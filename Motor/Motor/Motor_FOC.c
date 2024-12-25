@@ -61,7 +61,7 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
     }
     else if (p_motor->FeedbackMode.Current == 0U) /* Voltage Control mode - Apply limits without FeedbackLoop */
     {
-        req = Motor_VReqOfILimit(p_motor, FOC_GetIq(&p_motor->Foc), initialReq);
+        // req = Motor_VReqOfILimit(p_motor, FOC_GetIq(&p_motor->Foc), initialReq);
         FOC_SetVq(&p_motor->Foc, req);
         FOC_SetVd(&p_motor->Foc, FOC_GetReqD(&p_motor->Foc));
     }
@@ -91,7 +91,7 @@ static inline void ProcSpeedFeedback(Motor_T * p_motor, bool hasSpeedFeedback)
     else if (p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
         // if (p_motor->FeedbackMode.Current == 1U) { req = Motor_IReqLimitOf(p_motor, initialReq); } /* clamp again in case a new limit is set while input discontinued */
-        req = Motor_ReqOfSpeedLimit(p_motor, rampReq);
+        // req = Motor_ReqOfSpeedLimit(p_motor, rampReq);
         FOC_SetReqQ(&p_motor->Foc, req);
         FOC_SetReqD(&p_motor->Foc, 0);
     }
@@ -344,7 +344,7 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor) { Motor_FOC_SetDirection(p
 void Motor_FOC_StartAlign(Motor_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U;
-    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_UFract16 / 2U);
+    Linear_Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_UFract16);
     // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     // Motor_FOC_MatchFeedbackState(p_motor);
 }

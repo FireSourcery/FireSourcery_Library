@@ -126,17 +126,17 @@ static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor) {
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
 static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor) { return p_motor->StateFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor) { return p_motor->FaultFlags; }
-static inline bool Motor_User_IsStopState(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
-static inline bool Motor_User_IsRunState(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
+static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
+static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
 
 /*
     Set via interface functions
 */
-/* Getters satisfy generic use. Setters are specific to control mode. */
 /*! @return [-32767:32767] <=> [-1:1] */
-static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)        { return Motor_GetCmd(p_motor); }
-static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)   { return Motor_GetSetPoint(p_motor); }
+/* Getters satisfy generic use. Setters are specific to control mode. */
+static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
+static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
 
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
@@ -156,15 +156,6 @@ static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  
 static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_GetILimit(p_motor); }
 
 
-// static inline int16_t Motor_User_SpeedCmdLimitOf(const Motor_T * p_motor, int32_t speed_Fract16)
-// {
-//     return math_clamp(speed_Fract16, 0, Motor_User_GetSpeedLimit(p_motor));
-// };
-
-// static inline int16_t Motor_User_ICmdLimitOf(const Motor_T * p_motor, int16_t i_Fract16)
-// {
-//     return math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor));
-// };
 
 
 /* SubStates */
@@ -204,11 +195,18 @@ extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
 
 extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
-extern bool Motor_User_TryRelease(Motor_T * p_motor);
-extern bool Motor_User_TryHold(Motor_T * p_motor);
-extern bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction);
-extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
-extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
+
+extern void Motor_User_SetRelease(Motor_T * p_motor);
+extern void Motor_User_SetHold(Motor_T * p_motor);
+extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
+extern void Motor_User_SetDirectionForward(Motor_T * p_motor);
+extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);
+
+// extern bool Motor_User_TryRelease(Motor_T * p_motor);
+// extern bool Motor_User_TryHold(Motor_T * p_motor);
+// extern bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction);
+// extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
+// extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
 
 extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16);
 extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16);

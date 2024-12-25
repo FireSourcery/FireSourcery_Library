@@ -56,8 +56,16 @@ static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return 
 static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> p_linear->SlopeShift); }
 
 static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); } //alternatively update slope if sign changed
-static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t match) { p_linear->Y0 = (match << p_linear->SlopeShift); }
-static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear) { p_linear->Y0 = 0; }
+static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear)
+{
+    p_linear->Y0 = 0;
+    p_linear->YReference = 0;
+}
+static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t match)
+{
+    p_linear->Y0 = (match << p_linear->SlopeShift);
+    p_linear->YReference = p_linear->Y0;
+}
 
 /******************************************************************************/
 /*

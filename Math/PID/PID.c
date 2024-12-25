@@ -154,7 +154,7 @@ void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 
     if (sampleFreq > 0U)
     {
-        p_pid->Config.SampleFreq = sampleFreq;
+        p_pid->Config.SampleFreq = sampleFreq; /* store fixed value, loop this may lose precision */
         ki = PID_GetKi_Fixed32(p_pid);
         PID_SetKi_Fixed32(p_pid, ki);
     }

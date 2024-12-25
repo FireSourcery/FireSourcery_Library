@@ -68,14 +68,13 @@ void Motor_Analog_MarkIabc(Motor_T * p_motor)
 /******************************************************************************/
 /*!
     @brief
+    Call by StateMachine
 */
 /******************************************************************************/
 void Motor_Analog_StartCalibration(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * 2U); /* 2 Seconds */
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearFeedbackState, 0U /*Phase_Ground(&p_motor->Phase)*/);
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, 0U /*Phase_Ground(&p_motor->Phase)*/);
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, 0U /*Phase_Ground(&p_motor->Phase)*/);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, 0U /*Phase_Ground(&p_motor->Phase)*/);
 
     Filter_Avg_Init(&p_motor->FilterA);
     Filter_Avg_Init(&p_motor->FilterB);
@@ -88,7 +87,8 @@ void Motor_Analog_StartCalibration(Motor_T * p_motor)
 
 bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
 {
-    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    static const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+
     bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
     if (isComplete == true)
     {
@@ -100,12 +100,15 @@ bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
     }
     else
     {
-        if((p_motor->ControlTimerBase & DIVIDER) == 0UL)
+        if (p_motor->ControlTimerBase != 0U) /* skip first sample */
         {
-            Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
-            Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
-            Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
-            Motor_Analog_MarkIabc(p_motor);
+            if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
+            {
+                Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+                Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+                Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+                Motor_Analog_MarkIabc(p_motor);
+            }
         }
     }
 

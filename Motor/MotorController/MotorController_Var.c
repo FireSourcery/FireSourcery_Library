@@ -183,7 +183,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
             switch((MotVarId_Control_General_T)varId.NameBase)
             {
                 case MOT_VAR_DIRECTION:     value = MotorController_User_GetDirection(p_mc);    break;
-            // case MOT_VAR_USER_SET_POINT:                 value = MotorController_User_GetCmdValue(p_mc);                     break;
+            // case MOT_VAR_USER_SET_POINT: value = MotorController_User_GetCmdValue(p_mc);     break;
                 default: break;
             }
             break;
@@ -191,8 +191,8 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
         case MOT_VAR_ID_TYPE_CONTROL_MOTOR:
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_MOTOR_DIRECTION:           value = Motor_User_GetDirection(p_motor);                   break;
-                case MOT_VAR_MOTOR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);                    break;
+                case MOT_VAR_MOTOR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
+                case MOT_VAR_MOTOR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
                 case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Word;     break;
                 case MOT_VAR_MOTOR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
                 case MOT_VAR_MOTOR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
@@ -221,10 +221,10 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
     {
         case MOT_VAR_ID_TYPE_CMD_MOTOR:
         // todo wrap motor cmd with MotorController StateMachine check
-        //    if (MotorController_User_IsActiveState(p_mc))
-        //    {
+    //    if (MotorController_User_IsActiveState(p_mc))
+    //    {
 
-        //    }
+    //    }
             switch((MotVarId_Cmd_Motor_T)varId.NameBase)
             {
                 // case MOT_VAR_MOTOR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
@@ -244,7 +244,7 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
         case MOT_VAR_ID_TYPE_CONTROL_MOTOR:
             switch((MotVarId_Control_Motor_T)varId.NameBase)
             {
-                case MOT_VAR_MOTOR_DIRECTION:               isSuccess = Motor_User_TryDirection(p_motor, (Motor_Direction_T)varValue);  break;
+                case MOT_VAR_MOTOR_DIRECTION:               Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);  break;
                 case MOT_VAR_MOTOR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);                break;
                 case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:      Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);    break;
                 case MOT_VAR_MOTOR_USER_SPEED_LIMIT:        isSuccess = Motor_User_TrySpeedLimit(p_motor, varValue);        break;

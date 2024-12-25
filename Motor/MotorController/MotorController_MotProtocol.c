@@ -107,7 +107,6 @@ static protocol_size_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallRes
             // status = MotorController_User_InputLock(p_mc, (MotorController_LockId_T)p_rxPacket->CallReq.Arg); // match return status
             switch((MotorController_LockId_T)p_rxPacket->CallReq.Arg) /* StateMachine will check for invalid BlockingId */
             {
-                case MOTOR_CONTROLLER_LOCK_PARK:      status = MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;
                 case MOTOR_CONTROLLER_LOCK_ENTER:     status = MotorController_User_EnterLockState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;
                 case MOTOR_CONTROLLER_LOCK_EXIT:      status = MotorController_User_ExitLockState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;   break;
                 /* Non Blocking function, host/caller poll Async return status after. */ // calibration status todo

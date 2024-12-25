@@ -50,13 +50,13 @@ MotorController_Analog_ChannelGlobal_T;
 // static inline uint16_t MotorController_Analog_GetAdcu(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->AnalogResults.Channels[adcChannel]; }
 // static inline uint8_t MotorController_Analog_GetAdcu_Msb8(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 
-static inline uint16_t MotorController_Analog_GetVSource(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
-static inline uint16_t MotorController_Analog_GetVSense(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VSENSE.P_STATE->Result; }
-static inline uint16_t MotorController_Analog_GetVAccs(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_VACCS.P_STATE->Result; }
-static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_HEAT_PCB.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetVSource(const MotorController_T * p_mc)    { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetVSense(const MotorController_T * p_mc)     { return p_mc->CONST.CONVERSION_VSENSE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetVAccs(const MotorController_T * p_mc)      { return p_mc->CONST.CONVERSION_VACCS.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetHeatPcb(const MotorController_T * p_mc)    { return p_mc->CONST.CONVERSION_HEAT_PCB.P_STATE->Result; }
 static inline uint16_t MotorController_Analog_GetHeatMosfets(const MotorController_T * p_mc, uint8_t index) { return p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[index].P_STATE->Result; }
-static inline uint16_t MotorController_Analog_GetThrottle(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result; }
-static inline uint16_t MotorController_Analog_GetBrake(const MotorController_T * p_mc) { return p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetThrottle(const MotorController_T * p_mc)   { return p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result; }
+static inline uint16_t MotorController_Analog_GetBrake(const MotorController_T * p_mc)      { return p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result; }
 
 #define MOT_ANALOG_CONVERSION_INIT(LocalChannel, AdcId, AdcPin, p_Mot) ANALOG_CONVERSION_INIT((MOT_ANALOG_CHANNEL_BASE_GENERAL + LocalChannel), 0U, p_Mot, AdcId, AdcPin)
 
@@ -70,7 +70,6 @@ static inline uint16_t MotorController_Analog_GetBrake(const MotorController_T *
 
 #define MOT_ANALOG_CONVERSIONS_INIT_USER_THROTTLE(ThrottleHost, ThrottlePin, p_Mot)     MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_THROTTLE, ThrottleHost, ThrottlePin, p_Mot)
 #define MOT_ANALOG_CONVERSIONS_INIT_USER_BRAKE(BrakeHost, BrakePin, p_Mot)              MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_BRAKE, BrakeHost, BrakePin, p_Mot)
-
 
 
 #endif

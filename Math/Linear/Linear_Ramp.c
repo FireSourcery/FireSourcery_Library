@@ -121,7 +121,7 @@ int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
 void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
-    p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT; // unused set to 0?
+    p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT; // unused
     Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
     Linear_Ramp_SetOutputState(p_linear, 0);
     Linear_Ramp_SetTarget(p_linear, 0);

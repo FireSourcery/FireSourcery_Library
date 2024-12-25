@@ -85,6 +85,13 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
     if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP) { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
 }
 
+/*
+    Bypasses User Mode restrictions, bounds
+    Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
+    Ramp input allows over saturated input
+*/
+static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+
 /******************************************************************************/
 /*!
     Voltage Mode
@@ -97,13 +104,13 @@ void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_User_StartControl(p_
 */
 void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_Fract16)
 {
-    Motor_SetCmd(p_motor, math_max(volts_Fract16, 0));  /* Reverse voltage use change direction, no plugging */
+    _Motor_User_SetCmd(p_motor, math_max(volts_Fract16, 0));  /* Reverse voltage use change direction, no plugging */
 }
 
 void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
     int32_t limitedCmd = (scalar_Fract16 > 0) ? fract16_mul(INT16_MAX, scalar_Fract16) : 0;
-    Motor_SetCmd(p_motor, limitedCmd);
+    _Motor_User_SetCmd(p_motor, limitedCmd);
 }
 
 // [v/2 +/- scalar * ]
@@ -125,13 +132,13 @@ void Motor_User_StartIMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor,
 */
 void Motor_User_SetICmd(Motor_T * p_motor, int16_t i_Fract16)
 {
-    Motor_SetCmd(p_motor, math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor)));
+    _Motor_User_SetCmd(p_motor, math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor)));
 }
 
 void Motor_User_SetICmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
     int32_t limit = (scalar_Fract16 > 0) ? Motor_User_GetILimitMotoring(p_motor) : Motor_User_GetILimitGenerating(p_motor);
-    Motor_SetCmd(p_motor, fract16_mul(limit, scalar_Fract16));
+    _Motor_User_SetCmd(p_motor, fract16_mul(limit, scalar_Fract16));
 }
 
 /******************************************************************************/
@@ -149,15 +156,15 @@ void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
     if (scalar_Fract16 < 0)
     {
-        if (Motor_User_GetIPhase_UFract16(p_motor) > (INT16_MAX / 20)) // 5%
-        {
-            Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
-        }
-        else
-        {
-            // Motor_User_SetICmd_Scalar(p_motor, 0U);
-            Motor_User_TryRelease(p_motor);
-        }
+        Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
+        // if (Motor_User_GetIPhase_UFract16(p_motor) > (INT16_MAX / 20)) // 5%
+        // {
+        //     Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
+        // }
+        // else
+        // {
+        //     Motor_User_TryRelease(p_motor);
+        // }
     }
     else
     {
@@ -188,13 +195,13 @@ void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_User_StartControl(p_mo
 */
 void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_Fract16)
 {
-    Motor_SetCmd(p_motor, math_clamp(speed_Fract16, 0, Motor_User_GetSpeedLimit(p_motor)));
+    _Motor_User_SetCmd(p_motor, math_clamp(speed_Fract16, 0, Motor_User_GetSpeedLimit(p_motor)));
 }
 
 void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
     int32_t limitedCmd = (scalar_Fract16 > 0) ? fract16_mul(Motor_User_GetSpeedLimit(p_motor), scalar_Fract16) : 0;
-    Motor_SetCmd(p_motor, limitedCmd);
+    _Motor_User_SetCmd(p_motor, limitedCmd);
 }
 
 /******************************************************************************/
@@ -208,7 +215,7 @@ void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 {
     // _Motor_User_ActivateControlMode(p_motor, MOTOR_FEEDBACK_MODE_POSITION_SPEED_CURRENT);
-    // Motor_SetCmd(p_motor, angle);
+    // _Motor_User_SetCmd(p_motor, angle);
 }
 
 /******************************************************************************/
@@ -233,7 +240,7 @@ void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Fract16)
 void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
 {
     int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16);
-    Motor_SetCmd(p_motor, ivCmdIn);
+    _Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
 #endif
@@ -271,7 +278,7 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 void Motor_User_ForceDisableControl(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
-    // Motor_SetCmd(p_motor, 0);
+    // _Motor_User_SetCmd(p_motor, 0);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
 }
 
@@ -279,36 +286,55 @@ void Motor_User_ForceDisableControl(Motor_T * p_motor)
     always State machine checked Disable
     TryRelease transition to FREEWHEEL
 */
-bool Motor_User_TryRelease(Motor_T * p_motor)
+void Motor_User_SetRelease(Motor_T * p_motor)
 {
-    // Motor_SetCmd(p_motor, 0);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
-    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL ||
-        StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
 }
 
-bool Motor_User_TryHold(Motor_T * p_motor)
+void Motor_User_SetHold(Motor_T * p_motor)
 {
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
-    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); // && PwmA+B+C == 0
 }
+
+// bool Motor_User_TryRelease(Motor_T * p_motor)
+// {
+//     // _Motor_User_SetCmd(p_motor, 0);
+//     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL ||
+//         StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
+// }
+
+// bool Motor_User_TryHold(Motor_T * p_motor)
+// {
+//     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
+//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); // && PwmA+B+C == 0
+// }
 
 /******************************************************************************/
 /*!
     Direction
 */
 /******************************************************************************/
-/*
-    Does not need critical section if PWM interrupt does not read/write direction
-*/
-bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction)
+void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
-    return (direction == p_motor->Direction);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
 }
 
-bool Motor_User_TryDirectionForward(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Config.DirectionForward); }
-bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
+void Motor_User_SetDirectionForward(Motor_T * p_motor) {   Motor_User_SetDirection(p_motor, p_motor->Config.DirectionForward); }
+void Motor_User_SetDirectionReverse(Motor_T * p_motor) {   Motor_User_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
+
+/*
+    Can set async without critical section if PWM interrupt does not read/write direction
+*/
+// bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction)
+// {
+//     if (p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+//     return (direction == p_motor->Direction);
+// }
+
+// bool Motor_User_TryDirectionForward(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Config.DirectionForward); }
+// bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
+
 
 
 /******************************************************************************/
@@ -321,8 +347,8 @@ bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDi
 */
 bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, speed_fract16); }
 bool Motor_User_ClearSpeedLimit(Motor_T * p_motor)                       { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
-bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16)         { return Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_USER, i_fract16); }
-bool Motor_User_ClearILimit(Motor_T * p_motor)                           { return Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_USER); }
+bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, i_fract16); }
+bool Motor_User_ClearILimit(Motor_T * p_motor)                           { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }
 
 /******************************************************************************/
 /*

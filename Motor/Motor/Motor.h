@@ -349,7 +349,7 @@ Motor_Config_T;
 */
 typedef const struct Motor_Const
 {
-    Analog_T * const P_ANALOG;
+    // Analog_T * const P_ANALOG;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
     const Motor_Config_T * const P_NVM_CONFIG;
 }
@@ -624,7 +624,7 @@ static inline bool Motor_IsDirectionReverse(const Motor_T * p_motor) { return !M
 
 /******************************************************************************/
 /*
-    Main Cmd value
+
 */
 /******************************************************************************/
 /*!
@@ -634,20 +634,15 @@ static inline bool Motor_IsDirectionReverse(const Motor_T * p_motor) { return !M
 */
 static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
 
-/* Getters satisfy generic use. Setters are specific to control mode. */
-static inline int32_t Motor_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
-static inline int32_t Motor_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
 
+/******************************************************************************/
 /*
-    Bypasses User Mode restrictions, bounds
-    Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
-    Ramp input allow over saturated input
+    Apply Limits
+    Call from Feedback loop
 */
-static inline void Motor_SetCmd(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
-static inline void Motor_ClearCmdState(Motor_T * p_motor) { Linear_Ramp_SetOutputState(&p_motor->Ramp, 0); }
-
+/******************************************************************************/
 /*
-
+    Limits getters as abstraction
 */
 static inline int32_t Motor_GetVLimitCcw(const Motor_T * p_motor) { return INT16_MAX; }
 static inline int32_t Motor_GetVLimitCw(const Motor_T * p_motor)  { return (0 - INT16_MAX); }
@@ -661,20 +656,23 @@ static inline int32_t Motor_GetSpeedLimitCw(const Motor_T * p_motor)  { return (
 static inline uint16_t Motor_GetSpeedLimit(const Motor_T * p_motor) { return (Motor_IsDirectionForward(p_motor) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16); }
 static inline uint16_t Motor_GetILimit(const Motor_T * p_motor) { return (FOC_GetISign(&p_motor->Foc) > 0) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
 
-
 // alternatively derived values as base
 // static inline uint16_t Motor_User_GetSpeedLimitForward(const Motor_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitCcw_Fract16 : (0 - p_motor->SpeedLimitCw_Fract16); }
 // static inline uint16_t Motor_User_GetSpeedLimitReverse(const Motor_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? (0 - p_motor->SpeedLimitCw_Fract16) : p_motor->SpeedLimitCcw_Fract16; }
 // static inline uint16_t Motor_User_GetILimitMotoring(const Motor_T * p_motor)    { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? p_motor->ILimitCcw_Fract16 : (0 - p_motor->ILimitCw_Fract16); }
 // static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? (0 - p_motor->ILimitCw_Fract16) : p_motor->ILimitCcw_Fract16; }
 
+// static inline int16_t Motor_User_SpeedCmdLimitOf(const Motor_T * p_motor, int32_t speed_Fract16)
+// {
+//     return math_clamp(speed_Fract16, 0, Motor_User_GetSpeedLimit(p_motor));
+// };
 
-/******************************************************************************/
-/*
-    Apply Limits
-    Call from Feedback loop
-*/
-/******************************************************************************/
+// static inline int16_t Motor_User_ICmdLimitOf(const Motor_T * p_motor, int16_t i_Fract16)
+// {
+//     return math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor));
+// };
+
+
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
 static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)       { return math_clamp(req, Motor_GetILimitCw(p_motor), Motor_GetILimitCcw(p_motor)); }
 
@@ -727,10 +725,6 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
 //     return math_clamp(req, 0 - limitedReqAbs, limitedReqAbs);
 // };
 
-/******************************************************************************/
-/* */
-/******************************************************************************/
-
 
 /******************************************************************************/
 /*
@@ -779,18 +773,18 @@ extern void Motor_UpdateSpeedOutputLimits(Motor_T * p_motor);
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
-extern void Motor_SetSpeedLimit(Motor_T * p_motor, uint16_t speed_UFract16);
+extern void Motor_SetSpeedLimit(Motor_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_ClearSpeedLimit(Motor_T * p_motor);
-extern void Motor_SetILimit(Motor_T * p_motor, uint16_t i_UFract16);
+extern void Motor_SetILimit(Motor_T * p_motor, uint16_t i_ufract16);
 extern void Motor_ClearILimit(Motor_T * p_motor);
 
-extern bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t speed_UFract16);
-extern bool Motor_SetSpeedLimitEntry_Scalar(Motor_T * p_motor, uint8_t id, uint16_t scalar_UFact16);
+extern bool Motor_SetSpeedLimitEntry(Motor_T * p_motor, uint8_t id, uint16_t speed_ufract16);
+extern bool Motor_SetSpeedLimitEntry_Scalar(Motor_T * p_motor, uint8_t id, uint16_t scalar_ufract16);
 extern bool Motor_ClearSpeedLimitEntry(Motor_T * p_motor, uint8_t id);
 
-extern bool Motor_SetILimitEntry(Motor_T * p_motor, uint8_t id, uint16_t i_UFract16);
-extern bool Motor_SetILimitEntry_Scalar(Motor_T * p_motor, uint8_t id, uint16_t scalar_UFact16);
-extern bool Motor_ClearILimitEntry(Motor_T * p_motor, uint8_t id);
+extern bool Motor_SetILimitMotoringEntry(Motor_T * p_motor, uint8_t id, uint16_t i_ufract16);
+extern bool Motor_SetILimitMotoringEntry_Scalar(Motor_T * p_motor, uint8_t id, uint16_t scalar_ufract16);
+extern bool Motor_ClearILimitMotoringEntry(Motor_T * p_motor, uint8_t id);
 
 extern bool Motor_TrySystemSpeedLimit(Motor_T * p_motor, uint16_t fract16);
 extern bool Motor_ClearSystemSpeedLimit(Motor_T * p_motor);

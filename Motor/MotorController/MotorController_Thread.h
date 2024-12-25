@@ -194,7 +194,10 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     /* Med Freq, Low Priority, 1 ms */
     if (Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
     {
-        StateMachine_Async_ProcState(&p_mc->StateMachine);
+        /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
+        // StateMachine_ProcState(&p_mc->StateMachine);
+        _StateMachine_ProcSyncInput(&p_mc->StateMachine);
+        _StateMachine_ProcStateOutput(&p_mc->StateMachine);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
@@ -285,7 +288,7 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
             if (p_mc->StateFlags.VLow == 0U)
             {
                 p_mc->StateFlags.VLow = 1U;
-                MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16 / 2U);
+                MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;

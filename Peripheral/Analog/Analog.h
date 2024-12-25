@@ -68,8 +68,8 @@ Analog_ConversionState_T;
 typedef const struct Analog_Conversion
 {
     /*
-        Id, to associate external state, by index. Globally unique if buffer is global.
-        Not needed if P_STATE is provided
+        Id, to associate Analog_T state, by index. Globally unique if buffer is global.
+        Not needed if P_STATE is provided.
     */
     const analog_channel_t CHANNEL;
 
@@ -77,8 +77,8 @@ typedef const struct Analog_Conversion
     const uint8_t ADC_ID; /* required to associate state from Analog_T */
     const adc_pin_t PIN;
 
-    const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
     void * const P_CONTEXT;
+    const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
     volatile Analog_ConversionState_T * const P_STATE;
 }
 Analog_Conversion_T;
@@ -91,6 +91,7 @@ Analog_Conversion_T;
     .P_CONTEXT      = p_Context,                                \
     .ON_COMPLETE    = CaptureFn,
 
+// #define ANALOG_CONVERSION_INIT(Channel, AdcId, PinId, p_Context, CaptureFn, ...)
 #define ANALOG_CONVERSION_INIT(Channel, CaptureFn, p_Context, AdcId, PinId, ...) \
 {                                                               \
     .CHANNEL    = Channel,                                      \
@@ -98,8 +99,6 @@ Analog_Conversion_T;
     _ANALOG_CONVERSION_INIT_CALLBACK(p_Context, CaptureFn)      \
     .P_STATE    =  &(Analog_ConversionState_T){},               \
 }
-    // __VA_ARGS__                                                 \
-
 
 // #define ANALOG_CONVERSION_INIT_STRUCT(...) ( (Analog_Conversion_T) { __VA_ARGS__ } )
 
@@ -184,6 +183,8 @@ Analog_T;
         .CONVERSIONS_COUNT          = ChannelCount                          \
     }, \
 }
+
+// #define ANALOG_INIT(AdcArray, p_ChannelArray) ANALOG_INIT(AdcArray, sizeof(AdcArray)/sizeof(Analog_ADC_T), p_ChannelArray, sizeof(p_ChannelArray)/sizeof(Analog_Conversion_T *))
 
 /******************************************************************************/
 /*!

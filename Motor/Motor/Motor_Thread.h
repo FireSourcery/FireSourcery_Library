@@ -49,7 +49,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 // #ifndef NDEBUG
     // Motor_Debug_CaptureRefTime(p_motor);
 // #endif
-    StateMachine_ProcState(&p_motor->StateMachine);
+    StateMachine_Sync_ProcState(&p_motor->StateMachine);
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
     Motor_ClearInterrupt(p_motor);
 #endif
@@ -106,12 +106,12 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
                 if (p_motor->StateFlags.HeatWarning == 1U) /* todo move to thermistor */
                 {
                     p_motor->StateFlags.HeatWarning = 0U;
-                    Motor_ClearILimitEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
+                    Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
                 }
                 break;
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StateFlags.HeatWarning = 1U;
-                Motor_SetILimitEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
+                Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;

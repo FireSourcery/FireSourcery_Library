@@ -57,17 +57,18 @@ typedef uint8_t statemachine_state_t;           /* State ID. User may overwrite 
 struct StateMachine_State;
 
 /*!
-    Transition Function - defined by user via P_TRANSITION_TABLE
+    Input
+    Forms the Transition Function - defined by user via P_TRANSITION_TABLE
     1 Additional input passed as arguments
     @return returns pointer to new state, if it exists.
-            0 - no transition, bypass exit and entry, indicates user defined non transition
-            !0 - transition, perform exist and entry. User may return same state, for self transition, proc exit and entry
+            NULL - no transition, bypass exit and entry, indicates user defined non transition
+            StateMachine_State * - transition, perform exit and entry. User may return same state, for self transition, proc exit and entry
 */
-typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue); // Input Function
+typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue);
 typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
 
 /* Alternatively include handle transition, no external input, "clock only" on internal state. Transition occurs last this way */
-// typedef struct StateMachine_State * (*StateMachine_StateOutput_T)(void * p_context);
+typedef struct StateMachine_State * (*StateMachine_StateOutput_T)(void * p_context);
 
 // include additional arg to optimize for r2-r3?
 // input only function, check state only, no transition
@@ -91,8 +92,8 @@ typedef const struct StateMachine_State
 {
     const statemachine_state_t ID;
     const StateMachine_Transition_T * const P_TRANSITION_TABLE;     /* f(statemachine_input_id_t) input map. Forms the TransitionFunction.  */
-    const StateMachine_Function_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
-    const StateMachine_Function_T ENTRY;      /* Common to all transition to current state, including self transition */
+    const StateMachine_StateOutput_T LOOP;       /* Output of the State. Synchronous periodic proc. No null pointer check, user must supply empty function */
+    const StateMachine_Function_T ENTRY;         /* Common to all transition to current state, including self transition */
 #ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
     const StateMachine_Function_T EXIT;
 #endif
@@ -140,23 +141,6 @@ StateMachine_T;
     }                                                           \
 }
 
-// static inline StateMachine_State_T * TransitionFunction(const StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-// {
-//     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
-// }
-
-// static inline StateMachine_State_T * StateOuput(const StateMachine_State_T * p_state, void * p_context)
-// {
-//     return p_state->LOOP(p_context);
-// }
-
-// static inline StateMachine_State_T * StateTransition(const StateMachine_State_T * p_active, void * p_context, StateMachine_State_T * p_newState)
-// {
-//     if (p_active->EXIT != NULL) { p_active->EXIT(p_context); }
-//     if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_context); }
-//     return p_newState;
-// }
-
 static inline statemachine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, statemachine_state_t stateId) { return (stateId == p_stateMachine->p_StateActive->ID); }
 
@@ -167,19 +151,24 @@ static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMach
 /******************************************************************************/
 extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
 
+extern void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine);
+extern void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine);
+extern void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+
 extern void StateMachine_Init(StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 
 extern void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine);
-extern bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
-extern bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 // extern bool StateMachine_Async_ProcInputState(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
-extern bool StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
-extern bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern void StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
+extern void StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue);
 
 #endif
 

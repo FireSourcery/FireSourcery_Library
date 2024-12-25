@@ -35,41 +35,6 @@
     Private Functions
 */
 /******************************************************************************/
-/*!
-    Handle multithreaded async inputs
-*/
-/* Multithreaded may use disable interrupts, if-test, or spin-wait with thread scheduler */
-static inline bool AcquireSignal_ISR(StateMachine_T * p_stateMachine)
-{
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
-}
-
-/* Single threaded input always overwrite */
-static inline void ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
-#else
-    (void)p_stateMachine;
-#endif
-}
-
-/* Single threaded input always does not need to check */
-static inline bool AcquireSignal_Input(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
-#else
-    Critical_AcquireSignal(&p_stateMachine->InputSignal);
-    return true;
-#endif
-}
-
-static inline void ReleaseSignal_Input(StateMachine_T * p_stateMachine)
-{
-    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
-}
-
 static inline void InitSignal(StateMachine_T * p_stateMachine)
 {
 #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
@@ -79,55 +44,97 @@ static inline void InitSignal(StateMachine_T * p_stateMachine)
 #endif
 }
 
-// static inline bool AcquireCritical_Input(StateMachine_T * p_stateMachine)
-// {
-// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-//     return Critical_AcquireEnter(&p_stateMachine->InputSignal); /* Multithreaded may use disable interrupts, if-test, or spin-wait with thread scheduler */
-// #else
-//     Critical_AcquireSignal(&p_stateMachine->InputSignal);
-//     return true;
-// #endif
-// }
-static inline bool AcquireCritical(StateMachine_T * p_stateMachine)
+/*!
+    Handle multithreaded async inputs
+*/
+static inline bool AcquireSignal_ISR(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireEnter(&p_stateMachine->InputSignal);
-#else
-    (void)p_stateMachine;
-    return true;
-#endif
-}
-
-static inline void ReleaseCritical(StateMachine_T * p_stateMachine)
-{
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    Critical_ReleaseExit(&p_stateMachine->InputSignal);
-#else
-    (void)p_stateMachine;
-#endif
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /*  */
 }
 
 
-/* Always skip processing when not acquired */
-static inline bool AcquireSignal(StateMachine_T * p_stateMachine)
+static inline void ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
 {
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
-#else
-    (void)p_stateMachine;
-    return true;
-#endif
-}
-
-static inline void ReleaseSignal(StateMachine_T * p_stateMachine)
-{
-#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
     Critical_ReleaseSignal(&p_stateMachine->InputSignal);
 #else
-    (void)p_stateMachine;
+    (void)p_stateMachine; /* Single threaded input always overwrite */
 #endif
 }
 
+
+static inline bool AcquireSignal_Input(StateMachine_T * p_stateMachine)
+{
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Multi-threaded do not proceed, if another thread holds the signal */
+#else
+    Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR does not need to block Input */
+    return true;
+#endif
+}
+
+static inline void ReleaseSignal_Input(StateMachine_T * p_stateMachine)
+{
+    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
+}
+
+/*
+    Selection between DisableISR and Signal
+    Multithreaded may use disable interrupts, set_and_test signal, or spin-wait with thread scheduler
+*/
+static inline bool AcquireCritical_ISR(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+#else
+    return AcquireSignal_ISR(p_stateMachine);
+#endif
+}
+
+static inline void ReleaseCritical_ISR(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+#else
+    ReleaseSignal_ISR(p_stateMachine);
+#endif
+}
+
+static inline bool AcquireCritical_Input(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+    _Critical_DisableIrq();
+    return true;
+#else
+    return AcquireSignal_Input(p_stateMachine);
+#endif
+}
+
+static inline void ReleaseCritical_Input(StateMachine_T * p_stateMachine)
+{
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+    _Critical_EnableIrq();
+#else
+    ReleaseSignal_Input(p_stateMachine);
+#endif
+}
+
+
+
+// static inline StateMachine_State_T * TransitionFunction(const StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+// {
+//     return p_active->P_TRANSITION_TABLE[inputId](p_context, inputValue);
+// }
+
+// static inline StateMachine_State_T * StateOuput(const StateMachine_State_T * p_state, void * p_context)
+// {
+//     return p_state->LOOP(p_context);
+// }
+
+// static inline StateMachine_State_T * StateTransition(const StateMachine_State_T * p_active, void * p_context, StateMachine_State_T * p_newState)
+// {
+//     if (p_active->EXIT != NULL) { p_active->EXIT(p_context); }
+//     if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_context); }
+//     return p_newState;
+// }
 
 static inline void Reset(StateMachine_T * p_stateMachine)
 {
@@ -148,11 +155,10 @@ static inline void Reset(StateMachine_T * p_stateMachine)
 /*
     No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
 */
-static inline void ProcStateOuput(const StateMachine_T * p_stateMachine)
+static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
 {
-    p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
-    // include transition in output loop
-    // ProcStateTransition(p_stateMachine, p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT));
+    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
+    if (p_newState != NULL) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
 }
 
 /*!
@@ -182,11 +188,10 @@ static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, state
     ProcInput must lock
     A transition must not occur between [isAcceptInput] and [ProcTransition]
 */
-static bool ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+static void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    bool isAccept = isAcceptInput(p_stateMachine, inputId);
-    if (isAccept == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
-    return isAccept;
+    if (isAcceptInput(p_stateMachine, inputId) == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
+
 }
 
 /******************************************************************************/
@@ -225,18 +230,47 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const St
 // void StateMachine_ProcStateTransitionId(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
 
 /*
-    Selectively implement critical in calling layer, if protection not require for all inputs
-    User ensure same thread or handle critical
+    User ensure same thread
+    Selectively implement critical in calling layer, if not require for all inputs
 */
-void _StateMachine_ProcState(StateMachine_T * p_stateMachine)
+void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine)
 {
     ProcStateOuput(p_stateMachine);
 }
 
-bool _StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+// void _StateMachine_ProcSyncState(StateMachine_T * p_stateMachine)
+// {
+//     if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
+//     {
+//         ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+//         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
+//     }
+//     else
+//     {
+//         ProcStateOuput(p_stateMachine);
+//     }
+// }
+
+void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine)
 {
-    return ProcInput(p_stateMachine, inputId, inputValue);
+    if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
+    {
+        ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
+    }
 }
+
+void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+{
+    ProcInput(p_stateMachine, inputId, inputValue);
+}
+
+void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+{
+    p_stateMachine->SyncInputValue = inputValue;
+    p_stateMachine->SyncInput = inputId;
+}
+
 
 
 /******************************************************************************/
@@ -260,10 +294,10 @@ void StateMachine_Init(StateMachine_T * p_stateMachine)
 
 void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
-    if (AcquireCritical(p_stateMachine) == true)
+    if (AcquireCritical_Input(p_stateMachine) == true)
     {
         Reset(p_stateMachine);
-        ReleaseCritical(p_stateMachine);
+        ReleaseCritical_Input(p_stateMachine);
     }
 }
 
@@ -294,37 +328,27 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
 */
 /******************************************************************************/
-static inline bool ProcSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-{
-    bool isAccept;
-    /*
-        Multithreaded calls to SetInput must use additional sentinel value
-        Signal flag must be cleared to provide indication to other inputs
-
-        Single thread can use atomic flag as bufferHasData
-    */
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    if (syncInput != STATE_MACHINE_INPUT_ID_NULL)
-    {
-        isAccept = ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
-        p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL; /* Clear input */
-    }
-#else
-    isAccept = ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
-#endif
-    return isAccept;
-}
-
 void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
 {
     if (AcquireSignal_ISR(p_stateMachine) == true)
     {
-        ProcSyncInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        /*
+            Multithreaded calls to SetInput must use additional sentinel value
+            Signal flag must be cleared to provide indication to other inputs
+
+            Single thread can use atomic flag as bufferHasData
+        */
+    #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+        _StateMachine_ProcSyncInput(p_stateMachine);
+    #else
+        ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+    #endif
         ReleaseSignal_ISR(p_stateMachine);
     }
     else
     {
-        ProcStateOuput(p_stateMachine);
+        /* Proc State without Signal/DisableISR if all Inputs are Sync_SetInput */
+        _StateMachine_ProcStateOutput(p_stateMachine);
     }
 }
 
@@ -334,19 +358,14 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
     @return     isAcceptInput()
                 a immediate return, although may differ when checked again during ProcState, due to transition or overwrite
 */
-bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    bool isAccept = isAcceptInput(p_stateMachine, inputId);
-    if (isAccept == true)
+    if (AcquireSignal_Input(p_stateMachine) == true) /* Disables [ProcState] [ProcInput] Interrupt */
     {
-        if (AcquireSignal_Input(p_stateMachine) == true) /* Disables [ProcState] [ProcInput] Interrupt */ // or AcquireCritical
-        {
-            p_stateMachine->SyncInputValue = inputValue;
-            p_stateMachine->SyncInput = inputId;
-            ReleaseSignal_Input(p_stateMachine);
-        }
+        p_stateMachine->SyncInputValue = inputValue;
+        p_stateMachine->SyncInput = inputId;
+        ReleaseSignal_Input(p_stateMachine);
     }
-    return isAccept;
 }
 
 
@@ -368,10 +387,10 @@ bool StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_in
 */
 void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 {
-    if (AcquireSignal(p_stateMachine) == true) /* Disabled when input is processing, ensure any transition is completed */
+    if (AcquireCritical_ISR(p_stateMachine) == true) /* Disabled when input is processing, ensure any transition is completed */
     {
-        ProcStateOuput(p_stateMachine);
-        ReleaseSignal(p_stateMachine);
+        _StateMachine_ProcStateOutput(p_stateMachine);
+        ReleaseCritical_ISR(p_stateMachine);
     }
 }
 
@@ -379,29 +398,15 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
     AcquireSignal blocks [ProcState] and other [ProcInput]
         inputs must be on the same thread or may skip input processing
 */
-bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    bool isAccept = false;
-    if (AcquireCritical(p_stateMachine) == true)
+    if (AcquireCritical_Input(p_stateMachine) == true)
     {
-        isAccept = ProcInput(p_stateMachine, inputId, inputValue);
-        ReleaseCritical(p_stateMachine);
+        _StateMachine_ProcAsyncInput(p_stateMachine, inputId, inputValue);
+        ReleaseCritical_Input(p_stateMachine);
     }
-    return isAccept;
 }
 
-
-/*
-    As Async with StateOutput as common output for all inputs, and on input only.
-    Critical only if inputs on different threads
-*/
-// bool StateMachine_Async_ProcInputWithState(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-// {
-//     bool isAccept = false;
-//     isAccept = ProcInput(p_stateMachine, inputId, inputValue);
-//     if (isAccept == true) { ProcStateOuput(p_stateMachine); }
-//     return isAccept;
-// }
 
 /******************************************************************************/
 /*
@@ -412,16 +417,28 @@ bool StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_
 inline void StateMachine_ProcState(StateMachine_T * p_stateMachine)
 {
     StateMachine_Sync_ProcState(p_stateMachine);
+
+
+#if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
+    StateMachine_Sync_ProcState(p_stateMachine); /* if [Async_ProcInput] disables ISR, ProcStateOutput is ok  */
+#else
+    if (AcquireSignal_ISR(p_stateMachine) == true)
+    {
+        _StateMachine_ProcSyncInput(p_stateMachine); /* [Async_ProcInput] may release signal, while SyncInput is invalid */
+        _StateMachine_ProcStateOutput(p_stateMachine); /* Do not proc state during [Async_ProcInput] */
+        ReleaseSignal_ISR(p_stateMachine);
+    }
+#endif
 }
 
-inline bool StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+inline void StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    return StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
+    StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
 }
 
-inline bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    return StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
+    StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
 }
 
 /******************************************************************************/
@@ -432,7 +449,7 @@ inline bool StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
 void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t input, statemachine_input_value_t inputValue)
 {
-    StateMachine_ProcInput(p_stateMachine, input, statemachine_input_value_t inputValue)
+    StateMachine_ProcInput(p_stateMachine, input, inputValue)
 }
 
 StateMachine_State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
@@ -464,7 +481,7 @@ void StateMachine_Menu_StartNext(StateMachine_T * p_stateMachine)
 
 void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, statemachine_input_id_t input, statemachine_input_value_t inputValue)
 {
-    StateMachine_ProcInput(p_stateMachine, input, statemachine_input_value_t inputValue)
+    StateMachine_ProcInput(p_stateMachine, input, inputValue)
 }
 
 void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)

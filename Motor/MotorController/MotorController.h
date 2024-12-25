@@ -130,7 +130,7 @@ MotorController_ServoMode_T;
 /* Drive SubState use edge detection - DriveState */
 typedef enum MotorController_DriveId
 {
-    MOTOR_CONTROLLER_DRIVE_ZERO,
+    MOTOR_CONTROLLER_DRIVE_RELEASE,
     MOTOR_CONTROLLER_DRIVE_THROTTLE,
     MOTOR_CONTROLLER_DRIVE_BRAKE,
     MOTOR_CONTROLLER_DRIVE_CMD,
@@ -140,7 +140,6 @@ MotorController_DriveId_T;
 /* Blocking SubState/Function Id */
 typedef enum MotorController_LockedId
 {
-    MOTOR_CONTROLLER_LOCK_PARK, /* convience for park first before lock */
     MOTOR_CONTROLLER_LOCK_ENTER,
     MOTOR_CONTROLLER_LOCK_EXIT,
     MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
@@ -448,18 +447,23 @@ extern void MotorController_ServoExtern_SetCmd(MotorController_T * p_mc, int32_t
 //  void MotorController_Servo_Proc(MotorController_T * p_mc);
 //  void MotorController_Servo_SetCmd(MotorController_T * p_mc, uint32_t cmd);
 // #endif
-extern bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc);
-extern bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc);
+
 extern bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc);
-
+extern bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc);
+extern bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc);
 extern bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc);
 extern bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc);
+
 extern void MotorController_ForceDisableAll(MotorController_T * p_mc);
-extern bool MotorController_TryReleaseAll(MotorController_T * p_mc);
-extern bool MotorController_TryHoldAll(MotorController_T * p_mc);
-extern bool MotorController_TryDirectionForwardAll(MotorController_T * p_mc, MotorController_Direction_T direction);
-extern bool MotorController_TryDirectionReverseAll(MotorController_T * p_mc, MotorController_Direction_T direction);
+extern void MotorController_SetReleaseAll(MotorController_T * p_mc);
+extern void MotorController_SetHoldAll(MotorController_T * p_mc);
+extern void MotorController_SetDirectionForwardAll(MotorController_T * p_mc);
+extern void MotorController_SetDirectionReverseAll(MotorController_T * p_mc);
+
+// extern bool MotorController_TryReleaseAll(MotorController_T * p_mc);
+// extern bool MotorController_TryHoldAll(MotorController_T * p_mc);
+
 extern void MotorController_SetSpeedLimitAll(MotorController_T * p_mc, Motor_SpeedLimitId_T id, uint16_t limit_fract16);
 extern void MotorController_ClearSpeedLimitAll(MotorController_T * p_mc, Motor_SpeedLimitId_T id);
 extern void MotorController_SetSpeedLimitAll_Scalar(MotorController_T * p_mc, Motor_SpeedLimitId_T id, uint16_t scalar_fract16);

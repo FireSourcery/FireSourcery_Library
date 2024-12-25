@@ -54,14 +54,15 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
     return direction;
 }
 
-bool MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
+void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
-    bool isSuccess;
-    if (MotorController_User_GetDirection(p_mc) != direction) { StateMachine_ProcInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    // else { MotorController_BeepDouble(p_mc); }
-    isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
-    if (isSuccess == false) { MotorController_BeepShort(p_mc); }
-    return isSuccess;
+    if (MotorController_User_GetDirection(p_mc) != direction) { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    // bool isSuccess;
+    // if (MotorController_User_GetDirection(p_mc) != direction) { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    // // else { MotorController_BeepDouble(p_mc); }
+    // isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
+    // if (isSuccess == false) { MotorController_BeepShort(p_mc); }
+    // return isSuccess;
 }
 
 // static inline MotorController_MainMode_T MotorController_User_GetMainMode(MotorController_T * p_mc)
@@ -140,7 +141,6 @@ static inline uint32_t _MotorController_User_InputLockOp(MotorController_T * p_m
 
     switch (opId) /* StateMachine will check for invalid Id */
     {
-        case MOTOR_CONTROLLER_LOCK_PARK:      isSuccess = MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);  break;
         case MOTOR_CONTROLLER_LOCK_ENTER:     isSuccess = MotorController_User_EnterLockState(p_mc);  break;
         case MOTOR_CONTROLLER_LOCK_EXIT:      isSuccess = MotorController_User_ExitLockState(p_mc);   break;
             /* Non Blocking function, host/caller poll Async return status after. */ // calibration status todo
@@ -167,9 +167,9 @@ uint32_t MotorController_User_InputSystem(MotorController_T * p_mc, MotorControl
         case MOT_USER_SYSTEM_BEEP:                  MotorController_User_BeepN(p_mc, 500U, 500U, value);                                  break;
         case MOT_USER_SYSTEM_CLEAR_FAULT:           isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);                     break;
         case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_User_SetRxWatchdog(p_mc, value);                                      break;
-        case MOT_USER_SYSTEM_LOCK_STATE:            status = _MotorController_User_InputLockOp(p_mc, (MotorController_LockId_T)value); break;
+        case MOT_USER_SYSTEM_LOCK_STATE:            status = _MotorController_User_InputLockOp(p_mc, (MotorController_LockId_T)value);    break;
         case MOT_USER_SYSTEM_SERVO:                 MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value);        break;
-        // case MOT_USER_SYSTEM_SYSTEM_GENERAL:     MotorController_User_InputSystemGeneral(p_mc, (MotorController_SystemGeneral_T)value); break;
+        // case MOT_USER_SYSTEM_GENERAL:     MotorController_User_InputSystemGeneral(p_mc, (MotorController_SystemGeneral_T)value); break;
         default: break;
     }
 
@@ -189,7 +189,7 @@ uint32_t MotorController_User_InputControl(MotorController_T * p_mc, MotVarId_Co
     {
         switch (id)
         {
-            case MOT_VAR_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            case MOT_VAR_DIRECTION: MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
             default: break;
         }
     }
