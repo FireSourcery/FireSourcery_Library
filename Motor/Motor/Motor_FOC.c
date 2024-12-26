@@ -269,8 +269,9 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     if (p_motor->FeedbackMode.Current == 1U)
     {
         PID_SetOutputState(&p_motor->PidIq, vq);
-        PID_SetOutputState(&p_motor->PidId, 0);
-        qReq = FOC_GetIq(&p_motor->Foc);
+        PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+        // qReq = FOC_GetIq(&p_motor->Foc);
+        qReq = 0;
     }
     else
     {

@@ -229,12 +229,20 @@ static const StateMachine_State_T STATE_PARK =
     @brief Drive Set Common
 */
 /******************************************************************************/
-/* (cmdValue == 0U) do nothing. case where 0 cmd simultaneous with throttle/brake is permited without error */
-/* Non-zero cmd simultaneous with throttle/brake results in error */
-/* SubState is not valid until Motor_StateMachine procs inf Sync mode. */
+/*
+    For Async Set
+    (cmdValue == 0U) do nothing. case where 0 cmd simultaneous with throttle/brake is permited without error
+    Non-zero cmd simultaneous with throttle/brake results in error
+
+    For Sync Set
+    SubState is not valid until Motor_StateMachine procs in Sync mode.
+*/
 /*! @param[in] driveCmd MotorController_DriveId_T */
 static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorController_DriveId_T id, uint32_t value)
 {
+
+    // if ((value == 0U) && (id == p_mc->DriveSubState)) { id = MOTOR_CONTROLLER_DRIVE_RELEASE; }
+
     switch (p_mc->DriveSubState) // switch on current state
     {
         case MOTOR_CONTROLLER_DRIVE_BRAKE:
@@ -248,8 +256,8 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
                     }
                     break;
-                case MOTOR_CONTROLLER_DRIVE_THROTTLE:     break;
-
+                case MOTOR_CONTROLLER_DRIVE_THROTTLE:
+                    break;
                 case MOTOR_CONTROLLER_DRIVE_RELEASE: /* UI detected release */
                     MotorController_StartDriveZero(p_mc);
                     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
@@ -286,16 +294,30 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
             switch (id)
             {
                 case MOTOR_CONTROLLER_DRIVE_BRAKE:
-                    if (MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_SetHoldAll(p_mc); }
+                    if (value != 0U)
+                    {
+                        if (MotorController_IsEveryMotorStopState(p_mc) == true) { MotorController_SetHoldAll(p_mc); }
+                        else
+                        {
+                            MotorController_StartBrakeMode(p_mc);
+                            p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+                        }
+                    }
                     else
                     {
-                        MotorController_StartBrakeMode(p_mc);
-                        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+                        MotorController_ProcDriveZero(p_mc);
                     }
                     break;
                 case MOTOR_CONTROLLER_DRIVE_THROTTLE:
-                    MotorController_StartThrottleMode(p_mc);
-                    p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
+                    if (value != 0U)
+                    {
+                        MotorController_StartThrottleMode(p_mc);
+                        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_THROTTLE;
+                    }
+                    else
+                    {
+                        MotorController_ProcDriveZero(p_mc);
+                    }
                     break;
                 case MOTOR_CONTROLLER_DRIVE_RELEASE:
                     MotorController_ProcDriveZero(p_mc);

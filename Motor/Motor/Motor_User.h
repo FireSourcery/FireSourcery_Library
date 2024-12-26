@@ -129,6 +129,8 @@ static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_moto
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
 static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
+static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return (p_motor->StateFlags.RampDisable == 0U); }
+static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { p_motor->StateFlags.RampDisable = (rampEnable == 0U); }
 
 /*
     Set via interface functions
@@ -140,7 +142,6 @@ static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { retur
 
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
-
 
 /*
     User reference direction
@@ -154,8 +155,6 @@ static inline uint16_t Motor_User_GetSpeedLimit(const Motor_T * p_motor)        
 static inline uint16_t Motor_User_GetILimitMotoring(const Motor_T * p_motor)    { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
 static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_GetILimit(p_motor); }
-
-
 
 
 /* SubStates */
@@ -173,19 +172,22 @@ extern void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode
 extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
+extern void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
+
 extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
-extern void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_Fract16);
-extern void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16);
-extern void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_Fract16);
+extern void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_fract16);
+extern void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
+extern void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_StartIMode(Motor_T * p_motor);
-extern void Motor_User_SetICmd(Motor_T * p_motor, int16_t i_Fract16);
-extern void Motor_User_SetICmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16);
+extern void Motor_User_SetICmd(Motor_T * p_motor, int16_t i_fract16);
+extern void Motor_User_SetICmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_StartTorqueMode(Motor_T * p_motor);
 extern void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t torque);
-extern void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16);
+extern void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_StartSpeedMode(Motor_T * p_motor);
-extern void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_Fract16);
-extern void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16);
+extern void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_fract16);
+extern void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle);
 
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)

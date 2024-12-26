@@ -48,9 +48,6 @@ void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
 
 void FOC_ZeroSvpwm(FOC_T * p_foc)
 {
-    // p_foc->DutyA = FRACT16_MAX / 2;
-    // p_foc->DutyB = FRACT16_MAX / 2;
-    // p_foc->DutyC = FRACT16_MAX / 2;
     p_foc->Va = FRACT16_MAX / 2;
     p_foc->Vb = FRACT16_MAX / 2;
     p_foc->Vc = FRACT16_MAX / 2;

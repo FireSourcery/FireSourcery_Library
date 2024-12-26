@@ -218,7 +218,7 @@ angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
     angle16_t angle;
     switch(p_motor->Config.SensorMode)
     {
-        // case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->Encoder);    break;
+        case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->Encoder);    break;
         case MOTOR_SENSOR_MODE_ENCODER: angle = Encoder_GetAngle(&p_motor->Encoder);    break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
@@ -327,7 +327,7 @@ static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 }
 
 /* User request or no sensor feedback */
-bool Motor_IsSensorAvailable(const Motor_T * p_motor)
+inline bool Motor_IsSensorAvailable(const Motor_T * p_motor)
 {
     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
@@ -377,7 +377,7 @@ void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     // if (mode.Word != p_motor->FeedbackMode.Word) //maybe set by ilimit
     {
-        p_motor->FeedbackMode.Word = mode.Word;
+        p_motor->FeedbackMode.Value = mode.Value;
         Motor_UpdateSpeedOutputLimits(p_motor);
     }
 }

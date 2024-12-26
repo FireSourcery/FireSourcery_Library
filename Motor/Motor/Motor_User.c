@@ -73,11 +73,16 @@
 inline void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     //  (FeedbackMode_IsValid(mode));
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Word);
+    // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
 }
 
 /* Generic array functions use */
-inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue) { Motor_User_StartControl(p_motor, Motor_FeedbackMode_Cast(modeValue)); }
+inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
+{
+    Motor_User_StartControl(p_motor, Motor_FeedbackMode_Cast(modeValue));
+    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
+}
 
 /* User set [FeedbackMode] without starting Run */
 inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
@@ -86,11 +91,30 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
 }
 
 /*
+    Async Machine,
+*/
+inline void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+}
+
+inline void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
+}
+
+
+
+/*
     Bypasses User Mode restrictions, bounds
-    Concurrency note: only 1 thread updates RampTarget. StateMachine Proc thread only updates OutputState
+    Concurrency note: only 1 thread updates RampTarget. StateMachine_Proc thread only updates OutputState
     Ramp input allows over saturated input
 */
-static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
+{
+    if (p_motor->StateFlags.RampDisable == 0U)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+    else                                        { Linear_Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
+}
 
 /******************************************************************************/
 /*!
@@ -102,19 +126,19 @@ void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_User_StartControl(p_
 /*!
     @param[in] voltage [-32768:32767]
 */
-void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_Fract16)
+void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_fract16)
 {
-    _Motor_User_SetCmd(p_motor, math_max(volts_Fract16, 0));  /* Reverse voltage use change direction, no plugging */
+    _Motor_User_SetCmd(p_motor, math_max(volts_fract16, 0));  /* Reverse voltage use change direction, no plugging */
 }
 
-void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
+void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16)
 {
-    int32_t limitedCmd = (scalar_Fract16 > 0) ? fract16_mul(INT16_MAX, scalar_Fract16) : 0;
+    int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(INT16_MAX, scalar_fract16) : 0;
     _Motor_User_SetCmd(p_motor, limitedCmd);
 }
 
 // [v/2 +/- scalar * ]
-void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_Fract16)
+void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_fract16)
 {
     Motor_User_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 2);
 }
@@ -193,14 +217,14 @@ void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_User_StartControl(p_mo
         Hall sensor directional read, ILimit directional set
     @param[in] speed [-32768:32767]
 */
-void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_Fract16)
+void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_fract16)
 {
-    _Motor_User_SetCmd(p_motor, math_clamp(speed_Fract16, 0, Motor_User_GetSpeedLimit(p_motor)));
+    _Motor_User_SetCmd(p_motor, math_clamp(speed_fract16, 0, Motor_User_GetSpeedLimit(p_motor)));
 }
 
-void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
+void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16)
 {
-    int32_t limitedCmd = (scalar_Fract16 > 0) ? fract16_mul(Motor_User_GetSpeedLimit(p_motor), scalar_Fract16) : 0;
+    int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(Motor_User_GetSpeedLimit(p_motor), scalar_fract16) : 0;
     _Motor_User_SetCmd(p_motor, limitedCmd);
 }
 
@@ -229,9 +253,9 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 */
 void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_Fract16)
+void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
 {
-    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_Fract16);
+    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
 }
 
 /*!
@@ -315,13 +339,9 @@ void Motor_User_SetHold(Motor_T * p_motor)
     Direction
 */
 /******************************************************************************/
-void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
-{
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction);
-}
-
-void Motor_User_SetDirectionForward(Motor_T * p_motor) {   Motor_User_SetDirection(p_motor, p_motor->Config.DirectionForward); }
-void Motor_User_SetDirectionReverse(Motor_T * p_motor) {   Motor_User_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
+void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+void Motor_User_SetDirectionForward(Motor_T * p_motor) { Motor_User_SetDirection(p_motor, p_motor->Config.DirectionForward); }
+void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
 
 /*
     Can set async without critical section if PWM interrupt does not read/write direction

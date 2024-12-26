@@ -176,9 +176,9 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
     Safe state actions, maybe blocking
 */
 /******************************************************************************/
-static inline void MotorController_User_InputLock(MotorController_T * p_mc, MotorController_LockId_T opId)
+static inline void MotorController_User_InputLock(MotorController_T * p_mc, MotorController_LockId_T id)
 {
-    _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, opId);
+    _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, id);
 }
 
 static inline bool MotorController_User_IsLockState(MotorController_T * p_mc)
@@ -402,7 +402,7 @@ static inline void MotorController_User_SetBlink(MotorController_T * p_mc, bool 
 static inline uint16_t MotorController_User_GetVSourceRef(const MotorController_T * p_mc) { return p_mc->Config.VSourceRef; }
 
 static inline Motor_FeedbackMode_T MotorController_User_GetDefaultFeedbackMode(const MotorController_T * p_mc)      { return p_mc->Config.DefaultCmdMode; }
-static inline void MotorController_User_SetDefaultFeedbackMode_Cast(MotorController_T * p_mc, uint16_t wordValue)   { p_mc->Config.DefaultCmdMode.Word = wordValue; }
+static inline void MotorController_User_SetDefaultFeedbackMode_Cast(MotorController_T * p_mc, uint16_t wordValue)   { p_mc->Config.DefaultCmdMode.Value = wordValue; }
 
 static inline MotorController_MainMode_T MotorController_User_GetInitMode(const MotorController_T * p_mc)           { return p_mc->Config.InitMode; }
 static inline MotorController_InputMode_T MotorController_User_GetInputMode(const MotorController_T * p_mc)         { return p_mc->Config.InputMode; }

@@ -143,7 +143,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
                 case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                    break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
-                case MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE:    value = Motor_User_GetFeedbackMode(p_motor).Word;  break;
+                case MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE:    value = Motor_User_GetFeedbackMode(p_motor).Value;  break;
                 case MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT:      value = Motor_User_GetSpeedLimit(p_motor);         break;
                 case MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT:          value = Motor_User_GetILimit(p_motor);             break;
                 case MOT_VAR_MOTOR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);             break;
@@ -193,7 +193,7 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
             {
                 case MOT_VAR_MOTOR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
                 case MOT_VAR_MOTOR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
-                case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Word;     break;
+                case MOT_VAR_MOTOR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Value;     break;
                 case MOT_VAR_MOTOR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
                 case MOT_VAR_MOTOR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
                 default: break;
@@ -392,7 +392,7 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
                 case MOT_VAR_USER_INPUT_MODE:           value = MotorController_User_GetInputMode(p_mc);                break;
                 case MOT_VAR_USER_INIT_MODE:            value = MotorController_User_GetInitMode(p_mc);                 break;
                 case MOT_VAR_THROTTLE_MODE:             value = MotorController_User_GetThrottleMode(p_mc);             break;
-                case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Word; break;
+                case MOT_VAR_DEFAULT_FEEDBACK_MODE:     value = MotorController_User_GetDefaultFeedbackMode(p_mc).Value; break;
                 case MOT_VAR_BRAKE_MODE:                value = MotorController_User_GetBrakeMode(p_mc);                break;
                 case MOT_VAR_DRIVE_ZERO_MODE:           value = MotorController_User_GetDriveZeroMode(p_mc);            break;
                 case MOT_VAR_I_LIMIT_LOW_V:             value = (p_mc->Config.VLowILimit_Fract16);                     break;

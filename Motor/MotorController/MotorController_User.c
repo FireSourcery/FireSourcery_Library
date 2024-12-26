@@ -221,10 +221,6 @@ uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_Ge
 
     switch (id)
     {
-        // case MOT_VAR_BEEP:                      MotorController_User_BeepN(p_mc, 500U, 500U, varValue);     break;
-        // case MOT_VAR_CONTROLLER_MODE:           MotorController_User_SetMainMode(p_mc, varValue);           break;
-        // case MOT_VAR_CLEAR_FAULT:               isSuccess = MotorController_StateMachine_ClearFault(p_mc, varValue);   break;
-
         case MOT_VAR_THROTTLE:                  _MotorController_User_InputDriveCmd(p_mc, id, value);            break;
         case MOT_VAR_BRAKE:                     _MotorController_User_InputDriveCmd(p_mc, id, value);            break;
 

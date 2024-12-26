@@ -144,6 +144,16 @@ StateMachine_T;
 static inline statemachine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, statemachine_state_t stateId) { return (stateId == p_stateMachine->p_StateActive->ID); }
 
+/*!
+    @return false indicates not accepted input, transition does not exist, no mapped input function.
+            true indicates accepted input, state may transition or self transition (with or without entry and exit function).
+*/
+static inline bool StateMachine_IsAcceptInput(const StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
+{
+    return ((inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
+}
+
+
 /******************************************************************************/
 /*
     Extern

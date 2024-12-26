@@ -107,7 +107,7 @@ MotVarId_Monitor_MotorSensor_T;
 */
 typedef enum MotVarId_Cmd_Motor
 {
-    // MOT_VAR_MOTOR_USER_CMD,      // RampIn Always reflects the input value
+    // MOT_VAR_MOTOR_USER_CMD,      // Active mode value
     MOT_VAR_MOTOR_CMD_SPEED,        // UserCmd as Speed
     MOT_VAR_MOTOR_CMD_CURRENT,
     MOT_VAR_MOTOR_CMD_VOLTAGE,
@@ -120,6 +120,7 @@ typedef enum MotVarId_Cmd_Motor
 }
 MotVarId_Cmd_Motor_T;
 
+/* IO */
 typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
@@ -128,6 +129,7 @@ typedef enum MotVarId_Control_Motor
     MOT_VAR_MOTOR_USER_FEEDBACK_MODE,
     MOT_VAR_MOTOR_USER_SPEED_LIMIT,
     MOT_VAR_MOTOR_USER_I_LIMIT,
+    MOT_VAR_MOTOR_SET_RAMP_ON_OFF,      // 1:Enable, 0:Disable
 }
 MotVarId_Control_Motor_T;
 
@@ -174,19 +176,15 @@ MotVarId_Monitor_AnalogUser_T;
 */
 typedef enum MotVarId_Cmd_General
 {
-    // MOT_VAR_BEEP,
-    // MOT_VAR_CONTROLLER_MODE,                // Servo Or Drive
-    // MOT_VAR_CLEAR_FAULT,
-
     /*
         for all motors, or primary Motor
         per motor use use motor instance functions
     */
+    MOT_VAR_USER_CMD,                           // [-32768:32767]
+    MOT_VAR_USER_FEEDBACK_MODE,                 //
     // MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
     // MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
     // MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
-    MOT_VAR_USER_CMD,                           // [-32768:32767]
-    MOT_VAR_USER_FEEDBACK_MODE,                 //
 
     /*
         Brake and Throttle invoke SubStates

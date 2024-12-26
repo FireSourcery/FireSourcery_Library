@@ -60,10 +60,13 @@
 #include <stdbool.h>
 #include <assert.h>
 
-
-// #define MOTOR_CONTROL_DIVIDER(Pow2) ((uint32_t)Pow2 - 1U)
-#define MOTOR_CONTROL_CYCLES(MilliSeconds, Freq)    ((uint32_t)((uint64_t)MilliSeconds * Freq / 1000U))
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+#define MOTOR_CONTROL_CYCLES(Milliseconds, Freq)    ((uint32_t)((uint64_t)Milliseconds * Freq / 1000U))
 #define MOTOR_CONTROL_TIME_MS(Cycles, Freq)         ((uint32_t)((uint64_t)Cycles * 1000U / Freq))
+#define MOTOR_CONTROL_DIVIDER(Pow2)                 ((uint32_t)Pow2 - 1U)
 
 /******************************************************************************/
 /*
@@ -98,7 +101,6 @@ extern uint16_t Motor_Static_GetVSource_Adcu(void);
 
 /******************************************************************************/
 /*
-
 */
 /******************************************************************************/
 typedef enum Motor_CommutationMode
@@ -136,7 +138,7 @@ typedef union Motor_FeedbackMode
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Position   : 1U;
     };
-    uint8_t Word; /* Id */
+    uint8_t Value; /* Id */
 }
 Motor_FeedbackMode_T;
 
@@ -148,7 +150,7 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
 // static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
-static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Word = word }); }
+static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Value = word }); }
 
 /*
     Effectively sync mailbox for async calculations
@@ -160,6 +162,7 @@ typedef union Motor_StateFlags
         uint16_t HeatWarning        : 1U;
         uint16_t ILimited           : 1U;
         uint16_t SpeedLimited       : 1U;
+        uint16_t RampDisable        : 1U;
         // uint16_t SensorFeedback  : 1U;
         // uint16_t Hold        : 1U;
         // uint16_t Control     : 1U;
@@ -349,7 +352,6 @@ Motor_Config_T;
 */
 typedef const struct Motor_Const
 {
-    // Analog_T * const P_ANALOG;
     const MotorAnalog_Conversions_T ANALOG_CONVERSIONS;
     const Motor_Config_T * const P_NVM_CONFIG;
 }
@@ -391,18 +393,17 @@ typedef struct Motor
     */
     Limit_T SpeedLimit;
     Limit_T ILimit;
+    /* Sentinel values buffers */
     uint16_t SpeedLimitBuffer[SPEED_LIMIT_ID_COUNT];
-    uint16_t ILimitBuffer[I_LIMIT_ID_COUNT];            /* Fixed buffer for 3 values, internal thermistor, user, upper layer */
-    // // Motor_SpeedLimitId_T SpeedLimitActiveId;
-    // // Motor_ILimitId_T ILimitActiveId;
+    uint16_t ILimitBuffer[I_LIMIT_ID_COUNT];
 
-    /* Non directional scalars */
+    /* Non directional */
     uint16_t SpeedLimitForward_Fract16; /* May over saturate */
     uint16_t SpeedLimitReverse_Fract16;
-    uint16_t ILimitMotoring_Fract16;
+    uint16_t ILimitMotoring_Fract16;    /* 32767 Max */
     uint16_t ILimitGenerating_Fract16;
 
-    /* Active directional limits - on feedback */
+    /* Cached directional limits - on feedback */
     // int16_t SpeedLimitCcw_Fract16;  /* + */
     // int16_t SpeedLimitCw_Fract16;   /* - */
     // int16_t ILimitCcw_Fract16;      /* + */
@@ -419,7 +420,7 @@ typedef struct Motor
 
     */
     angle16_t MechanicalAngle;
-    angle16_t ElectricalAngle;         /* Angle Feedback. Shared E-Cycle edge detect, User output */
+    angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
 
     PID_T PidPosition;    /* todo */
 

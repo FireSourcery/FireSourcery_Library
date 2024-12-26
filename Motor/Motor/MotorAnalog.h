@@ -100,12 +100,4 @@ MotorAnalog_Conversions_T;
 // }
 // MotorAnalog_Results_T;
 
-// typedef enum MotorAnalog_Batch
-// {
-//     MOTOR_ANALOG_CHANNEL_DISABLED,
-//     MOTOR_ANALOG_BATCH_V_ABC,
-//     MOTOR_ANALOG_BATCH_I_ABC,
-// }
-// MotorAnalog_Batch_T;
-
 #endif

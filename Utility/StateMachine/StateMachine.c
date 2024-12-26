@@ -35,58 +35,45 @@
     Private Functions
 */
 /******************************************************************************/
-static inline void InitSignal(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
-#else
-    atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
-#endif
-}
-
-/*!
-    Handle multithreaded async inputs
-*/
-static inline bool AcquireSignal_ISR(StateMachine_T * p_stateMachine)
-{
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /*  */
-}
 
 
-static inline void ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
-#else
-    (void)p_stateMachine; /* Single threaded input always overwrite */
-#endif
-}
+// static inline void InitSignal_SingleThreaded(StateMachine_T * p_stateMachine)
+// {
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
+// }
+
+// static inline bool AcquireSignal_ISR_SingleThreaded(StateMachine_T * p_stateMachine)
+// {
+//     return (atomic_flag_test_and_set(&p_stateMachine->InputSignal) == false); /*  */
+// }
+
+// static inline void ReleaseSignal_ISR_SingleThreaded(StateMachine_T * p_stateMachine)
+// {
+//     (void)p_stateMachine; /* Single threaded input always overwrite */
+// }
+
+// static inline bool AcquireSignal_Input_SingleThreaded(StateMachine_T * p_stateMachine)
+// {
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR does not need to block Input */
+//     return true;
+// }
+
+// static inline void ReleaseSignal_Input_SingleThreaded(StateMachine_T * p_stateMachine)
+// {
+//     atomic_flag_clear(&p_stateMachine->InputSignal);
+// }
 
 
-static inline bool AcquireSignal_Input(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Multi-threaded do not proceed, if another thread holds the signal */
-#else
-    Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR does not need to block Input */
-    return true;
-#endif
-}
-
-static inline void ReleaseSignal_Input(StateMachine_T * p_stateMachine)
-{
-    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
-}
 
 /*
     Selection between DisableISR and Signal
-    Multithreaded may use disable interrupts, set_and_test signal, or spin-wait with thread scheduler
+    Multi-threaded may use disable interrupts, set_and_test signal, or spin-wait with thread scheduler
 */
 static inline bool AcquireCritical_ISR(StateMachine_T * p_stateMachine)
 {
 #if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
 #else
-    return AcquireSignal_ISR(p_stateMachine);
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
 #endif
 }
 
@@ -94,7 +81,7 @@ static inline void ReleaseCritical_ISR(StateMachine_T * p_stateMachine)
 {
 #if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
 #else
-    ReleaseSignal_ISR(p_stateMachine);
+    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
 #endif
 }
 
@@ -104,7 +91,7 @@ static inline bool AcquireCritical_Input(StateMachine_T * p_stateMachine)
     _Critical_DisableIrq();
     return true;
 #else
-    return AcquireSignal_Input(p_stateMachine);
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
 #endif
 }
 
@@ -113,7 +100,7 @@ static inline void ReleaseCritical_Input(StateMachine_T * p_stateMachine)
 #if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
     _Critical_EnableIrq();
 #else
-    ReleaseSignal_Input(p_stateMachine);
+    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
 #endif
 }
 
@@ -152,24 +139,6 @@ static inline void Reset(StateMachine_T * p_stateMachine)
 //     }
 // }
 
-/*
-    No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
-*/
-static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
-{
-    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
-    if (p_newState != NULL) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
-}
-
-/*!
-    @return false indicates not accepted input, transition does not exist, no mapped input function.
-            true indicates accepted input, state may transition or self transition (with or without entry and exit function).
-*/
-static inline bool isAcceptInput(const StateMachine_T * p_stateMachine, statemachine_input_id_t inputId)
-{
-    return ((inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
-}
-
 /*!
     Transistion Function maps current state to new state for each input
 
@@ -185,12 +154,21 @@ static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, state
 }
 
 /*
+    No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
+*/
+static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
+{
+    StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
+    if (p_newState != NULL) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
+}
+
+/*
     ProcInput must lock
-    A transition must not occur between [isAcceptInput] and [ProcTransition]
+    A transition must not occur between [StateMachine_IsAcceptInput] and [ProcTransition]
 */
 static void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    if (isAcceptInput(p_stateMachine, inputId) == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
+    if (StateMachine_IsAcceptInput(p_stateMachine, inputId) == true) { ProcTransitionFunction(p_stateMachine, inputId, inputValue); }
 }
 
 /******************************************************************************/
@@ -203,7 +181,7 @@ static void ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t i
         p_newState assumed to be valid, caller ensure correctness
         call from within [ProcState] high priority thread, or user handle critical
 */
-void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState)
+inline void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState)
 {
 #ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
     if (p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONST.P_CONTEXT); }
@@ -214,15 +192,15 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const St
         Async may selectively implement critical. If unprotected:
         Set p_StateActive after proc ENTRY.
             This way Async will not proc [p_newState->OUTPUT] until after [p_newState->ENTRY].
-            May proc [p_StateActive->OUTPUT] (the prev State) after ENTRY. cannot reject during entry
+            May proc [p_StateActive->OUTPUT] (the prev State) after ENTRY.
             p_newState->OUTPUT after p_newState->ENTRY correctly
             p_StateActive->OUTPUT may overwrite p_newState->ENTRY incorrectly
 
-            Alternatively:
-            Set p_StateActive before ENTRY.
-                This way Async might proc OUTPUT of p_newState before ENTRY.
-                p_newState->ENTRY overwrite p_StateActive->OUTPUT correctly
-                p_newState->OUTPUT prior to p_newState->ENTRY incorrectly
+        Alternatively:
+        Set p_StateActive before ENTRY.
+            This way Async might proc OUTPUT of p_newState before ENTRY.
+            p_newState->ENTRY overwrite p_StateActive->OUTPUT correctly
+            p_newState->OUTPUT prior to p_newState->ENTRY incorrectly
     */
 }
 
@@ -232,7 +210,7 @@ void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const St
     User ensure same thread
     Selectively implement critical in calling layer, if not require for all inputs
 */
-void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine)
+inline void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine)
 {
     ProcStateOuput(p_stateMachine);
 }
@@ -250,21 +228,26 @@ void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine)
 //     }
 // }
 
-void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine)
+/*
+    it is possible to return a boolean status indicating if the input was accepted,
+    however this status is only dependent on the active State, and not the logic of the State.
+    the calling layer only needs to check the active state.
+*/
+inline void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
+    ProcInput(p_stateMachine, inputId, inputValue);
+}
+
+inline void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine)
+{
+    if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL) /* checked by isAccept input */
     {
         ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
     }
 }
 
-void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-{
-    ProcInput(p_stateMachine, inputId, inputValue);
-}
-
-void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+inline void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
     p_stateMachine->SyncInputValue = inputValue;
     p_stateMachine->SyncInput = inputId;
@@ -282,12 +265,9 @@ void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, statemachine_in
 */
 void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
-    p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
-    p_stateMachine->SyncInputValue = 0;
-    InitSignal(p_stateMachine);
-// #ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
-//     Critical_InitSignal(&p_stateMachine->InputSignal);
-// #endif
+    _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
+    // Sync_InitSignal(p_stateMachine);
+    atomic_flag_clear(&p_stateMachine->InputSignal); /* Special case single threaded case, ISR will run null once */
     Reset(p_stateMachine);
 }
 
@@ -302,7 +282,7 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
 /******************************************************************************/
 /*
-    Synchronous Machine
+    [Synchronous Machine]
     Synchronous Proc State - [ProcState] synchronous to clock/timer
     Synchronous Proc Input - Async user [SetInput] proc synchronously during [ProcState]
 
@@ -327,52 +307,113 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
 */
 /******************************************************************************/
+
+/*
+    Special case for Single Threaded Input Sync Machines with ISR
+*/
+static inline void Sync_InitSignal(StateMachine_T * p_stateMachine)
+{
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+    atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
+#else
+    atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
+#endif
+}
+
+/*!
+    Handle multithreaded [SetInput]
+*/
+static inline bool Sync_AcquireSignal_ISR(StateMachine_T * p_stateMachine)
+{
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /*  */
+}
+
+static inline void Sync_ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
+{
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
+#else
+    (void)p_stateMachine; /* Single threaded input always overwrite */
+#endif
+}
+
+
+static inline bool Sync_AcquireSignal_Input(StateMachine_T * p_stateMachine)
+{
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Multi-threaded do not proceed, if another thread holds the signal */
+#else
+    Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR does not need to block Input */
+    return true;
+#endif
+}
+
+static inline void Sync_ReleaseSignal_Input(StateMachine_T * p_stateMachine)
+{
+    Critical_ReleaseSignal(&p_stateMachine->InputSignal);
+}
+
+/******************************************************************************/
+/*! Public Functions */
+/******************************************************************************/
+// void StateMachine_Sync_Init(StateMachine_T * p_stateMachine)
+// {
+//     _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
+// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+//     atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
+// #else
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR, when no input is set */
+// #endif
+//     Reset(p_stateMachine);
+// }
+
 void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
 {
-    if (AcquireSignal_ISR(p_stateMachine) == true)
+    if (Sync_AcquireSignal_ISR(p_stateMachine) == true)
     {
         /*
-            Multithreaded calls to SetInput must use additional sentinel value
-            Signal flag must be cleared to provide indication to other inputs
+            Multi-threaded calls to [Sync_SetInput] use additional sentinel value
+            [InputSignal] flag is cleared to provide indication to other inputs
 
-            Single thread can use atomic flag as bufferEmpty
+            Single threaded calls can use atomic flag as bufferEmpty, bufferHasData when cleared
+            [InputSignal] flag does not need to clear, as it is always overwritten by input
+            [SyncInput] id does not need to clear
         */
     #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
         _StateMachine_ProcSyncInput(p_stateMachine);
     #else
-        ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        _StateMachine_ProcAsyncInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
     #endif
-        ReleaseSignal_ISR(p_stateMachine);
+        Sync_ReleaseSignal_ISR(p_stateMachine);
     }
     else
     {
-        /* Proc State without Signal/DisableISR if all Inputs are Sync_SetInput */
+        /* [ProcStateOutput] without Signal/DisableISR is okay, when all Inputs are [Sync_SetInput] */
         _StateMachine_ProcStateOutput(p_stateMachine);
     }
 }
 
 /*!
-    Multiple calls may overwrite each other, only the last set is processed.
+    Multiple calls overwrite the previous, only the last set is processed.
 
-    @return     isAcceptInput()
-                a immediate return, although may differ when checked again during ProcState, due to transition or overwrite
+    [StateMachine_IsAcceptInput] may provide an immediate return,
+        although may differ when checked again during [ProcState], due to transition or overwrite
 */
 void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    if (AcquireSignal_Input(p_stateMachine) == true) /* Disables [ProcState] [ProcInput] Interrupt */
+    if (Sync_AcquireSignal_Input(p_stateMachine) == true) /* Disables [ProcInput] portion of [Sync_ProcState] */
     {
-        p_stateMachine->SyncInputValue = inputValue;
-        p_stateMachine->SyncInput = inputId;
-        ReleaseSignal_Input(p_stateMachine);
+        _StateMachine_SetSyncInput(p_stateMachine, inputId, inputValue);
+        Sync_ReleaseSignal_Input(p_stateMachine);
     }
 }
 
 
 /******************************************************************************/
 /*
-    Asynchronous Machine
+    [Asynchronous Machine]
     Async user input may change state immediately,
-        optionally implement periodic ProcStateOuput
+        optionally implement periodic [ProcStateOuput]
 
     Input/State on the same thread: same behavior as synchronous
 
@@ -382,7 +423,7 @@ void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, statemachine_in
 */
 /******************************************************************************/
 /*
-    Assuming ProcState runs higher priority than ProcInput, critical is implemented in ProcInput only
+    Assuming [ProcState] runs higher priority than [ProcInput], critical is implemented in [ProcInput] only
 */
 void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 {
@@ -394,7 +435,7 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
 }
 
 /*
-    AcquireSignal blocks [ProcState] and other [ProcInput]
+    [AcquireCritical] blocks [ProcState] and other [ProcInput]
         inputs must be on the same thread or may skip input processing
 */
 void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
@@ -409,25 +450,29 @@ void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, statemachine_
 
 /******************************************************************************/
 /*
-    Hybrid Semi-synchronous Machine
+    [Combined Semi-Synchronous Machine]
     supports both operation at expense of additional condition check
 */
 /******************************************************************************/
 inline void StateMachine_ProcState(StateMachine_T * p_stateMachine)
 {
-    StateMachine_Sync_ProcState(p_stateMachine);
-
-
 #if defined(CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE)
-    StateMachine_Sync_ProcState(p_stateMachine); /* if [Async_ProcInput] disables ISR, ProcStateOutput is ok  */
+    /* [Async_ProcInput] disables ISR, [ProcStateOutput] is ok  */
+    StateMachine_Sync_ProcState(p_stateMachine);
 #else
-    if (AcquireSignal_ISR(p_stateMachine) == true)
+    /* [ProcSyncInput] must also be blocked during [Async_ProcInput] in case of transition */
+    if (Sync_AcquireSignal_ISR(p_stateMachine) == true)
     {
-        _StateMachine_ProcSyncInput(p_stateMachine); /* [Async_ProcInput] may release signal, while SyncInput is invalid */
-        _StateMachine_ProcStateOutput(p_stateMachine); /* Do not proc state during [Async_ProcInput] */
-        ReleaseSignal_ISR(p_stateMachine);
+        _StateMachine_ProcSyncInput(p_stateMachine);
+        _StateMachine_ProcStateOutput(p_stateMachine);
+        Sync_ReleaseSignal_ISR(p_stateMachine);
     }
 #endif
+}
+
+inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
+{
+    StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
 }
 
 inline void StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
@@ -435,10 +480,6 @@ inline void StateMachine_ProcInput(StateMachine_T * p_stateMachine, statemachine
     StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
 }
 
-inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
-{
-    StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
-}
 
 /******************************************************************************/
 /*

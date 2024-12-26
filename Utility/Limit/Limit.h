@@ -63,8 +63,8 @@ typedef struct
         limits calculated on add/remove
         get is O(1)
     */
-    // size_t minId;
-    // size_t maxId;
+    // uint8_t minId;
+    // uint8_t maxId;
     limit_t valuesMin; /* Min of the array, upper of [Limit] */
     limit_t valuesMax; /* Max of the array, lower of [Limit] */
 }
