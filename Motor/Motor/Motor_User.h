@@ -129,6 +129,19 @@ static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_moto
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
 static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
+/*
+    Separate getters for compatibility with StateMachine SetInput and ProcInput
+*/
+static inline bool Motor_User_IsRelease(const Motor_T * p_motor)
+{
+    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL || StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
+}
+
+static inline bool Motor_User_IsHold(const Motor_T * p_motor)
+{
+    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); // && PwmA+B+C == 0
+}
+
 static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return (p_motor->StateFlags.RampDisable == 0U); }
 static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { p_motor->StateFlags.RampDisable = (rampEnable == 0U); }
 

@@ -296,11 +296,11 @@ void MotorController_CalibrateSensorAll(MotorController_T * p_mc)
 */
 /******************************************************************************/
 bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc)  { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsStopState); }
-bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc)  { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsRunState); }
+bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc)   { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsRunState); }
 bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_IsDirectionForward); }
 bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_IsDirectionReverse); }
 
-bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc) { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
+bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc)  { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
 bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ExitFault); }
 
 void MotorController_ForceDisableAll(MotorController_T * p_mc)  { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
@@ -335,15 +335,10 @@ void MotorController_SetILimitAll_Scalar(MotorController_T * p_mc, Motor_ILimitI
 void MotorController_ClearILimitAll(MotorController_T * p_mc, Motor_ILimitId_T id)
     { for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ClearILimitMotoringEntry(&p_mc->CONST.P_MOTORS[iMotor], id); } }
 
-// bool MotorController_SetSystemILimitAll(MotorController_T * p_mc, uint16_t limit_percent16) { return struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_TrySystemILimit, limit_percent16); }
-// bool MotorController_ClearSystemILimitAll(MotorController_T * p_mc)                         { return void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_ClearSystemILimit); }
 
-// servo mode on boot
-// void MotorController_StartControlModeDefault(MotorController_T * p_mc)  { MotorN_User_ActivateControl(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, p_mc->Config.DefaultCmdMode); }
-// void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode) { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Word); }
-
-void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)    { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
-void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                  { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue, userCmd); }
+void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                          { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue, userCmd); }
+void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)   { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Value); }
+void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)            { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
 
 void MotorController_StartThrottleMode(MotorController_T * p_mc)
 {

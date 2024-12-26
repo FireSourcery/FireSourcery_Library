@@ -387,8 +387,7 @@ typedef struct Motor
     uint8_t CalibrationStateIndex;
     volatile Motor_PhaseFlags_T IFlags;
     volatile Motor_PhaseFlags_T VFlags;
-
-    int16_t UserCmdBuffer; /* effectively 3rd input into StateMachine */
+    // int16_t UserCmdBuffer; /* effectively 3rd input into StateMachine */
 
     /*
         Active Limits

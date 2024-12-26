@@ -147,9 +147,6 @@ typedef enum MotorController_LockedId
     MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
     // MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
     MOTOR_CONTROLLER_LOCK_REBOOT,
-    MOTOR_CONTROLLER_LOCK_POLL_STATUS,
-    // MOTOR_CONTROLLER_LOCK_ENTER_SERVO,
-    // MOTOR_CONTROLLER_LOCK_ENTER_DRIVE,
     // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
     // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
     // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
@@ -239,6 +236,19 @@ typedef union MotorController_BuzzerFlags
 }
 MotorController_BuzzerFlags_T;
 
+// typedef struct MotorController_DriveState
+// {
+//     // MotAnalogUser_AIn_T ThrottleAIn;
+
+//     // AnalogValueIn
+//     // bool IsEnable;
+//     // uint16_t Value;
+//     // uint16_t ValuePrev;
+
+//     // MotorController_Direction_T Direction; /* Previous state */
+// }
+// MotorController_DriveState_T;
+
 /*
     MotorController Voltages
     MOTOR_STATIC.VMAX -> controller voltage max
@@ -248,7 +258,7 @@ MotorController_BuzzerFlags_T;
 typedef struct MotorController_Config
 {
     uint16_t VSourceRef;    /* Source/Battery Voltage. Sync with Motor_Static VSourceRef_V */
-    Motor_FeedbackMode_T DefaultCmdMode;
+    // Motor_FeedbackMode_T DefaultCmdMode;
     MotorController_MainMode_T InitMode;
     MotorController_InputMode_T InputMode;
     MotorController_BrakeMode_T BrakeMode;
@@ -277,25 +287,21 @@ MotorController_Config_T;
 typedef const struct MotorController_Const
 {
     const uint8_t MAIN_VERSION[4U];
-
     /*  */
     const MotorController_Config_T * const P_NVM_CONFIG;
     /*
         Modules
     */
     Motor_T * const P_MOTORS; const uint8_t MOTOR_COUNT;
-    // Thermistor_T const P_THERMISTORS; const uint8_t THERMISTOR_COUNT;
-    // VMonitor_T const P_VMONITORS; const uint8_t VMONITOR_COUNT;
 
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE) || defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
-    Flash_T * const P_FLASH;    /* Flash controller defined outside module, ensure flash config/params are in RAM */
+    Flash_T * const P_FLASH;    /* Flash controller defined with _attribute ram section */
 // #endif
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     EEPROM_T * const P_EEPROM;   /* Defined outside for regularity */
 #endif
 
-
-    Analog_T * const P_ANALOG; /* pointer since it is shared */
+    Analog_T * const P_ANALOG;
 
     const Analog_Conversion_T CONVERSION_VSOURCE;
     const Analog_Conversion_T CONVERSION_VSENSE;
@@ -306,7 +312,6 @@ typedef const struct MotorController_Const
     const Analog_Conversion_T CONVERSION_THROTTLE;
     const Analog_Conversion_T CONVERSION_BRAKE;
 
-    // alternatively pass count by macro, allows aliasing in struct
     /* Simultaneous active serial */
     Serial_T * const P_SERIALS; const uint8_t SERIAL_COUNT;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
@@ -319,13 +324,10 @@ typedef const struct MotorController_Const
     /*
         Static Config
     */
-    // const uint8_t MAIN_VERSION[4U]; // alternatively pass using macro
     const uintptr_t MANUFACTURE_ADDRESS; const uint8_t MANUFACTURE_SIZE;
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     const uintptr_t CONFIG_ADDRESS; const uint16_t CONFIG_SIZE;  /* Flash params start. */
-    // alternatively use p_mc->CONST..P_FLASH->P_PARTITIONS[id]
-    // NvMemory_Partition_T * P_CONFIG_PARTITION;
-    // NvMemory_Partition_T * P_MANUFACTURE_PARTITION; /* pointer to partition table held by P_FLASH */
+    // alternatively use p_mc->CONST.P_FLASH->P_PARTITIONS[id]
 #endif
     const BootRef_T * const P_BOOT_REF;
     const uint32_t ANALOG_USER_DIVIDER;  /* In Pow2 - 1 */
@@ -342,17 +344,7 @@ typedef struct MotorController
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
 
-//     volatile MotAnalog_Results_T AnalogResults;
-// #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) // NDEBUG
-//     MotAnalog_Results_T FaultAnalogRecord;
-// #endif
-
-    MotAnalogUser_T AnalogUser;
-    Blinky_T Buzzer;
-    Blinky_T Meter;
-    Pin_T Relay;
-    Debounce_T OptDin;     /* Configurable input */
-
+    // Analog_T Analog;
     Thermistor_T ThermistorPcb;
     Thermistor_T MosfetsThermistors[MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT];
 
@@ -360,40 +352,50 @@ typedef struct MotorController
     VMonitor_T VMonitorSense;   /* ~5V */
     VMonitor_T VMonitorAccs;    /* ~12V */
 
-#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    Linear_T BatteryLife;       /* Battery Life percentage */
-#endif
+    MotAnalogUser_T AnalogUser;
+    Debounce_T OptDin;     /* Configurable input */
+    Blinky_T Buzzer;
+    Blinky_T Meter;
+    Pin_T Relay;
+
+    /* State and SubState */
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
     uint32_t TimerDividerCounter;
 
-#if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
-    Shell_T Shell;
-    uint16_t ShellSubstate;
-#endif
-
-    /* State and SubState */
     StateMachine_T StateMachine;
     MotorController_StateFlags_T StateFlags;
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
 
     /* SubStates - effectively previous input */
-    MotorController_DriveId_T DriveSubState;
+    MotorController_DriveId_T DriveSubState; // change for full values
     MotorController_LockId_T LockSubState;
+
+    /* Local Polling State */
+    int32_t UserCmdValue;
+    Motor_FeedbackMode_T UserCmdMode;
+
     uint8_t CmdMotorId; /* for VarId, Value input mode only */
-    // bool isAsyncStatusAvailable; /* Async return status */
-    // uint8_t CalibrationStatus;
     /* Async return status */
     // union
     // {
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
-    uint8_t CalibrationStatus;
-        // Calibration_Status_T CalibrationStatus;
+    uint8_t LockOpStatus;
+    // Calibration_Status_T CalibrationStatus;
     // } AsyncStatus;
-    // int32_t UserCmdValue; /* Not needed unless comparing greater/less then */
+
+#if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
+    Shell_T Shell;
+    uint16_t ShellSubstate;
+#endif
+#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+    Linear_T BatteryLife;       /* Battery Life percentage */
+#endif
 }
 MotorController_T, * MotorControllerPtr_T;
+
+
 
 /******************************************************************************/
 /*

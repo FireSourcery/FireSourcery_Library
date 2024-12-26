@@ -87,7 +87,8 @@ inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
 /* User set [FeedbackMode] without starting Run */
 inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
 {
-    if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP) { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
+    if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
+        { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
 }
 
 /*
@@ -339,13 +340,17 @@ void Motor_User_SetHold(Motor_T * p_motor)
     Direction
 */
 /******************************************************************************/
-void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+/*
+    ProcInput use Critical, as States may transition during input
+*/
+void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
+{
+    if (p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+}
+
 void Motor_User_SetDirectionForward(Motor_T * p_motor) { Motor_User_SetDirection(p_motor, p_motor->Config.DirectionForward); }
 void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
 
-/*
-    Can set async without critical section if PWM interrupt does not read/write direction
-*/
 // bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction)
 // {
 //     if (p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
@@ -354,7 +359,6 @@ void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection
 
 // bool Motor_User_TryDirectionForward(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Config.DirectionForward); }
 // bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
-
 
 
 /******************************************************************************/

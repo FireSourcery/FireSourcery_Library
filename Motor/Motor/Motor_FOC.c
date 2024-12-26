@@ -183,13 +183,6 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     ProcAngleOutput(p_motor);
 }
 
-/* use speed as V match */
-// static inline void Motor_FOC_ProcVSpeed(Motor_T * p_motor)
-// {
-//     FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor));
-//     FOC_SetVd(&p_motor->Foc, 0);
-// }
-
 /*
     ProcAngleObserve
     Angle Observe VBemf FreeWheel and Stop State
@@ -252,26 +245,24 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
 }
 
 /*!
-    On FeedbackMode change, match Feedback state; Ramp, PID.
-    Match Feedback Ouput to VOutput (Vd, Vq)
+    On FeedbackMode change and Freewheel to Run
+    Match Feedback State/Ouput to Output Voltage
+        Ramp, PID to Vd, Vq
 */
 void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
+    int32_t vq = FOC_GetVq(&p_motor->Foc);
     int32_t qReq;
 
     // if match without ad sampling
     // int32_t vq = Motor_GetVSpeed_Fract16(p_motor);
-    int32_t vq = FOC_GetVq(&p_motor->Foc);
-    // vd = 0;
-
     // int32_t vEffective = FOC_GetVq(&p_motor->Foc) * p_motor->Config.VSpeedScalar_UFract16 >> 15;
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
         PID_SetOutputState(&p_motor->PidIq, vq);
         PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
-        // qReq = FOC_GetIq(&p_motor->Foc);
-        qReq = 0;
+        qReq = 0; /* FOC_GetIq(&p_motor->Foc); */
     }
     else
     {
@@ -289,16 +280,16 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     }
 }
 
-void Motor_UpdateIOutputLimits(Motor_T * p_motor)
-{
-    // update on direction only for now
-    // if (p_motor->FeedbackMode.Current == 1U)
-    // {
-    //     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
-    //     else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
-    // }
-    // PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
-}
+// void Motor_UpdateIOutputLimits(Motor_T * p_motor)
+// {
+//     // update on direction only for now
+//     // if (p_motor->FeedbackMode.Current == 1U)
+//     // {
+//     //     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX); }
+//     //     else { PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0); }
+//     // }
+//     // PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+// }
 
 
 /******************************************************************************/

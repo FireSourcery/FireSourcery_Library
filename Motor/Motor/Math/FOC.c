@@ -71,6 +71,6 @@ void FOC_ClearControlState(FOC_T * p_foc)
 //     p_foc->Vbeta = 0;
 //     p_foc->Vd = 0; /* Output/Bemf */
 //     p_foc->Vq = 0;
-    FOC_ZeroSvpwm(p_foc);
+    // FOC_ZeroSvpwm(p_foc);
 }
 

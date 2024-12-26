@@ -70,16 +70,40 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 // Linear_ADC_T;
 
 // static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu) { return Linear_Q16_Units(p_linear, adcu); }
-
 // static inline int32_t Linear_ADC_CalcPhysical_Fract16(const Linear_T * p_linear, uint16_t fract16) { return Linear_Q16_Units16(p_linear, fract16); }
-// /* Division in this function */
 // static inline int32_t Linear_ADC_CalcFract16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Q16_InvUnits16(p_linear, units); }
-// /* Division in this function */
 // static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units) { return Linear_Q16_InvUnits(p_linear, units); }
 
 /******************************************************************************/
 
 /******************************************************************************/
+
+// linear_shift_fixed32
+// linear_shift_invfixed32
+// static inline int32_t linear_units_of_fixed(uint8_t nBits, int32_t y0_units, int32_t deltay_units, int32_t y_fixed32)
+// {
+//     return ((y_fixed32 * deltay_units) >> nBits) + y0_units;
+// }
+
+// static inline int32_t linear_fixed_of_units(uint8_t nBits, int32_t y0_units, int32_t deltay_units, int32_t y_units)
+// {
+//     return (((y_units - y0_units) << nBits) / deltay_units);
+// }
+
+/* y_fixed32 * (yref_units - y0_units) >> 16U + y0_units */
+/* fixed32 to y_units */
+// static inline int32_t linear_units_of_fixed(int32_t y0_units, int32_t deltay_units, int32_t y_fixed32)
+// {
+//     return ((y_fixed32 * deltay_units) / 65536) + y0_units;
+// }
+
+// /* (y_units - y0_units) << 16U / (yref_units - y0_units) */
+// /* y_units to fixed32 */
+// static inline int32_t linear_fixed_of_units(int32_t y0_units, int32_t deltay_units, int32_t y_units)
+// {
+//     return ((y_units - y0_units) * 65536 / deltay_units);
+// }
+
 // static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_fract16)
 // {
 //     return linear_units_of_fixed(p_linear->Y0, p_linear->YDeltaRef, y_fract16);

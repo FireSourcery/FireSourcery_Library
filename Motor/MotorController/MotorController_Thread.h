@@ -70,6 +70,8 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
     }
 }
 
+// alternatively move drive image to this layer share with state machine
+
 /*
     Optional Din
 */

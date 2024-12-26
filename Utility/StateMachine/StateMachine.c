@@ -35,11 +35,9 @@
     Private Functions
 */
 /******************************************************************************/
-
-
 // static inline void InitSignal_SingleThreaded(StateMachine_T * p_stateMachine)
 // {
-//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR, when no input is set */
 // }
 
 // static inline bool AcquireSignal_ISR_SingleThreaded(StateMachine_T * p_stateMachine)
@@ -62,8 +60,6 @@
 // {
 //     atomic_flag_clear(&p_stateMachine->InputSignal);
 // }
-
-
 
 /*
     Selection between DisableISR and Signal
@@ -103,7 +99,6 @@ static inline void ReleaseCritical_Input(StateMachine_T * p_stateMachine)
     Critical_ReleaseSignal(&p_stateMachine->InputSignal);
 #endif
 }
-
 
 
 // static inline StateMachine_State_T * TransitionFunction(const StateMachine_State_T * p_active, void * p_context, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
@@ -148,9 +143,9 @@ static inline void Reset(StateMachine_T * p_stateMachine)
 */
 static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, statemachine_input_id_t inputId, statemachine_input_value_t inputValue)
 {
-    // StateMachine_State_T * p_newState = TransitionFunction(p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT, inputId, inputValue);
     StateMachine_State_T * p_newState = p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId](p_stateMachine->CONST.P_CONTEXT, inputValue);
     if (p_newState != NULL) { _StateMachine_ProcStateTransition(p_stateMachine, p_newState); }
+    // ProcStateTransition(p_stateMachine, TransitionFunction(p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT, inputId, inputValue));
 }
 
 /*
@@ -307,18 +302,17 @@ void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
 */
 /******************************************************************************/
-
 /*
     Special case for Single Threaded Input Sync Machines with ISR
 */
-static inline void Sync_InitSignal(StateMachine_T * p_stateMachine)
-{
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
-#else
-    atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
-#endif
-}
+// static inline void Sync_InitSignal(StateMachine_T * p_stateMachine)
+// {
+// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+//     atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
+// #else
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR */
+// #endif
+// }
 
 /*!
     Handle multithreaded [SetInput]
@@ -336,7 +330,6 @@ static inline void Sync_ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
     (void)p_stateMachine; /* Single threaded input always overwrite */
 #endif
 }
-
 
 static inline bool Sync_AcquireSignal_Input(StateMachine_T * p_stateMachine)
 {
@@ -356,17 +349,6 @@ static inline void Sync_ReleaseSignal_Input(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*! Public Functions */
 /******************************************************************************/
-// void StateMachine_Sync_Init(StateMachine_T * p_stateMachine)
-// {
-//     _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
-// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-//     atomic_flag_clear(&p_stateMachine->InputSignal); /* ISR implemented with additional sentinel */
-// #else
-//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR, when no input is set */
-// #endif
-//     Reset(p_stateMachine);
-// }
-
 void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
 {
     if (Sync_AcquireSignal_ISR(p_stateMachine) == true)

@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Q.h
+    @file   Fract16.h
     @author FireSourcery
-    @brief     Math with 16 bit fractions in Q1.15 format
     @version V0
+    @brief  Math with 16 bit fractions in Q1.15 format
 */
 /******************************************************************************/
 #ifndef FRACT16_H
@@ -41,7 +41,7 @@
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
-typedef int32_t accum32_t;     /*!< Q17.15 */
+typedef int32_t accum32_t;      /*!< Q17.15 */
 
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
@@ -127,7 +127,7 @@ static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor)
     return fract16_sat(fract16_div(dividend, divisor));
 }
 
-/* cast overflow as ufrac */
+/* cast overflow as ufract */
 static inline ufract16_t fract16_abs(fract16_t x)
 {
     int32_t mask = (x >> FRACT16_N_BITS); // Create a mask based on the sign bit
@@ -183,11 +183,10 @@ static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
     return (angle16_quadrant_t)((uint16_t)theta & ANGLE16_QUADRANT_MASK);
 }
 
-// polling freq must be sufficient
+/* polling freq must be sufficient */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
 {
-    // return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
-    return ((theta0 ^ theta1) < 0);
+    return ((theta0 ^ theta1) < 0); /* return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); */
 }
 
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)

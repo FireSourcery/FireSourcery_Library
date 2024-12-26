@@ -35,6 +35,7 @@
     f(adcu) = fract16
     f(adcuZero) = 0
     f(adcuRef) = 65535
+    todo combine as Fract16_Init_ADC
 */
 /******************************************************************************/
 void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef)

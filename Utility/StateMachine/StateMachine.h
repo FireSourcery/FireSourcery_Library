@@ -33,9 +33,7 @@
 
 #include "Config.h"
 
-// #ifdef  CONFIG_STATE_MACHINE_LOCAL_CRITICAL_ENABLE
 #include "System/Critical/Critical.h"
-// #endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -65,28 +63,29 @@ struct StateMachine_State;
             StateMachine_State * - transition, perform exit and entry. User may return same state, for self transition, proc exit and entry
 */
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue);
-typedef void (*StateMachine_Function_T)(void * p_context); // Output Function
-
-/* Alternatively include handle transition, no external input, "clock only" on internal state. Transition occurs last this way */
+/* Include handle transition, no external input, "clock only" on internal state. Transition occurs last this way */
 typedef struct StateMachine_State * (*StateMachine_StateOutput_T)(void * p_context);
+typedef void (*StateMachine_Function_T)(void * p_context); // OnTransition Function
 
 // include additional arg to optimize for r2-r3?
+// additional input tables, for inputs that map to many states, without transition
 // input only function, check state only, no transition
-// typedef void (*StateMachine_Input_T)(void * p_context, statemachine_input_value_t inputValue0, statemachine_input_value_t inputValue1, statemachine_input_value_t inputValue2); // Input Function
+// Inputs maping to a single state, and without transition, can simply check State ID
+// typedef uint32_t(*StateMachine_Get_T)(void * p_context);
+// typedef void(*StateMachine_Set_T)(void * p_context, statemachine_input_value_t inputValue);
+// typedef void (*StateMachine_SetEntry_T)(void * p_context, statemachine_input_value_t inputK, statemachine_input_value_t inputV); // Input Function
 
 /*
     Array Implementation - 2D input table
     Map allocates for all possible transitions/inputs for each state, valid and invalid
     Allocates space for fault transition for invalid inputs
-    Array index is input, eliminates search, only space efficient when inputs are common across many states.
+    Array index as [statemachine_input_id_t], eliminates search, only space efficient when inputs are common across many states.
     States belonging to the same state machine must have same size maps
 
     Pointer to array of functions that return a pointer to the next state (No null pointer check, user must supply empty table)
-    Not accept input => define null pointer.
-    Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return 0
+    Not accept input => no process.
+    Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return NULL
     Self-transition, proc entry function => function return pointer to self
-
-    Input directly to output functions, without transition, can simply check State ID
 */
 typedef const struct StateMachine_State
 {
@@ -97,11 +96,17 @@ typedef const struct StateMachine_State
 #ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
     const StateMachine_Function_T EXIT;
 #endif
-    // void * const P_STATE_CONTEXT;        /* SubState Buffer */
+
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
     const struct StateMachine_State * P_LINK_NEXT;
     const struct StateMachine_State * P_LINK_PREV;
 #endif
+// #ifdef CONFIG_STATE_MACHINE_GETTERS_SETTERS_ENABLE
+//     const StateMachine_Get_T * const P_GETTER_TABLE;
+//     const StateMachine_Set_T * const P_SETTER_TABLE;
+// #endif
+
+    // void * const P_STATE_CONTEXT;        /* SubState Buffer */
 }
 StateMachine_State_T;
 

@@ -145,28 +145,28 @@ static inline bool ValidateOpPartition(NvMemory_T * p_this, uintptr_t address, s
     Checks Boundary and Dest Align
     p_this->p_OpControl must be set
 */
-NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     p_this->OpAddress = address;
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, address, opSize) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
+    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, address, size) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
     if(status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(address, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
     return status;
 }
 
-NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t size)
 {
     NvMemory_Status_T status;
-    p_this->OpSize = opSize;
+    p_this->OpSize = size;
     if((p_this->IsForceAlignEnable == true) && (p_this->p_OpControl->FORCE_ALIGN != NULL))
     {
-        p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(opSize, p_this->p_OpControl->UNIT_SIZE); // alternatively use getter
+        p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(size, p_this->p_OpControl->UNIT_SIZE); // alternatively use getter
         status = NV_MEMORY_STATUS_SUCCESS;
     }
     else
     {
         p_this->OpSizeAligned = p_this->OpSize;  /* Not in effect when status returns error */
-        status = (nvmemory_is_aligned(opSize, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
+        status = (nvmemory_is_aligned(size, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT;
     }
     return status;
 }
@@ -175,16 +175,16 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize)
     For Write, or buffered Read
     Accepts p_data == NULL as NV_MEMORY_STATUS_SUCCESS
 */
-NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t opSize)
+NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
     if((p_data != NULL) && (p_this->IsOpBuffered == true))
     {
-        status = (opSize <= p_this->CONST.BUFFER_SIZE) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BUFFER;
+        status = (size <= p_this->CONST.BUFFER_SIZE) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BUFFER;
         if(status == NV_MEMORY_STATUS_SUCCESS)
         {
-            memcpy(p_this->CONST.P_BUFFER, p_data, opSize);
+            memcpy(p_this->CONST.P_BUFFER, p_data, size);
             p_this->p_OpData = p_this->CONST.P_BUFFER;
         }
     }

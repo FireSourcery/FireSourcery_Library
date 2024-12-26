@@ -102,13 +102,6 @@ NvMemory_Partition_T;
     _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                       \
 }
 
-// #define NV_MEMORY_PARTITION_INIT(AddressStart, SizeBytes, ...)  \
-// {                                                               \
-//     .ADDRESS    = AddressStart,                                 \
-//     .SIZE       = SizeBytes,                                    \
-//     _NV_MEMORY_INIT_PARTITION_OFFSET(__VA_ARGS__)               \
-// }
-
 /*
     typedefs
 */
@@ -118,11 +111,9 @@ typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
 typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
 typedef void (*HAL_NvMemory_FinalizeCmd_T)(void * p_hal, uintptr_t address, size_t units, uint8_t * p_buffer);
 
-// typedef bool(*HAL_NvMemory_ReadStatus_T)(const void * p_hal);
-// typedef NvMemory_Status_T(*NvMemory_ParseStatus_T)(const void * p_hal);
 typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(const void * p_hal);
 
-/* implementation mapping each operation type to vtable, instead of using generic startCmd */
+/* implementation mapping each operation type to vtable, instead of using generic [HAL_NvMemory_StartCmd_T] */
 typedef void (*HAL_NvMemory_CmdReadUnit_T)(void * p_hal, uintptr_t address, uint8_t * p_result);
 typedef void (*HAL_NvMemory_CmdWriteUnit_T)(void * p_hal, uintptr_t address, const uint8_t * p_data);
 typedef void (*HAL_NvMemory_CmdEraseUnit_T)(void * p_hal, uintptr_t address);
@@ -160,7 +151,7 @@ typedef const struct NvMemory_Const
     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
-    const NvMemory_Partition_T * const P_PARTITIONS;
+    const NvMemory_Partition_T * const P_PARTITIONS;        /* Bounds of accessible partitions */
     const uint8_t PARTITION_COUNT;
     uint8_t * const P_BUFFER;
     const size_t BUFFER_SIZE;
@@ -249,19 +240,17 @@ static inline void NvMemory_SetYield(NvMemory_T * p_this, NvMemory_Callback_T yi
 /*
     Extern
 */
-
 extern void NvMemory_Init(NvMemory_T * p_this);
 extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_source, size_t size);
 
 extern NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_source, size_t size);
 /* Destination is not intended to be dereference, pass as uintptr_t type */
-extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t opSize);
-extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t opSize);
-extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t opSize);
+extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, uint8_t * p_data);
 extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const uint8_t * p_data, size_t size);
-
 
 /*
     Blocking

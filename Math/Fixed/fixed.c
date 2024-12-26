@@ -152,7 +152,7 @@ uint8_t fixed_log2_ceiling(uint32_t x)
     fixed_log2(x - 1U) + 1U;
 }
 
-uint32_t fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
+void fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
 {
     uint32_t lower = fixed_log2(x);
     uint32_t upper = lower + 1U;
