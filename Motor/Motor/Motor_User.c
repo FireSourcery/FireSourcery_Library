@@ -93,15 +93,15 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
 /*
     Async Machine,
 */
-inline void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
-{
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-}
+// inline void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+// {
+//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+// }
 
-inline void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
-{
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
-}
+// inline void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
+// {
+//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
+// }
 
 
 

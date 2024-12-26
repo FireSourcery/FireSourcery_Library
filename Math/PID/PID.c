@@ -123,19 +123,19 @@ void PID_Reset(PID_T * p_pid)
     p_pid->ErrorPrev = 0;
 }
 
-void PID_SetIntegral(PID_T * p_pid, int16_t integral)
+void PID_SetIntegral(PID_T * p_pid, int32_t integral)
 {
     SetIntegral(p_pid, math_clamp(integral, p_pid->OutputMin, p_pid->OutputMax));
 }
 
-void PID_SetOutputState(PID_T * p_pid, int16_t integral)
+void PID_SetOutputState(PID_T * p_pid, int32_t integral)
 {
     PID_SetIntegral(p_pid, integral);
     // p_pid->ErrorPrev = 0;
     p_pid->Output = GetIntegral(p_pid);
 }
 
-void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
+void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 {
     if(max > min)
     {

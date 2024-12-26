@@ -271,8 +271,11 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                 case MOTOR_CONTROLLER_DRIVE_BRAKE:
                     if (value != 0U) /* ignore brake if simultaneous input for 0, async input only */
                     {
-                        MotorController_StartDriveZero(p_mc);
-                        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
+                        MotorController_StartBrakeMode(p_mc);
+                        // MotorController_SetBrakeValue(p_mc, value);
+                        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+                        // MotorController_StartDriveZero(p_mc);
+                        // p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
                     }
                     break;
                 case MOTOR_CONTROLLER_DRIVE_THROTTLE:
@@ -300,6 +303,7 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                         else
                         {
                             MotorController_StartBrakeMode(p_mc);
+                            // MotorController_SetBrakeValue(p_mc, value);
                             p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
                         }
                     }

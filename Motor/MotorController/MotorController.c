@@ -374,6 +374,8 @@ void MotorController_StartBrakeMode(MotorController_T * p_mc)
         case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartVoltageMode); break;
         default: break;
     }
+
+    // MotorController_SetBrakeValue(p_mc, value); T
 }
 
 /*!

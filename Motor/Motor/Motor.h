@@ -388,6 +388,8 @@ typedef struct Motor
     volatile Motor_PhaseFlags_T IFlags;
     volatile Motor_PhaseFlags_T VFlags;
 
+    int16_t UserCmdBuffer; /* effectively 3rd input into StateMachine */
+
     /*
         Active Limits
     */
