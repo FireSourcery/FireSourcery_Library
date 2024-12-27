@@ -141,24 +141,49 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 /******************************************************************************/
 
 /******************************************************************************/
+/* Common */
+/******************************************************************************/
+/*
+    All or Primary motor
+*/
+/*! @param[in] userCmd [-32767:32767] */
+static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
+{
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (uint32_t)userCmd);
+}
+
+static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
+{
+    p_mc->UserCmdMode.Value = feedbackMode;
+}
+
+// static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
+
+// float all and ground all, stop state then use motor
+// static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
+// static inline void MotorController_User_SetDriveGround(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
+
+/******************************************************************************/
 /* Drive Mode */
 /******************************************************************************/
 /******************************************************************************/
-/* DriveCmd - Throttle, Brake, Zero */
-/*! @param[in] driveCmd Throttle, Brake, Zero */
-/*! @param[in] cmdValue [0:65535] */
+ /*!
+    DriveCmd - Throttle, Brake, Zero
+    @param[in] driveCmd Throttle, Brake, Zero
+    @param[in] cmdValue [0:65535]
+*/
 /******************************************************************************/
 // static inline void MotorController_User_SetDriveCmd(MotorController_T * p_mc, MotorController_DriveId_T cmdId, uint16_t cmdValue)
 // {
-//     _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, cmdId);
+//     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, cmdId);
 //     p_mc->UserCmdValue = cmdValue;
 // }
 /* Same as Brake/Throttle 0 */
 // static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)               { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_RELEASE, 0U); }
 
-static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)                  { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
-static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
-static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
+static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)                  { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
+static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
+static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 
 // todo move Drive image to statemachine or let host maintain state
 // static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
@@ -169,25 +194,6 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 //     }
 // }
 
-/*
-    All or Primary motor
-*/
-/*! @param[in] userCmd [-32767:32767] */
-static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
-{
-    _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, userCmd);
-}
-
-static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
-{
-    p_mc->UserCmdMode.Value = feedbackMode;
-}
-
-// static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
-// float all and ground all, stop state then use motor
-// static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
-// static inline void MotorController_User_SetDriveGround(MotorController_T * p_mc) { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
-
 
 /******************************************************************************/
 /*
@@ -197,7 +203,7 @@ static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc
 /******************************************************************************/
 static inline void MotorController_User_InputLock(MotorController_T * p_mc, MotorController_LockId_T id)
 {
-    _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, id);
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, id);
 }
 
 static inline bool MotorController_User_IsLockState(MotorController_T * p_mc)
@@ -241,7 +247,7 @@ static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 static inline void MotorController_User_InputServoMode(MotorController_T * p_mc, MotorController_ServoMode_T servoMode)
 {
-    _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode);
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode);
 }
 
 static inline bool MotorController_User_IsServoState(MotorController_T * p_mc)
@@ -249,8 +255,8 @@ static inline bool MotorController_User_IsServoState(MotorController_T * p_mc)
     return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO);
 }
 
-static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc)   { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
-static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc)    { _StateMachine_SetSyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc)   { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 
 // static inline void MotorController_User_StartControlMode(MotorController_T * p_mc, uint8_t feedbackMode)

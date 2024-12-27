@@ -198,7 +198,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     {
         /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
         // StateMachine_ProcState(&p_mc->StateMachine);
-        _StateMachine_ProcSyncInput(&p_mc->StateMachine);
+        // _StateMachine_ProcSyncInput(&p_mc->StateMachine);
         _StateMachine_ProcStateOutput(&p_mc->StateMachine);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }

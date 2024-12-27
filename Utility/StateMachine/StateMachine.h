@@ -62,6 +62,7 @@ struct StateMachine_State;
             NULL - no transition, bypass exit and entry, indicates user defined non transition
             StateMachine_State * - transition, perform exit and entry. User may return same state, for self transition, proc exit and entry
 */
+// typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context);
 typedef struct StateMachine_State * (*StateMachine_Transition_T)(void * p_context, statemachine_input_value_t inputValue);
 /* Include handle transition, no external input, "clock only" on internal state. Transition occurs last this way */
 typedef struct StateMachine_State * (*StateMachine_StateOutput_T)(void * p_context);

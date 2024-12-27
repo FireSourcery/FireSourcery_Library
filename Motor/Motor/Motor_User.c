@@ -73,8 +73,8 @@
 inline void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     //  (FeedbackMode_IsValid(mode));
-    // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
 }
 
 /* Generic array functions use */
@@ -291,6 +291,11 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
     else                            { Motor_User_SetVoltageCmd(p_motor, userCmd); }
 }
 
+void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+{
+    if (mode.Value != p_motor->FeedbackMode.Value) { Motor_User_StartControl(p_motor, mode); }
+    else { Motor_User_SetActiveCmdValue(p_motor, userCmd); }
+}
 
 /******************************************************************************/
 /*!

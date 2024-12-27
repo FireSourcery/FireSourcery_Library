@@ -340,6 +340,12 @@ void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)  
 void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)   { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Value); }
 void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)            { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
 
+void MotorController_StartControlModeValueAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode, int16_t value)
+{
+    MotorController_StartControlModeAll(p_mc, feedbackMode);
+    MotorController_SetCmdValueAll(p_mc, value); /* Overwritten by 0 is Motor_StateMachine is in Sync Mode */
+}
+
 void MotorController_StartThrottleMode(MotorController_T * p_mc)
 {
     switch (p_mc->Config.ThrottleMode)
