@@ -401,6 +401,7 @@ void MotorController_SetBrakeValue(MotorController_T * p_mc, uint16_t userCmdBra
     }
 }
 
+/* an alternate cmd for float is required */
 void MotorController_StartDriveZero(MotorController_T * p_mc)
 {
     switch (p_mc->Config.DriveZeroMode)

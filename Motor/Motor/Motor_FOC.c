@@ -232,13 +232,16 @@ void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, f
 void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
 {
     FOC_ClearControlState(&p_motor->Foc); /* Clear for view, updated again on enter control */
-    // FOC_ZeroSvpwm(p_foc);
     PID_Reset(&p_motor->PidIq);
     PID_Reset(&p_motor->PidId);
     PID_Reset(&p_motor->PidSpeed);
     Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
     p_motor->IFlags.Value = 0U;
     p_motor->VFlags.Value = 0U;
+
+    /* Output is disabled, preset duty to 50% */
+    // FOC_ZeroSvpwm(&p_motor->Foc);
+    // Phase_ActuateDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
     // in case partial ADC results pending, mark all
     // Motor_Analog_MarkVabc(p_motor);
     // Motor_Analog_MarkIabc(p_motor);
@@ -251,11 +254,11 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
 */
 void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
-    // int32_t vq = FOC_GetVq(&p_motor->Foc);
+    int32_t vq = FOC_GetVq(&p_motor->Foc);
     int32_t qReq;
 
     // if match without ad sampling
-    int32_t vq = Motor_GetVSpeed_Fract16(p_motor);
+    // int32_t vq = Motor_GetVSpeed_Fract16(p_motor);
     // int32_t vEffective = FOC_GetVq(&p_motor->Foc) * p_motor->Config.VSpeedScalar_UFract16 >> 15;
 
     if (p_motor->FeedbackMode.Current == 1U)

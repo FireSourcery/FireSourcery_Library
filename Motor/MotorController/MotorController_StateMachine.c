@@ -174,7 +174,10 @@ static void Park_Entry(MotorController_T * p_mc)
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 }
 
-static StateMachine_State_T * Park_Proc(MotorController_T * p_mc) { (void)p_mc; return NULL; }
+static StateMachine_State_T * Park_Proc(MotorController_T * p_mc) {
+    // if (MotorController_IsEveryMotorStopState(p_mc) == false) set error
+    return NULL;
+}
 
 static StateMachine_State_T * Park_InputBlocking(MotorController_T * p_mc, statemachine_input_value_t lockId)
 {
@@ -343,6 +346,7 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
     SubStates: Fwd/Rev,
     Motor States: Run, Freewheel, Stop
     Accepted Inputs: Throttle, Brake
+    Associate a drive release mode to cmd value 0, on top of motor layer
 
     neutral and drive share stop via motor stop state.
     DriveZero must release control, to transition into Park State
@@ -359,23 +363,23 @@ static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
 {
     (void)p_mc;
 
-    // switch (p_mc->DriveSubState)
-    // {
-    //     case MOTOR_CONTROLLER_DRIVE_CMD: /* for a non polling input */
-    //         if (p_mc->UserCmdValue == 0)
-    //         {
-    //             MotorController_StartDriveZero(p_mc);
-    //             p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
-    //         }
-    //         else
-    //         {
-    //             MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
-    //         }
-    //         break;
-    //     case MOTOR_CONTROLLER_DRIVE_RELEASE:
-    //         MotorController_ProcDriveZero(p_mc);
-    //         break;
-    // }
+    switch (p_mc->DriveSubState)
+    {
+        case MOTOR_CONTROLLER_DRIVE_CMD: /* for a non polling input */
+            // if (p_mc->UserCmdValue == 0)
+            // {
+            //     MotorController_StartDriveZero(p_mc);
+            //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
+            // }
+            // else
+            // {
+            //     MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
+            // }
+            // break;
+        case MOTOR_CONTROLLER_DRIVE_RELEASE:
+            MotorController_ProcDriveZero(p_mc);
+            break;
+    }
 
     return NULL;
 }
@@ -420,26 +424,26 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
 
     // if      ((p_mc->UserCmdValue != 0) && (cmdValue != 0))  { MotorController_SetCmdValueAll(p_mc, cmdValue); }
     // else if ((p_mc->UserCmdValue != 0) && (cmdValue == 0))  { MotorController_StartDriveZero(p_mc); } /* Drive State Only */
-    // else if ((p_mc->UserCmdValue == 0) && (cmdValue != 0))  { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); Debug_Beep(); }
+    // else if ((p_mc->UserCmdValue == 0) && (cmdValue != 0))  { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
     // else if ((p_mc->UserCmdValue == 0) && (cmdValue == 0))  { MotorController_ProcDriveZero(p_mc); }
 
     switch (p_mc->DriveSubState)
     {
         case MOTOR_CONTROLLER_DRIVE_CMD: /* for a non polling input */
-            if (cmdValue == 0)  { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; }
-            else                { MotorController_SetCmdValueAll(p_mc, cmdValue); }
+            if (cmdValue == 0) { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; }
+            // else { MotorController_SetCmdValueAll(p_mc, cmdValue); }
             // else { MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue); }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
-            if (cmdValue == 0)  { MotorController_StartControlModeValueAll(p_mc, p_mc->UserCmdMode, cmdValue); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; Debug_Beep();}
-            else                { MotorController_ProcDriveZero(p_mc); }
+            if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; Debug_Beep(); }
             break;
     }
 
-    // if      ((p_mc->UserCmdValue != 0) && (cmdValue == 0))  { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; } /* Drive State Only */
-    // else if ((p_mc->UserCmdValue == 0) && (cmdValue != 0))  { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;  }
-
-    // MotorController_SetCmdValueAll(p_mc, cmdValue); /* Overwritten by 0 is Motor_StateMachine is in Sync Mode */
+    /*
+        Overwritten by 0 is Motor_StateMachine is in Sync Mode or
+        If Motor_StateMachine Procs twice, 2nd time will be new mode towards previous ramp target
+    */
+    MotorController_SetCmdValueAll(p_mc, cmdValue);
     // p_mc->UserCmdValue = cmdValue;
 
     return NULL;

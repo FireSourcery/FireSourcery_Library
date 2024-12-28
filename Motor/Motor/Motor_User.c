@@ -77,11 +77,22 @@ inline void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode
     // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
 }
 
+// typedef union Motor_Cmd
+// {
+//     struct
+//     {
+//         uint32_t CmdValue       : 16U;
+//         uint32_t FeedbackMode   : 8U;
+//     };
+//     uint32_t Value; /* Id */
+// }
+// Motor_Cmd_T;
+
+
 /* Generic array functions use */
 inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
 {
     Motor_User_StartControl(p_motor, Motor_FeedbackMode_Cast(modeValue));
-    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
 }
 
 /* User set [FeedbackMode] without starting Run */
@@ -90,20 +101,6 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
     if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
         { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
 }
-
-/*
-    Async Machine,
-*/
-// inline void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
-// {
-//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-// }
-
-// inline void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
-// {
-//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, modeValue);
-// }
-
 
 
 /*
@@ -294,7 +291,7 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Value != p_motor->FeedbackMode.Value) { Motor_User_StartControl(p_motor, mode); }
-    else { Motor_User_SetActiveCmdValue(p_motor, userCmd); }
+    Motor_User_SetActiveCmdValue(p_motor, userCmd);
 }
 
 /******************************************************************************/
