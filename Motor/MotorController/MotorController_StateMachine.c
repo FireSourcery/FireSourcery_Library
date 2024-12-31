@@ -365,16 +365,9 @@ static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
 
     switch (p_mc->DriveSubState)
     {
-        case MOTOR_CONTROLLER_DRIVE_CMD: /* for a non polling input */
-            // if (p_mc->UserCmdValue == 0)
-            // {
-            //     MotorController_StartDriveZero(p_mc);
-            //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
-            // }
-            // else
-            // {
-            //     MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
-            // }
+        case MOTOR_CONTROLLER_DRIVE_CMD:
+            /* polling for a non polling input */
+            // MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
             // break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
             MotorController_ProcDriveZero(p_mc);
@@ -435,7 +428,7 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
             // else { MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue); }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
-            if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; Debug_Beep(); }
+            if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
             break;
     }
 

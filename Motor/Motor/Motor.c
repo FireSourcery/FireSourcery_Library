@@ -52,14 +52,14 @@ void Motor_Static_InitVSourceRef_Adcu(uint16_t vSource_Adcu) /* Using the active
 {
     InitUnitsVSource();
     MotorStatic.VSourceRef_Adcu = (Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, vSource_Adcu) < MOTOR_STATIC.V_MAX_VOLTS) ?
-        vSource_Adcu : Linear_Voltage_AdcuInputOfV(&MotorStatic.UnitsVSource_V, MOTOR_STATIC.V_MAX_VOLTS);
+        vSource_Adcu : Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, MOTOR_STATIC.V_MAX_VOLTS);
 }
 
 /* Set before Motor_Init */
 void Motor_Static_InitVSourceRef_V(uint16_t vSource_V)
 {
     InitUnitsVSource();
-    MotorStatic.VSourceRef_Adcu = Linear_Voltage_AdcuInputOfV(&MotorStatic.UnitsVSource_V, ((vSource_V < MOTOR_STATIC.V_MAX_VOLTS) ? vSource_V : MOTOR_STATIC.V_MAX_VOLTS));
+    MotorStatic.VSourceRef_Adcu = Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, ((vSource_V < MOTOR_STATIC.V_MAX_VOLTS) ? vSource_V : MOTOR_STATIC.V_MAX_VOLTS));
 }
 
 uint16_t Motor_Static_GetVSource_V(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu); }
@@ -388,54 +388,7 @@ void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
 }
 
 
-/******************************************************************************/
-/*
-    Cw, Ccw use by Control loop
-*/
-/******************************************************************************/
-// static void UpdateILimitsCcw(Motor_T * p_motor)
-// // static void UpdateILimitsCcw(Motor_T * p_motor, fract16_t motoring, fract16_t generating)
-// {
-//     p_motor->ILimitCcw_Fract16 = p_motor->ILimitMotoring_Fract16  ;
-//     p_motor->ILimitCw_Fract16 = (int32_t)0 - (p_motor->ILimitGenerating_Fract16  );
-// }
 
-// static void UpdateILimitsCw(Motor_T * p_motor)
-// {
-//     p_motor->ILimitCw_Fract16 = (int32_t)0 - (p_motor->ILimitMotoring_Fract16  );
-//     p_motor->ILimitCcw_Fract16 = p_motor->ILimitGenerating_Fract16  ;
-// }
-
-// static void UpdateSpeedLimitsCcw(Motor_T * p_motor)
-// {
-//     int32_t ccw = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16;
-//     p_motor->SpeedLimitCcw_Fract16 = ccw  ;
-//     p_motor->SpeedLimitCw_Fract16 = 0;
-// }
-
-// static void UpdateSpeedLimitsCw(Motor_T * p_motor)
-// {
-//     int32_t cw = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitReverse_Fract16 : p_motor->SpeedLimitForward_Fract16;
-//     p_motor->SpeedLimitCcw_Fract16 = 0;
-//     p_motor->SpeedLimitCw_Fract16 = (int16_t)0 - (cw  );
-// }
-
-/*
-    UpdateLimits on Limits change
-*/
-// static void UpdateILimits(Motor_T * p_motor)
-// {
-//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateILimitsCcw(p_motor); } else { UpdateILimitsCw(p_motor); }
-
-//     if ((p_motor->FeedbackMode.Speed == 1U) && (p_motor->FeedbackMode.Current == 1U)) /* Only when SpeedPid Output is I */
-//         { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_Fract16, p_motor->ILimitCcw_Fract16); }
-// }
-
-// static void UpdateSpeedLimits(Motor_T * p_motor)
-// {
-//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateSpeedLimitsCcw(p_motor); } else { UpdateSpeedLimitsCw(p_motor); }
-//     // set ramp limits
-// }
 
 /******************************************************************************/
 /*!
@@ -934,3 +887,52 @@ void Motor_Jog12(Motor_T * p_motor)
     Motor_Jog12Step(p_motor, p_motor->JogIndex);
     p_motor->JogIndex++;
 }
+
+/******************************************************************************/
+/*
+    Cw, Ccw use by Control loop
+*/
+/******************************************************************************/
+// static void UpdateILimitsCcw(Motor_T * p_motor)
+// // static void UpdateILimitsCcw(Motor_T * p_motor, fract16_t motoring, fract16_t generating)
+// {
+//     p_motor->ILimitCcw_Fract16 = p_motor->ILimitMotoring_Fract16  ;
+//     p_motor->ILimitCw_Fract16 = (int32_t)0 - (p_motor->ILimitGenerating_Fract16  );
+// }
+
+// static void UpdateILimitsCw(Motor_T * p_motor)
+// {
+//     p_motor->ILimitCw_Fract16 = (int32_t)0 - (p_motor->ILimitMotoring_Fract16  );
+//     p_motor->ILimitCcw_Fract16 = p_motor->ILimitGenerating_Fract16  ;
+// }
+
+// static void UpdateSpeedLimitsCcw(Motor_T * p_motor)
+// {
+//     int32_t ccw = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16;
+//     p_motor->SpeedLimitCcw_Fract16 = ccw  ;
+//     p_motor->SpeedLimitCw_Fract16 = 0;
+// }
+
+// static void UpdateSpeedLimitsCw(Motor_T * p_motor)
+// {
+//     int32_t cw = (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitReverse_Fract16 : p_motor->SpeedLimitForward_Fract16;
+//     p_motor->SpeedLimitCcw_Fract16 = 0;
+//     p_motor->SpeedLimitCw_Fract16 = (int16_t)0 - (cw  );
+// }
+
+/*
+    UpdateLimits on Limits change
+*/
+// static void UpdateILimits(Motor_T * p_motor)
+// {
+//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateILimitsCcw(p_motor); } else { UpdateILimitsCw(p_motor); }
+
+//     if ((p_motor->FeedbackMode.Speed == 1U) && (p_motor->FeedbackMode.Current == 1U)) /* Only when SpeedPid Output is I */
+//         { PID_SetOutputLimits(&p_motor->PidSpeed, p_motor->ILimitCw_Fract16, p_motor->ILimitCcw_Fract16); }
+// }
+
+// static void UpdateSpeedLimits(Motor_T * p_motor)
+// {
+//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { UpdateSpeedLimitsCcw(p_motor); } else { UpdateSpeedLimitsCw(p_motor); }
+//     // set ramp limits
+// }

@@ -254,12 +254,9 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
 */
 void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
-    int32_t vq = FOC_GetVq(&p_motor->Foc);
+    // int32_t vq = FOC_GetVq(&p_motor->Foc);
+    int32_t vq = Motor_GetVSpeed_Fract16(p_motor);    // match without ad sampling
     int32_t qReq;
-
-    // if match without ad sampling
-    // int32_t vq = Motor_GetVSpeed_Fract16(p_motor);
-    // int32_t vEffective = FOC_GetVq(&p_motor->Foc) * p_motor->Config.VSpeedScalar_UFract16 >> 15;
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
