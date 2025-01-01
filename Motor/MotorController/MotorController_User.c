@@ -32,7 +32,7 @@
 
 /******************************************************************************/
 /*
-    Real Time
+    Real Time StateMachine Functions
 */
 /******************************************************************************/
 /* Drive Direction */
@@ -56,7 +56,12 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
 
 void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
 {
-    if (MotorController_User_GetDirection(p_mc) != direction) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
+    if (MotorController_User_GetDirection(p_mc) != direction)
+    {
+        _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction);
+        if (MotorController_User_GetDirection(p_mc) != direction) { MotorController_BeepShort(p_mc); } /* effective on async proc only */
+    }
+
     // bool isSuccess;
     // if (MotorController_User_GetDirection(p_mc) != direction) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
     // // else { MotorController_BeepDouble(p_mc); }
@@ -166,6 +171,7 @@ static inline uint32_t _MotorController_User_InputLockOp(MotorController_T * p_m
 }
 
 
+
 uint32_t MotorController_User_InputSystem(MotorController_T * p_mc, MotorController_User_System_T id, int32_t value)
 {
     uint32_t status = MOT_VAR_STATUS_OK;
@@ -247,12 +253,34 @@ uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_Ge
     return (isSuccess == true) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;
 }
 
-int32_t MotorController_User_OutputVar(MotorController_T * p_mc, MotVarId_Monitor_General_T varKey)
-{
+// int32_t MotorController_Output_SubStateStatus(MotorController_T * p_mc, MotorController_User_SubState_T id)
+// // static inline int32_t _MotorController_User_OutputLockOpAsyncStatus(MotorController_T * p_mc, MotorController_LockId_T opId)
+// {
 
+// }
+
+int32_t MotorController_Output_Debug(MotorController_T * p_mc, MotorController_Output_Debug_T id)
+{
+    int32_t value = 0;
+    switch (id)
+    {
+        case MOT_OUTPUT_DEBUG0: value = 0;    break;
+        case MOT_OUTPUT_DEBUG1: value = 0;    break;
+        case MOT_OUTPUT_DEBUG2: value = 0;    break;
+        case MOT_OUTPUT_DEBUG3: value = 0;    break;
+        case MOT_OUTPUT_DEBUG4: value = 0;    break;
+        case MOT_OUTPUT_DEBUG5: value = 0;    break;
+        case MOT_OUTPUT_DEBUG6: value = 0;    break;
+        case MOT_OUTPUT_DEBUG7: value = 0;    break;
+        default: break;
+    }
+    return value;
 }
 
 
+/******************************************************************************/
+/* Config */
+/******************************************************************************/
 int32_t MotorController_User_GetConfigGeneral(const MotorController_T * p_mc, MotVarId_Config_General_T id)
 {
     int32_t value = 0;
@@ -268,7 +296,7 @@ int32_t MotorController_User_GetConfigGeneral(const MotorController_T * p_mc, Mo
         case MOT_VAR_OPT_DIN_FUNCTION:              value = p_mc->Config.OptDinMode;                        break;
         case MOT_VAR_OPT_SPEED_LIMIT:               value = p_mc->Config.OptSpeedLimit_Fract16;             break;
         case MOT_VAR_OPT_I_LIMIT:                   value = p_mc->Config.OptILimit_Fract16;                 break;
-        // case MOT_VAR_BUZZER_FLAGS_ENABLE:           value = p_mc->Config.BuzzerFlags;                      break;
+        // case MOT_VAR_BUZZER_FLAGS_ENABLE:           value = p_mc->Config.BuzzerFlags;                    break;
         // case MOT_VAR_DEFAULT_FEEDBACK_MODE:         value = MotorController_User_GetDefaultFeedbackMode_Cast(p_mc); break;
         #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
         case MOT_VAR_CAN_SERVICES_ID:               value = p_mc->Config.CanServicesId;                     break;
@@ -316,12 +344,12 @@ uint32_t MotorController_User_SetConfigAnalogUser(MotorController_T * p_mc, MotV
 {
     switch (id)
     {
-        case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             p_mc->AnalogUser.Config.ThrottleZero_Adcu = value;          break;
-        case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              p_mc->AnalogUser.Config.ThrottleMax_Adcu = value;           break;
-        case MOT_VAR_ANALOG_THROTTLE_EDGE_PIN_IS_ENABLE:    p_mc->AnalogUser.Config.UseThrottleEdgePin = value;         break;
-        case MOT_VAR_ANALOG_BRAKE_ZERO_ADCU:                p_mc->AnalogUser.Config.BrakeZero_Adcu = value;             break;
-        case MOT_VAR_ANALOG_BRAKE_MAX_ADCU:                 p_mc->AnalogUser.Config.BrakeMax_Adcu = value;              break;
-        case MOT_VAR_ANALOG_BRAKE_EDGE_PIN_IS_ENABLE:       p_mc->AnalogUser.Config.UseBrakeEdgePin = value;            break;
+        case MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU:             p_mc->AnalogUser.Config.ThrottleZero_Adcu = value;              break;
+        case MOT_VAR_ANALOG_THROTTLE_MAX_ADCU:              p_mc->AnalogUser.Config.ThrottleMax_Adcu = value;               break;
+        case MOT_VAR_ANALOG_THROTTLE_EDGE_PIN_IS_ENABLE:    p_mc->AnalogUser.Config.UseThrottleEdgePin = value;             break;
+        case MOT_VAR_ANALOG_BRAKE_ZERO_ADCU:                p_mc->AnalogUser.Config.BrakeZero_Adcu = value;                 break;
+        case MOT_VAR_ANALOG_BRAKE_MAX_ADCU:                 p_mc->AnalogUser.Config.BrakeMax_Adcu = value;                  break;
+        case MOT_VAR_ANALOG_BRAKE_EDGE_PIN_IS_ENABLE:       p_mc->AnalogUser.Config.UseBrakeEdgePin = value;                break;
         case MOT_VAR_ANALOG_DIN_BRAKE_VALUE:                p_mc->AnalogUser.Config.BistateBrakeValue_Percent16 = value;    break;
         case MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE:            p_mc->AnalogUser.Config.UseBistateBrakePin = value;             break;
         case MOT_VAR_ANALOG_DIRECTION_PINS:                 p_mc->AnalogUser.Config.PinsSelect = value;                     break;

@@ -66,7 +66,7 @@ static inline int32_t Linear_Voltage_Of(const Linear_T * p_linear, uint16_t adcu
 
 static inline int32_t Linear_Voltage_MilliV(const Linear_T * p_linear, uint16_t adcu)
 {
-    return Linear_Of_Scalar(p_linear, adcu, 1000U);
+    return Linear_Of(p_linear, adcu * 1000U);
 }
 
 static inline int32_t Linear_Voltage_ScalarV(const Linear_T * p_linear, uint16_t adcu, uint16_t scalar)
@@ -101,12 +101,14 @@ static inline uint16_t Linear_Voltage_AdcuOfScalarV(const Linear_T * p_linear, u
 /* round up .5 volts */
 static inline uint16_t Linear_Voltage_AdcuInputOfV(const Linear_T * p_linear, uint16_t volts)
 {
-    return Linear_Voltage_AdcuOfV(p_linear, volts) + (Linear_Voltage_AdcuOfV(p_linear, 1U) / 2U);
+    return Linear_InvOf_Round(p_linear, volts);
+    // return Linear_Voltage_AdcuOfV(p_linear, volts) + (Linear_Voltage_AdcuOfV(p_linear, 1U) / 2U);
 }
 
 static inline uint16_t Linear_Voltage_AdcuInputOfMilliV(const Linear_T * p_linear, uint32_t milliV)
 {
-    return Linear_Voltage_AdcuOfMilliV(p_linear, milliV) + (Linear_Voltage_AdcuOfMilliV(p_linear, 1U) / 2U);
+    return Linear_InvOf_Round(p_linear, milliV) / 1000U;
+    // return Linear_Voltage_AdcuOfMilliV(p_linear, milliV) + (Linear_Voltage_AdcuOfMilliV(p_linear, 1U) / 2U);
 }
 
 /******************************************************************************/
@@ -116,14 +118,6 @@ static inline uint16_t Linear_Voltage_AdcuInputOfMilliV(const Linear_T * p_linea
     requires [vInRef] to be set
 */
 /******************************************************************************/
-/*!
-    @brief  results in Q16.16, with 2x input interval
-*/
-// static inline int32_t Linear_Voltage_Q16Of(const Linear_T * p_linear, uint16_t adcu)
-// {
-//     return _Linear_Fixed32(p_linear, adcu);
-// }
-
 /*!
     @brief  results in Q0.16, where 65356 => 100% of vInMax
     Saturated to 65535 max
@@ -143,8 +137,7 @@ static inline int16_t Linear_Voltage_Fract16OfAdcu(const Linear_T * p_linear, ui
 
 // static inline uint32_t Linear_Voltage_Charge_Fract16OfAdcu(const Linear_T * p_linear, uint16_t adcuZero, uint16_t adcu)
 // {
-//     // return ((uint32_t)(adcu - adcuZero) * UINT16_MAX) / (p_linear->XReference - adcuZero);
-//     return linear_f_x0(65536, p_linear->XDeltaRef, adcuZero, adcu);
+//      return ((uint32_t)(adcu - adcuZero) * INT16_MAX) / (p_linear->XReference - adcuZero);
 // }
 
 static inline uint16_t Linear_Voltage_AdcuOfPercent16(const Linear_T * p_linear, uint16_t percent16)
@@ -169,7 +162,6 @@ static inline int32_t Linear_Voltage_OfFract16(const Linear_T * p_linear, uint16
 */
 /******************************************************************************/
 extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInMax);
-// extern uint16_t Linear_Voltage_AdcuInputOfV(const Linear_T * p_linear, uint16_t volts);
-// extern uint16_t Linear_Voltage_AdcuInputOfMilliV(const Linear_T * p_linear, uint32_t milliV);
+
 
 #endif

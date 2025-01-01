@@ -46,15 +46,15 @@ static int32_t OutputOf(const Linear_T * p_linear, int32_t currentRampValue, int
 {
     int32_t newRampValue = currentRampValue;
 
-    if(currentRampValue < p_linear->YReference) // incrementing
+    if (currentRampValue < p_linear->YReference) // incrementing
     {
         newRampValue = OutputValueOf(p_linear, currentRampValue, steps);
-        if(newRampValue > p_linear->YReference) { newRampValue = p_linear->YReference; }
+        if (newRampValue > p_linear->YReference) { newRampValue = p_linear->YReference; }
     }
-    else if(currentRampValue > p_linear->YReference) // decrementing
+    else if (currentRampValue > p_linear->YReference) // decrementing
     {
         newRampValue = OutputValueOf(p_linear, currentRampValue, 0 - steps); // Ramp slope always positive
-        if(newRampValue < p_linear->YReference) { newRampValue = p_linear->YReference; }
+        if (newRampValue < p_linear->YReference) { newRampValue = p_linear->YReference; }
     }
 
     return newRampValue;

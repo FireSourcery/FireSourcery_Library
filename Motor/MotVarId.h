@@ -72,6 +72,7 @@ typedef enum MotVarId_Monitor_Motor
     MOT_VAR_MOTOR_STATE_FLAGS,
     MOT_VAR_MOTOR_FAULT_FLAGS,
     MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_EFFECTIVE_SET_POINT,
     MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT,
     MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT,
     MOT_VAR_MOTOR_V_SPEED_DEBUG,
@@ -124,8 +125,8 @@ MotVarId_Cmd_Motor_T;
 typedef enum MotVarId_Control_Motor
 {
     MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
-    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
     /* IO Vars, Read effective value, write interface value */
+    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
     MOT_VAR_MOTOR_USER_FEEDBACK_MODE,
     MOT_VAR_MOTOR_USER_SPEED_LIMIT,
     MOT_VAR_MOTOR_USER_I_LIMIT,
@@ -447,6 +448,7 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
 {
     /* Monitor - Read-Only */
     MOT_VAR_ID_TYPE_MONITOR_GENERAL,
+    // MOT_VAR_ID_TYPE_MONITOR_ASYNC_STATUS,
     MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
@@ -459,6 +461,7 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
     MOT_VAR_ID_TYPE_CMD_GENERAL,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
     MOT_VAR_ID_TYPE_CMD_SYSTEM,
+    MOT_VAR_ID_TYPE_DEBUG,
     MOT_VAR_ID_TYPE_REAL_TIME_END = 15U,
 }
 MotVarId_Type_RealTime_T;

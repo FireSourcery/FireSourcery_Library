@@ -95,6 +95,11 @@ static inline int32_t linear_shift_f_y0(int32_t m_shifted, uint8_t shift, int32_
     return (((m_shifted * x) >> shift) + y0);
 }
 
+static inline int32_t linear_shift_f_round(int32_t m_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t x)
+{
+    return (((m_shifted * (x - x0) + (1 << shift)) >> shift) + y0);
+}
+
 static inline int32_t linear_shift_invf(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t y)
 {
     return linear_shift_f(invm_shifted, shift, y0, x0, y); /* (((invm_shifted * (y - y0)) >> shift) + x0) */
@@ -110,5 +115,9 @@ static inline int32_t linear_shift_invf_y0(int32_t invm_shifted, uint8_t shift, 
     return linear_shift_f_x0(invm_shifted, shift, y0, y); /* ((invm_shifted * (y - y0)) >> shift) */
 }
 
+static inline int32_t linear_shift_invf_round(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t y)
+{
+    return linear_shift_f_round(invm_shifted, shift, y0, x0, y); /* (((invm_shifted * (y - y0) + (1 << shift)) >> shift) + x0) */
+}
 
 #endif

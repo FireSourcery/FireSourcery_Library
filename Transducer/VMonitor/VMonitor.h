@@ -116,9 +116,9 @@ static inline bool VMonitor_IsWarning(const VMonitor_T * p_vMonitor)            
 static inline int32_t VMonitor_ScalarVOf(const VMonitor_T * p_vMonitor, uint16_t adcu, uint16_t vScalar) { return Linear_Voltage_ScalarV(&p_vMonitor->Units, adcu, vScalar); }
 static inline int32_t VMonitor_AdcuOfMilliV(const VMonitor_T * p_vMonitor, uint32_t milliV)              { return Linear_Voltage_AdcuOfMilliV(&p_vMonitor->Units, milliV); }
 static inline int32_t VMonitor_AdcuOfV(VMonitor_T * p_vMonitor, uint16_t v)                              { return Linear_Voltage_AdcuOfV(&p_vMonitor->Units, v); }
+
 /* Map [0:VRef] to [0:65535] */
 // static inline int32_t VMonitor_ConvertToPercent16(const VMonitor_T * p_vMonitor, uint16_t adcu)       { return Linear_Voltage_CalcPercent16(&p_vMonitor->Units, adcu); }
-
 /******************************************************************************/
 /*!
     Map [VNominalRef:FaultLower] to [65535:0]

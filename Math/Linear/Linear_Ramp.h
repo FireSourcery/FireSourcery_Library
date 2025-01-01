@@ -34,17 +34,6 @@
 #include "Linear.h"
 #include <stdint.h>
 
-// typedef struct Linear_Sum
-// {
-//     Linear_T Linear;
-//     int32_t Sum32;
-// }
-// Linear_Sum_T;
-
-// static inline int32_t sum32_of(int32_t slope32, int32_t value32, int32_t x)
-// {
-//     return (value32 + (slope32 * x));
-// }
 
 /******************************************************************************/
 /*
@@ -86,3 +75,15 @@ extern int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear);
 
 #endif
 
+
+// typedef struct Linear_Sum
+// {
+//     Linear_T Linear;
+//     int32_t Sum32;
+// }
+// Linear_Sum_T;
+
+// static inline int32_t sum32_of(int32_t slope32, int32_t value32, int32_t x)
+// {
+//     return (value32 + (slope32 * x));
+// }

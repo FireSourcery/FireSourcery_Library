@@ -94,6 +94,9 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
 
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
+        case MOT_VAR_ID_TYPE_DEBUG:
+            value = MotorController_Output_Debug(p_mc, (MotorController_Output_Debug_T)varId.NameBase);
+            break;
         case MOT_VAR_ID_TYPE_MONITOR_GENERAL:
             switch((MotVarId_Monitor_General_T)varId.NameBase)
             {
@@ -142,11 +145,12 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
                 case MOT_VAR_MOTOR_FAULT_FLAGS:     value = Motor_User_GetFaultFlags(p_motor).Value;             break;
                 case MOT_VAR_MOTOR_HEAT:            value = Motor_User_GetHeat_Adcu(p_motor);                    break;
                     //Motor_User_GetHeat_DegC(p_motor, 1U);
-                case MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE:    value = Motor_User_GetFeedbackMode(p_motor).Value;  break;
-                case MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT:      value = Motor_User_GetSpeedLimit(p_motor);         break;
-                case MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT:          value = Motor_User_GetILimit(p_motor);             break;
-                case MOT_VAR_MOTOR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);             break;
-                case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
+                case MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE:     value = Motor_User_GetFeedbackMode(p_motor).Value;      break;
+                case MOT_VAR_MOTOR_EFFECTIVE_SET_POINT:         value = Motor_User_GetSetPoint(p_motor);                break;
+                case MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT:       value = Motor_User_GetSpeedLimit(p_motor);              break;
+                case MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT:           value = Motor_User_GetILimit(p_motor);                  break;
+                case MOT_VAR_MOTOR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);            break;
+                case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);        break;
                 default: break;
             }
             break;

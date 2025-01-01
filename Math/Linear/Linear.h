@@ -92,6 +92,14 @@ static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, in
     p_linear->InvSlope = (slopeDivisor << p_linear->InvSlopeShift) / slopeFactor;
 }
 
+
+/* Getters In case implementation changes */
+static inline int32_t Linear_GetXRef(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDeltaRef; }
+static inline int32_t Linear_GetYRef(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDeltaRef; }
+static inline int32_t Linear_GetXDelta(const Linear_T * p_linear) { return p_linear->XDeltaRef; }
+static inline int32_t Linear_GetYDelta(const Linear_T * p_linear) { return p_linear->YDeltaRef; }
+
+
 /******************************************************************************/
 /*!
     @brief Linear Main Functions - Configured by Linear_Init
@@ -134,7 +142,8 @@ static inline int32_t Linear_Of_Sat(const Linear_T * p_linear, int32_t x)
 
 static inline int32_t Linear_InvOf_Sat(const Linear_T * p_linear, int32_t y)
 {
-    return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDeltaRef, p_linear->YReference));
+    // return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDeltaRef, p_linear->YReference));
+    return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDeltaRef * 2, p_linear->Y0 + p_linear->YDeltaRef * 2));
 }
 
 /******************************************************************************/
@@ -145,8 +154,7 @@ static inline int32_t Linear_InvOf_Sat(const Linear_T * p_linear, int32_t y)
 static inline int32_t Linear_Of_Round(const Linear_T * p_linear, int32_t x)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    return Linear_Of(p_linear, x);
-    // return Linear_Of(p_linear, x) + Linear_Of(p_linear, 1) / 2;
+    return linear_shift_f_round(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, x);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     return linear_f_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
@@ -155,8 +163,7 @@ static inline int32_t Linear_Of_Round(const Linear_T * p_linear, int32_t x)
 static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
-    return Linear_InvOf(p_linear, y);
-    // return Linear_InvOf(p_linear, y) + Linear_InvOf(p_linear, 1) / 2;
+    return linear_shift_invf_round(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, y);
 #elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
     return linear_invf_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
@@ -227,7 +234,7 @@ static inline int16_t _Linear_Fract16(const Linear_T * p_linear, int32_t x)
     // return  linear_f_x0(32768, deltax, x0, x);
 }
 
-/* y_fract16 use q1.15 */
+/* y_fract16 in q1.15 */
 static inline int32_t _Linear_InvFract16(const Linear_T * p_linear, int16_t y_fract16)
 {
     return _Linear_InvFixed32(p_linear, (int32_t)y_fract16 * 2);

@@ -32,7 +32,8 @@
 
 /******************************************************************************/
 /*!
-    @brief     Initialize Linear struct using Voltage Divider parameters.
+    @brief  Initialize Linear struct using Voltage Divider parameters.
+            Use a constant shift instead of deriving it from max input, accounts for millivolt bounds.
 
     f(adcu) = voltage
     f16(adcu) = fract16
@@ -46,7 +47,6 @@
     ADC = VIN*DIV/VADC = VIN*(R2*ADC_MAX)/((R1+R2)*ADC_VREF)
     VIN = ADC*VADC/DIV = ADC*(ADC_VREF*(R1+R2))/(ADC_MAX*R2)
     VIN/ADC = VADC/DIV = ADC_VREF*(R1 + R2)/(ADC_MAX*R2)
-
 
     @param[in] line - Struct containing calculated intermediate values
     @param[in] r1 - R1 value expressed as a whole number, < 65536
@@ -66,12 +66,12 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
     p_linear->InvSlopeShift     = LINEAR_VOLTAGE_SHIFT - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U; /* (ADC_VREF*(R1+R2)) */
-    p_linear->SlopeDivisor      = (((uint64_t)1UL << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
+    p_linear->SlopeDivisor      = (((uint64_t)1U << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
 #endif
     p_linear->X0                = 0;
     p_linear->Y0                = 0;
     p_linear->YReference        = vInRef;
-    p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1UL << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Fract16 reference */
+    p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1U << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Fract16 reference */
     p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
     p_linear->YDeltaRef         = vInRef - p_linear->Y0;
 }

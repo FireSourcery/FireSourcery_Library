@@ -77,3 +77,15 @@ void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef)
 }
 
 
+// void Linear_Fixed_Init_Fract16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// {
+//     Linear_Fixed_Init(p_linear, 15U, x0, xRef);
+// }
+
+// void Linear_Fixed_Init_Percent16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// {
+//     Linear_Fixed_Init(p_linear, 16U, x0, xRef);
+// }
+
+
+

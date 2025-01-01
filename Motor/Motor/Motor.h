@@ -308,7 +308,7 @@ typedef struct Motor_Config
     // uint16_t SpeedFeedbackRef_Rpm;   /* VSource*Kv. Feedback / PID Regulator Limits Ref. Sensor/User Fract16, unit conversion. */
                                         /* A value greater than achievable will cause integral windup. too low will lose PID control range */
 
-    // Motor_ResumeMode_T    ResumeMode; // option Scale to VSpeed or VBemf on resume
+    // Motor_ResumeMode_T ResumeMode; // option Scale to VSpeed or VBemf on resume
     uint16_t IaZeroRef_Adcu;
     uint16_t IbZeroRef_Adcu;
     uint16_t IcZeroRef_Adcu;
@@ -317,9 +317,9 @@ typedef struct Motor_Config
 // #endif
 
     /* Persistent Base Limits. Same units as control vars */
-    uint16_t SpeedLimitForward_Fract16;  /* of SpeedFeedbackRef_Rpm */
+    uint16_t SpeedLimitForward_Fract16;     /* of SpeedVRef_Rpm */
     uint16_t SpeedLimitReverse_Fract16;
-    uint16_t ILimitMotoring_Fract16;    /* of I_MAX_AMPS. */
+    uint16_t ILimitMotoring_Fract16;        /* of I_MAX_AMPS. */
     uint16_t ILimitGenerating_Fract16;
 
     uint32_t RampAccel_Cycles;

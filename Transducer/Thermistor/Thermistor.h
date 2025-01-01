@@ -57,12 +57,12 @@ typedef enum Thermistor_Status
 Thermistor_Status_T;
 
 /*   */
-// typedef enum Thermistor_Type
-// {
-//     THERMISTOR_TYPE_NTC,
-//     THERMISTOR_TYPE_PTC,
-// }
-// Thermistor_Type_T;
+typedef enum Thermistor_Type
+{
+    THERMISTOR_TYPE_NTC,
+    THERMISTOR_TYPE_PTC,
+}
+Thermistor_Type_T;
 
 // // optionally place in configurable Config, or CONFIG
 // typedef struct Thermistor_Coefficients
@@ -79,8 +79,8 @@ Thermistor_Status_T;
 */
 typedef struct Thermistor_Config
 {
-    // Thermistor_Type_T Type;
 
+    Thermistor_Type_T Type;
     /* NTC coefficients conversion */
     uint16_t B;     /* In Kelvin*/
     uint32_t R0;
@@ -88,9 +88,10 @@ typedef struct Thermistor_Config
     uint16_t VInRef_MilliV; /* Generally the same as VADC */
     // Thermistor_Coeffs_T directly wtihout pointer
 
-    /* Back Up Linear Unit Conversion. Bypass R. todo derive from DeltaT, DeltaR */
+    /* Back Up Linear Unit Conversion. Derive from DeltaR, DeltaT */
     // uint32_t DeltaR;
     // uint16_t DeltaT;
+    // uint32_t LinearCoefficient_Fixed32;
 
     /* Monitor Limits */
     uint16_t FaultTrigger_Adcu;
@@ -107,10 +108,10 @@ typedef struct Thermistor_Const
     const Thermistor_Config_T * P_CONFIG; /* Optional NvM */
     const uint32_t R_SERIES;    /* Pull-up */
     const uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
-    // Thermistor_Coeffs_T * P_COEFFICIENTS;
+    // Thermistor_Coeffs_T * P_FIXED_COEFFICIENTS;
+    /* Non detachable. Disable Coefficient set functions */
     // configure as pointer to config ram or const?
     // allocate both, if const load from config
-    // bool IS_BOARD;            /* Non detachable. Disable Coefficient set functions */
 }
 Thermistor_Const_T;
 
@@ -208,20 +209,20 @@ static inline void Thermistor_SetWarningThreshold_Adcu(Thermistor_T * p_therm, u
 /******************************************************************************/
 /* Units Calibration */
 /******************************************************************************/
-// static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Config.Type; }
+static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return p_therm->Config.VInRef_MilliV; }
+static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return p_therm->Config.Type; }
 static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return p_therm->Config.R0; }
 static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return p_therm->Config.T0; } /* Degrees Kelvin */
 static inline uint16_t Thermistor_GetT0_DegC(const Thermistor_T * p_therm)          { return p_therm->Config.T0 + ABSOLUTE_ZERO_CELSIUS; }
 static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return p_therm->Config.B; }
-static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return p_therm->Config.VInRef_MilliV; }
 
-// static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Config.Type = value; }
+static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Config.VInRef_MilliV = vIn_MilliV; }
+static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Config.Type = value; }
 // check IsConst?
 static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Config.R0 = value; }
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Config.T0 = value; } /* Degrees Kelvin */
 static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Config.T0 = value - ABSOLUTE_ZERO_CELSIUS; }
 static inline void Thermistor_SetB(Thermistor_T * p_therm, uint16_t value)                  { p_therm->Config.B = value; }
-static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Config.VInRef_MilliV = vIn_MilliV; }
 
 // static inline uint16_t Thermistor_GetLinearR(const Thermistor_T * p_therm)            { return p_therm->Config.DeltaR; }
 // static inline uint16_t Thermistor_GetLinearT(const Thermistor_T * p_therm)            { return p_therm->Config.DeltaT; }
