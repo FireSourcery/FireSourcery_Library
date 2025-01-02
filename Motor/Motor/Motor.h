@@ -152,6 +152,14 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .
 // static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Value = word }); }
 
+// typedef enum Motor_ControlState PhaseState
+// {
+//     MOTOR_CONTROL_RELEASE, // Stop/Freewheel
+//     MOTOR_CONTROL_ACTIVE, // Run State only
+//     MOTOR_CONTROL_HOLD, // Stop
+// }
+// Motor_ControlState_T;
+
 /*
     Effectively sync mailbox for async calculations
 */
@@ -164,9 +172,7 @@ typedef union Motor_StateFlags
         uint16_t SpeedLimited       : 1U;
         uint16_t RampDisable        : 1U;
         // uint16_t SensorFeedback  : 1U;
-        // uint16_t Hold        : 1U;
-        // uint16_t Control     : 1U;
-        // uint16_t Release     : 1U;
+        // uint16_t Hold            : 1U;  // Stop substate
     };
     uint16_t Word;
 }
@@ -293,10 +299,9 @@ typedef struct Motor_Config
     Motor_CommutationMode_T     CommutationMode;
     Motor_SensorMode_T          SensorMode;
     Motor_Direction_T           DirectionForward;
-    // Motor_FeedbackMode_T        FeedbackModeDefault;     /* FeedbackMode On Init */
 
     /*
-        Ref values, calibration parameters
+        Calibration parameters
     */
     uint8_t PolePairs;          /* Motor Pole Pairs. Use to derive Hall/Encoder speed calibration */
     uint16_t Kv;                /* Motor Constant. Use to derive SpeedVRef */
@@ -323,10 +328,8 @@ typedef struct Motor_Config
     uint16_t ILimitGenerating_Fract16;
 
     uint32_t RampAccel_Cycles;
-
     uint16_t AlignPower_UFract16;          /* V or I */
     uint32_t AlignTime_Cycles;
-
 // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t OpenLoopSpeed_UFract16;    /*   */
     uint16_t OpenLoopPower_UFract16;    /* V or I */

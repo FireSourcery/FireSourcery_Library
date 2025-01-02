@@ -104,37 +104,37 @@ void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_h
 //         switch (p_motor->CalibrationStateIndex)
 //         {
 //         case 0U:
-//             Phase_ActivateDuty(&p_motor->Phase, duty, 0U, 0U);
+//             Phase_WriteDuty(&p_motor->Phase, duty, 0U, 0U);
 //             p_motor->CalibrationStateIndex = 1U;
 //             break;
 
 //         case 1U:
 //             Hall_CalibratePhaseA(&p_motor->Hall);
-//             Phase_ActivateDuty(&p_motor->Phase, duty, duty, 0U);
+//             Phase_WriteDuty(&p_motor->Phase, duty, duty, 0U);
 //             p_motor->CalibrationStateIndex = 2U;
 //             break;
 
 //         case 2U:
 //             Hall_CalibratePhaseInvC(&p_motor->Hall);
-//             Phase_ActivateDuty(&p_motor->Phase, 0U, duty, 0U);
+//             Phase_WriteDuty(&p_motor->Phase, 0U, duty, 0U);
 //             p_motor->CalibrationStateIndex = 3U;
 //             break;
 
 //         case 3U:
 //             Hall_CalibratePhaseB(&p_motor->Hall);
-//             Phase_ActivateDuty(&p_motor->Phase, 0U, duty, duty);
+//             Phase_WriteDuty(&p_motor->Phase, 0U, duty, duty);
 //             p_motor->CalibrationStateIndex = 4U;
 //             break;
 
 //         case 4U:
 //             Hall_CalibratePhaseInvA(&p_motor->Hall);
-//             Phase_ActivateDuty(&p_motor->Phase, 0U, 0U, duty);
+//             Phase_WriteDuty(&p_motor->Phase, 0U, 0U, duty);
 //             p_motor->CalibrationStateIndex = 5U;
 //             break;
 
 //         case 5U:
 //             Hall_CalibratePhaseC(&p_motor->Hall);
-//             Phase_ActivateDuty(&p_motor->Phase, duty, 0U, duty);
+//             Phase_WriteDuty(&p_motor->Phase, duty, 0U, duty);
 //             p_motor->CalibrationStateIndex = 6U;
 //             break;
 

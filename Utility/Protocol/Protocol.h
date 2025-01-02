@@ -400,6 +400,18 @@ Protocol_T;
     _PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)                  \
 }
 
+typedef enum MotVarId_Config_Protocol
+{
+    MOT_VAR_PROTOCOL_XCVR_ID,
+    MOT_VAR_PROTOCOL_SPECS_ID,
+    MOT_VAR_PROTOCOL_WATCHDOG_TIME,
+    MOT_VAR_PROTOCOL_BAUD_RATE, // On boot
+    //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,
+    MOT_VAR_PROTOCOL_IS_ENABLED,
+}
+MotVarId_Config_Protocol_T;
+
+
 static inline Protocol_RxCode_T Protocol_GetRxStatus(const Protocol_T * p_protocol)     { return p_protocol->RxStatus; }
 static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_protocol)   { return p_protocol->ReqStatus; }
 

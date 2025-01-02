@@ -77,25 +77,25 @@ inline void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode
     // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
 }
 
-// typedef union Motor_Cmd
-// {
-//     struct
-//     {
-//         uint32_t CmdValue       : 16U;
-//         uint32_t FeedbackMode   : 8U;
-//     };
-//     uint32_t Value; /* Id */
-// }
-// Motor_Cmd_T;
-
-
 /* Generic array functions use */
 inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
 {
     Motor_User_StartControl(p_motor, Motor_FeedbackMode_Cast(modeValue));
 }
 
-/* User set [FeedbackMode] without starting Run */
+/* combine process by statemachine */
+// typedef union Motor_Cmd
+// {
+//     struct
+//     {
+//         uint32_t CmdValue       : 16U;
+//         uint32_t FeedbackMode   : 8U;
+//         uint32_t Activate       : 1U;
+//     };
+//     uint32_t Value;
+// }
+// Motor_Cmd_T;
+/* todo User set [FeedbackMode] without starting Run */
 inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
 {
     if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
@@ -325,8 +325,7 @@ void Motor_User_SetHold(Motor_T * p_motor)
 
 // bool Motor_User_TryRelease(Motor_T * p_motor)
 // {
-//     // _Motor_User_SetCmd(p_motor, 0);
-//     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
 //     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL ||
 //         StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
 // }
@@ -355,26 +354,13 @@ void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection
 
 // bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction)
 // {
-//     if (p_motor->Direction != direction) { StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
+//     if (p_motor->Direction != direction) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_DIRECTION, direction); }
 //     return (direction == p_motor->Direction);
 // }
 
 // bool Motor_User_TryDirectionForward(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Config.DirectionForward); }
 // bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
 
-
-/******************************************************************************/
-/*!
-    Getters/Setters with interface function
-*/
-/******************************************************************************/
-/*
-   User Conditional - set compare with array
-*/
-bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, speed_fract16); }
-bool Motor_User_ClearSpeedLimit(Motor_T * p_motor)                       { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
-bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, i_fract16); }
-bool Motor_User_ClearILimit(Motor_T * p_motor)                           { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }
 
 /******************************************************************************/
 /*

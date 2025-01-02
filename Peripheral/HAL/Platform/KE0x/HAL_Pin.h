@@ -42,6 +42,8 @@ static inline void HAL_Pin_WriteOutputOn(HAL_Pin_T * p_hal, uint32_t pinId) { (p
 static inline void HAL_Pin_WriteOutputOff(HAL_Pin_T * p_hal, uint32_t pinId) { (p_hal->PCOR |= pinId); }
 static inline void HAL_Pin_WriteOutput(HAL_Pin_T * p_hal, uint32_t pinId, bool isOn) { isOn ? (p_hal->PDOR |= pinId) : (p_hal->PDOR &= ~(pinId)); }
 static inline void HAL_Pin_ToggleOutput(HAL_Pin_T * p_hal, uint32_t pinId) { (p_hal->PTOR |= pinId); }
+static inline bool HAL_Pin_ReadOutput(HAL_Pin_T * p_hal, uint32_t pinId) { return ((p_hal->PDOR & pinId) != 0U); }
+
 static inline bool HAL_Pin_ReadInput(const HAL_Pin_T * p_hal, uint32_t pinId) { return ((p_hal->PDIR & pinId) == pinId); }
 
 static inline void HAL_Pin_InitInput(HAL_Pin_T * p_hal, uint32_t pinId)     { p_hal->PDDR &= ~(pinId); p_hal->PIDR &= ~(pinId); }

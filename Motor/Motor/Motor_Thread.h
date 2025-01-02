@@ -84,12 +84,9 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
         }
         //    switch(p_motor->AnalogCmd)
         //    {
-        //        case FOC_I_ABC :
-        //            break;
-        //        case FOC_VBEMF :
-        //            break;
-        //        default :
-        //            break;
+        //        case FOC_I: break;
+        //        case FOC_V: break;
+        //        default: break;
         //    }
     }
 }
@@ -98,8 +95,6 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
     if (Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
     {
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
-
         switch (Thermistor_PollMonitor(&p_motor->Thermistor, Motor_Analog_GetHeat(p_motor)))
         {
             case THERMISTOR_STATUS_OK:
@@ -109,16 +104,20 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
                     Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
                 }
                 break;
+            case THERMISTOR_STATUS_WARNING_THRESHOLD:
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StateFlags.HeatWarning = 1U;
                 Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
+            case THERMISTOR_STATUS_FAULT_THRESHOLD:
             case THERMISTOR_STATUS_FAULT:
                 p_motor->FaultFlags.Overheat = 1U;
                 Motor_StateMachine_EnterFault(p_motor);
                 break;
             default: break;
         }
+
+        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_HEAT);
     }
 }
 

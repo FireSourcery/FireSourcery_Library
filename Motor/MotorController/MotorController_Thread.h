@@ -197,7 +197,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     if (Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
     {
         /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
-        // StateMachine_ProcState(&p_mc->StateMachine);
         // _StateMachine_ProcSyncInput(&p_mc->StateMachine);
         _StateMachine_ProcStateOutput(&p_mc->StateMachine);
 
@@ -265,6 +264,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
         p_mc->MainDividerCounter++; //Timer_GetBase(p_timer)
     }
+    // todo transient recorder proc
 }
 
 /*
@@ -332,12 +332,11 @@ static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 
     if (Motor_IsAnalogCycle(&p_mc->CONST.P_MOTORS[0U]) == true) /* todo common timer */
     {
-        Analog_StartConversions(p_mc->CONST.P_ANALOG); //todo try phases in the same fifo
+        Analog_StartConversions(p_mc->CONST.P_ANALOG); // todo try phases in the same fifo
     }
 
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
 
-    // todo transient recorder proc
     Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);
 }
 

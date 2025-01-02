@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//todo User_Wrapper functions
 /******************************************************************************/
 /*!
     @brief     Cmd Functions

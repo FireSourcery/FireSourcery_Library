@@ -104,6 +104,19 @@ VMonitor_T;
 // }
 
 
+typedef enum MotVarId_Config_VMonitor
+{
+    MOT_VAR_VMONITOR_R1, // All instance Read-Only
+    MOT_VAR_VMONITOR_R2, // All instance Read-Only
+    MOT_VAR_VMONITOR_FAULT_UPPER_ADCU,
+    MOT_VAR_VMONITOR_FAULT_LOWER_ADCU,
+    MOT_VAR_VMONITOR_WARNING_UPPER_ADCU,
+    MOT_VAR_VMONITOR_WARNING_LOWER_ADCU,
+    MOT_VAR_VMONITOR_IS_ENABLE,
+}
+MotVarId_Config_VMonitor_T;
+
+
 static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor)   { return (p_vMonitor->Status); }
 static inline bool VMonitor_IsFault(const VMonitor_T * p_vMonitor)               { return ((p_vMonitor->Status == VMONITOR_FAULT_UPPER) || (p_vMonitor->Status == VMONITOR_FAULT_LOWER)); }
 static inline bool VMonitor_IsWarning(const VMonitor_T * p_vMonitor)             { return ((p_vMonitor->Status == VMONITOR_WARNING_UPPER) || (p_vMonitor->Status == VMONITOR_WARNING_LOWER)); }

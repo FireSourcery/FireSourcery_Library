@@ -86,6 +86,7 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
     // MOT_PACKET_REF = 0x02U,
+
     MOT_PACKET_CALL = 0xC0U,
     // MOT_PACKET_CALL_ADDRESS = 0xCAU,
 
@@ -237,11 +238,12 @@ typedef struct MotPacket_StopResp { MotPacket_Header_T Header; MotPacket_StopRes
 /*! Call - Arbitrary Functions */
 /******************************************************************************/
 typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t Arg; }                                     MotPacket_CallReq_Payload_T;
-// typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; } MotPacket_CallReq_Payload_T;
 typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Status; }                                 MotPacket_CallResp_Payload_T;
 typedef struct MotPacket_CallReq { MotPacket_Header_T Header; MotPacket_CallReq_Payload_T CallReq; }        MotPacket_CallReq_T;
 typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallResp_Payload_T CallResp; }     MotPacket_CallResp_T;
 
+// multiple parameters
+// typedef struct MotPacket_CallVectorReq_Payload { uint16_t Id; uint16_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; } MotPacket_CallReq_Payload_T;
 
 /******************************************************************************/
 /*!

@@ -37,58 +37,36 @@
 #include "../MotVarId.h"
 #include "../Version.h"
 
+/******************************************************************************/
 /*
-    VarId Base
+    Call via Key/Value
+    State/Substates Cmds
+    not stored in host view cache
 */
-typedef enum MotorController_User_System
+/******************************************************************************/
+typedef enum MotorController_User_CallId
 {
     MOT_USER_SYSTEM_BEEP,
-    MOT_USER_SYSTEM_LOCK_STATE,
-    MOT_USER_SYSTEM_SERVO,
-    MOT_USER_SYSTEM_CLEAR_FAULT,
-    MOT_USER_SYSTEM_RX_WATCHDOG,
+    MOT_USER_SYSTEM_LOCK_STATE, // lock op
+    MOT_USER_SYSTEM_LOCK_STATUS, // Async status
+    MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
+    MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
+    // MOT_USER_SYSTEM_SERVO, // servo mode
+    // drive direction
     //     MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE,
     //     MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE,
 }
-MotorController_User_System_T;
+MotorController_User_CallId_T;
 
-typedef enum MotorController_User_SubState
-{
-    MOT_USER_DRIVE_SUB_STATE,
-    MOT_USER_LOCK_SUB_STATE,
-    MOT_USER_NVM_STATUS,
-    MOT_USER_CALIBRATION_STATUS,
-}
-MotorController_User_SubState_T;
-
-typedef enum MotorController_Output_General
-{
-    MOT_VAR_ZERO,
-    MOT_VAR_MILLIS,
-    MOT_VAR_DEBUG,
-    MOT_VAR_MC_STATE,
-    MOT_VAR_MC_STATE_FLAGS,
-    MOT_VAR_MC_FAULT_FLAGS,
-    MOT_VAR_V_SOURCE,
-    MOT_VAR_V_SENSOR,
-    MOT_VAR_V_ACCS,
-    MOT_VAR_BATTERY_CHARGE, // if CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-    MOT_VAR_HEAT_PCB,
-    MOT_VAR_HEAT_MOSFETS,
-    // MOT_VAR_HEAT_MOSFETS_TOP,
-    // MOT_VAR_HEAT_MOSFETS_BOT,
-    // MOT_VAR_HEAT_MOSFETS_2,
-    // MOT_VAR_HEAT_MOSFETS_3,
-}
-MotorController_Output_General_T;
-
-typedef enum MotorController_Output_Debug
-{
-    MOT_OUTPUT_DEBUG0, MOT_OUTPUT_DEBUG1, MOT_OUTPUT_DEBUG2, MOT_OUTPUT_DEBUG3, MOT_OUTPUT_DEBUG4, MOT_OUTPUT_DEBUG5, MOT_OUTPUT_DEBUG6, MOT_OUTPUT_DEBUG7,
-}
-MotorController_Output_Debug_T;
-
-typedef uint32_t mot_status_t;
+// typedef enum MotorController_Ouput_Status
+// {
+//     MOT_USER_DRIVE_SUB_STATE,
+//     MOT_USER_LOCK_SUB_STATE,
+//     MOT_USER_NVM_STATUS,
+//     MOT_USER_CALIBRATION_STATUS,
+    // MOT_VAR_ASYNC_STATUS,
+// }
+// MotorController_User_StateIO_T;
 
 /******************************************************************************/
 /*!
@@ -96,21 +74,33 @@ typedef uint32_t mot_status_t;
     @return may return null
 */
 /******************************************************************************/
-// typedef enum MotVarId_Instance_ThermistorBoard
-// {
-//     MOT_VAR_ID_THERMISTOR_PCB,
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
-// }
-// MotVarId_Instance_ThermistorBoard_T;
+typedef enum MotVarId_Instance_BoardThermistor
+{
+    // MOT_INSTANCE_THERMISTOR_PCB,
+    MOT_VAR_ID_THERMISTOR_PCB,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_0,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_1,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_2,
+    MOT_VAR_ID_THERMISTOR_MOSFETS_3,
+}
+MotVarId_Instance_BoardThermistor_T;
 
-// typedef enum MotVarId_Instance_VMonitor
-// {
-//     MOT_VAR_ID_VMONITOR_SOURCE,
-//     MOT_VAR_ID_VMONITOR_SENSOR,
-//     MOT_VAR_ID_VMONITOR_ACC,
-// }
-// MotVarId_Instance_VMonitor_T;
+typedef enum MotVarId_Instance_VMonitor
+{
+    MOT_VAR_ID_VMONITOR_SOURCE,
+    MOT_VAR_ID_VMONITOR_SENSOR,
+    MOT_VAR_ID_VMONITOR_ACCS,
+}
+MotVarId_Instance_VMonitor_T;
+
+typedef enum MotVarId_Instance_Motor
+{
+    MOT_VAR_ID_MOTOR_0,
+    MOT_VAR_ID_MOTOR_1,
+    MOT_VAR_ID_MOTOR_2,
+    MOT_VAR_ID_MOTOR_3,
+}
+MotVarId_Instance_Motor_T;
 
 /*
     Index corresponds to external user interface
@@ -158,7 +148,6 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
     &p_mc->CONST.P_PROTOCOLS[p_mc->CONST.USER_PROTOCOL_INDEX];
 }
 
-
 /******************************************************************************/
 /*
     Real Time User Input Interface; into StateMachine process
@@ -190,7 +179,7 @@ static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc
 
 // float all and ground all, stop state then use motor
 // static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
-// static inline void MotorController_User_SetDriveGround(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
+// static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
 
 /******************************************************************************/
 /* Drive Mode */
@@ -207,9 +196,9 @@ static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc
 //     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, cmdId);
 //     p_mc->UserCmdValue = cmdValue;
 // }
+
 /* Same as Brake/Throttle 0 */
 // static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)               { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_RELEASE, 0U); }
-
 static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)                  { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
@@ -233,25 +222,6 @@ static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, ui
 static inline void MotorController_User_InputLock(MotorController_T * p_mc, MotorController_LockId_T id)
 {
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, id);
-}
-
-/* Alternatively return union status */
-static inline uint32_t MotorController_UserPollLockAsyncStatus(MotorController_T * p_mc, MotorController_LockId_T opId)
-{
-    uint32_t status = MOT_VAR_STATUS_OK;
-
-    switch (opId)
-    {
-        case MOTOR_CONTROLLER_LOCK_ENTER:               status = MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;       break;
-        case MOTOR_CONTROLLER_LOCK_EXIT:                status = !MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;      break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    status = p_mc->LockOpStatus;    break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       status = p_mc->LockOpStatus;    break;
-        case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     status = p_mc->NvmStatus;       break;
-        case MOTOR_CONTROLLER_LOCK_REBOOT:              status = MOT_VAR_STATUS_OK;     break;
-        default: break;
-    }
-
-    return status;
 }
 
 static inline bool MotorController_User_IsLockState(MotorController_T * p_mc)
@@ -284,8 +254,28 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 }
 
 /* Lock State returns to ENTER */
+static inline MotorController_LockId_T MotorController_User_GetLockOpState(const MotorController_T * p_mc) { return p_mc->LockSubState; }
 static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_mc) { return p_mc->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER; }
+
+/* return union status */
 static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController_T * p_mc) { return p_mc->LockOpStatus; }
+
+// static inline uint32_t MotorController_User_GetLockOpStatus(MotorController_T * p_mc, MotorController_LockId_T opId)
+// {
+//     uint32_t status = MOT_VAR_STATUS_OK;
+
+//     switch (opId)
+//     {
+//         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    status = p_mc->LockOpStatus;    break;
+//         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       status = p_mc->LockOpStatus;    break;
+//         case MOTOR_CONTROLLER_LOCK_ENTER:               status = MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;       break;
+//         case MOTOR_CONTROLLER_LOCK_EXIT:                status = !MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;      break;
+//         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     status = p_mc->NvmStatus;       break;
+//         case MOTOR_CONTROLLER_LOCK_REBOOT:              status = MOT_VAR_STATUS_OK;     break;
+//         default: break;
+//     }
+//     return status;
+// }
 
 /******************************************************************************/
 /*
@@ -293,19 +283,11 @@ static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController
 */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-static inline void MotorController_User_InputServoMode(MotorController_T * p_mc, MotorController_ServoMode_T servoMode)
-{
-    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode);
-}
+static inline void MotorController_User_InputServoMode(MotorController_T * p_mc, MotorController_ServoMode_T servoMode) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode); }
+static inline bool MotorController_User_IsServoState(MotorController_T * p_mc) { return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO); }
 
-static inline bool MotorController_User_IsServoState(MotorController_T * p_mc)
-{
-    return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO);
-}
-
-static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc)   { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
-static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
-
+static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_MACHINE_INPUT_VALUE_NULL); }
 
 // static inline void MotorController_User_StartControlMode(MotorController_T * p_mc, uint8_t feedbackMode)
 // {
@@ -325,6 +307,7 @@ static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) 
 static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc)
 {
     MotorController_ForceDisableAll(p_mc);
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION,  MOTOR_CONTROLLER_DIRECTION_NEUTRAL);
     p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE;
 }
 
@@ -402,16 +385,19 @@ typedef union MotorController_User_StatusFlags
         // uint16_t ILimitHeatPcb      : 1U;
         // uint16_t ILimitHeatMotors   : 1U;
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 MotorController_User_StatusFlags_T;
 
 static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusFlags(const MotorController_T * p_mc)
 {
-    MotorController_User_StatusFlags_T statusFlags;
-    statusFlags.HeatWarning     = p_mc->StateFlags.HeatWarning;
-    statusFlags.VLow            = p_mc->StateFlags.VLow;
-    statusFlags.BuzzerEnable    = p_mc->StateFlags.BuzzerEnable;
+    MotorController_User_StatusFlags_T statusFlags =
+    {
+        .HeatWarning    = p_mc->StateFlags.HeatWarning,
+        .VLow           = p_mc->StateFlags.VLow,
+        .BuzzerEnable   = p_mc->StateFlags.BuzzerEnable,
+    };
+
     return statusFlags;
 }
 
@@ -507,15 +493,7 @@ extern void MotorController_User_SetDirection(MotorController_T * p_mc, MotorCon
 extern void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts);
 extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
-
-uint32_t MotorController_User_InputControl(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value);
-uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value);
-int32_t MotorController_Output_Debug(MotorController_T * p_mc, MotorController_Output_Debug_T id);
-uint32_t MotorController_User_InputSystem(MotorController_T * p_mc, MotorController_User_System_T id, int32_t value);
-
-int32_t MotorController_User_GetConfigGeneral(const MotorController_T * p_mc, MotVarId_Config_General_T id);
-uint32_t MotorController_User_SetConfigGeneral(MotorController_T * p_mc, MotVarId_Config_General_T id, int32_t value);
-uint32_t MotorController_User_SetConfigAnalogUser(MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id, int32_t value);
+extern uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_User_CallId_T id, int32_t value);
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 extern void MotorController_User_SetBatteryLifeDefault(MotorController_T * p_mc);

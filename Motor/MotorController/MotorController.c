@@ -286,6 +286,7 @@ void MotorController_CalibrateAdc(MotorController_T * p_mc)
 
 void MotorController_CalibrateSensorAll(MotorController_T * p_mc)
 {
+    //tododo 1 motor at a time
     void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
 }
 

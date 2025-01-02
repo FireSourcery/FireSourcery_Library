@@ -24,8 +24,8 @@
 /*!
     @file   Motor_User.h
     @author FireSourcery
-    @brief  User[Interface] Input/Output function, includes error checking.
     @version V0
+    @brief  User[Interface] Input/Output function, includes error checking.
 */
 /******************************************************************************/
 #ifndef MOTOR_USER_H
@@ -39,34 +39,107 @@
 #include <stdbool.h>
 
 
-/*
-    On poll only
-    Consolidate all status flags into a single word
+/******************************************************************************/
+/*!
+    Keyed Access
+    Fields, or Interface function
 */
-typedef union Motor_User_StatusFlags
+/******************************************************************************/
+/*
+    RealTime Read-Only
+    Get/Output
+*/
+/*
+    Speed/IPhase/VPhase/Power
+        Units0 => UFract16, may over saturate
+*/
+// Motor_Output_Primary_T
+// Motor_Output_FeedbackValue_T // move state
+typedef enum MotVarId_Monitor_Motor
 {
-    struct
-    {
-        uint16_t HeatWarning : 1U;
-        uint16_t ILimitSet : 1U;
-        uint16_t SpeedLimitSet : 1U;
-        uint16_t ILimited : 1U;
-        uint16_t SpeedLimited : 1U;
-        uint16_t Hold : 1U;
-    };
-    uint16_t Word;
+    MOT_VAR_SPEED,
+    MOT_VAR_I_PHASE,
+    MOT_VAR_V_PHASE,
+    MOT_VAR_ELECTRICAL_ANGLE,
+    MOT_VAR_MECHANICAL_ANGLE,
+    MOT_VAR_POWER,
+    MOT_VAR_MOTOR_HEAT,
+    MOT_VAR_MOTOR_STATE,
+    MOT_VAR_MOTOR_STATE_FLAGS,
+    MOT_VAR_MOTOR_FAULT_FLAGS,
+    MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_EFFECTIVE_SET_POINT,
+    MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT,
+    MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT,
+    MOT_VAR_MOTOR_V_SPEED_DEBUG,
+    MOT_VAR_MOTOR_V_SPEED_EFFECTIVE,
 }
-Motor_User_StatusFlags_T;
+MotVarId_Monitor_Motor_T;
 
-static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T * p_motor)
+// Motor_Output_Foc_T
+typedef enum MotVarId_Monitor_MotorFoc
 {
-    Motor_User_StatusFlags_T status;
-    status.HeatWarning = Thermistor_IsWarning(&p_motor->Thermistor);
-    status.ILimitSet = Limit_IsUpperActive(&p_motor->ILimit);
-    status.SpeedLimitSet = Limit_IsUpperActive(&p_motor->SpeedLimit);
-    status.ILimited = p_motor->StateFlags.ILimited;
-    status.SpeedLimited = p_motor->StateFlags.SpeedLimited;
+    MOT_VAR_FOC_IA,
+    MOT_VAR_FOC_IB,
+    MOT_VAR_FOC_IC,
+    MOT_VAR_FOC_IQ,
+    MOT_VAR_FOC_ID,
+    MOT_VAR_FOC_VQ,
+    MOT_VAR_FOC_VD,
+    MOT_VAR_FOC_REQ_Q,
+    MOT_VAR_FOC_REQ_D,
+    MOT_VAR_FOC_VA,
+    MOT_VAR_FOC_VB,
+    MOT_VAR_FOC_VC,
 }
+MotVarId_Monitor_MotorFoc_T;
+
+typedef enum MotVarId_Monitor_MotorSensor
+{
+    MOT_VAR_ENCODER_FREQ,
+}
+MotVarId_Monitor_MotorSensor_T;
+
+/*
+    Cmd -> Write-Only, Get returns 0
+        Set/Input
+    Value [-32768:32767]
+*/
+// Motor_Input_T
+typedef enum MotVarId_Cmd_Motor
+{
+    // MOT_VAR_MOTOR_USER_CMD,      // Active mode value
+    MOT_VAR_MOTOR_CMD_SPEED,        // UserCmd as Speed
+    MOT_VAR_MOTOR_CMD_CURRENT,
+    MOT_VAR_MOTOR_CMD_VOLTAGE,
+    MOT_VAR_MOTOR_CMD_ANGLE,
+    MOT_VAR_MOTOR_CMD_OPEN_LOOP,
+    MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
+    MOT_VAR_MOTOR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
+    MOT_VAR_MOTOR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
+    MOT_VAR_MOTOR_CLEAR_FAULT,              // No value arg. Clear Faults
+}
+MotVarId_Cmd_Motor_T;
+
+/*
+    IO/Access
+    May be paired getter/setter or a single variable
+    Analogously a control loop in/out may differ
+*/
+// Motor_IO_T
+typedef enum MotVarId_Control_Motor
+{
+    MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
+    /* IO Vars, Read effective value, write interface value */
+    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
+    MOT_VAR_MOTOR_USER_FEEDBACK_MODE,
+    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
+    MOT_VAR_MOTOR_USER_I_LIMIT,
+    MOT_VAR_MOTOR_SET_RAMP_ON_OFF,      // 1:Enable, 0:Disable
+}
+MotVarId_Control_Motor_T;
+
+
 
 /******************************************************************************/
 /*!
@@ -132,15 +205,8 @@ static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (St
 /*
     Separate getters for compatibility with StateMachine SetInput and ProcInput
 */
-static inline bool Motor_User_IsRelease(const Motor_T * p_motor)
-{
-    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL || StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
-}
-
-static inline bool Motor_User_IsHold(const Motor_T * p_motor)
-{
-    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); // && PwmA+B+C == 0
-}
+static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
+static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
 static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return (p_motor->StateFlags.RampDisable == 0U); }
 static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { p_motor->StateFlags.RampDisable = (rampEnable == 0U); }
@@ -148,6 +214,7 @@ static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) {
 /*
     Set via interface functions
 */
+
 /*! @return [-32767:32767] <=> [-1:1] */
 /* Getters satisfy generic use. Setters are specific to control mode. */
 static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
@@ -169,12 +236,56 @@ static inline uint16_t Motor_User_GetILimitMotoring(const Motor_T * p_motor)    
 static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
 static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_GetILimit(p_motor); }
 
-
 /* SubStates */
 static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                      { return p_motor->ControlTimerBase; }
 static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)        { return p_motor->OpenLoopState; }
 static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor)  { return p_motor->CalibrationState; }
 static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_motor)              { return p_motor->CalibrationStateIndex; }
+
+
+/*
+   User Conditional - set compare with array
+*/
+static inline bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, speed_fract16); }
+static inline bool Motor_User_ClearSpeedLimit(Motor_T * p_motor)                       { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
+static inline bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, i_fract16); }
+static inline bool Motor_User_ClearILimit(Motor_T * p_motor)                           { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }
+
+/*
+    On poll only
+    Consolidate all status flags into a single word
+*/
+typedef union Motor_User_StatusFlags
+{
+    struct
+    {
+        uint16_t HeatWarning    : 1U;
+        uint16_t ILimitSet      : 1U;
+        uint16_t SpeedLimitSet  : 1U;
+        uint16_t ILimited       : 1U;
+        uint16_t SpeedLimited   : 1U;
+        uint16_t Hold           : 1U;
+        uint16_t Release        : 1U;
+    };
+    uint16_t Word;
+}
+Motor_User_StatusFlags_T;
+
+static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T * p_motor)
+{
+    Motor_User_StatusFlags_T status =
+    {
+        .HeatWarning    = Thermistor_IsWarning(&p_motor->Thermistor),
+        .ILimitSet      = Limit_IsUpperActive(&p_motor->ILimit),
+        .SpeedLimitSet  = Limit_IsUpperActive(&p_motor->SpeedLimit),
+        .ILimited       = p_motor->StateFlags.ILimited,
+        .SpeedLimited   = p_motor->StateFlags.SpeedLimited,
+        .Hold           = Motor_User_IsHold(p_motor),
+        .Release        = Motor_User_IsRelease(p_motor),
+    };
+
+    return status;
+}
 
 /******************************************************************************/
 /*!
@@ -185,8 +296,8 @@ extern void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode
 extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
-extern void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
-extern void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
+// extern void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+// extern void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 
 extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
 extern void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_fract16);
@@ -208,9 +319,9 @@ extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
 #endif
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
+extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
 
 extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
-
 extern void Motor_User_SetRelease(Motor_T * p_motor);
 extern void Motor_User_SetHold(Motor_T * p_motor);
 extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
@@ -223,10 +334,10 @@ extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);
 // extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
 // extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
 
-extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16);
-extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16);
-extern bool Motor_User_ClearSpeedLimit(Motor_T * p_motor);
-extern bool Motor_User_ClearILimit(Motor_T * p_motor);
+// extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16);
+// extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16);
+// extern bool Motor_User_ClearSpeedLimit(Motor_T * p_motor);
+// extern bool Motor_User_ClearILimit(Motor_T * p_motor);
 
 extern void Motor_User_CalibrateSensor(Motor_T * p_motor);
 extern void Motor_User_CalibrateAdc(Motor_T * p_motor);
@@ -238,5 +349,3 @@ extern void Motor_User_SetGroundSpeed_Mph(Motor_T * p_motor, uint32_t wheelDiame
 #endif
 
 #endif
-
-

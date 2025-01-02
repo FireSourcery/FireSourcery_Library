@@ -90,12 +90,6 @@ static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) {
 #define MOTOR_ANALOG_CONVERSION_SIN(p_Motor) (&(p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[MOTOR_ANALOG_CHANNEL_SIN])
 #define MOTOR_ANALOG_CONVERSION_COS(p_Motor) (&(p_Motor)->CONST.ANALOG_CONVERSIONS.CONVERSIONS[MOTOR_ANALOG_CHANNEL_COS])
 
-// typedef enum Motor_Analog_Select
-// {
-//     MOTOR_ANALOG_SELECT_FOC_I_ABC,
-//     MOTOR_ANALOG_SELECT_FOC_V_ABC,
-// }
-// Motor_Analog_Select_T;
 
 extern void Motor_Analog_MarkVabc(Motor_T * p_motor);
 extern void Motor_Analog_MarkIabc(Motor_T * p_motor);

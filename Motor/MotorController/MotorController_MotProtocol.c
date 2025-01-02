@@ -78,58 +78,12 @@ static protocol_size_t StopAll(MotorController_T * p_mc, MotPacket_StopResp_T * 
 }
 
 /******************************************************************************/
-/*! Call - Blocking  */
-// functions of the same cast type
-// blocking + async responses
+/*! Call - May be Blocking */
 /******************************************************************************/
-typedef enum MotProtocol_CallId
-{
-    MOT_CALL_LOCK_STATE,
-    MOT_CALL_SYSTEM,
-}
-MotProtocol_CallId_T;
-
-// typedef enum MotProtocol_Call_System
-// {
-//     MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE,
-//     MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE,
-// }
-// MotProtocol_Call_System_T;
-
+/* Generic status response, type depending on input */
 static protocol_size_t Call_Blocking(MotorController_T * p_mc, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
-    Motor_T * p_motor = MotorController_GetPtrMotor(p_mc, 0U);
-    uint16_t status = 0U; /* Overloaded status */
-
-    switch((MotProtocol_CallId_T)p_rxPacket->CallReq.Id)
-    {
-        case MOT_CALL_LOCK_STATE:
-            // status = MotorController_User_InputLock(p_mc, (MotorController_LockId_T)p_rxPacket->CallReq.Arg); // match return status
-            switch((MotorController_LockId_T)p_rxPacket->CallReq.Arg) /* StateMachine will check for invalid BlockingId */
-            {
-                case MOTOR_CONTROLLER_LOCK_ENTER:     status = MotorController_User_EnterLockState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;  break;
-                case MOTOR_CONTROLLER_LOCK_EXIT:      status = MotorController_User_ExitLockState(p_mc) ? MOT_STATUS_OK : MOT_STATUS_ERROR;   break;
-                /* Non Blocking function, host/caller poll Async return status after. */ // calibration status todo
-                case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR);    status = MOT_STATUS_OK; break;
-                case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC);       status = MOT_STATUS_OK; break;
-                /* Blocking functions can directly return status. */
-                case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     status = MotorController_User_SaveConfig_Blocking(p_mc);    break;
-                case MOTOR_CONTROLLER_LOCK_REBOOT:  MotorController_User_InputLock(p_mc, MOTOR_CONTROLLER_LOCK_REBOOT);  status = MOT_STATUS_OK; break;
-                default: break;
-            }
-            break;
-        // case MOT_CALL_SYSTEM:
-        //     switch ((MotProtocol_Call_System_T)p_rxPacket->CallReq.Arg)
-        //     {
-        //         case MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE:    Protocol_EnableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));    status = MOT_STATUS_OK; break;
-        //         case MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE:   Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_mc));   status = MOT_STATUS_OK; break;
-        //         default: break;
-        //     }
-        //     break;
-
-        default: break;
-    }
-
+    uint16_t status = MotorController_User_Call(p_mc, (MotorController_User_CallId_T)p_rxPacket->CallReq.Id, p_rxPacket->CallReq.Arg);
     return MotPacket_CallResp_Build(p_txPacket, p_rxPacket->CallReq.Id, status);
 }
 

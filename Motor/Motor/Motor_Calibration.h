@@ -72,13 +72,13 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
     {
         switch(p_motor->CalibrationStateIndex)
         {
-            case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_ActuateDuty_Fract16(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
-            case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_ActuateDuty_Fract16(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
-            case 2U: Hall_CalibratePhaseInvC(&p_motor->Hall);   Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, duty, 0U);      p_motor->CalibrationStateIndex = 3U;    break;
-            case 3U: Hall_CalibratePhaseB(&p_motor->Hall);      Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, duty, duty);    p_motor->CalibrationStateIndex = 4U;    break;
-            case 4U: Hall_CalibratePhaseInvA(&p_motor->Hall);   Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, 0U, duty);      p_motor->CalibrationStateIndex = 5U;    break;
-            case 5U: Hall_CalibratePhaseC(&p_motor->Hall);      Phase_ActuateDuty_Fract16(&p_motor->Phase, duty, 0U, duty);    p_motor->CalibrationStateIndex = 6U;    break;
-            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                           isComplete = true;                      break;
+            case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
+            case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
+            case 2U: Hall_CalibratePhaseInvC(&p_motor->Hall);   Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, duty, 0U);      p_motor->CalibrationStateIndex = 3U;    break;
+            case 3U: Hall_CalibratePhaseB(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, duty, duty);    p_motor->CalibrationStateIndex = 4U;    break;
+            case 4U: Hall_CalibratePhaseInvA(&p_motor->Hall);   Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, 0U, duty);      p_motor->CalibrationStateIndex = 5U;    break;
+            case 5U: Hall_CalibratePhaseC(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, duty);    p_motor->CalibrationStateIndex = 6U;    break;
+            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                                  isComplete = true;                      break;
             default: break;
         }
     }
@@ -90,7 +90,7 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    Phase_ActuateDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+    Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
 }
 
 static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
@@ -103,7 +103,7 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
         {
             case 0U:
                 Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
-                Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
                 p_motor->CalibrationStateIndex = 1U;
                 break;
 
@@ -175,7 +175,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
         switch (p_motor->CalibrationStateIndex)
         {
             case 0U:
-                Phase_ActuateDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
                 p_motor->CalibrationStateIndex = 2U;
                 /* wait 1s */
                 break;
@@ -190,7 +190,7 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
             case 2U:
                 SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-                Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
                 p_motor->CalibrationStateIndex = 4U;
                 /* wait 1s */
                 break;
@@ -203,16 +203,16 @@ static inline bool Motor_Calibrate_SinCos(Motor_T * p_motor)
 
             case 4U:
                 SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, 0U, p_motor->Config.AlignPower_UFract16);
+//                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, 0U, p_motor->Config.AlignPower_UFract16);
                 p_motor->CalibrationStateIndex = 5U;
                 // isComplete = true;
-                Phase_ActuateDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
                 break;
 
             case 5U:
                 p_motor->SinCos.DebugAPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
                 p_motor->SinCos.DebugAPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
-                Phase_ActuateDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
                 p_motor->CalibrationStateIndex = 6U;
                 break;
 

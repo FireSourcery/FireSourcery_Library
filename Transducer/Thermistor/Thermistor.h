@@ -163,6 +163,29 @@ Thermistor_T;
     .Config = _THERMISTOR_INIT_CONFIG_B(B, R0, T0_Kelvin),                      \
 }
 
+
+// typedef enum Thermistor_ConfigId_T
+typedef enum MotVarId_Config_Thermistor
+{
+    // THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
+    MOT_VAR_THERMISTOR_R_SERIES, // All instance Read-Only
+    MOT_VAR_THERMISTOR_R_PARALLEL, // All instance Read-Only
+    MOT_VAR_THERMISTOR_TYPE,
+    MOT_VAR_THERMISTOR_R0,
+    MOT_VAR_THERMISTOR_T0,
+    MOT_VAR_THERMISTOR_B,
+    MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
+    MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
+    MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
+    MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
+    MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU,
+    MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU,
+    MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU,
+    MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU,
+    MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE,
+}
+MotVarId_Config_Thermistor_T;
+
 /******************************************************************************/
 /*
     HeatLimit scalar value - Fraction Inverse to heat

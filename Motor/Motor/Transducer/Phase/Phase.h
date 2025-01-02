@@ -46,7 +46,7 @@ typedef enum Phase_Mode
 {
     PHASE_MODE_UNIPOLAR_1,    /*!<   */
     PHASE_MODE_UNIPOLAR_2,    /*!<   */
-    PHASE_MODE_BIPOLAR       /*!<   */
+    PHASE_MODE_BIPOLAR        /*!<   */
 }
 Phase_Mode_T;
 
@@ -77,6 +77,14 @@ Phase_Id_T;
 //     PHASE_ID_7 = 7U,
 // }
 // Phase_Id_T;
+
+typedef enum Phase_State
+{
+    PHASE_STATE_FLOAT,
+    PHASE_STATE_ACTIVE,
+    PHASE_STATE_GROUND,
+}
+Phase_State_T;
 
 typedef struct Phase
 {
@@ -113,12 +121,14 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 /******************************************************************************/
 /*! Extern */
 /******************************************************************************/
-extern void Phase_ActivateDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-extern void Phase_ActuateDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-extern void Phase_ActuateDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
+extern void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
+extern void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
+extern void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 extern void Phase_ActivateOutputABC(const Phase_T * p_phase);
 extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);
+extern bool Phase_IsGround(const Phase_T * p_phase);
+extern bool Phase_IsFloat(const Phase_T * p_phase);
 
 extern void Phase_Polar_ActivateA(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Polar_ActivateB(const Phase_T * p_phase, uint16_t duty);

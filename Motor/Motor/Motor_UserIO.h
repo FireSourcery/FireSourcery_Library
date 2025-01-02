@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -22,19 +23,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   .h
+    @file   Motor_Include.h
     @author FireSourcery
-    @brief
     @version V0
+
+    @brief  Var Id Access - Consistent access to Motor variables, using id/value
 */
 /******************************************************************************/
-#ifndef CONFIG_PID_H
-#define CONFIG_PID_H
+#include "Motor_User.h"
+#include "Motor_Config.h"
 
-// #if      defined(CONFIG_PID_K_INT)
-// #elif    defined(CONFIG_PID_K_FLOAT)
-// #else
-//     #define CONFIG_PID_K_INT
-// #endif
+#include <assert.h>
 
-#endif
+

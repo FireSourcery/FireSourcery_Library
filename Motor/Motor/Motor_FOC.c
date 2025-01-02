@@ -142,7 +142,7 @@ static void ProcInnerFeedback(Motor_T * p_motor)
 static void ProcAngleOutput(Motor_T * p_motor)
 {
     FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);  /* Set Vabc */
-    Phase_ActuateDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+    Phase_WriteDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
 /******************************************************************************/
@@ -155,7 +155,7 @@ static void ProcAngleOutput(Motor_T * p_motor)
 */
 void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 {
-    Phase_ActuateDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+    Phase_WriteDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
     Phase_ActivateOutputABC(&p_motor->Phase);
 }
 
@@ -238,10 +238,6 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
     Linear_Ramp_ZeroOutputState(&p_motor->Ramp);
     p_motor->IFlags.Value = 0U;
     p_motor->VFlags.Value = 0U;
-
-    /* Output is disabled, preset duty to 50% */
-    // FOC_ZeroSvpwm(&p_motor->Foc);
-    // Phase_ActuateDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
     // in case partial ADC results pending, mark all
     // Motor_Analog_MarkVabc(p_motor);
     // Motor_Analog_MarkIabc(p_motor);
@@ -278,6 +274,9 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     {
         Linear_Ramp_SetOutputState(&p_motor->Ramp, qReq);
     }
+
+    /* Output is disabled, preset duty to 50% */
+    // FOC_ZeroSvpwm(&p_motor->Foc);
 }
 
 // void Motor_UpdateIOutputLimits(Motor_T * p_motor)
@@ -306,7 +305,7 @@ void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
 {
     Motor_SetDirectionCcw(p_motor);
     PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
-    PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2); /* Symmetrical for now */
+    PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
 }
 
 void Motor_FOC_SetDirectionCw(Motor_T * p_motor)

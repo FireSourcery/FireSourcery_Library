@@ -122,7 +122,6 @@ typedef enum MotorController_ServoMode
 {
     MOTOR_CONTROLLER_SERVO_MODE_ENTER,
     MOTOR_CONTROLLER_SERVO_MODE_EXIT,
-    // MOTOR_CONTROLLER_SERVO_MODE_SINGLE_SELECT,
     // POSITION_PUSE_TIME
 }
 MotorController_ServoMode_T;
@@ -381,7 +380,7 @@ typedef struct MotorController
     // union
     // {
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
-    uint8_t LockOpStatus;
+    uint8_t LockOpStatus; /* async status */
     // Calibration_Status_T CalibrationStatus;
     // } AsyncStatus;
 

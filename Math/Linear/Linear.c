@@ -38,7 +38,6 @@
 uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterval)
 {
     return fixed_lshift_max_signed((inputInterval * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
-
 }
 
 /******************************************************************************/

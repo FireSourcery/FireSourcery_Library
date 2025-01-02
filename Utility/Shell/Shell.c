@@ -172,10 +172,10 @@ void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate)
 
 void Shell_ResetBaudRate(Shell_T * p_shell)
 {
-#ifdef CONFIG_PROTOCOL_XCVR_ENABLE
-    if(Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Config.XcvrId))
-#elif defined(CONFIG_PROTOCOL_XCVR_SERIAL)
-    if(p_protocol->Config.p_Serial != 0U))
+#ifdef CONFIG_SHELL_XCVR_ENABLE
+    if (Xcvr_CheckIsSet(&p_shell->Terminal.Xcvr, p_shell->Config.XcvrId))
+#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+    if (p_shell->Config.p_Serial != 0U)
 #endif
     {
         Terminal_ConfigBaudRate(&p_shell->Terminal, p_shell->Config.BaudRate);

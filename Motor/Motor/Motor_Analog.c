@@ -40,12 +40,9 @@ void Motor_Analog_MarkVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
     /* Without checking for previous completion. Conversions must complete in within the analog cycle or feedback will never process  */
-    // if (p_motor->VFlags.Value == 0U)
-    {
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
-    }
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
 #else
     (void)p_motor;
 #endif
@@ -53,15 +50,12 @@ void Motor_Analog_MarkVabc(Motor_T * p_motor)
 
 void Motor_Analog_MarkIabc(Motor_T * p_motor)
 {
-    // if (p_motor->IFlags.Value == 0U)
-    {
-        Motor_Debug_CaptureRefTime(p_motor);
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
-    #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
-    #endif
-    }
+    Motor_Debug_CaptureRefTime(p_motor);
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
+#if defined(CONFIG_MOTOR_I_SENSORS_ABC)
+    Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC);
+#endif
 }
 
 
@@ -87,7 +81,7 @@ void Motor_Analog_StartCalibration(Motor_T * p_motor)
 
 bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
 {
-    static const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
 
     bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
     if (isComplete == true)
@@ -100,7 +94,7 @@ bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
     }
     else
     {
-        if (p_motor->ControlTimerBase != 0U) /* skip first sample */
+        if (p_motor->ControlTimerBase != 0U) /* skip first time */
         {
             if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
             {

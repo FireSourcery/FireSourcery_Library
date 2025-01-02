@@ -81,7 +81,7 @@ typedef const struct
     const uint32_t TIMER_FREQ;
     const Shell_Config_T * const P_CONFIG;
 }
-Shell_Config_T;
+Shell_Const_T;
 
 typedef struct
 {

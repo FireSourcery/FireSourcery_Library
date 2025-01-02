@@ -46,13 +46,15 @@ typedef FTM_Type HAL_PWM_T;
     Channel
 */
 static inline void HAL_PWM_WriteDuty(HAL_PWM_T * p_hal, uint32_t channel, uint32_t duty)    { p_hal->CONTROLS[channel].CnV = duty; }
+static inline uint32_t HAL_PWM_ReadDuty(HAL_PWM_T * p_hal, uint32_t channel)                { return p_hal->CONTROLS[channel].CnV; }
 static inline void HAL_PWM_EnableOutput(HAL_PWM_T * p_hal, uint32_t channel)                { p_hal->OUTMASK &= ~(1UL << channel); }
 static inline void HAL_PWM_DisableOutput(HAL_PWM_T * p_hal, uint32_t channel)               { p_hal->OUTMASK |= (1UL << channel); }
+static inline bool HAL_PWM_ReadOutputState(HAL_PWM_T * p_hal, uint32_t channel)             { p_hal->OUTMASK & (1UL << channel); }
 static inline void HAL_PWM_EnableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel)        { p_hal->POL |= (1UL << channel); }
 static inline void HAL_PWM_DisableInvertPolarity(HAL_PWM_T * p_hal, uint32_t channel)       { p_hal->POL &= ~(1UL << channel); }
 
-static inline void HAL_PWM_EnableSoftwareControl(HAL_PWM_T * p_hal, uint32_t channel)   { p_hal->SWOCTRL |= 1UL << (channel); }
-static inline void HAL_PWM_DisableSoftwareControl(HAL_PWM_T * p_hal, uint32_t channel)  { p_hal->SWOCTRL &= ~(1UL << (channel)); }
+static inline void HAL_PWM_EnableSoftwareControl(HAL_PWM_T * p_hal, uint32_t channel)   { p_hal->SWOCTRL |= 1UL << channel; }
+static inline void HAL_PWM_DisableSoftwareControl(HAL_PWM_T * p_hal, uint32_t channel)  { p_hal->SWOCTRL &= ~(1UL << channel); }
 static inline void HAL_PWM_WriteHigh(HAL_PWM_T * p_hal, uint32_t channel)               { p_hal->SWOCTRL |= (1UL << (channel + FTM_SWOCTRL_CH0OCV_SHIFT)); }
 static inline void HAL_PWM_WriteLow(HAL_PWM_T * p_hal, uint32_t channel)                { p_hal->SWOCTRL &= ~(1UL << (channel + FTM_SWOCTRL_CH0OCV_SHIFT)); }
 
@@ -74,6 +76,7 @@ static inline void HAL_PWM_EnableInterrupt(HAL_PWM_T * p_hal)   { p_hal->SC |= F
 static inline void HAL_PWM_SyncModule(HAL_PWM_T * p_hal)        { p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
 
 /* Divided 2 for center align mode */
+// static inline void HAL_PWM_InitModulePeriod_Freq(HAL_PWM_T * p_hal, uint32_t freq)
 static inline void HAL_PWM_InitModuleFreq(HAL_PWM_T * p_hal, uint32_t freq)
 {
     p_hal->SC &= ~FTM_SC_CLKS_MASK;
@@ -81,7 +84,7 @@ static inline void HAL_PWM_InitModuleFreq(HAL_PWM_T * p_hal, uint32_t freq)
     p_hal->SC |= FTM_SC_CLKS(0x01U);
 }
 
-/* Caller accounts for factor of 2 */
+/* Caller accounts for factor of 2 in up down mode */
 static inline void HAL_PWM_InitModulePeriod(HAL_PWM_T * p_hal, uint32_t ticks)
 {
     p_hal->SC &= ~FTM_SC_CLKS_MASK;
@@ -91,6 +94,7 @@ static inline void HAL_PWM_InitModulePeriod(HAL_PWM_T * p_hal, uint32_t ticks)
 
 /*
     Init Module
+    Center aligned mode by default
     To use sync with shared channel registers, buffer value, HAL_WriteModule register channel values simultaneously
 */
 static inline void HAL_PWM_InitModule(HAL_PWM_T * p_hal)
