@@ -24,8 +24,9 @@
 /*!
     @file   .h
     @author FireSourcery
-    @brief  Analog definitions minimal dependencies.
     @version V0
+
+    @brief  Analog definitions minimal dependencies.
 */
 /******************************************************************************/
 #ifndef MOTOR_ANALOG_H

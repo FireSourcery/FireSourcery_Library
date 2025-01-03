@@ -174,10 +174,13 @@ typedef enum MotVarId_Config_Thermistor
     MOT_VAR_THERMISTOR_R0,
     MOT_VAR_THERMISTOR_T0,
     MOT_VAR_THERMISTOR_B,
-    MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
-    MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
-    MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
-    MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
+    // MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
+    // MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
+    // MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
+    // MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
+    // MOT_VAR_THERMISTOR_LINEAR_DELTA_R,
+    // MOT_VAR_THERMISTOR_LINEAR_DELTA_T_ADCU,
+    // MOT_VAR_THERMISTOR_LINEAR_DELTA_T_DEG,
     MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU,
     MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU,
     MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU,
@@ -273,71 +276,8 @@ extern thermal_t Thermistor_GetFaultThreshold_DegC(const Thermistor_T * p_therm)
 extern thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm);
 
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-// int32_t Thermistor_VarId_GetMonitor(const Thermistor_T * p_thermistor, Thermistor_VarId nameId)
-// {
-//     int32_t value = 0;
-//     switch(nameId)
-//     {
-
-//         case MOT_VAR_THERMISTOR_VALUE_ADCU:     value = p_thermistor->Adcu;                         break;
-//         case MOT_VAR_THERMISTOR_STATUS:         value = Thermistor_GetStatus(p_thermistor);         break;
-//         default: value = 0; break;
-//     }
-//     return value;
-// }
-
-
-// int32_t Thermistor_VarId_GetConfig(const Thermistor_T * p_thermistor, Thermistor_VarId nameId)
-// {
-//     int32_t value = 0;
-//     // if(p_thermistor != NULL)
-//     // {
-//         switch(nameId)
-//         {
-//             case MOT_VAR_THERMISTOR_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                 break;
-//             case MOT_VAR_THERMISTOR_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;               break;
-//             case MOT_VAR_THERMISTOR_R0:                         value = Thermistor_GetR0(p_thermistor) / 10U;               break;
-//             case MOT_VAR_THERMISTOR_T0:                         value = Thermistor_GetT0(p_thermistor);                     break;
-//             case MOT_VAR_THERMISTOR_B:                          value = Thermistor_GetB(p_thermistor);                      break;
-//             case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:         value = Thermistor_GetFaultTrigger_Adcu(p_thermistor);      break;
-//             case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:       value = Thermistor_GetFaultThreshold_Adcu(p_thermistor);    break;
-//             case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:       value = Thermistor_GetWarningTrigger_Adcu(p_thermistor);    break;
-//             case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
-//             case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          value = Thermistor_IsMonitorEnable(p_thermistor);           break;
-//                 // case MOT_VAR_THERMISTOR_TYPE:                       value = Thermistor_GetType(p_thermistor);                   break;
-//             default: break;
-//         }
-//     // }
-//     return value;
-// }
-
-// /* Caller check instance */
-// void Thermistor_VarId_SetConfig(Thermistor_T * p_thermistor, Thermistor_VarId nameId, int32_t varValue)
-// {
-//     // if(p_thermistor != NULL)
-//     // {
-//         switch(nameId)
-//         {
-//             case MOT_VAR_THERMISTOR_R_SERIES:                   break;
-//             case MOT_VAR_THERMISTOR_R_PARALLEL:                 break;
-//             case MOT_VAR_THERMISTOR_R0:                         Thermistor_SetR0(p_thermistor, varValue);                     break;
-//             case MOT_VAR_THERMISTOR_T0:                         Thermistor_SetT0(p_thermistor, varValue);                     break;
-//             case MOT_VAR_THERMISTOR_B:                          Thermistor_SetB(p_thermistor, varValue);                      break;
-//             case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:         Thermistor_SetFaultTrigger_Adcu(p_thermistor, varValue);      break;
-//             case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:       Thermistor_SetFaultThreshold_Adcu(p_thermistor, varValue);    break;
-//             case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:       Thermistor_SetWarningTrigger_Adcu(p_thermistor, varValue);    break;
-//             case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     Thermistor_SetWarningThreshold_Adcu(p_thermistor, varValue);  break;
-//             case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          Thermistor_SetIsMonitorEnable(p_thermistor, varValue);        break;
-//                 // case MOT_VAR_THERMISTOR_TYPE:                       Thermistor_SetType(p_thermistor, varValue);                   break;
-//             default: break;
-//         }
-//     // }
-// }
+extern int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id);
+extern void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id, int32_t value);
 
 #endif
 

@@ -149,8 +149,7 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
-// static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { Motor_FeedbackMode_T flags = { .Word = word }; return flags; }
-static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t word) { return ((Motor_FeedbackMode_T) { .Value = word }); }
+static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t value) { return ((Motor_FeedbackMode_T) { .Value = value }); }
 
 // typedef enum Motor_ControlState PhaseState
 // {
@@ -174,7 +173,7 @@ typedef union Motor_StateFlags
         // uint16_t SensorFeedback  : 1U;
         // uint16_t Hold            : 1U;  // Stop substate
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 Motor_StateFlags_T;
 
@@ -601,8 +600,8 @@ static inline void Motor_ClearInterrupt(Motor_T * p_motor)     { Phase_ClearInte
 static inline void Motor_DisableInterrupt(Motor_T * p_motor)   { Phase_DisableInterrupt(&p_motor->Phase); }
 static inline void Motor_EnableInterrupt(Motor_T * p_motor)    { Phase_EnableInterrupt(&p_motor->Phase); }
 
-// static inline void Motor_DisableOutput(Motor_T * p_motor)      { Phase_Float(&p_motor->Phase); }
-// static inline bool Motor_IsHold(Motor_T * p_motor)      { Phase_IsHold(&p_motor->Phase); }
+// static inline void Motor_DisableOutput(Motor_T * p_motor)    { Phase_Float(&p_motor->Phase); }
+// static inline bool Motor_IsHold(Motor_T * p_motor)           { Phase_IsHold(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -692,7 +691,6 @@ static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)   
 */
 // SpeedLimit with SpeedPid disabled
 // alternatively enable PID // MatchOutput
-// p_motor->FeedbackMode.Speed = 1U;
 // ScaleWithSpeedLimit
 static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req)
 {
@@ -709,9 +707,6 @@ static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req
 }
 
 // alternatively enable PID // MatchOutput
-// p_motor->FeedbackMode.Current = 1U;
-// PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc));
-// PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
 static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedback, int16_t req)
 {
     int16_t limitedReq = req;

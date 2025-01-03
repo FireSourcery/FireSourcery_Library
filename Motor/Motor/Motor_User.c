@@ -24,8 +24,9 @@
 /*!
     @file   Motor_User.c
     @author FireSourcery
-    @brief
     @version V0
+
+    @brief
 */
 /******************************************************************************/
 #include "Motor_User.h"
@@ -288,11 +289,12 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
     else                            { Motor_User_SetVoltageCmd(p_motor, userCmd); }
 }
 
-void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
-{
-    if (mode.Value != p_motor->FeedbackMode.Value) { Motor_User_StartControl(p_motor, mode); }
-    Motor_User_SetActiveCmdValue(p_motor, userCmd);
-}
+// void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+// {
+// only while run
+//     if (mode.Value != p_motor->FeedbackMode.Value) { Motor_User_StartControl(p_motor, mode); }
+//     Motor_User_SetActiveCmdValue(p_motor, userCmd);
+// }
 
 /******************************************************************************/
 /*!

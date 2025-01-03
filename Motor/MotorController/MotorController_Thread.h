@@ -178,6 +178,7 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     VMonitor_PollStatus(&p_mc->VMonitorAccs, MotorController_Analog_GetVAccs(p_mc));
     if (VMonitor_IsFault(&p_mc->VMonitorSense) == true) { p_mc->FaultFlags.VSenseLimit = 1U; isFault = true; }
     if (VMonitor_IsFault(&p_mc->VMonitorAccs) == true) { p_mc->FaultFlags.VAccsLimit = 1U; isFault = true; }
+    // if (VMonitor_IsFault(&p_mc->VMonitorAccs) == true) { MotorController_StateMachine_SetFault(p_mc, ((const MotorController_FaultFlags_T){.VAccsLimit = 1U}).Value); }
 
     if (isFault == true) { MotorController_StateMachine_EnterFault(p_mc); } /* Sensors checks fault only */
 

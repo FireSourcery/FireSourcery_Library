@@ -25,6 +25,7 @@
     @file   Motor_User.h
     @author FireSourcery
     @version V0
+
     @brief  User[Interface] Input/Output function, includes error checking.
 */
 /******************************************************************************/
@@ -37,109 +38,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
-
-/******************************************************************************/
-/*!
-    Keyed Access
-    Fields, or Interface function
-*/
-/******************************************************************************/
-/*
-    RealTime Read-Only
-    Get/Output
-*/
-/*
-    Speed/IPhase/VPhase/Power
-        Units0 => UFract16, may over saturate
-*/
-// Motor_Output_Primary_T
-// Motor_Output_FeedbackValue_T // move state
-typedef enum MotVarId_Monitor_Motor
-{
-    MOT_VAR_SPEED,
-    MOT_VAR_I_PHASE,
-    MOT_VAR_V_PHASE,
-    MOT_VAR_ELECTRICAL_ANGLE,
-    MOT_VAR_MECHANICAL_ANGLE,
-    MOT_VAR_POWER,
-    MOT_VAR_MOTOR_HEAT,
-    MOT_VAR_MOTOR_STATE,
-    MOT_VAR_MOTOR_STATE_FLAGS,
-    MOT_VAR_MOTOR_FAULT_FLAGS,
-    MOT_VAR_MOTOR_EFFECTIVE_FEEDBACK_MODE,
-    MOT_VAR_MOTOR_EFFECTIVE_SET_POINT,
-    MOT_VAR_MOTOR_EFFECTIVE_SPEED_LIMIT,
-    MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT,
-    MOT_VAR_MOTOR_V_SPEED_DEBUG,
-    MOT_VAR_MOTOR_V_SPEED_EFFECTIVE,
-}
-MotVarId_Monitor_Motor_T;
-
-// Motor_Output_Foc_T
-typedef enum MotVarId_Monitor_MotorFoc
-{
-    MOT_VAR_FOC_IA,
-    MOT_VAR_FOC_IB,
-    MOT_VAR_FOC_IC,
-    MOT_VAR_FOC_IQ,
-    MOT_VAR_FOC_ID,
-    MOT_VAR_FOC_VQ,
-    MOT_VAR_FOC_VD,
-    MOT_VAR_FOC_REQ_Q,
-    MOT_VAR_FOC_REQ_D,
-    MOT_VAR_FOC_VA,
-    MOT_VAR_FOC_VB,
-    MOT_VAR_FOC_VC,
-}
-MotVarId_Monitor_MotorFoc_T;
-
-typedef enum MotVarId_Monitor_MotorSensor
-{
-    MOT_VAR_ENCODER_FREQ,
-}
-MotVarId_Monitor_MotorSensor_T;
-
-/*
-    Cmd -> Write-Only, Get returns 0
-        Set/Input
-    Value [-32768:32767]
-*/
-// Motor_Input_T
-typedef enum MotVarId_Cmd_Motor
-{
-    // MOT_VAR_MOTOR_USER_CMD,      // Active mode value
-    MOT_VAR_MOTOR_CMD_SPEED,        // UserCmd as Speed
-    MOT_VAR_MOTOR_CMD_CURRENT,
-    MOT_VAR_MOTOR_CMD_VOLTAGE,
-    MOT_VAR_MOTOR_CMD_ANGLE,
-    MOT_VAR_MOTOR_CMD_OPEN_LOOP,
-    MOT_VAR_MOTOR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
-    MOT_VAR_MOTOR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
-    MOT_VAR_MOTOR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
-    MOT_VAR_MOTOR_CLEAR_FAULT,              // No value arg. Clear Faults
-}
-MotVarId_Cmd_Motor_T;
-
-/*
-    IO/Access
-    May be paired getter/setter or a single variable
-    Analogously a control loop in/out may differ
-*/
-// Motor_IO_T
-typedef enum MotVarId_Control_Motor
-{
-    MOT_VAR_MOTOR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
-    /* IO Vars, Read effective value, write interface value */
-    MOT_VAR_MOTOR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
-    MOT_VAR_MOTOR_USER_FEEDBACK_MODE,
-    MOT_VAR_MOTOR_USER_SPEED_LIMIT,
-    MOT_VAR_MOTOR_USER_I_LIMIT,
-    MOT_VAR_MOTOR_SET_RAMP_ON_OFF,      // 1:Enable, 0:Disable
-}
-MotVarId_Control_Motor_T;
-
-
 
 /******************************************************************************/
 /*!
@@ -296,9 +194,6 @@ extern void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode
 extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
-// extern void Motor_User_ProcStartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
-// extern void Motor_User_ProcStartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
-
 extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
 extern void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_fract16);
 extern void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
@@ -333,11 +228,6 @@ extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);
 // extern bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction);
 // extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
 // extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
-
-// extern bool Motor_User_TrySpeedLimit(Motor_T * p_motor, uint16_t speed_fract16);
-// extern bool Motor_User_TryILimit(Motor_T * p_motor, uint16_t i_fract16);
-// extern bool Motor_User_ClearSpeedLimit(Motor_T * p_motor);
-// extern bool Motor_User_ClearILimit(Motor_T * p_motor);
 
 extern void Motor_User_CalibrateSensor(Motor_T * p_motor);
 extern void Motor_User_CalibrateAdc(Motor_T * p_motor);

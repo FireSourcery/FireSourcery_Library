@@ -25,6 +25,7 @@
     @file   Motor_Config.c
     @author FireSourcery
     @version V0
+
     @brief @see Motor_Config.h
 */
 /******************************************************************************/
@@ -77,14 +78,13 @@ void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
-// void Motor_Config_SetVSpeedScalar_Percent16(Motor_T * p_motor, uint16_t percent16)
-// {
-//     Motor_Config_SetVSpeedScalar_UFract16(p_motor, percent16 >> 1U);
-// }
 
+/******************************************************************************/
+/*  */
+/******************************************************************************/
 /* Kv * VSource */
-/* Depreciate */
-/* SpeedFeedbackRef_Rpm => 100% speed for PID feedback. */
+/* SpeedFeedbackRef_Rpm */
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
 void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     // p_motor->Config.SpeedFeedback_Rpm = rpm;
@@ -96,7 +96,7 @@ void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm)
 {
     Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
 }
-
+#endif
 
 /******************************************************************************/
 /* ISensorRef */
@@ -181,36 +181,6 @@ void Motor_Config_SetILimit_Fract16(Motor_T * p_motor, uint16_t motoring_Fract16
 #ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
 static inline void Motor_Config_SetPhaseMode(Motor_T * p_motor, Phase_Mode_T mode) { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->Phase, mode); }
 #endif
-
-
-/******************************************************************************/
-/*
-    Config
-    Alternatively use a schema def
-*/
-/******************************************************************************/
-// typedef enum Motor_Config_FieldId
-// {
-//     MOTOR_CONFIG_IA_ZERO_REF_ADCU,
-//     MOTOR_CONFIG_IB_ZERO_REF_ADCU,
-//     MOTOR_CONFIG_IC_ZERO_REF_ADCU,
-//     MOTOR_CONFIG_I_PEAK_REF_ADCU,
-//     MOTOR_CONFIG_SPEED_LIMIT_FORWARD_PERCENT16,
-//     MOTOR_CONFIG_SPEED_LIMIT_REVERSE_PERCENT16,
-//     MOTOR_CONFIG_I_LIMIT_MOTORING_PERCENT16,
-//     MOTOR_CONFIG_I_LIMIT_GENERATING_PERCENT16,
-//     MOTOR_CONFIG_RAMP_ACCEL_CYCLES,
-//     MOTOR_CONFIG_ALIGN_POWER_PERCENT16,
-//     MOTOR_CONFIG_ALIGN_TIME_CYCLES,
-//     MOTOR_CONFIG_OPEN_LOOP_SPEED_PERCENT16,
-//     MOTOR_CONFIG_OPEN_LOOP_POWER_PERCENT16,
-//     MOTOR_CONFIG_OPEN_LOOP_ACCEL_CYCLES,
-//     MOTOR_CONFIG_SURFACE_DIAMETER,
-//     MOTOR_CONFIG_GEAR_RATIO_FACTOR,
-//     MOTOR_CONFIG_GEAR_RATIO_DIVISOR,
-//     MOTOR_CONFIG_MEMBER_COUNT // This can be used to get the number of members
-// }
-// Motor_Config_FieldId_T;
 
 /******************************************************************************/
 /* Local Unit Conversion */

@@ -375,7 +375,7 @@ void Motor_UpdateSpeedOutputLimits(Motor_T * p_motor)
 /* Call from StateMachine only, may update feedback limits after */
 void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    // if (mode.Word != p_motor->FeedbackMode.Word) //maybe set by ilimit
+    // if (mode.Word != p_motor->FeedbackMode.Word) //update if limits changed
     {
         p_motor->FeedbackMode.Value = mode.Value;
         Motor_UpdateSpeedOutputLimits(p_motor);

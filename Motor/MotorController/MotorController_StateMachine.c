@@ -369,6 +369,8 @@ static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
             /* polling for a non polling input */
             // MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
             // break;
+            //alternatively,
+            // if (p_mc->UserCmdValue == 0) { MotorController_ProcDriveZero(p_mc); }
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
             MotorController_ProcDriveZero(p_mc);
             break;
@@ -420,12 +422,10 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
     // else if ((p_mc->UserCmdValue == 0) && (cmdValue != 0))  { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
     // else if ((p_mc->UserCmdValue == 0) && (cmdValue == 0))  { MotorController_ProcDriveZero(p_mc); }
 
-    switch (p_mc->DriveSubState)
+    switch (p_mc->DriveSubState) // effectively DriveState acts as mutual brake/throttle/cmd zero
     {
         case MOTOR_CONTROLLER_DRIVE_CMD: /* for a non polling input */
             if (cmdValue == 0) { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; }
-            // else { MotorController_SetCmdValueAll(p_mc, cmdValue); }
-            // else { MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue); }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
             if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
@@ -442,6 +442,21 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
     return NULL;
 }
 
+// begins control
+// static StateMachine_State_T * Drive_InputFeedbackMode(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
+// {
+//     if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
+//     return NULL;
+// }
+
+// using stored prev and new
+// shares input index
+// static StateMachine_State_T * Drive_InputCmdImage(MotorController_T * p_mc, statemachine_input_value_t _void)
+// {
+//     // if (p_mc->UserCmdMode != p_mc->UserCmdModePrev) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
+//     // return NULL;
+// }
+
 static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
@@ -449,6 +464,7 @@ static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TA
     [MCSM_INPUT_THROTTLE]   = (StateMachine_Transition_T)Drive_InputThrottle,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Drive_InputBrake,
     [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
+    // [MCSM_INPUT_CMD_IMAGE]  = (StateMachine_Transition_T)Drive_InputCmdImage,
 };
 
 static const StateMachine_State_T STATE_DRIVE =
@@ -677,23 +693,7 @@ static StateMachine_State_T * Servo_InputCmd(MotorController_T * p_mc, statemach
     // MotorController_Servo_SetCmd(p_mc, userCmd);
     MotorController_SetCmdValueAll(p_mc, cmdValue);
 #endif
-    //     // if(cmdValue != 0U)
-    //     // {
-    //     //     if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
-    //     //     {
-    //     //         MotorController_SetCmdModeValue(p_mc, cmdValue);
-    //     //     }
-    //     //     else if(p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE)
-    //     //     {
-    //     //         MotorController_StartCmdModeDefault(p_mc);
-    //     //         MotorController_SetCmdModeValue(p_mc, cmdValue);
-    //     //         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
-    //     //     }
-    //     // }
-    //     // else
-    //     // {
-    //     //     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
-    //     // }
+
     return NULL;
 }
 
@@ -895,6 +895,24 @@ bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t 
 //     }
 // }
 
+// if (cmdValue != 0U)
+// {
+//     if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_CMD)
+//     {
+//         MotorController_SetCmdModeValue(p_mc, cmdValue);
+//     }
+//     else if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE)
+//     {
+//         MotorController_StartCmdModeDefault(p_mc);
+//         MotorController_SetCmdModeValue(p_mc, cmdValue);
+//         p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD;
+//     }
+// }
+// else
+// {
+//     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
+// }
+
 // static void SetDriveZero(MotorController_T * p_mc, MotorController_DriveId_T driveSubState)
 // {
 //     if (p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_ZERO)
@@ -907,3 +925,4 @@ bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t 
 //         MotorController_StartDriveZero(p_mc);
 //     }
 // }
+

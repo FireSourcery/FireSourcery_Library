@@ -34,7 +34,6 @@
 
 #include "MotorController_StateMachine.h"
 #include "MotorController_Analog.h"
-#include "../MotVarId.h"
 #include "../Version.h"
 
 /******************************************************************************/
@@ -53,8 +52,6 @@ typedef enum MotorController_User_CallId
     MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
     // MOT_USER_SYSTEM_SERVO, // servo mode
     // drive direction
-    //     MOT_CALL_SYSTEM_RX_WATCHDOG_ENABLE,
-    //     MOT_CALL_SYSTEM_RX_WATCHDOG_DISABLE,
 }
 MotorController_User_CallId_T;
 
@@ -152,7 +149,10 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 /*
     Real Time User Input Interface; into StateMachine process
 
-    StateMachine in Sync mode process last set input, may overwrite, once per ms
+    [StateMachine_Sync] mode
+        process last set input, once per ms
+        SetSyncInput will overwrite previous input
+        effectively limit to 1 input per ms/packet
 
     Inputs that passes to Motor_StateMachine AND mark Substate, must be Sync to wait for Motor
 */
@@ -391,14 +391,12 @@ MotorController_User_StatusFlags_T;
 
 static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusFlags(const MotorController_T * p_mc)
 {
-    MotorController_User_StatusFlags_T statusFlags =
+    return (MotorController_User_StatusFlags_T)
     {
         .HeatWarning    = p_mc->StateFlags.HeatWarning,
         .VLow           = p_mc->StateFlags.VLow,
         .BuzzerEnable   = p_mc->StateFlags.BuzzerEnable,
     };
-
-    return statusFlags;
 }
 
 static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(const MotorController_T * p_mc)   { return StateMachine_GetActiveStateId(&p_mc->StateMachine); }

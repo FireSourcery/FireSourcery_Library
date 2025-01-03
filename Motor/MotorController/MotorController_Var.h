@@ -36,7 +36,7 @@
 
 #include "MotorController_User.h"
 #include "MotorController.h"
-#include "../MotVarId.h"
+#include "../Motor/Motor_Var.h"
 #include "System/SysTime/SysTime.h"
 
 // typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
@@ -55,7 +55,6 @@ typedef enum MotVarId_Monitor_General
 {
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
-    MOT_VAR_DEBUG,
     MOT_VAR_MC_STATE,
     MOT_VAR_MC_STATE_FLAGS,
     MOT_VAR_MC_FAULT_FLAGS,

@@ -176,7 +176,7 @@ typedef union MotorController_StatusFlags
         // uint16_t IsStopped          : 1U;
         uint16_t BuzzerEnable          : 1U;
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 MotorController_StateFlags_T;
 
@@ -194,8 +194,8 @@ typedef union MotorController_FaultFlags
         uint16_t VSenseLimit        : 1U;
         uint16_t VAccsLimit         : 1U;
         uint16_t Motors             : 1U;
-        // uint16_t DirectionSync      : 1U;
         uint16_t RxLost             : 1U;
+        // uint16_t DirectionSync      : 1U;
         // uint16_t User               : 1U;
     };
     uint16_t Value;
@@ -213,7 +213,7 @@ typedef union MotorController_InitFlags
         uint16_t DirectionSet : 1U;
         // uint16_t IsConfigLoaded : 1U;
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 MotorController_InitFlags_T;
 
@@ -231,7 +231,7 @@ typedef union MotorController_BuzzerFlags
         // uint16_t ThrottleOnBrakeRelease;
         // uint16_t ThrottleOnNeutralRelease;
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 MotorController_BuzzerFlags_T;
 
@@ -357,16 +357,15 @@ typedef struct MotorController
     Blinky_T Meter;
     Pin_T Relay;
 
-    /* State and SubState */
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
     uint32_t TimerDividerCounter;
 
+    /* State and SubState */
     StateMachine_T StateMachine;
     MotorController_StateFlags_T StateFlags;
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
-
     /* SubStates - effectively previous input */
     MotorController_DriveId_T DriveSubState; // change for full values
     MotorController_LockId_T LockSubState;
