@@ -50,7 +50,6 @@ void Motor_Analog_MarkVabc(Motor_T * p_motor)
 
 void Motor_Analog_MarkIabc(Motor_T * p_motor)
 {
-    Motor_Debug_CaptureRefTime(p_motor);
     Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA);
     Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC)

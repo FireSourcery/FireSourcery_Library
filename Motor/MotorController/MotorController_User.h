@@ -172,7 +172,8 @@ static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, in
 
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {
-    p_mc->UserCmdMode.Value = feedbackMode; // or include mod in bitfield
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
+    // p_mc->UserCmdMode.Value = feedbackMode; // or include mod in bitfield
 }
 
 // static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }

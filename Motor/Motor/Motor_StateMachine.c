@@ -324,12 +324,6 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
     Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     if (Motor_IsSensorAvailable(p_motor) == true) { p_nextState = &STATE_RUN; } /* If flags set */
     /* OpenLoop does not resume */
-    p_motor->DebugTime[5] = Motor_Analog_GetVa(p_motor);
-    p_motor->DebugTime[6] = Motor_Analog_GetVb(p_motor);
-    p_motor->DebugTime[7] = Motor_Analog_GetVc(p_motor);
-    p_motor->DebugTime[8] = p_motor->Foc.Vq;
-    p_motor->DebugTime[9] = p_motor->Speed_Fract16;
-
     return p_nextState;
 }
 

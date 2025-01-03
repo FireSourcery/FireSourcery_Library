@@ -43,7 +43,7 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, MotVarId_Monitor_Motor_T va
         case MOT_VAR_V_PHASE:                           value = Motor_User_GetVPhase_UFract16(p_motor);             break;
         case MOT_VAR_POWER:                             value = Motor_User_GetElectricalPower_UFract16(p_motor);    break;
         case MOT_VAR_MOTOR_STATE:                       value = Motor_User_GetStateId(p_motor);                     break;
-        case MOT_VAR_MOTOR_STATE_FLAGS:                 value = Motor_User_GetStateFlags(p_motor).Value;             break;
+        case MOT_VAR_MOTOR_STATE_FLAGS:                 value = Motor_User_GetStateFlags(p_motor).Value;            break;
         // case MOT_VAR_MOTOR_STATUS_FLAGS:    value = Motor_User_GetStateFlags(p_motor).Word;       break;
         case MOT_VAR_MOTOR_FAULT_FLAGS:                 value = Motor_User_GetFaultFlags(p_motor).Value;            break;
         case MOT_VAR_MOTOR_HEAT:                        value = Motor_User_GetHeat_Adcu(p_motor);                   break;
@@ -53,6 +53,8 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, MotVarId_Monitor_Motor_T va
         case MOT_VAR_MOTOR_EFFECTIVE_I_LIMIT:           value = Motor_User_GetILimit(p_motor);                      break;
         case MOT_VAR_MOTOR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);        break;
         case MOT_VAR_MOTOR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
+        case MOT_VAR_ELECTRICAL_ANGLE:                  value = Motor_User_GetElectricalAngle(p_motor);             break;
+        case MOT_VAR_MECHANICAL_ANGLE:                  value = Motor_User_GetMechanicalAngle(p_motor);             break;
     }
     return value;
 }

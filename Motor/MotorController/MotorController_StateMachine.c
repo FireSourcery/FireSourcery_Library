@@ -443,11 +443,11 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
 }
 
 // begins control
-// static StateMachine_State_T * Drive_InputFeedbackMode(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
-// {
-//     if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
-//     return NULL;
-// }
+static StateMachine_State_T * Drive_InputControlFeedback(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
+{
+    if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
+    return NULL;
+}
 
 // using stored prev and new
 // shares input index
@@ -464,6 +464,7 @@ static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TA
     [MCSM_INPUT_THROTTLE]   = (StateMachine_Transition_T)Drive_InputThrottle,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Drive_InputBrake,
     [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
+    [MCSM_INPUT_CMD_MODE]   = (StateMachine_Transition_T)Drive_InputControlFeedback,
     // [MCSM_INPUT_CMD_IMAGE]  = (StateMachine_Transition_T)Drive_InputCmdImage,
 };
 
