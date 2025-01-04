@@ -38,8 +38,8 @@ void MotorController_Init(MotorController_T * p_mc)
     EEPROM_Init_Blocking(p_mc->CONST.P_EEPROM);
 #endif
 
-    if(p_mc->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_mc->Config, p_mc->CONST.P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
-    if(p_mc->CONST.P_BOOT_REF != 0U) { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
+    if (p_mc->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_mc->Config, p_mc->CONST.P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
+    if (p_mc->CONST.P_BOOT_REF != 0U) { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
 
     Analog_Init(p_mc->CONST.P_ANALOG);
     for(uint8_t iSerial = 0U; iSerial < p_mc->CONST.SERIAL_COUNT; iSerial++) { Serial_Init(&p_mc->CONST.P_SERIALS[iSerial]); }
@@ -231,10 +231,11 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_mc)
     return status;
 }
 
-// void MotorController_ReloadConfig_Blocking(MotorController_T * p_mc)
+// set statemachine to init
+// void MotorController_LoadConfig_Blocking(MotorController_T * p_mc)
 // {
 //     if (p_mc->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_mc->Config, p_mc->CONST.P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
-//     if (p_mc->CONST.P_BOOT_REF != 0U) { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
+//     if (p_mc->CONST.P_BOOT_REF != 0U)   { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
 // }
 
 // eeprom only
@@ -337,6 +338,11 @@ void MotorController_ClearILimitAll(MotorController_T * p_mc, Motor_ILimitId_T i
     { for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_ClearILimitMotoringEntry(&p_mc->CONST.P_MOTORS[iMotor], id); } }
 
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                          { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue, userCmd); }
 void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)   { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Value); }
 void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)            { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
@@ -347,6 +353,11 @@ void MotorController_StartControlModeValueAll(MotorController_T * p_mc, Motor_Fe
     MotorController_SetCmdValueAll(p_mc, value); /* Overwritten by 0 is Motor_StateMachine is in Sync Mode */
 }
 
+/******************************************************************************/
+/*
+   Drive Mode
+*/
+/******************************************************************************/
 void MotorController_StartThrottleMode(MotorController_T * p_mc)
 {
     switch (p_mc->Config.ThrottleMode)

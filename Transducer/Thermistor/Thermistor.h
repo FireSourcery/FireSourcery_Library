@@ -61,6 +61,7 @@ typedef enum Thermistor_Type
 {
     THERMISTOR_TYPE_NTC,
     THERMISTOR_TYPE_PTC,
+    THERMISTOR_TYPE_LINEAR,
 }
 Thermistor_Type_T;
 
@@ -91,7 +92,7 @@ typedef struct Thermistor_Config
     /* Back Up Linear Unit Conversion. Derive from DeltaR, DeltaT */
     // uint32_t DeltaR;
     // uint16_t DeltaT;
-    // uint32_t LinearCoefficient_Fixed32;
+    // int32_t LinearCoefficient_Fixed32;
 
     /* Monitor Limits */
     uint16_t FaultTrigger_Adcu;

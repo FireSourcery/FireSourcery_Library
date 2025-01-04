@@ -100,7 +100,7 @@ typedef struct MotAnalogUser_Config
             uint8_t UseForwardPin       : 1U;
             uint8_t UseBistateBrakePin  : 1U;
         };
-        uint8_t PinsSelect;
+        // uint8_t PinsSelect;
     };
 
 

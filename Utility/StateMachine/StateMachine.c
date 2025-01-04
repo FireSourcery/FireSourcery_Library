@@ -35,32 +35,6 @@
     Private Functions
 */
 /******************************************************************************/
-// static inline void InitSignal_SingleThreaded(StateMachine_T * p_stateMachine)
-// {
-//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Disables the ISR, when no input is set */
-// }
-
-// static inline bool AcquireSignal_ISR_SingleThreaded(StateMachine_T * p_stateMachine)
-// {
-//     return (atomic_flag_test_and_set(&p_stateMachine->InputSignal) == false); /*  */
-// }
-
-// static inline void ReleaseSignal_ISR_SingleThreaded(StateMachine_T * p_stateMachine)
-// {
-//     (void)p_stateMachine; /* Single threaded input always overwrite */
-// }
-
-// static inline bool AcquireSignal_Input_SingleThreaded(StateMachine_T * p_stateMachine)
-// {
-//     atomic_flag_test_and_set(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR does not need to block Input */
-//     return true;
-// }
-
-// static inline void ReleaseSignal_Input_SingleThreaded(StateMachine_T * p_stateMachine)
-// {
-//     atomic_flag_clear(&p_stateMachine->InputSignal);
-// }
-
 /*
     Selection between DisableISR and Signal
     Multi-threaded may use disable interrupts, set_and_test signal, or spin-wait with thread scheduler
@@ -262,7 +236,7 @@ void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
     _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
     // Sync_InitSignal(p_stateMachine);
-    atomic_flag_clear(&p_stateMachine->InputSignal); /* Special case single threaded case, ISR will run null once */
+    atomic_flag_clear(&p_stateMachine->InputSignal); /* Special case single threaded, ISR will run null once */
     Reset(p_stateMachine);
 }
 

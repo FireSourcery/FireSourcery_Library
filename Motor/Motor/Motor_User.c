@@ -91,7 +91,7 @@ inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
 //     {
 //         uint32_t CmdValue       : 16U;
 //         uint32_t FeedbackMode   : 8U;
-//         uint32_t Activate       : 1U;
+//         uint32_t Activate       : 2U;
 //     };
 //     uint32_t Value;
 // }

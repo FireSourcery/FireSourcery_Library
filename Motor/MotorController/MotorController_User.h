@@ -204,14 +204,7 @@ static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 
-// todo move Drive image to statemachine or let host maintain state
-// static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd)
-// {
-//     if (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_DRIVE)
-//     {
-//         MotorController_SetThrottleValue(p_mc, userCmd);
-//     }
-// }
+// todo move Drive image to statemachine
 
 
 /******************************************************************************/
@@ -327,47 +320,13 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
     p_mc->StateFlags.BuzzerEnable = 0U;
 }
 
-static inline bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
-{
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_fract16);
-    // MotorController_SetSpeedLimitAll(MotorController_T * p_mc, USER,   limit_fract16)
-}
 
-static inline bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
-{
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearSpeedLimit);
-}
-
-static inline bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
-{
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_fract16);
-}
-
-static inline bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
-{
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearILimit);
-}
-
-static inline void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)
-{
-    if (isEnable == true)   { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Fract16); }
-    else                    { MotorController_User_ClearSpeedLimitAll(p_mc); }
-}
-
-static inline void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable)
-{
-    if (isEnable == true)   { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Fract16); }
-    else                    { MotorController_User_ClearILimitAll(p_mc); }
-}
 
 /******************************************************************************/
 /*
     Motor Controller Struct Variables
 */
 /******************************************************************************/
-/*
-    Controller RAM Variables
-*/
 /*
     Status Flags for User Interface
 */
@@ -489,6 +448,14 @@ static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorContro
 /******************************************************************************/
 extern MotorController_Direction_T MotorController_User_GetDirection(const MotorController_T * p_mc);
 extern void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController_Direction_T direction);
+
+extern bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16);
+extern bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc);
+extern bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16);
+extern bool MotorController_User_ClearILimitAll(MotorController_T * p_mc);
+extern void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable);
+extern void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable);
+
 extern void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts);
 extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);

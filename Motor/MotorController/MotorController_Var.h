@@ -81,7 +81,7 @@ typedef enum MotVarId_Monitor_AnalogUser
 }
 MotVarId_Monitor_AnalogUser_T;
 
-typedef enum MotorController_Output_Debug
+typedef enum MotorController_VarOutput_Debug_Get
 {
     MOT_OUTPUT_DEBUG0, MOT_OUTPUT_DEBUG1, MOT_OUTPUT_DEBUG2, MOT_OUTPUT_DEBUG3, MOT_OUTPUT_DEBUG4, MOT_OUTPUT_DEBUG5, MOT_OUTPUT_DEBUG6, MOT_OUTPUT_DEBUG7,
 }
@@ -184,13 +184,13 @@ MotVarId_Config_BootRef_T;
 // typedef MotVarId_Config_Thermistor_T MotVarId_Config_BoardThermistor_T;
 // typedef MotVarId_Config_Thermistor_T MotVarId_Config_MotorThermistor_T;
 
-uint32_t MotorController_User_InputControl(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value);
-uint32_t MotorController_User_InputCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value);
+uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value);
+uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value);
 
-int32_t MotorController_Output_Debug(const MotorController_T * p_mc, MotorController_Output_Debug_T id);
-int32_t MotorController_User_GetConfigGeneral(const MotorController_T * p_mc, MotVarId_Config_General_T id);
-uint32_t MotorController_User_SetConfigGeneral(MotorController_T * p_mc, MotVarId_Config_General_T id, int32_t value);
-uint32_t MotorController_User_SetConfigAnalogUser(MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id, int32_t value);
+int32_t MotorController_VarOutput_Debug_Get(const MotorController_T * p_mc, MotorController_Output_Debug_T id);
+int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotVarId_Config_General_T id);
+uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotVarId_Config_General_T id, int32_t value);
+uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id, int32_t value);
 
 /******************************************************************************/
 /*
@@ -201,6 +201,7 @@ uint32_t MotorController_User_SetConfigAnalogUser(MotorController_T * p_mc, MotV
     Type of NameBase e.g. MotVarId_Monitor_General_T
     struct id
 */
+/* MotorController_Var_TypeIO */
 typedef enum MotVarId_Type_RealTime /* : uint16_t */
 {
     /* Monitor - Read-Only */
@@ -222,8 +223,10 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
 }
 MotVarId_Type_RealTime_T;
 
+/* MotorController_Var_TypeConfig */
 typedef enum MotVarId_Type_Config
 {
+    // MOT_VAR_TYPE_CONFIG_MOTOR_PRIMARY,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL,
@@ -249,6 +252,7 @@ typedef enum MotVarId_TypeType
 }
 MotVarId_TypeType_T;
 
+// MotorController_VarKey_T
 typedef union MotVarId
 {
     struct

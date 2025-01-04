@@ -83,6 +83,38 @@ void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController
 //     return isSuccess;
 // }
 
+bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
+{
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_fract16);
+    // MotorController_SetSpeedLimitAll(MotorController_T * p_mc, USER,   limit_fract16)
+}
+
+bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
+{
+    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearSpeedLimit);
+}
+
+bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
+{
+    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_fract16);
+}
+
+bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
+{
+    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearILimit);
+}
+
+void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)
+{
+    if (isEnable == true)   { MotorController_User_SetSpeedLimitAll(p_mc, p_mc->Config.OptSpeedLimit_Fract16); }
+    else                    { MotorController_User_ClearSpeedLimitAll(p_mc); }
+}
+
+void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEnable)
+{
+    if (isEnable == true)   { MotorController_User_SetILimitAll(p_mc, p_mc->Config.OptILimit_Fract16); }
+    else                    { MotorController_User_ClearILimitAll(p_mc); }
+}
 
 /******************************************************************************/
 /* Config */
@@ -150,14 +182,6 @@ NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController
 //     }
 // }
 
-// static inline void MotorController_User_SetMotorIO(MotorController_T * p_mc, uint8_t motorId, uint8_t varId, int32_t varValue)
-// {
-//     Motor_T * p_motor;
-//     {
-//         p_motor = MotorController_User_GetPtrMotor(p_mc, motorId);
-//         if (p_motor != NULL) { Motor_User_SetVar(p_motor, varId, varValue); }
-//     }
-// }
 
 /******************************************************************************/
 /*

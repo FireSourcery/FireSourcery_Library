@@ -137,7 +137,7 @@ typedef enum MotorController_DriveId
 MotorController_DriveId_T;
 
 /* Blocking SubState/Function Id */
-typedef enum MotorController_LockedId
+typedef enum MotorController_LockId
 {
     MOTOR_CONTROLLER_LOCK_ENTER,
     MOTOR_CONTROLLER_LOCK_EXIT,

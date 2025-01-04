@@ -150,7 +150,7 @@ angle16_t fract16_atan2(fract16_t y, fract16_t x)
 
     if (y < 0) { angle = 0 - angle; }
 
-    return angle; /* angle wraps, no need to saturate */
+    return angle;
 }
 
 /*

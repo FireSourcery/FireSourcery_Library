@@ -181,6 +181,8 @@ static inline void VMonitor_SetWarningLower_MilliV(VMonitor_T * p_vMonitor, uint
 
 static inline void VMonitor_SetNominal_MilliV(VMonitor_T * p_vMonitor, uint32_t mV)             { p_vMonitor->Config.Nominal_Adcu = Linear_Voltage_AdcuInputOfMilliV(&p_vMonitor->Units, mV); }
 
+
+
 /******************************************************************************/
 /*!
     Extern
@@ -190,4 +192,8 @@ extern void VMonitor_Init(VMonitor_T * p_vMonitor);
 extern VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu);
 extern void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor);
 // extern void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef);
+
+extern int32_t VMonitor_ConfigId_Get(const VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId);
+extern void VMonitor_ConfigId_Set(VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId, uint16_t value);
+
 #endif

@@ -256,7 +256,6 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_i
     }
 
     /* Alternatively, transition through Freewheel */
-    // p_nextState = &STATE_FREEWHEEL; /* Observed bemf may experience larger discontinuity than control voltage */
 
     return p_nextState;
 }
