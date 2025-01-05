@@ -107,7 +107,7 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
             case THERMISTOR_STATUS_WARNING_THRESHOLD:
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StateFlags.HeatWarning = 1U;
-                Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
+                Motor_SetILimitMotoringEntry_Scalar(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
             case THERMISTOR_STATUS_FAULT_THRESHOLD:
             case THERMISTOR_STATUS_FAULT:

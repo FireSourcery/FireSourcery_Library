@@ -195,15 +195,17 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
 
     switch (id)
     {
-        case MOT_USER_SYSTEM_BEEP:          MotorController_User_BeepN(p_mc, 500U, 500U, value);                                  break;
-        case MOT_USER_SYSTEM_CLEAR_FAULT:   isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);                     break;
-        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_mc, value);                                      break;
+        case MOT_USER_SYSTEM_BEEP:          MotorController_User_BeepN(p_mc, 500U, 500U, value);                break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:   isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);   break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_mc, value);                    break;
 
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE:
+            // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
             MotorController_User_InputLock(p_mc, (MotorController_LockId_T)value);
+            // status = MotorController_User_GetLockOpState(p_mc);
             status = MotorController_User_GetLockOpStatus(p_mc);
             break;
         case MOT_USER_SYSTEM_LOCK_STATUS:
@@ -211,8 +213,7 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
             status = MotorController_User_GetLockOpStatus(p_mc);
             break;
         // include for convenience
-        // case MOT_USER_SYSTEM_PARK:
-        //     isSuccess = MotorController_User_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
+        // case MOT_USER_SYSTEM_PARK:isSuccess = MotorController_User_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
 
         // case MOT_USER_SYSTEM_SERVO:  MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value);        break;
         default: break;

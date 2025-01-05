@@ -218,7 +218,7 @@ static inline void MotorController_User_InputLock(MotorController_T * p_mc, Moto
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_LOCK, id);
 }
 
-static inline bool MotorController_User_IsLockState(MotorController_T * p_mc)
+static inline bool MotorController_User_IsLockState(const MotorController_T * p_mc)
 {
     return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_LOCK);
 }
@@ -248,28 +248,13 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 }
 
 /* Lock State returns to ENTER */
-static inline MotorController_LockId_T MotorController_User_GetLockOpState(const MotorController_T * p_mc) { return p_mc->LockSubState; }
+static inline MotorController_LockId_T MotorController_User_GetLockOpState(const MotorController_T * p_mc)
+{
+    return MotorController_User_IsLockState(p_mc) ? p_mc->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
+}
 static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_mc) { return p_mc->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER; }
-
 /* return union status */
 static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController_T * p_mc) { return p_mc->LockOpStatus; }
-
-// static inline uint32_t MotorController_User_GetLockOpStatus(MotorController_T * p_mc, MotorController_LockId_T opId)
-// {
-//     uint32_t status = MOT_VAR_STATUS_OK;
-
-//     switch (opId)
-//     {
-//         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:    status = p_mc->LockOpStatus;    break;
-//         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:       status = p_mc->LockOpStatus;    break;
-//         case MOTOR_CONTROLLER_LOCK_ENTER:               status = MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;       break;
-//         case MOTOR_CONTROLLER_LOCK_EXIT:                status = !MotorController_User_IsLockState(p_mc) ? MOT_VAR_STATUS_OK : MOT_VAR_STATUS_ERROR;      break;
-//         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     status = p_mc->NvmStatus;       break;
-//         case MOTOR_CONTROLLER_LOCK_REBOOT:              status = MOT_VAR_STATUS_OK;     break;
-//         default: break;
-//     }
-//     return status;
-// }
 
 /******************************************************************************/
 /*
@@ -335,11 +320,10 @@ typedef union MotorController_User_StatusFlags
     struct
     {
         uint16_t HeatWarning        : 1U; // ILimit by Heat
-        uint16_t VLow               : 1U; // ILimit by VLow
-        uint16_t SpeedLimit         : 1U;
-        uint16_t ILimit             : 1U;
-        // uint16_t IsStopped          : 1U;
-        uint16_t BuzzerEnable       : 1U;
+        uint16_t VSourceLow               : 1U; // ILimit by VSourceLow
+        // uint16_t SpeedLimit         : 1U;
+        // uint16_t ILimit             : 1U;
+        // uint16_t BuzzerEnable       : 1U;
         // derive from thermistor functions
         // uint16_t ILimitHeatMosfets  : 1U;
         // uint16_t ILimitHeatPcb      : 1U;
@@ -354,8 +338,8 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
     return (MotorController_User_StatusFlags_T)
     {
         .HeatWarning    = p_mc->StateFlags.HeatWarning,
-        .VLow           = p_mc->StateFlags.VLow,
-        .BuzzerEnable   = p_mc->StateFlags.BuzzerEnable,
+        .VSourceLow           = p_mc->StateFlags.VSourceLow,
+        // .BuzzerEnable   = p_mc->StateFlags.BuzzerEnable,
     };
 }
 

@@ -161,12 +161,13 @@ typedef enum MotorController_OptDinMode
 }
 MotorController_OptDinMode_T;
 
-typedef union MotorController_StatusFlags
+// typedef union MotorController_State_Common
+typedef union MotorController_StateFlags
 {
     struct
     {
         uint16_t HeatWarning            : 1U; // ILimit by Heat
-        uint16_t VLow                   : 1U; // ILimit by VLow
+        uint16_t VSourceLow                   : 1U; // ILimit by VSourceLow
         // uint16_t SpeedLimit          : 1U; // use active speed limit?
         // uint16_t ILimit              : 1U;
         // derive from thermistor functions
@@ -184,6 +185,7 @@ MotorController_StateFlags_T;
     Fault SubState flags
     Faults flags with exception of RxLost retain set state until user clears
 */
+// typedef union MotorController_State_Fault
 typedef union MotorController_FaultFlags
 {
     struct
@@ -217,7 +219,7 @@ typedef union MotorController_InitFlags
 }
 MotorController_InitFlags_T;
 
-/* Buzzer Control */
+/* Buzzer Config  options enabled for use */
 typedef union MotorController_BuzzerFlags
 {
     struct
@@ -264,6 +266,7 @@ typedef struct MotorController_Config
     MotorController_ThrottleMode_T ThrottleMode;
     MotorController_DriveZeroMode_T DriveZeroMode;
     MotorController_OptDinMode_T OptDinMode;
+// MotorController_BuzzerFlags_T BuzzerFlags;
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
     uint16_t VLowILimit_Fract16;
@@ -275,7 +278,6 @@ typedef struct MotorController_Config
     uint16_t BatteryZero_Adcu;
     uint16_t BatteryFull_Adcu;
 #endif
-    // MotorController_BuzzerFlags_T BuzzerFlags; /* which options are enabled for use */
 }
 MotorController_Config_T;
 
@@ -374,7 +376,7 @@ typedef struct MotorController
     int32_t UserCmdValue;
     Motor_FeedbackMode_T UserCmdMode;
 
-    uint8_t CmdMotorId; /* for VarId, Value input mode only */
+    // uint8_t CmdMotorId; /* for VarId, Value input mode only */
     /* Async return status */
     // union
     // {

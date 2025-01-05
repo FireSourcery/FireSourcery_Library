@@ -165,13 +165,13 @@ typedef union Motor_User_StatusFlags
         uint16_t Hold           : 1U;
         uint16_t Release        : 1U;
     };
-    uint16_t Word;
+    uint16_t Value;
 }
 Motor_User_StatusFlags_T;
 
 static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T * p_motor)
 {
-    Motor_User_StatusFlags_T status =
+    return (Motor_User_StatusFlags_T)
     {
         .HeatWarning    = Thermistor_IsWarning(&p_motor->Thermistor),
         .ILimitSet      = Limit_IsUpperActive(&p_motor->ILimit),
@@ -181,8 +181,6 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T *
         .Hold           = Motor_User_IsHold(p_motor),
         .Release        = Motor_User_IsRelease(p_motor),
     };
-
-    return status;
 }
 
 /******************************************************************************/

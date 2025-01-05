@@ -394,12 +394,6 @@ typedef struct Motor
     /*
         Active Limits
     */
-    Limit_T SpeedLimit;
-    Limit_T ILimit;
-    /* Sentinel values buffers */
-    uint16_t SpeedLimitBuffer[SPEED_LIMIT_ID_COUNT];
-    uint16_t ILimitBuffer[I_LIMIT_ID_COUNT];
-
     /* Non directional */
     uint16_t SpeedLimitForward_Fract16; /* May over saturate */
     uint16_t SpeedLimitReverse_Fract16;
@@ -411,6 +405,12 @@ typedef struct Motor
     // int16_t SpeedLimitCw_Fract16;   /* - */
     // int16_t ILimitCcw_Fract16;      /* + */
     // int16_t ILimitCw_Fract16;       /* - */
+
+    /* Sentinel values buffers */
+    Limit_T SpeedLimit;
+    Limit_T ILimit;
+    uint16_t SpeedLimitBuffer[SPEED_LIMIT_ID_COUNT];
+    uint16_t ILimitBuffer[I_LIMIT_ID_COUNT];
 
     /*
         Input

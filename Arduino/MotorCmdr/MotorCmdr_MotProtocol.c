@@ -82,7 +82,7 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
     //     // case MOT_VAR_I_PEAK_AMP:        Motor_User_GetIPhase_Amps(MotorController_User_GetPtrMotor(p_mc, 0U));     break;
     //     // case MOT_VAR_SPEED_GROUND_KMH:    Motor_User_GetSpeed_Rpm(MotorController_User_GetPtrMotor(p_mc, 0U));     break;
     //     // case MOT_VAR_HEAT_PCB_DEG_C:    MotorController_User_GetHeatPcb_DegC(p_mc, 1U);             break;
-    //     // case MOT_VAR_FOC_IQ:            MotorController_User_GetPtrMotor(p_mc, 0U)->Foc.Iq;         break;
+    //     // case MOTOR_VAR_FOC_IQ:            MotorController_User_GetPtrMotor(p_mc, 0U)->Foc.Iq;         break;
 
     //     case MOT_VAR_PARAM_TEST_BEGIN:    break;                    /*  */
     //     case MOT_VAR_PARAM_TEST_1:        break;                        /* Value 16-bit */
@@ -91,8 +91,8 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
     //     case MOT_VAR_PARAM_TEST_4:        break;                        /* Value enum: 0:White, 1:Black, 2:Red, */
     //     // case MOT_VAR_PARAM_TEST_5:    value = p_mc->Config.Test[4U];    break;                        /*   */
 
-    //     case MOT_VAR_POLE_PAIRS:                        break;
-    //     case MOT_VAR_SPEED_V_REF_RPM:    break;
+    //     case MOTOR_VAR_POLE_PAIRS:                        break;
+    //     case MOTOR_VAR_SPEED_V_REF_RPM:    break;
     //     case MOT_VAR_I_MAX_REF_AMP:           break;
     //     default: break;
     // }

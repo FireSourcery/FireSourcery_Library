@@ -252,7 +252,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             _MotorController_ProcOptDin(p_mc);
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
-            // for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
             /* Can use low priority check, as motor is already in fault state */
             if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_EnterFault(p_mc); }
 
@@ -288,17 +287,17 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
         case VMONITOR_WARNING_UPPER:
             break;
         case VMONITOR_WARNING_LOWER:
-            if (p_mc->StateFlags.VLow == 0U)
+            if (p_mc->StateFlags.VSourceLow == 0U)
             {
-                p_mc->StateFlags.VLow = 1U;
+                p_mc->StateFlags.VSourceLow = 1U;
                 MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
         case VMONITOR_STATUS_OK:
-            if (p_mc->StateFlags.VLow == 1U)
+            if (p_mc->StateFlags.VSourceLow == 1U)
             {
-                p_mc->StateFlags.VLow = 0U;
+                p_mc->StateFlags.VSourceLow = 0U;
                 MotorController_ClearILimitAll(p_mc, MOTOR_I_LIMIT_V_LOW);
             }
             break;
