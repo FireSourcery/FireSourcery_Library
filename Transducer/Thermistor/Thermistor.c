@@ -298,54 +298,54 @@ thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm)   { 
 //     switch (id)
 //     {
 
-//         case MOT_VAR_THERMISTOR_VALUE_ADCU:     value = p_thermistor->Adcu;                         break;
-//         case MOT_VAR_THERMISTOR_STATUS:         value = Thermistor_GetStatus(p_thermistor);         break;
+//         case THERMISTOR_CONFIG_VALUE_ADCU:     value = p_thermistor->Adcu;                         break;
+//         case THERMISTOR_CONFIG_STATUS:         value = Thermistor_GetStatus(p_thermistor);         break;
 //         default: value = 0; break;
 //     }
 //     return value;
 // }
 
-int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id)
+int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, Thermistor_ConfigId_T id)
 {
     int32_t value = 0;
     // if (p_thermistor != NULL)
     {
         switch (id)
         {
-            case MOT_VAR_THERMISTOR_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                 break;
-            case MOT_VAR_THERMISTOR_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;               break;
-            case MOT_VAR_THERMISTOR_R0:                         value = Thermistor_GetR0(p_thermistor) / 10U;               break;
-            case MOT_VAR_THERMISTOR_T0:                         value = Thermistor_GetT0(p_thermistor);                     break;
-            case MOT_VAR_THERMISTOR_B:                          value = Thermistor_GetB(p_thermistor);                      break;
-            case MOT_VAR_THERMISTOR_TYPE:                       value = Thermistor_GetType(p_thermistor);                   break;
-            case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:         value = Thermistor_GetFaultTrigger_Adcu(p_thermistor);      break;
-            case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:       value = Thermistor_GetFaultThreshold_Adcu(p_thermistor);    break;
-            case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:       value = Thermistor_GetWarningTrigger_Adcu(p_thermistor);    break;
-            case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
-            case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          value = Thermistor_IsMonitorEnable(p_thermistor);           break;
+            case THERMISTOR_CONFIG_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                 break;
+            case THERMISTOR_CONFIG_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;               break;
+            case THERMISTOR_CONFIG_R0:                         value = Thermistor_GetR0(p_thermistor) / 10U;               break;
+            case THERMISTOR_CONFIG_T0:                         value = Thermistor_GetT0(p_thermistor);                     break;
+            case THERMISTOR_CONFIG_B:                          value = Thermistor_GetB(p_thermistor);                      break;
+            case THERMISTOR_CONFIG_TYPE:                       value = Thermistor_GetType(p_thermistor);                   break;
+            case THERMISTOR_CONFIG_FAULT_TRIGGER_ADCU:         value = Thermistor_GetFaultTrigger_Adcu(p_thermistor);      break;
+            case THERMISTOR_CONFIG_FAULT_THRESHOLD_ADCU:       value = Thermistor_GetFaultThreshold_Adcu(p_thermistor);    break;
+            case THERMISTOR_CONFIG_WARNING_TRIGGER_ADCU:       value = Thermistor_GetWarningTrigger_Adcu(p_thermistor);    break;
+            case THERMISTOR_CONFIG_WARNING_THRESHOLD_ADCU:     value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
+            case THERMISTOR_CONFIG_IS_MONITOR_ENABLE:          value = Thermistor_IsMonitorEnable(p_thermistor);           break;
             default: break;
         }
     }
     return value;
 }
 
-void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id, int32_t value)
+void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, Thermistor_ConfigId_T id, int32_t value)
 {
     // if (p_thermistor != NULL)
     {
         switch (id)
         {
-            case MOT_VAR_THERMISTOR_R_SERIES:                   break;
-            case MOT_VAR_THERMISTOR_R_PARALLEL:                 break;
-            case MOT_VAR_THERMISTOR_R0:                         Thermistor_SetR0(p_thermistor, value);                     break;
-            case MOT_VAR_THERMISTOR_T0:                         Thermistor_SetT0(p_thermistor, value);                     break;
-            case MOT_VAR_THERMISTOR_B:                          Thermistor_SetB(p_thermistor, value);                      break;
-            case MOT_VAR_THERMISTOR_TYPE:                       Thermistor_SetType(p_thermistor, value);                   break;
-            case MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU:         Thermistor_SetFaultTrigger_Adcu(p_thermistor, value);      break;
-            case MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU:       Thermistor_SetFaultThreshold_Adcu(p_thermistor, value);    break;
-            case MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU:       Thermistor_SetWarningTrigger_Adcu(p_thermistor, value);    break;
-            case MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU:     Thermistor_SetWarningThreshold_Adcu(p_thermistor, value);  break;
-            case MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE:          Thermistor_SetIsMonitorEnable(p_thermistor, value);        break;
+            case THERMISTOR_CONFIG_R_SERIES:                   break;
+            case THERMISTOR_CONFIG_R_PARALLEL:                 break;
+            case THERMISTOR_CONFIG_R0:                         Thermistor_SetR0(p_thermistor, value);                     break;
+            case THERMISTOR_CONFIG_T0:                         Thermistor_SetT0(p_thermistor, value);                     break;
+            case THERMISTOR_CONFIG_B:                          Thermistor_SetB(p_thermistor, value);                      break;
+            case THERMISTOR_CONFIG_TYPE:                       Thermistor_SetType(p_thermistor, value);                   break;
+            case THERMISTOR_CONFIG_FAULT_TRIGGER_ADCU:         Thermistor_SetFaultTrigger_Adcu(p_thermistor, value);      break;
+            case THERMISTOR_CONFIG_FAULT_THRESHOLD_ADCU:       Thermistor_SetFaultThreshold_Adcu(p_thermistor, value);    break;
+            case THERMISTOR_CONFIG_WARNING_TRIGGER_ADCU:       Thermistor_SetWarningTrigger_Adcu(p_thermistor, value);    break;
+            case THERMISTOR_CONFIG_WARNING_THRESHOLD_ADCU:     Thermistor_SetWarningThreshold_Adcu(p_thermistor, value);  break;
+            case THERMISTOR_CONFIG_IS_MONITOR_ENABLE:          Thermistor_SetIsMonitorEnable(p_thermistor, value);        break;
         }
     }
 }

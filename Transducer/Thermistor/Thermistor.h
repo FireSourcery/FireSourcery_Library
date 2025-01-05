@@ -164,31 +164,28 @@ Thermistor_T;
     .Config = _THERMISTOR_INIT_CONFIG_B(B, R0, T0_Kelvin),                      \
 }
 
-
-// typedef enum Thermistor_ConfigId_T
-typedef enum MotVarId_Config_Thermistor
+typedef enum Thermistor_ConfigId
 {
-    // THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
-    MOT_VAR_THERMISTOR_R_SERIES, // All instance Read-Only
-    MOT_VAR_THERMISTOR_R_PARALLEL, // All instance Read-Only
-    MOT_VAR_THERMISTOR_TYPE,
-    MOT_VAR_THERMISTOR_R0,
-    MOT_VAR_THERMISTOR_T0,
-    MOT_VAR_THERMISTOR_B,
-    // MOT_VAR_THERMISTOR_LINEAR_T0_ADCU,
-    // MOT_VAR_THERMISTOR_LINEAR_T1_ADCU,
-    // MOT_VAR_THERMISTOR_LINEAR_T0_DEG_C,
-    // MOT_VAR_THERMISTOR_LINEAR_T1_DEG_C,
-    // MOT_VAR_THERMISTOR_LINEAR_DELTA_R,
-    // MOT_VAR_THERMISTOR_LINEAR_DELTA_T_ADCU,
-    // MOT_VAR_THERMISTOR_LINEAR_DELTA_T_DEG,
-    MOT_VAR_THERMISTOR_FAULT_TRIGGER_ADCU,
-    MOT_VAR_THERMISTOR_FAULT_THRESHOLD_ADCU,
-    MOT_VAR_THERMISTOR_WARNING_TRIGGER_ADCU,
-    MOT_VAR_THERMISTOR_WARNING_THRESHOLD_ADCU,
-    MOT_VAR_THERMISTOR_IS_MONITOR_ENABLE,
+    THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
+    THERMISTOR_CONFIG_R_PARALLEL, // All instance Read-Only
+    THERMISTOR_CONFIG_TYPE,
+    THERMISTOR_CONFIG_R0,
+    THERMISTOR_CONFIG_T0,
+    THERMISTOR_CONFIG_B,
+    // THERMISTOR_CONFIG_LINEAR_T0_ADCU,
+    // THERMISTOR_CONFIG_LINEAR_T1_ADCU,
+    // THERMISTOR_CONFIG_LINEAR_T0_DEG_C,
+    // THERMISTOR_CONFIG_LINEAR_T1_DEG_C,
+    // THERMISTOR_CONFIG_LINEAR_DELTA_R,
+    // THERMISTOR_CONFIG_LINEAR_DELTA_T_ADCU,
+    // THERMISTOR_CONFIG_LINEAR_DELTA_T_DEG,
+    THERMISTOR_CONFIG_FAULT_TRIGGER_ADCU,
+    THERMISTOR_CONFIG_FAULT_THRESHOLD_ADCU,
+    THERMISTOR_CONFIG_WARNING_TRIGGER_ADCU,
+    THERMISTOR_CONFIG_WARNING_THRESHOLD_ADCU,
+    THERMISTOR_CONFIG_IS_MONITOR_ENABLE,
 }
-MotVarId_Config_Thermistor_T;
+Thermistor_ConfigId_T;
 
 /******************************************************************************/
 /*
@@ -277,8 +274,8 @@ extern thermal_t Thermistor_GetFaultThreshold_DegC(const Thermistor_T * p_therm)
 extern thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm);
 extern thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm);
 
-extern int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id);
-extern void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, MotVarId_Config_Thermistor_T id, int32_t value);
+extern int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, Thermistor_ConfigId_T id);
+extern void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, Thermistor_ConfigId_T id, int32_t value);
 
 #endif
 

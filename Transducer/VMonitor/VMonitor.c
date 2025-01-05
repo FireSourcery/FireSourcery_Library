@@ -98,33 +98,33 @@ void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor)
     ConfigId
 */
 /******************************************************************************/
-void VMonitor_ConfigId_Set(VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId, uint16_t value)
+void VMonitor_ConfigId_Set(VMonitor_T * p_vMonitor, VMonitor_ConfigId_T configId, uint16_t value)
 {
     switch(configId)
     {
-        case MOT_VAR_VMONITOR_R1:                                                                    break;
-        case MOT_VAR_VMONITOR_R2:                                                                    break;
-        case MOT_VAR_VMONITOR_FAULT_UPPER_ADCU:     VMonitor_SetFaultUpper(p_vMonitor, value);       break;
-        case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     VMonitor_SetFaultLower(p_vMonitor, value);       break;
-        case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   VMonitor_SetWarningUpper(p_vMonitor, value);     break;
-        case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   VMonitor_SetWarningLower(p_vMonitor, value);     break;
-        case MOT_VAR_VMONITOR_IS_ENABLE:            VMonitor_SetIsEnable(p_vMonitor, value);         break;
+        case VMONITOR_CONFIG_R1:                                                                    break;
+        case VMONITOR_CONFIG_R2:                                                                    break;
+        case VMONITOR_CONFIG_FAULT_UPPER_ADCU:     VMonitor_SetFaultUpper(p_vMonitor, value);       break;
+        case VMONITOR_CONFIG_FAULT_LOWER_ADCU:     VMonitor_SetFaultLower(p_vMonitor, value);       break;
+        case VMONITOR_CONFIG_WARNING_UPPER_ADCU:   VMonitor_SetWarningUpper(p_vMonitor, value);     break;
+        case VMONITOR_CONFIG_WARNING_LOWER_ADCU:   VMonitor_SetWarningLower(p_vMonitor, value);     break;
+        case VMONITOR_CONFIG_IS_ENABLE:            VMonitor_SetIsEnable(p_vMonitor, value);         break;
         default: break;
     }
 }
 
-int32_t VMonitor_ConfigId_Get(const VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId)
+int32_t VMonitor_ConfigId_Get(const VMonitor_T * p_vMonitor, VMonitor_ConfigId_T configId)
 {
     int32_t value = 0;
     switch(configId)
     {
-        case MOT_VAR_VMONITOR_R1:                   value = p_vMonitor->CONST.UNITS_R1 / 10U;       break;
-        case MOT_VAR_VMONITOR_R2:                   value = p_vMonitor->CONST.UNITS_R2 / 10U;       break;
-        case MOT_VAR_VMONITOR_FAULT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);     break;
-        case MOT_VAR_VMONITOR_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);     break;
-        case MOT_VAR_VMONITOR_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);   break;
-        case MOT_VAR_VMONITOR_WARNING_LOWER_ADCU:   value = VMonitor_GetWarningLower(p_vMonitor);   break;
-        case MOT_VAR_VMONITOR_IS_ENABLE:            value = VMonitor_IsEnable(p_vMonitor);          break;
+        case VMONITOR_CONFIG_R1:                   value = p_vMonitor->CONST.UNITS_R1 / 10U;       break;
+        case VMONITOR_CONFIG_R2:                   value = p_vMonitor->CONST.UNITS_R2 / 10U;       break;
+        case VMONITOR_CONFIG_FAULT_UPPER_ADCU:     value = VMonitor_GetFaultUpper(p_vMonitor);     break;
+        case VMONITOR_CONFIG_FAULT_LOWER_ADCU:     value = VMonitor_GetFaultLower(p_vMonitor);     break;
+        case VMONITOR_CONFIG_WARNING_UPPER_ADCU:   value = VMonitor_GetWarningUpper(p_vMonitor);   break;
+        case VMONITOR_CONFIG_WARNING_LOWER_ADCU:   value = VMonitor_GetWarningLower(p_vMonitor);   break;
+        case VMONITOR_CONFIG_IS_ENABLE:            value = VMonitor_IsEnable(p_vMonitor);          break;
         default: break;
     }
     return value;

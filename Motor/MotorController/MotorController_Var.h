@@ -181,8 +181,8 @@ typedef enum MotVarId_Config_BootRef
 }
 MotVarId_Config_BootRef_T;
 
-// typedef MotVarId_Config_Thermistor_T MotVarId_Config_BoardThermistor_T;
-// typedef MotVarId_Config_Thermistor_T MotVarId_Config_MotorThermistor_T;
+// typedef Thermistor_ConfigId_T MotVarId_Config_BoardThermistor_T;
+// typedef Thermistor_ConfigId_T MotVarId_Config_MotorThermistor_T;
 
 int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotVarId_Monitor_General_T id);
 int32_t MotorController_VarOutput_Debug_Get(const MotorController_T * p_mc, MotorController_VarOutput_Debug_T id);

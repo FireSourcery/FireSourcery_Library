@@ -461,7 +461,7 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:
-            if (p_motor != NULL) { value = Thermistor_ConfigId_Get(&p_motor->Thermistor, (MotVarId_Config_Thermistor_T)varId.NameBase); }
+            if (p_motor != NULL) { value = Thermistor_ConfigId_Get(&p_motor->Thermistor, (Thermistor_ConfigId_T)varId.NameBase); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:
@@ -489,12 +489,12 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 
         case MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR:
             p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
-            if (p_thermistor != NULL) { value = Thermistor_ConfigId_Get(p_thermistor, (MotVarId_Config_Thermistor_T)varId.NameBase); }
+            if (p_thermistor != NULL) { value = Thermistor_ConfigId_Get(p_thermistor, (Thermistor_ConfigId_T)varId.NameBase); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_VMONITOR:
             p_vMonitor = MotorController_User_GetPtrVMonitor(p_mc, varId.Instance);
-            if (p_vMonitor != NULL) { VMonitor_ConfigId_Get(p_vMonitor, (MotVarId_Config_VMonitor_T)varId.NameBase); }
+            if (p_vMonitor != NULL) { VMonitor_ConfigId_Get(p_vMonitor, (VMonitor_ConfigId_T)varId.NameBase); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_PROTOCOL:
@@ -605,7 +605,7 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:
-            if(p_motor != NULL) { Thermistor_ConfigId_Set(&(p_motor->Thermistor), (MotVarId_Config_Thermistor_T)varId.NameBase, varValue); }
+            if(p_motor != NULL) { Thermistor_ConfigId_Set(&(p_motor->Thermistor), (Thermistor_ConfigId_T)varId.NameBase, varValue); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:
@@ -635,16 +635,16 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
         case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:       MotorController_Config_BootRef_Set(p_mc, (MotVarId_Config_BootRef_T)varId.NameBase, varValue);       break;
 
         case MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR:
-            if((MotVarId_Config_Thermistor_T)varId.NameBase == MOT_VAR_THERMISTOR_R0) break;
-            if((MotVarId_Config_Thermistor_T)varId.NameBase == MOT_VAR_THERMISTOR_T0) break;
-            if((MotVarId_Config_Thermistor_T)varId.NameBase == MOT_VAR_THERMISTOR_B) break;
+            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_R0) break;
+            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_T0) break;
+            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_B) break;
             p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
-            if(p_thermistor != NULL) { Thermistor_ConfigId_Set(p_thermistor, (MotVarId_Config_Thermistor_T)varId.NameBase, varValue); }
+            if(p_thermistor != NULL) { Thermistor_ConfigId_Set(p_thermistor, (Thermistor_ConfigId_T)varId.NameBase, varValue); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_VMONITOR:
             p_vMonitor = MotorController_User_GetPtrVMonitor(p_mc, varId.Instance);
-            if (p_vMonitor != NULL) { VMonitor_ConfigId_Set(p_vMonitor, (MotVarId_Config_VMonitor_T)varId.NameBase, varValue); }
+            if (p_vMonitor != NULL) { VMonitor_ConfigId_Set(p_vMonitor, (VMonitor_ConfigId_T)varId.NameBase, varValue); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_PROTOCOL:

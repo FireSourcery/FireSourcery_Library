@@ -104,17 +104,17 @@ VMonitor_T;
 // }
 
 
-typedef enum MotVarId_Config_VMonitor
+typedef enum VMonitor_ConfigId
 {
-    MOT_VAR_VMONITOR_R1, // All instance Read-Only
-    MOT_VAR_VMONITOR_R2, // All instance Read-Only
-    MOT_VAR_VMONITOR_FAULT_UPPER_ADCU,
-    MOT_VAR_VMONITOR_FAULT_LOWER_ADCU,
-    MOT_VAR_VMONITOR_WARNING_UPPER_ADCU,
-    MOT_VAR_VMONITOR_WARNING_LOWER_ADCU,
-    MOT_VAR_VMONITOR_IS_ENABLE,
+    VMONITOR_CONFIG_R1, // All instance Read-Only
+    VMONITOR_CONFIG_R2, // All instance Read-Only
+    VMONITOR_CONFIG_FAULT_UPPER_ADCU,
+    VMONITOR_CONFIG_FAULT_LOWER_ADCU,
+    VMONITOR_CONFIG_WARNING_UPPER_ADCU,
+    VMONITOR_CONFIG_WARNING_LOWER_ADCU,
+    VMONITOR_CONFIG_IS_ENABLE,
 }
-MotVarId_Config_VMonitor_T;
+VMonitor_ConfigId_T;
 
 
 static inline VMonitor_Status_T VMonitor_GetStatus(const VMonitor_T * p_vMonitor)   { return (p_vMonitor->Status); }
@@ -193,7 +193,7 @@ extern VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t a
 extern void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor);
 // extern void VMonitor_SetVInRef(VMonitor_T * p_vMonitor, uint32_t vInRef);
 
-extern int32_t VMonitor_ConfigId_Get(const VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId);
-extern void VMonitor_ConfigId_Set(VMonitor_T * p_vMonitor, MotVarId_Config_VMonitor_T configId, uint16_t value);
+extern int32_t VMonitor_ConfigId_Get(const VMonitor_T * p_vMonitor, VMonitor_ConfigId_T configId);
+extern void VMonitor_ConfigId_Set(VMonitor_T * p_vMonitor, VMonitor_ConfigId_T configId, uint16_t value);
 
 #endif
