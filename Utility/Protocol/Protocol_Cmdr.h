@@ -42,11 +42,11 @@
 */
 /******************************************************************************/
 /* One function handle all cases. Alternatively, use function table */
-// typedef void (*Protocol_Cmdr_BuildTxReq_T)(uint8_t * p_txPacket, size_t * p_txLength, const void * p_appInterface, protocol_reqid_t reqId); //size_t * p_rxRemainig,
+// typedef void (*Protocol_Cmdr_BuildTxReq_T)(uint8_t * p_txPacket, size_t * p_txLength, const void * p_appInterface, protocol_req_id_t reqId); //size_t * p_rxRemainig,
 // // typedef void (*Protocol_Cmdr_BuildReq_T)(uint8_t * p_txPacket, size_t * p_txLength, const void * p_appInterface); //size_t * p_rxRemainig,
 
-// extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-// extern void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
+// extern void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_req_id_t cmdId);
+// extern void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_req_id_t cmdId);
 // extern bool Protocol_Cmdr_CheckTxIdle(Protocol_T * p_protocol);
 
 #endif
@@ -54,7 +54,7 @@
 /*
 
 */
-// extern size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId);
-// extern size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId);
+// extern size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_req_id_t cmdId);
+// extern size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_req_id_t cmdId);
 // extern bool _Protocol_Cmdr_PollTimeout(Protocol_T * p_protocol);
 // extern bool _Protocol_Cmdr_ParseResp(Protocol_T * p_protocol);

@@ -36,7 +36,7 @@
 
 */
 /******************************************************************************/
-int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotVarId_Monitor_General_T id)
+int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotorController_VarOutput_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -53,7 +53,7 @@ int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotVarId_M
         case MOT_VAR_HEAT_PCB:              value = MotorController_Analog_GetHeatPcb(p_mc);                break;
         case MOT_VAR_HEAT_MOSFETS:          value = MotorController_Analog_GetHeatMosfets(p_mc, 0);         break;
         #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
-        case MOT_VAR_BATTERY_CHARGE:        value = MotorController_User_GetBatteryCharge_Percent16(p_mc);   break;
+        case MOT_VAR_BATTERY_CHARGE:        value = MotorController_User_GetBatteryCharge_Percent16(p_mc);  break;
             // case MOT_VAR_HEAT_PCB_DEG_C:        value = MotorController_User_GetHeatPcb_DegC(p_mc, 1U);         break;
             // case MOT_VAR_HEAT_MOSFETS_DEG_C:    value = MotorController_User_GetHeatMosfets_DegC(p_mc, 1U);     break;
         #endif
@@ -61,7 +61,7 @@ int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotVarId_M
     return value;
 }
 
-int32_t MotorController_VarOutput_AnalogUser_Get(const MotorController_T * p_mc, MotVarId_Monitor_AnalogUser_T id)
+int32_t MotorController_VarOutput_AnalogUser_Get(const MotorController_T * p_mc, MotorController_VarOutput_AnalogUser_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -80,19 +80,19 @@ int32_t MotorController_VarOutput_Debug_Get(const MotorController_T * p_mc, Moto
     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0);
     switch (id)
     {
-        case MOT_VAR_OUTPUT_DEBUG0: value = p_motor->DebugTime[4];    break;
-        case MOT_VAR_OUTPUT_DEBUG1: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG2: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG3: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG4: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG5: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG6: value = 0;    break;
-        case MOT_VAR_OUTPUT_DEBUG7: value = 0;    break;
+        case MOT_VAR_DEBUG0: value = p_motor->DebugTime[4];    break;
+        case MOT_VAR_DEBUG1: value = 0;    break;
+        case MOT_VAR_DEBUG2: value = 0;    break;
+        case MOT_VAR_DEBUG3: value = 0;    break;
+        case MOT_VAR_DEBUG4: value = 0;    break;
+        case MOT_VAR_DEBUG5: value = 0;    break;
+        case MOT_VAR_DEBUG6: value = 0;    break;
+        case MOT_VAR_DEBUG7: value = 0;    break;
     }
     return value;
 }
 
-int32_t MotorController_VarIO_Get(const MotorController_T * p_mc, MotVarId_Control_General_T id)
+int32_t MotorController_VarIO_Get(const MotorController_T * p_mc, MotorController_VarIO_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -106,7 +106,7 @@ int32_t MotorController_VarIO_Get(const MotorController_T * p_mc, MotVarId_Contr
 /******************************************************************************/
 /* Inputs disabled on Analog Mode */
 /******************************************************************************/
-static uint32_t SetDriveCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value)
+static uint32_t SetDriveCmd(MotorController_T * p_mc, MotorController_VarInput_T id, int32_t value)
 {
     bool isSet = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL);
 
@@ -116,14 +116,15 @@ static uint32_t SetDriveCmd(MotorController_T * p_mc, MotVarId_Cmd_General_T id,
         {
             case MOT_VAR_THROTTLE:  MotorController_User_SetCmdThrottle(p_mc, value);        break;
             case MOT_VAR_BRAKE:     MotorController_User_SetCmdBrake(p_mc, value);           break;
-                // case MOT_VAR_DRIVE_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            // case MOT_VAR_DRIVE_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            // case MOT_VAR_USER_CMD:                  MotorController_User_SetCmdValue(p_mc, value);              break;
         }
     }
 
     return  (isSet == true) ? 0 : -1;
 }
 
-uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value)
+uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotorController_VarInput_T id, int32_t value)
 {
     volatile bool isSuccess = true;
 
@@ -143,10 +144,11 @@ uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotVarId_Cmd_Gen
     return (isSuccess == true) ? 0 : -1;
 }
 
-uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value)
+uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotorController_VarIO_T id, int32_t value)
 {
-    bool isSet = true;
-    if (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL)
+    bool isSet = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL);
+
+    if (isSet)
     {
         switch (id)
         {
@@ -159,44 +161,9 @@ uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotVarId_Control_Ge
 }
 
 /******************************************************************************/
-/*!
-    Per Motor Instance Input
-    with MotorController StateMachine check
-*/
-/******************************************************************************/
-// private check state
-static inline uint32_t MotorInstanceInput_Set(MotorController_T * p_mc, uint8_t motorInstance, Motor_VarInput_T id, int32_t value)
-{
-    Motor_T * p_motor;
-
-    //  if (MotorController_User_IsActiveState(p_mc)) //or set buffer
-    {
-        p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
-        if (p_motor != NULL) { Motor_VarInput_Set(p_motor, id, value); }
-        // MotorController_User_SetMotorValue(p_mc, motorInstance value);
-    }
-
-    return 0;
-}
-
-static inline uint32_t MotorInstanceIO_Set(MotorController_T * p_mc, uint8_t motorInstance, Motor_VarIO_T id, int32_t value)
-{
-    Motor_T * p_motor;
-
-    // if (MotorController_User_IsActiveState(p_mc))
-    {
-        p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
-        if (p_motor != NULL) { Motor_VarIO_Set(p_motor, id, value); }
-    }
-
-    return 0;
-}
-
-
-/******************************************************************************/
 /* Config */
 /******************************************************************************/
-int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotVarId_Config_General_T id)
+int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotorController_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -226,7 +193,7 @@ int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotVarId_Conf
 }
 
 /* Serialization of MotorController_Config */
-uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotVarId_Config_General_T id, int32_t value)
+uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotorController_ConfigId_T id, int32_t value)
 {
     switch (id)
     {
@@ -253,7 +220,7 @@ uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotVarId_Config_Ge
     }
 }
 
-int32_t MotorController_Config_AnalogUser_Get(const MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id)
+int32_t MotorController_Config_AnalogUser_Get(const MotorController_T * p_mc, MotorController_Config_AnalogUser_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -271,7 +238,7 @@ int32_t MotorController_Config_AnalogUser_Get(const MotorController_T * p_mc, Mo
     return value;
 }
 
-uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id, int32_t value)
+uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotorController_Config_AnalogUser_T id, int32_t value)
 {
     switch (id)
     {
@@ -289,7 +256,7 @@ uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotVarI
     return 0;
 }
 
-int32_t MotorController_Config_BootRef_Get(const MotorController_T * p_mc, MotVarId_Config_BootRef_T id)
+int32_t MotorController_Config_BootRef_Get(const MotorController_T * p_mc, MotorController_Config_BootRef_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -302,7 +269,7 @@ int32_t MotorController_Config_BootRef_Get(const MotorController_T * p_mc, MotVa
     return value;
 }
 
-uint32_t MotorController_Config_BootRef_Set(MotorController_T * p_mc, MotVarId_Config_BootRef_T id, int32_t value)
+uint32_t MotorController_Config_BootRef_Set(MotorController_T * p_mc, MotorController_Config_BootRef_T id, int32_t value)
 {
     switch (id)
     {
@@ -331,10 +298,10 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
 
     switch((MotVarId_Type_RealTime_T)varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_MONITOR_GENERAL:       value = MotorController_VarOutput_Get(p_mc, (MotVarId_Monitor_General_T)varId.NameBase);                break;
-        case MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER:   value = MotorController_VarOutput_AnalogUser_Get(p_mc, (MotVarId_Monitor_AnalogUser_T)varId.NameBase);  break;
-        case MOT_VAR_ID_TYPE_DEBUG:                 value = MotorController_VarOutput_Debug_Get(p_mc, (MotorController_VarOutput_Debug_T)varId.NameBase);   break;
-        case MOT_VAR_ID_TYPE_CONTROL_GENERAL:       value = MotorController_VarIO_Get(p_mc, (MotVarId_Control_General_T)varId.NameBase);                    break;
+        case MOT_VAR_ID_TYPE_MONITOR_GENERAL:       value = MotorController_VarOutput_Get(p_mc, (MotorController_VarOutput_T)varId.NameBase);                           break;
+        case MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER:   value = MotorController_VarOutput_AnalogUser_Get(p_mc, (MotorController_VarOutput_AnalogUser_T)varId.NameBase);     break;
+        case MOT_VAR_ID_TYPE_DEBUG:                 value = MotorController_VarOutput_Debug_Get(p_mc, (MotorController_VarOutput_Debug_T)varId.NameBase);               break;
+        case MOT_VAR_ID_TYPE_CONTROL_GENERAL:       value = MotorController_VarIO_Get(p_mc, (MotorController_VarIO_T)varId.NameBase);                                   break;
         // case MOT_VAR_ID_TYPE_CMD_SYSTEM:         value = MotorController_User_OutputSystem(p_mc, (MotorController_User_CallId_T)varId.NameBase);         break;
         case MOT_VAR_ID_TYPE_MONITOR_MOTOR:         value = Motor_VarOutput_Get(p_motor, (Motor_VarOuput_T)varId.NameBase);                                 break;
         case MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC:     value = Motor_VarOutput_Foc_Get(p_motor, (Motor_VarOuput_Foc_T)varId.NameBase);                         break;
@@ -352,6 +319,39 @@ static inline int32_t GetRealTime(const MotorController_T * p_mc, MotVarId_T var
 /*!
 
 */
+/******************************************************************************/
+/*!
+    Per Motor Instance Input with MotorController StateMachine check
+    private helper, check state
+*/
+/******************************************************************************/
+static inline uint32_t MotorInstanceInput_Set(MotorController_T * p_mc, uint8_t motorInstance, Motor_VarInput_T id, int32_t value)
+{
+    Motor_T * p_motor;
+
+    //  if (MotorController_User_IsActiveState(p_mc)) //or set buffer
+    {
+        p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
+        if (p_motor != NULL) { Motor_VarInput_Set(p_motor, id, value); }
+        // MotorController_User_SetMotorValue(p_mc, motorInstance value);
+    }
+
+    return 0;
+}
+
+static inline uint32_t MotorInstanceIO_Set(MotorController_T * p_mc, uint8_t motorInstance, Motor_VarIO_T id, int32_t value)
+{
+    Motor_T * p_motor;
+
+    // if (MotorController_User_IsActiveState(p_mc))
+    {
+        p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
+        if (p_motor != NULL) { Motor_VarIO_Set(p_motor, id, value); }
+    }
+
+    return 0;
+}
+
 static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
@@ -362,8 +362,8 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
         case MOT_VAR_ID_TYPE_MONITOR_GENERAL:       status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         case MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER:   status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         case MOT_VAR_ID_TYPE_DEBUG:                 status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-        case MOT_VAR_ID_TYPE_CMD_GENERAL:           status = MotorController_VarInput_Set(p_mc, (MotVarId_Cmd_General_T)varId.NameBase, varValue);      break;
-        case MOT_VAR_ID_TYPE_CONTROL_GENERAL:       status = MotorController_VarIO_Set(p_mc, (MotVarId_Control_General_T)varId.NameBase, varValue);     break;
+        case MOT_VAR_ID_TYPE_CMD_GENERAL:           status = MotorController_VarInput_Set(p_mc, (MotorController_VarInput_T)varId.NameBase, varValue);      break;
+        case MOT_VAR_ID_TYPE_CONTROL_GENERAL:       status = MotorController_VarIO_Set(p_mc, (MotorController_VarIO_T)varId.NameBase, varValue);            break;
         // case MOT_VAR_ID_TYPE_CMD_SYSTEM:         status = MotorController_User_Call(p_mc, (MotorController_User_CallId_T)varId.NameBase, varValue);  break;
         case MOT_VAR_ID_TYPE_MONITOR_MOTOR:         status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
         case MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC:     status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
@@ -379,113 +379,52 @@ static inline MotVarId_Status_T SetRealTime(MotorController_T * p_mc, MotVarId_T
 
 /******************************************************************************/
 /*!
-    Parameter
+    Config
 */
 /******************************************************************************/
+static int32_t MotorInstance_GetConfig(const MotorController_T * p_mc, uint8_t motorInstance, MotVarId_Type_Config_T varType, uint8_t idBase)
+{
+    int32_t value = 0;
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
+
+    if (p_motor != NULL)
+    {
+        switch (varType)
+        {
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:      value = Motor_VarConfig_Calibration_Get(p_motor, (Motor_VarConfig_Calibration_T)idBase);    break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:    value = Motor_VarConfig_Actuation_Get(p_motor, (Motor_VarConfig_Actuation_T)idBase);        break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:         value = Motor_VarConfig_Hall_Get(p_motor, (Motor_VarConfig_Hall_T)idBase);                  break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:      value = Motor_VarConfig_Encoder_Get(p_motor, (Motor_VarConfig_Encoder_T)idBase);            break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   value = Thermistor_ConfigId_Get(&p_motor->Thermistor, (Thermistor_ConfigId_T)idBase);       break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          value = Motor_VarConfig_Pid_Get(p_motor, (Motor_VarConfig_Pid_T)idBase);                    break;
+            // case MOT_VAR_TYPE_SIN_COS:                      value = Motor_VarConfig_SinCos_Get(p_motor, (Motor_VarConfig_SinCos_T)idBase);           break;
+        }
+    }
+
+    return value;
+}
+
 static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    const Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
-    const Protocol_T * p_protocol = NULL;
-    const Thermistor_T * p_thermistor = NULL;
-    const VMonitor_T * p_vMonitor = NULL;
+    // const Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
+    const Protocol_T * p_protocol;
+    const Thermistor_T * p_thermistor;
+    const VMonitor_T * p_vMonitor;
 
-    // volatile int32_t id = varId.Value;
-
-    switch((MotVarId_Type_Config_T)varId.NameType)
+    switch ((MotVarId_Type_Config_T)varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:
-            switch((Motor_VarConfig_Calibration_T)varId.NameBase)
-            {
-                case MOTOR_VAR_COMMUTATION_MODE:              value = Motor_Config_GetCommutationMode(p_motor);           break;
-                case MOTOR_VAR_SENSOR_MODE:                   value = Motor_Config_GetSensorMode(p_motor);                break;
-                // case MOTOR_VAR_DEFAULT_FEEDBACK_MODE:   value = Motor_Config_GetDefaultFeedbackMode(p_motor).Word;  break;
-                case MOTOR_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_motor);      break;
-                case MOTOR_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
-                case MOTOR_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
-                case MOTOR_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);    break;
-                case MOTOR_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
-                case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);        break;
-                case MOTOR_VAR_IA_ZERO_REF_ADCU:              value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
-                case MOTOR_VAR_IB_ZERO_REF_ADCU:              value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
-                case MOTOR_VAR_IC_ZERO_REF_ADCU:              value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
-                case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
-                default: break;
-            }
-            break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:      value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:    value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:         value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:      value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
+        // case MOT_VAR_TYPE_SIN_COS:                   value = MotorInstance_GetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase);  break;
 
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:
-            switch((Motor_VarConfig_Actuation_T)varId.NameBase)
-            {
-                case MOTOR_VAR_BASE_SPEED_LIMIT_FORWARD:      value = Motor_Config_GetSpeedLimitForward_Fract16(p_motor);    break;
-                case MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE:      value = Motor_Config_GetSpeedLimitReverse_Fract16(p_motor);    break;
-                case MOTOR_VAR_BASE_I_LIMIT_MOTORING:         value = Motor_Config_GetILimitMotoring_Fract16(p_motor);       break;
-                case MOTOR_VAR_BASE_I_LIMIT_GENERATING:       value = Motor_Config_GetILimitGenerating_Fract16(p_motor);     break;
-                case MOTOR_VAR_RAMP_ACCEL_TIME:               value = Motor_Config_GetRampAccel_Millis(p_motor);              break;
-                // case MOTOR_VAR_ALIGN_MODE:                 value = Motor_Config_GetAlignMode(p_motor);                 break;
-                case MOTOR_VAR_ALIGN_POWER:                   value = Motor_Config_GetAlignPower_Fract16(p_motor);           break;
-                case MOTOR_VAR_ALIGN_TIME:                    value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
-                #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-                case MOTOR_VAR_OPEN_LOOP_POWER:               value = Motor_Config_GetOpenLoopPower_Fract16(p_motor);        break;
-                case MOTOR_VAR_OPEN_LOOP_SPEED:               value = Motor_Config_GetOpenLoopSpeed_Fract16(p_motor);        break;
-                case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:          value = Motor_Config_GetOpenLoopAccel_Millis(p_motor);          break;
-                #endif
-                // case MOTOR_VAR_PHASE_PWM_MODE:             value = Motor_Config_GetPhaseModeParam(p_motor);            break;
-                default: break;
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:
-            switch((Motor_VarConfig_Hall_T)varId.NameBase)
-            {
-                case MOTOR_VAR_HALL_SENSOR_TABLE_1: value = p_motor->Hall.Config.SensorsTable[1U]; break;
-                case MOTOR_VAR_HALL_SENSOR_TABLE_2: value = p_motor->Hall.Config.SensorsTable[2U]; break;
-                case MOTOR_VAR_HALL_SENSOR_TABLE_3: value = p_motor->Hall.Config.SensorsTable[3U]; break;
-                case MOTOR_VAR_HALL_SENSOR_TABLE_4: value = p_motor->Hall.Config.SensorsTable[4U]; break;
-                case MOTOR_VAR_HALL_SENSOR_TABLE_5: value = p_motor->Hall.Config.SensorsTable[5U]; break;
-                case MOTOR_VAR_HALL_SENSOR_TABLE_6: value = p_motor->Hall.Config.SensorsTable[6U]; break;
-                default: break;
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:
-            switch((Motor_VarConfig_Encoder_T)varId.NameBase)
-            {
-                case MOTOR_VAR_ENCODER_COUNTS_PER_REVOLUTION:             value = p_motor->Encoder.Config.CountsPerRevolution;            break;
-                case MOTOR_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_motor->Encoder.Config.IsQuadratureCaptureEnabled;     break;
-                case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:              value = p_motor->Encoder.Config.IsALeadBPositive;               break;
-                // case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:                            value = 0; break;
-                // case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:                               value = 0; break;
-                default: break;
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:
-            if (p_motor != NULL) { value = Thermistor_ConfigId_Get(&p_motor->Thermistor, (Thermistor_ConfigId_T)varId.NameBase); }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:
-            switch((Motor_VarConfig_Pid_T)varId.NameBase)
-            {
-                case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_motor->PidSpeed);   break;
-                case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_motor->PidSpeed);   break;
-                case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_motor->PidSpeed);   break;
-                // case MOTOR_VAR_PID_SPEED_KD_FIXED16:      value = PID_GetKd_Fixed16(&p_motor->PidSpeed);   break;
-                case MOTOR_VAR_PID_FOC_IQ_SAMPLE_FREQ:    value = PID_GetSampleFreq(&p_motor->PidIq);     break;
-                case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16:     value = PID_GetKp_Fixed16(&p_motor->PidIq);     break;
-                case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16:     value = PID_GetKi_Fixed16(&p_motor->PidIq);     break;
-                // case MOTOR_VAR_PID_FOC_IQ_KD_FIXED16:     value = PID_GetKd_Fixed16(&p_motor->PidIq);     break;
-                // case MOTOR_VAR_PID_FOC_ID_SAMPLE_FREQ:    value = PID_GetSampleFreq(&p_motor->PidId);     break;
-                // case MOTOR_VAR_PID_FOC_ID_KP_FIXED16:     value = PID_GetKp_Fixed16(&p_motor->PidId);     break;
-                // case MOTOR_VAR_PID_FOC_ID_KI_FIXED16:     value = PID_GetKi_Fixed16(&p_motor->PidId);     break;
-                // case MOTOR_VAR_PID_FOC_ID_KD_FIXED16:     value = PID_GetKd_Fixed16(&p_motor->PidId);     break;
-                default: break;
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_GENERAL:        value = MotorController_Config_Get(p_mc, (MotVarId_Config_General_T)varId.NameBase);                break;
-        case MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER:    value = MotorController_Config_AnalogUser_Get(p_mc, (MotVarId_Config_AnalogUser_T)varId.NameBase);  break;
-        case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:       value = MotorController_Config_BootRef_Get(p_mc, (MotVarId_Config_BootRef_T)varId.NameBase);        break;
+        case MOT_VAR_ID_TYPE_CONFIG_GENERAL:            value = MotorController_Config_Get(p_mc, (MotorController_ConfigId_T)varId.NameBase);                       break;
+        case MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER:        value = MotorController_Config_AnalogUser_Get(p_mc, (MotorController_Config_AnalogUser_T)varId.NameBase);   break;
+        case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:           value = MotorController_Config_BootRef_Get(p_mc, (MotorController_Config_BootRef_T)varId.NameBase);         break;
 
         case MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR:
             p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
@@ -499,18 +438,8 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 
         case MOT_VAR_ID_TYPE_CONFIG_PROTOCOL:
             p_protocol = MotorController_User_GetPtrProtocol(p_mc, varId.Instance);
-            switch((MotVarId_Config_Protocol_T)varId.NameBase)
-            {
-                case MOT_VAR_PROTOCOL_XCVR_ID:         value = p_protocol->Config.SpecsId; break;
-                case MOT_VAR_PROTOCOL_SPECS_ID:        value = 0; break;
-                case MOT_VAR_PROTOCOL_WATCHDOG_TIME:   value = 0; break;
-                case MOT_VAR_PROTOCOL_BAUD_RATE:       value = 0; break;
-                case MOT_VAR_PROTOCOL_IS_ENABLED:      value = 0; break;
-                default: break;
-            }
+            if (p_protocol != NULL) { value = Protocol_ConfigId_Get(p_protocol, (Protocol_ConfigId_T)varId.NameBase); }
             break;
-
-
 
         default: break;
     }
@@ -518,128 +447,53 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
     return value;
 }
 
+static void MotorInstance_SetConfig(MotorController_T * p_mc, uint8_t motorInstance, MotVarId_Type_Config_T varType, uint8_t idBase, int32_t value)
+{
+    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, motorInstance);
+
+    if (p_motor != NULL)
+    {
+        switch (varType)
+        {
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:      Motor_VarConfig_Calibration_Set(p_motor, (Motor_VarConfig_Calibration_T)idBase, value);    break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:    Motor_VarConfig_Actuation_Set(p_motor, (Motor_VarConfig_Actuation_T)idBase, value);        break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:         Motor_VarConfig_Hall_Set(p_motor, (Motor_VarConfig_Hall_T)idBase, value);                  break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:      Motor_VarConfig_Encoder_Set(p_motor, (Motor_VarConfig_Encoder_T)idBase, value);            break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   Thermistor_ConfigId_Set(&p_motor->Thermistor, (Thermistor_ConfigId_T)idBase, value);       break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          Motor_VarConfig_Pid_Set(p_motor, (Motor_VarConfig_Pid_T)idBase, value);                    break;
+            // case MOT_VAR_TYPE_SIN_COS:                      Motor_VarConfig_SinCos_Set(p_motor, (Motor_VarConfig_SinCos_T)idBase, value);           break;
+        }
+    }
+}
+
 static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue)
 {
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
     bool isSuccess = true;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance); /* for convience, invalid if varId.NameBase is not Motor type */
-    Protocol_T * p_protocol = NULL;
-    Thermistor_T * p_thermistor = NULL;
-    VMonitor_T * p_vMonitor = NULL;
+    Protocol_T * p_protocol;
+    Thermistor_T * p_thermistor;
+    VMonitor_T * p_vMonitor;
 
     switch((MotVarId_Type_Config_T)varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:
-            if(p_motor != NULL)
-            {
-                switch((Motor_VarConfig_Calibration_T)varId.NameBase)
-                {
-                    case MOTOR_VAR_COMMUTATION_MODE:              Motor_Config_SetCommutationMode(p_motor, varValue);             break;
-                    case MOTOR_VAR_SENSOR_MODE:                   Motor_Config_SetSensorMode(p_motor, varValue);                  break;
-                    // case MOTOR_VAR_DEFAULT_FEEDBACK_MODE:   Motor_Config_SetDefaultFeedbackMode(p_motor, varValue);    break;
-                    case MOTOR_VAR_DIRECTION_CALIBRATION:         Motor_Config_SetDirectionCalibration(p_motor, varValue);        break;
-                    case MOTOR_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                   break;
-                    case MOTOR_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                          break;
-                    case MOTOR_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);       break;
-                    case MOTOR_VAR_SPEED_V_REF_RPM:                   break;
-                    case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:             break;
-                    case MOTOR_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);                 break;
-                    case MOTOR_VAR_IB_ZERO_REF_ADCU:              Motor_Config_SetIbZero_Adcu(p_motor, varValue);                 break;
-                    case MOTOR_VAR_IC_ZERO_REF_ADCU:              Motor_Config_SetIcZero_Adcu(p_motor, varValue);                 break;
-                    case MOTOR_VAR_I_PEAK_REF_ADCU:               Motor_Config_SetIPeakRef_Adcu(p_motor, varValue);               break;
-                    default:  break;
-                }
-            }
-            break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY:      MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:    MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:         MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:      MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        // case MOT_VAR_TYPE_SIN_COS:                   MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
 
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY:
-            if(p_motor != NULL)
-            {
-                switch((Motor_VarConfig_Actuation_T)varId.NameBase)
-                {
-                    case MOTOR_VAR_BASE_SPEED_LIMIT_FORWARD:      Motor_Config_SetSpeedLimitForward_Fract16(p_motor, varValue);  break;
-                    case MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Fract16(p_motor, varValue);  break;
-                    case MOTOR_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Fract16(p_motor, varValue);     break;
-                    case MOTOR_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Fract16(p_motor, varValue);   break;
-                    case MOTOR_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetRampAccel_Millis(p_motor, varValue);  break;
-                    case MOTOR_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Fract16(p_motor, varValue);  break;
-                    case MOTOR_VAR_ALIGN_TIME:                    Motor_Config_SetAlignTime_Millis(p_motor, varValue);  break;
-                    case MOTOR_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Fract16(p_motor, varValue);  break;
-                    case MOTOR_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Fract16(p_motor, varValue);  break;
-                    case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:          Motor_Config_SetOpenLoopAccel_Millis(p_motor, varValue);  break;
-                    // case MOTOR_VAR_PHASE_PWM_MODE:             Motor_Config_SetPhaseModeParam(p_motor,  varValue);  break;
-                    default: break;
-                }
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL:
-            if(p_motor != NULL)
-            {
-                switch((Motor_VarConfig_Hall_T)varId.NameBase)
-                {
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_1: p_motor->Hall.Config.SensorsTable[1U];    break;
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_2: p_motor->Hall.Config.SensorsTable[2U];    break;
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_3: p_motor->Hall.Config.SensorsTable[3U];    break;
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_4: p_motor->Hall.Config.SensorsTable[4U];    break;
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_5: p_motor->Hall.Config.SensorsTable[5U];    break;
-                    // case MOTOR_VAR_HALL_SENSOR_TABLE_6: p_motor->Hall.Config.SensorsTable[6U];    break;
-                    default: break;
-                }
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:
-            if(p_motor != NULL)
-            {
-                switch((Motor_VarConfig_Encoder_T)varId.NameBase)
-                {
-                    // case MOTOR_VAR_ENCODER_COUNTS_PER_REVOLUTION:              p_motor->Encoder.Config.CountsPerRevolution;            break;
-                    // case MOTOR_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:      p_motor->Encoder.Config.IsQuadratureCaptureEnabled;     break;
-                    // case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:               p_motor->Encoder.Config.IsALeadBPositive;               break;
-                    // case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:                            0; break;
-                    // case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:                               0; break;
-                    default: break;
-                }
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:
-            if(p_motor != NULL) { Thermistor_ConfigId_Set(&(p_motor->Thermistor), (Thermistor_ConfigId_T)varId.NameBase, varValue); }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:
-            if(p_motor != NULL)
-            {
-                switch((Motor_VarConfig_Pid_T)varId.NameBase)
-                {
-                    // case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:  PID_SetSampleFreq(&p_motor->PidSpeed, varValue);  break;
-                    case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
-                    case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
-                    // case MOTOR_VAR_PID_SPEED_KD_FIXED16:  PID_SetKd_Fixed16(&p_motor->PidSpeed, varValue);    break;
-                    // case MOTOR_VAR_PID_FOC_IQ_SAMPLE_FREQ: PID_SetSampleFreq(&p_motor->PidIq, varValue);     break;
-                    case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue);       break;
-                    case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue);       break;
-                    // case MOTOR_VAR_PID_FOC_IQ_KD_FIXED16: PID_SetKd_Fixed16(&p_motor->PidIq, varValue);       break;
-                    // case MOTOR_VAR_PID_FOC_ID_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidId, varValue);       break;
-                    // case MOTOR_VAR_PID_FOC_ID_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidId, varValue);       break;
-                    // case MOTOR_VAR_PID_FOC_ID_KD_FIXED16: PID_SetKd_Fixed16(&p_motor->PidId, varValue);       break;
-                    // case MOTOR_VAR_PID_FOC_ID_SAMPLE_FREQ: PID_SetSampleFreq(&p_motor->PidId, varValue);     break;
-                    default: break;
-                }
-            }
-            break;
-
-        case MOT_VAR_ID_TYPE_CONFIG_GENERAL:        MotorController_Config_Set(p_mc, (MotVarId_Config_General_T)varId.NameBase, varValue);                  break;
-        case MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER:    MotorController_Config_AnalogUser_Set(p_mc, (MotVarId_Config_AnalogUser_T)varId.NameBase, varValue);    break;
-        case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:       MotorController_Config_BootRef_Set(p_mc, (MotVarId_Config_BootRef_T)varId.NameBase, varValue);       break;
+        case MOT_VAR_ID_TYPE_CONFIG_GENERAL:        MotorController_Config_Set(p_mc, (MotorController_ConfigId_T)varId.NameBase, varValue);                         break;
+        case MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER:    MotorController_Config_AnalogUser_Set(p_mc, (MotorController_Config_AnalogUser_T)varId.NameBase, varValue);     break;
+        case MOT_VAR_ID_TYPE_CONFIG_BOOT_REF:       MotorController_Config_BootRef_Set(p_mc, (MotorController_Config_BootRef_T)varId.NameBase, varValue);           break;
 
         case MOT_VAR_ID_TYPE_CONFIG_BOARD_THERMISTOR:
-            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_R0) break;
-            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_T0) break;
-            if((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_B) break;
+            if ((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_R0) break;
+            if ((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_T0) break;
+            if ((Thermistor_ConfigId_T)varId.NameBase == THERMISTOR_CONFIG_B)  break;
             p_thermistor = MotorController_User_GetPtrThermistor(p_mc, varId.Instance);
-            if(p_thermistor != NULL) { Thermistor_ConfigId_Set(p_thermistor, (Thermistor_ConfigId_T)varId.NameBase, varValue); }
+            if (p_thermistor != NULL) { Thermistor_ConfigId_Set(p_thermistor, (Thermistor_ConfigId_T)varId.NameBase, varValue); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_VMONITOR:
@@ -649,20 +503,8 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
 
         case MOT_VAR_ID_TYPE_CONFIG_PROTOCOL:
             p_protocol = MotorController_User_GetPtrProtocol(p_mc, varId.Instance);
-            if(p_protocol != NULL)
-            {
-                switch((MotVarId_Config_Protocol_T)varId.NameBase)
-                {
-                    // case MOT_VAR_PROTOCOL0_XCVR_ID:                         MotorController_User_SetPtrProtocol(p_mc, 0)->Config.SpecsId; break;
-                    // case MOT_VAR_PROTOCOL0_SPECS_ID:                        0; break;
-                    // case MOT_VAR_PROTOCOL0_WATCHDOG_TIME:                   0; break;
-                    // case MOT_VAR_PROTOCOL0_BAUD_RATE:                       0; break;
-                    // case MOT_VAR_PROTOCOL0_IS_ENABLED:                      0; break;
-                    default: break;
-                }
-            }
+            if (p_protocol != NULL) { Protocol_ConfigId_Set(p_protocol, (Protocol_ConfigId_T)varId.NameBase, varValue); }
             break;
-
     }
 
     return status;
@@ -683,8 +525,7 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME: value = GetRealTime(p_mc, varId);   break;
-        case MOT_VAR_ID_TYPE_CONFIG:    value = GetConfig(p_mc, varId);  break;
-        default: break;
+        case MOT_VAR_ID_TYPE_CONFIG:    value = GetConfig(p_mc, varId);     break;
     }
     return value;
 }
@@ -697,7 +538,7 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
         case MOT_VAR_ID_TYPE_REAL_TIME:
             // status = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) ?
             //     SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
-            SetRealTime(p_mc, varId, varValue);
+            status = SetRealTime(p_mc, varId, varValue);
             break;
         case MOT_VAR_ID_TYPE_CONFIG:
             status = (MotorController_User_IsConfigState(p_mc) == true) ?
@@ -710,5 +551,4 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
 
 // uint8_t MotorController_Var_GetSize(MotorController_T * p_mc, uint16_t varId)
 // {
-
 // }

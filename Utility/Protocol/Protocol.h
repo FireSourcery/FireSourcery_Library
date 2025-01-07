@@ -40,7 +40,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef uint8_t protocol_reqid_t;   /* Index into P_REQ_TABLE. Child module define */
+typedef uint8_t protocol_req_id_t;   /* Index into P_REQ_TABLE. Child module define */
 typedef uint8_t protocol_size_t;    /* Packet Size */
 
 /******************************************************************************/
@@ -80,7 +80,7 @@ Protocol_RxCode_T;
 /* Parse with PARSE_RX_META */
 typedef struct Protocol_HeaderMeta
 {
-    protocol_reqid_t ReqId;     /* protocol_reqid_t values defined by child module. Index into P_REQ_TABLE */
+    protocol_req_id_t ReqId;     /* protocol_req_id_t values defined by child module. Index into P_REQ_TABLE */
     protocol_size_t Length;     /* Rx Packet Total Length. */
 }
 Protocol_HeaderMeta_T;
@@ -199,7 +199,7 @@ Protocol_ReqSync_T;
 */
 typedef const struct Protocol_Req
 {
-    const protocol_reqid_t          ID;
+    const protocol_req_id_t          ID;
     const Protocol_ProcReqResp_T    PROC;
     const Protocol_ProcReqExt_T     PROC_EXT;
     const Protocol_ReqSync_T        SYNC;
@@ -208,10 +208,10 @@ typedef const struct Protocol_Req
 Protocol_Req_T;
 
 #define PROTOCOL_REQ(ReqId, ProcReqResp, ProcExt, ReqSync) \
-    { .ID = (protocol_reqid_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, }
+    { .ID = (protocol_req_id_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, }
 
 #define PROTOCOL_REQ_EXT(ReqId, ProcReqResp, ProcExt, ReqSyncExt) \
-    { .ID = (protocol_reqid_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
+    { .ID = (protocol_req_id_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
 /******************************************************************************/
 /*!
@@ -264,24 +264,25 @@ typedef const struct Protocol_Specs
     // const Protocol_ResetReqState_T REQ_EXT_RESET;   /* Alternatively, handle in req by user */
 
     /* Optional */
-    const uint32_t RX_START_ID;             /* set to 0x00 for not applicable */
+    const uint32_t RX_START_ID;             /* 0x00 for not applicable */
     // const uint32_t RX_END_ID;
 
     // if all packets common
-    //todo defaults over write in protocol Param
-    // const uint32_t BAUD_RATE_DEFAULT;
     const uint32_t RX_TIMEOUT;              /* Reset cumulative per packet */
     // const uint32_t RX_TIMEOUT_BYTE;      /* Reset per byte *///todo as delimeter
     const uint32_t REQ_TIMEOUT;             /* checked for stateful Req only */
     const uint8_t NACK_COUNT;
+
+    //todo defaults over write in protocol Param
+    // const uint32_t BAUD_RATE_DEFAULT;
 
     // alternative to PARSE_RX_META while building
     // const protocol_size_t RX_LENGTH_INDEX;
     // const protocol_size_t RX_REQ_ID_INDEX;
     // const protocol_size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
 
-    // const bool ENCODED;                  /* TODO Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
-    /* Cmdr side only *///todo change for inheritance, runtime polymorphism not needed
+    // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
+    /* Cmdr side only *///todo wrap in cmdr, runtime polymorphism not needed
     // const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Single build function is sufficient. Rx Share Protocol_Proc() and P_REQ_TABLE. Alternatively, function table */
 }
 Protocol_Specs_T;
@@ -363,7 +364,7 @@ typedef struct Protocol
     Protocol_Req_T * p_ReqActive;    /* */
     uint32_t ReqTimeStart;           /* Set on Req Start and Complete */
     uint32_t ReqSubStateIndex; //track ext req index internally?
-    Protocol_ReqContext_T ReqContext; // buffer for passing req parameters. Alternatively, pass const block and TxLength seperately
+    Protocol_ReqContext_T ReqContext; // buffer for passing req parameters. Alternatively, pass const block and TxLength separately
 
     /* Common */
     uint8_t NackCount;
@@ -400,17 +401,15 @@ Protocol_T;
     _PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)                  \
 }
 
-typedef enum MotVarId_Config_Protocol
+typedef enum Protocol_ConfigId
 {
-    MOT_VAR_PROTOCOL_XCVR_ID,
-    MOT_VAR_PROTOCOL_SPECS_ID,
-    MOT_VAR_PROTOCOL_WATCHDOG_TIME,
-    MOT_VAR_PROTOCOL_BAUD_RATE, // On boot
-    //  MOT_VAR_PROTOCOL_ACTIVE_BAUD_RATE,
-    MOT_VAR_PROTOCOL_IS_ENABLED,
+    PROTOCOL_CONFIG_XCVR_ID,
+    PROTOCOL_CONFIG_SPECS_ID,
+    PROTOCOL_CONFIG_WATCHDOG_TIME,
+    PROTOCOL_CONFIG_BAUD_RATE, // On boot
+    PROTOCOL_CONFIG_IS_ENABLED,
 }
-MotVarId_Config_Protocol_T;
-
+Protocol_ConfigId_T;
 
 static inline Protocol_RxCode_T Protocol_GetRxStatus(const Protocol_T * p_protocol)     { return p_protocol->RxStatus; }
 static inline Protocol_ReqCode_T Protocol_GetReqStatus(const Protocol_T * p_protocol)   { return p_protocol->ReqStatus; }
@@ -439,7 +438,7 @@ static inline void Protocol_DisableOnInit(Protocol_T * p_protocol) { p_protocol-
 /*
     Extern
 */
-extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_reqid_t id);
+extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, protocol_req_id_t id);
 extern void Protocol_Init(Protocol_T * p_protocol);
 extern void Protocol_Proc(Protocol_T * p_protocol);
 extern void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId);
@@ -448,27 +447,11 @@ extern void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t specsId);
 extern bool Protocol_Enable(Protocol_T * p_protocol);
 extern void Protocol_Disable(Protocol_T * p_protocol);
 
+extern int32_t Protocol_ConfigId_Get(const Protocol_T * p_protocol, Protocol_ConfigId_T id);
+extern void Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T id, uint32_t value);
+
 #endif
 
-/*
-    User
-*/
-// typedef enum Protocol_VarId_Config
-// {
-//     PROTOCOL_CONFIG_XCVR_ID,
-//     PROTOCOL_CONFIG_SPECS_ID,
-//     PROTOCOL_CONFIG_BAUD_RATE,
-//     PROTOCOL_CONFIG_WATCHDOG_TIMEOUT,
-//     PROTOCOL_CONFIG_IS_ENABLED,
-// }
-// Protocol_VarId_Config_T;
-
-// typedef enum Protocol_VarId_Active
-// {
-//     PROTOCOL_RX_WATCHDOG_ON_OFF,
-//     // PROTOCOL_ACTIVE_BAUD_RATE,
-// }
-// Protocol_VarId_Active_T;
 
 // static inline uint16_t Protocol_GetTxPacketCount(const Protocol_T * p_protocol) { return p_protocol->TxPacketCount; }
 // static inline uint16_t Protocol_GetRxPacketCount(const Protocol_T * p_protocol) { return p_protocol->RxPacketErrorCount + p_protocol->RxPacketSuccessCount; }

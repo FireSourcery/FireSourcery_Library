@@ -372,7 +372,7 @@ typedef struct MotorController
     MotorController_DriveId_T DriveSubState; // change for full values
     MotorController_LockId_T LockSubState;
 
-    /* Local Polling State */
+    /* Input Image / Polling State */
     int32_t UserCmdValue;
     Motor_FeedbackMode_T UserCmdMode;
 

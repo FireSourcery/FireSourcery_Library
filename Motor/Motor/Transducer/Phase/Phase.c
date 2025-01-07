@@ -143,6 +143,12 @@ static inline bool Phase_IsEnabledABC(const Phase_T * p_phase)
     return (Phase_IsEnabledA(p_phase) & Phase_IsEnabledB(p_phase) & Phase_IsEnabledC(p_phase));
 }
 
+static inline bool Phase_IsDisabledABC(const Phase_T * p_phase)
+{
+    // return (Phase_IsEnabledA(p_phase) == false) && (Phase_IsEnabledB(p_phase) == false) && (Phase_IsEnabledC(p_phase) == false);
+    return ((Phase_IsEnabledA(p_phase) | Phase_IsEnabledB(p_phase) | Phase_IsEnabledC(p_phase)) == false);
+}
+
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
@@ -206,15 +212,13 @@ void Phase_Ground(const Phase_T * p_phase)
 
 bool Phase_IsFloat(const Phase_T * p_phase)
 {
-    // return (Phase_IsEnabledA(p_phase) == false) && (Phase_IsEnabledB(p_phase) == false) && (Phase_IsEnabledC(p_phase) == false);
     return ((Phase_IsEnabledA(p_phase) | Phase_IsEnabledB(p_phase) | Phase_IsEnabledC(p_phase)) == false);
 }
 
 
 bool Phase_IsGround(const Phase_T * p_phase)
 {
-    return  ((Phase_IsEnabledABC(p_phase) == true) &&
-        ((PWM_ReadDuty_Ticks(&p_phase->PwmA) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmB) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmC) == 0U)));
+    return  ((Phase_IsEnabledABC(p_phase) == true) && ((PWM_ReadDuty_Ticks(&p_phase->PwmA) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmB) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmC) == 0U)));
 }
 
 Phase_State_T Phase_GetState(const Phase_T * p_phase)

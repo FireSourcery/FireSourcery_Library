@@ -167,13 +167,14 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 /*! @param[in] userCmd [-32767:32767] */
 static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
 {
+    p_mc->UserCmdValue = userCmd;
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (uint32_t)userCmd);
 }
 
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {
+    p_mc->UserCmdMode.Value = feedbackMode;
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
-    // p_mc->UserCmdMode.Value = feedbackMode; // or include mod in bitfield
 }
 
 // static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }

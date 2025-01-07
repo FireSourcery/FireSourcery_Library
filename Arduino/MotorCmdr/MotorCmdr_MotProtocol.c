@@ -192,7 +192,7 @@ static const Protocol_Req_T REQ_TABLE[] =
 /******************************************************************************/
 /*! BuildTxReq */
 /******************************************************************************/
-void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, protocol_reqid_t reqId)
+void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, protocol_req_id_t reqId)
 {
     switch(reqId)
     {

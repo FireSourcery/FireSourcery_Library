@@ -36,7 +36,7 @@
 #include "MotorController_Analog.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-static inline bool CheckDividerMask(uint32_t num, uint32_t align) { return ((num & align) == 0UL); }
+static inline bool IsDividerAlign(uint32_t counter, uint32_t align) { return ((counter & align) == 0UL); }
 
 /******************************************************************************/
 /*
@@ -63,7 +63,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_mc)
         default: break;
     }
 
-    if (CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONST.ANALOG_USER_DIVIDER) == true)
+    if (IsDividerAlign(p_mc->MainDividerCounter, p_mc->CONST.ANALOG_USER_DIVIDER) == true)
     {
         Analog_MarkConversion(&p_mc->CONST.CONVERSION_THROTTLE);
         Analog_MarkConversion(&p_mc->CONST.CONVERSION_BRAKE);
@@ -233,7 +233,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         // }
 
         /* Low Freq, Low Priority, ~10ms ~16ms, 100Hz */
-        if (CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONST.MAIN_DIVIDER_10) == true)
+        if (IsDividerAlign(p_mc->MainDividerCounter, p_mc->CONST.MAIN_DIVIDER_10) == true)
         {
         #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
             Shell_Proc(&p_mc->Shell);
@@ -244,7 +244,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
         }
 
         /* Low Freq, Low Priority, ~1s ~1024ms */
-        if (CheckDividerMask(p_mc->MainDividerCounter, p_mc->CONST.MAIN_DIVIDER_1000) == true)
+        if (IsDividerAlign(p_mc->MainDividerCounter, p_mc->CONST.MAIN_DIVIDER_1000) == true)
         {
             /* In case of Serial Rx Overflow Timeout */
             for (uint8_t iSerial = 0U; iSerial < p_mc->CONST.SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_mc->CONST.P_SERIALS[iSerial]); }
@@ -310,13 +310,6 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
     //     if (MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_ForceDisableControl(p_mc); }
-    // }
-
-    // if(CheckDividerMask(p_mc->TimerDividerCounter, p_mc->CONST.TIMER_DIVIDER_1000) == true)
-    // {
-    //     _MotorController_ProcVoltageMonitor(p_mc); /* Except voltage supply */
-    //     _MotorController_ProcHeatMonitor(p_mc);
-    //     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
     // }
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);

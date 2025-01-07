@@ -45,16 +45,12 @@
 */
 /******************************************************************************/
 /*
-    RealTime Read-Only
     Get/Output
-*/
-/*
-    Speed/IPhase/VPhase/Power
-        Units0 => UFract16, may over saturate
+    RealTime Read-Only
+    Speed/IPhase/VPhase/Power -> UFract16, may over saturate
 */
 // Motor_VarOutput_Primary_T
 // Motor_VarOutput_Monitor_T
-// Motor_VarOutput_T
 typedef enum Motor_VarOuput
 {
     MOTOR_VAR_SPEED,
@@ -76,7 +72,6 @@ typedef enum Motor_VarOuput
 }
 Motor_VarOuput_T;
 
-// Motor_VarOutput_MonitorFoc_T
 typedef enum Motor_VarOuput_Foc
 {
     MOTOR_VAR_FOC_IA,
@@ -205,9 +200,6 @@ typedef enum Motor_VarConfig_Encoder
 }
 Motor_VarConfig_Encoder_T;
 
-/*
-    Sine Cos Encoder
-*/
 typedef enum Motor_VarConfig_SinCos
 {
     MOTOR_VAR_SIN_COS_ZERO_ADCU,
@@ -257,7 +249,19 @@ extern int32_t Motor_VarIO_Get(const Motor_T * p_motor, Motor_VarIO_T varId);
 extern void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varValue);
 extern void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue);
 
+extern int32_t Motor_VarConfig_Calibration_Get(const Motor_T * p_motor, Motor_VarConfig_Calibration_T varId);
+extern int32_t Motor_VarConfig_Actuation_Get(const Motor_T * p_motor, Motor_VarConfig_Actuation_T varId);
+extern int32_t Motor_VarConfig_Hall_Get(const Motor_T * p_motor, Motor_VarConfig_Hall_T varId);
+extern int32_t Motor_VarConfig_Encoder_Get(const Motor_T * p_motor, Motor_VarConfig_Encoder_T varId);
+extern int32_t Motor_VarConfig_SinCos_Get(const Motor_T * p_motor, Motor_VarConfig_SinCos_T varId);
+extern int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId);
 
+extern void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibration_T varId, int32_t varValue);
+extern void Motor_VarConfig_Actuation_Set(Motor_T * p_motor, Motor_VarConfig_Actuation_T varId, int32_t varValue);
+extern void Motor_VarConfig_Hall_Set(Motor_T * p_motor, Motor_VarConfig_Hall_T varId, int32_t varValue);
+extern void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T varId, int32_t varValue);
+extern void Motor_VarConfig_SinCos_Set(Motor_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue);
+extern void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int32_t varValue);
 
 #endif
 

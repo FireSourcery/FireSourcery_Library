@@ -50,9 +50,9 @@ typedef uint32_t mot_var_status_t; // generic status, type depending on input
     Var Id Base
 */
 /******************************************************************************/
-// MotorController_VarOutput_T
-typedef enum MotVarId_Monitor_General
+typedef enum MotorController_VarOutput
 {
+    // MC_VAR_ZERO,
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
     MOT_VAR_MC_STATE,
@@ -69,21 +69,27 @@ typedef enum MotVarId_Monitor_General
     // MOT_VAR_HEAT_MOSFETS_2,
     // MOT_VAR_HEAT_MOSFETS_3,
 }
-MotVarId_Monitor_General_T;
+MotorController_VarOutput_T;
 
-// MotorController_VarOutput_AnalogUser_T
-typedef enum MotVarId_Monitor_AnalogUser
+typedef enum MotorController_VarOutput_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE,
     MOT_VAR_ANALOG_THROTTLE_DIN,
     MOT_VAR_ANALOG_BRAKE,
     MOT_VAR_ANALOG_BRAKE_DIN,
 }
-MotVarId_Monitor_AnalogUser_T;
+MotorController_VarOutput_AnalogUser_T;
 
-typedef enum MotorController_VarOutput_Debug_Get
+typedef enum MotorController_VarOutput_Debug
 {
-    MOT_VAR_OUTPUT_DEBUG0, MOT_VAR_OUTPUT_DEBUG1, MOT_VAR_OUTPUT_DEBUG2, MOT_VAR_OUTPUT_DEBUG3, MOT_VAR_OUTPUT_DEBUG4, MOT_VAR_OUTPUT_DEBUG5, MOT_VAR_OUTPUT_DEBUG6, MOT_VAR_OUTPUT_DEBUG7,
+    MOT_VAR_DEBUG0,
+    MOT_VAR_DEBUG1,
+    MOT_VAR_DEBUG2,
+    MOT_VAR_DEBUG3,
+    MOT_VAR_DEBUG4,
+    MOT_VAR_DEBUG5,
+    MOT_VAR_DEBUG6,
+    MOT_VAR_DEBUG7,
 }
 MotorController_VarOutput_Debug_T;
 
@@ -93,8 +99,7 @@ MotorController_VarOutput_Debug_T;
 
     Direction or DriveState use feedback. Other
 */
-// MotorController_VarInput_T
-typedef enum MotVarId_Cmd_General
+typedef enum MotorController_VarInput
 {
     /*
         for all motors, or primary Motor
@@ -119,14 +124,14 @@ typedef enum MotVarId_Cmd_General
     MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
 }
-MotVarId_Cmd_General_T;
+MotorController_VarInput_T;
 
 // MotorController_VarIO_T
-typedef enum MotVarId_Control_General
+typedef enum MotorController_VarIO
 {
     MOT_VAR_DIRECTION,                      // MotorController_Direction_T,
 }
-MotVarId_Control_General_T;
+MotorController_VarIO_T;
 
 
 /******************************************************************************/
@@ -134,8 +139,7 @@ MotVarId_Control_General_T;
     Config - Nvm variables
 */
 /******************************************************************************/
-// typedef enum MotorController_ConfigId_General
-typedef enum MotVarId_Config_General
+typedef enum MotorController_ConfigId
 {
     MOT_VAR_V_SOURCE_REF_VOLTS,
     MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
@@ -155,10 +159,9 @@ typedef enum MotVarId_Config_General
     // MOT_VAR_BATTERY_FULL_ADCU,
     // MOT_VAR_BOOT_REF,
 }
-MotVarId_Config_General_T;
+MotorController_ConfigId_T;
 
-// typedef enum MotorController_Config_AnalogUser
-typedef enum MotVarId_Config_AnalogUser
+typedef enum MotorController_Config_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU,
     MOT_VAR_ANALOG_THROTTLE_MAX_ADCU,
@@ -170,35 +173,35 @@ typedef enum MotVarId_Config_AnalogUser
     MOT_VAR_ANALOG_DIN_BRAKE_IS_ENABLE,
     MOT_VAR_ANALOG_DIRECTION_PINS,
 }
-MotVarId_Config_AnalogUser_T;
+MotorController_Config_AnalogUser_T;
 
-typedef enum MotVarId_Config_BootRef
+typedef enum MotorController_Config_BootRef
 {
     MOT_VAR_BOOT_REF_FAST_BOOT,
     MOT_VAR_BOOT_REF_BEEP,
     MOT_VAR_BOOT_REF_BLINK,
     // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
 }
-MotVarId_Config_BootRef_T;
+MotorController_Config_BootRef_T;
 
 // typedef Thermistor_ConfigId_T MotVarId_Config_BoardThermistor_T;
 // typedef Thermistor_ConfigId_T MotVarId_Config_MotorThermistor_T;
 
-int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotVarId_Monitor_General_T id);
+int32_t MotorController_VarOutput_Get(const MotorController_T * p_mc, MotorController_VarOutput_T id);
 int32_t MotorController_VarOutput_Debug_Get(const MotorController_T * p_mc, MotorController_VarOutput_Debug_T id);
-int32_t MotorController_VarOutput_AnalogUser_Get(const MotorController_T * p_mc, MotVarId_Monitor_AnalogUser_T id);
+int32_t MotorController_VarOutput_AnalogUser_Get(const MotorController_T * p_mc, MotorController_VarOutput_AnalogUser_T id);
 
-uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotVarId_Cmd_General_T id, int32_t value);
+uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotorController_VarInput_T id, int32_t value);
 
-int32_t MotorController_VarIO_Get(const MotorController_T * p_mc, MotVarId_Control_General_T id);
-uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotVarId_Control_General_T id, int32_t value);
+int32_t MotorController_VarIO_Get(const MotorController_T * p_mc, MotorController_VarIO_T id);
+uint32_t MotorController_VarIO_Set(MotorController_T * p_mc, MotorController_VarIO_T id, int32_t value);
 
-int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotVarId_Config_General_T id);
-uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotVarId_Config_General_T id, int32_t value);
-int32_t MotorController_Config_BootRef_Get(const MotorController_T * p_mc, MotVarId_Config_BootRef_T id);
-uint32_t MotorController_Config_BootRef_Set(MotorController_T * p_mc, MotVarId_Config_BootRef_T id, int32_t value);
-int32_t MotorController_Config_AnalogUser_Get(const MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id);
-uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotVarId_Config_AnalogUser_T id, int32_t value);
+int32_t MotorController_Config_Get(const MotorController_T * p_mc, MotorController_ConfigId_T id);
+uint32_t MotorController_Config_Set(MotorController_T * p_mc, MotorController_ConfigId_T id, int32_t value);
+int32_t MotorController_Config_BootRef_Get(const MotorController_T * p_mc, MotorController_Config_BootRef_T id);
+uint32_t MotorController_Config_BootRef_Set(MotorController_T * p_mc, MotorController_Config_BootRef_T id, int32_t value);
+int32_t MotorController_Config_AnalogUser_Get(const MotorController_T * p_mc, MotorController_Config_AnalogUser_T id);
+uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotorController_Config_AnalogUser_T id, int32_t value);
 
 /******************************************************************************/
 /*
@@ -206,7 +209,7 @@ uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotVarI
 */
 /******************************************************************************/
 /*
-    Type of NameBase e.g. MotVarId_Monitor_General_T
+    Type of NameBase e.g. MotorController_VarOutput_T
     struct id
 */
 /* MotorController_Var_TypeIO */

@@ -445,7 +445,8 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
 // begins control
 static StateMachine_State_T * Drive_InputControlFeedback(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
 {
-    if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
+    // if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
+    MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode);
     return NULL;
 }
 

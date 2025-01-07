@@ -46,7 +46,7 @@
 
     alternatively, resp Queue, match RespLength
 */
-// static bool StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// static bool StartReq(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     Protocol_Req_T * p_req = _Protocol_SearchReqTable(p_protocol->p_Specs->P_REQ_TABLE, p_protocol->p_Specs->REQ_TABLE_LENGTH, cmdId);
 //     bool isSuccess = (p_req != 0U);
@@ -82,13 +82,13 @@
 // }
 
 // /* Does not start state if sync is active */
-// // bool _Protocol_Cmdr_StartReq_Background(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// // bool _Protocol_Cmdr_StartReq_Background(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // // {
 // //     return (p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ? StartReq(p_protocol, cmdId) : false;
 // // }
 
 // // /* Does not start if ReqState WAIT_SYNC WAIT_EXT */
-// bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// bool _Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     return (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_ID) ? StartReq(p_protocol, cmdId) : false;
 //     //(p_protocol->ReqState == PROTOCOL_REQ_STATE_INACTIVE) ||
@@ -99,7 +99,7 @@
 //     Tx new Req before Rx Reponse to previous Req
 //     Prioir Resp will be discarded
 // */
-// bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// bool _Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     return StartReq(p_protocol, cmdId);
 // }
@@ -107,12 +107,12 @@
 // /*
 //     No overwrite existing
 // */
-// void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// void Protocol_Cmdr_StartReq(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     if(_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
 // }
 
-// void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// void Protocol_Cmdr_StartReq_Overwrite(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     if(_Protocol_Cmdr_StartReq_Overwrite(p_protocol, cmdId) == true) { Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength); }
 // }
@@ -137,12 +137,12 @@
 //     //optionally, match txreq count vs rx proc count to determine wait
 // }
 
-// size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// size_t _Protocol_Cmdr_BuildTxReq(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     return (_Protocol_Cmdr_StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
 // }
 
-// size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_reqid_t cmdId)
+// size_t _Protocol_Cmdr_BuildTxReq_Overwrite(Protocol_T * p_protocol, protocol_req_id_t cmdId)
 // {
 //     return (StartReq(p_protocol, cmdId) == true) ? p_protocol->TxLength : 0U;
 // }

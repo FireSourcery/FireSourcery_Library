@@ -96,12 +96,12 @@ inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
 //     uint32_t Value;
 // }
 // Motor_Cmd_T;
-/* todo User set [FeedbackMode] without starting Run */
-inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
-{
-    if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
-        { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
-}
+/*   User set [FeedbackMode] without starting Run */
+// inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
+// {
+//     if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
+//         { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
+// }
 
 
 /*
@@ -324,6 +324,11 @@ void Motor_User_SetHold(Motor_T * p_motor)
 {
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
 }
+
+// void Motor_User_SetControl(Motor_T * p_motor)
+// {
+
+// }
 
 // bool Motor_User_TryRelease(Motor_T * p_motor)
 // {
