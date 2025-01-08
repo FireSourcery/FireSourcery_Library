@@ -379,17 +379,17 @@ void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection
 /******************************************************************************/
 void Motor_User_CalibrateAdc(Motor_T * p_motor)
 {
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ADC);
 }
 
 void Motor_User_CalibrateSensor(Motor_T * p_motor)
 {
     switch(p_motor->Config.SensorMode)
     {
-        case MOTOR_SENSOR_MODE_HALL:        StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
-        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
+        case MOTOR_SENSOR_MODE_HALL:        StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
+        case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
+        case MOTOR_SENSOR_MODE_SIN_COS:     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_SIN_COS);    break;
         #endif
         default: break;
     }

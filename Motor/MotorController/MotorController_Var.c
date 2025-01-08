@@ -397,7 +397,7 @@ static int32_t MotorInstance_GetConfig(const MotorController_T * p_mc, uint8_t m
             case MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER:      value = Motor_VarConfig_Encoder_Get(p_motor, (Motor_VarConfig_Encoder_T)idBase);            break;
             case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   value = Thermistor_ConfigId_Get(&p_motor->Thermistor, (Thermistor_ConfigId_T)idBase);       break;
             case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          value = Motor_VarConfig_Pid_Get(p_motor, (Motor_VarConfig_Pid_T)idBase);                    break;
-            // case MOT_VAR_TYPE_SIN_COS:                      value = Motor_VarConfig_SinCos_Get(p_motor, (Motor_VarConfig_SinCos_T)idBase);           break;
+            // case MOT_VAR_TYPE_SIN_COS:                   value = Motor_VarConfig_SinCos_Get(p_motor, (Motor_VarConfig_SinCos_T)idBase);              break;
         }
     }
 
@@ -407,7 +407,6 @@ static int32_t MotorInstance_GetConfig(const MotorController_T * p_mc, uint8_t m
 static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 {
     int32_t value = 0;
-    // const Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, varId.Instance);
     const Protocol_T * p_protocol;
     const Thermistor_T * p_thermistor;
     const VMonitor_T * p_vMonitor;
@@ -433,7 +432,7 @@ static int32_t GetConfig(const MotorController_T * p_mc, MotVarId_T varId)
 
         case MOT_VAR_ID_TYPE_CONFIG_VMONITOR:
             p_vMonitor = MotorController_User_GetPtrVMonitor(p_mc, varId.Instance);
-            if (p_vMonitor != NULL) { VMonitor_ConfigId_Get(p_vMonitor, (VMonitor_ConfigId_T)varId.NameBase); }
+            if (p_vMonitor != NULL) { value = VMonitor_ConfigId_Get(p_vMonitor, (VMonitor_ConfigId_T)varId.NameBase); }
             break;
 
         case MOT_VAR_ID_TYPE_CONFIG_PROTOCOL:
