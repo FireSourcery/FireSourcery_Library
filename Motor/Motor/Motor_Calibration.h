@@ -68,9 +68,9 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 {
     const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     bool isComplete = false;
-    if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+    if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
-        switch(p_motor->CalibrationStateIndex)
+        switch (p_motor->CalibrationStateIndex)
         {
             case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
             case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
@@ -78,7 +78,7 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
             case 3U: Hall_CalibratePhaseB(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, duty, duty);    p_motor->CalibrationStateIndex = 4U;    break;
             case 4U: Hall_CalibratePhaseInvA(&p_motor->Hall);   Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, 0U, duty);      p_motor->CalibrationStateIndex = 5U;    break;
             case 5U: Hall_CalibratePhaseC(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, duty);    p_motor->CalibrationStateIndex = 6U;    break;
-            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                                  isComplete = true;                      break;
+            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                                isComplete = true;                      break;
             default: break;
         }
     }

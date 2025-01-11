@@ -100,11 +100,6 @@ static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_moto
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
 static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
-/*
-    Separate getters for compatibility with StateMachine SetInput and ProcInput
-*/
-static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
-static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
 static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return (p_motor->StateFlags.RampDisable == 0U); }
 static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { p_motor->StateFlags.RampDisable = (rampEnable == 0U); }
@@ -120,6 +115,10 @@ static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { retur
 
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
+
+/* Separate getters for compatibility with StateMachine SetInput and ProcInput */
+static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
+static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
 /*
     User reference direction
@@ -188,8 +187,14 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T *
     Extern
 */
 /******************************************************************************/
-extern void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
+
+extern void Motor_User_ActivateControl(Motor_T * p_motor);
+extern void Motor_User_Release(Motor_T * p_motor);
+extern void Motor_User_Hold(Motor_T * p_motor);
+extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
+extern void Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
 extern void Motor_User_StartVoltageMode(Motor_T * p_motor);
@@ -206,17 +211,13 @@ extern void Motor_User_StartSpeedMode(Motor_T * p_motor);
 extern void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_fract16);
 extern void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle);
-
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
 #endif
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
-extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
+// extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
 
-extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
-extern void Motor_User_SetRelease(Motor_T * p_motor);
-extern void Motor_User_SetHold(Motor_T * p_motor);
 extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_User_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);

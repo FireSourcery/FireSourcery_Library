@@ -184,6 +184,7 @@ typedef enum MotorController_Config_BootRef
 }
 MotorController_Config_BootRef_T;
 
+// todo
 // typedef Thermistor_ConfigId_T MotVarId_Config_BoardThermistor_T;
 // typedef Thermistor_ConfigId_T MotVarId_Config_MotorThermistor_T;
 
@@ -206,13 +207,14 @@ uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotorCo
 /******************************************************************************/
 /*
     Meta
+    todo reanme
 */
 /******************************************************************************/
 /*
     Type of NameBase e.g. MotorController_VarOutput_T
     struct id
 */
-/* MotorController_Var_TypeIO */
+/* Mot_VarTypeIO */
 typedef enum MotVarId_Type_RealTime /* : uint16_t */
 {
     /* Monitor - Read-Only */
@@ -234,7 +236,7 @@ typedef enum MotVarId_Type_RealTime /* : uint16_t */
 }
 MotVarId_Type_RealTime_T;
 
-/* MotorController_Var_TypeConfig */
+/* Mot_VarTypeConfig */
 typedef enum MotVarId_Type_Config
 {
     // MOT_VAR_TYPE_CONFIG_MOTOR_PRIMARY,
@@ -256,6 +258,7 @@ typedef enum MotVarId_Type_Config
 MotVarId_Type_Config_T;
 
 /* Type of MotVarId_Type_Config_T, MotVarId_Type_RealTime_T */
+/* Mot_VarTypeType */
 typedef enum MotVarId_TypeType
 {
     MOT_VAR_ID_TYPE_REAL_TIME,
@@ -263,7 +266,7 @@ typedef enum MotVarId_TypeType
 }
 MotVarId_TypeType_T;
 
-// MotorController_VarKey_T
+// Mot_VarId_T
 typedef union MotVarId
 {
     struct
@@ -288,6 +291,7 @@ MotVarId_T;
 /*
     Status Response for Read/Write
 */
+/* Mot_VarStatus */
 typedef enum MotVarId_Status
 {
     MOT_VAR_STATUS_OK,

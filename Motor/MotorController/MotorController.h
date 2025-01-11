@@ -373,8 +373,8 @@ typedef struct MotorController
     MotorController_LockId_T LockSubState;
 
     /* Input Image / Polling State */
-    int32_t UserCmdValue;
-    Motor_FeedbackMode_T UserCmdMode;
+    // int32_t UserCmdValue;
+    // Motor_FeedbackMode_T UserCmdMode;
 
     // uint8_t CmdMotorId; /* for VarId, Value input mode only */
     /* Async return status */
@@ -474,9 +474,10 @@ extern void MotorController_SetILimitAll_Scalar(MotorController_T * p_mc, Motor_
 extern void MotorController_ClearILimitAll(MotorController_T * p_mc, Motor_ILimitId_T id);
 
 extern void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode);
+extern void MotorController_StartControlAll(MotorController_T * p_mc);
 extern void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode);
 extern void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd);
-extern void MotorController_StartControlModeValueAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode, int16_t value);
+// extern void MotorController_StartControlModeValueAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode, int16_t value);
 
 extern void MotorController_StartThrottleMode(MotorController_T * p_mc);
 extern void MotorController_SetThrottleValue(MotorController_T * p_mc, uint16_t userCmdThrottle);

@@ -39,7 +39,7 @@
     Motor State Machine Thread Safety
     State Proc in PWM thread.
         Includes _StateMachine_ProcStateTransition.
-    User Input [Motor_User_StartControl] in Main thread.
+    User Input [Motor_User_StartControlMode] in Main thread.
         Inputs do not directly proc transition, set for sync proc
 
     Sync Mode -
@@ -53,6 +53,95 @@
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
 /******************************************************************************/
+
+
+/******************************************************************************/
+/*!
+    On/Off Control
+*/
+/******************************************************************************/
+/*
+    Set [FeedbackMode] and Transition to Run State
+*/
+inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+{
+    //  (FeedbackMode_IsValid(mode));
+    // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value); // disables interrupts twice
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE);
+}
+
+/* Generic array functions use */
+// inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
+// {
+//     Motor_User_StartControlMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
+// }
+
+/* combine process by statemachine */
+// typedef union Motor_Cmd
+// {
+//     struct
+//     {
+//         uint32_t CmdValue       : 16U;
+//         uint32_t FeedbackMode   : 8U;
+//         uint32_t Activate       : 2U;
+//     };
+//     uint32_t Value;
+// }
+// Motor_Cmd_T;
+
+inline void Motor_User_ActivateControl(Motor_T * p_motor)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE);
+}
+
+/*
+    always State machine checked Disable
+*/
+inline void Motor_User_Release(Motor_T * p_motor)
+{
+    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_FLOAT);
+}
+
+inline void Motor_User_Hold(Motor_T * p_motor)
+{
+    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_GROUND);
+}
+
+/*
+    Force Disable control Non StateMachine checked
+*/
+void Motor_User_ForceDisableControl(Motor_T * p_motor)
+{
+    Phase_Float(&p_motor->Phase);
+    // _Motor_User_SetCmd(p_motor, 0);
+    Motor_User_Release(p_motor);
+}
+
+/*   User set [FeedbackMode] without starting Run */
+inline void Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
+{
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value);
+}
+
+inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
+{
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, modeValue);
+}
+
+/*
+    Bypasses User Mode restrictions, bounds
+    Concurrency note: only 1 thread updates RampTarget. StateMachine_Proc thread only updates OutputState
+    Ramp input allows over saturated input
+*/
+static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
+{
+    if (p_motor->StateFlags.RampDisable == 0U) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+    else { Linear_Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
+}
 
 /******************************************************************************/
 /*!
@@ -68,59 +157,13 @@
     SetCmd[Value] - Without invoking StateMachine - Sets buffered cmd value, sets on all states even when inactive
 */
 /******************************************************************************/
-/*
-    Acts as set [FeedbackMode] and Transition to Run State
-*/
-inline void Motor_User_StartControl(Motor_T * p_motor, Motor_FeedbackMode_T mode)
-{
-    //  (FeedbackMode_IsValid(mode));
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-}
-
-/* Generic array functions use */
-inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
-{
-    Motor_User_StartControl(p_motor, Motor_FeedbackMode_Cast(modeValue));
-}
-
-/* combine process by statemachine */
-// typedef union Motor_Cmd
-// {
-//     struct
-//     {
-//         uint32_t CmdValue       : 16U;
-//         uint32_t FeedbackMode   : 8U;
-//         uint32_t Activate       : 2U;
-//     };
-//     uint32_t Value;
-// }
-// Motor_Cmd_T;
-/*   User set [FeedbackMode] without starting Run */
-// inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
-// {
-//     if (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP || (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_FREEWHEEL))
-//         { Motor_SetFeedbackMode_Cast(p_motor, modeValue); } /* alternatively use MSM_INPUT_FEEDBACK_MODE, or cached value */
-// }
-
-
-/*
-    Bypasses User Mode restrictions, bounds
-    Concurrency note: only 1 thread updates RampTarget. StateMachine_Proc thread only updates OutputState
-    Ramp input allows over saturated input
-*/
-static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
-{
-    if (p_motor->StateFlags.RampDisable == 0U)  { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
-    else                                        { Linear_Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
-}
-
 /******************************************************************************/
 /*!
     Voltage Mode
 */
 /******************************************************************************/
-void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
+// Motor_User_SetFeedbackMode
+void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
 
 /*!
     @param[in] voltage [-32768:32767]
@@ -148,7 +191,7 @@ void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_fract16)
     Current Mode
 */
 /******************************************************************************/
-void Motor_User_StartIMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
+void Motor_User_StartIMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
 
 /*!
     @param[in] i [-32768:32767]
@@ -209,7 +252,7 @@ void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 /*!
     Default speed mode is speed torque mode
 */
-void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
+void Motor_User_StartSpeedMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
 
 /*!
     Only allow forward direction, reverse direction use MOTOR_DIRECTION,
@@ -250,7 +293,7 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 /*!
 
 */
-void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControl(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
+void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
 void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
 {
@@ -289,59 +332,6 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
     else                            { Motor_User_SetVoltageCmd(p_motor, userCmd); }
 }
 
-// void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
-// {
-// only while run
-//     if (mode.Value != p_motor->FeedbackMode.Value) { Motor_User_StartControl(p_motor, mode); }
-//     Motor_User_SetActiveCmdValue(p_motor, userCmd);
-// }
-
-/******************************************************************************/
-/*!
-    On/Off Control
-*/
-/******************************************************************************/
-/*
-    Force Disable control Non StateMachine checked
-*/
-void Motor_User_ForceDisableControl(Motor_T * p_motor)
-{
-    Phase_Float(&p_motor->Phase);
-    // _Motor_User_SetCmd(p_motor, 0);
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
-}
-
-/*
-    always State machine checked Disable
-    TryRelease transition to FREEWHEEL
-*/
-void Motor_User_SetRelease(Motor_T * p_motor)
-{
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
-}
-
-void Motor_User_SetHold(Motor_T * p_motor)
-{
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
-}
-
-// void Motor_User_SetControl(Motor_T * p_motor)
-// {
-
-// }
-
-// bool Motor_User_TryRelease(Motor_T * p_motor)
-// {
-//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
-//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_FREEWHEEL ||
-//         StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
-// }
-
-// bool Motor_User_TryHold(Motor_T * p_motor)
-// {
-//     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
-//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); // && PwmA+B+C == 0
-// }
 
 /******************************************************************************/
 /*!

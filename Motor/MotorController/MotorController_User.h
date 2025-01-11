@@ -167,20 +167,22 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 /*! @param[in] userCmd [-32767:32767] */
 static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
 {
-    p_mc->UserCmdValue = userCmd;
+    // p_mc->UserCmdValue = userCmd;
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (uint32_t)userCmd);
 }
 
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {
-    p_mc->UserCmdMode.Value = feedbackMode;
+    // p_mc->UserCmdMode.Value = feedbackMode;
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
 }
 
 // static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
 
 // float all and ground all, stop state then use motor
-// static inline void MotorController_User_ReleaseControl(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
+// cmd = 0
+// static inline void MotorController_User_Release (MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
+// voltagemode 0
 // static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
 
 /******************************************************************************/
@@ -205,7 +207,7 @@ static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 
-// todo move Drive image to statemachine
+// todo move analoguser image to statemachine
 
 
 /******************************************************************************/

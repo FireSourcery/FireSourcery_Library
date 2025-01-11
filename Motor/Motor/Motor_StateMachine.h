@@ -42,13 +42,13 @@
 typedef enum Motor_StateMachine_Input
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
-    MSM_INPUT_CONTROL,          /* Spin - Activate Control / Feedback Mode - Transition to Run State (Active Control), and FeedbackMode update */
-    MSM_INPUT_RELEASE,          /* Freewheel/Stop - Release Control */
-    MSM_INPUT_HOLD,             /* Stop */
-    // MSM_INPUT_FEEDBACK_MODE,  // feedbackflags
-    // MSM_INPUT_CONTROL_MODE,    // active/release/hold
+    MSM_INPUT_CONTROL_MODE,     /* Active/Release/Hold */
+    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode] flags */
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
+    // MSM_INPUT_CONTROL,          /* Spin - Activate Control / Feedback Mode - Transition to Run State (Active Control), and FeedbackMode update */
+    // MSM_INPUT_RELEASE,          /* Freewheel/Stop - Release Control */
+    // MSM_INPUT_HOLD,             /* Stop */
 }
 Motor_StateMachine_Input_T;
 

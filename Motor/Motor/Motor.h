@@ -156,6 +156,7 @@ static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t value) { retu
 //     MOTOR_CONTROL_RELEASE, // Stop/Freewheel
 //     MOTOR_CONTROL_ACTIVE, // Run State only
 //     MOTOR_CONTROL_HOLD, // Stop
+//     MOTOR_CONTROL_OPEN_LOOP,
 // }
 // Motor_ControlState_T;
 
@@ -170,8 +171,6 @@ typedef union Motor_StateFlags
         uint16_t ILimited           : 1U;
         uint16_t SpeedLimited       : 1U;
         uint16_t RampDisable        : 1U;
-        // uint16_t SensorFeedback  : 1U;
-        // uint16_t Hold            : 1U;  // Stop substate
     };
     uint16_t Value;
 }
@@ -389,7 +388,6 @@ typedef struct Motor
     uint8_t CalibrationStateIndex;
     volatile Motor_PhaseFlags_T IFlags;
     volatile Motor_PhaseFlags_T VFlags;
-    // int16_t UserCmdBuffer; /* effectively 3rd input into StateMachine */
 
     /*
         Active Limits

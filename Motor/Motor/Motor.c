@@ -388,8 +388,6 @@ void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue)
 }
 
 
-
-
 /******************************************************************************/
 /*!
     Sentinel Active Limits

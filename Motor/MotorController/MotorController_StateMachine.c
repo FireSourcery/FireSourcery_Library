@@ -266,7 +266,7 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                     MotorController_StartDriveZero(p_mc);
                     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
                     break;
-                default: break;
+                case MOTOR_CONTROLLER_DRIVE_CMD: break;
             }
             break;
         case MOTOR_CONTROLLER_DRIVE_THROTTLE:
@@ -294,7 +294,7 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                     MotorController_StartDriveZero(p_mc);
                     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
                     break;
-                default: break;
+                case MOTOR_CONTROLLER_DRIVE_CMD: break;
             }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
@@ -328,13 +328,27 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
                     }
                     break;
                 case MOTOR_CONTROLLER_DRIVE_RELEASE:
-                    MotorController_ProcDriveZero(p_mc);
+                    // MotorController_ProcDriveZero(p_mc);
+                    // MotorController_StartcDriveZero(p_mc);
                     break;
-                    // case MOTOR_CONTROLLER_DRIVE_CMD:
-                default: break;
+                case MOTOR_CONTROLLER_DRIVE_CMD: break;
             }
             break;
-        default: break;
+        case MOTOR_CONTROLLER_DRIVE_CMD:
+            switch (id)
+            {
+                case MOTOR_CONTROLLER_DRIVE_BRAKE:
+                    if (value != 0U)
+                    {
+                        MotorController_StartBrakeMode(p_mc);
+                        p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_BRAKE;
+                    }
+                    break;
+                case MOTOR_CONTROLLER_DRIVE_RELEASE: break;
+                case MOTOR_CONTROLLER_DRIVE_THROTTLE: break;
+                case MOTOR_CONTROLLER_DRIVE_CMD: break;
+            }
+            break;
     }
 
     return NULL;
@@ -365,15 +379,15 @@ static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
 
     switch (p_mc->DriveSubState)
     {
-        case MOTOR_CONTROLLER_DRIVE_CMD:
-            /* polling for a non polling input */
-            // MotorController_ProcControlModeAll(p_mc, p_mc->UserCmdMode, p_mc->UserCmdValue);
-            // break;
-            //alternatively,
-            // if (p_mc->UserCmdValue == 0) { MotorController_ProcDriveZero(p_mc); }
+        case MOTOR_CONTROLLER_DRIVE_BRAKE: break;
+        case MOTOR_CONTROLLER_DRIVE_THROTTLE: break;
+        case MOTOR_CONTROLLER_DRIVE_CMD: break;
+            /* alternatively, polling for non polling inputs */
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
             MotorController_ProcDriveZero(p_mc);
             break;
+        //alternatively,
+        // if (p_mc->UserCmdValue == 0) { MotorController_ProcDriveZero(p_mc); }
     }
 
     return NULL;
@@ -428,7 +442,8 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
             if (cmdValue == 0) { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
-            if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
+            // if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
+            if (cmdValue != 0) { MotorController_StartControlAll(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
             break;
     }
 
@@ -443,20 +458,11 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
 }
 
 // begins control
-static StateMachine_State_T * Drive_InputControlFeedback(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
+static StateMachine_State_T * Drive_InputFeedbackMode(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
 {
-    // if (feedbackMode != p_mc->UserCmdMode.Value) { p_mc->UserCmdMode.Value = feedbackMode; MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
-    MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode);
+    MotorController_SetFeedbackModeAll_Cast(p_mc, feedbackMode);
     return NULL;
 }
-
-// using stored prev and new
-// shares input index
-// static StateMachine_State_T * Drive_InputCmdImage(MotorController_T * p_mc, statemachine_input_value_t _void)
-// {
-//     // if (p_mc->UserCmdMode != p_mc->UserCmdModePrev) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); }
-//     // return NULL;
-// }
 
 static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -465,8 +471,7 @@ static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TA
     [MCSM_INPUT_THROTTLE]   = (StateMachine_Transition_T)Drive_InputThrottle,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Drive_InputBrake,
     [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
-    [MCSM_INPUT_CMD_MODE]   = (StateMachine_Transition_T)Drive_InputControlFeedback,
-    // [MCSM_INPUT_CMD_IMAGE]  = (StateMachine_Transition_T)Drive_InputCmdImage,
+    [MCSM_INPUT_CMD_MODE]   = (StateMachine_Transition_T)Drive_InputFeedbackMode,
 };
 
 static const StateMachine_State_T STATE_DRIVE =
