@@ -543,7 +543,7 @@ static void Calibration_Entry(Motor_T * p_motor)
     p_motor->CalibrationStateIndex = 0U;
     Phase_Ground(&p_motor->Phase);
 
-    switch(p_motor->CalibrationState)
+    switch (p_motor->CalibrationState)
     {
         case MOTOR_CALIBRATION_STATE_ADC:       Motor_Calibration_StartAdc(p_motor);      break;
         case MOTOR_CALIBRATION_STATE_HALL:      Motor_Calibration_StartHall(p_motor);     break;
@@ -559,7 +559,7 @@ static StateMachine_State_T * Calibration_Proc(Motor_T * p_motor)
 {
     bool isComplete = false;
 
-    switch(p_motor->CalibrationState)
+    switch (p_motor->CalibrationState)
     {
         case MOTOR_CALIBRATION_STATE_ADC:       isComplete = Motor_Calibration_ProcAdc(p_motor);      break;
         case MOTOR_CALIBRATION_STATE_HALL:      isComplete = Motor_Calibration_ProcHall(p_motor);     break;
@@ -570,7 +570,7 @@ static StateMachine_State_T * Calibration_Proc(Motor_T * p_motor)
         default: break;
     }
 
-    if(isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    if (isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
     return NULL;
 }
 

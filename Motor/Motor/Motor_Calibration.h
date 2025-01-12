@@ -50,7 +50,7 @@ static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
 
 static inline bool Motor_Calibration_ProcAdc(Motor_T * p_motor)
 {
-    Motor_Analog_ProcCalibration(p_motor);
+   return Motor_Analog_ProcCalibration(p_motor);
 }
 
 

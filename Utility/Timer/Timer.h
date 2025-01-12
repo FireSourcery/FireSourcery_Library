@@ -120,9 +120,9 @@ static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) 
 static inline bool Timer_Poll(Timer_T * p_timer)
 {
     bool isElapsed = (p_timer->Period > 0U) && (Timer_IsElapsed(p_timer) == true);
-    if(isElapsed == true)
+    if (isElapsed == true)
     {
-        if(p_timer->IsOneShot == true)  { p_timer->Period = 0U; }
+        if (p_timer->IsOneShot == true) { p_timer->Period = 0U; }
         else                            { Timer_Restart(p_timer); }
     }
     return isElapsed;
@@ -146,7 +146,7 @@ static inline bool Timer_IsPeriodic(Timer_T * p_timer)                      { re
 static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
 {
     bool isElapsed = Timer_IsElapsed(p_timer);
-    if(isElapsed == true) { Timer_Restart(p_timer); }
+    if (isElapsed == true) { Timer_Restart(p_timer); }
     return isElapsed;
 }
 
@@ -161,7 +161,7 @@ static inline void Timer_Periodic_Disable(Timer_T * p_timer) { p_timer->Period =
 static inline bool Timer_OneShot_Poll(Timer_T * p_timer)
 {
     bool isElapsed = (p_timer->Period > 0U) && (Timer_IsElapsed(p_timer) == true);
-    if(isElapsed == true) { p_timer->Period = 0U; }
+    if (isElapsed == true) { p_timer->Period = 0U; }
     return isElapsed;
 }
 

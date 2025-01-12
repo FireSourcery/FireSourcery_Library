@@ -206,7 +206,7 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
             // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
             MotorController_User_InputLock(p_mc, (MotorController_LockId_T)value);
             // status = MotorController_User_GetLockOpState(p_mc);
-            status = MotorController_User_GetLockOpStatus(p_mc); // union status, 0 as success
+            // status = MotorController_User_GetLockOpStatus(p_mc); // union status, 0 as success
             break;
         case MOT_USER_SYSTEM_LOCK_STATUS:
             // if (MotorController_User_IsLockOpComplete(p_mc) == true)
