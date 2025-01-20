@@ -182,10 +182,10 @@ NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController
 //     }
 // }
 
-
 /******************************************************************************/
 /*
     Call via Key/Value
+    todo regularize return status
 */
 /******************************************************************************/
 uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_User_CallId_T id, int32_t value)
@@ -202,20 +202,21 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
-        case MOT_USER_SYSTEM_LOCK_STATE:
+        case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
             MotorController_User_InputLock(p_mc, (MotorController_LockId_T)value);
-            // status = MotorController_User_GetLockOpState(p_mc);
-            // status = MotorController_User_GetLockOpStatus(p_mc); // union status, 0 as success
+            status = MotorController_User_GetLockOpStatus(p_mc); // returns block status, async op always returns 0
             break;
-        case MOT_USER_SYSTEM_LOCK_STATUS:
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
+            status = MotorController_User_GetLockState(p_mc);
+            break;
+        case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS: // union status, 0 as success
             // if (MotorController_User_IsLockOpComplete(p_mc) == true)
             status = MotorController_User_GetLockOpStatus(p_mc);
             break;
         // include for convenience
         // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
-
-        // case MOT_USER_SYSTEM_SERVO: MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value);        break;
+        // case MOT_USER_SYSTEM_SERVO: MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
         default: break;
     }
 

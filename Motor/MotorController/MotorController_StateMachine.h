@@ -49,7 +49,7 @@ typedef enum MotorController_StateMachine_Input
     MCSM_INPUT_LOCK,
     MCSM_INPUT_DIRECTION,   /* Drive Direction */
     MCSM_INPUT_CMD,
-    MCSM_INPUT_THROTTLE, /* Polling inputs */
+    MCSM_INPUT_THROTTLE,    /* Polling inputs */
     MCSM_INPUT_BRAKE,
     MCSM_INPUT_SERVO,
     MCSM_INPUT_CMD_MODE,

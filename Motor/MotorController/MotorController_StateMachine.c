@@ -587,6 +587,7 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     break;
         /* Motor Calibration State transistion may start next pwm cycle */
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:
+            // alternatively if (MotorController_IsEveryMotorCalibrationComplete(p_mc) == true)
             if (MotorController_IsEveryMotorStopState(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 0U; }
             break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:
@@ -606,12 +607,11 @@ static StateMachine_State_T * Lock_InputLockOp_Blocking(MotorController_T * p_mc
     switch ((MotorController_LockId_T)lockId)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER: break;
-        case MOTOR_CONTROLLER_LOCK_EXIT:              p_mc->LockOpStatus = -1;  p_nextState = &STATE_PARK;                  break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  p_mc->LockOpStatus = -1;  MotorController_CalibrateSensorAll(p_mc);   break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:     p_mc->LockOpStatus = -1;  MotorController_CalibrateAdc(p_mc);         break;
-        /* NvM function will block + disable interrupts */
+        case MOTOR_CONTROLLER_LOCK_EXIT:              p_nextState = &STATE_PARK;                  break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  MotorController_CalibrateSensorAll(p_mc);   break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:     MotorController_CalibrateAdc(p_mc);         break;
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
-            p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc);
+            p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc); /* NvM function will block + disable interrupts */
             p_mc->LockOpStatus = p_mc->NvmStatus;
             p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
             break;

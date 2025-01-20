@@ -314,7 +314,7 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, statemachine_i
         case PHASE_STATE_ACTIVE: break;
     }
 
-    return &STATE_FREEWHEEL;
+    return p_nextState;
 }
 
 static StateMachine_State_T * Run_InputFeedbackMode(Motor_T * p_motor, statemachine_input_value_t feedbackMode)
@@ -545,6 +545,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 
     switch (p_motor->CalibrationState)
     {
+        case MOTOR_CALIBRATION_STATE_DISABLE: break;
         case MOTOR_CALIBRATION_STATE_ADC:       Motor_Calibration_StartAdc(p_motor);      break;
         case MOTOR_CALIBRATION_STATE_HALL:      Motor_Calibration_StartHall(p_motor);     break;
         case MOTOR_CALIBRATION_STATE_ENCODER:   Motor_Calibration_StartEncoder(p_motor);  break;
@@ -561,16 +562,17 @@ static StateMachine_State_T * Calibration_Proc(Motor_T * p_motor)
 
     switch (p_motor->CalibrationState)
     {
-        case MOTOR_CALIBRATION_STATE_ADC:       isComplete = Motor_Calibration_ProcAdc(p_motor);      break;
-        case MOTOR_CALIBRATION_STATE_HALL:      isComplete = Motor_Calibration_ProcHall(p_motor);     break;
-        case MOTOR_CALIBRATION_STATE_ENCODER:   isComplete = Motor_Calibration_ProcEncoder(p_motor);  break;
+        case MOTOR_CALIBRATION_STATE_DISABLE:   isComplete = true;                                      break;
+        case MOTOR_CALIBRATION_STATE_ADC:       isComplete = Motor_Calibration_ProcAdc(p_motor);        break;
+        case MOTOR_CALIBRATION_STATE_HALL:      isComplete = Motor_Calibration_ProcHall(p_motor);       break;
+        case MOTOR_CALIBRATION_STATE_ENCODER:   isComplete = Motor_Calibration_ProcEncoder(p_motor);    break;
         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_CALIBRATION_STATE_SIN_COS:   isComplete = Motor_Calibration_ProcSinCos(p_motor);   break;
+        case MOTOR_CALIBRATION_STATE_SIN_COS:   isComplete = Motor_Calibration_ProcSinCos(p_motor);     break;
         #endif
         default: break;
     }
 
-    if (isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); }
+    if (isComplete == true) { _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_STOP); } // CalibrationState = MOTOR_CALIBRATION_STATE_DISABLE;
     return NULL;
 }
 

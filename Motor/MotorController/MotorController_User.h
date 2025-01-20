@@ -46,8 +46,9 @@
 typedef enum MotorController_User_CallId
 {
     MOT_USER_SYSTEM_BEEP,
-    MOT_USER_SYSTEM_LOCK_STATE, // lock op
-    MOT_USER_SYSTEM_LOCK_STATUS, // Async status
+    MOT_USER_SYSTEM_LOCK_STATE_INPUT, // MotorController_LockId_T as input
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
     MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
     MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
     // MOT_USER_SYSTEM_SERVO, // servo mode
@@ -251,9 +252,10 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 }
 
 /* Lock State returns to ENTER */
-static inline MotorController_LockId_T MotorController_User_GetLockOpState(const MotorController_T * p_mc)
+static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_mc)
 {
-    return MotorController_User_IsLockState(p_mc) ? p_mc->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
+    // return MotorController_User_IsLockState(p_mc) ? p_mc->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
+    return  p_mc->LockSubState;
 }
 static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_mc) { return p_mc->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER; }
 /* return union status */

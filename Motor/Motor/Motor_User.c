@@ -358,7 +358,6 @@ void Motor_User_SetDirectionReverse(Motor_T * p_motor) { Motor_User_SetDirection
 // bool Motor_User_TryDirectionForward(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->Config.DirectionForward); }
 // bool Motor_User_TryDirectionReverse(Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
 
-
 /******************************************************************************/
 /*
     Calibration State - Blocking Run Calibration functions
@@ -374,7 +373,7 @@ void Motor_User_CalibrateAdc(Motor_T * p_motor)
 
 void Motor_User_CalibrateSensor(Motor_T * p_motor)
 {
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:        StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_HALL);       break;
         case MOTOR_SENSOR_MODE_ENCODER:     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_ENCODER);    break;
