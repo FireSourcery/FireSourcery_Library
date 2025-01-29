@@ -207,7 +207,8 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
             // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
             _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_PARK);
             MotorController_User_InputLock(p_mc, (MotorController_LockId_T)value);
-            if (MotorController_User_IsLockState(p_mc) == false) { MotorController_BeepShort(p_mc); }
+            if (((MotorController_LockId_T)value != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_User_IsLockState(p_mc) == false))
+                { MotorController_BeepShort(p_mc); }
             status = MotorController_User_GetLockOpStatus(p_mc); // returns block status, async op always returns 0
             break;
         case MOT_USER_SYSTEM_LOCK_STATE_STATUS:

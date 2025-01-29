@@ -101,13 +101,11 @@ inline void Motor_User_ActivateControl(Motor_T * p_motor)
 */
 inline void Motor_User_Release(Motor_T * p_motor)
 {
-    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_RELEASE, STATE_MACHINE_INPUT_VALUE_NULL);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_FLOAT);
 }
 
 inline void Motor_User_Hold(Motor_T * p_motor)
 {
-    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_HOLD, STATE_MACHINE_INPUT_VALUE_NULL);
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_GROUND);
 }
 

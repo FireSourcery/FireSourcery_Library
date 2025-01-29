@@ -442,7 +442,6 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
             if (cmdValue == 0) { MotorController_StartDriveZero(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE; }
             break;
         case MOTOR_CONTROLLER_DRIVE_RELEASE:
-            // if (cmdValue != 0) { MotorController_StartControlModeAll(p_mc, p_mc->UserCmdMode); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
             if (cmdValue != 0) { MotorController_StartControlAll(p_mc); p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_CMD; }
             break;
     }
@@ -457,7 +456,6 @@ static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemach
     return NULL;
 }
 
-// begins control
 static StateMachine_State_T * Drive_InputFeedbackMode(MotorController_T * p_mc, statemachine_input_value_t feedbackMode)
 {
     MotorController_SetFeedbackModeAll_Cast(p_mc, feedbackMode);
@@ -512,12 +510,17 @@ static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, s
 
     switch((MotorController_Direction_T)direction)
     {
-        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break; // release on low speed
+        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = NULL; break;
-        case MOTOR_CONTROLLER_DIRECTION_FORWARD:    MotorController_SetDirectionForwardAll(p_mc); p_nextState = &STATE_DRIVE; break;
-        case MOTOR_CONTROLLER_DIRECTION_REVERSE:    MotorController_SetDirectionReverseAll(p_mc); p_nextState = &STATE_DRIVE; break;
-        // case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = MotorController_SetDirectionForwardAll(p_mc) ? &STATE_DRIVE : 0U; break;
-        // case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = MotorController_SetDirectionReverseAll(p_mc) ? &STATE_DRIVE : 0U; break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD:
+            MotorController_SetDirectionForwardAll(p_mc);
+            p_nextState = MotorController_IsEveryMotorForward(p_mc) ? &STATE_DRIVE : NULL;
+            break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE:
+            MotorController_SetDirectionReverseAll(p_mc);
+            p_nextState = MotorController_IsEveryMotorReverse(p_mc) ? &STATE_DRIVE : NULL;
+            break;
+        // case MOTOR_CONTROLLER_DIRECTION_ERROR: break;
         default: break;
     }
 
@@ -583,7 +586,9 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
 {
     switch(p_mc->LockSubState)
     {
-        case MOTOR_CONTROLLER_LOCK_ENTER:               break;
+        case MOTOR_CONTROLLER_LOCK_ENTER:
+            // if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; } // poll motor
+            break;
         case MOTOR_CONTROLLER_LOCK_EXIT:                break;
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     break;
         /* Motor Calibration State transistion may start next pwm cycle */

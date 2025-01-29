@@ -486,8 +486,8 @@ static void Calibration_Entry(Motor_T * p_motor)
 
 static StateMachine_State_T * Calibration_Proc(Motor_T * p_motor)
 {
-    bool isComplete = false;
     StateMachine_State_T * p_nextState = NULL;
+    bool isComplete = false;
 
     switch (p_motor->CalibrationState)
     {
@@ -583,7 +583,7 @@ static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TAB
 {
     [MSM_INPUT_FAULT]       = (StateMachine_Transition_T)Fault_InputClearFault,
     [MSM_INPUT_DIRECTION]   = NULL,
-    [MSM_INPUT_CALIBRATION] = Fault_InputCalibration,
+    [MSM_INPUT_CALIBRATION] = (StateMachine_Transition_T)Fault_InputCalibration,
 };
 
 static const StateMachine_State_T STATE_FAULT =

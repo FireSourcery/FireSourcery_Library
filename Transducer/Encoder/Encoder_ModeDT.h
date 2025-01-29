@@ -114,51 +114,51 @@ static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)
 /*
 */
 /******************************************************************************/
-static inline int32_t Encoder_ModeDT_GetAngularSpeed(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_T * p_encoder)
 {
     return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
 }
 
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed(const Encoder_T * p_encoder)
 {
     return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution;
 }
 
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_T * p_encoder)
 {
     return p_encoder->FreqD * 60 / p_encoder->Config.CountsPerRevolution;
 }
 
-static inline int32_t Encoder_ModeDT_GetAngularVelocity(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetAngularVelocity(const Encoder_T * p_encoder)
 {
 }
 
-static inline int32_t Encoder_ModeDT_GetRotationalVelocity(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetRotationalVelocity(const Encoder_T * p_encoder)
 {
 
 }
 
-static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_T * p_encoder)
 {
     return Encoder_GetDirection(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);
 }
 
-static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(const Encoder_T * p_encoder)
 {
     return p_encoder->FreqD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
 }
 
-static inline int32_t Encoder_ModeDT_GetSurfaceVelocity(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetSurfaceVelocity(const Encoder_T * p_encoder)
 {
 
 }
 
-static inline int32_t Encoder_ModeDT_GetGroundVelocity_Mph(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetGroundVelocity_Mph(const Encoder_T * p_encoder)
 {
 
 }
 
-static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(const Encoder_T * p_encoder)
 {
 
 }

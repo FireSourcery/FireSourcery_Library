@@ -166,17 +166,22 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 /*
     All or Primary motor
 */
-/*! @param[in] userCmd [-32767:32767] */
+/*!
+    Invoke StateMachine to record 0 state
+    @param[in] userCmd [-32767:32767]
+*/
 static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
 {
     // p_mc->UserCmdValue = userCmd;
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (uint32_t)userCmd);
 }
 
+/* Directly invoke Motor StateMachine */
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {
     // p_mc->UserCmdMode.Value = feedbackMode;
-    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
+    MotorController_SetFeedbackModeAll_Cast(p_mc, feedbackMode);
+    // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
 }
 
 // static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
@@ -256,9 +261,9 @@ static inline bool MotorController_User_IsConfigState(MotorController_T * p_mc)
 static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_mc)
 {
     // return MotorController_User_IsLockState(p_mc) ? p_mc->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
-    return  p_mc->LockSubState;
+    return p_mc->LockSubState;
 }
-static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_mc) { return p_mc->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER; }
+static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_mc) { return (p_mc->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER); }
 /* return union status */
 static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController_T * p_mc) { return p_mc->LockOpStatus; }
 
@@ -292,7 +297,7 @@ static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) 
 static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc)
 {
     MotorController_ForceDisableAll(p_mc);
-    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION,  MOTOR_CONTROLLER_DIRECTION_NEUTRAL);
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);
     p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE;
 }
 
@@ -312,8 +317,6 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
     p_mc->StateFlags.BuzzerEnable = 0U;
 }
 
-
-
 /******************************************************************************/
 /*
     Motor Controller Struct Variables
@@ -327,7 +330,7 @@ typedef union MotorController_User_StatusFlags
     struct
     {
         uint16_t HeatWarning        : 1U; // ILimit by Heat
-        uint16_t VSourceLow               : 1U; // ILimit by VSourceLow
+        uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
         // uint16_t SpeedLimit         : 1U;
         // uint16_t ILimit             : 1U;
         // uint16_t BuzzerEnable       : 1U;
@@ -345,7 +348,7 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
     return (MotorController_User_StatusFlags_T)
     {
         .HeatWarning    = p_mc->StateFlags.HeatWarning,
-        .VSourceLow           = p_mc->StateFlags.VSourceLow,
+        .VSourceLow     = p_mc->StateFlags.VSourceLow,
         // .BuzzerEnable   = p_mc->StateFlags.BuzzerEnable,
     };
 }

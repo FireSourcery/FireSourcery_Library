@@ -92,6 +92,7 @@ int32_t Motor_VarOutput_PositionSensor_Get(const Motor_T * p_motor, Motor_VarOut
     switch (varId)
     {
         case MOTOR_VAR_ENCODER_FREQ:  value = p_motor->Encoder.FreqD;     break;
+        case MOTOR_VAR_ENCODER_RPM:   value = Encoder_ModeDT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
     }
     return value;
 }
@@ -177,8 +178,8 @@ void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibrat
         case MOTOR_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                 break;
         case MOTOR_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                        break;
         case MOTOR_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);     break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:               Motor_Config_SetSpeedVRef_Rpm(p_motor, varValue);             break;
-        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         Motor_Config_SetSpeedVMatchRef_Rpm(p_motor, varValue);        break;
+        // case MOTOR_VAR_SPEED_V_REF_RPM:               Motor_Config_SetSpeedVRef_Rpm(p_motor, varValue);             break;
+        // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         Motor_Config_SetSpeedVMatchRef_Rpm(p_motor, varValue);        break;
         case MOTOR_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);               break;
         case MOTOR_VAR_IB_ZERO_REF_ADCU:              Motor_Config_SetIbZero_Adcu(p_motor, varValue);               break;
         case MOTOR_VAR_IC_ZERO_REF_ADCU:              Motor_Config_SetIcZero_Adcu(p_motor, varValue);               break;

@@ -49,6 +49,7 @@ static inline uint16_t Motor_Config_GetKv(const Motor_T * p_motor)              
 static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_T * p_motor)            { return p_motor->Config.VSpeedScalar_UFract16; }
 
 static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(const Motor_T * p_motor)                    { return Motor_GetSpeedVRef_Rpm(p_motor); }
+// Motor_Static_RpmOfKv(p_motor->Config.Kv);
 static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_T * p_motor)               { return (p_motor->Config.VSpeedScalar_UFract16 * Motor_GetSpeedVRef_Rpm(p_motor)) >> 15U; }
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_T * p_motor)                      { return p_motor->Config.IaZeroRef_Adcu; }

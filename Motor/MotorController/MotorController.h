@@ -114,7 +114,7 @@ typedef enum MotorController_Direction
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
     MOTOR_CONTROLLER_DIRECTION_FORWARD,
     MOTOR_CONTROLLER_DIRECTION_REVERSE,
-    MOTOR_CONTROLLER_DIRECTION_ERROR = 255U,
+    MOTOR_CONTROLLER_DIRECTION_ERROR,
 }
 MotorController_Direction_T;
 
@@ -166,9 +166,10 @@ typedef union MotorController_StateFlags
 {
     struct
     {
+        // these can move to sub module edge polling
         uint16_t HeatWarning            : 1U; // ILimit by Heat
-        uint16_t VSourceLow                   : 1U; // ILimit by VSourceLow
-        // uint16_t SpeedLimit          : 1U; // use active speed limit?
+        uint16_t VSourceLow             : 1U; // ILimit by VSourceLow
+        // uint16_t SpeedLimit          : 1U;
         // uint16_t ILimit              : 1U;
         // derive from thermistor functions
         // uint16_t ILimitHeatMosfets  : 1U;

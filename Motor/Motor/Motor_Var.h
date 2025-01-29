@@ -92,6 +92,7 @@ Motor_VarOuput_Foc_T;
 typedef enum Motor_VarOutput_PositionSensor
 {
     MOTOR_VAR_ENCODER_FREQ,
+    MOTOR_VAR_ENCODER_RPM,
 }
 Motor_VarOutput_PositionSensor_T;
 
