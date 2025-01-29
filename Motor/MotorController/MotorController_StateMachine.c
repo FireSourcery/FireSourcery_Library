@@ -509,9 +509,10 @@ static StateMachine_State_T * Neutral_Proc(MotorController_T * p_mc)
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, statemachine_input_value_t direction)
 {
     StateMachine_State_T * p_nextState = NULL;
+
     switch((MotorController_Direction_T)direction)
     {
-        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : 0U; break; // release on low speed
+        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break; // release on low speed
         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = NULL; break;
         case MOTOR_CONTROLLER_DIRECTION_FORWARD:    MotorController_SetDirectionForwardAll(p_mc); p_nextState = &STATE_DRIVE; break;
         case MOTOR_CONTROLLER_DIRECTION_REVERSE:    MotorController_SetDirectionReverseAll(p_mc); p_nextState = &STATE_DRIVE; break;
@@ -588,7 +589,12 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
         /* Motor Calibration State transistion may start next pwm cycle */
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:
             // alternatively if (MotorController_IsEveryMotorCalibrationComplete(p_mc) == true)
-            if (MotorController_IsEveryMotorStopState(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 0U; }
+            if (MotorController_IsEveryMotorStopState(p_mc) == true)
+            {
+                p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
+                p_mc->LockOpStatus = 0U;
+            }
+            // else if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 1U; }
             break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:
             if (MotorController_IsEveryMotorStopState(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 0U; }
@@ -660,8 +666,6 @@ static const StateMachine_State_T STATE_LOCK =
 //     #endif
 //     }
 // }
-
-
 
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 static void Servo_Entry(MotorController_T * p_mc)
@@ -766,16 +770,16 @@ static StateMachine_State_T * Fault_Proc(MotorController_T * p_mc)
 {
     MotorController_ForceDisableAll(p_mc);
 
-    switch(p_mc->Config.InputMode)
+    switch (p_mc->Config.InputMode)
     {
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: /* Protocol Rx Lost use auto recover, without user input */
             p_mc->FaultFlags.RxLost = Protocol_IsRxLost(&p_mc->CONST.P_PROTOCOLS[0U]);
             break;
-        case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: break;
+        case MOTOR_CONTROLLER_INPUT_MODE_CAN:       break;
+        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    break;
     }
 
-    if(p_mc->FaultFlags.Value == 0U)
+    if (p_mc->FaultFlags.Value == 0U)
     {
         Blinky_Stop(&p_mc->Buzzer);
         _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK);

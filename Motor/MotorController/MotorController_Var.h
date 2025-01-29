@@ -42,8 +42,7 @@
 // typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
 // typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
 // typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
-
-typedef uint32_t mot_var_status_t; // generic status, type depending on input
+// typedef uint32_t mot_var_status_t; // generic status, type depending on input
 
 /******************************************************************************/
 /*
@@ -273,7 +272,7 @@ typedef union MotVarId
     {
         uint16_t NameBase           : 4U;
         uint16_t NameType           : 4U; /* Name's Type - corresponds 1:1 with enum type */
-        uint16_t NameTypeType       : 1U; /* Name Type's Type */
+        uint16_t NameTypeType       : 1U; /* Name Type's Type - Alternatively partition as monitor/cmd/call */
         uint16_t Instance           : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */
         uint16_t Alt                : 4U; /* Alternative unit/format */
     };

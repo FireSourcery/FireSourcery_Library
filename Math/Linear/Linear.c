@@ -129,7 +129,7 @@ int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
         }
     }
 
-    if(result == 0) { result = Linear_Of(p_linear, x) * scalar; }
+    if (result == 0) { result = Linear_Of(p_linear, x) * scalar; }
 
     return result;
 }

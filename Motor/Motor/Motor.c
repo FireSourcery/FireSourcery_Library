@@ -62,6 +62,7 @@ void Motor_Static_InitVSourceRef_V(uint16_t vSource_V)
     MotorStatic.VSourceRef_Adcu = Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, ((vSource_V < MOTOR_STATIC.V_MAX_VOLTS) ? vSource_V : MOTOR_STATIC.V_MAX_VOLTS));
 }
 
+// alternatively cache rpmRef and handle conversion by caller
 uint16_t Motor_Static_GetVSource_V(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu); }
 uint16_t Motor_Static_GetVSource_V10(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, (uint32_t)MotorStatic.VSourceRef_Adcu * 10U); }
 // uint16_t Motor_Static_GetVSource_V10(void) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, 10U); }
@@ -69,6 +70,9 @@ uint16_t Motor_Static_GetVSource_Adcu(void) { return MotorStatic.VSourceRef_Adcu
 
 /* Conversion via adcu. Highest precision without overflow */
 uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, kv); }
+
+// kv < ~1000
+// uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu * kv); }
 
 
 /*
@@ -100,7 +104,7 @@ void Motor_InitReboot(Motor_T * p_motor)
     Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
     FOC_Init(&p_motor->Foc);
-    //    BEMF_Init(&p_motor->Bemf);
+    // BEMF_Init(&p_motor->Bemf);
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
     PID_Init(&p_motor->PidSpeed);
@@ -114,7 +118,8 @@ void Motor_InitReboot(Motor_T * p_motor)
         e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
         Final value is overwritten, Slope is persistent unless reset
     */
-    Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
+    // Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
+    Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles * 2, -INT16_MAX, INT16_MAX); /* common input ramp */
     Linear_Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, 0);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
@@ -134,33 +139,58 @@ void Motor_InitReboot(Motor_T * p_motor)
 /* Re init peripheral registers */
 void Motor_InitSensor(Motor_T * p_motor)
 {
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
             Hall_Init(&p_motor->Hall);
-#if     defined(CONFIG_MOTOR_HALL_MODE_POLLING) || !defined(CONFIG_MOTOR_HALL_MODE_ISR)
+        #if     defined(CONFIG_MOTOR_HALL_MODE_POLLING) || !defined(CONFIG_MOTOR_HALL_MODE_ISR)
             Encoder_ModeDT_Init_Polling(&p_motor->Encoder);
-#elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
+        #elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
             Encoder_InitInterrupts_ABC(&p_motor->Encoder);
-#endif
+        #endif
             break;
         case MOTOR_SENSOR_MODE_ENCODER:
             Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->Encoder);
             Encoder_EnableQuadratureMode(&p_motor->Encoder);
             break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:
             SinCos_Init(&p_motor->SinCos);
             break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:
             break;
-#endif
+        #endif
         default:
             break;
     }
     Motor_ResetUnitsSensor(p_motor);
+}
+
+bool Motor_VerifySensorCalibration(Motor_T * p_motor)
+{
+    bool isValid = true;
+    switch (p_motor->Config.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            if (Hall_IsSensorsStateValid(&p_motor->Hall) == false) { isValid = false; }
+            if (Hall_IsSensorsTableValid(&p_motor->Hall) == false) { isValid = false; }
+            break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            break;
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:
+            break;
+        #endif
+        default:
+            break;
+    }
+    return isValid;
 }
 
 /******************************************************************************/
@@ -781,11 +811,11 @@ void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
 /* Common, Set after PolePairs */
 void Motor_ResetUnitsEncoder(Motor_T * p_motor)
 {
-    if(Motor_GetSpeedVRef_Rpm(p_motor) != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
+    if (Motor_GetSpeedVRef_Rpm(p_motor) != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
     {
         Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
     }
-    if(p_motor->Config.PolePairs != p_motor->Encoder.Config.InterpolateAngleScalar) /* Set for electrical cycle */
+    if (p_motor->Config.PolePairs != p_motor->Encoder.Config.InterpolateAngleScalar) /* Set for electrical cycle */
     {
         Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Config.PolePairs);
     }

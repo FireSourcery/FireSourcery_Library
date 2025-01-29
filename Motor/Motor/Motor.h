@@ -181,7 +181,7 @@ typedef union
     struct
     {
         uint16_t Overheat       : 1U;
-        uint16_t AlignStartUp   : 1U;
+        uint16_t PositionSensor : 1U;
     };
     uint16_t Value;
 }
@@ -614,6 +614,7 @@ static inline bool Motor_IsAnalogCycle(const Motor_T * p_motor) { return ((p_mot
 
 // alternatively cache results SpeedFeedbackRef_Rpm
 static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_T * p_motor) { return p_motor->Config.Kv * Motor_Static_GetVSource_V(); }
+// static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_T * p_motor) { return Motor_Static_RpmOfKv(p_motor->Config.Kv); }
 
 /*
 
@@ -755,6 +756,8 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return 
 extern void Motor_Init(Motor_T * p_motor);
 extern void Motor_InitReboot(Motor_T * p_motor);
 extern void Motor_InitSensor(Motor_T * p_motor);
+
+extern bool Motor_VerifySensorCalibration(Motor_T * p_motor);
 
 extern angle16_t Motor_PollSensorAngle(Motor_T * p_motor);
 extern bool Motor_PollCaptureSpeed(Motor_T * p_motor);

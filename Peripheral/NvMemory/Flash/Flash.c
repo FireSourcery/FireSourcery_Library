@@ -272,24 +272,6 @@ void Flash_Init(Flash_T * p_flash)
     Proc Include Set and Activate
 */
 /******************************************************************************/
-Flash_Status_T Flash_SetOp(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size, Flash_Operation_T opId)
-{
-    Flash_Status_T status;
-
-    switch(opId)
-    {
-        case FLASH_OPERATION_WRITE:             status = SetWrite(p_flash, flashAddress, p_data, size);                break;
-        case FLASH_OPERATION_ERASE:             status = SetErase(p_flash, flashAddress, size);                        break;
-        case FLASH_OPERATION_VERIFY_WRITE:      status = SetVerifyWrite(p_flash, flashAddress, p_data, size);          break;
-        case FLASH_OPERATION_VERIFY_ERASE:      status = SetVerifyErase(p_flash, flashAddress, size);                  break;
-        case FLASH_OPERATION_WRITE_ONCE:        status = SetWriteOnce(p_flash, flashAddress, p_data, size);            break;
-        case FLASH_OPERATION_READ_ONCE:         status = SetReadOnce(p_flash, flashAddress, size, (uint8_t *)p_data);  break;
-        default:                                status = NV_MEMORY_STATUS_ERROR_INVALID_OP;                            break;
-    }
-
-    return status;
-}
-
 Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 {
     Flash_Status_T status;
@@ -308,8 +290,10 @@ static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
     Flash_Status_T status;
     size_t remainder = p_flash->OpSize - p_flash->OpSizeAligned;
     uint8_t alignedData[MAX_WRITE_SIZE]; //= { [0U ... (MAX_WRITE_SIZE - 1U)] = FLASH_UNIT_ERASE_PATTERN };
+
     memset(&alignedData[0U], FLASH_UNIT_ERASE_PATTERN, MAX_WRITE_SIZE);
-    memcpy(&alignedData[0U], &p_flash->p_OpData[p_flash->OpSizeAligned], remainder); /* start from remaining data, OpSize AlignDown */
+    memcpy(&alignedData[0U], &p_flash->p_OpData[p_flash->OpSizeAligned], remainder); /* Start from remaining data, OpSize AlignDown */
+
     p_flash->p_OpData = &alignedData[0U];
     p_flash->OpAddress = p_flash->OpAddress + p_flash->OpSizeAligned; /* Update previous aligned down address  */
     p_flash->OpSizeAligned = unitSize;
@@ -399,6 +383,24 @@ Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
 //     return ProcAfterSet(p_flash, Flash_SetOp(p_flash, flashAddress, p_data, size, opId));
 // }
 
+/* By Id */
+// Flash_Status_T Flash_SetOp(Flash_T * p_flash, uintptr_t flashAddress, uint8_t * p_data, size_t size, Flash_Operation_T opId)
+// {
+//     Flash_Status_T status;
+
+//     switch (opId)
+//     {
+//         case FLASH_OPERATION_WRITE:         status = SetWrite(p_flash, flashAddress, p_data, size);                break;
+//         case FLASH_OPERATION_ERASE:         status = SetErase(p_flash, flashAddress, size);                        break;
+//         case FLASH_OPERATION_VERIFY_WRITE:  status = SetVerifyWrite(p_flash, flashAddress, p_data, size);          break;
+//         case FLASH_OPERATION_VERIFY_ERASE:  status = SetVerifyErase(p_flash, flashAddress, size);                  break;
+//         case FLASH_OPERATION_WRITE_ONCE:    status = SetWriteOnce(p_flash, flashAddress, p_data, size);            break;
+//         case FLASH_OPERATION_READ_ONCE:     status = SetReadOnce(p_flash, flashAddress, size, (uint8_t *)p_data);  break;
+//         default:                            status = NV_MEMORY_STATUS_ERROR_INVALID_OP;                            break;
+//     }
+
+//     return status;
+// }
 
 /******************************************************************************/
 /*!

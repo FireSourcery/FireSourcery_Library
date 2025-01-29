@@ -196,6 +196,7 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
     switch (id)
     {
         case MOT_USER_SYSTEM_BEEP:          MotorController_User_BeepN(p_mc, 500U, 500U, value);                break;
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_User_BeepStop(p_mc);                                break;
         case MOT_USER_SYSTEM_CLEAR_FAULT:   isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);   break;
         case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_mc, value);                    break;
 
@@ -204,7 +205,9 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
+            _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_PARK);
             MotorController_User_InputLock(p_mc, (MotorController_LockId_T)value);
+            if (MotorController_User_IsLockState(p_mc) == false) { MotorController_BeepShort(p_mc); }
             status = MotorController_User_GetLockOpStatus(p_mc); // returns block status, async op always returns 0
             break;
         case MOT_USER_SYSTEM_LOCK_STATE_STATUS:

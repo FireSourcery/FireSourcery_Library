@@ -38,8 +38,8 @@ void MotorController_Init(MotorController_T * p_mc)
     EEPROM_Init_Blocking(p_mc->CONST.P_EEPROM);
 #endif
 
-    if (p_mc->CONST.P_NVM_CONFIG != 0U) { memcpy(&p_mc->Config, p_mc->CONST.P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
-    if (p_mc->CONST.P_BOOT_REF != 0U) { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
+    if (p_mc->CONST.P_NVM_CONFIG != NULL) { memcpy(&p_mc->Config, p_mc->CONST.P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
+    if (p_mc->CONST.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_mc->CONST.P_BOOT_REF->Word; }
 
     Analog_Init(p_mc->CONST.P_ANALOG);
     for(uint8_t iSerial = 0U; iSerial < p_mc->CONST.SERIAL_COUNT; iSerial++) { Serial_Init(&p_mc->CONST.P_SERIALS[iSerial]); }

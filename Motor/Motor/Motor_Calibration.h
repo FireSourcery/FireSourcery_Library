@@ -68,6 +68,7 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 {
     const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     bool isComplete = false;
+
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
         switch (p_motor->CalibrationStateIndex)
@@ -82,6 +83,7 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
             default: break;
         }
     }
+
     return isComplete;
 }
 
@@ -150,13 +152,13 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
     {
         switch(p_motor->Config.SensorMode)
         {
-            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_Fract16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.AlignStartUp = 1U; } break;
+            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_Fract16 ^ Linear_Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.PositionSensor = 1U; } break;
 
             // (p_motor->Speed_Fract16 ^ Iq)
             default: break;
         }
 
-        return p_motor->FaultFlags.AlignStartUp;
+        return p_motor->FaultFlags.PositionSensor;
     }
 
 

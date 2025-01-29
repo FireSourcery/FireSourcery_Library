@@ -46,6 +46,7 @@
 typedef enum MotorController_User_CallId
 {
     MOT_USER_SYSTEM_BEEP,
+    MOT_USER_SYSTEM_BEEP_STOP,
     MOT_USER_SYSTEM_LOCK_STATE_INPUT, // MotorController_LockId_T as input
     MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
     MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
@@ -301,6 +302,7 @@ static inline void MotorController_User_SetRxWatchdog(MotorController_T * p_mc, 
 
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n)   { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
 static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime)          { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
+
 static inline void MotorController_User_BeepStop(MotorController_T * p_mc)                                              { Blinky_Stop(&p_mc->Buzzer); }
 
 // todo base flag

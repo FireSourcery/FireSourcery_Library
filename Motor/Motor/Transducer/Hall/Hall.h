@@ -155,7 +155,6 @@ Hall_Config_T;
 typedef const struct Hall_Const
 {
     const Hall_Config_T * const P_NVM_CONFIG;
-    // void (* const HAL_INIT)(void);
 }
 Hall_Const_T;
 
@@ -313,6 +312,26 @@ static inline uint16_t Hall_GetAngle16(Hall_T * p_hall) { return p_hall->Angle; 
 static inline bool Hall_GetSensorA(Hall_T * p_hall) { return p_hall->Sensors.A; }
 static inline bool Hall_GetSensorB(Hall_T * p_hall) { return p_hall->Sensors.B; }
 static inline bool Hall_GetSensorC(Hall_T * p_hall) { return p_hall->Sensors.C; }
+
+static inline bool Hall_Verify(Hall_T * p_hall, uint8_t sensorsValue)
+{
+    return ((sensorsValue != HALL_ANGLE_ERROR_0) && (sensorsValue != HALL_ANGLE_ERROR_7));
+}
+
+static inline bool Hall_IsSensorsStateValid(Hall_T * p_hall )
+{
+    return Hall_Verify(p_hall, Hall_ReadSensors(p_hall).Value);
+}
+
+static inline bool Hall_IsSensorsTableValid(Hall_T * p_hall)
+{
+    bool isSuccess = true;
+    for (uint8_t index = 1U; index < HALL_SENSORS_TABLE_LENGTH - 1U; index++) /* 1-6 */
+    {
+        if (Hall_Verify(p_hall, p_hall->Config.SensorsTable[index]) == false) { isSuccess = false; break; }
+    }
+    return isSuccess;
+}
 
 /******************************************************************************/
 /*

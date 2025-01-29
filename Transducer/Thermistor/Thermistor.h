@@ -83,9 +83,9 @@ typedef struct Thermistor_Config
 
     Thermistor_Type_T Type;
     /* NTC coefficients conversion */
-    uint16_t B;     /* In Kelvin*/
+    uint16_t B;     /* In Kelvin */
     uint32_t R0;
-    uint16_t T0;    /* In Kelvin*/
+    uint16_t T0;    /* In Kelvin */
     uint16_t VInRef_MilliV; /* Generally the same as VADC */
     // Thermistor_Coeffs_T directly wtihout pointer
 

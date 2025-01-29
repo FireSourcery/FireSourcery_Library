@@ -116,8 +116,8 @@ static uint32_t SetDriveCmd(MotorController_T * p_mc, MotorController_VarInput_T
         {
             case MOT_VAR_THROTTLE:  MotorController_User_SetCmdThrottle(p_mc, value);        break;
             case MOT_VAR_BRAKE:     MotorController_User_SetCmdBrake(p_mc, value);           break;
-            // case MOT_VAR_DRIVE_DIRECTION:  isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
-            // case MOT_VAR_USER_CMD:                  MotorController_User_SetCmdValue(p_mc, value);              break;
+            // case MOT_VAR_DRIVE_DIRECTION:    isSet = MotorController_User_SetDirection(p_mc, (MotorController_Direction_T)value);    break;
+            // case MOT_VAR_USER_CMD:           MotorController_User_SetCmdValue(p_mc, value);                                          break;
         }
     }
 
@@ -126,7 +126,8 @@ static uint32_t SetDriveCmd(MotorController_T * p_mc, MotorController_VarInput_T
 
 uint32_t MotorController_VarInput_Set(MotorController_T * p_mc, MotorController_VarInput_T id, int32_t value)
 {
-    volatile bool isSuccess = true;
+    bool isSuccess = true;
+    // bool isSet = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL);
 
     switch (id)
     {
