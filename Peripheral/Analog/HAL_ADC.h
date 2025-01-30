@@ -46,7 +46,7 @@
 #define HAL_ADC_PIN_T uint8_t
 #endif
 
-typedef HAL_ADC_VALUE_T adc_t;
+typedef HAL_ADC_VALUE_T adc_t; //adcu_t
 typedef HAL_ADC_PIN_T adc_pin_t;
 
 
@@ -80,7 +80,7 @@ static inline void HAL_ADC_Init(const HAL_ADC_T * p_hal) { (void)p_hal; }
 */
 
 
-static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, uint32_t * p_pins, uint8_t count)
+static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
 {
     assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
     HAL_ADC_WriteFifoCount(p_hal, count);
@@ -88,7 +88,7 @@ static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, uint32_t * p_pins, uint8
     // HAL_ADC_ActivateFifo(p_hal);
 }
 
-static inline void HAL_ADC_WriteFifo_ActivateOnLast(HAL_ADC_T * p_hal, uint32_t * p_pins, uint8_t count)
+static inline void HAL_ADC_WriteFifo_ActivateOnLast(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
 {
     assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
     HAL_ADC_WriteFifoCount(p_hal, count);

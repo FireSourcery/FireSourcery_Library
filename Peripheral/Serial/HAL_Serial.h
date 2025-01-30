@@ -31,13 +31,9 @@
 #ifndef HAL_SERIAL_H
 #define HAL_SERIAL_H
 
-#if     defined(CONFIG_HAL_SERIAL_PATH)
-    #include STR(CONFIG_HAL_SERIAL_PATH/HAL_Serial.h)
-#elif     defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
-    #include "Peripheral/HAL/HAL_Peripheral.h"
-    #include HAL_PERIPHERAL_PATH(HAL_Serial.h)
-#else
-    #error "HAL_Serial included but undefined."
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Serial.h)
+
     // typedef void HAL_Serial_T; /* Peripheral register map provided by chip manufacturer */
     // static inline void HAL_Serial_WriteTxChar(HAL_Serial_T * p_hal, uint8_t txChar) {}
     // static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_hal) {}
@@ -54,6 +50,5 @@
     // static inline void HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate) {}
     // static inline void HAL_Serial_Init(HAL_Serial_T * p_hal) {}
     // static inline void HAL_Serial_Deinit(HAL_Serial_T * p_hal) {}
-#endif
 
 #endif

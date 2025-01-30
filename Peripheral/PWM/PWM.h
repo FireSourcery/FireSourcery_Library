@@ -63,7 +63,6 @@ PWM_T;
     Channel
 */
 
-
 static inline uint32_t _PWM_TicksOfPercent16(const PWM_T * p_pwm, uint16_t percent16) { return p_pwm->CONST.PERIOD_TICKS * percent16 >> 16U; }
 static inline uint32_t _PWM_TicksOfFract16(const PWM_T * p_pwm, uint16_t fract16) { return p_pwm->CONST.PERIOD_TICKS * fract16 >> 15U; }
 

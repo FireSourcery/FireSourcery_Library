@@ -318,6 +318,7 @@ typedef struct Motor_Config
 // #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     uint16_t IPeakRef_Adcu;
 // #endif
+    // uint16_t VabcRef_Adcu;
 
     /* Persistent Base Limits. Same units as control vars */
     uint16_t SpeedLimitForward_Fract16;     /* of SpeedVRef_Rpm */

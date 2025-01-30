@@ -173,7 +173,7 @@ Analog_T;
 
 // #define ANALOG_INIT_CHANNELS(AdcArray, AdcCount, ChannelArrayBuffer, ChannelCount, BatchArrayBuffer, BatchCount) \
 
-#define ANALOG_INIT(AdcArray, AdcCount, pp_ChannelTable, ChannelCount) \
+#define ANALOG_INIT(AdcArray, AdcCount, pp_ChannelTable, ChannelCount)      \
 {                                                                           \
     .CONST =                                                                \
     {                                                                       \
@@ -181,7 +181,7 @@ Analog_T;
         .ADC_COUNT                  = AdcCount,                             \
         .PP_CONVERSIONS             = pp_ChannelTable,                      \
         .CONVERSIONS_COUNT          = ChannelCount                          \
-    }, \
+    },                                                                      \
 }
 
 // #define ANALOG_INIT(AdcArray, p_ChannelArray) ANALOG_INIT(AdcArray, sizeof(AdcArray)/sizeof(Analog_ADC_T), p_ChannelArray, sizeof(p_ChannelArray)/sizeof(Analog_Conversion_T *))

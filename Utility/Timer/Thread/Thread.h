@@ -55,15 +55,15 @@ typedef struct
     uint32_t OneShotProcs;
     volatile uint32_t OneShotProcsRemaining;
 
-#ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
+// #ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
     void (*Function)(void * p_context);
     void (*OnComplete)(void * p_context);
     void * p_Context;
 //    void * p_OnCompleteContext;
-#elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
-    void (*Function)(void);
-    void (*OnComplete)(void);
-#endif
+// #elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
+//     void (*Function)(void);
+//     void (*OnComplete)(void);
+// #endif
 }
 Thread_T;
 

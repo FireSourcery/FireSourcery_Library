@@ -240,15 +240,15 @@ void Serial_TxData_ISR(Serial_T * p_serial)
 
 bool Serial_PollRestartRxIsr(const Serial_T * p_serial)
 {
-    bool status = false;
+    bool isOverrun = false;
     /* Continue waiting for buffer read, before restarting interrupts, if buffer is full */
     if((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) && (Ring_IsFull(&p_serial->RxRing) == false))
     {
         HAL_Serial_ClearRxErrors(p_serial->CONST.P_HAL_SERIAL);
         HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL);
-        status = true;
+        isOverrun = true;
     }
-    return status;
+    return isOverrun;
 }
 
 

@@ -73,12 +73,6 @@ Ring_T;
 #define _RING_INIT_POW2(Pow2Mask)
 #endif
 
-// #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-// #define _RING_INIT_CRITICAL_VA(...) __VA_ARGS__
-// #else
-// #define _RING_INIT_CRITICAL_VA(...)
-// #endif
-// _RING_INIT_CRITICAL(UseCritical)                    \
 
 #define RING_INIT(p_Buffer, UnitSize, Length, ...)  \
 {                                                           \
@@ -91,7 +85,7 @@ Ring_T;
     },                                                      \
 }
 
-#define RING_INIT_ALLOC(UnitSize, Length, ...) RING_INIT((uint8_t[(Length*UnitSize)]){ }, UnitSize, Length, __VA_ARGS__)
+#define RING_INIT_ALLOC(UnitSize, Length, ...) RING_INIT((uint8_t[(Length * UnitSize)]){ }, UnitSize, Length, __VA_ARGS__)
 #define RING_INIT_AS(TYPE, Length, ...) RING_INIT((TYPE[Length]){ }, sizeof(TYPE), Length, __VA_ARGS__)
 
 
@@ -129,7 +123,7 @@ static inline size_t _Ring_IndexDecOf(const Ring_T * p_ring, size_t index, size_
 #elif   defined(CONFIG_RING_POW2_WRAP)
     return _Ring_IndexWrappedOf(p_ring, index - dec);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return (index - dec < 0) ?  p_ring->CONST.LENGTH + index - dec : index - dec;
+    return ((int32_t)index - (int32_t)dec < 0) ? p_ring->CONST.LENGTH + index - dec : index - dec;
 #endif
 }
 

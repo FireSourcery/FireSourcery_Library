@@ -35,8 +35,8 @@
 static struct
 {
     Linear_T UnitsVSource_V; /* VSource Volts of ADCU. effectively const */
-    uint16_t VSourceRef_Adcu; /* Active VSource */ /* A higher value, matches observed bemf to lower applied voltage */
-    uint16_t VSourceRef_V;
+    uint16_t VSourceRef_Adcu; /* For units Bemf. A higher value, matches observed bemf to lower applied voltage */
+    uint16_t VSourceRef_V; /* units speedref */
 }
 MotorStatic;
 // MotorStatic =
@@ -52,8 +52,6 @@ void InitUnitsVSource(void)
 void Motor_Static_InitVSourceRef_Adcu(uint16_t vSource_Adcu) /* Using the active read value */
 {
     InitUnitsVSource();
-    // MotorStatic.VSourceRef_Adcu = (Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, vSource_Adcu) < MOTOR_STATIC.V_MAX_VOLTS) ?
-    //     vSource_Adcu : Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, MOTOR_STATIC.V_MAX_VOLTS);
     MotorStatic.VSourceRef_Adcu = vSource_Adcu;
 }
 
@@ -61,22 +59,18 @@ void Motor_Static_InitVSourceRef_Adcu(uint16_t vSource_Adcu) /* Using the active
 void Motor_Static_InitVSourceRef_V(uint16_t vSource_V)
 {
     InitUnitsVSource();
-    // MotorStatic.VSourceRef_Adcu = Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, ((vSource_V < MOTOR_STATIC.V_MAX_VOLTS) ? vSource_V : MOTOR_STATIC.V_MAX_VOLTS));
     MotorStatic.VSourceRef_Adcu = Linear_Voltage_AdcuOfV(&MotorStatic.UnitsVSource_V, vSource_V);
     MotorStatic.VSourceRef_V = vSource_V;
 }
 
 // alternatively cache rpmRef and handle conversion by caller
 // uint16_t Motor_Static_GetVSource_V(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu); }
-uint16_t Motor_Static_GetVSource_V(void) { return MotorStatic.VSourceRef_V; }
 // uint16_t Motor_Static_GetVSource_V10(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, (uint32_t)MotorStatic.VSourceRef_Adcu * 10U); }
-// uint16_t Motor_Static_GetVSource_V10(void) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, 10U); }
+uint16_t Motor_Static_GetVSource_V(void) { return MotorStatic.VSourceRef_V; }
 uint16_t Motor_Static_GetVSource_Adcu(void) { return MotorStatic.VSourceRef_Adcu; }
 
-/* Conversion via adcu. Dtermine highest precision without overflow */
+/* Conversion via adcu. Determine highest precision without overflow */
 // uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, kv); }
-uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, kv); }
-
 // kv < ~1000
 // uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu * kv); }
 

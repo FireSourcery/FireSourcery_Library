@@ -57,29 +57,28 @@ Timer_T;
 //     Timer_T Timer;
 //     uint32_t Repeat;
 //     uint32_t Period;            /* In Base Freq Ticks, 0 is Loop infinite */
-//     uint32_t NCounter;
+//     uint32_t Counter;
 // }
 // TimerN_T;
 
 #define TIMER_INIT(p_Base, BaseFreq) { .CONST = { .P_BASE = p_Base, .BASE_FREQ = BaseFreq, }, }
-
-// todo define pow2 divider
 
 /******************************************************************************/
 /*!
     @brief    Timer Common
 */
 /******************************************************************************/
-static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Period = 0U; }
-static inline void Timer_Restart(Timer_T * p_timer) { p_timer->TimeRef = *p_timer->CONST.P_BASE; }
 static inline uint32_t Timer_GetBase(Timer_T * p_timer) { return *p_timer->CONST.P_BASE; }
 
-/* Only this functions casts away P_BASE const. Use with caution */
+/* Only this functions casts away P_BASE const. Call with writable base only */
 static inline void Timer_ZeroBase(Timer_T * p_timer)
 {
     *((volatile uint32_t *)p_timer->CONST.P_BASE) = 0U;
     p_timer->TimeRef = *p_timer->CONST.P_BASE;
 }
+
+static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Period = 0U; }
+static inline void Timer_Restart(Timer_T * p_timer) { p_timer->TimeRef = *p_timer->CONST.P_BASE; }
 
 static inline uint32_t Timer_GetElapsed(Timer_T * p_timer)
 {
@@ -101,7 +100,7 @@ static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
 }
 
 /* has elapsed */
-static inline bool Timer_IsElapsed(Timer_T * p_timer) { return (Timer_GetElapsed(p_timer) >= p_timer->Period) ? true : false; }
+static inline bool Timer_IsElapsed(Timer_T * p_timer) { return (Timer_GetElapsed(p_timer) >= p_timer->Period); }
 
 /* freq != 0U, freq < Base Freq */
 static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq)              { p_timer->Period = p_timer->CONST.BASE_FREQ / freq; }
@@ -123,7 +122,7 @@ static inline bool Timer_Poll(Timer_T * p_timer)
     if (isElapsed == true)
     {
         if (p_timer->IsOneShot == true) { p_timer->Period = 0U; }
-        else                            { Timer_Restart(p_timer); }
+        else { Timer_Restart(p_timer); }
     }
     return isElapsed;
 }
@@ -151,7 +150,7 @@ static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
 }
 
 static inline void Timer_Periodic_Init(Timer_T * p_timer, uint32_t ticks) { p_timer->IsOneShot = false; p_timer->Period = ticks; }
-static inline void Timer_Periodic_Disable(Timer_T * p_timer) { p_timer->Period = UINT32_MAX; }
+// static inline void Timer_Periodic_Disable(Timer_T * p_timer) { p_timer->Period = UINT32_MAX; }
 
 /******************************************************************************/
 /*!
