@@ -47,17 +47,15 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
 {
     int32_t initialReq = FOC_GetReqQ(&p_motor->Foc);
     int32_t req = initialReq;
-
-    /* if Iq_req is in the opposite direction and Iq is small, set as 0 instead of bounce */
-    // if(math_sign(FOC_GetIq(&p_motor->Foc)) != math_sign(initialReq))
-    // {
-    //     if (math_abs(FOC_GetIq(&p_motor->Foc)) < (INT16_MAX / 20)) { initialReq = 0; }
-    // }
+    int32_t vd;
 
     if (hasIFeedback && (p_motor->FeedbackMode.Current == 1U)) /* Current Control mode - Proc FeedbackLoop, Iq Id set by ADC routine */
     {
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
         FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
+
+        /* filter bounce */
+        if (math_abs(FOC_GetVd(&p_motor->Foc)) < (INT16_MAX / 16)) { FOC_SetVd(&p_motor->Foc, 0); }
     }
     else if (p_motor->FeedbackMode.Current == 0U) /* Voltage Control mode - Apply limits without FeedbackLoop */
     {
@@ -306,6 +304,7 @@ void Motor_FOC_SetDirectionCcw(Motor_T * p_motor)
     Motor_SetDirectionCcw(p_motor);
     PID_SetOutputLimits(&p_motor->PidIq, 0, INT16_MAX);
     PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+    // PID_SetOutputLimits(&p_motor->PidId, 0, INT16_MAX / 2);
 }
 
 void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
@@ -313,6 +312,7 @@ void Motor_FOC_SetDirectionCw(Motor_T * p_motor)
     Motor_SetDirectionCw(p_motor);
     PID_SetOutputLimits(&p_motor->PidIq, INT16_MIN, 0);
     PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, INT16_MAX / 2);
+    // PID_SetOutputLimits(&p_motor->PidId, INT16_MIN / 2, 0);
 }
 
 void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
