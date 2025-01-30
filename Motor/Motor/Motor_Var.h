@@ -86,6 +86,8 @@ typedef enum Motor_VarOuput_Foc
     MOTOR_VAR_FOC_VA,
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
+    MOTOR_VAR_FOC_INTEGRAL_Q,
+    MOTOR_VAR_FOC_INTEGRAL_D,
 }
 Motor_VarOuput_Foc_T;
 

@@ -82,6 +82,8 @@ int32_t Motor_VarOutput_Foc_Get(const Motor_T * p_motor, Motor_VarOuput_Foc_T va
         case MOTOR_VAR_FOC_VA:    value = p_motor->Foc.Va;        break;
         case MOTOR_VAR_FOC_VB:    value = p_motor->Foc.Vb;        break;
         case MOTOR_VAR_FOC_VC:    value = p_motor->Foc.Vc;        break;
+        case MOTOR_VAR_FOC_INTEGRAL_Q:    value = PID_GetIntegral(&p_motor->PidIq);        break;
+        case MOTOR_VAR_FOC_INTEGRAL_D:    value = PID_GetIntegral(&p_motor->PidId);        break;
     }
     return value;
 }
