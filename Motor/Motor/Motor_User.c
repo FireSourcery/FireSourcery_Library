@@ -218,22 +218,11 @@ void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_User_StartIMode(p_mot
 */
 void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
-    if (scalar_Fract16 < 0)
-    {
-        Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
-        // if (Motor_User_GetIPhase_UFract16(p_motor) > (INT16_MAX / 20)) // 5%
-        // {
-        //     Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
-        // }
-        // else
-        // {
-        //     Motor_User_TryRelease(p_motor);
-        // }
-    }
-    else
-    {
-        Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
-    }
+    Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
+
+    // if (scalar_Fract16 < 0)
+    // if (scalar_Fract16 > 0)
+    // if (scalar_Fract16 == 0)
 }
 
 // void Motor_User_SetIFollow(Motor_T * p_motor)
