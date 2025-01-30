@@ -512,7 +512,7 @@ void Protocol_Proc(Protocol_T * p_protocol)
 {
     p_protocol->RxStatus = ProcRxState(p_protocol);
     p_protocol->ReqStatus = ProcReqState(p_protocol, p_protocol->RxStatus);
-    // todo ProcTxAsync(p_protocol);
+    // ProcTxAsync(p_protocol);
     // ProcDatagram(p_protocol);  /* Enqueue Datagram for processing in parallel */
 }
 

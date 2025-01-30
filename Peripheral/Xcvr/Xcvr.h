@@ -120,6 +120,7 @@ typedef struct Xcvr
 Xcvr_T;
 
 #define XCVR_INIT(p_XcvrTable, Count) { .CONST = { .P_XCVR_TABLE = p_XcvrTable, .XCVR_TABLE_LENGTH = Count, }, }
+#define XCVR_INIT_FIXED(p_XcvrTable) { .CONST = { .P_XCVR_TABLE = p_XcvrTable, .XCVR_TABLE_LENGTH = 1U, }, }
 
 extern bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar);
 extern bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar);

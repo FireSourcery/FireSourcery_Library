@@ -36,6 +36,7 @@
 */
 void Xcvr_Init(Xcvr_T * p_xcvr, uint8_t xcvrDefaultIndex)
 {
+    // p_xcvr->p_Xcvr = &p_xcvr->CONST.P_XCVR_TABLE[0U];
     if(Xcvr_SetXcvr(p_xcvr, xcvrDefaultIndex) != true) { Xcvr_SetXcvr(p_xcvr, 0U); }
 }
 
