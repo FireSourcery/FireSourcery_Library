@@ -92,6 +92,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
             case MOT_PACKET_SYNC_NACK:  rxCode = PROTOCOL_RX_CODE_NACK;     break;
             case MOT_PACKET_SYNC_ABORT: rxCode = PROTOCOL_RX_CODE_ABORT;    break;
             case MOT_PACKET_PING:       rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
+            case MOT_PACKET_PING_BOOT:  rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
             case MOT_PACKET_PING_ALT:   rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
 
             /* await */
@@ -294,6 +295,8 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
             break;
         case 2U: /* Write Data - rxPacket is DataPacket */
             reqCode = MotProtocol_Flash_DataModeWriteData_Blocking(p_flash, p_reqContext);
+            // if (reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE
+            //     PROTOCOL_REQ_CODE_PROCESS_COMPLETE)
             break;
         case 3U:
             *p_reqContext->p_SubStateIndex = 0U;

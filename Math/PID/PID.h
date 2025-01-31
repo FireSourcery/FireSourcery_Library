@@ -84,8 +84,8 @@ PID_T;
 
 #define PID_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
 
-static inline int16_t PID_GetOutput(PID_T * p_pid) { return p_pid->Output; }
-static inline int16_t PID_GetIntegral(PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
+static inline int16_t PID_GetOutput(const PID_T * p_pid) { return p_pid->Output; }
+static inline int16_t PID_GetIntegral(const PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
 
 static inline uint32_t PID_GetSampleFreq(const PID_T * p_pid) { return p_pid->Config.SampleFreq; }
 static inline int32_t PID_GetKp_Fixed32(const PID_T * p_pid) { return p_pid->Config.Kp_Fixed32; }

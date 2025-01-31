@@ -50,7 +50,7 @@ typedef struct Blinky
     Timer_T Timer;
     bool IsOn;
     uint32_t Index;
-    uint32_t Max;
+    uint32_t End;
     uint32_t OnTime;
     uint32_t OffTime;
     // uint32_t OffTimeDefault; unchanged between activation types

@@ -148,7 +148,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfets ); // use highest or
             if (p_mc->StateFlags.HeatWarning == false)
             {
-                Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U);
+                // Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 1U); //todo disable during init, alternatively disable monitors on init
                 p_mc->StateFlags.HeatWarning = true;
             }
         }

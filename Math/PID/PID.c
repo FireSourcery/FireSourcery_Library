@@ -54,7 +54,7 @@ void PID_Init(PID_T * p_pid)
 //     PID_Reset(p_pid);
 // }
 
-static inline int16_t GetIntegral(PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
+static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integral32 = ((int32_t)integral << 16); }
 
 /*!

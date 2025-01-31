@@ -51,13 +51,14 @@ static void Pattern_PeriodicToggle(Blinky_T * p_blinky);
     @brief
     @param[in]
 */
+//disabled, oneshot, periodic
 void Blinky_Proc(Blinky_T * p_blinky)
 {
     if(Timer_Poll(&p_blinky->Timer) == true)
     {
         if(Timer_IsOneShot(&p_blinky->Timer) == true) /* Timer is in OneShot Mode */
         {
-            if (p_blinky->Index < p_blinky->Max) /* OneShot Pattern */
+            if (p_blinky->Index < p_blinky->End) /* OneShot Pattern */
             {
                 Pattern_PeriodicToggle(p_blinky);
                 Timer_Restart(&p_blinky->Timer);
@@ -104,14 +105,14 @@ void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration)
 void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime)
 {
     p_blinky->Index = 0U;
-    p_blinky->Max = 0U;
+    p_blinky->End = 0U;
     Blinky_Blink_OnOff(p_blinky, onTime);
 }
 
 void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
 {
     p_blinky->Index = 0U;
-    p_blinky->Max = nRepeat * 2U - 2U;
+    p_blinky->End = nRepeat * 2U - 2U;
     p_blinky->OnTime = onTime;
     p_blinky->OffTime = offTime;
     Blinky_Blink_OnOff(p_blinky, onTime);
