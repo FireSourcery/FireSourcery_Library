@@ -35,7 +35,16 @@
 
 #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 
-static inline void Reboot(void) { NVIC_SystemReset(); }
+static inline void Reboot(void) {
+    __disable_irq();
+
+    for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICER[iReg] = 0xFFFFFFFF; }
+    for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICPR[iReg] = 0xFFFFFFFF; }
+
+    SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
+
+    NVIC_SystemReset();
+}
 
 #else
 

@@ -199,7 +199,7 @@ Protocol_ReqSync_T;
 */
 typedef const struct Protocol_Req
 {
-    const protocol_req_id_t          ID;
+    const protocol_req_id_t         ID;
     const Protocol_ProcReqResp_T    PROC;
     const Protocol_ProcReqExt_T     PROC_EXT;
     const Protocol_ReqSync_T        SYNC;

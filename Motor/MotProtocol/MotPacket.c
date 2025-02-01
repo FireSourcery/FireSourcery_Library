@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #include "MotPacket.h"
+#include "../Version.h"
 
 #include <string.h>
 #include <stddef.h>
@@ -115,12 +116,11 @@ uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket, MotPacket_
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t firmware, uint32_t board)
+uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t firmware)
 {
     p_respPacket->VersionResp.Protocol  = MOT_PACKET_VERSION_WORD32;
-    p_respPacket->VersionResp.Library   = library;
+    p_respPacket->VersionResp.Library   = MOTOR_LIBRARY_VERSION;
     p_respPacket->VersionResp.Firmware  = firmware;
-    p_respPacket->VersionResp.Board     = board;
 
     return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T));
 }

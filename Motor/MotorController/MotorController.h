@@ -62,6 +62,9 @@
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
 
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
+
 #include <stdint.h>
 #include <string.h>
 

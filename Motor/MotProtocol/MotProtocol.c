@@ -62,7 +62,7 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_
         case PROTOCOL_TX_SYNC_NACK_REQ_EXT:     syncChar = MOT_PACKET_SYNC_NACK;  break;
         case PROTOCOL_TX_SYNC_ACK_ABORT:        syncChar = MOT_PACKET_SYNC_ABORT; break;
         // case PROTOCOL_TX_SYNC_ABORT:         syncChar = MOT_PACKET_SYNC_ABORT; break;
-        default: *p_txSize = 0U; syncChar = 0U; break;
+        default: syncChar = 0U; break;
     }
 
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
@@ -128,6 +128,9 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
+/*
+    MotProtocol_GenericStatus_T
+*/
 Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
@@ -205,6 +208,9 @@ Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_
 /******************************************************************************/
 /*! Stateful Write Data */
 /******************************************************************************/
+/*
+    Response status type NvMemory_Status_T
+*/
 Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
@@ -230,8 +236,8 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     }
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
-    *p_reqContext->p_SubStateIndex = 1U;
     reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
+    *p_reqContext->p_SubStateIndex = 1U;
 
     return reqCode;
 }
@@ -281,12 +287,13 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteData_Blocking(Flash_T * p_flas
 */
 Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
 {
-    Protocol_ReqCode_T reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
+    Protocol_ReqCode_T reqCode;
 
     switch(*p_reqContext->p_SubStateIndex)
     {
         case 0U: /* Tx Ack handled by Common Req Sync */
             reqCode = MotProtocol_Flash_DataModeWriteInit_Blocking(p_flash, p_reqContext);
+
             break;
         case 1U: /* No Tx. begin by waiting */
             *p_reqContext->p_TxSize = 0U;
@@ -295,8 +302,8 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
             break;
         case 2U: /* Write Data - rxPacket is DataPacket */
             reqCode = MotProtocol_Flash_DataModeWriteData_Blocking(p_flash, p_reqContext);
-            // if (reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE
-            //     PROTOCOL_REQ_CODE_PROCESS_COMPLETE)
+            // if (reqCode == PROTOCOL_REQ_CODE_TX_CONTINUE) *p_reqContext->p_SubStateIndex = 3 ;
+            //     (reqCode == PROTOCOL_REQ_CODE_PROCESS_COMPLETE) *p_reqContext->p_SubStateIndex = 0 ;
             break;
         case 3U:
             *p_reqContext->p_SubStateIndex = 0U;

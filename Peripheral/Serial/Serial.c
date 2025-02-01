@@ -86,7 +86,7 @@ static inline void ExitCriticalRx(Serial_T * p_serial)
 static inline bool AcquireCriticalTx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    return Critical_AquireMutex(&p_serial->TxMutex);
+    return Critical_AcquireSignal(&p_serial->TxMutex);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
     _Critical_DisableIrq();
@@ -113,7 +113,7 @@ static inline void ReleaseCriticalTx(Serial_T * p_serial)
 static inline bool AcquireCriticalRx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    return Critical_AquireMutex(&p_serial->RxMutex); // UNTESTED
+    return Critical_AcquireSignal(&p_serial->RxMutex);
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
     _Critical_DisableIrq();
@@ -127,7 +127,7 @@ static inline bool AcquireCriticalRx(Serial_T * p_serial)
 static inline void ReleaseCriticalRx(Serial_T * p_serial)
 {
 #if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseSignal(&p_serial->RxMutex); // UNTESTED
+    Critical_ReleaseSignal(&p_serial->RxMutex);
 #elif    defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
     (void)p_serial;
     _Critical_EnableIrq();
@@ -270,7 +270,7 @@ void Serial_Deinit(Serial_T * p_serial)
 
 bool Serial_ConfigBaudRate(Serial_T * p_serial, uint32_t baudRate)
 {
-    volatile bool isSuccess = true;
+    bool isSuccess = true;
 
     HAL_Serial_WriteTxSwitch(p_serial->CONST.P_HAL_SERIAL, false);
     HAL_Serial_WriteRxSwitch(p_serial->CONST.P_HAL_SERIAL, false);

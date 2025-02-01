@@ -220,7 +220,7 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 /*! Version - Static Response */
 /******************************************************************************/
 typedef struct MotPacket_VersionReq_Payload {}                                                                              MotPacket_VersionReq_Payload_T;
-typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; uint32_t Board; }    MotPacket_VersionResp_Payload_T;
+typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; }                    MotPacket_VersionResp_Payload_T;
 typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionResp { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
@@ -348,7 +348,7 @@ extern uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_
 extern uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength);
 
 extern uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket, MotPacket_Id_T syncId);
-extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t library, uint32_t firmware, uint32_t board);
+extern uint8_t MotPacket_VersionResp_Build(MotPacket_VersionResp_T * p_respPacket, uint32_t firmware);
 extern uint8_t MotPacket_StopResp_Build(MotPacket_StopResp_T * p_respPacket, uint16_t status);
 extern uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, uint32_t id, uint16_t status);
 

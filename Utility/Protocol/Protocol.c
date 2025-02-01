@@ -40,7 +40,7 @@ void Protocol_Init(Protocol_T * p_protocol)
         Xcvr_Init(&p_protocol->Xcvr, p_protocol->Config.XcvrId);
         Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->Config.BaudRate);
         Protocol_SetSpecs(p_protocol, p_protocol->Config.SpecsId);
-        if(p_protocol->Config.IsEnableOnInit == true) { Protocol_Enable(p_protocol); } else { Protocol_Disable(p_protocol); }
+        if (p_protocol->Config.IsEnableOnInit == true) { Protocol_Enable(p_protocol); } else { Protocol_Disable(p_protocol); }
     }
     else
     {
@@ -213,6 +213,9 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     // p_protocol->RxPacketErrorCount++;
                     break;
 
+                case PROTOCOL_RX_CODE_ACK: break;
+                case PROTOCOL_RX_CODE_NACK: break;
+                case PROTOCOL_RX_CODE_ABORT: break;
                 default: break;
             }
 
@@ -257,7 +260,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_RxCode_T rxCode)
 {
     Protocol_ReqCode_T reqStatus = PROTOCOL_REQ_CODE_TX_CONTINUE;
-    Protocol_ReqContext_T reqContext =
+    const Protocol_ReqContext_T reqContext =
     {
         .p_SubState = p_protocol->CONST.P_REQ_STATE_BUFFER,
         .p_RxPacket = p_protocol->CONST.P_RX_PACKET_BUFFER,
@@ -317,9 +320,9 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                         reqStatus = PROTOCOL_REQ_CODE_ERROR_ID;
                     }
                     break;
-                case PROTOCOL_RX_CODE_ACK:      /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_NACK:     /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_ABORT:    /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ACK:      reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_NACK:     reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ABORT:    reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
 
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
                 default: reqStatus = PROTOCOL_REQ_CODE_PROCESS_COMPLETE; break;
@@ -396,13 +399,13 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: // handlke once before checking rx?
                     break;
-                case PROTOCOL_RX_CODE_PACKET_COMPLETE:  /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
-                case PROTOCOL_RX_CODE_ACK:              /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
-                case PROTOCOL_RX_CODE_NACK:             /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_PACKET_COMPLETE:  reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_ACK:              reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                case PROTOCOL_RX_CODE_NACK:             reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
                 case PROTOCOL_RX_CODE_ABORT: /* handle outside */ break;
 
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
-                default: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
+                default: reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED;  break;
             }
             break;
 
@@ -416,8 +419,8 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
                     p_protocol->ReqState = PROTOCOL_REQ_STATE_PROCESS_REQ_EXT;
                     reqStatus = PROTOCOL_REQ_CODE_TX_CONTINUE;
                     break;
-                case PROTOCOL_RX_CODE_ACK:  /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
-                case PROTOCOL_RX_CODE_NACK: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_ACK:  reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_NACK: reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
                 case PROTOCOL_RX_CODE_ABORT: break;
 
                 /* (rxCode == PROTOCOL_RX_CODE_ERROR_META) || (rxCode == PROTOCOL_RX_CODE_ERROR_DATA) || (rxCode == PROTOCOL_RX_CODE_ERROR_TIMEOUT) */
@@ -429,7 +432,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
             switch(rxCode)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: reqStatus = PROTOCOL_REQ_CODE_AWAIT_RX_SYNC; break;
-                case PROTOCOL_RX_CODE_PACKET_COMPLETE: /* p_protocol->RxPacketErrorSync++; */ reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
+                case PROTOCOL_RX_CODE_PACKET_COMPLETE: reqStatus = PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED; break;
                 case PROTOCOL_RX_CODE_ACK:
                     p_protocol->ReqTimeStart = *p_protocol->CONST.P_TIMER;
                     if(p_protocol->p_ReqActive->PROC_EXT != NULL)
@@ -472,6 +475,7 @@ static inline Protocol_ReqCode_T ProcReqState(Protocol_T * p_protocol, Protocol_
         default: break;
     }
 
+    // if (reqStatus == PROTOCOL_REQ_CODE_ERROR_RX_UNEXPECTED) { p_protocol->RxPacketErrorSync++; }
     /* States Common */
     if((p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_CONTINUE) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_WAIT_RX_SYNC) || (p_protocol->ReqState == PROTOCOL_REQ_STATE_PROCESS_REQ_EXT))
     {
@@ -533,9 +537,9 @@ void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 
 void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 {
-    const Protocol_Specs_T * p_specs = (p_specsId < p_protocol->CONST.SPECS_COUNT) ? p_protocol->CONST.PP_SPECS_TABLE[p_specsId] : 0U;
+    const Protocol_Specs_T * p_specs = (p_specsId < p_protocol->CONST.SPECS_COUNT) ? p_protocol->CONST.PP_SPECS_TABLE[p_specsId] : NULL;
 
-    if((p_specs != 0U) && (p_specs->RX_LENGTH_MAX <= p_protocol->CONST.PACKET_BUFFER_LENGTH))
+    if((p_specs != NULL) && (p_specs->RX_LENGTH_MAX <= p_protocol->CONST.PACKET_BUFFER_LENGTH))
     {
         p_protocol->p_Specs = p_specs;
         // if(p_protocol->Config.BaudRate == 0U) { Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->p_Specs->BAUD_RATE_DEFAULT); }
