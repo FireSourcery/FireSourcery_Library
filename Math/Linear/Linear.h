@@ -85,14 +85,6 @@ static inline int16_t _Linear_SatSigned16(int32_t value16)           { return ((
 static inline uint16_t _Linear_SatUnsigned16(int32_t value16)        { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }
 static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16)    { return _Linear_SatUnsigned16(math_abs(value16)); }
 
-/* NonError Checked */
-static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor)
-{
-    p_linear->Slope = (slopeFactor << p_linear->SlopeShift) / slopeDivisor;
-    p_linear->InvSlope = (slopeDivisor << p_linear->InvSlopeShift) / slopeFactor;
-}
-
-
 /* Getters In case implementation changes */
 static inline int32_t Linear_GetXRef(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDeltaRef; }
 static inline int32_t Linear_GetYRef(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDeltaRef; }

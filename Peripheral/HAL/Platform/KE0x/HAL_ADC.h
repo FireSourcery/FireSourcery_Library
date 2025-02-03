@@ -49,7 +49,6 @@ static inline void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel) 
 static inline void HAL_ADC_ActivateFifo(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 
 
-
 /*
     Use NVIC interrupt for local critical section
     p_hal->SC1 &= ~ADC_SC1_AIEN_MASK; aborts conversion

@@ -35,8 +35,8 @@
 static struct
 {
     Linear_T UnitsVSource_V; /* VSource Volts of ADCU. effectively const */
-    uint16_t VSourceRef_Adcu; /* For units Bemf. A higher value, matches observed bemf to lower applied voltage */
-    uint16_t VSourceRef_V; /* units speedref */
+    uint16_t VSourceRef_Adcu; /* VabcRef_Adcu. A higher value, matches observed bemf to lower applied voltage */
+    uint16_t VSourceRef_V; /*  VSpeedRef */
 }
 MotorStatic;
 // MotorStatic =
@@ -63,11 +63,11 @@ void Motor_Static_InitVSourceRef_V(uint16_t vSource_V)
     MotorStatic.VSourceRef_V = vSource_V;
 }
 
+uint16_t Motor_Static_GetVSource_V(void) { return MotorStatic.VSourceRef_V; }
+uint16_t Motor_Static_GetVSource_Adcu(void) { return MotorStatic.VSourceRef_Adcu; }
 // alternatively cache rpmRef and handle conversion by caller
 // uint16_t Motor_Static_GetVSource_V(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu); }
 // uint16_t Motor_Static_GetVSource_V10(void) { return Linear_Voltage_Of(&MotorStatic.UnitsVSource_V, (uint32_t)MotorStatic.VSourceRef_Adcu * 10U); }
-uint16_t Motor_Static_GetVSource_V(void) { return MotorStatic.VSourceRef_V; }
-uint16_t Motor_Static_GetVSource_Adcu(void) { return MotorStatic.VSourceRef_Adcu; }
 
 /* Conversion via adcu. Determine highest precision without overflow */
 // uint16_t Motor_Static_RpmOfKv(uint16_t kv) { return Linear_Voltage_ScalarV(&MotorStatic.UnitsVSource_V, MotorStatic.VSourceRef_Adcu, kv); }
@@ -118,12 +118,12 @@ void Motor_InitReboot(Motor_T * p_motor)
         e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
         Final value is overwritten, Slope is persistent unless reset
     */
-    // Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
-    Linear_Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles * 2, -INT16_MAX, INT16_MAX); /* common input ramp */
-    Linear_Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, 0);
+    // Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
+    Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles * 2, -INT16_MAX, INT16_MAX); /* common input ramp */
+    Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, 0);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
-    Linear_Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, 0);
+    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, 0);
 #endif
 
     Motor_ResetUnitsVabc(p_motor);
@@ -373,12 +373,12 @@ inline bool Motor_IsSensorAvailable(const Motor_T * p_motor)
 // {
 //     if (p_motor->FeedbackMode.Speed == 1U)
 //     {
-//         Linear_Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Fract16);
+//         Ramp_SetOutputState(&p_motor->Ramp, p_motor->Speed_Fract16);
 //         PID_SetOutputState(&p_motor->PidSpeed, speedOutput);
 //     }
 //     else
 //     {
-//         Linear_Ramp_SetOutputState(&p_motor->Ramp, speedOutput);
+//         Ramp_SetOutputState(&p_motor->Ramp, speedOutput);
 //     }
 // }
 

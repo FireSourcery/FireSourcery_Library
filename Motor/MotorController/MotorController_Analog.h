@@ -72,4 +72,9 @@ static inline uint16_t MotorController_Analog_GetBrake(const MotorController_T *
 #define MOT_ANALOG_CONVERSIONS_INIT_USER_BRAKE(BrakeHost, BrakePin, p_Mot)              MOT_ANALOG_CONVERSION_INIT(MOT_ANALOG_CHANNEL_BRAKE, BrakeHost, BrakePin, p_Mot)
 
 
+bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc);
+void MotorController_Analog_StartCalibrate(MotorController_T * p_mc);
+
 #endif
+
+

@@ -65,11 +65,8 @@
 */
 inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    //  (FeedbackMode_IsValid(mode));
-    // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-    // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL, mode.Value);
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value); // disables interrupts twice
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE); //// disables interrupts twice depreciate
 }
 
 /* Generic array functions use */
@@ -97,7 +94,7 @@ inline void Motor_User_ActivateControl(Motor_T * p_motor)
 }
 
 /*
-    always State machine checked Disable
+    StateMachine checked disable
 */
 inline void Motor_User_Release(Motor_T * p_motor)
 {
@@ -110,12 +107,11 @@ inline void Motor_User_Hold(Motor_T * p_motor)
 }
 
 /*
-    Force Disable control Non StateMachine checked
+   Disable control non StateMachine checked
 */
 void Motor_User_ForceDisableControl(Motor_T * p_motor)
 {
     Phase_Float(&p_motor->Phase);
-    // _Motor_User_SetCmd(p_motor, 0);
     Motor_User_Release(p_motor);
 }
 
@@ -137,8 +133,8 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
 */
 static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
 {
-    if (p_motor->StateFlags.RampDisable == 0U) { Linear_Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
-    else { Linear_Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
+    if (p_motor->StateFlags.RampDisable == 0U) { Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+    else { Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
 }
 
 /******************************************************************************/
@@ -284,7 +280,7 @@ void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMo
 
 void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
 {
-    Linear_Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
+    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
 }
 
 /*!

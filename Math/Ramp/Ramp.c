@@ -22,13 +22,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Ramp.c
+    @file   Ramp.c
     @author FireSourcery
     @version V0
     @brief
 */
 /******************************************************************************/
-#include "Linear_Ramp.h"
+#include "Ramp.h"
 
 #define LINEAR_RAMP_SHIFT 14U /* Output range [-UINT16_MAX:UINT16_MAX]x2 without overflow */
 
@@ -61,14 +61,14 @@ static int32_t OutputOf(const Linear_T * p_linear, int32_t currentRampValue, int
 }
 
 
-// int32_t Linear_Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t start, int32_t steps)
+// int32_t Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t start, int32_t steps)
 // {
 //
 // }
 
 /* todo store as X */
 // return Linear_Of(p_linear, steps);
-// int32_t Linear_Ramp_OutputOf(const Linear_T * p_linear, int32_t steps)
+// int32_t Ramp_OutputOf(const Linear_T * p_linear, int32_t steps)
 // {
 //     int32_t directionalSteps =steps;
 //     int32_t output;
@@ -97,15 +97,15 @@ static int32_t OutputOf(const Linear_T * p_linear, int32_t currentRampValue, int
 
 
 // LinearOf, sat output
-int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
+int32_t Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps)
 {
     if(p_linear->Y0 != p_linear->YReference) { p_linear->Y0 = OutputOf(p_linear, p_linear->Y0, steps); }
-    return Linear_Ramp_GetOutput(p_linear);
+    return Ramp_GetOutput(p_linear);
 }
 
-int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
+int32_t Ramp_ProcOutput(Linear_T * p_linear)
 {
-    return Linear_Ramp_ProcOutputN(p_linear, 1U);
+    return Ramp_ProcOutputN(p_linear, 1U);
 }
 
 /******************************************************************************/
@@ -118,25 +118,25 @@ int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear)
     using fixed LINEAR_RAMP_SHIFT, so that dynamic ramps do not need to recalculate.
     Overflow: final > 65535*2 to include percent16 input
 */
-void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
+void Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT; // unused
-    Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
-    Linear_Ramp_SetOutputState(p_linear, 0);
-    Linear_Ramp_SetTarget(p_linear, 0);
+    Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
+    Ramp_SetOutputState(p_linear, 0);
+    Ramp_SetTarget(p_linear, 0);
 }
 
 /*
     Overflow: (duration_Ms * updateFreq_Hz) > 131,071,000
 */
-void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
+void Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
     p_linear->SlopeShift = LINEAR_RAMP_SHIFT;
     p_linear->InvSlopeShift = LINEAR_RAMP_SHIFT;
-    Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
-    Linear_Ramp_SetOutputState(p_linear, 0);
-    Linear_Ramp_SetTarget(p_linear, 0);
+    Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
+    Ramp_SetOutputState(p_linear, 0);
+    Ramp_SetTarget(p_linear, 0);
 }
 
 /******************************************************************************/
@@ -144,16 +144,25 @@ void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16
     Set Slope
 */
 /******************************************************************************/
+
+/* NonError Checked */
+static inline void _Linear_SetSlope(Linear_T * p_linear, int32_t slopeFactor, int32_t slopeDivisor)
+{
+    p_linear->Slope = (slopeFactor << p_linear->SlopeShift) / slopeDivisor;
+    p_linear->InvSlope = (slopeDivisor << p_linear->InvSlopeShift) / slopeFactor;
+}
+
+
 /* duration_Ticks != 0  */
-void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
+void Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
     _Linear_SetSlope(p_linear, final - initial, duration_Ticks);
 }
 
-void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
+void Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
     uint32_t ticks = (duration_Ms != 0U) ? (duration_Ms * updateFreq_Hz / 1000U) : 1U;
-    Linear_Ramp_SetSlope(p_linear, ticks, initial, final);
+    Ramp_SetSlope(p_linear, ticks, initial, final);
 }
 
 /******************************************************************************/
@@ -161,18 +170,18 @@ void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, ui
     Set
 */
 /******************************************************************************/
-void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
+void Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
-    Linear_Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
-    Linear_Ramp_SetOutputState(p_linear, initial);
-    Linear_Ramp_SetTarget(p_linear, final);
+    Ramp_SetSlope(p_linear, duration_Ticks, initial, final);
+    Ramp_SetOutputState(p_linear, initial);
+    Ramp_SetTarget(p_linear, final);
 }
 
-void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
+void Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
-    Linear_Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
-    Linear_Ramp_SetOutputState(p_linear, initial);
-    Linear_Ramp_SetTarget(p_linear, final);
+    Ramp_SetSlope_Millis(p_linear, updateFreq_Hz, duration_Ms, initial, final);
+    Ramp_SetOutputState(p_linear, initial);
+    Ramp_SetTarget(p_linear, final);
 }
 
 /******************************************************************************/
@@ -182,12 +191,12 @@ void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_
     Acceleration proportional to change in userCmd
 */
 /******************************************************************************/
-void Linear_Ramp_SetInterpolate(Linear_T * p_linear, uint32_t duration_Ticks, int32_t final)
+void Ramp_SetInterpolate(Linear_T * p_linear, uint32_t duration_Ticks, int32_t final)
 {
-    Linear_Ramp_Set(p_linear, duration_Ticks, Linear_Ramp_GetOutput(p_linear), final);
+    Ramp_Set(p_linear, duration_Ticks, Ramp_GetOutput(p_linear), final);
 }
 
-void Linear_Ramp_SetInterpolate_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t final)
+void Ramp_SetInterpolate_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t final)
 {
-    Linear_Ramp_Set_Millis(p_linear, updateFreq_Hz, duration_Ms, Linear_Ramp_GetOutput(p_linear), final);
+    Ramp_Set_Millis(p_linear, updateFreq_Hz, duration_Ms, Ramp_GetOutput(p_linear), final);
 }

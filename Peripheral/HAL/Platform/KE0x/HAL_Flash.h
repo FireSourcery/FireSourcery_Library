@@ -42,6 +42,21 @@
 #include <stdbool.h>
 #include <assert.h>
 
+/*
+    BUSCLK frequency(MHz) FDIV[5:0]
+    20.6 21.6 0x14
+    21.6 22.6 0x15
+    22.6 23.6 0x16
+    23.6 24.6 0x17
+    24.6 25.6 0x18
+
+    Overwrite when CPU_FREQ is not BUSCLK Freq
+*/
+#ifndef HAL_FLASH_CLOCK_SOURCE_FREQ
+#define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
+#endif
+
+
 #define KE0x_FLASH_RESERVED_START                   0x0000UL    /* */
 #define KE0x_FLASH_RESERVED_END                     0x040FUL    /* */
 #define KE0x_FLASH_RESERVED_IFR_START               0x0000UL    /* */
@@ -147,6 +162,8 @@
 #endif
 /* @} */
 
+#define KE0x_FLASH_CLK_DIVIER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+
 /*
     Map to upper software layer
 */
@@ -157,16 +174,6 @@
 #define HAL_FLASH_UNIT_WRITE_ONCE_SIZE      KE0x_FLASH_PHRASE_SIZE
 #define HAL_FLASH_UNIT_READ_ONCE_SIZE       KE0x_FLASH_PHRASE_SIZE
 #define HAL_FLASH_UNIT_ERASE_PATTERN        (0xFFU)
-
-/*
-    BUSCLK frequency(MHz) FDIV[5:0]
-    20.6 21.6 0x14
-    21.6 22.6 0x15
-    22.6 23.6 0x16
-    23.6 24.6 0x17
-    24.6 25.6 0x18
-*/
-#define KE0x_FLASH_CLK_DIVIER ((uint8_t)(CPU_FREQ / 2UL / 1000000UL))
 
 #if     defined(KE06Z4_SERIES)
 typedef FTMRE_Type HAL_Flash_T;
@@ -320,8 +327,6 @@ static inline void HAL_Flash_UnlockSecurity(HAL_Flash_T * p_regs, uint8_t * p_ke
     _flash_set_command(4U, p_key[6U], p_key[7U]);
 }
 
-
-
 // static inline void HAL_Flash_ConfigClock(HAL_Flash_T * p_regs)
 // {
 
@@ -331,7 +336,7 @@ static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)
 {
     (void)p_regs;
 
-    if ((0U == (FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK)) && (0U != (FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK)))
+    if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U))
     {
         /* FCLKDIV register is not locked.*/
         FTMRx->FCLKDIV = (uint8_t)(FTMRx->FCLKDIV & (~FTMRx_FCLKDIV_FDIV_MASK)) | FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIER);

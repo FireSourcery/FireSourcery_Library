@@ -280,8 +280,8 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
             // Terminal_SendString(p_term, "SpeedControl: "); Terminal_SendNum(p_term, PID_GetOutput(&p_motor->PidSpeed)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "IdReq: "); Terminal_SendNum(p_term, p_motor->Foc.ReqQ); Terminal_SendString(p_term, "\r\n");
 
-            Terminal_SendString(p_term, "RampOut: "); Terminal_SendNum(p_term, Linear_Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
-            Terminal_SendString(p_term, "RampTarget: "); Terminal_SendNum(p_term, Linear_Ramp_GetTarget(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "RampOut: "); Terminal_SendNum(p_term, Ramp_GetOutput(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
+            Terminal_SendString(p_term, "RampTarget: "); Terminal_SendNum(p_term, Ramp_GetTarget(&p_motor->Ramp)); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "DeltaD: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaD); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "DeltaT: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaT); Terminal_SendString(p_term, "\r\n");
             Terminal_SendString(p_term, "DeltaTh: "); Terminal_SendNum(p_term, p_motor->Encoder.DeltaTh); Terminal_SendString(p_term, "\r\n");

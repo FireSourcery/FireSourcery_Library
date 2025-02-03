@@ -32,9 +32,11 @@
 /******************************************************************************/
 #include "MotorController_StateMachine.h"
 #include "MotorController_Analog.h"
-#include "Utility/StateMachine/StateMachine.h"
 #include "System/SysTime/SysTime.h"
-#include "System/Reboot/Reboot.h"
+
+#include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
+
 #include <string.h>
 
 static const StateMachine_State_T STATE_INIT;
@@ -582,6 +584,18 @@ static void Lock_Entry(MotorController_T * p_mc)
     p_mc->LockOpStatus = 0U;
 }
 
+
+// tododo 1 motor at a time
+void StartCalibrateSensor(MotorController_T * p_mc)
+{
+    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
+}
+
+bool ProcCalibrateSensor(MotorController_T * p_mc)
+{
+    return (MotorController_IsEveryMotorStopState(p_mc) == true);
+}
+
 static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
 {
     switch(p_mc->LockSubState)
@@ -593,8 +607,7 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:     break;
         /* Motor Calibration State transistion may start next pwm cycle */
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:
-            // alternatively if (MotorController_IsEveryMotorCalibrationComplete(p_mc) == true)
-            if (MotorController_IsEveryMotorStopState(p_mc) == true)
+            if (ProcCalibrateSensor(p_mc) == true)
             {
                 p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
                 p_mc->LockOpStatus = 0U;
@@ -602,7 +615,11 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
             // else if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 1U; }
             break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:
-            if (MotorController_IsEveryMotorStopState(p_mc) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 0U; }
+            if (MotorController_Analog_ProcCalibrate(p_mc) == true)
+            {
+                p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
+                p_mc->LockOpStatus = 0U;
+            }
             break;
     }
     return NULL;
@@ -618,18 +635,17 @@ static StateMachine_State_T * Lock_InputLockOp_Blocking(MotorController_T * p_mc
     switch ((MotorController_LockId_T)lockId)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER: break;
-        case MOTOR_CONTROLLER_LOCK_EXIT:              p_nextState = &STATE_PARK;                  break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  MotorController_CalibrateSensorAll(p_mc);   break;
-        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:     MotorController_CalibrateAdc(p_mc);         break;
+        case MOTOR_CONTROLLER_LOCK_EXIT:              p_nextState = &STATE_PARK;                    break;
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
             p_mc->NvmStatus = MotorController_SaveConfig_Blocking(p_mc); /* NvM function will block + disable interrupts */
             p_mc->LockOpStatus = p_mc->NvmStatus;
             p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
             break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_mc);                   break;
+        case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:     MotorController_Analog_StartCalibrate(p_mc);  break;
+        case MOTOR_CONTROLLER_LOCK_REBOOT: HAL_Reboot(); break; /* No return */ //optionally deinit clock select
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);         break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
-        // case MOTOR_CONTROLLER_LOCK_REBOOT: Reboot(); break; /* No return */ //optionally deinit clock select
-        case MOTOR_CONTROLLER_LOCK_REBOOT: HAL_Reboot(); break; /* No return */ //optionally deinit clock select
     }
 
     return p_nextState;

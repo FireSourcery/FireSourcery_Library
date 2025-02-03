@@ -22,18 +22,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Ramp.h
+    @file   Ramp.h
     @author FireSourcery
-    @brief
     @version V0
+    @brief
 */
 /******************************************************************************/
-#ifndef LINEAR_RAMP_H
-#define LINEAR_RAMP_H
+#ifndef RAMP_H
+#define RAMP_H
 
-#include "Linear.h"
+#include "../Linear/Linear.h"
 #include <stdint.h>
-
 
 /******************************************************************************/
 /*
@@ -41,16 +40,16 @@
 */
 /******************************************************************************/
 /* Aliases */
-static inline int32_t Linear_Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
-static inline int32_t Linear_Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> p_linear->SlopeShift); }
+static inline int32_t Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
+static inline int32_t Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> p_linear->SlopeShift); }
 
-static inline void Linear_Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); } //alternatively update slope if sign changed
-static inline void Linear_Ramp_ZeroOutputState(Linear_T * p_linear)
+static inline void Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); } //alternatively update slope if sign changed
+static inline void Ramp_ZeroOutputState(Linear_T * p_linear)
 {
     p_linear->YReference = 0;
     p_linear->Y0 = 0;
 }
-static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t match)
+static inline void Ramp_SetOutputState(Linear_T * p_linear, int32_t match)
 {
     p_linear->YReference = (match << p_linear->SlopeShift);
     p_linear->Y0 = (match << p_linear->SlopeShift);
@@ -61,17 +60,17 @@ static inline void Linear_Ramp_SetOutputState(Linear_T * p_linear, int32_t match
     Extern
 */
 /******************************************************************************/
-extern void Linear_Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
-extern void Linear_Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Linear_Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern void Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern void Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern void Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 
-extern int32_t Linear_Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
-extern int32_t Linear_Ramp_NextOutputOf(const Linear_T * p_linear, int32_t currentRampValue);
-extern int32_t Linear_Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps);
-extern int32_t Linear_Ramp_ProcOutput(Linear_T * p_linear);
+extern int32_t Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
+extern int32_t Ramp_NextOutputOf(const Linear_T * p_linear, int32_t currentRampValue);
+extern int32_t Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps);
+extern int32_t Ramp_ProcOutput(Linear_T * p_linear);
 
 #endif
 

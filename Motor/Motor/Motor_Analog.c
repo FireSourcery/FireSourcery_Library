@@ -82,7 +82,7 @@ bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
 {
     const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
 
-    bool isComplete = Timer_Periodic_Poll(&p_motor->ControlTimer);
+    bool isComplete = Timer_IsElapsed(&p_motor->ControlTimer);
     if (isComplete == true)
     {
         p_motor->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));

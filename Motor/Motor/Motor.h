@@ -50,8 +50,8 @@
 #include "Math/Fixed/fixed.h"
 #include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear_Voltage.h"
-#include "Math/Linear/Linear_Ramp.h"
 #include "Math/Linear/Linear.h"
+#include "Math/Ramp/Ramp.h"
 #include "Math/PID/PID.h"
 #include "Math/Filter/Filter_MovAvg.h"
 #include "Math/Filter/Filter.h"
@@ -599,8 +599,6 @@ static inline void Motor_ClearInterrupt(Motor_T * p_motor)     { Phase_ClearInte
 static inline void Motor_DisableInterrupt(Motor_T * p_motor)   { Phase_DisableInterrupt(&p_motor->Phase); }
 static inline void Motor_EnableInterrupt(Motor_T * p_motor)    { Phase_EnableInterrupt(&p_motor->Phase); }
 
-// static inline void Motor_DisableOutput(Motor_T * p_motor)    { Phase_Float(&p_motor->Phase); }
-// static inline bool Motor_IsHold(Motor_T * p_motor)           { Phase_IsHold(&p_motor->Phase); }
 
 /******************************************************************************/
 /*
@@ -738,7 +736,7 @@ static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedba
 
     @return [0:65535] <=> [0:2) Unsaturated output
 */
-static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return p_motor->Speed_Fract16 * p_motor->Config.VSpeedScalar_UFract16 >> 15U; }
+static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return p_motor->Speed_Fract16 * p_motor->Config.VSpeedScalar_UFract16 >> 15; }
 
 // static inline uint32_t _Motor_Angle16OfSpeed_Fract16(uint16_t speed_fract16)
 // static inline uint32_t _Motor_SpeedOfAngle16_Fract16(uint16_t angle16)

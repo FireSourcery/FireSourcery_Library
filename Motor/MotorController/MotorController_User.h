@@ -184,14 +184,6 @@ static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc
     // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
 }
 
-// static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
-
-// float all and ground all, stop state then use motor
-// cmd = 0
-// static inline void MotorController_User_Release (MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
-// voltagemode 0
-// static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }
-
 /******************************************************************************/
 /* Drive Mode */
 /******************************************************************************/
@@ -202,12 +194,6 @@ static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc
     @param[in] cmdValue [0:65535]
 */
 /******************************************************************************/
-// static inline void MotorController_User_SetDriveCmd(MotorController_T * p_mc, MotorController_DriveId_T cmdId, uint16_t cmdValue)
-// {
-//     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DRIVE, cmdId);
-//     p_mc->UserCmdValue = cmdValue;
-// }
-
 /* Same as Brake/Throttle 0 */
 // static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)               { MotorController_User_SetDriveCmd(p_mc, MOTOR_CONTROLLER_DRIVE_RELEASE, 0U); }
 static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc)                  { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, 0U); }
@@ -462,3 +448,11 @@ extern void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc,
 
 #endif
 
+
+// static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
+
+// float all and ground all, stop state then use motor
+// cmd = 0
+// static inline void MotorController_User_Release (MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
+// voltagemode 0
+// static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }

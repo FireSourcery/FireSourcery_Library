@@ -62,8 +62,6 @@
 #include "Math/Linear/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
 
-#include "Peripheral/HAL/HAL_Peripheral.h"
-#include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
 
 #include <stdint.h>
 #include <string.h>
@@ -366,6 +364,7 @@ typedef struct MotorController
     Timer_T TimerMillis;
     uint32_t MainDividerCounter;
     uint32_t TimerDividerCounter;
+    uint32_t StateCounter;
 
     /* State and SubState */
     StateMachine_T StateMachine;
@@ -389,6 +388,9 @@ typedef struct MotorController
     // Calibration_Status_T CalibrationStatus;
     // } AsyncStatus;
 
+    Filter_T AvgBuffer0;
+    Filter_T AvgBuffer1;
+
 #if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
     Shell_T Shell;
     uint16_t ShellSubstate;
@@ -411,13 +413,12 @@ static inline Motor_T * MotorController_GetPtrMotor(const MotorController_T * p_
 
 /******************************************************************************/
 /*
-    Alarm
+    Buzzer
 */
 /******************************************************************************/
 static inline void MotorController_BeepShort(MotorController_T * p_mc)             { Blinky_Blink(&p_mc->Buzzer, 500U); }
 static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc)     { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
 static inline void MotorController_BeepDouble(MotorController_T * p_mc)            { Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U); }
-
 
 
 /******************************************************************************/
@@ -439,8 +440,6 @@ extern NvMemory_Status_T MotorController_SaveBootReg_Blocking(MotorController_T 
 extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
 
-extern void MotorController_CalibrateAdc(MotorController_T * p_mc);
-extern void MotorController_CalibrateSensorAll(MotorController_T * p_mc);
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE) && defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
 extern void MotorController_ServoExtern_Start(MotorController_T * p_mc);
@@ -481,7 +480,6 @@ extern void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_
 extern void MotorController_StartControlAll(MotorController_T * p_mc);
 extern void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode);
 extern void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd);
-// extern void MotorController_StartControlModeValueAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode, int16_t value);
 
 extern void MotorController_StartThrottleMode(MotorController_T * p_mc);
 extern void MotorController_SetThrottleValue(MotorController_T * p_mc, uint16_t userCmdThrottle);

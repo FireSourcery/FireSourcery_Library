@@ -110,8 +110,8 @@ static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) {
 
 /*! @return [-32767:32767] <=> [-1:1] */
 /* Getters satisfy generic use. Setters are specific to control mode. */
-static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetTarget(&p_motor->Ramp)); }
-static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Linear_Ramp_GetOutput(&p_motor->Ramp)); }
+static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->Ramp)); }
+static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Ramp_GetOutput(&p_motor->Ramp)); }
 
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }

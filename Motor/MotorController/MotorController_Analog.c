@@ -37,3 +37,52 @@
 /*
     MotAnalog Callbacks go here
 */
+
+/******************************************************************************/
+/*!
+    Calibrate
+*/
+/******************************************************************************/
+void MotorController_Analog_StartCalibrate(MotorController_T * p_mc)
+{
+    p_mc->StateCounter = 0U;
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_THROTTLE);
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_BRAKE);
+    p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result = 0U;
+    p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result = 0U;
+    Filter_Avg_Init(&p_mc->AvgBuffer0);
+    Filter_Avg_Init(&p_mc->AvgBuffer1);
+
+    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
+}
+
+bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc)
+{
+    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    const uint32_t TIME = 2000U;
+
+    bool isLocalComplete = (p_mc->StateCounter == TIME); /* 2 seconds */
+
+    if (p_mc->StateCounter == TIME)
+    {
+        MotAnalogUser_SetThrottleZero(&p_mc->AnalogUser, Filter_Avg(&p_mc->AvgBuffer0, p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result));
+        MotAnalogUser_SetBrakeZero(&p_mc->AnalogUser, Filter_Avg(&p_mc->AvgBuffer1, p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result));
+    }
+    else if (p_mc->StateCounter <= TIME)
+    {
+        if (p_mc->StateCounter != 0U) /* skip first time */
+        {
+            if ((p_mc->StateCounter & DIVIDER) == 0U)
+            {
+                Filter_Avg(&p_mc->AvgBuffer0, p_mc->CONST.CONVERSION_THROTTLE.P_STATE->Result);
+                Filter_Avg(&p_mc->AvgBuffer1, p_mc->CONST.CONVERSION_BRAKE.P_STATE->Result);
+                Analog_MarkConversion(&p_mc->CONST.CONVERSION_THROTTLE);
+                Analog_MarkConversion(&p_mc->CONST.CONVERSION_BRAKE);
+            }
+        }
+    }
+
+    p_mc->StateCounter++;
+
+    return (p_mc->StateCounter > TIME) && MotorController_IsEveryMotorStopState(p_mc);
+}

@@ -195,6 +195,7 @@ uint32_t MotorController_User_Call(MotorController_T * p_mc, MotorController_Use
 
     switch (id)
     {
+        // case MOT_USER_SYSTEM_RESRV:                           break;
         case MOT_USER_SYSTEM_BEEP:          MotorController_User_BeepN(p_mc, 500U, 500U, value);                break;
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_User_BeepStop(p_mc);                                break;
         case MOT_USER_SYSTEM_CLEAR_FAULT:   isSuccess = MotorController_StateMachine_ClearFault(p_mc, value);   break;
