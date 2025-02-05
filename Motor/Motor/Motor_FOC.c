@@ -88,7 +88,7 @@ static inline void ProcSpeedFeedback(Motor_T * p_motor, bool hasSpeedFeedback)
     }
     else if (p_motor->FeedbackMode.Speed == 0U) /* Current or Voltage Control mode */
     {
-        // if (p_motor->FeedbackMode.Current == 1U) { req = Motor_IReqLimitOf(p_motor, initialReq); } /* clamp again in case a new limit is set while input discontinued */
+        // if (p_motor->FeedbackMode.Current == 1U) { req = Motor_IReqLimitOf(p_motor, initialReq); } /* Clamp again in case input discontinued */
         // req = Motor_ReqOfSpeedLimit(p_motor, rampReq);
         FOC_SetReqQ(&p_motor->Foc, req);
         FOC_SetReqD(&p_motor->Foc, 0);
@@ -126,7 +126,6 @@ static void ProcInnerFeedback(Motor_T * p_motor)
     if (p_motor->IFlags.Value == 0x07U)  /* alternatively use batch callback */
     {
         isCaptureI = true;
-        Motor_Debug_CaptureTime(p_motor, 4U);
         Motor_FOC_CaptureIa(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result);
         Motor_FOC_CaptureIb(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result);
         Motor_FOC_CaptureIc(p_motor, p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result);
@@ -169,13 +168,13 @@ void Motor_FOC_ActivateOutputZero(Motor_T * p_motor)
 */
 void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 {
-#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
-    Motor_ExternControl(p_motor);
-#endif
-
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     Ramp_ProcOutput(&p_motor->Ramp);
+
+#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+    Motor_ExternControl(p_motor);
+#endif
     ProcOuterFeedback(p_motor);
     ProcInnerFeedback(p_motor);
     ProcAngleOutput(p_motor);
@@ -255,7 +254,8 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     if (p_motor->FeedbackMode.Current == 1U)
     {
         PID_SetOutputState(&p_motor->PidIq, vq);
-        PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
+        PID_SetOutputState(&p_motor->PidId, 0);
+        // PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
         qReq = 0; /* FOC_GetIq(&p_motor->Foc); */
     }
     else

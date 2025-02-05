@@ -30,6 +30,7 @@
 /******************************************************************************/
 #include "PID.h"
 #include <string.h>
+#include <assert.h>
 
 static void ResetGains(PID_T * p_pid)
 {
@@ -54,8 +55,8 @@ void PID_Init(PID_T * p_pid)
 //     PID_Reset(p_pid);
 // }
 
-static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
-static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integral32 = ((int32_t)integral << 16); }
+static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 16); }
+static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 16); }
 
 /*!
     Conventional parallel PID calculation
@@ -73,7 +74,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     */
     /* Forward rectangular approximation. */
     integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Exclusive of 16 shift */
-    integral32 = math_add_sat(p_pid->Integral32, integral32Part);
+    integral32 = math_add_sat(p_pid->IntegralAccum, integral32Part);
     integral = integral32 >> 16;
 
     /* Dynamic Clamp */
@@ -82,12 +83,15 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 
     /*
         Clamp integral to prevent windup.
-        Determine integral storage, Integral32, using [integral]
+        Determine integral storage, IntegralAccum, using [integral]
         if integral and error are in opposite directions, some synchronization issue has occurred, reset stored integral.
     */
-    if      (integral > integralMax) { integral = integralMax; if (error < 0) { SetIntegral(p_pid, integralMax); } }
-    else if (integral < integralMin) { integral = integralMin; if (error > 0) { SetIntegral(p_pid, integralMin); } }
-    else                             { p_pid->Integral32 = integral32; }
+    // if      (integral > integralMax) { integral = integralMax; if (error < 0) { SetIntegral(p_pid, integralMax); } }
+    // else if (integral < integralMin) { integral = integralMin; if (error > 0) { SetIntegral(p_pid, integralMin); } }
+    // else                             { p_pid->IntegralAccum = integral32; }
+
+    integral = math_clamp(integral, integralMin, integralMax);
+    SetIntegral(p_pid, integral);
 
     return proportional + integral;
 }
@@ -110,7 +114,14 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 */
 int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    // p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    // return p_pid->Output;
+
+    int32_t output = CalcPI(p_pid, setpoint - feedback);
+
+    p_pid->Output = math_clamp(output, p_pid->OutputMin, p_pid->OutputMax);
+    if (output != p_pid->Output) { SetIntegral(p_pid, p_pid->Output); }
+
     return p_pid->Output;
 }
 
@@ -119,7 +130,7 @@ int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 */
 void PID_Reset(PID_T * p_pid)
 {
-    p_pid->Integral32 = 0;
+    p_pid->IntegralAccum = 0;
     p_pid->ErrorPrev = 0;
 }
 
@@ -132,12 +143,12 @@ void PID_SetOutputState(PID_T * p_pid, int32_t integral)
 {
     PID_SetIntegral(p_pid, integral);
     // p_pid->ErrorPrev = 0;
-    p_pid->Output = GetIntegral(p_pid);
+    p_pid->Output = GetIntegral(p_pid); /* passed value after clamp */
 }
 
 void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 {
-    if(max > min)
+    if (max > min)
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;
@@ -170,8 +181,10 @@ void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
 */
 static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
+    assert(1 >> -1 == 1 << 1);
+
     p_pid->PropGainShift = fixed_log2(INT32_MAX / kp_Fixed32);
-    p_pid->PropGain = kp_Fixed32 >> (16U - p_pid->PropGainShift);
+    p_pid->PropGain = kp_Fixed32 >> (16 - p_pid->PropGainShift);
 }
 
 
@@ -188,8 +201,10 @@ static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 */
 static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
+    assert(1 >> -1 == 1 << 1);
+
     p_pid->IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32);
-    p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
+    p_pid->IntegralGain = ((int64_t)ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
 }
 
 
@@ -198,15 +213,12 @@ static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 */
 void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 {
-    if (sampleFreq > 0U)
-    {
-        p_pid->Config.SampleFreq = sampleFreq;
-        SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32); /* Reset Ki Runtime */
-    }
+    p_pid->Config.SampleFreq = sampleFreq;
+    SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32); /* Reset Ki Runtime */
 }
 
 
-void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
+void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32)
 {
     p_pid->Config.Kp_Fixed32 = kp_Fixed32;
     SetKp_Fixed32(p_pid, kp_Fixed32);
@@ -214,7 +226,7 @@ void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 
 
 
-void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
+void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
 {
     p_pid->Config.Ki_Fixed32 = ki_Fixed32;
     SetKi_Fixed32(p_pid, ki_Fixed32);
@@ -223,14 +235,14 @@ void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 /*!
     @param[in] kp_Fixed16 [0:INT16_MAX] Q8.8 256 => 1
 */
-void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
+void PID_SetKp_Fixed16(PID_T * p_pid, int16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
 
 /*!
 */
-void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
+void PID_SetKi_Fixed16(PID_T * p_pid, int16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
 
 
 /*!
     todo
 */
-void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) {}
+void PID_SetKd_Fixed16(PID_T * p_pid, int16_t kd_Fixed16) {}

@@ -252,7 +252,7 @@ static inline uint16_t Hall_Angle16CcwOf(Hall_T * p_hall, uint8_t physicalSensor
 static inline uint16_t _Hall_Angle16Boundary(Hall_T * p_hall)
 {
     return ((p_hall->Direction == HALL_DIRECTION_CW) ? _HALL_ANGLE_BOUNDARY : 0 - _HALL_ANGLE_BOUNDARY); /* unsigned angle wraps */
-    // return (uint16_t)(p_hall->Direction * _HALL_ANGLE_BOUNDARY);
+    // return (uint16_t)(p_hall->Direction * _HALL_ANGLE_BOUNDARY); direction is 1 or -1
 }
 
 static inline uint16_t Hall_Angle16Of(Hall_T * p_hall, uint8_t physicalSensors)
@@ -285,7 +285,11 @@ static inline bool Hall_PollEdgeA(Hall_T * p_hall) { return ((Hall_ReadSensors(p
 /* Next poll is edge */
 static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
 
-static inline void Hall_SetInitial(Hall_T * p_hall) { Hall_CaptureAngle_ISR(p_hall); }
+static inline void Hall_SetInitial(Hall_T * p_hall)
+{
+    Hall_CaptureSensors_ISR(p_hall);
+    p_hall->Angle = _Hall_Angle16Of(p_hall, p_hall->Sensors.Value); /* assume middle */
+}
 
 /*
     Six-step commutation Id
@@ -297,9 +301,7 @@ static inline Hall_Id_T Hall_CommutationIdOf(Hall_T * p_hall, uint8_t physicalSe
 }
 static inline Hall_Id_T Hall_GetCommutationId(Hall_T * p_hall) { return Hall_CommutationIdOf(p_hall, p_hall->Sensors.Value); }
 
-/*
 
-*/
 static inline Hall_Direction_T Hall_GetDirection(Hall_T * p_hall) { return (p_hall->Direction); }
 /* Sets direction => commutation, angle degrees16 conversion */
 static inline void Hall_SetDirection(Hall_T * p_hall, Hall_Direction_T dir) { p_hall->Direction = dir; }
@@ -318,7 +320,7 @@ static inline bool Hall_Verify(Hall_T * p_hall, uint8_t sensorsValue)
     return ((sensorsValue != HALL_ANGLE_ERROR_0) && (sensorsValue != HALL_ANGLE_ERROR_7));
 }
 
-static inline bool Hall_IsSensorsStateValid(Hall_T * p_hall )
+static inline bool Hall_IsSensorsStateValid(Hall_T * p_hall)
 {
     return Hall_Verify(p_hall, Hall_ReadSensors(p_hall).Value);
 }

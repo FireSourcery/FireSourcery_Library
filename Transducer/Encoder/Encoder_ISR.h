@@ -68,31 +68,31 @@ static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 /******************************************************************************/
 /* Quadrature */
 /******************************************************************************/
-static inline void _Encoder_CaptureCount_Quadrature(Encoder_T * p_encoder, int8_t count)
+static inline void _Encoder_Quadrature_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
-    if(count == _ENCODER_TABLE_ERROR)   { p_encoder->ErrorCount++; }
-    else                                { _Encoder_CaptureCount(p_encoder, count); }
+    if (count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
+    else { _Encoder_CaptureCount(p_encoder, count); }
 }
 
-static inline void _Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
+static inline void _Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
-    _Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
+    _Encoder_Quadrature_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
 }
 
 // static inline void _Encoder_CapturePulse_QuadraturePhaseA(Encoder_T * p_encoder)
 // {
-//     _Encoder_CaptureCount_Quadrature(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
+//     _Encoder_Quadrature_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
 // }
 
 // static inline void _Encoder_CapturePulse_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
 // {
-//     _Encoder_CaptureCount_Quadrature(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
+//     _Encoder_Quadrature_CaptureCount(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
 // }
 
 /******************************************************************************/
 /* Single Phase, Non-Directional */
 /******************************************************************************/
-static inline void _Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
+static inline void _Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_CaptureCount(p_encoder, 1);
 }
@@ -102,16 +102,16 @@ static inline void _Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
     User compile time implement mode
 */
 /******************************************************************************/
-static inline void Encoder_CapturePulse_Quadrature(Encoder_T * p_encoder)
+static inline void Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
-    _Encoder_CapturePulse_Quadrature(p_encoder);
+    _Encoder_Quadrature_CapturePulse(p_encoder);
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
-static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
+static inline void Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
 {
-    _Encoder_CapturePulse_SinglePhase(p_encoder);
+    _Encoder_SinglePhase_CapturePulse(p_encoder);
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
@@ -121,7 +121,7 @@ static inline void Encoder_CapturePulse_SinglePhase(Encoder_T * p_encoder)
 */
 static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
-    Encoder_CaptureMode_Proc(p_encoder, _Encoder_CapturePulse_Quadrature, _Encoder_CapturePulse_SinglePhase); /* Quadrature On/Off Switch */
+    Encoder_CaptureMode_Proc(p_encoder, _Encoder_Quadrature_CapturePulse, _Encoder_SinglePhase_CapturePulse); /* Quadrature On/Off Switch */
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
@@ -156,8 +156,8 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
     HAL_Encoder_ClearPinInterrupt(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
     p_encoder->IndexCount++;
     // todo phase index delta
-// #if         defined(CONFIG_ENCODER_HW_EMULATED)
-// #elif     defined(CONFIG_ENCODER_HW_DECODER)
+// #if      defined(CONFIG_ENCODER_HW_EMULATED)
+// #elif    defined(CONFIG_ENCODER_HW_DECODER)
 //     HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0U);
 // #endif
 }

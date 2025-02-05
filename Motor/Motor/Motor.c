@@ -206,7 +206,7 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-            if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); } // Encoder_CapturePulse_SinglePhase
+            if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); } // Encoder_SinglePhase_CapturePulse
         #endif
             /* by assigned direction, alternatively compare prev state */
             electricalAngle = Hall_GetAngle16(&p_motor->Hall);
@@ -309,7 +309,7 @@ bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_ZeroSensor(Motor_T * p_motor)
 {
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
             Hall_SetInitial(&p_motor->Hall);
@@ -318,12 +318,15 @@ void Motor_ZeroSensor(Motor_T * p_motor)
         case MOTOR_SENSOR_MODE_ENCODER:
             Encoder_ModeDT_SetInitial(&p_motor->Encoder);
             break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:        break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:            Motor_SetPositionFeedback(p_motor, 0U);        break;
-#endif
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:
+            Motor_SetPositionFeedback(p_motor, 0U);
+            break;
+        #endif
         default: break;
     }
 }
@@ -335,7 +338,7 @@ bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
     switch(p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;        break;
-        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_GetIsAligned(&p_motor->Encoder);    break;
+        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_GetIsAligned(&p_motor->Encoder);    break; //isHomed
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
 #endif
@@ -362,6 +365,45 @@ inline bool Motor_IsSensorAvailable(const Motor_T * p_motor)
     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
 
+
+/******************************************************************************/
+/*
+    Sensor Direction
+*/
+/******************************************************************************/
+static void SetSensorCcw(Motor_T * p_motor)
+{
+    switch (p_motor->Config.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
+            Encoder_SinglePhase_SetDirectionPositive(&p_motor->Encoder);
+            break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            break;
+        #if defined (CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:     break;
+        #endif
+        default: break;
+    }
+}
+
+static void SetSensorCw(Motor_T * p_motor)
+{
+    switch (p_motor->Config.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW);
+            Encoder_SinglePhase_SetDirectionNegative(&p_motor->Encoder);
+            break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            break;
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:  break;
+        #endif
+        default: break;
+    }
+}
 
 /******************************************************************************/
 /*
@@ -633,15 +675,7 @@ void Motor_SetDirectionCcw(Motor_T * p_motor)
     p_motor->Direction = MOTOR_DIRECTION_CCW;
     // UpdateDirectionLimitsCcw(p_motor);
     Motor_UpdateSpeedOutputLimits(p_motor); // alternatively, common function with repeat check direction logic
-    switch(p_motor->Config.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, true); break;
-        case MOTOR_SENSOR_MODE_ENCODER:     break;
-        #if defined (CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:     break;
-        #endif
-        default: break;
-    }
+    SetSensorCcw(p_motor);
 }
 
 void Motor_SetDirectionCw(Motor_T * p_motor)
@@ -649,15 +683,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
     p_motor->Direction = MOTOR_DIRECTION_CW;
     // UpdateDirectionLimitsCw(p_motor);
     Motor_UpdateSpeedOutputLimits(p_motor);
-    switch (p_motor->Config.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL: Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CW); Encoder_SetSinglePhaseDirection(&p_motor->Encoder, false); break;
-        case MOTOR_SENSOR_MODE_ENCODER:     break;
-        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:  break;
-        #endif
-        default: break;
-    }
+    SetSensorCw(p_motor);
 }
 
 /*

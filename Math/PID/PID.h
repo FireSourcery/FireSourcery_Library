@@ -74,7 +74,7 @@ typedef struct PID
     int16_t IntegralGain;
     int8_t IntegralGainShift;
 
-    int32_t Integral32; /* Shifted 16 */
+    int32_t IntegralAccum; /* Shifted 16 */
     int32_t ErrorPrev;
     int16_t OutputMin; /* -32768 Min */
     int16_t OutputMax; /* 32767 Max */
@@ -85,7 +85,7 @@ PID_T;
 #define PID_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
 
 static inline int16_t PID_GetOutput(const PID_T * p_pid) { return p_pid->Output; }
-static inline int16_t PID_GetIntegral(const PID_T * p_pid) { return (p_pid->Integral32 >> 16); }
+static inline int16_t PID_GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 16); }
 
 static inline uint32_t PID_GetSampleFreq(const PID_T * p_pid) { return p_pid->Config.SampleFreq; }
 static inline int32_t PID_GetKp_Fixed32(const PID_T * p_pid) { return p_pid->Config.Kp_Fixed32; }
@@ -107,11 +107,11 @@ extern void PID_SetIntegral(PID_T * p_pid, int32_t integral);
 extern void PID_SetOutputState(PID_T * p_pid, int32_t integral);
 extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
-extern void PID_SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32);
-extern void PID_SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32);
-extern void PID_SetKd_Fixed32(PID_T * p_pid, uint32_t kd_Fixed32);
-extern void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16);
-extern void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16);
-extern void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16);
+extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);
+extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32);
+extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);
+extern void PID_SetKp_Fixed16(PID_T * p_pid, int16_t kp_Fixed16);
+extern void PID_SetKi_Fixed16(PID_T * p_pid, int16_t ki_Fixed16);
+extern void PID_SetKd_Fixed16(PID_T * p_pid, int16_t kd_Fixed16);
 
 #endif /* PID_H */

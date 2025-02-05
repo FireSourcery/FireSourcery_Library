@@ -674,7 +674,6 @@ static inline uint16_t Motor_GetILimit(const Motor_T * p_motor) { return (FOC_Ge
 //     return math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor));
 // };
 
-
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
 static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)       { return math_clamp(req, Motor_GetILimitCw(p_motor), Motor_GetILimitCcw(p_motor)); }
 
@@ -692,27 +691,31 @@ static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)   
 // ScaleWithSpeedLimit
 static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req)
 {
-    int16_t limitedReq = req;
     /* fract16_div always return positive < 1 */
     // if      (p_motor->Speed_Fract16 < p_motor->SpeedLimitCw_Fract16)  { limitedReq = 0 - fract16_div(p_motor->SpeedLimitCw_Fract16, p_motor->Speed_Fract16); } /* Speed is more negative */
     // else if (p_motor->Speed_Fract16 > p_motor->SpeedLimitCcw_Fract16) { limitedReq = fract16_div(p_motor->SpeedLimitCcw_Fract16, p_motor->Speed_Fract16); }
 
+    int16_t limitedReq = req;
     uint32_t speedLimit = Motor_GetSpeedLimit(p_motor);
-    // if (math_abs(p_motor->Speed_Fract16) > speedLimit) { limitedReq = fract16_mul(speedLimit, req); }
-    if (math_abs(p_motor->Speed_Fract16) > speedLimit) { limitedReq = fract16_mul(fract16_div(speedLimit, p_motor->Speed_Fract16), req); }
+    uint32_t speed = math_abs(p_motor->Speed_Fract16);
+    if (speed > speedLimit) { limitedReq = (int32_t)req * speedLimit / speed; }
+    // if (speed > speedLimit) { limitedReq = fract16_mul(req, speedLimit); }
 
     return limitedReq;
 }
 
 // alternatively enable PID // MatchOutput
-static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t feedback, int16_t req)
+static inline int16_t Motor_VReqOfILimit(const Motor_T * p_motor, int32_t iFeedback, int16_t req)
 {
-    int16_t limitedReq = req;
     // if      (feedback < p_motor->ILimitCw_Fract16)   { limitedReq = 0 - fract16_div(p_motor->ILimitCw_Fract16, feedback); }
     // else if (feedback > p_motor->ILimitCcw_Fract16)  { limitedReq = fract16_div(p_motor->ILimitCcw_Fract16, feedback); }
 
+    int16_t limitedReq = req;
     uint32_t iLimit = Motor_GetILimit(p_motor);
-    if (math_abs(feedback) > iLimit) { limitedReq = fract16_mul(iLimit, req); }
+    uint32_t iAbs = math_abs(iFeedback);
+
+    // if (math_abs(feedback) > iLimit) { limitedReq = fract16_mul(iLimit, req); }
+    if (iAbs > iLimit) { limitedReq = (int32_t)req * iLimit / iAbs; }
 
     return limitedReq;
 };
