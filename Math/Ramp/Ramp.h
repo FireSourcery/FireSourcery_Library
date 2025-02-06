@@ -40,10 +40,10 @@
 */
 /******************************************************************************/
 /* Aliases */
-static inline int32_t Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> p_linear->SlopeShift); }
-static inline int32_t Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> p_linear->SlopeShift); }
+static inline int32_t Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> (int32_t)p_linear->SlopeShift); }
+static inline int32_t Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> (int32_t)p_linear->SlopeShift); }
 
-static inline void Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << p_linear->SlopeShift); } //alternatively update slope if sign changed
+static inline void Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << (int32_t)p_linear->SlopeShift); } //alternatively update slope if sign changed
 static inline void Ramp_ZeroOutputState(Linear_T * p_linear)
 {
     p_linear->YReference = 0;

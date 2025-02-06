@@ -44,6 +44,12 @@ typedef struct Filter
 }
 Filter_T;
 
+static inline void Filter_Init(Filter_T * p_filter)
+{
+    p_filter->Accumulator = 0;
+    p_filter->Index = 0U;
+}
+
 static inline void Filter_Avg_Init(Filter_T * p_filter)
 {
     p_filter->Accumulator = 0;
@@ -56,5 +62,8 @@ static inline int32_t Filter_Avg(Filter_T * p_filter, int32_t in)
     p_filter->Index++;
     return p_filter->Accumulator / p_filter->Index;
 }
+
+static inline int32_t Filter_Min(Filter_T * p_filter, int32_t in) { return math_min(p_filter->Accumulator, in); }
+static inline int32_t Filter_Max(Filter_T * p_filter, int32_t in) { return math_max(p_filter->Accumulator, in); }
 
 #endif

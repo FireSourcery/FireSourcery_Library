@@ -95,6 +95,10 @@ static inline int16_t PID_GetKp_Fixed16(const PID_T * p_pid) { return PID_GetKp_
 static inline int16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
 static inline int16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
+// static inline int16_t _PID_GetKp_Fixed16_Runtime(const PID_T * p_pid) { return p_pid->PropGain = kp_Fixed32 >> (16 - p_pid->PropGainShift) >> 8; }
+// static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return p_pid->IntegralGain = ((int64_t)ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq >> 8; }
+// static inline int16_t _PID_GetKd_Fixed16_Runtime(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
+
 
 /******************************************************************************/
 /*!

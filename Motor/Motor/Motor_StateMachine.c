@@ -226,8 +226,8 @@ static void Run_Entry(Motor_T * p_motor)
     /* Optionally poll angle sensor or let interpolate angle be off by 1 */
     // Motor_UpdateSpeedOutputLimits(p_motor); /* Alternatively run in SetFeedbackMode does not need to updated unless feedback mode changed */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL);
-    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, NULL);
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, NULL);
+    Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, NULL);
+    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, NULL);
 }
 
 static StateMachine_State_T * Run_Proc(Motor_T * p_motor)

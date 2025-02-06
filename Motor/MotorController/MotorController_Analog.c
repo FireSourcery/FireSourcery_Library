@@ -61,7 +61,7 @@ bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc)
     const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
     const uint32_t TIME = 2000U;
 
-    bool isLocalComplete = (p_mc->StateCounter == TIME); /* 2 seconds */
+    // bool isLocalComplete = (p_mc->StateCounter == TIME); /* 2 seconds */
 
     if (p_mc->StateCounter == TIME)
     {

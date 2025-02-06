@@ -52,10 +52,10 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
     if (hasIFeedback && (p_motor->FeedbackMode.Current == 1U)) /* Current Control mode - Proc FeedbackLoop, Iq Id set by ADC routine */
     {
         FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), req)); /* PidIq configured with VLimits */
-        FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
-
-        /* filter bounce */
-        if (math_abs(FOC_GetVd(&p_motor->Foc)) < (INT16_MAX / 16)) { FOC_SetVd(&p_motor->Foc, 0); }
+        // FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), FOC_GetReqD(&p_motor->Foc)));
+        FOC_SetVd(&p_motor->Foc, 0);
+        // /* filter bounce */
+        // if (math_abs(FOC_GetVd(&p_motor->Foc)) < (INT16_MAX / 16)) { FOC_SetVd(&p_motor->Foc, 0); }
     }
     else if (p_motor->FeedbackMode.Current == 0U) /* Voltage Control mode - Apply limits without FeedbackLoop */
     {
