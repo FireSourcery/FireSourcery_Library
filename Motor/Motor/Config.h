@@ -31,16 +31,16 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-#if     defined(CONFIG_MOTOR_DEBUG)
-#elif   defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    #define CONFIG_MOTOR_OPEN_LOOP_ENABLE
-    #define CONFIG_MOTOR_DEBUG
-#elif   defined(CONFIG_MOTOR_DEBUG_DISABLE)
-  #define CONFIG_MOTOR_DEBUG 0U
-#else
+// #if     defined(CONFIG_MOTOR_DEBUG)
+// #elif   defined(CONFIG_MOTOR_DEBUG_ENABLE)
+//     #define CONFIG_MOTOR_OPEN_LOOP_ENABLE
+//     #define CONFIG_MOTOR_DEBUG
+// #elif   defined(CONFIG_MOTOR_DEBUG_DISABLE)
+//   #define CONFIG_MOTOR_DEBUG 0U
+// #else
     // #define CONFIG_MOTOR_DEBUG_DISABLE
     #define CONFIG_MOTOR_DEBUG (!NDEBUG)
-#endif
+// #endif
 
 
 #if     defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
@@ -82,7 +82,7 @@
 #if     defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
 #elif   defined(CONFIG_MOTOR_OPEN_LOOP_DISABLE)
 #else
-    #define CONFIG_MOTOR_OPEN_LOOP_DISABLE
+    #define CONFIG_MOTOR_OPEN_LOOP_ENABLE
 #endif
 
 #if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)

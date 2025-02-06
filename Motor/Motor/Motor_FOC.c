@@ -119,8 +119,7 @@ static inline void ProcOuterFeedback(Motor_T * p_motor)
     ProcSpeedFeedback(p_motor, Motor_PollCaptureSpeed(p_motor)); /* Set ReqDQ */
 }
 
-/* From Iabc to Idq to Vdq */
-static void ProcInnerFeedback(Motor_T * p_motor)
+static bool CaptureIabc(Motor_T * p_motor)
 {
     bool isCaptureI = false;
     if (p_motor->IFlags.Value == 0x07U)  /* alternatively use batch callback */
@@ -132,7 +131,13 @@ static void ProcInnerFeedback(Motor_T * p_motor)
         ProcClarkePark(p_motor);
         p_motor->IFlags.Value = 0U;
     }
-    ProcIFeedback(p_motor, isCaptureI); /* Set Vdq */
+    return isCaptureI;
+}
+
+/* From Iabc to Idq to Vdq */
+static void ProcInnerFeedback(Motor_T * p_motor)
+{
+    ProcIFeedback(p_motor, CaptureIabc(p_motor)); /* Set Vdq */
 }
 
 /* From Vdq to Vabc */
@@ -140,6 +145,11 @@ static void ProcAngleOutput(Motor_T * p_motor)
 {
     FOC_ProcInvParkInvClarkeSvpwm(&p_motor->Foc);  /* Set Vabc */
     Phase_WriteDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
+}
+
+void Motor_FOC_CaptureIabc(Motor_T * p_motor)
+{
+    CaptureIabc(p_motor);
 }
 
 /******************************************************************************/
@@ -216,11 +226,11 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_
 /*
     Feed Forward Angle without ClarkePark on Current
 */
-void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd)
+void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
 {
     FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetVq(&p_motor->Foc, vq);
     FOC_SetVd(&p_motor->Foc, vd);
+    FOC_SetVq(&p_motor->Foc, vq);
     ProcAngleOutput(p_motor);
 }
 
@@ -387,4 +397,6 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     ProcOpenLoop(p_motor);
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, 0, Ramp_ProcOutput(&p_motor->AuxRamp));
 }
+
+
 

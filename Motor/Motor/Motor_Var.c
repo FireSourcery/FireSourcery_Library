@@ -128,7 +128,7 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
         case MOTOR_VAR_PHASE_CONTROL:       Motor_User_StartPhaseState(p_motor, (Phase_State_T)varValue);                   break;
             //temp  without state machine
         case MOTOR_VAR_PHASE_ALIGN:         Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)varValue, p_motor->Config.AlignPower_UFract16);    break;
-        case MOTOR_VAR_FEED_FORWARD_ANGLE:  Motor_FOC_ProcAngleFeedforward(p_motor, 0, p_motor->Config.AlignPower_UFract16, 0);                         break;
+        case MOTOR_VAR_FEED_FORWARD_ANGLE:  Motor_FOC_ActivateAngle(p_motor, varValue, p_motor->Config.AlignPower_UFract16, 0);                         break;
     }
 }
 

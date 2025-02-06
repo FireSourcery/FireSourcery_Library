@@ -83,7 +83,7 @@ static inline void Pin_Output_Low(const Pin_T * p_pin)      { HAL_Pin_WriteOutpu
 static inline void Pin_Output_High(const Pin_T * p_pin)     { HAL_Pin_WriteOutputOn(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
 static inline void Pin_Output_Toggle(const Pin_T * p_pin)   { HAL_Pin_ToggleOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
 static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HAL_Pin_WriteOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID, isOn); }
-static inline bool Pin_Output_ReadPhysical(const Pin_T * p_pin) { HAL_Pin_ReadOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
+static inline bool Pin_Output_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
 
 /* As On/Off. Include invert check */
 static inline void Pin_Output_Off(const Pin_T * p_pin)  { if(p_pin->CONST.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
