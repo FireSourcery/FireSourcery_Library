@@ -202,7 +202,7 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 {
     angle16_t electricalAngle; /* [0, 65535] maps to negative portions of angle16_t */
 
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
@@ -246,16 +246,16 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 {
     angle16_t angle;
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->Encoder);    break;
         case MOTOR_SENSOR_MODE_ENCODER: angle = Encoder_GetAngle(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS: angle = 0; break;
-#endif
+        #endif
         default: angle = 0; break;
     }
     return angle;
@@ -276,18 +276,18 @@ angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
 {
     int32_t speed_Fixed32;
-    switch(p_motor->Config.SensorMode)
+    switch (p_motor->Config.SensorMode)
     {
         /* Using assigned direction */
         case MOTOR_SENSOR_MODE_HALL:    speed_Fixed32 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break;
         /*  */
         case MOTOR_SENSOR_MODE_ENCODER: speed_Fixed32 = Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder); break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS: speed_Fixed32 = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));    break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS: break;
-#endif
+        #endif
         default: speed_Fixed32 = 0; break;
     }
     return speed_Fixed32 / 2;
@@ -297,7 +297,7 @@ int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
 bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 {
     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
-    if(isCaptureSpeed == true) { p_motor->Speed_Fract16 = (Motor_PollSensorSpeed(p_motor) + p_motor->Speed_Fract16) / 2; }
+    if (isCaptureSpeed == true) { p_motor->Speed_Fract16 = (Motor_PollSensorSpeed(p_motor) + p_motor->Speed_Fract16) / 2; }
     return isCaptureSpeed;
 }
 
@@ -337,7 +337,7 @@ bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
     bool isAvailable;
     switch(p_motor->Config.SensorMode)
     {
-        case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;        break;
+        case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
         case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_GetIsAligned(&p_motor->Encoder);    break; //isHomed
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
@@ -359,8 +359,7 @@ static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 #endif
 }
 
-/* User request or no sensor feedback */
-inline bool Motor_IsSensorAvailable(const Motor_T * p_motor)
+inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
 {
     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
@@ -873,17 +872,17 @@ void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
     uint16_t index = step % 12U;
     switch(index)
     {
-        case 0U: Phase_Polar_ActivateA(&p_motor->Phase, duty); break;
+        case 0U: Phase_Align_ActivateA(&p_motor->Phase, duty); break;
         case 1U: Phase_Polar_ActivateAC(&p_motor->Phase, duty); break;
-        case 2U: Phase_Polar_ActivateInvC(&p_motor->Phase, duty); break;
+        case 2U: Phase_Align_ActivateInvC(&p_motor->Phase, duty); break;
         case 3U: Phase_Polar_ActivateBC(&p_motor->Phase, duty); break;
-        case 4U: Phase_Polar_ActivateB(&p_motor->Phase, duty); break;
+        case 4U: Phase_Align_ActivateB(&p_motor->Phase, duty); break;
         case 5U: Phase_Polar_ActivateBA(&p_motor->Phase, duty); break;
-        case 6U: Phase_Polar_ActivateInvA(&p_motor->Phase, duty); break;
+        case 6U: Phase_Align_ActivateInvA(&p_motor->Phase, duty); break;
         case 7U: Phase_Polar_ActivateCA(&p_motor->Phase, duty); break;
-        case 8U: Phase_Polar_ActivateC(&p_motor->Phase, duty); break;
+        case 8U: Phase_Align_ActivateC(&p_motor->Phase, duty); break;
         case 9U: Phase_Polar_ActivateCB(&p_motor->Phase, duty); break;
-        case 10U: Phase_Polar_ActivateInvB(&p_motor->Phase, duty); break;
+        case 10U: Phase_Align_ActivateInvB(&p_motor->Phase, duty); break;
         case 11U: Phase_Polar_ActivateAB(&p_motor->Phase, duty); break;
         default: break;
     }
@@ -910,18 +909,7 @@ void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
 */
 void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
 {
-    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
-    uint16_t index = step % 6U;
-    switch(index)
-    {
-        case 0U: Phase_Polar_ActivateA(&p_motor->Phase, duty); break;
-        case 1U: Phase_Polar_ActivateInvC(&p_motor->Phase, duty); break;
-        case 2U: Phase_Polar_ActivateB(&p_motor->Phase, duty); break;
-        case 3U: Phase_Polar_ActivateInvA(&p_motor->Phase, duty); break;
-        case 4U: Phase_Polar_ActivateC(&p_motor->Phase, duty); break;
-        case 5U: Phase_Polar_ActivateInvB(&p_motor->Phase, duty); break;
-        default: break;
-    }
+    Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)(step % 6U), p_motor->Config.AlignPower_UFract16);
 }
 
 void Motor_Jog6(Motor_T * p_motor)

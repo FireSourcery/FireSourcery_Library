@@ -35,6 +35,7 @@
 
 #include "Motor_User.h"
 #include "Motor_Config.h"
+#include "Motor_FOC.h"
 
 #include <assert.h>
 
@@ -105,6 +106,7 @@ Motor_VarOutput_PositionSensor_T;
 */
 typedef enum Motor_VarInput
 {
+    MOTOR_VAR_CLEAR_FAULT,
     // MOTOR_VAR_USER_CMD,      // Active mode value
     MOTOR_VAR_CMD_SPEED,        // UserCmd as Speed
     MOTOR_VAR_CMD_CURRENT,
@@ -112,9 +114,11 @@ typedef enum Motor_VarInput
     MOTOR_VAR_CMD_ANGLE,
     MOTOR_VAR_CMD_OPEN_LOOP,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
-    MOTOR_VAR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
-    MOTOR_VAR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
-    MOTOR_VAR_CLEAR_FAULT,              // No value arg. Clear Faults
+    // MOTOR_VAR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
+    // MOTOR_VAR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
+    MOTOR_VAR_PHASE_CONTROL,
+    MOTOR_VAR_PHASE_ALIGN,
+    MOTOR_VAR_FEED_FORWARD_ANGLE,
 }
 Motor_VarInput_T;
 

@@ -193,6 +193,7 @@ extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_ActivateControl(Motor_T * p_motor);
 extern void Motor_User_Release(Motor_T * p_motor);
 extern void Motor_User_Hold(Motor_T * p_motor);
+extern void Motor_User_StartPhaseState(Motor_T * p_motor, Phase_State_T state);
 extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
 extern void Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);

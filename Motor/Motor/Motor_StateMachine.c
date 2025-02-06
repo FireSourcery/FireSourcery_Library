@@ -170,7 +170,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, statemachine_
         case PHASE_STATE_FLOAT:     Phase_Float(&p_motor->Phase);   break;
         case PHASE_STATE_GROUND:    Phase_Ground(&p_motor->Phase);  break;
         case PHASE_STATE_ACTIVE:
-            if (Motor_IsSensorAvailable(p_motor) == true)
+            if (Motor_IsClosedLoopStart(p_motor) == true)
             {
                 Motor_ZeroSensor(p_motor);
                 p_nextState = &STATE_RUN;
@@ -321,7 +321,7 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, statemac
             // if (p_motor->Speed_Fract16 == 0U) { Phase_Ground p_nextState = &STATE_STOP; }
             break;
         case PHASE_STATE_ACTIVE:
-            if (Motor_IsSensorAvailable(p_motor) == true) { p_nextState = &STATE_RUN; } /* If flags set */
+            if (Motor_IsClosedLoopStart(p_motor) == true) { p_nextState = &STATE_RUN; } /* If flags set */
             /* OpenLoop does not resume */
             break;
     }
@@ -414,7 +414,7 @@ static StateMachine_State_T * OpenLoop_Proc(Motor_T * p_motor)
             }
             break;
         case MOTOR_OPEN_LOOP_STATE_RUN: /* OpenLoop */
-            if(Motor_IsSensorAvailable(p_motor) == true)
+            if(Motor_IsClosedLoopStart(p_motor) == true)
             {
                 _StateMachine_ProcStateTransition(&p_motor->StateMachine, &STATE_RUN);
             }

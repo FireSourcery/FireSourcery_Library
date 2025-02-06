@@ -769,7 +769,7 @@ extern angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor);
 extern void Motor_ZeroSensor(Motor_T * p_motor);
 extern void Motor_CalibrateSensorZero(Motor_T * p_motor);
 extern void Motor_ValidateSensorAlign(Motor_T * p_motor);
-extern bool Motor_IsSensorAvailable(const Motor_T * p_motor);
+extern bool Motor_IsClosedLoopStart(const Motor_T * p_motor);
 extern bool Motor_PollAlignFault(Motor_T * p_motor);
 
 extern void Motor_UpdateSpeedOutputLimits(Motor_T * p_motor);

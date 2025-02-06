@@ -70,7 +70,7 @@ inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T 
 }
 
 /* Generic array functions use */
-// inline void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue)
+// inline void Motor_User_StartControlMode_Cast(Motor_T * p_motor, uint8_t modeValue)
 // {
 //     Motor_User_StartControlMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
 // }
@@ -104,6 +104,11 @@ inline void Motor_User_Release(Motor_T * p_motor)
 inline void Motor_User_Hold(Motor_T * p_motor)
 {
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_GROUND);
+}
+
+inline void Motor_User_StartPhaseState(Motor_T * p_motor, Phase_State_T state)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, state);
 }
 
 /*
