@@ -133,7 +133,7 @@ typedef union Motor_FeedbackMode
 {
     struct
     {
-        uint8_t OpenLoop   : 1U;   /* 0 -> Position feedback, 1 -> OpenLoop */
+        uint8_t OpenLoop   : 1U;   /* 0 -> Position feedback, 1 -> OpenLoop */ /* Not used for feedback run state, a flag is require to track transitions */
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Position   : 1U;
@@ -214,6 +214,7 @@ Motor_Direction_T;
 */
 typedef enum Motor_OpenLoopState
 {
+    MOTOR_OPEN_LOOP_STATE_IDLE,
     MOTOR_OPEN_LOOP_STATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_RUN,

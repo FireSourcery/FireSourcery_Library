@@ -122,15 +122,15 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_mo
 /******************************************************************************/
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_T * p_motor);
-
 extern void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
 
 extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
-extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vq, fract16_t vd);
+extern void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
 extern void Motor_FOC_ClearFeedbackState(Motor_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
+extern void Motor_FOC_CaptureIabc(Motor_T * p_motor);
 extern void Motor_FOC_StartAlign(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
 extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);

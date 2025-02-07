@@ -177,6 +177,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, statemachine_
             }
             else
             {
+                // p_motor->OpenLoopState = MOTOR_OPEN_LOOP_STATE_ALIGN;
                 p_nextState = &STATE_OPEN_LOOP; /* ZeroSensors after OpenLoop */
             }
             break;
@@ -265,6 +266,7 @@ static StateMachine_State_T * Run_InputFeedbackMode(Motor_T * p_motor, statemach
 
     if (feedbackMode != p_motor->FeedbackMode.Value)
     {
+        // if openloop return freewheel
         Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
         p_nextState = &STATE_RUN; /* repeat entry function */ /* Alternatively, transition through Freewheel */
     }
@@ -361,11 +363,18 @@ static const StateMachine_State_T STATE_FREEWHEEL =
 /******************************************************************************/
 static void OpenLoop_Entry(Motor_T * p_motor)
 {
-    // switch(p_motor->Config.AlignMode)
-    // {
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, NULL);
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    p_motor->OpenLoopState = MOTOR_OPEN_LOOP_STATE_ALIGN;
+    switch (p_motor->OpenLoopState)
+    {
+        case MOTOR_OPEN_LOOP_STATE_IDLE: Phase_Ground(&p_motor->Phase);
+            break;
+        case MOTOR_OPEN_LOOP_STATE_ALIGN:
+        // switch(p_motor->Config.AlignMode)
+            // {
+            Motor_ProcCommutationMode(p_motor, Motor_FOC_StartAlign, NULL);
+            Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+            break;
+    }
+    // p_motor->OpenLoopState = MOTOR_OPEN_LOOP_STATE_ALIGN;
     // }
 }
 
@@ -373,6 +382,10 @@ static StateMachine_State_T * OpenLoop_Proc(Motor_T * p_motor)
 {
     switch(p_motor->OpenLoopState)
     {
+        case MOTOR_OPEN_LOOP_STATE_IDLE:
+            Motor_ProcCommutationMode(p_motor, Motor_FOC_CaptureIabc, NULL);
+            break;
+
         case MOTOR_OPEN_LOOP_STATE_ALIGN:
             if(Timer_Periodic_Poll(&p_motor->ControlTimer) == false)
             {
