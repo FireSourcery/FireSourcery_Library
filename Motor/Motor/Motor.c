@@ -136,6 +136,12 @@ void Motor_InitReboot(Motor_T * p_motor)
     p_motor->ControlTimerBase = 0U;
 }
 
+
+/******************************************************************************/
+/*!
+    Position Sensor Feedback - Speed, Angle
+*/
+/******************************************************************************/
 /* Re init peripheral registers */
 void Motor_InitSensor(Motor_T * p_motor)
 {
@@ -193,11 +199,6 @@ bool Motor_VerifySensorCalibration(Motor_T * p_motor)
     return isValid;
 }
 
-/******************************************************************************/
-/*!
-    Position Sensor Feedback - Speed, Angle
-*/
-/******************************************************************************/
 angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
 {
     angle16_t electricalAngle; /* [0, 65535] maps to negative portions of angle16_t */
@@ -293,7 +294,6 @@ int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
     return speed_Fixed32 / 2;
 }
 
-// ProcCaptureSpeed
 bool Motor_PollCaptureSpeed(Motor_T * p_motor)
 {
     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
@@ -301,12 +301,6 @@ bool Motor_PollCaptureSpeed(Motor_T * p_motor)
     return isCaptureSpeed;
 }
 
-
-/******************************************************************************/
-/*
-    Reset Sensors/Align
-*/
-/******************************************************************************/
 void Motor_ZeroSensor(Motor_T * p_motor)
 {
     switch (p_motor->Config.SensorMode)
@@ -364,12 +358,9 @@ inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
 
-
-/******************************************************************************/
 /*
     Sensor Direction
 */
-/******************************************************************************/
 static void SetSensorCcw(Motor_T * p_motor)
 {
     switch (p_motor->Config.SensorMode)

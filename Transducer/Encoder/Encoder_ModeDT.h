@@ -72,7 +72,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 {
     if (Encoder_DeltaT_CheckExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreqD(p_encoder); }
-    else { p_encoder->FreqD = 0U; }
+    else { p_encoder->FreqD = 0; }
 }
 
 /* |DeltaD| <= 1 */

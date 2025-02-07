@@ -127,6 +127,7 @@ extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);
 extern bool Phase_IsGround(const Phase_T * p_phase);
 extern bool Phase_IsFloat(const Phase_T * p_phase);
+extern Phase_State_T Phase_GetState(const Phase_T * p_phase);
 
 extern void Phase_Align_ActivateA(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Align_ActivateB(const Phase_T * p_phase, uint16_t duty);

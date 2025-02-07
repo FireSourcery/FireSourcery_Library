@@ -116,7 +116,7 @@ typedef enum Motor_VarInput
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
     // MOTOR_VAR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
     // MOTOR_VAR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
-    MOTOR_VAR_PHASE_CONTROL,
+
     MOTOR_VAR_PHASE_ALIGN,
     MOTOR_VAR_FEED_FORWARD_ANGLE,
 }
@@ -133,6 +133,7 @@ typedef enum Motor_VarIO
     /* IO Vars, Read effective value, write interface value */
     MOTOR_VAR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
     MOTOR_VAR_USER_FEEDBACK_MODE,
+    MOTOR_VAR_USER_PHASE_STATE,
     // Limits do not invoke state machine
     MOTOR_VAR_USER_SPEED_LIMIT,
     MOTOR_VAR_USER_I_LIMIT,

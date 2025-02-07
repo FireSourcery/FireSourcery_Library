@@ -376,7 +376,7 @@ void MotorController_StartBrakeMode(MotorController_T * p_mc)
 */
 void MotorController_SetBrakeValue(MotorController_T * p_mc, uint16_t userCmdBrake)
 {
-    int16_t cmdValue = 0 - (userCmdBrake / 2); // 32767 max
+    int16_t cmdValue = 0 - ((int32_t)userCmdBrake / 2); // 32767 max
 
     switch (p_mc->Config.BrakeMode)
     {

@@ -99,20 +99,6 @@ int32_t Motor_VarOutput_PositionSensor_Get(const Motor_T * p_motor, Motor_VarOut
     return value;
 }
 
-int32_t Motor_VarIO_Get(const Motor_T * p_motor, Motor_VarIO_T varId)
-{
-    int32_t value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
-        case MOTOR_VAR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
-        case MOTOR_VAR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Value;    break;
-        case MOTOR_VAR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
-        case MOTOR_VAR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
-    }
-    return value;
-}
-
 void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varValue)
 {
     switch (varId)
@@ -125,24 +111,37 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
         case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
         case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
         case MOTOR_VAR_FORCE_DISABLE_CONTROL: Motor_User_ForceDisableControl(p_motor);  break;
-        case MOTOR_VAR_PHASE_CONTROL:       Motor_User_StartPhaseState(p_motor, (Phase_State_T)varValue);                   break;
             //temp  without state machine
-        case MOTOR_VAR_PHASE_ALIGN:         Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)varValue, p_motor->Config.AlignPower_UFract16);    break;
-        case MOTOR_VAR_FEED_FORWARD_ANGLE:  Motor_FOC_ProcAngleFeedforward(p_motor, 0, p_motor->Config.AlignPower_UFract16, 0);                         break;
+        // case MOTOR_VAR_PHASE_ALIGN:         Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)varValue, p_motor->Config.AlignPower_UFract16);    break;
+        // case MOTOR_VAR_FEED_FORWARD_ANGLE:  Motor_FOC_ProcAngleFeedforward(p_motor, 0, p_motor->Config.AlignPower_UFract16, 0);                         break;
     }
+}
+
+int32_t Motor_VarIO_Get(const Motor_T * p_motor, Motor_VarIO_T varId)
+{
+    int32_t value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
+        case MOTOR_VAR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
+        case MOTOR_VAR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Value;    break;
+        case MOTOR_VAR_USER_PHASE_STATE:    value = Motor_User_GetPhaseState(p_motor);            break;
+        case MOTOR_VAR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
+        case MOTOR_VAR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
+    }
+    return value;
 }
 
 void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue)
 {
     switch (varId)
     {
-        case MOTOR_VAR_DIRECTION:               Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);  break; //use async polling for status for now
-        case MOTOR_VAR_USER_SET_POINT:          Motor_User_SetActiveCmdValue(p_motor, varValue);                break;
-        // case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);    break;
-        case MOTOR_VAR_USER_SPEED_LIMIT:        Motor_User_TrySpeedLimit(p_motor, varValue);                    break;
-        case MOTOR_VAR_USER_I_LIMIT:            Motor_User_TryILimit(p_motor, varValue);                        break;
-    //     case MOTOR_VAR_USER_SPEED_LIMIT:        isSuccess = Motor_User_TrySpeedLimit(p_motor, varValue);        break;
-    //     case MOTOR_VAR_USER_I_LIMIT:            isSuccess = Motor_User_TryILimit(p_motor, varValue);            break;
+        case MOTOR_VAR_DIRECTION:           Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);  break; // use async polling for status
+        case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue(p_motor, varValue);                break;
+        case MOTOR_VAR_USER_FEEDBACK_MODE:  Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);    break;
+        case MOTOR_VAR_USER_PHASE_STATE:    Motor_User_StartPhaseState(p_motor, (Phase_State_T)varValue);   break;
+        case MOTOR_VAR_USER_SPEED_LIMIT:    Motor_User_TrySpeedLimit(p_motor, varValue);                    break;
+        case MOTOR_VAR_USER_I_LIMIT:        Motor_User_TryILimit(p_motor, varValue);                        break;
     }
 }
 

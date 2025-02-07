@@ -120,6 +120,8 @@ static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_
 static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
 static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
+static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_GetState(&p_motor->Phase); }
+
 /*
     User reference direction
     Effective Limits

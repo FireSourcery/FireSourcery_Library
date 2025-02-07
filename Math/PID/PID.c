@@ -90,8 +90,12 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     // else if (integral < integralMin) { integral = integralMin; if (error > 0) { SetIntegral(p_pid, integralMin); } }
     // else                             { p_pid->IntegralAccum = integral32; }
 
-    integral = math_clamp(integral, integralMin, integralMax);
-    SetIntegral(p_pid, integral);
+    // integral = math_clamp(integral, integralMin, integralMax);
+    // SetIntegral(p_pid, integral);
+
+    if      (integral > integralMax) { integral = integralMax; SetIntegral(p_pid, p_pid->OutputMax); }
+    else if (integral < integralMin) { integral = integralMin; SetIntegral(p_pid, p_pid->OutputMin); }
+    else                             { p_pid->IntegralAccum = integral32; }
 
     return proportional + integral;
 }
@@ -114,15 +118,15 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 */
 int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    // p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
-    // return p_pid->Output;
-
-    int32_t output = CalcPI(p_pid, setpoint - feedback);
-
-    p_pid->Output = math_clamp(output, p_pid->OutputMin, p_pid->OutputMax);
-    if (output != p_pid->Output) { SetIntegral(p_pid, p_pid->Output); }
-
+    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
+
+//     int32_t output = CalcPI(p_pid, setpoint - feedback);
+
+//     p_pid->Output = math_clamp(output, p_pid->OutputMin, p_pid->OutputMax);
+//     if (output != p_pid->Output) { SetIntegral(p_pid, p_pid->Output); }
+
+//     return p_pid->Output;
 }
 
 /*
