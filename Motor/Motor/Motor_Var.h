@@ -114,8 +114,6 @@ typedef enum Motor_VarInput
     MOTOR_VAR_CMD_ANGLE,
     MOTOR_VAR_CMD_OPEN_LOOP,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
-    // MOTOR_VAR_TRY_RELEASE,              // No value arg. same as either neutral or driveZero
-    // MOTOR_VAR_TRY_HOLD,                 // No value arg. bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
 
     MOTOR_VAR_PHASE_ALIGN,
     MOTOR_VAR_FEED_FORWARD_ANGLE,
