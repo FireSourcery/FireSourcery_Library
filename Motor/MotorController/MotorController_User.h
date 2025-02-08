@@ -173,7 +173,7 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
 static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, int16_t userCmd)
 {
     // p_mc->UserCmdValue = userCmd;
-    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (uint32_t)userCmd);
+    _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (int32_t)userCmd);
 }
 
 /* Directly invoke Motor StateMachine */

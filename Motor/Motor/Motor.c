@@ -118,12 +118,11 @@ void Motor_InitReboot(Motor_T * p_motor)
         e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
         Final value is overwritten, Slope is persistent unless reset
     */
-    // Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, -INT16_MAX, INT16_MAX); /* common input ramp */
-    Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles * 2, -INT16_MAX, INT16_MAX); /* common input ramp */
-    Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, 0);
+    Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, INT16_MAX); /* common input ramp */
+    Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, INT16_MAX);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
-    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, 0);
+    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, INT16_MAX);
 #endif
 
     Motor_ResetUnitsVabc(p_motor);
@@ -207,10 +206,11 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-            if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_CapturePulse(&p_motor->Encoder); } // Encoder_SinglePhase_CapturePulse
+            if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
         #endif
             /* by assigned direction, alternatively compare prev state */
             electricalAngle = Hall_GetAngle16(&p_motor->Hall);
+            // if ()
             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
             break;
 
@@ -358,6 +358,28 @@ inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 }
 
+// Motor_Direction_T Motor_GetDirection(Motor_T * p_motor)
+// {
+//     switch (p_motor->Config.SensorMode)
+//     {
+//         case MOTOR_SENSOR_MODE_HALL:
+//             break;
+//         case MOTOR_SENSOR_MODE_ENCODER:
+//             break;
+//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         case MOTOR_SENSOR_MODE_SIN_COS:
+//             break;
+//         #endif
+//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//             break;
+//         #endif
+//         default:
+//             break;
+//     }
+// }
+
+
 /*
     Sensor Direction
 */
@@ -367,7 +389,7 @@ static void SetSensorCcw(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
             Hall_SetDirection(&p_motor->Hall, HALL_DIRECTION_CCW);
-            Encoder_SinglePhase_SetDirectionPositive(&p_motor->Encoder);
+            Encoder_SinglePhase_SetDirectionPositive(&p_motor->Encoder); // interpolate as +/-
             break;
         case MOTOR_SENSOR_MODE_ENCODER:
             break;

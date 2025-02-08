@@ -431,7 +431,7 @@ static StateMachine_State_T * Drive_InputBrake(MotorController_T * p_mc, statema
 /* if 'substate' var is not included as the LOOP pointer dereference, perhaps replace with check in SetCmd */
 static StateMachine_State_T * Drive_InputCmd(MotorController_T * p_mc, statemachine_input_value_t value)
 {
-    int32_t cmdValue = (int32_t)value;
+    int16_t cmdValue = (int16_t)value;
 
     // if      ((p_mc->UserCmdValue != 0) && (cmdValue != 0))  { MotorController_SetCmdValueAll(p_mc, cmdValue); }
     // else if ((p_mc->UserCmdValue != 0) && (cmdValue == 0))  { MotorController_StartDriveZero(p_mc); } /* Drive State Only */

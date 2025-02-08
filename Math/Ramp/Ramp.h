@@ -31,58 +31,59 @@
 #ifndef RAMP_H
 #define RAMP_H
 
-#include "../Linear/Linear.h"
+#include "../Accumulator/Accumulator.h"
 #include <stdint.h>
+#include <stdbool.h>
+
+/* Aliases */
+typedef Accumulator_T Ramp_T;
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-/* Aliases */
-static inline int32_t Ramp_GetTarget(const Linear_T * p_linear) { return (p_linear->YReference >> (int32_t)p_linear->SlopeShift); }
-static inline int32_t Ramp_GetOutput(const Linear_T * p_linear) { return (p_linear->Y0 >> (int32_t)p_linear->SlopeShift); }
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
+static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
 
-static inline void Ramp_SetTarget(Linear_T * p_linear, int32_t target) { p_linear->YReference = (target << (int32_t)p_linear->SlopeShift); } //alternatively update slope if sign changed
-static inline void Ramp_ZeroOutputState(Linear_T * p_linear)
+static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target)
 {
-    p_linear->YReference = 0;
-    p_linear->Y0 = 0;
+    p_ramp->Target = (target << p_ramp->Shift);
+    if (p_ramp->Coefficient == 0) { p_ramp->State = p_ramp->Target; }
 }
-static inline void Ramp_SetOutputState(Linear_T * p_linear, int32_t match)
+
+static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
-    p_linear->YReference = (match << p_linear->SlopeShift);
-    p_linear->Y0 = (match << p_linear->SlopeShift);
+    p_ramp->Target = (match << p_ramp->Shift);
+    p_ramp->State = p_ramp->Target;
 }
+
+static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
+{
+    p_ramp->Target = 0;
+    p_ramp->State = 0;
+}
+
+static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }
+
+static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = 0; }
 
 /******************************************************************************/
 /*
     Extern
 */
 /******************************************************************************/
-extern void Ramp_Init(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Ramp_Init_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
-extern void Ramp_SetSlope(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Ramp_SetSlope_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
-extern void Ramp_Set(Linear_T * p_linear, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Ramp_Set_Millis(Linear_T * p_linear, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
+extern int32_t Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps);
+extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
 
-extern int32_t Ramp_NextOutputOfState(const Linear_T * p_linear, int32_t currentRampValue, int32_t steps);
-extern int32_t Ramp_NextOutputOf(const Linear_T * p_linear, int32_t currentRampValue);
-extern int32_t Ramp_ProcOutputN(Linear_T * p_linear, int32_t steps);
-extern int32_t Ramp_ProcOutput(Linear_T * p_linear);
+extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range);
+extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t range);
+extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range);
+extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t range);
+
+extern void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final);
+extern void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);
 
 #endif
 
 
-// typedef struct Linear_Sum
-// {
-//     Linear_T Linear;
-//     int32_t Sum32;
-// }
-// Linear_Sum_T;
-
-// static inline int32_t sum32_of(int32_t slope32, int32_t value32, int32_t x)
-// {
-//     return (value32 + (slope32 * x));
-// }

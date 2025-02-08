@@ -54,7 +54,7 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, Motor_VarOuput_T varId)
         case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_User_GetFaultFlags(p_motor).Value;            break;
         case MOTOR_VAR_HEAT:                        value = Motor_User_GetHeat_Adcu(p_motor);                   break;
         case MOTOR_VAR_EFFECTIVE_FEEDBACK_MODE:     value = Motor_User_GetFeedbackMode(p_motor).Value;          break;
-        case MOTOR_VAR_EFFECTIVE_SET_POINT:         value = Motor_User_GetSetPoint(p_motor);                    break;
+        case MOTOR_VAR_EFFECTIVE_SET_POINT:         value = Motor_User_GetEffectiveSetPoint(p_motor);           break;
         case MOTOR_VAR_EFFECTIVE_SPEED_LIMIT:       value = Motor_User_GetSpeedLimit(p_motor);                  break;
         case MOTOR_VAR_EFFECTIVE_I_LIMIT:           value = Motor_User_GetILimit(p_motor);                      break;
         case MOTOR_VAR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);        break;
@@ -104,16 +104,15 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
     switch (varId)
     {
         case MOTOR_VAR_CLEAR_FAULT:     break;
-        // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
-        case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
-        case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);         break;
-        case MOTOR_VAR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);   break;
-        case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
-        case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
         case MOTOR_VAR_FORCE_DISABLE_CONTROL: Motor_User_ForceDisableControl(p_motor);  break;
-            //temp  without state machine
-        // case MOTOR_VAR_PHASE_ALIGN:         Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)varValue, p_motor->Config.AlignPower_UFract16);    break;
-        // case MOTOR_VAR_FEED_FORWARD_ANGLE:  Motor_FOC_ProcAngleFeedforward(p_motor, 0, p_motor->Config.AlignPower_UFract16, 0);                         break;
+        // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
+        // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
+        // case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);         break;
+        // case MOTOR_VAR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);   break;
+        // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
+        // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
+        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngle(p_motor, varValue);                         break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Align_T)varValue);     break;
     }
 }
 

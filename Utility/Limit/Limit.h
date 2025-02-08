@@ -33,6 +33,8 @@
 
 #include "Type/Array/Array.h"
 
+/* Array Limit */
+
 #ifdef CONFIG_LIMIT_SIGNED
 typedef int32_t limit_t;
 #define LIMIT_MIN (-INT32_MAX)

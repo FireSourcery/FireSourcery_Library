@@ -68,8 +68,13 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /* Wrap for array */
 static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uint8_t stateId) { return (StateMachine_IsActiveState(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
 
+void Motor_OpenLoop_SetAngle(Motor_T * p_motor, angle16_t angle);
+void Motor_OpenLoop_SetPhaseAlign(Motor_T * p_motor, Phase_Align_T phase);
+void Motor_OpenLoop_StartUp(Motor_T * p_motor);
+
 extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);
 extern bool Motor_StateMachine_ExitFault(Motor_T * p_motor);
 extern void Motor_StateMachine_EnterFault(Motor_T * p_motor);
 
 #endif
+

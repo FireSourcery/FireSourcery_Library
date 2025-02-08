@@ -75,19 +75,6 @@ inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T 
 //     Motor_User_StartControlMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
 // }
 
-/* combine process by statemachine */
-// typedef union Motor_Cmd
-// {
-//     struct
-//     {
-//         uint32_t CmdValue       : 16U;
-//         uint32_t FeedbackMode   : 8U;
-//         uint32_t Activate       : 2U;
-//     };
-//     uint32_t Value;
-// }
-// Motor_Cmd_T;
-
 inline void Motor_User_ActivateControl(Motor_T * p_motor)
 {
     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE);
@@ -138,8 +125,7 @@ inline void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue
 */
 static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
 {
-    if (p_motor->StateFlags.RampDisable == 0U) { Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd)); }
-    else { Ramp_SetOutputState(&p_motor->Ramp, userCmd); }
+    Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, userCmd));
 }
 
 /******************************************************************************/
@@ -154,6 +140,9 @@ static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
 
     SetMode       - Invokes StateMachine - Sets control mode only
     SetCmd[Value] - Without invoking StateMachine - Sets buffered cmd value, sets on all states even when inactive
+
+    Cmd as scalar of Calibration Ref, clamped by Config.Limit
+    _Scalar as scalar of Config.Limit
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -161,7 +150,6 @@ static inline void _Motor_User_SetCmd(Motor_T * p_motor, int32_t userCmd)
     Voltage Mode
 */
 /******************************************************************************/
-// Motor_User_SetFeedbackMode
 void Motor_User_StartVoltageMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
 
 /*!
@@ -172,11 +160,11 @@ void Motor_User_SetVoltageCmd(Motor_T * p_motor, int16_t volts_fract16)
     _Motor_User_SetCmd(p_motor, math_max(volts_fract16, 0));  /* Reverse voltage use change direction, no plugging */
 }
 
-void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16)
-{
-    int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(INT16_MAX, scalar_fract16) : 0;
-    _Motor_User_SetCmd(p_motor, limitedCmd);
-}
+// void Motor_User_SetVoltageCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16)
+// {
+//     int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(Motor_GetVLimit(), scalar_fract16) : 0;
+//     _Motor_User_SetCmd(p_motor, limitedCmd);
+// }
 
 // [v/2 +/- scalar * ]
 void Motor_User_SetVSpeedScalarCmd(Motor_T * p_motor, int16_t scalar_fract16)
@@ -214,11 +202,22 @@ void Motor_User_SetICmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 /******************************************************************************/
 void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_User_StartIMode(p_motor); }
 
+void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t value_Fract16)
+{
+    // action on release
+    // if (math_abs(Motor_User_GetCmd(p_motor) - value_Fract16) > 0) { PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc)); }
+
+    /* Dissipate integral if output rail reached */
+    if (value_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
+    Motor_User_SetICmd(p_motor, value_Fract16);
+}
+
 /*!
     @param[in] torque [-32768:32767]
 */
 void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
+    if (scalar_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
     Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
 
     // if (scalar_Fract16 < 0)
@@ -283,20 +282,19 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 */
 void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
-{
-    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
-}
-
 /*!
 
 */
 void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
 {
     int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16);
-    _Motor_User_SetCmd(p_motor, ivCmdIn);
+    // _Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
+void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
+{
+    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
+}
 #endif
 
 
@@ -308,6 +306,7 @@ void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
 /*!
     The untyped command must be the outer super function, as the boundaries of each type are different.
     @param[in] userCmd[-32768:32767] A union value, bounds to be determined by active mode
+    Scalar to calibration ref
 */
 void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 {
@@ -316,6 +315,18 @@ void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
     if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmd(p_motor, userCmd); }
     // else if (flags.Position == 1U)  { Motor_User_SetPositionCmd(p_motor, userCmd); }
     else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmd(p_motor, userCmd); }
+    else if (flags.Current == 1U)   { Motor_User_SetICmd(p_motor, userCmd); }
+    else                            { Motor_User_SetVoltageCmd(p_motor, userCmd); }
+}
+
+/* Scalar to limit */
+void Motor_User_SetActiveCmdValue_Scalar(Motor_T * p_motor, int16_t userCmd)
+{
+    Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
+
+    if      (flags.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmd(p_motor, userCmd); }
+    // else if (flags.Position == 1U)  { Motor_User_SetPositionCmd(p_motor, userCmd); }
+    else if (flags.Speed == 1U)     { Motor_User_SetSpeedCmd_Scalar(p_motor, userCmd); }
     else if (flags.Current == 1U)   { Motor_User_SetTorqueCmd_Scalar(p_motor, userCmd); }
     else                            { Motor_User_SetVoltageCmd(p_motor, userCmd); }
 }

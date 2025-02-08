@@ -75,7 +75,7 @@ Encoder_Phases_T;
 typedef enum Encoder_Align
 {
     ENCODER_ALIGN_NO,
-    ENCODER_ALIGN_PHASE,
+    ENCODER_ALIGN_PHASE,    /* Calibrate Aligned */
     ENCODER_ALIGN_ABSOLUTE,
 }
 Encoder_Align_T;
@@ -88,7 +88,7 @@ typedef struct Encoder_Config
     uint16_t GearRatio_Factor;          /* Derive Linear Units. Surface:Encoder Ratio */
     uint16_t GearRatio_Divisor;         /* Derive Linear Units. */
     /* DistancePerRevolution_Factor, DistancePerRevolution_Factor_Divider */
-    uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s or .5rpm */
+    uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s or ~.5rpm */
     uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
     uint32_t ZeroIndexOffset;
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
@@ -133,11 +133,13 @@ typedef struct Encoder
 #endif
     int32_t CounterD;
     uint32_t Angle32;
+
     int32_t DeltaD;         /*!< Counter counts (of distance) between 2 samples. Units in raw counter ticks */
     uint32_t DeltaT;        /*!< Timer counts between 2 pulse counts. Units in raw timer ticks */
     uint32_t DeltaTh;       /*!< ModeDT */
-    int32_t FreqD;          /*!< EncoderPulseFreq ModeDT. DeltaD 1 Second */
-    uint32_t InterpolateAngleIndex; /*!< ModeDT */
+    int32_t FreqD;          /*!< EncoderPulseFreq ModeDT. DeltaD 1 Second [Hz] */
+    uint32_t InterpolateAngleIndex; /*!< ModeT/DT */
+
     int32_t DirectionD;     /*!< previous DeltaD sign, when DeltaD == 0 */
     uint32_t ErrorCount;
     uint32_t IndexCount;
@@ -263,6 +265,15 @@ static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
 #endif
 }
 
+static inline void _Encoder_SetCounterD(Encoder_T * p_encoder, int32_t counterD)
+{
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+    HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, counterD);
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+    p_encoder->CounterD = counterD;
+#endif
+}
+
 static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
@@ -284,12 +295,12 @@ static inline uint16_t Encoder_SinglePhase_GetAngle(Encoder_T * p_encoder) { ret
     Convert signed capture to user reference
     Captured as ALeadB is positive by default
 */
-static inline int32_t Encoder_GetDirection_Quadrature(const Encoder_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
-static inline uint16_t Encoder_GetAngle_Quadrature(Encoder_T * p_encoder) { return Encoder_GetDirection_Quadrature(p_encoder) * _Encoder_GetAngle(p_encoder); }
-
+static inline int32_t Encoder_Quadrature_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
+static inline uint16_t Encoder_Quadrature_GetAngle(Encoder_T * p_encoder) { return Encoder_Quadrature_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
 /* Select using IsQuadratureCaptureEnabled */
-static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return Encoder_CaptureMode_Get(p_encoder, Encoder_GetDirection_Quadrature, Encoder_SinglePhase_GetDirection); }
+static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return Encoder_CaptureMode_Get(p_encoder, Encoder_Quadrature_GetDirection, Encoder_SinglePhase_GetDirection); }
+
 static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
 /* scalar < 256 */
 static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar) { return Encoder_GetDirection(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); }

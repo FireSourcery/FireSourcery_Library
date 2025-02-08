@@ -107,16 +107,16 @@ Motor_VarOutput_PositionSensor_T;
 typedef enum Motor_VarInput
 {
     MOTOR_VAR_CLEAR_FAULT,
-    // MOTOR_VAR_USER_CMD,      // Active mode value
+    MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
+    // MOTOR_VAR_USER_CMD,         // Active mode value
     MOTOR_VAR_CMD_SPEED,        // UserCmd as Speed
     MOTOR_VAR_CMD_CURRENT,
     MOTOR_VAR_CMD_VOLTAGE,
     MOTOR_VAR_CMD_ANGLE,
     MOTOR_VAR_CMD_OPEN_LOOP,
-    MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
 
-    MOTOR_VAR_PHASE_ALIGN,
-    MOTOR_VAR_FEED_FORWARD_ANGLE,
+    MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
+    MOTOR_VAR_OPEN_LOOP_ANGLE,
 }
 Motor_VarInput_T;
 

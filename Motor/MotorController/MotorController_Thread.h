@@ -198,7 +198,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     if (Timer_Periodic_Poll(&p_mc->TimerMillis) == true)
     {
         /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
-        // _StateMachine_ProcSyncInput(&p_mc->StateMachine);
+        /* Handle Inputs as they are received */
         _StateMachine_ProcStateOutput(&p_mc->StateMachine);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }

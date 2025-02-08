@@ -35,30 +35,43 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+typedef int32_t sign_t;
+
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
-static inline int32_t math_clamp(int32_t value, int32_t low, int32_t high) { return math_min(math_max(value, low), high); }
+static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
+static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
+
+static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
+static inline bool math_in_range(int32_t value, int32_t lower, int32_t upper) { return (value == math_clamp(value, lower, upper)); }
+
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
-static inline bool math_in_range(int32_t value, int32_t low, int32_t high) { return (value == math_clamp(value, low, high)); }
+// static inline uint32_t math_abs(int32_t value)
+// {
+//     uint32_t mask = value >> 31;
+//     return (value + mask) ^ mask;
+// }
+
+static inline int32_t math_shift(int32_t value, int8_t shift) { return (shift > 0) ? (value << shift) : (value >> (-shift)); }
 
 static inline int32_t math_add_sat(int32_t a, int32_t b)
 {
-// #if defined(__GNUC__)
-    // int32_t result;
-    // if (__builtin_add_overflow(a, b, &result))
-    // {
-    //     if (a > 0 && b > 0) { result = INT32_MAX; }
-    //     else if (a < 0 && b < 0) { result = (0 - INT32_MAX); }
-    // }
-    // return result;
-// #else
+#if defined(__GNUC__)
+    int32_t result;
+    if (__builtin_add_overflow(a, b, &result))
+    {
+        if      (a > 0 && b > 0) { result = INT32_MAX; }
+        else if (a < 0 && b < 0) { result = (0 - INT32_MAX); }
+    }
+    return result;
+#else
     int32_t result = a + b;
     if      ((a > 0) && (b > 0) && (result < 0)) { result = INT32_MAX; }
     else if ((a < 0) && (b < 0) && (result > 0)) { result = (0 - INT32_MAX); }
     return result;
-// #endif
+#endif
 }
 
 

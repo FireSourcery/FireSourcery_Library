@@ -61,13 +61,14 @@ void MotorController_User_SetDirection(MotorController_T * p_mc, MotorController
         _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction);
         if (MotorController_User_GetDirection(p_mc) != direction) { MotorController_BeepShort(p_mc); } /* effective on motor async proc only */
     }
+}
 
-    // bool isSuccess;
-    // if (MotorController_User_GetDirection(p_mc) != direction) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, direction); }
-    // // else { MotorController_BeepDouble(p_mc); }
-    // isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
-    // if (isSuccess == false) { MotorController_BeepShort(p_mc); }
-    // return isSuccess;
+/* Separate Check direction with alarm, so Motor set can use SetSyncInput */
+bool MotorController_User_CheckDirection(MotorController_T * p_mc, MotorController_Direction_T direction)
+{
+    bool isSuccess = (MotorController_User_GetDirection(p_mc) == direction);
+    if (isSuccess == false) { MotorController_BeepShort(p_mc); }
+    return isSuccess;
 }
 
 /*

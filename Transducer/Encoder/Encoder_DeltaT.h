@@ -101,7 +101,13 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(Encoder_T * p_encoder)
 */
 static inline void Encoder_DeltaT_CaptureExtended(Encoder_T * p_encoder)
 {
-    if(_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion; }
+    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion; }
+    p_encoder->ExtendedTimerPrev = *(p_encoder->CONST.P_EXTENDED_TIMER);
+}
+
+static inline void Encoder_DeltaT_CaptureReset(Encoder_T * p_encoder)
+{
+    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->ExtendedTimerConversion; }
     p_encoder->ExtendedTimerPrev = *(p_encoder->CONST.P_EXTENDED_TIMER);
 }
 
@@ -149,6 +155,7 @@ static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
 {
+    /* cache p_encoder->UnitInterpolateAngle / p_encoder->DeltaT */
     p_encoder->InterpolateAngleIndex = 0U;
 }
 

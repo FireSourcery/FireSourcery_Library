@@ -75,13 +75,13 @@
     @param x Fixed-point number
     @return Square root of x
 */
-uint16_t fixed_sqrt(int32_t x)
+uint16_t fixed_sqrt(uint32_t x)
 {
-    if (x < 0)
-    {
-        // Return 0 for negative input (undefined behavior for square root of negative number)
-        return 0;
-    }
+    // if (x < 0)
+    // {
+    //     // Return 0 for negative input (undefined behavior for square root of negative number)
+    //     return 0;
+    // }
 
     uint32_t result = 0U;
     uint32_t bit = 1U << 30U; // The second-to-top bit is set
@@ -121,6 +121,7 @@ uint8_t _leading_zeros(uint32_t x)
 }
 
 /*
+    32767 -> 14
     65535 -> 15
     65536 -> 16
     65537 -> 16
@@ -130,9 +131,9 @@ uint8_t fixed_log2(uint32_t x)
 
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x) - 1U;
+    // return  __builtin_stdc_bit_width(x) - 1U;
 #elif defined(__GNUC__)
     return (x == 0U) ? 0U : (31U - __builtin_clz(x));
-    // return  __builtin_stdc_bit_width(x) - 1U;
 #else
     /* Iterative log2 */
     uint8_t shift = 0U;
@@ -182,15 +183,25 @@ uint32_t fixed_pow2_round(uint32_t x)
 }
 
 /* leading zeros of abs(x) - 1 */
+/* log2(INT32_MAX) - log2(abs(x))) */
 uint8_t fixed_lshift_max_signed(int32_t x)
 {
-    return 30U - fixed_log2(math_abs(x)); /* fixed_log2(INT32_MAX/(abs(x))) */
+#if defined(__GNUC__)
+    return __builtin_clz(math_abs(x)) - 1U;
+#else
+    return 30U - fixed_log2(math_abs(x));
+#endif
 }
 
 /* leading zeros */
 uint8_t fixed_lshift_max_unsigned(uint32_t x)
 {
+
+#if defined(__GNUC__)
+    return __builtin_clz(x);
+#else
     return 31U - fixed_log2(x);
+#endif
 }
 
 int32_t fixed_scalar_max_signed(int32_t x)

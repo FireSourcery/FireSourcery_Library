@@ -55,7 +55,7 @@ static inline void _Phase_SyncPwmDuty(const Phase_T * p_phase)
 
 /* Sync activation of Switch and Invert Polarity */
 /* Bit Reg operation need to be in single write for sync update  */
-// Need to PWM_module or HAL_Phase with awareness of all pwm channels for Sync on writes to 1 register
+// Need to PWM_module or HAL_Phase with context of all pwm channels for Sync on writes to 1 register
 static inline void _Phase_SyncPwmSwitch(const Phase_T * p_phase)
 {
 #ifndef CONFIG_PHASE_PIN_SWITCH

@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -22,24 +23,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Q.h
+    @file   Accumulator.c
     @author FireSourcery
-    @brief  fixed point math operations
     @version V0
+    @brief
 */
 /******************************************************************************/
-#ifndef FIXED_MATH_H
-#define FIXED_MATH_H
-
-#include <stdint.h>
-
-extern uint16_t fixed_sqrt(uint32_t x);
-extern uint8_t fixed_log2(uint32_t x);
-extern uint8_t fixed_log2_ceiling(uint32_t x);
-extern uint8_t fixed_log2_round(uint32_t x);
-extern uint32_t fixed_pow2_round(uint32_t x);
-extern uint8_t fixed_lshift_max_signed(int32_t x);
-extern uint8_t fixed_lshift_max_unsigned(uint32_t x);
-
-#endif
-
+#include "Accumulator.h"

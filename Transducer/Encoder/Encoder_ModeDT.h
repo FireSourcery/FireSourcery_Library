@@ -22,10 +22,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_ModeDT.h
+    @file   Encoder_ModeDT.h
     @author FireSourcery
-    @brief     Mixed Frequency Sampling
     @version V0
+    @brief  Mixed Frequency Sampling
 */
 /******************************************************************************/
 #ifndef ENCODER_MODE_DT_H
@@ -36,6 +36,7 @@
 
 /******************************************************************************/
 /*
+
 */
 /******************************************************************************/
 /* In SAMPLE_FREQ time */
@@ -52,6 +53,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     {
         /* Assume its user direction, low speed opposite direction will be seen as aligned direction */
         p_encoder->FreqD = p_encoder->DirectionD * (timerFreq / p_encoder->DeltaT);
+
         /* Set next periodTk as ~DeltaT on overflow */
         p_encoder->DeltaTh = (HAL_Encoder_ReadTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER) == true) ?
             (p_encoder->DeltaT - timerFreq / sampleFreq) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
@@ -59,11 +61,15 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     else
     {
         p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
-        deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER); /* Overflow is > SampleTime. DeltaD == 0 occurs prior. */
+
+        /* Overflow is > SampleTime. DeltaD == 0 occurs prior. */
+        deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+
         /* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
         freqTk = (timerFreq * sampleFreq) / (timerFreq + (sampleFreq * (p_encoder->DeltaTh - deltaTh)));
+
         /* if(periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
-        if((sampleFreq * 2U) > freqTk) { p_encoder->FreqD = (p_encoder->DeltaD * freqTk); }
+        if (freqTk < (sampleFreq * 2U)) { p_encoder->FreqD = (p_encoder->DeltaD * freqTk); }
             // p_encoder->FreqD = (p_encoder->DeltaD * freqTk); // without check
         p_encoder->DeltaTh = deltaTh;
     }
@@ -78,7 +84,8 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    uint32_t freqD = math_abs(p_encoder->FreqD);
+    return (1 < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
 /*
@@ -94,14 +101,19 @@ static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * 
 */
 /******************************************************************************/
 /* Signed with capture reference */
-static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
+// static inline int32_t _Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
+// {
+//     return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
+// }
+
+static inline int32_t _Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
 {
     return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
 }
 
 static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
 {
-    return Encoder_GetDirection(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
+    return Encoder_GetDirection(p_encoder) * _Encoder_ModeDT_GetScalarVelocity(p_encoder);
 }
 
 static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)
@@ -119,7 +131,7 @@ static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_T * p_encoder
     return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
 }
 
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed(const Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_T * p_encoder)
 {
     return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution;
 }

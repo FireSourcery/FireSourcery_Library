@@ -93,15 +93,21 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
     p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s */
     p_encoder->InterpolateAngleIndex = 0U;
-    _Encoder_ZeroPulseCount(p_encoder);
     p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
     HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
+    _Encoder_ZeroPulseCount(p_encoder);
 }
 
+/******************************************************************************/
+/*
+    Config
+*/
+/******************************************************************************/
 /*
     Extended timer ticks to determine capture stopped
     EXTENDED_TIMER_FREQ should be small, 1000, < 65536
+    1[S] => 60/CPR[RPM]
 */
 void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {

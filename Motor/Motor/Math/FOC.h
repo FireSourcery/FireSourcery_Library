@@ -125,6 +125,9 @@ static inline int8_t FOC_GetISign(const FOC_T * p_foc) { return math_sign(p_foc-
 /* [0:49152] <=> [0:1.5] */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
+// static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return math_sign(p_foc->Vq) == math_sign(p_foc->Iq); }
+// static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return math_sign(p_foc->Vq) != math_sign(p_foc->Iq); }
+
 static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 
 static inline void FOC_SetIa(FOC_T * p_foc, fract16_t ia) { p_foc->Ia = ia; }

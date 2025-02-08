@@ -69,12 +69,13 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
-    Angle
+    Displacement
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaD_Get(Encoder_T * p_encoder)                { return p_encoder->DeltaD; }
+static inline int32_t  Encoder_DeltaD_Get(Encoder_T * p_encoder)                { return p_encoder->DeltaD; }
 static inline uint32_t Encoder_DeltaD_GetDeltaAngle(Encoder_T * p_encoder)      { return Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
 static inline uint32_t Encoder_DeltaD_GetDeltaDistance(Encoder_T * p_encoder)   { return Encoder_DistanceOfCount(p_encoder, p_encoder->DeltaD); }
+
 
 /******************************************************************************/
 /*!

@@ -109,6 +109,14 @@ static inline int32_t Motor_FOC_GetIPhase_UFract16(const Motor_T * p_motor)     
 static inline int32_t Motor_FOC_GetVPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
 static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
+// (Motor_DirectionalValueOf(p_motor, FOC_GetISign(&p_motor->Foc)) > 0)
+static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Speed_Fract16); }
+static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Speed_Fract16); }
+
+
+static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+
+
 /******************************************************************************/
 /*!
 
@@ -132,6 +140,7 @@ extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_CaptureIabc(Motor_T * p_motor);
 extern void Motor_FOC_StartAlign(Motor_T * p_motor);
+extern void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
 extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
 extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);

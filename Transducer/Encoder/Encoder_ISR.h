@@ -34,6 +34,7 @@
 #include "Encoder.h"
 #include "Encoder_DeltaD.h"
 #include "Encoder_DeltaT.h"
+#include "Encoder_ModeDT.h"
 
 /******************************************************************************/
 /*!
@@ -57,12 +58,12 @@ static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
     return p_encoder->Phases.Value;
 }
 
-/* count = {-1,+1} */
+/* count = {-1, 0, +1} */
 static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
     p_encoder->CounterD += count;
     // p_encoder->TotalD += count;
-    p_encoder->Angle32 += ((int32_t)count * (int32_t)p_encoder->UnitAngularD);
+    p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
 }
 
 /******************************************************************************/
@@ -126,6 +127,29 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
+static inline void Encoder_CaptureRef(Encoder_T * p_encoder)
+{
+    _Encoder_SetCounterD(p_encoder, p_encoder->IndexOffsetRef);
+    p_encoder->Angle32 = ((int32_t)p_encoder->IndexOffsetRef * p_encoder->UnitAngularD);
+    // Encoder_ModeDT_SetInitial(p_encoder);
+}
+
+/* External */
+/* -1, 0, 1 */
+static inline void Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
+{
+    _Encoder_CaptureCount(p_encoder, count);
+    Encoder_DeltaT_CaptureExtended(p_encoder);
+    Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
+}
+
+static inline void Encoder_CaptureExternal(Encoder_T * p_encoder, int8_t prev, int8_t count)
+{
+    /* direction changed */
+    if (prev != count) { Encoder_ModeDT_SetInitial(p_encoder); }
+    else { Encoder_CaptureCount(p_encoder, count); }
+}
+
 /******************************************************************************/
 /*!
     ISRs
@@ -155,11 +179,8 @@ static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
     p_encoder->IndexCount++;
+    _Encoder_SetCounterD(p_encoder, p_encoder->IndexOffsetRef);
     // todo phase index delta
-// #if      defined(CONFIG_ENCODER_HW_EMULATED)
-// #elif    defined(CONFIG_ENCODER_HW_DECODER)
-//     HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0U);
-// #endif
 }
 
 /* Shared A, B ISR */

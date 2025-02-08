@@ -101,8 +101,8 @@ static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (St
 static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
 
 
-static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return (p_motor->StateFlags.RampDisable == 0U); }
-static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { p_motor->StateFlags.RampDisable = (rampEnable == 0U); }
+static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return Ramp_IsDisabled(&p_motor->Ramp); }
+static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { if (rampEnable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
 
 /*
     Set via interface functions
@@ -113,14 +113,15 @@ static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) {
 static inline int32_t Motor_User_GetCmd(const Motor_T * p_motor)         { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->Ramp)); }
 static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { return Motor_DirectionalValueOf(p_motor, Ramp_GetOutput(&p_motor->Ramp)); }
 
+static inline int32_t Motor_User_GetEffectiveSetPoint(const Motor_T * p_motor)    { return Ramp_GetOutput(&p_motor->Ramp); }
+
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
 
 /* Separate getters for compatibility with StateMachine SetInput and ProcInput */
+static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_GetState(&p_motor->Phase); }
 static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
 static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
-
-static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_GetState(&p_motor->Phase); }
 
 /*
     User reference direction
@@ -133,7 +134,7 @@ static inline uint16_t Motor_User_GetSpeedLimit(const Motor_T * p_motor)        
 
 static inline uint16_t Motor_User_GetILimitMotoring(const Motor_T * p_motor)    { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
-static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_GetILimit(p_motor); }
+static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_FOC_GetILimit(p_motor); }
 
 /* SubStates */
 static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                      { return p_motor->ControlTimerBase; }

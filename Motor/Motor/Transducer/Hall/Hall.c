@@ -40,6 +40,9 @@ const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
     [HALL_ANGLE_150_210]    = 32768U,     /* 180 */
     [HALL_ANGLE_210_270]    = 43690U,     /* 240 */
     [HALL_ANGLE_270_330]    = 54613U,     /* 300 */
+
+    [HALL_ANGLE_ERROR_0]    = 0U,
+    [HALL_ANGLE_ERROR_7]    = 0U,
 };
 
 /*
