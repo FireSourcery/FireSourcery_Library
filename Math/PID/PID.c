@@ -182,7 +182,6 @@ static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
     p_pid->PropGain = kp_Fixed32 >> (16 - p_pid->PropGainShift);
 }
 
-
 /*!
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
                 = ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
@@ -202,9 +201,7 @@ static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
     /* p_pid->IntegralGainShift = fixed_lshift_max_signed(ki_Fixed32 << 16 / p_pid->Config.SampleFreq); */
     p_pid->IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32);
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
-
 }
-
 
 /*
     Config
@@ -238,6 +235,15 @@ void PID_SetKp_Fixed16(PID_T * p_pid, int16_t kp_Fixed16) { PID_SetKp_Fixed32(p_
 /*!
 */
 void PID_SetKi_Fixed16(PID_T * p_pid, int16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
+
+/*!
+
+*/
+void PID_SetKp_Scalar10(PID_T * p_pid, int16_t kp) { PID_SetKp_Fixed32(p_pid, ((int32_t)kp << 16) / 10); }
+
+/*!
+*/
+void PID_SetKi_Scalar10(PID_T * p_pid, int16_t ki) { PID_SetKi_Fixed32(p_pid, ((int32_t)ki << 16) / 10); }
 
 
 /*!

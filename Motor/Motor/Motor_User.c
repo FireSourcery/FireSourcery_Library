@@ -282,13 +282,18 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 */
 void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-/*!
+// inline void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state)
+// {
+//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, state);
+// }
 
+/*!
+    MOTOR_OPEN_LOOP_STATE_IDLE
 */
 void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
 {
     int32_t ivCmdIn = math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16);
-    // _Motor_User_SetCmd(p_motor, ivCmdIn);
+    _Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
 void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)

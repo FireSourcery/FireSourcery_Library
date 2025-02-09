@@ -85,10 +85,10 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor)
 {
     uint32_t vRef = p_vMonitor->Config.Nominal_Adcu;
-    VMonitor_SetFaultLower(p_vMonitor, vRef * 3U / 4U);
-    VMonitor_SetFaultUpper(p_vMonitor, vRef * 5U / 4U);
-    VMonitor_SetWarningLower(p_vMonitor, vRef * 7U / 8U);
-    VMonitor_SetWarningUpper(p_vMonitor, vRef * 9U / 8U);
+    VMonitor_SetFaultLower(p_vMonitor, vRef * 5 / 8);
+    VMonitor_SetFaultUpper(p_vMonitor, vRef * 10 / 8);
+    VMonitor_SetWarningLower(p_vMonitor, vRef * 6 / 8);
+    VMonitor_SetWarningUpper(p_vMonitor, vRef * 9 / 8);
 }
 
 

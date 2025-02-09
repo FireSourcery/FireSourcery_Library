@@ -138,7 +138,10 @@ typedef struct Encoder
     uint32_t DeltaT;        /*!< Timer counts between 2 pulse counts. Units in raw timer ticks */
     uint32_t DeltaTh;       /*!< ModeDT */
     int32_t FreqD;          /*!< EncoderPulseFreq ModeDT. DeltaD 1 Second [Hz] */
+
     uint32_t InterpolateAngleIndex; /*!< ModeT/DT */
+    uint32_t InterpolateAngleSum;
+    uint32_t InterpolateAngleLimit;
 
     int32_t DirectionD;     /*!< previous DeltaD sign, when DeltaD == 0 */
     uint32_t ErrorCount;
@@ -167,10 +170,11 @@ typedef struct Encoder
         Unit conversion. derived on init from Nv Config
     */
     uint32_t UnitT_Freq;                    /*!< Common Units propagating set depending on mode. T unit(seconds) conversion factor. */
-    uint32_t UnitAngularD;                     /*!< [0xFFFFFFFFU/CountsPerRevolution + 1]         => Angle = PulseCounter * UnitAngle_Factor >> (32 - DEGREES_BITS) */
-    uint32_t UnitLinearD;                    /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).*/
-    uint32_t UnitInterpolateAngle;             /*!< [UnitT_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
-    uint32_t InterpolateAngleLimit;
+    uint32_t UnitAngularD;                  /*!< [0xFFFFFFFFU/CountsPerRevolution + 1] => Angle = PulseCounter * UnitAngularD >> DEGREES_SHIFT */
+    uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT is 1). Units per DeltaT capture, using Capture DeltaT (DeltaD is 1).*/
+    uint32_t UnitInterpolateAngle;          /*!< [UnitT_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
+    uint32_t InterpolateAngleDelta;         /*!< UnitInterpolateAngle / DeltaT */
+
     uint32_t UnitAngularSpeed;                 /*!< [(1 << DEGREES_BITS) * UnitT_Freq / CountsPerRevolution]     => AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
     uint32_t UnitSurfaceSpeed;                /*!< [UnitD * UnitT_Freq]                         => Speed = DeltaD * UnitSpeed / DeltaT */
     uint32_t UnitScalarSpeed;                /*!< Percentage Speed of ScalarSpeedRef_Rpm, given max speed, as Fraction16 */
@@ -285,25 +289,46 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 
 static inline uint16_t _Encoder_GetAngle(const Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
+
 /* Direction set by outer module */
-static inline int32_t Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
-static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
-static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
-static inline uint16_t Encoder_SinglePhase_GetAngle(Encoder_T * p_encoder) { return Encoder_SinglePhase_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
+static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
 
 /*
     Convert signed capture to user reference
     Captured as ALeadB is positive by default
 */
-static inline int32_t Encoder_Quadrature_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
-static inline uint16_t Encoder_Quadrature_GetAngle(Encoder_T * p_encoder) { return Encoder_Quadrature_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
+static inline int32_t _Encoder_Quadrature_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
+
+// static inline uint16_t Encoder_SinglePhase_GetAngle(Encoder_T * p_encoder) { return Encoder_SinglePhase_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
+// static inline uint16_t Encoder_Quadrature_GetAngle(Encoder_T * p_encoder) { return Encoder_Quadrature_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
 /* Select using IsQuadratureCaptureEnabled */
-static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return Encoder_CaptureMode_Get(p_encoder, Encoder_Quadrature_GetDirection, Encoder_SinglePhase_GetDirection); }
+static inline int32_t _Encoder_GetDirectionComp(const Encoder_T * p_encoder)
+{
+    return Encoder_CaptureMode_Get(p_encoder, _Encoder_Quadrature_GetDirection, _Encoder_SinglePhase_GetDirection);
+}
+
+/*
+    Store the direction for when CounterD = 0, with compensator
+*/
+// static inline int32_t Encoder_CaptureDirection(Encoder_T * p_encoder)
+// {
+//     p_encoder->DirectionD = math_sign(p_encoder->CounterD) * _Encoder_GetDirectionComp(p_encoder);
+//     return p_encoder->DirectionD;
+// }
+// static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return p_encoder->DirectionD; }
+
+static inline int32_t Encoder_GetDirection(const Encoder_T * p_encoder) { return /* p_encoder->DirectionD *  */_Encoder_GetDirectionComp(p_encoder); }
 
 static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return Encoder_GetDirection(p_encoder) * _Encoder_GetAngle(p_encoder); }
 /* scalar < 256 */
 static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar) { return Encoder_GetDirection(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); }
+
+
+static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
+static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
+
+// static inline void Encoder_Quadrature_InitDirection(Encoder_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
 
 /******************************************************************************/
@@ -314,14 +339,14 @@ static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint
 /*!
     Angle - Base unit in ENCODER_ANGLE_BITS
 */
-static inline uint32_t Encoder_AngleOfCount(Encoder_T * p_encoder, uint32_t counterD_Ticks)
+static inline uint32_t Encoder_AngleOfCount(const Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
     return (counterD_Ticks < p_encoder->Config.CountsPerRevolution) ?
         ((counterD_Ticks * p_encoder->UnitAngularD) >> ENCODER_ANGLE_SHIFT) :
         ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution); /* Overflow: counterD > CountsPerRevolution, UnitAngularD == UINT32_MAX / CountsPerRevolution */
 }
 
-static inline uint32_t Encoder_CountOfAngle(Encoder_T * p_encoder, uint16_t angle_UserDegrees)
+static inline uint32_t Encoder_CountOfAngle(const Encoder_T * p_encoder, uint16_t angle_UserDegrees)
 {
     return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngularD;
 }
@@ -329,8 +354,8 @@ static inline uint32_t Encoder_CountOfAngle(Encoder_T * p_encoder, uint16_t angl
 /*!
     Linear Distance
 */
-static inline uint32_t Encoder_DistanceOfCount(Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
-static inline uint32_t Encoder_CountOfDistance(Encoder_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_DistanceOfCount(const Encoder_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_CountOfDistance(const Encoder_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
 
 /******************************************************************************/
 /*!
@@ -340,12 +365,12 @@ static inline uint32_t Encoder_CountOfDistance(Encoder_T * p_encoder, uint32_t d
 /*
     Only When base units in mm, as set via SetGroundRatio function.
 */
-static inline uint32_t Encoder_CalcGroundSpeed_Mph(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+static inline uint32_t Encoder_GroundSpeedOf_Mph(const Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 {
     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1609344U);
 }
 
-static inline uint32_t Encoder_CalcGroundSpeed_Kmh(Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+static inline uint32_t Encoder_GroundSpeedOf_Kmh(const Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 {
     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
 }

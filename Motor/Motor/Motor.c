@@ -212,6 +212,8 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
             electricalAngle = Hall_GetAngle16(&p_motor->Hall);
             // if ()
             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
+
+            /* handle direction reset */
             break;
 
         case MOTOR_SENSOR_MODE_ENCODER:

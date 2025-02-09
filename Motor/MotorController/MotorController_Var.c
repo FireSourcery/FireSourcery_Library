@@ -536,13 +536,13 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
     switch((MotVarId_TypeType_T)varId.NameTypeType)
     {
         case MOT_VAR_ID_TYPE_REAL_TIME:
-            // status = (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) ?
-            //     SetRealTime(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             status = SetRealTime(p_mc, varId, varValue);
             break;
         case MOT_VAR_ID_TYPE_CONFIG:
-            status = (MotorController_User_IsConfigState(p_mc) == true) ?
-                SetConfig(p_mc, varId, varValue) : MOT_VAR_STATUS_ERROR_RUNNING;
+            if ((MotorController_User_IsConfigState(p_mc) == true) || (MotVarId_Type_Config_T)varId.NameType == (MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID))
+                { status = SetConfig(p_mc, varId, varValue); }
+            else
+                { status = MOT_VAR_STATUS_ERROR_RUNNING; }
             break;
         default: break;
     }

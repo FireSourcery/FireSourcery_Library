@@ -45,6 +45,9 @@ static void InitValues(Encoder_T * p_encoder)
     Encoder_DeltaT_SetInitial(p_encoder);
 }
 
+/*
+    Init function coupled with HW
+*/
 void Encoder_ModeDT_Init_Polling(Encoder_T * p_encoder)
 {
     _Encoder_DeltaT_InitTimer(p_encoder);
@@ -57,7 +60,7 @@ void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_Quadrature(p_encoder);
     InitValues(p_encoder);
-    p_encoder->Config.IsQuadratureCaptureEnabled = true;
+    // p_encoder->Config.IsQuadratureCaptureEnabled = true;
 }
 
 void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)

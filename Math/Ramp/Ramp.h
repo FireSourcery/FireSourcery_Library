@@ -65,7 +65,6 @@ static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 }
 
 static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }
-
 static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = 0; }
 
 /******************************************************************************/

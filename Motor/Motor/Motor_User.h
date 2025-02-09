@@ -180,8 +180,8 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T *
         .SpeedLimitSet  = Limit_IsUpperActive(&p_motor->SpeedLimit),
         .ILimited       = p_motor->StateFlags.ILimited,
         .SpeedLimited   = p_motor->StateFlags.SpeedLimited,
-        .Hold           = Motor_User_IsHold(p_motor),
-        .Release        = Motor_User_IsRelease(p_motor),
+        // .Hold           = Motor_User_IsHold(p_motor),
+        // .Release        = Motor_User_IsRelease(p_motor),
     };
 }
 

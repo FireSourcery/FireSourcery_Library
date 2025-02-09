@@ -33,19 +33,19 @@
 /* Phase in XXXXABAB order, ALeadB as increment */
 const int8_t _ENCODER_TABLE[_ENCODER_TABLE_LENGTH] =
 {
-    0,-1,1,_ENCODER_TABLE_ERROR,
-    1,0,_ENCODER_TABLE_ERROR,-1,
-    -1,_ENCODER_TABLE_ERROR,0,1,
-    _ENCODER_TABLE_ERROR,1,-1,0
+    0, -1, 1, _ENCODER_TABLE_ERROR,
+    1, 0, _ENCODER_TABLE_ERROR, -1,
+    -1, _ENCODER_TABLE_ERROR, 0, 1,
+    _ENCODER_TABLE_ERROR, 1, -1, 0
 };
 
 /* Phase A Both Edge */
 const int8_t _ENCODER_TABLE_PHASE_A[_ENCODER_TABLE_LENGTH] =
 {
-    0,_ENCODER_TABLE_ERROR,_ENCODER_TABLE_ERROR,-1,
-    _ENCODER_TABLE_ERROR,0,1,_ENCODER_TABLE_ERROR,
-    _ENCODER_TABLE_ERROR,1,0,_ENCODER_TABLE_ERROR,
-    -1,_ENCODER_TABLE_ERROR,_ENCODER_TABLE_ERROR,0
+    0, _ENCODER_TABLE_ERROR, _ENCODER_TABLE_ERROR, -1,
+    _ENCODER_TABLE_ERROR, 0, 1, _ENCODER_TABLE_ERROR,
+    _ENCODER_TABLE_ERROR, 1, 0, _ENCODER_TABLE_ERROR,
+    -1, _ENCODER_TABLE_ERROR, _ENCODER_TABLE_ERROR, 0
 };
 
 /******************************************************************************/
@@ -72,6 +72,11 @@ void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder)
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_B, p_encoder->CONST.PIN_B_ID);
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
+}
+
+void Encoder_InitInterrupts_Incremental(Encoder_T * p_encoder)
+{
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
 }
 
 
@@ -119,13 +124,13 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 {
     uint32_t speedDivisor = p_encoder->Config.CountsPerRevolution * unitsDivisor;
 
-    if (p_encoder->UnitT_Freq == p_encoder->CONST.TIMER_FREQ)
+    if (p_encoder->UnitT_Freq == p_encoder->CONST.TIMER_FREQ) /* Mode deltaT */
     {
         *p_unitsSpeedShift = 0U;
         *p_unitsSpeed = math_muldiv64_unsigned(p_encoder->UnitT_Freq, unitsFactor, speedDivisor);
         // *p_unitsSpeed = (uint64_t)(p_encoder->UnitT_Freq) * unitsFactor / speedDivisor;
     }
-    else
+    else /* ModeDT */
     {
         /* max = unitsFactor * ScalarSpeedRef_Rpm/60 * 2 / unitsDivisor = deltaDMax * speedFactor / speedDivisor */
         *p_unitsSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Config.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
@@ -270,7 +275,6 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
     Calibration
 */
 /******************************************************************************/
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
 void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
 void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Config.IsQuadratureCaptureEnabled = false; }
@@ -336,4 +340,4 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
         p_encoder->Align = ENCODER_ALIGN_NO;
     }
 
-#endif
+

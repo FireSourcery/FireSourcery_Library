@@ -362,7 +362,8 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
 
 void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor)
 {
-    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->Ramp), 0);
+    // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->Ramp), 0);
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_GetTarget(&p_motor->Ramp), 0);
 }
 
 

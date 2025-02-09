@@ -95,6 +95,8 @@ int32_t Motor_VarOutput_PositionSensor_Get(const Motor_T * p_motor, Motor_VarOut
     {
         case MOTOR_VAR_ENCODER_FREQ:  value = p_motor->Encoder.FreqD;     break;
         case MOTOR_VAR_ENCODER_RPM:   value = Encoder_ModeDT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
+        case MOTOR_VAR_ENCODER_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
+        case MOTOR_VAR_ENCODER_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
     }
     return value;
 }
@@ -337,12 +339,12 @@ int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T v
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_motor->PidSpeed);   break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_motor->PidSpeed);   break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_motor->PidSpeed);   break;
+        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = _PID_GetKp_Scalar10_Runtime(&p_motor->PidSpeed);   break;
+        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = _PID_GetKi_Scalar10_Runtime(&p_motor->PidSpeed);   break;
         // case MOTOR_VAR_PID_SPEED_KD_FIXED16:      value = PID_GetKd_Fixed16(&p_motor->PidSpeed);   break;
         case MOTOR_VAR_PID_FOC_IQ_SAMPLE_FREQ:    value = PID_GetSampleFreq(&p_motor->PidIq);     break;
-        case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16:     value = PID_GetKp_Fixed16(&p_motor->PidIq);     break;
-        case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16:     value = PID_GetKi_Fixed16(&p_motor->PidIq);     break;
+        case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16:     value = _PID_GetKp_Scalar10_Runtime(&p_motor->PidIq);     break;
+        case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16:     value = _PID_GetKi_Scalar10_Runtime(&p_motor->PidIq);     break;
         // case MOTOR_VAR_PID_FOC_IQ_KD_FIXED16:     value = PID_GetKd_Fixed16(&p_motor->PidIq);     break;
 
         // case MOTOR_VAR_PID_FOC_ID_SAMPLE_FREQ:    value = PID_GetSampleFreq(&p_motor->PidId);     break;
@@ -358,12 +360,19 @@ void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int
     switch (varId)
     {
         // case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:  PID_SetSampleFreq(&p_motor->PidSpeed, varValue);          break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Scalar10(&p_motor->PidSpeed, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Scalar10(&p_motor->PidSpeed, varValue);    break;
         // case MOTOR_VAR_PID_SPEED_KD_FIXED16:  PID_SetKd_Fixed16(&p_motor->PidSpeed, varValue);       break;
         // case MOTOR_VAR_PID_FOC_IQ_SAMPLE_FREQ: PID_SetSampleFreq(&p_motor->PidIq, varValue);         break;
-        case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue);       break;
-        case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue);       break;
+        case MOTOR_VAR_PID_FOC_IQ_KP_FIXED16:
+            PID_SetKp_Scalar10(&p_motor->PidIq, varValue);
+            PID_SetKp_Scalar10(&p_motor->PidId, varValue);
+            break;
+        case MOTOR_VAR_PID_FOC_IQ_KI_FIXED16:
+            PID_SetKi_Scalar10(&p_motor->PidIq, varValue);
+            PID_SetKi_Scalar10(&p_motor->PidId, varValue);
+            break;
+
         // case MOTOR_VAR_PID_FOC_IQ_KD_FIXED16: PID_SetKd_Fixed16(&p_motor->PidIq, varValue);          break;
 
         // case MOTOR_VAR_PID_FOC_ID_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidId, varValue);          break;

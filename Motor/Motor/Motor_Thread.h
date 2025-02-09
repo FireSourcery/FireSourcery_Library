@@ -67,7 +67,7 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
     }
 #endif
 
-    if (Motor_IsAnalogCycle(p_motor) == true)
+    if (Motor_IsAnalogCycle(p_motor) == true) //todo change timer
     {
         switch (StateMachine_GetActiveStateId(&p_motor->StateMachine))
         {

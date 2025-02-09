@@ -44,10 +44,6 @@
 /******************************************************************************/
 
 /******************************************************************************/
-/*
-    Quadrature, Signed Direction
-    Captures as ALeadB is Positive, compensate on user Get
-*/
 /******************************************************************************/
 static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
 {
@@ -61,6 +57,7 @@ static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
 /* count = {-1, 0, +1} */
 static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
 {
+    // count = count * directionCalibration
     p_encoder->CounterD += count;
     // p_encoder->TotalD += count;
     p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
@@ -75,6 +72,10 @@ static inline void _Encoder_Quadrature_CaptureCount(Encoder_T * p_encoder, int8_
     else { _Encoder_CaptureCount(p_encoder, count); }
 }
 
+/*
+    Quadrature, Signed Direction
+    Captures as ALeadB is Positive, compensate on user Get
+*/
 static inline void _Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_Quadrature_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);

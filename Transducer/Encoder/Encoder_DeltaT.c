@@ -91,11 +91,12 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
 {
-    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s */
-    p_encoder->InterpolateAngleIndex = 0U;
-    p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
     HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
+
+    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s */ /* p_encoder->Config.ExtendedDeltaTStop */
+    p_encoder->InterpolateAngleIndex = 0U;
+    p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
     _Encoder_ZeroPulseCount(p_encoder);
 }
 
@@ -116,7 +117,8 @@ void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t 
 
 void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder)
 {
-    p_encoder->Config.ExtendedDeltaTStop = Encoder_DeltaT_FromRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONST.EXTENDED_TIMER_FREQ / p_encoder->CONST.TIMER_FREQ;
+    // 60U * p_encoder->CONST.EXTENDED_TIMER_FREQ / p_encoder->Config.CountsPerRevolution / rpm
+    p_encoder->Config.ExtendedDeltaTStop = Encoder_DeltaT_OfRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONST.EXTENDED_TIMER_FREQ / _Encoder_DeltaT_GetTimerFreq(p_encoder);
 }
 
 void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint16_t scalar)

@@ -85,7 +85,8 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
     uint32_t freqD = math_abs(p_encoder->FreqD);
-    return (1 < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    /* disabled for less than 2RPS 120RPM */
+    return ((p_encoder->Config.CountsPerRevolution * 2U) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
 /*

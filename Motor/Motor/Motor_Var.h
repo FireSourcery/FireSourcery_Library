@@ -96,6 +96,8 @@ typedef enum Motor_VarOutput_PositionSensor
 {
     MOTOR_VAR_ENCODER_FREQ,
     MOTOR_VAR_ENCODER_RPM,
+    MOTOR_VAR_ENCODER_DELTA_T_SPEED,
+    MOTOR_VAR_ENCODER_DELTA_D_SPEED,
 }
 Motor_VarOutput_PositionSensor_T;
 

@@ -503,6 +503,7 @@ static void Neutral_Entry(MotorController_T * p_mc)
 static StateMachine_State_T * Neutral_Proc(MotorController_T * p_mc)
 {
     (void)p_mc;
+    // check freewheel/stop
     return NULL;
 }
 
