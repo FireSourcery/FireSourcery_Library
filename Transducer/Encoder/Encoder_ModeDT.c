@@ -39,7 +39,8 @@ static void InitValues(Encoder_T * p_encoder)
 {
     if (p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 
-    p_encoder->UnitT_Freq = 1U;
+    p_encoder->UnitTime_Freq = 1U;
+    // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
     _Encoder_ResetUnits(p_encoder);
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
@@ -60,7 +61,7 @@ void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_Quadrature(p_encoder);
     InitValues(p_encoder);
-    // p_encoder->Config.IsQuadratureCaptureEnabled = true;
+    p_encoder->Config.IsQuadratureCaptureEnabled = true;
 }
 
 void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
@@ -71,22 +72,6 @@ void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
     InitValues(p_encoder);
 }
 
-
-// void Encoder_ModeDT_Init(Encoder_T * p_encoder)
-// {
-//     if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
-//     if(p_encoder->CONST.HAL_INIT != 0U) { p_encoder->CONST.HAL_INIT(); }
-//     else
-//     {
-//         _Encoder_DeltaT_InitTimer(p_encoder);
-//         _Encoder_DeltaD_InitCounter(p_encoder);
-//     }
-//     p_encoder->UnitT_Freq = 1U;
-//     _Encoder_ResetUnits(p_encoder);
-//     Encoder_DeltaD_SetInitial(p_encoder);
-//     Encoder_DeltaT_SetInitial(p_encoder);
-// }
-
 void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 {
     Encoder_DeltaD_SetInitial(p_encoder);
@@ -94,5 +79,5 @@ void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
     p_encoder->DeltaTh = 0U;
     p_encoder->FreqD = 0;
     p_encoder->DirectionD = 0;
-    p_encoder->TotalD = 0;
+    // p_encoder->TotalD = 0;
 }

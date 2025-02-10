@@ -32,6 +32,8 @@
 #define RAMP_H
 
 #include "../Accumulator/Accumulator.h"
+#include "../math_general.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 

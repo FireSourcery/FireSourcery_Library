@@ -78,9 +78,6 @@ static inline void ProcIFeedback(Motor_T * p_motor, bool hasIFeedback)
     }
 }
 
-
-
-
 /*
     Speed Feedback Loop
     SpeedControl_Fract16 update ~1000Hz,

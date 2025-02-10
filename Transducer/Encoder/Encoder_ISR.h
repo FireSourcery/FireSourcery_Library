@@ -44,6 +44,7 @@
 /******************************************************************************/
 
 /******************************************************************************/
+/* Common  */
 /******************************************************************************/
 static inline uint8_t _Encoder_CapturePhasesState(Encoder_T * p_encoder)
 {
@@ -60,36 +61,45 @@ static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
     // count = count * directionCalibration
     p_encoder->CounterD += count;
     // p_encoder->TotalD += count;
+    /* instead of imitating the hw decoder case, capture a separate position */
     p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
 }
 
-/******************************************************************************/
-/* Quadrature */
-/******************************************************************************/
-static inline void _Encoder_Quadrature_CaptureCount(Encoder_T * p_encoder, int8_t count)
-{
-    if (count == _ENCODER_TABLE_ERROR) { p_encoder->ErrorCount++; }
-    else { _Encoder_CaptureCount(p_encoder, count); }
-}
 
+/******************************************************************************/
 /*
     Quadrature, Signed Direction
     Captures as ALeadB is Positive, compensate on user Get
 */
+/******************************************************************************/
+#define _ENCODER_TABLE_INC_2 (2)
+#define _ENCODER_TABLE_DEC_2 (-2)
+
 static inline void _Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
-    _Encoder_Quadrature_CaptureCount(p_encoder, _ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
+    /* Phase in XXXXBABA order, ALeadB as increment */
+    static const int8_t ENCODER_TABLE[] =
+    {
+        0, 1, -1, _ENCODER_TABLE_INC_2, /* 0011: as B rising edge, missed A rising edge */
+        -1, 0, _ENCODER_TABLE_INC_2, 1, /* 0110: as A rising edge, missed B rising edge */
+        1, _ENCODER_TABLE_DEC_2, 0, -1, /* 1001: as B falling edge, missed A rising edge */
+        _ENCODER_TABLE_DEC_2, -1, 1, 0  /* 1100: as A falling edge, missed B rising edge */
+    };
+
+    // if (count == +2||-2) { p_encoder->ErrorCount++; }
+    _Encoder_CaptureCount(p_encoder, ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
 }
 
-// static inline void _Encoder_CapturePulse_QuadraturePhaseA(Encoder_T * p_encoder)
-// {
-//     _Encoder_Quadrature_CaptureCount(p_encoder, _ENCODER_TABLE_PHASE_A[_Encoder_CapturePhasesState(p_encoder)]);
-// }
+/* Alternatively, single phase signed capture or combine with B */
+static inline void _Encoder_Quadrature_CapturePulse_PhaseA(Encoder_T * p_encoder)
+{
+    _Encoder_CaptureCount(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
+}
 
-// static inline void _Encoder_CapturePulse_QuadraturePhaseARisingEdge(Encoder_T * p_encoder)
-// {
-//     _Encoder_Quadrature_CaptureCount(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinB) == false) ? 1 : -1));
-// }
+static inline void _Encoder_Quadrature_CapturePulse_PhaseB(Encoder_T * p_encoder)
+{
+    _Encoder_CaptureCount(p_encoder, ((Pin_Input_ReadPhysical(&p_encoder->PinA) == true) ? 1 : -1));
+}
 
 /******************************************************************************/
 /* Single Phase, Non-Directional */
@@ -107,8 +117,9 @@ static inline void _Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
 static inline void Encoder_Quadrature_CapturePulse(Encoder_T * p_encoder)
 {
     _Encoder_Quadrature_CapturePulse(p_encoder);
-    Encoder_DeltaT_CaptureExtended(p_encoder);
-    Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
+    Encoder_DeltaT_Capture(p_encoder);
+    // Encoder_DeltaT_CaptureExtended(p_encoder);
+    // Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
 static inline void Encoder_SinglePhase_CapturePulse(Encoder_T * p_encoder)
@@ -125,31 +136,34 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 {
     Encoder_CaptureMode_Proc(p_encoder, _Encoder_Quadrature_CapturePulse, _Encoder_SinglePhase_CapturePulse); /* Quadrature On/Off Switch */
     Encoder_DeltaT_CaptureExtended(p_encoder);
+    // Encoder_DeltaT_Capture(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
-}
-
-static inline void Encoder_CaptureRef(Encoder_T * p_encoder)
-{
-    _Encoder_SetCounterD(p_encoder, p_encoder->IndexOffsetRef);
-    p_encoder->Angle32 = ((int32_t)p_encoder->IndexOffsetRef * p_encoder->UnitAngularD);
-    // Encoder_ModeDT_SetInitial(p_encoder);
 }
 
 /* External */
 /* -1, 0, 1 */
-static inline void Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
+static inline void Encoder_CaptureCount_Polling(Encoder_T * p_encoder, int8_t count)
 {
     _Encoder_CaptureCount(p_encoder, count);
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }
 
-static inline void Encoder_CaptureExternal(Encoder_T * p_encoder, int8_t prev, int8_t count)
+/******************************************************************************/
+/* Index */
+/******************************************************************************/
+static inline void Encoder_CaptureIndex(Encoder_T * p_encoder)
 {
-    /* direction changed */
-    if (prev != count) { Encoder_ModeDT_SetInitial(p_encoder); }
-    else { Encoder_CaptureCount(p_encoder, count); }
+#if defined(CONFIG_ENCODER_HW_DECODER)
+    // HAL_Encoder_ClearCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    // sync Angle with count
+#elif defined(CONFIG_ENCODER_HW_EMULATED)
+    // _Encoder_SetCounterD(p_encoder, 0);
+#endif
+    p_encoder->Angle32 = p_encoder->Config.IndexAngleRef;
+    p_encoder->IndexCount++;
 }
+
 
 /******************************************************************************/
 /*!
@@ -160,7 +174,6 @@ static inline void Encoder_CaptureExternal(Encoder_T * p_encoder, int8_t prev, i
 /******************************************************************************/
 /*!
     Configured using IsQuadratureMode flag
-    Superfluous capture DeltaT for Emulated DeltaD only mode
 */
 /******************************************************************************/
 static inline void Encoder_OnPhaseA_ISR(Encoder_T * p_encoder)
@@ -179,9 +192,7 @@ static inline void Encoder_OnPhaseB_ISR(Encoder_T * p_encoder)
 static inline void Encoder_OnIndex_ISR(Encoder_T * p_encoder)
 {
     HAL_Encoder_ClearPinInterrupt(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
-    p_encoder->IndexCount++;
-    _Encoder_SetCounterD(p_encoder, p_encoder->IndexOffsetRef);
-    // todo phase index delta
+    Encoder_CaptureIndex(p_encoder);
 }
 
 /* Shared A, B ISR */

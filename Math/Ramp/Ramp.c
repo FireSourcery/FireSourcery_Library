@@ -43,13 +43,11 @@ static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
     // Ramp slope always positive
     if (p_ramp->State < p_ramp->Target) // incrementing
     {
-        output = p_ramp->State + (p_ramp->Coefficient * steps);
-        if (output > p_ramp->Target) { output = p_ramp->Target; }
+        output = math_limit_upper(p_ramp->State + (p_ramp->Coefficient * steps), p_ramp->Target);
     }
     else if (p_ramp->State > p_ramp->Target) // decrementing
     {
-        output = p_ramp->State - (p_ramp->Coefficient * steps);
-        if (output < p_ramp->Target) { output = p_ramp->Target; }
+        output = math_limit_lower(p_ramp->State - (p_ramp->Coefficient * steps), p_ramp->Target);
     }
 
     return output;

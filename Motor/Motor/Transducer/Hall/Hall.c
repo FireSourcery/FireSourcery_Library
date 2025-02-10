@@ -40,7 +40,6 @@ const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
     [HALL_ANGLE_150_210]    = 32768U,     /* 180 */
     [HALL_ANGLE_210_270]    = 43690U,     /* 240 */
     [HALL_ANGLE_270_330]    = 54613U,     /* 300 */
-
     [HALL_ANGLE_ERROR_0]    = 0U,
     [HALL_ANGLE_ERROR_7]    = 0U,
 };
@@ -83,12 +82,14 @@ static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Config.SensorsTable[Ha
 
 /* For 180 degree active. 120 degree active todo */
 void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Config.BoundaryType = 0U; */ }
-void Hall_CalibratePhaseA(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
-void Hall_CalibratePhaseB(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
-void Hall_CalibratePhaseC(Hall_T * p_hall)      { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
-void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if(Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseA(Hall_T * p_hall)      { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvC(Hall_T * p_hall)   { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseB(Hall_T * p_hall)      { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvA(Hall_T * p_hall)   { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseC(Hall_T * p_hall)      { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseC(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
+
+
 
 // void Hall_Calibrate
 // (

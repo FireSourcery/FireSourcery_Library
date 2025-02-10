@@ -207,12 +207,11 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
             if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
-        #endif
+            //
             /* by assigned direction, alternatively compare prev state */
+        #endif
             electricalAngle = Hall_GetAngle16(&p_motor->Hall);
-            // if ()
             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
-
             /* handle direction reset */
             break;
 

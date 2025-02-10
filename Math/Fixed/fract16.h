@@ -150,7 +150,7 @@ static inline fract16_t fract16_sqrt(fract16_t x)
     angle16
 */
 /******************************************************************************/
-typedef int16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
+typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
 
 #define FRACT16_SINE_90_TABLE_LENGTH    (256U)
 #define FRACT16_SINE_90_TABLE_LSB       (6U)    /*!< Least significant bits, shifted away */
@@ -186,7 +186,8 @@ static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
 /* polling freq must be sufficient */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
 {
-    return ((theta0 ^ theta1) < 0); /* return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); */
+    // return ((int16_t)(theta0 ^ theta1) < 0);
+    return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
 }
 
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)

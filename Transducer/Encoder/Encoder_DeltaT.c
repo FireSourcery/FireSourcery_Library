@@ -80,6 +80,7 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
 {
     if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaT_InitTimer(p_encoder);
+    p_encoder->UnitTime_Freq = p_encoder->CONST.TIMER_FREQ;
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaD = 1U; /* Effective for shared functions only */
     p_encoder->IsSinglePhasePositive = true;
@@ -94,10 +95,10 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
     HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
 
-    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s */ /* p_encoder->Config.ExtendedDeltaTStop */
-    p_encoder->InterpolateAngleIndex = 0U;
+    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s 60/Cpr RPM, alternatively multiply for 1rpm */
     p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
-    _Encoder_ZeroPulseCount(p_encoder);
+    p_encoder->InterpolateAngleIndex = 0U;
+    // _Encoder_ZeroPulseCount(p_encoder);
 }
 
 /******************************************************************************/

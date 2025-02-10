@@ -88,6 +88,10 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
 }
 
 
+static inline bool Motor_Calibration_ProcEncoderHoming(Motor_T * p_motor)
+{
+
+}
 
 static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {

@@ -45,7 +45,12 @@ static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return ma
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
 static inline bool math_in_range(int32_t value, int32_t lower, int32_t upper) { return (value == math_clamp(value, lower, upper)); }
 
+// static inline int32_t math_wrap(int32_t value, int32_t max
+
+
 static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
+static inline bool math_sign_diff(int32_t value1, int32_t value2) { return ((value1 ^ value2) < 0); }
+
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
 // static inline uint32_t math_abs(int32_t value)

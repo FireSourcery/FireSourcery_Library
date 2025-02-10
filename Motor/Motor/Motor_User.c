@@ -208,7 +208,7 @@ void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t value_Fract16)
     // if (math_abs(Motor_User_GetCmd(p_motor) - value_Fract16) > 0) { PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc)); }
 
     /* Dissipate integral if output rail reached */
-    if (value_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
+    // if (value_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
     Motor_User_SetICmd(p_motor, value_Fract16);
 }
 
@@ -217,7 +217,7 @@ void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t value_Fract16)
 */
 void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
-    if (scalar_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
+    // if (scalar_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
     Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
 
     // if (scalar_Fract16 < 0)

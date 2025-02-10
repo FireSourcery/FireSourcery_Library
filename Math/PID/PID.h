@@ -95,15 +95,18 @@ static inline int16_t PID_GetKp_Fixed16(const PID_T * p_pid) { return PID_GetKp_
 static inline int16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
 static inline int16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
+static inline int16_t PID_GetKp_Scalar10(const PID_T * p_pid) { return (PID_GetKp_Fixed32(p_pid) * 10 >> 16); }
+static inline int16_t PID_GetKi_Scalar10(const PID_T * p_pid) { return (PID_GetKi_Fixed32(p_pid) * 10 >> 16); }
+
 static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return (int32_t)p_pid->PropGain << (16 - p_pid->PropGainShift); }
-static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return (int64_t)p_pid->IntegralGain * p_pid->Config.SampleFreq >> p_pid->IntegralGainShift; }
+static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return (int32_t)p_pid->IntegralGain * p_pid->Config.SampleFreq >> p_pid->IntegralGainShift; }
 
 static inline int16_t _PID_GetKp_Fixed16_Runtime(const PID_T * p_pid) { return  _PID_GetKp_Runtime(p_pid) >> 8; }
 static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return  _PID_GetKi_Runtime(p_pid) >> 8; }
 
 /* 28 bits max */
-static inline int16_t _PID_GetKp_Scalar10_Runtime(const PID_T * p_pid) { return ((int64_t)_PID_GetKp_Runtime(p_pid) * 10 >> 16); }
-static inline int16_t _PID_GetKi_Scalar10_Runtime(const PID_T * p_pid) { return ((int64_t)_PID_GetKi_Runtime(p_pid) * 10 >> 16); }
+static inline int16_t _PID_GetKp_Scalar10_Runtime(const PID_T * p_pid) { return (_PID_GetKp_Runtime(p_pid) * 10 >> 16); }
+static inline int16_t _PID_GetKi_Scalar10_Runtime(const PID_T * p_pid) { return (_PID_GetKi_Runtime(p_pid) * 10 >> 16); }
 
 
 /******************************************************************************/
@@ -123,7 +126,7 @@ extern void PID_SetKp_Fixed16(PID_T * p_pid, int16_t kp_Fixed16);
 extern void PID_SetKi_Fixed16(PID_T * p_pid, int16_t ki_Fixed16);
 extern void PID_SetKd_Fixed16(PID_T * p_pid, int16_t kd_Fixed16);
 
-void PID_SetKp_Scalar10(PID_T * p_pid, int16_t kp);
-void PID_SetKi_Scalar10(PID_T * p_pid, int16_t ki);
+extern void PID_SetKp_Scalar10(PID_T * p_pid, int16_t kp);
+extern void PID_SetKi_Scalar10(PID_T * p_pid, int16_t ki);
 
 #endif /* PID_H */

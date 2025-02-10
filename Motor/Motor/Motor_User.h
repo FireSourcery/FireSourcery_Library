@@ -53,8 +53,8 @@ static inline int32_t Motor_User_GetVSpeedEffective_Fract16(const Motor_T * p_mo
 static inline uint16_t Motor_User_GetVSpeedEffective_UFract16(const Motor_T * p_motor) { return math_abs(Motor_GetVSpeed_Fract16(p_motor)); }
 
 /* Speed as V. Conversion can be handled by host (VSource * Speed_Fract16 / FRACT16_MAX) */
-static inline int32_t Motor_User_GetVSpeedDebug_Fract16(const Motor_T * p_motor)    { return Motor_User_GetSpeed_Fract16(p_motor); }
-static inline uint16_t Motor_User_GetVSpeedDebug_UFract16(const Motor_T * p_motor)  { return Motor_User_GetSpeed_UFract16(p_motor); }
+// static inline int32_t Motor_User_GetVSpeedDebug_Fract16(const Motor_T * p_motor)    { return Motor_User_GetSpeed_Fract16(p_motor); }
+// static inline uint16_t Motor_User_GetVSpeedDebug_UFract16(const Motor_T * p_motor)  { return Motor_User_GetSpeed_UFract16(p_motor); }
 
 /*
     Conversion functions only on user call. No periodic proc.
@@ -97,8 +97,8 @@ static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor) {
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
 static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor) { return p_motor->StateFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor) { return p_motor->FaultFlags; }
-static inline bool Motor_User_IsStopState(const Motor_T * p_motor)  { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP); }
-static inline bool Motor_User_IsRunState(const Motor_T * p_motor)   { return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_RUN); }
+static inline bool Motor_User_IsStopState(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_STOP); }
+static inline bool Motor_User_IsRunState(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_RUN); }
 
 
 static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return Ramp_IsDisabled(&p_motor->Ramp); }
@@ -141,7 +141,6 @@ static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)      
 static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)        { return p_motor->OpenLoopState; }
 static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor)  { return p_motor->CalibrationState; }
 static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_motor)              { return p_motor->CalibrationStateIndex; }
-
 
 /*
    User Conditional - set compare with array

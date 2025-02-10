@@ -24,33 +24,33 @@
 /*!
     @file   Reboot.h
     @author FireSourcery
-    @brief  Implements Critical Section
+    @brief
     @version V0
 */
 /******************************************************************************/
 #ifndef REBOOT_H
 #define REBOOT_H
 
-#ifdef CONFIG_SYSTEM_MCU_ARM
+// #ifdef CONFIG_SYSTEM_MCU_ARM
 
-#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+// #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 
-static inline void Reboot(void) {
-    __disable_irq();
+// static inline void Reboot(void) {
+//     __disable_irq();
 
-    for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICER[iReg] = 0xFFFFFFFF; }
-    for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICPR[iReg] = 0xFFFFFFFF; }
+//     for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICER[iReg] = 0xFFFFFFFF; }
+//     for (uint8_t iReg = 0U; iReg < 1; iReg++) { NVIC->ICPR[iReg] = 0xFFFFFFFF; }
 
-    SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
+//     SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
 
-    NVIC_SystemReset();
-}
+//     NVIC_SystemReset();
+// }
 
-#else
+// #else
 
-static inline void Reboot(void) {}
+// static inline void Reboot(void) {}
 
-#endif
+// #endif
 
 
 
