@@ -112,26 +112,12 @@ static inline bool Encoder_DeltaT_IsExtendedStop(Encoder_T * p_encoder)
 
 
 /******************************************************************************/
-/*
-    Capture Period < 1S
-    DeltaT / TimerFreq = DeltaT [Seconds]
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_DeltaT_AsFreq(const Encoder_T * p_encoder) { return p_encoder->CONST.TIMER_FREQ / p_encoder->DeltaT; }
-static inline uint32_t Encoder_DeltaT_AsTime_Ms(const Encoder_T * p_encoder) { return p_encoder->DeltaT * 1000U / p_encoder->CONST.TIMER_FREQ; }
-
-
-/******************************************************************************/
 /*!
     @brief  Angle Interpolation Functions
 
     Estimate Angle each control cycle in between encoder counts
-    AngularSpeed * AngleIndex / POLLING_FREQ
-        (AngleIndex / POLLING_FREQ) * (UnitTime_Freq / DeltaT) * (ENCODER_ANGLE_DEGREES / CountsPerRevolution)
-        AngleIndex * [ENCODER_ANGLE_DEGREES * UnitTime_Freq / CountsPerRevolution / POLLING_FREQ] / DeltaT
-    AngleIndex [0:InterpolationCount]
 
-    Only when POLLING_FREQ > EncoderPulseFreq, i.e. 0 encoder counts per poll, polls per encoder count > 1
+    Only when POLLING_FREQ > PulseFreq, i.e. 0 encoder counts per poll, polls per encoder count > 1
     e.g. High res break even point
         8192 CountsPerRevolution, 20Khz POLLING_FREQ => 146 RPM
 */
@@ -148,6 +134,7 @@ static inline uint32_t Encoder_DeltaT_AsTime_Ms(const Encoder_T * p_encoder) { r
     @brief InterpolateAngle
     AngleIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
     UnitInterpolateAngle = [ENCODER_ANGLE_DEGREES[65536] * TIMER_FREQ / POLLING_FREQ / CountsPerRevolution]
+    AngleIndex [0:InterpolationCount]
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
@@ -168,6 +155,7 @@ static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
 {
     p_encoder->InterpolateAngleIndex = 0U;
+    p_encoder->InterpolateAngleSum = 0U;
 }
 
 
@@ -210,6 +198,7 @@ static inline uint32_t Encoder_DeltaT_ToRotationalSpeed_RPM(const Encoder_T * p_
     // return  p_encoder->CONST.TIMER_FREQ / deltaT_ticks * 60U / p_encoder->Config.CountsPerRevolution;
 }
 
+
 static inline uint32_t Encoder_DeltaT_OfLinearSpeed(const Encoder_T * p_encoder, uint32_t speed_UnitsPerSecond)
 {
     return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitSurfaceSpeed / speed_UnitsPerSecond;
@@ -230,6 +219,14 @@ static inline uint32_t Encoder_DeltaT_ToLinearSpeed_UnitsPerMinute(const Encoder
     // return Encoder_DeltaT_OfLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
 }
 
+/******************************************************************************/
+/*
+    Capture Period < 1S
+    DeltaT / TimerFreq = DeltaT [Seconds]
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_DeltaT_AsFreq(const Encoder_T * p_encoder) { return p_encoder->CONST.TIMER_FREQ / p_encoder->DeltaT; }
+static inline uint32_t Encoder_DeltaT_AsTime_Ms(const Encoder_T * p_encoder) { return p_encoder->DeltaT * 1000U / p_encoder->CONST.TIMER_FREQ; }
 
 /******************************************************************************/
 /*!

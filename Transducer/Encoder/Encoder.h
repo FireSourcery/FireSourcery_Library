@@ -84,7 +84,7 @@ Encoder_Align_T;
 
 typedef struct Encoder_Config
 {
-    uint16_t CountsPerRevolution;       /* Derive Angular Units. Max for counting AngularD, CaptureDeltaT mode need 2nd TimerCounterMax */
+    uint16_t CountsPerRevolution;       /* Derive Angular Units. */
     uint16_t ScalarSpeedRef_Rpm;        /* Derive Percent16 Units. */
     uint16_t SurfaceDiameter;           /* Derive Linear Units. */
     uint16_t GearRatio_Factor;          /* Derive Linear Units. Surface:Encoder Ratio */
@@ -120,8 +120,8 @@ typedef const struct Encoder_Const
     const volatile uint32_t * const P_EXTENDED_TIMER;   /* 32-bit extension + WatchStop */
     const uint32_t EXTENDED_TIMER_FREQ;
 
-    const uint32_t POLLING_FREQ;        /*!< DeltaT Interpolation Freq. */
-    const uint32_t SAMPLE_FREQ;         /*!< DeltaD Sample Freq. */
+    const uint32_t POLLING_FREQ;        /*!< Angle Sample Freq. DeltaT Interpolation Freq. */
+    const uint32_t SAMPLE_FREQ;         /*!< Speed Sample Freq. DeltaD Sample Freq. */
     const uint32_t SAMPLE_TIME;         /* derived from TIMER_FREQ/SAMPLE_TIME */
     const Encoder_Config_T * const P_CONFIG;
 }
@@ -170,8 +170,6 @@ typedef struct Encoder
     Encoder_Align_T Align;
     int32_t AbsoluteOffset;
 
-    int32_t _FreqDMax;
-
     /* Experimental */
     // int32_t TotalD;          /* Integral Capture */
     // uint32_t TotalT;         /*!< Timer ticks, persistent through DeltaT captures */
@@ -182,7 +180,7 @@ typedef struct Encoder
         Unit conversion. derived on init from Nv Config
     */
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
-    uint32_t UnitAngularD;                  /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngularD >> DEGREES_SHIFT */
+    uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
     uint32_t UnitInterpolateAngle;          /*!< [UnitTime_Freq << DEGREES_BITS / POLLING_FREQ / CountsPerRevolution] */
 
@@ -293,7 +291,7 @@ static inline void _Encoder_SetCounterD(Encoder_T * p_encoder, int32_t counterD)
 static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    return HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->UnitAngularD;
+    return HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->UnitAngleD;
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     return p_encoder->Angle32;
 #endif
@@ -399,23 +397,23 @@ static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
 /******************************************************************************/
 /*!
     Angle - Base unit in ENCODER_ANGLE_BITS
-    input [0:CountsPerRevolution], UnitAngularD == UINT32_MAX / CountsPerRevolution
+    input [0:CountsPerRevolution], UnitAngleD == UINT32_MAX / CountsPerRevolution
 */
 static inline uint32_t _Encoder_AngleOfCount(const Encoder_T * p_encoder, uint32_t counterD_Ticks)
 {
-    return ((counterD_Ticks * p_encoder->UnitAngularD) >> ENCODER_ANGLE_SHIFT);
+    return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT);
 }
 
 // static inline uint32_t Encoder_AngleOfDeltaD(const Encoder_T * p_encoder, uint32_t counterD_Ticks)
 // {
 //     return (counterD_Ticks < p_encoder->Config.CountsPerRevolution) ?
-//         ((counterD_Ticks * p_encoder->UnitAngularD) >> ENCODER_ANGLE_SHIFT) :
+//         ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT) :
 //         ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
 // }
 
 static inline uint32_t _Encoder_CountOfAngle(const Encoder_T * p_encoder, uint16_t angle_UserDegrees)
 {
-    return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngularD;
+    return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD;
 }
 
 /*!
@@ -429,6 +427,11 @@ static inline uint32_t Encoder_CountOfDistance(const Encoder_T * p_encoder, uint
 
 */
 /******************************************************************************/
+// static inline uint32_t Encoder_RotationalSpeedOf_RPM(const Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+// {
+//     return  deltaD_Ticks * p_encoder->UnitTime_Freq * 60U / (p_encoder->Config.CountsPerRevolution * deltaT_Ticks);
+// }
+
 /*
     Only When base units in mm, as set via SetGroundRatio function.
 */

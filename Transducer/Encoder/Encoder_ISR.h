@@ -62,7 +62,7 @@ static inline void _Encoder_CaptureCount(Encoder_T * p_encoder, int8_t count)
     p_encoder->CounterD += count;
     // p_encoder->TotalD += count;
     /* instead of imitating the hw decoder case, capture a separate position */
-    p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngularD);
+    p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngleD);
 }
 
 

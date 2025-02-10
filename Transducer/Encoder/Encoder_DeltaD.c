@@ -71,8 +71,8 @@ void Encoder_DeltaD_SetInitial(Encoder_T * p_encoder)
     HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0U);
     p_encoder->IndexCount = 0U;
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    _Encoder_ZeroPulseCount(p_encoder);
 #endif
+    _Encoder_ZeroPulseCount(p_encoder);
     p_encoder->DeltaD = 0U;
 }
 

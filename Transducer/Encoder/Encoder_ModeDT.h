@@ -101,17 +101,27 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
     AngleIndex * FreqD * [ENCODER_ANGLE_DEGREES / CountsPerRevolution / POLLING_FREQ]
 
 */
-// static uint32_t Encoder_ModeDT_CaptureInterpolateDelta(Encoder_T * p_encoder)
-// {
-//     // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitInterpolateAngle;
-//     p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngularD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
-// }
+static uint32_t Encoder_ModeDT_CaptureInterpolateDelta(Encoder_T * p_encoder)
+{
+    /* Apply / POLLING_FREQ on proc */
+    p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitAngularSpeed * p_encoder->Config.InterpolateAngleScalar;
 
-// static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder)
-// {
-//     p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta, p_encoder->InterpolateAngleLimit);
-//     return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
-// }
+    /* as shifted angle */
+    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitInterpolateAngle;
+    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
+}
+
+static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder)
+{
+    p_encoder->InterpolateAngleIndex++;
+    return math_limit_upper(p_encoder->InterpolateAngleIndex * p_encoder->InterpolateAngleDelta / p_encoder->CONST.POLLING_FREQ, p_encoder->InterpolateAngleLimit);
+
+
+    // uint32_t sum = (p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta) >> ENCODER_ANGLE_SHIFT;
+    // sum = math_limit_upper(sum, p_encoder->InterpolateAngleLimit);
+    // p_encoder->InterpolateAngleSum = sum << ENCODER_ANGLE_SHIFT;
+    // return sum;
+}
 
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)

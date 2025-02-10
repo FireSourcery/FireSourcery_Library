@@ -58,14 +58,7 @@ static inline void Encoder_DeltaD_Capture(Encoder_T * p_encoder)
     p_encoder->CounterPrev = p_encoder->CounterD;
 }
 
-/******************************************************************************/
-/*!
-    Displacement
-*/
-/******************************************************************************/
-static inline int32_t  Encoder_DeltaD(const Encoder_T * p_encoder)              { return p_encoder->DeltaD; }
-static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_T * p_encoder)      { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
-static inline uint32_t Encoder_DeltaD_AsDistance(const Encoder_T * p_encoder)   { return Encoder_DistanceOfCount(p_encoder, p_encoder->DeltaD); }
+
 
 
 /******************************************************************************/
@@ -90,7 +83,7 @@ static inline uint32_t Encoder_DeltaD_ToRotationalSpeed_RPM(const Encoder_T * p_
 /*!
     @return DeltaD in counter ticks.
 */
-static inline uint32_t Encoder_DeltaD_OfAngularSpeed(const Encoder_T * p_encoder, uint32_t angularSpeed_UserDegreesPerSecond)
+static inline uint32_t Encoder_DeltaD_OfAngularSpeed(const Encoder_T * p_encoder, uint32_t angularSpeed_degreesPerSecond)
 {
     // return angularSpeed_UserDegreesPerSecond / p_encoder->UnitAngularSpeed;
 }
@@ -119,6 +112,15 @@ static inline uint32_t Encoder_DeltaD_ToLinearSpeed_UnitsPerMinute(const Encoder
 {
     // return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks * 60U, 1U);
 }
+
+/******************************************************************************/
+/*!
+    Displacement
+*/
+/******************************************************************************/
+static inline int32_t  Encoder_DeltaD(const Encoder_T * p_encoder) { return p_encoder->DeltaD; }
+static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_T * p_encoder) { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
+static inline uint32_t Encoder_DeltaD_AsDistance(const Encoder_T * p_encoder) { return Encoder_DistanceOfCount(p_encoder, p_encoder->DeltaD); }
 
 /******************************************************************************/
 /*!

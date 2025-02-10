@@ -69,31 +69,72 @@ void Encoder_InitInterrupts_Incremental(Encoder_T * p_encoder)
 */
 /******************************************************************************/
 /*
-    Rotational/Angular
-    User Input:
-    DEGREES_BITS            Angle unit conversion. Degrees per revolution in Bits. e.g. 16 for 65535 degrees cycle
-    CountsPerRevolution     Angle unit conversion. Encoder Resolution
-*/
-/*
-    UnitAngle[DEGREES/EncoderTick] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
-    UnitAngle => PulseCounter * [((1 << 32) / CountsPerRevolution] >> (32 - DEGREES_BITS)
+    UnitAngle[DEGREES/EncoderCount] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
+    UnitAngle => Counts * [(DEGREES << SHIFT) / CountsPerRevolution] >> SHIFT
 */
 void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 {
-    p_encoder->UnitAngularD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
+    p_encoder->UnitAngleD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
+}
+
+// uint32_t scale64_unsigned(uint32_t value, uint32_t factor1 uint32_t divisor)
+// {
+//     return (uint64_t)value * factor1 * factor / divisor;
+// }
+
+/*
+    As Factor,Shift of Rotational Speed
+        => RPM * DEGREES / 60 ~= RPM * 10000
+
+    UnitAngularSpeed => DeltaD * [DEGREES * UnitTime_Freq / CountsPerRevolution] / DeltaT
+        <=> [UnitAngleD * UnitTime_Freq >> SHIFT]
+
+    AngularSpeed[DEGREES/s]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
+        DeltaAngle[DEGREES]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
+    RotationalSpeed[N/s]        = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
+        Revolutions[N]          = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
+
+    e.g. DEGREES_BITS = 16,
+        UnitAngularSpeed = 160,000          : UnitTime_Freq = 20000, CountsPerRevolution = 8192
+        UnitAngularSpeed = 131,072          : UnitTime_Freq = 20000, CountsPerRevolution = 10000
+        UnitAngularSpeed = 8,000            : UnitTime_Freq = 1000, CountsPerRevolution = 8192
+        UnitAngularSpeed = 819,200,000      : UnitTime_Freq = 750000, CountsPerRevolution = 60
+
+    ModeD
+    deltaDMax * speedFactor / speedDivisor = ENCODER_ANGLE_DEGREES * rps * 2;
+*/
+void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
+{
+    p_encoder->UnitAngularSpeed = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES, p_encoder->UnitTime_Freq, p_encoder->Config.CountsPerRevolution);
+    // p_encoder->UnitAngularSpeedShift
 }
 
 /*
-    ENCODER_ANGLE_DEGREES * InterpolateAngleScalar * TIMER_FREQ / (POLLING_FREQ * CountsPerRevolution)
+    AngularSpeed / POLLING_FREQ
+    (AngleIndex / POLLING_FREQ) * (Count/Time) * (DEGREES / CountsPerRevolution)
+
+    DeltaT => (UnitTime_Freq / DeltaT)
+        AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
+
+    ModeDT => FreqD
+        AngleIndex * [FreqD * [DEGREES / CountsPerRevolution]] / POLLING_FREQ
+            <=> as UnitAngularSpeed
+
+        AngleIndex * [FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ]] >> SHIFT
+            <=> [FreqD * UnitAngleD / POLLING_FREQ]
+
+
+    DEGREES * InterpolateAngleScalar * TIMER_FREQ / (POLLING_FREQ * CountsPerRevolution)
     Scalar for electrical speed
 */
 void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
 {
+    /* always TIMER_FREQ for DeltaT for now */
     p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
     p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution;
 
-    // p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, 1 << 16, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
-    // p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution << 16;
+    /* using ANGLE_SHIFT */
+    // p_encoder->UnitInterpolateAngle = p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ;
 }
 
 /*
@@ -124,7 +165,7 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
     else /* ModeDT */
     {
         /* max = unitsFactor * ScalarSpeedRef_Rpm/60 * 2 / unitsDivisor = deltaDMax * speedFactor / speedDivisor */
-        *p_unitsSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor * 2U - 1U, p_encoder->Config.ScalarSpeedRef_Rpm, 60U * unitsDivisor));
+        *p_unitsSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor - 1U, p_encoder->Config.ScalarSpeedRef_Rpm * 2U, 60U * unitsDivisor));
         *p_unitsSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitTime_Freq << (*p_unitsSpeedShift), speedDivisor);
     }
 }
@@ -158,31 +199,9 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
     SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Config.ScalarSpeedRef_Rpm);
 
-    p_encoder->_FreqDMax = DeltaDOverflow(p_encoder);
+    // p_encoder->_FreqDMax = DeltaDOverflow(p_encoder);
 }
 
-/*
-    UnitAngularSpeed => DeltaD * [(1 << DEGREES_BITS) * UnitTime_Freq / CountsPerRevolution] / DeltaT
-        <=> UnitAngularD * UnitTime_Freq >> (32 - DEGREES_BITS)
-
-    AngularSpeed[DEGREES/s]     = DeltaD[EncoderCounts] * DegreesPerRevolution[DEGREES/1] * UnitTime_Freq[Hz] / CountsPerRevolution[EncoderCounts/1] / DeltaT[TimerTicks]
-    RotationalSpeed[N/s]        = DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / CountsPerRevolution[EncoderCounts/1] / DeltaT[TimerTicks]
-        DeltaAngle[DEGREES]     = DeltaD[EncoderCounts] * DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1]
-        Revolutions[N]          = DeltaD[EncoderCounts] / CountsPerRevolution[EncoderCounts/1]
-
-    e.g.
-        UnitAngularSpeed = 819,200,000     { DEGREES_BITS = 16, UnitTime_Freq = 750000, CountsPerRevolution = 60 }
-        UnitAngularSpeed = 160,000         { DEGREES_BITS = 16, UnitTime_Freq = 20000, CountsPerRevolution = 8192 }
-        UnitAngularSpeed = 131,072        { DEGREES_BITS = 16, UnitTime_Freq = 20000, CountsPerRevolution = 10000 }
-        UnitAngularSpeed = 8,000         { DEGREES_BITS = 16, UnitTime_Freq = 1000, CountsPerRevolution = 8192 }
-
-    ModeD
-    deltaDMax * speedFactor / speedDivisor = ENCODER_ANGLE_DEGREES * rps * 2;
-*/
-void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
-{
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitAngularSpeed, &p_encoder->UnitAngularSpeedShift, ENCODER_ANGLE_DEGREES, 1U);
-}
 
 /*
     SurfaceToEncoder Ratio <=> gearRatio_Factor/gearRatio_Divisor
