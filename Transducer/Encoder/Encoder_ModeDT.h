@@ -58,7 +58,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     if (p_encoder->DeltaD == 0)
     {
         /* Assume its user direction, low speed opposite direction will be seen as aligned direction */
-        // p_encoder->FreqD = p_encoder->DirectionD * (timerFreq / p_encoder->DeltaT);
+        p_encoder->FreqD = math_sign(p_encoder->FreqD) * (timerFreq / p_encoder->DeltaT);
         /* DeltaT to assume time/speed at init until first pulse, or FreqD no change for 0 */
 
         /* Set next periodTk as ~DeltaT on overflow */
@@ -126,10 +126,10 @@ static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    // return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
     /* disabled for less than 1RPS 60RPM */
-    // uint32_t freqD = math_abs(p_encoder->FreqD);
-    // return ((p_encoder->Config.CountsPerRevolution) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    uint32_t freqD = math_abs(p_encoder->FreqD);
+    return ((p_encoder->Config.CountsPerRevolution) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
 /*
@@ -164,7 +164,7 @@ static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
 */
 static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
 {
-    return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetScalarVelocity(p_encoder);
+    return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
 }
 
 static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)

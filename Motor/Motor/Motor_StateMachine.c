@@ -90,7 +90,7 @@ static StateMachine_State_T * Init_Proc(Motor_T * p_motor)
 {
     bool wait = true;
 
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
+    // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 
     if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
     {
