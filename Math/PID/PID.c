@@ -117,7 +117,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     @param[in] feedback [-32768:32767] with over saturation
         (setpoint - feedback) [-65535:65535]
 */
-int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
+int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
@@ -133,7 +133,7 @@ void PID_Reset(PID_T * p_pid)
     p_pid->Output = 0;
 }
 
-void PID_SetOutputState(PID_T * p_pid, int32_t integral)
+void PID_SetOutputState(PID_T * p_pid, int16_t integral)
 {
     SetIntegral(p_pid, math_clamp(integral, p_pid->OutputMin, p_pid->OutputMax));
     p_pid->Output = GetIntegral(p_pid); /* passed value after clamp */
@@ -143,7 +143,7 @@ void PID_SetOutputState(PID_T * p_pid, int32_t integral)
 /*!
     @param[in] [-32767:32767]
 */
-void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max)
+void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
     if (max > min)
     {

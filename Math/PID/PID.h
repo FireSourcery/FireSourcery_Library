@@ -74,6 +74,7 @@ typedef struct PID
     int16_t IntegralGain;
     int8_t IntegralGainShift;
 
+    /*  */
     int32_t IntegralAccum; /* Shifted 16 */
     int32_t ErrorPrev;
     int16_t OutputMin; /* -32768 Min */
@@ -114,10 +115,10 @@ static inline int16_t _PID_GetKi_Scalar10_Runtime(const PID_T * p_pid) { return 
 */
 /******************************************************************************/
 extern void PID_Init(PID_T * p_pid);
-extern int32_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
+extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
-extern void PID_SetOutputState(PID_T * p_pid, int32_t integral);
-extern void PID_SetOutputLimits(PID_T * p_pid, int32_t min, int32_t max);
+extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);
+extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
 extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);
 extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32);

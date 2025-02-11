@@ -76,8 +76,8 @@ void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
 {
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
-    p_encoder->DeltaTh = 0U;
+    p_encoder->DeltaTh = p_encoder->CONST.TIMER_FREQ;
     p_encoder->FreqD = 0;
-    p_encoder->DirectionD = 0;
+    // p_encoder->DirectionD = 0;
     // p_encoder->TotalD = 0;
 }

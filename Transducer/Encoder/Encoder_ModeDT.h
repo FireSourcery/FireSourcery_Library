@@ -47,8 +47,8 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 {
     const uint32_t sampleFreq = p_encoder->CONST.SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
     const uint32_t timerFreq = p_encoder->CONST.TIMER_FREQ;
-    // const uint32_t sampleTime = timerFreq / sampleFreq;
-    const uint32_t sampleTime = p_encoder->CONST.SAMPLE_TIME;
+    // const uint32_t samplePeriod = timerFreq / sampleFreq;
+    const uint32_t samplePeriod = p_encoder->CONST.SAMPLE_TIME; /* in Timer ticks */
 
     uint32_t deltaTh;
     uint32_t freqTk;
@@ -57,26 +57,25 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 
     if (p_encoder->DeltaD == 0)
     {
-        /* Assume its user direction, low speed opposite direction will be seen as aligned direction */
-        p_encoder->FreqD = math_sign(p_encoder->FreqD) * (timerFreq / p_encoder->DeltaT);
         /* DeltaT to assume time/speed at init until first pulse, or FreqD no change for 0 */
+         // p_encoder->FreqD = math_sign(p_encoder->FreqD) * (timerFreq / p_encoder->DeltaT);
 
         /* Set next periodTk as ~DeltaT on overflow */
         p_encoder->DeltaTh = (HAL_Encoder_ReadTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER) == true) ?
-            // (p_encoder->DeltaT - sampleTime) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+            // (p_encoder->DeltaT - samplePeriod) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
             /* accumulating should be more precise than approximating current DeltaT ~= Prev DeltaT */
-            (p_encoder->DeltaTh + sampleTime) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+            (p_encoder->DeltaTh + samplePeriod) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     }
     else
     {
         // p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
 
-        /* Overflow is > SampleTime. DeltaD == 0 occurs prior. */
+        /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
         deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
 
         /* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
         // freqTk = (timerFreq * sampleFreq) / (timerFreq + (sampleFreq * (p_encoder->DeltaTh - deltaTh)));
-        freqTk = (timerFreq) / (sampleTime + (p_encoder->DeltaTh - deltaTh));
+        freqTk = (timerFreq) / (samplePeriod + (p_encoder->DeltaTh - deltaTh));
 
         /* if (periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
         /* periodTk ~= periodTs */
@@ -104,23 +103,25 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 static uint32_t Encoder_ModeDT_CaptureInterpolateDelta(Encoder_T * p_encoder)
 {
     /* Apply / POLLING_FREQ on proc */
-    p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitAngularSpeed * p_encoder->Config.InterpolateAngleScalar;
+    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitAngularSpeed * p_encoder->Config.InterpolateAngleScalar;
 
     /* as shifted angle */
     // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitInterpolateAngle;
-    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
+    p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
 }
 
+/*
+    At POLLING_FREQ
+*/
 static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder)
 {
-    p_encoder->InterpolateAngleIndex++;
-    return math_limit_upper(p_encoder->InterpolateAngleIndex * p_encoder->InterpolateAngleDelta / p_encoder->CONST.POLLING_FREQ, p_encoder->InterpolateAngleLimit);
+    // p_encoder->InterpolateAngleIndex++;
+    // return math_limit_upper(p_encoder->InterpolateAngleIndex * p_encoder->InterpolateAngleDelta / p_encoder->CONST.POLLING_FREQ, p_encoder->InterpolateAngleLimit);
 
-
-    // uint32_t sum = (p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta) >> ENCODER_ANGLE_SHIFT;
-    // sum = math_limit_upper(sum, p_encoder->InterpolateAngleLimit);
-    // p_encoder->InterpolateAngleSum = sum << ENCODER_ANGLE_SHIFT;
-    // return sum;
+    uint32_t angle = (p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta) >> ENCODER_ANGLE_SHIFT;
+    angle = math_limit_upper(angle, p_encoder->InterpolateAngleLimit);
+    p_encoder->InterpolateAngleSum = angle << ENCODER_ANGLE_SHIFT;
+    return angle;
 }
 
 /* |DeltaD| <= 1 */

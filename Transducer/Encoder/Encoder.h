@@ -141,8 +141,7 @@ typedef struct Encoder
     uint32_t CounterD;
     uint32_t Angle32;
 
-    int32_t DirectionComp;
-    int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
+    // int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
 
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
@@ -179,6 +178,7 @@ typedef struct Encoder
     /*
         Unit conversion. derived on init from Nv Config
     */
+    // int32_t DirectionComp;               /* cache value if needed */
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
     uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
@@ -344,8 +344,8 @@ static inline void Encoder_CaptureDirection(Encoder_T * p_encoder, int8_t sign)
 static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
 {
     p_encoder->CounterD = 0U;
-    p_encoder->IndexCount = 0U;
     p_encoder->CounterPrev = 0U;
+    p_encoder->IndexCount = 0U;
 
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);

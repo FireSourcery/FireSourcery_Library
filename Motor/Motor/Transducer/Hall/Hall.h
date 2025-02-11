@@ -197,18 +197,38 @@ static const uint16_t _HALL_ANGLE_BOUNDARY = 5461U; /* 30 Degrees */
 /* +180 degrees */
 static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
 
+/* Center of Hall sensor angle */
+static inline uint16_t _Hall_Angle16Of(Hall_T * p_hall, Hall_Id_T virtualId)
+{
+    static const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
+    {
+        [HALL_ANGLE_330_30]     = 0U,         /* 0 */
+        [HALL_ANGLE_30_90]      = 10922U,     /* 60 */
+        [HALL_ANGLE_90_150]     = 21845U,     /* 120 */
+        [HALL_ANGLE_150_210]    = 32768U,     /* 180 */
+        [HALL_ANGLE_210_270]    = 43690U,     /* 240 */
+        [HALL_ANGLE_270_330]    = 54613U,     /* 300 */
+        [HALL_ANGLE_ERROR_0]    = 0U,
+        [HALL_ANGLE_ERROR_7]    = 0U,
+    };
+
+    return _HALL_ANGLE_TABLE[virtualId];
+}
+
+
 /*
     Virtual Id
 */
 static inline Hall_Id_T Hall_IdOf(Hall_T * p_hall, uint8_t physicalSensors) { return p_hall->Config.SensorsTable[physicalSensors]; }
+
 /*
     Angle Approximation and Capture
 */
-/* Center of Hall sensor angle */
-static inline uint16_t _Hall_Angle16Of(Hall_T * p_hall, uint8_t physicalSensors) { return _HALL_ANGLE_TABLE[p_hall->Config.SensorsTable[physicalSensors]]; }
+static inline uint16_t Hall_Angle16Of(Hall_T * p_hall, uint8_t physicalSensors)
+{
+    return _Hall_Angle16Of(p_hall, p_hall->Config.SensorsTable[physicalSensors]) - ((int16_t)p_hall->Direction * _HALL_ANGLE_BOUNDARY);
+}
 
-static inline uint16_t Hall_Angle16Of(Hall_T * p_hall, uint8_t physicalSensors) { return _Hall_Angle16Of(p_hall, physicalSensors) + (p_hall->Direction * _HALL_ANGLE_BOUNDARY); }
-// return _Hall_Angle16Of(p_hall, physicalSensors) + _Hall_Angle16Boundary(p_hall);
 
 /*
     Physical Sensors
