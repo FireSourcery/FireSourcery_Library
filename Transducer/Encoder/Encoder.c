@@ -104,7 +104,6 @@ static uint32_t MaxDeltaD(Encoder_T * p_encoder)
     CountsPerRevolution = 24, ScalarSpeedRef_Rpm = 4000 =>
        671,088 <=> 40 << Shift
 */
-
 uint32_t Encoder_GetScalarSpeedFactor(Encoder_T * p_encoder) { return (uint32_t)65536U * 60U; }
 uint32_t Encoder_GetScalarSpeedDivisor(Encoder_T * p_encoder) { return p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm; }
 
@@ -113,7 +112,7 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
     uint32_t unitsFactor = Encoder_GetScalarSpeedFactor(p_encoder);
     uint32_t unitsDivisor = Encoder_GetScalarSpeedDivisor(p_encoder);
     p_encoder->UnitScalarSpeedShift = 14U;
-    p_encoder->UnitScalarSpeed = (uint64_t)unitsFactor * p_encoder->UnitTime_Freq << p_encoder->UnitScalarSpeedShift / unitsDivisor;
+    p_encoder->UnitScalarSpeed = ((uint64_t)unitsFactor << p_encoder->UnitScalarSpeedShift) * p_encoder->UnitTime_Freq / unitsDivisor;
 }
 
 /*
