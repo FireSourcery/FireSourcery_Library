@@ -119,7 +119,7 @@ static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
 
 /* Separate getters for compatibility with StateMachine SetInput and ProcInput */
-static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_GetState(&p_motor->Phase); }
+static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_ReadState(&p_motor->Phase); }
 static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
 static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
@@ -195,7 +195,7 @@ extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_ActivateControl(Motor_T * p_motor);
 extern void Motor_User_Release(Motor_T * p_motor);
 extern void Motor_User_Hold(Motor_T * p_motor);
-extern void Motor_User_StartPhaseState(Motor_T * p_motor, Phase_State_T state);
+extern void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_State_T state);
 extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
 extern void Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);

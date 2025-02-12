@@ -221,7 +221,8 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_T * p_motor)
 }
 
 /*
-    activate angle with current feedback for align and openloop
+    Activate angle with or without current feedback
+    for align and openloop
 */
 void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
 {
@@ -231,19 +232,6 @@ void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_
     ProcInnerFeedback(p_motor);
     ProcAngleOutput(p_motor);
 }
-
-/*
-    Feed Forward Angle without ClarkePark on Current
-*/
-void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
-{
-    p_motor->ElectricalAngle = angle;
-    FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetVd(&p_motor->Foc, vd);
-    FOC_SetVq(&p_motor->Foc, vq);
-    ProcAngleOutput(p_motor);
-}
-
 
 /* Begin Observe, Ifeedback not updated */
 void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
@@ -357,20 +345,15 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
     // FOC_ClearControlState(&p_motor->Foc);
 }
 
-void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor)
+void Motor_FOC_ProcOpenLoopCmd(Motor_T * p_motor)
 {
-    // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->Ramp), 0);
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_GetTarget(&p_motor->Ramp), 0);
 }
 
 
 void Motor_FOC_ProcAlign(Motor_T * p_motor)
 {
-    // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
-    // Motor_PollCaptureSpeed(p_motor);
-
-    Motor_FOC_ProcAngleFeedforward(p_motor, 0, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
 }
 
 
@@ -385,7 +368,7 @@ void Motor_FOC_StartAlignValidate(Motor_T * p_motor)
 }
 
 /*
-    OpenLoop - Feed forward input angle, enable/disable current feedback
+    OpenLoop Spin - Feed forward input angle, enable/disable current feedback
     ElectricalAngle => integrate speed to angle
 */
 void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
@@ -411,5 +394,15 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, 0, Ramp_ProcOutput(&p_motor->AuxRamp));
 }
 
-
-
+/*
+    Feed forward voltage angle without feedback on current
+*/
+void Motor_FOC_ActivateVAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
+{
+    p_motor->FeedbackMode.Current = 0U; /* Disable */
+    p_motor->ElectricalAngle = angle;
+    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetVd(&p_motor->Foc, vd);
+    FOC_SetVq(&p_motor->Foc, vq);
+    ProcAngleOutput(p_motor);
+}

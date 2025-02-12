@@ -220,13 +220,41 @@ bool Phase_IsGround(const Phase_T * p_phase)
     return ((Phase_IsEnabledABC(p_phase) == true) && ((PWM_ReadDuty_Ticks(&p_phase->PwmA) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmB) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmC) == 0U)));
 }
 
-Phase_State_T Phase_GetState(const Phase_T * p_phase)
+Phase_State_T Phase_ReadState(const Phase_T * p_phase)
 {
     Phase_State_T state;
     if      (Phase_IsFloat(p_phase) == true)    { state = PHASE_STATE_FLOAT; }
     else if (Phase_IsGround(p_phase) == true)   { state = PHASE_STATE_GROUND; }
     else                                        { state = PHASE_STATE_ACTIVE; }
     return state;
+}
+
+void Phase_ActivateState(const Phase_T * p_phase, Phase_State_T state)
+{
+    switch (state)
+    {
+        case PHASE_STATE_FLOAT:     Phase_Float(p_phase); break;
+        case PHASE_STATE_GROUND:    Phase_Ground(p_phase); break;
+        case PHASE_STATE_ACTIVE:
+            Phase_WriteDuty(p_phase, PWM_DUTY_MAX / 2, PWM_DUTY_MAX / 2, PWM_DUTY_MAX / 2);
+            Phase_ActivateOutputABC(p_phase);
+            break;
+        default: break;
+    }
+}
+
+void Phase_ActivateStateDuty(const Phase_T * p_phase, Phase_State_T state, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+{
+    switch (state)
+    {
+        case PHASE_STATE_FLOAT:     Phase_Float(p_phase); break;
+        case PHASE_STATE_GROUND:    Phase_Ground(p_phase); break;
+        case PHASE_STATE_ACTIVE:
+            Phase_WriteDuty(p_phase, pwmDutyA, pwmDutyB, pwmDutyC);
+            Phase_ActivateOutputABC(p_phase);
+            break;
+        default: break;
+    }
 }
 
 /******************************************************************************/

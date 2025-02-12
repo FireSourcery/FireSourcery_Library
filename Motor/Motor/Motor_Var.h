@@ -118,6 +118,7 @@ typedef enum Motor_VarInput
     MOTOR_VAR_CMD_OPEN_LOOP,
 
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
+    MOTOR_VAR_OPEN_LOOP_PHASE_STATE,
     MOTOR_VAR_OPEN_LOOP_ANGLE,
 }
 Motor_VarInput_T;
@@ -184,8 +185,8 @@ Motor_VarConfig_Actuation_T;
 
 // LocalUnits
 // uint16_t SurfaceDiameter;
-// uint16_t GearRatio_Factor;
-// uint16_t GearRatio_Divisor;
+// uint16_t GearRatioOutput;
+// uint16_t GearRatioInput;
 
 typedef enum Motor_VarConfig_Hall
 {

@@ -142,6 +142,7 @@ Hall_Id_T;
 typedef enum Hall_Direction
 {
     HALL_DIRECTION_CW = -1,
+    HALL_DIRECTION_UNKNOWN = 0,
     HALL_DIRECTION_CCW = 1,
 }
 Hall_Direction_T;
@@ -166,9 +167,9 @@ typedef struct Hall
     Pin_T PinB;
     Pin_T PinC;
     Hall_Config_T Config;
-    Hall_Direction_T Direction;
     Hall_Sensors_T Sensors;     /* Save last physical read */
     Hall_Sensors_T SensorsPrev; /* Separate States for table */
+    Hall_Direction_T Direction;
     volatile uint16_t Angle;
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
     Hall_CommutationPhase_T CommuntationTable[HALL_SENSORS_TABLE_LENGTH];
@@ -198,7 +199,7 @@ static const uint16_t _HALL_ANGLE_BOUNDARY = 5461U; /* 30 Degrees */
 static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
 
 /* Center of Hall sensor angle */
-static inline uint16_t _Hall_Angle16Of(Hall_T * p_hall, Hall_Id_T virtualId)
+static inline uint16_t _Hall_Angle16Of(Hall_Id_T virtualId)
 {
     static const uint16_t _HALL_ANGLE_TABLE[HALL_SENSORS_TABLE_LENGTH] =
     {
@@ -226,7 +227,7 @@ static inline Hall_Id_T Hall_IdOf(Hall_T * p_hall, uint8_t physicalSensors) { re
 */
 static inline uint16_t Hall_Angle16Of(Hall_T * p_hall, uint8_t physicalSensors)
 {
-    return _Hall_Angle16Of(p_hall, p_hall->Config.SensorsTable[physicalSensors]) - ((int16_t)p_hall->Direction * _HALL_ANGLE_BOUNDARY);
+    return _Hall_Angle16Of(p_hall->Config.SensorsTable[physicalSensors]) - ((int16_t)p_hall->Direction * _HALL_ANGLE_BOUNDARY);
 }
 
 
@@ -264,6 +265,11 @@ static inline bool Hall_PollCaptureSensors(Hall_T * p_hall)
     return (isEdge);
 }
 
+/*
+    return true once per hall cycle
+*/
+static inline bool Hall_PollEdgeA(Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == 1U) && ((p_hall->Sensors.A) == 0U)); }
+
 static inline Hall_Direction_T Hall_CaptureDirection(Hall_T * p_hall)
 {
     Hall_Direction_T direction;
@@ -284,43 +290,16 @@ static inline Hall_Direction_T Hall_CaptureDirection(Hall_T * p_hall)
         case ((HALL_SENSORS_VIRTUAL_INV_A << 3U) | HALL_SENSORS_VIRTUAL_B):  direction = HALL_DIRECTION_CW;  break;
         case ((HALL_SENSORS_VIRTUAL_B << 3U) | HALL_SENSORS_VIRTUAL_INV_C):  direction = HALL_DIRECTION_CW;  break;
         case ((HALL_SENSORS_VIRTUAL_INV_C << 3U) | HALL_SENSORS_VIRTUAL_A):  direction = HALL_DIRECTION_CW;  break;
-        default:
-            // p_hall->Direction = MOTOR_DIRECTION_UNKNOWN;
-            break;
+        default: direction = HALL_DIRECTION_UNKNOWN; break;
     }
 
+    // p_hall->DirectionPrev = p_hall->Direction;
     p_hall->Direction = direction;
 }
 
-
-static inline void Hall_CaptureAngle_ISR(Hall_T * p_hall)
-{
-    Hall_CaptureSensors_ISR(p_hall);
-    p_hall->Angle = Hall_Angle16Of(p_hall, p_hall->Sensors.Value);
-    // Hall_CaptureDirection(p_hall);
-}
-
-static inline bool Hall_PollCaptureAngle(Hall_T * p_hall)
-{
-    bool isEdge = Hall_PollCaptureSensors(p_hall);
-    if (isEdge == true) { p_hall->Angle = Hall_Angle16Of(p_hall, p_hall->Sensors.Value); }
-    return (isEdge);
-}
-
-
-/*
-    return true once per hall cycle
-*/
-static inline bool Hall_PollEdgeA(Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == true) && ((p_hall->Sensors.A) == false)); }
-
-/* Next poll is edge */
-static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
-
-static inline void Hall_SetInitial(Hall_T * p_hall)
-{
-    Hall_CaptureSensors_ISR(p_hall);
-    p_hall->Angle = _Hall_Angle16Of(p_hall, p_hall->Sensors.Value); /* assume middle */
-}
+static inline Hall_Sensors_T Hall_GetSensors(Hall_T * p_hall) { return p_hall->Sensors; }
+static inline Hall_Id_T Hall_GetId(Hall_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
+static inline uint16_t Hall_GetAngle16(Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value); }
 
 /*
 */
@@ -328,9 +307,14 @@ static inline Hall_Direction_T Hall_GetDirection(Hall_T * p_hall) { return (p_ha
 /* Sets direction => commutation, angle degrees16 conversion */
 static inline void Hall_SetDirection(Hall_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
 
-static inline Hall_Sensors_T Hall_GetSensors(Hall_T * p_hall) { return p_hall->Sensors; }
-static inline Hall_Id_T Hall_GetId(Hall_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
-static inline uint16_t Hall_GetAngle16(Hall_T * p_hall) { return p_hall->Angle; }
+/* Next poll is edge */
+static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
+
+static inline void Hall_SetInitial(Hall_T * p_hall)
+{
+    Hall_CaptureSensors_ISR(p_hall);
+    p_hall->Angle = _Hall_Angle16Of(p_hall->Sensors.Value); /* assume middle */
+}
 
 /*
     Six-step commutation Id
@@ -381,6 +365,7 @@ extern void Hall_CalibratePhaseC(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvB(Hall_T * p_hall);
 
 #endif
+
 /*
    Caller determins direction
 */
@@ -396,4 +381,18 @@ extern void Hall_CalibratePhaseInvB(Hall_T * p_hall);
 // {
 //     return ((p_hall->Direction == HALL_DIRECTION_CW) ? _HALL_ANGLE_BOUNDARY : 0 - _HALL_ANGLE_BOUNDARY); /* unsigned angle wraps */
 //     // return (p_hall->Direction * _HALL_ANGLE_BOUNDARY);
+// }
+
+// static inline void Hall_CaptureAngle_ISR(Hall_T * p_hall)
+// {
+//     Hall_CaptureSensors_ISR(p_hall);
+//     // Hall_CaptureDirection(p_hall);
+//     p_hall->Angle = Hall_Angle16Of(p_hall, p_hall->Sensors.Value);
+// }
+
+// static inline bool Hall_PollCaptureAngle(Hall_T * p_hall)
+// {
+//     bool isEdge = Hall_PollCaptureSensors(p_hall);
+//     if (isEdge == true) { p_hall->Angle = Hall_Angle16Of(p_hall, p_hall->Sensors.Value); }
+//     return (isEdge);
 // }

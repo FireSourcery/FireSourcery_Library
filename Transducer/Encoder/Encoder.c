@@ -83,61 +83,6 @@ void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 // }
 
 /*
-    As Factor,Shift of Rotational Speed
-        => RPM * DEGREES / 60 ~= RPM * 10000
-
-    UnitAngularSpeed => DeltaD * [DEGREES * UnitTime_Freq / CountsPerRevolution] / DeltaT
-        <=> [UnitAngleD * UnitTime_Freq >> SHIFT]
-
-    AngularSpeed[DEGREES/s]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
-        DeltaAngle[DEGREES]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
-    RotationalSpeed[N/s]        = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
-        Revolutions[N]          = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
-
-    e.g. DEGREES_BITS = 16,
-        UnitAngularSpeed = 160,000          : UnitTime_Freq = 20000, CountsPerRevolution = 8192
-        UnitAngularSpeed = 131,072          : UnitTime_Freq = 20000, CountsPerRevolution = 10000
-        UnitAngularSpeed = 8,000            : UnitTime_Freq = 1000, CountsPerRevolution = 8192
-        UnitAngularSpeed = 819,200,000      : UnitTime_Freq = 750000, CountsPerRevolution = 60
-
-    ModeD
-    deltaDMax * speedFactor / speedDivisor = ENCODER_ANGLE_DEGREES * rps * 2;
-*/
-void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
-{
-    p_encoder->UnitAngularSpeed = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES, p_encoder->UnitTime_Freq, p_encoder->Config.CountsPerRevolution);
-    // p_encoder->UnitAngularSpeedShift
-}
-
-/*
-    AngularSpeed / POLLING_FREQ
-    (AngleIndex / POLLING_FREQ) * (Count/Time) * (DEGREES / CountsPerRevolution)
-
-    DeltaT => (UnitTime_Freq / DeltaT)
-        AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
-
-    ModeDT => FreqD
-        AngleIndex * [FreqD * [DEGREES / CountsPerRevolution]] / POLLING_FREQ
-            <=> as UnitAngularSpeed
-
-        AngleIndex * [FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ]] >> SHIFT
-            <=> [FreqD * UnitAngleD / POLLING_FREQ]
-
-
-    DEGREES * InterpolateAngleScalar * TIMER_FREQ / (POLLING_FREQ * CountsPerRevolution)
-    Scalar for electrical speed
-*/
-void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
-{
-    /* always TIMER_FREQ for DeltaT for now */
-    p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
-    p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution;
-
-    /* using ANGLE_SHIFT */
-    // p_encoder->UnitInterpolateAngle = p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ;
-}
-
-/*
     Speed
 */
 /*
@@ -195,6 +140,10 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
     CountsPerRevolution = 24, ScalarSpeedRef_Rpm = 4000 =>
        671,088 <=> 40 << Shift
 */
+
+uint32_t Encoder_GetScalarSpeedFactor(Encoder_T * p_encoder) { return (uint32_t)65536U * 60U; }
+uint32_t Encoder_GetScalarSpeedDivisor(Encoder_T * p_encoder) { return p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm; }
+
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
     SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Config.ScalarSpeedRef_Rpm);
@@ -202,17 +151,72 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
     // p_encoder->_FreqDMax = DeltaDOverflow(p_encoder);
 }
 
+/*
+    As Factor,Shift of Rotational Speed
+        => RPM * DEGREES / 60 ~= RPM * 10000
+
+    UnitAngularSpeed => DeltaD * [DEGREES * UnitTime_Freq / CountsPerRevolution] / DeltaT
+        <=> [UnitAngleD * UnitTime_Freq >> SHIFT]
+
+    AngularSpeed[DEGREES/s]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
+        DeltaAngle[DEGREES]     = DegreesPerRevolution[DEGREES/1] / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
+    RotationalSpeed[N/s]        = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts] * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
+        Revolutions[N]          = 1 / CountsPerRevolution[EncoderCounts/1] * DeltaD[EncoderCounts]
+
+    e.g. DEGREES_BITS = 16,
+        UnitAngularSpeed = 160,000          : UnitTime_Freq = 20000, CountsPerRevolution = 8192
+        UnitAngularSpeed = 131,072          : UnitTime_Freq = 20000, CountsPerRevolution = 10000
+        UnitAngularSpeed = 8,000            : UnitTime_Freq = 1000, CountsPerRevolution = 8192
+        UnitAngularSpeed = 819,200,000      : UnitTime_Freq = 750000, CountsPerRevolution = 60
+
+    ModeD
+    deltaDMax * speedFactor / speedDivisor = ENCODER_ANGLE_DEGREES * rps * 2;
+*/
+void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
+{
+    p_encoder->UnitAngularSpeed = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES, p_encoder->UnitTime_Freq, p_encoder->Config.CountsPerRevolution);
+    // p_encoder->UnitAngularSpeedShift
+}
 
 /*
-    SurfaceToEncoder Ratio <=> gearRatio_Factor/gearRatio_Divisor
+    AngularSpeed / POLLING_FREQ
+    (AngleIndex / POLLING_FREQ) * (Count/Time) * (DEGREES / CountsPerRevolution)
 
-    SurfaceSpeed_DistancePerHour = (RPM * gearRatio_Divisor/gearRatio_Factor) * surfaceDiameter_Units * 314 / 100 * 60 / DistanceConversion
+    DeltaT => (UnitTime_Freq / DeltaT)
+        AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
+
+    ModeDT => FreqD
+        AngleIndex * [FreqD * [DEGREES / CountsPerRevolution]] / POLLING_FREQ
+            <=> as UnitAngularSpeed
+
+        AngleIndex * [FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ]] >> SHIFT
+            <=> [FreqD * UnitAngleD / POLLING_FREQ]
+
+
+    DEGREES * InterpolateAngleScalar * TIMER_FREQ / (POLLING_FREQ * CountsPerRevolution)
+    Scalar for electrical speed
+*/
+void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
+{
+    /* always TIMER_FREQ for DeltaT for now */
+    p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
+    p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution;
+
+    /* using ANGLE_SHIFT */
+    // p_encoder->UnitInterpolateAngle = p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ;
+}
+
+/*
+    todo linear/unit speed use getter
+    Surface/Encoder Ratio <=> gearRatioOutput/gearRatioInput
+
+    SurfaceSpeed_DistancePerHour = (RPM * gearRatioInput/gearRatioOutput) * surfaceDiameter_Units * 314 / 100 * 60 / DistanceConversion
     RPM = 60 *(deltaD_Ticks * UnitTime_Freq) / (CountsPerRevolution * deltaT_Ticks)
 
-    SurfaceSpeed_UnitsPerSecond = (deltaD_Ticks * UnitTime_Freq * gearRatio_Divisor * surfaceDiameter_Units * 314) / (CountsPerRevolution * deltaT_Ticks * gearRatio_Factor * 100))
-    SurfaceSpeed_UnitsPerSecond = deltaD_Ticks * [[UnitTime_Freq * gearRatio_Divisor * surfaceDiameter_Units * 314] / [CountsPerRevolution * gearRatio_Factor * 100]] / deltaT_Ticks
+    SurfaceSpeed_UnitsPerSecond = (deltaD_Ticks * UnitTime_Freq * gearRatioInput * surfaceDiameter_Units * 314) / (CountsPerRevolution * deltaT_Ticks * gearRatioOutput * 100))
+    SurfaceSpeed_UnitsPerSecond = deltaD_Ticks * [[UnitTime_Freq * gearRatioInput * surfaceDiameter_Units * 314] / [CountsPerRevolution * gearRatioOutput * 100]] / deltaT_Ticks
 
-    SurfaceSpeed_DistancePerHour = ((60 * deltaD_Ticks * UnitTime_Freq * gearRatio_Divisor * surfaceDiameter_Units * 314 * 60) / (CountsPerRevolution * deltaT_Ticks * gearRatio_Factor * 100 * DistanceConversion))
+    SurfaceSpeed_DistancePerHour = ((60 * deltaD_Ticks * UnitTime_Freq * gearRatioInput * surfaceDiameter_Units * 314 * 60) / (CountsPerRevolution * deltaT_Ticks * gearRatioOutput * 100 * DistanceConversion))
 
     Units => mm
     DistanceConversion:
@@ -228,11 +232,11 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
         mph = 136 * 24 * 60 * 60 / 1609344 = 7.3
         kmh = 136 * 24 * 60 * 60 / 1000000 = 11.7504
 
-    DistancePerRevolution = [gearRatio_Divisor * surfaceDiameter_Mm * 314 / gearRatio_Factor * 100]
+    DistancePerRevolution = [gearRatioInput * surfaceDiameter_Mm * 314 / gearRatioOutput * 100]
 */
 void _Encoder_ResetUnitsLinearSpeed(Encoder_T * p_encoder)
 {
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitSurfaceSpeed, &p_encoder->UnitSurfaceSpeedShift, (p_encoder->Config.GearRatio_Divisor * p_encoder->Config.SurfaceDiameter * 314), (p_encoder->Config.GearRatio_Factor * 100));
+    SetUnitsSpeed(p_encoder, &p_encoder->UnitSurfaceSpeed, &p_encoder->UnitSurfaceSpeedShift, (p_encoder->Config.GearRatioInput * p_encoder->Config.SurfaceDiameter * 314), (p_encoder->Config.GearRatioOutput * 100));
 }
 
 void _Encoder_ResetUnits(Encoder_T * p_encoder)
@@ -259,24 +263,24 @@ void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
 }
 
 /*
-    gearRatio is Surface:Encoder
+    gearRatio as Surface/Encoder
 */
-void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor)
+void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
 {
     p_encoder->Config.SurfaceDiameter = surfaceDiameter;
-    p_encoder->Config.GearRatio_Factor = gearRatio_Factor;
-    p_encoder->Config.GearRatio_Divisor = gearRatio_Divisor;
+    p_encoder->Config.GearRatioOutput = gearRatioSurface;
+    p_encoder->Config.GearRatioInput = gearRatioDrive;
     _Encoder_ResetUnitsLinearSpeed(p_encoder);
 }
 
-void Encoder_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+void Encoder_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
 {
-    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
 }
 
-void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
 {
-    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);
+    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
 }
 
 

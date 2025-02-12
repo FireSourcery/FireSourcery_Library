@@ -38,19 +38,21 @@
 */
 static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
 {
-    int32_t output = p_ramp->State;
+    int32_t output32 = p_ramp->State;
+
+    // output32 = p_ramp->State + math_sign(p_ramp->Target - p_ramp->State) * (p_ramp->Coefficient * steps);
 
     // Ramp slope always positive
-    if (p_ramp->State < p_ramp->Target) // incrementing
+    if (p_ramp->Target > p_ramp->State) // incrementing
     {
-        output = math_limit_upper(p_ramp->State + (p_ramp->Coefficient * steps), p_ramp->Target);
+        output32 = math_limit_upper(p_ramp->State + (p_ramp->Coefficient * steps), p_ramp->Target);
     }
-    else if (p_ramp->State > p_ramp->Target) // decrementing
+    else if (p_ramp->Target < p_ramp->State) // decrementing
     {
-        output = math_limit_lower(p_ramp->State - (p_ramp->Coefficient * steps), p_ramp->Target);
+        output32 = math_limit_lower(p_ramp->State - (p_ramp->Coefficient * steps), p_ramp->Target);
     }
 
-    return output;
+    return output32;
 }
 
 int32_t Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
@@ -98,6 +100,12 @@ void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range)
 {
     p_ramp->Coefficient = (range << p_ramp->Shift) / duration_Ticks;
 }
+
+/* [0:inf] => [0:UINT16_MAX] */
+// void Ramp_SetSlope_Fixed16(Ramp_T * p_ramp, uint16_t rate)
+// {
+//     p_ramp->Coefficient = rate << RAMP_SHIFT;
+// }
 
 /*
     (duration_Ms * updateFreq_Hz) [0:131,071,000]

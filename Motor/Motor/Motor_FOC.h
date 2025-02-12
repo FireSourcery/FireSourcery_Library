@@ -113,6 +113,7 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_mo
 static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Speed_Fract16); }
 static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Speed_Fract16); }
 
+// static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return (math_sign(p_motor->Foc.Vq) >= 0) && (p_motor->Direction == MOTOR_DIRECTION_CCW); }
 
 static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
 
@@ -131,6 +132,7 @@ static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Mo
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
+extern void Motor_FOC_SetAngleFeedforward(Motor_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
 
 extern void Motor_FOC_ActivateOutputZero(Motor_T * p_motor);
 extern void Motor_FOC_ActivateOutput(Motor_T * p_motor);
@@ -139,8 +141,10 @@ extern void Motor_FOC_ClearFeedbackState(Motor_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_CaptureIabc(Motor_T * p_motor);
-extern void Motor_FOC_StartAlign(Motor_T * p_motor);
+
 extern void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor);
+
+extern void Motor_FOC_StartAlign(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
 extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
 extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);

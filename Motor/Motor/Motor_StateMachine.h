@@ -46,6 +46,7 @@ typedef enum Motor_StateMachine_Input
     MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode] flags */
     MSM_INPUT_DIRECTION,
     MSM_INPUT_CALIBRATION,
+    MSM_INPUT_OPEN_LOOP,
 }
 Motor_StateMachine_Input_T;
 
@@ -68,8 +69,9 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /* Wrap for array */
 static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uint8_t stateId) { return (StateMachine_IsActiveState(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
 
-void Motor_OpenLoop_SetAngle(Motor_T * p_motor, angle16_t angle);
-void Motor_OpenLoop_SetPhaseAlign(Motor_T * p_motor, Phase_Align_T phase);
+void Motor_User_SetOpenLoopAngle(Motor_T * p_motor, angle16_t angle);
+void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase);
+void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase);
 void Motor_OpenLoop_StartUp(Motor_T * p_motor);
 
 extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);

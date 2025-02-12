@@ -206,7 +206,7 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-            if (Hall_PollCaptureAngle(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
+            if (Hall_PollCaptureSensors(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
             //
             /* by assigned direction, alternatively compare prev state */
         #endif
@@ -333,7 +333,7 @@ bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
     switch(p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
-        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_GetIsAligned(&p_motor->Encoder);    break; //isHomed
+        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(&p_motor->Encoder);    break; //isHomed
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
 #endif
@@ -858,7 +858,7 @@ void Motor_ResetUnitsEncoder(Motor_T * p_motor)
     {
         Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Config.PolePairs);
     }
-    // if(p_motor->Config.GearRatio_Factor != p_motor->Encoder.Config.GearRatio_Factor) ||
+    // if(p_motor->Config.GearRatioOutput != p_motor->Encoder.Config.GearRatioOutput) ||
     // {
     //     Encoder_SetSurfaceRatio(&p_motor->Encoder, p_motor->Config.GearRatio);
     // }

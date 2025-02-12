@@ -210,16 +210,30 @@ typedef enum Motor_Direction
 Motor_Direction_T;
 
 /*
-
+    Open Loop SubState
 */
 typedef enum Motor_OpenLoopState
 {
     MOTOR_OPEN_LOOP_STATE_IDLE,
+    MOTOR_OPEN_LOOP_STATE_PASSIVE,
+    MOTOR_OPEN_LOOP_STATE_CMD,
     MOTOR_OPEN_LOOP_STATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_RUN,
+    // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
+    MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
+    MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
+
+    // MOTOR_OPEN_LOOP_CMD_STARTUP,
+    MOTOR_OPEN_LOOP_CMD_SET_ANGLE,
+    MOTOR_OPEN_LOOP_CMD_SET_PHASE_ALIGN,
+    MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
 }
 Motor_OpenLoopState_T;
+
+// typedef enum Motor_OpenLoopCmd
+// {
+// }
+// Motor_OpenLoopCmd_T;
 
 /*
     Calibration SubState
@@ -343,8 +357,8 @@ typedef struct Motor_Config
 
 #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
     uint16_t SurfaceDiameter;
-    uint16_t GearRatio_Factor;
-    uint16_t GearRatio_Divisor;
+    uint16_t GearRatioOutput;
+    uint16_t GearRatioInput;
 #endif
 }
 Motor_Config_T;
@@ -415,9 +429,13 @@ typedef struct Motor
     /*
         Input
     */
-    Ramp_T Ramp;          /* User Input Ramp, UserCmdValue as RampTarget - Speed, Current, or Voltage. Updated without StateMachine check */
+    Ramp_T Ramp;            /* User Input Ramp, UserCmdValue as RampTarget - Speed, Current, or Voltage. Updated without StateMachine check */
                             /* Output [-32767:32767] SetPoint => SpeedReq, IReq, VReq. */
-    Ramp_T AuxRamp;       /* OpenLoop and Align */
+
+    /*  */
+    Ramp_T AuxRamp;             /* OpenLoop and Align,  */
+    Ramp_T OpenLoopSpeedRamp;   /* OpenLoopSpeed Ramp */
+    // Ramp_T Generating;
 
     /*
 
@@ -481,15 +499,9 @@ typedef struct Motor
     uint16_t IPhasePeakTemp_Adcu;
 #endif
 
-    /*
-        OpenLoop speed ramp
-    */
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-    Ramp_T OpenLoopSpeedRamp;            /* OpenLoopSpeed Ramp */
     #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     uint32_t OpenLoopCommutationPeriod;
     #endif
-// #endif
 
 #if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
     volatile uint32_t MicrosRef;
@@ -654,6 +666,7 @@ static inline bool Motor_IsDirectionReverse(const Motor_T * p_motor) { return !M
     Convert between a user reference direction or non directional, to CCW/CW direction
     @param[in] userCmd int32_t[-65536:65536] fract16 or percent16. positive is forward relative to the user.
     @return int32_t[-65536:65536], Over saturated if input is -32768
+    *DirectionComp
 */
 static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
 
@@ -673,7 +686,6 @@ static inline int32_t _Motor_GetVLimitCw(const Motor_T * p_motor)  { return (-IN
 
 static inline int32_t _Motor_GetILimitCcw(const Motor_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
 static inline int32_t _Motor_GetILimitCw(const Motor_T * p_motor)  { return ((int32_t)0 - ((p_motor->Direction == MOTOR_DIRECTION_CCW) ? p_motor->ILimitGenerating_Fract16 : p_motor->ILimitMotoring_Fract16)); }
-
 
 static inline int32_t _Motor_GetSpeedLimitCcw(const Motor_T * p_motor)  { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16; }
 static inline int32_t _Motor_GetSpeedLimitCw(const Motor_T * p_motor)   { return ((int32_t)0 - ((p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? p_motor->SpeedLimitReverse_Fract16 : p_motor->SpeedLimitForward_Fract16)); }

@@ -87,9 +87,8 @@ typedef struct Encoder_Config
     uint16_t CountsPerRevolution;       /* Derive Angular Units. */
     uint16_t ScalarSpeedRef_Rpm;        /* Derive Percent16 Units. */
     uint16_t SurfaceDiameter;           /* Derive Linear Units. */
-    uint16_t GearRatio_Factor;          /* Derive Linear Units. Surface:Encoder Ratio */
-    uint16_t GearRatio_Divisor;         /* Derive Linear Units. */
-    /* DistancePerRevolution_Factor, DistancePerRevolution_Divider */
+    uint16_t GearRatioInput;            /* DistancePerRevolution_Divider */
+    uint16_t GearRatioOutput;           /* DistancePerRevolution_Factor */
     uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s */
     uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
 
@@ -335,7 +334,6 @@ static inline void Encoder_CaptureDirection(Encoder_T * p_encoder, int8_t sign)
 
 // static inline int32_t Encoder_GetUserDirection(const Encoder_T * p_encoder) { return  p_encoder->DirectionD * _Encoder_GetDirectionComp(p_encoder); }
 
-
 /******************************************************************************/
 /*!
     @brief
@@ -348,23 +346,11 @@ static inline void _Encoder_ZeroPulseCount(Encoder_T * p_encoder)
     p_encoder->IndexCount = 0U;
 
 #if     defined(CONFIG_ENCODER_HW_DECODER)
-    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    p_encoder->CounterPrev = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0);
-
+    HAL_Encoder_ClearCounterOverflow(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
 #endif
-
-// #if     defined(CONFIG_ENCODER_HW_DECODER)
-//     HAL_Encoder_ClearCounterOverflow(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
-//     HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0U);
-//     p_encoder->IndexCount = 0U;
-// #elif   defined(CONFIG_ENCODER_HW_EMULATED)
-// #endif
 }
-
-// static inline int32_t Encoder_GetCounterD(const Encoder_T * p_encoder)
-// {
-//     return p_encoder->CounterD * _Encoder_GetDirectionComp(p_encoder);
-// }
 
 static inline uint16_t _Encoder_GetAngle(const Encoder_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
@@ -385,7 +371,7 @@ static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encode
 /******************************************************************************/
 static bool Encoder_IsPositionRefSet(Encoder_T * p_encoder) { return p_encoder->Align != ENCODER_ALIGN_NO; }
 
-static inline bool Encoder_GetIsAligned(const Encoder_T * p_encoder)
+static inline bool Encoder_IsAligned(const Encoder_T * p_encoder)
 {
     return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
 }
@@ -472,11 +458,12 @@ extern void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder);
 extern void _Encoder_ResetUnitsLinearSpeed(Encoder_T * p_encoder);
 extern void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder);
 extern void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRevolution);
-extern void Encoder_SetDistancePerRevolution(Encoder_T * p_encoder, uint16_t distancePerCount);
 extern void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef);
-extern void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatio_Factor, uint32_t gearRatio_Divisor);
-extern void Encoder_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
-extern void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
+
+// extern void Encoder_SetDistancePerRevolution(Encoder_T * p_encoder, uint16_t distance, uint16_t rotation);
+extern void Encoder_SetSurfaceRatio(Encoder_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive);
+extern void Encoder_SetGroundRatio_US(Encoder_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio);
+extern void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

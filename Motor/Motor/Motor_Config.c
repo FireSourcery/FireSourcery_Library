@@ -49,6 +49,12 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 #endif
 }
 
+// functions as full width variable to preserve calling convention, alternatively caller handle check set state
+// typedef void(*Motor_SetInt_T)(Motor_T * p_motor, int32_t value);
+// typedef int32_t(*Motor_GetInt_T)(const Motor_T * p_motor);
+
+
+
 /******************************************************************************/
 /*
     Nvm Reference/Calibration

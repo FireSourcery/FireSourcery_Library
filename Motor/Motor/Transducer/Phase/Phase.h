@@ -127,7 +127,9 @@ extern void Phase_Float(const Phase_T * p_phase);
 extern void Phase_Ground(const Phase_T * p_phase);
 extern bool Phase_IsGround(const Phase_T * p_phase);
 extern bool Phase_IsFloat(const Phase_T * p_phase);
-extern Phase_State_T Phase_GetState(const Phase_T * p_phase);
+extern Phase_State_T Phase_ReadState(const Phase_T * p_phase);
+extern void Phase_ActivateState(const Phase_T * p_phase, Phase_State_T state);
+extern void Phase_ActivateStateDuty(const Phase_T * p_phase, Phase_State_T state, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 
 extern void Phase_Align_ActivateA(const Phase_T * p_phase, uint16_t duty);
 extern void Phase_Align_ActivateB(const Phase_T * p_phase, uint16_t duty);

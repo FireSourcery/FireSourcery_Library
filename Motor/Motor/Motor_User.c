@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include "Motor_User.h"
 #include "System/Critical/Critical.h"
+#include "Motor_StateMachine.h"
 
 /******************************************************************************/
 /*!
@@ -93,7 +94,7 @@ inline void Motor_User_Hold(Motor_T * p_motor)
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_GROUND);
 }
 
-inline void Motor_User_StartPhaseState(Motor_T * p_motor, Phase_State_T state)
+inline void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_State_T state)
 {
     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, state);
 }
@@ -197,18 +198,13 @@ void Motor_User_SetICmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 /******************************************************************************/
 /*!
     Torque Mode
-    I with release when feedback is near 0
+    case for additional process
 */
 /******************************************************************************/
 void Motor_User_StartTorqueMode(Motor_T * p_motor) { Motor_User_StartIMode(p_motor); }
 
 void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t value_Fract16)
 {
-    // action on release
-    // if (math_abs(Motor_User_GetCmd(p_motor) - value_Fract16) > 0) { PID_SetOutputState(&p_motor->PidIq, FOC_GetVq(&p_motor->Foc)); }
-
-    /* Dissipate integral if output rail reached */
-    // if (value_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
     Motor_User_SetICmd(p_motor, value_Fract16);
 }
 
@@ -217,7 +213,6 @@ void Motor_User_SetTorqueCmd(Motor_T * p_motor, int16_t value_Fract16)
 */
 void Motor_User_SetTorqueCmd_Scalar(Motor_T * p_motor, int16_t scalar_Fract16)
 {
-    // if (scalar_Fract16 < 0) { if (FOC_GetVq(&p_motor->Foc) == 0) { PID_Reset(&p_motor->PidIq); } }
     Motor_User_SetICmd_Scalar(p_motor, scalar_Fract16);
 
     // if (scalar_Fract16 < 0)
@@ -280,12 +275,8 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 /*!
 
 */
-void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
+// void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-// inline void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state)
-// {
-//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, state);
-// }
 
 /*!
     MOTOR_OPEN_LOOP_STATE_IDLE
@@ -300,6 +291,51 @@ void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
 {
     Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
 }
+
+void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state)
+{
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, state);
+}
+
+/*
+    Open Loop Process Cmds
+*/
+
+/* align on feedforward using V or I */
+void Motor_User_SetOpenLoopAngle(Motor_T * p_motor, angle16_t angle)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ALIGN); /* Transistion is protected */
+    // todo pass as struct variables
+    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
+    {
+        Motor_FOC_ClearFeedbackState(p_motor);
+        p_motor->ElectricalAngle = angle;
+    }
+}
+
+void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_PASSIVE);
+    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
+    {
+        Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)phase, p_motor->Config.AlignPower_UFract16);
+    }
+}
+
+void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_PASSIVE);
+    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
+    {
+        Motor_FOC_ClearFeedbackState(p_motor);
+        Phase_ActivateState(&p_motor->Phase, phase);
+    }
+}
+
+// void Motor_User_SetOpenLoopJog(Motor_T * p_motor, int8_t direction)
+// {
+//    //todo using register state
+// }
 #endif
 
 

@@ -81,9 +81,12 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
             Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
     */
     /* Forward rectangular approximation. */
+    // integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
+    // integral32 = math_add_sat(p_pid->IntegralAccum, integral32Part);
+    // integral = integral32 >> 16;
+
     integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    integral32 = math_add_sat(p_pid->IntegralAccum, integral32Part);
-    integral = integral32 >> 16;
+    integral = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
 
     /* Dynamic Clamp */
     integralMin = math_min(p_pid->OutputMin - proportional, 0);
@@ -155,10 +158,13 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 
 /******************************************************************************/
 /*
+    Config
+*/
+/******************************************************************************/
+/*
     Select Gain and Shift without overflow
     [Error Max] = (32,767 - (-32,768)) = 65535 => [Gain Max] = 32,767
 */
-/******************************************************************************/
 
 /*!
     Proportional(k) = Kp * error(k)
@@ -203,23 +209,17 @@ static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
 }
 
-/*
-    Config
-*/
 void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 {
     p_pid->Config.SampleFreq = sampleFreq;
     SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32); /* Reset Ki Runtime */
 }
 
-
 void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32)
 {
     p_pid->Config.Kp_Fixed32 = kp_Fixed32;
     SetKp_Fixed32(p_pid, kp_Fixed32);
 }
-
-
 
 void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
 {
@@ -228,25 +228,15 @@ void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
 }
 
 /*!
-    @param[in] kp_Fixed16 [0:INT16_MAX] Q8.8 256 => 1
+    @param[in] kp_Fixed16 [0:INT16_MAX] Q12.4
 */
-void PID_SetKp_Fixed16(PID_T * p_pid, int16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
+void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 4); }
 
 /*!
 */
-void PID_SetKi_Fixed16(PID_T * p_pid, int16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
-
-/*!
-
-*/
-void PID_SetKp_Scalar10(PID_T * p_pid, int16_t kp) { PID_SetKp_Fixed32(p_pid, ((int32_t)kp << 16) / 10); }
-
-/*!
-*/
-void PID_SetKi_Scalar10(PID_T * p_pid, int16_t ki) { PID_SetKi_Fixed32(p_pid, ((int32_t)ki << 16) / 10); }
-
-
+void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 4); }
 /*!
     todo
 */
-void PID_SetKd_Fixed16(PID_T * p_pid, int16_t kd_Fixed16) {}
+void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) {}
+

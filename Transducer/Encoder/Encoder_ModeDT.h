@@ -127,10 +127,10 @@ static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    // return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
     /* disabled for less than 1RPS 60RPM */
-    uint32_t freqD = math_abs(p_encoder->FreqD);
-    return ((p_encoder->Config.CountsPerRevolution) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    // uint32_t freqD = math_abs(p_encoder->FreqD);
+    // return ((p_encoder->Config.CountsPerRevolution) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
 }
 
 /*
