@@ -57,24 +57,21 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 
     if (p_encoder->DeltaD == 0)
     {
-        /* DeltaT to assume time/speed at init until first pulse, or FreqD no change for 0 */
-         // p_encoder->FreqD = math_sign(p_encoder->FreqD) * (timerFreq / p_encoder->DeltaT);
+        /* Same FreqD/speed until next pulse */
+        // p_encoder->FreqD = math_sign(p_encoder->FreqD) * (timerFreq / p_encoder->DeltaT);
 
         /* Set next periodTk as ~DeltaT on overflow */
-        p_encoder->DeltaTh = (HAL_Encoder_ReadTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER) == true) ?
+        p_encoder->DeltaTh = HAL_Encoder_ReadTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER) ?
             // (p_encoder->DeltaT - samplePeriod) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
             /* accumulating should be more precise than approximating current DeltaT ~= Prev DeltaT */
             (p_encoder->DeltaTh + samplePeriod) : HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
     }
     else
     {
-        // p_encoder->DirectionD = math_sign(p_encoder->DeltaD);
-
         /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
         deltaTh = HAL_Encoder_ReadTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
 
         /* periodTk = periodTs + DeltaThPrev/timerFreq - deltaTh/timerFreq */
-        // freqTk = (timerFreq * sampleFreq) / (timerFreq + (sampleFreq * (p_encoder->DeltaTh - deltaTh)));
         freqTk = (timerFreq) / (samplePeriod + (p_encoder->DeltaTh - deltaTh));
 
         /* if (periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */

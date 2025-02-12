@@ -36,13 +36,6 @@
     Init
 */
 /******************************************************************************/
-// static void InitPhasePins(Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
-//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_B, p_encoder->CONST.PIN_B_ID);
-//     HAL_Encoder_InitPin(p_encoder->CONST.P_HAL_PIN_Z, p_encoder->CONST.PIN_Z_ID);
-// }
-
 void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder)
 {
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
@@ -77,11 +70,6 @@ void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
     p_encoder->UnitAngleD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
 }
 
-// uint32_t scale64_unsigned(uint32_t value, uint32_t factor1 uint32_t divisor)
-// {
-//     return (uint64_t)value * factor1 * factor / divisor;
-// }
-
 /*
     Speed
 */
@@ -89,31 +77,8 @@ void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
     determine ModeT or ModeD/DT Mode Units
     Max = 2 * ScalarSpeedRef_Rpm * CountsPerRevolution / (60 * UnitTime_Freq)
 */
-static uint32_t DeltaDOverflow(Encoder_T * p_encoder)
-    { return math_muldiv64_unsigned(p_encoder->Config.ScalarSpeedRef_Rpm * 2U, p_encoder->Config.CountsPerRevolution, 60U * p_encoder->UnitTime_Freq); }
-
-
-/*
-    factor/divisor excluding common UnitTime_Freq/CountsPerRevolution
-*/
-static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_t * p_unitsSpeedShift, uint32_t unitsFactor, uint32_t unitsDivisor)
-{
-    uint32_t speedDivisor = p_encoder->Config.CountsPerRevolution * unitsDivisor;
-
-    // todo with more meaningful indicator
-    /* switch(Mode) */
-    if (p_encoder->UnitTime_Freq == p_encoder->CONST.TIMER_FREQ) /* Mode deltaT */
-    {
-        *p_unitsSpeedShift = 0U;
-        *p_unitsSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitTime_Freq, speedDivisor);
-    }
-    else /* ModeDT */
-    {
-        /* max = unitsFactor * ScalarSpeedRef_Rpm/60 * 2 / unitsDivisor = deltaDMax * speedFactor / speedDivisor */
-        *p_unitsSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor - 1U, p_encoder->Config.ScalarSpeedRef_Rpm * 2U, 60U * unitsDivisor));
-        *p_unitsSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitTime_Freq << (*p_unitsSpeedShift), speedDivisor);
-    }
-}
+static uint32_t MaxDeltaD(Encoder_T * p_encoder)
+    { return  p_encoder->Config.ScalarSpeedRef_Rpm * 2U * p_encoder->Config.CountsPerRevolution / (60U * p_encoder->UnitTime_Freq); }
 
 /*
     ScalarSpeed[Percent16] = Speed_Rpm * 65536 / ScalarSpeedRef_Rpm
@@ -132,9 +97,8 @@ static void SetUnitsSpeed(Encoder_T * p_encoder, uint32_t * p_unitsSpeed, uint8_
 
     ModeD/DT
     FreqD = Speed_Rpm * CountsPerRevolution / 60
-    FreqD_OVF = 2 * ScalarSpeedRef_Rpm * CountsPerRevolution / 60
-    FreqD_OVF * UnitScalarSpeed_Factor / UnitScalarSpeed_Divisor = 65536 * 2
-    UnitScalarSpeed = 131,072 / FreqD_OVF
+    [MaxD * 2] = [2 * ScalarSpeedRef_Rpm] * CountsPerRevolution / 60 / UnitTime_Freq
+    SpeedMax = 131,072 = [MaxD * 2] * [UnitScalarSpeed_Factor / UnitScalarSpeed_Divisor]
 
     e.g.
     CountsPerRevolution = 24, ScalarSpeedRef_Rpm = 4000 =>
@@ -146,9 +110,10 @@ uint32_t Encoder_GetScalarSpeedDivisor(Encoder_T * p_encoder) { return p_encoder
 
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitScalarSpeed, &p_encoder->UnitScalarSpeedShift, (uint32_t)65536U * 60U, p_encoder->Config.ScalarSpeedRef_Rpm);
-
-    // p_encoder->_FreqDMax = DeltaDOverflow(p_encoder);
+    uint32_t unitsFactor = Encoder_GetScalarSpeedFactor(p_encoder);
+    uint32_t unitsDivisor = Encoder_GetScalarSpeedDivisor(p_encoder);
+    p_encoder->UnitScalarSpeedShift = 14U;
+    p_encoder->UnitScalarSpeed = (uint64_t)unitsFactor * p_encoder->UnitTime_Freq << p_encoder->UnitScalarSpeedShift / unitsDivisor;
 }
 
 /*
@@ -169,13 +134,11 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
         UnitAngularSpeed = 8,000            : UnitTime_Freq = 1000, CountsPerRevolution = 8192
         UnitAngularSpeed = 819,200,000      : UnitTime_Freq = 750000, CountsPerRevolution = 60
 
-    ModeD
-    deltaDMax * speedFactor / speedDivisor = ENCODER_ANGLE_DEGREES * rps * 2;
 */
 void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
 {
     p_encoder->UnitAngularSpeed = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES, p_encoder->UnitTime_Freq, p_encoder->Config.CountsPerRevolution);
-    // p_encoder->UnitAngularSpeedShift
+    // p_encoder->UnitAngularSpeedShift = 0U;
 }
 
 /*
@@ -207,7 +170,6 @@ void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
 }
 
 /*
-    todo linear/unit speed use getter
     Surface/Encoder Ratio <=> gearRatioOutput/gearRatioInput
 
     SurfaceSpeed_DistancePerHour = (RPM * gearRatioInput/gearRatioOutput) * surfaceDiameter_Units * 314 / 100 * 60 / DistanceConversion
@@ -236,7 +198,10 @@ void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
 */
 void _Encoder_ResetUnitsLinearSpeed(Encoder_T * p_encoder)
 {
-    SetUnitsSpeed(p_encoder, &p_encoder->UnitSurfaceSpeed, &p_encoder->UnitSurfaceSpeedShift, (p_encoder->Config.GearRatioInput * p_encoder->Config.SurfaceDiameter * 314), (p_encoder->Config.GearRatioOutput * 100));
+    // uint32_t unitsFactor = (p_encoder->Config.GearRatioInput * p_encoder->Config.SurfaceDiameter * 314);
+    // uint32_t unitsDivisor = (p_encoder->Config.GearRatioOutput * 100);
+    // p_encoder->UnitSurfaceSpeedShift = fixed_lshift_max_signed(math_muldiv64_unsigned(unitsFactor, p_encoder->Config.ScalarSpeedRef_Rpm * 2U, 60U * unitsDivisor));
+    // p_encoder->UnitSurfaceSpeed = math_muldiv64_unsigned(unitsFactor, p_encoder->UnitTime_Freq << p_encoder->UnitSurfaceSpeedShift, unitsDivisor * p_encoder->Config.CountsPerRevolution);
 }
 
 void _Encoder_ResetUnits(Encoder_T * p_encoder)
@@ -283,10 +248,11 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
 }
 
-
+/******************************************************************************/
 /*
     Config
 */
+/******************************************************************************/
 void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
 void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
 void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Config.IsQuadratureCaptureEnabled = false; }

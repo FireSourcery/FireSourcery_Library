@@ -111,7 +111,7 @@ static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return  
 extern void PID_Init(PID_T * p_pid);
 extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
-extern void PID_SetOutputState(PID_T * p_pid, int16_t integral);
+extern void PID_SetOutputState(PID_T * p_pid, int32_t state);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
 extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);

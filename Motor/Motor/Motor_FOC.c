@@ -252,19 +252,19 @@ void Motor_FOC_ClearFeedbackState(Motor_T * p_motor)
     On FeedbackMode change and Freewheel to Run
     Match Feedback State/Ouput to Output Voltage
         Ramp, PID to Vd, Vq
+    StateMachine blocks feedback proc
 */
 void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
 {
-    // int32_t vq = FOC_GetVq(&p_motor->Foc);
-    int32_t vq = Motor_GetVSpeed_Fract16(p_motor);    // match without ad sampling
-    int32_t qReq;
+    // int16_t vq = FOC_GetVq(&p_motor->Foc) * 3/2;
+    int32_t vq = Motor_GetVSpeed_Fract16(p_motor); // match without ad sampling
+    int16_t qReq;
 
     if (p_motor->FeedbackMode.Current == 1U)
     {
         PID_SetOutputState(&p_motor->PidIq, vq);
         PID_SetOutputState(&p_motor->PidId, 0);
-        // PID_SetOutputState(&p_motor->PidId, FOC_GetVd(&p_motor->Foc));
-        qReq = 0; /* FOC_GetIq(&p_motor->Foc); if transitioning without release into freewheel */
+        qReq = FOC_GetIq(&p_motor->Foc); /* if transitioning without release into freewheel */
     }
     else
     {
@@ -282,7 +282,7 @@ void Motor_FOC_MatchFeedbackState(Motor_T * p_motor)
     }
 }
 
-// void Motor_UpdateIOutputLimits(Motor_T * p_motor)
+// void Motor_UpdateIControlLimits(Motor_T * p_motor)
 // {
 //     // update on direction only for now
 //     // if (p_motor->FeedbackMode.Current == 1U)

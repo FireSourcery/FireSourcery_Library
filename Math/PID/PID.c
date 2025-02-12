@@ -136,9 +136,10 @@ void PID_Reset(PID_T * p_pid)
     p_pid->Output = 0;
 }
 
-void PID_SetOutputState(PID_T * p_pid, int16_t integral)
+/* allow int32_t input to clamp in 1 step */
+void PID_SetOutputState(PID_T * p_pid, int32_t state)
 {
-    SetIntegral(p_pid, math_clamp(integral, p_pid->OutputMin, p_pid->OutputMax));
+    SetIntegral(p_pid, math_clamp(state, p_pid->OutputMin, p_pid->OutputMax));
     p_pid->Output = GetIntegral(p_pid); /* passed value after clamp */
     p_pid->ErrorPrev = 0;
 }

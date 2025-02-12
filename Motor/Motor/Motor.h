@@ -769,7 +769,7 @@ extern void Motor_ValidateSensorAlign(Motor_T * p_motor);
 extern bool Motor_IsClosedLoopStart(const Motor_T * p_motor);
 extern bool Motor_PollAlignFault(Motor_T * p_motor);
 
-extern void Motor_UpdateSpeedOutputLimits(Motor_T * p_motor);
+extern void Motor_UpdateSpeedControlLimits(Motor_T * p_motor);
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);
 
