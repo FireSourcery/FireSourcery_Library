@@ -324,6 +324,10 @@ void MotorController_StartControlAll(MotorController_T * p_mc)                  
 void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)    { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
 void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                  { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue, userCmd); }
 
+// void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd) {
+//     _STRUCT_ARRAY_FOREACH_SET(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd);
+// }
+
 // void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)   { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Value); }
 
 /******************************************************************************/

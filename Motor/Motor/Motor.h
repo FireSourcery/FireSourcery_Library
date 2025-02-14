@@ -142,12 +142,14 @@ typedef union Motor_FeedbackMode
 }
 Motor_FeedbackMode_T;
 
+
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
+
 
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t value) { return ((Motor_FeedbackMode_T) { .Value = value }); }
 
@@ -214,26 +216,27 @@ Motor_Direction_T;
 */
 typedef enum Motor_OpenLoopState
 {
-    MOTOR_OPEN_LOOP_STATE_IDLE,
+    MOTOR_OPEN_LOOP_STATE_ENTER,
     MOTOR_OPEN_LOOP_STATE_PASSIVE,
-    MOTOR_OPEN_LOOP_STATE_CMD,
+    // MOTOR_OPEN_LOOP_STATE_CMD,
     MOTOR_OPEN_LOOP_STATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_RUN,
     // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
 
-    // MOTOR_OPEN_LOOP_CMD_STARTUP,
-    MOTOR_OPEN_LOOP_CMD_SET_ANGLE,
-    MOTOR_OPEN_LOOP_CMD_SET_PHASE_ALIGN,
-    MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
 }
 Motor_OpenLoopState_T;
 
-// typedef enum Motor_OpenLoopCmd
-// {
-// }
-// Motor_OpenLoopCmd_T;
+typedef enum Motor_OpenLoopCmd
+{
+    MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
+    MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
+    MOTOR_OPEN_LOOP_CMD_ANGLE,
+    MOTOR_OPEN_LOOP_CMD_ALIGN,
+    // MOTOR_OPEN_LOOP_CMD_STARTUP,
+}
+Motor_OpenLoopCmd_T;
 
 /*
     Calibration SubState
@@ -545,30 +548,24 @@ static inline int32_t _Motor_Power_WattsOfFract16(int32_t vi_fract16)   { return
 /******************************************************************************/
 /*
     Simplify CommutationMode Check
-    These function should optimize away select if only 1 mode is enabled
+    This function should optimize away select if only 1 mode is enabled
 */
 /******************************************************************************/
-#if     defined(CONFIG_MOTOR_FOC_ENABLE) && !defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-#define _Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) (focFunction)
-#elif   !defined(CONFIG_MOTOR_FOC_ENABLE) && defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-#define _Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) (sixStepFunction)
-#else
 static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, const void * focFunction, const void * sixStepFunction)
 {
     const void * fn;
-    switch(p_motor->Config.CommutationMode)
+    switch (p_motor->Config.CommutationMode)
     {
-#if     defined(CONFIG_MOTOR_FOC_ENABLE)
+#if defined(CONFIG_MOTOR_FOC_ENABLE)
         case MOTOR_COMMUTATION_MODE_FOC: fn = focFunction; break;
 #endif
-#if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
         case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction; break;
 #endif
-        default: assert(false); break; // error
+        // default: assert(false); break; // error
     }
     return fn;
 }
-#endif
 
 typedef void(*Motor_ProcVoid_T)(Motor_T * p_motor);
 typedef void(*Motor_SetUInt32_T)(Motor_T * p_motor, uint32_t value);
@@ -576,6 +573,21 @@ typedef void(*Motor_SetUInt16_T)(Motor_T * p_motor, uint16_t value);
 typedef void(*Motor_SetUInt8_T)(Motor_T * p_motor, uint8_t value);
 typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
 
+#define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
+    _Generic((focSet), \
+        Motor_GetInt32_T:   (Motor_GetInt32_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
+        Motor_SetUInt32_T:  (Motor_SetUInt32_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)), \
+        Motor_SetUInt16_T:  (Motor_SetUInt16_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)), \
+        Motor_SetUInt8_T:   (Motor_SetUInt8_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
+        Motor_ProcVoid_T:   (Motor_ProcVoid_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))   \
+    )
+
+// c23
+// #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction))(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
+
+#define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) (Motor_CommutationModeFn(p_motor, focSet, sixStepSet)(p_motor __VA_OPT__(,) __VA_ARGS__))
+
+/* todo depreciate */
 static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_ProcVoid_T focProc, Motor_ProcVoid_T sixStepProc)
     { ((Motor_ProcVoid_T)_Motor_CommutationModeFn(p_motor, focProc, sixStepProc))(p_motor); }
 
@@ -591,22 +603,6 @@ static inline void Motor_SetCommutationModeUInt8(Motor_T * p_motor, Motor_SetUIn
 static inline int32_t Motor_GetCommutationModeInt32(const Motor_T * p_motor, Motor_GetInt32_T focGet, Motor_GetInt32_T sixStepGet)
     { return ((Motor_GetInt32_T)_Motor_CommutationModeFn(p_motor, focGet, sixStepGet))(p_motor); }
 
-// #define Motor_ProcCommutationMode(p_motor, focProc, sixStepProc) \
-//     _Generic((focProc), \
-//         Motor_ProcVoid_T: ((Motor_ProcVoid_T)_Motor_CommutationModeFn(p_motor, focProc, sixStepProc))(p_motor) \
-//     )
-
-// #define Motor_SetAsCommutationMode(p_motor, focSet, sixStepSet, value) \
-//     _Generic((value), \
-//         uint32_t: ((Motor_SetUInt32_T)_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor, value), \
-//         uint16_t: ((Motor_SetUInt16_T)_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor, value), \
-//         uint8_t: ((Motor_SetUInt8_T)_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor, value) \
-//     )
-
-// #define Motor_GetAsCommutationMode(p_motor, focGet, sixStepGet) \
-//     _Generic((focGet), \
-//         Motor_GetInt32_T: ((Motor_GetInt32_T)_Motor_CommutationModeFn(p_motor, focGet, sixStepGet))(p_motor) \
-//     )
 
 
 /******************************************************************************/
@@ -669,6 +665,7 @@ static inline bool Motor_IsDirectionReverse(const Motor_T * p_motor) { return !M
     *DirectionComp
 */
 static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? userCmd : (int32_t)0 - userCmd; }
+// static inline int32_t Motor_DirectionalValueOf(const Motor_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
 
 
@@ -692,6 +689,9 @@ static inline int32_t _Motor_GetSpeedLimitCw(const Motor_T * p_motor)   { return
 
 //abs
 static inline uint16_t Motor_GetSpeedLimit(const Motor_T * p_motor) { return (Motor_IsDirectionForward(p_motor) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16); }
+
+
+
 
 /* same units */
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, _Motor_GetSpeedLimitCw(p_motor), _Motor_GetSpeedLimitCcw(p_motor)); }
@@ -745,6 +745,7 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return 
 // static inline uint32_t speed_angle16_of_rpm(uint32_t sampleFreq, uint16_t rpm)          { return ((uint32_t)rpm << 16U) / (60U * sampleFreq); }
 // static inline uint32_t _Motor_RpmOfMechAngle16(uint16_t angle16)                        { return speed_rpm_of_angle16(MOTOR_STATIC.SPEED_FREQ, angle16); }
 // static inline uint32_t _Motor_Angle16OfRpm(uint16_t rpm)                                { return speed_angle16_of_rpm(MOTOR_STATIC.SPEED_FREQ, rpm); }
+
 
 
 /******************************************************************************/

@@ -182,6 +182,18 @@ void Motor_FOC_ActivateOutputZero(Motor_T * p_motor)
 }
 
 /*
+    Feed forward voltage angle without feedback on current
+*/
+void Motor_FOC_ActivateAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
+{
+    p_motor->ElectricalAngle = angle;
+    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetVd(&p_motor->Foc, vd);
+    FOC_SetVq(&p_motor->Foc, vq);
+    ProcAngleOutput(p_motor);
+}
+
+/*
     Feedback Control Loop
     StateMachine calls each PWM, ~20kHz
 */
@@ -345,13 +357,13 @@ void Motor_FOC_StartAlign(Motor_T * p_motor)
     // FOC_ClearControlState(&p_motor->Foc);
 }
 
-void Motor_FOC_ProcOpenLoopCmd(Motor_T * p_motor)
+void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 {
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_GetTarget(&p_motor->Ramp), 0);
 }
 
 
-void Motor_FOC_ProcAlign(Motor_T * p_motor)
+void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
 {
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
 }
@@ -375,17 +387,17 @@ void Motor_FOC_StartOpenLoop(Motor_T * p_motor)
 {
     p_motor->Speed_Fract16 = 0;
     Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_UFract16));    // alternatively, clamp user input ramp
-    Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_UFract16));
+    Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopSpeed_UFract16)); //use get target to
 }
 
 /*
-    RPM = Speed_Fract16 * 2 * SpeedFeedbackRef_Rpm / 65535
-    ElectricalAngle += (RPM * 65536 * PolePairs) / (60 * CONTROL_FREQ)
+    RPM = Speed_Fract16 * SpeedFeedbackRef_Rpm / FRAC16_MAX
+    ElectricalAngle += (RPM * FRAC16_MAX * PolePairs) / (60 * CONTROL_FREQ)
 */
 static void ProcOpenLoop(Motor_T * p_motor)
 {
     p_motor->Speed_Fract16 = Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp);
-    p_motor->ElectricalAngle += ((p_motor->Speed_Fract16 * Motor_GetSpeedVRef_Rpm(p_motor) * p_motor->Config.PolePairs * 2) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
+    p_motor->ElectricalAngle += ((p_motor->Speed_Fract16 * Motor_GetSpeedVRef_Rpm(p_motor) * p_motor->Config.PolePairs) / ((int32_t)60 * MOTOR_STATIC.CONTROL_FREQ));
 }
 
 void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
@@ -394,15 +406,3 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, 0, Ramp_ProcOutput(&p_motor->AuxRamp));
 }
 
-/*
-    Feed forward voltage angle without feedback on current
-*/
-void Motor_FOC_ActivateVAngle(Motor_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
-{
-    p_motor->FeedbackMode.Current = 0U; /* Disable */
-    p_motor->ElectricalAngle = angle;
-    FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetVd(&p_motor->Foc, vd);
-    FOC_SetVq(&p_motor->Foc, vq);
-    ProcAngleOutput(p_motor);
-}

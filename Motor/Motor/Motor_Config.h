@@ -57,6 +57,7 @@ static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_T * p_motor)     
 static inline uint16_t Motor_Config_GetIcZero_Adcu(const Motor_T * p_motor)                      { return p_motor->Config.IcZeroRef_Adcu; }
 static inline uint16_t Motor_Config_GetIPeakRef_Adcu(const Motor_T * p_motor)                    { return Motor_GetIPeakRef_Adcu(p_motor); }
 
+
 /******************************************************************************/
 /* Persistent Base Limits */
 /******************************************************************************/
@@ -117,6 +118,8 @@ extern void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv);
 extern void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar);
 extern void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
+
+void Motor_Config_CalibrateEncoderHomeOffset(Motor_T * p_motor);
 
 extern void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);

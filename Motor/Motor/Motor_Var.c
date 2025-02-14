@@ -274,6 +274,8 @@ int32_t Motor_VarConfig_Encoder_Get(const Motor_T * p_motor, Motor_VarConfig_Enc
         case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:              value = p_motor->Encoder.Config.IsALeadBPositive;               break;
         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       value = p_motor->Encoder.Config.ExtendedDeltaTStop;             break;
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
+
+        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                  value = p_motor->Encoder.Config.IndexAngleRef;                  break;
     }
     return value;
 }
@@ -287,6 +289,8 @@ void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T va
         case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:              p_motor->Encoder.Config.IsALeadBPositive = varValue;               break;
         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       p_motor->Encoder.Config.ExtendedDeltaTStop = varValue;             break;
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          break;
+
+        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:        Motor_Config_CalibrateEncoderHomeOffset(p_motor);                             break;
     }
 }
 

@@ -122,7 +122,7 @@ void Motor_InitReboot(Motor_T * p_motor)
     Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, INT16_MAX);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
-    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, INT16_MAX);
+    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopAccel_Cycles, p_motor->Config.OpenLoopSpeed_UFract16); /* direction updated on set */
 #endif
 
     Motor_ResetUnitsVabc(p_motor);
@@ -207,7 +207,7 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
             if (Hall_PollCaptureSensors(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
-            //
+
             /* by assigned direction, alternatively compare prev state */
         #endif
             electricalAngle = Hall_GetAngle16(&p_motor->Hall);
@@ -546,12 +546,12 @@ void Motor_SetDirectionReverse(Motor_T * p_motor) { Motor_SetDirection(p_motor, 
 */
 void Motor_SetSpeedLimitForward(Motor_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
+    p_motor->SpeedLimitForward_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
 }
 
 void Motor_SetSpeedLimitReverse(Motor_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitReverse_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+    p_motor->SpeedLimitReverse_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
 }
 
 void Motor_SetSpeedLimit(Motor_T * p_motor, uint16_t speed_ufract16)
@@ -578,7 +578,7 @@ void Motor_ClearSpeedLimit(Motor_T * p_motor)
 static uint16_t SpeedLimitSentinelOf(const Motor_T * p_motor, uint16_t speed_ufract16)
 {
     return (p_motor->Direction == p_motor->Config.DirectionForward) ?
-        math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16) : math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+        math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16) : math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
 }
 
 
@@ -593,20 +593,20 @@ static uint16_t SpeedLimitSentinelOf(const Motor_T * p_motor, uint16_t speed_ufr
 */
 void Motor_SetILimitMotoring(Motor_T * p_motor, uint16_t i_Fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = math_min(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+    p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
     Motor_UpdateSpeedControlLimits(p_motor);
 }
 
 void Motor_SetILimitGenerating(Motor_T * p_motor, uint16_t i_Fract16)
 {
-    p_motor->ILimitGenerating_Fract16 = math_min(i_Fract16, p_motor->Config.ILimitGenerating_Fract16);
+    p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitGenerating_Fract16);
     Motor_UpdateSpeedControlLimits(p_motor);
 }
 
 // void Motor_SetILimit(Motor_T * p_motor, uint16_t i_Fract16)
 // {
-//     p_motor->ILimitMotoring_Fract16 = math_min(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
-//     p_motor->ILimitGenerating_Fract16 = math_min(i_Fract16, p_motor->Config.ILimitGenerating_Fract16);
+//     p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+//     p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitGenerating_Fract16);
 //     // UpdateILimits(p_motor);
 //     Motor_UpdateSpeedControlLimits(p_motor);
 // }
@@ -631,7 +631,7 @@ void Motor_ClearILimit(Motor_T * p_motor)
 
 static uint16_t ILimitMotoringSentinelOf(const Motor_T * p_motor, uint16_t i_Fract16)
 {
-    return math_min(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+    return math_limit_upper(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
 }
 
 static uint16_t ILimitMotoringSentinelOf_Scalar(const Motor_T * p_motor, uint16_t scalar_ufract16)

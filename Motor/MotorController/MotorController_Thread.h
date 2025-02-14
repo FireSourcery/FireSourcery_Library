@@ -186,6 +186,40 @@ static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
     Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSENSE);
 }
 
+static inline void _MotorController_ProcVSourceMonitor(MotorController_T * p_mc)
+{
+#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, MotorController_Analog_GetVSource(p_mc)); // todo include edge
+
+    switch (vStatus)
+    {
+        /* if the signal is not acquired, main will check fault flags and enter */
+        case VMONITOR_FAULT_UPPER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_mc); break;
+        case VMONITOR_FAULT_LOWER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_mc); break;
+        case VMONITOR_WARNING_UPPER:
+            break;
+        case VMONITOR_WARNING_LOWER:
+            if (p_mc->StateFlags.VSourceLow == 0U)
+            {
+                p_mc->StateFlags.VSourceLow = 1U;
+                MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+                Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
+            }
+            break;
+        case VMONITOR_STATUS_OK:
+            if (p_mc->StateFlags.VSourceLow == 1U)
+            {
+                p_mc->StateFlags.VSourceLow = 0U;
+                MotorController_ClearILimitAll(p_mc, MOTOR_I_LIMIT_V_LOW);
+            }
+            break;
+        default: break;
+    }
+
+    Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSOURCE);
+#endif
+}
+
 /*
     Main
     High Freq, Low Priority,
@@ -199,7 +233,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     {
         /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
         /* Handle Inputs as they are received */
-        _StateMachine_ProcStateOutput(&p_mc->StateMachine);
+        _StateMachine_ProcStateOutput(&p_mc->StateMachine); //todo change this to signal if enter fault is on 1ms thread
 
         for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
@@ -254,6 +288,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             _MotorController_ProcHeatMonitor(p_mc);
             /* Can use low priority check, as motor is already in fault state */
             if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_EnterFault(p_mc); }
+            // if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_mc); }
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);
@@ -269,44 +304,12 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 
 /*
     Med Freq, Med-High Priority
-
-    Thread Safety: Async Set Fault, is okay?
-        Set ILimit - possible mix match sentinel value to id?
 */
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 {
     // p_mc->TimerDividerCounter++;
     //    BrakeThread(p_mc);
-#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    VMonitor_Status_T vStatus = VMonitor_PollStatus(&p_mc->VMonitorSource, MotorController_Analog_GetVSource(p_mc)); // todo include edge
-
-    switch (vStatus)
-    {
-        case VMONITOR_FAULT_UPPER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_mc); break;
-        case VMONITOR_FAULT_LOWER: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_mc); break;
-        case VMONITOR_WARNING_UPPER:
-            break;
-        case VMONITOR_WARNING_LOWER:
-            if (p_mc->StateFlags.VSourceLow == 0U)
-            {
-                p_mc->StateFlags.VSourceLow = 1U;
-                MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
-                Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
-            }
-            break;
-        case VMONITOR_STATUS_OK:
-            if (p_mc->StateFlags.VSourceLow == 1U)
-            {
-                p_mc->StateFlags.VSourceLow = 0U;
-                MotorController_ClearILimitAll(p_mc, MOTOR_I_LIMIT_V_LOW);
-            }
-            break;
-        default: break;
-    }
-
-    Analog_MarkConversion(&p_mc->CONST.CONVERSION_VSOURCE);
-#endif
-
+    _MotorController_ProcVSourceMonitor(p_mc);
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
     //     if (MotAnalogUser_PollBrakePins(&p_mc->AnalogUser) == true) { MotorController_User_ForceDisableControl(p_mc); }

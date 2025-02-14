@@ -84,6 +84,11 @@ void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
+void Motor_Config_CalibrateEncoderHomeOffset(Motor_T * p_motor)
+{
+    Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);
+    // PropagateSet(p_motor, );
+}
 
 /******************************************************************************/
 /*  */

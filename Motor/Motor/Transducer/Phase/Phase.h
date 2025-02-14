@@ -42,6 +42,28 @@
 #include <stdint.h>
 #include <assert.h>
 
+
+typedef enum Phase_State
+{
+    PHASE_STATE_FLOAT,
+    PHASE_STATE_ACTIVE,
+    PHASE_STATE_GROUND,
+}
+Phase_State_T;
+
+typedef union Phase_Flags
+{
+    struct
+    {
+        uint8_t A : 1U;
+        uint8_t B : 1U;
+        uint8_t C : 1U;
+        uint8_t Resv : 5U;
+    };
+    uint8_t Value;
+}
+Phase_Flags_T;
+
 typedef enum Phase_Mode
 {
     PHASE_MODE_UNIPOLAR_1,    /*!<   */
@@ -49,6 +71,20 @@ typedef enum Phase_Mode
     PHASE_MODE_BIPOLAR        /*!<   */
 }
 Phase_Mode_T;
+
+/* 3-Phase Active, Align */
+typedef enum Phase_Align
+{
+    // PHASE_ID_0,
+    // PHASE_ID_7,
+    PHASE_ID_A,
+    PHASE_ID_INV_C,
+    PHASE_ID_B,
+    PHASE_ID_INV_A,
+    PHASE_ID_C,
+    PHASE_ID_INV_B,
+}
+Phase_Align_T;
 
 /* 2-Phase Active, Six-Step Commutation */
 typedef enum Phase_Polar
@@ -63,26 +99,6 @@ typedef enum Phase_Polar
     PHASE_ID_7 = 7U,
 }
 Phase_Polar_T;
-
-/* 3-Phase Active, Align */
-typedef enum Phase_Align
-{
-    PHASE_ID_A,
-    PHASE_ID_INV_C,
-    PHASE_ID_B,
-    PHASE_ID_INV_A,
-    PHASE_ID_C,
-    PHASE_ID_INV_B,
-}
-Phase_Align_T;
-
-typedef enum Phase_State
-{
-    PHASE_STATE_FLOAT,
-    PHASE_STATE_ACTIVE,
-    PHASE_STATE_GROUND,
-}
-Phase_State_T;
 
 typedef struct Phase
 {

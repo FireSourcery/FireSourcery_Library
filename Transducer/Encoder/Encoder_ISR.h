@@ -160,7 +160,10 @@ static inline void Encoder_CaptureIndex(Encoder_T * p_encoder)
 #elif defined(CONFIG_ENCODER_HW_EMULATED)
     // _Encoder_SetCounterD(p_encoder, 0);
 #endif
+    p_encoder->IndexAngleError = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
     p_encoder->Angle32 = p_encoder->Config.IndexAngleRef;
+    // p_encoder->Angle32 = p_encoder->IndexAngleRef;
+    // p_encoder->CounterOnIndex = p_encoder->CounterD;
     p_encoder->IndexCount++;
 }
 

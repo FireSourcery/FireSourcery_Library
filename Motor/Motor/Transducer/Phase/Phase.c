@@ -243,19 +243,19 @@ void Phase_ActivateState(const Phase_T * p_phase, Phase_State_T state)
     }
 }
 
-void Phase_ActivateStateDuty(const Phase_T * p_phase, Phase_State_T state, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
-{
-    switch (state)
-    {
-        case PHASE_STATE_FLOAT:     Phase_Float(p_phase); break;
-        case PHASE_STATE_GROUND:    Phase_Ground(p_phase); break;
-        case PHASE_STATE_ACTIVE:
-            Phase_WriteDuty(p_phase, pwmDutyA, pwmDutyB, pwmDutyC);
-            Phase_ActivateOutputABC(p_phase);
-            break;
-        default: break;
-    }
-}
+// void Phase_ActivateStateDuty(const Phase_T * p_phase, Phase_State_T state, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+// {
+//     switch (state)
+//     {
+//         case PHASE_STATE_FLOAT:     Phase_Float(p_phase); break;
+//         case PHASE_STATE_GROUND:    Phase_Ground(p_phase); break;
+//         case PHASE_STATE_ACTIVE:
+//             Phase_WriteDuty(p_phase, pwmDutyA, pwmDutyB, pwmDutyC);
+//             Phase_ActivateOutputABC(p_phase);
+//             break;
+//         default: break;
+//     }
+// }
 
 /******************************************************************************/
 /*

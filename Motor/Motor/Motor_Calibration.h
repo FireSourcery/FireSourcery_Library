@@ -40,19 +40,6 @@
     Calibration State Functions - Mapped to StateMachine, Nonblocking
 */
 /******************************************************************************/
-/*
-    Calibrate Current ADC
-*/
-static inline void Motor_Calibration_StartAdc(Motor_T * p_motor)
-{
-    Motor_Analog_StartCalibration(p_motor);
-}
-
-static inline bool Motor_Calibration_ProcAdc(Motor_T * p_motor)
-{
-   return Motor_Analog_ProcCalibration(p_motor);
-}
-
 
 /******************************************************************************/
 /*
@@ -87,11 +74,65 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
     return isComplete;
 }
 
+/******************************************************************************/
+/* */
+/******************************************************************************/
+static inline void Motor_Calibration_StartEncoderHoming(Motor_T * p_motor)
+{
+    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
+    Encoder_StartHoming(&p_motor->Encoder);
+    p_motor->ElectricalAngle = 0U;
+}
 
 static inline bool Motor_Calibration_ProcEncoderHoming(Motor_T * p_motor)
 {
+    bool isComplete = false;
+    uint16_t angle = Encoder_GetHomingAngle(&p_motor->Encoder) * p_motor->Config.PolePairs;
 
+    if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+    {
+        if (Encoder_ProcHoming(&p_motor->Encoder) == true)
+        {
+            // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
+            Phase_Float(&p_motor->Phase);
+            isComplete = true;
+        }
+        else
+        {
+            Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle + angle, p_motor->Config.AlignPower_UFract16, 0);
+        }
+    }
+
+    return isComplete;
 }
+
+static inline void Motor_Calibration_CalibrateEncoderHomeOffset(Motor_T * p_motor)
+{
+    Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);
+}
+
+/* calib or openloop */
+// static inline bool Motor_Calibration_ProcEncoderHomingVirtualZero(Motor_T * p_motor)
+// {
+//     bool isComplete = false;
+
+//     // if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
+//     // {
+//         // if (Encoder_IsVirtualZero(&p_motor->Encoder) == true)
+//         // {
+//         //     Phase_Float(&p_motor->Phase);
+//         //     isComplete = true;
+//         // }
+//         // else
+//         // {
+//         //     Motor_FOC_ProcOpenLoop(&p_motor->Foc);
+//         // }
+//         Motor_FOC_ProcOpenLoopMechAngle(&p_motor->Foc, 0);
+//     // }
+
+//     return isComplete;
+// }
+
 
 static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
 {
@@ -108,7 +149,7 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
         switch(p_motor->CalibrationStateIndex)
         {
             case 0U:
-                Encoder_CalibrateQuadratureReference(&p_motor->Encoder);
+                Encoder_CaptureQuadratureReference(&p_motor->Encoder);
                 Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
                 p_motor->CalibrationStateIndex = 1U;
                 break;
@@ -131,7 +172,7 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
         p_motor->ElectricalAngle = 0U;
         switch(p_motor->Config.SensorMode)
         {
-            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignZero(&p_motor->Encoder);    break;
+            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CaptureAlignZero(&p_motor->Encoder);    break;
     #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
             case MOTOR_SENSOR_MODE_SENSORLESS:    break;
     #endif
@@ -143,7 +184,7 @@ static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
     {
         switch(p_motor->Config.SensorMode)
         {
-            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CalibrateAlignValidate(&p_motor->Encoder);    break; /* Quadrature direction must be set first */
+            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CompleteAlignValidate(&p_motor->Encoder);    break; /* Quadrature direction must be set first */
     #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
             case MOTOR_SENSOR_MODE_SENSORLESS: break;
     #endif

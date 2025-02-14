@@ -277,7 +277,6 @@ void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle)
 */
 // void Motor_User_StartOpenLoopMode(Motor_T * p_motor) { Motor_User_StartControlMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-
 /*!
     MOTOR_OPEN_LOOP_STATE_IDLE
 */
@@ -287,7 +286,7 @@ void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd)
     _Motor_User_SetCmd(p_motor, ivCmdIn);
 }
 
-void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int32_t speed_fract16)
+void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int16_t speed_fract16)
 {
     Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, speed_fract16);
 }
@@ -300,41 +299,28 @@ void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T stat
 /*
     Open Loop Process Cmds
 */
+/* transition begin control, todo this function only */
+void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase)
+{
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ENTER);
+    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL, phase);
+}
+
+/* change to non enter function or also activate state  */
+void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase)
+{
+    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN, phase);
+}
 
 /* align on feedforward using V or I */
 void Motor_User_SetOpenLoopAngle(Motor_T * p_motor, angle16_t angle)
 {
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ALIGN); /* Transistion is protected */
-    // todo pass as struct variables
-    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
-    {
-        Motor_FOC_ClearFeedbackState(p_motor);
-        p_motor->ElectricalAngle = angle;
-    }
-}
-
-void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase)
-{
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_PASSIVE);
-    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
-    {
-        Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)phase, p_motor->Config.AlignPower_UFract16);
-    }
-}
-
-void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase)
-{
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_PASSIVE);
-    if (Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_OPEN_LOOP))
-    {
-        Motor_FOC_ClearFeedbackState(p_motor);
-        Phase_ActivateState(&p_motor->Phase, phase);
-    }
+    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_ANGLE, angle);
 }
 
 // void Motor_User_SetOpenLoopJog(Motor_T * p_motor, int8_t direction)
 // {
-//    //todo using register state
+//     todo using register state
 // }
 #endif
 

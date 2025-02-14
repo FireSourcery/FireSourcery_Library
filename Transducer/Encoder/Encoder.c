@@ -55,6 +55,7 @@ void Encoder_InitInterrupts_Incremental(Encoder_T * p_encoder)
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->CONST.P_HAL_PIN_A, p_encoder->CONST.PIN_A_ID);
 }
 
+// static inline void Encoder_Quadrature_InitDirection(Encoder_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
 /******************************************************************************/
 /*!
@@ -205,6 +206,7 @@ void _Encoder_ResetUnitsLinearSpeed(Encoder_T * p_encoder)
 
 void _Encoder_ResetUnits(Encoder_T * p_encoder)
 {
+    // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
     _Encoder_ResetUnitsAngle(p_encoder);
     _Encoder_ResetUnitsInterpolateAngle(p_encoder);
     _Encoder_ResetUnitsScalarSpeed(p_encoder);
@@ -252,40 +254,6 @@ void Encoder_SetGroundRatio_Metric(Encoder_T * p_encoder, uint32_t wheelDiameter
     Config
 */
 /******************************************************************************/
-void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled)   { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
-void Encoder_EnableQuadratureMode(Encoder_T * p_encoder)                { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
-void Encoder_DisableQuadratureMode(Encoder_T * p_encoder)               { p_encoder->Config.IsQuadratureCaptureEnabled = false; }
-/*! isALeadBPositive - User runtime calibrate */
-void Encoder_SetQuadratureDirection(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Config.IsALeadBPositive = isALeadBPositive; }
-
-
-void Encoder_CaptureQuadratureReference(Encoder_T * p_encoder)
-{
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER, 0);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->CounterD = 0;
-#endif
-}
-
-/*
-    Call after having moved in the positive direction
-*/
-void Encoder_CaptureQuadraturePositive(Encoder_T * p_encoder)
-{
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
-    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    // p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-    // #endif
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->Config.IsALeadBPositive = (p_encoder->CounterD > 0);
-#endif
-}
-
 
 /******************************************************************************/
 /*!
@@ -295,64 +263,101 @@ void Encoder_CaptureQuadraturePositive(Encoder_T * p_encoder)
 void Encoder_StartHoming(Encoder_T * p_encoder)
 {
     p_encoder->IndexCount = 0U;
-    p_encoder->Angle32 = 0U;
     p_encoder->CounterD = 0U;
-    p_encoder->CounterPrev = 0U;
+    // p_encoder->IndexAngleRef = 0U;
 }
 
+uint16_t Encoder_GetHomingAngle(const Encoder_T * p_encoder)
+{
+    return ENCODER_ANGLE_DEGREES / math_max(p_encoder->Config.CountsPerRevolution, 1000);
+}
+
+bool Encoder_IsHomingIndexFound(const Encoder_T * p_encoder)
+{
+    return p_encoder->IndexCount > 0U;
+//     return p_encoder->Angle32 == p_encoder->Config.IndexAngleRef;
+}
+
+bool Encoder_IsHomingIndexError(const Encoder_T * p_encoder)
+{
+    /* DirectionComp */ p_encoder->CounterD > p_encoder->Config.CountsPerRevolution;
+}
+
+//enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
 bool Encoder_ProcHoming(Encoder_T * p_encoder)
 {
     bool isIndex = p_encoder->IndexCount > 0U;
-    // bool isIndex = p_encoder->Angle32 == p_encoder->Config.IndexAngleRef;
 
     if (isIndex == true)
     {
         p_encoder->IndexCount = 0U;
-        // p_encoder->Angle32 = p_encoder->Config.IndexAngleRef;
+        p_encoder->CounterD = 0U;
+        p_encoder->IsHomed = true;
     }
 
-    /* caller handle */
-    // assert(p_encoder->CounterD < p_encoder->Config.CountsPerRevolution);
     return isIndex;
 }
 
-bool Encoder_ProcHomingVirtualIndex(Encoder_T * p_encoder)
+// bool Encoder_ProcHomingVirtualIndex(Encoder_T * p_encoder)
+// {
+//     // bool isVirtualIndex = p_encoder->Angle32 < p_encoder->Config.IndexAngleRef;
+//     // bool isVirtualIndex = p_encoder->Angle32 > p_encoder->Config.IndexAngleRef;
+// }
+
+void Encoder_CalibrateIndexZeroRef(Encoder_T * p_encoder)
 {
-    // bool isVirtualIndex = p_encoder->Angle32 < p_encoder->Config.IndexAngleRef;
-    // bool isVirtualIndex = p_encoder->Angle32 > p_encoder->Config.IndexAngleRef;
+    if (p_encoder->IsHomed == true)
+    {
+        // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
+        // p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
+        p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
+        p_encoder->Angle32 = 0U;
+    }
+}
+
+/* Clears the value to config index to set as 0 */
+void Encoder_ClearIndexZeroRef(Encoder_T * p_encoder)
+{
+    p_encoder->Config.IndexAngleRef = 0U;
+}
+
+
+/******************************************************************************/
+/*!
+    Align to phase without homing
+*/
+/******************************************************************************/
+void Encoder_CheckAlignRef(Encoder_T * p_encoder)
+{
+    // if (Encoder_IsPositionRefSet(p_encoder) == false)
+    // {
+    // }
+    //     p_encoder->AlignOffsetRef = p_encoder->Config.AlignOffsetRef;
 }
 
 void Encoder_CaptureAlignZero(Encoder_T * p_encoder)
 {
-    p_encoder->Angle32 = 0U;
-    // p_encoder->Angle32 = 0U + p_encoder->Config.IndexAngleRef;
+    // p_encoder->Angle32 = 0U;
+    p_encoder->AlignOffsetRef = p_encoder->Angle32 /* - p_encoder->Config.IndexAngleRef */;
     _Encoder_ZeroPulseCount(p_encoder);
 }
 
-
-
-// void Encoder_CalibrateZeroReference(Encoder_T * p_encoder)
-
-/******************************************************************************/
-void Encoder_CalibrateAlignZero(Encoder_T * p_encoder)
+/* this way angle starts from a known pole */
+uint16_t Encoder_GetAngleAligned(Encoder_T * p_encoder)
 {
-    p_encoder->Angle32 = 0U;
-    _Encoder_ZeroPulseCount(p_encoder);
+    return (p_encoder->Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
 }
 
-/* todo */
-void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder)
+bool Encoder_ProcAlignValidate(Encoder_T * p_encoder)
+{
+
+}
+
+void Encoder_CompleteAlignValidate(Encoder_T * p_encoder)
 {
     p_encoder->Align = ENCODER_ALIGN_PHASE;
     _Encoder_ZeroPulseCount(p_encoder);
 }
-
-void Encoder_CalibrateIndexStart(Encoder_T * p_encoder)
-{
-    // _Encoder_ZeroPulseCount(p_encoder);
-}
-
-
 
 void Encoder_ClearAlign(Encoder_T * p_encoder)
 {
@@ -366,11 +371,16 @@ void Encoder_ClearAlign(Encoder_T * p_encoder)
     Determine the values initially
 */
 /******************************************************************************/
+void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled) { p_encoder->Config.IsQuadratureCaptureEnabled = isEnabled; }
+void Encoder_EnableQuadratureMode(Encoder_T * p_encoder) { p_encoder->Config.IsQuadratureCaptureEnabled = true; }
+void Encoder_DisableQuadratureMode(Encoder_T * p_encoder) { p_encoder->Config.IsQuadratureCaptureEnabled = false; }
+/*! isALeadBPositive - User runtime calibrate */
+void Encoder_SetQuadratureDirection(Encoder_T * p_encoder, bool isALeadBPositive) { p_encoder->Config.IsALeadBPositive = isALeadBPositive; }
+
 /*
     Run on calibration routine start
 */
-// void Encoder_CalibrateZeroReference(Encoder_T * p_encoder)
-void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder)
+void Encoder_CaptureQuadratureReference(Encoder_T * p_encoder)
 {
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
@@ -397,33 +407,16 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 #endif
 }
 
-void Encoder_SetVirtualZero(Encoder_T * p_encoder)
+void Encoder_CalibrateQuadratureDirection(Encoder_T * p_encoder, bool isPositive)
 {
-    p_encoder->Angle32 = 0U;
-
-
+#if     defined(CONFIG_ENCODER_HW_DECODER)
+    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
+    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+    // p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
+    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
+    // #endif
+#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+    p_encoder->Config.IsALeadBPositive = ((p_encoder->CounterD > 0) == isPositive);
+#endif
 }
-
-void Encoder_CalibrateVirtualZero(Encoder_T * p_encoder)
-{
-    p_encoder->Angle32 = 0U;
-}
-
-
-void Encoder_StartCalibrateIndex(Encoder_T * p_encoder)
-{
-    p_encoder->Angle32 = 0U;
-}
-
-void Encoder_CalibrateIndex(Encoder_T * p_encoder)
-{
-    p_encoder->Angle32 = 0U;
-// p_encoder->Angle32 = p_encoder->Config.IndexAngleRef
-}
-
-// void Encoder_CalibrateIndex(Encoder_T * p_encoder)
-// {
-//     p_encoder->Align = ENCODER_ALIGN_ABSOLUTE;
-//     // p_encoder->AbsoluteOffset = p_encoder->IndexOffset;
-// }
-

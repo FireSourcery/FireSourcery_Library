@@ -92,8 +92,8 @@ typedef struct Encoder_Config
     uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s */
     uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
 
-    uint32_t VirtualIndexOffset;
-    uint32_t IndexAngleRef;
+    uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
+    uint32_t AlignOffsetRef;            /* Align - Index */
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
@@ -141,6 +141,8 @@ typedef struct Encoder
     uint32_t Angle32;
 
     // int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
+    bool IsSinglePhasePositive;
+    // int32_t DirectionComp;   /* todo */
 
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
@@ -157,16 +159,16 @@ typedef struct Encoder
     uint32_t InterpolateAngleLimit;
 
     uint32_t ErrorCount;
+
     uint32_t IndexCount;
-
-    int32_t IndexZeroRef;
-
-    int32_t OffsetRef;
-
-    bool IsSinglePhasePositive;
-    // int8_t SinglePhaseSign;
+    uint32_t IndexAngleRef;
+    uint32_t IndexAngleError;
+    // uint32_t CounterOnIndex;
+    // uint32_t CounterOnIndexPrev;
+    bool IsHomed;
     Encoder_Align_T Align;
-    int32_t AbsoluteOffset;
+    uint32_t AlignOffsetRef;
+    // int32_t AbsoluteOffset;
 
     /* Experimental */
     // int32_t TotalD;          /* Integral Capture */
@@ -177,7 +179,6 @@ typedef struct Encoder
     /*
         Unit conversion. derived on init from Nv Config
     */
-    // int32_t DirectionComp;               /* cache value if needed */
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
     uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
@@ -360,21 +361,23 @@ static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint
 
 
 /* SinglePhase assign direction */
-static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; }
-static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; }
-// static inline void Encoder_Quadrature_InitDirection(Encoder_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
+static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; /*  DirectionComp = 1 */}
+static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; /*  DirectionComp = -1 */ }
+
 
 /******************************************************************************/
 /*!
     @brief
 */
 /******************************************************************************/
-static bool Encoder_IsPositionRefSet(Encoder_T * p_encoder) { return p_encoder->Align != ENCODER_ALIGN_NO; }
 
 static inline bool Encoder_IsAligned(const Encoder_T * p_encoder)
 {
     return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
 }
+
+static inline bool Encoder_IsPositionRefSet(Encoder_T * p_encoder) { return (p_encoder->IsHomed || Encoder_IsAligned(p_encoder)); }
+
 
 /******************************************************************************/
 /*!
@@ -413,10 +416,6 @@ static inline uint32_t Encoder_CountOfDistance(const Encoder_T * p_encoder, uint
 
 */
 /******************************************************************************/
-// static inline uint32_t Encoder_RotationalSpeedOf_RPM(const Encoder_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-// {
-//     return  deltaD_Ticks * p_encoder->UnitTime_Freq * 60U / (p_encoder->Config.CountsPerRevolution * deltaT_Ticks);
-// }
 
 /*
     Only When base units in mm, as set via SetGroundRatio function.
@@ -440,14 +439,20 @@ static inline uint32_t Encoder_GroundSpeedOf_Kmh(const Encoder_T * p_encoder, ui
 extern void Encoder_InitInterrupts_Quadrature(Encoder_T * p_encoder);
 extern void Encoder_InitInterrupts_ABC(Encoder_T * p_encoder);
 
-extern void Encoder_CalibrateAlignZero(Encoder_T * p_encoder);
-extern void Encoder_CalibrateAlignValidate(Encoder_T * p_encoder);
+extern void Encoder_CaptureAlignZero(Encoder_T * p_encoder);
+extern void Encoder_CompleteAlignValidate(Encoder_T * p_encoder);
+
+void Encoder_StartHoming(Encoder_T * p_encoder);
+uint16_t Encoder_GetHomingAngle(const Encoder_T * p_encoder);
+bool Encoder_ProcHoming(Encoder_T * p_encoder);
+void Encoder_CalibrateIndexZeroRef(Encoder_T * p_encoder);
+void Encoder_ClearIndexZeroRef(Encoder_T * p_encoder);
 
 #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
 extern void Encoder_SetQuadratureMode(Encoder_T * p_encoder, bool isEnabled);
 extern void Encoder_EnableQuadratureMode(Encoder_T * p_encoder);
 extern void Encoder_SetQuadratureDirection(Encoder_T * p_encoder, bool isALeadBPositive);
-extern void Encoder_CalibrateQuadratureReference(Encoder_T * p_encoder);
+extern void Encoder_CaptureQuadratureReference(Encoder_T * p_encoder);
 extern void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder);
 #endif
 

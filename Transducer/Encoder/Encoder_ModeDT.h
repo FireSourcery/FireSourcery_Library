@@ -90,6 +90,7 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 }
 
 /*
+    Capture Angular Speed in POLLING_FREQ
     Using FreqD to interpolate Angle
 
     AngularSpeed * AngleIndex / POLLING_FREQ
@@ -97,7 +98,7 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
     AngleIndex * FreqD * [ENCODER_ANGLE_DEGREES / CountsPerRevolution / POLLING_FREQ]
 
 */
-static uint32_t Encoder_ModeDT_CaptureInterpolateDelta(Encoder_T * p_encoder)
+static inline uint32_t Encoder_ModeDT_CaptureInterpolateAngleDelta(Encoder_T * p_encoder)
 {
     /* Apply / POLLING_FREQ on proc */
     // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitAngularSpeed * p_encoder->Config.InterpolateAngleScalar;

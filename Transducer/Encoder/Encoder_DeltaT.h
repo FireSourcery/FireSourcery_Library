@@ -204,20 +204,11 @@ static inline uint32_t Encoder_DeltaT_OfLinearSpeed(const Encoder_T * p_encoder,
     return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitSurfaceSpeed / speed_UnitsPerSecond;
 }
 
-static inline uint32_t Encoder_DeltaT_OfLinearSpeed_UnitsPerMinute(const Encoder_T * p_encoder, uint32_t speed_UnitsPerMinute)
-{
-    return (speed_UnitsPerMinute == 0U) ? 0U : p_encoder->UnitSurfaceSpeed * 60U / speed_UnitsPerMinute;
-}
-
 static inline uint32_t Encoder_DeltaT_ToLinearSpeed(const Encoder_T * p_encoder, uint32_t deltaT_ticks)
 {
-    // return Encoder_DeltaT_OfLinearSpeed(p_encoder, deltaT_ticks); /* Same division */
+    return Encoder_DeltaT_OfLinearSpeed(p_encoder, deltaT_ticks);
 }
 
-static inline uint32_t Encoder_DeltaT_ToLinearSpeed_UnitsPerMinute(const Encoder_T * p_encoder, uint32_t deltaT_Ticks)
-{
-    // return Encoder_DeltaT_OfLinearSpeed_UnitsPerMinute(p_encoder, deltaT_Ticks); /* Same division */
-}
 
 /******************************************************************************/
 /*
@@ -240,9 +231,15 @@ static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(const Encoder_T * p
 
 static inline uint32_t Encoder_DeltaT_GetAngularSpeed(const Encoder_T * p_encoder)
 {
-    /* p_encoder->UnitAngularSpeed set to 0U if overflow */
-    // return (p_encoder->UnitAngularSpeed == 0U) ?
-    //     ((p_encoder->CONST.TIMER_FREQ / p_encoder->DeltaT) << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution : p_encoder->UnitAngularSpeed / p_encoder->DeltaT;
+    return (p_encoder->CONST.TIMER_FREQ / p_encoder->CONST.POLLING_FREQ << ENCODER_ANGLE_BITS) /
+        (p_encoder->Config.CountsPerRevolution * p_encoder->DeltaT) * p_encoder->CONST.POLLING_FREQ;
+    // return (p_encoder->CONST.TIMER_FREQ / p_encoder->DeltaT << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution;
+}
+
+static inline uint32_t Encoder_DeltaT_GetAngularSpeed_PerPoll(const Encoder_T * p_encoder)
+{
+    return (p_encoder->CONST.TIMER_FREQ / p_encoder->CONST.POLLING_FREQ << ENCODER_ANGLE_BITS) /
+        (p_encoder->Config.CountsPerRevolution * p_encoder->DeltaT);
 }
 
 /******************************************************************************/
