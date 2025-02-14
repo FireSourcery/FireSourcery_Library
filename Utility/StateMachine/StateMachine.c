@@ -429,7 +429,7 @@ inline void _StateMachine_ProcSubstate(StateMachine_T * p_stateMachine)
 */
 inline void StateMachine_ProcSubstateInput(StateMachine_T * p_stateMachine, state_machine_state_t stateId, state_machine_state_input_t inputId, state_machine_state_value_t inputValue)
 {
-    if (AcquireSignal_ISR(p_stateMachine) == true) /* Disable Proc or results of CMD maybe overwritten */
+    if (AcquireSignal_Input(p_stateMachine) == true) /* Disable Proc or results of CMD maybe overwritten */
     {
         if (StateMachine_IsActiveState(p_stateMachine, stateId) == true)
         {
@@ -438,7 +438,7 @@ inline void StateMachine_ProcSubstateInput(StateMachine_T * p_stateMachine, stat
             p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].CMD(p_stateMachine->CONST.P_CONTEXT, inputValue);
             p_stateMachine->SubstateLoop = p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].LOOP;
         }
-        ReleaseSignal_ISR(p_stateMachine);
+        ReleaseSignal_Input(p_stateMachine);
     }
 }
 

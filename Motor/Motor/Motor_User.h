@@ -217,6 +217,9 @@ extern void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle);
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
+
+void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state);
+
 #endif
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
 // extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
