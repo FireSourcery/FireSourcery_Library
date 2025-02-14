@@ -229,13 +229,13 @@ void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
 }
 
 /*!
-    @param[in] kp_Fixed16 [0:INT16_MAX] Q12.4
+    @param[in] kp_Fixed16 [0:INT16_MAX] Q10.6
 */
-void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 12); }
+void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 10); }
 
 /*!
 */
-void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 12); }
+void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 10); }
 /*!
     todo
 */

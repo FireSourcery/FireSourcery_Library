@@ -294,7 +294,7 @@ void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T va
         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       p_motor->Encoder.Config.ExtendedDeltaTStop = varValue;             break;
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          break;
 
-        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:        Motor_Config_CalibrateEncoderHomeOffset(p_motor);                             break;
+        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                Motor_Config_CalibrateEncoderHomeOffset(p_motor);                  break;
     }
 }
 

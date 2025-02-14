@@ -335,6 +335,15 @@ void Encoder_CheckAlignRef(Encoder_T * p_encoder)
     //     p_encoder->AlignOffsetRef = p_encoder->Config.AlignOffsetRef;
 }
 
+//
+// void Encoder_CalibrateAlignRef(Encoder_T * p_encoder)
+// {
+//     // p_encoder->Angle32 = 0U;
+//     p_encoder->AlignOffsetRef = p_encoder->Angle32 /* - p_encoder->Config.IndexAngleRef */;
+//     p_encoder->Config.AlignOffsetRef = p_encoder->AlignOffsetRef;
+//     _Encoder_ZeroPulseCount(p_encoder);
+// }
+
 void Encoder_CaptureAlignZero(Encoder_T * p_encoder)
 {
     // p_encoder->Angle32 = 0U;

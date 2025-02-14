@@ -51,7 +51,6 @@
 /******************************************************************************/
 typedef enum MotorController_VarOutput
 {
-    // MC_VAR_ZERO,
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
     MOT_VAR_MC_STATE,
@@ -60,9 +59,11 @@ typedef enum MotorController_VarOutput
     MOT_VAR_V_SOURCE,
     MOT_VAR_V_SENSOR,
     MOT_VAR_V_ACCS,
-    MOT_VAR_BATTERY_CHARGE, // if CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     MOT_VAR_HEAT_PCB,
     MOT_VAR_HEAT_MOSFETS,
+    MOT_VAR_HEAT_MOSFETS_1,
+    MOT_VAR_HEAT_MOSFETS_2,
+    MOT_VAR_HEAT_MOSFETS_3,
     // MOT_VAR_HEAT_MOSFETS_TOP,
     // MOT_VAR_HEAT_MOSFETS_BOT,
     // MOT_VAR_HEAT_MOSFETS_2,
@@ -76,6 +77,11 @@ typedef enum MotorController_VarOutput_AnalogUser
     MOT_VAR_ANALOG_THROTTLE_DIN,
     MOT_VAR_ANALOG_BRAKE,
     MOT_VAR_ANALOG_BRAKE_DIN,
+    MOT_VAR_ANALOG_BISTATE_BRAKE_DIN,
+    MOT_VAR_ANALOG_FORWARD_DIN,
+    MOT_VAR_ANALOG_NEUTRAL_DIN,
+    MOT_VAR_ANALOG_REVERSE_DIN,
+    MOT_VAR_ANALOG_OPT_DIN,
 }
 MotorController_VarOutput_AnalogUser_T;
 
@@ -91,6 +97,11 @@ typedef enum MotorController_VarOutput_Debug
     MOT_VAR_DEBUG7,
 }
 MotorController_VarOutput_Debug_T;
+
+// typedef enum MotorController_VarOutput_Pin
+// {
+// }
+// MotorController_VarOutput_Pin_T;
 
 /*
     Collective set motors for convenience
@@ -122,6 +133,8 @@ typedef enum MotorController_VarInput
     */
     MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
+    MOT_VAR_RELAY_TOGGLE,
+    MOT_VAR_METER_TOGGLE,
 }
 MotorController_VarInput_T;
 
