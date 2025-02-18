@@ -394,7 +394,7 @@ typedef struct MotorController
 
 #if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
     Shell_T Shell;
-    uint16_t ShellSubstate;
+    uint16_t ShellSubState;
 #endif
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     Linear_T BatteryLife;       /* Battery Life percentage */

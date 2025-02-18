@@ -37,7 +37,8 @@
 
 /******************************************************************************/
 /*
-    Calibration State Functions - Mapped to StateMachine, Nonblocking
+    Part of StateMachine - Mapped to StateMachine
+    Calibration State Functions
 */
 /******************************************************************************/
 
@@ -74,137 +75,7 @@ static inline bool Motor_Calibration_ProcHall(Motor_T * p_motor)
     return isComplete;
 }
 
-/******************************************************************************/
-/* */
-/******************************************************************************/
-static inline void Motor_Calibration_StartEncoderHoming(Motor_T * p_motor)
-{
-    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
-    Encoder_StartHoming(&p_motor->Encoder);
-    p_motor->ElectricalAngle = 0U;
-}
 
-static inline bool Motor_Calibration_ProcEncoderHoming(Motor_T * p_motor)
-{
-    bool isComplete = false;
-    uint16_t angle = Encoder_GetHomingAngle(&p_motor->Encoder) * p_motor->Config.PolePairs;
-
-    if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-    {
-        if (Encoder_ProcHoming(&p_motor->Encoder) == true)
-        {
-            // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
-            Phase_Float(&p_motor->Phase);
-            isComplete = true;
-        }
-        else
-        {
-            Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle + angle, p_motor->Config.AlignPower_UFract16, 0);
-        }
-    }
-
-    return isComplete;
-}
-
-static inline void Motor_Calibration_CalibrateEncoderHomeOffset(Motor_T * p_motor)
-{
-    Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);
-}
-
-/* calib or openloop */
-// static inline bool Motor_Calibration_ProcEncoderHomingVirtualZero(Motor_T * p_motor)
-// {
-//     bool isComplete = false;
-
-//     // if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-//     // {
-//         // if (Encoder_IsVirtualZero(&p_motor->Encoder) == true)
-//         // {
-//         //     Phase_Float(&p_motor->Phase);
-//         //     isComplete = true;
-//         // }
-//         // else
-//         // {
-//         //     Motor_FOC_ProcOpenLoop(&p_motor->Foc);
-//         // }
-//         Motor_FOC_ProcOpenLoopMechAngle(&p_motor->Foc, 0);
-//     // }
-
-//     return isComplete;
-// }
-
-
-static inline void Motor_Calibration_StartEncoder(Motor_T * p_motor)
-{
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
-}
-
-static inline bool Motor_Calibration_ProcEncoder(Motor_T * p_motor)
-{
-    bool isComplete = false;
-
-    if(Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-    {
-        switch(p_motor->CalibrationStateIndex)
-        {
-            case 0U:
-                Encoder_CaptureQuadratureReference(&p_motor->Encoder);
-                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
-                p_motor->CalibrationStateIndex = 1U;
-                break;
-
-            case 1U:
-                Encoder_CalibrateQuadraturePositive(&p_motor->Encoder);
-                Phase_Float(&p_motor->Phase);
-                isComplete = true;
-                break;
-            default: break;
-        }
-    }
-
-    return isComplete;
-}
-
-/* todo */
-    void Motor_CalibrateSensorZero(Motor_T * p_motor)
-    {
-        p_motor->ElectricalAngle = 0U;
-        switch(p_motor->Config.SensorMode)
-        {
-            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CaptureAlignZero(&p_motor->Encoder);    break;
-    #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-            case MOTOR_SENSOR_MODE_SENSORLESS:    break;
-    #endif
-            default: break;
-        }
-    }
-
-    void Motor_ValidateSensorAlign(Motor_T * p_motor)
-    {
-        switch(p_motor->Config.SensorMode)
-        {
-            case MOTOR_SENSOR_MODE_ENCODER: Encoder_CompleteAlignValidate(&p_motor->Encoder);    break; /* Quadrature direction must be set first */
-    #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-            case MOTOR_SENSOR_MODE_SENSORLESS: break;
-    #endif
-            default: break;
-        }
-    }
-
-    /* Using Signed Ramp mode */
-    bool Motor_PollAlignFault(Motor_T * p_motor)
-    {
-        switch(p_motor->Config.SensorMode)
-        {
-            case MOTOR_SENSOR_MODE_ENCODER: if((p_motor->Speed_Fract16 ^ Ramp_GetTarget(&p_motor->Ramp)) < 0) { p_motor->FaultFlags.PositionSensor = 1U; } break;
-
-            // (p_motor->Speed_Fract16 ^ Iq)
-            default: break;
-        }
-
-        return p_motor->FaultFlags.PositionSensor;
-    }
 
 
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)

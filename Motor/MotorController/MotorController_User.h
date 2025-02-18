@@ -39,7 +39,7 @@
 /******************************************************************************/
 /*
     Call via Key/Value
-    State/Substates Cmds
+    State/SubStates Cmds
     not stored in host view cache
 */
 /******************************************************************************/
@@ -156,7 +156,7 @@ static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorContr
         SetSyncInput will overwrite previous input
         effectively limit to 1 input per ms/packet
 
-    Inputs that passes to Motor_StateMachine AND mark Substate, must be Sync to wait for Motor
+    Inputs that passes to Motor_StateMachine AND mark SubState, must be Sync to wait for Motor
 */
 /******************************************************************************/
 

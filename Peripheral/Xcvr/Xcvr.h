@@ -57,6 +57,7 @@ typedef size_t(*Xcvr_Interface_TxMax_T)         (void * p_xcvr, const uint8_t * 
 typedef size_t(*Xcvr_Interface_RxMax_T)         (void * p_xcvr, uint8_t * p_destBuffer, size_t bufferSize);
 typedef bool(*Xcvr_Interface_TxN_T)             (void * p_xcvr, const uint8_t * p_src, size_t length);
 typedef bool(*Xcvr_Interface_RxN_T)             (void * p_xcvr, uint8_t * p_dest, size_t length);
+// typedef bool(*Xcvr_Interface_RxN_T)             (void * p_xcvr, size_t length, uint8_t * p_dest);
 typedef size_t(*Xcvr_Interface_GetCount_T)      (void * p_xcvr);
 typedef void(*Xcvr_Interface_ConfigBaudRate_T)  (void * p_xcvr, uint32_t baudRate);
 
@@ -106,6 +107,10 @@ typedef const struct Xcvr_Const
 {
     const Xcvr_Entry_T * const P_XCVR_TABLE;
     const uint8_t XCVR_TABLE_LENGTH;
+
+    // on start up / default
+    // const Xcvr_Interface_T * const P_INTERFACE;
+    // void * P_HAL_CONTEXT;
 }
 Xcvr_Const_T;
 

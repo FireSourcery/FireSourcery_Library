@@ -113,10 +113,10 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
         // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
         // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
 
-        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_User_StartOpenLoopState(p_motor, (Motor_OpenLoopState_T)varValue);     break;
-        case MOTOR_VAR_OPEN_LOOP_PHASE_STATE:   Motor_User_SetOpenLoopPhaseState(p_motor, (Phase_State_T)varValue);     break;
-        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_User_SetOpenLoopPhaseAlign(p_motor, (Phase_Align_T)varValue);     break;
-        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_User_SetOpenLoopAngle(p_motor, varValue);                         break;
+        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_User_StartOpenLoopState(p_motor, (Motor_OpenLoopState_T)varValue);    break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_STATE:   Motor_OpenLoop_SetPhaseState(p_motor, (Phase_State_T)varValue);             break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseVAlign(p_motor, (Phase_Align_T)varValue);            break;
+        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                            break;
 
         case MOTOR_VAR_OPEN_LOOP_HOMING:                                  break;
     }
@@ -279,7 +279,8 @@ int32_t Motor_VarConfig_Encoder_Get(const Motor_T * p_motor, Motor_VarConfig_Enc
         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       value = p_motor->Encoder.Config.ExtendedDeltaTStop;             break;
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
 
-        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                  value = p_motor->Encoder.Config.IndexAngleRef;                  break;
+        case MOTOR_VAR_ENCODER_INDEX_ZERO_REF:                    value = Encoder_GetIndexZeroRef(&p_motor->Encoder);             break;
+        // case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                value = p_motor->Encoder.Config.IndexAngleRef;                  break;
     }
     return value;
 }
@@ -294,7 +295,8 @@ void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T va
         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       p_motor->Encoder.Config.ExtendedDeltaTStop = varValue;             break;
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          break;
 
-        case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                Motor_Config_CalibrateEncoderHomeOffset(p_motor);                  break;
+        case MOTOR_VAR_ENCODER_INDEX_ZERO_REF:                    Encoder_SetIndexZeroRef(&p_motor->Encoder, varValue);              break;
+        // case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                Motor_Encoder_CalibrateHomeOffset(p_motor);                    break;
     }
 }
 
@@ -338,7 +340,7 @@ int32_t Motor_VarConfig_Thermistor_Get(const Motor_T * p_motor, Thermistor_Confi
 
 void Motor_VarConfig_Thermistor_Set(Motor_T * p_motor, Thermistor_ConfigId_T varId, int32_t varValue)
 {
-    Thermistor_ConfigId_Set(&(p_motor->Thermistor), varId, varValue);
+    Thermistor_ConfigId_Set(&p_motor->Thermistor, varId, varValue);
 }
 
 int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId)
@@ -395,5 +397,22 @@ void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int
         // case MOTOR_VAR_PID_FOC_ID_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidId, varValue);          break;
         // case MOTOR_VAR_PID_FOC_ID_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidId, varValue);          break;
         // case MOTOR_VAR_PID_FOC_ID_KD_FIXED16: PID_SetKd_Fixed16(&p_motor->PidId, varValue);          break;
+    }
+}
+
+
+#include "Transducer/Motor_Encoder/Motor_Encoder.h"
+/*
+
+*/
+
+void Motor_VarConfig_Cmd_Call(Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int32_t varValue)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME: Motor_Encoder_StartHoming(p_motor);   break;
+        case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME: Motor_OpenLoop_StartHome(p_motor);          break;
+
+        // Motor_Encoder_CalibrateHomeOffset
     }
 }

@@ -284,14 +284,14 @@ bool Encoder_IsHomingIndexError(const Encoder_T * p_encoder)
 }
 
 //enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
-bool Encoder_ProcHoming(Encoder_T * p_encoder)
+bool Encoder_PollHomingComplete(Encoder_T * p_encoder)
 {
     bool isIndex = p_encoder->IndexCount > 0U;
 
     if (isIndex == true)
     {
         p_encoder->IndexCount = 0U;
-        p_encoder->CounterD = 0U;
+        // p_encoder->CounterD = 0U;
         p_encoder->IsHomed = true;
     }
 
@@ -315,11 +315,7 @@ void Encoder_CalibrateIndexZeroRef(Encoder_T * p_encoder)
     }
 }
 
-/* Clears the value to config index to set as 0 */
-void Encoder_ClearIndexZeroRef(Encoder_T * p_encoder)
-{
-    p_encoder->Config.IndexAngleRef = 0U;
-}
+
 
 
 /******************************************************************************/
@@ -346,9 +342,13 @@ void Encoder_CheckAlignRef(Encoder_T * p_encoder)
 
 void Encoder_CaptureAlignZero(Encoder_T * p_encoder)
 {
-    // p_encoder->Angle32 = 0U;
+    p_encoder->AlignOffsetRef = p_encoder->Angle32;
     p_encoder->AlignOffsetRef = p_encoder->Angle32 /* - p_encoder->Config.IndexAngleRef */;
-    _Encoder_ZeroPulseCount(p_encoder);
+    if (p_encoder->IsHomed == true)
+    {
+        p_encoder->Config.AlignOffsetRef = p_encoder->AlignOffsetRef;
+        _Encoder_ZeroPulseCount(p_encoder);
+    }
 }
 
 /* this way angle starts from a known pole */
@@ -356,6 +356,11 @@ uint16_t Encoder_GetAngleAligned(Encoder_T * p_encoder)
 {
     return (p_encoder->Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
 }
+
+// uint16_t Encoder_GetElectricalAngleOffset(Encoder_T * p_encoder)
+// {
+//     return % p_encoder->Config.InterpolateAngleScalar;
+// }
 
 bool Encoder_ProcAlignValidate(Encoder_T * p_encoder)
 {
@@ -429,3 +434,58 @@ void Encoder_CalibrateQuadratureDirection(Encoder_T * p_encoder, bool isPositive
     p_encoder->Config.IsALeadBPositive = ((p_encoder->CounterD > 0) == isPositive);
 #endif
 }
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+// //
+// uint16_t CountsPerRevolution;       /* Derive Angular Units. */
+// uint16_t ScalarSpeedRef_Rpm;        /* Derive Percent16 Units. */
+// uint16_t SurfaceDiameter;           /* Derive Linear Units. */
+// uint16_t GearRatioInput;            /* DistancePerRevolution_Divider */
+// uint16_t GearRatioOutput;           /* DistancePerRevolution_Factor */
+// uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s */
+// uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
+
+// uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
+// uint32_t AlignOffsetRef;            /* Align - Index */
+
+// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
+// bool IsALeadBPositive;              /* User runtime calibration for encoder install direction. Accounts for LUT calibration */
+// /* Optionally combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
+//
+
+// int32_t Encoder_VarId_Get(const Motor_T * p_motor, Motor_VarConfig_Encoder_T varId)
+// {
+//     int32_t value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_ENCODER_COUNTS_PER_REVOLUTION:             value = p_motor->Encoder.Config.CountsPerRevolution;            break;
+//         case MOTOR_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_motor->Encoder.Config.IsQuadratureCaptureEnabled;     break;
+//         case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:              value = p_motor->Encoder.Config.IsALeadBPositive;               break;
+//         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       value = p_motor->Encoder.Config.ExtendedDeltaTStop;             break;
+//         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
+//         case MOTOR_VAR_ENCODER_INDEX_ZERO_REF:                    value = Encoder_GetIndexZeroRef(&p_motor->Encoder);             break;
+//         case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                value = p_motor->Encoder.Config.IndexAngleRef;                  break;
+//     }
+//     return value;
+// }
+
+// void Encoder_VarId_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T varId, int32_t varValue)
+// {
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_ENCODER_COUNTS_PER_REVOLUTION:             p_motor->Encoder.Config.CountsPerRevolution = varValue;            break;
+//         case MOTOR_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED:     p_motor->Encoder.Config.IsQuadratureCaptureEnabled = varValue;     break;
+//         case MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE:              p_motor->Encoder.Config.IsALeadBPositive = varValue;               break;
+//         case MOTOR_VAR_ENCODER_EXTENDED_TIMER_DELTA_T_STOP:       p_motor->Encoder.Config.ExtendedDeltaTStop = varValue;             break;
+//         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          break;
+
+//         case MOTOR_VAR_ENCODER_INDEX_ZERO_REF:                    Encoder_SetIndexZeroRef(&p_motor->Encoder, varValue);              break;
+//         case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:                Motor_Encoder_CalibrateHomeOffset(p_motor);                  break;
+//     }
+// }

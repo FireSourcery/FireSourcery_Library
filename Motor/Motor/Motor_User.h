@@ -214,13 +214,14 @@ extern void Motor_User_StartSpeedMode(Motor_T * p_motor);
 extern void Motor_User_SetSpeedCmd(Motor_T * p_motor, int16_t speed_fract16);
 extern void Motor_User_SetSpeedCmd_Scalar(Motor_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle);
+
 #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
-
-void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state);
-
+extern void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int16_t speed_fract16);
+extern void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state);
 #endif
+
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
 // extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
 
@@ -228,14 +229,9 @@ extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T directi
 extern void Motor_User_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);
 
-// extern bool Motor_User_TryRelease(Motor_T * p_motor);
-// extern bool Motor_User_TryHold(Motor_T * p_motor);
-// extern bool Motor_User_TryDirection(Motor_T * p_motor, Motor_Direction_T direction);
-// extern bool Motor_User_TryDirectionForward(Motor_T * p_motor);
-// extern bool Motor_User_TryDirectionReverse(Motor_T * p_motor);
-
 extern void Motor_User_CalibrateSensor(Motor_T * p_motor);
 extern void Motor_User_CalibrateAdc(Motor_T * p_motor);
+
 
 #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
 extern int16_t Motor_User_GetGroundSpeed_Mph(Motor_T * p_motor);

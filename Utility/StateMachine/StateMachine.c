@@ -54,9 +54,11 @@ static inline void ReleaseSignal_ISR(StateMachine_T * p_stateMachine)
 static inline bool AcquireSignal_Input(StateMachine_T * p_stateMachine)
 {
 #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-    return Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Multi-threaded do not proceed, if another thread holds the signal */
+    /* Multi-threaded do not proceed, if another thread holds the signal */
+    return Critical_AcquireSignal(&p_stateMachine->InputSignal);
 #else
-    Critical_AcquireSignal(&p_stateMachine->InputSignal); /* Single threaded input always overwrite. ISR will run to completion. does not need to block Input */
+    /* Single threaded input always overwrite. ISR will run to completion. does not need to block Input */
+    Critical_AcquireSignal(&p_stateMachine->InputSignal);
     return true;
 #endif
 }
@@ -116,31 +118,62 @@ static inline void ReleaseCritical_Input(StateMachine_T * p_stateMachine)
 /******************************************************************************/
 /*! */
 /******************************************************************************/
-/* Init */
-static inline void Reset(StateMachine_T * p_stateMachine)
+static inline void State_Init(const StateMachine_State_T ** pp_currentState, const StateMachine_State_T * p_newState, void * p_context)
 {
-    p_stateMachine->p_StateActive = p_stateMachine->CONST.P_MACHINE->P_STATE_INITIAL;
-    if (p_stateMachine->p_StateActive->ENTRY != NULL) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONST.P_CONTEXT); }
+    if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_context); }
+    *pp_currentState = p_newState;
 }
 
-static inline void ProcStateTransition(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
+/* Sets null as null */
+static inline void State_ProcTransition(const StateMachine_State_T ** pp_currentState, const StateMachine_State_T * p_newState, void * p_context)
 {
     if (p_newState != NULL)
     {
     #ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
-        if (p_stateMachine->p_StateActive->EXIT != NULL) { p_stateMachine->p_StateActive->EXIT(p_stateMachine->CONST.P_CONTEXT); }
+        if ((*pp_currentState)->EXIT != NULL) { (*pp_currentState)->EXIT(p_context); }
     #endif
-        if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_stateMachine->CONST.P_CONTEXT); }
-        p_stateMachine->p_StateActive = p_newState;
+        if (p_newState->ENTRY != NULL) { p_newState->ENTRY(p_context); }
+        *pp_currentState = p_newState;
     }
 }
 
 /*
-    No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
+    Top level State Proc
 */
-static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
+static inline void State_Proc(const StateMachine_State_T ** pp_currentState, void * p_context)
 {
-    ProcStateTransition(p_stateMachine, p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT));
+    (*pp_currentState)->LOOP(p_context);
+    if ((*pp_currentState)->NEXT != NULL) { State_ProcTransition(pp_currentState, (*pp_currentState)->NEXT(p_context), p_context); }
+}
+
+/*
+    Recursive for SubState
+*/
+static inline void State_ProcTraversal(const StateMachine_State_T ** pp_currentState, const StateMachine_State_T * p_superState, void * p_context)
+{
+    if (p_superState != NULL)
+    {
+        // p_superState->LOOP(p_context);
+        if (p_superState->LOOP != NULL) { p_superState->LOOP(p_context); }
+        if (p_superState->NEXT != NULL) { State_ProcTransition(pp_currentState, p_superState->NEXT(p_context), p_context); }
+        State_ProcTraversal(pp_currentState, p_superState->P_HOST, p_context);
+    }
+}
+
+
+/*
+    Top Level p_stateMachine->p_StateActive
+*/
+static inline StateMachine_Input_T AcceptInput(const StateMachine_T * p_stateMachine, state_machine_input_id_t inputId)
+{
+    // assert(inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH);
+    // return p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId];
+    return (inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) ? p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] : NULL;
+}
+
+static inline StateMachine_State_T * _TransitionFunction(StateMachine_T * p_stateMachine, StateMachine_Input_T transition, state_machine_input_value_t inputValue)
+{
+    return (transition != NULL) ? transition(p_stateMachine->CONST.P_CONTEXT, inputValue) : NULL;
 }
 
 /*!
@@ -150,17 +183,19 @@ static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
             self for self-transition processing ENTRY
             another State for transition to another State
 */
-static inline void ProcTransitionFunction(StateMachine_T * p_stateMachine, StateMachine_Transition_T transition, state_machine_input_value_t inputValue)
+/* Map (inputId, inputValue) => newState */
+static inline StateMachine_State_T * TransitionFunction(StateMachine_T * p_stateMachine, state_machine_input_id_t inputId, state_machine_input_value_t inputValue)
 {
-    if (transition != NULL) { ProcStateTransition(p_stateMachine, transition(p_stateMachine->CONST.P_CONTEXT, inputValue)); }
+    // StateMachine_Input_T transition = AcceptInput(p_stateMachine, inputId);
+    // return (transition != NULL) ? transition(p_stateMachine->CONST.P_CONTEXT, inputValue) : NULL;
+    return _TransitionFunction(p_stateMachine, AcceptInput(p_stateMachine, inputId), inputValue);
 }
 
-static inline StateMachine_Transition_T AcceptInput(const StateMachine_T * p_stateMachine, state_machine_input_id_t inputId)
-{
-    // assert(inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH);
-    // return p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId];
-    return (inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) ? p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] : NULL;
-}
+
+// static inline void SetActiveState(StateMachine_T * p_stateMachine, StateMachine_State_T * p_newState)
+// {
+//     State_ProcTransition(&p_stateMachine->p_StateActive, p_newState, p_stateMachine->CONST.P_CONTEXT);
+// }
 
 /*
     ProcInput must lock
@@ -170,16 +205,34 @@ static inline StateMachine_Transition_T AcceptInput(const StateMachine_T * p_sta
 */
 static void ProcInput(StateMachine_T * p_stateMachine, state_machine_input_id_t inputId, state_machine_input_value_t inputValue)
 {
-    StateMachine_Transition_T transition = AcceptInput(p_stateMachine, inputId);
-    ProcTransitionFunction(p_stateMachine, transition, inputValue);
+    // SetActiveState(p_stateMachine, TransitionFunction(p_stateMachine, inputId, inputValue));
+    State_ProcTransition(&p_stateMachine->p_StateActive, TransitionFunction(p_stateMachine, inputId, inputValue), p_stateMachine->CONST.P_CONTEXT);
 }
 
+/*
+    No null pointer check. User ensure LOOP is defined when using this interface. supply empty for no op
+*/
+static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
+{
+    // p_stateMachine->p_StateActive->LOOP(p_stateMachine->CONST.P_CONTEXT);
+    // SetActiveState(p_stateMachine, p_stateMachine->p_StateActive->NEXT(p_stateMachine->CONST.P_CONTEXT));
+    State_Proc(&p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT);
+}
+
+
+/* Init */
+static inline void Reset(StateMachine_T * p_stateMachine)
+{
+    p_stateMachine->p_StateActive = p_stateMachine->CONST.P_MACHINE->P_STATE_INITIAL;
+    if (p_stateMachine->p_StateActive->ENTRY != NULL) { p_stateMachine->p_StateActive->ENTRY(p_stateMachine->CONST.P_CONTEXT); }
+}
 
 /******************************************************************************/
 /*!
     Protected Functions
 */
 /******************************************************************************/
+
 /*
     Unconditional Transition - Maps active state to new state.
         p_newState assumed to be valid, caller ensure correctness
@@ -313,7 +366,7 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
         _StateMachine_ProcSyncInput(p_stateMachine);
     #else
         /* Singled threaded case handled by signal flag */
-        ProcInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        _StateMachine_ProcAsyncInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
     #endif
         ReleaseSignal_ISR(p_stateMachine);
     }
@@ -339,6 +392,8 @@ void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, state_machine_i
         ReleaseSignal_Input(p_stateMachine);
     }
 }
+
+// void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, state_machine_input_id_t inputId, state_machine_input_value_t inputValue)
 
 /******************************************************************************/
 /*
@@ -370,10 +425,9 @@ void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine)
     [AcquireCritical] blocks [ProcState] and other [ProcInput]
 
     Signal Case
+        may skip the next [ProcState]
         inputs must be on the same thread, or a non polling input maybe missed
 */
-/* Async case use critical or callers account for input missed via signal */
-/* alternatively use flag to only disable Proc State */
 void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_id_t inputId, state_machine_input_value_t inputValue)
 {
     if (AcquireCritical_Input(p_stateMachine) == true)
@@ -396,10 +450,9 @@ inline void StateMachine_ProcState(StateMachine_T * p_stateMachine)
     StateMachine_Sync_ProcState(p_stateMachine);
 #else
     /* [ProcSyncInput] must also be blocked during [Async_ProcInput] in case of transition */
-    /* Proc input must use sentinel */
     if (AcquireSignal_ISR(p_stateMachine) == true)
     {
-        _StateMachine_ProcSyncInput(p_stateMachine);
+        _StateMachine_ProcSyncInput(p_stateMachine);     /* Proc input must use sentinel */
         _StateMachine_ProcStateOutput(p_stateMachine);
         ReleaseSignal_ISR(p_stateMachine);
     }
@@ -416,65 +469,159 @@ inline void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_machin
     StateMachine_Async_ProcInput(p_stateMachine, inputId, inputValue);
 }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+/* per state inputs, only need to check id. inputs that only map to 1 state, reduce table size */
+// inline void StateMachine_SetValue(StateMachine_T * p_stateMachine, state_machine_state_t state, state_machine_input_value_t value)
+// {
+//     if (p_stateMachine->p_StateActive->ID == state) {
+//         if (p_stateMachine->p_StateActive->SET != NULL) { p_stateMachine->p_StateActive->SET(p_stateMachine->CONST.P_CONTEXT, value); }
+//     }
+// }
+
+// inline void StateMachine_substateInput(StateMachine_T * p_stateMachine, substateid, state_machine_input_value_t value)
+// {
+//  p_subState->P_TRANSITION_TABLE[ ](p_stateMachine->CONST.P_CONTEXT, value);
+// }
+
+
+
 /*
     SubState Functions
 */
-inline void _StateMachine_ProcSubstate(StateMachine_T * p_stateMachine)
+
+/*  */
+void _StateMachine_ProcBranch(StateMachine_T * p_stateMachine)
 {
-    if (p_stateMachine->SubstateLoop != NULL) { p_stateMachine->SubstateLoop(p_stateMachine->CONST.P_CONTEXT); }
+    if (p_stateMachine->p_SubState != NULL)
+    {
+        State_ProcTraversal(&p_stateMachine->p_SubState, p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT);
+    }
 }
 
-/*
-    Unique per State Inputs
-*/
-inline void StateMachine_ProcSubstateInput(StateMachine_T * p_stateMachine, state_machine_state_t stateId, state_machine_state_input_t inputId, state_machine_state_value_t inputValue)
+/* SubState Only */
+/* Proc already inside Signal */
+void _StateMachine_ProcSubState(StateMachine_T * p_stateMachine)
 {
-    if (AcquireSignal_Input(p_stateMachine) == true) /* Disable Proc or results of CMD maybe overwritten */
+    if (p_stateMachine->p_SubState != NULL)
     {
-        if (StateMachine_IsActiveState(p_stateMachine, stateId) == true)
+        if (p_stateMachine->p_SubState->LOOP != NULL)
         {
-            assert(p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].CMD != NULL);
+            /* caller must call _StateMachine_EndSubState to end loop or use return code */
+            State_Proc(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT);
+        }
+        // else
+        // {
+        //     _StateMachine_EndSubState(p_stateMachine);
+        // }
+    }
+}
 
-            p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].CMD(p_stateMachine->CONST.P_CONTEXT, inputValue);
-            p_stateMachine->SubstateLoop = p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].LOOP;
+inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine)
+{
+    // p_stateMachine->p_SubState = p_stateMachine->p_SubState->NEXT(p_stateMachine->CONST.P_CONTEXT);
+    p_stateMachine->p_SubState = NULL;
+}
+
+
+/*
+    Allow setting SubState without defined transitions.
+*/
+
+bool State_IsActive(const StateMachine_State_T * p_currentHost, const StateMachine_State_T * p_subState)
+{
+    if (p_currentHost == p_subState) { return true; }
+    else { return State_IsActive(p_currentHost, p_subState->P_HOST); }
+
+    // while(p_subState->P_HOST != NULL) {
+    //     p_host = p_subState->P_HOST;
+            // if (StateMachine_IsActiveState(p_stateMachine, p_subState->P_HOST) == true)
+    // } /* get the top level state */
+}
+
+// set the substate if it parent exist in the branch
+// inline void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_subState)
+// {
+//     if (StateMachine_IsActiveState(p_stateMachine->p_SubState->P_HOST, p_subState->P_HOST) == true)
+//     {
+//         /* multilevel implement array and level */
+//         State_Init(&p_stateMachine->p_SubState, p_subState, p_stateMachine->CONST.P_CONTEXT);
+//     }
+// }
+
+
+/*
+    Allow any SubState to overwrite any SubState
+*/
+void StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_subState)
+{
+    if (AcquireSignal_Input(p_stateMachine) == true) /* Disable ProcState or entry maybe overwritten */
+    {
+        if (StateMachine_IsActiveState(p_stateMachine, p_subState->P_HOST) == true)
+        {
+            /* multilevel implement array and level */
+            State_Init(&p_stateMachine->p_SubState, p_subState, p_stateMachine->CONST.P_CONTEXT);
         }
         ReleaseSignal_Input(p_stateMachine);
     }
 }
 
-/*  */
-// inline void StateMachine_ProcSubstateInput_Fn(StateMachine_T * p_stateMachine, state_machine_state_t stateId, StateMachine_Input_T inputFunction, state_machine_state_value_t inputValue, StateMachine_Function_T loop)
+// void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_id_t id, state_machine_input_value_t value)
 // {
-//     if (AcquireSignal_ISR(p_stateMachine) == true) /* Disable Proc or results of CMD maybe overwritten */
-//     {
-//         if (StateMachine_IsActiveState(p_stateMachine, stateId) == true)
-//         {
-//             inputFunction(p_stateMachine->CONST.P_CONTEXT, inputValue);
-//             p_stateMachine->SubstateLoop = loop;
-//         }
-//         ReleaseSignal_ISR(p_stateMachine);
-//     }
+//     p_subState->P_TRANSITION_TABLE[id](p_stateMachine->CONST.P_CONTEXT, value);
 // }
 
-
-
-// inline state_machine_state_value_t StateMachine_ProcSubstate(StateMachine_T * p_stateMachine, state_machine_state_t stateId, state_machine_state_input_t inputId, state_machine_state_value_t inputValue)
+/* additionally match to substate */
+// void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, StateMachine_State_T * p_subState, state_machine_input_id_t id, state_machine_input_value_t value)
 // {
-//     state_machine_state_value_t result;
-
-//     if (AcquireSignal_ISR(p_stateMachine) == true) /* Disable Proc or its entry function may be overwritten */
-//     {
-//         if (StateMachine_IsActiveState(p_stateMachine, stateId) == true)
-//         {
-//             // assert(p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId] != NULL);
-//             p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].ENTRY(p_stateMachine->CONST.P_CONTEXT);
-//             p_stateMachine->SubstateLoop = p_stateMachine->p_StateActive->P_SUB_STATE_TABLE[inputId].LOOP;
-//         }
-//         ReleaseSignal_ISR(p_stateMachine);
-//     }
-
-//     return result;
+//     p_subState->P_TRANSITION_TABLE[id](p_stateMachine->CONST.P_CONTEXT, value);
+//
 // }
+
+/*
+    Unique per State Inputs
+*/
+
+static inline bool IsCmdState(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state)
+{
+    return ((p_state == p_stateMachine->p_StateActive) || (p_state->P_HOST == p_stateMachine->p_StateActive));
+}
+
+static inline bool IsCmdStateId(const StateMachine_T * p_stateMachine, const state_machine_state_t stateId)
+{
+    return true;
+}
+
+// void StateMachine_StartCmd(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_initialState, const StateMachine_Cmd_T * p_cmd, state_machine_input_value_t inputValue)
+// {
+
+// }
+
+void StateMachine_StartCmd(StateMachine_T * p_stateMachine, const StateMachine_Cmd_T * p_cmd, state_machine_input_value_t inputValue)
+{
+    if (AcquireSignal_Input(p_stateMachine) == true) /* Disable Proc or results of CMD maybe overwritten */
+    {
+        // StateMachine_ProcInput(p_stateMachine, p_cmd->P_INITIAL->P_HOST, 0); optionally attempt to transition first
+        if (IsCmdState(p_stateMachine, p_cmd->P_INITIAL))
+        {
+            if (p_cmd->CMD != NULL) { p_cmd->CMD(p_stateMachine->CONST.P_CONTEXT, inputValue); }
+
+            // _StateMachine_SetSubState
+            if (p_cmd->P_INITIAL == p_stateMachine->p_StateActive) { _StateMachine_EndSubState(p_stateMachine); } /* pointer to the host state, indicate no periodic loop */
+            else { State_Init(&p_stateMachine->p_SubState, p_cmd->P_INITIAL, p_stateMachine->CONST.P_CONTEXT); }
+        }
+        ReleaseSignal_Input(p_stateMachine);
+    }
+
+    // p_stateMachine->CmdChain = cmdChain;
+    // cmdChain(p_stateMachine->CONST.P_CONTEXT, NULL)->CMD(p_stateMachine->CONST.P_CONTEXT, inputValue); /* call the initial command  */
+}
+
+
+
 
 /******************************************************************************/
 /*

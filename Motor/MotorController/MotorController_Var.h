@@ -196,6 +196,21 @@ typedef enum MotorController_Config_BootRef
 }
 MotorController_Config_BootRef_T;
 
+
+/* or handle with call */
+// typedef enum Motor_VarConfig_Cmd
+// {
+//     MOTOR_VAR_CMD_CALIBRATE_SENSOR,
+//     MOTOR_VAR_CMD_CALIBRATE_ADC,
+//     MOTOR_VAR_CMD_NVM_SAVE_CONFIG,
+//     MOTOR_VAR_CMD_NVM_RESTORE_CONFIG,
+//     MOTOR_VAR_CMD_REBOOT,
+//     MOTOR_VAR_CMD_NVM_SAVE_BOOT,
+//     MOTOR_VAR_CMD_NVM_WRITE_ONCE,
+//     MOTOR_VAR_CMD_NVM_READ_ONCE,
+// }
+// Motor_VarConfig_Cmd_T;
+
 // todo
 // typedef Thermistor_ConfigId_T MotVarId_Config_BoardThermistor_T;
 // typedef Thermistor_ConfigId_T MotVarId_Config_MotorThermistor_T;
@@ -258,6 +273,7 @@ typedef enum MotVarId_Type_Config
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID,
+    MOT_VAR_ID_TYPE_CONFIG_MOTOR_CMD,
     MOT_VAR_ID_TYPE_CONFIG_GENERAL,
     MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER,
     MOT_VAR_ID_TYPE_CONFIG_VMONITOR,

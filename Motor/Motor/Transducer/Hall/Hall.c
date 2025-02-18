@@ -69,6 +69,7 @@ static void CalibratePhaseInvA(Hall_T * p_hall) { p_hall->Config.SensorsTable[Ha
 static void CalibratePhaseC(Hall_T * p_hall)    { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_C; }
 static void CalibratePhaseInvB(Hall_T * p_hall) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = HALL_SENSORS_VIRTUAL_INV_B; }
 
+
 /* For 180 degree active. 120 degree active todo */
 void Hall_StartCalibrate(Hall_T * p_hall)       { Hall_ResetCapture(p_hall); /* p_hall->Config.BoundaryType = 0U; */ }
 void Hall_CalibratePhaseA(Hall_T * p_hall)      { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseA(p_hall); /* p_hall->Config.BoundaryType++; */ } }
@@ -79,68 +80,4 @@ void Hall_CalibratePhaseC(Hall_T * p_hall)      { if (Hall_PollCaptureSensors(p_
 void Hall_CalibratePhaseInvB(Hall_T * p_hall)   { if (Hall_PollCaptureSensors(p_hall) == true) { CalibratePhaseInvB(p_hall); /* p_hall->Config.BoundaryType++; */ } }
 
 
-
-// void Hall_Calibrate
-// (
-//     Hall_T * p_hall,
-//     (void)(*activePhase)(void * p_phaseContext, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC),
-//     void * p_phaseContext,
-//     (void)(*wait)(void * p_waitContext),
-//     void * p_waitContext
-// )
-// {
-//     const uint16_t duty = p_motor->Config.AlignPower_ScalarU16;
-//     bool isComplete = false;
-
-//     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-//     {
-//         switch (p_motor->CalibrationStateIndex)
-//         {
-//         case 0U:
-//             Phase_WriteDuty(&p_motor->Phase, duty, 0U, 0U);
-//             p_motor->CalibrationStateIndex = 1U;
-//             break;
-
-//         case 1U:
-//             Hall_CalibratePhaseA(&p_motor->Hall);
-//             Phase_WriteDuty(&p_motor->Phase, duty, duty, 0U);
-//             p_motor->CalibrationStateIndex = 2U;
-//             break;
-
-//         case 2U:
-//             Hall_CalibratePhaseInvC(&p_motor->Hall);
-//             Phase_WriteDuty(&p_motor->Phase, 0U, duty, 0U);
-//             p_motor->CalibrationStateIndex = 3U;
-//             break;
-
-//         case 3U:
-//             Hall_CalibratePhaseB(&p_motor->Hall);
-//             Phase_WriteDuty(&p_motor->Phase, 0U, duty, duty);
-//             p_motor->CalibrationStateIndex = 4U;
-//             break;
-
-//         case 4U:
-//             Hall_CalibratePhaseInvA(&p_motor->Hall);
-//             Phase_WriteDuty(&p_motor->Phase, 0U, 0U, duty);
-//             p_motor->CalibrationStateIndex = 5U;
-//             break;
-
-//         case 5U:
-//             Hall_CalibratePhaseC(&p_motor->Hall);
-//             Phase_WriteDuty(&p_motor->Phase, duty, 0U, duty);
-//             p_motor->CalibrationStateIndex = 6U;
-//             break;
-
-//         case 6U:
-//             Hall_CalibratePhaseInvB(&p_motor->Hall);
-//             Phase_Float(&p_motor->Phase);
-//             isComplete = true;
-//             break;
-
-//         default:
-//             break;
-//         }
-//     }
-
-//     return isComplete;
-// }
+void Hall_CalibrateStateAs(Hall_T * p_hall, Hall_Id_T calibratedId) { if (Hall_PollCaptureSensors(p_hall) == true) { p_hall->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = calibratedId; } }

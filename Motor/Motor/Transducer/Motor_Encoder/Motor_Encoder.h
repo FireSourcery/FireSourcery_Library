@@ -22,30 +22,28 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file   Motor_Encoder.h
     @author FireSourcery
-    @brief     State machine module preprocessor configuration options and defaults.
     @version V0
+    @brief
 */
 /******************************************************************************/
-#ifndef CONFIG_STATE_MACHINE_H
-#define CONFIG_STATE_MACHINE_H
+#ifndef MOTOR_ENCODER_H
+#define MOTOR_ENCODER_H
 
-#if     defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
-#elif   defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
-#else
-    #define CONFIG_STATE_MACHINE_ASYNC_CRITICAL
-#endif
+#include "../../Motor.h"
+#include "../../Motor_FOC.h"
+#include "../../Motor_StateMachine.h"
 
-// #if     defined(CONFIG_STATE_MACHINE_INPUT_MULTITHREADED)
-// #elif   defined(CONFIG_STATE_MACHINE_INPUT_SINGLE_THREADED)
-// #else
-// #endif
+#include "Transducer/Encoder/Encoder_ModeDT.h"
 
-#if     defined(CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE)
-#elif   defined(CONFIG_STATE_MACHINE_LINKED_MENU_DISABLE)
-#else
-    #define CONFIG_STATE_MACHINE_LINKED_MENU_DISABLE
-#endif
+
+void Motor_Encoder_StartHoming(Motor_T * p_motor);
+void Motor_Encoder_CalibrateHomeOffset(Motor_T * p_motor);
+
+void Motor_Encoder_StartUpChain(Motor_T * p_motor);
+
 
 #endif
+/******************************************************************************/
+

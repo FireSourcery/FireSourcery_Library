@@ -121,7 +121,6 @@ void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t dura
     Set
 */
 /******************************************************************************/
-static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->State = (match << p_ramp->Shift); }
 
 /* if initial > final AND acceleration is positive, ramp returns final value */
 void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final)

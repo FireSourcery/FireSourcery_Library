@@ -121,14 +121,14 @@ typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t 
 
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
-/* Per Cmd VTable */
+/* Per Cmd VTable. NvMemory_Cmd */
 typedef const struct NvMemory_OpControl
 {
     HAL_NvMemory_StartCmd_T START_CMD;          /* Start HAL Cmd, multiple iterations per Op */
     HAL_NvMemory_FinalizeCmd_T FINALIZE_CMD;    /* On end per Cmd iteration */
     HAL_NvMemory_MapStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
     size_t UNIT_SIZE;                           /* Align Size */
-    size_t(*FORCE_ALIGN)(uintptr_t value, size_t align); /* Align up or down */
+    size_t(*FORCE_ALIGN)(uintptr_t value, size_t align); /* Align up or down, alternatively as enum */
     // size_t CMD_UNITS;        /* Used by EraseVerify for now */
     // size_t BytesPerCmd;      /* Used by Erase for now */
     // size_t UnitsPerCmd;      /* count of UNIT_SIZE */

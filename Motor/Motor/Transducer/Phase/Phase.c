@@ -220,6 +220,7 @@ bool Phase_IsGround(const Phase_T * p_phase)
     return ((Phase_IsEnabledABC(p_phase) == true) && ((PWM_ReadDuty_Ticks(&p_phase->PwmA) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmB) == 0U) && (PWM_ReadDuty_Ticks(&p_phase->PwmC) == 0U)));
 }
 
+
 Phase_State_T Phase_ReadState(const Phase_T * p_phase)
 {
     Phase_State_T state;
@@ -286,6 +287,30 @@ void Phase_Align_ActivateDuty(const Phase_T * p_phase, Phase_Align_T id, uint16_
         case PHASE_ID_INV_A:    Phase_Align_ActivateDutyInvA(p_phase, duty);    break;
         case PHASE_ID_C:        Phase_Align_ActivateDutyC(p_phase, duty);       break;
         case PHASE_ID_INV_B:    Phase_Align_ActivateDutyInvB(p_phase, duty);    break;
+        default: break;
+    }
+}
+
+Phase_Flags_T _Phase_ReadOutputState(const Phase_T * p_phase)
+{
+    return (Phase_Flags_T) { .A = (PWM_ReadDuty_Ticks(&p_phase->PwmA) != 0U), .B = (PWM_ReadDuty_Ticks(&p_phase->PwmB) != 0U), .C = (PWM_ReadDuty_Ticks(&p_phase->PwmC) != 0U) };
+}
+
+Phase_Align_T Phase_ReadAlign(const Phase_T * p_phase)
+{
+    //  return _Phase_ReadOutputState(p_phase).Value; //dodo as index
+}
+
+Phase_Align_T Phase_GetNextAlign(const Phase_T * p_phase)
+{
+    switch (Phase_ReadAlign(p_phase))
+    {
+        case PHASE_ID_A:        return PHASE_ID_INV_C;
+        case PHASE_ID_INV_C:    return PHASE_ID_B;
+        case PHASE_ID_B:        return PHASE_ID_INV_A;
+        case PHASE_ID_INV_A:    return PHASE_ID_C;
+        case PHASE_ID_C:        return PHASE_ID_INV_B;
+        case PHASE_ID_INV_B:    return PHASE_ID_A;
         default: break;
     }
 }

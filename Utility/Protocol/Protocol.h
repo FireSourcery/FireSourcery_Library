@@ -384,7 +384,7 @@ Protocol_T;
 
 #define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength),
 
-#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubstateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Config)    \
+#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Config)    \
 {                                                                \
     .CONST =                                                     \
     {                                                            \
@@ -392,7 +392,7 @@ Protocol_T;
         .P_TX_PACKET_BUFFER     = p_TxBuffer,                    \
         .PACKET_BUFFER_LENGTH   = PacketBufferLength,            \
         .P_APP_INTERFACE        = p_AppInterface,                \
-        .P_REQ_STATE_BUFFER     = p_SubstateBuffer,              \
+        .P_REQ_STATE_BUFFER     = p_SubStateBuffer,              \
         .PP_SPECS_TABLE         = p_SpecsTable,                  \
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \

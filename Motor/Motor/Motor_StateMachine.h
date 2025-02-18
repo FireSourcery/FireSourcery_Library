@@ -66,13 +66,20 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
 
-/* Wrap for array */
-static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uint8_t stateId) { return (StateMachine_IsActiveState(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
+// extern STATE_CALIBRATION; /* extern for extension */
 
-void Motor_User_SetOpenLoopAngle(Motor_T * p_motor, angle16_t angle);
-void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase);
-void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase);
-void Motor_OpenLoop_StartUp(Motor_T * p_motor);
+/* uint8_t Wrap for array */
+static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uint8_t stateId) { return (StateMachine_IsActiveStateId(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
+
+static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return (p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_DISABLE); }
+
+extern void Motor_OpenLoop_SetPhaseState(Motor_T * p_motor, Phase_State_T state);
+extern void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Align_T align);
+extern void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle);
+extern void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction);
+extern void Motor_OpenLoop_StartHome(Motor_T * p_motor);
+
+// extern void Motor_Calibration_SetIdle(Motor_T * p_motor);
 
 extern bool Motor_StateMachine_IsFault(const Motor_T * p_motor);
 extern bool Motor_StateMachine_ExitFault(Motor_T * p_motor);

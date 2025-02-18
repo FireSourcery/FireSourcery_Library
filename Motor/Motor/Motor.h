@@ -224,19 +224,18 @@ typedef enum Motor_OpenLoopState
     // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
-
 }
 Motor_OpenLoopState_T;
 
-typedef enum Motor_OpenLoopCmd
-{
-    MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
-    MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
-    MOTOR_OPEN_LOOP_CMD_ANGLE,
-    MOTOR_OPEN_LOOP_CMD_ALIGN,
-    // MOTOR_OPEN_LOOP_CMD_STARTUP,
-}
-Motor_OpenLoopCmd_T;
+// typedef enum Motor_OpenLoopCmd
+// {
+//     MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
+//     MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
+//     MOTOR_OPEN_LOOP_CMD_ANGLE,
+//     MOTOR_OPEN_LOOP_CMD_ALIGN,
+//     // MOTOR_OPEN_LOOP_CMD_STARTUP,
+// }
+// Motor_OpenLoopCmd_T;
 
 /*
     Calibration SubState
@@ -249,6 +248,7 @@ typedef enum Motor_CalibrationState
     MOTOR_CALIBRATION_STATE_ENCODER,
     MOTOR_CALIBRATION_STATE_SIN_COS,
     MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
+    MOTOR_CALIBRATION_STATE_IDLE,
 }
 Motor_CalibrationState_T;
 
@@ -402,8 +402,10 @@ typedef struct Motor
     Motor_FeedbackMode_T FeedbackMode;          /* Active FeedbackMode, Control/Run SubState */
     Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
     Motor_StateFlags_T StateFlags;              /* Can be pushed to modules */
-    Motor_OpenLoopState_T OpenLoopState;
+
+    Motor_OpenLoopState_T OpenLoopState; /* depreciate */
     Motor_CalibrationState_T CalibrationState;  /* SubState, selection for calibration */
+
     uint8_t CalibrationStateIndex;
     volatile Motor_PhaseFlags_T IFlags;
     volatile Motor_PhaseFlags_T VFlags;
@@ -544,6 +546,7 @@ static inline int32_t _Motor_V_Fract16OfVolts(int32_t v_volts)          { return
 static inline int16_t _Motor_V_VoltsOfFract16(int32_t v_fract16)        { return v_fract16 * Motor_Static_GetVSource_V() / 32768; }
 static inline int32_t _Motor_Power_WattsOfFract16(int32_t vi_fract16)   { return vi_fract16 * MOTOR_STATIC.I_MAX_AMPS * Motor_Static_GetVSource_V() / 32768; }
 #endif
+
 
 /******************************************************************************/
 /*
@@ -691,8 +694,6 @@ static inline int32_t _Motor_GetSpeedLimitCw(const Motor_T * p_motor)   { return
 static inline uint16_t Motor_GetSpeedLimit(const Motor_T * p_motor) { return (Motor_IsDirectionForward(p_motor) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16); }
 
 
-
-
 /* same units */
 static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req)   { return math_clamp(req, _Motor_GetSpeedLimitCw(p_motor), _Motor_GetSpeedLimitCcw(p_motor)); }
 static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)       { return math_clamp(req, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
@@ -738,14 +739,22 @@ static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req
 */
 static inline int32_t Motor_GetVSpeed_Fract16(const Motor_T * p_motor) { return p_motor->Speed_Fract16 * p_motor->Config.VSpeedScalar_UFract16 >> 15; }
 
-// static inline uint32_t _Motor_Angle16OfSpeed_Fract16(uint16_t speed_fract16)
-// static inline uint32_t _Motor_SpeedOfAngle16_Fract16(uint16_t angle16)
-// for sensor which report an delta angle instead of speed.
-// static inline uint32_t speed_rpm_of_angle16(uint32_t sampleFreq, uint16_t angle16)      { return (angle16 * sampleFreq >> 16U) * 60U; }
-// static inline uint32_t speed_angle16_of_rpm(uint32_t sampleFreq, uint16_t rpm)          { return ((uint32_t)rpm << 16U) / (60U * sampleFreq); }
-// static inline uint32_t _Motor_RpmOfMechAngle16(uint16_t angle16)                        { return speed_rpm_of_angle16(MOTOR_STATIC.SPEED_FREQ, angle16); }
-// static inline uint32_t _Motor_Angle16OfRpm(uint16_t rpm)                                { return speed_angle16_of_rpm(MOTOR_STATIC.SPEED_FREQ, rpm); }
 
+// for sensor which return a delta angle instead of speed.
+static inline uint32_t speed_rpm_of_angle16(uint32_t sampleFreq, uint16_t angle16)      { return (angle16 * sampleFreq >> 16U) * 60U; }
+static inline uint32_t speed_angle16_of_rpm(uint32_t sampleFreq, uint16_t rpm)          { return ((uint32_t)rpm << 16U) / (60U * sampleFreq); }
+
+// static inline uint32_t _Motor_RpmOfAngle16(uint16_t angle16)                         { return speed_rpm_of_angle16(MOTOR_STATIC.SPEED_FREQ, angle16); }
+// static inline uint32_t _Motor_Angle16OfRpm(uint16_t rpm)                             { return speed_angle16_of_rpm(MOTOR_STATIC.SPEED_FREQ, rpm); }
+
+static inline uint16_t Motor_MechAngleOfSpeed_Fract16(Motor_T * p_motor, int16_t speed_fract16)
+    { return ((int32_t)speed_fract16 * 2 * Motor_GetSpeedVRef_Rpm(p_motor)) / (60 * MOTOR_STATIC.CONTROL_FREQ); }
+
+static inline uint32_t Motor_MechSpeedOfAngle_Fract16(Motor_T * p_motor, uint16_t angle16)
+    { return ((uint32_t)angle16 * MOTOR_STATIC.CONTROL_FREQ * 60) / (2 * Motor_GetSpeedVRef_Rpm(p_motor)); }
+
+static inline uint16_t Motor_ElectricalAngleOfSpeed(Motor_T * p_motor, int16_t speed_fract16)
+    { return ((int32_t)speed_fract16 * 2 * Motor_GetSpeedVRef_Rpm(p_motor) * p_motor->Config.PolePairs) / (60 * MOTOR_STATIC.CONTROL_FREQ); }
 
 
 /******************************************************************************/
@@ -765,10 +774,10 @@ extern void Motor_ProcSpeedFeedback(Motor_T * p_motor);
 extern angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor);
 
 extern void Motor_ZeroSensor(Motor_T * p_motor);
-extern void Motor_CalibrateSensorZero(Motor_T * p_motor);
-extern void Motor_ValidateSensorAlign(Motor_T * p_motor);
 extern bool Motor_IsClosedLoopStart(const Motor_T * p_motor);
-extern bool Motor_PollAlignFault(Motor_T * p_motor);
+// extern void Motor_CalibrateSensorZero(Motor_T * p_motor);
+// extern void Motor_ValidateSensorAlign(Motor_T * p_motor);
+// extern bool Motor_PollAlignFault(Motor_T * p_motor);
 
 extern void Motor_UpdateSpeedControlLimits(Motor_T * p_motor);
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);

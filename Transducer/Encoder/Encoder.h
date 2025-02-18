@@ -161,13 +161,14 @@ typedef struct Encoder
     uint32_t ErrorCount;
 
     uint32_t IndexCount;
-    uint32_t IndexAngleRef;
+    uint32_t IndexAngleRef; /* 32 */
     uint32_t IndexAngleError;
     // uint32_t CounterOnIndex;
     // uint32_t CounterOnIndexPrev;
     bool IsHomed;
     Encoder_Align_T Align;
     uint32_t AlignOffsetRef;
+    uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
 
     /* Experimental */
@@ -359,6 +360,15 @@ static inline uint16_t Encoder_GetAngle(const Encoder_T * p_encoder) { return En
 /* scalar < 256 */
 static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint8_t scalar) { return Encoder_GetDirectionRef(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * scalar) >> 8U); }
 
+static inline uint16_t Encoder_GetElectricalAngle(const Encoder_T * p_encoder, uint8_t polePairs)
+{
+    // return Encoder_GetDirectionRef(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * polePairs) >> 8U) + p_encoder->AlignOffsetRef;
+
+    // p_encoder->AlignOffsetRef = 0 if aligned to phase
+    // indexangle-algnedangle
+
+}
+
 
 /* SinglePhase assign direction */
 static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; /*  DirectionComp = 1 */}
@@ -376,8 +386,24 @@ static inline bool Encoder_IsAligned(const Encoder_T * p_encoder)
     return (p_encoder->Align == ENCODER_ALIGN_ABSOLUTE) || (p_encoder->Align == ENCODER_ALIGN_PHASE);
 }
 
+static inline bool _Encoder_IsAligned(const Encoder_T * p_encoder)
+{
+    // return (p_encoder->Align == ENCODER_ALIGN_PHASE) || (p_encoder->IsHomed && Encoder_IsAlignOffsetOn(p_encoder));
+}
+
 static inline bool Encoder_IsPositionRefSet(Encoder_T * p_encoder) { return (p_encoder->IsHomed || Encoder_IsAligned(p_encoder)); }
 
+
+/******************************************************************************/
+/*!
+    @brief inline config
+*/
+/******************************************************************************/
+static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_T * p_encoder) { return p_encoder->Config.IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
+static inline void Encoder_SetIndexZeroRef(Encoder_T * p_encoder, uint16_t angle) { p_encoder->Config.IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
+
+/* Clears the value to config index to set as 0 */
+static inline void Encoder_ClearIndexZeroRef(Encoder_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
 
 /******************************************************************************/
 /*!
@@ -444,7 +470,7 @@ extern void Encoder_CompleteAlignValidate(Encoder_T * p_encoder);
 
 void Encoder_StartHoming(Encoder_T * p_encoder);
 uint16_t Encoder_GetHomingAngle(const Encoder_T * p_encoder);
-bool Encoder_ProcHoming(Encoder_T * p_encoder);
+bool Encoder_PollHomingComplete(Encoder_T * p_encoder);
 void Encoder_CalibrateIndexZeroRef(Encoder_T * p_encoder);
 void Encoder_ClearIndexZeroRef(Encoder_T * p_encoder);
 

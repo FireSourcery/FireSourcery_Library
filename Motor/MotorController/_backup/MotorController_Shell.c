@@ -249,14 +249,14 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
 {
     if(argc == 1U)
     {
-        p_mc->ShellSubstate = 0U;
+        p_mc->ShellSubState = 0U;
     }
     else if(argc == 2U)
     {
-        if      (strncmp(argv[1U], "sensor", 6U) == 0U) { p_mc->ShellSubstate = 1U; }
-        else if (strncmp(argv[1U], "power", 5U) == 0U)  { p_mc->ShellSubstate = 2U; }
-        else if (strncmp(argv[1U], "bemf", 4U) == 0U)   { p_mc->ShellSubstate = 3U; }
-        else if (strncmp(argv[1U], "exp", 3U) == 0U)    { p_mc->ShellSubstate = 4U; }
+        if      (strncmp(argv[1U], "sensor", 6U) == 0U) { p_mc->ShellSubState = 1U; }
+        else if (strncmp(argv[1U], "power", 5U) == 0U)  { p_mc->ShellSubState = 2U; }
+        else if (strncmp(argv[1U], "bemf", 4U) == 0U)   { p_mc->ShellSubState = 3U; }
+        else if (strncmp(argv[1U], "exp", 3U) == 0U)    { p_mc->ShellSubState = 4U; }
     }
     return CMD_STATUS_PROCESS_LOOP;
 }
@@ -267,7 +267,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
     Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
-    switch(p_mc->ShellSubstate)
+    switch(p_mc->ShellSubState)
     {
         case 0U:
             Terminal_SendString(p_term, "Speed: "); Terminal_SendNum(p_term, Motor_User_GetSpeed_Rpm(p_motor)); Terminal_SendString(p_term, " RPM, ");

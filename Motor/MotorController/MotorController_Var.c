@@ -69,8 +69,8 @@ int32_t MotorController_VarOutput_AnalogUser_Get(const MotorController_T * p_mc,
     {
         // case MOT_VAR_ANALOG_THROTTLE:       value = MotAnalogUser_GetThrottle(&p_mc->AnalogUser);               break;
         // case MOT_VAR_ANALOG_BRAKE:          value = MotAnalogUser_GetBrake(&p_mc->AnalogUser);                  break;
-        case MOT_VAR_ANALOG_THROTTLE:           value = MotorController_Analog_GetThrottle(&p_mc->AnalogUser);      break;
-        case MOT_VAR_ANALOG_BRAKE:              value = MotorController_Analog_GetBrake(&p_mc->AnalogUser);         break;
+        case MOT_VAR_ANALOG_THROTTLE:           value = MotorController_Analog_GetThrottle(p_mc);                   break;
+        case MOT_VAR_ANALOG_BRAKE:              value = MotorController_Analog_GetBrake(p_mc);                      break;
         case MOT_VAR_ANALOG_THROTTLE_DIN:       value = p_mc->AnalogUser.ThrottleAIn.EdgePin.DebouncedState;        break;
         case MOT_VAR_ANALOG_BRAKE_DIN:          value = p_mc->AnalogUser.BrakeAIn.EdgePin.DebouncedState;           break;
         case MOT_VAR_ANALOG_BISTATE_BRAKE_DIN:  value = p_mc->AnalogUser.ThrottleAIn.EdgePin.DebouncedState;        break;
@@ -473,6 +473,7 @@ static void MotorInstance_SetConfig(MotorController_T * p_mc, uint8_t motorInsta
             case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   Thermistor_ConfigId_Set(&p_motor->Thermistor, (Thermistor_ConfigId_T)idBase, value);       break;
             case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          Motor_VarConfig_Pid_Set(p_motor, (Motor_VarConfig_Pid_T)idBase, value);                    break;
             // case MOT_VAR_TYPE_SIN_COS:                      Motor_VarConfig_SinCos_Set(p_motor, (Motor_VarConfig_SinCos_T)idBase, value);           break;
+            case MOT_VAR_ID_TYPE_CONFIG_MOTOR_CMD:          Motor_VarConfig_Cmd_Call(p_motor, (Motor_VarConfig_Cmd_T)idBase, value);                   break;
         }
     }
 }
@@ -494,6 +495,7 @@ static MotVarId_Status_T SetConfig(MotorController_T * p_mc, MotVarId_T varId, i
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR:   MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
         case MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID:          MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
         // case MOT_VAR_TYPE_SIN_COS:                   MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
+        case MOT_VAR_ID_TYPE_CONFIG_MOTOR_CMD:          MotorInstance_SetConfig(p_mc, varId.Instance, (MotVarId_Type_Config_T)varId.NameType, varId.NameBase, varValue); break;
 
         case MOT_VAR_ID_TYPE_CONFIG_GENERAL:        MotorController_Config_Set(p_mc, (MotorController_ConfigId_T)varId.NameBase, varValue);                         break;
         case MOT_VAR_ID_TYPE_CONFIG_ANALOG_USER:    MotorController_Config_AnalogUser_Set(p_mc, (MotorController_Config_AnalogUser_T)varId.NameBase, varValue);     break;
@@ -562,4 +564,12 @@ MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T v
 
 // uint8_t MotorController_Var_GetSize(MotorController_T * p_mc, uint16_t varId)
 // {
+// }
+
+// const StateMachine_SubState_T CMD_SET_CONFIG =
+// {
+//     .CMD = MotorController_Var_Set,
+//     // .CMD_ID = MOT_VAR_ID_TYPE_CONFIG,
+//     .LOOP = NULL,
+//     .STATE = MCSM_STATE_ID_LOCK,
 // }

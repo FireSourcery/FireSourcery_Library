@@ -45,12 +45,13 @@
 
 typedef enum Phase_State
 {
-    PHASE_STATE_FLOAT,
-    PHASE_STATE_ACTIVE,
-    PHASE_STATE_GROUND,
+    PHASE_STATE_FLOAT,  /* Disable  */
+    PHASE_STATE_ACTIVE, /* VDuty */
+    PHASE_STATE_GROUND, /* VDuty 0 */
 }
 Phase_State_T;
 
+// typedef union Phase_Id
 typedef union Phase_Flags
 {
     struct
@@ -75,16 +76,42 @@ Phase_Mode_T;
 /* 3-Phase Active, Align */
 typedef enum Phase_Align
 {
-    // PHASE_ID_0,
-    // PHASE_ID_7,
+    // PHASE_ID_0_GROUND,
+    // PHASE_ID_7_ACTIVE,
     PHASE_ID_A,
     PHASE_ID_INV_C,
     PHASE_ID_B,
     PHASE_ID_INV_A,
     PHASE_ID_C,
     PHASE_ID_INV_B,
+// #define    PHASE_ALIGN_A         (0b001U)
+// #define    PHASE_ALIGN_B         (0b010U)
+// #define    PHASE_ALIGN_C         (0b100U)
+// #define    PHASE_ALIGN_INV_A     (0b110U)
+// #define    PHASE_ALIGN_INV_B     (0b101U)
+// #define    PHASE_ALIGN_INV_C     (0b011U)
 }
 Phase_Align_T;
+
+
+
+static inline uint16_t Phase_AngleOf(Phase_Align_T id)
+{
+    static const uint16_t ANGLE_TABLE[] =
+    {
+        [PHASE_ID_A]        = 0U,         /* 0 */
+        [PHASE_ID_INV_C]    = 10922U,     /* 60 */
+        [PHASE_ID_B]        = 21845U,     /* 120 */
+        [PHASE_ID_INV_A]    = 32768U,     /* 180 */
+        [PHASE_ID_C]        = 43690U,     /* 240 */
+        [PHASE_ID_INV_B]    = 54613U,     /* 300 */
+        // [PHASE_ID_0]    = 0U,
+        // [PHASE_ID_7]    = 0U,
+    };
+
+    return  ANGLE_TABLE[id];
+}
+
 
 /* 2-Phase Active, Six-Step Commutation */
 typedef enum Phase_Polar

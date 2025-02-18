@@ -209,6 +209,8 @@ typedef enum Motor_VarConfig_Encoder
     MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR,
     MOTOR_VAR_ENCODER_IS_QUADRATURE_CAPTURE_ENABLED,
     MOTOR_VAR_ENCODER_IS_A_LEAD_B_POSITIVE,
+
+    MOTOR_VAR_ENCODER_INDEX_ZERO_REF,
     MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF,
 }
 Motor_VarConfig_Encoder_T;
@@ -223,6 +225,22 @@ typedef enum Motor_VarConfig_SinCos
     MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
 }
 Motor_VarConfig_SinCos_T;
+
+/* calibration commands */
+typedef enum Motor_VarConfig_Cmd
+{
+    MOTOR_VAR_CONFIG_CMD_ENCODER_HOME,
+    MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
+    // MOTOR_VAR_CMD_CALIBRATE_SENSOR,
+    // MOTOR_VAR_CMD_CALIBRATE_ADC,
+    // MOTOR_VAR_CMD_NVM_SAVE_CONFIG,
+    // MOTOR_VAR_CMD_NVM_RESTORE_CONFIG,
+    // MOTOR_VAR_CMD_REBOOT,
+    // MOTOR_VAR_CMD_NVM_SAVE_BOOT,
+    // MOTOR_VAR_CMD_NVM_WRITE_ONCE,
+    // MOTOR_VAR_CMD_NVM_READ_ONCE,
+}
+Motor_VarConfig_Cmd_T;
 
 /*
     PID
@@ -275,6 +293,8 @@ extern void Motor_VarConfig_Hall_Set(Motor_T * p_motor, Motor_VarConfig_Hall_T v
 extern void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T varId, int32_t varValue);
 extern void Motor_VarConfig_SinCos_Set(Motor_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue);
 extern void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int32_t varValue);
+
+extern void Motor_VarConfig_Cmd_Call(Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int32_t varValue);
 
 #endif
 

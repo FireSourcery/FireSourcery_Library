@@ -48,17 +48,21 @@ typedef Accumulator_T Ramp_T;
 static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
 
+static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->State = (match << p_ramp->Shift); }
+
 static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target)
 {
     p_ramp->Target = (target << p_ramp->Shift);
     if (p_ramp->Coefficient == 0) { p_ramp->State = p_ramp->Target; }
 }
 
+
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
     p_ramp->Target = (match << p_ramp->Shift);
     p_ramp->State = p_ramp->Target;
 }
+
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 {

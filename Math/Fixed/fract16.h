@@ -183,7 +183,18 @@ static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
     return (angle16_quadrant_t)((uint16_t)theta & ANGLE16_QUADRANT_MASK);
 }
 
+static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
+{
+    return ((theta0 > theta1) == incrementing);
+}
+
+static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
+{
+    return (theta0 > theta1);
+}
+
 /* polling freq must be sufficient */
+/* crossing 0 and 180 */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
 {
     // return ((int16_t)(theta0 ^ theta1) < 0);

@@ -142,6 +142,7 @@ void Motor_InitReboot(Motor_T * p_motor)
 */
 /******************************************************************************/
 /* Re init peripheral registers */
+
 void Motor_InitSensor(Motor_T * p_motor)
 {
     switch (p_motor->Config.SensorMode)
@@ -333,7 +334,7 @@ bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
     switch(p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
-        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(&p_motor->Encoder);    break; //isHomed
+        case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(&p_motor->Encoder);    break;
 #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
 #endif
@@ -347,11 +348,11 @@ bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
 
 static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 {
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     return (p_motor->FeedbackMode.OpenLoop == 1U);
-#else
-    (void)p_motor; return false;
-#endif
+// #else
+//     (void)p_motor; return false;
+// #endif
 }
 
 inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)

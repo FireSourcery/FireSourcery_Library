@@ -294,43 +294,12 @@ void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int16_t speed_fract16)
 /*
 
 */
+/* depreciate param */
 void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state)
 {
     StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ENTER);
     // StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, state);
 }
-
-/*
-    Open Loop Process Cmds
-*/
-/* transition begin control, todo this function only */
-// void Motor_User_EnterOpenLoop(Motor_T * p_motor)
-// {
-//     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ENTER);
-//     // StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL, phase);
-// }
-
-void Motor_User_SetOpenLoopPhaseState(Motor_T * p_motor, Phase_State_T phase)
-{
-    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL, phase);
-}
-
-/* change to non enter function or also activate state  */
-void Motor_User_SetOpenLoopPhaseAlign(Motor_T * p_motor, Phase_Align_T phase)
-{
-    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN, phase);
-}
-
-/* align on feedforward using V or I */
-void Motor_User_SetOpenLoopAngle(Motor_T * p_motor, angle16_t angle)
-{
-    StateMachine_ProcSubstateInput(&p_motor->StateMachine, MSM_STATE_ID_OPEN_LOOP, MOTOR_OPEN_LOOP_CMD_ANGLE, angle);
-}
-
-// void Motor_User_SetOpenLoopJog(Motor_T * p_motor, int8_t direction)
-// {
-//     todo using register state
-// }
 #endif
 
 

@@ -62,18 +62,6 @@ const StateMachine_Machine_T MCSM_MACHINE =
 
 static StateMachine_State_T * TransitionFault(MotorController_T * p_mc, state_machine_input_value_t _void) { (void)_void; return &STATE_FAULT; }
 
-// #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-// static StateMachine_State_T * TransitionServo(MotorController_T * p_mc, state_machine_input_value_t servoMode)
-// {
-//     StateMachine_State_T * p_nextState = NULL;
-//     switch ((MotorController_ServoMode_T)servoMode)
-//     {
-//         case MOTOR_CONTROLLER_SERVO_MODE_ENTER:  p_nextState = &STATE_SERVO;  break;
-//         default: break;
-//     }
-//     return p_nextState;
-// }
-// #endif
 
 /* Main thread only sets fault flags, does not clear, call to check clear */
 void MotorController_PollAdcFaultFlags(MotorController_T * p_mc)
@@ -108,7 +96,7 @@ static void Init_Entry(MotorController_T * p_mc)
 //     MotorController_BeepShort(p_mc);
 // }
 
-static StateMachine_State_T * Init_Proc(MotorController_T * p_mc)
+static void Init_Proc(MotorController_T * p_mc)
 {
     bool wait = true;
 
@@ -142,10 +130,9 @@ static StateMachine_State_T * Init_Proc(MotorController_T * p_mc)
         }
     }
 
-    return NULL;
 }
 
-static const StateMachine_Transition_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT] = NULL, /* MotorController_StateMachine_EnterFault is disabled for INIT_STATE */
 };
@@ -154,11 +141,11 @@ static const StateMachine_State_T STATE_INIT =
 {
     .ID                 = MCSM_STATE_ID_INIT,
     .ENTRY              = (StateMachine_Function_T)Init_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Init_Proc,
+    .LOOP               = (StateMachine_Function_T)Init_Proc,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
-    // .P_TRANSITION_TABLE = (StateMachine_Transition_T[MCSM_TRANSITION_TABLE_LENGTH])
+    // .P_TRANSITION_TABLE = (StateMachine_Input_T[MCSM_TRANSITION_TABLE_LENGTH])
     // {
-    //     [MCSM_INPUT_FAULT] = (StateMachine_Transition_T)NULL,
+    //     [MCSM_INPUT_FAULT] = (StateMachine_Input_T)NULL,
     // },
 };
 
@@ -176,9 +163,9 @@ static void Park_Entry(MotorController_T * p_mc)
     // p_mc->DriveDirection = MOTOR_CONTROLLER_DIRECTION_PARK;
 }
 
-static StateMachine_State_T * Park_Proc(MotorController_T * p_mc) {
+static void Park_Proc(MotorController_T * p_mc) {
     // if (MotorController_IsEveryMotorStopState(p_mc) == false) set error
-    return NULL;
+
 }
 
 static StateMachine_State_T * Park_InputBlocking(MotorController_T * p_mc, state_machine_input_value_t lockId)
@@ -209,15 +196,15 @@ static StateMachine_State_T * Park_InputDirection(MotorController_T * p_mc, stat
     return p_nextState;
 }
 
-static const StateMachine_Transition_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_LOCK]       = (StateMachine_Transition_T)Park_InputBlocking,
-    [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Park_InputDirection,
+    [MCSM_INPUT_FAULT]      = (StateMachine_Input_T)TransitionFault,
+    [MCSM_INPUT_LOCK]       = (StateMachine_Input_T)Park_InputBlocking,
+    [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Park_InputDirection,
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-    [MCSM_INPUT_SERVO]      = (StateMachine_Transition_T)Park_InputServo,
+    [MCSM_INPUT_SERVO]      = (StateMachine_Input_T)Park_InputServo,
 #endif
-    // [MCSM_INPUT_USER_MODE]  = (StateMachine_Transition_T)Park_InputUser,
+    // [MCSM_INPUT_USER_MODE]  = (StateMachine_Input_T)Park_InputUser,
 };
 
 static const StateMachine_State_T STATE_PARK =
@@ -225,7 +212,7 @@ static const StateMachine_State_T STATE_PARK =
     .ID                 = MCSM_STATE_ID_PARK,
     .P_TRANSITION_TABLE = &PARK_TRANSITION_TABLE[0U],
     .ENTRY              = (StateMachine_Function_T)Park_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Park_Proc,
+    .LOOP               = (StateMachine_Function_T)Park_Proc,
 };
 
 
@@ -370,12 +357,13 @@ static StateMachine_State_T * _Drive_InputDrive(MotorController_T * p_mc, MotorC
 /******************************************************************************/
 static void Drive_Entry(MotorController_T * p_mc)
 {
-    // MotorController_ActivateAll(p_mc);
+    // MotorController_SetCmdValueAll(p_mc, 0);
+    // MotorController_StartControlAll(p_mc);
     // p_mc->StateFlags.IsStopped = 0U;
     p_mc->DriveSubState = MOTOR_CONTROLLER_DRIVE_RELEASE;
 }
 
-static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
+static void Drive_Proc(MotorController_T * p_mc)
 {
     (void)p_mc;
 
@@ -392,7 +380,6 @@ static StateMachine_State_T * Drive_Proc(MotorController_T * p_mc)
         // if (p_mc->UserCmdValue == 0) { MotorController_ProcDriveZero(p_mc); }
     }
 
-    return NULL;
 }
 
 static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, state_machine_input_value_t direction)
@@ -464,21 +451,21 @@ static StateMachine_State_T * Drive_InputFeedbackMode(MotorController_T * p_mc, 
     return NULL;
 }
 
-static const StateMachine_Transition_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Drive_InputDirection,
-    [MCSM_INPUT_THROTTLE]   = (StateMachine_Transition_T)Drive_InputThrottle,
-    [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Drive_InputBrake,
-    [MCSM_INPUT_CMD]        = (StateMachine_Transition_T)Drive_InputCmd,
-    [MCSM_INPUT_CMD_MODE]   = (StateMachine_Transition_T)Drive_InputFeedbackMode,
+    [MCSM_INPUT_FAULT]      = (StateMachine_Input_T)TransitionFault,
+    [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Drive_InputDirection,
+    [MCSM_INPUT_THROTTLE]   = (StateMachine_Input_T)Drive_InputThrottle,
+    [MCSM_INPUT_BRAKE]      = (StateMachine_Input_T)Drive_InputBrake,
+    [MCSM_INPUT_CMD]        = (StateMachine_Input_T)Drive_InputCmd,
+    [MCSM_INPUT_CMD_MODE]   = (StateMachine_Input_T)Drive_InputFeedbackMode,
 };
 
 static const StateMachine_State_T STATE_DRIVE =
 {
     .ID                 = MCSM_STATE_ID_DRIVE,
     .ENTRY              = (StateMachine_Function_T)Drive_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Drive_Proc,
+    .LOOP               = (StateMachine_Function_T)Drive_Proc,
     .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
 };
 
@@ -500,11 +487,10 @@ static void Neutral_Entry(MotorController_T * p_mc)
     // MotorController_SetReleaseAll(p_mc);
 }
 
-static StateMachine_State_T * Neutral_Proc(MotorController_T * p_mc)
+static void Neutral_Proc(MotorController_T * p_mc)
 {
     (void)p_mc;
     // check freewheel/stop
-    return NULL;
 }
 
 static StateMachine_State_T * Neutral_InputDirection(MotorController_T * p_mc, state_machine_input_value_t direction)
@@ -554,19 +540,19 @@ static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, state
     return NULL;
 }
 
-static const StateMachine_Transition_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]      = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_DIRECTION]  = (StateMachine_Transition_T)Neutral_InputDirection,
-    [MCSM_INPUT_BRAKE]      = (StateMachine_Transition_T)Neutral_InputBrake,
-    // [MCSM_INPUT_DRIVE]      = (StateMachine_Transition_T)Neutral_InputDrive,
+    [MCSM_INPUT_FAULT]      = (StateMachine_Input_T)TransitionFault,
+    [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Neutral_InputDirection,
+    [MCSM_INPUT_BRAKE]      = (StateMachine_Input_T)Neutral_InputBrake,
+    // [MCSM_INPUT_DRIVE]      = (StateMachine_Input_T)Neutral_InputDrive,
 };
 
 static const StateMachine_State_T STATE_NEUTRAL =
 {
     .ID                 = MCSM_STATE_ID_NEUTRAL,
     .ENTRY              = (StateMachine_Function_T)Neutral_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Neutral_Proc,
+    .LOOP               = (StateMachine_Function_T)Neutral_Proc,
     .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
 };
 
@@ -581,10 +567,10 @@ static const StateMachine_State_T STATE_NEUTRAL =
 /******************************************************************************/
 static void Lock_Entry(MotorController_T * p_mc)
 {
+    if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; }
     p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
     p_mc->LockOpStatus = 0U;
 }
-
 
 // tododo 1 motor at a time
 void StartCalibrateSensor(MotorController_T * p_mc)
@@ -597,7 +583,7 @@ bool ProcCalibrateSensor(MotorController_T * p_mc)
     return (MotorController_IsEveryMotorStopState(p_mc) == true);
 }
 
-static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
+static void Lock_Proc(MotorController_T * p_mc)
 {
     switch(p_mc->LockSubState)
     {
@@ -623,7 +609,6 @@ static StateMachine_State_T * Lock_Proc(MotorController_T * p_mc)
             }
             break;
     }
-    return NULL;
 }
 
 /* Lock SubState by passed value */
@@ -652,17 +637,17 @@ static StateMachine_State_T * Lock_InputLockOp_Blocking(MotorController_T * p_mc
     return p_nextState;
 }
 
-static const StateMachine_Transition_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]  = (StateMachine_Transition_T)TransitionFault,
-    [MCSM_INPUT_LOCK]   = (StateMachine_Transition_T)Lock_InputLockOp_Blocking,
+    [MCSM_INPUT_FAULT]  = (StateMachine_Input_T)TransitionFault,
+    [MCSM_INPUT_LOCK]   = (StateMachine_Input_T)Lock_InputLockOp_Blocking,
 };
 
 static const StateMachine_State_T STATE_LOCK =
 {
     .ID                 = MCSM_STATE_ID_LOCK,
     .ENTRY              = (StateMachine_Function_T)Lock_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Lock_Proc,
+    .LOOP               = (StateMachine_Function_T)Lock_Proc,
     .P_TRANSITION_TABLE = &LOCK_TRANSITION_TABLE[0U],
 };
 
@@ -702,7 +687,7 @@ static void Servo_Entry(MotorController_T * p_mc)
 #endif
 }
 
-static StateMachine_State_T * Servo_Proc(MotorController_T * p_mc)
+static void Servo_Proc(MotorController_T * p_mc)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
     MotorController_ServoExtern_Proc(p_mc);
@@ -758,19 +743,19 @@ static StateMachine_State_T * Servo_InputServo(MotorController_T * p_mc, state_m
     return p_nextState;
 }
 
-static const StateMachine_Transition_T SERVO_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T SERVO_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]          = (StateMachine_Transition_T)TransitionFault,
-    // [MCSM_INPUT_DIRECTION]   = (StateMachine_Transition_T)Servo_InputDirection,
-    [MCSM_INPUT_CMD]            = (StateMachine_Transition_T)Servo_InputCmd,
-    [MCSM_INPUT_SERVO]          = (StateMachine_Transition_T)Servo_InputServo,
+    [MCSM_INPUT_FAULT]          = (StateMachine_Input_T)TransitionFault,
+    // [MCSM_INPUT_DIRECTION]   = (StateMachine_Input_T)Servo_InputDirection,
+    [MCSM_INPUT_CMD]            = (StateMachine_Input_T)Servo_InputCmd,
+    [MCSM_INPUT_SERVO]          = (StateMachine_Input_T)Servo_InputServo,
 };
 
 static const StateMachine_State_T STATE_SERVO =
 {
     .ID                 = MCSM_STATE_ID_SERVO,
     .ENTRY              = (StateMachine_Function_T)Servo_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Servo_Proc,
+    .LOOP               = (StateMachine_Function_T)Servo_Proc,
     .P_TRANSITION_TABLE = &SERVO_TRANSITION_TABLE[0U],
 };
 #endif
@@ -789,7 +774,7 @@ static void Fault_Entry(MotorController_T * p_mc)
     Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U);
 }
 
-static StateMachine_State_T * Fault_Proc(MotorController_T * p_mc)
+static void Fault_Proc(MotorController_T * p_mc)
 {
     MotorController_ForceDisableAll(p_mc);
 
@@ -807,8 +792,6 @@ static StateMachine_State_T * Fault_Proc(MotorController_T * p_mc)
         Blinky_Stop(&p_mc->Buzzer);
         _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK);
     }
-
-    return NULL;
 }
 
 /* Fault State Input Fault Checks Fault */
@@ -846,17 +829,17 @@ static StateMachine_State_T * Fault_InputLockSaveConfig_Blocking(MotorController
     return NULL;
 }
 
-static const StateMachine_Transition_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const StateMachine_Input_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]  = (StateMachine_Transition_T)Fault_InputClearFault,
-    [MCSM_INPUT_LOCK]   = (StateMachine_Transition_T)Fault_InputLockSaveConfig_Blocking,
+    [MCSM_INPUT_FAULT]  = (StateMachine_Input_T)Fault_InputClearFault,
+    [MCSM_INPUT_LOCK]   = (StateMachine_Input_T)Fault_InputLockSaveConfig_Blocking,
 };
 
 static const StateMachine_State_T STATE_FAULT =
 {
     .ID                 = MCSM_STATE_ID_FAULT,
     .ENTRY              = (StateMachine_Function_T)Fault_Entry,
-    .LOOP               = (StateMachine_StateOutput_T)Fault_Proc,
+    .LOOP               = (StateMachine_Function_T)Fault_Proc,
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
 };
 

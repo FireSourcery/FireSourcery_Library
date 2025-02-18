@@ -145,8 +145,8 @@ extern void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor);
 
 
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
-extern void Motor_FOC_StartAlign(Motor_T * p_motor);
-extern void Motor_FOC_ProcAlign(Motor_T * p_motor);
+extern void Motor_FOC_StartStartUpAlign(Motor_T * p_motor);
+extern void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor);
 extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
 
 extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);

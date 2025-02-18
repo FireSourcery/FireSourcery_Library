@@ -57,7 +57,7 @@ typedef struct MotorCmdr
     uint8_t TxPacket[MOT_PACKET_LENGTH_MAX];
     uint8_t RxPacket[MOT_PACKET_LENGTH_MAX];
     Protocol_T Protocol;
-    MotProtocol_SubState_T Substate; /* Stateful Protocol Substate */
+    MotProtocol_SubState_T SubState; /* Stateful Protocol SubState */
 
     /* Req Interface */
     uint16_t RespStatus;
@@ -100,7 +100,7 @@ extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
     .Protocol = PROTOCOL_INIT                                                                             \
     (                                                                                                    \
         &((p_ThisMotorCmdr)->RxPacket[0U]), &((p_ThisMotorCmdr)->TxPacket[0U]), MOT_PACKET_LENGTH_MAX,     \
-        (p_ThisMotorCmdr), &((p_ThisMotorCmdr)->Substate),                                                 \
+        (p_ThisMotorCmdr), &((p_ThisMotorCmdr)->SubState),                                                 \
         _MOTOR_CMDR_PROTOCOL_SPECS_TABLE, 1U,                                                             \
         p_XcvrTable, XcvrCount,                                                                         \
         p_Timer, 0U                                                                                        \
