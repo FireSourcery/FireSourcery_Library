@@ -45,4 +45,31 @@ typedef struct Accumulator
 }
 Accumulator_T;
 
+
+static inline int32_t Accumulator_GetTarget(const Accumulator_T * p_accum) { return (p_accum->Target >> p_accum->Shift); }
+static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->State >> p_accum->Shift); }
+
+static inline void Accumulator_SetOutput(Accumulator_T * p_accum, int32_t match) { p_accum->State = (match << p_accum->Shift); }
+
+static inline void Accumulator_SetTarget(Accumulator_T * p_accum, int32_t target)
+{
+    p_accum->Target = (target << p_accum->Shift);
+    if (p_accum->Coefficient == 0) { p_accum->State = p_accum->Target; }
+}
+
+
+static inline void Accumulator_SetOutputState(Accumulator_T * p_accum, int32_t match)
+{
+    p_accum->Target = (match << p_accum->Shift);
+    p_accum->State = p_accum->Target;
+}
+
+
+static inline void Accumulator_ZeroOutputState(Accumulator_T * p_accum)
+{
+    p_accum->Target = 0;
+    p_accum->State = 0;
+}
+
+
 #endif

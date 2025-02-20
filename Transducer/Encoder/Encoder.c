@@ -308,6 +308,8 @@ void Encoder_CalibrateIndexZeroRef(Encoder_T * p_encoder)
 {
     if (p_encoder->IsHomed == true)
     {
+        // Encoder_SetIndexZeroRef(p_encoder, p_encoder->Angle32);
+
         // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
         // p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
         p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;

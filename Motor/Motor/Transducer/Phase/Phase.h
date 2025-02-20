@@ -46,8 +46,8 @@
 typedef enum Phase_State
 {
     PHASE_STATE_FLOAT,  /* Disable  */
-    PHASE_STATE_ACTIVE, /* VDuty */
     PHASE_STATE_GROUND, /* VDuty 0 */
+    PHASE_STATE_ACTIVE, /* VDuty */
 }
 Phase_State_T;
 

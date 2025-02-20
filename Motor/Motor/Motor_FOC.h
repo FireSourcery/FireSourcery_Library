@@ -143,7 +143,7 @@ extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 extern void Motor_FOC_CaptureIabc(Motor_T * p_motor);
 extern void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor);
 
-
+extern void Motor_FOC_StartAlignCmd(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
 extern void Motor_FOC_StartStartUpAlign(Motor_T * p_motor);
 extern void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor);

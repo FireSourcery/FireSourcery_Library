@@ -44,6 +44,8 @@
     Inline Getters/Setters
 */
 /******************************************************************************/
+/* todo wrap functions with value_t */
+
 /*! @return [-32767:32767] <=> [-1:1) speed forward as positive. reverse as negative. */
 static inline int32_t Motor_User_GetSpeed_Fract16(const Motor_T * p_motor) { return Motor_DirectionalValueOf(p_motor, p_motor->Speed_Fract16); }
 /*! @return [0:65535] <=> [0:2) */

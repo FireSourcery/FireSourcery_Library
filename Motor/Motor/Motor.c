@@ -385,7 +385,7 @@ inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
 /*
     Sensor Direction
 */
-static void SetSensorCcw(Motor_T * p_motor)
+static void Motor_SetSensorCcw(Motor_T * p_motor)
 {
     switch (p_motor->Config.SensorMode)
     {
@@ -402,7 +402,7 @@ static void SetSensorCcw(Motor_T * p_motor)
     }
 }
 
-static void SetSensorCw(Motor_T * p_motor)
+static void Motor_SetSensorCw(Motor_T * p_motor)
 {
     switch (p_motor->Config.SensorMode)
     {
@@ -416,6 +416,33 @@ static void SetSensorCw(Motor_T * p_motor)
         case MOTOR_SENSOR_MODE_SENSORLESS:  break;
         #endif
         default: break;
+    }
+}
+
+void Motor_ResetUnitsSensor(Motor_T * p_motor)
+{
+    switch (p_motor->Config.SensorMode)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            Motor_ResetUnitsHallEncoder(p_motor);
+            Motor_ResetUnitsEncoder(p_motor);
+            break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            Motor_ResetUnitsEncoder(p_motor);
+            break;
+        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:
+            Motor_ResetUnitsSinCos(&p_motor->SinCos);
+            Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:
+            Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
+            break;
+        #endif
+        default:
+            break;
     }
 }
 
@@ -503,7 +530,7 @@ void Motor_SetDirectionCcw(Motor_T * p_motor)
     p_motor->Direction = MOTOR_DIRECTION_CCW;
     // UpdateDirectionLimitsCcw(p_motor);
     Motor_UpdateSpeedControlLimits(p_motor); // alternatively, common function with repeat check direction logic
-    SetSensorCcw(p_motor);
+    Motor_SetSensorCcw(p_motor);
 }
 
 void Motor_SetDirectionCw(Motor_T * p_motor)
@@ -511,7 +538,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
     p_motor->Direction = MOTOR_DIRECTION_CW;
     // UpdateDirectionLimitsCw(p_motor);
     Motor_UpdateSpeedControlLimits(p_motor);
-    SetSensorCw(p_motor);
+    Motor_SetSensorCw(p_motor);
 }
 
 /*
@@ -747,32 +774,7 @@ void Motor_ResetILimitActive(Motor_T * p_motor)
 /******************************************************************************/
 /* Reset fixed point unit conversion structs */
 /******************************************************************************/
-void Motor_ResetUnitsSensor(Motor_T * p_motor)
-{
-    switch(p_motor->Config.SensorMode)
-    {
-        case MOTOR_SENSOR_MODE_HALL:
-            Motor_ResetUnitsHallEncoder(p_motor);
-            Motor_ResetUnitsEncoder(p_motor);
-            break;
-        case MOTOR_SENSOR_MODE_ENCODER:
-            Motor_ResetUnitsEncoder(p_motor);
-            break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:
-            Motor_ResetUnitsSinCos(&p_motor->SinCos);
-            Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
-            break;
-#endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:
-            Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
-            break;
-#endif
-        default:
-            break;
-    }
-}
+
 
 
 void Motor_ResetUnitsIabc(Motor_T * p_motor)

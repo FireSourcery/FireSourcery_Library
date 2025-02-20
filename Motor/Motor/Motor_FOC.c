@@ -343,18 +343,33 @@ void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, uint8_t direction)
 
 void Motor_FOC_SetDirectionForward(Motor_T * p_motor) { Motor_FOC_SetDirection(p_motor, p_motor->Config.DirectionForward); }
 
+
 /******************************************************************************/
 /*!
     StateMachine mapping
     defined as inline for StateMachine wrapper functions tdo
 */
 /******************************************************************************/
-
+/* Align with user cmd value */
+void Motor_FOC_StartAlignCmd(Motor_T * p_motor)
+{
+    Phase_ActivateOutputABC(&p_motor->Phase);
+    Ramp_SetOutput(&p_motor->Ramp, 0); /* reset the voltage to start at 0 */
+    // p_motor->ElectricalAngle = angle;
+}
 
 /* User ramp */
 void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 {
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_GetTarget(&p_motor->Ramp), 0);
+}
+
+void Motor_FOC_StartStartUpAlign(Motor_T * p_motor)
+{
+    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+    Ramp_Set(&p_motor->AuxRamp, p_motor->Config.AlignTime_Cycles, 0, p_motor->Config.AlignPower_UFract16);
+    p_motor->FeedbackMode.Current = 1U; /* config alternatively */
+    p_motor->ElectricalAngle = 0U;
 }
 
 void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)

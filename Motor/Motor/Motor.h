@@ -189,6 +189,7 @@ typedef union
 }
 Motor_FaultFlags_T;
 
+// typedef Motor_PhaseFlags Phase_Flags_T;
 typedef union Motor_PhaseFlags
 {
     struct
@@ -211,46 +212,7 @@ typedef enum Motor_Direction
 }
 Motor_Direction_T;
 
-/*
-    Open Loop SubState
-*/
-typedef enum Motor_OpenLoopState
-{
-    MOTOR_OPEN_LOOP_STATE_ENTER,
-    MOTOR_OPEN_LOOP_STATE_PASSIVE,
-    // MOTOR_OPEN_LOOP_STATE_CMD,
-    MOTOR_OPEN_LOOP_STATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_RUN,
-    // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
-}
-Motor_OpenLoopState_T;
 
-// typedef enum Motor_OpenLoopCmd
-// {
-//     MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
-//     MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
-//     MOTOR_OPEN_LOOP_CMD_ANGLE,
-//     MOTOR_OPEN_LOOP_CMD_ALIGN,
-//     // MOTOR_OPEN_LOOP_CMD_STARTUP,
-// }
-// Motor_OpenLoopCmd_T;
-
-/*
-    Calibration SubState
-*/
-typedef enum Motor_CalibrationState
-{
-    MOTOR_CALIBRATION_STATE_DISABLE,
-    MOTOR_CALIBRATION_STATE_ADC,
-    MOTOR_CALIBRATION_STATE_HALL,
-    MOTOR_CALIBRATION_STATE_ENCODER,
-    MOTOR_CALIBRATION_STATE_SIN_COS,
-    MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
-    MOTOR_CALIBRATION_STATE_IDLE,
-}
-Motor_CalibrationState_T;
 
 /*
     Sub-modules independently conform to same ID
@@ -403,8 +365,8 @@ typedef struct Motor
     Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
     Motor_StateFlags_T StateFlags;              /* Can be pushed to modules */
 
-    Motor_OpenLoopState_T OpenLoopState; /* depreciate */
-    Motor_CalibrationState_T CalibrationState;  /* SubState, selection for calibration */
+    uint32_t OpenLoopState; /* depreciate */
+    uint32_t CalibrationState;  /* SubState, selection for calibration */
 
     uint8_t CalibrationStateIndex;
     volatile Motor_PhaseFlags_T IFlags;

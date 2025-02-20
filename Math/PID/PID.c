@@ -72,7 +72,7 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-    int32_t proportional, integral32, integral32Part, integral, integralMin, integralMax, output;
+    int32_t proportional, integral32, integral32Part, integralPreClamp, integral, integralMin, integralMax, output;
 
     proportional = (p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 16 shift */
 
@@ -86,7 +86,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     // integral = integral32 >> 16;
 
     integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    integral = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
+    integralPreClamp = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
 
     /* Dynamic Clamp */
     integralMin = math_min(p_pid->OutputMin - proportional, 0);
@@ -96,12 +96,25 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         Clamp integral to prevent windup.
         Determine integral storage, IntegralAccum, using [integral]
     */
-    integral = math_clamp(integral, integralMin, integralMax);
-    SetIntegral(p_pid, integral);
+    integral = math_clamp(integralPreClamp, integralMin, integralMax);
+    // p_pid->IntegralAccum = (integral << 16);
+    p_pid->IntegralAccum += (integral == integralPreClamp) ? integral32Part : 0; /* accumulate if not saturated */
 
     p_pid->ErrorPrev = error;
 
     return proportional + integral;
+}
+
+/*!
+    @param[in] setpoint [-32768:32767] with over saturation
+    @param[in] feedback [-32768:32767] with over saturation
+        (setpoint - feedback) [-65535:65535]
+*/
+int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
+{
+    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    // p_pid->Output = CalcPI(p_pid, setpoint - feedback);
+    return p_pid->Output;
 }
 
 // int32_t PID_ProcPID(PID_T * p_pid, int32_t feedback, int32_t setpoint)
@@ -115,16 +128,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 //     return p_pid->Output;
 // }
 
-/*!
-    @param[in] setpoint [-32768:32767] with over saturation
-    @param[in] feedback [-32768:32767] with over saturation
-        (setpoint - feedback) [-65535:65535]
-*/
-int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
-{
-    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
-    return p_pid->Output;
-}
 
 /*
     Compute-Time State
