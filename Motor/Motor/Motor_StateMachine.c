@@ -766,7 +766,7 @@ static const StateMachine_State_T OPEN_LOOP_STATE_HOMING =
     .NEXT       = (StateMachine_Transition_T)OpenLoop_HomeTransition,
 };
 
-void Motor_OpenLoop_StartHome(Motor_T * p_motor)
+void Motor_Calibration_StartHome(Motor_T * p_motor)
 {
     static const StateMachine_Cmd_T OPEN_LOOP_CMD_HOME = { .CMD = NULL, .P_INITIAL = &OPEN_LOOP_STATE_HOMING, };
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_HOME, 0);

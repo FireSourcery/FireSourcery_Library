@@ -147,7 +147,7 @@ extern void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Align_T align
 extern void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle);
 extern void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction);
 extern void Motor_OpenLoop_StartRunChain(Motor_T * p_motor);
-extern void Motor_OpenLoop_StartHome(Motor_T * p_motor);
+extern void Motor_Calibration_StartHome(Motor_T * p_motor);
 
 // extern void Motor_Calibration_SetIdle(Motor_T * p_motor);
 

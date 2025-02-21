@@ -245,16 +245,16 @@ uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotorCo
 typedef enum MotVarId_Type_RealTime /* : uint16_t */
 {
     /* Monitor - Read-Only */
+    /* Control - Read/Write */
+    /* Cmd - Write-Only */
     MOT_VAR_ID_TYPE_MONITOR_GENERAL,
     MOT_VAR_ID_TYPE_MONITOR_ANALOG_USER,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_FOC,
     MOT_VAR_ID_TYPE_MONITOR_MOTOR_SENSOR,
-    /* Control - Read/Write */
     MOT_VAR_ID_TYPE_CONTROL_GENERAL,
     MOT_VAR_ID_TYPE_CONTROL_MOTOR,
     // MOT_VAR_ID_TYPE_VAR_PROTOCOL,
-    /* Cmd - Write-Only */
     MOT_VAR_ID_TYPE_CMD_GENERAL,
     MOT_VAR_ID_TYPE_CMD_MOTOR,
     // MOT_VAR_ID_TYPE_CMD_SYSTEM,

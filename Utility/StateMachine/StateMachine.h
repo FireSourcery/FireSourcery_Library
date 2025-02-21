@@ -159,7 +159,7 @@ typedef const struct StateMachine_State
         Transition Control
     */
 
-    /* Handle Context Transition, no external input, "clock only" on internal state. */
+    /* Handle Context Transition, no external input, "clock only" on internal/[P_CONTEXT] state. */
     /* alternatively Handler calls _ProcStateTransition */
     /* TRANSITION_OF_CONTEXT */
     const StateMachine_Transition_T NEXT; /* Separate internal input/event transition handler from OUTPUT for SubState regularity */
@@ -230,7 +230,7 @@ typedef const struct StateMachine_Const
     // const StateMachine_State_T * const P_STATE_INITIAL;
     // const uint8_t TRANSITION_TABLE_LENGTH;
     void * const P_CONTEXT;                                 /* Mutable state information per state machine. Includes ref to StateMachine */
-    const uint32_t * P_TIMER;   /* Auto handle timed state */
+    // const uint32_t * P_TIMER;   /* Auto handle timed state */
 }
 StateMachine_Const_T;
 

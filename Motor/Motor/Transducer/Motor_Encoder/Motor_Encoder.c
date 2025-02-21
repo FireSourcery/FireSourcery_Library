@@ -31,41 +31,103 @@
 #include "Motor_Encoder.h"
 
 
-
-/* todo error status */
-// static inline bool ProcHoming(Motor_T * p_motor)
+/******************************************************************************/
+/*
+    Interface Table
+*/
+/******************************************************************************/
+// void Motor_InitSensor(Motor_T * p_motor)
 // {
-//     bool isComplete = false;
-//     uint16_t angle = Encoder_GetHomingAngle(&p_motor->Encoder) * p_motor->Config.PolePairs;
-
-//     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-//     {
-//         if (Encoder_PollHomingComplete(&p_motor->Encoder) == true)
-//         {
-//             // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
-//             isComplete = true;
-//         }
-//         else
-//         {
-//             //openloop speed ramp
-//             Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle + angle, p_motor->Config.AlignPower_UFract16, 0);
-//         }
-//     }
-
-//     return isComplete;
+//     Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->Encoder);
+//     Encoder_EnableQuadratureMode(&p_motor->Encoder);
+//     Motor_ResetUnitsSensor(p_motor);
 // }
 
-// static void Calibration_ProcEncoderHoming(Motor_T * p_motor)
+// bool Motor_VerifySensorCalibration(Motor_T * p_motor)
 // {
-//     if (ProcHoming(p_motor) == true)
-//     {
-//         _StateMachine_EndSubState(&p_motor->StateMachine);
 
-//         // Motor_Calibration_SetIdle(p_motor);
-//         // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_IDLE);
-//         StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_FLOAT); /* or exit */
-//     }
 // }
+
+// angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
+// {
+//     Encoder_GetAngle_Scalar(&p_motor->Encoder, p_motor->Config.PolePairs); /* ElectricalAngle => MechanicalAngle * PolePairs */
+//     // electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->Encoder);
+// }
+
+// angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
+// {
+//     Encoder_GetAngle(&p_motor->Encoder);
+// }
+
+// /*!
+//     @return Fract16 Q1.15 unsaturated
+// */
+// int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
+// {
+//     Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder) / 2;
+// }
+
+// void Motor_ZeroSensor(Motor_T * p_motor)
+// {
+//     Encoder_ModeDT_SetInitial(&p_motor->Encoder);
+// }
+
+// /* From Stop and after Align */
+// bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
+// {
+//     Encoder_IsAligned(&p_motor->Encoder);
+// }
+
+// // inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
+// // {
+// //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
+// // }
+
+// Motor_Direction_T Motor_GetDirection(Motor_T * p_motor)
+// {
+
+// }
+
+// /*
+//     Sensor Direction
+// */
+// void Motor_SetSensorCcw(Motor_T * p_motor)
+// {
+
+// }
+
+// void Motor_SetSensorCw(Motor_T * p_motor)
+// {
+
+// }
+
+// void Motor_ResetUnitsSensor(Motor_T * p_motor)
+// {
+//     Motor_ResetUnitsEncoder(p_motor);
+// }
+
+// /* Common, Set after PolePairs */
+// void Motor_ResetUnitsEncoder(Motor_T * p_motor)
+// {
+//     if (Motor_GetSpeedVRef_Rpm(p_motor) != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
+//     {
+//         Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
+//     }
+//     if (p_motor->Config.PolePairs != p_motor->Encoder.Config.InterpolateAngleScalar) /* Set for electrical cycle */
+//     {
+//         Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Config.PolePairs);
+//     }
+//     // if(p_motor->Config.GearRatioOutput != p_motor->Encoder.Config.GearRatioOutput) ||
+//     // {
+//     //     Encoder_SetSurfaceRatio(&p_motor->Encoder, p_motor->Config.GearRatio);
+//     // }
+// }
+
+/******************************************************************************/
+/*
+    States
+*/
+/******************************************************************************/
 
 /*
 
@@ -81,6 +143,7 @@ static void ProcHoming(Motor_T * p_motor)
 {
     uint16_t angle;
 
+    /* alternatively openloop speed/angle ramp */
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
         angle = Encoder_GetHomingAngle(&p_motor->Encoder) * p_motor->Config.PolePairs;
@@ -90,7 +153,7 @@ static void ProcHoming(Motor_T * p_motor)
 
 static StateMachine_State_T * HomingTransition(Motor_T * p_motor)
 {
-    if (Encoder_PollHomingComplete(&p_motor->Encoder) == true)
+    if (Encoder_PollHomingComplete(&p_motor->Encoder) == true) /* todo error status */
     {
         // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
         _StateMachine_EndSubState(&p_motor->StateMachine);
@@ -115,8 +178,8 @@ static const StateMachine_State_T STATE_ENCODER_HOMING =
 void Motor_Encoder_StartHoming(Motor_T * p_motor)
 {
     static const StateMachine_Cmd_T CMD_HOME = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &STATE_ENCODER_HOMING, };
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_IDLE); /* for now */
-    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_HOME, 0);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_IDLE); /* for now */// enter calib state
+    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_HOME, 0); //begin from calib state only
 }
 
 /*  */
@@ -300,23 +363,7 @@ static const StateMachine_State_T VALIDATE_CLOSED_LOOP =
 };
 
 
-void Motor_Encoder_StartAlignZero(Motor_T * p_motor)
-{
-    static const StateMachine_Cmd_T CMD_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &ALIGN, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_ALIGN, 0);
-}
 
-void Motor_Encoder_StartValidateAlign(Motor_T * p_motor)
-{
-    static const StateMachine_Cmd_T CMD_VALIDATE_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_ALIGN, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_ALIGN, 0);
-}
-
-void Motor_Encoder_StartValidateClosedLoop(Motor_T * p_motor)
-{
-    static const StateMachine_Cmd_T CMD_VALIDATE_CLOSED_LOOP = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_CLOSED_LOOP, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_CLOSED_LOOP, 0);
-}
 
 /*
     Start Up Chain
@@ -340,7 +387,6 @@ static StateMachine_State_T * StartUpValidateClosedLoopTransition(Motor_T * p_mo
 {
 
 }
-
 
 static const StateMachine_State_T START_UP =
 {
@@ -383,6 +429,27 @@ static const StateMachine_State_T START_UP_VALIDATE_CLOSED_LOOP =
 };
 
 
+/*
+
+*/
+
+void Motor_Encoder_StartAlignZero(Motor_T * p_motor)
+{
+    static const StateMachine_Cmd_T CMD_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &ALIGN, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_ALIGN, 0);
+}
+
+void Motor_Encoder_StartValidateAlign(Motor_T * p_motor)
+{
+    static const StateMachine_Cmd_T CMD_VALIDATE_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_ALIGN, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_ALIGN, 0);
+}
+
+void Motor_Encoder_StartValidateClosedLoop(Motor_T * p_motor)
+{
+    static const StateMachine_Cmd_T CMD_VALIDATE_CLOSED_LOOP = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_CLOSED_LOOP, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_CLOSED_LOOP, 0);
+}
 
 void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 {

@@ -111,18 +111,20 @@ typedef enum Motor_VarInput
 {
     MOTOR_VAR_CLEAR_FAULT,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call
-    // MOTOR_VAR_USER_CMD,         // Active mode value
-    MOTOR_VAR_CMD_SPEED,        // UserCmd as Speed
+    // MOTOR_VAR_USER_CMD,              // Active mode value
+    MOTOR_VAR_CMD_SPEED,                // UserCmd as Speed
     MOTOR_VAR_CMD_CURRENT,
     MOTOR_VAR_CMD_VOLTAGE,
     MOTOR_VAR_CMD_ANGLE,
     MOTOR_VAR_CMD_OPEN_LOOP,
 
-    MOTOR_VAR_OPEN_LOOP_CONTROL,
+    // non polling, could be io
+    MOTOR_VAR_OPEN_LOOP_CONTROL, /* optional pas cmd / run */
     MOTOR_VAR_OPEN_LOOP_PHASE_STATE,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_ANGLE,
-    MOTOR_VAR_OPEN_LOOP_HOMING,
+    // MOTOR_VAR_OPEN_LOOP_HOMING,
+    MOTOR_VAR_OPEN_LOOP_RUN,
 }
 Motor_VarInput_T;
 
@@ -166,6 +168,7 @@ typedef enum Motor_VarConfig_Calibration
     MOTOR_VAR_IB_ZERO_REF_ADCU,
     MOTOR_VAR_IC_ZERO_REF_ADCU,
     MOTOR_VAR_I_PEAK_REF_ADCU,
+    MOTOR_VAR_RUN_VIRTUAL_HOME, /* run routine */
 }
 Motor_VarConfig_Calibration_T;
 
@@ -185,11 +188,6 @@ typedef enum Motor_VarConfig_Actuation
     MOTOR_VAR_PHASE_PWM_MODE,
 }
 Motor_VarConfig_Actuation_T;
-
-// LocalUnits
-// uint16_t SurfaceDiameter;
-// uint16_t GearRatioOutput;
-// uint16_t GearRatioInput;
 
 typedef enum Motor_VarConfig_Hall
 {
@@ -212,6 +210,8 @@ typedef enum Motor_VarConfig_Encoder
 
     MOTOR_VAR_ENCODER_INDEX_ZERO_REF,
     MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF,
+
+    MOTOR_VAR_ENCODER_RUN_HOMING,
 }
 Motor_VarConfig_Encoder_T;
 
@@ -225,22 +225,6 @@ typedef enum Motor_VarConfig_SinCos
     MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
 }
 Motor_VarConfig_SinCos_T;
-
-/* calibration commands */
-typedef enum Motor_VarConfig_Cmd
-{
-    MOTOR_VAR_CONFIG_CMD_ENCODER_HOME,
-    MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
-    // MOTOR_VAR_CMD_CALIBRATE_SENSOR,
-    // MOTOR_VAR_CMD_CALIBRATE_ADC,
-    // MOTOR_VAR_CMD_NVM_SAVE_CONFIG,
-    // MOTOR_VAR_CMD_NVM_RESTORE_CONFIG,
-    // MOTOR_VAR_CMD_REBOOT,
-    // MOTOR_VAR_CMD_NVM_SAVE_BOOT,
-    // MOTOR_VAR_CMD_NVM_WRITE_ONCE,
-    // MOTOR_VAR_CMD_NVM_READ_ONCE,
-}
-Motor_VarConfig_Cmd_T;
 
 /*
     PID
@@ -266,6 +250,29 @@ typedef enum Motor_VarConfig_Pid
     // MOTOR_VAR_PID_FOC_ID_SAMPLE_FREQ,
 }
 Motor_VarConfig_Pid_T;
+
+/* calibration commands */
+typedef enum Motor_VarConfig_Cmd
+{
+    MOTOR_VAR_CONFIG_CMD_ENCODER_HOME,
+    MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
+    // MOTOR_VAR_CMD_CALIBRATE_SENSOR,
+    // MOTOR_VAR_CMD_CALIBRATE_ADC,
+    // MOTOR_VAR_CMD_NVM_SAVE_CONFIG,
+    // MOTOR_VAR_CMD_NVM_RESTORE_CONFIG,
+    // MOTOR_VAR_CMD_REBOOT,
+    // MOTOR_VAR_CMD_NVM_SAVE_BOOT,
+    // MOTOR_VAR_CMD_NVM_WRITE_ONCE,
+    // MOTOR_VAR_CMD_NVM_READ_ONCE,
+}
+Motor_VarConfig_Cmd_T;
+
+
+// LocalUnits
+// uint16_t SurfaceDiameter;
+// uint16_t GearRatioOutput;
+// uint16_t GearRatioInput;
+
 
 /******************************************************************************/
 /*
