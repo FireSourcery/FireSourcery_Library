@@ -291,6 +291,8 @@ int32_t Motor_VarConfig_Encoder_Get(const Motor_T * p_motor, Motor_VarConfig_Enc
     return value;
 }
 
+#include "Transducer/Motor_Encoder/Motor_Encoder.h"
+
 void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T varId, int32_t varValue)
 {
     switch (varId)
@@ -413,7 +415,7 @@ void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int
 }
 
 
-#include "Transducer/Motor_Encoder/Motor_Encoder.h"
+
 /*
 
 */

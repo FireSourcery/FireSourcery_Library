@@ -329,7 +329,8 @@ static inline uint16_t Hall_CaptureAngle(Hall_T * p_hall)
 
 static inline Hall_Sensors_T Hall_GetSensors(const Hall_T * p_hall) { return p_hall->Sensors; }
 static inline Hall_Id_T Hall_GetId(const Hall_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
-static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value, p_hall->Direction); }
+// static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value, p_hall->Direction); }
+static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return p_hall->Angle; }
 
 /* */
 static inline Hall_Direction_T Hall_GetDirection(const Hall_T * p_hall) { return (p_hall->Direction); }
@@ -342,7 +343,7 @@ static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.Value = 
 static inline void Hall_SetInitial(Hall_T * p_hall)
 {
     Hall_CaptureSensors_ISR(p_hall);
-    p_hall->Angle = _Hall_Angle16Of(p_hall->Sensors.Value); /* assume middle */
+    p_hall->Angle = Hall_Angle16Of(p_hall, p_hall->Sensors.Value, HALL_DIRECTION_UNKNOWN); /* assume middle */
 }
 
 /*

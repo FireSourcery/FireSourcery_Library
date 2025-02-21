@@ -72,9 +72,13 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-    int32_t proportional, integral32, integral32Part, integralPreClamp, integral, integralMin, integralMax, output;
+    int32_t proportional, integral32, integral32Part, integralNew, integral, integralMin, integralMax, output;
 
     proportional = (p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 16 shift */
+
+    /* Dynamic Clamp */
+    integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    integralMax = math_max(p_pid->OutputMax - proportional, 0);
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
@@ -83,22 +87,15 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     /* Forward rectangular approximation. */
     // integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
     // integral32 = math_add_sat(p_pid->IntegralAccum, integral32Part);
-    // integral = integral32 >> 16;
+    // integral = math_clamp(integral32 >> 16, integralMin, integralMax);
+    // if (integral == (integral32 >> 16)) { p_pid->IntegralAccum = integral32; }
 
     integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    integralPreClamp = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
-
-    /* Dynamic Clamp */
-    integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    integralMax = math_max(p_pid->OutputMax - proportional, 0);
-
-    /*
-        Clamp integral to prevent windup.
-        Determine integral storage, IntegralAccum, using [integral]
-    */
-    integral = math_clamp(integralPreClamp, integralMin, integralMax);
+    integralNew = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
+    integral = math_clamp(integralNew, integralMin, integralMax);
     // p_pid->IntegralAccum = (integral << 16);
-    p_pid->IntegralAccum += (integral == integralPreClamp) ? integral32Part : 0; /* accumulate if not saturated */
+    // p_pid->IntegralAccum += (integral == integralNew) ? integral32Part : 0; /* accumulate if not saturated */
+    p_pid->IntegralAccum = (integral == integralNew) ? (p_pid->IntegralAccum + integral32Part) : (integral << 16); /* accumulate if not saturated */
 
     p_pid->ErrorPrev = error;
 

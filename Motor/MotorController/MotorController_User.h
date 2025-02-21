@@ -176,6 +176,7 @@ static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, in
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD, (int32_t)userCmd);
 }
 
+/* ensure feedback mode and start control do not overwrite in the same packet */
 /* Directly invoke Motor StateMachine */
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {

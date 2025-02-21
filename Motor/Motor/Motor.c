@@ -207,7 +207,12 @@ angle16_t Motor_PollSensorAngle(Motor_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:
         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-            if (Hall_PollCaptureSensors(&p_motor->Hall) == true) { Encoder_SinglePhase_CapturePulse(&p_motor->Encoder); } // Encoder_CaptureCount
+            if (Hall_PollCaptureSensors(&p_motor->Hall) == true)
+            {
+                Encoder_SinglePhase_CapturePulse(&p_motor->Encoder);
+                Hall_CaptureAngle(&p_motor->Hall);
+            }
+            // Encoder_CaptureCount
 
             /* by assigned direction, alternatively compare prev state */
         #endif
