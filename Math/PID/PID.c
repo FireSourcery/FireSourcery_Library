@@ -86,16 +86,14 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         Forward rectangular approximation.
     */
 
-    // p_pid->IntegralAccum += (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    // p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 16, integralMax << 16);
-    // integral = p_pid->IntegralAccum >> 16;
+    p_pid->IntegralAccum = math_add_sat(p_pid->IntegralAccum, (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
+    p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 16, integralMax << 16);
+    integral = p_pid->IntegralAccum >> 16;
 
-    // assert(((p_pid->IntegralGain * error) >> 16) <= ((int32_t)INT16_MAX * 2));
-    // assert(p_pid->IntegralAccum <= (int32_t)INT16_MAX << 16);
 
-    integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
-    integral = math_clamp(integralAccum >> 16, integralMin, integralMax);
-    p_pid->IntegralAccum = (integral == (integralAccum >> 16)) ? integralAccum : (integral << 16);
+    // integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
+    // integral = math_clamp(integralAccum >> 16, integralMin, integralMax);
+    // p_pid->IntegralAccum = (integral == (integralAccum >> 16)) ? integralAccum : (integral << 16);
 
     p_pid->ErrorPrev = error;
 
@@ -109,8 +107,7 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    // p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
-    p_pid->Output = CalcPI(p_pid, setpoint - feedback);
+    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }
 
