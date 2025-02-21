@@ -135,6 +135,7 @@
 static void StartHoming(Motor_T * p_motor)
 {
     Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
+    Motor_FOC_ActivateOutputZero(p_motor);
     Encoder_StartHoming(&p_motor->Encoder);
     p_motor->ElectricalAngle = 0U;
 }
@@ -186,6 +187,11 @@ void Motor_Encoder_StartHoming(Motor_T * p_motor)
 void Motor_Encoder_CalibrateHomeOffset(Motor_T * p_motor)
 {
     Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);
+}
+
+void Motor_Encoder_StartVirtualHome(Motor_T * p_motor)
+{
+    Motor_Calibration_StartHome(p_motor);
 }
 
 /******************************************************************************/

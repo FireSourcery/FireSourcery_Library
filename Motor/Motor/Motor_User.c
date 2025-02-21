@@ -311,7 +311,7 @@ void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T stat
 /*!
     The untyped command must be the outer super function, as the boundaries of each type are different.
     @param[in] userCmd[-32768:32767] A union value, bounds to be determined by active mode
-    Scalar to calibration ref
+    Scalar to calibration ref, clamp by limit
 */
 void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd)
 {

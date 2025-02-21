@@ -116,10 +116,9 @@ static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder
     // p_encoder->InterpolateAngleIndex++;
     // return math_limit_upper(p_encoder->InterpolateAngleIndex * p_encoder->InterpolateAngleDelta / p_encoder->CONST.POLLING_FREQ, p_encoder->InterpolateAngleLimit);
 
-    uint32_t angle = (p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta) >> ENCODER_ANGLE_SHIFT;
-    angle = math_limit_upper(angle, p_encoder->InterpolateAngleLimit);
-    p_encoder->InterpolateAngleSum = angle << ENCODER_ANGLE_SHIFT;
-    return angle;
+    // uint32_t angle;
+    p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta, p_encoder->InterpolateAngleLimit << ENCODER_ANGLE_SHIFT);
+    return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
 }
 
 /* |DeltaD| <= 1 */

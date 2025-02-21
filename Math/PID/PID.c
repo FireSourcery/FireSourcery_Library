@@ -72,7 +72,7 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
-    int32_t proportional, integral32, integral32Part, integralNew, integral, integralMin, integralMax, output;
+    int32_t proportional, integral, integralAccum, integralMin, integralMax, output;
 
     proportional = (p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 16 shift */
 
@@ -83,19 +83,18 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
             Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
+        Forward rectangular approximation.
     */
-    /* Forward rectangular approximation. */
-    // integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    // integral32 = math_add_sat(p_pid->IntegralAccum, integral32Part);
-    // integral = math_clamp(integral32 >> 16, integralMin, integralMax);
-    // if (integral == (integral32 >> 16)) { p_pid->IntegralAccum = integral32; }
+    assert(((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) <= INT16_MAX);
+    assert(p_pid->IntegralAccum <= INT16_MAX << 16);
 
-    integral32Part = (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
-    integralNew = (p_pid->IntegralAccum >> 16) + (integral32Part >> 16); /* Saturated add handled by limit this way */
-    integral = math_clamp(integralNew, integralMin, integralMax);
-    // p_pid->IntegralAccum = (integral << 16);
-    // p_pid->IntegralAccum += (integral == integralNew) ? integral32Part : 0; /* accumulate if not saturated */
-    p_pid->IntegralAccum = (integral == integralNew) ? (p_pid->IntegralAccum + integral32Part) : (integral << 16); /* accumulate if not saturated */
+    p_pid->IntegralAccum += (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift; /* Excludes 16 shift */
+    p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 16, integralMax << 16);
+    integral = p_pid->IntegralAccum >> 16;
+
+    // integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
+    // integral = math_clamp(integralAccum >> 16, integralMin, integralMax);
+    // p_pid->IntegralAccum = (integral == (integralAccum >> 16)) ? integralAccum : (integral << 16);
 
     p_pid->ErrorPrev = error;
 
@@ -109,8 +108,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
-    // p_pid->Output = CalcPI(p_pid, setpoint - feedback);
+    // p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    p_pid->Output = CalcPI(p_pid, setpoint - feedback);
     return p_pid->Output;
 }
 
@@ -205,8 +204,7 @@ static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 */
 static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
-    /* p_pid->IntegralGainShift = fixed_lshift_max_signed(ki_Fixed32 << 16 / p_pid->Config.SampleFreq); */
-    p_pid->IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32);
+    p_pid->IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32); /* lshift_max(ki_Fixed32 << 16 / p_pid->Config.SampleFreq); */
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
 }
 
@@ -228,16 +226,18 @@ void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32)
     SetKi_Fixed32(p_pid, ki_Fixed32);
 }
 
+void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32)
+{
+    p_pid->Config.Kd_Fixed32 = kd_Fixed32; /* todo */
+}
+
 /*!
     @param[in] kp_Fixed16 [0:INT16_MAX] Q10.6
 */
+
 void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 10); }
 
-/*!
-*/
 void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 10); }
-/*!
-    todo
-*/
-void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) {}
+
+void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) { PID_SetKd_Fixed32(p_pid, (uint32_t)kd_Fixed16 << 10); }
 

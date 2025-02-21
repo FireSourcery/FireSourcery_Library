@@ -525,6 +525,15 @@ static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlignTransition,
 };
 
+static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
+{
+    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
+    .DEPTH      = 2U,
+    // .ENTRY      = (StateMachine_Function_T) , timer
+    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlignTransition,
+};
+
 
 /*
 
@@ -672,51 +681,8 @@ static void Calibration_SetIdle(Motor_T * p_motor, state_machine_value_t state)
 // }
 
 /*
-    probably move this to calibration
     with position sensor without position feedback loop
 */
-// static void OpenLoop_StartHome(Motor_T * p_motor)
-// {
-//     Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
-//     // Encoder_StartHoming(&p_motor->Encoder);
-//     // p_motor->ElectricalAngle = 0U;
-//     Motor_FOC_StartOpenLoop(p_motor);
-// }
-
-// static bool _ProcOpenLoopHome(Motor_T * p_motor)
-// {
-//     uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
-//     bool isComplete = false;
-
-//     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-//     {
-//         Motor_PollSensorAngle(p_motor);
-
-//         if (angle16_cycle(p_motor->MechanicalAngle, Motor_GetMechanicalAngle(p_motor), (p_motor->Direction == MOTOR_DIRECTION_CCW)) == true)
-//         {
-//             isComplete = true;
-//         }
-//         /* error on full rev */
-//         else
-//         {
-//             p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
-//             p_motor->ElectricalAngle = (p_motor->MechanicalAngle + angleDelta) * p_motor->Config.PolePairs;
-//             Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
-//         }
-//     }
-
-//     return isComplete;
-// }
-
-// static void OpenLoop_ProcHome(Motor_T * p_motor)
-// {
-//     if (_ProcOpenLoopHome(p_motor) == true)
-//     {
-//         Phase_Float(&p_motor->Phase);
-//         _StateMachine_EndSubState(&p_motor->StateMachine);
-//     }
-// }
-
 static void OpenLoop_CmdHome(Motor_T * p_motor)
 {
     Phase_ActivateOutputABC(&p_motor->Phase);

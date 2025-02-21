@@ -92,8 +92,8 @@ int32_t Motor_VarOutput_PositionSensor_Get(const Motor_T * p_motor, Motor_VarOut
     int32_t value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_ENCODER_FREQ:  value = p_motor->Encoder.FreqD;     break;
-        case MOTOR_VAR_ENCODER_RPM:   value = Encoder_ModeDT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
+        case MOTOR_VAR_ENCODER_FREQ:            value = p_motor->Encoder.FreqD;     break;
+        case MOTOR_VAR_ENCODER_RPM:             value = Encoder_ModeDT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
         case MOTOR_VAR_ENCODER_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
         case MOTOR_VAR_ENCODER_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(&p_motor->Encoder);     break;
     }
@@ -419,13 +419,12 @@ void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int
 /*
 
 */
-
 void Motor_VarConfig_Cmd_Call(Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int32_t varValue)
 {
     switch (varId)
     {
-        case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME: Motor_Encoder_StartHoming(p_motor);     break;
-        case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME: Motor_Calibration_StartHome(p_motor);      break;
+        case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME: Motor_Encoder_StartHoming(p_motor);         break;
+        case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME: Motor_Calibration_StartHome(p_motor);       break;
         // Motor_Encoder_CalibrateHomeOffset
     }
 }

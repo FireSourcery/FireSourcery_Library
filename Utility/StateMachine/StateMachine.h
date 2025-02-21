@@ -193,7 +193,7 @@ typedef const struct StateMachine_State
         SubStates mount onto States
     */
     const struct StateMachine_State * const P_PARENT;
-    const uint8_t DEPTH; /* Depth of state. Simplify LCA */
+    const uint8_t DEPTH; /* Depth of state. Depth must be consistent for iteration */
     // const state_machine_state_t TOP_ID;  /* Top level state ID, can remain private via extern id */
 
     /*
