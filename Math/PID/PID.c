@@ -86,10 +86,9 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         Forward rectangular approximation.
     */
 
-    // p_pid->IntegralAccum = math_add_sat(p_pid->IntegralAccum, (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
+    // p_pid->IntegralAccum += (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift;; /* Excludes 16 shift */
     // p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 16, integralMax << 16);
     // integral = p_pid->IntegralAccum >> 16;
-
 
     integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
     integral = math_clamp(integralAccum >> 16, integralMin, integralMax);

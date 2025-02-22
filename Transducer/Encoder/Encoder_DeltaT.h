@@ -138,10 +138,7 @@ static inline bool Encoder_DeltaT_IsExtendedStop(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
-    uint32_t angle = pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT;
-    return (angle > p_encoder->InterpolateAngleLimit) ? p_encoder->InterpolateAngleLimit : angle;
-
-    // math_min(pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
+    math_limit_upper(pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
 }
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder)
@@ -157,7 +154,6 @@ static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_T * p_encoder)
     p_encoder->InterpolateAngleIndex = 0U;
     p_encoder->InterpolateAngleSum = 0U;
 }
-
 
 /*
     InterpolationCount - numbers of Polls per encoder count, per DeltaT Capture, AngleIndex max

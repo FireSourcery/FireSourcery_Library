@@ -82,13 +82,6 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     }
 }
 
-static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
-{
-    /* Speed may reach zero before checking with extended counter takes effect */
-    if (Encoder_DeltaT_IsExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreqD(p_encoder); }
-    else { p_encoder->FreqD = 0; }
-}
-
 /*
     Capture Angular Speed in POLLING_FREQ
     Using FreqD to interpolate Angle
@@ -100,23 +93,27 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_ModeDT_CaptureInterpolateAngleDelta(Encoder_T * p_encoder)
 {
-    /* Apply / POLLING_FREQ on proc */
-    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitAngularSpeed * p_encoder->Config.InterpolateAngleScalar;
-
     /* as shifted angle */
     // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitInterpolateAngle;
     p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
 }
 
+static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
+{
+    /* Speed may reach zero before checking with extended counter takes effect */
+    if (Encoder_DeltaT_IsExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreqD(p_encoder); }
+    else { p_encoder->FreqD = 0; }
+
+    Encoder_ModeDT_CaptureInterpolateAngleDelta(p_encoder);
+}
+
 /*
     At POLLING_FREQ
 */
-static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder)
+static inline uint32_t _Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    // p_encoder->InterpolateAngleIndex++;
-    // return math_limit_upper(p_encoder->InterpolateAngleIndex * p_encoder->InterpolateAngleDelta / p_encoder->CONST.POLLING_FREQ, p_encoder->InterpolateAngleLimit);
+    // Encoder_DeltaT_ProcInterpolateAngle(p_encoder);
 
-    // uint32_t angle;
     p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta, p_encoder->InterpolateAngleLimit << ENCODER_ANGLE_SHIFT);
     return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
 }
@@ -124,10 +121,7 @@ static inline uint32_t Encoder_ModeDT_ProcInterpolateAngle(Encoder_T * p_encoder
 /* |DeltaD| <= 1 */
 static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
-    return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
-    /* disabled for less than 1RPS 60RPM */
-    // uint32_t freqD = math_abs(p_encoder->FreqD);
-    // return ((p_encoder->Config.CountsPerRevolution) < freqD && freqD < p_encoder->CONST.POLLING_FREQ / 2U) ? Encoder_DeltaT_ProcInterpolateAngle(p_encoder) : 0U;
+    return (math_abs(p_encoder->FreqD) < p_encoder->CONST.POLLING_FREQ / 2U) ? _Encoder_ModeDT_InterpolateAngle(p_encoder) : 0U;
 }
 
 /*
@@ -135,7 +129,6 @@ static inline uint32_t Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 */
 static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * p_encoder)
 {
-    // return Encoder_GetDirectionRef(p_encoder) /* * p_encoder->DirectionD */ * Encoder_ModeDT_InterpolateAngle(p_encoder);
     /*
         quadrature signed capture applies math_sign(p_encoder->FreqD) only
         unsigned capture with decrement comp is unaffected

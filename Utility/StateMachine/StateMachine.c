@@ -992,7 +992,7 @@ void StateMachine_EnterSubStateWith(StateMachine_T * p_stateMachine, const State
         {
             if (StateMachine_IsReachableBranch(p_stateMachine, p_newState) == true)
             {
-                setter(p_stateMachine->CONST.P_CONTEXT, inputValue);
+                if (setter != NULL) { setter(p_stateMachine->CONST.P_CONTEXT, inputValue); }
                 _StateMachine_SetSubState(p_stateMachine, p_newState);
             }
 

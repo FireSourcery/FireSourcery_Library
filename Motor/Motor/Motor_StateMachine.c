@@ -359,6 +359,7 @@ static void OpenLoop_Entry(Motor_T * p_motor)
     Phase_Ground(&p_motor->Phase);
     // FOC_ClearControlState(&p_motor->Foc);
 
+    _StateMachine_EndSubState(&p_motor->StateMachine); /* 'unmount' last operation */
     // determine initial substate from stop
 }
 
@@ -454,6 +455,7 @@ static void OpenLoop_CmdPhaseAlign(Motor_T * p_motor, state_machine_value_t phas
 {
     Phase_ActivateOutputABC(&p_motor->Phase);
     Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)phaseAlign, Ramp_GetTarget(&p_motor->Ramp)); /* limited by p_motor->Config.AlignPower_UFract16 */
+    /* todo add on output for consitency */
     p_motor->ElectricalAngle = Phase_AngleOf((Phase_Align_T)phaseAlign); /* set the angle to maintain consistency */
 }
 
@@ -508,8 +510,12 @@ static const StateMachine_State_T OPEN_LOOP_STATE_RUN =
     .NEXT       = NULL,
 };
 
+static void OpenLoop_StartUpAlign_EntryTimer(Motor_T * p_motor)
+{
+    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+}
 
-static StateMachine_State_T * OpenLoop_StartUpAlignTransition(Motor_T * p_motor)
+static StateMachine_State_T * OpenLoop_StartUpAlign_Transition(Motor_T * p_motor)
 {
     return (Timer_Periodic_Poll(&p_motor->ControlTimer) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
 }
@@ -522,16 +528,17 @@ static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .DEPTH      = 1U,
     .ENTRY      = (StateMachine_Function_T)Motor_FOC_StartStartUpAlign,
     .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcStartUpAlign,
-    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlignTransition,
+    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlign_Transition,
 };
 
+//use branch
 static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
 {
     // .ID         = MSM_STATE_ID_OPEN_LOOP,
     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
     .DEPTH      = 2U,
-    // .ENTRY      = (StateMachine_Function_T) , timer
-    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlignTransition,
+    .ENTRY      = (StateMachine_Function_T)OpenLoop_StartUpAlign_EntryTimer,
+    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlign_Transition,
 };
 
 
@@ -688,6 +695,7 @@ static void OpenLoop_CmdHome(Motor_T * p_motor)
     Phase_ActivateOutputABC(&p_motor->Phase);
     Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
     p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_UFract16));
     // Motor_FOC_StartOpenLoopSpeed(p_motor, Motor_MechSpeedOfAngle_Fract16(p_motor, 65536/1000));
 }
 
@@ -701,7 +709,8 @@ static void OpenLoop_ProcHome(Motor_T * p_motor)
     {
         Motor_PollSensorAngle(p_motor); /*  */
 
-        p_motor->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->Config.PolePairs;
+        // p_motor->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->Config.PolePairs;
+        p_motor->ElectricalAngle +=  (angleDelta * p_motor->Config.PolePairs);
         Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
     }
 }
@@ -711,7 +720,7 @@ static StateMachine_State_T * OpenLoop_HomeTransition(Motor_T * p_motor)
     uint16_t angleDelta = 65536 / 1000;
 
     /* error on full rev todo */
-    if (angle16_cycle(Motor_GetMechanicalAngle(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta, (p_motor->Direction == MOTOR_DIRECTION_CCW)) == true)
+    if (angle16_cycle(p_motor->MechanicalAngle, Motor_GetMechanicalAngle(p_motor), (p_motor->Direction == MOTOR_DIRECTION_CCW)) == true)
     {
         Phase_Ground(&p_motor->Phase);
         _StateMachine_EndSubState(&p_motor->StateMachine);
