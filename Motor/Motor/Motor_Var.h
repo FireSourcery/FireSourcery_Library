@@ -120,13 +120,15 @@ typedef enum Motor_VarInput
     MOTOR_VAR_CMD_OPEN_LOOP,
 
     // non polling, could be io
-    MOTOR_VAR_OPEN_LOOP_CONTROL, /* optional pas cmd / run */
+    MOTOR_VAR_OPEN_LOOP_CONTROL, /* Enter State optional pas cmd / run */
     MOTOR_VAR_OPEN_LOOP_PHASE_STATE,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_ANGLE,
     // MOTOR_VAR_OPEN_LOOP_HOMING,
     MOTOR_VAR_OPEN_LOOP_RUN,
     MOTOR_VAR_OPEN_LOOP_JOG,
+
+    // MOTOR_VAR_CALIBRATION_ENTER,
 }
 Motor_VarInput_T;
 

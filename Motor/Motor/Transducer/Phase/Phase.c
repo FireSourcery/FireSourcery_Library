@@ -55,7 +55,7 @@ void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDut
     PWM_WriteDuty(&p_phase->PwmA, pwmDutyA);
     PWM_WriteDuty(&p_phase->PwmB, pwmDutyB);
     PWM_WriteDuty(&p_phase->PwmC, pwmDutyC);
-    _Phase_SyncPwmDuty(p_phase, (PHASE_ID_ABC));
+    _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
 void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
@@ -63,7 +63,7 @@ void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_
     PWM_WriteDuty_Fract16(&p_phase->PwmA, pwmDutyA);
     PWM_WriteDuty_Fract16(&p_phase->PwmB, pwmDutyB);
     PWM_WriteDuty_Fract16(&p_phase->PwmC, pwmDutyC);
-    _Phase_SyncPwmDuty(p_phase, (PHASE_ID_ABC));
+    _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
 void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
@@ -71,7 +71,7 @@ void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint1
     PWM_WriteDuty_Percent16(&p_phase->PwmA, pwmDutyA);
     PWM_WriteDuty_Percent16(&p_phase->PwmB, pwmDutyB);
     PWM_WriteDuty_Percent16(&p_phase->PwmC, pwmDutyC);
-    _Phase_SyncPwmDuty(p_phase, (PHASE_ID_ABC));
+    _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
 void Phase_ActivateOutput(const Phase_T * p_phase)
@@ -79,7 +79,7 @@ void Phase_ActivateOutput(const Phase_T * p_phase)
     _Phase_EnableA(p_phase);
     _Phase_EnableB(p_phase);
     _Phase_EnableC(p_phase);
-    // _Phase_SyncPwmOnOff(p_phase );
+    // _Phase_SyncPwmOnOff(p_phase);
     // _Phase_WriteState(p_phase, PHASE_ID_ABC);
 }
 
@@ -89,6 +89,7 @@ void Phase_Float(const Phase_T * p_phase)
     _Phase_DisableB(p_phase);
     _Phase_DisableC(p_phase);
     // _Phase_SyncPwmOnOff(p_phase);
+    // _Phase_WriteState(p_phase, PHASE_ID_DISABLE);
 }
 
 /* NOT for Bipolar active. Enable all at 0 duty */

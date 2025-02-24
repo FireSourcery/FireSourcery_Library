@@ -764,7 +764,7 @@ static const StateMachine_State_T CALIBRATION_STATE_HOMING =
 void Motor_Calibration_StartHome(Motor_T * p_motor)
 {
     static const StateMachine_Cmd_T CALIBRATION_CMD_HOME = { .CMD = NULL, .P_INITIAL = &CALIBRATION_STATE_HOMING, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &CALIBRATION_CMD_HOME, 0);
+    StateMachine_StartCmd(&p_motor->StateMachine, &CALIBRATION_CMD_HOME, 0); /* substate only reachable after setting calib first */
 }
 
 

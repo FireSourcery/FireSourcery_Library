@@ -162,7 +162,7 @@ static inline const StateMachine_State_T * State_TransitionOutput_Top(const Stat
 /******************************************************************************/
 static inline StateMachine_Input_T State_AcceptInput(const StateMachine_State_T * p_state, void * p_context, state_machine_input_t inputId)
 {
-    StateMachine_Input_T result = NULL;
+   volatile StateMachine_Input_T result = NULL;
     if      (p_state->P_TRANSITION_TABLE != NULL)   { result = p_state->P_TRANSITION_TABLE[inputId]; }
     else if (p_state->TRANSITION_MAPPER != NULL)    { result = p_state->TRANSITION_MAPPER(p_context, inputId); }
     return result;
@@ -782,7 +782,7 @@ static inline const StateMachine_State_T * State_TraverseOutput(const StateMachi
 */
 static inline StateMachine_Input_T State_TraverseAcceptInput(const StateMachine_State_T * p_start, void * p_context, state_machine_input_t inputId)
 {
-    StateMachine_Input_T result;
+    volatile StateMachine_Input_T result;
     for (const StateMachine_State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
     {
         result = State_AcceptInput(p_iterator, p_context, inputId);
@@ -887,9 +887,11 @@ void _StateMachine_ProcSubState(StateMachine_T * p_stateMachine)
 
 void _StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value)
 {
-    if (p_stateMachine->p_SubState != NULL) { State_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, id, value); }
+    if (p_stateMachine->p_SubState != NULL) { p_stateMachine->p_SubState = p_stateMachine->p_StateActive; }
+    State_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, id, value);
 }
 
+/* SubStae must accept the input, does not traverse. alternatively includ 1 level parent */
 void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value)
 {
     if (AcquireCritical_Input(p_stateMachine) == true)
@@ -955,11 +957,17 @@ void _StateMachine_ProcBranch_Nested(StateMachine_T * p_stateMachine)
     StateBranch_ProcOutput(&p_stateMachine->p_SubState, p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT);
 }
 
-void _StateMachine_ProcBranch_SyncInput(StateMachine_T * p_stateMachine)
+void _StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value)
+{
+    if (p_stateMachine->p_SubState == NULL) { p_stateMachine->p_SubState = p_stateMachine->p_StateActive; }
+    StateBranch_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, id, value);
+}
+
+void _StateMachine_ProcBranchSyncInput(StateMachine_T * p_stateMachine)
 {
     if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
     {
-        StateBranch_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
+        _StateMachine_ProcBranchInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
     }
 }
@@ -969,7 +977,7 @@ void StateMachine_ProcBranch(StateMachine_T * p_stateMachine)
 {
     if (AcquireCritical_ISR(p_stateMachine) == true)
     {
-        _StateMachine_ProcBranch_SyncInput(p_stateMachine);
+        _StateMachine_ProcBranchSyncInput(p_stateMachine);
         StateBranch_ProcOutput(&p_stateMachine->p_SubState, NULL, p_stateMachine->CONST.P_CONTEXT);
         ReleaseCritical_ISR(p_stateMachine);
     }
@@ -979,7 +987,7 @@ void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine
 {
     if (AcquireCritical_Input(p_stateMachine) == true)
     {
-        StateBranch_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, id, value);
+        _StateMachine_ProcBranchInput(p_stateMachine, id, value);
         ReleaseCritical_Input(p_stateMachine);
     }
 }
