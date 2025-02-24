@@ -129,20 +129,6 @@ typedef state_machine_value_t(*StateMachine_Get_T)(void * p_context);
 
 
 /*  */
-typedef StateMachine_Set_T StateMachine_CmdInput_T;
-
-/*
-    unlike an Input which must map to all states, a Cmd maps to a single State or Branch
-    SubState Cmd
-*/
-typedef const struct StateMachine_Cmd
-{
-    const StateMachine_CmdInput_T CMD;
-    const struct StateMachine_State * P_INITIAL; /* reimplement states with NEXT */
-}
-StateMachine_Cmd_T;
-
-/*  */
 typedef const struct StateMachine_State
 {
     /*
@@ -220,6 +206,23 @@ typedef struct StateMachine_Machine
     const uint8_t TRANSITION_TABLE_LENGTH;  /* state_machine_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
 }
 StateMachine_Machine_T;
+
+
+/*  */
+typedef StateMachine_Set_T StateMachine_CmdInput_T;
+
+/*
+    unlike an Input which must map to all states, a Cmd maps to a single State or Branch
+    SubState Cmd
+*/
+typedef const struct StateMachine_Cmd
+{
+    const StateMachine_CmdInput_T CMD;
+    const struct StateMachine_State * P_INITIAL; /* reimplement states with NEXT */
+    const struct StateMachine_State * P_ACCEPT;
+    uint8_t ACCEPT_COUNT;
+}
+StateMachine_Cmd_T;
 
 /*
 
@@ -300,7 +303,10 @@ extern void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, state_ma
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
 extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
 
+
+extern void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
 extern void _StateMachine_ProcSubState(StateMachine_T * p_stateMachine);
+extern void _StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
 extern void _StateMachine_EndSubState(StateMachine_T * p_stateMachine);
 
 extern void StateMachine_SetSubState(StateMachine_T * p_stateMachine, StateMachine_State_T * p_subState);

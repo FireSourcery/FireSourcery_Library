@@ -67,7 +67,7 @@
 inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value);
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE); //// disables interrupts twice depreciate
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_VPWM); //// disables interrupts twice depreciate
 }
 
 /* Generic array functions use */
@@ -78,7 +78,7 @@ inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T 
 
 inline void Motor_User_ActivateControl(Motor_T * p_motor)
 {
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_ACTIVE);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_VPWM);
 }
 
 /*
@@ -86,15 +86,15 @@ inline void Motor_User_ActivateControl(Motor_T * p_motor)
 */
 inline void Motor_User_Release(Motor_T * p_motor)
 {
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_FLOAT);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_FLOAT);
 }
 
 inline void Motor_User_Hold(Motor_T * p_motor)
 {
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_STATE_GROUND);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_GROUND);
 }
 
-inline void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_State_T state)
+inline void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_Output_T state)
 {
     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, state);
 }

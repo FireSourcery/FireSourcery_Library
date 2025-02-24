@@ -38,4 +38,7 @@
 #include "../../Motor_StateMachine.h"
 
 
+extern void Motor_Hall_Calibrate(Motor_T * p_motor);
+
+
 #endif

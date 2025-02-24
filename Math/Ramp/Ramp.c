@@ -31,7 +31,6 @@
 #include "Ramp.h"
 #include <assert.h>
 
-#define RAMP_SHIFT 14U /* Output range [-UINT16_MAX:UINT16_MAX]x2 without overflow */
 
 /*
     return ouput as shifted
@@ -55,7 +54,7 @@ static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
     return output32;
 }
 
-int32_t Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
+int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
 {
     if (p_ramp->State != p_ramp->Target) { p_ramp->State = OutputOf(p_ramp, steps); }
     return Ramp_GetOutput(p_ramp);
@@ -63,7 +62,7 @@ int32_t Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
 
 int32_t Ramp_ProcOutput(Ramp_T * p_ramp)
 {
-    return Ramp_ProcOutputN(p_ramp, 1U);
+    return _Ramp_ProcOutputN(p_ramp, 1U);
 }
 
 /******************************************************************************/
@@ -98,6 +97,7 @@ void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration
 /* duration_Ticks != 0  */
 void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range)
 {
+    assert(duration_Ticks != 0U);
     p_ramp->Coefficient = (range << p_ramp->Shift) / duration_Ticks;
 }
 

@@ -91,6 +91,7 @@ typedef struct Encoder_Config
     uint16_t GearRatioOutput;           /* DistancePerRevolution_Factor */
     uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s */
     uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
+    // uint32_t AngularSpeedScalar;
 
     uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
     uint32_t AlignOffsetRef;            /* Align - Index */
@@ -134,19 +135,17 @@ typedef struct Encoder
     Pin_T PinA;
     Pin_T PinB;
 #endif
-
-// #if defined(CONFIG_ENCODER_HW_EMULATED)
     Encoder_Phases_T Phases; /* Save Prev State */
     uint32_t CounterD;
     uint32_t Angle32;
+// #endif /* CONFIG_ENCODER_HW_EMULATED */
 
     // int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
     bool IsSinglePhasePositive;
-    // int32_t DirectionComp;   /* todo */
 
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
-    uint32_t ExtendedTimerConversion;    /* Extended Timer to Short Timer */
+    uint32_t ExtendedTimerConversion; /* Extended Timer to Short Timer */
 
     int32_t DeltaD;         /*!< Counter counts (of distance) between 2 samples. Units in raw counter ticks */
     uint32_t DeltaT;        /*!< Timer counts between 2 pulse counts. Units in raw timer ticks */
@@ -178,8 +177,9 @@ typedef struct Encoder
     // uint32_t DeltaSpeed;     /*!< Save for acceleration calc */
 
     /*
-        Unit conversion. derived on init from Nv Config
+    Unit conversion. derived on init from Nv Config
     */
+   // int32_t DirectionComp;   /* todo */
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
     uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/

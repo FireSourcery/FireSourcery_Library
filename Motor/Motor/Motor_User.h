@@ -103,8 +103,8 @@ static inline bool Motor_User_IsStopState(const Motor_T * p_motor) { return Moto
 static inline bool Motor_User_IsRunState(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_RUN); }
 
 
-static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return Ramp_IsDisabled(&p_motor->Ramp); }
-static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool rampEnable) { if (rampEnable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
+static inline bool Motor_User_IsRampEnabled(const Motor_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->Ramp); }
+static inline void Motor_User_SetRampOnOff(Motor_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
 
 /*
     Set via interface functions
@@ -121,7 +121,7 @@ static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
 
 /* Separate getters for compatibility with StateMachine SetInput and ProcInput */
-static inline Phase_State_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_ReadState(&p_motor->Phase); }
+static inline Phase_Output_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_ReadOutputState(&p_motor->Phase); }
 static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
 static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
 
@@ -197,7 +197,7 @@ extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 extern void Motor_User_ActivateControl(Motor_T * p_motor);
 extern void Motor_User_Release(Motor_T * p_motor);
 extern void Motor_User_Hold(Motor_T * p_motor);
-extern void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_State_T state);
+extern void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_Output_T state);
 extern void Motor_User_ForceDisableControl(Motor_T * p_motor);
 extern void Motor_User_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(Motor_T * p_motor, uint8_t modeValue);

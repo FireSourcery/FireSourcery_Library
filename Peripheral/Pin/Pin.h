@@ -97,6 +97,8 @@ static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_
 /* As On/Off. Include invert check */
 static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadPhysical(p_pin) ^ p_pin->CONST.IS_INVERT); }
 
+static inline bool Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ^ p_pin->CONST.IS_INVERT) ? p_pin->CONST.ID : 0; }
+
 /******************************************************************************/
 /*!
 */

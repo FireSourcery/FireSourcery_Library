@@ -629,7 +629,7 @@ static StateMachine_State_T * Lock_InputLockOp_Blocking(MotorController_T * p_mc
             break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_mc);                   break;
         case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC:     MotorController_Analog_StartCalibrate(p_mc);  break;
-        case MOTOR_CONTROLLER_LOCK_REBOOT: HAL_Reboot(); break; /* No return */ //optionally deinit clock select
+        case MOTOR_CONTROLLER_LOCK_REBOOT:              HAL_Reboot(); break; /* No return */ //optionally deinit clock select
         // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_mc);         break;
         // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_mc);       break;
     }

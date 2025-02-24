@@ -96,6 +96,7 @@ extern void Motor_Analog_MarkIabc(Motor_T * p_motor);
 extern void Motor_Analog_StartCalibration(Motor_T * p_motor);
 extern bool Motor_Analog_ProcCalibration(Motor_T * p_motor);
 
+extern void Motor_Analog_Calibrate(Motor_T * p_motor);
 
 #endif
 

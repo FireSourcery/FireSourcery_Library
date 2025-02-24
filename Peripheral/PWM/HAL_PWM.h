@@ -31,6 +31,9 @@
 #ifndef HAL_PWM_H
 #define HAL_PWM_H
 
+// typedef struct HAL_PWM HAL_PWM_T;
+// typedef struct HAL_PWM_Module HAL_PWM_Module_T;
+
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_PWM.h)
 

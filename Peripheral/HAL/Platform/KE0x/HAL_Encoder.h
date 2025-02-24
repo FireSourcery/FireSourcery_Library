@@ -97,6 +97,7 @@ static inline bool HAL_Encoder_ReadCounterDirection(const HAL_Encoder_Counter_T 
 static inline bool HAL_Encoder_ReadCounterOverflowIncrement(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; return (0U); }
 static inline bool HAL_Encoder_ReadCounterOverflowDecrement(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; return (0U); }
 
+/* alternatively typedef HAL_Encoder_Pin_T uint32_t* */
 /*
     Emulated via edge interrupt
 */

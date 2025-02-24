@@ -149,9 +149,9 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, state_machine
 
     switch ((Phase_Mode_T)phaseMode)
     {
-        case PHASE_STATE_FLOAT:     Phase_Float(&p_motor->Phase);   break;
-        case PHASE_STATE_GROUND:    Phase_Ground(&p_motor->Phase);  break;
-        case PHASE_STATE_ACTIVE:
+        case PHASE_OUTPUT_FLOAT:     Phase_Float(&p_motor->Phase);   break;
+        case PHASE_OUTPUT_GROUND:    Phase_Ground(&p_motor->Phase);  break;
+        case PHASE_OUTPUT_VPWM:
             if (Motor_IsClosedLoopStart(p_motor) == true)
             {
                 Motor_ZeroSensor(p_motor); // todo as match or clear
@@ -182,8 +182,12 @@ static StateMachine_State_T * Stop_InputOpenLoop(Motor_T * p_motor, state_machin
 
 static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor, state_machine_value_t state)
 {
-    p_motor->CalibrationState = state;
-    return &MOTOR_STATE_CALIBRATION;
+    StateMachine_State_T * p_subState = (StateMachine_State_T *)state;
+
+    return (p_subState != NULL) ? p_subState : NULL;
+
+    // p_motor->CalibrationState = state;
+    // return &MOTOR_STATE_CALIBRATION;
 }
 
 static const StateMachine_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -234,14 +238,14 @@ static StateMachine_State_T * Run_InputControl(Motor_T * p_motor, state_machine_
 
     switch ((Phase_Mode_T)phaseMode)
     {
-        case PHASE_STATE_FLOAT:
+        case PHASE_OUTPUT_FLOAT:
             //   (Motor_CheckSpeed(p_motor) == true) ? &MOTOR_STATE_FREEWHEEL : 0U; // check speed range
             p_nextState = &MOTOR_STATE_FREEWHEEL;
             break;
-        case PHASE_STATE_GROUND:
+        case PHASE_OUTPUT_GROUND:
             // if (p_motor->Speed_Fract16 == 0U) { Phase_Ground ; }
             break;
-        case PHASE_STATE_ACTIVE: break;
+        case PHASE_OUTPUT_VPWM: break;
     }
 
     return p_nextState;
@@ -310,11 +314,11 @@ static StateMachine_State_T * Freewheel_InputControl(Motor_T * p_motor, state_ma
 
     switch ((Phase_Mode_T)phaseMode)
     {
-        case PHASE_STATE_FLOAT:  break;
-        case PHASE_STATE_GROUND:
+        case PHASE_OUTPUT_FLOAT:  break;
+        case PHASE_OUTPUT_GROUND:
             // if (p_motor->Speed_Fract16 == 0U) { Phase_Ground p_nextState = &MOTOR_STATE_STOP; }
             break;
-        case PHASE_STATE_ACTIVE:
+        case PHASE_OUTPUT_VPWM:
             if (Motor_IsClosedLoopStart(p_motor) == true) { p_nextState = &MOTOR_STATE_RUN; } /* If flags set */
             /* OpenLoop does not resume */
             break;
@@ -377,9 +381,9 @@ static StateMachine_State_T * OpenLoop_InputControl(Motor_T * p_motor, state_mac
 
     switch ((Phase_Mode_T)phaseMode)
     {
-        case PHASE_STATE_FLOAT:  p_nextState = &MOTOR_STATE_FREEWHEEL;          break;
-        case PHASE_STATE_GROUND: Phase_Ground(&p_motor->Phase);                 break;
-        case PHASE_STATE_ACTIVE: /* Motor_FOC_ActivateOutputZero(p_motor); */   break;
+        case PHASE_OUTPUT_FLOAT:  p_nextState = &MOTOR_STATE_FREEWHEEL;          break;
+        case PHASE_OUTPUT_GROUND: Phase_Ground(&p_motor->Phase);                 break;
+        case PHASE_OUTPUT_VPWM: /* Motor_FOC_ActivateOutputZero(p_motor); */   break;
         /* No resume from OpenLoop, freewheel state check stop */
     }
 
@@ -445,29 +449,31 @@ const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
 static void OpenLoop_CmdPhaseControl(Motor_T * p_motor, state_machine_value_t phaseState)
 {
     Motor_FOC_ClearFeedbackState(p_motor);
-    Phase_ActivateState(&p_motor->Phase, (Phase_State_T)phaseState);
+    Phase_ActivateOutputState(&p_motor->Phase, (Phase_Output_T)phaseState);
     // _StateMachine_EndSubState(&p_motor->StateMachine); /* No periodic  */
 }
 
 /*
+    Activate Align
 */
 static void OpenLoop_CmdPhaseAlign(Motor_T * p_motor, state_machine_value_t phaseAlign)
 {
-    Phase_ActivateOutputABC(&p_motor->Phase);
-    Phase_Align_ActivateDuty(&p_motor->Phase, (Phase_Align_T)phaseAlign, Ramp_GetTarget(&p_motor->Ramp)); /* limited by p_motor->Config.AlignPower_UFract16 */
-    /* todo add on output for consitency */
-    p_motor->ElectricalAngle = Phase_AngleOf((Phase_Align_T)phaseAlign); /* set the angle to maintain consistency */
+    Phase_ActivateOutput(&p_motor->Phase);
+    Phase_Align(&p_motor->Phase, (Phase_Id_T)phaseAlign, Ramp_GetTarget(&p_motor->Ramp)); /* limited by p_motor->Config.AlignPower_UFract16 */
+
+    /* Set state variables for User Interface consistency */
+    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
+    p_motor->ElectricalAngle = Phase_AngleOf((Phase_Id_T)phaseAlign);
 }
 
 /*
-
 */
 static void OpenLoop_CmdJog(Motor_T * p_motor, state_machine_value_t direction)
 {
-    // OpenLoop_CmdPhaseAlign(p_motor, Phase_GetNextAlign(&p_motor->Phase, direction));
+    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
+    // Ramp_ProcEndState(&p_motor->Ramp);
+    p_motor->ElectricalAngle = Phase_AngleOf(Phase_JogDirection(&p_motor->Phase, Ramp_GetTarget(&p_motor->Ramp), 1));
 }
-
-
 
 /*
     Angle Cmd and User Current/Voltage Cmd
@@ -491,11 +497,25 @@ static void OpenLoop_CmdAngleAlign(Motor_T * p_motor, state_machine_value_t angl
     p_motor->ElectricalAngle = angle;
 }
 
-/* if a ramp isolated from userCmd must be used */
+/* ramp isolated from userCmd   */
 // void OpenLoop_CmdAlign(Motor_T * p_motor, state_machine_value_t ivCmd)
 // {
 //     Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16)));
 // }
+
+static StateMachine_State_T * OpenLoop_StartUpAlign_Transition(Motor_T * p_motor);// todo
+
+/* Align with Aux Ramp */
+static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
+{
+    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
+    .DEPTH      = 1U,
+    .ENTRY      = (StateMachine_Function_T)Motor_FOC_StartStartUpAlign,
+    .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcStartUpAlign,
+    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlign_Transition,
+};
+
 
 /******************************************************************************/
 /* */
@@ -520,17 +540,6 @@ static StateMachine_State_T * OpenLoop_StartUpAlign_Transition(Motor_T * p_motor
     return (Timer_Periodic_Poll(&p_motor->ControlTimer) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
 }
 
-/* Align with Aux Ramp */
-static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
-{
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
-    .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
-    .DEPTH      = 1U,
-    .ENTRY      = (StateMachine_Function_T)Motor_FOC_StartStartUpAlign,
-    .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcStartUpAlign,
-    .NEXT       = (StateMachine_Transition_T)OpenLoop_StartUpAlign_Transition,
-};
-
 //use branch
 static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
 {
@@ -545,13 +554,13 @@ static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
 /*
 
 */
-void Motor_OpenLoop_SetPhaseState(Motor_T * p_motor, Phase_State_T phase)
+void Motor_OpenLoop_SetPhaseState(Motor_T * p_motor, Phase_Output_T phase)
 {
     static const StateMachine_Cmd_T OPEN_LOOP_CMD_PHASE = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdPhaseControl, .P_INITIAL = &MOTOR_STATE_OPEN_LOOP, };
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_PHASE, phase);
 }
 
-void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Align_T align)
+void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Id_T align)
 {
     static const StateMachine_Cmd_T OPEN_LOOP_CMD_V_ALIGN = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdPhaseAlign, .P_INITIAL = &MOTOR_STATE_OPEN_LOOP, };
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_V_ALIGN, align);
@@ -563,11 +572,11 @@ void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle)
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
 }
 
-// void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
-// {
-//     static const StateMachine_Cmd_T OPEN_LOOP_CMD_JOG = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdJog, .P_INITIAL = &MOTOR_STATE_OPEN_LOOP, };
-//     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_JOG, direction);
-// }
+void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
+{
+    static const StateMachine_Cmd_T OPEN_LOOP_CMD_JOG = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdJog, .P_INITIAL = &MOTOR_STATE_OPEN_LOOP, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_JOG, direction);
+}
 
 void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 {
@@ -588,57 +597,60 @@ static void Calibration_Entry(Motor_T * p_motor)
     p_motor->CalibrationStateIndex = 0U;
     Phase_Ground(&p_motor->Phase);
 
-    switch (p_motor->CalibrationState)
-    {
-        case MOTOR_CALIBRATION_STATE_DISABLE:  break;
-        case MOTOR_CALIBRATION_STATE_ADC:       Motor_Analog_StartCalibration(p_motor);   break;
-        /* Sensor */
-        case MOTOR_CALIBRATION_STATE_HALL:      Motor_Calibration_StartHall(p_motor);     break;
-        // case MOTOR_CALIBRATION_STATE_ENCODER:   Motor_Calibration_StartEncoderDirection(p_motor);  break;
-        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_CALIBRATION_STATE_SIN_COS:   Motor_Calibration_StartSinCos(p_motor);   break;
-        #endif
-        // case MOTOR_CALIBRATION_STATE_INPUT:      break;
-        default: break;
-    }
+    // switch (p_motor->CalibrationState)
+    // {
+    //     case MOTOR_CALIBRATION_STATE_DISABLE:  break;
+    //     case MOTOR_CALIBRATION_STATE_ADC:       Motor_Analog_StartCalibration(p_motor);   break;
+    //     /* Sensor */
+    //     case MOTOR_CALIBRATION_STATE_HALL:      Motor_Calibration_StartHall(p_motor);     break;
+    //     // case MOTOR_CALIBRATION_STATE_ENCODER:   Motor_Calibration_StartEncoderDirection(p_motor);  break;
+    //     #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+    //     case MOTOR_CALIBRATION_STATE_SIN_COS:   Motor_Calibration_StartSinCos(p_motor);   break;
+    //     #endif
+    //     // case MOTOR_CALIBRATION_STATE_INPUT:      break;
+    //     default: break;
+    // }
 }
 
 static void Calibration_Proc(Motor_T * p_motor)
 {
-    StateMachine_State_T * p_nextState = NULL;
-    bool isComplete = false;
+    _StateMachine_ProcSubState(&p_motor->StateMachine);
 
-    switch (p_motor->CalibrationState)
-    {
-        case MOTOR_CALIBRATION_STATE_IDLE:      _StateMachine_ProcSubState(&p_motor->StateMachine);     break;
-        case MOTOR_CALIBRATION_STATE_DISABLE:   isComplete = true;                                      break;
-        case MOTOR_CALIBRATION_STATE_ADC:       isComplete = Motor_Analog_ProcCalibration(p_motor);     break;
+    // StateMachine_State_T * p_nextState = NULL;
+    // bool isComplete = false;
 
-        case MOTOR_CALIBRATION_STATE_HALL:
-            isComplete = Motor_Calibration_ProcHall(p_motor);
-            if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
-            break;
+    // switch (p_motor->CalibrationState)
+    // {
+    //     case MOTOR_CALIBRATION_STATE_IDLE:      _StateMachine_ProcSubState(&p_motor->StateMachine);     break;
+    //     case MOTOR_CALIBRATION_STATE_DISABLE:   isComplete = true;                                      break;
+    //     case MOTOR_CALIBRATION_STATE_ADC:       isComplete = Motor_Analog_ProcCalibration(p_motor);     break;
 
-        // case MOTOR_CALIBRATION_STATE_ENCODER:
-        //     isComplete = Motor_Calibration_ProcEncoderDirection(p_motor);
-        //     if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
-            break;
+    //     case MOTOR_CALIBRATION_STATE_HALL:
+    //         isComplete = Motor_Calibration_ProcHall(p_motor);
+    //         if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
+    //         break;
 
-        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-        case MOTOR_CALIBRATION_STATE_SIN_COS:   isComplete = Motor_Calibration_ProcSinCos(p_motor);     break;
-        #endif
-        default: break;
-    }
+    //     // case MOTOR_CALIBRATION_STATE_ENCODER:
+    //     //     isComplete = Motor_Calibration_ProcEncoderDirection(p_motor);
+    //     //     if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
+    //         break;
 
-    if (isComplete == true)
-    {
-        p_nextState = (p_motor->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : &MOTOR_STATE_STOP;
-        p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_DISABLE;
-    }
+    //     #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+    //     case MOTOR_CALIBRATION_STATE_SIN_COS:   isComplete = Motor_Calibration_ProcSinCos(p_motor);     break;
+    //     #endif
+    //     default: break;
+    // }
+
+    // if (isComplete == true)
+    // {
+    //     p_nextState = (p_motor->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : &MOTOR_STATE_STOP;
+    //     p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_DISABLE;
+    // }
 }
 
 static StateMachine_State_T * Calibration_Next(Motor_T * p_motor)
 {
+    return (p_motor->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
     // if (isComplete == true)
     // {
     //     p_nextState = (p_motor->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : &MOTOR_STATE_STOP;
@@ -673,11 +685,11 @@ const StateMachine_State_T MOTOR_STATE_CALIBRATION =
     .LOOP               = (StateMachine_Function_T)Calibration_Proc,
 };
 
-static void Calibration_SetIdle(Motor_T * p_motor, state_machine_value_t state)
-{
-    p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_IDLE;
-    Phase_Float(&p_motor->Phase);
-}
+// static void Calibration_SetIdle(Motor_T * p_motor, state_machine_value_t state)
+// {
+//     p_motor->CalibrationState = MOTOR_CALIBRATION_STATE_IDLE;
+//     Phase_Float(&p_motor->Phase);
+// }
 
 // static const StateMachine_Cmd_T CALIBRATION_CMD_IDLE = { .STATE = MSM_STATE_ID_CALIBRATION, .CMD = (StateMachine_CmdInput_T)Calibration_SetIdle, .LOOP = NULL, };
 
@@ -687,19 +699,27 @@ static void Calibration_SetIdle(Motor_T * p_motor, state_machine_value_t state)
 //     StateMachine_SetSubState(&p_motor->StateMachine, &CALIBRATION_CMD_IDLE, 0);
 // }
 
+/******************************************************************************/
+/*!  */
+/******************************************************************************/
 /*
     with position sensor without position feedback loop
 */
-static void OpenLoop_CmdHome(Motor_T * p_motor)
+static void Calibration_CmdHome(Motor_T * p_motor)
 {
-    Phase_ActivateOutputABC(&p_motor->Phase);
-    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
-    p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    //for now
+    p_motor->ControlTimerBase = 0U;
+    p_motor->CalibrationStateIndex = 0U;
+
+    Phase_ActivateOutput(&p_motor->Phase);
+    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); // ~1rpm
     Ramp_Set(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->Config.OpenLoopPower_UFract16));
-    // Motor_FOC_StartOpenLoopSpeed(p_motor, Motor_MechSpeedOfAngle_Fract16(p_motor, 65536/1000));
+
+    p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 }
 
-static void OpenLoop_ProcHome(Motor_T * p_motor)
+static void Calibration_ProcHome(Motor_T * p_motor)
 {
     // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
     /* alternatively use openloop speed */
@@ -710,12 +730,12 @@ static void OpenLoop_ProcHome(Motor_T * p_motor)
         Motor_PollSensorAngle(p_motor); /*  */
 
         // p_motor->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->Config.PolePairs;
-        p_motor->ElectricalAngle +=  (angleDelta * p_motor->Config.PolePairs);
+        p_motor->ElectricalAngle += (angleDelta * p_motor->Config.PolePairs);
         Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
     }
 }
 
-static StateMachine_State_T * OpenLoop_HomeTransition(Motor_T * p_motor)
+static StateMachine_State_T * Calibration_HomeTransition(Motor_T * p_motor)
 {
     uint16_t angleDelta = 65536 / 1000;
 
@@ -731,21 +751,22 @@ static StateMachine_State_T * OpenLoop_HomeTransition(Motor_T * p_motor)
     return NULL;
 }
 
-static const StateMachine_State_T OPEN_LOOP_STATE_HOMING =
+static const StateMachine_State_T CALIBRATION_STATE_HOMING =
 {
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
-    .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
+    // .ID         = MSM_STATE_ID_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
-    .ENTRY      = (StateMachine_Function_T)OpenLoop_CmdHome,
-    .LOOP       = (StateMachine_Function_T)OpenLoop_ProcHome,
-    .NEXT       = (StateMachine_Transition_T)OpenLoop_HomeTransition,
+    .ENTRY      = (StateMachine_Function_T)Calibration_CmdHome,
+    .LOOP       = (StateMachine_Function_T)Calibration_ProcHome,
+    .NEXT       = (StateMachine_Transition_T)Calibration_HomeTransition,
 };
 
 void Motor_Calibration_StartHome(Motor_T * p_motor)
 {
-    static const StateMachine_Cmd_T OPEN_LOOP_CMD_HOME = { .CMD = NULL, .P_INITIAL = &OPEN_LOOP_STATE_HOMING, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_HOME, 0);
+    static const StateMachine_Cmd_T CALIBRATION_CMD_HOME = { .CMD = NULL, .P_INITIAL = &CALIBRATION_STATE_HOMING, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &CALIBRATION_CMD_HOME, 0);
 }
+
 
 /******************************************************************************/
 /*!

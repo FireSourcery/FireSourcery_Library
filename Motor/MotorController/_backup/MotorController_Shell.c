@@ -176,15 +176,15 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
         if(argv[1U][0U] == 'a' && argv[1U][1U] == 'b') { Phase_Polar_ActivateAB(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'a' && argv[1U][1U] == 'c') { Phase_Polar_ActivateAC(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'a' && argv[1U][1U] == '\0') { Phase_Polar_ActivateA(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '-') { Phase_Align_ActivateInvA(&p_motor->Phase, duty); }
+        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '-') { Phase_ActivateAlignInvA(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'a') { Phase_Polar_ActivateBA(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'c') { Phase_Polar_ActivateBC(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '\0') { Phase_Align_ActivateB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '-') { Phase_Align_ActivateInvB(&p_motor->Phase, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '\0') { Phase_ActivateAlignB(&p_motor->Phase, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '-') { Phase_ActivateAlignInvB(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'a') { Phase_Polar_ActivateCA(&p_motor->Phase, duty); }
         else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'b') { Phase_Polar_ActivateCB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '\0') { Phase_Align_ActivateC(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '-') { Phase_Align_ActivateInvC(&p_motor->Phase, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '\0') { Phase_ActivateAlignC(&p_motor->Phase, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '-') { Phase_ActivateAlignInvC(&p_motor->Phase, duty); }
     }
 
     return CMD_STATUS_SUCCESS;

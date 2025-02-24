@@ -38,13 +38,6 @@
 #include <stddef.h>
 #include <assert.h>
 
-/*!
-    @param[in] value - address or size
-    @param[in] align - unit must be power of 2
-*/
-static inline uintptr_t nvmemory_align_down(uintptr_t value, size_t align) { return (value & (-align)); }
-static inline uintptr_t nvmemory_align_up(uintptr_t value, size_t align) { return (-((-value) & (-align))); }
-static inline bool nvmemory_is_aligned(uintptr_t value, size_t align) { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
 
 /*
     Common return status by public module functions
@@ -70,7 +63,7 @@ typedef enum NvMemory_Status
     NV_MEMORY_STATUS_ERROR_VERIFY,      /* Verify cmd */
     NV_MEMORY_STATUS_ERROR_CHECKSUM,    /*  */
     NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED,
-    NV_MEMORY_STATUS_ERROR_OTHER, /* External error requring common a return type */
+    NV_MEMORY_STATUS_ERROR_OTHER, /* External error requiring common a return type */
 }
 NvMemory_Status_T;
 
@@ -117,7 +110,7 @@ typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(const void * p_hal);
 typedef void (*HAL_NvMemory_CmdReadUnit_T)(void * p_hal, uintptr_t address, uint8_t * p_result);
 typedef void (*HAL_NvMemory_CmdWriteUnit_T)(void * p_hal, uintptr_t address, const uint8_t * p_data);
 typedef void (*HAL_NvMemory_CmdEraseUnit_T)(void * p_hal, uintptr_t address);
-typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t units);
+typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t units); /* Collective Erase/Verify */
 
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
@@ -163,7 +156,7 @@ NvMemory_Const_T;
 */
 typedef struct NvMemory
 {
-    NvMemory_Const_T CONST;
+    const NvMemory_Const_T CONST;
 
     /* Config Options */
     bool IsOpBuffered;          /* copy to buffer first or use pointer to source */
@@ -222,6 +215,15 @@ NvMemory_T;
         _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)                                                                                                    \
     }                                                                                                                                                   \
 }
+
+/*!
+    @param[in] value - address or size
+    @param[in] align - unit must be power of 2
+*/
+static inline uintptr_t nvmemory_align_down(uintptr_t value, size_t align) { return (value & (-align)); }
+static inline uintptr_t nvmemory_align_up(uintptr_t value, size_t align) { return (-((-value) & (-align))); }
+static inline bool nvmemory_is_aligned(uintptr_t value, size_t align) { return ((value & (align - 1UL)) == (uintptr_t)0UL); }
+
 
 /* Alternatively Cached on SetOp */
 static size_t NvMemory_GetOpSizeAligned(NvMemory_T * p_this)    { p_this->p_OpControl->FORCE_ALIGN(p_this->OpSize, p_this->p_OpControl->UNIT_SIZE); }

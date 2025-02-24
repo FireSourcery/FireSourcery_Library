@@ -29,7 +29,7 @@
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
-
+#include "Motor_StateMachine.h"
 
 /******************************************************************************/
 /*!
@@ -106,4 +106,55 @@ bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
     }
 
     return isComplete;
+}
+
+void  ProcCalibration(Motor_T * p_motor)
+{
+    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+
+    if (Timer_IsElapsed(&p_motor->ControlTimer) == true)
+    {
+        p_motor->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+        p_motor->Config.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+        p_motor->Config.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+        Motor_ResetUnitsIabc(p_motor);
+        Phase_Float(&p_motor->Phase);
+    }
+    else
+    {
+        if (p_motor->ControlTimerBase != 0U) /* skip first time */
+        {
+            if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
+            {
+                Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+                Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+                Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+                Motor_Analog_MarkIabc(p_motor);
+            }
+        }
+    }
+
+    // return isComplete;
+}
+
+StateMachine_State_T * EndCalibration(Motor_T * p_motor)
+{
+    // return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? p_motor->StateMachine.p_StateActive : 0U;
+    return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? &MOTOR_STATE_STOP : 0U;
+}
+
+static const StateMachine_State_T CALIBRATION_STATE =
+{
+    // .ID         = MSM_STATE_ID_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (StateMachine_Function_T)Motor_Analog_StartCalibration,
+    .LOOP       = (StateMachine_Function_T)ProcCalibration,
+    .NEXT       = (StateMachine_Transition_T)EndCalibration,
+};
+
+
+void Motor_Analog_Calibrate(Motor_T * p_motor)
+{
+    _StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
 }

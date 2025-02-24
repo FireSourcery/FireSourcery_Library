@@ -286,16 +286,24 @@ bool Encoder_IsHomingIndexError(const Encoder_T * p_encoder)
 //enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
 bool Encoder_PollHomingComplete(Encoder_T * p_encoder)
 {
-    bool isIndex = p_encoder->IndexCount > 0U;
+    bool isComplete = false;
 
-    if (isIndex == true)
+    if (Encoder_IsHomingIndexFound(p_encoder) == true)
     {
-        p_encoder->IndexCount = 0U;
+        // p_encoder->IndexCount = 0U;
         // p_encoder->CounterD = 0U;
         p_encoder->IsHomed = true;
+        isComplete = true;
+    }
+    else if (Encoder_IsHomingIndexError(p_encoder) == true)
+    {
+        // p_encoder->IndexCount = 0U;
+        // p_encoder->CounterD = 0U;
+        p_encoder->IsHomed = false;
+        isComplete = true;
     }
 
-    return isIndex;
+    return isComplete;
 }
 
 // bool Encoder_ProcHomingVirtualIndex(Encoder_T * p_encoder)

@@ -172,7 +172,7 @@ void Motor_FOC_CaptureIabc(Motor_T * p_motor)
 void Motor_FOC_ActivateOutput(Motor_T * p_motor)
 {
     Phase_WriteDuty_Fract16(&p_motor->Phase, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
-    Phase_ActivateOutputABC(&p_motor->Phase);
+    Phase_ActivateOutput(&p_motor->Phase);
 }
 
 void Motor_FOC_ActivateOutputZero(Motor_T * p_motor)
@@ -353,7 +353,7 @@ void Motor_FOC_SetDirectionForward(Motor_T * p_motor) { Motor_FOC_SetDirection(p
 /* Align with user cmd value */
 void Motor_FOC_StartAlignCmd(Motor_T * p_motor)
 {
-    Phase_ActivateOutputABC(&p_motor->Phase);
+    Phase_ActivateOutput(&p_motor->Phase);
     Ramp_SetOutput(&p_motor->Ramp, 0); /* reset the voltage to start at 0 */
     // p_motor->ElectricalAngle = angle;
 }
@@ -361,6 +361,7 @@ void Motor_FOC_StartAlignCmd(Motor_T * p_motor)
 /* User ramp */
 void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 {
+    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp)); /* disable ramp */
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_GetTarget(&p_motor->Ramp), 0);
 }
 

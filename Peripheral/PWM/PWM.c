@@ -41,14 +41,16 @@ void PWM_Init(PWM_T * p_pwm)
     HAL_PWM_InitChannel(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID);
 }
 
-void PWM_InitChannel(PWM_T * p_pwm)
+/* Init As Channel */
+void PWM_Channel_Init(PWM_T * p_pwm)
 {
     HAL_PWM_InitChannel(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.CHANNEL_ID);
 }
 
-void PWM_InitModule(PWM_T * p_pwm)
+/* Init As Module */
+void PWM_Module_Init(PWM_Module_T * p_pwm)
 {
-    HAL_PWM_InitModule(p_pwm->CONST.P_HAL_PWM);
-    HAL_PWM_InitModulePeriod(p_pwm->CONST.P_HAL_PWM, p_pwm->CONST.PERIOD_TICKS);
+    HAL_PWM_InitModule(p_pwm->P_HAL_PWM_MODULE);
+    HAL_PWM_InitModulePeriod(p_pwm->P_HAL_PWM_MODULE, p_pwm->PERIOD_TICKS);
 }
 

@@ -47,7 +47,7 @@
 #define ADC_FIFO_LENGTH_MAX 1U
 #endif
 
-typedef uint8_t analog_channel_t; /* Virtual Channel Index */
+typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Conversion_T */
 
 typedef void (*Analog_Callback_T)(void * p_context);
 typedef void (*Analog_Setter_T)(void * p_context, adc_t value);
@@ -76,6 +76,7 @@ typedef const struct Analog_Conversion
     /* HAL Map */
     const uint8_t ADC_ID; /* required to associate state from Analog_T */
     const adc_pin_t PIN;
+    // Analog_ADC_T * const P_ADC;
 
     void * const P_CONTEXT;
     const Analog_Setter_T ON_COMPLETE; /* On complete, always runs if set */
@@ -101,6 +102,7 @@ Analog_Conversion_T;
 }
 
 // #define ANALOG_CONVERSION_INIT_STRUCT(...) ( (Analog_Conversion_T) { __VA_ARGS__ } )
+
 
 
 /*
@@ -146,6 +148,27 @@ Analog_ADC_T;
 {                                       \
     .P_HAL_ADC       = p_HalAnalog,     \
 }
+
+// typedef const struct Analog_Channel
+// {
+//     const analog_channel_t CHANNEL;
+
+//     /* HAL Map */
+//     Analog_ADC_T * const P_ADC;
+//     const adc_pin_t PIN;
+
+//     void * const P_CONTEXT;
+//     const Analog_Setter_T ON_COMPLETE;
+// }
+// Analog_Channel_T;
+
+// typedef struct Analog_Conversion
+// {
+//     Analog_Channel_T * const P_CHANNEL;
+//     volatile adc_t Result;
+//     volatile bool IsMarked;
+// }
+// Analog_Conversion_T;
 
 typedef const struct Analog_Const
 {

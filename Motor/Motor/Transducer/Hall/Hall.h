@@ -38,15 +38,17 @@
 #include <stdint.h>
 
 /* Virtual State Where ID => 0bCBA */
-#define    HALL_SENSORS_VIRTUAL_A         (0b001U)
-#define    HALL_SENSORS_VIRTUAL_B         (0b010U)
-#define    HALL_SENSORS_VIRTUAL_C         (0b100U)
+#define HALL_SENSORS_VIRTUAL_A      (0b001U)
+#define HALL_SENSORS_VIRTUAL_B      (0b010U)
+#define HALL_SENSORS_VIRTUAL_C      (0b100U)
 /* 180 Degree active sensors */
-#define    HALL_SENSORS_VIRTUAL_INV_A     (0b110U)
-#define    HALL_SENSORS_VIRTUAL_INV_B     (0b101U)
-#define    HALL_SENSORS_VIRTUAL_INV_C     (0b011U)
+#define HALL_SENSORS_VIRTUAL_INV_A  (0b110U)
+#define HALL_SENSORS_VIRTUAL_INV_B  (0b101U)
+#define HALL_SENSORS_VIRTUAL_INV_C  (0b011U)
 
-#define    HALL_SENSORS_TABLE_LENGTH     (8U)
+#define HALL_SENSORS_TABLE_LENGTH (8U)
+
+#define HALL_DIRECTION_STATE(idPrev, idNew) ((idPrev << 3U) | idNew)
 
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
 typedef void (*Hall_CommutationPhase_T)(void * p_context);
@@ -329,8 +331,8 @@ static inline uint16_t Hall_CaptureAngle(Hall_T * p_hall)
 
 static inline Hall_Sensors_T Hall_GetSensors(const Hall_T * p_hall) { return p_hall->Sensors; }
 static inline Hall_Id_T Hall_GetId(const Hall_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
-// static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value, p_hall->Direction); }
 static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return p_hall->Angle; }
+// static inline uint16_t Hall_GetAngle16(const Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value, p_hall->Direction); }
 
 /* */
 static inline Hall_Direction_T Hall_GetDirection(const Hall_T * p_hall) { return (p_hall->Direction); }
@@ -387,12 +389,15 @@ static inline bool Hall_IsSensorsTableValid(const Hall_T * p_hall)
 extern void Hall_Init(Hall_T * p_hall);
 // extern void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
 extern void Hall_StartCalibrate(Hall_T * p_hall);
+
 extern void Hall_CalibratePhaseA(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
 extern void Hall_CalibratePhaseB(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvA(Hall_T * p_hall);
 extern void Hall_CalibratePhaseC(Hall_T * p_hall);
 extern void Hall_CalibratePhaseInvB(Hall_T * p_hall);
+
+extern void Hall_CalibrateStateAs(Hall_T * p_hall, Hall_Id_T calibratedId);
 
 #endif
 

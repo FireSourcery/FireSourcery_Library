@@ -36,6 +36,7 @@
 #include "Motor_User.h"
 #include "Motor_Config.h"
 #include "Motor_FOC.h"
+#include "Motor_Analog.h"
 
 #include <assert.h>
 
@@ -125,6 +126,7 @@ typedef enum Motor_VarInput
     MOTOR_VAR_OPEN_LOOP_ANGLE,
     // MOTOR_VAR_OPEN_LOOP_HOMING,
     MOTOR_VAR_OPEN_LOOP_RUN,
+    MOTOR_VAR_OPEN_LOOP_JOG,
 }
 Motor_VarInput_T;
 
@@ -168,6 +170,7 @@ typedef enum Motor_VarConfig_Calibration
     MOTOR_VAR_IB_ZERO_REF_ADCU,
     MOTOR_VAR_IC_ZERO_REF_ADCU,
     MOTOR_VAR_I_PEAK_REF_ADCU,
+    MOTOR_VAR_RUN_ADC_CALIBRATION,
     MOTOR_VAR_RUN_VIRTUAL_HOME, /* run routine */
 }
 Motor_VarConfig_Calibration_T;
@@ -197,6 +200,7 @@ typedef enum Motor_VarConfig_Hall
     MOTOR_VAR_HALL_SENSOR_TABLE_4,
     MOTOR_VAR_HALL_SENSOR_TABLE_5,
     MOTOR_VAR_HALL_SENSOR_TABLE_6,
+    MOTOR_VAR_HALL_RUN_CALIBRATION,
 }
 Motor_VarConfig_Hall_T;
 

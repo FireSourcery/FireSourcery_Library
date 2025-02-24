@@ -86,7 +86,7 @@ bool MotorController_User_CheckDirection(MotorController_T * p_mc, MotorControll
 
 bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_fract16);
+    struct_array_for_any_try_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TrySpeedLimit, limit_fract16);
     // MotorController_SetSpeedLimitAll(MotorController_T * p_mc, USER,   limit_fract16)
 }
 
@@ -97,7 +97,7 @@ bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
 
 bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    struct_array_for_any_set_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_fract16);
+    struct_array_for_any_try_uint16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_uint16_t)Motor_User_TryILimit, limit_fract16);
 }
 
 bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)

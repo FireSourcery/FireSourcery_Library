@@ -272,6 +272,12 @@ static inline void Reset(StateMachine_T * p_stateMachine)
     State_Init(&p_stateMachine->p_StateActive, p_stateMachine->CONST.P_MACHINE->P_STATE_INITIAL, p_stateMachine->CONST.P_CONTEXT);
 }
 
+static inline void _ProcTransition_Top(const StateMachine_State_T ** pp_currentState, const StateMachine_State_T * p_newState, void * p_context)
+{
+    assert(p_newState->DEPTH == 0); /* Top level state */
+    State_ProcTransition(pp_currentState, p_newState, p_context);
+}
+
 /* Top level check table only */
 /* no null ptr check on P_TRANSITION_TABLE */
 static inline StateMachine_Input_T AcceptInput(const StateMachine_T * p_stateMachine, state_machine_input_t inputId)
@@ -291,7 +297,7 @@ static inline StateMachine_State_T * TransitionFunction(StateMachine_T * p_state
 static inline void ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue)
 {
     assert(inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH); /* inputId is known at compile time */
-    State_ProcTransition(&p_stateMachine->p_StateActive, TransitionFunction(p_stateMachine, inputId, inputValue), p_stateMachine->CONST.P_CONTEXT);
+    _ProcTransition_Top(&p_stateMachine->p_StateActive, TransitionFunction(p_stateMachine, inputId, inputValue), p_stateMachine->CONST.P_CONTEXT);
 }
 
 static inline const StateMachine_State_T * TransitionOutput(const StateMachine_State_T * p_state, void * p_context)
@@ -305,7 +311,7 @@ static inline const StateMachine_State_T * TransitionOutput(const StateMachine_S
 */
 static inline void ProcStateOuput(StateMachine_T * p_stateMachine)
 {
-    State_ProcTransition(&p_stateMachine->p_StateActive, TransitionOutput(p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT), p_stateMachine->CONST.P_CONTEXT);
+    _ProcTransition_Top(&p_stateMachine->p_StateActive, TransitionOutput(p_stateMachine->p_StateActive, p_stateMachine->CONST.P_CONTEXT), p_stateMachine->CONST.P_CONTEXT);
 }
 
 
@@ -530,6 +536,8 @@ inline void StateMachine_ProcState(StateMachine_T * p_stateMachine)
 #endif
 }
 
+/* Handles Top level transitions only */
+
 inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue)
 {
     StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
@@ -708,6 +716,15 @@ static inline void TraverseExit(const StateMachine_State_T * p_start, const Stat
     }
 #endif
 }
+
+// static inline void TraverseEntry_ValidateDepth(const StateMachine_State_T * p_common, const StateMachine_State_T * p_end, void * p_context, uint8_t depth)
+// {
+//     if ((p_end != NULL) && (p_end != p_common))
+//     {
+//         TraverseEntry_ValidateDepth(p_common, p_end->P_PARENT, p_context, depth + 1);
+//         if (p_end->ENTRY != NULL) { p_end->ENTRY(p_context); }
+//     }
+// }
 
 /* Call Entry traversing down the tree */
 static inline void TraverseEntry(const StateMachine_State_T * p_common, const StateMachine_State_T * p_end, void * p_context)

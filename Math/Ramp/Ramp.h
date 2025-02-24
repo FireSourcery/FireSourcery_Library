@@ -37,6 +37,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define RAMP_SHIFT 14U /* Output range without overflow [-UINT16_MAX:UINT16_MAX]x2 */
+
 /* Aliases */
 typedef Accumulator_T Ramp_T;
 
@@ -45,17 +47,11 @@ typedef Accumulator_T Ramp_T;
 
 */
 /******************************************************************************/
-static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
+static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Shift); }
 
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
 static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->State = (match << p_ramp->Shift); }
-
-static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target)
-{
-    p_ramp->Target = (target << p_ramp->Shift);
-    if (p_ramp->Coefficient == 0) { p_ramp->State = p_ramp->Target; }
-}
-
 
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
@@ -63,25 +59,34 @@ static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
     p_ramp->State = p_ramp->Target;
 }
 
-
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 {
     p_ramp->Target = 0;
     p_ramp->State = 0;
 }
 
-static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }
-static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = 0; }
+static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
+{
+    p_ramp->State = p_ramp->Target;
+    return Ramp_GetOutput(p_ramp);
+}
+
+
+
+// static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }
+// static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = 0; }
 
 /* single step proc only */
-// static inline void Ramp_Disable_ByInf(Ramp_T * p_ramp) { p_ramp->Coefficient = (UINT16_MAX << SHIFT); }
+static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == (UINT16_MAX << RAMP_SHIFT)); }
+static inline bool _Ramp_IsEnabled(const Ramp_T * p_ramp) { return  !_Ramp_IsDisabled(p_ramp); }
+static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = (UINT16_MAX << RAMP_SHIFT); }
 
 /******************************************************************************/
 /*
     Extern
 */
 /******************************************************************************/
-extern int32_t Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps);
+extern int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps);
 extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range);

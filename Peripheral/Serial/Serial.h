@@ -49,11 +49,6 @@ typedef struct Serial
     const Serial_Const_T CONST;
     Ring_T RxRing;
     Ring_T TxRing;
-#if CONFIG_SERIAL_DMA_ENABLE
-    Serial_TransferMode_T TransferMode; /*!< interrupt/dma mode */
-    uint8_t RxDmaChannel;               /*!< DMA channel number for DMA-based rx. */
-    uint8_t TxDmaChannel;               /*!< DMA channel number for DMA-based tx. */
-#endif
 }
 Serial_T;
 
