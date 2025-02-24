@@ -75,5 +75,5 @@ static const StateMachine_State_T CALIBRATION_STATE_HALL =
 
 void Motor_Hall_Calibrate(Motor_T * p_motor)
 {
-    _StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
+    StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
 }

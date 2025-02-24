@@ -181,7 +181,7 @@ void Motor_Encoder_StartHoming(Motor_T * p_motor)
     // static const StateMachine_Cmd_T CMD_HOME = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &STATE_ENCODER_HOMING, };
     // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_IDLE); /* for now */// enter calib state
     // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_HOME, 0); //begin from calib state only
-    _StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+    StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 }
 
 /*  */

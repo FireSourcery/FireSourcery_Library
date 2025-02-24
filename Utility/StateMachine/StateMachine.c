@@ -869,6 +869,13 @@ void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachi
     }
 }
 
+/* ExitBranch */
+inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine)
+{
+    p_stateMachine->p_SubState = NULL;
+    // p_stateMachine->p_SubState = p_stateMachine->p_StateActive; /* return to top level state */
+}
+
 /*
     Proc inside p_stateMachine->p_StateActive->LOOP
 */
@@ -883,12 +890,16 @@ void _StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_mach
     if (p_stateMachine->p_SubState != NULL) { State_ProcInput(&p_stateMachine->p_SubState, p_stateMachine->CONST.P_CONTEXT, id, value); }
 }
 
-/* ExitBranch */
-inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine)
+void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value)
 {
-    p_stateMachine->p_SubState = NULL;
-    // p_stateMachine->p_SubState = p_stateMachine->p_StateActive; /* return to top level state */
+    if (AcquireCritical_Input(p_stateMachine) == true)
+    {
+        _StateMachine_ProcSubStateInput(p_stateMachine, id, value);
+        ReleaseCritical_Input(p_stateMachine);
+    }
 }
+
+
 
 
 /******************************************************************************/
@@ -976,7 +987,7 @@ void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine
 
 /******************************************************************************/
 /*
-    State direct inputs. Reject if it is not the active state.
+    State direct inputs. Reject if it is not reachable from active state.
 
     inputs that only map to 1 state, reduce table size
     per state inputs, only need to check id.

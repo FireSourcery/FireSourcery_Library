@@ -303,11 +303,11 @@ extern void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, state_ma
 extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
 extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
 
-
 extern void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
 extern void _StateMachine_ProcSubState(StateMachine_T * p_stateMachine);
-extern void _StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
 extern void _StateMachine_EndSubState(StateMachine_T * p_stateMachine);
+
+extern void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
 
 extern void StateMachine_SetSubState(StateMachine_T * p_stateMachine, StateMachine_State_T * p_subState);
 extern void StateMachine_StartCmd(StateMachine_T * p_stateMachine, StateMachine_Cmd_T * p_cmd, state_machine_value_t inputValue);
