@@ -274,7 +274,7 @@ static inline void Reset(StateMachine_T * p_stateMachine)
 
 static inline void _ProcTransition_Top(const StateMachine_State_T ** pp_currentState, const StateMachine_State_T * p_newState, void * p_context)
 {
-    assert(p_newState->DEPTH == 0); /* Top level state */
+    assert(p_newState == NULL || p_newState->DEPTH == 0); /* Top level state */
     State_ProcTransition(pp_currentState, p_newState, p_context);
 }
 

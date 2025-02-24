@@ -261,9 +261,9 @@ static inline uint32_t _Phase_PinSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 /* optionally disable for counter up/down sync */
 static inline void _Phase_SyncPwmDuty(const Phase_T * p_phase, Phase_Id_T state)
 {
-#ifdef CONFIG_PHASE_SYNC_DUTY_UPDATE
+// #ifdef CONFIG_PHASE_SYNC_DUTY_UPDATE
     _PWM_Module_WriteSyncDuty(&p_phase->PwmModule, _Phase_PwmSyncOf(p_phase, state));
-#endif
+// #endif
 }
 
 /* Sync activation of Switch and Invert Polarity */
