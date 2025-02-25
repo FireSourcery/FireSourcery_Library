@@ -443,42 +443,6 @@ const StateMachine_State_T MOTOR_STATE_OPEN_LOOP =
 */
 /******************************************************************************/
 /*
-    commands may repeat set without prior state,
-*/
-
-/*
-    sets the phase state without exiting openloop
-*/
-static void OpenLoop_CmdPhaseControl(Motor_T * p_motor, state_machine_value_t phaseState)
-{
-    Motor_FOC_ClearFeedbackState(p_motor);
-    Phase_ActivateOutputState(&p_motor->Phase, (Phase_Output_T)phaseState);
-    // _StateMachine_EndSubState(&p_motor->StateMachine); /* No periodic  */
-}
-
-/*
-    Activate Align
-*/
-static void OpenLoop_CmdPhaseAlign(Motor_T * p_motor, state_machine_value_t phaseAlign)
-{
-    Phase_ActivateOutput(&p_motor->Phase);
-    Phase_Align(&p_motor->Phase, (Phase_Id_T)phaseAlign, Ramp_GetTarget(&p_motor->Ramp)); /* limited by p_motor->Config.AlignPower_UFract16 */
-
-    /* Set state variables for User Interface consistency */
-    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
-    p_motor->ElectricalAngle = Phase_AngleOf((Phase_Id_T)phaseAlign);
-}
-
-/*
-*/
-static void OpenLoop_CmdJog(Motor_T * p_motor, state_machine_value_t direction)
-{
-    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
-    // Ramp_ProcEndState(&p_motor->Ramp);
-    p_motor->ElectricalAngle = Phase_AngleOf(Phase_JogDirection(&p_motor->Phase, Ramp_GetTarget(&p_motor->Ramp), 1));
-}
-
-/*
     Angle Cmd and User Current/Voltage Cmd
 */
 static const StateMachine_State_T OPEN_LOOP_STATE_ALIGN =
@@ -490,21 +454,6 @@ static const StateMachine_State_T OPEN_LOOP_STATE_ALIGN =
     .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcAlignCmd,
     .NEXT       = NULL,
 };
-
-/*
-    intensity using user ramp
-    feedback align angle
-*/
-static void OpenLoop_CmdAngleAlign(Motor_T * p_motor, state_machine_value_t angle)
-{
-    p_motor->ElectricalAngle = angle;
-}
-
-/* ramp isolated from userCmd   */
-// void OpenLoop_CmdAlign(Motor_T * p_motor, state_machine_value_t ivCmd)
-// {
-//     Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16)));
-// }
 
 static StateMachine_State_T * OpenLoop_StartUpAlign_Transition(Motor_T * p_motor); // todo
 
@@ -520,9 +469,6 @@ static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 };
 
 
-/******************************************************************************/
-/* */
-/******************************************************************************/
 static const StateMachine_State_T OPEN_LOOP_STATE_RUN =
 {
     // .ID         = MSM_STATE_ID_OPEN_LOOP,
@@ -533,6 +479,10 @@ static const StateMachine_State_T OPEN_LOOP_STATE_RUN =
     .NEXT       = NULL,
 };
 
+
+/******************************************************************************/
+/* */
+/******************************************************************************/
 static void OpenLoop_StartUpAlign_EntryTimer(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
@@ -543,7 +493,7 @@ static StateMachine_State_T * OpenLoop_StartUpAlign_Transition(Motor_T * p_motor
     return (Timer_Periodic_Poll(&p_motor->ControlTimer) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
 }
 
-//use branch
+//test branch
 static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
 {
     // .ID         = MSM_STATE_ID_OPEN_LOOP,
@@ -554,6 +504,18 @@ static const StateMachine_State_T OPEN_LOOP_STATE_RUN_START_UP =
 };
 
 
+/******************************************************************************/
+/*
+    sets the phase state without exiting openloop
+*/
+/******************************************************************************/
+static void OpenLoop_CmdPhaseControl(Motor_T * p_motor, state_machine_value_t phaseState)
+{
+    Motor_FOC_ClearFeedbackState(p_motor);
+    Phase_ActivateOutputState(&p_motor->Phase, (Phase_Output_T)phaseState);
+    // _StateMachine_EndSubState(&p_motor->StateMachine); /* No periodic  */
+}
+
 /*
 
 */
@@ -563,16 +525,35 @@ void Motor_OpenLoop_SetPhaseState(Motor_T * p_motor, Phase_Output_T phase)
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_PHASE, phase);
 }
 
+/******************************************************************************/
+/*
+    Activate Align
+*/
+/******************************************************************************/
+static void OpenLoop_CmdPhaseAlign(Motor_T * p_motor, state_machine_value_t phaseAlign)
+{
+    Phase_ActivateOutput(&p_motor->Phase);
+    Phase_Align(&p_motor->Phase, (Phase_Id_T)phaseAlign, Ramp_GetTarget(&p_motor->Ramp)); /* limited by p_motor->Config.AlignPower_UFract16 */
+
+    /* Set state variables for User Interface consistency */
+    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
+    p_motor->ElectricalAngle = Phase_AngleOf((Phase_Id_T)phaseAlign);
+}
+
 void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Id_T align)
 {
     static const StateMachine_Cmd_T OPEN_LOOP_CMD_V_ALIGN = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdPhaseAlign, .P_INITIAL = &MOTOR_STATE_OPEN_LOOP, };
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_V_ALIGN, align);
 }
 
-void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle)
+/******************************************************************************/
+/* */
+/******************************************************************************/
+static void OpenLoop_CmdJog(Motor_T * p_motor, state_machine_value_t direction)
 {
-    static const StateMachine_Cmd_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdAngleAlign, .P_INITIAL = &OPEN_LOOP_STATE_ALIGN, };
-    StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
+    Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
+    // Ramp_ProcEndState(&p_motor->Ramp);
+    p_motor->ElectricalAngle = Phase_AngleOf(Phase_JogDirection(&p_motor->Phase, Ramp_GetTarget(&p_motor->Ramp), 1));
 }
 
 void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
@@ -581,6 +562,33 @@ void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
     StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_JOG, direction);
 }
 
+/******************************************************************************/
+/*
+    intensity using user ramp
+    feedback align angle
+*/
+/******************************************************************************/
+/* ramp isolated from userCmd   */
+// void OpenLoop_CmdAlign(Motor_T * p_motor, state_machine_value_t ivCmd)
+// {
+//     Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16)));
+// }
+
+static void OpenLoop_CmdAngleAlign(Motor_T * p_motor, state_machine_value_t angle)
+{
+    p_motor->ElectricalAngle = angle;
+}
+
+void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle)
+{
+    static const StateMachine_Cmd_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .CMD = (StateMachine_CmdInput_T)OpenLoop_CmdAngleAlign, .P_INITIAL = &OPEN_LOOP_STATE_ALIGN, };
+    StateMachine_StartCmd(&p_motor->StateMachine, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
+}
+
+
+/******************************************************************************/
+/* */
+/******************************************************************************/
 void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 {
     static const StateMachine_Cmd_T OPEN_LOOP_CMD_RUN = { .CMD = NULL, .P_INITIAL = &OPEN_LOOP_STATE_START_UP_ALIGN, };
