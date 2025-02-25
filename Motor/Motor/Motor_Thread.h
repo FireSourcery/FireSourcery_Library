@@ -78,8 +78,9 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_motor);     break;
         #endif
+            // case MSM_STATE_ID_CALIBRATION:  Motor_Analog_MarkIabc(p_motor);     break;
+            case MSM_STATE_ID_CALIBRATION:        break;
             case MSM_STATE_ID_INIT:                      break;
-            case MSM_STATE_ID_CALIBRATION:               break;
             // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_motor); Motor_Analog_MarkIabc(p_motor); break;
             default:            break;
         }

@@ -458,6 +458,7 @@ extern bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc
 extern bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc);
+extern bool MotorController_IsEveryMotorState(const MotorController_T * p_mc, uintptr_t state);
 extern bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc);
 extern bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc);
 

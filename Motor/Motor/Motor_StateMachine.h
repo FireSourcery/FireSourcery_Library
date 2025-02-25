@@ -136,8 +136,11 @@ static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { retur
 
 
 /* Proc, to allow validate immediately */
-static inline void Motor_Calibration_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, 0U); }
-static inline void Motor_OpenLoop_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, 0U); }
+static inline void Motor_Calibration_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
+static inline void Motor_OpenLoop_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+
+static inline void Motor_Calibration_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, 0); }
+static inline void Motor_OpenLoop_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, 0); }
 
 /*
 

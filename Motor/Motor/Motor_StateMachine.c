@@ -677,15 +677,35 @@ static StateMachine_State_T * Calibration_Next(Motor_T * p_motor)
 /* Release on all input values */
 static StateMachine_State_T * Calibration_InputControl(Motor_T * p_motor, state_machine_value_t phaseMode)
 {
+    StateMachine_State_T * p_nextState = NULL;
+
+    // switch ((Phase_Mode_T)phaseMode)
+    // {
+    //     case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->Phase);  p_nextState = &MOTOR_STATE_CALIBRATION; break; /* or fault */
+    //     case PHASE_OUTPUT_GROUND:   Phase_Ground(&p_motor->Phase);  break;
+    //     case PHASE_OUTPUT_VPWM: break;
+    // }
+
     return &MOTOR_STATE_STOP;
+    return NULL;
+}
+
+static StateMachine_State_T * Calibration_InputCalibration(Motor_T * p_motor, state_machine_value_t state)
+{
+    StateMachine_State_T * input = (StateMachine_State_T *)state;
+    if (input == 0U) return &MOTOR_STATE_STOP;
+    else if (StateMachine_IsActiveBranch(&p_motor->StateMachine, input)) { return input; }
+    else { return NULL; }
+    // return (state != &MOTOR_STATE_CALIBRATION) ? &MOTOR_STATE_STOP : NULL;
+    // return &MOTOR_STATE_STOP;
 }
 
 static const StateMachine_Input_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
     [MSM_INPUT_FAULT]           = (StateMachine_Input_T)TransitionFault,
     [MSM_INPUT_CONTROL_STATE]   = (StateMachine_Input_T)Calibration_InputControl,
+    [MSM_INPUT_CALIBRATION]     = (StateMachine_Input_T)Calibration_InputCalibration,
     [MSM_INPUT_DIRECTION]       = NULL,
-    [MSM_INPUT_CALIBRATION]     = NULL,
 };
 
 const StateMachine_State_T MOTOR_STATE_CALIBRATION =
@@ -721,6 +741,7 @@ static void Calibration_CmdHome(Motor_T * p_motor)
     //for now
     p_motor->ControlTimerBase = 0U;
     p_motor->CalibrationStateIndex = 0U;
+    p_motor->FeedbackMode.Current = 0U;
 
     Phase_ActivateOutput(&p_motor->Phase);
     Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); // ~1rpm
@@ -730,6 +751,7 @@ static void Calibration_CmdHome(Motor_T * p_motor)
     p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 }
 
+//todo curent voltage speed calc
 static void Calibration_ProcHome(Motor_T * p_motor)
 {
     // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
@@ -742,7 +764,8 @@ static void Calibration_ProcHome(Motor_T * p_motor)
 
         // p_motor->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->Config.PolePairs;
         p_motor->ElectricalAngle += (angleDelta * p_motor->Config.PolePairs);
-        Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+        // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+        Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, p_motor->Config.OpenLoopPower_UFract16 * 2, 0);
     }
 }
 
@@ -754,7 +777,7 @@ static StateMachine_State_T * Calibration_HomeTransition(Motor_T * p_motor)
     if (angle16_cycle(p_motor->MechanicalAngle, Motor_GetMechanicalAngle(p_motor), (p_motor->Direction == MOTOR_DIRECTION_CCW)) == true)
     {
         Phase_Ground(&p_motor->Phase);
-        _StateMachine_EndSubState(&p_motor->StateMachine);
+        // _StateMachine_EndSubState(&p_motor->StateMachine);
     }
 
     p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);

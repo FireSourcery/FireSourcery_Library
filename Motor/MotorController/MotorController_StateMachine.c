@@ -573,11 +573,11 @@ static const StateMachine_State_T STATE_NEUTRAL =
 /******************************************************************************/
 static void Lock_Entry(MotorController_T * p_mc)
 {
-    // if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; }
+    if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; }
     for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++)
     {
-        Motor_OpenLoop_Enter(MotorController_GetPtrMotor(p_mc, iMotor));
-        if (Motor_StateMachine_IsState(MotorController_GetPtrMotor(p_mc, iMotor), MSM_STATE_ID_OPEN_LOOP) == false) { p_mc->FaultFlags.Motors = true; }
+        Motor_Calibration_Enter(MotorController_GetPtrMotor(p_mc, iMotor));
+        if (Motor_StateMachine_IsState(MotorController_GetPtrMotor(p_mc, iMotor), MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
     }
 
     p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
@@ -597,6 +597,8 @@ bool ProcCalibrateSensor(MotorController_T * p_mc)
 
 static void Lock_Proc(MotorController_T * p_mc)
 {
+    if (MotorController_IsEveryMotorState(p_mc, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
+
     switch(p_mc->LockSubState)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER:
