@@ -120,6 +120,7 @@ typedef enum MotorController_VarInput
     // MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
     // MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
     // MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
+    // MOT_VAR_CONTROL_STATE,             // apply to all motors
 
     /*
         Brake and Throttle invoke SubStates
@@ -133,6 +134,7 @@ typedef enum MotorController_VarInput
     */
     MOT_VAR_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
+
     MOT_VAR_RELAY_TOGGLE,
     MOT_VAR_METER_TOGGLE,
 }

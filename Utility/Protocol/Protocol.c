@@ -589,7 +589,7 @@ void Protocol_Disable(Protocol_T * p_protocol)
 //        //    }
 //}
 
-int32_t Protocol_ConfigId_Get(const Protocol_T * p_protocol, Protocol_ConfigId_T id)
+int32_t _Protocol_ConfigId_Get(const Protocol_T * p_protocol, Protocol_ConfigId_T id)
 {
     int32_t value = 0;
     switch(id)
@@ -603,7 +603,12 @@ int32_t Protocol_ConfigId_Get(const Protocol_T * p_protocol, Protocol_ConfigId_T
     return value;
 }
 
-void Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T id, uint32_t value)
+int32_t Protocol_ConfigId_Get(const Protocol_T * p_protocol, Protocol_ConfigId_T id)
+{
+    return (p_protocol != NULL) ? _Protocol_ConfigId_Get(p_protocol, id) : 0;
+}
+
+void _Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T id, uint32_t value)
 {
     switch(id)
     {
@@ -613,4 +618,9 @@ void Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T id, uint
         case PROTOCOL_CONFIG_BAUD_RATE:       p_protocol->Config.BaudRate = value;          break;
         case PROTOCOL_CONFIG_IS_ENABLED:      p_protocol->Config.IsEnableOnInit = value;    break;
     }
+}
+
+void Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T id, uint32_t value)
+{
+    if (p_protocol != NULL) { _Protocol_ConfigId_Set(p_protocol, id, value); }
 }

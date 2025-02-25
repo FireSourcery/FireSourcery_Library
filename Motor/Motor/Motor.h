@@ -150,17 +150,8 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
-
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t value) { return ((Motor_FeedbackMode_T) { .Value = value }); }
 
-// typedef enum Motor_ControlState PhaseState
-// {
-//     MOTOR_CONTROL_RELEASE, // Stop/Freewheel
-//     MOTOR_CONTROL_ACTIVE, // Run State only
-//     MOTOR_CONTROL_HOLD, // Stop
-//     MOTOR_CONTROL_OPEN_LOOP,
-// }
-// Motor_ControlState_T;
 
 /*
     Effectively sync mailbox for async calculations

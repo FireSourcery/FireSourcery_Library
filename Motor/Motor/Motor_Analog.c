@@ -139,7 +139,7 @@ void  ProcCalibration(Motor_T * p_motor)
 
 StateMachine_State_T * EndCalibration(Motor_T * p_motor)
 {
-    // return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? p_motor->StateMachine.p_StateActive : 0U;
+    // return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? p_motor->StateMachine.p_ActiveState : 0U;
     return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? &MOTOR_STATE_STOP : 0U;
 }
 
@@ -156,5 +156,5 @@ static const StateMachine_State_T CALIBRATION_STATE =
 
 void Motor_Analog_Calibrate(Motor_T * p_motor)
 {
-    StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
+    StateMachine_ProcBranchInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
 }

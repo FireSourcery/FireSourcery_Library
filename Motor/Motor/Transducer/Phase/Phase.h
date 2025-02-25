@@ -90,7 +90,7 @@ static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
         case PHASE_ID_INV_B:    next = PHASE_ID_A;          break;
         case PHASE_ID_DISABLE:  next = PHASE_ID_DISABLE;    break;
         case PHASE_ID_ABC:      next = PHASE_ID_ABC;        break;
-        default: assert(false); break;
+        default: next = PHASE_ID_DISABLE; assert(false);    break;
     }
     return next;
 }

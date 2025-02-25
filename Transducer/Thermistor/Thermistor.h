@@ -243,7 +243,7 @@ static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)            
 static inline void Thermistor_SetVInRef_MilliV(Thermistor_T * p_therm, uint16_t vIn_MilliV) { p_therm->Config.VInRef_MilliV = vIn_MilliV; }
 static inline void Thermistor_SetType(Thermistor_T * p_therm, uint16_t value)               { p_therm->Config.Type = value; }
 
-// check IsConst?
+// todo with IsConst?
 static inline void Thermistor_SetR0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Config.R0 = value; }
 static inline void Thermistor_SetT0(Thermistor_T * p_therm, uint16_t value)                 { p_therm->Config.T0 = value; } /* Degrees Kelvin */
 static inline void Thermistor_SetT0_DegC(Thermistor_T * p_therm, uint16_t value)            { p_therm->Config.T0 = value - ABSOLUTE_ZERO_CELSIUS; }

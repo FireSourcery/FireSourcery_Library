@@ -39,7 +39,7 @@
 
     Motor State Machine Thread Safety
     State Proc in PWM thread.
-        Includes _StateMachine_ProcStateTransition.
+        Includes _StateMachine_SetState.
     User Input [Motor_User_StartControlMode] in Main thread.
         Inputs do not directly proc transition, set for sync proc
 
@@ -67,7 +67,7 @@
 inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_FEEDBACK_MODE, mode.Value);
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_VPWM); //// disables interrupts twice depreciate
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_VPWM); //// disables interrupts twice depreciate
 }
 
 /* Generic array functions use */
@@ -78,7 +78,7 @@ inline void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T 
 
 inline void Motor_User_ActivateControl(Motor_T * p_motor)
 {
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_VPWM);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_VPWM);
 }
 
 /*
@@ -86,17 +86,18 @@ inline void Motor_User_ActivateControl(Motor_T * p_motor)
 */
 inline void Motor_User_Release(Motor_T * p_motor)
 {
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_FLOAT);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_FLOAT);
 }
 
 inline void Motor_User_Hold(Motor_T * p_motor)
 {
-    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_GROUND);
+    StateMachine_SetInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_GROUND);
 }
 
+/* Phase_Output_T as ControlState */
 inline void Motor_User_ActivateControlState(Motor_T * p_motor, Phase_Output_T state)
 {
-    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, state);
+    StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, state);
 }
 
 /*

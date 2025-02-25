@@ -112,20 +112,20 @@ static void Init_Proc(MotorController_T * p_mc)
     {
         if ((p_mc->FaultFlags.Value != 0U) || MotorController_IsAnyMotorFault(p_mc) == true)
         {
-            _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_FAULT);
+            _StateMachine_SetState(&p_mc->StateMachine, &STATE_FAULT);
         }
         else
         {
             MotorController_BeepShort(p_mc);
             if (p_mc->Config.InitMode == MOTOR_CONTROLLER_MAIN_MODE_SERVO)
             {
-                _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_SERVO);
+                _StateMachine_SetState(&p_mc->StateMachine, &STATE_SERVO);
             }
             else
             {
                 /* In the case of boot into motor spinning state. Do not apply sudden hold of Park state. */
-                if (MotorController_IsEveryMotorStopState(p_mc) == true)    { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK); }
-                else                                                        { _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_NEUTRAL); }
+                if (MotorController_IsEveryMotorStopState(p_mc) == true)    { _StateMachine_SetState(&p_mc->StateMachine, &STATE_PARK); }
+                else                                                        { _StateMachine_SetState(&p_mc->StateMachine, &STATE_NEUTRAL); }
             }
         }
     }
@@ -469,6 +469,12 @@ static const StateMachine_State_T STATE_DRIVE =
     .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
 };
 
+// static const StateMachine_State_T STATE_THROTTLE =
+// {
+//     .P_PARENT           = &STATE_DRIVE,
+// };
+
+
 /******************************************************************************/
 /*!
     @brief  Neutral State
@@ -567,7 +573,13 @@ static const StateMachine_State_T STATE_NEUTRAL =
 /******************************************************************************/
 static void Lock_Entry(MotorController_T * p_mc)
 {
-    if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; }
+    // if (MotorController_IsEveryMotorStopState(p_mc) == false) { p_mc->FaultFlags.Motors = true; }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++)
+    {
+        Motor_OpenLoop_Enter(MotorController_GetPtrMotor(p_mc, iMotor));
+        if (Motor_StateMachine_IsState(MotorController_GetPtrMotor(p_mc, iMotor), MSM_STATE_ID_OPEN_LOOP) == false) { p_mc->FaultFlags.Motors = true; }
+    }
+
     p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER;
     p_mc->LockOpStatus = 0U;
 }
@@ -790,7 +802,7 @@ static void Fault_Proc(MotorController_T * p_mc)
     if (p_mc->FaultFlags.Value == 0U)
     {
         Blinky_Stop(&p_mc->Buzzer);
-        _StateMachine_ProcStateTransition(&p_mc->StateMachine, &STATE_PARK);
+        _StateMachine_SetState(&p_mc->StateMachine, &STATE_PARK);
     }
 }
 

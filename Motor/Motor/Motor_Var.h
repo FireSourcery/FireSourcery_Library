@@ -139,11 +139,11 @@ Motor_VarInput_T;
 */
 typedef enum Motor_VarIO
 {
-    MOTOR_VAR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
     /* IO Vars, Read effective value, write interface value */
+    MOTOR_VAR_DIRECTION,            // Motor_Direction_T - CW/CCW. Read state value, write interface value,
     MOTOR_VAR_USER_SET_POINT,       // RampIn(UserCmd)/RampOut(SetPoint), Generic mode select
     MOTOR_VAR_USER_FEEDBACK_MODE,
-    MOTOR_VAR_USER_PHASE_STATE,
+    MOTOR_VAR_USER_CONTROL_STATE,
     // Limits do not invoke state machine
     MOTOR_VAR_USER_SPEED_LIMIT,
     MOTOR_VAR_USER_I_LIMIT,

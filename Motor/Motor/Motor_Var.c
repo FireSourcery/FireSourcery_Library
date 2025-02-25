@@ -114,6 +114,7 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
         // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
 
         case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_User_StartOpenLoopState(p_motor, (Motor_OpenLoopState_T)varValue);    break;
+
         case MOTOR_VAR_OPEN_LOOP_PHASE_STATE:   Motor_OpenLoop_SetPhaseState(p_motor, (Phase_Output_T)varValue);             break;
         case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseVAlign(p_motor, (Phase_Id_T)varValue);            break;
         case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                            break;
@@ -133,7 +134,7 @@ int32_t Motor_VarIO_Get(const Motor_T * p_motor, Motor_VarIO_T varId)
         case MOTOR_VAR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
         case MOTOR_VAR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Value;    break;
-        case MOTOR_VAR_USER_PHASE_STATE:    value = Motor_User_GetPhaseState(p_motor);            break;
+        case MOTOR_VAR_USER_CONTROL_STATE:  value = Motor_User_GetPhaseState(p_motor);            break; /* effective Stop/hold/run */
         case MOTOR_VAR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
         case MOTOR_VAR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
     }
@@ -147,7 +148,7 @@ void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue)
         case MOTOR_VAR_DIRECTION:           Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);      break; // use async polling for status
         case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue(p_motor, varValue);                    break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);        break;
-        case MOTOR_VAR_USER_PHASE_STATE:    Motor_User_ActivateControlState(p_motor, (Phase_Output_T)varValue);  break;
+        case MOTOR_VAR_USER_CONTROL_STATE:  Motor_User_ActivateControlState(p_motor, (Phase_Output_T)varValue); break;
         case MOTOR_VAR_USER_SPEED_LIMIT:    Motor_User_TrySpeedLimit(p_motor, varValue);                        break;
         case MOTOR_VAR_USER_I_LIMIT:        Motor_User_TryILimit(p_motor, varValue);                            break;
     }
@@ -176,6 +177,7 @@ int32_t Motor_VarConfig_Calibration_Get(const Motor_T * p_motor, Motor_VarConfig
         case MOTOR_VAR_IC_ZERO_REF_ADCU:              value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
         case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
 
+        case MOTOR_VAR_RUN_ADC_CALIBRATION:           value = 0;                                                  break;
         case MOTOR_VAR_RUN_VIRTUAL_HOME:              value = 0;                                                  break;
     }
     return value;
@@ -312,11 +314,11 @@ void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T va
         case MOTOR_VAR_ENCODER_INTERPOLATE_ANGLE_SCALAR:          break;
 
         // case MOTOR_VAR_ENCODER_INDEX_ZERO_REF:                   Encoder_SetIndexZeroRef(&p_motor->Encoder, varValue);             break;
-        // case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:               Motor_Encoder_CalibrateHomeOffset(p_motor);                       break;
 
         /*  */
         // (varValue==0)
         case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:  Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);                 break;
+        // case MOTOR_VAR_ENCODER_CALIBRATE_ZERO_REF:               Motor_Encoder_CalibrateHomeOffset(p_motor);                       break;
         // Motor_Encoder routine
         case MOTOR_VAR_ENCODER_RUN_HOMING:          Motor_Encoder_StartHoming(p_motor);     break;
     }
@@ -391,6 +393,7 @@ int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T v
     return value;
 }
 
+/* alternatively move to VarIO */
 void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int32_t varValue)
 {
     switch (varId)

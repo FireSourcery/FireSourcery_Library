@@ -218,7 +218,8 @@ typedef StateMachine_Set_T StateMachine_CmdInput_T;
 typedef const struct StateMachine_Cmd
 {
     const StateMachine_CmdInput_T CMD;
-    const struct StateMachine_State * P_INITIAL; /* reimplement states with NEXT */
+    const struct StateMachine_State * P_INITIAL;
+    /* optionally list of accept states */
     const struct StateMachine_State * P_ACCEPT;
     uint8_t ACCEPT_COUNT;
 }
@@ -240,10 +241,10 @@ StateMachine_Const_T;
 typedef struct StateMachine
 {
     const StateMachine_Const_T CONST;
-    const StateMachine_State_T * p_StateActive; /* The Active Top Level State. Keep the top level fast. */
-    const StateMachine_State_T * p_SubState;    /* Leaf State, defines full path */
+    const StateMachine_State_T * p_ActiveState;     /* The Active Top Level State. Keep the top level fast. */
+    const StateMachine_State_T * p_ActiveSubState;  /* Leaf State, defines full path */
 
-    // const StateMachine_State_T * p_States; alternative to recursive traverse down
+    // const StateMachine_State_T * p_ActiveStates; alternative to recursive traverse down
 
     volatile atomic_flag InputSignal;
 
@@ -268,17 +269,18 @@ StateMachine_T;
 /*
     Top Level State
 */
-static inline state_machine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive->ID; }
-static inline bool StateMachine_IsActiveStateId(const StateMachine_T * p_stateMachine, state_machine_state_t stateId) { return (stateId == p_stateMachine->p_StateActive->ID); }
+static inline state_machine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveState->ID; }
+static inline bool StateMachine_IsActiveStateId(const StateMachine_T * p_stateMachine, state_machine_state_t stateId) { return (stateId == p_stateMachine->p_ActiveState->ID); }
 
-static inline const StateMachine_State_T * StateMachine_GetActiveState(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_StateActive; }
-static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state) { return (p_state == p_stateMachine->p_StateActive); }
+static inline const StateMachine_State_T * StateMachine_GetActiveState(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveState; }
+static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state) { return (p_state == p_stateMachine->p_ActiveState); }
 
+
+// static inline const StateMachine_State_T * StateMachine_GetActiveSubState(const StateMachine_T * p_stateMachine)
+//     { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
 
 static inline const StateMachine_State_T * StateMachine_GetActiveBranch(const StateMachine_T * p_stateMachine)
-{
-    return (p_stateMachine->p_SubState == NULL) ? p_stateMachine->p_StateActive : p_stateMachine->p_SubState;
-}
+    { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
 
 extern bool StateMachine_IsActiveBranch(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state);
 
@@ -287,7 +289,7 @@ extern bool StateMachine_IsActiveBranch(const StateMachine_T * p_stateMachine, c
     Extern
 */
 /******************************************************************************/
-extern void _StateMachine_ProcStateTransition(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
+extern void _StateMachine_SetState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
 
 extern void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine);
 extern void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine);
@@ -306,6 +308,7 @@ extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_
 extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
 extern void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
+extern void StateMachine_SetValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value);
 
 /* HSM */
 extern void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
@@ -320,14 +323,3 @@ extern void StateMachine_StartCmd(StateMachine_T * p_stateMachine, StateMachine_
 extern void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
 
 #endif
-
-
-/*!
-    @return false indicates not accepted input, transition does not exist, no mapped input function.
-            true indicates accepted input, state may transition or self transition (with or without entry and exit function).
-*/
-// static inline bool StateMachine_IsAcceptInput(const StateMachine_T * p_stateMachine, state_machine_input_t inputId)
-// {
-//     return ((inputId < p_stateMachine->CONST.P_MACHINE->TRANSITION_TABLE_LENGTH) && (p_stateMachine->p_StateActive->P_TRANSITION_TABLE[inputId] != NULL));
-// }
-

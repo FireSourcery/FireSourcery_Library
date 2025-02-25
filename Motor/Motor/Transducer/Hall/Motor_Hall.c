@@ -55,7 +55,6 @@ static inline void Calibration_Proc(Motor_T * p_motor)
             default: break;
         }
     }
-
 }
 
 static inline StateMachine_State_T * Calibration_End(Motor_T * p_motor)

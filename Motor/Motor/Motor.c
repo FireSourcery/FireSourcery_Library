@@ -551,8 +551,7 @@ void Motor_SetDirectionCw(Motor_T * p_motor)
 */
 void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (direction == MOTOR_DIRECTION_CCW) { Motor_SetDirectionCcw(p_motor); }
-    else { Motor_SetDirectionCw(p_motor); }
+    if (direction == MOTOR_DIRECTION_CCW) { Motor_SetDirectionCcw(p_motor); } else { Motor_SetDirectionCw(p_motor); }
 }
 
 void Motor_SetDirection_Cast(Motor_T * p_motor, uint8_t direction)

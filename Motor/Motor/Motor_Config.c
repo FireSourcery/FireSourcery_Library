@@ -54,6 +54,25 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 // typedef int32_t(*Motor_GetInt_T)(const Motor_T * p_motor);
 
 
+// void Motor_Config_Set(Motor_T * p_motor, Motor_VarConfig_Hall_T varId, int32_t varValue)
+// {
+//     StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_STOP, Motor_VarConfig_Hall_Set, varId, varValue);
+// }
+void Motor_Config_Set(Motor_T * p_motor, StateMachine_Set_T setter, int32_t value)
+{
+    StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION, setter, value);
+}
+
+// void Motor_Config_SetAlignPower_Fract16_Cast(Motor_T * p_motor, int32_t scalar_fract16)
+// {
+//     Motor_Config_SetAlignPower_Fract16(p_motor, (uint16_t)scalar_fract16);
+// }
+
+// void Motor_Config_SetAlignPower_Fract16_Extern(Motor_T * p_motor, int32_t scalar_fract16)
+// {
+//     Motor_Config_Set(p_motor, Motor_Config_SetAlignPower_Fract16_Cast, scalar_fract16);
+// }
+
 
 /******************************************************************************/
 /*
@@ -84,11 +103,6 @@ void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar)
     PropagateSet(p_motor, Motor_ResetUnitsSensor);
 }
 
-// void Motor_Config_CalibrateEncoderHomeOffset(Motor_T * p_motor)
-// {
-//     Encoder_CalibrateIndexZeroRef(&p_motor->Encoder);
-//     // PropagateSet(p_motor, );
-// }
 
 /******************************************************************************/
 /*  */

@@ -114,12 +114,12 @@ static inline void Motor_Config_SetOpenLoopAccel_Millis(Motor_T * p_motor, uint1
 /******************************************************************************/
 /* Extern */
 /******************************************************************************/
+extern void Motor_Config_Set(Motor_T * p_motor, StateMachine_Set_T setter, int32_t value);
+
 extern void Motor_Config_SetKv(Motor_T * p_motor, uint16_t kv);
 extern void Motor_Config_SetVSpeedScalar_UFract16(Motor_T * p_motor, uint16_t scalar);
 extern void Motor_Config_SetSpeedVRef_Rpm(Motor_T * p_motor, uint16_t rpm);
 extern void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_T * p_motor, uint16_t rpm);
-
-void Motor_Config_CalibrateEncoderHomeOffset(Motor_T * p_motor);
 
 extern void Motor_Config_SetIaZero_Adcu(Motor_T * p_motor, uint16_t adcu);
 extern void Motor_Config_SetIbZero_Adcu(Motor_T * p_motor, uint16_t adcu);

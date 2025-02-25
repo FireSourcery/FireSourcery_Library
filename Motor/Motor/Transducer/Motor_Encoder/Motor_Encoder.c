@@ -158,7 +158,7 @@ static StateMachine_State_T * HomingTransition(Motor_T * p_motor)
     {
         // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
         // _StateMachine_EndSubState(&p_motor->StateMachine);
-        // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_MODE, PHASE_OUTPUT_FLOAT);
+        // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_FLOAT);
         return &MOTOR_STATE_STOP;
     }
 
@@ -181,7 +181,7 @@ void Motor_Encoder_StartHoming(Motor_T * p_motor)
     // static const StateMachine_Cmd_T CMD_HOME = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &STATE_ENCODER_HOMING, };
     // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, MOTOR_CALIBRATION_STATE_IDLE); /* for now */// enter calib state
     // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_HOME, 0); //begin from calib state only
-    StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+    StateMachine_ProcBranchInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 }
 
 /*  */
