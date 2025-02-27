@@ -97,6 +97,7 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
     foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 }
 
+/* VabcOfVdq */
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
     foc_circle_limit(&p_foc->Vd, &p_foc->Vq, FRACT16_MAX, FRACT16_1_DIV_SQRT3);
@@ -125,11 +126,13 @@ static inline int8_t FOC_GetISign(const FOC_T * p_foc) { return math_sign(p_foc-
 /* [0:49152] <=> [0:1.5] */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
 
-// static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return math_sign(p_foc->Vq) == math_sign(p_foc->Iq); }
-// static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return math_sign(p_foc->Vq) != math_sign(p_foc->Iq); }
+// static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return !(math_sign(p_foc->Vq) != math_sign(p_foc->Iq)); }
+// static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return !(math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 
+/*
+*/
 static inline void FOC_SetIa(FOC_T * p_foc, fract16_t ia) { p_foc->Ia = ia; }
 static inline void FOC_SetIb(FOC_T * p_foc, fract16_t ib) { p_foc->Ib = ib; }
 static inline void FOC_SetIc(FOC_T * p_foc, fract16_t ic) { p_foc->Ic = ic; }

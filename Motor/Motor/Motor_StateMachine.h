@@ -31,7 +31,6 @@
 #ifndef MOTOR_STATE_MACHINE_H
 #define MOTOR_STATE_MACHINE_H
 
-#include "Motor_Calibration.h"
 #include "Motor_FOC.h"
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 #include "Motor_SixStep.h"
@@ -75,18 +74,18 @@ Motor_StateMachine_StateId_T;
 /*
     Open Loop SubState
 */
-typedef enum Motor_OpenLoopState
-{
-    MOTOR_OPEN_LOOP_STATE_ENTER,
-    MOTOR_OPEN_LOOP_STATE_PASSIVE,
-    // MOTOR_OPEN_LOOP_STATE_CMD,
-    MOTOR_OPEN_LOOP_STATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_RUN,
-    // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
-}
-Motor_OpenLoopState_T;
+// typedef enum Motor_OpenLoopState
+// {
+//     MOTOR_OPEN_LOOP_STATE_ENTER,
+//     MOTOR_OPEN_LOOP_STATE_PASSIVE,
+//     // MOTOR_OPEN_LOOP_STATE_CMD,
+//     MOTOR_OPEN_LOOP_STATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_RUN,
+//     // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
+// }
+// Motor_OpenLoopState_T;
 
 // typedef enum Motor_OpenLoopCmd
 // {
@@ -101,17 +100,17 @@ Motor_OpenLoopState_T;
 /*
     Calibration SubState
 */
-typedef enum Motor_CalibrationState
-{
-    MOTOR_CALIBRATION_STATE_DISABLE,
-    MOTOR_CALIBRATION_STATE_ADC,
-    MOTOR_CALIBRATION_STATE_HALL,
-    MOTOR_CALIBRATION_STATE_ENCODER,
-    MOTOR_CALIBRATION_STATE_SIN_COS,
-    MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
-    MOTOR_CALIBRATION_STATE_IDLE,
-}
-Motor_CalibrationState_T;
+// typedef enum Motor_CalibrationState
+// {
+//     MOTOR_CALIBRATION_STATE_DISABLE,
+//     MOTOR_CALIBRATION_STATE_ADC,
+//     MOTOR_CALIBRATION_STATE_HALL,
+//     MOTOR_CALIBRATION_STATE_ENCODER,
+//     MOTOR_CALIBRATION_STATE_SIN_COS,
+//     MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
+//     MOTOR_CALIBRATION_STATE_IDLE,
+// }
+// Motor_CalibrationState_T;
 
 /* extern for extension */
 extern const StateMachine_State_T MOTOR_STATE_INIT;
@@ -129,26 +128,26 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 #define MOTOR_STATE_MACHINE_INIT(p_Motor) STATE_MACHINE_INIT(&MSM_MACHINE, p_Motor, false)
 
 /* uint8_t Wrap for array */
-static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, uintptr_t stateId) { return (StateMachine_IsActiveStateId(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
+static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, register_t stateId) { return (StateMachine_IsActiveStateId(&p_motor->StateMachine, (Motor_StateMachine_StateId_T)stateId)); }
 
 // static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return (p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_DISABLE); }
-static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_STOP); }
+/* Exit the substate on complete */
+static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsActiveSubState(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
 
 
 /* Proc, to allow validate immediately */
+/* if this is proc branch, end substea is handled */
 static inline void Motor_Calibration_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
-static inline void Motor_OpenLoop_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+static inline void Motor_Calibration_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
 
-static inline void Motor_Calibration_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, 0); }
-static inline void Motor_OpenLoop_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, 0); }
-
-/*
-
-*/
 static inline void Motor_Calibration_EnterBranch(Motor_T * p_motor, StateMachine_State_T * p_subState)
 {
     StateMachine_ProcBranchInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)p_subState);
 }
+
+static inline void Motor_OpenLoop_Enter(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+
+// static inline void Motor_OpenLoop_Exit(Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_OPEN_LOOP, 0); }
 
 static inline void Motor_OpenLoop_EnterBranch(Motor_T * p_motor, StateMachine_State_T * p_subState)
 {
@@ -158,7 +157,7 @@ static inline void Motor_OpenLoop_EnterBranch(Motor_T * p_motor, StateMachine_St
 /*
     Extern
 */
-extern void Motor_OpenLoop_SetPhaseState(Motor_T * p_motor, Phase_Output_T state);
+extern void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_Output_T state);
 extern void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Id_T align);
 extern void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle);
 extern void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction);

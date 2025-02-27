@@ -278,22 +278,15 @@ bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc)  { re
 bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc)   { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_User_IsRunState); }
 bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_IsDirectionForward); }
 bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_IsDirectionReverse); }
-
-bool MotorController_IsEveryMotorState(const MotorController_T * p_mc, uintptr_t state) { return void_array_for_every_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_register_t)Motor_StateMachine_IsState, state); }
-
+// bool MotorController_IsEveryMotorState(const MotorController_T * p_mc, uintptr_t state) { return void_array_for_every_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_register_t)Motor_StateMachine_IsState, state); }
 bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc)  { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)Motor_StateMachine_IsFault); }
 bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_StateMachine_ExitFault); }
 
-void MotorController_ForceDisableAll(MotorController_T * p_mc)  { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ForceDisableControl); }
-void MotorController_SetReleaseAll(MotorController_T * p_mc)    { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_Release); }
-void MotorController_SetHoldAll(MotorController_T * p_mc)       { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_Hold); }
-void MotorController_SetDirectionForwardAll(MotorController_T * p_mc) { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetDirectionForward); }
-void MotorController_SetDirectionReverseAll(MotorController_T * p_mc) { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_SetDirectionReverse); }
 
-// bool MotorController_TryReleaseAll(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryRelease); }
-// bool MotorController_TryHoldAll(MotorController_T * p_mc)    { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryHold); }
-// bool MotorController_TryDirectionForwardAll(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryDirectionForward); }
-// bool MotorController_TryDirectionReverseAll(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_TryDirectionReverse); }
+void MotorController_ForEachMotor(MotorController_T * p_mc, Motor_ProcVoid_T function) { return void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)function); }
+bool MotorController_IsEveryMotor(const MotorController_T * p_mc, Motor_Test_T test) { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_test_t)test); }
+bool MotorController_IsEveryMotorValue(const MotorController_T * p_mc, Motor_TestValue_T test, register_t value) { return void_array_for_every_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_register_t)test, value); }
+
 
 /*
     current no void_array functions for key/value set
@@ -322,15 +315,10 @@ void MotorController_ClearILimitAll(MotorController_T * p_mc, Motor_ILimitId_T i
 
 */
 /******************************************************************************/
-void MotorController_StartControlAll(MotorController_T * p_mc)                                  { void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_ActivateControl); }
+void MotorController_StartControlAll(MotorController_T * p_mc)                                  { MotorController_ForEachMotor(p_mc, Motor_User_ActivateControl); }
 void MotorController_SetFeedbackModeAll_Cast(MotorController_T * p_mc, uint8_t feedbackMode)    { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_SetFeedbackMode_Cast, feedbackMode); }
-void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                  { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue, userCmd); }
+void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd)                  { struct_array_foreach_set_int16(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_int16_t)Motor_User_SetActiveCmdValue_Scalar, userCmd); }
 
-// void MotorController_SetCmdValueAll(MotorController_T * p_mc, int16_t userCmd) {
-//     _STRUCT_ARRAY_FOREACH_SET(p_mc->CONST.P_MOTORS, p_mc->CONST.MOTOR_COUNT, Motor_User_SetActiveCmdValue, userCmd);
-// }
-
-// void MotorController_StartControlModeAll(MotorController_T * p_mc, Motor_FeedbackMode_T feedbackMode)   { struct_array_foreach_set_uint8(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (set_uint8_t)Motor_User_StartControl_Cast, feedbackMode.Value); }
 
 /******************************************************************************/
 /*
@@ -341,8 +329,8 @@ void MotorController_StartThrottleMode(MotorController_T * p_mc)
 {
     switch (p_mc->Config.ThrottleMode)
     {
-        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartSpeedMode);     break;
-        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartTorqueMode);    break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_SPEED:  MotorController_ForEachMotor(p_mc, Motor_User_StartSpeedMode);     break;
+        case MOTOR_CONTROLLER_THROTTLE_MODE_TORQUE: MotorController_ForEachMotor(p_mc, Motor_User_StartTorqueMode);    break;
         default: break;
     }
 }
@@ -362,8 +350,8 @@ void MotorController_StartBrakeMode(MotorController_T * p_mc)
 {
     switch (p_mc->Config.BrakeMode)
     {
-        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE:  void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartTorqueMode); break;
-        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartVoltageMode); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_TORQUE:  MotorController_ForEachMotor(p_mc, Motor_User_StartTorqueMode); break;
+        case MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE: MotorController_ForEachMotor(p_mc, Motor_User_StartVoltageMode); break;
         default: break;
     }
 
@@ -397,9 +385,9 @@ void MotorController_StartDriveZero(MotorController_T * p_mc)
 {
     switch (p_mc->Config.DriveZeroMode)
     {
-        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: MotorController_SetReleaseAll(p_mc); break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_FLOAT: MotorController_ForEachMotor(p_mc, Motor_User_Release); break;
         case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_REGEN: /* MotorController_SetRegenMotorAll(p_mc); */ break;
-        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_StartTorqueMode); break;
+        case MOTOR_CONTROLLER_DRIVE_ZERO_MODE_CRUISE: MotorController_ForEachMotor(p_mc, Motor_User_StartTorqueMode); break;
         default: break;
     }
 }

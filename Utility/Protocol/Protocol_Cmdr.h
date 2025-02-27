@@ -33,6 +33,10 @@
 
 #include "Protocol.h"
 
+
+    /* Cmdr side only *///todo wrap in cmdr, runtime polymorphism not needed
+    // const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Single build function is sufficient. Rx Share Protocol_Proc() and P_REQ_TABLE. Alternatively, function table */
+
 /*
     Extern
 */

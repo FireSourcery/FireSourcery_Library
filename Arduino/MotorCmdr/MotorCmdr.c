@@ -37,10 +37,10 @@
     Optionally handle TxRx, req/resp wait
 */
 
-extern const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;  /* circular extern defined in MotorCmdr_MotProtocol */
+extern const Protocol_PacketClass_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;  /* circular extern defined in MotorCmdr_MotProtocol */
 
 /* MotorCmdr supports MotorCmdr_MotProtocol only */
-const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U] =
+const Protocol_PacketClass_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U] =
 {
     [0U] = &MOTOR_CMDR_MOT_PROTOCOL_SPECS,
 };

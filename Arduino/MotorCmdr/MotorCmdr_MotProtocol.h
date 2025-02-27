@@ -33,6 +33,6 @@
 
 #include "Utility/Protocol/Protocol_Cmdr.h"
 
-extern const Protocol_Specs_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;
+extern const Protocol_PacketClass_T MOTOR_CMDR_MOT_PROTOCOL_SPECS;
 
 #endif

@@ -59,7 +59,7 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, Motor_VarOuput_T varId)
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
         case MOTOR_VAR_ELECTRICAL_ANGLE:            value = Motor_User_GetElectricalAngle(p_motor);             break;
         case MOTOR_VAR_MECHANICAL_ANGLE:            value = Motor_User_GetMechanicalAngle(p_motor);             break;
-        // case MOTOR_VAR_V_SPEED_DEBUG:               value = Motor_User_GetVSpeedDebug_UFract16(p_motor);        break;
+        case MOTOR_VAR_SUB_STATE:                   value = Motor_User_GetSubStateId(p_motor);                  break;
     }
     return value;
 }
@@ -113,14 +113,13 @@ void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varVa
         // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
         // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
 
-        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_User_StartOpenLoopState(p_motor, (Motor_OpenLoopState_T)varValue);    break;
-
-        case MOTOR_VAR_OPEN_LOOP_PHASE_STATE:   Motor_OpenLoop_SetPhaseState(p_motor, (Phase_Output_T)varValue);             break;
-        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseVAlign(p_motor, (Phase_Id_T)varValue);            break;
-        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                            break;
+        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_OpenLoop_Enter(p_motor);                                      break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseVAlign(p_motor, (Phase_Id_T)varValue);       break;
+        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
 
         /*  */
-        case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                                      break;
+        case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                                  break;
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                               break;
         // case MOTOR_VAR_OPEN_LOOP_HOMING:                                  break;
     }
@@ -146,7 +145,7 @@ void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue)
     switch (varId)
     {
         case MOTOR_VAR_DIRECTION:           Motor_User_SetDirection(p_motor, (Motor_Direction_T)varValue);      break; // use async polling for status
-        case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue(p_motor, varValue);                    break;
+        case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue_Scalar(p_motor, varValue);             break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);        break;
         case MOTOR_VAR_USER_CONTROL_STATE:  Motor_User_ActivateControlState(p_motor, (Phase_Output_T)varValue); break;
         case MOTOR_VAR_USER_SPEED_LIMIT:    Motor_User_TrySpeedLimit(p_motor, varValue);                        break;

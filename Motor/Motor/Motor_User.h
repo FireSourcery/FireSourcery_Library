@@ -97,6 +97,8 @@ static inline angle16_t Motor_User_GetElectricalAngle(const Motor_T * p_motor) {
 static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_T * p_motor) { return Motor_GetMechanicalAngle(p_motor); }
 
 static inline Motor_StateMachine_StateId_T Motor_User_GetStateId(const Motor_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+static inline uint8_t Motor_User_GetSubStateId(const Motor_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine); } /* 0 during substate */
+
 static inline Motor_StateFlags_T Motor_User_GetStateFlags(const Motor_T * p_motor) { return p_motor->StateFlags; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_T * p_motor) { return p_motor->FaultFlags; }
 static inline bool Motor_User_IsStopState(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_STOP); }
@@ -140,8 +142,8 @@ static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            
 
 /* SubStates */
 static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                      { return p_motor->ControlTimerBase; }
-static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)        { return p_motor->OpenLoopState; }
-static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor)  { return p_motor->CalibrationState; }
+// static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)        { return p_motor->OpenLoopState; }
+// static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor)  { return p_motor->CalibrationState; }
 static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
 /*
@@ -221,10 +223,11 @@ extern void Motor_User_SetPositionCmd(Motor_T * p_motor, uint16_t angle);
 extern void Motor_User_StartOpenLoopMode(Motor_T * p_motor);
 extern void Motor_User_SetOpenLoopCmd(Motor_T * p_motor, int16_t ivCmd);
 extern void Motor_User_SetOpenLoopSpeed(Motor_T * p_motor, int16_t speed_fract16);
-extern void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state);
+// extern void Motor_User_StartOpenLoopState(Motor_T * p_motor, Motor_OpenLoopState_T state);
 #endif
 
 extern void Motor_User_SetActiveCmdValue(Motor_T * p_motor, int16_t userCmd);
+extern void Motor_User_SetActiveCmdValue_Scalar(Motor_T * p_motor, int16_t userCmd);
 // extern void Motor_User_ProcModeCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd);
 
 extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);

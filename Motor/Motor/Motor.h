@@ -339,7 +339,7 @@ typedef struct Motor
     StateMachine_T StateMachine;
     Timer_T ControlTimer;                       /* State Timer */
     uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
-    Motor_Direction_T Direction;                /* Active spin direction. SubState of Run State */
+    Motor_Direction_T Direction;                /* Applied spin direction. */
     Motor_FeedbackMode_T FeedbackMode;          /* Active FeedbackMode, Control/Run SubState */
     Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
     Motor_StateFlags_T StateFlags;              /* Can be pushed to modules */
@@ -462,6 +462,20 @@ Motor_T, * MotorPtr_T;
 // static const fract16_t MOTOR_V_LIMIT_CCW = INT16_MAX;
 // static const fract16_t MOTOR_V_LIMIT_CW = -INT16_MAX;
 
+
+typedef bool(*Motor_Test_T)(const Motor_T * p_motor);
+typedef void(*Motor_ProcVoid_T)(Motor_T * p_motor);
+typedef register_t(*Motor_Get_T)(const Motor_T * p_motor);
+typedef void(*Motor_Set_T)(Motor_T * p_motor, register_t value);
+typedef bool(*Motor_Try_T)(Motor_T * p_motor, register_t value);
+
+typedef bool(*Motor_TestValue_T)(const Motor_T * p_motor, register_t value);
+
+typedef void(*Motor_SetUInt32_T)(Motor_T * p_motor, uint32_t value);
+typedef void(*Motor_SetUInt16_T)(Motor_T * p_motor, uint16_t value);
+typedef void(*Motor_SetUInt8_T)(Motor_T * p_motor, uint8_t value);
+typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
+
 /******************************************************************************/
 /*
     Number formats
@@ -489,6 +503,7 @@ static inline int32_t _Motor_Power_WattsOfFract16(int32_t vi_fract16)   { return
 #endif
 
 
+
 /******************************************************************************/
 /*
     Simplify CommutationMode Check
@@ -511,12 +526,6 @@ static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, con
     return fn;
 }
 
-typedef void(*Motor_ProcVoid_T)(Motor_T * p_motor);
-typedef void(*Motor_SetUInt32_T)(Motor_T * p_motor, uint32_t value);
-typedef void(*Motor_SetUInt16_T)(Motor_T * p_motor, uint16_t value);
-typedef void(*Motor_SetUInt8_T)(Motor_T * p_motor, uint8_t value);
-typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
-
 #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
     _Generic((focSet), \
         Motor_GetInt32_T:   (Motor_GetInt32_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
@@ -530,6 +539,9 @@ typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
 // #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction))(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
 
 #define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) (Motor_CommutationModeFn(p_motor, focSet, sixStepSet)(p_motor __VA_OPT__(,) __VA_ARGS__))
+
+
+
 
 /* todo depreciate */
 static inline void Motor_ProcCommutationMode(Motor_T * p_motor, Motor_ProcVoid_T focProc, Motor_ProcVoid_T sixStepProc)
@@ -658,29 +670,22 @@ static inline int16_t Motor_SpeedReqLimitOf(const Motor_T * p_motor, int16_t req
 static inline int16_t Motor_IReqLimitOf(const Motor_T * p_motor, int16_t req)       { return math_clamp(req, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
 
 
+
+
+
 /*
-    Apply limit as scalar, req = limit_scalar/feedback
-*/
-/*
-    Req may be I, or V
+    Req  I, or V
 */
 // SpeedLimit with SpeedPid disabled
 // alternatively enable PID // MatchOutput
-// ScaleWithSpeedLimit
 static inline int16_t Motor_ReqOfSpeedLimit(const Motor_T * p_motor, int16_t req)
 {
     /* fract16_div always return positive < 1 */
-    // if      (p_motor->Speed_Fract16 < p_motor->SpeedLimitCw_Fract16)  { limitedReq = 0 - fract16_div(p_motor->SpeedLimitCw_Fract16, p_motor->Speed_Fract16); } /* Speed is more negative */
-    // else if (p_motor->Speed_Fract16 > p_motor->SpeedLimitCcw_Fract16) { limitedReq = fract16_div(p_motor->SpeedLimitCcw_Fract16, p_motor->Speed_Fract16); }
-
-    uint32_t speedLimit = Motor_GetSpeedLimit(p_motor);
-    uint32_t speed = math_abs(p_motor->Speed_Fract16);
-    int16_t limitedReq = req;
-
-    if (speed > speedLimit) { limitedReq = (int32_t)req * speedLimit / speed; }
-
-    return limitedReq;
+    // if      (p_motor->Speed_Fract16 < p_motor->SpeedLimitCw_Fract16)  { scalar = 0 - fract16_div(p_motor->SpeedLimitCw_Fract16, p_motor->Speed_Fract16); } /* Speed is more negative */
+    // else if (p_motor->Speed_Fract16 > p_motor->SpeedLimitCcw_Fract16) { scalar = fract16_div(p_motor->SpeedLimitCcw_Fract16, p_motor->Speed_Fract16); }
+    // return fract16_mul req   scalar;
 }
+
 
 
 /******************************************************************************/
@@ -769,12 +774,6 @@ extern void Motor_ResetUnitsSinCos(Motor_T * p_motor);
 extern void Motor_ResetUnitsAngleSpeed_Mech(Motor_T * p_motor);
 extern void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_T * p_motor);
 
-extern void Motor_Jog12Step(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog6Step(Motor_T * p_motor, uint8_t step);
-extern void Motor_Jog12(Motor_T * p_motor);
-extern void Motor_Jog6Phase(Motor_T * p_motor);
-extern void Motor_Jog6(Motor_T * p_motor);
 
 #endif
 

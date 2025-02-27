@@ -66,7 +66,7 @@ void Motor_Analog_MarkIabc(Motor_T * p_motor)
 /******************************************************************************/
 void Motor_Analog_StartCalibration(Motor_T * p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * 2U); /* 2 Seconds */
+    Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * (uint32_t)2U); /* 2 Seconds */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutputZero, 0U /*Phase_Ground(&p_motor->Phase)*/);
 
     Filter_Avg_Init(&p_motor->FilterA);
@@ -78,37 +78,37 @@ void Motor_Analog_StartCalibration(Motor_T * p_motor)
     Motor_Analog_MarkIabc(p_motor);
 }
 
-bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
-{
-    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+// bool Motor_Analog_ProcCalibration(Motor_T * p_motor)
+// {
+//     const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
 
-    bool isComplete = Timer_IsElapsed(&p_motor->ControlTimer);
-    if (isComplete == true)
-    {
-        p_motor->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
-        p_motor->Config.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
-        p_motor->Config.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
-        Motor_ResetUnitsIabc(p_motor);
-        Phase_Float(&p_motor->Phase);
-    }
-    else
-    {
-        if (p_motor->ControlTimerBase != 0U) /* skip first time */
-        {
-            if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
-            {
-                Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
-                Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
-                Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
-                Motor_Analog_MarkIabc(p_motor);
-            }
-        }
-    }
+//     bool isComplete = Timer_IsElapsed(&p_motor->ControlTimer);
+//     if (isComplete == true)
+//     {
+//         p_motor->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+//         p_motor->Config.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+//         p_motor->Config.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+//         Motor_ResetUnitsIabc(p_motor);
+//         Phase_Float(&p_motor->Phase);
+//     }
+//     else
+//     {
+//         if (p_motor->ControlTimerBase != 0U) /* skip first time */
+//         {
+//             if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
+//             {
+//                 Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+//                 Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+//                 Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+//                 Motor_Analog_MarkIabc(p_motor);
+//             }
+//         }
+//     }
 
-    return isComplete;
-}
+//     return isComplete;
+// }
 
-void  ProcCalibration(Motor_T * p_motor)
+void ProcCalibration(Motor_T * p_motor)
 {
     const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
 
@@ -140,17 +140,18 @@ void  ProcCalibration(Motor_T * p_motor)
 StateMachine_State_T * EndCalibration(Motor_T * p_motor)
 {
     // return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? p_motor->StateMachine.p_ActiveState : 0U;
-    return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? &MOTOR_STATE_STOP : 0U;
+    return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? &MOTOR_STATE_CALIBRATION : 0U;
 }
 
 static const StateMachine_State_T CALIBRATION_STATE =
 {
     // .ID         = MSM_STATE_ID_CALIBRATION,
+    .P_ROOT     = &MOTOR_STATE_CALIBRATION,
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
     .ENTRY      = (StateMachine_Function_T)Motor_Analog_StartCalibration,
     .LOOP       = (StateMachine_Function_T)ProcCalibration,
-    .NEXT       = (StateMachine_Transition_T)EndCalibration,
+    .NEXT       = (StateMachine_InputVoid_T)EndCalibration,
 };
 
 

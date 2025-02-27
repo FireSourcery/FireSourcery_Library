@@ -69,8 +69,8 @@ typedef enum Motor_VarOuput
     MOTOR_VAR_EFFECTIVE_SET_POINT,
     MOTOR_VAR_EFFECTIVE_SPEED_LIMIT,
     MOTOR_VAR_EFFECTIVE_I_LIMIT,
-    MOTOR_VAR_V_SPEED_DEBUG,
     MOTOR_VAR_V_SPEED_EFFECTIVE,
+    MOTOR_VAR_SUB_STATE,
 }
 Motor_VarOuput_T;
 
@@ -121,7 +121,7 @@ typedef enum Motor_VarInput
 
     // non polling, could be io
     MOTOR_VAR_OPEN_LOOP_CONTROL, /* Enter State optional pas cmd / run */
-    MOTOR_VAR_OPEN_LOOP_PHASE_STATE,
+    MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_ANGLE,
     // MOTOR_VAR_OPEN_LOOP_HOMING,

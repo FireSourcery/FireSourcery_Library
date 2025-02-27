@@ -230,7 +230,7 @@ static const Protocol_Req_T REQ_TABLE[] =
 // #endif
 };
 
-const Protocol_Specs_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
+const Protocol_PacketClass_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 {
     .RX_LENGTH_MIN = MOT_PACKET_LENGTH_MIN,
     .RX_LENGTH_MAX = MOT_PACKET_LENGTH_MAX,

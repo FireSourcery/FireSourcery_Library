@@ -90,7 +90,7 @@ typedef struct MotorCmdr
 }
 MotorCmdr_T;
 
-extern const Protocol_Specs_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
+extern const Protocol_PacketClass_T * const _MOTOR_CMDR_PROTOCOL_SPECS_TABLE[1U];
 
 /*
     No Non-Volatile memory params by default

@@ -250,7 +250,7 @@ typedef void (* const Protocol_BuildTxSync_T)(uint8_t * p_txPacket, protocol_siz
     todo split Packet Class
 */
 /******************************************************************************/
-typedef const struct Protocol_Specs
+typedef const struct Protocol_PacketClass
 {
     const uint8_t RX_LENGTH_MIN;                    /* Rx this many bytes before calling PARSE_RX */
     const uint8_t RX_LENGTH_MAX;
@@ -282,10 +282,8 @@ typedef const struct Protocol_Specs
     // const protocol_size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
 
     // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
-    /* Cmdr side only *///todo wrap in cmdr, runtime polymorphism not needed
-    // const Protocol_Cmdr_BuildTxReq_T CMDR_BUILD_TX_REQ; /* Single build function is sufficient. Rx Share Protocol_Proc() and P_REQ_TABLE. Alternatively, function table */
 }
-Protocol_Specs_T;
+Protocol_PacketClass_T;
 
 /******************************************************************************/
 /*!
@@ -320,6 +318,7 @@ typedef struct Protocol_Config
     //uint32_t RxTimeoutPacket
     //uint32_t RxTimeoutByte
     //uint32_t ReqExtTimeout
+    //uint8_t NackLimit
     bool IsEnableOnInit;     /* enable on start up */
     // bool IsWatchdogOnInit;
 }
@@ -332,7 +331,7 @@ typedef const struct Protocol_Const
     const uint8_t PACKET_BUFFER_LENGTH;                         /* Must be greater than Specs RX_LENGTH_MAX */
     void * const P_APP_INTERFACE;                               /* User app context for packet processing */
     void * const P_REQ_STATE_BUFFER;                            /* Child protocol control variables, may be separate from app_interface, must be largest enough to hold substate context referred by specs */
-    const Protocol_Specs_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
+    const Protocol_PacketClass_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
     const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
     const Protocol_Config_T * const P_CONFIG;
@@ -344,7 +343,7 @@ typedef struct Protocol
     const Protocol_Const_T CONST;
     Protocol_Config_T Config;
     Xcvr_T Xcvr;
-    const Protocol_Specs_T * p_Specs; /* Active protocol */
+    const Protocol_PacketClass_T * p_Specs; /* Active protocol */
     // Datagram_T Datagram; // configurable broadcast
 
     /* Rx Parse Packet Meta */

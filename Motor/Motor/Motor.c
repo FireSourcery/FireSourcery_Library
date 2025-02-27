@@ -883,74 +883,7 @@ void Motor_ResetUnitsSinCos(Motor_T * p_motor)
 #endif
 
 
-/******************************************************************************/
-/*
 
-*/
-/******************************************************************************/
-void Motor_Jog12Step(Motor_T * p_motor, uint8_t step)
-{
-    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
-    uint16_t index = step % 12U;
-    switch(index)
-    {
-        case 0U: Phase_ActivateAlignA(&p_motor->Phase, duty); break;
-        case 1U: Phase_Polar_ActivateAC(&p_motor->Phase, duty); break;
-        case 2U: Phase_ActivateAlignInvC(&p_motor->Phase, duty); break;
-        case 3U: Phase_Polar_ActivateBC(&p_motor->Phase, duty); break;
-        case 4U: Phase_ActivateAlignB(&p_motor->Phase, duty); break;
-        case 5U: Phase_Polar_ActivateBA(&p_motor->Phase, duty); break;
-        case 6U: Phase_ActivateAlignInvA(&p_motor->Phase, duty); break;
-        case 7U: Phase_Polar_ActivateCA(&p_motor->Phase, duty); break;
-        case 8U: Phase_ActivateAlignC(&p_motor->Phase, duty); break;
-        case 9U: Phase_Polar_ActivateCB(&p_motor->Phase, duty); break;
-        case 10U: Phase_ActivateAlignInvB(&p_motor->Phase, duty); break;
-        case 11U: Phase_Polar_ActivateAB(&p_motor->Phase, duty); break;
-        default: break;
-    }
-}
-
-void Motor_Jog6PhaseStep(Motor_T * p_motor, uint8_t step)
-{
-    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
-    uint16_t index = step % 6U;
-    switch(index)
-    {
-        case 0U: Phase_Polar_ActivateAC(&p_motor->Phase, duty); break;
-        case 1U: Phase_Polar_ActivateBC(&p_motor->Phase, duty); break;
-        case 2U: Phase_Polar_ActivateBA(&p_motor->Phase, duty); break;
-        case 3U: Phase_Polar_ActivateCA(&p_motor->Phase, duty); break;
-        case 4U: Phase_Polar_ActivateCB(&p_motor->Phase, duty); break;
-        case 5U: Phase_Polar_ActivateAB(&p_motor->Phase, duty); break;
-        default: break;
-    }
-}
-
-/*
-    Preferred for stability
-*/
-void Motor_Jog6Step(Motor_T * p_motor, uint8_t step)
-{
-    Phase_Align(&p_motor->Phase, (Phase_Id_T)(step % 6U), p_motor->Config.AlignPower_UFract16);
-}
-
-void Motor_Jog6(Motor_T * p_motor)
-{
-    Motor_Jog6Step(p_motor, p_motor->JogIndex);
-    p_motor->JogIndex++;
-}
-
-void Motor_Jog6Phase(Motor_T * p_motor)
-{
-    Motor_Jog6PhaseStep(p_motor, p_motor->JogIndex);
-    p_motor->JogIndex++;
-}
-
-void Motor_Jog12(Motor_T * p_motor)
-{
-    Motor_Jog12Step(p_motor, p_motor->JogIndex);
-    p_motor->JogIndex++;
-}
 
 /******************************************************************************/
 /*

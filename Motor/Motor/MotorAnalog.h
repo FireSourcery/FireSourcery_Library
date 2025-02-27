@@ -81,6 +81,18 @@ typedef union MotorAnalog_Conversions
 }
 MotorAnalog_Conversions_T;
 
+
+// static inline uint16_t MotorAnalog_GetAdcu(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return p_analog->CONVERSIONS[localChannel].P_STATE->Result; }
+// static inline uint8_t MotorAnalog_GetAdcu_Msb8(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return MotorAnalog_GetAdcu(p_analog, localChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+
+// static inline uint16_t MotorAnalog_GetVa(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_VA.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetVb(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_VB.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetVc(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_VC.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetIa(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_IA.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetIb(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_IB.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetIc(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_IC.P_STATE->Result; }
+// static inline uint16_t MotorAnalog_GetHeat(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_HEAT.P_STATE->Result; }
+
 // typedef union MotorAnalog_Results
 // {
 //     struct

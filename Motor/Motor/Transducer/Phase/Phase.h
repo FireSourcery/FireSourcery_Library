@@ -41,10 +41,11 @@
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
 #include <assert.h>
+#include <sys/types.h>
 
-typedef uint8_t phase_id_t; /* for interface casting */
+typedef register_t phase_id_t; /* for interface casting */
 
-// Phase_Id/State
+/* Phase_Id/State */
 typedef union Phase_Bits
 {
     struct

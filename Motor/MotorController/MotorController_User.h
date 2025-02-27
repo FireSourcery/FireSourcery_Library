@@ -283,7 +283,8 @@ static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) 
 /* StateMachine unchecked disable motors, use with caution */
 static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc)
 {
-    MotorController_ForceDisableAll(p_mc);
+    // MotorController_ForceDisableAll(p_mc);
+    MotorController_ForEachMotor(p_mc, Motor_User_ForceDisableControl);
     _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);
     p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE;
 }

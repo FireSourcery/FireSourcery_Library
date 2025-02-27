@@ -201,7 +201,8 @@ Phase_Id_T Phase_ReadAlignNextDirection(const Phase_T * p_phase, bool ccw)
     return (ccw == true) ? Phase_NextOf(Phase_ReadAlign(p_phase)) : Phase_PrevOf(Phase_ReadAlign(p_phase));
 }
 
-// Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, int16_t dutySigned)
+// Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
+
 Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, uint16_t duty, bool ccw)
 {
     Phase_Id_T id = Phase_ReadAlignNextDirection(p_phase, ccw);

@@ -421,6 +421,17 @@ static inline void MotorController_BeepShort(MotorController_T * p_mc)          
 static inline void MotorController_BeepPeriodicType1(MotorController_T * p_mc)     { Blinky_StartPeriodic(&p_mc->Buzzer, 500U, 500U); }
 static inline void MotorController_BeepDouble(MotorController_T * p_mc)            { Blinky_BlinkN(&p_mc->Buzzer, 250U, 250U, 2U); }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+// static inline bool MotorController_IsEveryMotorValue(const MotorController_T * p_mc, Motor_TestValue_T test, register_t value) { return void_array_for_every_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_register_t)test, value); }
+// static inline void MotorController_ForEachMotor(MotorController_T * p_mc, Motor_ProcVoid_T function) { return void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)function); }
+
+void MotorController_ForEachMotor(MotorController_T * p_mc, Motor_ProcVoid_T function);
+bool MotorController_IsEveryMotorValue(const MotorController_T * p_mc, Motor_TestValue_T test, register_t value);
+
 
 /******************************************************************************/
 /*
@@ -461,6 +472,9 @@ extern bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc);
 extern bool MotorController_IsEveryMotorState(const MotorController_T * p_mc, uintptr_t state);
 extern bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc);
 extern bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc);
+
+extern void MotorController_EnterCalibrationAll(MotorController_T * p_mc);
+extern void MotorController_ExitCalibrationAll(MotorController_T * p_mc);
 
 extern void MotorController_ForceDisableAll(MotorController_T * p_mc);
 extern void MotorController_SetReleaseAll(MotorController_T * p_mc);

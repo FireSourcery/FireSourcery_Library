@@ -43,7 +43,7 @@ static inline void Calibration_Proc(Motor_T * p_motor)
 
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
-        switch (p_motor->CalibrationStateIndex)
+        switch (p_motor->CalibrationStateIndex) /* Phase_ReadAlign() */
         {
             case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
             case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
@@ -59,21 +59,22 @@ static inline void Calibration_Proc(Motor_T * p_motor)
 
 static inline StateMachine_State_T * Calibration_End(Motor_T * p_motor)
 {
-    return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_STOP : NULL;
+    // if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
+    // return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_STOP : NULL;
+    return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_CALIBRATION : NULL; /* (Phase_ReadAlign(&p_motor->Phase) == PHASE_ID_DISABLE) ? &MOTOR_STATE_STOP : NULL; */
 }
 
 static const StateMachine_State_T CALIBRATION_STATE_HALL =
 {
+    .P_ROOT = &MOTOR_STATE_CALIBRATION,
     .P_PARENT = &MOTOR_STATE_CALIBRATION,
     .DEPTH = 1U,
     .ENTRY = (StateMachine_Function_T)Calibration_Entry,
     .LOOP = (StateMachine_Function_T)Calibration_Proc,
-    .NEXT = (StateMachine_Transition_T)Calibration_End,
+    .NEXT = (StateMachine_InputVoid_T)Calibration_End,
 };
-
 
 void Motor_Hall_Calibrate(Motor_T * p_motor)
 {
-    // StateMachine_ProcSubStateInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
     StateMachine_ProcBranchInput(&p_motor->StateMachine, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
 }

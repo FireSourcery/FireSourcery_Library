@@ -65,12 +65,12 @@ static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
     p_ramp->State = 0;
 }
 
+/* ProcAsDisabled */
 static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
 {
     p_ramp->State = p_ramp->Target;
     return Ramp_GetOutput(p_ramp);
 }
-
 
 
 // static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }

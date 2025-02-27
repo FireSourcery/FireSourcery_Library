@@ -111,10 +111,9 @@ static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_mo
 
 static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Speed_Fract16); }
 static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Speed_Fract16); }
-
 // sign of current request direction with comp
-// (Motor_DirectionalValueOf(p_motor, math_sign(p_motor->Foc.Vq)) > 0)
-// static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return (math_sign(p_motor->Foc.Vq) >= 0) && (p_motor->Direction == MOTOR_DIRECTION_CCW); }
+// static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return (Motor_DirectionalValueOf(p_motor, math_sign(p_motor->Foc.Vq)) > 0); }
+
 static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
 
 

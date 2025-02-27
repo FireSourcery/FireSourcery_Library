@@ -220,3 +220,26 @@ extern void Ring_Free(Ring_T * p_ring);
 #endif
 
 
+
+
+// typedef struct Ring_State
+// {
+//     volatile size_t Head;    /* FIFO Out/Front. */
+//     volatile size_t Tail;    /* FIFO In/Back. */
+// #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+//     volatile critical_signal_t Mutex;
+// #endif
+// }
+// Ring_State_T;
+
+// typedef const struct Ring_Const
+// {
+//     void * const P_BUFFER;
+//     const size_t UNIT_SIZE;     /* Bytes */
+//     const size_t LENGTH;        /* In UNIT_SIZE counts (NOT bytes) */
+// #if defined(CONFIG_RING_POW2_MASK) || defined(CONFIG_RING_POW2_WRAP)
+//     const uint32_t POW2_MASK; /* Index Mask */
+// #endif
+//     Ring_State_T * const P_RING_STATE;
+// }
+// Ring_Const_T;
