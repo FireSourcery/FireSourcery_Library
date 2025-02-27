@@ -369,7 +369,7 @@ static void OpenLoop_Entry(Motor_T * p_motor)
     p_motor->FeedbackMode.OpenLoop = 1U; /* limits user cmd input */
     Phase_Ground(&p_motor->Phase);
     // FOC_ClearControlState(&p_motor->Foc);
-    // _StateMachine_EndSubState(&p_motor->StateMachine); /* 'unmount' last operation */
+    _StateMachine_EndSubState(&p_motor->StateMachine); /* 'unmount' last operation */
     // determine initial substate from stop
 }
 

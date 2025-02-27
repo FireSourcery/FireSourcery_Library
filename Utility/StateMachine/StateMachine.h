@@ -273,7 +273,7 @@ static inline state_machine_state_t StateMachine_GetActiveSubStateId(const State
 // static inline const StateMachine_State_T * StateMachine_GetActiveBranch(const StateMachine_T * p_stateMachine)
 //     { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
 
-
+static inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine) { p_stateMachine->p_ActiveSubState = p_stateMachine->p_ActiveState; }
 
 /******************************************************************************/
 /*

@@ -49,7 +49,7 @@ static inline void ReleaseSignal_SyncProcInput(StateMachine_T * p_stateMachine)
 #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
     Critical_ReleaseSignal(&p_stateMachine->InputSignal);
 #else
-    (void)p_stateMachine; /* Single threaded input always overwrite */
+    (void)p_stateMachine; /* Single threaded input always overwrite, and state output is not blocked */
 #endif
 }
 
@@ -108,6 +108,7 @@ static inline bool AcquireCritical_AsyncInput(StateMachine_T * p_stateMachine)
     return true;
 #else
     return Critical_AcquireSignal(&p_stateMachine->InputSignal);
+    // return true; single thread can return true
 #endif
 }
 
@@ -354,7 +355,7 @@ inline void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, state_
 
 inline void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine)
 {
-    if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL) /* checked by isAccept input */
+    if (p_stateMachine->SyncInput != STATE_MACHINE_INPUT_ID_NULL)
     {
         _StateMachine_ProcAsyncInput(p_stateMachine, p_stateMachine->SyncInput, p_stateMachine->SyncInputValue);
         p_stateMachine->SyncInput = STATE_MACHINE_INPUT_ID_NULL;
@@ -378,11 +379,18 @@ inline void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, state_ma
 */
 void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
-    _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
-    // atomic_flag_clear(&p_stateMachine->InputSignal); /* sync runs with 255 once */
-    atomic_flag_test_and_set(&p_stateMachine->InputSignal);
+    // _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
+    _StateMachine_SetSyncInput(p_stateMachine, 0, 0); /* run a dummy input in the init state. same as case of async unlock with write through dummy input */
+    atomic_flag_clear(&p_stateMachine->InputSignal);
     Reset(p_stateMachine);
 }
+
+// void StateMachine_Sync_Init(StateMachine_T * p_stateMachine)
+// {
+//     _StateMachine_SetSyncInput(p_stateMachine, STATE_MACHINE_INPUT_ID_NULL, 0);
+//     atomic_flag_test_and_set(&p_stateMachine->InputSignal);
+//     Reset(p_stateMachine);
+// }
 
 void StateMachine_Reset(StateMachine_T * p_stateMachine)
 {
@@ -444,7 +452,8 @@ void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine)
     /* Optionally Proc both */
     else
     {
-        /* All Inputs are [Sync_SetInput], all transition are processed Sync, [ProcStateOutput] will not interrupt a transition  */
+        /* ISR wont interrupt an Input transition in this case.
+            All Inputs are [Sync_SetInput], all transition are processed Sync, [ProcStateOutput] will not interrupt a transition  */
         _StateMachine_ProcStateOutput(p_stateMachine);
     }
 }
@@ -522,7 +531,7 @@ inline void StateMachine_ProcState(StateMachine_T * p_stateMachine)
     /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
     if (AcquireCritical_AsyncState(p_stateMachine) == true)
     {
-        _StateMachine_ProcSyncInput(p_stateMachine);     /* Proc input must use sentinel */
+        _StateMachine_ProcSyncInput(p_stateMachine);     /* Proc SyncInput must use sentinel, AsyncInput releases lock without valid SyncInput */
         _StateMachine_ProcStateOutput(p_stateMachine);
         ReleaseCritical_AsyncState(p_stateMachine);
     }
@@ -603,6 +612,8 @@ void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachi
         State_Transition(&p_stateMachine->p_ActiveSubState, p_state, p_stateMachine->CONST.P_CONTEXT); /* ignores null */
     }
 }
+
+
 
 void ProcTransitionSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state)
 {
@@ -996,6 +1007,8 @@ void StateMachine_InputBranchTransition(StateMachine_T * p_stateMachine, const S
     {
         if (StateMachine_IsActiveBranch(p_stateMachine, p_transition->P_VALID) == true)
         {
+            assert(State_IsActiveBranch(p_transition->P_VALID, p_stateMachine->p_ActiveState)); /* ensure substate is in sync with top level state */
+
             ProcBranchTransition(p_stateMachine, p_transition->TRANSITION(p_stateMachine->CONST.P_CONTEXT, inputValue));
         }
         ReleaseCritical_AsyncInput(p_stateMachine);

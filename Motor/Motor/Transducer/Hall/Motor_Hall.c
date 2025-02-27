@@ -33,6 +33,7 @@
 static inline void Calibration_Entry(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+    Phase_Ground(&p_motor->Phase);
     p_motor->CalibrationStateIndex = 0U;
 }
 

@@ -105,6 +105,7 @@ static void Init_Proc(MotorController_T * p_mc)
     {
         wait = false;
         MotorController_PollAdcFaultFlags(p_mc);
+        // wait for every motor exit init
         // MotorController_ResetVSourceActiveRef(p_mc); /* Set Motors VSourceRef using ADC reading */
     }
 
@@ -385,19 +386,45 @@ static void Drive_Proc(MotorController_T * p_mc)
 static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, state_machine_value_t direction)
 {
     StateMachine_State_T * p_nextState = NULL;
-    switch((MotorController_Direction_T)direction)
+
+    switch ((MotorController_Direction_T)direction)
     {
-        case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
-        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL;   break;
-        case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = NULL;             break;
-        case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = NULL;             break;
-        // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_SetDirectionForwardAll(p_mc) ? &STATE_DRIVE : NULL; break;
-        // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_SetDirectionReverseAll(p_mc) ? &STATE_DRIVE : NULL; break;
+        case MOTOR_CONTROLLER_DIRECTION_PARK:
+            MotorController_ForEachMotor(p_mc, Motor_User_Hold);
+            p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL;
+            break;
+        case MOTOR_CONTROLLER_DIRECTION_FORWARD:
+            MotorController_ForEachMotor(p_mc, Motor_User_SetDirectionForward);
+            p_nextState = MotorController_IsEveryMotorForward(p_mc) ? &STATE_DRIVE : NULL;
+            break;
+        case MOTOR_CONTROLLER_DIRECTION_REVERSE:
+            MotorController_ForEachMotor(p_mc, Motor_User_SetDirectionReverse);
+            p_nextState = MotorController_IsEveryMotorReverse(p_mc) ? &STATE_DRIVE : NULL;
+            break;
+        case MOTOR_CONTROLLER_DIRECTION_NEUTRAL: p_nextState = &STATE_NEUTRAL; break;
+        case MOTOR_CONTROLLER_DIRECTION_ERROR: p_nextState = NULL; break;
         default: break;
     }
 
     return p_nextState;
 }
+
+// static StateMachine_State_T * Drive_InputDirection(MotorController_T * p_mc, state_machine_value_t direction)
+// {
+//     StateMachine_State_T * p_nextState = NULL;
+//     switch((MotorController_Direction_T)direction)
+//     {
+//         case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL;   break;
+//         case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = NULL;             break;
+//         case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = NULL;             break;
+//         // case MOTOR_CONTROLLER_DIRECTION_FORWARD: p_nextState = MotorController_SetDirectionForwardAll(p_mc) ? &STATE_DRIVE : NULL; break;
+//         // case MOTOR_CONTROLLER_DIRECTION_REVERSE: p_nextState = MotorController_SetDirectionReverseAll(p_mc) ? &STATE_DRIVE : NULL; break;
+//         default: break;
+//     }
+
+//     return p_nextState;
+// }
 
 /* either set drive 0 first, Motor set control twice. or motor directly transition */
 static StateMachine_State_T * Drive_InputThrottle(MotorController_T * p_mc, state_machine_value_t cmdValue)
@@ -550,7 +577,8 @@ static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, state
 static const StateMachine_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Input_T)TransitionFault,
-    [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Neutral_InputDirection,
+    // [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Neutral_InputDirection,
+    [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Drive_InputDirection,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Input_T)Neutral_InputBrake,
     // [MCSM_INPUT_DRIVE]      = (StateMachine_Input_T)Neutral_InputDrive,
 };
