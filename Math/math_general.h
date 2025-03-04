@@ -35,7 +35,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef int32_t sign_t;
+// typedef int32_t sign_t;
+
+/* simplify with return by value */
+typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
+typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
 
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
@@ -58,11 +62,10 @@ static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_M
 
 // static inline uint32_t math_abs(int32_t value)
 // {
-    //     uint32_t mask = value >> 31;
-    //     return (value + mask) ^ mask;
-    // }
+//     uint32_t mask = value >> 31;
+//     return (value + mask) ^ mask;
+// }
 
-// static inline int32_t math_wrap(int32_t value, int32_t max
 
 static inline int32_t math_shift(int32_t value, int8_t shift) { return (shift > 0) ? (value << shift) : (value >> (-shift)); }
 

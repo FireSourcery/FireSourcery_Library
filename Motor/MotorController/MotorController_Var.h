@@ -175,6 +175,7 @@ typedef enum MotorController_ConfigId
 }
 MotorController_ConfigId_T;
 
+/* MotAnalog_ConfigId */
 typedef enum MotorController_Config_AnalogUser
 {
     MOT_VAR_ANALOG_THROTTLE_ZERO_ADCU,
@@ -235,8 +236,8 @@ uint32_t MotorController_Config_AnalogUser_Set(MotorController_T * p_mc, MotorCo
 
 /******************************************************************************/
 /*
-    Meta
-    todo reanme
+    [MotVarId]
+    Type index
 */
 /******************************************************************************/
 /*
@@ -293,6 +294,8 @@ typedef enum MotVarId_TypeType
 {
     MOT_VAR_ID_TYPE_REAL_TIME,
     MOT_VAR_ID_TYPE_CONFIG,
+    // MOT_VAR_ID_TYPE_REAL_TIME_CMD, //corresponding write only/ subroutine
+    // MOT_VAR_ID_TYPE_CONFIG_CMD,
 }
 MotVarId_TypeType_T;
 
@@ -303,7 +306,7 @@ typedef union MotVarId
     {
         uint16_t NameBase           : 4U;
         uint16_t NameType           : 4U; /* Name's Type - corresponds 1:1 with enum type */
-        uint16_t NameTypeType       : 1U; /* Name Type's Type - Alternatively partition as monitor/cmd/call */
+        uint16_t NameTypeType       : 1U; /* Type's Type/Prefix/Partition */
         uint16_t Instance           : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */
         uint16_t Alt                : 4U; /* Alternative unit/format */
     };

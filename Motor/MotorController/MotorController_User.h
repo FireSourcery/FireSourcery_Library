@@ -201,7 +201,13 @@ static inline void MotorController_User_SetCmdDriveZero(MotorController_T * p_mc
 static inline void MotorController_User_SetCmdThrottle(MotorController_T * p_mc, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_THROTTLE, userCmd); }
 static inline void MotorController_User_SetCmdBrake(MotorController_T * p_mc, uint16_t userCmd)    { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, userCmd); }
 
-// todo move analoguser image to statemachine
+static inline void MotorController_User_SetCmdThrottle_BySerial(MotorController_T * p_mc, uint16_t userCmd)
+{
+    if (p_mc->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) { MotorController_User_SetCmdThrottle(p_mc, userCmd); }
+    // alternatively write to buffer as interface, or struct/cmd pattern, or group id type
+}
+
+// todo move analog user drive image to statemachine, separate drive states as MotorArray Context
 
 
 /******************************************************************************/

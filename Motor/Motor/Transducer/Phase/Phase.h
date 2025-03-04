@@ -43,7 +43,7 @@
 #include <assert.h>
 #include <sys/types.h>
 
-typedef register_t phase_id_t; /* for interface casting */
+// typedef register_t phase_id_t; /* for interface casting */
 
 /* Phase_Id/State */
 typedef union Phase_Bits
@@ -64,14 +64,14 @@ Phase_Bits_T;
 */
 typedef enum Phase_Id
 {
-    PHASE_ID_DISABLE    = (0b000U),
-    PHASE_ID_A          = (0b001U),
-    PHASE_ID_B          = (0b010U),
-    PHASE_ID_INV_C      = (0b011U),
-    PHASE_ID_C          = (0b100U),
-    PHASE_ID_INV_B      = (0b101U),
-    PHASE_ID_INV_A      = (0b110U),
-    PHASE_ID_ABC        = (0b111U),
+    PHASE_ID_0      = (0b000U),
+    PHASE_ID_A      = (0b001U),
+    PHASE_ID_B      = (0b010U),
+    PHASE_ID_INV_C  = (0b011U),
+    PHASE_ID_C      = (0b100U),
+    PHASE_ID_INV_B  = (0b101U),
+    PHASE_ID_INV_A  = (0b110U),
+    PHASE_ID_ABC    = (0b111U),
 }
 Phase_Id_T;
 
@@ -89,9 +89,9 @@ static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
         case PHASE_ID_INV_A:    next = PHASE_ID_C;          break;
         case PHASE_ID_C:        next = PHASE_ID_INV_B;      break;
         case PHASE_ID_INV_B:    next = PHASE_ID_A;          break;
-        case PHASE_ID_DISABLE:  next = PHASE_ID_DISABLE;    break;
+        case PHASE_ID_0:        next = PHASE_ID_0;          break;
         case PHASE_ID_ABC:      next = PHASE_ID_ABC;        break;
-        default: next = PHASE_ID_DISABLE; assert(false);    break;
+        default: next = PHASE_ID_0; assert(false); break;
     }
     return next;
 }
@@ -111,7 +111,7 @@ static inline uint16_t Phase_AngleOf(Phase_Id_T id)
         [PHASE_ID_INV_A]    = 32768U,     /* 180 */
         [PHASE_ID_C]        = 43690U,     /* 240 */
         [PHASE_ID_INV_B]    = 54613U,     /* 300 */
-        [PHASE_ID_DISABLE]  = 0U,
+        [PHASE_ID_0]        = 0U,
         [PHASE_ID_ABC]      = 0U,
     };
 
@@ -125,8 +125,8 @@ static inline uint16_t Phase_AngleOf(Phase_Id_T id)
 typedef enum Phase_Output
 {
     PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, since it is the result of Pin 0/Low */
-    PHASE_OUTPUT_GROUND, /* VDuty 0, Pin High/1 */
-    /* PHASE_STATE_RESV = 0b10 */ /* This way bit 1 reflects pin on/off, bit 2 reflects pwm value */
+    PHASE_OUTPUT_V0,     /* VDuty 0, Pin High/1 */
+    /* PHASE_STATE_RESV = 0b10 */ /* This way bit0 reflects pin on/off, bit1 reflects pwm value */
     PHASE_OUTPUT_VPWM,   /* VDuty +, Pin High/1 */
 }
 Phase_Output_T;
@@ -136,14 +136,14 @@ Phase_Output_T;
 */
 typedef enum Phase_Polar
 {
-    PHASE_ID_0 = 0U,
+    PHASE_ID_POLAR_0 = 0U,
     PHASE_ID_1_AC = 1U,
     PHASE_ID_2_BC = 2U,
     PHASE_ID_3_BA = 3U,
     PHASE_ID_4_CA = 4U,
     PHASE_ID_5_CB = 5U,
     PHASE_ID_6_AB = 6U,
-    PHASE_ID_7 = 7U,
+    PHASE_ID_POLAR_7 = 7U,
 }
 Phase_Polar_T;
 
@@ -276,7 +276,7 @@ static inline void _Phase_SyncPwmInvert(const Phase_T * p_phase, Phase_Id_T stat
 #endif
 }
 
-static inline void _Phase_SyncPwmOnOff(const Phase_T * p_phase, Phase_Id_T state)
+static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
 {
 #ifdef CONFIG_PHASE_PIN_SYNC
     // _Phase_PinSyncOf(p_phase, state);
@@ -298,7 +298,7 @@ static inline Phase_Bits_T _Phase_ReadState(const Phase_T * p_phase)
 static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 {
 #ifdef CONFIG_PHASE_PIN_SYNC
-    _Phase_SyncPwmOnOff(p_phase, id);
+    _Phase_SyncOnOff(p_phase, id);
 #else
     const Phase_Bits_T state = Phase_BitsOf(id);
     _Phase_WriteStateA(p_phase, state.A);
@@ -326,8 +326,8 @@ extern void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, 
 extern void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
 extern void Phase_ActivateOutput(const Phase_T * p_phase);
 extern void Phase_Float(const Phase_T * p_phase);
-extern void Phase_Ground(const Phase_T * p_phase);
-extern bool Phase_IsGround(const Phase_T * p_phase);
+extern void Phase_ActivateOutputV0(const Phase_T * p_phase);
+extern bool Phase_IsV0(const Phase_T * p_phase);
 extern bool Phase_IsFloat(const Phase_T * p_phase);
 extern Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase);
 extern void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T state);

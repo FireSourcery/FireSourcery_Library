@@ -54,8 +54,17 @@ typedef uint8_t limit_id_t;
 
 typedef struct
 {
+    limit_t Lower;
+    limit_t Upper;
+}
+Limit_Pair_T;
+
+typedef struct
+{
     // VALUE_ARRAY(limit_t);
     const struct { limit_t * const P_ARRAY; const size_t LENGTH; };
+    // const struct { Limit_Pair_T * const P_ARRAY; const size_t LENGTH; };
+
     // void * P_CALLBACK_CONTEXT;
     // void (* const ON_SET)(void * p_context, limit_t value);
     // void (* const ON_CLEAR)(void * p_context);
@@ -76,6 +85,7 @@ Limit_T;
 // VALUE_ARRAY_INIT_UNNAMED(p_buffer, length),             \
 // .ARRAY = ARRAY_INIT(p_buffer, length, unitSize),        \
 
+// static inline int16_t Limit_Of(const Limit_Pair_T * p_limits, int16_t req) { return math_clamp(req, p_limits->Lower, p_limits->Upper); }
 
 /*!
     @brief Get the arrayMinimum value from the p_limit control.

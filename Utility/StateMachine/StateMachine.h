@@ -50,7 +50,7 @@ typedef uint8_t state_machine_input_t;      /* Input/Handler Id. Maps to [StateM
 typedef intptr_t state_machine_value_t;     /* User define platform register size */
 
 // id is not passed in a function pointer. will not affect function pointer casting compatibility
-// typedef enum uint8_t { STATE_MACHINE_INPUT_ID_NULL = 0xFF } state_machine_input_t;
+// typedef enum state_machine_input { STATE_MACHINE_INPUT_ID_NULL1 = 0xFF } state_machine_input_t;
 
 typedef uint8_t state_machine_state_t;      /* State ID. User may overwrite with enum */
 struct StateMachine_State;
@@ -121,14 +121,17 @@ typedef state_machine_value_t(*StateMachine_GetK_T)(void * p_context, state_mach
     Transition
     Alternative mapping Id
     reverse map [Transition]/[Input] to a [State] or set of [State]s
+    compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
     Apply transition to State
+
+    effectively [State] local [state_machine_input_t]
 */
 /******************************************************************************/
 typedef const struct StateMachine_TransitionInput
 {
-    const struct StateMachine_State * const P_VALID; /* From. Starting State known to accept this input at compile time. */
+    const struct StateMachine_State * const P_VALID; /* From/Source. Starting State known to accept this input at compile time. */
     const uint8_t VALID_COUNT;
-    const StateMachine_Input_T TRANSITION; /* To. Does not return NULL */
+    const StateMachine_Input_T TRANSITION; /* To/Destination. Does not return NULL */
 }
 StateMachine_TransitionInput_T;
 

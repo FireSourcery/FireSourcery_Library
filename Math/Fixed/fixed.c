@@ -77,24 +77,15 @@
 */
 uint16_t fixed_sqrt(uint32_t x)
 {
-    // if (x < 0)
-    // {
-    //     // Return 0 for negative input (undefined behavior for square root of negative number)
-    //     return 0;
-    // }
-
     uint32_t result = 0U;
     uint32_t bit = 1U << 30U; // The second-to-top bit is set
 
     // "bit" starts at the highest power of four <= the argument.
-    while (bit > (uint32_t)x)
-    {
-        bit >>= 2;
-    }
+    while (bit > x) { bit >>= 2; }
 
     while (bit != 0)
     {
-        if ((uint32_t)x >= result + bit)
+        if (x >= result + bit)
         {
             x -= result + bit;
             result = (result >> 1) + bit;
@@ -128,7 +119,6 @@ uint8_t _leading_zeros(uint32_t x)
 */
 uint8_t fixed_log2(uint32_t x)
 {
-
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x) - 1U;
     // return  __builtin_stdc_bit_width(x) - 1U;
@@ -137,7 +127,7 @@ uint8_t fixed_log2(uint32_t x)
 #else
     /* Iterative log2 */
     uint8_t shift = 0U;
-    while((x >> shift) > 1U) { shift++; }
+    while((x >> shift) >= 1U) { shift++; }
     return shift;
 #endif
 }
@@ -153,10 +143,32 @@ uint8_t fixed_log2_ceiling(uint32_t x)
     fixed_log2(x - 1U) + 1U;
 }
 
+uint8_t fixed_bitwidth(uint32_t x)
+{
+#if (__STDC_VERSION__ >= 202311L)
+    return stdc_bit_width(x);
+    // return  __builtin_stdc_bit_width(x);
+#elif defined(__GNUC__)
+    return (x == 0U) ? 0U : (32U - __builtin_clz(x));
+#else
+    uint8_t shift = 0U;
+    while ((x >> shift) > 0U) { shift++; }
+    return shift;
+#endif
+}
+
+
+void fixed_log2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
+{
+    *p_lower = fixed_log2(x);
+    *p_upper = *p_lower + 1U;
+}
+
 void fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
 {
-    uint32_t lower = fixed_log2(x);
-    uint32_t upper = lower + 1U;
+    uint32_t lower;
+    uint32_t upper;
+    fixed_log2_bound(&lower, &upper, x);
     *p_lower = 1U << lower;
     *p_upper = 1U << upper;
 }
@@ -182,7 +194,7 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* leading zeros of abs(x) - 1 */
+/* leading zeros - 1 */
 /* log2(INT32_MAX) - log2(abs(x))) */
 uint8_t fixed_lshift_max_signed(int32_t x)
 {

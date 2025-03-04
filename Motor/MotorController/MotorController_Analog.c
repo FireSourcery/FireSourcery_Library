@@ -53,7 +53,7 @@ void MotorController_Analog_StartCalibrate(MotorController_T * p_mc)
     Filter_Avg_Init(&p_mc->AvgBuffer0);
     Filter_Avg_Init(&p_mc->AvgBuffer1);
 
-    void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
+    // void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateAdc);
 }
 
 bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc)
@@ -84,5 +84,5 @@ bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc)
 
     p_mc->StateCounter++;
 
-    return (p_mc->StateCounter > TIME) && MotorController_IsEveryMotorStopState(p_mc);
+    return (p_mc->StateCounter > TIME)  ;
 }

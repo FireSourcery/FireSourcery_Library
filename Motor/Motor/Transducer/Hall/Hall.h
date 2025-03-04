@@ -402,15 +402,15 @@ static inline bool Hall_IsSensorsTableValid(const Hall_T * p_hall)
 extern void Hall_Init(Hall_T * p_hall);
 // extern void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
 extern void Hall_StartCalibrate(Hall_T * p_hall);
-
-extern void Hall_CalibratePhaseA(Hall_T * p_hall);
-extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
-extern void Hall_CalibratePhaseB(Hall_T * p_hall);
-extern void Hall_CalibratePhaseInvA(Hall_T * p_hall);
-extern void Hall_CalibratePhaseC(Hall_T * p_hall);
-extern void Hall_CalibratePhaseInvB(Hall_T * p_hall);
-
 extern void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId);
+
+// extern void Hall_CalibratePhaseA(Hall_T * p_hall);
+// extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
+// extern void Hall_CalibratePhaseB(Hall_T * p_hall);
+// extern void Hall_CalibratePhaseInvA(Hall_T * p_hall);
+// extern void Hall_CalibratePhaseC(Hall_T * p_hall);
+// extern void Hall_CalibratePhaseInvB(Hall_T * p_hall);
+
 
 #endif
 

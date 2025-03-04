@@ -86,8 +86,8 @@ static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HA
 static inline bool Pin_Output_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
 
 /* As On/Off. Include invert check */
-static inline void Pin_Output_Off(const Pin_T * p_pin)  { if(p_pin->CONST.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
-static inline void Pin_Output_On(const Pin_T * p_pin)   { if(p_pin->CONST.IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); } }
+static inline void Pin_Output_Off(const Pin_T * p_pin) { if (p_pin->CONST.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
+static inline void Pin_Output_On(const Pin_T * p_pin) { if (p_pin->CONST.IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); } }
 static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { Pin_Output_WritePhysical(p_pin, (isOn ^ p_pin->CONST.IS_INVERT)); }
 static inline bool Pin_Output_Read(const Pin_T * p_pin) { return Pin_Output_ReadPhysical(p_pin) ^ p_pin->CONST.IS_INVERT; }
 
@@ -97,7 +97,8 @@ static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_
 /* As On/Off. Include invert check */
 static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadPhysical(p_pin) ^ p_pin->CONST.IS_INVERT); }
 
-static inline bool Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ^ p_pin->CONST.IS_INVERT) ? p_pin->CONST.ID : 0; }
+// static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ^ p_pin->CONST.IS_INVERT) ? p_pin->CONST.ID : 0; }
+static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ? p_pin->CONST.ID : 0UL); }
 
 /******************************************************************************/
 /*!

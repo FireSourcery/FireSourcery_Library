@@ -40,7 +40,7 @@ static void InitValues(Encoder_T * p_encoder)
     if (p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 
     p_encoder->UnitTime_Freq = 1U;
-    // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
+    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
     _Encoder_ResetUnits(p_encoder);
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);

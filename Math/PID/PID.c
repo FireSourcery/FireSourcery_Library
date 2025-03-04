@@ -61,8 +61,8 @@ void PID_SetConfig(PID_T * p_pid, PID_Config_T * p_config)
     ResetGains(p_pid);
 }
 
-static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 16); }
-static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 16); }
+static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 15); }
+static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
 
 /*!
     Conventional parallel PID calculation
@@ -74,7 +74,9 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
     int32_t proportional, integral, integralAccum, integralMin, integralMax, output;
 
-    proportional = (p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 16 shift */
+    // error = math_clamp(error, INT16_MIN, INT16_MAX);
+
+    proportional = (p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
     /* Dynamic Clamp */
     integralMin = math_min(p_pid->OutputMin - proportional, 0);
@@ -86,13 +88,16 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
         Forward rectangular approximation.
     */
 
-    // p_pid->IntegralAccum += (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift;; /* Excludes 16 shift */
-    // p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 16, integralMax << 16);
-    // integral = p_pid->IntegralAccum >> 16;
+    // p_pid->IntegralAccum += (p_pid->IntegralGain * error) >> p_pid->IntegralGainShift;; /* Excludes 15 shift */
+    // p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 15, integralMax << 15);
+    // integral = p_pid->IntegralAccum >> 15;
 
-    integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 16 shift */
-    integral = math_clamp(integralAccum >> 16, integralMin, integralMax);
-    p_pid->IntegralAccum = (integral == (integralAccum >> 16)) ? integralAccum : (integral << 16);
+    assert(p_pid->IntegralAccum < INT32_MAX / 2);
+    assert(((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
+
+    integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
+    integral = math_clamp(integralAccum >> 15, integralMin, integralMax);
+    p_pid->IntegralAccum = (integral == (integralAccum >> 15)) ? integralAccum : (integral << 15);
 
     p_pid->ErrorPrev = error;
 
@@ -102,11 +107,16 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 /*!
     @param[in] setpoint [-32768:32767] with over saturation
     @param[in] feedback [-32768:32767] with over saturation
-        (setpoint - feedback) [-65535:65535]
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    return p_pid->Output;
+}
+
+int16_t _PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
+{
+    p_pid->Output = CalcPI(p_pid, setpoint - feedback);
     return p_pid->Output;
 }
 
@@ -160,50 +170,83 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 /******************************************************************************/
 /*
     Select Gain and Shift without overflow
-    [Error Max] = (32,767 - (-32,768)) = 65535 => [Gain Max] = 32,767
+    [Error Max] = 32,767 * 2 => [Gain Max] = 32,767
 */
 
 /*!
     Proportional(k) = Kp * error(k)
-                    = kp_Fixed32 * error(k) >> 16
+                    = [kp_Fixed32 >> N] * error(k)
 
-    kp_Fixed32 >> 16 = PropGain >> PropGainShift, includes shift 16
-    PropGain = kp_Fixed32 << PropGainShift >> 16
-    [kp_Fixed32 << PropGainShift >> 16] * [Error Max] < INT32_MAX
-    PropGainShift <= log2(INT32_MAX / [Error Max] * 65536 / kp_Fixed32)
+    [kp_Fixed32 >> N] = [PropGain >> PropGainShift], includes shift N
+    PropGain = [kp_Fixed32 << PropGainShift >> N]
+    [kp_Fixed32 << PropGainShift >> N] * [Error Max] < INT32_MAX / 2
+    PropGainShift <= log2(INT32_MAX / 2 / [Error Max] << N / kp_Fixed32)
 
-    kp_Fixed32 = 65536 * 255 = 16,711,680 => RShift 9, Gain = (32,640, 7)
-    kp_Fixed32 = 256 => RShift 0, Gain = (256, 16)
-    kp_Fixed32 = 65536 => RShift 2, Gain = (16,384, 14)
-    kp_Fixed32 = 32767 => RShift 0, Gain = (32,767, 16)
+    as Q17.15
+    kp_Fixed32 = 32767, 1.0F => RShift 0, Gain = (32,767, 15 - 0)
+    kp_Fixed32 = 65536, 2.0F => RShift 2, Gain = (16,384, 15 - 2)
+    kp_Fixed32 = [511.0F = 511 < 15] => RShift 9, Gain = (~32,767, 15 - 9)
 
-    @param[in] kp_Fixed32 Q16.16, 65536 => 1
+    //// @param[in] kp_Fixed32 Q16.16, 65536 => 1
+    @param[in] kp_Fixed32 Q17.15, 32767 => 1
 */
 static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 {
-    p_pid->PropGainShift = math_limit_upper(fixed_lshift_max_signed(kp_Fixed32), 16); /* fixed_log2(INT32_MAX / kp_Fixed32); */
-    p_pid->PropGain = kp_Fixed32 >> (16 - p_pid->PropGainShift);
+    // p_pid->PropGainShift = math_limit_upper(fixed_log2(INT32_MAX / kp_Fixed32), 16); /* discard negative shift */
+    // p_pid->PropGain = kp_Fixed32 >> (16 - p_pid->PropGainShift);
+
+    /*
+        As additional shift of fract16
+        (p_pid->PropGain * error) >> (15 - p_pid->PropGainShift)
+    */
+    // p_pid->PropGainShift = math_limit_lower(fixed_log2(kp_Fixed32) + 1 - 15, 0);
+    // p_pid->PropGain = kp_Fixed32 >> p_pid->PropGainShift;
+
+    /*
+        (p_pid->PropGain * error) >> (p_pid->PropGainShift)
+    */
+    p_pid->PropGainShift = math_limit_upper(fixed_log2(INT32_MAX / 2 / kp_Fixed32), 15);
+    p_pid->PropGain = kp_Fixed32 >> (15 - p_pid->PropGainShift);
+
+    assert(p_pid->PropGain < INT16_MAX);
 }
 
 /*!
     Integral(k) = Ki * error(k) / SampleFreq + Integral(k-1)
-                = ki_Fixed32 * error(k) / SampleFreq >> 16 + Integral(k-1)
+                = [ki_Fixed32 >> 15 / SampleFreq] * error(k) + Integral(k-1)
 
-    ki_Fixed32 / SampleFreq = IntegralGain >> IntegralGainShift, excludes shift 16
-    IntegralGain = ki_Fixed32 / SampleFreq << IntegralGainShift
-    [ki_Fixed32 / SampleFreq << IntegralGainShift] * [Error Max] < INT32_MAX
-    IntegralGainShift <= log2(INT32_MAX / [Error Max] * SampleFreq / ki_Fixed32)
+    [ki_Fixed32 / SampleFreq] = [IntegralGain >> IntegralGainShift], excludes shift 15
+    IntegralGain = [ki_Fixed32 / SampleFreq << IntegralGainShift]
+    [ki_Fixed32 / SampleFreq << IntegralGainShift] * [Error Max] < [INT32_MAX / 2],
+    IntegralGainShift <= log2([INT32_MAX / 2] / [Error Max] * SampleFreq / ki_Fixed32)
+
+    SampleFreq = 10000:
+    ki_Fixed32 = 32768 * 200 = 6,553,600 => (20,971, 5)
 
     SampleFreq = 20000:
     ki_Fixed32 = 65536 * 255 = 16,711,680 => (26,843, 5)
     ki_Fixed32 = 256 => Gain = (26,843, 21)
     ki_Fixed32 = 65536 => RShift 3, Gain = (26,843, 13)
+
+    @param[in] ki_Fixed32 Q17.15, 32767 => 1
 */
 static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
-    p_pid->IntegralGainShift = fixed_log2((INT32_MAX >> 16) * p_pid->Config.SampleFreq / ki_Fixed32); /* lshift_max(ki_Fixed32 << 16 / p_pid->Config.SampleFreq); */
+    /*
+        As additional shift of fract16
+        (p_pid->PropGain * error) >> (15 + p_pid->PropGainShift)
+
+        error 32767 => INT32_MAX / 2
+    */
+    // p_pid->IntegralGainShift = fixed_log2((INT32_MAX / 2 / 65536) * p_pid->Config.SampleFreq / ki_Fixed32); /* lshift_max(ki_Fixed32 << 15 / p_pid->Config.SampleFreq) - 1; */
+    // p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
+
+    p_pid->IntegralGainShift = math_limit_lower(15 - (fixed_log2(ki_Fixed32 / p_pid->Config.SampleFreq) + 1), 0);
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
+
+    assert(p_pid->IntegralGain < INT16_MAX);
 }
+
 
 void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq)
 {
@@ -229,12 +272,12 @@ void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32)
 }
 
 /*!
-    @param[in] kp_Fixed16 [0:INT16_MAX] Q10.6
+    @param[in] kp_Fixed16 [0:INT16_MAX] Q9.7
 */
 
-void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 10); }
+void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }
 
-void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 10); }
+void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16) { PID_SetKi_Fixed32(p_pid, (uint32_t)ki_Fixed16 << 8); }
 
-void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) { PID_SetKd_Fixed32(p_pid, (uint32_t)kd_Fixed16 << 10); }
+void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16) { PID_SetKd_Fixed32(p_pid, (uint32_t)kd_Fixed16 << 8); }
 

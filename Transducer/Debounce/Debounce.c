@@ -35,16 +35,9 @@ void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
     Pin_Input_Init(&p_debounce->Pin);
     p_debounce->DebounceTime = debounceTime;
     p_debounce->DebouncedState = Pin_Input_Read(&p_debounce->Pin);
-    p_debounce->EdgeState = p_debounce->DebouncedState;
+    p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
     p_debounce->PinState = p_debounce->DebouncedState;
 }
-
-/* Ain or din */
-bool _Debounce_CaptureState(Debounce_T * p_debounce, bool state)
-{
-
-}
-
 
 /*!
     @return true if state changed
@@ -67,8 +60,8 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
         if (*p_debounce->CONST.P_TIMER - p_debounce->TimeStart > p_debounce->DebounceTime)
         {
             p_debounce->TimeStart = UINT32_MAX - p_debounce->DebounceTime; /* disable repeat set until next change in pin */
-            // if (p_debounce->DebouncedState != p_debounce->EdgeState) // same as timer disable
-            p_debounce->EdgeState = p_debounce->DebouncedState; /* record the previous state when an edge has occurred */
+            // if (p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) // same as timer disable
+            p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; /* record the previous state when an edge has occurred */
             p_debounce->DebouncedState = pinState;
         }
     }
@@ -77,35 +70,35 @@ bool Debounce_CaptureState(Debounce_T * p_debounce)
 }
 
 
-static inline void UpdateEdgeState(Debounce_T * p_debounce, bool isEdge)
-    { if(isEdge == true) { p_debounce->EdgeState = p_debounce->DebouncedState; } }
+static inline void ClearEdgeState(Debounce_T * p_debounce, bool isEdge)
+    { if (isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; } }
 
 /* The last edge, valid until poll, or another edge */
 
 bool Debounce_PollDualEdge(Debounce_T * p_debounce)
 {
     bool isEdge = Debounce_IsEdge(p_debounce);
-    UpdateEdgeState(p_debounce, isEdge);
+    ClearEdgeState(p_debounce, isEdge);
     return isEdge;
 }
 
 bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
 {
     bool isEdge = Debounce_IsFallingEdge(p_debounce);
-    UpdateEdgeState(p_debounce, isEdge);
+    ClearEdgeState(p_debounce, isEdge);
     return isEdge;
 }
 
 bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
 {
     bool isEdge = Debounce_IsRisingEdge(p_debounce);
-    UpdateEdgeState(p_debounce, isEdge);
+    ClearEdgeState(p_debounce, isEdge);
     return isEdge;
 }
 
 Debounce_Edge_T Debounce_PollEdge(Debounce_T * p_debounce)
 {
     Debounce_Edge_T edge = Debounce_GetEdge(p_debounce);
-    UpdateEdgeState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
+    ClearEdgeState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
     return edge;
 }

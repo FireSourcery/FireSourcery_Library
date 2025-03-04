@@ -356,7 +356,7 @@ typedef struct MotorController
     VMonitor_T VMonitorSense;   /* ~5V */
     VMonitor_T VMonitorAccs;    /* ~12V */
 
-    MotAnalogUser_T AnalogUser;
+    MotAnalogUser_T AnalogUser; /* drive input */
     Debounce_T OptDin;     /* Configurable input */
     Blinky_T Buzzer;
     Blinky_T Meter;
@@ -430,6 +430,7 @@ static inline void MotorController_BeepDouble(MotorController_T * p_mc)         
 // static inline void MotorController_ForEachMotor(MotorController_T * p_mc, Motor_ProcVoid_T function) { return void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)function); }
 
 void MotorController_ForEachMotor(MotorController_T * p_mc, Motor_ProcVoid_T function);
+bool MotorController_IsEveryMotor(const MotorController_T * p_mc, Motor_Test_T test);
 bool MotorController_IsEveryMotorValue(const MotorController_T * p_mc, Motor_TestValue_T test, register_t value);
 
 

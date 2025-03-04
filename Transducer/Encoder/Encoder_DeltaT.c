@@ -83,7 +83,8 @@ void Encoder_DeltaT_Init(Encoder_T * p_encoder)
     p_encoder->UnitTime_Freq = p_encoder->CONST.TIMER_FREQ;
     _Encoder_ResetUnits(p_encoder);
     p_encoder->DeltaD = 1U; /* Effective for shared functions only */
-    p_encoder->IsSinglePhasePositive = true;
+    // p_encoder->IsSinglePhasePositive = true;
+    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
 }
 

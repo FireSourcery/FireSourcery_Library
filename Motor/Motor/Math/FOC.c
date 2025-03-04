@@ -31,8 +31,6 @@
 
 void FOC_Init(FOC_T * p_foc)
 {
-    // p_foc->IdqMagnitudeMax = FRACT16_MAX;
-    // p_foc->IdMax = FRACT16_1_DIV_SQRT3;
     // FOC_ClearState(p_foc);
 }
 

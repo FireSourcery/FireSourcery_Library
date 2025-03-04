@@ -54,6 +54,28 @@ static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
     return output32;
 }
 
+static int32_t _OutputOf(const Ramp_T * p_ramp, int32_t target, int32_t steps)
+{
+    int32_t target32 = target << p_ramp->Shift;
+    int32_t output32 = p_ramp->State;
+
+    // output32 = p_ramp->State + math_sign(target32 - p_ramp->State) * (p_ramp->Coefficient * steps);
+    // output32 = math_clamp(output32, lower, upper);
+
+    // Ramp slope always positive
+    if (target32 > p_ramp->State) // incrementing
+    {
+        output32 = math_limit_upper(p_ramp->State + (p_ramp->Coefficient * steps), target32);
+    }
+    else if (target32 < p_ramp->State) // decrementing
+    {
+        output32 = math_limit_lower(p_ramp->State - (p_ramp->Coefficient * steps), target32);
+    }
+
+    return output32;
+}
+
+
 int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
 {
     if (p_ramp->State != p_ramp->Target) { p_ramp->State = OutputOf(p_ramp, steps); }
@@ -64,6 +86,14 @@ int32_t Ramp_ProcOutput(Ramp_T * p_ramp)
 {
     return _Ramp_ProcOutputN(p_ramp, 1U);
 }
+
+
+int32_t Ramp_NextOf(Ramp_T * p_ramp, int16_t target)
+{
+    if ((p_ramp->State >> p_ramp->Shift) != target) { p_ramp->State = _OutputOf(p_ramp, target, 1); }
+    return Ramp_GetOutput(p_ramp);
+}
+
 
 /******************************************************************************/
 /*

@@ -149,6 +149,7 @@ static inline void ADC_FillActiveConversions(Analog_ADC_T * p_adc, uint8_t adcId
         p_adc->ActiveChannelIndex += 1U;
         if (p_entry != NULL)
         {
+            // if (p_entry->P_ADC == p_adc && p_entry->P_STATE->IsMarked == true)
             if (p_entry->ADC_ID == adcId && p_entry->P_STATE->IsMarked == true)
             {
                 p_adc->ActiveConversions[p_adc->ActiveConversionCount] = p_entry;

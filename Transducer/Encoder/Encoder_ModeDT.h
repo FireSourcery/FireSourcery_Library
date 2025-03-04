@@ -158,7 +158,7 @@ static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
     return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
 }
 
-static inline int32_t Encoder_ModeDT_PollScalarVelocity(Encoder_T * p_encoder)
+static inline int32_t Encoder_ModeDT_CaptureScalarVelocity(Encoder_T * p_encoder)
 {
     Encoder_ModeDT_CaptureVelocity(p_encoder);
     return Encoder_ModeDT_GetScalarVelocity(p_encoder);

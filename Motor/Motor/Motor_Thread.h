@@ -69,11 +69,12 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
 
     if (Motor_IsAnalogCycle(p_motor) == true) //todo change timer
     {
-        switch (StateMachine_GetActiveStateId(&p_motor->StateMachine))
+        switch (StateMachine_GetActiveStateId(&p_motor->StateMachine)) /* or set on state entry */
         {
             case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_motor);     break;
             case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_motor);     break;
-            case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);     break;
+            // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_motor);     break;
+            case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_motor);     break;
             case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_motor);     break;
         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_motor);     break;

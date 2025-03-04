@@ -554,7 +554,7 @@ inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine
 }
 
 /*
-    Reverse map, compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
+
 */
 void StateMachine_InputTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
 {
@@ -971,6 +971,7 @@ void _StateMachine_ProcBranchSyncInput(StateMachine_T * p_stateMachine)
 
 /*
     except Top State, for cases where implementation include [_StateMachine_ProcBranch_Nested] in only some [p_ActiveState->LOOP]
+    Caller clears SubStates
 */
 void _StateMachine_ProcBranch_Nested(StateMachine_T * p_stateMachine)
 {
@@ -1000,6 +1001,7 @@ void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine
 /*
     result the input handle is any of P_VALID is in the active branch
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
+    TryTransition
 */
 void StateMachine_InputBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
 {
@@ -1018,6 +1020,7 @@ void StateMachine_InputBranchTransition(StateMachine_T * p_stateMachine, const S
 /*
     Effective for all States descending from the selected State
     i.e. the active SubState is below the selected State, in the active branch.
+    TrySetWith
 */
 void StateMachine_SetBranchValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value)
 {
@@ -1028,6 +1031,7 @@ void StateMachine_SetBranchValueWith(StateMachine_T * p_stateMachine, const Stat
     }
 }
 
+/* todo include transition as super super. check P_CHILDREN States on transition */
 
 
 /******************************************************************************/

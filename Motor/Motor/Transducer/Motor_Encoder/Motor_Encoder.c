@@ -64,7 +64,7 @@
 // */
 // int32_t Motor_PollSensorSpeed(Motor_T * p_motor)
 // {
-//     Encoder_ModeDT_PollScalarVelocity(&p_motor->Encoder) / 2;
+//     Encoder_ModeDT_CaptureScalarVelocity(&p_motor->Encoder) / 2;
 // }
 
 // void Motor_ZeroSensor(Motor_T * p_motor)
@@ -78,7 +78,7 @@
 //     Encoder_IsAligned(&p_motor->Encoder);
 // }
 
-// // inline bool Motor_IsClosedLoopStart(const Motor_T * p_motor)
+// // inline bool Motor_IsClosedLoop(const Motor_T * p_motor)
 // // {
 // //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 // // }

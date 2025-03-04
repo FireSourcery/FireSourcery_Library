@@ -230,6 +230,7 @@ static inline void _MotorController_ProcVSourceMonitor(MotorController_T * p_mc)
     Main
     High Freq, Low Priority,
 */
+// todo split submodules
 static inline void MotorController_Main_Thread(MotorController_T * p_mc)
 {
     /* High Freq, Low Priority */
@@ -239,15 +240,21 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
     {
         /* SubStates update on proc, at least once Motor_StateMachine will have processed  */
         /* Handle Inputs as they are received */
-        _StateMachine_ProcStateOutput(&p_mc->StateMachine); //todo change this to signal if enter fault is on 1ms thread
+        _StateMachine_ProcStateOutput(&p_mc->StateMachine); // todo change this to signal if enter fault is on 1ms thread
 
-        for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]); }
+        for (uint8_t iProtocol = 0U; iProtocol < p_mc->CONST.PROTOCOL_COUNT; iProtocol++)
+        {
+            Protocol_Proc(&p_mc->CONST.P_PROTOCOLS[iProtocol]);
+            // if (Protocol_IsRxLost(&p_mc->CONST.P_PROTOCOLS[iProtocol]) == true)
+        }
+
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
         if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_mc->CONST.P_CAN_BUS); }
     #endif
 
         /* Real-Time, continuous polling, inputs require arbitration */
         /* MotorController_Var_Set voluntarily checks InputMode for proc */
+        //do as as drive state and input buffer
         switch (p_mc->Config.InputMode)
         {
             // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
@@ -293,8 +300,8 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
             /* Can use low priority check, as motor is already in fault state */
-            if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; MotorController_StateMachine_EnterFault(p_mc); }
-            // if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_mc); }
+            if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; /* MotorController_StateMachine_EnterFault(p_mc); */ }
+            if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_mc); }
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);

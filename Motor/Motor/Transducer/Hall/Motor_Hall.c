@@ -30,14 +30,14 @@
 /******************************************************************************/
 #include "Motor_Hall.h"
 
-static inline void Calibration_Entry(Motor_T * p_motor)
+static void Calibration_Entry(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    Phase_Ground(&p_motor->Phase);
+    Phase_ActivateOutputV0(&p_motor->Phase);
     p_motor->CalibrationStateIndex = 0U;
 }
 
-static inline void Calibration_Proc(Motor_T * p_motor)
+static void Calibration_Proc(Motor_T * p_motor)
 {
     const uint16_t duty = p_motor->Config.AlignPower_UFract16;
     bool isComplete = false;
@@ -46,23 +46,23 @@ static inline void Calibration_Proc(Motor_T * p_motor)
     {
         switch (p_motor->CalibrationStateIndex) /* Phase_ReadAlign() */
         {
-            case 0U: Hall_StartCalibrate(&p_motor->Hall);       Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, 0U);      p_motor->CalibrationStateIndex = 1U;    break;
-            case 1U: Hall_CalibratePhaseA(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, duty, 0U);    p_motor->CalibrationStateIndex = 2U;    break;
-            case 2U: Hall_CalibratePhaseInvC(&p_motor->Hall);   Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, duty, 0U);      p_motor->CalibrationStateIndex = 3U;    break;
-            case 3U: Hall_CalibratePhaseB(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, duty, duty);    p_motor->CalibrationStateIndex = 4U;    break;
-            case 4U: Hall_CalibratePhaseInvA(&p_motor->Hall);   Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, 0U, duty);      p_motor->CalibrationStateIndex = 5U;    break;
-            case 5U: Hall_CalibratePhaseC(&p_motor->Hall);      Phase_WriteDuty_Fract16(&p_motor->Phase, duty, 0U, duty);    p_motor->CalibrationStateIndex = 6U;    break;
-            case 6U: Hall_CalibratePhaseInvB(&p_motor->Hall);   Phase_Float(&p_motor->Phase);                                p_motor->CalibrationStateIndex = 7U; isComplete = true;                      break;
+            case 0U: Hall_StartCalibrate(&p_motor->Hall);                               Phase_Align(&p_motor->Phase, PHASE_ID_A, duty);        p_motor->CalibrationStateIndex = 1U;    break;
+            case 1U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_A);       Phase_Align(&p_motor->Phase, PHASE_ID_INV_C, duty);    p_motor->CalibrationStateIndex = 2U;    break;
+            case 2U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_INV_C);   Phase_Align(&p_motor->Phase, PHASE_ID_B, duty);        p_motor->CalibrationStateIndex = 3U;    break;
+            case 3U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_B);       Phase_Align(&p_motor->Phase, PHASE_ID_INV_A, duty);    p_motor->CalibrationStateIndex = 4U;    break;
+            case 4U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_INV_A);   Phase_Align(&p_motor->Phase, PHASE_ID_C, duty);        p_motor->CalibrationStateIndex = 5U;    break;
+            case 5U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_C);       Phase_Align(&p_motor->Phase, PHASE_ID_INV_B, duty);    p_motor->CalibrationStateIndex = 6U;    break;
+            case 6U: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_INV_B);   Phase_Float(&p_motor->Phase);                          p_motor->CalibrationStateIndex = 7U;    isComplete = true;  break;
             default: break;
         }
     }
 }
 
-static inline StateMachine_State_T * Calibration_End(Motor_T * p_motor)
+static StateMachine_State_T * Calibration_End(Motor_T * p_motor)
 {
     // if (isComplete == true) { p_motor->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); }
     // return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_STOP : NULL;
-    return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_CALIBRATION : NULL; /* (Phase_ReadAlign(&p_motor->Phase) == PHASE_ID_DISABLE) ? &MOTOR_STATE_STOP : NULL; */
+    return (p_motor->CalibrationStateIndex == 7U) ? &MOTOR_STATE_CALIBRATION : NULL; /* (Phase_ReadAlign(&p_motor->Phase) == PHASE_ID_0) ? &MOTOR_STATE_STOP : NULL; */
 }
 
 static const StateMachine_State_T CALIBRATION_STATE_HALL =

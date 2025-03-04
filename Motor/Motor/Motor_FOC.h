@@ -109,12 +109,22 @@ static inline int32_t Motor_FOC_GetIPhase_UFract16(const Motor_T * p_motor)     
 static inline int32_t Motor_FOC_GetVPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
 static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
-static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Speed_Fract16); }
-static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Speed_Fract16); }
-// sign of current request direction with comp
-// static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return (Motor_DirectionalValueOf(p_motor, math_sign(p_motor->Foc.Vq)) > 0); }
+static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Foc.Iq); }
+static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Foc.Iq); }
+
+// static inline uint16_t Motor_FOC_GetILimitOf(const Motor_T * p_motor, int16_t qSign) { return ((qSign >= 0) ? _Motor_GetILimitCcw(p_motor) : _Motor_GetILimitCw(p_motor)); }
 
 static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+
+/* alternatively derive from directional limits */
+// static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor)
+// {
+//     uint16_t scalar = FRACT16_1_OVERSAT;
+//     /* fract16_div always return positive < 1 */
+//     if      (p_motor->Foc.Iq < _Motor_GetILimitCw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCw(p_motor), p_motor->Foc.Iq); }
+//     else if (p_motor->Foc.Iq > _Motor_GetILimitCcw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCcw(p_motor), p_motor->Foc.Iq); }
+//     return scalar;
+// }
 
 
 /******************************************************************************/

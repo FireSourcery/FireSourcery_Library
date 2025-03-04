@@ -68,16 +68,8 @@ const fract16_t FRACT16_SINE_90_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
     32727, 32736, 32744, 32751, 32757, 32761, 32764, 32766
 };
 
-/* Alternatively, use 180 table to include sin(90) == 1 */
-// #ifdef CONFIG_FRACT16_FRACT16_SINE_180_TABLE
-// const accum_t FRACT16_SINE_180_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
-// {
-//     32768,
-// }
-// #endif
-
 /*
-    sin_quadrant_265
+    sin_quadrant_256
     0b xx11 1111 11xx xxxx
     Use 8 most significant digits of 90 degree bound.
     Removes sign / 180 degree bit, 90 degree bit, and 6 lsb.
@@ -132,18 +124,18 @@ fract16_t fract16_cos(angle16_t theta)
 angle16_t fract16_atan2(fract16_t y, fract16_t x)
 {
     int32_t mask = (y >> FRACT16_N_BITS);
-    int32_t yAbs = (y + mask) ^ mask;
+    int32_t y_abs = (y + mask) ^ mask;
     int32_t r, r_3, angle;
 
     if (x >= 0)
     {
-        r = fract16_div((x - yAbs), (x + yAbs));
+        r = fract16_div((x - y_abs), (x + y_abs));
         r_3 = fract16_mul(fract16_mul(r, r), r);
         angle = fract16_mul(0x07FF, r_3) - fract16_mul(0x27FF, r) + FRACT16_1_DIV_4;
     }
     else
     {
-        r = fract16_div((x + yAbs), (yAbs - x));
+        r = fract16_div((x + y_abs), (y_abs - x));
         r_3 = fract16_mul(fract16_mul(r, r), r);
         angle = fract16_mul(0x07FF, r_3) - fract16_mul(0x27FF, r) + FRACT16_3_DIV_4;
     }

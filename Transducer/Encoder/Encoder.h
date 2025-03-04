@@ -141,7 +141,7 @@ typedef struct Encoder
 // #endif /* CONFIG_ENCODER_HW_EMULATED */
 
     // int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
-    bool IsSinglePhasePositive;
+    // bool IsSinglePhasePositive;
 
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
@@ -177,9 +177,9 @@ typedef struct Encoder
     // uint32_t DeltaSpeed;     /*!< Save for acceleration calc */
 
     /*
-    Unit conversion. derived on init from Nv Config
+        Unit conversion. derived on init from Nv Config
     */
-   // int32_t DirectionComp;   /* todo */
+    int32_t DirectionComp;   /* todo */
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
     uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
@@ -304,8 +304,10 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
     @brief Direction
 */
 /******************************************************************************/
+// static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
 /* Direction set by outer module */
-static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
+/* 0 until set */
+static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return p_encoder->DirectionComp; }
 
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
@@ -363,16 +365,15 @@ static inline uint16_t Encoder_GetAngle_Scalar(const Encoder_T * p_encoder, uint
 static inline uint16_t Encoder_GetElectricalAngle(const Encoder_T * p_encoder, uint8_t polePairs)
 {
     // return Encoder_GetDirectionRef(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * polePairs) >> 8U) + p_encoder->AlignOffsetRef;
-
     // p_encoder->AlignOffsetRef = 0 if aligned to phase
     // indexangle-algnedangle
-
 }
 
 
 /* SinglePhase assign direction */
-static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; /*  DirectionComp = 1 */}
-static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; /*  DirectionComp = -1 */ }
+// static inline void Encoder_SinglePhase_SetDirectionPositive(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = true; /*  DirectionComp = 1 */}
+// static inline void Encoder_SinglePhase_SetDirectionNegative(Encoder_T * p_encoder) { p_encoder->IsSinglePhasePositive = false; /*  DirectionComp = -1 */ }
+static inline void Encoder_SinglePhase_SetDirection(Encoder_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 
 
 /******************************************************************************/

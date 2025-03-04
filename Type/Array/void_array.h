@@ -13,6 +13,9 @@ typedef void(*void_op_t)(void * p_unit);
 typedef bool(*void_poll_t)(void * p_unit);
 typedef bool(*void_test_t)(const void * p_unit);
 
+typedef void (*set_register_t)(void * p_struct, register_t value);
+typedef bool (*try_register_t)(void * p_struct, register_t value);
+
 /******************************************************************************/
 /*!
     @brief Void Array / Sized Array - Generic by type_size
@@ -99,9 +102,8 @@ static inline bool void_array_is_any(const void * p_buffer, size_t type_size, si
     return is_any;
 }
 
-typedef void (*set_register_t)(void * p_struct, register_t value);
-typedef bool (*try_register_t)(void * p_struct, register_t value);
 
+/*  */
 static inline void void_array_foreach_set(const void * p_buffer, size_t type_size, size_t length, set_register_t unit_setter, register_t value)
 {
     for (size_t index = 0U; index < length; index++) { unit_setter(void_pointer_at(p_buffer, type_size, index), value); }

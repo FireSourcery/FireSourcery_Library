@@ -59,13 +59,16 @@ static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
 static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
 
 /* Calculation with over saturation */
-static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /*!< (32768) */
-static const accum32_t FRACT16_PI             = 0x0001921F; /* Over saturated */
-static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97; /* Over saturated */
+static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /* 32768 */
+static const accum32_t FRACT16_SQRT3          = 0x0000DDB3; /* 1.73202514648f */
+static const accum32_t FRACT16_PI             = 0x0001921F;
+static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 #define FRACT16_FLOAT_MAX (0.999969482421875F)
 #define FRACT16_FLOAT_MIN (-1.0F)
-#define FRACT16_FLOAT(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
+#define FRACT16(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
+
+#define FRACT16_ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
 static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
 static inline fract16_t fract16_sat(accum32_t value)    { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
@@ -150,7 +153,7 @@ static inline fract16_t fract16_sqrt(fract16_t x)
     angle16
 */
 /******************************************************************************/
-typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle loops. */
+typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 #define FRACT16_SINE_90_TABLE_LENGTH    (256U)
 #define FRACT16_SINE_90_TABLE_LSB       (6U)    /*!< Least significant bits, shifted away */
@@ -185,13 +188,17 @@ static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
 
 static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
 {
-    return ((theta0 > theta1) == incrementing);
+    return (((uint16_t)theta0 > (uint16_t)theta1) == incrementing);
 }
 
 static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
 {
-    return (theta0 > theta1);
+    return ((uint16_t)theta0 > (uint16_t)theta1);
 }
+
+// static inline bool angle16_cycle_sign(angle16_t theta0, angle16_t theta1, int16_t sign)
+// {
+// }
 
 /* polling freq must be sufficient */
 /* crossing 0 and 180 */

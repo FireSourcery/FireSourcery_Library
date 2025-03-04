@@ -44,7 +44,7 @@
     Inline Getters/Setters
 */
 /******************************************************************************/
-/* todo wrap functions with value_t */
+/* todo wrap functions with intptr_t */
 
 /*! @return [-32767:32767] <=> [-1:1) speed forward as positive. reverse as negative. */
 static inline int32_t Motor_User_GetSpeed_Fract16(const Motor_T * p_motor) { return Motor_DirectionalValueOf(p_motor, p_motor->Speed_Fract16); }
@@ -119,13 +119,16 @@ static inline int32_t Motor_User_GetSetPoint(const Motor_T * p_motor)    { retur
 
 static inline int32_t Motor_User_GetEffectiveSetPoint(const Motor_T * p_motor)    { return Ramp_GetOutput(&p_motor->Ramp); }
 
+
+
 static inline Motor_Direction_T Motor_User_GetDirection(const Motor_T * p_motor)        { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_T * p_motor)  { return p_motor->FeedbackMode; }
 
-/* Separate getters for compatibility with StateMachine SetInput and ProcInput */
 static inline Phase_Output_T Motor_User_GetPhaseState(const Motor_T * p_motor) { return Phase_ReadOutputState(&p_motor->Phase); }
-static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
-static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsGround(&p_motor->Phase); }
+
+/* Separate getters for compatibility with StateMachine SetInput and ProcInput */
+// static inline bool Motor_User_IsRelease(const Motor_T * p_motor)    { return Phase_IsFloat(&p_motor->Phase); }
+// static inline bool Motor_User_IsHold(const Motor_T * p_motor)       { return Phase_IsV0(&p_motor->Phase); }
 
 /*
     User reference direction
@@ -141,10 +144,10 @@ static inline uint16_t Motor_User_GetILimitGenerating(const Motor_T * p_motor)  
 static inline uint16_t Motor_User_GetILimit(const Motor_T * p_motor)            { return Motor_FOC_GetILimit(p_motor); }
 
 /* SubStates */
-static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                      { return p_motor->ControlTimerBase; }
+// static inline uint32_t Motor_User_GetControlTimer(const Motor_T * p_motor)                      { return p_motor->ControlTimerBase; }
 // static inline Motor_OpenLoopState_T Motor_User_GetOpenLoopState(const Motor_T * p_motor)        { return p_motor->OpenLoopState; }
 // static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_T * p_motor)  { return p_motor->CalibrationState; }
-static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_motor)              { return p_motor->CalibrationStateIndex; }
+// static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
 /*
    User Conditional - set compare with array
@@ -188,12 +191,25 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T *
     };
 }
 
+/* buffered copy implementation */
+// typedef struct MotorUser_Input
+// {
+//     int8_t Direction;
+//     uint16_t CmdValue;
+//     uint16_t FeedbackMode;
+//     uint16_t ControlState;
+//     uint16_t SpeedLimit;
+//     uint16_t ILimit;
+//     uint16_t RampOnOff;
+// }
+// MotorUser_Input_T;
+
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
-extern void Motor_User_StartControlMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
+extern void Motor_User_ActivateControlWith(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_User_StartControl_Cast(Motor_T * p_motor, uint8_t modeValue);
 
 extern void Motor_User_ActivateControl(Motor_T * p_motor);
@@ -233,6 +249,8 @@ extern void Motor_User_SetActiveCmdValue_Scalar(Motor_T * p_motor, int16_t userC
 extern void Motor_User_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
 extern void Motor_User_SetDirectionForward(Motor_T * p_motor);
 extern void Motor_User_SetDirectionReverse(Motor_T * p_motor);
+
+extern void Motor_User_Stop(Motor_T * p_motor);
 
 extern void Motor_User_CalibrateSensor(Motor_T * p_motor);
 extern void Motor_User_CalibrateAdc(Motor_T * p_motor);

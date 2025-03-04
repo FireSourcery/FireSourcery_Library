@@ -57,7 +57,7 @@ typedef struct Debounce
     uint16_t TimeStart;
     bool PinState;
     bool DebouncedState;
-    bool EdgeState; /* for edge read */
+    bool DebouncedStatePrev; /* for edge read */
 }
 Debounce_T;
 
@@ -74,14 +74,13 @@ Debounce_T;
 }
 
 
-
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->DebouncedState; }
 
 /* During same synchronous cycle only */
-static inline bool Debounce_IsEdge(Debounce_T * p_debounce)         { return (p_debounce->DebouncedState != p_debounce->EdgeState); }
-static inline bool Debounce_IsRisingEdge(Debounce_T * p_debounce)   { return ((p_debounce->DebouncedState == true) && (p_debounce->EdgeState == false)); }
-static inline bool Debounce_IsFallingEdge(Debounce_T * p_debounce)  { return ((p_debounce->DebouncedState == false) && (p_debounce->EdgeState == true)); }
-static inline Debounce_Edge_T Debounce_GetEdge(Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->DebouncedState - p_debounce->EdgeState); }
+static inline bool Debounce_IsEdge(Debounce_T * p_debounce)         { return (p_debounce->DebouncedState != p_debounce->DebouncedStatePrev); }
+static inline bool Debounce_IsRisingEdge(Debounce_T * p_debounce)   { return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
+static inline bool Debounce_IsFallingEdge(Debounce_T * p_debounce)  { return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
+static inline Debounce_Edge_T Debounce_GetEdge(Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->DebouncedState - p_debounce->DebouncedStatePrev); }
 
 static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
 

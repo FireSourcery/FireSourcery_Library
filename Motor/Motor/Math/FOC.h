@@ -24,8 +24,7 @@
 /*!
     @file   FOC.h
     @author FireSourcery
-    @brief  FOC math functions only. Wrapper for pure math functions.
-            Only this modules calls math_foc, math_svpwm
+    @brief  FOC math functions with state. Wrapper for pure math functions.
     @version V0
 */
 /******************************************************************************/
@@ -40,10 +39,6 @@
 
 typedef struct FOC
 {
-    /* Config */
-    // fract16_t IdqMagnitudeMax;
-    // fract16_t IdMax; /* default 1/sqrt3 */
-
     /*
         VDuty Outputs during AngleControl
         VBemf Inputs during Freewheel - Capture by ADC
@@ -97,6 +92,11 @@ static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
     foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 }
 
+static inline void FOC_ProcVectorLimit(FOC_T * p_foc)
+{
+    foc_circle_limit(&p_foc->Vd, &p_foc->Vq, FRACT16_MAX, FRACT16_1_DIV_SQRT3);
+}
+
 /* VabcOfVdq */
 static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
 {
@@ -121,13 +121,12 @@ static inline ufract16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return fra
 static inline fract16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
 static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
-static inline int8_t FOC_GetISign(const FOC_T * p_foc) { return math_sign(p_foc->Iq); }
-
 /* [0:49152] <=> [0:1.5] */
-static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2); }
+static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return fract16_mul(fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)), FRACT16_SQRT3); }
 
-// static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return !(math_sign(p_foc->Vq) != math_sign(p_foc->Iq)); }
-// static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return !(math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
+// static inline int8_t FOC_GetISign(const FOC_T * p_foc) { return math_sign(p_foc->Iq); }
+static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) != math_sign(p_foc->Iq)); }
 
 static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 

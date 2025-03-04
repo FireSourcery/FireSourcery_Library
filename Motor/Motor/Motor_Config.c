@@ -135,9 +135,9 @@ void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->Config.IPeakRef_Adcu = adcu;
     Motor_ResetUnitsIabc(p_motor);
-#else
-    p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_PEAK_ADCU) ? MOTOR_STATIC.I_PEAK_ADCU : adcu;
-    PropagateSet(p_motor, Motor_ResetUnitsIabc);
+// #else
+//     p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_PEAK_ADCU) ? MOTOR_STATIC.I_PEAK_ADCU : adcu;
+//     PropagateSet(p_motor, Motor_ResetUnitsIabc);
 #endif
 }
 
