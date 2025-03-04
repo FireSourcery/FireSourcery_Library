@@ -66,31 +66,11 @@ static void Init_Entry(Motor_T * p_motor)
 {
     /* alternatively null until a direction is set */
     /* Sets Speed/I Limits using direction */
-    Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward);
+    // Motor_ProcCommutationMode(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward);
 }
 
 static void Init_Proc(Motor_T * p_motor)
 {
-    // bool wait = true;
-
-    // // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
-
-    // if (SysTime_GetMillis() > MOTOR_STATIC.INIT_WAIT) /* wait for Speed and Heat sensors */
-    // {
-    //     wait = false;
-    //     // (Motor_CheckConfig() == true)    // check params
-    //     Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
-    // }
-
-    // if (wait == false)
-    // {
-    //     if (p_motor->FaultFlags.Value != 0U) { _StateMachine_SetState(&p_motor->StateMachine, &MOTOR_STATE_FAULT); }
-    //     else
-    //     {
-    //         if (p_motor->Speed_Fract16 > 0) { _StateMachine_SetState(&p_motor->StateMachine, &MOTOR_STATE_FREEWHEEL); }
-    //         else                            { _StateMachine_SetState(&p_motor->StateMachine, &MOTOR_STATE_STOP); }
-    //     }
-    // }
 
 }
 
@@ -104,14 +84,10 @@ static StateMachine_State_T * Init_Next(Motor_T * p_motor)
         Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
 
         if (p_motor->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; }
-        else
-        {
-            // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
-            // if (p_motor->Speed_Fract16 > 0) { p_nextState = &MOTOR_STATE_FREEWHEEL; }
-            // else
-            { p_nextState = &MOTOR_STATE_STOP; }
-        }
+        else                                 { p_nextState = &MOTOR_STATE_STOP; }
     }
+
+    return p_nextState;
 }
 
 static const StateMachine_Input_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -146,6 +122,7 @@ static void Stop_Entry(Motor_T * p_motor)
     Phase_Float(&p_motor->Phase);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     p_motor->ControlTimerBase = 0U; /* ok to reset timer */
+    _StateMachine_EndSubState(&p_motor->StateMachine);
 }
 
 static void Stop_Proc(Motor_T * p_motor)
@@ -161,8 +138,7 @@ static void Stop_Proc(Motor_T * p_motor)
 static StateMachine_State_T * Stop_InputDirection(Motor_T * p_motor, state_machine_value_t direction)
 {
     Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, direction);
-    // or transition on direction?
-    return NULL;
+    return (direction != MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
 }
 
 static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, state_machine_value_t phaseMode)
@@ -173,7 +149,7 @@ static StateMachine_State_T * Stop_InputControl(Motor_T * p_motor, state_machine
     {
         case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->Phase);               break;
         case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->Phase);    break;
-        case PHASE_OUTPUT_VPWM:     p_nextState = &MOTOR_STATE_PASSIVE;         break;
+        // case PHASE_OUTPUT_VPWM:     p_nextState = &MOTOR_STATE_PASSIVE;         break;
         default: break;
     }
 
@@ -196,10 +172,6 @@ static StateMachine_State_T * Stop_InputFeedbackMode(Motor_T * p_motor, state_ma
 static StateMachine_State_T * Stop_InputCalibration(Motor_T * p_motor, state_machine_value_t statePtr)
 {
     StateMachine_State_T * p_state = (StateMachine_State_T *)statePtr;
-
-    // return (p_subState != NULL) ? p_subState : NULL;
-    // p_motor->CalibrationState = state;
-    // return &MOTOR_STATE_CALIBRATION;
 
     assert(/* p_state == 0U || */ p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_ROOT == &MOTOR_STATE_CALIBRATION);
 
@@ -237,6 +209,8 @@ static void Passive_Entry(Motor_T * p_motor)
     Phase_Float(&p_motor->Phase);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     // p_motor->ControlTimerBase = 0U; /* ok to reset timer */
+
+    _StateMachine_EndSubState(&p_motor->StateMachine);
 }
 
 static void Passive_Proc(Motor_T * p_motor)
@@ -501,8 +475,9 @@ const StateMachine_State_T MOTOR_STATE_RUN =
 static void OpenLoop_Entry(Motor_T * p_motor)
 {
     p_motor->FeedbackMode.OpenLoop = 1U; /* limits user cmd input */
-    Phase_ActivateOutputV0(&p_motor->Phase);
-    // FOC_ClearControlState(&p_motor->Foc);
+    // Phase_ActivateOutputV0(&p_motor->Phase);
+    FOC_ClearControlState(&p_motor->Foc);
+    Motor_FOC_ActivateOutputZero(p_motor);
     _StateMachine_EndSubState(&p_motor->StateMachine); /* 'unmount' last operation */
     // determine initial substate from stop
 
@@ -596,6 +571,27 @@ static const StateMachine_State_T OPEN_LOOP_STATE_ALIGN =
     .NEXT       = NULL,
 };
 
+/* ramp isolated from userCmd   */
+// void OpenLoop_CmdAlign(Motor_T * p_motor, state_machine_value_t ivCmd)
+// {
+//     Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16)));
+// }
+
+static StateMachine_State_T * OpenLoop_AngleAlign(Motor_T * p_motor, state_machine_value_t angle)
+{
+    p_motor->ElectricalAngle = angle;
+    return &OPEN_LOOP_STATE_ALIGN;
+}
+
+void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle)
+{
+    static const StateMachine_TransitionInput_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)OpenLoop_AngleAlign, };
+    StateMachine_InputBranchTransition(&p_motor->StateMachine, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
+}
+
+
+/*
+*/
 static const StateMachine_State_T OPEN_LOOP_STATE_RUN =
 {
     // .ID         = MSM_STATE_ID_OPEN_LOOP,
@@ -648,6 +644,7 @@ static const StateMachine_State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 
 static StateMachine_State_T * OpenLoop_StartUpRun(Motor_T * p_motor, state_machine_value_t null)
 {
+    Motor_FOC_ActivateOutputZero(p_motor); //in case it has been disabled
     return &OPEN_LOOP_STATE_START_UP_ALIGN;
 }
 
@@ -666,8 +663,9 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 static StateMachine_State_T * OpenLoop_PhaseControl(Motor_T * p_motor, state_machine_value_t phaseState)
 {
     Motor_FOC_ClearFeedbackState(p_motor);
+    //clear outputState V
     Phase_ActivateOutputState(&p_motor->Phase, (Phase_Output_T)phaseState);
-    return NULL;
+    return &MOTOR_STATE_OPEN_LOOP;
 }
 
 /*
@@ -677,8 +675,6 @@ void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_Output_T phase)
 {
     static const StateMachine_TransitionInput_T OPEN_LOOP_CMD_PHASE = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)OpenLoop_PhaseControl, };
     StateMachine_InputBranchTransition(&p_motor->StateMachine, &OPEN_LOOP_CMD_PHASE, phase);
-
-
 }
 
 /******************************************************************************/
@@ -695,7 +691,7 @@ static StateMachine_State_T * OpenLoop_PhaseAlign(Motor_T * p_motor, state_machi
     Ramp_SetOutputState(&p_motor->Ramp, Ramp_GetTarget(&p_motor->Ramp));
     p_motor->ElectricalAngle = Phase_AngleOf((Phase_Id_T)phaseAlign);
 
-    return NULL;
+    return &MOTOR_STATE_OPEN_LOOP;
 }
 
 void Motor_OpenLoop_SetPhaseVAlign(Motor_T * p_motor, Phase_Id_T align)
@@ -713,7 +709,7 @@ static StateMachine_State_T * OpenLoop_Jog(Motor_T * p_motor, state_machine_valu
     // Ramp_ProcEndState(&p_motor->Ramp);
     p_motor->ElectricalAngle = Phase_AngleOf(Phase_JogDirection(&p_motor->Phase, Ramp_GetTarget(&p_motor->Ramp), 1));
 
-    return NULL;
+    return &MOTOR_STATE_OPEN_LOOP;
 }
 
 void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
@@ -722,29 +718,6 @@ void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
     StateMachine_InputBranchTransition(&p_motor->StateMachine, &OPEN_LOOP_CMD_JOG, direction);
 }
 
-/******************************************************************************/
-/*
-    intensity using user ramp
-    feedback align angle
-*/
-/******************************************************************************/
-/* ramp isolated from userCmd   */
-// void OpenLoop_CmdAlign(Motor_T * p_motor, state_machine_value_t ivCmd)
-// {
-//     Ramp_SetTarget(&p_motor->Ramp, Motor_DirectionalValueOf(p_motor, math_clamp(ivCmd, 0, p_motor->Config.OpenLoopPower_UFract16)));
-// }
-
-static StateMachine_State_T * OpenLoop_AngleAlign(Motor_T * p_motor, state_machine_value_t angle)
-{
-    p_motor->ElectricalAngle = angle;
-    return NULL;
-}
-
-void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle)
-{
-    static const StateMachine_TransitionInput_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)OpenLoop_AngleAlign, };
-    StateMachine_InputBranchTransition(&p_motor->StateMachine, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
-}
 
 
 /******************************************************************************/
@@ -895,6 +868,8 @@ static void Calibration_HomeEntry(Motor_T * p_motor)
 
     p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     p_motor->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+
+    Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, MOTOR_DIRECTION_CCW);
 }
 
 // todo curent voltage speed calc

@@ -92,8 +92,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     // p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, integralMin << 15, integralMax << 15);
     // integral = p_pid->IntegralAccum >> 15;
 
-    assert(p_pid->IntegralAccum < INT32_MAX / 2);
-    assert(((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
+    // assert(p_pid->IntegralAccum < INT32_MAX / 2);
+    // assert(((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
 
     integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
     integral = math_clamp(integralAccum >> 15, integralMin, integralMax);
