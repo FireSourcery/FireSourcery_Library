@@ -329,6 +329,7 @@ static void Run_Entry(Motor_T * p_motor)
     // Motor_UpdateSpeedControlLimits(p_motor); /* Alternatively run in SetFeedbackMode does not need to update  unless feedback mode changed */
     Motor_ProcCommutationMode(p_motor, Motor_FOC_MatchFeedbackState, NULL);
     Motor_ProcCommutationMode(p_motor, Motor_FOC_ActivateOutput, NULL);
+    _StateMachine_EndSubState(&p_motor->StateMachine);
 }
 
 static void Run_Proc(Motor_T * p_motor)
@@ -723,6 +724,7 @@ static void Calibration_Entry(Motor_T * p_motor)
     p_motor->ControlTimerBase = 0U;
     p_motor->CalibrationStateIndex = 0U;
     Phase_ActivateOutputV0(&p_motor->Phase);
+    _StateMachine_EndSubState(&p_motor->StateMachine);
 }
 
 static void Calibration_Proc(Motor_T * p_motor)

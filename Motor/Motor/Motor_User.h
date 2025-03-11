@@ -202,7 +202,7 @@ static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_T *
 //     uint16_t ILimit;
 //     uint16_t RampOnOff;
 // }
-// MotorUser_Input_T;
+// MotorUser_Input_T;7
 
 /******************************************************************************/
 /*!
