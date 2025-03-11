@@ -59,11 +59,11 @@ Serial_T;
     .RxRing = RING_INIT(p_RxBuffer, sizeof(uint8_t), RxBufferSize, 0U),         \
 }
 
-#define SERIAL_INIT_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
-{                                                               \
-    .CONST = { .P_HAL_SERIAL = p_Hal, },                        \
-    .TxRing = RING_INIT_ALLOC(sizeof(uint8_t), TxBufferSize),   \
-    .RxRing = RING_INIT_ALLOC(sizeof(uint8_t), RxBufferSize),   \
+#define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
+{                                                          \
+    .CONST = { .P_HAL_SERIAL = p_Hal, },                   \
+    .TxRing = RING_ALLOC(sizeof(uint8_t), TxBufferSize),   \
+    .RxRing = RING_ALLOC(sizeof(uint8_t), RxBufferSize),   \
 }
 
 static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(&p_serial->RxRing); }
@@ -99,7 +99,5 @@ extern bool Serial_RecvN(Serial_T * p_serial, uint8_t * p_destBuffer, size_t len
 extern bool Serial_Send(Serial_T * p_serial, const uint8_t * p_srcBuffer, size_t length);
 extern size_t Serial_Recv(Serial_T * p_serial, uint8_t * p_destBuffer, size_t length);
 
-// extern uint8_t * Serial_AcquireTxBuffer(Serial_T * p_serial);
-// extern void Serial_ReleaseTxBuffer(Serial_T * p_serial, size_t writeSize);
 
 #endif

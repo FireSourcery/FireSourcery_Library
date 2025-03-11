@@ -34,8 +34,8 @@
 #include "Config.h"
 #include "Peripheral/Pin/Pin.h"
 
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Virtual State Where ID => 0bCBA */
 #define HALL_SENSORS_VIRTUAL_A      (0b001U)
@@ -167,7 +167,7 @@ typedef struct Hall
     Hall_Direction_T Direction;
     uint16_t Angle;
 #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-    Hall_CommutationPhase_T CommuntationTable[HALL_SENSORS_TABLE_LENGTH];
+    Hall_CommutationPhase_T CommutationTable[HALL_SENSORS_TABLE_LENGTH];
     void * p_CommutationContext;
 #endif
 }
@@ -183,6 +183,18 @@ Hall_T;
     .PinB = PIN_INIT(p_PinBHal, PinBId),                        \
     .PinC = PIN_INIT(p_PinCHal, PinCId),                        \
 }
+
+typedef enum Hall_ConfigId
+{
+    HALL_CONFIG_SENSOR_TABLE_1,
+    HALL_CONFIG_SENSOR_TABLE_2,
+    HALL_CONFIG_SENSOR_TABLE_3,
+    HALL_CONFIG_SENSOR_TABLE_4,
+    HALL_CONFIG_SENSOR_TABLE_5,
+    HALL_CONFIG_SENSOR_TABLE_6,
+    HALL_CONFIG_RUN_CALIBRATION,
+}
+Hall_ConfigId_T;
 
 /******************************************************************************/
 /* Stateless Conversions */
@@ -379,19 +391,23 @@ static inline bool Hall_Verify(const Hall_T * p_hall, uint8_t sensorsValue)
     return ((sensorsValue != HALL_ANGLE_ERROR_0) && (sensorsValue != HALL_ANGLE_ERROR_7));
 }
 
-static inline bool Hall_IsSensorsStateValid(const Hall_T * p_hall)
+static inline bool Hall_IsStateValid(const Hall_T * p_hall)
 {
     return Hall_Verify(p_hall, Hall_ReadSensors(p_hall).Value);
 }
 
-static inline bool Hall_IsSensorsTableValid(const Hall_T * p_hall)
+static inline bool Hall_IsTableValid(const Hall_T * p_hall)
 {
-    bool isSuccess = true;
+    bool valid = true;
+    bool once[HALL_SENSORS_TABLE_LENGTH] = { false };
+
     for (uint8_t index = 1U; index < HALL_SENSORS_TABLE_LENGTH - 1U; index++) /* 1-6 */
     {
-        if (Hall_Verify(p_hall, p_hall->Config.SensorsTable[index]) == false) { isSuccess = false; break; }
+        if (Hall_Verify(p_hall, p_hall->Config.SensorsTable[index]) == false) { valid = false; break; }
+        if (once[p_hall->Config.SensorsTable[index]] == true) { valid = false; break; }
+        once[p_hall->Config.SensorsTable[index]] = true;
     }
-    return isSuccess;
+    return valid;
 }
 
 /******************************************************************************/
@@ -400,10 +416,10 @@ static inline bool Hall_IsSensorsTableValid(const Hall_T * p_hall)
 */
 /******************************************************************************/
 extern void Hall_Init(Hall_T * p_hall);
-// extern void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
 extern void Hall_StartCalibrate(Hall_T * p_hall);
 extern void Hall_CalibrateState(Hall_T * p_hall, Hall_Id_T calibratedId);
 
+// extern void Hall_SetSensorsTable(Hall_T * p_hall, uint8_t sensorsA, uint8_t sensorsInvC, uint8_t sensorsB, uint8_t sensorsInvA, uint8_t sensorsC, uint8_t sensorsInvB);
 // extern void Hall_CalibratePhaseA(Hall_T * p_hall);
 // extern void Hall_CalibratePhaseInvC(Hall_T * p_hall);
 // extern void Hall_CalibratePhaseB(Hall_T * p_hall);

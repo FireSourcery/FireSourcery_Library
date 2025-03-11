@@ -80,7 +80,6 @@ void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint1
 //     Phase_ActivateOutput(p_phase);
 // }
 
-
 void Phase_ActivateOutput(const Phase_T * p_phase)
 {
     // _Phase_WriteState(p_phase, PHASE_ID_ABC);
@@ -209,6 +208,12 @@ Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase) { return Phase_NextOf(Ph
 Phase_Id_T Phase_ReadAlignNextDirection(const Phase_T * p_phase, bool ccw)
 {
     return (ccw == true) ? Phase_NextOf(Phase_ReadAlign(p_phase)) : Phase_PrevOf(Phase_ReadAlign(p_phase));
+}
+
+/* towards B */
+void Phase_JogNext(const Phase_T * p_phase, uint16_t duty)
+{
+    Phase_Align(p_phase, Phase_ReadAlignNext(p_phase), duty);
 }
 
 // Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)

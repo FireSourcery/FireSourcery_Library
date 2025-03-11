@@ -296,6 +296,8 @@ static inline void ProcTransition(StateMachine_T * p_stateMachine, const StateMa
     assert(p_newState == NULL || p_newState->DEPTH == 0); /* Top level state */
     State_Transition(&p_stateMachine->p_ActiveState, p_newState, p_stateMachine->CONST.P_CONTEXT);
     // if (p_newState != NULL) { _StateMachine_SetState(p_stateMachine, p_newState); }
+
+    // p_stateMachine->p_ActiveSubState = p_newState; /* if HSM is select. */
 }
 
 
@@ -554,9 +556,9 @@ inline void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine
 }
 
 /*
-
+    Invoke a [Transition] or as a Command
 */
-void StateMachine_InputTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
+void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
 {
     if (AcquireCritical_AsyncInput(p_stateMachine) == true)
     {
@@ -567,14 +569,18 @@ void StateMachine_InputTransition(StateMachine_T * p_stateMachine, const StateMa
     }
 }
 
+// void _StateMachine_SetValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value)
+// {
+//     if (StateMachine_IsActiveState(p_stateMachine, p_state) == true) { setter(p_stateMachine->CONST.P_CONTEXT, value); }
+// }
 
 /*
+    Invoke Setter
     SetValueOfStateWith Setter
     State direct inputs. Reject if it is not the active state.
     inputs that only map to 1 state, reduce table size
     per state inputs, only need to check id.
 */
-/* set with signal */
 void StateMachine_SetValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value)
 {
     if (AcquireCritical_AsyncInput(p_stateMachine) == true)
@@ -612,7 +618,6 @@ void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachi
         State_Transition(&p_stateMachine->p_ActiveSubState, p_state, p_stateMachine->CONST.P_CONTEXT); /* ignores null */
     }
 }
-
 
 
 void ProcTransitionSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state)
@@ -1003,7 +1008,7 @@ void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
     TryTransition
 */
-void StateMachine_InputBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
+void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue)
 {
     if (AcquireCritical_AsyncInput(p_stateMachine) == true)
     {

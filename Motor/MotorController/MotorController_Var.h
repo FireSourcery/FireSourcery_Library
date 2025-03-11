@@ -343,6 +343,8 @@ MotVarId_Status_T;
 extern int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId);
 extern MotVarId_Status_T MotorController_Var_Set(MotorController_T * p_mc, MotVarId_T varId, int32_t varValue);
 
-
+// typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
+// typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
+// typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
 
 #endif

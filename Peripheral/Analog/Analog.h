@@ -235,7 +235,7 @@ static inline void _Analog_ADC_Deactivate(const Analog_ADC_T * p_adc)
 */
 static inline bool Analog_ReadIsActive(const Analog_T * p_analog)
 {
-    return void_array_is_any(p_analog->CONST.P_ADCS, sizeof(Analog_ADC_T), p_analog->CONST.ADC_COUNT, (void_test_t)_Analog_ADC_ReadIsActive);
+    return void_array_is_any(p_analog->CONST.P_ADCS, sizeof(Analog_ADC_T), p_analog->CONST.ADC_COUNT, (test_t)_Analog_ADC_ReadIsActive);
 }
 
 /*
@@ -243,7 +243,7 @@ static inline bool Analog_ReadIsActive(const Analog_T * p_analog)
 */
 static inline void Analog_Deactivate(const Analog_T * p_analog)
 {
-    void_array_foreach(p_analog->CONST.P_ADCS, sizeof(Analog_ADC_T), p_analog->CONST.ADC_COUNT, (void_op_t)_Analog_ADC_Deactivate);
+    void_array_foreach(p_analog->CONST.P_ADCS, sizeof(Analog_ADC_T), p_analog->CONST.ADC_COUNT, (proc_t)_Analog_ADC_Deactivate);
 }
 
 /******************************************************************************/

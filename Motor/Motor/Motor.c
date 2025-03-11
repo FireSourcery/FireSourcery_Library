@@ -116,8 +116,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 #endif
 
     /*
-        e.g. Ramp 0 to 32767 max in ~500ms, 3.2767 per ControlCycle
-        Final value is overwritten, Slope is persistent unless reset
+        e.g. (CONTROL_FREQ, INT16_MAX) => Ramp 0 to SpeedRef_Rpm in 1000ms
+        Sets slope until reset
     */
     Ramp_Init(&p_motor->Ramp, p_motor->Config.RampAccel_Cycles, INT16_MAX); /* todo as speed freq cycles */
     Ramp_Init(&p_motor->AuxRamp, p_motor->Config.RampAccel_Cycles, INT16_MAX);
@@ -146,6 +146,8 @@ void Motor_InitReboot(Motor_T * p_motor)
 
 void Motor_InitSensor(Motor_T * p_motor)
 {
+    // MotorSensor_Init(&p_motor->Sensor Interface);
+
     switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
@@ -181,8 +183,8 @@ bool Motor_VerifySensorCalibration(Motor_T * p_motor)
     switch (p_motor->Config.SensorMode)
     {
         case MOTOR_SENSOR_MODE_HALL:
-            if (Hall_IsSensorsStateValid(&p_motor->Hall) == false) { isValid = false; }
-            if (Hall_IsSensorsTableValid(&p_motor->Hall) == false) { isValid = false; }
+            if (Hall_IsStateValid(&p_motor->Hall) == false) { isValid = false; }
+            if (Hall_IsTableValid(&p_motor->Hall) == false) { isValid = false; }
             break;
         case MOTOR_SENSOR_MODE_ENCODER:
             break;

@@ -142,7 +142,7 @@ typedef union Motor_FeedbackMode
 }
 Motor_FeedbackMode_T;
 
-
+/* Defined as const bit-fields over enum. in line with bit as conditional, not all combination need to be defined */
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, };
@@ -347,9 +347,6 @@ typedef struct Motor
     Motor_StateFlags_T StateFlags;              /* Can be pushed to submodules */
 
     bool IsVarControlEnabled;                   /* Direct Var Set Enable. */
-
-    uint32_t OpenLoopState;     /* depreciate */
-    uint32_t CalibrationState;  /* SubState, selection for calibration */
 
     uint8_t CalibrationStateIndex;
     volatile Phase_Bits_T IFlags;

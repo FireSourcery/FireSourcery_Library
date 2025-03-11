@@ -92,7 +92,7 @@ bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t li
 
 bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
 {
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearSpeedLimit);
+    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (poll_t)Motor_User_ClearSpeedLimit);
 }
 
 bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
@@ -102,7 +102,7 @@ bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_
 
 bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
 {
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_poll_t)Motor_User_ClearILimit);
+    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (poll_t)Motor_User_ClearILimit);
 }
 
 void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)

@@ -138,6 +138,7 @@ typedef enum NvMemory_State
 NvMemory_State_T;
 
 /* Per sub-type VTable, abstract functions provided by concrete child class */
+/* alternatiely split type and instance */
 typedef const struct NvMemory_Const
 {
     void * const P_HAL;

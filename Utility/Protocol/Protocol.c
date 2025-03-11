@@ -529,7 +529,7 @@ void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 
 void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 {
-    if((baudRate != 0U) && (Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true))
+    if((baudRate != 0U) && (Xcvr_IsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true))
     {
         Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate);
     }
@@ -548,7 +548,7 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 
 bool Protocol_Enable(Protocol_T * p_protocol)
 {
-    bool isEnable = ((Xcvr_CheckIsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true) && (p_protocol->p_Specs != 0U));
+    bool isEnable = ((Xcvr_IsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true) && (p_protocol->p_Specs != 0U));
 
     if(isEnable == true)
     {

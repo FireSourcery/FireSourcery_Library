@@ -59,7 +59,6 @@ static inline void ProcIFeedback(Motor_T * p_motor)
     // FOC_ProcVectorLimit(&p_motor->Foc); /* This does not have to apply when updating the angle only */
 }
 
-
 static inline void ProcILimitV(Motor_T * p_motor)
 {
     FOC_SetVq(&p_motor->Foc, math_limit_magnitude(FOC_GetReqQ(&p_motor->Foc), Motor_FOC_GetILimit(p_motor), math_abs(FOC_GetIq(&p_motor->Foc))));
@@ -84,10 +83,11 @@ static inline void ProcVReq(Motor_T * p_motor)
 */
 static inline void ProcSpeedFeedback(Motor_T * p_motor)
 {
+    // Ramp_GetOutput(&p_motor->SpeedRamp); todo as speed freq
     FOC_SetReqQ(&p_motor->Foc, PID_ProcPI(&p_motor->PidSpeed, p_motor->Speed_Fract16, Ramp_GetOutput(&p_motor->Ramp)));
 }
 
-static inline void ProcSpeedLimitReq(Motor_T * p_motor)
+static inline void ProcSpeedLimitReqQ(Motor_T * p_motor)
 {
     FOC_SetReqQ(&p_motor->Foc, math_limit_magnitude(Ramp_GetOutput(&p_motor->Ramp), Motor_GetSpeedLimit(p_motor), math_abs(p_motor->Speed_Fract16))); /* todo i input ramp limits */
 
@@ -126,7 +126,7 @@ static void ProcOuterFeedback(Motor_T * p_motor)
     }
     else if (p_motor->FeedbackMode.Speed == 0U)
     {
-        if (hasSpeedFeedback == true) { ProcSpeedLimitReq(p_motor); }
+        if (hasSpeedFeedback == true) { ProcSpeedLimitReqQ(p_motor); }
         else if (p_motor->StateFlags.SpeedLimited == 0U) { ProcReqQ(p_motor); }
     }
 

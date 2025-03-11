@@ -64,13 +64,13 @@ static inline void HAL_Serial_DisableRxInterrupt(HAL_Serial_T * p_hal)  { p_hal-
 static inline void HAL_Serial_WriteTxSwitch(HAL_Serial_T * p_hal, bool enable)
 {
     p_hal->C2 = (p_hal->C2 & ~UART_C2_TE_MASK) | ((enable ? 1UL : 0UL) << UART_C2_TE_SHIFT);
-    while(((p_hal->C2 & UART_C2_TE_MASK) != 0U) != enable) {}    /* Wait for the register write operation to complete */
+    while (((p_hal->C2 & UART_C2_TE_MASK) != 0U) != enable) {}    /* Wait for the register write operation to complete */
 }
 
 static inline void HAL_Serial_WriteRxSwitch(HAL_Serial_T * p_hal, bool enable)
 {
     p_hal->C2 = (p_hal->C2 & ~UART_C2_RE_MASK) | ((enable ? 1UL : 0UL) << UART_C2_RE_SHIFT);
-    while(((p_hal->C2 & UART_C2_RE_MASK) != 0U) != enable) {}    /* Wait for the register write operation to complete */
+    while (((p_hal->C2 & UART_C2_RE_MASK) != 0U) != enable) {}    /* Wait for the register write operation to complete */
 }
 
 static inline bool HAL_Serial_ConfigBaudRate(HAL_Serial_T * p_hal, uint32_t baudRate_Bps)

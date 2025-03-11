@@ -72,20 +72,13 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
 static inline fract16_t fract16_sat(accum32_t value)    { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
-static inline ufract16_t ufract16_sat(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); } /* Although range of [0:2). Refer to 1 as saturated */
+static inline ufract16_t ufract16_sat(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); } /* range of [0:2). Refer to 1 as saturated */
 
 /*!
     @brief Unsaturated Multiply
 
-    input max factor1 * factor2 < INT32_MAX
-    overflow
-        e.g. (65,536, 32,768)
-
-    fract16_mul(+/-32768, +/-32768) returns 32768 [0x8000]
-        (int32_t)32768 -> positive 32768, over saturated 1
-        (int16_t)32768 -> -32768, -1
-
     @param[in]
+        input max factor1 * factor2 < INT32_MAX
     @return int32_t[-65536:65535] <=> [-2:2)
 */
 static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
@@ -96,7 +89,11 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
 
-    fract16_mul(int16_t factor, int16_t frac) must still check for 32768 case
+    check for 32768 case
+    fract16_mul(-32768, -32768) => 32768 [0x8000], over sat 1
+    (int16_t)32768 => -32768
+
+    alternatively fract16_mul(int16_t, int16_t)
         (product == +32768) ? 32767 : product;
 
     @return int16_t[-32767, 32767] <=> (-1:1)
@@ -109,10 +106,10 @@ static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
 /*!
     @brief Unsaturated Divide
 
-    dividend >= divisor returns [-1073741824:1073709056] <=> (-32768, 32767)
-        over saturated fract16_t, 32768 [0x8000] -> over saturated 1
-    dividend < divisor returns [-32767:32767] <=> (-1:1)
-        within fract16_t range
+    dividend >= divisor => [-1073741824:1073709056] <=> (-32768.0, 32767.0)
+        accum32_t
+    dividend < divisor => [-32767:32767] <=> (-1:1)
+        fract16_t
 
     @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t[-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
@@ -133,13 +130,12 @@ static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor)
 /* cast overflow as ufract */
 static inline ufract16_t fract16_abs(fract16_t x)
 {
-    int32_t mask = (x >> FRACT16_N_BITS); // Create a mask based on the sign bit
-    return (x + mask) ^ mask; // Apply the mask to get the absolute value
+    return abs(x);
 }
 
 static inline fract16_t fract16_abs_sat(fract16_t x)
 {
-    return (x < 0) ? ((x == -32768) ? 32767 : 0 - x) : x;
+    return (x == INT16_MIN) ? INT16_MAX : abs(x);
 }
 
 static inline fract16_t fract16_sqrt(fract16_t x)
@@ -196,6 +192,11 @@ static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
     return ((uint16_t)theta0 > (uint16_t)theta1);
 }
 
+static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
+{
+    return ((uint16_t)theta0 < (uint16_t)theta1);
+}
+
 // static inline bool angle16_cycle_sign(angle16_t theta0, angle16_t theta1, int16_t sign)
 // {
 // }
@@ -204,8 +205,7 @@ static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
 /* crossing 0 and 180 */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
 {
-    // return ((int16_t)(theta0 ^ theta1) < 0);
-    return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U);
+    return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); /* ((theta0 ^ theta1) < 0); */
 }
 
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)

@@ -1,7 +1,5 @@
 
 #include "Limit.h"
-#include "Type/Array/Array.h"
-#include "Type/Array/array_generic.h"
 
 #include <stdint.h>
 #include <stdbool.h>

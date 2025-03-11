@@ -48,7 +48,7 @@ typedef struct PID_Config
 {
     PID_Mode_T Mode;
     uint32_t SampleFreq;
-    int32_t Kp_Fixed32; /* Q17.5 */
+    int32_t Kp_Fixed32; /* Q17.15 */
     int32_t Ki_Fixed32;
     int32_t Kd_Fixed32;
 }

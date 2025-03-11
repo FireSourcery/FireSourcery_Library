@@ -33,6 +33,36 @@
 
 
 /*!
+    @brief Calculate the square root of a fixed-point number
+    @param x Fixed-point number
+    @return Square root of x
+*/
+uint16_t fixed_sqrt(uint32_t x)
+{
+    uint32_t result = 0U;
+    uint32_t bit = 1U << 30U; // The second-to-top bit is set
+
+    // "bit" starts at the highest power of four <= the argument.
+    while (bit > x) { bit >>= 2; }
+
+    while (bit != 0)
+    {
+        if (x >= result + bit)
+        {
+            x -= result + bit;
+            result = (result >> 1) + bit;
+        }
+        else
+        {
+            result >>= 1;
+        }
+        bit >>= 2;
+    }
+
+    return result;
+}
+
+/*!
     @brief Calculates square root
 
     Babylonian method
@@ -70,49 +100,30 @@
 //     return (uint16_t)y;
 // }
 
-/*!
-    @brief Calculate the square root of a fixed-point number
-    @param x Fixed-point number
-    @return Square root of x
-*/
-uint16_t fixed_sqrt(uint32_t x)
-{
-    uint32_t result = 0U;
-    uint32_t bit = 1U << 30U; // The second-to-top bit is set
 
-    // "bit" starts at the highest power of four <= the argument.
-    while (bit > x) { bit >>= 2; }
+// uint8_t _leading_zeros(uint32_t x)
+// {
+// #if defined(__GNUC__)
+//     return __builtin_clz(x);
+// #elif(__STDC_VERSION__ >= 202311L)
+//     return stdc_leading_zeros(x);
+// #endif
+// }
 
-    while (bit != 0)
-    {
-        if (x >= result + bit)
-        {
-            x -= result + bit;
-            result = (result >> 1) + bit;
-        }
-        else
-        {
-            result >>= 1;
-        }
-        bit >>= 2;
-    }
-
-    return result;
-}
-
-
-uint8_t _leading_zeros(uint32_t x)
+uint8_t fixed_bitwidth(uint32_t x)
 {
 #if (__STDC_VERSION__ >= 202311L)
-    return stdc_leading_zeros(x);
+    return stdc_bit_width(x);
 #elif defined(__GNUC__)
-    return (x == 0U) ? 0U : __builtin_clz(x);
-    // return  __builtin_stdc_leading_zeros (x);
+    return (32U - __builtin_clz(x));
+#else
+    uint8_t shift = 0U;
+    while ((x >> shift) > 0U) { shift++; }
+    return shift;
 #endif
 }
 
 /*
-    32767 -> 14
     65535 -> 15
     65536 -> 16
     65537 -> 16
@@ -121,40 +132,25 @@ uint8_t fixed_log2(uint32_t x)
 {
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x) - 1U;
-    // return  __builtin_stdc_bit_width(x) - 1U;
 #elif defined(__GNUC__)
     return (x == 0U) ? 0U : (31U - __builtin_clz(x));
 #else
     /* Iterative log2 */
     uint8_t shift = 0U;
-    while((x >> shift) >= 1U) { shift++; }
+    while((x >> shift) > 1U) { shift++; }
     return shift;
 #endif
+    // return fixed_bitwidth(x) - 1U;
 }
 
 /*
-    32768 -> 15
-    32769 -> 16
+    65535 -> 16
     65536 -> 16
     65537 -> 17
 */
 uint8_t fixed_log2_ceiling(uint32_t x)
 {
     fixed_log2(x - 1U) + 1U;
-}
-
-uint8_t fixed_bitwidth(uint32_t x)
-{
-#if (__STDC_VERSION__ >= 202311L)
-    return stdc_bit_width(x);
-    // return  __builtin_stdc_bit_width(x);
-#elif defined(__GNUC__)
-    return (x == 0U) ? 0U : (32U - __builtin_clz(x));
-#else
-    uint8_t shift = 0U;
-    while ((x >> shift) > 0U) { shift++; }
-    return shift;
-#endif
 }
 
 
@@ -194,8 +190,10 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* leading zeros - 1 */
+/* leading zeros - 1 sign bit */
+/* 31 - bitwidth */
 /* log2(INT32_MAX) - log2(abs(x))) */
+// uint8_t fixed32_sat_lshift(int32_t x)
 uint8_t fixed_lshift_max_signed(int32_t x)
 {
 #if defined(__GNUC__)
@@ -205,10 +203,14 @@ uint8_t fixed_lshift_max_signed(int32_t x)
 #endif
 }
 
+// uint8_t fixed16_sat_lshift(int32_t x) max(fixed16_sat_shift(x), 0)
+// int8_t fixed16_sat_shift(int32_t x) 15 - bitwidth
+
+
 /* leading zeros */
+// uint8_t ufixed_lshift_max(uint32_t x)
 uint8_t fixed_lshift_max_unsigned(uint32_t x)
 {
-
 #if defined(__GNUC__)
     return __builtin_clz(x);
 #else
@@ -216,7 +218,7 @@ uint8_t fixed_lshift_max_unsigned(uint32_t x)
 #endif
 }
 
-int32_t fixed_scalar_max_signed(int32_t x)
-{
-    return INT32_MAX >> fixed_lshift_max_signed(x);
-}
+// int32_t fixed_scalar_max_signed(int32_t x)
+// {
+//     return INT32_MAX >> fixed_lshift_max_signed(x);
+// }

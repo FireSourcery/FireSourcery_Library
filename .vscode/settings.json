@@ -82,7 +82,7 @@
 
     "files.trimTrailingWhitespace": true,
 
-    // "[c]": {
+    "[c]": {
     //     "editor.tabSize": 4,
     //     "editor.insertSpaces": true,
     //     "editor.formatOnPaste": false,
@@ -90,7 +90,7 @@
     //     "editor.detectIndentation": false,
     //     "editor.defaultFormatter": "ms-vscode.cpptools",
     //     "editor.semanticHighlighting.enabled": "configuredByTheme",
-    // },
+    },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },

@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "array_generic.h"
 #include "void_array.h"
 #include "struct_array.h"
 
@@ -20,6 +19,7 @@
     a structure to hold a pointer to an p_array buffer and its length
     Generic array implementation using Unit Size. Run time generic.
 */
+// typedef struct array_type { size_t type; size_t length; } array_type_t;
 typedef const struct ArrayMeta
 {
     void * const P_BUFFER;  // Pointer to the p_array buffer
@@ -35,8 +35,8 @@ Array_T;
     @param length Length of the p_array.
 */
 #define ARRAY_INIT(p_buffer, unitSize, length) { .P_BUFFER = (p_buffer), .UNIT_SIZE = (unitSize), .LENGTH = (length) }
-#define ARRAY_INIT_ALLOC(unitSize, length) ARRAY_INIT((uint8_t[(length * unitSize)]){ }, unitSize, length)
-#define ARRAY_INIT_AS(T, length) ARRAY_INIT_ALLOC(sizeof(T), length)
+#define ARRAY_ALLOC(unitSize, length) ARRAY_ALLOC((uint8_t[(unitSize) * (length)]){}, unitSize, length)
+#define ARRAY_ALLOC_AS(T, length) ARRAY_ALLOC_AS(sizeof(T), length)
 
 /*!
     Protected
@@ -73,34 +73,17 @@ static inline bool Array_Set(const Array_T * p_array, size_t index, const void *
     return true;
 }
 
-static inline void Array_ForEach(const Array_T * p_array, void_op_t unit_op)
+static inline void Array_ForEach(const Array_T * p_array, proc_t unit_op)
 {
     void_array_foreach(p_array->P_BUFFER, p_array->UNIT_SIZE, p_array->LENGTH, unit_op);
 }
 
-
-static inline void Array_SetAll_Int32(const Array_T * p_array, set_int32_t unit_op, int32_t value)
+static inline void Array_SetEach(const Array_T * p_array, set_t unit_op, intptr_t value)
 {
-    struct_array_foreach_set_int32(p_array->P_BUFFER, p_array->UNIT_SIZE, p_array->LENGTH, unit_op, value);
+    void_array_foreach_set(p_array->P_BUFFER, p_array->UNIT_SIZE, p_array->LENGTH, unit_op, value);
 }
 
 
-/*
-    Value Array.
-
-    Wrapped version of array/value_array
-    Macro generic - for primatives without swith_copy/memcpy
-    call can wrap array without helper
-    handle with _Generic.
-*/
-typedef const struct Array8 { uint8_t * const P_ARRAY; const size_t LENGTH; } Array8_T;
-typedef const struct Array16 { uint16_t * const P_ARRAY; const size_t LENGTH; } Array16_T;
-typedef const struct Array32 { uint32_t * const P_ARRAY; const size_t LENGTH; } Array32_T;
-typedef const struct Array64 { uint64_t * const P_ARRAY; const size_t LENGTH; } Array64_T;
-#define VALUE_ARRAY(T) const struct { T * const P_ARRAY; const size_t LENGTH; }
-
-#define VALUE_ARRAY_INIT(p_buffer, length) { .P_ARRAY = (p_buffer), .LENGTH = (length), }
-#define VALUE_ARRAY_INIT_UNNAMED(p_buffer, length) .P_ARRAY = (p_buffer), .LENGTH = (length)
 
 
 

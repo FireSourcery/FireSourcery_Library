@@ -322,7 +322,7 @@ bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar)
 }
 
 /*
-    Calling function must check Serial_GetRxFullCount to avoid meta data collision
+    Caller check Serial_GetRxFullCount to avoid meta data collision
 */
 uint8_t Serial_GetByte(Serial_T * p_serial)
 {
@@ -451,6 +451,13 @@ void Serial_FlushBuffers(Serial_T * p_serial)
 //     Ring_ReleaseBuffer(&p_serial->TxRing, writeSize);
 //     if(Ring_IsEmpty(&p_serial->TxRing) == false) { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
 //     ReleaseCriticalTx(p_serial);
+// }
+
+// char Serial_GetChar(Serial_T * p_serial)
+// {
+//     char rxChar = 0xFFU;
+//     if (Serial_RecvByte(p_serial, (uint8_t *)&rxChar) == false) { rxChar = 0xFFU; }
+//     return rxChar;
 // }
 
 // bool Serial_SendCharString(Serial_T * p_serial, const uint8_t * p_srcBuffer)

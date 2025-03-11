@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "array_generic.h"
 #include "void_array.h"
 
 /******************************************************************************/
@@ -16,7 +15,6 @@
     In most cases structs will have pre defined getters/setters.
     Collectively defined with various typed handlers.
         Otherwise caller would need to wrap established getters/setters with void handlers.
-        typedef void (*set_void_t)(void * p_unit, void * p_value);
 */
 /******************************************************************************/
 typedef int32_t(*get_int32_t)(const void * p_struct);
@@ -44,7 +42,6 @@ typedef bool (*try_uint32_t)(void * p_struct, uint32_t value);
 */
 /******************************************************************************/
 #define _STRUCT_ARRAY_FOREACH_SET(p_structs, length, unit_set, unit_value) ({ for (size_t index = 0U; index < length; index++) { unit_set(((p_structs) + index), unit_value); } })
-
 
 #define _STRUCT_ARRAY_FOR_EVERY_SET(p_structs, length, unit_try, unit_value) ({ \
     bool is_every = true; \

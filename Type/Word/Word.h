@@ -34,12 +34,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
-typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
-typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
-
-#define REGISTER_SIZE sizeof(register_t)
-
 typedef union __attribute__((packed, aligned(4U))) Word32
 {
     char Chars[4U];

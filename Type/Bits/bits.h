@@ -42,9 +42,7 @@ static inline void fill_bit(uint32_t * p_bits, uint8_t index) { *p_bits |= (1U <
 static inline void clear_bit(uint32_t * p_bits, uint8_t index) { *p_bits &= ~(1U << index); }
 static inline void set_bit(uint32_t * p_bits, uint8_t index, bool value) { (value) ? fill_bit(p_bits, index) : clear_bit(p_bits, index); }
 
-
 static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1U << index)) | (value << index); }
-
 
 static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))
 {

@@ -129,11 +129,18 @@ typedef state_machine_value_t(*StateMachine_GetK_T)(void * p_context, state_mach
 /******************************************************************************/
 typedef const struct StateMachine_TransitionInput
 {
-    const struct StateMachine_State * const P_VALID; /* From/Source. Starting State known to accept this input at compile time. */
-    const uint8_t VALID_COUNT;
     const StateMachine_Input_T TRANSITION; /* To/Destination. Does not return NULL */
+    const struct StateMachine_State * const P_VALID; /* From/Source. Starting State known to accept this input at compile time. */
 }
 StateMachine_TransitionInput_T;
+
+// typedef const struct StateMachine_MultiTransitionInput
+// {
+//     const StateMachine_Input_T TRANSITION; /* To/Destination. Does not return NULL */
+//     const struct StateMachine_State * const PP_VALID; /* From/Source. Starting State known to accept this input at compile time. */
+//     const uint8_t VALID_COUNT;
+// }
+// StateMachine_MultiTransitionInput_T;
 
 
 /*  */
@@ -197,6 +204,7 @@ typedef const struct StateMachine_State
         effectively, struct { State_T base, additional } SubState_T;
         P_EXT
     */
+    // StateMachine_SetK_T SET; /* via Key, alternative to passing function pointer */
 
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
@@ -206,6 +214,7 @@ typedef const struct StateMachine_State
 }
 StateMachine_State_T;
 
+/* StateMachine Type */
 typedef struct StateMachine_Machine
 {
     const StateMachine_State_T * const P_STATE_INITIAL;
@@ -227,6 +236,7 @@ typedef const struct StateMachine_Const
 }
 StateMachine_Const_T;
 
+/* StateMachine Instance */
 typedef struct StateMachine
 {
     const StateMachine_Const_T CONST;
@@ -301,7 +311,7 @@ extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_
 extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
 extern void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
-extern void StateMachine_InputTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_input, state_machine_value_t inputValue);
+extern void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_input, state_machine_value_t inputValue);
 extern void StateMachine_SetValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value);
 
 /* HSM */
@@ -320,7 +330,7 @@ extern void _StateMachine_ProcBranchSyncInput(StateMachine_T * p_stateMachine);
 extern void _StateMachine_ProcBranch_Nested(StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcBranch(StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
-extern void StateMachine_InputBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue);
+extern void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue);
 extern void StateMachine_SetBranchValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value);
 
 #endif

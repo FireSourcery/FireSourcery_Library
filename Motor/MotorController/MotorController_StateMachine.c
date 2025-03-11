@@ -607,8 +607,8 @@ static StateMachine_State_T * Neutral_InputBrake(MotorController_T * p_mc, state
 static const StateMachine_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (StateMachine_Input_T)TransitionFault,
-    // [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Neutral_InputDirection,
     [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Drive_InputDirection,
+    // [MCSM_INPUT_DIRECTION]  = (StateMachine_Input_T)Neutral_InputDirection,
     [MCSM_INPUT_BRAKE]      = (StateMachine_Input_T)Neutral_InputBrake,
     // [MCSM_INPUT_DRIVE]      = (StateMachine_Input_T)Neutral_InputDrive,
 };
@@ -651,7 +651,7 @@ static void Lock_Entry(MotorController_T * p_mc)
 // // tododo 1 motor at a time
 // void StartCalibrateSensor(MotorController_T * p_mc)
 // {
-//     void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (void_op_t)Motor_User_CalibrateSensor);
+//     void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (proc_t)Motor_User_CalibrateSensor);
 // }
 
 // bool ProcCalibrateSensor(MotorController_T * p_mc)

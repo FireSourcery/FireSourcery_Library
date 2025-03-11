@@ -103,7 +103,6 @@ typedef struct MotAnalogUser_Config
         // uint8_t PinsSelect;
     };
 
-
     uint16_t BistateBrakeValue_Percent16;
 
     // bool UseErrorAdcuRange; //report error if adcu read falls outside Zero_Adcu and Max_Adcu

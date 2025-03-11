@@ -134,14 +134,13 @@ typedef struct Encoder
 #if defined(CONFIG_ENCODER_HW_EMULATED)
     Pin_T PinA;
     Pin_T PinB;
-#endif
     Encoder_Phases_T Phases; /* Save Prev State */
+#endif
     uint32_t CounterD;
     uint32_t Angle32;
 // #endif /* CONFIG_ENCODER_HW_EMULATED */
 
     // int32_t DirectionD;     /*!< CounterD Direction without user compensation. previous DeltaD sign, when DeltaD == 0 */
-    // bool IsSinglePhasePositive;
 
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
@@ -162,8 +161,6 @@ typedef struct Encoder
     uint32_t IndexCount;
     uint32_t IndexAngleRef; /* 32 */
     uint32_t IndexAngleError;
-    // uint32_t CounterOnIndex;
-    // uint32_t CounterOnIndexPrev;
     bool IsHomed;
     Encoder_Align_T Align;
     uint32_t AlignOffsetRef;
@@ -179,7 +176,7 @@ typedef struct Encoder
     /*
         Unit conversion. derived on init from Nv Config
     */
-    int32_t DirectionComp;   /* todo */
+    int32_t DirectionComp;
     uint32_t UnitTime_Freq;                 /*!< Common Units propagating set depending on mode. T seconds conversion factor. */
     uint32_t UnitAngleD;                    /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
@@ -304,10 +301,10 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_T * p_encoder)
     @brief Direction
 */
 /******************************************************************************/
-// static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
 /* Direction set by outer module */
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return p_encoder->DirectionComp; }
+// static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
 
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
@@ -320,7 +317,8 @@ static inline int32_t _Encoder_GetDirectionComp(const Encoder_T * p_encoder)
     return Encoder_CaptureMode_Get(p_encoder, _Encoder_Quadrature_GetDirection, _Encoder_SinglePhase_GetDirection);
 }
 
-static inline int32_t Encoder_GetDirectionRef(const Encoder_T * p_encoder) { return _Encoder_GetDirectionComp(p_encoder); }
+/* return value assigned at Init */
+static inline int32_t Encoder_GetDirectionRef(const Encoder_T * p_encoder) { return p_encoder->DirectionComp; }
 
 /*
     Capture Direction on each Count or accumulated during Speed

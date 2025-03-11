@@ -36,11 +36,26 @@
     Interface Table
 */
 /******************************************************************************/
-// void Motor_InitSensor(Motor_T * p_motor)
+MotorSensor_VTable_T MOTOR_ENCODER =
+{
+    .Init = (MotorSensor_Proc_T)Encoder_ModeDT_Init_InterruptQuadrature,
+    // .VerifyCalibration = (MotorSensor_Test_T)Encoder_ModeDT_VerifyCalibration,
+    // .PollAngle = (MotorSensor_Angle_T)Encoder_ModeDT_GetAngle,
+    // .PollSpeed = (MotorSensor_Speed_T)Encoder_ModeDT_GetSpeed,
+    // .Zero = (MotorSensor_Proc_T)Encoder_ModeDT_SetInitial,
+};
+
+
+void Init(Encoder_T * p_encoder)
+{
+    Encoder_ModeDT_Init_InterruptQuadrature(p_encoder);
+    Encoder_EnableQuadratureMode(p_encoder);
+    // Motor_ResetUnitsSensor(p_motor);
+}
+
+// bool Motor_Init(Motor_T * p_motor)
 // {
-//     Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->Encoder);
-//     Encoder_EnableQuadratureMode(&p_motor->Encoder);
-//     Motor_ResetUnitsSensor(p_motor);
+    // Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
 // }
 
 // bool Motor_VerifySensorCalibration(Motor_T * p_motor)
@@ -134,7 +149,7 @@
 */
 static void StartHoming(Motor_T * p_motor)
 {
-    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 20); //~1rpm
+    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 10); //~1rpm
     Motor_FOC_ActivateOutputZero(p_motor);
     Encoder_StartHoming(&p_motor->Encoder);
     p_motor->ElectricalAngle = 0U;
@@ -154,17 +169,20 @@ static void ProcHoming(Motor_T * p_motor)
 
 static StateMachine_State_T * HomingTransition(Motor_T * p_motor)
 {
+    StateMachine_State_T * p_nextState = NULL;
+
     if (Encoder_PollHomingComplete(&p_motor->Encoder) == true) /* todo error status */
     {
         // Encoder_CalibrateQuadratureDirection(&p_motor->Encoder, p_motor->Direction == MOTOR_DIRECTION_CCW);
         // /* _StateMachine_EndSubState(&p_motor->StateMachine); */
         // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_FLOAT);
-        return &MOTOR_STATE_STOP;
+        p_nextState = &MOTOR_STATE_CALIBRATION;
     }
 
-    return NULL;
+    return p_nextState;
 }
 
+//todo add align
 static const StateMachine_State_T STATE_ENCODER_HOMING =
 {
     // .ID         = MSM_STATE_ID_CALIBRATION,
@@ -223,23 +241,25 @@ void Motor_Encoder_StartVirtualHome(Motor_T * p_motor)
 //     }
 // }
 
-static StateMachine_State_T *  AlignZeroTransition(Motor_T * p_motor)
+static StateMachine_State_T *  AlignZeroNext(Motor_T * p_motor)
 {
+    StateMachine_State_T * p_nextState = NULL;
+
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
         p_motor->ElectricalAngle = 0U;
         Encoder_CaptureAlignZero(&p_motor->Encoder);
         /* _StateMachine_EndSubState(&p_motor->StateMachine); */
     }
-    // else
-    // {
-    //     Motor_PollSensorAngle(p_motor);
-    //     Motor_PollCaptureSpeed(p_motor);
-    //     if (Encoder_ModeDT_GetScalarSpeed(&p_motor->Encoder) != 0U) /* reset the timer until speed is 0 */
-    //     {
-    //         Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    //     }
-    // }
+    else
+    {
+        Motor_PollSensorAngle(p_motor);
+        Motor_PollCaptureSpeed(p_motor);
+        if (Encoder_ModeDT_GetScalarSpeed(&p_motor->Encoder) != 0U) /* reset the timer until speed is 0 */
+        {
+            Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+        }
+    }
 
     return NULL;
 }
@@ -253,7 +273,7 @@ static const StateMachine_State_T ALIGN =
     .DEPTH      = 1U,
     .ENTRY      = (StateMachine_Function_T)Motor_FOC_StartStartUpAlign,
     .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcStartUpAlign,
-    .NEXT       = (StateMachine_InputVoid_T)AlignZeroTransition,
+    .NEXT       = (StateMachine_InputVoid_T)AlignZeroNext,
 };
 
 
@@ -292,7 +312,7 @@ static void ValidateAlign(Motor_T * p_motor)
 //     }
 // }
 
-static StateMachine_State_T *  ValidateAlignTransition(Motor_T * p_motor)
+static StateMachine_State_T *  ValidateAlignNext(Motor_T * p_motor)
 {
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
@@ -313,9 +333,7 @@ static const StateMachine_State_T VALIDATE_ALIGN =
     .DEPTH      = 1U,
     .ENTRY      = (StateMachine_Function_T)ValidateAlign,
     .LOOP       = (StateMachine_Function_T)Motor_FOC_ProcOpenLoop,
-    .NEXT       = (StateMachine_InputVoid_T)ValidateAlignTransition,
-
-
+    .NEXT       = (StateMachine_InputVoid_T)ValidateAlignNext,
 };
 
 
@@ -371,37 +389,62 @@ static const StateMachine_State_T VALIDATE_CLOSED_LOOP =
 };
 
 
+static StateMachine_State_T * Cmd_Align(Motor_T * p_motor, state_machine_value_t null)
+{
+    // Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
+    // Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+    return &ALIGN;
+}
+
+/* individual state test */
+void Motor_Encoder_StartAlignZero(Motor_T * p_motor)
+{
+    static const StateMachine_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)Cmd_Align, };
+    StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &CMD, 0);
+}
+
+static StateMachine_State_T * Cmd_ValidateAlign(Motor_T * p_motor, state_machine_value_t null)
+{
+    return &VALIDATE_ALIGN;
+}
+
+void Motor_Encoder_StartValidateAlign(Motor_T * p_motor)
+{
+    static const StateMachine_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)Cmd_ValidateAlign, };
+    StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &CMD, 0);
+}
 
 
+static StateMachine_State_T * Cmd_ValidateClosedLoop(Motor_T * p_motor, state_machine_value_t null)
+{
+    return &VALIDATE_CLOSED_LOOP;
+}
+
+void Motor_Encoder_StartValidateClosedLoop(Motor_T * p_motor)
+{
+    static const StateMachine_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (StateMachine_Input_T)Cmd_ValidateClosedLoop, };
+    StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &CMD, 0);
+}
+
+
+/******************************************************************************/
 /*
     Start Up Chain
 */
-static StateMachine_State_T * StartUpTransition(Motor_T * p_motor)
-{
-    return NULL;
-}
-
-static StateMachine_State_T * StartUpAlignTransition(Motor_T * p_motor)
-{
-
-}
-
-static StateMachine_State_T * StartUpValidateAlignTransition(Motor_T * p_motor)
-{
-
-}
-
-static StateMachine_State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor)
-{
-
-}
+/******************************************************************************/
+static StateMachine_State_T * StartUpTransition(Motor_T * p_motor);
+static StateMachine_State_T * StartUpAlignTransition(Motor_T * p_motor);
+static StateMachine_State_T * StartUpValidateAlignTransition(Motor_T * p_motor);
+static StateMachine_State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor);
 
 static const StateMachine_State_T START_UP =
 {
     // .ID = MSM_STATE_ID_OPEN_LOOP,
     .P_ROOT = &MOTOR_STATE_OPEN_LOOP,
+
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
+
     // .ENTRY = (StateMachine_Function_T) ,
     // .LOOP = (StateMachine_Function_T) ,
     .NEXT = (StateMachine_InputVoid_T)StartUpTransition,
@@ -416,6 +459,11 @@ static const StateMachine_State_T START_UP_ALIGN =
     .ENTRY = (StateMachine_Function_T)Motor_FOC_StartStartUpAlign,
     .LOOP = (StateMachine_Function_T)Motor_FOC_ProcStartUpAlign,
     .NEXT = (StateMachine_InputVoid_T)StartUpAlignTransition,
+
+    // .P_ROOT = &MOTOR_STATE_OPEN_LOOP,
+    // .P_PARENT = &ALIGN,
+    // .DEPTH = 2U,
+    // .NEXT = (StateMachine_InputVoid_T)StartUpAlignTransition,
 };
 
 static const StateMachine_State_T START_UP_VALIDATE_ALIGN =
@@ -440,46 +488,58 @@ static const StateMachine_State_T START_UP_VALIDATE_CLOSED_LOOP =
     .NEXT = (StateMachine_InputVoid_T)StartUpValidateClosedLoopTransition,
 };
 
+static StateMachine_State_T * StartUpTransition(Motor_T * p_motor)
+{
+    //if not aligned
+    return &START_UP_ALIGN;
+}
 
+static StateMachine_State_T * StartUpAlignTransition(Motor_T * p_motor)
+{
+    return &START_UP_VALIDATE_ALIGN;
+}
+
+static StateMachine_State_T * StartUpValidateAlignTransition(Motor_T * p_motor)
+{
+    return &START_UP_VALIDATE_CLOSED_LOOP;
+}
+
+static StateMachine_State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor)
+{
+    return &MOTOR_STATE_RUN;
+}
 /*
 
 */
 
-void Motor_Encoder_StartAlignZero(Motor_T * p_motor)
+StateMachine_State_T * Motor_Encoder_GetStartUpState(Motor_T * p_motor)
 {
-    // static const StateMachine_Cmd_T CMD_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &ALIGN, };
-    // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_ALIGN, 0);
+    return &START_UP;
 }
 
-void Motor_Encoder_StartValidateAlign(Motor_T * p_motor)
+StateMachine_State_T * StartUpChain(Motor_T * p_motor, state_machine_value_t null)
 {
-    // static const StateMachine_Cmd_T CMD_VALIDATE_ALIGN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_ALIGN, };
-    // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_ALIGN, 0);
-}
-
-void Motor_Encoder_StartValidateClosedLoop(Motor_T * p_motor)
-{
-    // static const StateMachine_Cmd_T CMD_VALIDATE_CLOSED_LOOP = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &VALIDATE_CLOSED_LOOP, };
-    // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_VALIDATE_CLOSED_LOOP, 0);
+    if (p_motor->Speed_Fract16 == 0U)    return &START_UP;
+    else return NULL;
 }
 
 void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 {
-    // static const StateMachine_Cmd_T CMD_START_UP_CHAIN = { .CMD = (StateMachine_CmdInput_T)NULL, .P_INITIAL = &START_UP, };
-    // StateMachine_StartCmd(&p_motor->StateMachine, &CMD_START_UP_CHAIN, 0);
+    static const StateMachine_TransitionInput_T  START_UP_CHAIN = { .P_VALID = &MOTOR_STATE_PASSIVE, .TRANSITION = (StateMachine_Input_T)StartUpChain , };
+    StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &START_UP_CHAIN, 0);
 }
 
 
 /******************************************************************************/
 /* */
 /******************************************************************************/
-static inline void Motor_Calibration_StartEncoderDirection(Motor_T * p_motor)
+static inline void StartDirection(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
     Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
 }
 
-static inline bool Motor_Calibration_ProcEncoderDirection(Motor_T * p_motor)
+static inline bool ProcDirection(Motor_T * p_motor)
 {
     bool isComplete = false;
 

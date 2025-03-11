@@ -31,7 +31,11 @@
 #ifndef LIMIT_H
 #define LIMIT_H
 
-#include "Type/Array/Array.h"
+// #include "Type/Array/Array.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 /* Array Limit */
 

@@ -35,6 +35,8 @@
 #include "../../Motor_FOC.h"
 #include "../../Motor_StateMachine.h"
 
+#include "../MotorSensor/MotorSensor.h"
+
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 
 

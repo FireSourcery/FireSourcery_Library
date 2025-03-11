@@ -82,6 +82,7 @@ typedef union MotorAnalog_Conversions
 MotorAnalog_Conversions_T;
 
 
+
 // static inline uint16_t MotorAnalog_GetAdcu(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return p_analog->CONVERSIONS[localChannel].P_STATE->Result; }
 // static inline uint8_t MotorAnalog_GetAdcu_Msb8(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return MotorAnalog_GetAdcu(p_analog, localChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
 

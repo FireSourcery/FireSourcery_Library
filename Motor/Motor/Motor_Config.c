@@ -53,24 +53,20 @@ static inline void PropagateSet(Motor_T * p_motor, Motor_PropagateSet_T reset)
 // typedef void(*Motor_SetInt_T)(Motor_T * p_motor, int32_t value);
 // typedef int32_t(*Motor_GetInt_T)(const Motor_T * p_motor);
 
-
-// void Motor_Config_Set(Motor_T * p_motor, Motor_VarConfig_Hall_T varId, int32_t varValue)
-// {
-//     StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_STOP, Motor_VarConfig_Hall_Set, varId, varValue);
-// }
+/* or use transition mapper */
 void Motor_Config_Set(Motor_T * p_motor, StateMachine_Set_T setter, int32_t value)
 {
     StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION, setter, value);
 }
 
-// void Motor_Config_SetAlignPower_Fract16_Cast(Motor_T * p_motor, int32_t scalar_fract16)
+// void _Motor_Config_SetAlignPower_Fract16(Motor_T * p_motor, int32_t scalar_fract16)
 // {
-//     Motor_Config_SetAlignPower_Fract16(p_motor, (uint16_t)scalar_fract16);
+//     SetAlignPower_Fract16(p_motor, (uint16_t)scalar_fract16);
 // }
 
-// void Motor_Config_SetAlignPower_Fract16_Extern(Motor_T * p_motor, int32_t scalar_fract16)
+// void Motor_Config_SetAlignPower_Fract16(Motor_T * p_motor, int32_t scalar_fract16)
 // {
-//     Motor_Config_Set(p_motor, Motor_Config_SetAlignPower_Fract16_Cast, scalar_fract16);
+//     Motor_Config_Set(p_motor, _Motor_Config_SetAlignPower_Fract16, scalar_fract16);
 // }
 
 
@@ -135,9 +131,6 @@ void Motor_Config_SetIPeakRef_Adcu(Motor_T * p_motor, uint16_t adcu)
 #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
     p_motor->Config.IPeakRef_Adcu = adcu;
     Motor_ResetUnitsIabc(p_motor);
-// #else
-//     p_motor->Config.IPeakRef_Adcu = (adcu > MOTOR_STATIC.I_PEAK_ADCU) ? MOTOR_STATIC.I_PEAK_ADCU : adcu;
-//     PropagateSet(p_motor, Motor_ResetUnitsIabc);
 #endif
 }
 
