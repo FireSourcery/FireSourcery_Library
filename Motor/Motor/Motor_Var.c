@@ -69,9 +69,12 @@ int32_t Motor_VarOutput_Foc_Get(const Motor_T * p_motor, Motor_VarOuput_Foc_T va
     int32_t value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
-        case MOTOR_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
-        case MOTOR_VAR_FOC_IC:    value = p_motor->Foc.Ic;        break;
+        // case MOTOR_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
+        // case MOTOR_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
+        // case MOTOR_VAR_FOC_IC:    value = p_motor->Foc.Ic;        break;
+        case MOTOR_VAR_FOC_IA:    value = Motor_Analog_GetIa(p_motor);  break;
+        case MOTOR_VAR_FOC_IB:    value = Motor_Analog_GetIb(p_motor);  break;
+        case MOTOR_VAR_FOC_IC:    value = Motor_Analog_GetIc(p_motor);  break;
         case MOTOR_VAR_FOC_IQ:    value = p_motor->Foc.Iq;        break;
         case MOTOR_VAR_FOC_ID:    value = p_motor->Foc.Id;        break;
         case MOTOR_VAR_FOC_VQ:    value = p_motor->Foc.Vq;        break;
