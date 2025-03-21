@@ -150,7 +150,7 @@ static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
 
-static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(uint8_t value) { return ((Motor_FeedbackMode_T) { .Value = value }); }
+static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (Motor_FeedbackMode_T) { .Value = value }; }
 
 
 /*
@@ -477,11 +477,6 @@ typedef bool(*Motor_Try_T)(Motor_T * p_motor, motor_value_t value);
 typedef bool(*Motor_Test_T)(const Motor_T * p_motor);
 typedef bool(*Motor_TestValue_T)(const Motor_T * p_motor, motor_value_t value);
 
-/* internal call */
-typedef void(*Motor_SetUInt32_T)(Motor_T * p_motor, uint32_t value);
-typedef void(*Motor_SetUInt16_T)(Motor_T * p_motor, uint16_t value);
-typedef void(*Motor_SetUInt8_T)(Motor_T * p_motor, uint8_t value);
-typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
 
 /******************************************************************************/
 /*
@@ -533,6 +528,12 @@ static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, con
     return fn;
 }
 
+/* internal call */
+typedef void(*Motor_SetUInt32_T)(Motor_T * p_motor, uint32_t value);
+typedef void(*Motor_SetUInt16_T)(Motor_T * p_motor, uint16_t value);
+typedef void(*Motor_SetUInt8_T)(Motor_T * p_motor, uint8_t value);
+typedef int32_t(*Motor_GetInt32_T)(const Motor_T * p_motor);
+
 #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
     _Generic((focSet), \
         Motor_GetInt32_T:   (Motor_GetInt32_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
@@ -546,7 +547,6 @@ static inline const void * _Motor_CommutationModeFn(const Motor_T * p_motor, con
 // #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction))(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
 
 #define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) (Motor_CommutationModeFn(p_motor, focSet, sixStepSet)(p_motor __VA_OPT__(,) __VA_ARGS__))
-
 
 
 

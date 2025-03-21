@@ -32,9 +32,9 @@
 #define CONFIG_RING_H
 
 #if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. */
-    #define CONFIG_RING_POW2_MASK
-#elif   defined(CONFIG_RING_POW2_MASK)      /* Power 2 length only. Mask on access */
-#elif   defined(CONFIG_RING_POW2_WRAP)      /* Power 2 length only. Mask and update index */
+    #define CONFIG_RING_POW2_COUNTER
+#elif   defined(CONFIG_RING_POW2_COUNTER)      /* Power 2 length only. Mask on access */
+#elif   defined(CONFIG_RING_POW2_WRAP)      /* Power 2 length only. Mask once on update index, -1 capacity */
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
 #else
     #define CONFIG_RING_LENGTH_COMPARE

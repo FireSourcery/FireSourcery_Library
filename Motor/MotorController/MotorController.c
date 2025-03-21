@@ -281,10 +281,6 @@ bool MotorController_IsEveryMotorValue(const MotorController_T * p_mc, Motor_Tes
 bool MotorController_IsAnyMotorValue(const MotorController_T * p_mc, Motor_TestValue_T test, register_t value) { return void_array_for_any_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_t)test, value); }
 
 /* depreciate */
-// bool MotorController_IsEveryMotorStopState(const MotorController_T * p_mc)  { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (test_t)Motor_User_IsStopState); }
-// bool MotorController_IsEveryMotorRunState(const MotorController_T * p_mc)   { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (test_t)Motor_User_IsRunState); }
-// bool MotorController_IsEveryMotorForward(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (test_t)Motor_IsDirectionForward); }
-// bool MotorController_IsEveryMotorReverse(const MotorController_T * p_mc)    { return void_array_is_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (test_t)Motor_IsDirectionReverse); }
 bool MotorController_IsAnyMotorFault(const MotorController_T * p_mc)  { return void_array_is_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (test_t)Motor_StateMachine_IsFault); }
 bool MotorController_ForEveryMotorExitFault(MotorController_T * p_mc) { return void_array_for_every(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (poll_t)Motor_StateMachine_ExitFault); }
 

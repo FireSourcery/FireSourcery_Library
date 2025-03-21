@@ -5,11 +5,11 @@ typedef const struct Ring_Type
 {
     const size_t UNIT_SIZE;
     const size_t LENGTH;
-#if defined(CONFIG_RING_POW2_MASK) || defined(CONFIG_RING_POW2_WRAP)
+#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
     const size_t POW2_MASK;
 #endif
 // ifndef RAM_ONLY
-    Ring_State_T * const P_STATE;
+    Ring_State_T * const P_STATE; /* Null for RAM */
 }
 Ring_Type_T;
 
@@ -18,7 +18,7 @@ typedef struct Ring_State
     volatile uint32_t Head;    /* FIFO Out/Front. */
     volatile uint32_t Tail;    /* FIFO In/Back. */
 #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    volatile critical_signal_t Mutex;
+    volatile critical_signal_t Lock;
 #endif
     uint8_t Buffer[]; /* MISRA violation. Rationale: Compile-time allocated. */
 }
@@ -27,14 +27,18 @@ Ring_State_T;
 
 typedef const struct Ring
 {
-    const Ring_Type_T TYPE;
-    // Ring_State_T * const P_STATE;
-    uint8_t _Interface[];
+    const Ring_Type_T TYPE; // Ring_State_T * const P_STATE;
+    // uint8_t _Interface[]; // if allocating as RAM at compile time
 }
 Ring_T;
 
+
+// can compiler optimize as generic type when passing const to inline function?
+// static inline void _Ring_PushBack(const Ring_Type_T * p_ringType, Ring_State_T * p_state, const void * p_unit)
+
 #define IS_POW2(x) (((x) & ((x) - 1U)) == 0U)
 
+/* alternatively use int/sizeof(int) in case of ascii fill */
 #define BUFFER_ALLOC(Bytes) ((void *)(uint8_t[(Bytes)]){})
 #define ARRAY_ALLOC(UnitSize, Length) BUFFER_ALLOC((UnitSize)*(Length))
 #define ARRAY_ALLOC_AS(T, Length) ((void *)(T[(Length)]){})
@@ -52,9 +56,9 @@ Ring_T;
 
 
 /*
-    Contigious RAM allocation, although this implementation would still need to be referenced by a pointer when nested in another struct
+    Contigious RAM allocation,
+    this implementation would still need to be referenced by a pointer when nested in another struct
     Incurs 1 pointer dereference, just as the ROM P_STATE case
-    Mostly optimal for DMA case
 */
 typedef struct _Ring_RAM
 {
@@ -88,8 +92,7 @@ _Ring_ROM_T;
 
 typedef struct _Ring_Interface
 {
-    const Ring_Type_T Type;
-    Ring_State_T * const p_State; // null for contiguos RAM
+    const Ring_Type_T Type; Ring_State_T * const p_State; // null for contiguos RAM
     uint8_t _Interface[];
 }
 _Ring_Interface_T;

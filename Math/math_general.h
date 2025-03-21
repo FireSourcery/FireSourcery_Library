@@ -38,10 +38,9 @@
 // typedef int32_t sign_t;
 
 /* simplify with return by value */
-typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
-typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
-
-typedef enum sign { NEGATIVE = -1, ZERO = 0, POSITIVE = 1 } sign_t;
+// typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
+// typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
+// typedef enum sign { NEGATIVE = -1, ZERO = 0, POSITIVE = 1 } sign_t;
 
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }

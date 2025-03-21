@@ -56,12 +56,18 @@ typedef uint8_t state_machine_state_t;      /* State ID. User may overwrite with
 struct StateMachine_State;
 
 /* A State Function. Depends only on the State and internal values */
-/* TransitionAction/Output */
+/* Transition Action/Output */
 typedef void (*StateMachine_Function_T)(void * p_context);
+
+// struct StateMachine_Input
+// {
+//     state_machine_input_t id;
+//     state_machine_value_t value;
+// };
 
 /******************************************************************************/
 /*!
-    Transition Input Function Types
+    Transition Input Handler Function Types
     Forms the Transition Function - defined by user via P_TRANSITION_TABLE
 
     @return pointer to new state, if it exists.
@@ -77,12 +83,15 @@ typedef void (*StateMachine_Function_T)(void * p_context);
 /******************************************************************************/
 /*
     Context Input Handler
+    MapFn
+    Transition0
     Transition Input with context, mapped by id
 */
 typedef struct StateMachine_State * (*StateMachine_InputVoid_T)(void * p_context);
 
 /*
     Value Input Handler
+    Transition1
     Transition Input with immediate parameter, value/ptr
     Alternative to passing all parameters by context. reduce assigning temporary variables
 */
@@ -118,7 +127,7 @@ typedef state_machine_value_t(*StateMachine_GetK_T)(void * p_context, state_mach
 
 /******************************************************************************/
 /*
-    Transition
+    Transition - self contained
     Alternative mapping Id
     reverse map [Transition]/[Input] to a [State] or set of [State]s
     compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
@@ -283,6 +292,7 @@ static inline bool StateMachine_IsActiveSubState(const StateMachine_T * p_stateM
 static inline state_machine_state_t StateMachine_GetActiveSubStateId(const StateMachine_T * p_stateMachine)
     { return StateMachine_GetActiveSubState(p_stateMachine)->ID; }
 
+// static inline const StateMachine_State_T * StateMachine_GetActiveSubState(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveSubState; }
 // static inline const StateMachine_State_T * StateMachine_GetActiveBranch(const StateMachine_T * p_stateMachine)
 //     { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
 
@@ -294,7 +304,7 @@ static inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine) { 
 */
 /******************************************************************************/
 extern void _StateMachine_SetState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
-extern void _StateMachine_ProcStateOutput(StateMachine_T * p_stateMachine);
+extern void _StateMachine_ProcSyncOutput(StateMachine_T * p_stateMachine);
 extern void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine);
 extern void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
 extern void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
