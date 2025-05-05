@@ -29,9 +29,18 @@
 /******************************************************************************/
 #include "FOC.h"
 
-void FOC_Init(FOC_T * p_foc)
+
+void FOC_InitModulationFull(FOC_T * p_foc) { p_foc->Modulation = FRACT16_MAX; }
+void FOC_InitModulationLinear(FOC_T * p_foc) { p_foc->Modulation = FRACT16_SQRT3_DIV_2; }
+
+void FOC_Init(FOC_T * p_foc, fract16_t vBus)
 {
-    // FOC_ClearState(p_foc);
+    p_foc->Modulation = FRACT16_MAX;
+    // FOC_CaptureVBus(p_foc, vBus);
+
+    /* or handle outside */
+    // p_foc->VdLimit = fract16_mul(fract16_mul(p_foc->VBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
+    // p_foc->VPhaseLimit = fract16_mul(fract16_mul(p_foc->VBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
 }
 
 /* Prep Align using input intensity */
@@ -41,14 +50,17 @@ void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
     p_foc->Vq = 0;
     p_foc->Sine = 0;
     p_foc->Cosine = FRACT16_MAX;
-    FOC_ProcInvParkInvClarkeSvpwm(p_foc);
+    // FOC_ProcInvParkInvClarkeSvpwm(p_foc);
 }
 
 void FOC_ZeroSvpwm(FOC_T * p_foc)
 {
-    p_foc->Va = FRACT16_MAX / 2;
-    p_foc->Vb = FRACT16_MAX / 2;
-    p_foc->Vc = FRACT16_MAX / 2;
+    // p_foc->Va = p_foc->VBus / 2;
+    // p_foc->Vb = p_foc->VBus / 2;
+    // p_foc->Vc = p_foc->VBus / 2;
+    p_foc->DutyA = FRACT16_1_DIV_2;
+    p_foc->DutyB = FRACT16_1_DIV_2;
+    p_foc->DutyC = FRACT16_1_DIV_2;
 }
 
 void FOC_ClearControlState(FOC_T * p_foc)
@@ -62,12 +74,12 @@ void FOC_ClearControlState(FOC_T * p_foc)
     p_foc->Ibeta = 0;
     p_foc->ReqD = 0; /* Req */
     p_foc->ReqQ = 0;
-    // p_foc->Va = 0; /* Clear as capture indicator */
+    // p_foc->Va = 0;
     // p_foc->Vb = 0;
     // p_foc->Vc = 0;
 //     p_foc->Valpha = 0;
 //     p_foc->Vbeta = 0;
-//     p_foc->Vd = 0; /* Output/Bemf */
+//     p_foc->Vd = 0;
 //     p_foc->Vq = 0;
     // FOC_ZeroSvpwm(p_foc);
 }

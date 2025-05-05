@@ -33,8 +33,8 @@
 
 //todo move
 static inline void AIn_EnableEdgePin(MotAnalogUser_AIn_T * p_aIn) { p_aIn->UseEdgePin = true; Debounce_Init(&p_aIn->EdgePin, 5U); }
-static inline void ResetBrakeUnits(MotAnalogUser_T * p_user)    { Linear_ADC_Init(&p_user->BrakeAIn.Units, p_user->Config.ThrottleZero_Adcu, p_user->Config.ThrottleMax_Adcu); }
-static inline void ResetThrottleUnits(MotAnalogUser_T * p_user) { Linear_ADC_Init(&p_user->ThrottleAIn.Units, p_user->Config.BrakeZero_Adcu, p_user->Config.BrakeMax_Adcu); }
+static inline void ResetBrakeUnits(MotAnalogUser_T * p_user)    { Linear_ADC_Init_Scalar(&p_user->BrakeAIn.Units, p_user->Config.ThrottleZero_Adcu, p_user->Config.ThrottleMax_Adcu); }
+static inline void ResetThrottleUnits(MotAnalogUser_T * p_user) { Linear_ADC_Init_Scalar(&p_user->ThrottleAIn.Units, p_user->Config.BrakeZero_Adcu, p_user->Config.BrakeMax_Adcu); }
 
 void MotAnalogUser_Init(MotAnalogUser_T * p_user)
 {

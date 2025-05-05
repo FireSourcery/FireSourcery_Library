@@ -35,11 +35,11 @@
 /*!
     @brief
 */
+/* Without checking for previous completion. Conversions must complete in within the analog cycle or feedback will never process  */
 /******************************************************************************/
 void Motor_Analog_MarkVabc(Motor_T * p_motor)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    /* Without checking for previous completion. Conversions must complete in within the analog cycle or feedback will never process  */
     Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA);
     Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB);
     Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VC);
@@ -66,7 +66,7 @@ void Motor_Analog_MarkIabc(Motor_T * p_motor)
 /******************************************************************************/
 static void StartCalibration(Motor_T * p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, MOTOR_STATIC.CONTROL_FREQ * (uint32_t)2U); /* 2 Seconds */
+    Timer_StartPeriod_Millis(&p_motor->ControlTimer, 2000U); /* 2 Seconds */
 
     Phase_WriteDuty_Fract16(&p_motor->Phase, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(&p_motor->Phase);
@@ -74,43 +74,41 @@ static void StartCalibration(Motor_T * p_motor)
     Filter_Avg_Init(&p_motor->FilterA);
     Filter_Avg_Init(&p_motor->FilterB);
     Filter_Avg_Init(&p_motor->FilterC);
-    p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result = 0U;
-    p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result = 0U;
-    p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result = 0U;
+    // p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IA.P_STATE->Result = 0U;
+    // p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IB.P_STATE->Result = 0U;
+    // p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_IC.P_STATE->Result = 0U;
+    p_motor->IBatch.Value = PHASE_ID_0;
+    p_motor->Config.IaZeroRef_Adcu = 0U;
+    p_motor->Config.IbZeroRef_Adcu = 0U;
+    p_motor->Config.IcZeroRef_Adcu = 0U;
     Motor_Analog_MarkIabc(p_motor);
 }
 
 static void ProcCalibration(Motor_T * p_motor)
 {
-    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    if (p_motor->IBatch.Value == PHASE_ID_ABC)
+    {
+        Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
+        Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
+        Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
+        Motor_Analog_MarkIabc(p_motor);
+    }
+}
+
+static StateMachine_State_T * EndCalibration(Motor_T * p_motor)
+{
+    StateMachine_State_T * p_nextState = NULL;
 
     if (Timer_IsElapsed(&p_motor->ControlTimer) == true)
     {
         p_motor->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
         p_motor->Config.IbZeroRef_Adcu = Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
         p_motor->Config.IcZeroRef_Adcu = Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
-        Motor_ResetUnitsIabc(p_motor);
+        // Motor_ResetUnitsIabc(p_motor);
         Phase_Float(&p_motor->Phase);
     }
-    else
-    {
-        if (p_motor->ControlTimerBase != 0U) /* skip first time */
-        // if (p_motor->IFlags == PHASE_ID_ABC)
-        {
-            if ((p_motor->ControlTimerBase & DIVIDER) == 0U)
-            {
-                Filter_Avg(&p_motor->FilterA, Motor_Analog_GetIa(p_motor));
-                Filter_Avg(&p_motor->FilterB, Motor_Analog_GetIb(p_motor));
-                Filter_Avg(&p_motor->FilterC, Motor_Analog_GetIc(p_motor));
-                Motor_Analog_MarkIabc(p_motor);
-            }
-        }
-    }
-}
 
-StateMachine_State_T * EndCalibration(Motor_T * p_motor)
-{
-    return (Timer_IsElapsed(&p_motor->ControlTimer) == true) ? &MOTOR_STATE_CALIBRATION : 0U;
+    return p_nextState;
 }
 
 static const StateMachine_State_T CALIBRATION_STATE =

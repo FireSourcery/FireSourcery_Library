@@ -104,8 +104,8 @@ static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { retur
 /*!
 */
 /******************************************************************************/
-extern void Pin_Output_Init(Pin_T * p_pin);
-extern void Pin_Input_Init(Pin_T * p_pin);
+extern void Pin_Output_Init(const Pin_T * p_pin);
+extern void Pin_Input_Init(const Pin_T * p_pin);
 extern void Pin_Deinit(const Pin_T * p_pin);
 
 #endif

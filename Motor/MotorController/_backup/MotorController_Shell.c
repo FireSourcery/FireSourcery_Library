@@ -48,7 +48,7 @@ static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 {
     (void)argc; (void)argv;
     MotorController_User_ForceDisableControl(p_mc);
-    p_mc->CONST.P_MOTORS[0].Encoder.Align = ENCODER_ALIGN_NO;
+    p_mc->CONST.MOTORS.P_ARRAY[0].Encoder.Align = ENCODER_ALIGN_NO;
     return CMD_STATUS_SUCCESS;
 }
 

@@ -36,11 +36,11 @@
 #include <stdbool.h>
 
 // typedef int32_t sign_t;
+// typedef enum sign { NEGATIVE = -1, ZERO = 0, POSITIVE = 1 } sign_t;
 
 /* simplify with return by value */
 // typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
 // typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
-// typedef enum sign { NEGATIVE = -1, ZERO = 0, POSITIVE = 1 } sign_t;
 
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
@@ -48,25 +48,15 @@ static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return ma
 static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
 
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
-static inline bool math_in_range(int32_t value, int32_t lower, int32_t upper) { return (value == math_clamp(value, lower, upper)); }
+static inline bool math_is_clamped(int32_t value, int32_t lower, int32_t upper) { return (value == math_clamp(value, lower, upper)); }
 
-/* scalar = (magnitude > limit) ? limit / magnitude : 1 */
-static inline int16_t math_limit_magnitude(int16_t input, uint16_t limit, uint16_t magnitude)
-{
-    return (magnitude > limit) ? (int32_t)input * limit / magnitude : input;
-}
 
-static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
-static inline bool math_sign_diff(int32_t value1, int32_t value2) { return ((value1 ^ value2) < 0); }
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
-// static inline uint32_t math_abs(int32_t value)
-// {
-//     uint32_t mask = value >> 31;
-//     return (value + mask) ^ mask;
-// }
-
+static inline int32_t math_sign(int32_t value) { return (value > 0) - (value < 0); } /* +1, 0, -1 */
+static inline bool math_is_sign_diff(int32_t value1, int32_t value2) { return ((value1 ^ value2) < 0); }
+static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
 static inline int32_t math_shift(int32_t value, int8_t shift) { return (shift > 0) ? (value << shift) : (value >> (-shift)); }
 
@@ -88,8 +78,6 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 #endif
 }
 
-
-extern uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor);
 
 #endif
 

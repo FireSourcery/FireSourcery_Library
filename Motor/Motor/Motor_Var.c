@@ -45,6 +45,7 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, Motor_VarOuput_T varId)
     switch (varId)
     {
         case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_UFract16(p_motor);              break;
+        // case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_Deg(p_motor);              break;
         case MOTOR_VAR_I_PHASE:                     value = Motor_User_GetIPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_User_GetVPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_POWER:                       value = Motor_User_GetElectricalPower_UFract16(p_motor);    break;
@@ -53,7 +54,7 @@ int32_t Motor_VarOutput_Get(const Motor_T * p_motor, Motor_VarOuput_T varId)
         case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_User_GetFaultFlags(p_motor).Value;            break;
         case MOTOR_VAR_HEAT:                        value = Motor_User_GetHeat_Adcu(p_motor);                   break;
         case MOTOR_VAR_EFFECTIVE_FEEDBACK_MODE:     value = Motor_User_GetFeedbackMode(p_motor).Value;          break;
-        case MOTOR_VAR_EFFECTIVE_SET_POINT:         value = Motor_User_GetEffectiveSetPoint(p_motor);           break;
+        case MOTOR_VAR_EFFECTIVE_SET_POINT:         value = Motor_User_GetSetPoint(p_motor);                    break;
         case MOTOR_VAR_EFFECTIVE_SPEED_LIMIT:       value = Motor_User_GetSpeedLimit(p_motor);                  break;
         case MOTOR_VAR_EFFECTIVE_I_LIMIT:           value = Motor_User_GetILimit(p_motor);                      break;
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_User_GetVSpeedEffective_UFract16(p_motor);    break;
@@ -69,21 +70,21 @@ int32_t Motor_VarOutput_Foc_Get(const Motor_T * p_motor, Motor_VarOuput_Foc_T va
     int32_t value = 0;
     switch (varId)
     {
-        // case MOTOR_VAR_FOC_IA:    value = p_motor->Foc.Ia;        break;
-        // case MOTOR_VAR_FOC_IB:    value = p_motor->Foc.Ib;        break;
-        // case MOTOR_VAR_FOC_IC:    value = p_motor->Foc.Ic;        break;
-        case MOTOR_VAR_FOC_IA:    value = Motor_Analog_GetIa(p_motor) - p_motor->Config.IaZeroRef_Adcu;  break;
-        case MOTOR_VAR_FOC_IB:    value = Motor_Analog_GetIb(p_motor) - p_motor->Config.IbZeroRef_Adcu;  break;
-        case MOTOR_VAR_FOC_IC:    value = Motor_Analog_GetIc(p_motor) - p_motor->Config.IcZeroRef_Adcu;  break;
-        case MOTOR_VAR_FOC_IQ:    value = p_motor->Foc.Iq;        break;
-        case MOTOR_VAR_FOC_ID:    value = p_motor->Foc.Id;        break;
-        case MOTOR_VAR_FOC_VQ:    value = p_motor->Foc.Vq;        break;
-        case MOTOR_VAR_FOC_VD:    value = p_motor->Foc.Vd;        break;
-        case MOTOR_VAR_FOC_REQ_Q: value = p_motor->Foc.ReqQ;      break;
-        case MOTOR_VAR_FOC_REQ_D: value = p_motor->Foc.ReqD;      break;
-        case MOTOR_VAR_FOC_VA:    value = p_motor->Foc.Va;        break;
-        case MOTOR_VAR_FOC_VB:    value = p_motor->Foc.Vb;        break;
-        case MOTOR_VAR_FOC_VC:    value = p_motor->Foc.Vc;        break;
+        case MOTOR_VAR_FOC_IA:      value = p_motor->Foc.Ia;        break;
+        case MOTOR_VAR_FOC_IB:      value = p_motor->Foc.Ib;        break;
+        case MOTOR_VAR_FOC_IC:      value = p_motor->Foc.Ic;        break;
+        // case MOTOR_VAR_FOC_IA:    value = Motor_Analog_GetIa(p_motor) - p_motor->Config.IaZeroRef_Adcu;  break;
+        // case MOTOR_VAR_FOC_IB:    value = Motor_Analog_GetIb(p_motor) - p_motor->Config.IbZeroRef_Adcu;  break;
+        // case MOTOR_VAR_FOC_IC:    value = Motor_Analog_GetIc(p_motor) - p_motor->Config.IcZeroRef_Adcu;  break;
+        case MOTOR_VAR_FOC_IQ:      value = p_motor->Foc.Iq;        break;
+        case MOTOR_VAR_FOC_ID:      value = p_motor->Foc.Id;        break;
+        case MOTOR_VAR_FOC_VQ:      value = p_motor->Foc.Vq;        break;
+        case MOTOR_VAR_FOC_VD:      value = p_motor->Foc.Vd;        break;
+        case MOTOR_VAR_FOC_REQ_Q:   value = p_motor->Foc.ReqQ;      break;
+        case MOTOR_VAR_FOC_REQ_D:   value = p_motor->Foc.ReqD;      break;
+        case MOTOR_VAR_FOC_VA:      value = p_motor->Foc.Va;        break;
+        case MOTOR_VAR_FOC_VB:      value = p_motor->Foc.Vb;        break;
+        case MOTOR_VAR_FOC_VC:      value = p_motor->Foc.Vc;        break;
         case MOTOR_VAR_FOC_INTEGRAL_Q:    value = PID_GetIntegral(&p_motor->PidIq);        break;
         case MOTOR_VAR_FOC_INTEGRAL_D:    value = PID_GetIntegral(&p_motor->PidId);        break;
     }
@@ -107,8 +108,8 @@ void _Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varV
 {
     switch (varId)
     {
-        case MOTOR_VAR_CLEAR_FAULT: Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T) { .Value = varValue });    break;
-        case MOTOR_VAR_FORCE_DISABLE_CONTROL: Motor_User_ForceDisableControl(p_motor);  break;
+        case MOTOR_VAR_CLEAR_FAULT:             Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T) { .Value = varValue });    break;
+        case MOTOR_VAR_FORCE_DISABLE_CONTROL:   Motor_User_ForceDisableControl(p_motor);  break;
         // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
         // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
         // case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);         break;
@@ -118,8 +119,8 @@ void _Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_t varV
 
         case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_OpenLoop_Enter(p_motor);                                      break;
         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
-        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseVAlign(p_motor, (Phase_Id_T)varValue);       break;
-        case MOTOR_VAR_OPEN_LOOP_ANGLE:         Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
+        case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
 
         /*  */
@@ -144,6 +145,9 @@ int32_t Motor_VarIO_Get(const Motor_T * p_motor, Motor_VarIO_T varId)
         case MOTOR_VAR_USER_CONTROL_STATE:  value = Motor_User_GetPhaseState(p_motor);            break; /* effective Stop/hold/run */
         case MOTOR_VAR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
         case MOTOR_VAR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
+        // case MOTOR_VAR_USER_I_LIMIT_MOTORING:        value = Motor_User_GetILimit(p_motor);                break;
+        // case MOTOR_VAR_USER_I_LIMIT_GENERATING:      value = Motor_User_GetILimit(p_motor);                break;
+        /* RAMP_ON_OFF */
     }
     return value;
 }
@@ -156,8 +160,8 @@ void _Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue)
         case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue_Scalar(p_motor, varValue);             break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);        break;
         case MOTOR_VAR_USER_CONTROL_STATE:  Motor_User_ActivateControlState(p_motor, (Phase_Output_T)varValue); break;
-        case MOTOR_VAR_USER_SPEED_LIMIT:    Motor_User_TrySpeedLimit(p_motor, varValue);                        break;
-        case MOTOR_VAR_USER_I_LIMIT:        Motor_User_TryILimit(p_motor, varValue);                            break;
+        // case MOTOR_VAR_USER_SPEED_LIMIT:    Motor_User_TrySpeedLimit(p_motor, varValue);                        break;
+        // case MOTOR_VAR_USER_I_LIMIT:        Motor_User_TryILimit(p_motor, varValue);                            break;
     }
 }
 
@@ -173,6 +177,7 @@ void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue)
     Config
 */
 /******************************************************************************/
+/*        // add ids */
 int32_t Motor_VarConfig_Calibration_Get(const Motor_T * p_motor, Motor_VarConfig_Calibration_T varId)
 {
     int32_t value = 0;
@@ -184,18 +189,31 @@ int32_t Motor_VarConfig_Calibration_Get(const Motor_T * p_motor, Motor_VarConfig
         case MOTOR_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
         case MOTOR_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
         case MOTOR_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);        break;
-        case MOTOR_VAR_IA_ZERO_REF_ADCU:              value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
-        case MOTOR_VAR_IB_ZERO_REF_ADCU:              value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
-        case MOTOR_VAR_IC_ZERO_REF_ADCU:              value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
-        case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
+        case MOTOR_VAR_SPEED_RATED_DEG:               value = Motor_Config_GetSpeedRated(p_motor);                break;
+        case MOTOR_VAR_IA_ZERO_ADCU:                  value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
+        case MOTOR_VAR_IB_ZERO_ADCU:                  value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
+        case MOTOR_VAR_IC_ZERO_ADCU:                  value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
+        // case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
 
         case MOTOR_VAR_RUN_ADC_CALIBRATION:           value = 0;                                                  break;
         case MOTOR_VAR_RUN_VIRTUAL_HOME:              value = 0;                                                  break;
     }
     return value;
 }
+
+int32_t Motor_VarConfig_CalibrationAlias_Get(const Motor_T * p_motor, Motor_VarConfig_CalibrationAlias_T varId)
+{
+    int32_t value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_SPEED_RATED_RPM:               value = Motor_Config_GetSpeedRated_Rpm(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);              break;
+        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+    }
+    return value;
+}
+
+
 
 void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibration_T varId, int32_t varValue)
 {
@@ -209,16 +227,21 @@ void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibrat
         case MOTOR_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);     break;
         // case MOTOR_VAR_SPEED_V_REF_RPM:               Motor_Config_SetSpeedVRef_Rpm(p_motor, varValue);             break;
         // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         Motor_Config_SetSpeedVMatchRef_Rpm(p_motor, varValue);        break;
-        case MOTOR_VAR_IA_ZERO_REF_ADCU:              Motor_Config_SetIaZero_Adcu(p_motor, varValue);               break;
-        case MOTOR_VAR_IB_ZERO_REF_ADCU:              Motor_Config_SetIbZero_Adcu(p_motor, varValue);               break;
-        case MOTOR_VAR_IC_ZERO_REF_ADCU:              Motor_Config_SetIcZero_Adcu(p_motor, varValue);               break;
-        case MOTOR_VAR_I_PEAK_REF_ADCU:               Motor_Config_SetIPeakRef_Adcu(p_motor, varValue);             break;
+        case MOTOR_VAR_IA_ZERO_ADCU:                  Motor_Config_SetIaZero_Adcu(p_motor, varValue);               break;
+        case MOTOR_VAR_IB_ZERO_ADCU:                  Motor_Config_SetIbZero_Adcu(p_motor, varValue);               break;
+        case MOTOR_VAR_IC_ZERO_ADCU:                  Motor_Config_SetIcZero_Adcu(p_motor, varValue);               break;
+        // case MOTOR_VAR_I_PEAK_REF_ADCU:               Motor_Config_SetIPeakRef_Adcu(p_motor, varValue);             break;
 
         /*  */
         case MOTOR_VAR_RUN_ADC_CALIBRATION:     Motor_Analog_Calibrate(p_motor);            break;
         case MOTOR_VAR_RUN_VIRTUAL_HOME:        Motor_Calibration_StartHome(p_motor);       break;
     }
 }
+
+// void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibration_T varId, int32_t varValue)
+// {
+//     if (Motor_Config_IsConfigState(p_motor) == true) { _Motor_VarConfig_Calibration_Set(p_motor, varId, varValue); }
+// }
 
 int32_t Motor_VarConfig_Actuation_Get(const Motor_T * p_motor, Motor_VarConfig_Actuation_T varId)
 {
@@ -229,18 +252,22 @@ int32_t Motor_VarConfig_Actuation_Get(const Motor_T * p_motor, Motor_VarConfig_A
         case MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE:    value = Motor_Config_GetSpeedLimitReverse_Fract16(p_motor);     break;
         case MOTOR_VAR_BASE_I_LIMIT_MOTORING:       value = Motor_Config_GetILimitMotoring_Fract16(p_motor);        break;
         case MOTOR_VAR_BASE_I_LIMIT_GENERATING:     value = Motor_Config_GetILimitGenerating_Fract16(p_motor);      break;
-        case MOTOR_VAR_RAMP_ACCEL_TIME:             value = Motor_Config_GetRampAccel_Millis(p_motor);              break;
+
+        case MOTOR_VAR_RAMP_ACCEL_TIME:             value = Motor_Config_GetSpeedRampTime_Millis(p_motor);          break;
+
         // case MOTOR_VAR_ALIGN_MODE:               value = Motor_Config_GetAlignMode(p_motor);                 break;
         case MOTOR_VAR_ALIGN_POWER:                 value = Motor_Config_GetAlignPower_Fract16(p_motor);            break;
         case MOTOR_VAR_ALIGN_TIME:                  value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
+
+        /* tdo */
     // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-        case MOTOR_VAR_OPEN_LOOP_POWER:             value = Motor_Config_GetOpenLoopPower_Fract16(p_motor);         break;
+        case MOTOR_VAR_OPEN_LOOP_POWER:             value = Motor_Config_GetOpenLoopI_Fract16(p_motor);             break;
         case MOTOR_VAR_OPEN_LOOP_SPEED:             value = Motor_Config_GetOpenLoopSpeed_Fract16(p_motor);         break;
-        case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:        value = Motor_Config_GetOpenLoopAccel_Millis(p_motor);          break;
+        case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:        value = Motor_Config_GetOpenLoopSpeedRamp_Millis (p_motor);     break;
     // #endif
-        #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-        case MOTOR_VAR_PHASE_PWM_MODE:              value = Motor_Config_GetPhaseModeParam(p_motor);                break;
-        #endif
+        // #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+        // case MOTOR_VAR_PHASE_PWM_MODE:              value = Motor_Config_GetPhaseModeParam(p_motor);                break;
+        // #endif
     }
     return value;
 }
@@ -253,12 +280,14 @@ void Motor_VarConfig_Actuation_Set(Motor_T * p_motor, Motor_VarConfig_Actuation_
         case MOTOR_VAR_BASE_SPEED_LIMIT_REVERSE:      Motor_Config_SetSpeedLimitReverse_Fract16(p_motor, varValue);  break;
         case MOTOR_VAR_BASE_I_LIMIT_MOTORING:         Motor_Config_SetILimitMotoring_Fract16(p_motor, varValue);     break;
         case MOTOR_VAR_BASE_I_LIMIT_GENERATING:       Motor_Config_SetILimitGenerating_Fract16(p_motor, varValue);   break;
-        case MOTOR_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetRampAccel_Millis(p_motor, varValue);           break;
-        case MOTOR_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Fract16(p_motor, varValue);         break;
+
+        /* todo */
+        case MOTOR_VAR_RAMP_ACCEL_TIME:               Motor_Config_SetSpeedRampTime_Millis (p_motor, varValue);           break;
+        case MOTOR_VAR_ALIGN_POWER:                   Motor_Config_SetAlignPower_Fract16 (p_motor, varValue);         break;
         case MOTOR_VAR_ALIGN_TIME:                    Motor_Config_SetAlignTime_Millis(p_motor, varValue);           break;
-        case MOTOR_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopPower_Fract16(p_motor, varValue);      break;
+        case MOTOR_VAR_OPEN_LOOP_POWER:               Motor_Config_SetOpenLoopI_Fract16(p_motor, varValue);          break;
         case MOTOR_VAR_OPEN_LOOP_SPEED:               Motor_Config_SetOpenLoopSpeed_Fract16(p_motor, varValue);      break;
-        case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:          Motor_Config_SetOpenLoopAccel_Millis(p_motor, varValue);       break;
+        case MOTOR_VAR_OPEN_LOOP_ACCEL_TIME:          Motor_Config_SetOpenLoopSpeedRamp_Millis (p_motor, varValue);       break;
         // case MOTOR_VAR_PHASE_PWM_MODE:             Motor_Config_SetPhaseModeParam(p_motor,  varValue);  break;
     }
 }
@@ -439,8 +468,6 @@ void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int
     }
 }
 
-
-
 /*
 
 */
@@ -452,4 +479,30 @@ void Motor_VarConfig_Cmd_Call(Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, in
         // case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME: Motor_Calibration_StartHome(p_motor);       break;
         // Motor_Encoder_CalibrateHomeOffset
     }
+}
+
+/*
+    const
+*/
+int32_t Motor_VarRef_Get(Motor_VarRef_T varId)
+{
+    int32_t value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_REF_V_MAX:                   value = MotorAnalogRef_GetIMaxAmps();                 break;
+        case MOTOR_VAR_REF_I_MAX:                   value = MotorAnalogRef_GetVMaxVolts();                break;
+        case MOTOR_VAR_REF_V_MAX_ADCU:              value = MOTOR_ANALOG_V_MAX_ADCU;                      break;
+        case MOTOR_VAR_REF_I_MAX_ADCU:              value = MOTOR_ANALOG_I_MAX_ADCU;                      break;
+        case MOTOR_VAR_REF_V_RATED:                 value = MotorAnalogRef_GetVRated_Fract16();           break;
+        case MOTOR_VAR_REF_I_RATED:                 value = MotorAnalogRef_GetIRatedPeak_Fract16();       break;
+
+        case MOTOR_VAR_REF_BOARD_V_RATED_VOLTS:     value = MotorAnalogRef_GetVRated();                   break;
+        case MOTOR_VAR_REF_BOARD_I_RATED_AMPS:      value = MotorAnalogRef_GetIRatedRms();                break;
+        case MOTOR_VAR_REF_V_PHASE_R1:              value = MOTOR_ANALOG_REFERENCE_BOARD.V_PHASE_R1 / 10;       break;
+        case MOTOR_VAR_REF_V_PHASE_R2:              value = MOTOR_ANALOG_REFERENCE_BOARD.V_PHASE_R2 / 10;       break;
+        case MOTOR_VAR_REF_I_PHASE_R_BASE:          value = MOTOR_ANALOG_REFERENCE_BOARD.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_REF_I_PHASE_R_MOSFETS:       value = MOTOR_ANALOG_REFERENCE_BOARD.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_REF_I_PHASE_GAIN:            value = MOTOR_ANALOG_REFERENCE_BOARD.I_PHASE_GAIN;          break;
+    }
+    return value;
 }

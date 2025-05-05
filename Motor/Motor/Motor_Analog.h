@@ -28,18 +28,14 @@
     @version V0
 */
 /******************************************************************************/
-#ifndef MOTOR_ANALOG_CONVERSION_H
-#define MOTOR_ANALOG_CONVERSION_H
+#ifndef MOTOR_MOTOR_ANALOG_CONVERSION_H
+#define MOTOR_MOTOR_ANALOG_CONVERSION_H
 
-#include "Motor_FOC.h"
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-#include "Motor_SixStep.h"
-#endif
 #include "Motor_Debug.h"
 #include "Motor.h"
 
 static inline uint16_t Motor_Analog_GetAdcu(const Motor_T * p_motor, MotorAnalog_Channel_T localChannel) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSIONS[localChannel].P_STATE->Result; }
-static inline uint8_t Motor_Analog_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T localChannel) { return Motor_Analog_GetAdcu(p_motor, localChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+static inline uint8_t Motor_Analog_GetAdcu_Msb8(const Motor_T * p_motor, MotorAnalog_Channel_T localChannel) { return Motor_Analog_GetAdcu(p_motor, localChannel) >> (ANALOG_REFERENCE.ADC_BITS - 8U); }
 
 static inline uint16_t Motor_Analog_GetVa(const Motor_T * p_motor) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VA.P_STATE->Result; }
 static inline uint16_t Motor_Analog_GetVb(const Motor_T * p_motor) { return p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_VB.P_STATE->Result; }
@@ -51,29 +47,36 @@ static inline uint16_t Motor_Analog_GetHeat(const Motor_T * p_motor) { return p_
 
 /******************************************************************************/
 /*!
-    @brief  Adc Capture
+    Convert conversion results from ADCU to Fract16
+    where 32767 is fully saturated sensor
 */
 /******************************************************************************/
-static inline void Motor_Analog_OnCompleteVa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.A = 1U; }
-static inline void Motor_Analog_OnCompleteVb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.B = 1U; }
-static inline void Motor_Analog_OnCompleteVc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VFlags.C = 1U; }
-static inline void Motor_Analog_OnCompleteIa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.A = 1U; }
-static inline void Motor_Analog_OnCompleteIb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.B = 1U; }
-static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IFlags.C = 1U; }
+static inline ufract16_t Motor_Analog_GetVa_Fract16(const Motor_T * p_motor) { return Motor_Analog_GetVa(p_motor) * MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
+static inline ufract16_t Motor_Analog_GetVb_Fract16(const Motor_T * p_motor) { return Motor_Analog_GetVb(p_motor) * MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
+static inline ufract16_t Motor_Analog_GetVc_Fract16(const Motor_T * p_motor) { return Motor_Analog_GetVc(p_motor) * MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
+static inline fract16_t Motor_Analog_GetIa_Fract16(const Motor_T * p_motor) { return (Motor_Analog_GetIa(p_motor) - p_motor->Config.IaZeroRef_Adcu) * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
+static inline fract16_t Motor_Analog_GetIb_Fract16(const Motor_T * p_motor) { return (Motor_Analog_GetIb(p_motor) - p_motor->Config.IbZeroRef_Adcu) * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
+static inline fract16_t Motor_Analog_GetIc_Fract16(const Motor_T * p_motor) { return (Motor_Analog_GetIc(p_motor) - p_motor->Config.IcZeroRef_Adcu) * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
 
-// static inline void Motor_Analog_CaptureVa(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureVa, 0U /* Motor_SixStep_CaptureVBemfA */, adcu); }
-// static inline void Motor_Analog_CaptureVb(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureVb, 0U /* Motor_SixStep_CaptureVBemfB */, adcu); }
-// static inline void Motor_Analog_CaptureVc(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureVc, 0U /* Motor_SixStep_CaptureVBemfC */, adcu); }
-// static inline void Motor_Analog_CaptureIa(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureIa, 0U /* Motor_SixStep_CaptureIa */, adcu); }
-// static inline void Motor_Analog_CaptureIb(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureIb, 0U /* Motor_SixStep_CaptureIb */, adcu); }
-// static inline void Motor_Analog_CaptureIc(Motor_T * p_motor, uint16_t adcu) { Motor_SetCommutationModeUInt16(p_motor, Motor_FOC_CaptureIc, 0U /* Motor_SixStep_CaptureIc */, adcu); }
 
-#define MOTOR_ANALOG_CONVERSION_VA_INIT(ChannelBase, VaHost, VaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VA), (Analog_Setter_T)Motor_Analog_OnCompleteVa, p_Motor, VaHost, VaPin)
-#define MOTOR_ANALOG_CONVERSION_VB_INIT(ChannelBase, VbHost, VbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VB), (Analog_Setter_T)Motor_Analog_OnCompleteVb, p_Motor, VbHost, VbPin)
-#define MOTOR_ANALOG_CONVERSION_VC_INIT(ChannelBase, VcHost, VcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VC), (Analog_Setter_T)Motor_Analog_OnCompleteVc, p_Motor, VcHost, VcPin)
-#define MOTOR_ANALOG_CONVERSION_IA_INIT(ChannelBase, IaHost, IaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IA), (Analog_Setter_T)Motor_Analog_OnCompleteIa, p_Motor, IaHost, IaPin)
-#define MOTOR_ANALOG_CONVERSION_IB_INIT(ChannelBase, IbHost, IbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IB), (Analog_Setter_T)Motor_Analog_OnCompleteIb, p_Motor, IbHost, IbPin)
-#define MOTOR_ANALOG_CONVERSION_IC_INIT(ChannelBase, IcHost, IcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IC), (Analog_Setter_T)Motor_Analog_OnCompleteIc, p_Motor, IcHost, IcPin)
+/******************************************************************************/
+/*!
+    @brief Adc Capture
+*/
+/******************************************************************************/
+static inline void Motor_Analog_OnCompleteVa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VBatch.A = 1U; }
+static inline void Motor_Analog_OnCompleteVb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VBatch.B = 1U; }
+static inline void Motor_Analog_OnCompleteVc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->VBatch.C = 1U; }
+static inline void Motor_Analog_OnCompleteIa(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IBatch.A = 1U; }
+static inline void Motor_Analog_OnCompleteIb(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IBatch.B = 1U; }
+static inline void Motor_Analog_OnCompleteIc(Motor_T * p_motor, uint16_t adcu) { (void)adcu; p_motor->IBatch.C = 1U; }
+
+#define MOTOR_ANALOG_CONVERSION_VA_INIT(ChannelBase, VaHost, VaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VA), (Analog_Capture_T)Motor_Analog_OnCompleteVa, p_Motor, VaHost, VaPin)
+#define MOTOR_ANALOG_CONVERSION_VB_INIT(ChannelBase, VbHost, VbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VB), (Analog_Capture_T)Motor_Analog_OnCompleteVb, p_Motor, VbHost, VbPin)
+#define MOTOR_ANALOG_CONVERSION_VC_INIT(ChannelBase, VcHost, VcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_VC), (Analog_Capture_T)Motor_Analog_OnCompleteVc, p_Motor, VcHost, VcPin)
+#define MOTOR_ANALOG_CONVERSION_IA_INIT(ChannelBase, IaHost, IaPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IA), (Analog_Capture_T)Motor_Analog_OnCompleteIa, p_Motor, IaHost, IaPin)
+#define MOTOR_ANALOG_CONVERSION_IB_INIT(ChannelBase, IbHost, IbPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IB), (Analog_Capture_T)Motor_Analog_OnCompleteIb, p_Motor, IbHost, IbPin)
+#define MOTOR_ANALOG_CONVERSION_IC_INIT(ChannelBase, IcHost, IcPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_IC), (Analog_Capture_T)Motor_Analog_OnCompleteIc, p_Motor, IcHost, IcPin)
 #define MOTOR_ANALOG_CONVERSION_HEAT_INIT(ChannelBase, HeatHost, HeatPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_HEAT), NULL, p_Motor, HeatHost, HeatPin)
 #define MOTOR_ANALOG_CONVERSION_SIN_INIT(ChannelBase, SinHost, SinPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_SIN), NULL, p_Motor, SinHost, SinPin)
 #define MOTOR_ANALOG_CONVERSION_COS_INIT(ChannelBase, CosHost, CosPin, p_Motor) ANALOG_CONVERSION_INIT((ChannelBase + MOTOR_ANALOG_CHANNEL_COS), NULL, p_Motor, CosHost, CosPin)
@@ -99,22 +102,3 @@ extern bool Motor_Analog_ProcCalibration(Motor_T * p_motor);
 extern void Motor_Analog_Calibrate(Motor_T * p_motor);
 
 #endif
-
-// #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
-// _MOTOR_ANALOG_CHANNEL_ENTRIES_SIN_COS(ChannelBase, p_Motor) \
-// [ChannelBase + MOTOR_ANALOG_CHANNEL_SIN] = MOTOR_ANALOG_CHANNEL_SIN_ENTRY(ChannelBase, p_Motor), \
-// [ChannelBase + MOTOR_ANALOG_CHANNEL_COS] = MOTOR_ANALOG_CHANNEL_COS_ENTRY(ChannelBase, p_Motor),
-// #else
-// #define _MOTOR_ANALOG_CHANNEL_ENTRIES_SIN_COS(ChannelBase, p_Motor)
-// #endif
-
-// #define _MOTOR_ANALOG_CHANNEL_ENTRIES(ChannelBase, p_Motor) \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_VA] = MOTOR_ANALOG_CONVERSION_OF_CHANNEL(p_Motor, MOTOR_ANALOG_CHANNEL_VA), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_VB] = MOTOR_ANALOG_CHANNEL_VB_ENTRY(ChannelBase, p_Motor), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_VC] = MOTOR_ANALOG_CHANNEL_VC_ENTRY(ChannelBase, p_Motor), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_IA] = MOTOR_ANALOG_CHANNEL_IA_ENTRY(ChannelBase, p_Motor), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_IB] = MOTOR_ANALOG_CHANNEL_IB_ENTRY(ChannelBase, p_Motor), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_IC] = MOTOR_ANALOG_CHANNEL_IC_ENTRY(ChannelBase, p_Motor), \
-//     [ChannelBase + MOTOR_ANALOG_CHANNEL_HEAT] = MOTOR_ANALOG_CHANNEL_HEAT_ENTRY(ChannelBase, p_Motor), \
-//     _MOTOR_ANALOG_CHANNEL_ENTRIES_SIN_COS(ChannelBase, p_Motor)
-

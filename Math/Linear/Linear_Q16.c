@@ -22,7 +22,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Q16_Of.c
+    @file   Linear_Q16.c
     @author FireSourcery
     @brief  Linear
     @version V0
@@ -40,15 +40,17 @@
 /*!
     Linear Fixed
 
+    f(x) = fract16
+    f(x0) = 0
+    f(xRef) = 65536
+
     Equalvalent to Linear_Init_Map(p_linear, x0, xRef, 0, (1 << nFractionalBits));
 */
 /******************************************************************************/
 void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0, int32_t xRef)
 {
-    p_linear->Slope = (1 << LINEAR_INT32_MAX_SHIFT) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
+    p_linear->Slope = ((int32_t)1 << LINEAR_INT32_MAX_SHIFT) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
     p_linear->SlopeShift = (LINEAR_INT32_MAX_SHIFT - nFractionalBits); // Adjust the shift to match the fractional bits
-    // p_linear->Slope = (1 << (LINEAR_INT32_MAX_SHIFT - nIntegerBits)) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
-    // p_linear->SlopeShift = ((LINEAR_INT32_MAX_SHIFT - nIntegerBits) - nFractionalBits); // Adjust the shift to match the fractional bits
     p_linear->InvSlope = (xRef - x0);
     p_linear->InvSlopeShift = nFractionalBits;
     p_linear->X0 = x0;

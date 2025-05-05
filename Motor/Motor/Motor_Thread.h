@@ -40,6 +40,9 @@
 
 #include "Transducer/Encoder/Encoder_ISR.h"
 
+
+static inline bool Motor_IsAnalogCycle(const Motor_T * p_motor) { return MotorTimeRef_IsAnalogCycle(p_motor->ControlTimerBase); }
+
 /*
     Default 50us
     Calling function clears interrupt flag
@@ -59,15 +62,9 @@ static inline void Motor_PWM_Thread(Motor_T * p_motor)
 /* Optionally mark before Start */
 void Motor_MarkAnalog_Thread(Motor_T * p_motor)
 {
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
-    if (p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
-    {
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-        Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
-    }
-#endif
+    // MotorSensor_MarkAnalog(&p_motor->Sensor);
 
-    if (Motor_IsAnalogCycle(p_motor) == true) //todo change timer
+    if (Motor_IsAnalogCycle(p_motor) == true) // todo change timer
     {
         switch (StateMachine_GetActiveStateId(&p_motor->StateMachine)) /* or set on state entry */
         {
@@ -94,6 +91,12 @@ void Motor_MarkAnalog_Thread(Motor_T * p_motor)
     }
 }
 
+/* Alternatively move singleton capture to this module */
+// void Motor_CaptureVSource(Motor_T * p_motor, uint16_t vBus)
+// {
+//     Motor_Analog_CaptureVSource(p_motor, vBus);
+// }
+
 static inline void Motor_Heat_Thread(Motor_T * p_motor)
 {
     if (Thermistor_IsMonitorEnable(&p_motor->Thermistor) == true)
@@ -104,13 +107,13 @@ static inline void Motor_Heat_Thread(Motor_T * p_motor)
                 if (p_motor->StateFlags.HeatWarning == 1U) /* todo move to thermistor */
                 {
                     p_motor->StateFlags.HeatWarning = 0U;
-                    Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
+                    // Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_HEAT_THIS);
                 }
                 break;
             case THERMISTOR_STATUS_WARNING_THRESHOLD:
             case THERMISTOR_STATUS_WARNING:     /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
                 p_motor->StateFlags.HeatWarning = 1U;
-                Motor_SetILimitMotoringEntry_Scalar(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
+                // Motor_SetILimitMotoringEntry_Scalar(p_motor, MOTOR_I_LIMIT_HEAT_THIS, Thermistor_GetHeatLimit_Percent16(&p_motor->Thermistor));
                 break;
             case THERMISTOR_STATUS_FAULT_THRESHOLD:
             case THERMISTOR_STATUS_FAULT:

@@ -35,175 +35,248 @@
 
 #include <assert.h>
 
+
+/*!
+    @param[in] vA, vB, vC - scalars normalized to [-.577F, .577F], such that vA = .577F <=> Phase A voltage output VBus/sqrt(3)
+*/
+static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
+{
+    // # Find the maximum and minimum of the three phase voltages
+    int32_t vMax = math_max(math_max(vA, vB), vC);
+    int32_t vMin = math_min(math_min(vA, vB), vC);
+
+    // # Calculate the zero - sequence voltage(midclamp adjustment)
+    int32_t vZero = (vMax + vMin) / 2 - FRACT16_1_DIV_2;
+
+    // # Adjust the phase voltages to ensure midclamp
+    int32_t dutyA = vA - vZero;
+    int32_t dutyB = vB - vZero;
+    int32_t dutyC = vC - vZero;
+
+    // # Saturate the duty cycles to ensure they are within the range of 0 to 1
+    *p_dutyA = ufract16_sat(dutyA);
+    *p_dutyB = ufract16_sat(dutyB);
+    *p_dutyC = ufract16_sat(dutyC);
+}
+
+/*!
+    @param[in] a, b, c - scalars normalized to [-1.0F, 1.0F], such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
+*/
+static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
+{
+    int32_t vA = fract16_mul(a, FRACT16_1_DIV_SQRT3);
+    int32_t vB = fract16_mul(b, FRACT16_1_DIV_SQRT3);
+    int32_t vC = fract16_mul(c, FRACT16_1_DIV_SQRT3);
+
+    svpwm_midclamp_vbus(p_dutyA, p_dutyB, p_dutyC, vA, vB, vC);
+}
+
+
 /*
-    Standard SVM calculation method. Inclusive of equivalent reverse Clarke transform.
+    Transform V with midclamp 3rd harmonic adjustment
+    without shifting to half Duty
+*/
+// static inline void svpwm_midclamp_transform(fract16_t * p_vA, fract16_t * p_vB, fract16_t * p_vC)
+// {
+//     // # Find the maximum and minimum of the three phase voltages
+//     int32_t vMax = math_max(math_max(*p_vA, *p_vB), *p_vC);
+//     int32_t vMin = math_min(math_min(*p_vA, *p_vB), *p_vC);
+
+//     // # Calculate the zero - sequence voltage(midclamp adjustment)
+//     int32_t vZero = (vMax + vMin) / 2;
+
+//     // # Adjust the phase voltages to ensure midclamp
+//     *p_vA = *p_vA - vZero;
+//     *p_vB = *p_vB - vZero;
+//     *p_vC = *p_vC - vZero;
+// }
+
+
+/*!
+    SVM calculation with 3rd harmonic. Inclusive of equivalent reverse Clarke transform.
     Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
 
-    dutyA, dutyB, dutyC -> 16 bits, q1.15, always positive
-    pass as signed to saturate as signed
+    @param[in] alpha scaled to VBus
+
+    Prescaled Normalized by a factor of sqrt(3)/2, such that alpha 1.15 => a = 1.0
+
+    altneratively pass Vbus
 */
-static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
-{
-    /*
-        The other 3 of 6 are inverse of the 3 derived
-        Magnitudes are normalized by a factor of sqrt(3)/2, i.e alpha = 1 => A = .866
-        Derives 3 magnitudes (duty cycles) belonging to basic unit vectors.
+// static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
+// {
+//     /*
+//         Derive 3 magnitudes (duty cycles) belonging to basic unit vectors.
+//         The other 3 of 6 are inverse of the 3 derived
 
-        X = beta;
-        Y = (beta + sqrt3 * alpha) / 2;
-        Z = (beta - sqrt3 * alpha) / 2;
-    */
+//         X = beta;
+//         Y = (beta + sqrt3 * alpha) / 2;
+//         Z = (beta - sqrt3 * alpha) / 2;
+//     */
+//     int32_t betaDiv2 = fract16_mul(betaDuty, FRACT16_1_DIV_2);
+//     int32_t alphaSqrt3Div2 = fract16_mul(alphaDuty, FRACT16_SQRT3_DIV_2);
 
-    int32_t betaDiv2 = fract16_mul(beta, FRACT16_1_DIV_2);
-    int32_t alphaSqrt3Div2 = fract16_mul(alpha, FRACT16_SQRT3_DIV_2);
+//     int32_t magX = betaDuty;
+//     int32_t magY = betaDiv2 + alphaSqrt3Div2;
+//     int32_t magZ = betaDiv2 - alphaSqrt3Div2;
 
-    int32_t magX = beta;
-    int32_t magY = betaDiv2 + alphaSqrt3Div2;
-    int32_t magZ = betaDiv2 - alphaSqrt3Div2;
+//     int32_t z0; /* z0 = (1/2) - (max + min)/2 = (1 - (max + min))/2 */
 
-    int32_t z0;
+//     int32_t dutyA;
+//     int32_t dutyB;
+//     int32_t dutyC;
 
-    if(magX >= 0)
-    {
-        if(magZ < 0)
-        {
-            /*
-                Sector 1: X >= 0 and Z < 0
+//     uint8_t sector;
 
-                Duty Cycle:
-                A:       |v100| = (sqrt3 * alpha - beta) / 2 = -Z;
-                invC:    |v110| = beta = X;
+//     if (magX >= 0)
+//     {
+//         if      (magZ < 0)  { sector = 1; }
+//         else if (magY >= 0) { sector = 2; }
+//         else                { sector = 3; }
+//     }
+//     else
+//     {
+//         if      (magZ >= 0) { sector = 4; }
+//         else if (magY < 0)  { sector = 5; }
+//         else                { sector = 6; }
+//     }
 
-                SVPWM:
-                A -> Max, B -> Mid, C -> Min
-                z0 = (1/2) - (max + min)/2 = (1 - (-Z - X))/2
-                A = z0 - Z;
-                B = z0;
-                C = z0 - X;
+//     switch (sector)
+//     {
+//         case 1:
+//             /*
+//                 Sector 1: X >= 0 and Z < 0
+//                 Duty Cycle:
+//                 A:       |v100| = (sqrt3 * alpha - beta) / 2 = -Z;
+//                 invC:    |v110| = beta = X;
 
-                A = (1 + X - Z) / 2;
-                B = (1 + X + Z) / 2;
-                C = (1 - X + Z) / 2;
-            */
-            z0 = (FRACT16_MAX + magX + magZ) / 2;
-            *p_dutyA = (z0 - magZ);
-            *p_dutyB = z0;
-            *p_dutyC = (z0 - magX);
-        }
-        else if(magY >= 0)
-        {
-            /*
-                Sector 2: Y >= 0 and Z >= 0
+//                 SVPWM:
+//                 A -> Max, B -> Mid, C -> Min
+//                 z0 = (1 - (-Z - X))/2
+//                 A = z0 - Z;
+//                 B = z0;
+//                 C = z0 - X;
 
+//                 A = (1 + X - Z) / 2;
+//                 B = (1 + X + Z) / 2;
+//                 C = (1 - X + Z) / 2;
+//             */
+//             z0 = (FRACT16_MAX + magX + magZ) / 2;
+//             dutyA = (z0 - magZ);
+//             dutyB = z0;
+//             dutyC = (z0 - magX);
+//             break;
 
-                Duty Cycle:
-                invC:     |v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
-                B:         |v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
+//         case 2:
+//             /*
+//                 Sector 2: Y >= 0 and Z >= 0
+//                 Duty Cycle:
+//                 invC:     |v110| = 1 * (beta + sqrt3 * alpha) / 2 = Y;
+//                 B:        |v010| = 1 * (beta - sqrt3 * alpha) / 2 = Z;
 
-                SVPWM:
-                A -> Mid, B -> Max, C -> Min
-                z0 = (1/2) - (max + min)/2 = (1 - (Z - Y))/2
-                A = z0;
-                B = z0 + Z;
-                C = z0 - Y;
-            */
-            z0 = (FRACT16_MAX + magY - magZ) / 2;
-            *p_dutyA = z0;
-            *p_dutyB = (z0 + magZ);
-            *p_dutyC = (z0 - magY);
-        }
-        else
-        {
-            /*
-                Sector 3: X >= 0 and Y < 0
+//                 SVPWM:
+//                 A -> Mid, B -> Max, C -> Min
+//                 z0 = (1 - (Z - Y))/2
+//                 A = z0;
+//                 B = z0 + Z;
+//                 C = z0 - Y;
+//             */
+//             z0 = (FRACT16_MAX + magY - magZ) / 2;
+//             dutyA = z0;
+//             dutyB = (z0 + magZ);
+//             dutyC = (z0 - magY);
+//             break;
 
-                Duty Cycle:
-                B:         |v010| = X;
-                invA:    |v011| = -Y;
+//         case 3:
+//             /*
+//                 Sector 3: X >= 0 and Y < 0
 
-                SVPWM:
-                A -> Min, B -> Max, C -> Mid
-                z0 = (1 - (X + Y))/2
-                A = z0 + Y;
-                B = z0 + X;
-                C = z0;
-            */
-            z0 = (FRACT16_MAX - magX - magY) / 2;
-            *p_dutyA = (z0 + magY);
-            *p_dutyB = (z0 + magX);
-            *p_dutyC = z0;
-        }
-    }
-    else
-    {
-        if(magZ >= 0)
-        {
-            /*
-                Sector 4: X < 0 and Z >= 0
+//                 Duty Cycle:
+//                 B:       |v010| = X;
+//                 invA:    |v011| = -Y;
 
-                Duty Cycle:
-                invA:     |v011| = Z;
-                C:        |v001| = -X;
+//                 SVPWM:
+//                 A -> Min, B -> Max, C -> Mid
+//                 z0 = (1 - (X + Y))/2
+//                 A = z0 + Y;
+//                 B = z0 + X;
+//                 C = z0;
+//             */
+//             z0 = (FRACT16_MAX - magX - magY) / 2;
+//             dutyA = (z0 + magY);
+//             dutyB = (z0 + magX);
+//             dutyC = z0;
+//             break;
 
-                SVPWM:
-                A -> Min, B -> Mid, C -> Max
-                z0 = (1 - (-X - Z))/2
-                A = z0 - Z;
-                B = z0;
-                C = z0 - X;
-            */
-            z0 = (FRACT16_MAX + magX + magZ) / 2;
-            *p_dutyA = (z0 - magZ);
-            *p_dutyB = z0;
-            *p_dutyC = (z0 - magX);
-        }
-        else if(magY < 0)
-        {
-            /*
-                Sector 5:  Y < 0 and Z < 0
+//         case 4:
+//             /*
+//                 Sector 4: X < 0 and Z >= 0
 
-                Duty Cycle:
-                C:         |v001| = -Y;
-                invB:    |v101| = -Z;
+//                 Duty Cycle:
+//                 invA:     |v011| = Z;
+//                 C:        |v001| = -X;
 
-                SVPWM:
-                A -> Mid, B -> Min, C -> Max
-                z0 = (1 - (-Y + Z))/2
-                A = z0;
-                B = z0 + Z;
-                C = z0 - Y;
-            */
-            z0 = (FRACT16_MAX + magY - magZ) / 2;
-            *p_dutyA = z0;
-            *p_dutyB = (z0 + magZ);
-            *p_dutyC = (z0 - magY);
-        }
-        else
-        {
-            /*
-                Sector 6: X < 0 and Y >= 0
+//                 SVPWM:
+//                 A -> Min, B -> Mid, C -> Max
+//                 z0 = (1 - (-X - Z))/2
+//                 A = z0 - Z;
+//                 B = z0;
+//                 C = z0 - X;
+//             */
+//             z0 = (FRACT16_MAX + magX + magZ) / 2;
+//             dutyA = (z0 - magZ);
+//             dutyB = z0;
+//             dutyC = (z0 - magX);
+//             break;
 
-                Duty Cycle:
-                invB:     |v101| = -X;
-                A:        |v100| = Y;
+//         case 5:
+//             /*
+//                 Sector 5:  Y < 0 and Z < 0
 
-                SVPWM:
-                A -> Max, B -> Min, C -> Mid
-                z0 = (1 - (X + Y))/2
-                A = z0 + Y;
-                B = z0 + X;
-                C = z0;
-            */
-            z0 = (FRACT16_MAX - magX - magY) / 2;
-            *p_dutyA = (z0 + magY);
-            *p_dutyB = (z0 + magX);
-            *p_dutyC = z0;
-        }
-    }
+//                 Duty Cycle:
+//                 C:       |v001| = -Y;
+//                 invB:    |v101| = -Z;
 
-    *p_dutyA = ufract16_sat(*p_dutyA);
-    *p_dutyB = ufract16_sat(*p_dutyB);
-    *p_dutyC = ufract16_sat(*p_dutyC);
-}
+//                 SVPWM:
+//                 A -> Mid, B -> Min, C -> Max
+//                 z0 = (1 - (-Y + Z))/2
+//                 A = z0;
+//                 B = z0 + Z;
+//                 C = z0 - Y;
+//             */
+//             z0 = (FRACT16_MAX + magY - magZ) / 2;
+//             dutyA = z0;
+//             dutyB = (z0 + magZ);
+//             dutyC = (z0 - magY);
+//             break;
+
+//         case 6:
+//             /*
+//                 Sector 6: X < 0 and Y >= 0
+
+//                 Duty Cycle:
+//                 invB:     |v101| = -X;
+//                 A:        |v100| = Y;
+
+//                 SVPWM:
+//                 A -> Max, B -> Min, C -> Mid
+//                 z0 = (1 - (X + Y))/2
+//                 A = z0 + Y;
+//                 B = z0 + X;
+//                 C = z0;
+//             */
+//             z0 = (FRACT16_MAX - magX - magY) / 2;
+//             dutyA = (z0 + magY);
+//             dutyB = (z0 + magX);
+//             dutyC = z0;
+//             break;
+
+//         default:
+//             break;
+//     }
+
+//     *p_dutyA = ufract16_sat(dutyA);
+//     *p_dutyB = ufract16_sat(dutyB);
+//     *p_dutyC = ufract16_sat(dutyC);
+// }
 
 #endif

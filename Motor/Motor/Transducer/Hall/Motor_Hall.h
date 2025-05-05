@@ -36,6 +36,7 @@
 #include "../../Motor.h"
 #include "../../Motor_FOC.h"
 #include "../../Motor_StateMachine.h"
+#include "Transducer/Encoder/Encoder.h" /* alternatively, split encoder math */
 
 
 extern void Motor_Hall_Calibrate(Motor_T * p_motor);

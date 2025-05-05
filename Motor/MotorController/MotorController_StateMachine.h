@@ -34,6 +34,11 @@
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
+#include "MotorController_Analog.h"
+#include "System/SysTime/SysTime.h"
+
+#include <string.h>
+
 // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 //     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (1U)
 // #else

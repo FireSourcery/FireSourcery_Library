@@ -22,20 +22,11 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   AnalogN.h
+    @file   Motor_Sensor.c
     @author FireSourcery
-    @brief
     @version V0
+    @brief
 */
 /******************************************************************************/
-#include "AnalogN.h"
-
-void AnalogN_Init(const AnalogN_T * p_analogn)
-{
-    for(uint8_t iAdc = 0U; iAdc < p_analogn->CONST.ANALOG_COUNT; iAdc++)
-    {
-        Analog_Init(&p_analogn->CONST.P_ANALOGS[iAdc]);
-    }
-}
-
+#include "Motor_Sensor.h"
 

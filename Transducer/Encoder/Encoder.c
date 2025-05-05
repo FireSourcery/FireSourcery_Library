@@ -62,9 +62,15 @@ void Encoder_InitInterrupts_Incremental(Encoder_T * p_encoder)
     Units
 */
 /******************************************************************************/
+
+/* One point of access to reduce flash use */
+uint32_t math_muldiv64_unsigned(uint32_t value, uint32_t factor, uint32_t divisor) { return (uint64_t)value * factor / divisor; }
+
+
 /*
-    UnitAngle[DEGREES/EncoderCount] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
-    UnitAngle => Counts * [(DEGREES << SHIFT) / CountsPerRevolution] >> SHIFT
+    UnitAngle == [DEGREES/EncoderCount] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
+
+    Angle = Counts * [(DEGREES << SHIFT) / CountsPerRevolution] >> SHIFT
 */
 void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
 {
@@ -79,13 +85,12 @@ void _Encoder_ResetUnitsAngle(Encoder_T * p_encoder)
     Max = 2 * ScalarSpeedRef_Rpm * CountsPerRevolution / (60 * UnitTime_Freq)
 */
 static uint32_t MaxDeltaD(Encoder_T * p_encoder)
-    { return  p_encoder->Config.ScalarSpeedRef_Rpm * 2U * p_encoder->Config.CountsPerRevolution / (60U * p_encoder->UnitTime_Freq); }
+    { return p_encoder->Config.ScalarSpeedRef_Rpm * 2U * p_encoder->Config.CountsPerRevolution / (60U * p_encoder->UnitTime_Freq); }
 
 /*
-    ScalarSpeed[Percent16] = Speed_Rpm * 65536 / ScalarSpeedRef_Rpm
-    UnitScalarSpeed => DeltaD * [UnitTime_Freq * 65536 * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)] / DeltaT
-    UnitScalarSpeed => [DeltaD / DeltaT] * [UnitTime_Freq] * [65536 * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)]
-        671,088
+    ScalarSpeed[Fract16] = Speed_Rpm * FRACT16_MAX / ScalarSpeedRef_Rpm
+    UnitScalarSpeed => DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)] / DeltaT
+    UnitScalarSpeed => [DeltaD / DeltaT] * [UnitTime_Freq] * [FRACT16_MAX * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)]
 
     e.g.
     UnitScalarSpeedShift = 1:
@@ -98,27 +103,22 @@ static uint32_t MaxDeltaD(Encoder_T * p_encoder)
 
     ModeD/DT
     FreqD = Speed_Rpm * CountsPerRevolution / 60
-    [MaxD * 2] = [2 * ScalarSpeedRef_Rpm] * CountsPerRevolution / 60 / UnitTime_Freq
-    SpeedMax = 131,072 = [MaxD * 2] * [UnitScalarSpeed_Factor / UnitScalarSpeed_Divisor]
 
     e.g.
     CountsPerRevolution = 24, ScalarSpeedRef_Rpm = 4000 =>
        671,088 <=> 40 << Shift
 */
-uint32_t Encoder_GetScalarSpeedFactor(Encoder_T * p_encoder) { return (uint32_t)65536U * 60U; }
-uint32_t Encoder_GetScalarSpeedDivisor(Encoder_T * p_encoder) { return p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm; }
-
 void _Encoder_ResetUnitsScalarSpeed(Encoder_T * p_encoder)
 {
-    uint32_t unitsFactor = Encoder_GetScalarSpeedFactor(p_encoder);
-    uint32_t unitsDivisor = Encoder_GetScalarSpeedDivisor(p_encoder);
-    p_encoder->UnitScalarSpeedShift = 14U;
+    uint32_t unitsFactor = (uint32_t)32768U * 60U;
+    uint32_t unitsDivisor = p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm;
+    p_encoder->UnitScalarSpeedShift = 14U; // todo as shift max of MaxDeltaD
     p_encoder->UnitScalarSpeed = ((uint64_t)unitsFactor << p_encoder->UnitScalarSpeedShift) * p_encoder->UnitTime_Freq / unitsDivisor;
 }
 
 /*
-    As Factor,Shift of Rotational Speed
-        => RPM * DEGREES / 60 ~= RPM * 10000
+    In range for electrical speed only
+    Angle16/S same as RPS normalized to [0:65536]
 
     UnitAngularSpeed => DeltaD * [DEGREES * UnitTime_Freq / CountsPerRevolution] / DeltaT
         <=> [UnitAngleD * UnitTime_Freq >> SHIFT]
@@ -142,31 +142,38 @@ void _Encoder_ResetUnitsAngularSpeed(Encoder_T * p_encoder)
 }
 
 /*
+    UnitPollingAngle == [DEGREES/EncoderCount/POLLING_FREQ] = [(DEGREES / CountsPerRevolution) / POLLING_FREQ]
+    PollingAngle = (Count/Time) * [(DEGREES / CountsPerRevolution) / POLLING_FREQ]
+
     AngularSpeed / POLLING_FREQ
-    (AngleIndex / POLLING_FREQ) * (Count/Time) * (DEGREES / CountsPerRevolution)
+        (1 / POLLING_FREQ) * (Count/Time) * (DEGREES / CountsPerRevolution)
 
     DeltaT => (UnitTime_Freq / DeltaT)
         AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
 
     ModeDT => FreqD
-        AngleIndex * [FreqD * [DEGREES / CountsPerRevolution]] / POLLING_FREQ
-            <=> as UnitAngularSpeed
+            [FreqD * [DEGREES / CountsPerRevolution]] / POLLING_FREQ
+                <=> as UnitAngularSpeed / POLLING_FREQ
 
-        AngleIndex * [FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ]] >> SHIFT
-            <=> [FreqD * UnitAngleD / POLLING_FREQ]
+            [FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ]] >> SHIFT
+                <=> [FreqD * UnitAngleD / POLLING_FREQ]
 
-
-    DEGREES * InterpolateAngleScalar * TIMER_FREQ / (POLLING_FREQ * CountsPerRevolution)
     Scalar for electrical speed
 */
-void _Encoder_ResetUnitsInterpolateAngle(Encoder_T * p_encoder)
+void _Encoder_ResetUnitsPollingAngle(Encoder_T * p_encoder)
 {
-    /* always TIMER_FREQ for DeltaT for now */
-    p_encoder->UnitInterpolateAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
-    p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.InterpolateAngleScalar / p_encoder->Config.CountsPerRevolution;
-
-    /* using ANGLE_SHIFT */
-    // p_encoder->UnitInterpolateAngle = p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ;
+    if (p_encoder->UnitTime_Freq == p_encoder->CONST.TIMER_FREQ) //todo as get mode
+    {
+        /* altneratively TIMER_FREQ / POLLING_FREQ << Shift */
+        p_encoder->UnitPollingAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.PartitionsPerRevolution, p_encoder->CONST.TIMER_FREQ, p_encoder->CONST.POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
+        p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.PartitionsPerRevolution / p_encoder->Config.CountsPerRevolution;
+    }
+    else if (p_encoder->UnitTime_Freq == 1U)
+    {
+        /* using ANGLE_SHIFT */
+        p_encoder->UnitPollingAngle = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution / p_encoder->CONST.POLLING_FREQ;
+        p_encoder->InterpolateAngleLimit = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution;
+    }
 }
 
 /*
@@ -208,7 +215,7 @@ void _Encoder_ResetUnits(Encoder_T * p_encoder)
 {
     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
     _Encoder_ResetUnitsAngle(p_encoder);
-    _Encoder_ResetUnitsInterpolateAngle(p_encoder);
+    _Encoder_ResetUnitsPollingAngle(p_encoder);
     _Encoder_ResetUnitsScalarSpeed(p_encoder);
     _Encoder_ResetUnitsAngularSpeed(p_encoder);
     _Encoder_ResetUnitsLinearSpeed(p_encoder);
@@ -218,6 +225,12 @@ void Encoder_SetCountsPerRevolution(Encoder_T * p_encoder, uint16_t countsPerRev
 {
     p_encoder->Config.CountsPerRevolution = countsPerRevolution;
     _Encoder_ResetUnits(p_encoder);
+}
+
+void Encoder_SetPartitionsPerRevolution(Encoder_T * p_encoder, uint16_t count)
+{
+    p_encoder->Config.PartitionsPerRevolution = count;
+    _Encoder_ResetUnitsPollingAngle(p_encoder);
 }
 
 void Encoder_SetScalarSpeedRef(Encoder_T * p_encoder, uint16_t speedRef)
@@ -369,7 +382,7 @@ uint16_t Encoder_GetAngleAligned(Encoder_T * p_encoder)
 
 // uint16_t Encoder_GetElectricalAngleOffset(Encoder_T * p_encoder)
 // {
-//     return % p_encoder->Config.InterpolateAngleScalar;
+//     return % p_encoder->Config.PartitionsPerRevolution;
 // }
 
 bool Encoder_ProcAlignValidate(Encoder_T * p_encoder)
@@ -422,7 +435,7 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 #if     defined(CONFIG_ENCODER_HW_DECODER)
     uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
     // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    // p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
+    p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
     // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
     // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
     // #endif
@@ -433,16 +446,7 @@ void Encoder_CalibrateQuadraturePositive(Encoder_T * p_encoder)
 
 void Encoder_CalibrateQuadratureDirection(Encoder_T * p_encoder, bool isPositive)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->CONST.P_HAL_ENCODER_COUNTER);
-    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    // p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-    // #endif
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    p_encoder->Config.IsALeadBPositive = ((p_encoder->CounterD > 0) == isPositive);
-#endif
+    p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
 }
 
 
@@ -453,12 +457,12 @@ void Encoder_CalibrateQuadratureDirection(Encoder_T * p_encoder, bool isPositive
 /******************************************************************************/
 // //
 // uint16_t CountsPerRevolution;       /* Derive Angular Units. */
-// uint16_t ScalarSpeedRef_Rpm;        /* Derive Percent16 Units. */
+// uint16_t ScalarSpeedRef_Rpm;        /* Derive Fract16 Units. */
 // uint16_t SurfaceDiameter;           /* Derive Linear Units. */
 // uint16_t GearRatioInput;            /* DistancePerRevolution_Divider */
 // uint16_t GearRatioOutput;           /* DistancePerRevolution_Factor */
 // uint16_t ExtendedDeltaTStop;        /* ExtendedTimer time read as deltaT stopped, default as 1s */
-// uint32_t InterpolateAngleScalar;    /* Sets UnitInterpolateAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
+// uint32_t PartitionsPerRevolution;    /* Sets UnitPollingAngle Scalar and InterpolateAngleLimit. e.g electrical angle conversion */
 
 // uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
 // uint32_t AlignOffsetRef;            /* Align - Index */

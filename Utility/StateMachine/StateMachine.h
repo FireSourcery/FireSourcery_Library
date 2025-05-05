@@ -86,6 +86,7 @@ typedef void (*StateMachine_Function_T)(void * p_context);
     MapFn
     Transition0
     Transition Input with context, mapped by id
+    Transit_T, Next_T
 */
 typedef struct StateMachine_State * (*StateMachine_InputVoid_T)(void * p_context);
 
@@ -215,6 +216,8 @@ typedef const struct StateMachine_State
     */
     // StateMachine_SetK_T SET; /* via Key, alternative to passing function pointer */
 
+    // void * (* const CONTEXT)(void * p_context); /* Retrive State Context from Machine Context */
+
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
 #ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
     const struct StateMachine_State * P_LINK_NEXT;
@@ -228,6 +231,7 @@ typedef struct StateMachine_Machine
 {
     const StateMachine_State_T * const P_STATE_INITIAL;
     // const StateMachine_Input_T * const * const PP_TRANSITION_TABLE; [state_machine_state_t][state_machine_input_t]
+    // const StateMachine_State_T * const P_ROOT_STATES;
     const uint8_t TRANSITION_TABLE_LENGTH;  /* state_machine_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
 }
 StateMachine_Machine_T;
@@ -249,6 +253,7 @@ StateMachine_Const_T;
 typedef struct StateMachine
 {
     const StateMachine_Const_T CONST;
+
     const StateMachine_State_T * p_ActiveState;     /* The Active Top Level State. Keep the top level fast. */
     const StateMachine_State_T * p_ActiveSubState;  /* Leaf State, defines full path */
 

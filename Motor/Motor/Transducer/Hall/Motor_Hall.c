@@ -30,6 +30,54 @@
 /******************************************************************************/
 #include "Motor_Hall.h"
 
+// MotorSensor_VTable_T Hall_VTable =
+// {
+//     .Init = (MotorSensor_Proc_T)Hall_Init,
+//     .VerifyCalibration = (MotorSensor_Test_T)Hall_IsTableValid,
+//     .PollStateAngle = (MotorSensor_Angle_T)Hall_GetAngle,
+//     .CaptureAngle = (MotorSensor_Angle_T)Hall_CaptureAngle,
+//     .CaptureSpeed = (MotorSensor_Speed_T)Hall_CaptureSpeed,
+//     .SetInitial = (MotorSensor_Proc_T)Hall_SetInitial,
+//     .GetElectricalAngle = (MotorSensor_Angle_T)Hall_GetElectricalAngle,
+//     .GetMechanicalAngle = (MotorSensor_Angle_T)Hall_GetMechanicalAngle,
+// };
+
+
+/*!
+    Hall sensors as speed encoder.
+
+    MECH_R = ELECTRIC_R / N_POLE_PAIRS
+    ELECTRIC_R = 6 STEPS / Hall Cycle
+    CPR = PolePairs*6   => GetSpeed => mechanical speed
+    CPR = PolePairs     => GetSpeed => electrical speed
+*/
+// void Motor_ResetUnitsHallEncoder(Motor_T * p_motor)
+// {
+//     if (p_motor->Config.PolePairs * 6U != p_motor->Encoder.Config.CountsPerRevolution)
+//     {
+//         Encoder_SetCountsPerRevolution(&p_motor->Encoder, p_motor->Config.PolePairs * 6U);
+//     }
+//     p_motor->Encoder.Config.IsQuadratureCaptureEnabled = false;
+// }
+
+// /* Common, Set after PolePairs */
+// void Motor_ResetUnitsEncoder(Motor_T * p_motor)
+// {
+//     if (Motor_GetSpeedVRef_Rpm(p_motor) != p_motor->Encoder.Config.ScalarSpeedRef_Rpm)
+//     {
+//         Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
+//     }
+//     if (p_motor->Config.PolePairs != p_motor->Encoder.Config.PartitionsPerRevolution) /* Set for electrical cycle */
+//     {
+//         Encoder_SetPartitionsPerRevolution(&p_motor->Encoder, p_motor->Config.PolePairs);
+//     }
+//     // if(p_motor->Config.GearRatioOutput != p_motor->Encoder.Config.GearRatioOutput) ||
+//     // {
+//     //     Encoder_SetSurfaceRatio(&p_motor->Encoder, p_motor->Config.GearRatio);
+//     // }
+// }
+
+
 /* Include [Phase] and [P_PARENT] State */
 
 static void Calibration_Entry(Motor_T * p_motor)
@@ -39,9 +87,11 @@ static void Calibration_Entry(Motor_T * p_motor)
     p_motor->CalibrationStateIndex = 0U;
 }
 
+static_assert(HALL_SENSORS_VIRTUAL_A == PHASE_ID_A);
+
 static void Calibration_Proc(Motor_T * p_motor)
 {
-    const uint16_t duty = p_motor->Config.AlignPower_UFract16;
+    const uint16_t duty = p_motor->Config.AlignPower_Fract16;
 
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {

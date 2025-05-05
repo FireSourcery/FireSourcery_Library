@@ -123,9 +123,3 @@ void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder)
     p_encoder->Config.ExtendedDeltaTStop = Encoder_DeltaT_OfRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONST.EXTENDED_TIMER_FREQ / _Encoder_DeltaT_GetTimerFreq(p_encoder);
 }
 
-void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint16_t scalar)
-{
-    p_encoder->Config.InterpolateAngleScalar = scalar;
-    _Encoder_ResetUnitsInterpolateAngle(p_encoder);
-}
-

@@ -10,12 +10,13 @@
 
 /******************************************************************************/
 /*!
-    depreciate for register_t interface
     @brief Struct Array - typed getters/setters
     Extension of void_array.
-    In most cases structs will have pre defined getters/setters.
-    Collectively defined with various typed handlers.
-        Otherwise caller would need to wrap established getters/setters with void handlers.
+    Collectively defined with sized/typed handlers. Effecitvely, generated for value size.
+
+    Alternative to register_t/value_t interface.
+    This way caller directly pass pre-defined getters/setters.
+        Otherwise caller wraps established getters/setters with register_t/value_t handlers.
 */
 /******************************************************************************/
 typedef int32_t(*get_int32_t)(const void * p_struct);
@@ -36,11 +37,7 @@ typedef bool (*try_uint16_t)(void * p_struct, uint16_t value);
 typedef bool (*try_uint32_t)(void * p_struct, uint32_t value);
 
 
-
-
-/******************************************************************************/
 // ensure calling convention is correct for function pointer containing a typed value parameter
-/******************************************************************************/
 
 // foreach_set
 static inline void struct_array_foreach_set_int32(const void * p_buffer, size_t unit_size, size_t length, set_int32_t unit_setter, int32_t value)

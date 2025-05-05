@@ -39,4 +39,18 @@
 #define MOTOR_LIBRARY_VERSION           ((MOTOR_LIBRARY_VERSION_OPT << 24U) | (MOTOR_LIBRARY_VERSION_MAJOR << 16U) | (MOTOR_LIBRARY_VERSION_MINOR << 8U) | (MOTOR_LIBRARY_VERSION_FIX))
 
 
+static inline uint8_t Motor_LibraryVersionIndex(uint8_t charIndex)
+{
+    uint8_t versionChar;
+    switch (charIndex)
+    {
+        case 0U: versionChar = MOTOR_LIBRARY_VERSION_FIX;    break;
+        case 1U: versionChar = MOTOR_LIBRARY_VERSION_MINOR;  break;
+        case 2U: versionChar = MOTOR_LIBRARY_VERSION_MAJOR;  break;
+        case 3U: versionChar = MOTOR_LIBRARY_VERSION_OPT;    break;
+        default: versionChar = 0U; break;
+    }
+    return versionChar;
+}
+
 #endif

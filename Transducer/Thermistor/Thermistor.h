@@ -32,7 +32,7 @@
 #define THERMISTOR_H
 
 #include "Config.h"
-#include "Peripheral/Analog/Global_Analog.h"
+#include "Peripheral/Analog/AnalogReference.h"
 #include "Math/Linear/Linear_ADC.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -56,6 +56,8 @@ typedef enum Thermistor_Status
 }
 Thermistor_Status_T;
 
+// Thermistor_StatusBits_T;
+
 /*   */
 typedef enum Thermistor_Type
 {
@@ -65,7 +67,7 @@ typedef enum Thermistor_Type
 }
 Thermistor_Type_T;
 
-// // optionally place in configurable Config, or CONFIG
+// optionally place in configurable Config, or CONFIG
 // typedef struct Thermistor_Coefficients
 // {
 //     uint16_t B;
@@ -80,9 +82,8 @@ Thermistor_Type_T;
 */
 typedef struct Thermistor_Config
 {
-
+    /* Unit Conversion */
     Thermistor_Type_T Type;
-    /* NTC coefficients conversion */
     uint16_t B;     /* In Kelvin */
     uint32_t R0;
     uint16_t T0;    /* In Kelvin */
@@ -92,7 +93,10 @@ typedef struct Thermistor_Config
     /* Back Up Linear Unit Conversion. Derive from DeltaR, DeltaT */
     // uint32_t DeltaR;
     // uint16_t DeltaT;
+    // uint16_t Linear_T0;
     // int32_t LinearCoefficient_Fixed32;
+        // uint16_t R/T;
+        // uint16_t V/T; /* VADC / K */
 
     /* Monitor Limits */
     uint16_t FaultTrigger_Adcu;
@@ -193,6 +197,7 @@ Thermistor_ConfigId_T;
     [WarningTrigger_Adcu:FaultTrigger_Adcu] as [65535:0]
 */
 /******************************************************************************/
+/* todo update Init */
 static inline uint16_t Thermistor_HeatLimitOfAdcu_Percent16(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_ADC_Percent16(&p_therm->HeatLimit, adcu); }
 /* Captured adcu on Thermistor_PollMonitor */
 static inline uint16_t Thermistor_GetHeatLimit_Percent16(const Thermistor_T * p_therm) { return Thermistor_HeatLimitOfAdcu_Percent16(p_therm, p_therm->Adcu); }
@@ -211,19 +216,15 @@ static inline bool Thermistor_IsWarning(const Thermistor_T * p_therm)           
     Config
 */
 /******************************************************************************/
-/******************************************************************************/
-/* Monitor */
-/******************************************************************************/
 static inline bool Thermistor_IsMonitorEnable(const Thermistor_T * p_therm)                 { return p_therm->Config.IsMonitorEnable; }
+static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                         { p_therm->Config.IsMonitorEnable = true; }
+static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                        { p_therm->Config.IsMonitorEnable = false; }
+static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)     { p_therm->Config.IsMonitorEnable = isEnable; }
+
 static inline uint16_t Thermistor_GetFaultTrigger_Adcu(const Thermistor_T * p_therm)        { return p_therm->Config.FaultTrigger_Adcu; }
 static inline uint16_t Thermistor_GetFaultThreshold_Adcu(const Thermistor_T * p_therm)      { return p_therm->Config.FaultThreshold_Adcu; }
 static inline uint16_t Thermistor_GetWarningTrigger_Adcu(const Thermistor_T * p_therm)      { return p_therm->Config.WarningTrigger_Adcu; }
 static inline uint16_t Thermistor_GetWarningThreshold_Adcu(const Thermistor_T * p_therm)    { return p_therm->Config.WarningThreshold_Adcu; }
-
-static inline void Thermistor_EnableMonitor(Thermistor_T * p_therm)                                         { p_therm->Config.IsMonitorEnable = true; }
-static inline void Thermistor_DisableMonitor(Thermistor_T * p_therm)                                        { p_therm->Config.IsMonitorEnable = false; }
-static inline void Thermistor_SetIsMonitorEnable(Thermistor_T * p_therm, bool isEnable)                     { p_therm->Config.IsMonitorEnable = isEnable; }
-
 /* Caller handle validation */
 static inline void Thermistor_SetFaultTrigger_Adcu(Thermistor_T * p_therm, uint16_t fault)                  { p_therm->Config.FaultTrigger_Adcu = fault; }
 static inline void Thermistor_SetFaultThreshold_Adcu(Thermistor_T * p_therm, uint16_t faultThreshold)       { p_therm->Config.FaultThreshold_Adcu = faultThreshold; }

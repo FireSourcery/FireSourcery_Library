@@ -40,15 +40,21 @@
 /*
 
 */
+#define LINEAR_VOLTAGE_OF(r1, r2, adcVRef_MilliV, adcBits, adcu) \
+    ((((uint64_t)adcVRef_MilliV * (r1 + r2) * (adcu)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U)
+
 #define LINEAR_VOLTAGE_INIT(r1, r2, adcVRef_MilliV, adcBits)                                                            \
 {                                                                                                                       \
-    .Slope              = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U,    \
+    .Slope              = LINEAR_VOLTAGE_OF(1),                                                                         \
     .SlopeShift         = LINEAR_VOLTAGE_SHIFT,                                                                         \
     .InvSlope           = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) * 1000U / adcVRef_MilliV / (r1 + r2),                  \
     .InvSlopeShift      = LINEAR_VOLTAGE_SHIFT - adcBits,                                                               \
     .Y0                 = 0U,                                                                                           \
     .X0                 = 0U,                                                                                           \
+    .XDeltaRef          = 1UL << adcBits,                                                                               \
+    .YDeltaRef          = LINEAR_VOLTAGE_OF(r1, r2, adcVRef_MilliV, adcBits, (1UL << adcBits)),                         \
 }
+
 
 /******************************************************************************/
 /*!
@@ -113,14 +119,13 @@ static inline uint16_t Linear_Voltage_AdcuInputOfMilliV(const Linear_T * p_linea
 
 /******************************************************************************/
 /*!
-    @brief
+    @brief Fraction as max ADCU value
     using division for conversion
     requires [vInRef] to be set
 */
 /******************************************************************************/
 /*!
-    @brief  results in Q0.16, where 65356 => 100% of vInMax
-    Saturated to 65535 max
+    @brief  results in Q0.16, where 65356 =>
 */
 static inline uint16_t Linear_Voltage_Percent16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
@@ -128,11 +133,12 @@ static inline uint16_t Linear_Voltage_Percent16OfAdcu(const Linear_T * p_linear,
 }
 
 /*!
-    @brief  results in Q1.15 where 32,767 => 100% of vInMax
+    @brief  results in Q1.15 where 32,767 =>
 */
 static inline int16_t Linear_Voltage_Fract16OfAdcu(const Linear_T * p_linear, uint16_t adcu)
 {
     return _Linear_Fract16(p_linear, adcu);
+    // return adcu << (15 - 12);
 }
 
 // static inline uint32_t Linear_Voltage_Charge_Fract16OfAdcu(const Linear_T * p_linear, uint16_t adcuZero, uint16_t adcu)
@@ -161,7 +167,7 @@ static inline int32_t Linear_Voltage_OfFract16(const Linear_T * p_linear, uint16
     @brief
 */
 /******************************************************************************/
-extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInMax);
+extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits);
 
 
 #endif

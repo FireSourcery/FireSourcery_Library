@@ -142,9 +142,9 @@ static inline void Encoder_CapturePulse(Encoder_T * p_encoder)
 
 /* External */
 /* -1, 0, 1 */
-static inline void Encoder_CaptureCount_Polling(Encoder_T * p_encoder, int8_t count)
+static inline void Encoder_CaptureCount_Polling(Encoder_T * p_encoder, int8_t sign)
 {
-    _Encoder_CaptureCount(p_encoder, count);
+    _Encoder_CaptureCount(p_encoder, sign);
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_DeltaT_ZeroInterpolateAngle(p_encoder);
 }

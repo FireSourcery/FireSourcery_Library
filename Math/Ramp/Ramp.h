@@ -37,20 +37,32 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define RAMP_SHIFT 14U /* Output range without overflow [-UINT16_MAX:UINT16_MAX]x2 */
+#define RAMP_SHIFT 14U /* Output range without overflow [-UINT16_MAX:UINT16_MAX] */
+
+#define TICKS_OF_RATE(PollingFreq, UnitsFinal, UnitsPerS) ((uint64_t)(PollingFreq) * (UnitsFinal) / (UnitsPerS))
 
 /* Aliases */
 typedef Accumulator_T Ramp_T;
+
+// typedef struct Ramp_Config_T
+// {
+//     uint16_t Units;         /*   */
+//     uint32_t Time_Cycles;   /* Time to reach Units */
+// }
+// Ramp_Config_T;
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
+/* [-UINT16_MAX:UINT16_MAX] */
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
 static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Shift); }
 
-static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
+/*  */
+static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
+/* Match Output */
 static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->State = (match << p_ramp->Shift); }
 
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
@@ -89,10 +101,11 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = (UINT1
 extern int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps);
 extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
 
-extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range);
-extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t range);
-extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t range);
-extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t range);
+extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
+extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
+extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
+extern void Ramp_SetSlope_Fract16(Ramp_T * p_ramp, uint16_t rate);
+extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 
 extern void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final);
 extern void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);

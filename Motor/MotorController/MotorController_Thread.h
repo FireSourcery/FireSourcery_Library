@@ -149,7 +149,7 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
                 constantly compares lowest active limit, alternatively, check and restore prev on clear limit
                 Increasing Limit only, reset on warning clear.
             */
-            MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_HEAT_MC, Thermistor_GetHeatLimit_Percent16(&p_mc->MosfetsThermistors[0U]) / 2);
+            // MotorController_SetILimitAll_Scalar(p_mc, MOT_I_LIMIT_HEAT_MC, Thermistor_GetHeatLimit_Percent16(&p_mc->MosfetsThermistors[0U]) / 2);
 
             // Thermistor_PollWarningRisingEdge(&p_mc->ThermistorMosfets ); // use highest or
             if (p_mc->StateFlags.HeatWarning == false)
@@ -163,17 +163,16 @@ static inline void _MotorController_ProcHeatMonitor(MotorController_T * p_mc)
             // Thermistor_PollWarningFallingEdge(&p_mc->ThermistorMosfets );
             if (p_mc->StateFlags.HeatWarning == true)
             {
-                MotorController_ClearILimitAll(p_mc, MOTOR_I_LIMIT_HEAT_MC); //clear mosfet
+                // MotorController_ClearILimitAll(p_mc, MOT_I_LIMIT_HEAT_MC); //clear mosfet
                 p_mc->StateFlags.HeatWarning = false;
             }
         }
     }
 
     Analog_MarkConversion(&p_mc->CONST.CONVERSION_HEAT_PCB);
-    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++)
-        { Analog_MarkConversion(&p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
+    for (uint8_t iMosfets = 0U; iMosfets < MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; iMosfets++) { Analog_MarkConversion(&p_mc->CONST.HEAT_MOSFETS_CONVERSIONS[iMosfets]); }
 
-    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_mc->CONST.MOTORS.P_ARRAY[iMotor]); }
 }
 
 static inline void _MotorController_ProcVoltageMonitor(MotorController_T * p_mc)
@@ -208,7 +207,7 @@ static inline void _MotorController_ProcVSourceMonitor(MotorController_T * p_mc)
             if (p_mc->StateFlags.VSourceLow == 0U)
             {
                 p_mc->StateFlags.VSourceLow = 1U;
-                MotorController_SetILimitAll_Scalar(p_mc, MOTOR_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+                // MotorController_SetILimitAll_Scalar(p_mc, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
                 Blinky_BlinkN(&p_mc->Buzzer, 500U, 250U, 2U);
             }
             break;
@@ -216,7 +215,7 @@ static inline void _MotorController_ProcVSourceMonitor(MotorController_T * p_mc)
             if (p_mc->StateFlags.VSourceLow == 1U)
             {
                 p_mc->StateFlags.VSourceLow = 0U;
-                MotorController_ClearILimitAll(p_mc, MOTOR_I_LIMIT_V_LOW);
+                // MotorController_ClearILimitAll(p_mc, MOT_I_LIMIT_V_LOW);
             }
             break;
         default: break;
@@ -300,7 +299,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_mc)
             _MotorController_ProcVoltageMonitor(p_mc); /* Except VSupply */
             _MotorController_ProcHeatMonitor(p_mc);
             /* Can use low priority check, as motor is already in fault state */
-            if (MotorController_IsAnyMotorFault(p_mc) == true) { p_mc->FaultFlags.Motors = 1U; /* MotorController_StateMachine_EnterFault(p_mc); */ }
+            if (Motor_Array_IsAny(&p_mc->CONST.MOTORS, Motor_StateMachine_IsFault) == true) { p_mc->FaultFlags.Motors = 1U; /* MotorController_StateMachine_EnterFault(p_mc); */ }
             if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_mc); }
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
@@ -337,16 +336,18 @@ static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_mc)
 */
 static inline void MotorController_PWM_Thread(MotorController_T * p_mc)
 {
-    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_MarkAnalog_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_mc->CONST.MOTORS.P_ARRAY[iMotor]); }
 
-    if (Motor_IsAnalogCycle(&p_mc->CONST.P_MOTORS[0U]) == true) /* todo common timer */
+    if (Motor_IsAnalogCycle(&p_mc->CONST.MOTORS.P_ARRAY[0U]) == true) /* todo common timer */
     {
         Analog_StartConversions(p_mc->CONST.P_ANALOG); // todo batch phases in the same fifo
     }
 
-    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++) { Motor_PWM_Thread(&p_mc->CONST.P_MOTORS[iMotor]); }
+    for (uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_mc->CONST.MOTORS.P_ARRAY[iMotor]); }
 
-    Motor_ClearInterrupt(&p_mc->CONST.P_MOTORS[0U]);
+    Motor_ClearInterrupt(&p_mc->CONST.MOTORS.P_ARRAY[0U]);
+
+    p_mc->ControlCounter++;
 }
 
 #endif

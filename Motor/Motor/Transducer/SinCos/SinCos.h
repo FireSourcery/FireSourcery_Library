@@ -75,6 +75,8 @@ SinCos_T;
 
 #define SIN_COS_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
 
+
+
 /*
     Activate Adc outside module
 */

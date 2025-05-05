@@ -60,6 +60,8 @@ static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
 
 /* Calculation with over saturation */
 static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /* 32768 */
+static const accum32_t FRACT16_2_DIV_SQRT3    = 0x000093CD; /* 1.15470053838f */
+static const accum32_t FRACT16_SQRT2          = 0x0001D4F3; /* 1.41421508789f */
 static const accum32_t FRACT16_SQRT3          = 0x0000DDB3; /* 1.73202514648f */
 static const accum32_t FRACT16_PI             = 0x0001921F;
 static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
@@ -72,14 +74,16 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
 static inline fract16_t fract16_sat(accum32_t value)    { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
+// static inline ufract16_t fract16_sat_abs(accum32_t value)
 static inline ufract16_t ufract16_sat(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); } /* range of [0:2). Refer to 1 as saturated */
 
 /*!
     @brief Unsaturated Multiply
 
-    @param[in]
+    @param[in] factor [-65536:65535] <=> [-2:2]
+    @param[in] frac   [-32768:32767] <=> [-1:1]
         input max factor1 * factor2 < INT32_MAX
-    @return int32_t[-65536:65535] <=> [-2:2)
+    @return int32_t [-65536:65535] <=> [-2:2)
 */
 static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
 {
@@ -89,14 +93,14 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
 
-    check for 32768 case
-    fract16_mul(-32768, -32768) => 32768 [0x8000], over sat 1
+    fract16_mul(-32768, -32768) => 32768 == 0x8000, over sat 1
     (int16_t)32768 => -32768
 
     alternatively fract16_mul(int16_t, int16_t)
+    check for 32768 case only
         (product == +32768) ? 32767 : product;
 
-    @return int16_t[-32767, 32767] <=> (-1:1)
+    @return int16_t [-32767, 32767] <=> (-1:1)
 */
 static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
 {
@@ -143,6 +147,22 @@ static inline fract16_t fract16_sqrt(fract16_t x)
     return fixed_sqrt((int32_t)x << FRACT16_N_BITS);
 }
 
+/* shift without divisor on max ref */
+/* left shift only */
+static inline int16_t fract16_unit_scalar_shift(int16_t maxRef)
+{
+    return (int16_t)(FRACT16_N_BITS - fixed_bit_width_signed(maxRef));
+}
+
+static inline int16_t fract16_unit_scalar(int16_t maxRef)
+{
+    return (1 << fract16_unit_scalar_shift(maxRef));
+}
+
+// static inline int16_t fract16_limit_scalar(uint16_t value, uint16_t max)
+// {
+//     return (value > max) ? fract16_div(max, value) : FRACT16_MAX;
+// }
 
 /******************************************************************************/
 /*!
@@ -151,8 +171,7 @@ static inline fract16_t fract16_sqrt(fract16_t x)
 /******************************************************************************/
 typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
-#define FRACT16_SINE_90_TABLE_LENGTH    (256U)
-#define FRACT16_SINE_90_TABLE_LSB       (6U)    /*!< Least significant bits, shifted away */
+#define ANGLE16_MAX (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -164,15 +183,19 @@ static const angle16_t ANGLE16_180 = 0x8000U;  /*! 32768, -32768, 180 == -180 */
 static const angle16_t ANGLE16_210 = 0x9555U;  /*! 38229 */
 static const angle16_t ANGLE16_240 = 0xAAAAU;  /*! 43690, -21845 */
 static const angle16_t ANGLE16_270 = 0xC000U;  /*! 49152, -16384, 270 == -90 */
+static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
+static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
+
+static const angle16_t ANGLE16_PER_RAD = 10430UL; /* = 65536 / (2 * PI) */
 
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
 typedef enum angle16_quadrant
 {
-    ANGLE16_QUADRANT_I = 0U,           /* 0_90 */
-    ANGLE16_QUADRANT_II = 0x4000U,     /* 90_180 */
-    ANGLE16_QUADRANT_III = 0x8000U,    /* 180_270 */
-    ANGLE16_QUADRANT_IV = 0xC000U,     /* 270_360 */
+    ANGLE16_QUADRANT_I      = 0U,       /* 0_90 */
+    ANGLE16_QUADRANT_II     = 0x4000U,  /* 90_180 */
+    ANGLE16_QUADRANT_III    = 0x8000U,  /* 180_270 */
+    ANGLE16_QUADRANT_IV     = 0xC000U,  /* 270_360 */
 }
 angle16_quadrant_t;
 
@@ -197,7 +220,7 @@ static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
     return ((uint16_t)theta0 < (uint16_t)theta1);
 }
 
-// static inline bool angle16_cycle_sign(angle16_t theta0, angle16_t theta1, int16_t sign)
+// static inline int16_t angle16_cycle_sign(angle16_t theta0, angle16_t theta1, int16_t sign)
 // {
 // }
 
@@ -224,9 +247,9 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 /******************************************************************************/
 // typedef struct vector32 { fract16_t x; fract16_t y; } vector32_t;
 extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
-extern uint16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
-extern uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit);
-extern uint16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t magnitudeMax);
+extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
+extern ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit);
+extern ufract16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t magnitudeMax);
 
 // extern uint16_t fract16_vector_scalar_fast(fract16_t x, fract16_t y, fract16_t mag_limit);
 // extern uint16_t fract16_vector_limit_fast(fract16_t * p_x, fract16_t * p_y, fract16_t limit);

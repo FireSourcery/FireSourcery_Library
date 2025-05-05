@@ -53,10 +53,9 @@
     @param[in] r2 - R2 value expressed as a whole number, < 65536
     @param[in] adcBit - Number of ADC bits
     @param[in] adcVRef - ADC reference voltage
-    @param[in] vInRef - Fract16 reference
 */
 /******************************************************************************/
-void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t vInRef)
+void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
     p_linear->Slope             = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U; /* (ADC_VREF*(R1 + R2) << 16)/(ADC_MAX*R2) */
@@ -70,9 +69,14 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
 #endif
     p_linear->X0                = 0;
     p_linear->Y0                = 0;
-    p_linear->YReference        = vInRef;
-    p_linear->XReference        = linear_invf(p_linear->Slope, ((uint32_t)1U << LINEAR_VOLTAGE_SHIFT), 0, vInRef); /* Fract16 reference */
+    p_linear->XReference        = 1UL << adcBits;
+    p_linear->YReference        = linear_shift_f(p_linear->Slope, p_linear->SlopeShift, 0, 0, 0);
     p_linear->XDeltaRef         = p_linear->XReference - p_linear->X0;
-    p_linear->YDeltaRef         = vInRef - p_linear->Y0;
+    p_linear->YDeltaRef         = p_linear->YReference - p_linear->Y0;
 }
 
+// @param[in] vInRef - Scalar Fract16 reference
+// void Linear_Voltage_Init_Scalar(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t VInRef)
+// {
+
+// }

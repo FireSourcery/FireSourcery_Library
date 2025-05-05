@@ -31,10 +31,14 @@
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
+#include "Transducer/MotorSensor/Motor_Sensor.h"
+
 #include "Motor.h"
+#include "Motor_Analog.h"
 #include "Motor_Debug.h"
 
 #include "Math/FOC.h"
+
 
 /******************************************************************************/
 /*
@@ -55,76 +59,49 @@
 
 /******************************************************************************/
 /*!
-    Map to Motor Analog Conversions
-    Convert current from ADCU to fract16
-    where 32767 is fully saturated current sensor
 */
 /******************************************************************************/
-static inline void Motor_FOC_CaptureIa(Motor_T * p_motor, uint16_t adcu)
-{
-    fract16_t iPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsIa, adcu) + FOC_GetIa(&p_motor->Foc)) / 2;
-    FOC_SetIa(&p_motor->Foc, iPhase);
-}
+/*
+    Handle Filter
+*/
+static inline void Motor_FOC_CaptureIa(Motor_T * p_motor) { FOC_SetIa(&p_motor->Foc, ((int32_t)Motor_Analog_GetIa_Fract16(p_motor) + FOC_GetIa(&p_motor->Foc)) / 2); }
+static inline void Motor_FOC_CaptureIb(Motor_T * p_motor) { FOC_SetIb(&p_motor->Foc, ((int32_t)Motor_Analog_GetIb_Fract16(p_motor) + FOC_GetIb(&p_motor->Foc)) / 2); }
+static inline void Motor_FOC_CaptureIc(Motor_T * p_motor) { FOC_SetIc(&p_motor->Foc, ((int32_t)Motor_Analog_GetIc_Fract16(p_motor) + FOC_GetIc(&p_motor->Foc)) / 2); }
+static inline void Motor_FOC_CaptureVa(Motor_T * p_motor) { FOC_SetVBemfA(&p_motor->Foc, ((int32_t)Motor_Analog_GetVa_Fract16(p_motor) + FOC_GetVBemfA(&p_motor->Foc)) / 2); }
+static inline void Motor_FOC_CaptureVb(Motor_T * p_motor) { FOC_SetVBemfB(&p_motor->Foc, ((int32_t)Motor_Analog_GetVb_Fract16(p_motor) + FOC_GetVBemfB(&p_motor->Foc)) / 2); }
+static inline void Motor_FOC_CaptureVc(Motor_T * p_motor) { FOC_SetVBemfC(&p_motor->Foc, ((int32_t)Motor_Analog_GetVc_Fract16(p_motor) + FOC_GetVBemfC(&p_motor->Foc)) / 2); }
 
-static inline void Motor_FOC_CaptureIb(Motor_T * p_motor, uint16_t adcu)
-{
-    fract16_t iPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsIb, adcu) + FOC_GetIb(&p_motor->Foc)) / 2;
-    FOC_SetIb(&p_motor->Foc, iPhase);
-}
-
-static inline void Motor_FOC_CaptureIc(Motor_T * p_motor, uint16_t adcu)
-{
-    fract16_t iPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsIc, adcu) + FOC_GetIc(&p_motor->Foc)) / 2;
-    FOC_SetIc(&p_motor->Foc, iPhase);
-}
-
-static inline void Motor_FOC_CaptureVa(Motor_T * p_motor, uint16_t adcu)
-{
-    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfA(&p_motor->Foc)) / 2;
-    FOC_SetVBemfA(&p_motor->Foc, vPhase);
-}
-
-static inline void Motor_FOC_CaptureVb(Motor_T * p_motor, uint16_t adcu)
-{
-    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfB(&p_motor->Foc)) / 2;
-    FOC_SetVBemfB(&p_motor->Foc, vPhase);
-}
-
-static inline void Motor_FOC_CaptureVc(Motor_T * p_motor, uint16_t adcu)
-{
-    ufract16_t vPhase = ((int32_t)Linear_ADC_Fract16(&p_motor->UnitsVabc, adcu) + FOC_GetVBemfC(&p_motor->Foc)) / 2;
-    FOC_SetVBemfC(&p_motor->Foc, vPhase);
-}
 
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetIPhase_Fract16(const Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_Fract16(const Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetIPhase_Fract16(const Motor_T * p_motor)            { return FOC_GetIPhase(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetVPhase_Fract16(const Motor_T * p_motor)            { return FOC_GetVPhase(&p_motor->Foc); }
 
 /* return int32 for function pointer casting compatibility */
-static inline int32_t Motor_FOC_GetIPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetVPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline int32_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetIPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
-static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) == math_sign(p_motor->Foc.Iq); }
-static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return math_sign(p_motor->Foc.Vq) != math_sign(p_motor->Foc.Iq); }
-
-// static inline uint16_t Motor_FOC_GetILimitOf(const Motor_T * p_motor, int16_t qSign) { return ((qSign >= 0) ? _Motor_GetILimitCcw(p_motor) : _Motor_GetILimitCw(p_motor)); }
+static inline bool Motor_FOC_IsMotoring(const Motor_T * p_motor) { return FOC_IsMotoring(&p_motor->Foc); }
+static inline bool Motor_FOC_IsGenerating(const Motor_T * p_motor) { return FOC_IsGenerating(&p_motor->Foc); }
 
 static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+// static inline bool Motor_FOC_IsILimitReached(const Motor_T * p_motor) { return (FOC_GetIMagnitude(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }
+static inline bool Motor_FOC_IsILimitReached(const Motor_T * p_motor) { return (FOC_GetIq(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }
 
-/* alternatively derive from directional limits */
-// static inline uint16_t Motor_FOC_GetILimit(const Motor_T * p_motor)
+// static inline int16_t Motor_FOC_VReqILimit(const Motor_T * p_motor, int16_t req)
 // {
-//     uint16_t scalar = FRACT16_1_OVERSAT;
-//     /* fract16_div always return positive < 1 */
-//     if      (p_motor->Foc.Iq < _Motor_GetILimitCw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCw(p_motor), p_motor->Foc.Iq); }
-//     else if (p_motor->Foc.Iq > _Motor_GetILimitCcw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCcw(p_motor), p_motor->Foc.Iq); }
-//     return scalar;
+//     return math_feedback_scalar(req, Motor_FOC_GetILimit(p_motor), math_abs(FOC_GetIq(&p_motor->Foc)));
+//     //     uint16_t scalar = FRACT16_1_OVERSAT;
+//     //     /* fract16_div always return positive < 1 */
+//     //     if      (p_motor->Foc.Iq < _Motor_GetILimitCw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCw(p_motor), p_motor->Foc.Iq); }
+//     //     else if (p_motor->Foc.Iq > _Motor_GetILimitCcw(p_motor)) { scalar = fract16_div(_Motor_GetILimitCcw(p_motor), p_motor->Foc.Iq); }
+//     //     return scalar;
 // }
+
 
 
 /******************************************************************************/
@@ -150,7 +127,6 @@ extern void Motor_FOC_ClearFeedbackState(Motor_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_CaptureIabc(Motor_T * p_motor);
-extern void Motor_FOC_ProcOpenLoopIdle(Motor_T * p_motor);
 
 extern void Motor_FOC_StartAlignCmd(Motor_T * p_motor);
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
@@ -161,10 +137,8 @@ extern void Motor_FOC_StartAlignValidate(Motor_T * p_motor);
 extern void Motor_FOC_StartOpenLoop(Motor_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
-extern void Motor_FOC_SetDirectionCcw(Motor_T * p_motor);
-extern void Motor_FOC_SetDirectionCw(Motor_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);
-extern void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, uint8_t direction);
+extern void Motor_FOC_SetDirection_Cast(Motor_T * p_motor, int direction);
 extern void Motor_FOC_SetDirectionForward(Motor_T * p_motor);
 
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE

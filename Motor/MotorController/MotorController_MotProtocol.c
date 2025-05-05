@@ -184,7 +184,7 @@ static Protocol_ReqCode_T ReadData(MotorController_T * p_mc, Protocol_ReqContext
 // #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_mc, Protocol_ReqContext_T * p_reqContext)
 {
-    return MotProtocol_Flash_WriteData_Blocking(p_mc->CONST.P_FLASH, p_reqContext);
+    return MotProtocol_Flash_WriteData_Blocking(p_mc->CONST.MOT_NVM.P_FLASH, p_reqContext);
 }
 // #endif
 

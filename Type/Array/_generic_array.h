@@ -24,17 +24,14 @@
 */
 /******************************************************************************/
 /* shorthand *((T*)p_buffer) */
-static inline int8_t as_int8(const int8_t * p_buffer) { return p_buffer[0]; }
-static inline void int8_assign(int8_t * p_buffer, int8_t value) { p_buffer[0] = value; }
-static inline void int8_ptr_assign(int8_t * p_buffer, int8_t * value) { p_buffer[0] = *value; }
+// static inline int8_t as_int8(const int8_t * p_buffer) { return p_buffer[0]; }
+// static inline void int8_assign(int8_t * p_buffer, int8_t value) { p_buffer[0] = value; }
+// static inline void int8_ptr_assign(int8_t * p_buffer, int8_t * value) { p_buffer[0] = *value; }
 
-static inline int8_t as_array_int8(const int8_t * p_buffer, size_t index) { return p_buffer[index]; }
-static inline const int8_t * as_array_int8_ptr(const int8_t * p_buffer, size_t index) { return &p_buffer[index]; }
-static inline void array_int8_assign(int8_t * p_buffer, size_t index, int8_t value) { p_buffer[index] = value; }
+static inline int8_t array8_get(const int8_t * p_buffer, size_t index) { return p_buffer[index]; }
+static inline void array8_set(int8_t * p_buffer, size_t index, int8_t value) { p_buffer[index] = value; }
+static inline const int8_t * array8_at(const int8_t * p_buffer, size_t index) { return &p_buffer[index]; }
 
-// use 1 version with index
-// static inline int8_t as_int8_at(const int8_t * p_buffer, size_t index) { return p_buffer[index]; }
-// static inline void as_int8_assign(int8_t * p_buffer, size_t index, int8_t value) { p_buffer[index] = value; }
 
 #define as(T, p_buffer) \
     _Generic((T)0, \
@@ -43,20 +40,6 @@ static inline void array_int8_assign(int8_t * p_buffer, size_t index, int8_t val
         int32_t : *((int32_t *)p_buffer), \
         int8_t *: ((int8_t *)p_buffer) \
     )
-
-// #define assign_as_value(p_buffer, value) \
-//     _Generic(value, \
-//         uint8_t  : ((uint8_t *)p_buffer = value), \
-//         uint16_t : (*p_buffer = value), \
-//         uint32_t : (*p_buffer = value), \
-//         uint64_t : (*p_buffer = value), \
-//         int8_t  : (*p_buffer = value), \
-//         int16_t : (*p_buffer = value), \
-//         int32_t : (*p_buffer = value), \
-//         int64_t : (*p_buffer = value), \
-//         void *: (*p_buffer = value), \
-//         default: memcpy(p_buffer, p_value, sizeof(T)) \
-//     )
 
 #define _assign_as(T, p_buffer, p_value) \
     _Generic((T)0, \
@@ -134,32 +117,6 @@ static inline void array_int8_assign(int8_t * p_buffer, size_t index, int8_t val
     buffer must be typed for _Generic selection
 */
 /******************************************************************************/
-#define value_array_at(p_typed, index) \
-    _Generic(p_typed, \
-        uint8_t  *: p_typed[index], \
-        uint16_t *: p_typed[index], \
-        uint32_t *: p_typed[index], \
-        uint64_t *: p_typed[index], \
-        int8_t  *: p_typed[index], \
-        int16_t *: p_typed[index], \
-        int32_t *: p_typed[index], \
-        int64_t *: p_typed[index], \
-        void **: p_typed[index] \
-    )
-
-#define value_array_assign(p_typed, index, value) \
-    _Generic(p_typed, \
-        uint8_t  *: p_typed[index] = value, \
-        uint16_t *: p_typed[index] = value, \
-        uint32_t *: p_typed[index] = value, \
-        uint64_t *: p_typed[index] = value, \
-        int8_t  *: p_typed[index] = value, \
-        int16_t *: p_typed[index] = value, \
-        int32_t *: p_typed[index] = value, \
-        int64_t *: p_typed[index] = value, \
-        void **: p_typed[index] = value \
-    )
-
 
 /* Short hand generation macro */
 #define _ARRAY_FOREACH(p_typed, length, function) { for (size_t index = 0U; index < length; index++) { function(&value_array_at(p_typed, index)); } }
@@ -167,7 +124,7 @@ static inline void array_int8_assign(int8_t * p_buffer, size_t index, int8_t val
 /* is there a lesser chance for size to optimize away? */
 // #define _ARRAY_FOREACH(p_typed, length, function) { void_array_foreach(p_typed, sizeof(*p_typed), length, function); }
 
-/* Individually selectable */
+/* Typed function signitures. Individually selectable */
 static inline void array_foreach_int8(int8_t * p_array, size_t length, proc_t unit_op) _ARRAY_FOREACH(p_array, length, unit_op)
 static inline void array_foreach_ptr(void ** p_array, size_t length, proc_t unit_op) _ARRAY_FOREACH(p_array, length, unit_op)
 
@@ -213,7 +170,7 @@ static void test()
 // // altnerntaively generate
 
 // // #define ARRAY_FOR_EVERY_DEF(T)
-// // static inline bool T##_array_for_every(T * p_buffer, size_t length, poll_t unit_poll)
+// // static inline bool T##_array_for_every(T * p_buffer, size_t length, try_proc_t unit_poll)
 // // {
 // //     bool is_every = true;
 // //     for (size_t index = 0U; index < length; index++) { if (unit_poll(p_buffer[index]) == false) { is_every = false; } }

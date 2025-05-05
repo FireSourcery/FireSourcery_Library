@@ -123,7 +123,7 @@ typedef enum Motor_VarInput
     MOTOR_VAR_OPEN_LOOP_CONTROL, /* Enter State optional pas cmd / run */
     MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
-    MOTOR_VAR_OPEN_LOOP_ANGLE,
+    MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_JOG,
     MOTOR_VAR_OPEN_LOOP_RUN,
 
@@ -162,21 +162,28 @@ Motor_VarIO_T;
 typedef enum Motor_VarConfig_Calibration
 {
     MOTOR_VAR_COMMUTATION_MODE,       /* Motor_CommutationMode_T, if runtime supported */
-    MOTOR_VAR_SENSOR_MODE,            /* Motor_SensorMode_T, */
+    MOTOR_VAR_SENSOR_MODE,            /* MotorSensorId_T, */
     MOTOR_VAR_DIRECTION_CALIBRATION,  /* Motor_DirectionCalibration_T */
     MOTOR_VAR_POLE_PAIRS,
     MOTOR_VAR_KV,
     MOTOR_VAR_V_SPEED_SCALAR,
-    MOTOR_VAR_SPEED_V_REF_RPM,
-    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
-    MOTOR_VAR_IA_ZERO_REF_ADCU,
-    MOTOR_VAR_IB_ZERO_REF_ADCU,
-    MOTOR_VAR_IC_ZERO_REF_ADCU,
-    MOTOR_VAR_I_PEAK_REF_ADCU,
+    MOTOR_VAR_SPEED_RATED_DEG,
+    MOTOR_VAR_IA_ZERO_ADCU,
+    MOTOR_VAR_IB_ZERO_ADCU,
+    MOTOR_VAR_IC_ZERO_ADCU,
+    // MOTOR_VAR_I_PEAK_REF_ADCU,
     MOTOR_VAR_RUN_ADC_CALIBRATION,
     MOTOR_VAR_RUN_VIRTUAL_HOME, /* run routine */
 }
 Motor_VarConfig_Calibration_T;
+
+typedef enum Motor_VarConfig_CalibrationAlias
+{
+    MOTOR_VAR_SPEED_RATED_RPM,
+    MOTOR_VAR_SPEED_V_REF_RPM,
+    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
+}
+Motor_VarConfig_CalibrationAlias_T;
 
 typedef enum Motor_VarConfig_Actuation
 {
@@ -280,6 +287,26 @@ Motor_VarConfig_Cmd_T;
 // uint16_t GearRatioOutput;
 // uint16_t GearRatioInput;
 
+typedef enum Motor_VarRef
+{
+    MOTOR_VAR_REF_V_RATED,
+    MOTOR_VAR_REF_I_RATED,
+    MOTOR_VAR_REF_V_MAX,
+    MOTOR_VAR_REF_I_MAX,
+    MOTOR_VAR_REF_V_MAX_ADCU,
+    MOTOR_VAR_REF_I_MAX_ADCU,
+    MOTOR_VAR_REF_V_PHASE_R1,
+    MOTOR_VAR_REF_V_PHASE_R2,
+    MOTOR_VAR_REF_I_PHASE_R_BASE,
+    MOTOR_VAR_REF_I_PHASE_R_MOSFETS,
+    MOTOR_VAR_REF_I_PHASE_GAIN,
+    MOTOR_VAR_REF_BOARD_V_RATED_VOLTS,
+    MOTOR_VAR_REF_BOARD_I_RATED_AMPS,
+}
+Motor_VarRef_T;
+
+
+
 
 /******************************************************************************/
 /*
@@ -295,20 +322,25 @@ extern void Motor_VarInput_Set(Motor_T * p_motor, Motor_VarInput_T varId, int32_
 extern void Motor_VarIO_Set(Motor_T * p_motor, Motor_VarIO_T varId, int32_t varValue);
 
 extern int32_t Motor_VarConfig_Calibration_Get(const Motor_T * p_motor, Motor_VarConfig_Calibration_T varId);
+extern int32_t Motor_VarConfig_CalibrationAlias_Get(const Motor_T * p_motor, Motor_VarConfig_CalibrationAlias_T varId);
 extern int32_t Motor_VarConfig_Actuation_Get(const Motor_T * p_motor, Motor_VarConfig_Actuation_T varId);
+extern int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId);
+
 extern int32_t Motor_VarConfig_Hall_Get(const Motor_T * p_motor, Motor_VarConfig_Hall_T varId);
 extern int32_t Motor_VarConfig_Encoder_Get(const Motor_T * p_motor, Motor_VarConfig_Encoder_T varId);
 extern int32_t Motor_VarConfig_SinCos_Get(const Motor_T * p_motor, Motor_VarConfig_SinCos_T varId);
-extern int32_t Motor_VarConfig_Pid_Get(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId);
 
 extern void Motor_VarConfig_Calibration_Set(Motor_T * p_motor, Motor_VarConfig_Calibration_T varId, int32_t varValue);
 extern void Motor_VarConfig_Actuation_Set(Motor_T * p_motor, Motor_VarConfig_Actuation_T varId, int32_t varValue);
+extern void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int32_t varValue);
+
 extern void Motor_VarConfig_Hall_Set(Motor_T * p_motor, Motor_VarConfig_Hall_T varId, int32_t varValue);
 extern void Motor_VarConfig_Encoder_Set(Motor_T * p_motor, Motor_VarConfig_Encoder_T varId, int32_t varValue);
 extern void Motor_VarConfig_SinCos_Set(Motor_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue);
-extern void Motor_VarConfig_Pid_Set(Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int32_t varValue);
 
 extern void Motor_VarConfig_Cmd_Call(Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int32_t varValue);
+
+extern int32_t Motor_VarRef_Get(Motor_VarRef_T varId);
 
 #endif
 

@@ -31,6 +31,9 @@
 #include "fract16.h"
 #include <assert.h>
 
+#define FRACT16_SINE_90_TABLE_LENGTH    (256U)
+#define FRACT16_SINE_90_TABLE_LSB       (6U)    /*!< Least significant bits, shifted away */
+
 /*! Resolution: 1024 steps per revolution */
 const fract16_t FRACT16_SINE_90_TABLE[FRACT16_SINE_90_TABLE_LENGTH] =
 {
@@ -156,22 +159,21 @@ void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta)
 }
 
 /* Max sqrt 46339, 1.41F */
-uint16_t fract16_vector_magnitude_squared(fract16_t x, fract16_t y)
+ufract16_t fract16_vector_magnitude_squared(fract16_t x, fract16_t y)
 {
     return (int32_t)x * x + (int32_t)y * y;
 }
 
-uint16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
+ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
     return fixed_sqrt((int32_t)x * x + (int32_t)y * y);
 }
-
 
 /*!
     Component scalar
     @return max/|Vxy|, < 1.0F,
 */
-uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit)
+ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit)
 {
     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
     int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
@@ -186,7 +188,7 @@ uint16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit)
     return scalar;
 }
 
-uint16_t fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, fract16_t scalar)
+ufract16_t fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, fract16_t scalar)
 {
     if (scalar < FRACT16_MAX)
     {
@@ -205,12 +207,12 @@ uint16_t fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, fract16_t scalar
     @param mag_limit The maximum allowed magnitude for the vector.
     @return max/|Vxy| for reference.
 */
-uint16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t mag_limit)
+ufract16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t mag_limit)
 {
     return fract16_vector_scale(p_x, p_y, fract16_vector_scalar(*p_x, *p_y, mag_limit));
 }
 
-uint16_t fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
+ufract16_t fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
 {
     return fract16_vector_limit(p_x, p_y, FRACT16_MAX);
 }

@@ -43,7 +43,6 @@
 #include <assert.h>
 #include <sys/types.h>
 
-// typedef register_t phase_id_t; /* for interface casting */
 
 /* Phase_Id/State */
 typedef union Phase_Bits
@@ -78,6 +77,7 @@ Phase_Id_T;
 // static inline Phase_Id_T Phase_IdOf(Phase_Bits_T bits) { return (Phase_Id_T)bits.Value; }
 static inline Phase_Bits_T Phase_BitsOf(Phase_Id_T id) { return (Phase_Bits_T){ .Value = id }; }
 
+/* Virtual CCW */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
 {
     Phase_Id_T next;
@@ -158,13 +158,13 @@ Phase_Mode_T;
 
 typedef struct Phase
 {
-    PWM_Module_T PwmModule;
-    PWM_T PwmA;
-    PWM_T PwmB;
-    PWM_T PwmC;
-    Pin_T PinA;
-    Pin_T PinB;
-    Pin_T PinC;
+    const PWM_Module_T PwmModule;
+    const PWM_T PwmA;
+    const PWM_T PwmB;
+    const PWM_T PwmC;
+    const Pin_T PinA;
+    const Pin_T PinB;
+    const Pin_T PinC;
     Phase_Mode_T PolarMode;
 }
 Phase_T;
@@ -334,8 +334,12 @@ extern void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T st
 
 Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase);
 Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase);
+Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase);
 
-Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, uint16_t duty, bool ccw);
+Phase_Id_T Phase_JogNext(const Phase_T * p_phase, uint16_t duty);
+Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty);
+
+// Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, uint16_t duty, bool ccw);
 
 extern void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty);
 

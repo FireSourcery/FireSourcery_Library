@@ -53,12 +53,12 @@ void MotorController_Analog_StartCalibrate(MotorController_T * p_mc)
     Filter_Avg_Init(&p_mc->AvgBuffer0);
     Filter_Avg_Init(&p_mc->AvgBuffer1);
 
-    // void_array_foreach(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (proc_t)Motor_User_CalibrateAdc);
+    // void_array_foreach(p_mc->CONST.MOTORS.P_ARRAY, sizeof(Motor_T), p_mc->CONST.MOTORS.LENGTH, (proc_t)Motor_User_CalibrateAdc);
 }
 
 bool MotorController_Analog_ProcCalibrate(MotorController_T * p_mc)
 {
-    const uint32_t DIVIDER = (MOTOR_STATIC.CONTROL_ANALOG_DIVIDER << 1U) & 1U; /* 2x normal sample time */
+    const uint32_t DIVIDER = (MOTOR_ANALOG_DIVIDER_MASK << 1U) & 1U; /* 2x normal sample time */
     const uint32_t TIME = 2000U;
 
     // bool isLocalComplete = (p_mc->StateCounter == TIME); /* 2 seconds */

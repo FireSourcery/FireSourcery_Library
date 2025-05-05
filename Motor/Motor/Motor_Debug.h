@@ -35,7 +35,7 @@
 #include "System/SysTime/SysTime.h"
 #include "Motor.h"
 
-
+//todo replace with trace
 static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
 {
 #ifndef NDEBUG

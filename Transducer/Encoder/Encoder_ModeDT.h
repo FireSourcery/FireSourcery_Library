@@ -40,14 +40,13 @@
 */
 /******************************************************************************/
 /*
-    In SAMPLE_FREQ ~1ms time
+    at SAMPLE_FREQ ~1ms
     Speed => 0 when DeltaT > 1S
 */
-static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
+static inline void Encoder_ModeDT_CaptureFreq(Encoder_T * p_encoder)
 {
     const uint32_t sampleFreq = p_encoder->CONST.SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
     const uint32_t timerFreq = p_encoder->CONST.TIMER_FREQ;
-    // const uint32_t samplePeriod = timerFreq / sampleFreq;
     const uint32_t samplePeriod = p_encoder->CONST.SAMPLE_TIME; /* in Timer ticks */
 
     uint32_t deltaTh;
@@ -76,7 +75,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
 
         /* if (periodTk > periodTs / 2) { freqD = (deltaD / periodTk) } */
         /* periodTk ~= periodTs */
-        if (freqTk < (sampleFreq * 2U)) { p_encoder->FreqD = (p_encoder->DeltaD * freqTk); }
+        if (freqTk < (sampleFreq * 2U)) { p_encoder->FreqD = p_encoder->DeltaD * freqTk; }
 
         p_encoder->DeltaTh = deltaTh;
     }
@@ -90,21 +89,24 @@ static inline void Encoder_ModeDT_CaptureFreqD(Encoder_T * p_encoder)
     (AngleIndex / POLLING_FREQ) * FreqD * (ENCODER_ANGLE_DEGREES / CountsPerRevolution)
     AngleIndex * FreqD * [ENCODER_ANGLE_DEGREES / CountsPerRevolution / POLLING_FREQ]
 
+    Capture as shifted
 */
-static inline uint32_t Encoder_ModeDT_CaptureInterpolateAngleDelta(Encoder_T * p_encoder)
+/* CaptureAngleSpeed */
+/* CaptureSpeedAngle */
+static inline uint32_t Encoder_ModeDT_CapturePollingAngle(Encoder_T * p_encoder)
 {
     /* as shifted angle */
-    // p_encoder->InterpolateAngleDelta = p_encoder->FreqD * p_encoder->UnitInterpolateAngle;
-    p_encoder->InterpolateAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.InterpolateAngleScalar / p_encoder->CONST.POLLING_FREQ);
+    p_encoder->PollingAngleDelta = p_encoder->FreqD * p_encoder->UnitPollingAngle;
+    // p_encoder->PollingAngleDelta = p_encoder->FreqD * (p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution / p_encoder->CONST.POLLING_FREQ);
+    return p_encoder->PollingAngleDelta >> ENCODER_ANGLE_SHIFT;
 }
+
 
 static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 {
     /* Speed may reach zero before checking with extended counter takes effect */
-    if (Encoder_DeltaT_IsExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreqD(p_encoder); }
+    if (Encoder_DeltaT_IsExtendedStop(p_encoder) == false) { Encoder_ModeDT_CaptureFreq(p_encoder); }
     else { p_encoder->FreqD = 0; }
-
-    Encoder_ModeDT_CaptureInterpolateAngleDelta(p_encoder);
 }
 
 /*
@@ -113,8 +115,7 @@ static inline void Encoder_ModeDT_CaptureVelocity(Encoder_T * p_encoder)
 static inline uint32_t _Encoder_ModeDT_InterpolateAngle(Encoder_T * p_encoder)
 {
     // Encoder_DeltaT_ProcInterpolateAngle(p_encoder);
-
-    p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->InterpolateAngleDelta, p_encoder->InterpolateAngleLimit << ENCODER_ANGLE_SHIFT);
+    p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->PollingAngleDelta, p_encoder->InterpolateAngleLimit);
     return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
 }
 
@@ -145,6 +146,10 @@ static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(Encoder_T * 
 /*
     Speed is signed without direction comp for quadrature, unsigned single phase
 */
+
+/*
+
+*/
 static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_T * p_encoder)
 {
     return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
@@ -158,44 +163,27 @@ static inline int32_t Encoder_ModeDT_GetScalarVelocity(Encoder_T * p_encoder)
     return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetScalarSpeed(p_encoder);
 }
 
-static inline int32_t Encoder_ModeDT_CaptureScalarVelocity(Encoder_T * p_encoder)
-{
-    Encoder_ModeDT_CaptureVelocity(p_encoder);
-    return Encoder_ModeDT_GetScalarVelocity(p_encoder);
-}
 
 /******************************************************************************/
 /*
+todo split math module
 */
 /******************************************************************************/
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_T * p_encoder)
-{
-    return p_encoder->FreqD * 60 / p_encoder->Config.CountsPerRevolution;
-}
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_T * p_encoder) { return p_encoder->FreqD * 60 / p_encoder->Config.CountsPerRevolution; }
 
-static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_T * p_encoder)
-{
-    return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);
-}
+static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder); }
 
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_T * p_encoder)
-{
-    return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution;
-}
-static inline int32_t Encoder_ModeDT_GetRotationalVelocity(const Encoder_T * p_encoder)
-{
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_T * p_encoder) { return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution; }
 
-}
+static inline int32_t Encoder_ModeDT_GetRotationalVelocity(const Encoder_T * p_encoder) {}
 
+/* In range for electrical speed only */
+static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_T * p_encoder) { return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift; }
 
-static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_T * p_encoder)
-{
-    return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
-}
+static inline int32_t Encoder_ModeDT_GetAngularVelocity(const Encoder_T * p_encoder) {}
 
-static inline int32_t Encoder_ModeDT_GetAngularVelocity(const Encoder_T * p_encoder)
-{
-}
+// static inline int32_t Encoder_ModeDT_GetPollingAngle(const Encoder_T * p_encoder)
+
 
 static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(const Encoder_T * p_encoder)
 {

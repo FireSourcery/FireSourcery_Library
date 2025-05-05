@@ -131,26 +131,15 @@ static inline size_t _Ring_IndexDecOf(const Ring_T * p_ring, size_t index, size_
 #endif
 }
 
-/* on access */
-static inline size_t _Ring_IndexAccessOf(const Ring_T * p_ring, size_t count)
-{
-#if     defined(CONFIG_RING_POW2_COUNTER)
-    return _Ring_IndexWrapOf(p_ring, count);
-#elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
-    return count;
-#endif
-}
+// static inline size_t _Ring_ArrayIndexOf(const Ring_T * p_ring, size_t virtualIndex)
+// {
+// #if     defined(CONFIG_RING_POW2_COUNTER)
+//     return _Ring_IndexWrapOf(p_ring, virtualIndex);
+// #elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
+//     return virtualIndex;
+// #endif
+// }
 
-/******************************************************************************/
-/*!
-    Cast Type
-*/
-/******************************************************************************/
-static inline intptr_t _Ring_ValueOf(const Ring_T * p_ring, const void * p_unit)
-{
-    assert(p_ring->CONST.UNIT_SIZE <= sizeof(intptr_t));
-    return void_as_value(p_unit, p_ring->CONST.UNIT_SIZE);
-}
 
 /******************************************************************************/
 /*!
@@ -209,16 +198,22 @@ static inline bool Ring_IsFull(const Ring_T * p_ring)
     Extern
 */
 /******************************************************************************/
+/*
+
+*/
 extern void * Ring_Front(const Ring_T * p_ring);
 extern void * Ring_Back(const Ring_T * p_ring);
 extern void * Ring_At(const Ring_T * p_ring, size_t index);
-extern void Ring_Assign(const Ring_T * p_ring, size_t index, const void * p_unit);
+
 extern void _Ring_PushBack(Ring_T * p_ring, const void * p_unit);
 extern void _Ring_PushFront(Ring_T * p_ring, const void * p_unit);
 extern void * _Ring_PopFront(Ring_T * p_ring);
 extern void * _Ring_PopBack(Ring_T * p_ring);
 extern void * _Ring_Seek(Ring_T * p_ring, size_t index);
 
+/*
+
+*/
 extern void Ring_Init(Ring_T * p_ring);
 extern void Ring_Clear(Ring_T * p_ring);
 extern bool Ring_PushFront(Ring_T * p_ring, const void * p_unit);
@@ -234,10 +229,11 @@ extern bool Ring_RemoveFront(Ring_T * p_ring, size_t unitCount);
 extern bool Ring_RemoveBack(Ring_T * p_ring, size_t unitCount);
 extern bool Ring_Enqueue(Ring_T * p_ring, const void * p_unit);
 extern bool Ring_Dequeue(Ring_T * p_ring, void * p_result);
+
 extern bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t unitCount);
 extern size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unitCount);
 
-extern bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount); // move p_result to last?
+extern bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount);
 extern size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount);
 
 

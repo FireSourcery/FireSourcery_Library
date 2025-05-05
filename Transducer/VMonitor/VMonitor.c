@@ -36,28 +36,32 @@
 
 static void ResetUnitConversion(VMonitor_T * p_vMonitor)
 {
-    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONST.UNITS_R1, p_vMonitor->CONST.UNITS_R2, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_BITS, 0);
+    Linear_Voltage_Init(&p_vMonitor->Units, p_vMonitor->CONST.UNITS_R1, p_vMonitor->CONST.UNITS_R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
+}
+
+/* select from compound literal or flash */
+void VMonitor_InitFrom(VMonitor_T * p_vMonitor, const VMonitor_Config_T * p_config)
+{
+    const VMonitor_Config_T * p_effectiveConfig = (p_config == NULL) ? p_vMonitor->CONST.P_CONFIG : p_config;
+    if (p_effectiveConfig != NULL) { memcpy(&p_vMonitor->Config, p_effectiveConfig, sizeof(VMonitor_Config_T)); }
+
+    ResetUnitConversion(p_vMonitor);
+    p_vMonitor->Status = VMONITOR_STATUS_OK;
+    if (p_vMonitor->Config.FaultUpper_Adcu == 0U) { p_vMonitor->Config.IsMonitorEnable = false; }
+    if (p_vMonitor->Config.FaultLower_Adcu == 0U) { p_vMonitor->Config.IsMonitorEnable = false; }
+    if (p_vMonitor->Config.WarningUpper_Adcu == 0U) { p_vMonitor->Config.WarningUpper_Adcu = p_vMonitor->Config.FaultUpper_Adcu; }
+    if (p_vMonitor->Config.WarningLower_Adcu == 0U) { p_vMonitor->Config.WarningLower_Adcu = p_vMonitor->Config.FaultLower_Adcu; }
 }
 
 void VMonitor_Init(VMonitor_T * p_vMonitor)
 {
-    if(p_vMonitor->CONST.P_CONFIG != NULL) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
-
-    ResetUnitConversion(p_vMonitor);
-    p_vMonitor->Status = VMONITOR_STATUS_OK;
-    if (p_vMonitor->Config.FaultUpper_Adcu == 0U)   { p_vMonitor->Config.IsMonitorEnable = false; }
-    if (p_vMonitor->Config.FaultLower_Adcu == 0U)   { p_vMonitor->Config.IsMonitorEnable = false; }
-    if (p_vMonitor->Config.WarningUpper_Adcu == 0U) { p_vMonitor->Config.WarningUpper_Adcu = p_vMonitor->Config.FaultUpper_Adcu; }
-    if (p_vMonitor->Config.WarningLower_Adcu == 0U) { p_vMonitor->Config.WarningLower_Adcu = p_vMonitor->Config.FaultLower_Adcu; }
-    // Linear_ADC_Init(&p_vMonitor->LinearLimits, p_vMonitor->Config.FaultLower_Adcu, p_vMonitor->Config.WarningLower_Adcu, 0, 0);
+    VMonitor_InitFrom(p_vMonitor, p_vMonitor->CONST.P_CONFIG);
 }
 
-/* select from compound literal or flash */
-// void _VMonitor_Init(VMonitor_T * p_vMonitor, const VMonitor_Config_T * p_config)
-// {
-//     const VMonitor_Config_T * p_effectiveConfig = (p_config == NULL) ? &p_vMonitor->CONST.P_CONFIG : p_config;
-//     if (p_effectiveConfig != NULL) { memcpy(&p_vMonitor->Config, p_vMonitor->CONST.P_CONFIG, sizeof(VMonitor_Config_T)); }
-// }
+void VMonitor_InitUnitRef(VMonitor_T * p_vMonitor, const VMonitor_Const_T * p_const)
+{
+    Linear_Voltage_Init(&p_vMonitor->Units, p_const->UNITS_R1, p_const->UNITS_R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
+}
 
 /*
     No previous state
@@ -65,6 +69,7 @@ void VMonitor_Init(VMonitor_T * p_vMonitor)
 */
 VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
 {
+    // p_vMonitor->Adcu = p_vMonitor->Adcu + adcu / 2;
     if (p_vMonitor->Config.IsMonitorEnable == true)
     {
         if      (adcu > p_vMonitor->Config.WarningUpper_Adcu)   { p_vMonitor->Status = (adcu > p_vMonitor->Config.FaultUpper_Adcu) ? VMONITOR_FAULT_UPPER : VMONITOR_WARNING_UPPER; }
@@ -75,7 +80,10 @@ VMonitor_Status_T VMonitor_PollStatus(VMonitor_T * p_vMonitor, uint16_t adcu)
     return p_vMonitor->Status;
 }
 
-// VMonitor_Status_T VMonitor_PollStatusWithEdge(VMonitor_T * p_vMonitor, uint16_t adcu)
+VMonitor_Status_T VMonitor_PollStatusEdge(VMonitor_T * p_vMonitor, uint16_t adcu)
+{
+    return (p_vMonitor->Status != VMonitor_PollStatus(p_vMonitor, adcu)) ? p_vMonitor->Status : VMONITOR_STATUS_OK;
+}
 
 /******************************************************************************/
 /*!
@@ -90,6 +98,7 @@ void VMonitor_ResetLimitsDefault(VMonitor_T * p_vMonitor)
     VMonitor_SetWarningLower(p_vMonitor, vRef * 6 / 8);
     VMonitor_SetWarningUpper(p_vMonitor, vRef * 9 / 8);
 }
+
 
 
 /******************************************************************************/

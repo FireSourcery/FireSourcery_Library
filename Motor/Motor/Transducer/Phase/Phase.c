@@ -80,6 +80,7 @@ void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint1
 //     Phase_ActivateOutput(p_phase);
 // }
 
+// void _Phase_Activate(const Phase_T * p_phase) active stored
 void Phase_ActivateOutput(const Phase_T * p_phase)
 {
     // _Phase_WriteState(p_phase, PHASE_ID_ABC);
@@ -89,6 +90,7 @@ void Phase_ActivateOutput(const Phase_T * p_phase)
     // _Phase_SyncOnOff(p_phase);
 }
 
+// void Phase_Deactivate(const Phase_T * p_phase)
 void Phase_Float(const Phase_T * p_phase)
 {
     // _Phase_WriteState(p_phase, PHASE_ID_0);
@@ -145,14 +147,14 @@ void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T state)
 /*
     Duty only
 */
-static inline void _Align_WriteDuty(const PWM_T * p_vDuty, const PWM_T * p_vGround1, const PWM_T * p_vGround2, uint16_t duty)
+static void _Align_WriteDuty(const PWM_T * p_vDuty, const PWM_T * p_vGround1, const PWM_T * p_vGround2, uint16_t duty)
 {
     PWM_WriteDuty(p_vDuty, duty);
     PWM_WriteDuty(p_vGround1, 0U);
     PWM_WriteDuty(p_vGround2, 0U);
 }
 
-static inline void _AlignInv_WriteDuty(const PWM_T * p_vInv, const PWM_T * p_vDuty1, const PWM_T * p_vDuty2, uint16_t duty)
+static void _AlignInv_WriteDuty(const PWM_T * p_vInv, const PWM_T * p_vDuty1, const PWM_T * p_vDuty2, uint16_t duty)
 {
     PWM_WriteDuty(p_vInv, 0U);
     PWM_WriteDuty(p_vDuty1, duty / 2);
@@ -166,6 +168,7 @@ void _Phase_AlignInvA(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty
 void _Phase_AlignInvB(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty(p_phase, duty/2, 0U, duty/2); }
 void _Phase_AlignInvC(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty(p_phase, duty/2, duty/2, 0U); }
 
+/* Duty Only */
 void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
 {
     switch (id)
@@ -202,28 +205,50 @@ void Phase_ActivateAlign(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
     State
 */
 Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase) { return _Phase_ReadDutyState(p_phase).Value; }
-
 Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
+Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }
 
-Phase_Id_T Phase_ReadAlignNextDirection(const Phase_T * p_phase, bool ccw)
+// Phase_Id_T Phase_ReadAlignNextDirection(const Phase_T * p_phase, int sign)
+// {
+//     // return (ccw == true) ? Phase_NextOf(Phase_ReadAlign(p_phase)) : Phase_PrevOf(Phase_ReadAlign(p_phase));
+// }
+
+/* A towards B */
+Phase_Id_T Phase_JogNext(const Phase_T * p_phase, uint16_t duty)
 {
-    return (ccw == true) ? Phase_NextOf(Phase_ReadAlign(p_phase)) : Phase_PrevOf(Phase_ReadAlign(p_phase));
-}
-
-/* towards B */
-void Phase_JogNext(const Phase_T * p_phase, uint16_t duty)
-{
-    Phase_Align(p_phase, Phase_ReadAlignNext(p_phase), duty);
-}
-
-// Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
-
-Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, uint16_t duty, bool ccw)
-{
-    Phase_Id_T id = Phase_ReadAlignNextDirection(p_phase, ccw);
+    Phase_Id_T id = Phase_ReadAlignNext(p_phase);
     Phase_Align(p_phase, id, duty);
     return id;
 }
+
+Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty)
+{
+    Phase_Id_T id = Phase_ReadAlignPrev(p_phase);
+    Phase_Align(p_phase, id, duty);
+    return id;
+}
+
+// Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
+// {
+//     Phase_Id_T id = Phase_ReadAlign(p_phase);
+//     if (dutySigned > 0)
+//     {
+//         id = Phase_ReadAlignNext(p_phase);
+//     }
+//     else if (dutySigned < 0)
+//     {
+//         id = Phase_ReadAlignPrev(p_phase);
+//     }
+//     Phase_Align(p_phase, id, abs(dutySigned));
+//     return id;
+// }
+
+// Phase_Id_T Phase_JogDirection(const Phase_T * p_phase, uint16_t duty, bool ccw)
+// {
+//     Phase_Id_T id = Phase_ReadAlignNextDirection(p_phase, ccw);
+//     Phase_Align(p_phase, id, duty);
+//     return id;
+// }
 /******************************************************************************/
 /*! */
 /******************************************************************************/
@@ -350,87 +375,87 @@ void Phase_Bipolar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty) { PWM_
 void Phase_Bipolar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_ActuateDutyMidPlus(&p_phase->PwmA, duty); PWM_ActuateDutyMidPlus(&p_phase->PwmB, duty); }
 
 // todo wrap layering
-void Phase_Polar_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAC(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAC(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAC(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAC(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAC(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAC(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-void Phase_Polar_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBC(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBC(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBC(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBC(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBC(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBC(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-void Phase_Polar_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBA(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBA(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBA(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyBA(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyBA(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyBA(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-void Phase_Polar_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCA(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCA(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCA(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCA(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCA(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCA(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-void Phase_Polar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCB(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCB(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCB(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyCB(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyCB(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyCB(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-void Phase_Polar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty)
-{
-    switch(p_phase->PolarMode)
-    {
-        case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAB(p_phase, duty);    break;
-        case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAB(p_phase, duty);    break;
-        case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAB(p_phase, duty);    break;
-        default: break;
-    }
-     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
-}
+// void Phase_Polar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty)
+// {
+//     switch(p_phase->PolarMode)
+//     {
+//         case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar1_ActivateDutyAB(p_phase, duty);    break;
+//         case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar2_ActivateDutyAB(p_phase, duty);    break;
+//         case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateDutyAB(p_phase, duty);    break;
+//         default: break;
+//     }
+//      _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
+// }
 
-/*
-    Activate Duty and Sets On/Off State
-*/
-void Phase_Polar_ActivateAC(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyAC(p_phase, duty); Phase_Polar_ActivateOutputAC(p_phase); }
-void Phase_Polar_ActivateBC(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyBC(p_phase, duty); Phase_Polar_ActivateOutputBC(p_phase); }
-void Phase_Polar_ActivateBA(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyBA(p_phase, duty); Phase_Polar_ActivateOutputBA(p_phase); }
-void Phase_Polar_ActivateCA(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyCA(p_phase, duty); Phase_Polar_ActivateOutputCA(p_phase); }
-void Phase_Polar_ActivateCB(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyCB(p_phase, duty); Phase_Polar_ActivateOutputCB(p_phase); }
-void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyAB(p_phase, duty); Phase_Polar_ActivateOutputAB(p_phase); }
+// /*
+//     Activate Duty and Sets On/Off State
+// */
+// void Phase_Polar_ActivateAC(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyAC(p_phase, duty); Phase_Polar_ActivateOutputAC(p_phase); }
+// void Phase_Polar_ActivateBC(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyBC(p_phase, duty); Phase_Polar_ActivateOutputBC(p_phase); }
+// void Phase_Polar_ActivateBA(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyBA(p_phase, duty); Phase_Polar_ActivateOutputBA(p_phase); }
+// void Phase_Polar_ActivateCA(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyCA(p_phase, duty); Phase_Polar_ActivateOutputCA(p_phase); }
+// void Phase_Polar_ActivateCB(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyCB(p_phase, duty); Phase_Polar_ActivateOutputCB(p_phase); }
+// void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty) { Phase_Polar_ActivateDutyAB(p_phase, duty); Phase_Polar_ActivateOutputAB(p_phase); }
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
@@ -441,74 +466,74 @@ void Phase_Polar_ActivateAB(const Phase_T * p_phase, uint16_t duty) { Phase_Pola
 
 */
 /******************************************************************************/
-void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
-{
-    if(p_phase->PolarMode == PHASE_MODE_BIPOLAR) /* If current phase mode is Bipolar, disable */
-    {
-        Phase_Float(p_phase);
-        PWM_DisableInvertPolarity(&p_phase->PwmA);
-        PWM_DisableInvertPolarity(&p_phase->PwmB);
-        PWM_DisableInvertPolarity(&p_phase->PwmC);
-    }
-    p_phase->PolarMode = phaseMode;
-}
+// void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Mode_T phaseMode)
+// {
+//     if(p_phase->PolarMode == PHASE_MODE_BIPOLAR) /* If current phase mode is Bipolar, disable */
+//     {
+//         Phase_Float(p_phase);
+//         PWM_DisableInvertPolarity(&p_phase->PwmA);
+//         PWM_DisableInvertPolarity(&p_phase->PwmB);
+//         PWM_DisableInvertPolarity(&p_phase->PwmC);
+//     }
+//     p_phase->PolarMode = phaseMode;
+// }
 
-/*
-    Commutation Phase Id handled by Phase module
-    switch should be faster than CommutationTable[phaseID][p_phase->PolarMode]();
-*/
-void Phase_Polar_Activate(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
-{
-    switch(phaseId)
-    {
-        case PHASE_ID_POLAR_0: break;
-        case PHASE_ID_1_AC: Phase_Polar_ActivateAC(p_phase, duty); break;
-        case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase, duty); break;
-        case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase, duty); break;
-        case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase, duty); break;
-        case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase, duty); break;
-        case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase, duty); break;
-        case PHASE_ID_POLAR_7: break;
-        default: break;
-    }
-}
+// /*
+//     Commutation Phase Id handled by Phase module
+//     switch should be faster than CommutationTable[phaseID][p_phase->PolarMode]();
+// */
+// void Phase_Polar_Activate(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
+// {
+//     switch(phaseId)
+//     {
+//         case PHASE_ID_POLAR_0: break;
+//         case PHASE_ID_1_AC: Phase_Polar_ActivateAC(p_phase, duty); break;
+//         case PHASE_ID_2_BC: Phase_Polar_ActivateBC(p_phase, duty); break;
+//         case PHASE_ID_3_BA: Phase_Polar_ActivateBA(p_phase, duty); break;
+//         case PHASE_ID_4_CA: Phase_Polar_ActivateCA(p_phase, duty); break;
+//         case PHASE_ID_5_CB: Phase_Polar_ActivateCB(p_phase, duty); break;
+//         case PHASE_ID_6_AB: Phase_Polar_ActivateAB(p_phase, duty); break;
+//         case PHASE_ID_POLAR_7: break;
+//         default: break;
+//     }
+// }
 
-void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
-{
-    switch(phaseId)
-    {
-        case PHASE_ID_POLAR_0: break;
-        case PHASE_ID_1_AC: Phase_Polar_ActivateDutyAC(p_phase, duty); break;
-        case PHASE_ID_2_BC: Phase_Polar_ActivateDutyBC(p_phase, duty); break;
-        case PHASE_ID_3_BA: Phase_Polar_ActivateDutyBA(p_phase, duty); break;
-        case PHASE_ID_4_CA: Phase_Polar_ActivateDutyCA(p_phase, duty); break;
-        case PHASE_ID_5_CB: Phase_Polar_ActivateDutyCB(p_phase, duty); break;
-        case PHASE_ID_6_AB: Phase_Polar_ActivateDutyAB(p_phase, duty); break;
-        case PHASE_ID_POLAR_7: break;
-        default: break;
-    }
-}
+// void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
+// {
+//     switch(phaseId)
+//     {
+//         case PHASE_ID_POLAR_0: break;
+//         case PHASE_ID_1_AC: Phase_Polar_ActivateDutyAC(p_phase, duty); break;
+//         case PHASE_ID_2_BC: Phase_Polar_ActivateDutyBC(p_phase, duty); break;
+//         case PHASE_ID_3_BA: Phase_Polar_ActivateDutyBA(p_phase, duty); break;
+//         case PHASE_ID_4_CA: Phase_Polar_ActivateDutyCA(p_phase, duty); break;
+//         case PHASE_ID_5_CB: Phase_Polar_ActivateDutyCB(p_phase, duty); break;
+//         case PHASE_ID_6_AB: Phase_Polar_ActivateDutyAB(p_phase, duty); break;
+//         case PHASE_ID_POLAR_7: break;
+//         default: break;
+//     }
+// }
 
-void Phase_Polar_ActivateOutput(Phase_T * p_phase, Phase_Polar_T phaseId)
-{
-    switch(phaseId)
-    {
-        case PHASE_ID_POLAR_0: break;
-        case PHASE_ID_1_AC: Phase_Polar_ActivateOutputAC(p_phase); break;
-        case PHASE_ID_2_BC: Phase_Polar_ActivateOutputBC(p_phase); break;
-        case PHASE_ID_3_BA: Phase_Polar_ActivateOutputBA(p_phase); break;
-        case PHASE_ID_4_CA: Phase_Polar_ActivateOutputCA(p_phase); break;
-        case PHASE_ID_5_CB: Phase_Polar_ActivateOutputCB(p_phase); break;
-        case PHASE_ID_6_AB: Phase_Polar_ActivateOutputAB(p_phase); break;
-        case PHASE_ID_POLAR_7: break;
-        default: break;
-    }
+// void Phase_Polar_ActivateOutput(Phase_T * p_phase, Phase_Polar_T phaseId)
+// {
+//     switch(phaseId)
+//     {
+//         case PHASE_ID_POLAR_0: break;
+//         case PHASE_ID_1_AC: Phase_Polar_ActivateOutputAC(p_phase); break;
+//         case PHASE_ID_2_BC: Phase_Polar_ActivateOutputBC(p_phase); break;
+//         case PHASE_ID_3_BA: Phase_Polar_ActivateOutputBA(p_phase); break;
+//         case PHASE_ID_4_CA: Phase_Polar_ActivateOutputCA(p_phase); break;
+//         case PHASE_ID_5_CB: Phase_Polar_ActivateOutputCB(p_phase); break;
+//         case PHASE_ID_6_AB: Phase_Polar_ActivateOutputAB(p_phase); break;
+//         case PHASE_ID_POLAR_7: break;
+//         default: break;
+//     }
 
-    // switch (p_phase->PolarMode)
-    // {
-    //     case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar_ActivateOutput(p_phase, phaseId);    break;
-    //     case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar_ActivateOutput(p_phase, phaseId);    break;
-    //     case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateOutput(p_phase, phaseId);    break;
-    //     default: break;
-    // }
-}
+//     // switch (p_phase->PolarMode)
+//     // {
+//     //     case PHASE_MODE_UNIPOLAR_1: Phase_Unipolar_ActivateOutput(p_phase, phaseId);    break;
+//     //     case PHASE_MODE_UNIPOLAR_2: Phase_Unipolar_ActivateOutput(p_phase, phaseId);    break;
+//     //     case PHASE_MODE_BIPOLAR:    Phase_Bipolar_ActivateOutput(p_phase, phaseId);    break;
+//     //     default: break;
+//     // }
+// }

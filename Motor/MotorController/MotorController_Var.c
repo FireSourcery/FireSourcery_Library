@@ -294,6 +294,19 @@ uint32_t MotorController_Config_BootRef_Set(MotorController_T * p_mc, MotorContr
 }
 
 
+// int32_t MotorController_Ref_Get(const MotorController_T * p_mc, MotorController_Ref_T id)
+// {
+//     int32_t value = 0;
+//     switch (id)
+//     {
+//         // case MOT_VAR_REF :    value = p_mc->CONST.HEAT_MOSFET_COUNT;     break;
+//         case MOT_VAR_REF:         value = p_mc->CONST.HEAT_MOSFET_COUNT;         break;
+//         case MOT_VAR_REF:        value = p_mc->CONST.HEAT_MOSFET_COUNT;        break;
+//     }
+//     return value;
+// }
+
+
 /******************************************************************************/
 /*!
     Combined Id Fields

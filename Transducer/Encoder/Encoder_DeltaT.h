@@ -125,27 +125,28 @@ static inline bool Encoder_DeltaT_IsExtendedStop(Encoder_T * p_encoder)
 /*
     optionally shift instead of index
 */
-// static uint32_t Encoder_DeltaT_CaptureInterpolateDelta(Encoder_T * p_encoder)
-// {
-//     p_encoder->InterpolateAngleDelta = p_encoder->UnitInterpolateAngle / p_encoder->DeltaT << 16;
-// }
+static uint32_t Encoder_DeltaT_CapturePollingDelta(Encoder_T * p_encoder)
+{
+    // p_encoder->PollingAngleDelta = p_encoder->UnitAngleD / p_encoder->DeltaT * (p_encoder->CONST.TIMER_FREQ / p_encoder->CONST.POLLING_FREQ);
+    // p_encoder->PollingAngleDelta = p_encoder->UnitPollingAngle / p_encoder->DeltaT << 16;
+}
 
 /*!
     @brief InterpolateAngle
-    AngleIndex * 1(DeltaD) * [UnitInterpolateAngle] / DeltaT
-    UnitInterpolateAngle = [ENCODER_ANGLE_DEGREES[65536] * TIMER_FREQ / POLLING_FREQ / CountsPerRevolution]
+    AngleIndex * 1(DeltaD) * [UnitPollingAngle] / DeltaT
+    UnitPollingAngle = [ENCODER_ANGLE_DEGREES[65536] * TIMER_FREQ / POLLING_FREQ / CountsPerRevolution]
     AngleIndex [0:InterpolationCount]
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_T * p_encoder, uint32_t pollingIndex)
 {
-    math_limit_upper(pollingIndex * p_encoder->UnitInterpolateAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
+    math_limit_upper(pollingIndex * p_encoder->UnitPollingAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
 }
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_T * p_encoder)
 {
-    p_encoder->InterpolateAngleIndex++;
+    p_encoder->InterpolateAngleIndex++; /* todo replace index for sum */
     return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolateAngleIndex);
-    // p_encoder->InterpolateAngleSum += p_encoder->InterpolateAngleDelta;
+    // p_encoder->InterpolateAngleSum += p_encoder->PollingAngleDelta;
     // return p_encoder->InterpolateAngleSum >> 16;
 }
 
@@ -280,7 +281,6 @@ extern void Encoder_DeltaT_Init(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder);
 extern void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis);
 extern void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder);
-extern void Encoder_DeltaT_SetInterpolateAngleScalar(Encoder_T * p_encoder, uint16_t scalar);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/

@@ -36,13 +36,7 @@
 #include "MotorController_Analog.h"
 #include "../Version.h"
 
-/******************************************************************************/
-/*
-    Call via Key/Value
-    State/SubStates Cmds
-    not stored in host view cache
-*/
-/******************************************************************************/
+/*  */
 typedef enum MotorController_User_CallId
 {
     MOT_USER_SYSTEM_BEEP,
@@ -106,7 +100,7 @@ MotVarId_Instance_Motor_T;
 */
 static inline Motor_T * MotorController_User_GetPtrMotor(const MotorController_T * p_mc, uint8_t motorIndex)
 {
-    return (motorIndex < p_mc->CONST.MOTOR_COUNT) ? MotorController_GetPtrMotor(p_mc, motorIndex) : NULL;
+    return (motorIndex < p_mc->CONST.MOTORS.LENGTH) ? MotorController_GetPtrMotor(p_mc, motorIndex) : NULL;
 }
 
 static inline Thermistor_T * MotorController_User_GetPtrThermistor(const MotorController_T * p_mc, uint8_t index)
@@ -144,7 +138,7 @@ static inline Protocol_T * MotorController_User_GetPtrProtocol(const MotorContro
 /* UserMain, which may use Watchdog  */
 static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorController_T * p_mc)
 {
-    &p_mc->CONST.P_PROTOCOLS[p_mc->CONST.USER_PROTOCOL_INDEX];
+    return MotorController_User_GetPtrProtocol(p_mc, p_mc->CONST.USER_PROTOCOL_INDEX);
 }
 
 /******************************************************************************/
@@ -181,9 +175,22 @@ static inline void MotorController_User_SetCmdValue(MotorController_T * p_mc, in
 static inline void MotorController_User_SetFeedbackMode(MotorController_T * p_mc, uint8_t feedbackMode)
 {
     // p_mc->UserCmdMode.Value = feedbackMode;
-    MotorController_SetFeedbackModeAll_Cast(p_mc, feedbackMode);
+    // MotorController_SetFeedbackModeAll_Cast(p_mc, feedbackMode); /* alternatively move to */
+    Motor_Array_ForEachSet(&p_mc->CONST.MOTORS, Motor_SetFeedbackMode_Cast, feedbackMode);
     // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_CMD_MODE, feedbackMode);
 }
+
+/******************************************************************************/
+/* Per Motor */
+/******************************************************************************/
+// static inline void MotorController_User_SetMotorCmdValue(MotorController_T * p_mc, uint8_t motorId, int16_t userCmdValue)
+// {
+//     Motor_T * p_motor;
+//     {
+//         p_motor = MotorController_GetPtrMotor(p_mc, motorId);
+//         if (p_motor != NULL) { Motor_User_SetActiveCmdValue(p_motor, userCmdValue); }
+//     }
+// }
 
 /******************************************************************************/
 /* Drive Mode */
@@ -209,6 +216,8 @@ static inline void MotorController_User_SetCmdThrottle_BySerial(MotorController_
 
 // todo move analog user drive image to statemachine, separate drive states as MotorArray Context
 
+// static inline void MotorController_User_Release (MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
+// static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_HOLD); }
 
 /******************************************************************************/
 /*
@@ -290,7 +299,7 @@ static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) 
 static inline void MotorController_User_ForceDisableControl(MotorController_T * p_mc)
 {
     // MotorController_ForceDisableAll(p_mc);
-    MotorController_ForEachMotor(p_mc, Motor_User_ForceDisableControl);
+    Motor_Array_ForEach(&p_mc->CONST.MOTORS, Motor_User_ForceDisableControl);
     // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);
     p_mc->DriveSubState == MOTOR_CONTROLLER_DRIVE_RELEASE;
 }
@@ -299,9 +308,10 @@ static inline void MotorController_User_EnableRxWatchdog(MotorController_T * p_m
 static inline void MotorController_User_DisableRxWatchdog(MotorController_T * p_mc) { Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_mc)); }
 static inline void MotorController_User_SetRxWatchdog(MotorController_T * p_mc, bool isEnable) { Protocol_SetRxWatchdogOnOff(MotorController_User_GetMainProtocol(p_mc), isEnable); }
 
+
+/*  */
 static inline void MotorController_User_BeepN(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime, uint8_t n)   { Blinky_BlinkN(&p_mc->Buzzer, onTime, offTime, n); }
 static inline void MotorController_User_BeepStart(MotorController_T * p_mc, uint32_t onTime, uint32_t offTime)          { Blinky_StartPeriodic(&p_mc->Buzzer, onTime, offTime); }
-
 static inline void MotorController_User_BeepStop(MotorController_T * p_mc)                                              { Blinky_Stop(&p_mc->Buzzer); }
 
 // todo base flag
@@ -313,9 +323,13 @@ static inline void MotorController_User_DisableBuzzer(MotorController_T * p_mc)
 
 /******************************************************************************/
 /*
-    Motor Controller Struct Variables
+    Motor Controller State Variables
 */
 /******************************************************************************/
+static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(const MotorController_T * p_mc)   { return StateMachine_GetActiveStateId(&p_mc->StateMachine); }
+static inline MotorController_StateFlags_T MotorController_User_GetStateFlags(const MotorController_T * p_mc)          { return p_mc->StateFlags; }
+static inline MotorController_FaultFlags_T MotorController_User_GetFaultFlags(const MotorController_T * p_mc)          { return p_mc->FaultFlags; }
+
 /*
     Status Flags for User Interface
 */
@@ -347,19 +361,17 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
     };
 }
 
-static inline MotorController_StateMachine_StateId_T MotorController_User_GetStateId(const MotorController_T * p_mc)   { return StateMachine_GetActiveStateId(&p_mc->StateMachine); }
-static inline MotorController_StateFlags_T MotorController_User_GetStateFlags(const MotorController_T * p_mc)          { return p_mc->StateFlags; }
-static inline MotorController_FaultFlags_T MotorController_User_GetFaultFlags(const MotorController_T * p_mc)          { return p_mc->FaultFlags; }
-
-static inline uint16_t MotorController_User_GetHeatPcb_Adcu(const MotorController_T * p_mc)                         { return MotorController_Analog_GetHeatPcb(p_mc); }
-static inline uint16_t MotorController_User_GetHeatMosfets_Adcu(const MotorController_T * p_mc)                     { return MotorController_Analog_GetHeatMosfets(p_mc, 0); }
-static inline uint16_t MotorController_User_GetHeatMosfetsIndex_Adcu(const MotorController_T * p_mc, uint8_t index) { return MotorController_Analog_GetHeatMosfets(p_mc, index); }
+/* local unit conversion only */
+// static inline uint16_t MotorController_User_GetHeatPcb_(const MotorController_T * p_mc)                         { return MotorController_Analog_GetHeatPcb(p_mc); }
+// static inline uint16_t MotorController_User_GetHeatMosfets_(const MotorController_T * p_mc)                     { return MotorController_Analog_GetHeatMosfets(p_mc, 0); }
+// static inline uint16_t MotorController_User_GetHeatMosfetsIndex_(const MotorController_T * p_mc, uint8_t index) { return MotorController_Analog_GetHeatMosfets(p_mc, index); }
 
 /*
     Boot Buffer
 */
 static inline BootRef_T MotorController_User_GetBootReg(const MotorController_T * p_mc)                { return p_mc->BootRef; }
 static inline void MotorController_User_SetBootReg(MotorController_T * p_mc, BootRef_T bootReg)        { p_mc->BootRef.Word = bootReg.Word; }
+
 static inline void MotorController_User_SetFastBoot(MotorController_T * p_mc, bool isEnable)           { p_mc->BootRef.FastBoot = isEnable; }
 static inline void MotorController_User_SetBeep(MotorController_T * p_mc, bool isEnable)               { p_mc->BootRef.Beep  = isEnable; }
 static inline void MotorController_User_SetBlink(MotorController_T * p_mc, bool isEnable)              { p_mc->BootRef.Blink = isEnable; }
@@ -395,39 +407,13 @@ static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_T * 
     Read Only
 */
 /******************************************************************************/
-static inline uint16_t MotorController_User_GetVMax(void) { return MOTOR_STATIC.V_MAX_VOLTS; }
-static inline uint16_t MotorController_User_GetIMax(void) { return MOTOR_STATIC.I_MAX_AMPS; }
-static inline uint16_t MotorController_User_GetIMaxAdcu(void) { return MOTOR_STATIC.I_PEAK_ADCU; }
-// static inline char * MotorController_User_GetBoardName(void)  { return MOTOR_STATIC.BOARD_NAME; }
-
 static inline uint32_t MotorController_User_GetLibraryVersion(void) { return MOTOR_LIBRARY_VERSION; }
-static inline uint8_t MotorController_User_GetLibraryVersionIndex(uint8_t charIndex)
-{
-    uint8_t versionChar;
-    switch (charIndex)
-    {
-        case 0U: versionChar = MOTOR_LIBRARY_VERSION_FIX;    break;
-        case 1U: versionChar = MOTOR_LIBRARY_VERSION_MINOR;  break;
-        case 2U: versionChar = MOTOR_LIBRARY_VERSION_MAJOR;  break;
-        case 3U: versionChar = MOTOR_LIBRARY_VERSION_OPT;    break;
-        default: versionChar = 0U; break;
-    }
-    return versionChar;
-}
-
 static inline uint32_t MotorController_User_GetMainVersion(const MotorController_T * p_mc) { return *((uint32_t *)(&p_mc->CONST.MAIN_VERSION[0U])); }
-static inline uint8_t MotorController_User_GetMainVersionIndex(const MotorController_T * p_mc, uint8_t charIndex) { return p_mc->CONST.MAIN_VERSION[charIndex]; }
+// static inline char * MotorController_User_GetBoardName(void)  { return  .BOARD_NAME; }
 
-// static inline void MotorController_User_GetBoardRef(const MotorController_T * p_mc, void * p_destBuffer)
-// {
-//     ((uint32_t *)p_destBuffer)[0U] = p_mc->VMonitorSource.CONST.UNITS_R1;
-//     ((uint32_t *)p_destBuffer)[1U] = p_mc->VMonitorSource.CONST.UNITS_R2;
-//     ((uint32_t *)p_destBuffer)[2U] = p_mc->ThermistorPcb.CONST.R_SERIES;
-//     ((uint32_t *)p_destBuffer)[3U] = p_mc->ThermistorPcb.CONST.R_PARALLEL;
-//     ((uint32_t *)p_destBuffer)[4U] = p_mc->MosfetsThermistors[0U].CONST.R_SERIES;
-//     ((uint32_t *)p_destBuffer)[5U] = p_mc->MosfetsThermistors[0U].CONST.R_PARALLEL;
-// }
-
+static inline uint16_t MotorController_User_GetMotorCount(const MotorController_T * p_mc) { return p_mc->CONST.MOTORS.LENGTH; }
+// static inline uint16_t MotorController_User_GetHeatMosfetCount(const MotorController_T * p_mc)   { return MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT; }
+// static inline uint16_t MotorController_User_GetVMonitorCount(const MotorController_T * p_mc)     { return MOTOR_CONTROLLER_VMONITOR_COUNT; }
 
 /******************************************************************************/
 /*
@@ -456,11 +442,3 @@ extern void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc,
 
 #endif
 
-
-// static inline int32_t MotorController_User_GetCmdValue(const MotorController_T * p_mc) { return p_mc->UserCmdValue; }
-
-// float all and ground all, stop state then use motor
-// cmd = 0
-// static inline void MotorController_User_Release (MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
-// voltagemode 0
-// static inline void MotorController_User_Hold(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_BRAKE, MOTOR_CONTROLLER_HOLD); }

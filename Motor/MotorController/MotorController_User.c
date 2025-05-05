@@ -45,8 +45,8 @@ MotorController_Direction_T MotorController_User_GetDirection(const MotorControl
         case MCSM_STATE_ID_PARK:        direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
         case MCSM_STATE_ID_NEUTRAL:     direction = MOTOR_CONTROLLER_DIRECTION_NEUTRAL;         break;
         case MCSM_STATE_ID_DRIVE:
-            if      (MotorController_IsEveryMotor(p_mc, Motor_IsDirectionForward) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
-            else if (MotorController_IsEveryMotor(p_mc, Motor_IsDirectionReverse) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
+            if      (Motor_Array_IsEvery(&p_mc->CONST.MOTORS, Motor_IsDirectionForward) == true) { direction = MOTOR_CONTROLLER_DIRECTION_FORWARD; }
+            else if (Motor_Array_IsEvery(&p_mc->CONST.MOTORS, Motor_IsDirectionReverse) == true) { direction = MOTOR_CONTROLLER_DIRECTION_REVERSE; }
             else                                                        { direction = MOTOR_CONTROLLER_DIRECTION_ERROR; }
             break;
         default: direction = MOTOR_CONTROLLER_DIRECTION_ERROR; break;
@@ -86,23 +86,26 @@ bool MotorController_User_CheckDirection(MotorController_T * p_mc, MotorControll
 
 bool MotorController_User_SetSpeedLimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    void_array_for_any_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_t)Motor_User_TrySpeedLimit, limit_fract16);
-    // MotorController_SetSpeedLimitAll(MotorController_T * p_mc, USER,   limit_fract16)
+    LimitArray_SetEntry(&p_mc->MotLimits.SpeedLimit, MOT_SPEED_LIMIT_USER, limit_fract16);
+    Motor_Array_ApplySpeedLimit(&p_mc->CONST.MOTORS, &p_mc->MotLimits.SpeedLimit);
 }
 
 bool MotorController_User_ClearSpeedLimitAll(MotorController_T * p_mc)
 {
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (poll_t)Motor_User_ClearSpeedLimit);
+    LimitArray_ClearEntry(&p_mc->MotLimits.SpeedLimit, MOT_SPEED_LIMIT_USER);
+    Motor_Array_ApplySpeedLimit(&p_mc->CONST.MOTORS, &p_mc->MotLimits.SpeedLimit);
 }
 
 bool MotorController_User_SetILimitAll(MotorController_T * p_mc, uint16_t limit_fract16)
 {
-    void_array_for_any_try(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (try_t)Motor_User_TryILimit, limit_fract16);
+    LimitArray_SetEntry(&p_mc->MotLimits.ILimit, MOT_I_LIMIT_USER, limit_fract16);
+    Motor_Array_ApplyILimit(&p_mc->CONST.MOTORS, &p_mc->MotLimits.ILimit);
 }
 
 bool MotorController_User_ClearILimitAll(MotorController_T * p_mc)
 {
-    void_array_for_any(p_mc->CONST.P_MOTORS, sizeof(Motor_T), p_mc->CONST.MOTOR_COUNT, (poll_t)Motor_User_ClearILimit);
+    LimitArray_ClearEntry(&p_mc->MotLimits.ILimit, MOT_I_LIMIT_USER);
+    Motor_Array_ApplyILimit(&p_mc->CONST.MOTORS, &p_mc->MotLimits.ILimit);
 }
 
 void MotorController_User_SetOptSpeedLimitOnOff(MotorController_T * p_mc, bool isEnable)
@@ -120,11 +123,12 @@ void MotorController_User_SetOptILimitOnOff(MotorController_T * p_mc, bool isEna
 /******************************************************************************/
 /* Config */
 /******************************************************************************/
-/*! @param[in] volts < MOTOR_STATIC.VMAX and Config.VSourceRef */
+/*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSourceRef */
 void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts)
 {
-    p_mc->Config.VSourceRef = Motor_VSourceLimitOf(volts);
-    MotorController_ResetVSourceActiveRef(p_mc);
+    // p_mc->Config.VSourceRef = Motor_VSourceLimitOf(volts);
+    p_mc->Config.VSourceRef = volts;
+    MotorController_CaptureVSourceActiveRef(p_mc);
     MotorController_ResetVSourceMonitorDefaults(p_mc);
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
     MotorController_ResetBatteryLifeDefault(p_mc);
@@ -133,12 +137,6 @@ void MotorController_User_SetVSourceRef(MotorController_T * p_mc, uint16_t volts
 
 // void MotorController_User_SetILimit_DC(MotorController_T * p_mc, uint16_t dc)
 // {
-//     uint16_t iPeakAc = dc;
-//     uint16_t motoring = iPeakAc;
-//     for(uint8_t iMotor = 0U; iMotor < p_mc->CONST.MOTOR_COUNT; iMotor++)
-//     {
-//         Motor_User_SetILimitMotoringParam_Amp(&p_mc->CONST.P_MOTORS[iMotor], motoring);
-//     }
 // }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
@@ -160,32 +158,22 @@ void MotorController_User_SetBatteryLife_MilliV(MotorController_T * p_mc, uint32
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_User_IsConfigState(p_mc) == true) { status = MotorController_ReadManufacture_Blocking(p_mc, onceAddress, size, p_destBuffer); }
+    if (MotorController_User_IsConfigState(p_mc) == true) { status = MotNvm_ReadManufacture_Blocking(&p_mc->CONST.MOT_NVM, onceAddress, size, p_destBuffer); }
     return status;
 }
 
 NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(MotorController_T * p_mc, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_User_IsLockState(p_mc) == true) { status = MotorController_WriteManufacture_Blocking(p_mc, onceAddress, p_source, size); }
+    if (MotorController_User_IsLockState(p_mc) == true) { status = MotNvm_WriteManufacture_Blocking(&p_mc->CONST.MOT_NVM, onceAddress, p_source, size); }
     return status;
 }
 
-/******************************************************************************/
-/* Per Motor */
-/******************************************************************************/
-// static inline void MotorController_User_SetMotorCmdValue(MotorController_T * p_mc, uint8_t motorId, int16_t userCmdValue)
-// {
-//     Motor_T * p_motor;
-//     {
-//         p_motor = MotorController_GetPtrMotor(p_mc, motorId);
-//         if (p_motor != NULL) { Motor_User_SetActiveCmdValue(p_motor, userCmdValue); }
-//     }
-// }
 
 /******************************************************************************/
 /*
-    Call via Key/Value
+    Call via Key/Value, State/SubStates Cmds
+    vars not stored in host view cache
     todo regularize return status
 */
 /******************************************************************************/

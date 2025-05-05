@@ -43,14 +43,12 @@ static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (a
 /* is_aligned_mask */
 static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
 
-static inline uint32_t bits_edge(uint32_t prevState, uint32_t newState) { return (prevState ^ newState); }
-/* 1: Rising Edge, 0: No Change, -1: Falling Edge */
-static inline int8_t edge_value(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
-
 static inline bool is_falling_edge(bool prevState, bool newState)   { return ((prevState == true) && (newState == false)); }
 static inline bool is_rising_edge(bool prevState, bool newState)    { return ((prevState == false) && (newState == true)); }
 static inline bool is_edge(bool prevState, bool newState)           { return (prevState != newState); }
-static inline int8_t edge_value(bool prevState, bool newState)      { return ((int8_t)newState - (int8_t)prevState); } /* -1: falling edge, 0: no edge, 1: rising edge */
+/* 1: Rising Edge, 0: No Change, -1: Falling Edge */
+static inline int8_t edge_sign(bool prevState, bool newState) { return ((int8_t)newState - (int8_t)prevState); }
+
 static inline uint32_t bits_edges(uint32_t prevState, uint32_t newState)  { return (prevState ^ newState); }
 
 #endif

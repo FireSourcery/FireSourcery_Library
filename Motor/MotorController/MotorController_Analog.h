@@ -35,7 +35,7 @@
 #include "MotorControllerAnalog.h"
 
 #include "Peripheral/Analog/Analog.h"
-#include "Motor/Motor/MotorAnalog.h"
+#include "Motor/Motor/Transducer/MotorAnalog/MotorAnalog.h"
 
 typedef enum MotorController_Analog_ChannelGlobal
 {
@@ -48,7 +48,7 @@ typedef enum MotorController_Analog_ChannelGlobal
 MotorController_Analog_ChannelGlobal_T;
 
 // static inline uint16_t MotorController_Analog_GetAdcu(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return p_mc->AnalogResults.Channels[adcChannel]; }
-// static inline uint8_t MotorController_Analog_GetAdcu_Msb8(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+// static inline uint8_t MotorController_Analog_GetAdcu_Msb8(const MotorController_T * p_mc, MotAnalog_Channel_T adcChannel) { return MotorController_User_GetAdcu(p_mc, adcChannel) >> (ANALOG_REFERENCE.ADC_BITS - 8U); }
 
 static inline uint16_t MotorController_Analog_GetVSource(const MotorController_T * p_mc)    { return p_mc->CONST.CONVERSION_VSOURCE.P_STATE->Result; }
 static inline uint16_t MotorController_Analog_GetVSense(const MotorController_T * p_mc)     { return p_mc->CONST.CONVERSION_VSENSE.P_STATE->Result; }

@@ -312,6 +312,7 @@ static inline Flash_Status_T ProcAfterSet(Flash_T * p_flash, Flash_Status_T stat
     Public
 */
 /******************************************************************************/
+// Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t flashAddress, const void * p_data, size_t size)
 Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 {
     Flash_Status_T status = ProcAfterSet(p_flash, SetWrite(p_flash, flashAddress, p_data, size));
@@ -373,7 +374,7 @@ Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddress
     return ProcAfterSet(p_flash, SetReadOnce(p_flash, flashAddress, size, p_resultBuffer));
 }
 
-Flash_Status_T Flash_EraseAll_Blocking(Flash_T *p_flash)
+Flash_Status_T Flash_EraseAll_Blocking(Flash_T * p_flash)
 {
     return ProcAfterSet(p_flash, SetEraseAll(p_flash));
 }

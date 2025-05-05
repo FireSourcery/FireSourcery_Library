@@ -144,9 +144,10 @@ static inline bool Timer_IsPeriodic(Timer_T * p_timer)                      { re
 /******************************************* ***********************************/
 static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
 {
-    bool isElapsed = Timer_IsElapsed(p_timer);
-    if (isElapsed == true) { Timer_Restart(p_timer); }
-    return isElapsed;
+    // bool isElapsed = Timer_IsElapsed(p_timer);
+    // if (isElapsed == true) { Timer_Restart(p_timer); }
+    // return isElapsed;
+    return Timer_IsElapsed(p_timer) ? ({ Timer_Restart(p_timer); true; }) : false;
 }
 
 static inline void Timer_Periodic_Init(Timer_T * p_timer, uint32_t ticks) { p_timer->IsOneShot = false; p_timer->Period = ticks; }

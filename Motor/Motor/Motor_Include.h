@@ -25,8 +25,8 @@
 /*!
     @file   Motor_Include.h
     @author FireSourcery
-    @brief
     @version V0
+    @brief
 */
 /******************************************************************************/
 #include "Motor_User.h"

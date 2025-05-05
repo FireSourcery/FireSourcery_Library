@@ -34,7 +34,7 @@
 
 static void ResetUnitsLinear(Thermistor_T * p_therm)
 {
-    Linear_ADC_Init(&p_therm->HeatLimit, p_therm->Config.FaultTrigger_Adcu, p_therm->Config.WarningTrigger_Adcu); /* for Percent16 only */
+    Linear_ADC_Init_Scalar(&p_therm->HeatLimit, p_therm->Config.FaultTrigger_Adcu, p_therm->Config.WarningTrigger_Adcu); /* for Percent16 only */
 
     // Linear_Init_Map(&p_therm->LinearUnits, p_therm->Config.LinearT0_Adcu, p_therm->Config.LinearT1_Adcu, p_therm->Config.LinearT0_DegC, p_therm->Config.LinearT1_DegC);
 }
@@ -191,7 +191,7 @@ static inline double steinhart(double b, double t0, double r0, double rTh)
 /*!
     @return R_Thermistor
 */
-static inline double invsteinhart(double b, double t0, double r0, double invT_Kelvin)
+static inline double inv_steinhart(double b, double t0, double r0, double invT_Kelvin)
 {
     return exp((invT_Kelvin - 1.0F / t0) * b) * r0;
 }
@@ -199,7 +199,7 @@ static inline double invsteinhart(double b, double t0, double r0, double invT_Ke
 #if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
 static float ConvertAdcuToDegK_Steinhart(const Thermistor_T * p_therm, uint16_t adcu)
 {
-    uint32_t rNet = r_pulldown_of_adcu(p_therm->CONST.R_SERIES, p_therm->Config.VInRef_MilliV, GLOBAL_ANALOG.ADC_VREF_MILLIV, GLOBAL_ANALOG.ADC_MAX, adcu);
+    uint32_t rNet = r_pulldown_of_adcu(p_therm->CONST.R_SERIES, p_therm->Config.VInRef_MilliV, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_MAX, adcu);
     uint32_t rTh = (p_therm->CONST.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONST.R_PARALLEL) : rNet;
     double invT_Kelvin = steinhart(p_therm->Config.B, p_therm->Config.T0, p_therm->Config.R0, rTh);
     return (1.0F / invT_Kelvin);
@@ -208,9 +208,9 @@ static float ConvertAdcuToDegK_Steinhart(const Thermistor_T * p_therm, uint16_t 
 static uint16_t ConvertDegKToAdcu_Steinhart(const Thermistor_T * p_therm, float degK)
 {
     double invT_Kelvin = (double)1.0F / (degK);
-    uint32_t rTh = invsteinhart(p_therm->Config.B, p_therm->Config.T0, p_therm->Config.R0, invT_Kelvin);
+    uint32_t rTh = inv_steinhart(p_therm->Config.B, p_therm->Config.T0, p_therm->Config.R0, invT_Kelvin);
     uint32_t rNet = (p_therm->CONST.R_PARALLEL != 0U) ? r_net(p_therm->CONST.R_PARALLEL, rTh) : rTh;
-    return adcu_of_r(GLOBAL_ANALOG.ADC_MAX, GLOBAL_ANALOG.ADC_VREF_MILLIV, p_therm->Config.VInRef_MilliV, p_therm->CONST.R_SERIES, rNet);
+    return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, p_therm->Config.VInRef_MilliV, p_therm->CONST.R_SERIES, rNet);
 }
 static float ConvertAdcuToDegC_Steinhart(const Thermistor_T * p_therm, uint16_t adcu)
 {

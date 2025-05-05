@@ -38,8 +38,12 @@ extern uint8_t fixed_log2(uint32_t x);
 extern uint8_t fixed_log2_ceiling(uint32_t x);
 extern uint8_t fixed_log2_round(uint32_t x);
 extern uint32_t fixed_pow2_round(uint32_t x);
-extern uint8_t fixed_lshift_max_signed(int32_t x);
+
+extern uint8_t fixed_bit_width(uint32_t x);
+extern uint8_t fixed_bit_width_signed(int32_t x);
+
 extern uint8_t fixed_lshift_max_unsigned(uint32_t x);
+extern uint8_t fixed_lshift_max_signed(int32_t x);
 
 #endif
 

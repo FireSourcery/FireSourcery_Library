@@ -43,12 +43,6 @@
     Ialpha = (2*Ia - Ib - Ic)/3
     Ibeta = sqrt3/3*(Ib - Ic) = (Ib - Ic)/sqrt3
 
-    Alternatively, Simplified:
-    Ialpha = Ia
-    Ibeta = (Ib - Ic)/sqrt(3)
-    alpha = a;
-    beta =  fract16_mul(b, FRACT16_1_DIV_SQRT3) -  fract16_mul(c, FRACT16_1_DIV_SQRT3);
-
     @param[out] p_alpha
     @param[out] p_beta
     @param[in] a
@@ -60,6 +54,19 @@
 static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 {
     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
+    int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
+
+    *p_alpha = fract16_sat(alpha);
+    *p_beta = fract16_sat(beta);
+}
+
+/*
+    Ialpha = Ia
+    Ibeta = (Ib - Ic)/sqrt(3)
+*/
+static inline void foc_clarke_align(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
+{
+    int32_t alpha = a;
     int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
 
     *p_alpha = fract16_sat(alpha);
@@ -170,10 +177,12 @@ static inline void foc_invpark(fract16_t * p_alpha, fract16_t * p_beta, fract16_
     foc_invpark_vector(p_alpha, p_beta, d, q, sin, cos);
 }
 
+
 /*
     limit around d
     mag_limit^2 - d^2 = q^2
 */
+/* vector_limit_clamp */
 static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t magnitude_limit, fract16_t d_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
@@ -186,11 +195,10 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
     {
         /* Apply d limit */
-        d_limit_squared = (int32_t)d_limit * d_limit;
-        if (d_squared > d_limit_squared) /* abs(d) > d_limit */
-            { *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit; }
-        else
-            { d_limit_squared = d_squared; }
+        d_limit_squared = math_min(d_squared, (int32_t)d_limit * d_limit);
+        /* abs(d) > d_limit */
+        if (d_squared > d_limit_squared) { *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit; }
+
         /* Apply q limit */
         q_limit_squared = mag_limit_squared - d_limit_squared;
         q_limit = fixed_sqrt(q_limit_squared);
@@ -200,3 +208,47 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
 
 
 #endif
+
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+/**
+    @brief Direct Clarke-Park Transform: Converts 3-phase (a, b, c) to rotor reference frame (d, q).
+
+    @param[out] p_d Pointer to the d-axis output.
+    @param[out] p_q Pointer to the q-axis output.
+    @param[in]  a Phase A input.
+    @param[in]  b Phase B input.
+    @param[in]  c Phase C input.
+    @param[in]  sin_theta Sine of the electrical angle.
+    @param[in]  cos_theta Cosine of the electrical angle.
+*/
+// static inline void foc_clarke_park
+// (
+//     fract16_t * p_d, fract16_t * p_q,
+//     fract16_t a, fract16_t b, fract16_t c,
+//     fract16_t sin_theta, fract16_t cos_theta,
+//     fract16_t sin_theta_120, fract16_t cos_theta_120,
+//     fract16_t sin_theta_240, fract16_t cos_theta_240
+// )
+
+// static inline void foc_clarke_park(fract16_t * p_d, fract16_t * p_q, fract16_t a, fract16_t b, fract16_t c, fract16_t sin_theta, fract16_t cos_theta)
+// {
+//     // Precompute constants for efficiency
+//     fract16_t sin_theta_120 = fract16_mul(sin_theta, FRACT16_COS_120) - fract16_mul(cos_theta, FRACT16_SIN_120);
+//     fract16_t cos_theta_120 = fract16_mul(cos_theta, FRACT16_COS_120) + fract16_mul(sin_theta, FRACT16_SIN_120);
+
+//     fract16_t sin_theta_240 = fract16_mul(sin_theta, FRACT16_COS_240) - fract16_mul(cos_theta, FRACT16_SIN_240);
+//     fract16_t cos_theta_240 = fract16_mul(cos_theta, FRACT16_COS_240) + fract16_mul(sin_theta, FRACT16_SIN_240);
+
+//     // Compute d and q directly
+//     int32_t d = fract16_mul(a, cos_theta) + fract16_mul(b, cos_theta_120) + fract16_mul(c, cos_theta_240);
+//     int32_t q = fract16_mul(a, sin_theta) + fract16_mul(b, sin_theta_120) + fract16_mul(c, sin_theta_240);
+
+//     // Scale by 2/3 (precomputed as FRACT16_2_DIV_3)
+//     *p_d = fract16_sat(fract16_mul(d, FRACT16_2_DIV_3));
+//     *p_q = fract16_sat(fract16_mul(q, FRACT16_2_DIV_3));
+// }

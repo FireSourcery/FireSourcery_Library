@@ -31,7 +31,7 @@
 #include "SinCos.h"
 #include "Config.h"
 
-#include "Peripheral/Analog/Global_Analog.h"
+#include "Peripheral/Analog/AnalogReference.h"
 #include <string.h>
 
 void SinCos_Init(SinCos_T * p_sincos)
@@ -45,7 +45,7 @@ void SinCos_Init(SinCos_T * p_sincos)
 
 void SinCos_ResetUnitsAngle(SinCos_T * p_sincos)
 {
-    Linear_ADC_Init(&p_sincos->UnitsAngle, p_sincos->Config.Min_Adcu, p_sincos->Config.Max_Adcu);
+    Linear_ADC_Init_Scalar(&p_sincos->UnitsAngle, p_sincos->Config.Min_Adcu, p_sincos->Config.Max_Adcu);
 }
 
 void SinCos_SetConfigAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV)
@@ -59,8 +59,8 @@ void SinCos_SetConfigAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Ad
 
 void SinCos_SetConfigAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV)
 {
-    uint16_t min_Adcu = (uint32_t)min_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV;
-    uint16_t max_Adcu = (uint32_t)max_mV * GLOBAL_ANALOG.ADC_MAX / adcVref_mV;
+    uint16_t min_Adcu = (uint32_t)min_mV * ANALOG_REFERENCE.ADC_MAX / adcVref_mV;
+    uint16_t max_Adcu = (uint32_t)max_mV * ANALOG_REFERENCE.ADC_MAX / adcVref_mV;
     SinCos_SetConfigAdc(p_sincos, min_Adcu, max_Adcu, min_mV, max_mV);
 }
 

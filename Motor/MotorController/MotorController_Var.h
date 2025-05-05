@@ -272,8 +272,10 @@ typedef enum MotVarId_Type_Config
     // MOT_VAR_TYPE_CONFIG_MOTOR_PRIMARY,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_PRIMARY,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_SECONDARY,
+
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_HALL,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_ENCODER,
+
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_THERMISTOR,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_PID,
     MOT_VAR_ID_TYPE_CONFIG_MOTOR_CMD,
@@ -296,6 +298,7 @@ typedef enum MotVarId_TypeType
     MOT_VAR_ID_TYPE_CONFIG,
     // MOT_VAR_ID_TYPE_REAL_TIME_CMD, //corresponding write only/ subroutine
     // MOT_VAR_ID_TYPE_CONFIG_CMD,
+    // MOT_VAR_ID_TYPE_SENSORS,
 }
 MotVarId_TypeType_T;
 
@@ -304,7 +307,7 @@ typedef union MotVarId
 {
     struct
     {
-        uint16_t NameBase           : 4U;
+        uint16_t NameBase           : 4U; /* Name - corresponds 1:1 with enum value */
         uint16_t NameType           : 4U; /* Name's Type - corresponds 1:1 with enum type */
         uint16_t NameTypeType       : 1U; /* Type's Type/Prefix/Partition */
         uint16_t Instance           : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */

@@ -32,7 +32,7 @@
 #define MOT_ANALOG_H
 
 #include "Peripheral/Analog/Analog.h"
-#include "Motor/Motor/MotorAnalog.h"
+#include "Motor/Motor/Transducer/MotorAnalog/MotorAnalog.h"
 
 #ifndef MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT
     #error "MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT must be defined"
@@ -46,7 +46,7 @@
 typedef enum MotAnalog_Channel
 {
     MOT_ANALOG_CHANNEL_VSOURCE,         /* V Source, V Battery */
-    MOT_ANALOG_CHANNEL_VSENSE,          /* V Sensors, ~5V */
+    MOT_ANALOG_CHANNEL_VSENSE,          /* V Analog Sensors, ~5V */
     MOT_ANALOG_CHANNEL_VACCS,           /* V Accessories, ~12V */
 
     MOT_ANALOG_CHANNEL_HEAT_PCB,

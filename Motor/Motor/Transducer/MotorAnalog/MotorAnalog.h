@@ -22,15 +22,14 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   .h
+    @file   MotorAnalog.h
     @author FireSourcery
+    @brief  Motor Analog Conversion definitions
     @version V0
-
-    @brief  Analog definitions minimal dependencies.
 */
 /******************************************************************************/
-#ifndef MOTOR_ANALOG_H
-#define MOTOR_ANALOG_H
+#ifndef MOTOR_ANALOG_CONVERSIONS_H
+#define MOTOR_ANALOG_CONVERSIONS_H
 
 #include "Peripheral/Analog/Analog.h"
 
@@ -81,10 +80,36 @@ typedef union MotorAnalog_Conversions
 }
 MotorAnalog_Conversions_T;
 
+// common static instance
+// extern const Analog_Conversion_T MOTOR_ANALOG_CONVERSION_VSOURCE;
+
+// typedef struct MotorAnalog_Config
+// {
+//     uint16_t IaZeroRef_Adcu;
+//     uint16_t IbZeroRef_Adcu;
+//     uint16_t IcZeroRef_Adcu;
+// }
+// MotorAnalog_Config_T;
+
+// typedef struct MotorAnalog
+// {
+//         const Analog_Conversion_T CONVERSION_VA;
+//         const Analog_Conversion_T CONVERSION_VB;
+//         const Analog_Conversion_T CONVERSION_VC;
+//         const Analog_Conversion_T CONVERSION_IA;
+//         const Analog_Conversion_T CONVERSION_IB;
+//         const Analog_Conversion_T CONVERSION_IC;
+//         const Analog_Conversion_T CONVERSION_HEAT;
+//         const Analog_Conversion_T CONVERSION_I_ABC;
+//         const Analog_Conversion_T CONVERSION_V_ABC;
+//     const Analog_T * const P_ANALOG;
+//     MotorAnalog_Config_T * P_CONFIG;
+// }
+// MotorAnalog_T;
 
 
 // static inline uint16_t MotorAnalog_GetAdcu(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return p_analog->CONVERSIONS[localChannel].P_STATE->Result; }
-// static inline uint8_t MotorAnalog_GetAdcu_Msb8(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return MotorAnalog_GetAdcu(p_analog, localChannel) >> (GLOBAL_ANALOG.ADC_BITS - 8U); }
+// static inline uint8_t MotorAnalog_GetAdcu_Msb8(const MotorAnalog_Conversions_T * p_analog, MotorAnalog_Channel_T localChannel) { return MotorAnalog_GetAdcu(p_analog, localChannel) >> (ANALOG_REFERENCE.ADC_BITS - 8U); }
 
 // static inline uint16_t MotorAnalog_GetVa(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_VA.P_STATE->Result; }
 // static inline uint16_t MotorAnalog_GetVb(const MotorAnalog_Conversions_T * p_analog) { return p_analog->CONVERSION_VB.P_STATE->Result; }

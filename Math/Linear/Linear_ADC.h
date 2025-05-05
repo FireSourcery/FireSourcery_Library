@@ -24,7 +24,7 @@
 /*!
     @file   Linear_ADC.h
     @author FireSourcery
-    @brief    Scale ADCU to provided reference value
+    @brief  Scale ADCU to provided reference value
     @version V0
 */
 /******************************************************************************/
@@ -34,28 +34,50 @@
 #include "Linear_Q16.h"
 #include <stdint.h>
 
+#define VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcBits, Adcu) ((VRef_MilliV * Adcu / AdcBits) / (Gain))
+#define AMPS_OF_ADCU(Shunt, Gain, VRef_MilliV, AdcBits, Adcu) (VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcBits, Adcu) / (Shunt))
+
+
+/******************************************************************************/
+/*!
+    Init as Const
+    f(adcuZero) = 0
+    f(2^adcBits - adcuZero) = 65536
+    multiply +/-1 and shift
+*/
+/******************************************************************************/
+#define LINEAR_ADC_INIT(adcBits, adcuZero, isInverted)  \
+{                                                       \
+    .Slope              = isInverted ? -1 : 1,          \
+    .SlopeShift         = 15U - adcuBits,               \
+    .InvSlope           = p_linear->Slope,              \
+    .InvSlopeShift      = p_linear->SlopeShift,         \
+    .Y0                 = adcuZero,                     \
+    .X0                 = 0U,                           \
+    .XDeltaRef          = 1U << adcBits,                \
+    .YDeltaRef          = adcuZero + 1U << adcBits,     \
+}
+
 /******************************************************************************/
 /*!
     From ADCU
 */
 /******************************************************************************/
-// static inline int32_t Linear_ADC_Q16(const Linear_T * p_linear, uint16_t adcu)                   { return Linear_Q16_Of(p_linear, adcu); }
 static inline int16_t Linear_ADC_Fract16(const Linear_T * p_linear, uint16_t adcu)                  { return Linear_Q16_Fract(p_linear, adcu); }
 static inline uint16_t Linear_ADC_Percent16(const Linear_T * p_linear, uint16_t adcu)               { return Linear_Q16_Percent(p_linear, adcu); }
 static inline uint16_t Linear_ADC_Percent16_Abs(const Linear_T * p_linear, uint16_t adcu)           { return Linear_Q16_Percent_Abs(p_linear, adcu); }
 static inline uint16_t Linear_ADC_AdcuOfFract16(const Linear_T * p_linear, int32_t fract16)         { return Linear_Q16_InvFract(p_linear, fract16); }
 static inline uint16_t Linear_ADC_AdcuOfPercent16(const Linear_T * p_linear, uint32_t percent16)    { return Linear_Q16_InvPercent(p_linear, percent16); }
 
+
+
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
-extern void Linear_ADC_Init(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
+extern void Linear_ADC_Init_Scalar(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
 extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef);
-extern void Linear_ADC_Init_MinMax(Linear_T * p_linear, uint16_t adcuMin, uint16_t adcuMax);
-extern void Linear_ADC_Init_Inverted(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
-extern void Linear_ADC_SetInverted(Linear_T * p_linear);
 extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV);
 extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV);
 

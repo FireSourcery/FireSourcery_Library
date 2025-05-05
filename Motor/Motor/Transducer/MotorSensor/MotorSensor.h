@@ -31,8 +31,24 @@
 #ifndef MOTOR_SENSOR_H
 #define MOTOR_SENSOR_H
 
+#include "Math/Fixed/fract16.h"
+
 #include <stdint.h>
 #include <stdbool.h>
+
+/*
+    Perserve order for serialization
+*/
+typedef enum MotorSensorId
+{
+    MOTOR_SENSOR_MODE_HALL,
+    MOTOR_SENSOR_MODE_ENCODER,
+    MOTOR_SENSOR_MODE_SIN_COS,
+    MOTOR_SENSOR_MODE_SENSORLESS,
+    // MOTOR_SENSOR_MODE_EXTERN,
+    // MOTOR_SENSOR_MODE_VTABLE,
+}
+MotorSensorId_T;
 
 
 typedef uint16_t(*MotorSensor_Angle_T)(void * p_sensor);
@@ -42,6 +58,7 @@ typedef void(*MotorSensor_Proc_T)(void * p_sensor);
 typedef bool(*MotorSensor_Test_T)(const void * p_sensor);
 typedef int (*MotorSensor_Get_T)(const void * p_sensor);
 typedef void(*MotorSensor_Set_T)(void * p_sensor, int value);
+// typedef void(*MotorSensor_Set_T)(MotorSensor_T * p_sensor, int value); /* include common interface state */
 
 struct MotorSensor;
 typedef void(*MotorSensor_Capture_T)(struct MotorSensor * p_sensor);
@@ -61,6 +78,8 @@ typedef struct MotorSensor_VTable_T
     MotorSensor_Get_T GetDirection;
     MotorSensor_Set_T SetDirection;
     MotorSensor_Proc_T ResetUnits;
+
+
 }
 MotorSensor_VTable_T;
 
@@ -86,5 +105,29 @@ MotorSensor_T;
 // {
 //     p_sensor->p_VTable->CaptureAngle(p_sensor->p_Sensor, &p_sensor->State); /* set */
 // }
+
+static inline int32_t MotorSensor_GetElecticalAngle(MotorSensor_T * p_sensor){}
+
+/*
+    Speed
+*/
+/* Electrical Angle at CONTROL_FREQ */
+static inline int32_t MotorSensor_GetControlAngle(MotorSensor_T * p_sensor){}
+
+// /* Mech Angle at SPEED_SAMPLE_FREQ */
+// static inline int32_t MotorSensor_GetSampleAngle(MotorSensor_T * p_sensor){}
+
+
+/*
+    Scalar units for feedback
+*/
+
+/*  */
+static inline int32_t MotorSensor_GetRpm(MotorSensor_T * p_sensor){}
+
+static inline int32_t MotorSensor_GetSpeed_Fract16(MotorSensor_T * p_sensor){}
+
+
+
 
 #endif

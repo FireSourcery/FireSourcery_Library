@@ -36,6 +36,7 @@
 typedef struct Accumulator
 {
     int32_t Coefficient;
+    // uint32_t SampleFreq;
     int8_t Shift;
     // uint16_t Index;
     int32_t State; /* Output */

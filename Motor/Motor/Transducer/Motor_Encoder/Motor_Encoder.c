@@ -128,9 +128,9 @@ void Init(Encoder_T * p_encoder)
 //     {
 //         Encoder_SetScalarSpeedRef(&p_motor->Encoder, Motor_GetSpeedVRef_Rpm(p_motor));
 //     }
-//     if (p_motor->Config.PolePairs != p_motor->Encoder.Config.InterpolateAngleScalar) /* Set for electrical cycle */
+//     if (p_motor->Config.PolePairs != p_motor->Encoder.Config.PartitionsPerRevolution) /* Set for electrical cycle */
 //     {
-//         Encoder_DeltaT_SetInterpolateAngleScalar(&p_motor->Encoder, p_motor->Config.PolePairs);
+//         Encoder_SetPartitionsPerRevolution(&p_motor->Encoder, p_motor->Config.PolePairs);
 //     }
 //     // if(p_motor->Config.GearRatioOutput != p_motor->Encoder.Config.GearRatioOutput) ||
 //     // {
@@ -163,7 +163,7 @@ static void ProcHoming(Motor_T * p_motor)
     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
     {
         angle = Encoder_GetHomingAngle(&p_motor->Encoder) * p_motor->Config.PolePairs;
-        Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle + angle, p_motor->Config.AlignPower_UFract16, 0);
+        Motor_FOC_ActivateAngle(p_motor, p_motor->ElectricalAngle + angle, p_motor->Config.AlignPower_Fract16, 0);
     }
 }
 
@@ -219,7 +219,7 @@ void Motor_Encoder_StartVirtualHome(Motor_T * p_motor)
 // aligning assuming phase a has not been found.
 // static void OpenLoop_EncoderAlignZero(Motor_T * p_motor, state_machine_value_t null)
 // {
-//     Motor_ProcCommutationMode(p_motor, Motor_FOC_StartStartUpAlign, NULL);
+//     Motor_CommutationModeFn_Call(p_motor, Motor_FOC_StartStartUpAlign, NULL);
 // }
 
 // static void OpenLoop_ProcEncoderAlignZero(Motor_T * p_motor)
@@ -232,7 +232,7 @@ void Motor_Encoder_StartVirtualHome(Motor_T * p_motor)
 //     }
 //     else
 //     {
-//         Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcStartUpAlign, NULL);
+//         Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcStartUpAlign, NULL);
 
 //         if (Encoder_ModeDT_GetScalarSpeed(&p_motor->Encoder) != 0U) /* reset the timer until speed is 0 */
 //         {
@@ -306,7 +306,7 @@ static void ValidateAlign(Motor_T * p_motor)
         //     else
         //     {
             //         Motor_FOC_ProcOpenLoop(p_motor);
-            //         // Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, NULL);  /* try closed loop */
+            //         // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL);  /* try closed loop */
             //         // if ((p_motor->Speed_Fract16 ^ math_sign(p_motor->Foc.Vq)) < 0) { p_motor->FaultFlags.PositionSensor = 1U; }
             //         // if (p_motor->FaultFlags.PositionSensor == 1U) { /* _StateMachine_EndSubState(&p_motor->StateMachine); */ }
 //     }
@@ -347,7 +347,7 @@ static const StateMachine_State_T VALIDATE_ALIGN =
 //     }
 //     else
 //     {
-//         Motor_ProcCommutationMode(p_motor, Motor_FOC_ProcAngleControl, NULL);  /* try closed loop */
+//         Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL);  /* try closed loop */
 //         // or encoder get speed
 //         if ((p_motor->Speed_Fract16 ^ math_sign(p_motor->Foc.Vq)) < 0) { p_motor->FaultFlags.PositionSensor = 1U; }
 //         if (p_motor->FaultFlags.PositionSensor == 1U) { /* _StateMachine_EndSubState(&p_motor->StateMachine); */ }
@@ -392,7 +392,7 @@ static const StateMachine_State_T VALIDATE_CLOSED_LOOP =
 static StateMachine_State_T * Cmd_Align(Motor_T * p_motor, state_machine_value_t null)
 {
     // Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    // Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+    // Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_Fract16, 0U, 0U);
     return &ALIGN;
 }
 
@@ -536,7 +536,7 @@ void Motor_Encoder_StartUpChain(Motor_T * p_motor)
 static inline void StartDirection(Motor_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
-    Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_UFract16, 0U, 0U);
+    Phase_WriteDuty_Fract16(&p_motor->Phase, p_motor->Config.AlignPower_Fract16, 0U, 0U);
 }
 
 static inline bool ProcDirection(Motor_T * p_motor)
@@ -549,7 +549,7 @@ static inline bool ProcDirection(Motor_T * p_motor)
         {
             case 0U:
                 Encoder_CaptureQuadratureReference(&p_motor->Encoder);
-                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_UFract16, 0U);
+                Phase_WriteDuty_Fract16(&p_motor->Phase, 0U, p_motor->Config.AlignPower_Fract16, 0U);
                 p_motor->CalibrationStateIndex = 1U;
                 break;
 

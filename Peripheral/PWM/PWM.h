@@ -43,7 +43,7 @@
 */
 /******************************************************************************/
 
-typedef struct PWM_Module
+typedef const struct PWM_Module
 {
     const struct
     {
@@ -69,12 +69,13 @@ typedef const struct PWM_Const
 {
     HAL_PWM_T * const P_HAL_PWM;
     const uint32_t CHANNEL_ID;
+    // const uint32_t CHANNEL_MASK;
     const uint32_t PERIOD_TICKS;
     // PWM_Module_T * const P_PWM_MODULE;
 }
 PWM_Const_T;
 
-typedef struct PWM
+typedef const struct PWM
 {
     const PWM_Const_T CONST;
 }
@@ -88,7 +89,6 @@ PWM_T;
 
 /* where PWM_DUTY_MAX is 100% duty */
 static inline uint32_t _PWM_DutyTicksOf(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->CONST.PERIOD_TICKS * duty / PWM_DUTY_MAX; }
-
 static inline uint32_t _PWM_TicksOfPercent16(const PWM_T * p_pwm, uint16_t percent16) { return p_pwm->CONST.PERIOD_TICKS * percent16 >> 16U; }
 static inline uint32_t _PWM_TicksOfFract16(const PWM_T * p_pwm, uint16_t fract16) { return p_pwm->CONST.PERIOD_TICKS * fract16 >> 15U; }
 
@@ -167,9 +167,9 @@ static inline void _PWM_Module_WriteSyncOnOff(const PWM_Module_T * p_pwm, uint32
 /*
     Extern
 */
-extern void PWM_Init(PWM_T * p_pwm);
-extern void PWM_Channel_Init(PWM_T * p_pwm);
-extern void PWM_Module_Init(PWM_Module_T * p_pwm);
+extern void PWM_Init(const PWM_T * p_pwm);
+extern void PWM_Channel_Init(const PWM_T * p_pwm);
+extern void PWM_Module_Init(const PWM_Module_T * p_pwm);
 
 #endif
 

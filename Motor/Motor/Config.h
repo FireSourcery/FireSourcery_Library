@@ -42,12 +42,12 @@
     #define CONFIG_MOTOR_DEBUG (!NDEBUG)
 // #endif
 
-
-#if     defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-#elif   defined(CONFIG_MOTOR_I_SENSORS_INVERT)
-#else
-    #define CONFIG_MOTOR_I_SENSORS_INVERT
-#endif
+//depreciate
+// #if     defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
+// #elif   defined(CONFIG_MOTOR_I_SENSORS_INVERT)
+// #else
+//     #define CONFIG_MOTOR_I_SENSORS_INVERT
+// #endif
 
 #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
 #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)

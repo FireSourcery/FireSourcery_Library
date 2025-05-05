@@ -70,57 +70,62 @@ uint16_t fixed_sqrt(uint32_t x)
 
     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
 */
-// uint16_t fixed_sqrt(int32_t x)
-// {
-//     uint32_t yPrev;
-//     uint32_t y;
+uint16_t _fixed_sqrt(int32_t x)
+{
+    uint32_t yPrev;
+    uint32_t y;
 
-//     if(x > 0)
-//     {
-//         /*
-//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+    if(x > 0)
+    {
+        /*
+            Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
 
-//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-//             128*128 == (1 << 14), solve < 1048576
-//             1048576U == (1 << 20)
-//         */
-//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
-//         {
-//             y = (yPrev + (x / yPrev)) / 2U;
-//             if(y == yPrev) { break; }
-//             yPrev = y;
-//         }
-//     }
-//     else
-//     {
-//         y = 0U;
-//     }
+            8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+            128*128 == (1 << 14), solve < 1048576
+            1048576U == (1 << 20)
+        */
+        yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
+        for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+        {
+            y = (yPrev + (x / yPrev)) / 2U;
+            if(y == yPrev) { break; }
+            yPrev = y;
+        }
+    }
+    else
+    {
+        y = 0U;
+    }
 
-//     return (uint16_t)y;
-// }
+    return (uint16_t)y;
+}
 
 
 // uint8_t _leading_zeros(uint32_t x)
 // {
 // #if defined(__GNUC__)
-//     return __builtin_clz(x);
+//      return (x == 0U) ? 32U :  __builtin_clz(x);
 // #elif(__STDC_VERSION__ >= 202311L)
 //     return stdc_leading_zeros(x);
 // #endif
 // }
 
-uint8_t fixed_bitwidth(uint32_t x)
+uint8_t fixed_bit_width(uint32_t x)
 {
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x);
 #elif defined(__GNUC__)
-    return (32U - __builtin_clz(x));
+    return (x == 0U) ? 0U : (32U - __builtin_clz(x));
 #else
     uint8_t shift = 0U;
     while ((x >> shift) > 0U) { shift++; }
     return shift;
 #endif
+}
+
+uint8_t fixed_bit_width_signed(int32_t x)
+{
+    fixed_bit_width(math_abs(x));
 }
 
 /*
@@ -130,17 +135,7 @@ uint8_t fixed_bitwidth(uint32_t x)
 */
 uint8_t fixed_log2(uint32_t x)
 {
-#if (__STDC_VERSION__ >= 202311L)
-    return stdc_bit_width(x) - 1U;
-#elif defined(__GNUC__)
-    return (x == 0U) ? 0U : (31U - __builtin_clz(x));
-#else
-    /* Iterative log2 */
-    uint8_t shift = 0U;
-    while((x >> shift) > 1U) { shift++; }
-    return shift;
-#endif
-    // return fixed_bitwidth(x) - 1U;
+    return fixed_bit_width(x) - 1U;
 }
 
 /*
@@ -162,11 +157,11 @@ void fixed_log2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
 
 void fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
 {
-    uint32_t lower;
-    uint32_t upper;
-    fixed_log2_bound(&lower, &upper, x);
-    *p_lower = 1U << lower;
-    *p_upper = 1U << upper;
+    uint32_t log2lower;
+    uint32_t log2upper;
+    fixed_log2_bound(&log2lower, &log2upper, x);
+    *p_lower = 1U << log2lower;
+    *p_upper = 1U << log2upper;
 }
 
 uint8_t fixed_log2_round(uint32_t x)
@@ -190,35 +185,26 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* leading zeros - 1 sign bit */
-/* 31 - bitwidth */
-/* log2(INT32_MAX) - log2(abs(x))) */
-// uint8_t fixed32_sat_lshift(int32_t x)
+/* leading zeros */
+// uint8_t fixed_lshift_max_unsigned(uint32_t x)
+// {
+// #if defined(__GNUC__)
+//     return __builtin_clz(x);
+// #else
+//     return 31U - fixed_log2(x);
+// #endif
+// }
+
+/* leading sign/zero bits - 1 */
+/* 31 - bit width */
+// uint8_t fixed_unit_scalar_shift(int32_t x)
 uint8_t fixed_lshift_max_signed(int32_t x)
 {
-#if defined(__GNUC__)
-    return __builtin_clz(math_abs(x)) - 1U;
-#else
-    return 30U - fixed_log2(math_abs(x));
-#endif
+    31U - fixed_bit_width_signed(x);
 }
 
-// uint8_t fixed16_sat_lshift(int32_t x) max(fixed16_sat_shift(x), 0)
-// int8_t fixed16_sat_shift(int32_t x) 15 - bitwidth
 
-
-/* leading zeros */
-// uint8_t ufixed_lshift_max(uint32_t x)
-uint8_t fixed_lshift_max_unsigned(uint32_t x)
-{
-#if defined(__GNUC__)
-    return __builtin_clz(x);
-#else
-    return 31U - fixed_log2(x);
-#endif
-}
-
-// int32_t fixed_scalar_max_signed(int32_t x)
+// int32_t fixed32_unit_scalar(int32_t x)
 // {
 //     return INT32_MAX >> fixed_lshift_max_signed(x);
 // }
