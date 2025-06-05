@@ -25,7 +25,7 @@
 /*!
     @file   LimitArray.h
     @author FireSourcery
-    @version V0
+
     @brief  Array with O(1) Min/Max, calculated on set/clear
 */
 /******************************************************************************/
@@ -39,19 +39,17 @@
     @brief Initialize the LimitArray_T structure.
     @param p_limit Pointer to the LimitArray_T structure.
 */
-void LimitArray_Init(LimitArray_T * p_limit)
+void LimitArray_Init(const LimitArray_T * p_limit)
 {
     // p_limit->count = 0U;
-    p_limit->Min = LIMIT_ARRAY_MAX;
-    p_limit->Max = LIMIT_ARRAY_MIN;
+    _LimitArray_State(p_limit)->Min = LIMIT_ARRAY_MAX;
+    _LimitArray_State(p_limit)->Max = LIMIT_ARRAY_MIN;
 }
 
-void LimitArray_ClearAll(LimitArray_T * p_limit)
+void LimitArray_ClearAll(const LimitArray_T * p_limit)
 {
-    p_limit->Min = LIMIT_ARRAY_MAX;
-    p_limit->Max = LIMIT_ARRAY_MIN;
-
-    for (uint8_t index = 0U; index < p_limit->LENGTH; index++) { p_limit->P_ARRAY[index] = LIMIT_ARRAY_CLEAR; }
+    _LimitArray_ClearState(_LimitArray_State(p_limit));
+    _LimitArray_ClearValues(_LimitArray_Values(p_limit), p_limit->LENGTH);
 }
 
 /*
@@ -59,6 +57,16 @@ void LimitArray_ClearAll(LimitArray_T * p_limit)
     Functions should not be mixed with non Id functions
     directly use index as id, this way O(n) compare is not needed.
 */
+bool TestSetUpper(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
+{
+    return (value > p_state->Max) ? ({ p_state->Max = value; p_state->MaxId = id; true; }) : false;
+}
+
+bool TestSetLower(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
+{
+    return (value < p_state->Min) ? ({ p_state->Min = value; p_state->MinId = id; true; }) : false;
+}
+
 
 /*!
    @brief a value to the p_limit control.
@@ -67,22 +75,51 @@ void LimitArray_ClearAll(LimitArray_T * p_limit)
    @param id The ID associated with the value.
    @return True if the value was a new min or max. The value of the entry is always set.
 */
-bool LimitArray_SetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value)
+bool LimitArray_SetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
-    bool isLimit = false;
-    p_limit->P_ARRAY[id] = value;
-    if (value < p_limit->Min) { p_limit->Min = value; isLimit = true; }
-    if (value > p_limit->Max) { p_limit->Max = value; isLimit = true; }
-    return isLimit;
+    assert(id < p_limit->LENGTH); // Ensure id is within bounds. Compile-time constant
+
+    _LimitArray_Values(p_limit)[id] = value;
+
+    return TestSetUpper(_LimitArray_State(p_limit), id, value) || TestSetLower(_LimitArray_State(p_limit), id, value);
 }
 
-bool LimitArray_SetEntryUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value)
+bool LimitArray_TestSetUpper(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
-    bool isLimit = false;
-    p_limit->P_ARRAY[id] = value;
-    if (value < p_limit->Min) { p_limit->Min = value; isLimit = true; }
-    return isLimit;
+    _LimitArray_Values(p_limit)[id] = value;
+    return TestSetUpper(_LimitArray_State(p_limit), id, value);
+    //return  LimitArray_GetUpper(p_limit);
 }
+
+
+/*
+    Alternatively, periodically call this function to update the min/max values
+    Entries may set async
+*/
+void LimitArray_ProcCompare(const LimitArray_T * p_limit)
+{
+    limit_t bufferMin = LIMIT_ARRAY_MAX;
+    limit_t bufferMax = LIMIT_ARRAY_MIN;
+    limit_t bufferValue;
+
+    for (uint8_t index = 0U; index < p_limit->LENGTH; index++)
+    {
+        bufferValue = _LimitArray_Values(p_limit)[index];
+        if (bufferValue != LIMIT_ARRAY_CLEAR)
+        {
+            if (bufferValue < bufferMin) { bufferMin = bufferValue; }
+            if (bufferValue > bufferMax) { bufferMax = bufferValue; }
+        }
+    }
+
+    _LimitArray_State(p_limit)->Min = bufferMin;
+    _LimitArray_State(p_limit)->Max = bufferMax;
+}
+
+// static inline limit_t LimitArray_ProcCompareUpper(const LimitArray_T * p_limit)
+// {
+//     _LimitArray_State(p_limit)->Min = _LimitArray_ProcCompareUpper(p_limit);
+// }
 
 /*!
     @brief Remove a value from the p_limit control by ID.
@@ -90,35 +127,14 @@ bool LimitArray_SetEntryUpper(LimitArray_T * p_limit, limit_id_t id, limit_t val
     @param id The ID of the value to remove.
     @return True if the value was a active limit. The value of the entry is always cleared.
 */
-bool LimitArray_ClearEntry(LimitArray_T * p_limit, limit_id_t id)
+bool LimitArray_ClearEntry(const LimitArray_T * p_limit, limit_id_t id)
 {
-    bool isLimit = false;
-    limit_t value = p_limit->P_ARRAY[id];
-    limit_t bufferValue;
-    limit_t bufferMin;
-    limit_t bufferMax;
+    limit_t value = _LimitArray_Values(p_limit)[id];
+    bool isLimit = (value == _LimitArray_State(p_limit)->Min) || (value == _LimitArray_State(p_limit)->Max);
 
-    p_limit->P_ARRAY[id] = LIMIT_ARRAY_CLEAR;
+    _LimitArray_Values(p_limit)[id] = LIMIT_ARRAY_CLEAR;
 
-    isLimit = (value == p_limit->Min || value == p_limit->Max); /*  */
-
-    if (isLimit == true)
-    {
-        bufferMin = LIMIT_ARRAY_MAX;
-        bufferMax = LIMIT_ARRAY_MIN;
-        for (uint8_t index = 0U; index < p_limit->LENGTH; index++)
-        {
-            bufferValue = p_limit->P_ARRAY[index];
-            if (bufferValue != LIMIT_ARRAY_CLEAR)
-            {
-                if (bufferValue < p_limit->Min) { bufferMin = bufferValue; }
-                if (bufferValue > p_limit->Max) { bufferMax = bufferValue; }
-            }
-        }
-
-        p_limit->Min = bufferMin;
-        p_limit->Max = bufferMax;
-    }
+    if (isLimit == true) { LimitArray_ProcCompare(p_limit); }
 
     return isLimit;
 }

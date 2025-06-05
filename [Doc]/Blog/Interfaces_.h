@@ -1,0 +1,5 @@
+/*
+    UserT implements VarAccess
+        VarAccess is an interface and Mixin
+        UserT is the container of VarAccess
+*/

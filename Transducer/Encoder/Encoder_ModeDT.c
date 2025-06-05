@@ -26,7 +26,7 @@
     @file    Encoder_DeltaDT.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "Encoder_DeltaD.h"
@@ -35,49 +35,73 @@
 #include <string.h>
 #include "Encoder_ModeDT.h"
 
-static void InitValues(Encoder_T * p_encoder)
-{
-    if (p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
 
-    p_encoder->UnitTime_Freq = 1U;
-    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
-    _Encoder_ResetUnits(p_encoder);
+void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config)
+{
+    if (p_config != NULL) { memcpy(&p_encoder->P_STATE->Config, p_config, sizeof(Encoder_Config_T)); }
+    p_encoder->P_STATE->UnitTime_Freq = 1U;
+    p_encoder->P_STATE->PollingFreq = p_encoder->POLLING_FREQ;
+    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+    _Encoder_ResetUnits(p_encoder->P_STATE);
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
-    Init function coupled with HW
+    Capture Mode
 */
-void Encoder_ModeDT_Init_Polling(Encoder_T * p_encoder)
+void _Encoder_ModeDT_InitPolling(const Encoder_T * p_encoder)
 {
     _Encoder_DeltaT_InitTimer(p_encoder);
-    InitValues(p_encoder);
 }
 
-void Encoder_ModeDT_Init_InterruptQuadrature(Encoder_T * p_encoder)
+void _Encoder_ModeDT_InitInterruptQuadrature(const Encoder_T * p_encoder)
 {
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_Quadrature(p_encoder);
-    InitValues(p_encoder);
-    p_encoder->Config.IsQuadratureCaptureEnabled = true;
+    p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled = true;
 }
 
-void Encoder_ModeDT_Init_InterruptAbc(Encoder_T * p_encoder)
+/* For hall sensor */
+void _Encoder_ModeDT_InitInterruptAbc(const Encoder_T * p_encoder)
 {
     _Encoder_DeltaT_InitTimer(p_encoder);
     _Encoder_DeltaD_InitCounter(p_encoder);
     Encoder_InitInterrupts_ABC(p_encoder);
-    InitValues(p_encoder);
 }
 
-void Encoder_ModeDT_SetInitial(Encoder_T * p_encoder)
+/*
+    Init function coupled with HWs
+*/
+void Encoder_ModeDT_Init_Polling(const Encoder_T * p_encoder)
+{
+    _Encoder_ModeDT_InitPolling(p_encoder);
+    Encoder_ModeDT_InitValuesFrom(p_encoder , p_encoder->P_NVM_CONFIG);
+}
+
+void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
+{
+    _Encoder_ModeDT_InitInterruptQuadrature(p_encoder);
+    Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
+}
+
+/* For hall sensor */
+void Encoder_ModeDT_Init_InterruptAbc(const Encoder_T * p_encoder)
+{
+    _Encoder_ModeDT_InitInterruptAbc(p_encoder);
+    Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
+}
+
+/*
+    Zero Hw Counters
+*/
+void Encoder_ModeDT_SetInitial(const Encoder_T * p_encoder)
 {
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
-    p_encoder->DeltaTh = p_encoder->CONST.TIMER_FREQ;
-    p_encoder->FreqD = 0;
+    p_encoder->P_STATE->DeltaTh = p_encoder->TIMER_FREQ;
+    p_encoder->P_STATE->FreqD = 0;
     // p_encoder->DirectionD = 0;
     // p_encoder->TotalD = 0;
 }

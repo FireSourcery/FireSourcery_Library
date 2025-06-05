@@ -25,7 +25,7 @@
     @file   Pin.h
     @author FireSourcery
     @brief  Uniform Wrapper for HAL_Pin
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef PIN_H
@@ -36,18 +36,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct Pin_Const
+typedef const struct Pin
 {
     HAL_Pin_T * const P_HAL_PIN;
-    const uint32_t ID;
-    // const uint32_t MASK;
+    const uint32_t ID; // const uint32_t MASK;
     const bool IS_INVERT; /* Use ground state as on */
-}
-Pin_Const_T;
-
-typedef struct Pin
-{
-    const Pin_Const_T CONST;
 }
 Pin_T;
 
@@ -57,48 +50,36 @@ Pin_T;
 #define _PIN_INIT_ID(Id)  (Id)
 #endif
 
-#define PIN_INIT(p_Hal, Id)         \
-{                                   \
-    .CONST =                        \
-    {                               \
-        .P_HAL_PIN = p_Hal,         \
-        .ID = _PIN_INIT_ID(Id),     \
-        .IS_INVERT = false,         \
-    },                              \
-}
+#define PIN_INIT(p_Hal, Id) { .P_HAL_PIN = p_Hal, .ID = _PIN_INIT_ID(Id), .IS_INVERT = false, } /* Default to not inverted */
 
-#define PIN_INIT_INVERT(p_Hal, Id, IsInvert)    \
-{                                               \
-    .CONST =                                    \
-    {                                           \
-        .P_HAL_PIN = p_Hal,                     \
-        .ID = _PIN_INIT_ID(Id),                 \
-        .IS_INVERT = IsInvert,                  \
-    },                                          \
-}
+#define PIN_INIT_INVERT(p_Hal, Id, IsInvert) { .P_HAL_PIN = p_Hal, .ID = _PIN_INIT_ID(Id), .IS_INVERT = IsInvert, }
 
 
 /* As voltage level. Ignore invert check, when handled by upper layer */
-static inline void Pin_Output_Low(const Pin_T * p_pin)      { HAL_Pin_WriteOutputOff(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
-static inline void Pin_Output_High(const Pin_T * p_pin)     { HAL_Pin_WriteOutputOn(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
-static inline void Pin_Output_Toggle(const Pin_T * p_pin)   { HAL_Pin_ToggleOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
-static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HAL_Pin_WriteOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID, isOn); }
-static inline bool Pin_Output_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
+static inline void Pin_Output_Low(const Pin_T * p_pin)      { HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, p_pin->ID); }
+static inline void Pin_Output_High(const Pin_T * p_pin)     { HAL_Pin_WriteOutputOn(p_pin->P_HAL_PIN, p_pin->ID); }
+static inline void Pin_Output_Toggle(const Pin_T * p_pin)   { HAL_Pin_ToggleOutput(p_pin->P_HAL_PIN, p_pin->ID); }
+static inline void Pin_Output_WritePhysical(const Pin_T * p_pin, bool isOn) { HAL_Pin_WriteOutput(p_pin->P_HAL_PIN, p_pin->ID, isOn); }
+static inline bool Pin_Output_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadOutput(p_pin->P_HAL_PIN, p_pin->ID); }
 
 /* As On/Off. Include invert check */
-static inline void Pin_Output_Off(const Pin_T * p_pin) { if (p_pin->CONST.IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
-static inline void Pin_Output_On(const Pin_T * p_pin) { if (p_pin->CONST.IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); } }
-static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { Pin_Output_WritePhysical(p_pin, (isOn ^ p_pin->CONST.IS_INVERT)); }
-static inline bool Pin_Output_Read(const Pin_T * p_pin) { return Pin_Output_ReadPhysical(p_pin) ^ p_pin->CONST.IS_INVERT; }
+static inline void Pin_Output_Off(const Pin_T * p_pin) { if (p_pin->IS_INVERT == true) { Pin_Output_High(p_pin); } else { Pin_Output_Low(p_pin); } }
+static inline void Pin_Output_On(const Pin_T * p_pin) { if (p_pin->IS_INVERT == true) { Pin_Output_Low(p_pin); } else { Pin_Output_High(p_pin); } }
+static inline void Pin_Output_Write(const Pin_T * p_pin, bool isOn) { Pin_Output_WritePhysical(p_pin, (isOn ^ p_pin->IS_INVERT)); }
+static inline bool Pin_Output_Read(const Pin_T * p_pin) { return Pin_Output_ReadPhysical(p_pin) ^ p_pin->IS_INVERT; }
 
 /* As voltage level. Ignore invert check, when handled by upper layer */
-static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadInput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID); }
+static inline bool Pin_Input_ReadPhysical(const Pin_T * p_pin) { return HAL_Pin_ReadInput(p_pin->P_HAL_PIN, p_pin->ID); }
 
 /* As On/Off. Include invert check */
-static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadPhysical(p_pin) ^ p_pin->CONST.IS_INVERT); }
+static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadPhysical(p_pin) ^ p_pin->IS_INVERT); }
 
-// static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ^ p_pin->CONST.IS_INVERT) ? p_pin->CONST.ID : 0; }
-static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ? p_pin->CONST.ID : 0UL); }
+// static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ^ p_pin->IS_INVERT) ? p_pin->ID : 0; }
+static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ? p_pin->ID : 0UL); }
+
+
+// static inline bool FastPin_Input_ReadPhysical(const FastPin_T * p_pin) { return HAL_FastPin_ReadInput(p_pin->P_HAL_PIN, p_pin->ID); }
+
 
 /******************************************************************************/
 /*!

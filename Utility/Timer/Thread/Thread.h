@@ -32,7 +32,7 @@
     Cannot time slice i.e cannot switch threads in the middle of execution
     No thread scheduler, all threads are equal priority and must run to completion in sequence.
 
-    @version V0
+
  */
 /******************************************************************************/
 #ifndef THREAD_H

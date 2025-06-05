@@ -25,7 +25,7 @@
     @file   Protocol.c
     @author FireSourcery
     @brief  Cmd side
-    @version V0
+
 */
 /******************************************************************************/
 #include "Protocol_Cmdr.h"

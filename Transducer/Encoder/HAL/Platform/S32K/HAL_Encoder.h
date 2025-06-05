@@ -25,7 +25,7 @@
     @file   HAL_Encoder.h
     @author FireSourcery
     @brief     Encoder Timer Counter HAL for S32K
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_ENCODER_PLATFORM_H

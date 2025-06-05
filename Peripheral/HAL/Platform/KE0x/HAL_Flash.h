@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_FLASH_PLATFORM_H

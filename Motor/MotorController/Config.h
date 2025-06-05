@@ -25,7 +25,7 @@
     @file   Config.h
     @author FireSourcery
     @brief  Motor module preprocessor configuration options and defaults
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_MOTOR_CONTROLLER_H
@@ -36,8 +36,8 @@
 // #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_2) /* Top/Bottom */
 // #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_4) /*  */
 // #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_N) /*  */
-//     #ifndef MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT
-//     #error "MOTOR_CONTROLLER_HEAT_MOSFETS_COUNT must be defined"
+//     #ifndef p_const->MOT_HEAT_MONITOR_CONVERSIONS.HEAT_MOSFETS_COUNT
+//     #error "p_const->MOT_HEAT_MONITOR_CONVERSIONS.HEAT_MOSFETS_COUNT must be defined"
 //     #endif
 // #else
 //     #define CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_1

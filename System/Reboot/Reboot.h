@@ -25,7 +25,7 @@
     @file   Reboot.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef REBOOT_H

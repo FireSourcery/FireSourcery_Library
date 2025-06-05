@@ -25,7 +25,7 @@
     @file   PID.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "PID.h"
@@ -41,22 +41,12 @@ static void ResetGains(PID_T * p_pid)
 
 void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
 {
-    if (p_config != NULL) { memcpy(&p_pid->Config, p_pid->CONST.P_CONFIG, sizeof(PID_Config_T)); }
+    if (p_config != NULL) { memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T)); }
     ResetGains(p_pid);
     PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
     PID_Reset(p_pid);
 }
 
-void PID_Init(PID_T * p_pid)
-{
-    PID_InitFrom(p_pid, p_pid->CONST.P_CONFIG);
-}
-
-void PID_SetConfig(PID_T * p_pid, PID_Config_T * p_config)
-{
-    memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T));
-    ResetGains(p_pid);
-}
 
 static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 15); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
@@ -102,10 +92,15 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    // error = math_clamp(error, INT16_MIN, INT16_MAX);
+    // error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }
+
+int16_t PID_ProcPI_WithLimits(PID_T * p_pid, int32_t feedback, int32_t setpoint, int32_t min, int32_t max)
+{
+}
+
 
 // int32_t PID_ProcPID(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 // {
@@ -138,15 +133,16 @@ void PID_SetOutputState(PID_T * p_pid, int32_t state)
 
 /*!
     dynamic output limits
+    update synchronous with proc
 */
-// void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
-// {
-//     if (max > min)
-//     {
-//         p_pid->OutputMin = min;
-//         p_pid->OutputMax = max;
-//     }
-// }
+void _PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
+{
+    if (max > min)
+    {
+        p_pid->OutputMin = min;
+        p_pid->OutputMax = max;
+    }
+}
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
@@ -262,6 +258,7 @@ void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32)
 
 /*!
     @param[in] kp_Fixed16 [0:INT16_MAX] Q9.7
+    Unsigned for resolution
 */
 
 void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16) { PID_SetKp_Fixed32(p_pid, (uint32_t)kp_Fixed16 << 8); }

@@ -25,7 +25,7 @@
     @file   Protocol.h
     @author FireSourcery
     @brief  Protocol abstract class equivalent
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef PROTOCOL_H
@@ -35,6 +35,7 @@
 //#include "Datagram.h"
 
 #include "Peripheral/Xcvr/Xcvr.h"
+#include "Type/mux.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -80,7 +81,7 @@ Protocol_RxCode_T;
 /* Parse with PARSE_RX_META */
 typedef struct Protocol_HeaderMeta
 {
-    protocol_req_id_t ReqId;     /* protocol_req_id_t values defined by child module. Index into P_REQ_TABLE */
+    protocol_req_id_t ReqId;    /* protocol_req_id_t values defined by child module. Index into P_REQ_TABLE */
     protocol_size_t Length;     /* Rx Packet Total Length. */
 }
 Protocol_HeaderMeta_T;
@@ -107,6 +108,13 @@ typedef Protocol_RxCode_T(*Protocol_ParseRxMeta_T)(Protocol_HeaderMeta_T * p_rxM
 */
 /******************************************************************************/
 typedef protocol_size_t(*Protocol_ProcReqResp_T)(void * p_appInterface, uint8_t * p_txPacket, const uint8_t * p_rxPacket);
+// alternatively,
+//req response
+// typedef protocol_size_t (*MotProtocol_Fixed_T)(const void * p_context, MotPayload_T * p_txPayload, const MotPayload_T * p_rxPayload);
+// typedef protocol_size_t (*MotProtocol_Variable_T)(const void * p_context, MotPayload_T * p_txPayload, const MotPayload_T * p_rxPayload, protocol_size_t rxLength);
+
+// typedef protocol_size_t(*Protocol_ParseProcReq_T)(void * p_appInterface, const uint8_t * p_rxPayload);
+// typedef protocol_size_t(*Protocol_BuildResponse_T)(void * p_appInterface, uint8_t * p_txPayload);
 
 /******************************************************************************/
 /*
@@ -213,6 +221,9 @@ Protocol_Req_T;
 #define PROTOCOL_REQ_EXT(ReqId, ProcReqResp, ProcExt, ReqSyncExt) \
     { .ID = (protocol_req_id_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
+
+
+
 /******************************************************************************/
 /*!
 //todo datagram request
@@ -243,6 +254,7 @@ typedef enum Protocol_TxSyncId
 Protocol_TxSyncId_T;
 
 typedef void (* const Protocol_BuildTxSync_T)(uint8_t * p_txPacket, protocol_size_t * p_txSize, Protocol_TxSyncId_T txId);
+// typedef void (* const Protocol_BuildTxHeader_T)(uint8_t * p_txPacket, const uint8_t * p_txPayload, Protocol_TxSyncId_T txId);
 
 /******************************************************************************/
 /*!
@@ -256,12 +268,7 @@ typedef const struct Protocol_PacketClass
     const uint8_t RX_LENGTH_MAX;
     const Protocol_ParseRxMeta_T PARSE_RX_META;     /* Parse Header for RxReqId and RxRemaining, and check data */
     const Protocol_BuildTxSync_T BUILD_TX_SYNC;     /* Build Sync Packets */
-    // const Protocol_BuildTxHeader_T BUILD_TX_Header;     /*  */
-
-    /* Req Resp Table */
-    const Protocol_Req_T * const P_REQ_TABLE;       /* Protocol_Req_T */
-    const uint8_t REQ_TABLE_LENGTH;
-    // const Protocol_ResetReqState_T REQ_EXT_RESET;   /* Alternatively, handle in req by user */
+    // const Protocol_BuildTxHeader_T BUILD_TX_HEADER;     /* todo  */
 
     /* Optional */
     const uint32_t RX_START_ID;             /* 0x00 for not applicable */
@@ -282,6 +289,11 @@ typedef const struct Protocol_PacketClass
     // const protocol_size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
 
     // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
+
+    /* Req Resp Table */
+    const Protocol_Req_T * const P_REQ_TABLE;       /* Protocol_Req_T */
+    const uint8_t REQ_TABLE_LENGTH;
+    // const Protocol_ResetReqState_T REQ_EXT_RESET;   /* Alternatively, handle in req by user */
 }
 Protocol_PacketClass_T;
 
@@ -335,6 +347,8 @@ typedef const struct Protocol_Const
     const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
     const Protocol_Config_T * const P_CONFIG;
+    const Xcvr_T * const * const P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
+    const uint8_t XCVR_COUNT; /* number of Xcvr in table */
 }
 Protocol_Const_T;
 
@@ -342,7 +356,8 @@ typedef struct Protocol
 {
     const Protocol_Const_T CONST;
     Protocol_Config_T Config;
-    Xcvr_T Xcvr;
+
+    const Xcvr_T * p_Xcvr;
     const Protocol_PacketClass_T * p_Specs; /* Active protocol */
     // Datagram_T Datagram; // configurable broadcast
 
@@ -381,9 +396,8 @@ typedef struct Protocol
 }
 Protocol_T;
 
-#define _PROTOCOL_XCVR_INIT(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength),
 
-#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_XcvrTable, XcvrCount, p_Timer, p_Config)    \
+#define PROTOCOL_INIT(p_RxBuffer, p_TxBuffer, PacketBufferLength, p_AppInterface, p_SubStateBuffer, p_SpecsTable, SpecsCount, p_Xcvrs, XcvrCount, p_Timer, p_Config)    \
 {                                                                \
     .CONST =                                                     \
     {                                                            \
@@ -396,8 +410,9 @@ Protocol_T;
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \
         .P_CONFIG               = p_Config,                      \
+        .P_XCVR_TABLE           = p_Xcvrs,                       \
+        .XCVR_COUNT             = XcvrCount,                     \
     },                                                           \
-    _PROTOCOL_XCVR_INIT(p_XcvrTable, XcvrCount)                  \
 }
 
 typedef enum Protocol_ConfigId
@@ -461,3 +476,10 @@ extern void Protocol_ConfigId_Set(Protocol_T * p_protocol, Protocol_ConfigId_T i
 //     p_protocol->RxPacketSuccessCount = 0U;
 //     p_protocol->RxPacketErrorCount = 0U;
 // }
+
+// typedef struct Socket
+// {
+//     Protocol_T * p_Protocol;
+//     Xcvr_T * p_Xcvr;
+// }
+// Socket_T;

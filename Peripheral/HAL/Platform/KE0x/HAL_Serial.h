@@ -25,7 +25,7 @@
     @file   HAL_Serial.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_SERIAL_PLATFORM_H

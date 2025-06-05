@@ -25,7 +25,7 @@
     @file   MotProtocol.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_CMDR_MOT_PROTOCOL_H

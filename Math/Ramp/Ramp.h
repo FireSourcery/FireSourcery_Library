@@ -24,7 +24,7 @@
 /*!
     @file   Ramp.h
     @author FireSourcery
-    @version V0
+
     @brief
 */
 /******************************************************************************/
@@ -39,10 +39,7 @@
 
 #define RAMP_SHIFT 14U /* Output range without overflow [-UINT16_MAX:UINT16_MAX] */
 
-#define TICKS_OF_RATE(PollingFreq, UnitsFinal, UnitsPerS) ((uint64_t)(PollingFreq) * (UnitsFinal) / (UnitsPerS))
-
-/* Aliases */
-typedef Accumulator_T Ramp_T;
+#define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
 
 // typedef struct Ramp_Config_T
 // {
@@ -51,55 +48,62 @@ typedef Accumulator_T Ramp_T;
 // }
 // Ramp_Config_T;
 
+typedef struct Ramp
+{
+    Accumulator_T Accumulator;
+    int16_t Target;
+}
+Ramp_T;
+
+
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
 /* [-UINT16_MAX:UINT16_MAX] */
-static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Shift); }
-static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Shift); }
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Accumulator.Shift); }
+static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Accumulator.Shift); }
 
 /*  */
-static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->State >> p_ramp->Shift); }
+static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.State >> p_ramp->Accumulator.Shift); }
 /* Match Output */
-static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->State = (match << p_ramp->Shift); }
+static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.State = (match << p_ramp->Accumulator.Shift); }
 
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
-    p_ramp->Target = (match << p_ramp->Shift);
-    p_ramp->State = p_ramp->Target;
+    p_ramp->Target = (match << p_ramp->Accumulator.Shift);
+    p_ramp->Accumulator.State = p_ramp->Target;
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 {
     p_ramp->Target = 0;
-    p_ramp->State = 0;
+    p_ramp->Accumulator.State = 0;
 }
 
 /* ProcAsDisabled */
 static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
 {
-    p_ramp->State = p_ramp->Target;
+    p_ramp->Accumulator.State = p_ramp->Target;
     return Ramp_GetOutput(p_ramp);
 }
 
-
-// static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == 0); }
-// static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = 0; }
-
 /* single step proc only */
-static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Coefficient == (UINT16_MAX << RAMP_SHIFT)); }
+static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == (UINT16_MAX << RAMP_SHIFT)); }
 static inline bool _Ramp_IsEnabled(const Ramp_T * p_ramp) { return  !_Ramp_IsDisabled(p_ramp); }
-static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Coefficient = (UINT16_MAX << RAMP_SHIFT); }
+static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coefficient = (UINT16_MAX << RAMP_SHIFT); }
+
+// static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == 0); }
+// static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coefficient = 0; }
 
 /******************************************************************************/
 /*
     Extern
 */
 /******************************************************************************/
-extern int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps);
 extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
+extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);

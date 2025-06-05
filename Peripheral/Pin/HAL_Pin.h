@@ -25,7 +25,7 @@
     @file   HAL.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_PIN_H

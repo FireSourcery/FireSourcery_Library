@@ -25,7 +25,7 @@
     @file    Terminal.h
     @author FireSourcery
     @brief    text io functions for terminal ui
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef TERMINAL_H

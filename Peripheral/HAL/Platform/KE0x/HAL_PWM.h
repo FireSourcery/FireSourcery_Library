@@ -81,7 +81,7 @@ static inline void HAL_PWM_SyncModule(HAL_PWM_Module_T * p_hal) { p_hal->SYNC |=
 /* Duty may write channels individually then sync */
 static inline void HAL_PWM_SyncModuleDuty(HAL_PWM_Module_T * p_hal, uint32_t channels) { (void)channels; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK; }
 /* Write full register only, if sync is enabled */
-static inline void HAL_PWM_SyncModuleInvert(HAL_PWM_Module_T * p_hal, uint32_t channels)        { /* p_hal->POL |= channels; */ }
+static inline void HAL_PWM_SyncModuleInvert(HAL_PWM_Module_T * p_hal, uint32_t channels) { /* p_hal->POL |= channels; p_hal->SYNC |= FTM_SYNC_SWSYNC_MASK;*/ }
 static inline void HAL_PWM_SyncModuleOutputState(HAL_PWM_Module_T * p_hal, uint32_t channels)   { /* p_hal->OUTMASK &= ~channels; */ }
 
 /* Caller accounts for factor of 2 in up down mode */

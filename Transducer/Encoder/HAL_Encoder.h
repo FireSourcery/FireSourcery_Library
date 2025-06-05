@@ -25,7 +25,7 @@
     @file    HAL.h
     @author FireSourcery
     @brief     User must provide HW functions, or configure HAL
-    @version V0
+
  */
 /******************************************************************************/
 #ifndef HAL_ENCODER_H

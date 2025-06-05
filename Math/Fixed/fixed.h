@@ -25,7 +25,7 @@
     @file   Q.h
     @author FireSourcery
     @brief  fixed point math operations
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef FIXED_MATH_H
@@ -42,6 +42,7 @@ extern uint32_t fixed_pow2_round(uint32_t x);
 extern uint8_t fixed_bit_width(uint32_t x);
 extern uint8_t fixed_bit_width_signed(int32_t x);
 
+// extern uint8_t fixed_sign_bits_unsigned(uint32_t x);
 extern uint8_t fixed_lshift_max_unsigned(uint32_t x);
 extern uint8_t fixed_lshift_max_signed(int32_t x);
 

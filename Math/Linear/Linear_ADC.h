@@ -25,7 +25,7 @@
     @file   Linear_ADC.h
     @author FireSourcery
     @brief  Scale ADCU to provided reference value
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef LINEAR_ADC_H
@@ -43,24 +43,26 @@
     Init as Const
     f(adcuZero) = 0
     f(2^adcBits - adcuZero) = 65536
-    multiply +/-1 and shift
+
+    multiply +/- 1 and shift
 */
 /******************************************************************************/
-#define LINEAR_ADC_INIT(adcBits, adcuZero, isInverted)  \
+#define LINEAR_ADC_INIT_CONST(adcBits, adcuZero, isInverted)  \
 {                                                       \
     .Slope              = isInverted ? -1 : 1,          \
     .SlopeShift         = 15U - adcuBits,               \
-    .InvSlope           = p_linear->Slope,              \
-    .InvSlopeShift      = p_linear->SlopeShift,         \
-    .Y0                 = adcuZero,                     \
-    .X0                 = 0U,                           \
-    .XDeltaRef          = 1U << adcBits,                \
-    .YDeltaRef          = adcuZero + 1U << adcBits,     \
+    .InvSlope           = isInverted ? -1 : 1,          \
+    .InvSlopeShift      = 15U - adcuBits,               \
+    .Y0                 = 0U,                           \
+    .X0                 = adcuZero,                     \
+    .XDelta          = (1U << adcBits) - adcuZero,   \
+    .YDelta          = adcuZero + 1U << adcBits,     \
 }
 
 /******************************************************************************/
 /*!
     From ADCU
+    todo as const, fixed const can remove sat
 */
 /******************************************************************************/
 static inline int16_t Linear_ADC_Fract16(const Linear_T * p_linear, uint16_t adcu)                  { return Linear_Q16_Fract(p_linear, adcu); }
@@ -76,13 +78,14 @@ static inline uint16_t Linear_ADC_AdcuOfPercent16(const Linear_T * p_linear, uin
     Extern
 */
 /******************************************************************************/
-extern void Linear_ADC_Init_Scalar(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
-extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef);
-extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t min_MilliV, uint16_t max_MilliV);
-extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcMax, uint16_t zero_MilliV, uint16_t max_MilliV);
+// extern void Linear_ADC_Init_Scalar(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuRef);
+// extern void Linear_ADC_Init_ZeroToPeak(Linear_T * p_linear, uint16_t adcuZero, uint16_t adcuZtPRef);
+// extern void Linear_ADC_Init_PeakToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcuMax, uint16_t min_MilliV, uint16_t max_MilliV);
+extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVRef_MilliV, uint16_t adcuMax, uint16_t zero_MilliV, uint16_t max_MilliV);
 
 #endif
 
+/* split general factor shift calc */
 // Alternatively
 // typedef struct Linear_ADC
 // {
@@ -128,12 +131,12 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 
 // static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_fract16)
 // {
-//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDeltaRef, y_fract16);
+//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDelta, y_fract16);
 // }
 
 // static inline int32_t Linear_Q16_InvUnits16(const Linear_T * p_linear, int32_t y_units)
 // {
-//     return linear_fixed_of_units(p_linear->Y0, p_linear->YDeltaRef, y_units);
+//     return linear_fixed_of_units(p_linear->Y0, p_linear->YDelta, y_units);
 // }
 
 // /* x to fixed to y_units */
@@ -151,11 +154,11 @@ extern void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 // /* User Units using YRef */
 // static inline int32_t Linear_Q16_Units(const Linear_T * p_linear, int32_t x)
 // {
-//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDeltaRef, x);
+//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDelta, x);
 // }
 
 // /* Division limited to this function only */
 // static inline int32_t Linear_Q16_InvUnits(const Linear_T * p_linear, int32_t y)
 // {
-//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDeltaRef, y);
+//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDelta, y);
 // }

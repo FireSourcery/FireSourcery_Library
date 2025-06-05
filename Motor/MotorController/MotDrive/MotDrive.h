@@ -1,53 +1,181 @@
-#include <stdint.h>
+#pragma once
 
+/******************************************************************************/
+/*!
+    @section LICENSE
 
+    Copyright (C) 2025 FireSourcery
 
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   MotDrive.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "../MotMotors/MotMotors.h"
+#include "Motor/Motor/Motor_Include.h"
+
+#include "Transducer/Blinky/Blinky.h"
+
+/* include part */
+// #include "MotDrive_StateMachine.h"
+
+/*
+*/
+typedef enum MotDrive_Status
+{
+    MOT_DRIVE_STATUS_OK,
+    MOT_DRIVE_STATUS_FAULT,
+}
+MotDrive_Status_T;
+
+/* MultiState SubState - Drive State */
+typedef enum MotDrive_Direction
+{
+    MOT_DRIVE_DIRECTION_PARK,
+    MOT_DRIVE_DIRECTION_NEUTRAL,
+    MOT_DRIVE_DIRECTION_FORWARD,
+    MOT_DRIVE_DIRECTION_REVERSE,
+    MOT_DRIVE_DIRECTION_ERROR,
+}
+MotDrive_Direction_T;
+
+/* Drive SubState use edge detection - DriveState */
+typedef enum MotDrive_Cmd
+{
+    MOT_DRIVE_CMD_RELEASE,
+    MOT_DRIVE_CMD_THROTTLE,
+    MOT_DRIVE_CMD_BRAKE,
+}
+MotDrive_Cmd_T;
 
 typedef struct MotDrive_Input
 {
-    int8_t Direction;
+    MotDrive_Direction_T Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
+    MotDrive_Cmd_T Cmd;
+    MotDrive_Cmd_T CmdPrev; /* as substate */
+
+    //     uint16_t SpeedLimit;
+    //     uint16_t ILimit;
     // uint16_t CmdValue;
-    void (*Capture)(struct MotDrive_Input * p_input);
+//     uint16_t FeedbackMode;
+//     uint16_t ControlState;
+//     uint16_t RampOnOff;
 }
 MotDrive_Input_T;
 
-// typedef struct MotorController_DriveState
-// {
-//     // MotAnalogUser_AIn_T ThrottleAIn;
+/* Config States */
+typedef enum MotDrive_BrakeMode
+{
+    MOT_DRIVE_BRAKE_MODE_PASSIVE,
+    MOT_DRIVE_BRAKE_MODE_TORQUE,
+    MOT_DRIVE_BRAKE_MODE_VOLTAGE,
+}
+MotDrive_BrakeMode_T;
 
-//     // AnalogValueIn
-//     // bool IsEnable;
-//     // uint16_t Value;
-//     // uint16_t ValuePrev;
+typedef enum MotDrive_ThrottleMode
+{
+    MOT_DRIVE_THROTTLE_MODE_SPEED,
+    MOT_DRIVE_THROTTLE_MODE_TORQUE,
+    MOT_DRIVE_THROTTLE_MODE_VOLTAGE,
+}
+MotDrive_ThrottleMode_T;
 
-//     // MotorController_Direction_T Direction; /* Previous state */
-// }
-// MotorController_DriveState_T;
+/* Release Input */
+typedef enum MotDrive_ZeroMode
+{
+    MOT_DRIVE_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
+    MOT_DRIVE_ZERO_MODE_REGEN,       /* Regen Brake */
+    MOT_DRIVE_ZERO_MODE_CRUISE,      /* Voltage following, Zero current/torque */
+    MOT_DRIVE_ZERO_MODE_ZERO,        /* Setpoint Zero. No cmd overwrite */
+}
+MotDrive_ZeroMode_T;
 
-// static void MotorN_Fn(Motor_T * p_motors, size_t motorCount){}
+typedef struct MotDrive_Config
+{
+    MotDrive_ThrottleMode_T ThrottleMode;
+    MotDrive_BrakeMode_T BrakeMode;
+    MotDrive_ZeroMode_T ZeroMode;
+}
+MotDrive_Config_T;
 
-// static const StateMachine_State_T STATE_DRIVE =
-// {
-//     .ID                 = MCSM_STATE_ID_DRIVE,
-//     .ENTRY              = (StateMachine_Function_T)Drive_Entry,
-//     .LOOP               = (StateMachine_Function_T)Drive_Proc,
-//     .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
-// };
+typedef struct MotDrive_Active
+{
+    MotDrive_Config_T Config;
+    MotDrive_Input_T Input;
+    // MotDrive_Input_T InputPrev;
+    MotDrive_Status_T Status;
+    StateMachine_Active_T StateMachine;
+}
+MotDrive_Active_T;
 
-/* update cmd using edge */
-/* other 0 modes use wrapper state */
-// void Motor_User_StartCmd(Motor_T * p_motor, int16_t speed_fract16)
-// {
-//     /* always pass to state machine 100ms-10ms */
-//     // Motor_User_SetActiveCmdValue(p_motor, speed_fract16);
-//     // Motor_User_ActivateControl(p_motor);
-//     // StateMachine_ProcInput(&p_motor->StateMachine, MSM_INPUT_, speed_fract16);
 
-//     /* invoke state machine only on edge */
-//     // if      ((p_mc->UserCmdValue != 0) && (cmdValue != 0))  { Motor_User_SetActiveCmdValue(p_mc, cmdValue); }
-//     // else if ((p_mc->UserCmdValue == 0) && (cmdValue != 0))  { Motor_User_ActivateControl(p_mc); } /* SetFeedbackMode, Transition */
-//     // else if ((p_mc->UserCmdValue != 0) && (cmdValue == 0))  { Motor_User_Release(p_mc); }
-//     // else if ((p_mc->UserCmdValue == 0) && (cmdValue == 0))  { }
-// }
+/*
+    StateMachine with Sync Input
+*/
+typedef const struct MotDrive
+{
+    MotDrive_Active_T * const P_MOT_DRIVE;
+    const StateMachine_T STATE_MACHINE;
+    const MotMotors_T MOTORS;
+    const Blinky_T * const P_BUZZER;
+    const MotDrive_Config_T * const P_NVM_CONFIG;
+    /*   VarInterface; for MotDrive_VarId_Set */
+}
+MotDrive_T;
+
+/*
+
+*/
+static inline MotDrive_Cmd_T MotDrive_Input_PollCmd(MotDrive_Input_T * p_user)
+{
+    MotDrive_Cmd_T cmd;
+
+    /* Check Brake first */
+    if (p_user->BrakeValue > 0U) { cmd = MOT_DRIVE_CMD_BRAKE; } // check throttle active error
+    else if (p_user->ThrottleValue > 0U) { cmd = MOT_DRIVE_CMD_THROTTLE; }
+    else { cmd = MOT_DRIVE_CMD_RELEASE; }
+
+    p_user->CmdPrev = p_user->Cmd;
+    p_user->Cmd = cmd;
+
+    return cmd;
+}
+
+static inline bool MotDrive_Input_PollCmdEdge(MotDrive_Input_T * p_user)
+{
+    return (p_user->Cmd != MotDrive_Input_PollCmd(p_user));
+}
+
+extern void MotDrive_Init(const MotDrive_T * p_handle);
+
+
+// extern void MotDrive_StartThrottleMode(const MotDrive_T * p_motDrive);
+// extern void MotDrive_SetThrottleValue(const MotDrive_T * p_motDrive, uint16_t userCmdThrottle);
+// extern void MotDrive_StartBrakeMode(const MotDrive_T * p_motDrive);
+// extern void MotDrive_SetBrakeValue(const MotDrive_T * p_motDrive, uint16_t userCmdBrake);
+// extern void MotDrive_StartDriveZero(const MotDrive_T * p_motDrive);
+// extern void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive);
+
+// static inline void MotDrive_User_StartThrottle(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_THROTTLE, userCmd); }
+// static inline void MotDrive_User_StartBrake(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_BRAKE, userCmd); }
+

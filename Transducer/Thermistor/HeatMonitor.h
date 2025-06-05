@@ -1,0 +1,283 @@
+#pragma once
+
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2025 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   HeatMonitor_Context.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "Transducer/Monitor/Monitor.h"
+#include "Transducer/Thermistor/Thermistor.h"
+#include "Peripheral/Analog/Analog.h"
+#include "Math/Linear/Linear_ADC.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
+/* ADCU by default */
+typedef uint16_t heatmonitor_value_t; /* Use heatmonitor_value_t for all logic */
+
+/* Use Monitor module for all logic */
+typedef Monitor_T HeatMonitor_T;
+
+/*!
+    @brief  Monitor configuration for temperature monitoring
+    @note   Monitor_T auto handles invert
+            For NTC: Higher temperature = Lower ADC value (inverse relationship)
+            For PTC: Higher temperature = Higher ADC value (direct relationship)
+*/
+typedef Monitor_Config_T HeatMonitor_Config_T;
+
+/* Status alias */
+typedef enum HeatMonitor_Status
+{
+    HEAT_MONITOR_STATUS_NORMAL = MONITOR_STATUS_NORMAL,
+    HEAT_MONITOR_STATUS_WARNING_HIGH = MONITOR_STATUS_WARNING,
+    HEAT_MONITOR_STATUS_FAULT_OVERHEAT = MONITOR_STATUS_FAULT,
+}
+HeatMonitor_Status_T;
+
+/******************************************************************************/
+/*!
+    @brief  HeatMonitor Context - Contains all necessary data for per-thermistor monitoring
+    @note   This is a context structure for a single heat monitor instance.
+    @note   It is used to encapsulate the state and configuration of the heat monitor.
+    @note   It can be used in a group context for multiple heat monitors.
+*/
+/******************************************************************************/
+/*
+    HeatMonitor Per Thermistor source
+*/
+typedef const struct HeatMonitor_Context
+{
+    HeatMonitor_T * P_STATE;
+    Linear_T * P_LIMIT_SCALAR;
+    const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
+
+    Analog_Conversion_T ANALOG_CONVERSION;
+    Thermistor_T THERMISTOR;
+    // const Thermistor_Coeffs_T * P_NVM_COEFFS; /* storage seperate from thermistor buffer */
+    Linear_T * P_LINEAR; /* Optionally for local unit conversion */
+}
+HeatMonitor_Context_T;
+
+// #define HEAT_MONITOR_CONTEXT_INIT(HeatMonitorState, AnalogConversion, Thermistor, Linear) \
+
+// typedef struct HeatMonitor_GroupState
+// {
+//     /* Group Management */
+//     uint8_t ActiveSensorIndex;          /* Currently active/monitored sensor */
+//     uint8_t LastProcessedIndex;         /* Last sensor that was processed */
+//     uint32_t GroupPollCounter;          /* Group polling cycle counter */
+//     /* Group State Tracking */
+//     HeatMonitor_Status_T GroupStatus;   /* Overall group status */
+//     uint8_t FaultCount;                 /* Number of sensors in fault */
+//     uint8_t WarningCount;               /* Number of sensors in warning */
+
+// }
+// HeatMonitor_GroupState_T;
+
+typedef const struct HeatMonitor_GroupContext
+{
+    HeatMonitor_Context_T * P_CONTEXTS; /* Array of HeatMonitor_Context_T */
+    uint8_t COUNT;
+
+    /* Collective State */
+    HeatMonitor_T * P_STATE;
+    Linear_T * P_LIMIT_SCALAR;
+    const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
+}
+HeatMonitor_GroupContext_T;
+
+/******************************************************************************/
+/*
+    Helpers
+    Monitor_T extentions
+*/
+/******************************************************************************/
+static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_T * p_heat, Linear_T * p_limitScalar)
+{
+    Linear_Q16_Init(p_limitScalar, p_heat->Config.Fault.Limit, p_heat->Config.Warning.Setpoint);
+}
+
+/******************************************************************************/
+/*
+    Single Context
+*/
+/******************************************************************************/
+/* Heat limit calculation */
+/* assert(p_heat->P_LIMIT_SCALAR != NULL) */
+// static inline uint16_t HeatMonitor_ScalarLimitOfInput_Percent16(const HeatMonitor_Context_T * p_heat, int32_t input) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, input); }
+static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_Context_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
+
+static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
+{
+    Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
+    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION);
+    return (HeatMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
+}
+
+static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
+
+
+/******************************************************************************/
+/*
+    Group Context
+*/
+/******************************************************************************/
+
+/* Monitor_GetLastInputComparable returns value for > compare */
+/* Find hottest sensor */
+static inline uint8_t HeatMonitor_Group_FindHottest(const HeatMonitor_GroupContext_T * p_group)
+{
+    uint8_t index = 0U;
+    int32_t max = 0;
+    int32_t compare;
+
+    for (uint8_t i = 0U; i < p_group->COUNT; i++)
+    {
+        compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+        if (compare > max) { max = compare; index = i; }
+    }
+
+    return index;
+}
+
+/* This function polls all sensors and returns the index of the hottest */
+static inline uint8_t _HeatMonitor_Group_PollEach_Index(const HeatMonitor_GroupContext_T * p_group)
+{
+    uint8_t index = 0U;
+    int32_t max = 0; /* Monitor_GetLastInputComparable returns value for > direction compare. sensor values > 0 */
+    int32_t compare;
+
+    for (uint8_t i = 0U; i < p_group->COUNT; i++)
+    {
+        HeatMonitor_Poll(&p_group->P_CONTEXTS[i]);
+        compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+        if (compare > max) { max = compare; index = i; }
+    }
+
+    return index;
+}
+
+// static inline HeatMonitor_Context_T * _HeatMonitor_Group_PollEach_Context(const HeatMonitor_GroupContext_T * p_group)
+// {
+//     HeatMonitor_Context_T * p_element = NULL;
+//     int32_t max = 0; /* Monitor_GetLastInputComparable returns value for > direction compare. sensor values > 0 */
+//     int32_t compare;
+
+//     for (uint8_t i = 0U; i < p_group->COUNT; i++)
+//     {
+//         HeatMonitor_Poll(&p_group->P_CONTEXTS[i]);
+//         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+//         if (compare > max)
+//         {
+//             max = compare;
+//             p_element = &p_group->P_CONTEXTS[i];
+//         }
+//     }
+
+//     return p_element;
+// }
+
+/* This function polls all sensors and returns the most severe status */
+// static inline HeatMonitor_Status_T _HeatMonitor_Group_PollEach_Status(const HeatMonitor_GroupContext_T * p_group)
+// {
+//     HeatMonitor_Status_T worstStatus = HEAT_MONITOR_STATUS_NORMAL;
+//     HeatMonitor_Status_T status;
+//     // uint8_t faultCount = 0;
+//     // uint8_t warningCount = 0;
+
+//     for (uint8_t i = 0U; i < p_group->COUNT; i++)
+//     {
+//         status = HeatMonitor_Poll(&p_group->P_CONTEXTS[i]);
+//         /* Track worst status */
+//         if (status > worstStatus) { worstStatus = status; }
+
+//         /* Track group statistics */
+//         // if (status == HEAT_MONITOR_STATUS_FAULT_OVERHEAT) { faultCount++; }
+//         // else if (status == HEAT_MONITOR_STATUS_WARNING_HIGH) { warningCount++; }
+//     }
+
+//     return worstStatus;
+// }
+
+/* Poll group using round-robin strategy */
+// static inline HeatMonitor_Status_T HeatMonitor_Group_PollRoundRobin(HeatMonitor_GroupContext_T * p_group)
+// {
+//     HeatMonitor_Status_T worstStatus = HEAT_MONITOR_STATUS_NORMAL;
+
+//     /* Poll next sensor in sequence */
+//     uint8_t sensorIndex = p_group->ActiveSensorIndex;
+//     HeatMonitor_Context_T * p_context = &p_group->P_CONTEXTS[sensorIndex];
+
+//     HeatMonitor_Status_T status = HeatMonitor_Context_PollSensor(p_context);
+
+//     /* Update group tracking */
+//     if (status > worstStatus) worstStatus = status;
+
+//     /* Advance to next sensor */
+//     p_group->ActiveSensorIndex = (sensorIndex + 1) % p_group->COUNT;
+//     p_group->LastProcessedIndex = sensorIndex;
+//     p_group->GroupPollCounter++;
+
+//     return worstStatus;
+// }
+
+/*
+    Poll and store results into collective state,
+    collective state using hottest sensor
+*/
+static inline HeatMonitor_Status_T HeatMonitor_Group_PollAll(const HeatMonitor_GroupContext_T * p_group)
+{
+    return (HeatMonitor_Status_T)Monitor_Poll(p_group->P_STATE, p_group->P_CONTEXTS[_HeatMonitor_Group_PollEach_Index(p_group)].P_STATE->LastInput);
+}
+
+
+/******************************************************************************/
+/*
+    Group Query Functions
+*/
+/******************************************************************************/
+static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_GroupContext_T * p_group)
+{
+    return Linear_Q16_Percent(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput);
+}
+
+static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor_GroupContext_T * p_group)
+{
+    return (HeatMonitor_Status_T)Monitor_GetStatus(p_group->P_STATE);
+}
+
+/******************************************************************************/
+/*
+    Extern
+*/
+/******************************************************************************/
+extern void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMonitor_Config_T * p_config);
+extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
+/* Initialize group with shared resources */
+extern void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group);

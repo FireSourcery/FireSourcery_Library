@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_EEPROM_PLATFORM_H

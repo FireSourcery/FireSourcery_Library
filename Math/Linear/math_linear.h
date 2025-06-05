@@ -25,7 +25,7 @@
     @file   math_linear.h
     @author FireSourcery
     @brief  Linear pure functions.
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MATH_LINEAR_H

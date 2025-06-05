@@ -25,7 +25,7 @@
     @file    Terminal.h
     @author FireSourcery
     @brief    Serial text support functions for terminal ui
-    @version V0
+
  */
  /******************************************************************************/
 #include "Terminal.h"

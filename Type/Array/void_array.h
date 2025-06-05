@@ -258,3 +258,20 @@ static inline void * void_array_max_with(void * p_buffer, size_t type, size_t le
 }
 
 #endif // VOID_ARRAY_H
+
+
+// static inline value_t as_value(size_t type, const void * p_unit)
+// {
+//     value_t value = 0;
+//     switch (type)
+//     {
+//         case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
+//         case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
+//         case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
+// #if (REGISTER_SIZE_64)
+//         case sizeof(int64_t): value = *((const int64_t *)p_unit); break;
+// #endif
+//         default: break;
+//     }
+//     return value;
+// }

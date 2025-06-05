@@ -25,16 +25,16 @@
     @file   MotorController_Include.h
     @author FireSourcery
     @brief    Includes all headers
-    @version V0
+
 */
 /******************************************************************************/
 #include "Config.h"
 #include "MotorController_User.h"
 #include "MotorController_Thread.h"
-#include "MotorController_Analog.h"
+// #include "MotorController_Analog.h"
 #if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
 #include "MotorController_Shell.h"
 #endif
-#include "MotorController_MotProtocol.h"
+// #include "MotorController_MotProtocol.h"
 #include "Motor/Motor/Motor_Include.h"
-#include "Motor/MotProtocol/MotProtocol.h"
+#include "../MotProtocol/MotProtocol.h"

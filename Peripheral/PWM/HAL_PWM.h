@@ -25,7 +25,7 @@
     @file   HAL_Phase.h
     @author FireSourcery
     @brief     Phase HAL import functions
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_PWM_H

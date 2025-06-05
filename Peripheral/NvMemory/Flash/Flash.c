@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "Flash.h"
@@ -378,6 +378,12 @@ Flash_Status_T Flash_EraseAll_Blocking(Flash_T * p_flash)
 {
     return ProcAfterSet(p_flash, SetEraseAll(p_flash));
 }
+
+// Flash_Status_T Flash_ReadWithParitions_Blocking(Flash_T * p_flash, uintptr_t flashAddress, size_t size, uint8_t * p_resultBuffer)
+// {
+//     return ProcAfterSet(p_flash, SetReadOnce(p_flash, flashAddress, size, p_resultBuffer));
+// }
+
 
 // Flash_Status_T Flash_ProcOp_Blocking(Flash_T * p_flash, Flash_Operation_T opId, uintptr_t flashAddress, const uint8_t * p_data, size_t size)
 // {

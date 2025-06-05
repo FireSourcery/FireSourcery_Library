@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROLLER_SHELL_H

@@ -25,7 +25,7 @@
     @file    Cmd.c
     @author FireSourcery
     @brief
-    @version V0
+
  */
 /******************************************************************************/
 #include "Cmd.h"

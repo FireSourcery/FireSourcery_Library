@@ -26,7 +26,7 @@
     @author FireSourcery
     @brief    Text based UI.
             This modules calls Motor_User and MotorController_User functions only.
-    @version V0
+
 */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
@@ -54,7 +54,7 @@ static Cmd_Status_T Cmd_stop(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_run(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     char * p_end;
     uint32_t value;
 
@@ -123,7 +123,7 @@ static void PrintPhase(Terminal_T * p_term, uint8_t step)
     }
 }
 
-static void PrintSensor(Terminal_T * p_term, Motor_T * p_motor)
+static void PrintSensor(Terminal_T * p_term, Motor_State_T * p_motor)
 {
     switch(Motor_User_GetSensorMode(p_motor))
     {
@@ -167,24 +167,24 @@ static void PrintSensor(Terminal_T * p_term, Motor_T * p_motor)
 /* Need stop to release */
 static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     //    Terminal_T * p_term = &p_mc->Shell.Terminal;
     const uint16_t duty = p_motor->Config.AlignPower_ScalarU16;
 
     if(argc == 2U)
     {
-        if(argv[1U][0U] == 'a' && argv[1U][1U] == 'b') { Phase_Polar_ActivateAB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'a' && argv[1U][1U] == 'c') { Phase_Polar_ActivateAC(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '\0') { Phase_Polar_ActivateA(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '-') { Phase_ActivateAlignInvA(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'a') { Phase_Polar_ActivateBA(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'c') { Phase_Polar_ActivateBC(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '\0') { Phase_ActivateAlignB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '-') { Phase_ActivateAlignInvB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'a') { Phase_Polar_ActivateCA(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'b') { Phase_Polar_ActivateCB(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '\0') { Phase_ActivateAlignC(&p_motor->Phase, duty); }
-        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '-') { Phase_ActivateAlignInvC(&p_motor->Phase, duty); }
+        if(argv[1U][0U] == 'a' && argv[1U][1U] == 'b') { Phase_Polar_ActivateAB(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'a' && argv[1U][1U] == 'c') { Phase_Polar_ActivateAC(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '\0') { Phase_Polar_ActivateA(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'a' && argv[1U][1U] == '-') { Phase_ActivateAlignInvA(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'a') { Phase_Polar_ActivateBA(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == 'c') { Phase_Polar_ActivateBC(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '\0') { Phase_ActivateAlignB(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'b' && argv[1U][1U] == '-') { Phase_ActivateAlignInvB(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'a') { Phase_Polar_ActivateCA(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == 'b') { Phase_Polar_ActivateCB(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '\0') { Phase_ActivateAlignC(&p_motor->PHASE, duty); }
+        else if(argv[1U][0U] == 'c' && argv[1U][1U] == '-') { Phase_ActivateAlignInvC(&p_motor->PHASE, duty); }
     }
 
     return CMD_STATUS_SUCCESS;
@@ -193,7 +193,7 @@ static Cmd_Status_T Cmd_phase(MotorController_T * p_mc, int argc, char ** argv)
 static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 {
     (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status;
     if(argc == 1U)
     {
@@ -212,7 +212,7 @@ static Cmd_Status_T Cmd_jog(MotorController_T * p_mc, int argc, char ** argv)
 static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 {
     (void)argc;    (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     p_motor->JogIndex = 0U;
     p_motor->Encoder.TotalD = 0U;
     Motor_ZeroSensor(p_motor);
@@ -222,7 +222,7 @@ static Cmd_Status_T Cmd_rev(MotorController_T * p_mc, int argc, char ** argv)
 static Cmd_Status_T Cmd_rev_Proc(MotorController_T * p_mc)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status;
 
     if(p_motor->JogIndex < Motor_User_GetPolePairs(p_motor) * 6U + 1U)
@@ -264,7 +264,7 @@ static Cmd_Status_T Cmd_monitor(MotorController_T * p_mc, int argc, char ** argv
 
 static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     switch(p_mc->ShellSubState)
@@ -410,7 +410,7 @@ static Cmd_Status_T Cmd_monitor_Proc(MotorController_T * p_mc)
 
 static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 1U) /* display modes */
@@ -474,12 +474,12 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
         }
         else if(strncmp(argv[1U], "brakevf", 7U) == 0U)
         {
-            MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_VOLTAGE);
+            MotorController_User_SetBrakeMode(p_mc, MOT_DRIVE_BRAKE_MODE_VOLTAGE);
             Terminal_SendString(p_term, "VFreq Brake\r\n");
         }
         else if(strncmp(argv[1U], "brakei", 7U) == 0U)
         {
-            MotorController_User_SetBrakeMode(p_mc, MOTOR_CONTROLLER_BRAKE_MODE_TORQUE);
+            MotorController_User_SetBrakeMode(p_mc, MOT_DRIVE_BRAKE_MODE_TORQUE);
             Terminal_SendString(p_term, "Torque Brake\r\n");
         }
     }
@@ -490,7 +490,7 @@ static Cmd_Status_T Cmd_mode(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Cmd_Status_T status = CMD_STATUS_INVALID_ARGS;
 
     if(argc == 2U)
@@ -510,7 +510,7 @@ static Cmd_Status_T Cmd_calibrate(MotorController_T * p_mc, int argc, char ** ar
 static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 {
     Cmd_Status_T status = CMD_STATUS_PROCESS_LOOP;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP)
@@ -572,7 +572,7 @@ static Cmd_Status_T Cmd_calibrate_Proc(MotorController_T * p_mc)
 static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
 {
     (void)argv;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 1U)
@@ -591,28 +591,28 @@ static Cmd_Status_T Cmd_hall(MotorController_T * p_mc, int argc, char ** argv)
     return CMD_STATUS_SUCCESS;
 }
 
-void PrintThermistorLimit(Terminal_T * p_term, Thermistor_T * p_thermistor)
+void PrintThermistorLimit(Terminal_T * p_term, HeatMonitor_T * p_thermistor)
 {
     Terminal_SendString(p_term, "Shutdown: ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultTrigger_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFault_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
+    Terminal_SendNum(p_term, HeatMonitor_GetFaultTrigger_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, HeatMonitor_GetFault_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
     Terminal_SendString(p_term, " Threshold: ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetFaultThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
+    Terminal_SendNum(p_term, HeatMonitor_GetFaultThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, HeatMonitor_GetFaultThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
 
     Terminal_SendString(p_term, "Warning: ");
-    Terminal_SendNum(p_term, Thermistor_GetWarningTrigger_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetWarning_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
+    Terminal_SendNum(p_term, HeatMonitor_GetWarningTrigger_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, HeatMonitor_GetWarning_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C ");
     Terminal_SendString(p_term, " Threshold: ");
-    Terminal_SendNum(p_term, Thermistor_GetWarningThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
-    Terminal_SendNum(p_term, Thermistor_GetWarningThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
+    Terminal_SendNum(p_term, HeatMonitor_GetWarningThreshold_Adcu(p_thermistor)); Terminal_SendString(p_term, " ADCU, ");
+    Terminal_SendNum(p_term, HeatMonitor_GetWarningThreshold_DegCScalar(p_thermistor, 1U)); Terminal_SendString(p_term, " C\r\n");
 }
 
 //todo seperate print functions
 static Cmd_Status_T Cmd_heat(MotorController_T * p_mc, int argc, char ** argv)
 {
     Terminal_T * p_term = &p_mc->Shell.Terminal;
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
     if(argc == 1U)
     {
@@ -676,7 +676,7 @@ static Cmd_Status_T Cmd_auser(MotorController_T * p_mc, int argc, char ** argv)
 //     char * p_stringDest = p_stringBuffer;
 
 //     memcpy(p_stringDest, STR_VSOURCE, strlen(STR_VSOURCE));         p_stringDest += strlen(STR_VSOURCE);
-//     p_stringDest += VMonitor_ToString_Verbose(&p_mc->VMonitorSource, p_stringDest, 1000U);
+//     p_stringDest += VMonitor_ToString_Verbose(&p_mc->V_SOURCE, p_stringDest, 1000U);
 //     memcpy(p_stringDest, "\r\n", 2U);     p_stringDest += 2U;
 
 //     memcpy(p_stringDest, STR_VSENSE, strlen(STR_VSENSE));     p_stringDest += strlen(STR_VSENSE);
@@ -807,12 +807,12 @@ static Cmd_Status_T Cmd_fault(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
 
     if(argc == 2U)
     {
-        if(strncmp(argv[1U], "fwd", 2U) == 0U) { MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD); }
-        else if(strncmp(argv[1U], "rev", 2U) == 0U) { MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE); }
+        if(strncmp(argv[1U], "fwd", 2U) == 0U) { MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_FORWARD); }
+        else if(strncmp(argv[1U], "rev", 2U) == 0U) { MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_REVERSE); }
     }
     if(argc == 3U)
     {
@@ -828,7 +828,7 @@ static Cmd_Status_T Cmd_direction(MotorController_T * p_mc, int argc, char ** ar
 
 static Cmd_Status_T Cmd_set(MotorController_T * p_mc, int argc, char ** argv)
 {
-    //    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    //    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
 
     if(argc == 2U)
@@ -888,7 +888,7 @@ static Cmd_Status_T Cmd_beep(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_kvspeed(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t rpm;
 
@@ -931,7 +931,7 @@ static void PrintIPeak(Terminal_T * p_term, uint16_t min_Adcu, int32_t min_Fract
 #if    defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
 static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t zeroToPeak_Adcu;
     uint16_t min_Adcu;
@@ -966,7 +966,7 @@ static Cmd_Status_T Cmd_ipeak(MotorController_T * p_mc, int argc, char ** argv)
 
 static Cmd_Status_T Cmd_ilimit(MotorController_T * p_mc, int argc, char ** argv)
 {
-    Motor_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
+    Motor_State_T * p_motor = MotorController_User_GetPtrMotor(p_mc, 0U);
     Terminal_T * p_term = &p_mc->Shell.Terminal;
     uint16_t ilimit_Fract16;
 

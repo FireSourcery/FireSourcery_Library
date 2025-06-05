@@ -1,0 +1,26 @@
+using a compile time const struct to the effect of a type parameter in inlined or macro functions,
+for the purpose of compile time expansion of that function to multiple hard coded instances after compiler optimization.
+
+
+GPT:
+
+Goal:
+Use const structs as pseudo-type parameters to "configure" a macro or inlined function at compile time
+— letting the compiler generate multiple specialized versions (often fully optimized, branchless).
+
+
+using const structs as compile-time configuration tokens to drive function specialization via inlining.
+It’s a kind of "manual templating" that emulates aspects of C++ templates in pure C.
+While there’s no single canonical name for it, this pattern is widely used across embedded middleware, HALs, and performance-sensitive C libraries.
+
+
+While this exact idiom isn’t always named clearly, it shows up under several umbrellas:
+
+Term or Concept	Where You Might See It
+Compile-time config struct	CMSIS, STM32 HAL, TI DriverLib, Nordic SDK
+Type erasure in C	Embedded dispatch tables
+Zero-cost abstraction	Performance-critical C drivers
+Function specialization	GCC/Clang optimization guides
+Partial evaluation in C	Compilers optimizing on static const data
+"Type-safe macros"	Inline function replacements for macros
+Fake templates in C	Discussions on C-to-C++ transition or porting

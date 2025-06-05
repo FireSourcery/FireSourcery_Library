@@ -24,14 +24,14 @@
 /*!
     @file   Limit.h
     @author FireSourcery
-    @version V0
+
     @brief Array with O(1) Min/Max, calculated on set/clear
 */
 /******************************************************************************/
 #ifndef LIMIT_ARRAY_H
 #define LIMIT_ARRAY_H
 
-// #include "Type/Array/Array.h"
+#include "Type/Array/Array.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -59,29 +59,62 @@ typedef size_t limit_id_t;
 //     limit_t Lower;
 //     limit_t Upper;
 // }
-// LimitArray_Pair_T;
-// static inline int16_t LimitArray_Of(const LimitArray_Pair_T * p_limits, int16_t req) { return math_clamp(req, p_limits->Lower, p_limits->Upper); }
+// LimitPair_T;
 
-typedef struct
+/*
+    Augments
+*/
+typedef struct LimitArray_Augments
 {
-    const struct { limit_t * const P_ARRAY; const size_t LENGTH; };
-    // const struct { LimitArray_Pair_T * const P_ARRAY; const size_t LENGTH; };
-
     // size_t count;
     /*
-        limits calculated on add/remove
+        calculated on add/remove
         get is O(1)
     */
-    // limit_id_t minIndex;
-    // limit_id_t maxId;
-    limit_t Min; /* Min of the array, upper of [Limit] */
-    limit_t Max; /* Max of the array, lower of [Limit] */
+    size_t MinId;
+    size_t MaxId;
+    int Min; /* Min of the array, upper of [Limit] */
+    int Max; /* Max of the array, lower of [Limit] */
+}
+LimitArray_Augments_T;
 
+// typedef Array_T LimitArray_T;
+
+typedef union
+{
+    Array_T ARRAY;
+    struct
+    {
+        limit_t * const P_BUFFER;   // Pointer to the p_array buffer
+        const size_t LENGTH;        // Length of the p_array
+        LimitArray_Augments_T * const P_AUGMENTS; // Pointer to the p_array buffer
+    };
 }
 LimitArray_T;
 
-#define LIMIT_ARRAY_INIT(p_buffer, length) { .P_ARRAY = (p_buffer), .LENGTH = (length) }
-#define LIMIT_ARRAY_ALLOC(length) { .P_ARRAY = (limit_t[length]){0}, .LENGTH = (length) }
+#define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) ARRAY_INIT(p_Buffer, Length, p_Augments)
+#define LIMIT_ARRAY_ALLOC(Length) ARRAY_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0})
+
+/*  */
+static inline LimitArray_Augments_T * _LimitArray_State(const LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }
+static inline limit_t * _LimitArray_Values(const LimitArray_T * p_limit) { return (limit_t *)p_limit->P_BUFFER; }
+
+/*  */
+static inline void _LimitArray_ClearState(LimitArray_Augments_T * p_state)
+{
+    p_state->Min = LIMIT_ARRAY_MAX;
+    p_state->Max = LIMIT_ARRAY_MIN;
+    p_state->MinId = -1;
+    p_state->MaxId = -1;
+}
+
+static inline void _LimitArray_ClearValues(limit_t * p_values, size_t length)
+{
+    for (uint8_t index = 0U; index < length; index++) { p_values[index] = LIMIT_ARRAY_CLEAR; }
+}
+
+
+// static inline int16_t LimitArray_Apply(const LimitArray_T * p_limits, int16_t req) { return math_clamp(req, p_limits->Lower, p_limits->Upper); }
 
 
 /*!
@@ -89,24 +122,24 @@ LimitArray_T;
     @param p_limit Pointer to the LimitArray_T structure.
     @return The arrayMinimum value, or UINT16_MAX if the array is empty.
 */
-static inline limit_t LimitArray_GetUpper(const LimitArray_T * p_limit) { return p_limit->Min; }
+static inline limit_t LimitArray_GetUpper(const LimitArray_T * p_limit) { return _LimitArray_State(p_limit)->Min; }
 
 /*!
     @brief Get the arrayMaximum value from the p_limit control.
     @param p_limit Pointer to the Limit_T structure.
     @return The arrayMaximum value, or 0 if the array is empty.
 */
-static inline limit_t LimitArray_GetLower(const LimitArray_T * p_limit) { return p_limit->Max; }
+static inline limit_t LimitArray_GetLower(const LimitArray_T * p_limit) { return _LimitArray_State(p_limit)->Max; }
 
-static inline bool LimitArray_IsActive(const LimitArray_T * p_limit) { return (p_limit->Min != LIMIT_ARRAY_MAX || p_limit->Max != LIMIT_ARRAY_MIN); }
-static inline bool LimitArray_IsUpperActive(const LimitArray_T * p_limit) { return (p_limit->Min != LIMIT_ARRAY_MAX); }
-static inline bool LimitArray_IsLowerActive(const LimitArray_T * p_limit) { return (p_limit->Max != LIMIT_ARRAY_MIN); }
+static inline bool LimitArray_IsUpperActive(const LimitArray_T * p_limit) { return (_LimitArray_State(p_limit)->Min != LIMIT_ARRAY_MAX); }
+static inline bool LimitArray_IsLowerActive(const LimitArray_T * p_limit) { return (_LimitArray_State(p_limit)->Max != LIMIT_ARRAY_MIN); }
+static inline bool LimitArray_IsActive(const LimitArray_T * p_limit) { return (LimitArray_IsUpperActive(p_limit) || LimitArray_IsLowerActive(p_limit)); }
 
-extern void LimitArray_Init(LimitArray_T * p_limit);
-extern void LimitArray_ClearAll(LimitArray_T * p_limit);
+extern void LimitArray_Init(const LimitArray_T * p_limit);
+extern void LimitArray_ClearAll(const LimitArray_T * p_limit);
 
-extern bool LimitArray_SetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value);
-extern bool LimitArray_ClearEntry(LimitArray_T * p_limit, limit_id_t id);
+extern bool LimitArray_SetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value);
+extern bool LimitArray_ClearEntry(const LimitArray_T * p_limit, limit_id_t id);
 // extern bool LimitArray_SetEntryUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value);
 
 #endif // LIMIT_ARRAY_H

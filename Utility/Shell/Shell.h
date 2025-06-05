@@ -25,7 +25,7 @@
     @file    Shell.h
     @author FireSourcery
     @brief
-    @version V0
+
  */
 /******************************************************************************/
 #ifndef SHELL_H

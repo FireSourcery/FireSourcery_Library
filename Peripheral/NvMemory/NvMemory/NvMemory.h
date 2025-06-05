@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief  Non Volatile Memory Operations. Abstract Base Class. Template Pattern.
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef NV_MEMORY_H
@@ -139,12 +139,14 @@ NvMemory_State_T;
 
 /* Per sub-type VTable, abstract functions provided by concrete child class */
 /* alternatiely split type and instance */
+/* Flash must store a vopy in RAM */
 typedef const struct NvMemory_Const
 {
     void * const P_HAL;
     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
+
     const NvMemory_Partition_T * const P_PARTITIONS;        /* Bounds of accessible partitions */
     const uint8_t PARTITION_COUNT;
     uint8_t * const P_BUFFER;
@@ -158,6 +160,7 @@ NvMemory_Const_T;
 typedef struct NvMemory
 {
     const NvMemory_Const_T CONST;
+    // const NvMemory_Const_T VTable; /* keep in ram */
 
     /* Config Options */
     bool IsOpBuffered;          /* copy to buffer first or use pointer to source */

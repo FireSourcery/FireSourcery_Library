@@ -25,7 +25,7 @@
     @file   Protocol.c
     @author FireSourcery
     @brief  Protocol abstract class equivalent
-    @version V0
+
 */
 /******************************************************************************/
 #include "Protocol.h"
@@ -37,7 +37,7 @@ void Protocol_Init(Protocol_T * p_protocol)
     {
         memcpy(&p_protocol->Config, p_protocol->CONST.P_CONFIG, sizeof(Protocol_Config_T));
 
-        Xcvr_Init(&p_protocol->Xcvr, p_protocol->Config.XcvrId);
+        p_protocol->p_Xcvr = mux_or_default((entry_table_t)p_protocol->CONST.P_XCVR_TABLE, p_protocol->CONST.XCVR_COUNT, p_protocol->Config.XcvrId);
         Protocol_ConfigXcvrBaudRate(p_protocol, p_protocol->Config.BaudRate);
         Protocol_SetSpecs(p_protocol, p_protocol->Config.SpecsId);
         if (p_protocol->Config.IsEnableOnInit == true) { Protocol_Enable(p_protocol); } else { Protocol_Disable(p_protocol); }
@@ -84,7 +84,7 @@ static inline Protocol_RxCode_T CaptureRx(Protocol_T * p_protocol)
 
         if (nextRxIndex > p_protocol->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
-        p_protocol->RxIndex += Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[p_protocol->RxIndex], nextRxIndex - p_protocol->RxIndex);
+        p_protocol->RxIndex += Xcvr_RxMax(p_protocol->p_Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[p_protocol->RxIndex], nextRxIndex - p_protocol->RxIndex);
 
         if(p_protocol->RxIndex == nextRxIndex) /* (xcvrRxCount == xcvrRxLimit) */
         {
@@ -107,7 +107,7 @@ static void TxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
     if(p_protocol->p_Specs->BUILD_TX_SYNC != 0U)
     {
         p_protocol->p_Specs->BUILD_TX_SYNC(p_protocol->CONST.P_TX_PACKET_BUFFER, &txLength, txId);
-        Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, txLength);
+        Xcvr_TxN(p_protocol->p_Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, txLength);
     }
 }
 
@@ -117,7 +117,7 @@ static void TxSync(Protocol_T * p_protocol, Protocol_TxSyncId_T txId)
 */
 static inline bool TxResp(Protocol_T * p_protocol)
 {
-    return (p_protocol->TxLength > 0U) ? Xcvr_TxN(&p_protocol->Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength) : false;
+    return (p_protocol->TxLength > 0U) ? Xcvr_TxN(p_protocol->p_Xcvr, p_protocol->CONST.P_TX_PACKET_BUFFER, p_protocol->TxLength) : false;
 }
 
 /*
@@ -161,7 +161,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
     switch(p_protocol->RxState)
     {
         case PROTOCOL_RX_STATE_WAIT_BYTE_1: /* nonblocking wait state, no timer */
-            if(Xcvr_RxMax(&p_protocol->Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[0U], 1U) > 0U)
+            if(Xcvr_RxMax(p_protocol->p_Xcvr, &p_protocol->CONST.P_RX_PACKET_BUFFER[0U], 1U) > 0U)
             {
                 /*
                     Use starting byte even if data is unencoded. first char can still be handled in separate state.
@@ -187,7 +187,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
                     if(*p_protocol->CONST.P_TIMER - p_protocol->RxTimeStart > p_protocol->p_Specs->RX_TIMEOUT)  /* No need to check for overflow if using millis */
                     {
                         // ProcNackRepeat(p_protocol, p_protocol->p_Specs->NACK_COUNT, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT, PROTOCOL_TX_SYNC_ABORT);
-                        // Xcvr_FlushRxBuffer(&p_protocol->Xcvr);
+                        // Xcvr_FlushRxBuffer(p_protocol->p_Xcvr);
                         TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT);
                         p_protocol->RxState = PROTOCOL_RX_STATE_WAIT_BYTE_1;
                         rxStatus = PROTOCOL_RX_CODE_ERROR_TIMEOUT;
@@ -201,7 +201,7 @@ static inline Protocol_RxCode_T ProcRxState(Protocol_T * p_protocol)
 
                 case PROTOCOL_RX_CODE_ERROR_META:
                     /* May occur before a packet is complete. await byte 1 maybe erroneous if data is unencoded. flush buffers */
-                    // Xcvr_FlushRxBuffer(&p_protocol->Xcvr);
+                    // Xcvr_FlushRxBuffer(p_protocol->p_Xcvr);
                     // ProcNackRepeat(p_protocol, p_protocol->p_Specs->NACK_COUNT, PROTOCOL_TX_SYNC_NACK_PACKET_META, PROTOCOL_TX_SYNC_ABORT);
                     TxSync(p_protocol, PROTOCOL_TX_SYNC_NACK_PACKET_META);
                     // p_protocol->RxPacketErrorCount++;
@@ -524,14 +524,14 @@ void Protocol_Proc(Protocol_T * p_protocol)
 void Protocol_SetXcvr(Protocol_T * p_protocol, uint8_t xcvrId)
 {
     p_protocol->Config.XcvrId = xcvrId;
-    Xcvr_Init(&p_protocol->Xcvr, p_protocol->Config.XcvrId);
+    p_protocol->p_Xcvr = mux_or_default((entry_table_t)p_protocol->CONST.P_XCVR_TABLE, p_protocol->CONST.XCVR_COUNT, xcvrId);
 }
 
 void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 {
-    if((baudRate != 0U) && (Xcvr_IsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true))
+    if ((baudRate != 0U) && mux_is_valid(p_protocol->p_Xcvr, (entry_table_t)p_protocol->CONST.P_XCVR_TABLE, p_protocol->CONST.XCVR_COUNT, p_protocol->Config.XcvrId) == true)
     {
-        Xcvr_ConfigBaudRate(&p_protocol->Xcvr, baudRate);
+        Xcvr_ConfigBaudRate(p_protocol->p_Xcvr, baudRate);
     }
 }
 
@@ -548,7 +548,7 @@ void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 
 bool Protocol_Enable(Protocol_T * p_protocol)
 {
-    bool isEnable = ((Xcvr_IsSet(&p_protocol->Xcvr, p_protocol->Config.XcvrId) == true) && (p_protocol->p_Specs != 0U));
+    bool isEnable = ((mux_is_valid(p_protocol->p_Xcvr, (entry_table_t)p_protocol->CONST.P_XCVR_TABLE, p_protocol->CONST.XCVR_COUNT, p_protocol->Config.XcvrId) == true) && (p_protocol->p_Specs != NULL));
 
     if(isEnable == true)
     {

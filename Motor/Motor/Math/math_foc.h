@@ -26,7 +26,7 @@
     @author FireSourcery
     @brief  FOC pure math functions.
             Aligned in CCW order: a, b, c; alpha, beta; d, q
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MATH_FOC_H
@@ -183,7 +183,8 @@ static inline void foc_invpark(fract16_t * p_alpha, fract16_t * p_beta, fract16_
     mag_limit^2 - d^2 = q^2
 */
 /* vector_limit_clamp */
-static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t magnitude_limit, fract16_t d_limit)
+/* applies vd limit on magnitude over limit only */
+static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t magnitude_limit, fract16_t d_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
@@ -191,6 +192,7 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
     uint32_t d_limit_squared;
     uint32_t q_limit_squared;
     uint16_t q_limit;
+    bool is_limited = false;
 
     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
     {
@@ -203,7 +205,24 @@ static inline void foc_circle_limit(fract16_t * p_d, fract16_t * p_q, fract16_t 
         q_limit_squared = mag_limit_squared - d_limit_squared;
         q_limit = fixed_sqrt(q_limit_squared);
         *p_q = (*p_q < 0) ? (0 - q_limit) : q_limit;
+        is_limited = true;
     }
+
+    return is_limited;
+}
+
+/* return q limit */
+static inline ufract16_t foc_circle_limit_q(fract16_t magnitude_limit, fract16_t d)
+{
+    uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+    uint32_t d_squared = (int32_t)d * d;
+    uint32_t q_squared = mag_limit_squared - d_squared;
+    uint16_t q_limit;
+
+    if (d_squared > mag_limit_squared) { q_limit = 0; }
+    else { q_limit = fixed_sqrt(q_squared); }
+
+    return q_limit;
 }
 
 

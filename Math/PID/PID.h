@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,13 +26,9 @@
 /*!
     @file   PID.h
     @author FireSourcery
-    @brief
-    @version V0
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef PID_H
-#define PID_H
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -54,16 +52,14 @@ typedef struct PID_Config
 }
 PID_Config_T;
 
-typedef const struct PID_Const
-{
-    const PID_Config_T * const P_CONFIG;
-}
-PID_Const_T;
-
 typedef struct PID
 {
-    const PID_Const_T CONST;
-    PID_Config_T Config;
+    /*  */
+    int32_t IntegralAccum; /* Shifted 15 */
+    int16_t ErrorPrev;
+    int16_t OutputMin; /* -32768 Min */
+    int16_t OutputMax; /* 32767 Max */
+    int16_t Output;
 
     /*
         Run-time coefficients. Store as Fixed32.
@@ -74,25 +70,21 @@ typedef struct PID
     int16_t IntegralGain;
     int8_t IntegralGainShift;
 
-    /*  */
-    int32_t IntegralAccum; /* Shifted 15 */
-    int16_t ErrorPrev;
-    int16_t OutputMin; /* -32768 Min */
-    int16_t OutputMax; /* 32767 Max */
-    int16_t Output;
+    PID_Config_T Config;
 }
 PID_T;
-
-#define PID_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
 
 static inline int16_t PID_GetOutput(const PID_T * p_pid) { return p_pid->Output; }
 static inline int16_t PID_GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 15); }
 
 static inline bool PID_IsLimited(const PID_T * p_pid) { return (p_pid->Output == p_pid->OutputMin) || (p_pid->Output == p_pid->OutputMax); }
 
+
+/******************************************************************************/
 /*
     Config
 */
+/******************************************************************************/
 static inline uint32_t PID_GetSampleFreq(const PID_T * p_pid) { return p_pid->Config.SampleFreq; }
 
 /* Q17.15 */
@@ -108,15 +100,16 @@ static inline uint16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi
 static inline uint16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
 static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return (int32_t)p_pid->PropGain << (15 - p_pid->PropGainShift); }
-static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return (int32_t)p_pid->IntegralGain * p_pid->Config.SampleFreq >> p_pid->IntegralGainShift; }
+static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return ((int32_t)p_pid->IntegralGain * p_pid->Config.SampleFreq) >> p_pid->IntegralGainShift; }
 
-static inline int16_t _PID_GetKp_Fixed16_Runtime(const PID_T * p_pid) { return  _PID_GetKp_Runtime(p_pid) >> 8; }
-static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return  _PID_GetKi_Runtime(p_pid) >> 8; }
+static inline int16_t _PID_GetKp_Fixed16_Runtime(const PID_T * p_pid) { return _PID_GetKp_Runtime(p_pid) >> 8; }
+static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return _PID_GetKi_Runtime(p_pid) >> 8; }
 
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
+extern void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config);
 extern void PID_Init(PID_T * p_pid);
 extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
@@ -129,5 +122,3 @@ extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);
 extern void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16);
 extern void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16);
 extern void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16);
-
-#endif /* PID_H */

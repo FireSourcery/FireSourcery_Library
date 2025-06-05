@@ -25,7 +25,7 @@
     @file   Config.h
     @author FireSourcery
     @brief     State machine module preprocessor configuration options and defaults.
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_STATE_MACHINE_H

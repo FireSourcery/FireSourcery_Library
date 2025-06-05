@@ -25,7 +25,7 @@
     @file   Q.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "fixed.h"
@@ -40,7 +40,7 @@
 uint16_t fixed_sqrt(uint32_t x)
 {
     uint32_t result = 0U;
-    uint32_t bit = 1U << 30U; // The second-to-top bit is set
+    uint32_t bit = 1UL << 30U; // The second-to-top bit is set
 
     // "bit" starts at the highest power of four <= the argument.
     while (bit > x) { bit >>= 2; }
@@ -62,60 +62,75 @@ uint16_t fixed_sqrt(uint32_t x)
     return result;
 }
 
-/*!
-    @brief Calculates square root
+// /*!
+//     @brief Calculates square root
 
-    Babylonian method
-    y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
+//     Babylonian method
+//     y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
 
-    <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
-*/
-uint16_t _fixed_sqrt(int32_t x)
+//     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
+// */
+// uint16_t _fixed_sqrt(int32_t x)
+// {
+//     uint32_t yPrev;
+//     uint32_t y;
+
+//     if(x > 0)
+//     {
+//         /*
+//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+
+//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+//             128*128 == (1 << 14), solve < 1048576
+//             1048576U == (1 << 20)
+//         */
+//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
+//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+//         {
+//             y = (yPrev + (x / yPrev)) / 2U;
+//             if(y == yPrev) { break; }
+//             yPrev = y;
+//         }
+//     }
+//     else
+//     {
+//         y = 0U;
+//     }
+
+//     return (uint16_t)y;
+// }
+
+uint8_t _leading_zeros(uint32_t x)
 {
-    uint32_t yPrev;
-    uint32_t y;
+#if defined(__GNUC__)
+    return __builtin_clz(x);
+#elif(__STDC_VERSION__ >= 202311L)
+    return stdc_leading_zeros(x);
+#endif
+}
 
-    if(x > 0)
-    {
-        /*
-            Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
-
-            8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-            128*128 == (1 << 14), solve < 1048576
-            1048576U == (1 << 20)
-        */
-        yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-        for(uint8_t iteration = 0U; iteration < 6U; iteration++)
-        {
-            y = (yPrev + (x / yPrev)) / 2U;
-            if(y == yPrev) { break; }
-            yPrev = y;
-        }
-    }
-    else
-    {
-        y = 0U;
-    }
-
-    return (uint16_t)y;
+uint8_t _leading_sign_bits(int32_t x)
+{
+#if defined(__GNUC__)
+    return __builtin_clrsb(x);
+#elif(__STDC_VERSION__ >= 202311L)
+    return stdc_leading_sign_bits(x);
+#endif
 }
 
 
-// uint8_t _leading_zeros(uint32_t x)
-// {
-// #if defined(__GNUC__)
-//      return (x == 0U) ? 32U :  __builtin_clz(x);
-// #elif(__STDC_VERSION__ >= 202311L)
-//     return stdc_leading_zeros(x);
-// #endif
-// }
-
+/*
+    0xFFFFFFFF -> 32
+    0x7FFFFFFF -> 31
+    0x80000000 -> 32
+    0x00000000 -> 0
+*/
 uint8_t fixed_bit_width(uint32_t x)
 {
 #if (__STDC_VERSION__ >= 202311L)
     return stdc_bit_width(x);
 #elif defined(__GNUC__)
-    return (x == 0U) ? 0U : (32U - __builtin_clz(x));
+    return (32U - __builtin_clz(x));
 #else
     uint8_t shift = 0U;
     while ((x >> shift) > 0U) { shift++; }
@@ -123,10 +138,33 @@ uint8_t fixed_bit_width(uint32_t x)
 #endif
 }
 
+/*
+    0xFFFFFFFF -> 1
+    0x7FFFFFFF -> 31
+    0x80000000 -> 31
+    0x00000000 -> 0
+*/
 uint8_t fixed_bit_width_signed(int32_t x)
 {
-    fixed_bit_width(math_abs(x));
+    return fixed_bit_width(math_abs(x));
 }
+
+/* leading zeros */
+/* x != 0 */
+// uint8_t fixed_leading_zeros(uint32_t x)
+uint8_t fixed_lshift_max_unsigned(uint32_t x)
+{
+    return (32U - fixed_bit_width(x));
+}
+
+/* leading sign/zero bits - 1 */
+/* fixed32_norm_shift */
+/* x != 0 */
+uint8_t fixed_lshift_max_signed(int32_t x)
+{
+    return (31U - fixed_bit_width_signed(x));
+}
+
 
 /*
     65535 -> 15
@@ -135,7 +173,7 @@ uint8_t fixed_bit_width_signed(int32_t x)
 */
 uint8_t fixed_log2(uint32_t x)
 {
-    return fixed_bit_width(x) - 1U;
+    return (x == 0U) ? 0U : (fixed_bit_width(x) - 1U);
 }
 
 /*
@@ -145,7 +183,8 @@ uint8_t fixed_log2(uint32_t x)
 */
 uint8_t fixed_log2_ceiling(uint32_t x)
 {
-    fixed_log2(x - 1U) + 1U;
+    // fixed_log2(x - 1U) + 1U;
+    return (x == 0U) ? 0U : fixed_bit_width(x - 1U);
 }
 
 
@@ -185,26 +224,3 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
-/* leading zeros */
-// uint8_t fixed_lshift_max_unsigned(uint32_t x)
-// {
-// #if defined(__GNUC__)
-//     return __builtin_clz(x);
-// #else
-//     return 31U - fixed_log2(x);
-// #endif
-// }
-
-/* leading sign/zero bits - 1 */
-/* 31 - bit width */
-// uint8_t fixed_unit_scalar_shift(int32_t x)
-uint8_t fixed_lshift_max_signed(int32_t x)
-{
-    31U - fixed_bit_width_signed(x);
-}
-
-
-// int32_t fixed32_unit_scalar(int32_t x)
-// {
-//     return INT32_MAX >> fixed_lshift_max_signed(x);
-// }

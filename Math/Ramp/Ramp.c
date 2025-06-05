@@ -24,7 +24,7 @@
 /*!
     @file   Ramp.c
     @author FireSourcery
-    @version V0
+
     @brief
 */
 /******************************************************************************/
@@ -33,100 +33,73 @@
 
 
 /*
-    return ouput as shifted
+    target is updated independently
 */
-static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
-{
-    int32_t output32 = p_ramp->State;
-
-    // Ramp slope always positive
-    if (p_ramp->Target > p_ramp->State) // incrementing
-    {
-        output32 = math_limit_upper(p_ramp->State + (p_ramp->Coefficient * steps), p_ramp->Target);
-    }
-    else if (p_ramp->Target < p_ramp->State) // decrementing
-    {
-        output32 = math_limit_lower(p_ramp->State - (p_ramp->Coefficient * steps), p_ramp->Target);
-    }
-
-    // int32_t output32 = p_ramp->State + (p_ramp->Coefficient * steps);
-    // int32_t sign = math_sign(p_ramp->Target - p_ramp->State);
-    // output32 = math_clamp(output32, -1 * abs(p_ramp->Target), abs(p_ramp->Target));
-
-    return output32;
-}
-
-/* altneratively, on index, steps + x0 < XDelta*/
-/* Slope as signed */
-// static int32_t OutputOf(const Ramp_T * p_ramp, int32_t steps)
-// {
-//     int32_t output32 = p_ramp->State + (p_ramp->Coefficient * steps);
-//     return output32;
-// }
-
 /* Slope as abs */
 static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
 {
-    int32_t target32 = target << p_ramp->Shift;
-    int32_t output32 = p_ramp->State;
+    int32_t target32 = target << p_ramp->Accumulator.Shift;
+    int32_t output32 = p_ramp->Accumulator.State;
 
-    if (target32 > p_ramp->State) // incrementing
+    if (target32 > p_ramp->Accumulator.State) // incrementing
     {
-        output32 = math_limit_upper(p_ramp->State + p_ramp->Coefficient, target32);
+        output32 = math_limit_upper(p_ramp->Accumulator.State + p_ramp->Accumulator.Coefficient, target32);
     }
-    else if (target32 < p_ramp->State) // decrementing
+    else if (target32 < p_ramp->Accumulator.State) // decrementing
     {
-        output32 = math_limit_lower(p_ramp->State - p_ramp->Coefficient, target32);
+        output32 = math_limit_lower(p_ramp->Accumulator.State - p_ramp->Accumulator.Coefficient, target32);
     }
 
     return output32;
 }
 
-int32_t _Ramp_ProcOutputN(Ramp_T * p_ramp, int32_t steps)
+int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {
-    if (p_ramp->State != p_ramp->Target) { p_ramp->State = OutputOf(p_ramp, steps); }
+    if (Ramp_GetOutput(p_ramp) != target) { p_ramp->Accumulator.State = NextOf(p_ramp, target); }
     return Ramp_GetOutput(p_ramp);
 }
+
+// int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t target, int16_t lowerLimit, int16_t upperLimit)
+// {
+//     if (Ramp_GetOutput(p_ramp) != target) { p_ramp->Accumulator.State = NextOf(p_ramp, math_clamp(target, lowerLimit, upperLimit)); }
+//     return Ramp_GetOutput(p_ramp);
+// }
+
+// int32_t Ramp_ProcNext_InternalLimits(Ramp_T * p_ramp, int16_t target)
+// {
+//    return Ramp_ProcNextWith(p_ramp, target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
+// }
 
 int32_t Ramp_ProcOutput(Ramp_T * p_ramp)
 {
-    return _Ramp_ProcOutputN(p_ramp, 1U);
+    return Ramp_ProcNextOf(p_ramp, Ramp_GetTarget(p_ramp));
 }
-
-int32_t Ramp_NextOf(Ramp_T * p_ramp, int16_t target)
-{
-    if ((p_ramp->State >> p_ramp->Shift) != target) { p_ramp->State = NextOf(p_ramp, target); }
-    return Ramp_GetOutput(p_ramp);
-}
-
 
 /******************************************************************************/
 /*
-    Ramp using Linear Aliases
+    Ramp
 */
 /******************************************************************************/
 /*
-    using fixed RAMP_SHIFT, interpolate ramps do not need to recalculate.
-
     range as positive only [0:UINT16_MAX]
 */
 void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {
-    p_ramp->Shift = RAMP_SHIFT;
+    p_ramp->Accumulator.Shift = RAMP_SHIFT;
     Ramp_SetSlope(p_ramp, duration_Ticks, range);
     Ramp_SetOutputState(p_ramp, 0);
 }
 
 // void Ramp_Init_Rate(Ramp_T * p_ramp, uint32_t rate_fract16)
 // {
-//     p_ramp->Shift = RAMP_SHIFT;
+//     p_ramp->Accumulator.Shift = RAMP_SHIFT;
 //     Ramp_SetSlope_Fract16(p_ramp, rate_fract16);
 //     Ramp_SetOutputState(p_ramp, 0);
 // }
 
 void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range)
 {
-    p_ramp->Shift = RAMP_SHIFT;
+    p_ramp->Accumulator.Shift = RAMP_SHIFT;
     Ramp_SetSlope_Millis(p_ramp, updateFreq_Hz, duration_Ms, range);
     Ramp_SetOutputState(p_ramp, 0);
 }
@@ -141,13 +114,18 @@ void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration
 void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {
     assert(duration_Ticks != 0U);
-    p_ramp->Coefficient = (range << p_ramp->Shift) / duration_Ticks;
+    p_ramp->Accumulator.Coefficient = (range << p_ramp->Accumulator.Shift) / duration_Ticks;
 }
 
-// /* [0:UINT16_MAX] / Tick */
-// void Ramp_SetSlope_Rate(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t rate)
+/* [0:UINT16_MAX] / Tick */
+void Ramp_SetSlope_Rate(Ramp_T * p_ramp, uint16_t rate)
+{
+    p_ramp->Accumulator.Coefficient = rate << RAMP_SHIFT;
+}
+
+// void Ramp_SetSlope_Rate(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t ratePerS)
 // {
-//     p_ramp->Coefficient = rate << RAMP_SHIFT;
+//     p_ramp->Accumulator.Coefficient = rate << RAMP_SHIFT;
 // }
 
 /*
@@ -164,18 +142,18 @@ void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t dura
     Set
 */
 /******************************************************************************/
-
+/* config excluding shift */
 /* if initial > final AND acceleration is positive, ramp returns final value */
 void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final)
 {
-    Ramp_SetSlope(p_ramp, duration_Ticks, final - initial);
+    Ramp_SetSlope(p_ramp, duration_Ticks, math_abs(final - initial));
     Ramp_SetOutput(p_ramp, initial);
     Ramp_SetTarget(p_ramp, final);
 }
 
 void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
 {
-    Ramp_SetSlope_Millis(p_ramp, updateFreq_Hz, duration_Ms, final - initial);
+    Ramp_SetSlope_Millis(p_ramp, updateFreq_Hz, duration_Ms, math_abs(final - initial));
     Ramp_SetOutput(p_ramp, initial);
     Ramp_SetTarget(p_ramp, final);
 }

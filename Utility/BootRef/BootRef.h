@@ -25,7 +25,7 @@
     @file   BootRef.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef BOOT_REF_H

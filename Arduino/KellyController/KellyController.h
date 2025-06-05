@@ -25,7 +25,7 @@
     @file   KellyController.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef KELLY_CONTROLLER_H

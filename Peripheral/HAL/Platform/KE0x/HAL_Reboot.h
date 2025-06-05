@@ -25,7 +25,7 @@
     @file    .h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_REBOOT_PLATFORM_H

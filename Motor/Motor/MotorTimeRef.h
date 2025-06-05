@@ -25,7 +25,7 @@
     @file   MotorTimeReference.h
     @author FireSourcery
     @brief  Global Static, for all Motor instances
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_TIME_REFERENCE_H
@@ -35,6 +35,7 @@
 
 /******************************************************************************/
 /*
+    Clock/Timer Reference
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROL_FREQ
@@ -43,20 +44,25 @@
 
 /* INNER_LOOP */
 /* OUTER_LOOP */
+/* INNER_CONTROL_FREQ 20000U */
+/* OUTER_CONTROL_FREQ 1000U */
 
 #ifndef MOTOR_I_LOOP_FREQ
-#define MOTOR_I_LOOP_FREQ (10000U)
+#define MOTOR_I_LOOP_FREQ (10000U) /* CONTROL_FREQ / ANALOG_DIVIDER) */
 #endif
 
 #ifndef MOTOR_SPEED_LOOP_FREQ
 #define MOTOR_SPEED_LOOP_FREQ (1000U)
 #endif
 
-#define CYCLES_OF_MS(Freq, Milliseconds)    ((uint32_t)((uint64_t)Milliseconds * Freq / 1000U))
-#define MS_OF_CYCLES(Freq, Cycles)          ((uint32_t)((uint64_t)Cycles * 1000U / Freq))
+#define CYCLES_OF_MS(Freq, Milliseconds)    ((uint32_t)((uint32_t)Milliseconds * Freq / 1000U))
+#define MS_OF_CYCLES(Freq, Cycles)          ((uint32_t)((uint32_t)Cycles * 1000U / Freq))
 
 #define MOTOR_CONTROL_CYCLES(Milliseconds)  CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_CONTROL_TIME_MS(Cycles)       MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
+
+#define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
+#define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
 #define MOTOR_I_CYCLES(Milliseconds)        CYCLES_OF_MS(MOTOR_I_LOOP_FREQ, Milliseconds)
 #define MOTOR_I_TIME_MS(Cycles)             MS_OF_CYCLES(MOTOR_I_LOOP_FREQ, Cycles)
@@ -76,8 +82,14 @@
 //     const uint32_t MOTOR_CURRENT_LOOP_FREQ;
 // }
 // MotorTimeReference_T;
+// MotorRef_Clock_T;
 
 static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & MOTOR_ANALOG_DIVIDER_MASK) == 0UL); }
 
+/*
+    Local Conversion Units
+*/
+static inline uint32_t _Motor_MillisOf(uint32_t controlCycles) { return MOTOR_CONTROL_TIME_MS(controlCycles); }
+static inline uint32_t _Motor_ControlCyclesOf(uint32_t millis) { return MOTOR_CONTROL_CYCLES(millis); }
 
 #endif

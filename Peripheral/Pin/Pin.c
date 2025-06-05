@@ -25,24 +25,24 @@
     @file   Pin.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "Pin.h"
 
 void Pin_Output_Init(const Pin_T * p_pin)
 {
-    HAL_Pin_InitOutput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
-    // HAL_Pin_WriteOutputOff(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
+    HAL_Pin_InitOutput(p_pin->P_HAL_PIN, p_pin->ID);
+    // HAL_Pin_WriteOutputOff(p_pin->P_HAL_PIN, p_pin->ID);
     Pin_Output_Off(p_pin);
 }
 
 void Pin_Input_Init(const Pin_T * p_pin)
 {
-    HAL_Pin_InitInput(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
+    HAL_Pin_InitInput(p_pin->P_HAL_PIN, p_pin->ID);
 }
 
 void Pin_Deinit(const Pin_T * p_pin)
 {
-    HAL_Pin_Deinit(p_pin->CONST.P_HAL_PIN, p_pin->CONST.ID);
+    HAL_Pin_Deinit(p_pin->P_HAL_PIN, p_pin->ID);
 }

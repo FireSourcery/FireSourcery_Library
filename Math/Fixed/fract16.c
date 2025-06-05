@@ -24,7 +24,7 @@
 /*!
     @file   Fract16.c
     @author FireSourcery
-    @version V0
+
     @brief  Functions for fixed-point trigonometric calculations using 16-bit fractional values.
 */
 /******************************************************************************/

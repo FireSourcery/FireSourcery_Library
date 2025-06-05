@@ -25,7 +25,7 @@
     @file    Blinky.c
     @author FireSourcery
     @brief     Pin Indicator
-    @version V0
+
 */
 /******************************************************************************/
 #include "Blinky.h"
@@ -37,107 +37,125 @@
 /*!
     @brief initialize blink switch
 */
-void Blinky_Init(Blinky_T * p_blinky)
+void Blinky_Init(const Blinky_T * p_blinky)
 {
-    Pin_Output_Init(&p_blinky->Pin);
-    Pin_Output_Off(&p_blinky->Pin);
-    Timer_Init(&p_blinky->Timer);
-    p_blinky->PatternFunction = 0U;
+    Pin_Output_Init(&p_blinky->PIN);
+    Pin_Output_Off(&p_blinky->PIN);
+    Timer_Init(&p_blinky->P_STATE->Timer);
+    p_blinky->P_STATE->PatternFunction = NULL;
 }
 
-static void Pattern_PeriodicToggle(Blinky_T * p_blinky);
+static void Pattern_PeriodicToggle(const Blinky_T * p_blinky);
 
 /*!
     @brief
     @param[in]
 */
 //disabled, oneshot, periodic
-void Blinky_Proc(Blinky_T * p_blinky)
+void Blinky_Proc(const Blinky_T * p_blinky)
 {
-    if(Timer_Poll(&p_blinky->Timer) == true)
+    Blinky_State_T * p_state = p_blinky->P_STATE;
+
+    switch (p_blinky->P_STATE->Mode)
     {
-        if(Timer_IsOneShot(&p_blinky->Timer) == true) /* Timer is in OneShot Mode */
-        {
-            if (p_blinky->Index < p_blinky->End) /* OneShot Pattern */
+        case BLINKY_STATE_DISABLED:  break;
+        case BLINKY_STATE_ENABLED:
+            if (Timer_Poll(&p_state->Timer) == true)
             {
-                Pattern_PeriodicToggle(p_blinky);
-                Timer_Restart(&p_blinky->Timer);
-                p_blinky->Index++;
+                if (Timer_IsOneShot(&p_state->Timer) == true) /* Timer is in OneShot Mode */
+                {
+                    if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
+                    {
+                        Pattern_PeriodicToggle(p_blinky);
+                        Timer_Restart(&p_state->Timer);
+                        p_state->Index++;
+                    }
+                    else
+                    {
+                        // _Blinky_Toggle(p_state);
+                        Pin_Output_Off(&p_blinky->PIN); /* Turn off */
+                        Timer_StartPeriodic(&p_state->Timer, p_state->OffTime);  /* Restore Periodic */
+                    }
+                }
+                else /* Timer is in Periodic Mode */
+                {
+                    if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
+                }
             }
-            else
-            {
-                _Blinky_Toggle(p_blinky);
-                Timer_StartPeriodic(&p_blinky->Timer, p_blinky->OffTime);  /* Restore Periodic */
-            }
-        }
-        else /* Timer is in Periodic Mode */
-        {
-            if (p_blinky->PatternFunction != 0U) { p_blinky->PatternFunction(p_blinky); }
-        }
+            break;
+
+        default:
+            break;
     }
 }
 
-void Blinky_On(Blinky_T * p_blinky)     { p_blinky->IsOn = true;    Pin_Output_High(&p_blinky->Pin); }
-void Blinky_Off(Blinky_T * p_blinky)    { p_blinky->IsOn = false;   Pin_Output_Low(&p_blinky->Pin); }
-void Blinky_Toggle(Blinky_T * p_blinky) { if (p_blinky->IsOn == true) { Blinky_Off(p_blinky); } else { Blinky_On(p_blinky); } }
+void Blinky_On(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = true; Pin_Output_High(&p_blinky->PIN); }
+void Blinky_Off(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = false; Pin_Output_Low(&p_blinky->PIN); }
+void _Blinky_Toggle(const Blinky_T * p_blinky) { Pin_Output_Toggle(&p_blinky->PIN); } /* with register state */
+void Blinky_Toggle(const Blinky_T * p_blinky) { if (p_blinky->P_STATE->IsOn == true) { Blinky_Off(p_blinky); } else { Blinky_On(p_blinky); } }
 
-void Blinky_Stop(Blinky_T * p_blinky)
+void Blinky_Stop(const Blinky_T * p_blinky)
 {
+    Timer_Stop(&p_blinky->P_STATE->Timer);
     Blinky_Off(p_blinky);
-    Timer_Disable(&p_blinky->Timer);
-    p_blinky->PatternFunction = NULL;
+    p_blinky->P_STATE->PatternFunction = NULL;
 }
 
 /* Start with On first */
-void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration)
+void Blinky_Blink_OnOff(const Blinky_T * p_blinky, uint32_t duration)
 {
     Blinky_On(p_blinky);
-    Timer_StartOneShot(&p_blinky->Timer, duration);
+    Timer_StartOneShot(&p_blinky->P_STATE->Timer, duration);
 }
 
 /* Toggle */
-void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration)
+void Blinky_Blink_Toggle(const Blinky_T * p_blinky, uint32_t duration)
 {
     _Blinky_Toggle(p_blinky);
-    Timer_StartOneShot(&p_blinky->Timer, duration);
+    Timer_StartOneShot(&p_blinky->P_STATE->Timer, duration);
 }
 
-void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime)
+void Blinky_Blink(const Blinky_T * p_blinky, uint32_t onTime)
 {
-    p_blinky->Index = 0U;
-    p_blinky->End = 0U;
+    p_blinky->P_STATE->Index = 0U;
+    p_blinky->P_STATE->End = 0U;
     Blinky_Blink_OnOff(p_blinky, onTime);
 }
 
-void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
+void Blinky_BlinkN(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
 {
-    p_blinky->Index = 0U;
-    p_blinky->End = nRepeat * 2U - 2U;
-    p_blinky->OnTime = onTime;
-    p_blinky->OffTime = offTime;
+    p_blinky->P_STATE->Index = 0U;
+    p_blinky->P_STATE->End = nRepeat * 2U - 2U;
+    p_blinky->P_STATE->OnTime = onTime;
+    p_blinky->P_STATE->OffTime = offTime;
     Blinky_Blink_OnOff(p_blinky, onTime);
 }
 
-void Blinky_StartPeriodic(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime)
-{
-    p_blinky->OnTime = onTime;
-    p_blinky->OffTime = offTime;
-    p_blinky->PatternFunction = Pattern_PeriodicToggle;
-    Timer_StartPeriodic(&p_blinky->Timer, offTime);
-}
 
-static void Pattern_PeriodicToggle(Blinky_T * p_blinky)
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static void Pattern_PeriodicToggle(const Blinky_T * p_blinky)
 {
-    if(p_blinky->IsOn == true)
+    if (p_blinky->P_STATE->IsOn == true)
     {
         Blinky_Off(p_blinky);
-        Timer_SetPeriod(&p_blinky->Timer, p_blinky->OffTime);
+        Timer_SetPeriod(&p_blinky->P_STATE->Timer, p_blinky->P_STATE->OffTime);
     }
     else
     {
         Blinky_On(p_blinky);
-        Timer_SetPeriod(&p_blinky->Timer, p_blinky->OnTime);
+        Timer_SetPeriod(&p_blinky->P_STATE->Timer, p_blinky->P_STATE->OnTime);
     }
+}
+
+void Blinky_StartPeriodic(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime)
+{
+    p_blinky->P_STATE->OnTime = onTime;
+    p_blinky->P_STATE->OffTime = offTime;
+    p_blinky->P_STATE->PatternFunction = Pattern_PeriodicToggle;
+    Timer_StartPeriodic(&p_blinky->P_STATE->Timer, offTime);
 }
 
 /******************************************************************************/

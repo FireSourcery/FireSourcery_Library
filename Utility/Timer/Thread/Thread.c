@@ -25,7 +25,7 @@
     @file    Thread.c
     @author FireSourcery
     @brief     Simple thread manager.
-    @version V0
+
  */
 /******************************************************************************/
 #include "Thread.h"

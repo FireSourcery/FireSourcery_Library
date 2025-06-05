@@ -25,7 +25,7 @@
     @file   HAL_ADC.h
     @author
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_ADC_PLATFORM_H

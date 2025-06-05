@@ -25,57 +25,72 @@
     @file   .h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOT_NVM_H
 #define MOT_NVM_H
 
-#include "Motor/Motor/Transducer/MotorAnalog/MotorAnalogRef.h"
+#include "Motor/Motor/Analog/MotorAnalogRef.h"
 #include "Utility/BootRef/BootRef.h"
+#include "Peripheral/NvMemory/Flash/Flash.h"
+#include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
 // #if     defined(CONFIG_MOT_NVM_USER_EEPROM)
 // #if     defined(CONFIG_MOT_NVM_USER_FLASH)
 
 /* externally define */
 struct HAL_Nvm_Manufacturer;
-// struct HAL_MemMap_MainConfig;
-// typedef struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
+// typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
 
-// extern uint32_t HAL_Nvm_Manufacturer_GetVMaxVolts(const struct HAL_Nvm_Manufacturer * p_this);
-// extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const struct HAL_Nvm_Manufacturer * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetVMaxVolts(const struct HAL_Nvm_Manufacturer * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const struct HAL_Nvm_Manufacturer * p_this);
 // extern uint32_t HAL_Nvm_Manufacturer_GetVRated(const struct HAL_Nvm_Manufacturer * p_this);
 // extern uint32_t HAL_Nvm_Manufacturer_GetIRatedRms(const struct HAL_Nvm_Manufacturer * p_this);
 extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
 extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
 
+/* config table */
+// struct HAL_MemMap_MainConfig;
+/* altnernatively as descriptor table. non contigous */
+// typedef struct MotNvm_Entry
+// {
+//     const void * const nvm_address;     /* NVM/Flash address */
+//     void * const ram_address;           /* RAM address */
+//     const size_t size;                  /* Size in bytes */
+//     const uint32_t checksum_seed;       /* For validation */
+// }
+// MotNvm_Entry_T;
+
 
 typedef const struct
 {
-    Flash_T * const P_FLASH;
+    Flash_T * P_FLASH;
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
-    EEPROM_T * const P_EEPROM;
+    EEPROM_T * P_EEPROM;
 #endif
-    /* Flash params start. */
-    const uintptr_t MAIN_CONFIG_ADDRESS;
-    const uint16_t MAIN_CONFIG_SIZE;
-    // alternatively use  P_FLASH->P_PARTITIONS[id]
-    const uintptr_t MANUFACTURE_ADDRESS;
-    const uint8_t MANUFACTURE_SIZE;
 
-    const BootRef_T * const P_BOOT_REF;
+    /* Flash params start. */
+    uintptr_t MAIN_CONFIG_ADDRESS;
+    uint16_t MAIN_CONFIG_SIZE;
+    // alternatively use  P_FLASH->P_PARTITIONS[id]
+    uintptr_t MANUFACTURE_ADDRESS;
+    uint8_t MANUFACTURE_SIZE;
+
+    const MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
+    const BootRef_T * P_BOOT_REF;
 }
-const MotNvm_T;
+MotNvm_T;
 
 /*
 */
-extern void MotNvm_Init(MotNvm_T * p_this);
-extern NvMemory_Status_T MotNvm_WriteConfig_Blocking(MotNvm_T * p_this, const void * p_nvm, const void * p_ram, size_t sizeBytes);
-extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(MotNvm_T * p_this, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
-extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(MotNvm_T * p_this, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
-extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(MotNvm_T * p_this);
-extern NvMemory_Status_T MotNvm_LoadMotorRefFrom(MotNvm_T * p_this, const struct HAL_Nvm_Manufacturer * p_source);
-extern NvMemory_Status_T MotNvm_LoadMotorRef(MotNvm_T * p_this);
+extern void MotNvm_Init(const MotNvm_T * p_motNvm);
+extern NvMemory_Status_T MotNvm_WriteConfig_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes);
+extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
+extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
+extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
+extern NvMemory_Status_T MotNvm_LoadMotorAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
+extern NvMemory_Status_T MotNvm_LoadMotorAnalogRef(const MotNvm_T * p_motNvm);
 
 
 #endif

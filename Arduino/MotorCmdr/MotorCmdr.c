@@ -26,7 +26,7 @@
     @file   MotProtocol.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "MotorCmdr.h"
@@ -117,7 +117,7 @@ void MotorCmdr_WriteBrake(MotorCmdr_T * p_motorCmdr, uint16_t brake)
     // p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_BRAKE;
     // p_motorCmdr->MotorCmdValue = brake;
     // Protocol_Cmdr_StartReq_Overwrite(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-    p_motorCmdr->MotorWriteVarId = MOT_VAR_BRAKE;
+    p_motorCmdr->MotorWriteVarId = MOT_DRIVE_VAR_BRAKE;
     p_motorCmdr->MotorWriteVarValue = brake;
     Protocol_Cmdr_StartReq_Overwrite(&p_motorCmdr->Protocol, MOT_PACKET_WRITE_VAR);
 }
@@ -128,14 +128,14 @@ void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
     // p_motorCmdr->MotorCmdValue = throttle;
     // Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
 
-    MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_THROTTLE, throttle);
+    MotorCmdr_WriteVar(p_motorCmdr, MOT_DRIVE_VAR_THROTTLE, throttle);
 }
 
 // void MotorCmdr_WriteRelease(MotorCmdr_T * p_motorCmdr)
 // {
 //     // p_motorCmdr->ControlIdActive = MOT_PACKET_CONTROL_RELEASE;
 //     // Protocol_Cmdr_StartReq(&p_motorCmdr->Protocol, MOT_PACKET_CONTROL_TYPE);
-//     MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_THROTTLE, 0U);
+//     MotorCmdr_WriteVar(p_motorCmdr, MOT_DRIVE_VAR_THROTTLE, 0U);
 // }
 
 // void MotorCmdr_WriteDirectionForward(MotorCmdr_T * p_motorCmdr)

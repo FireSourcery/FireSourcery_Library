@@ -24,7 +24,7 @@
 /*!
     @file   Ring.c
     @author FireSourcery
-    @version V0
+
     @brief
 */
 /******************************************************************************/
@@ -64,7 +64,7 @@ static inline void ExitCritical(const Ring_T * p_ring)
 static inline bool AcquireSignal(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireSignal(&p_ring->Mutex);
+    return Critical_AcquireLock(&p_ring->Lock);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
@@ -74,7 +74,7 @@ static inline bool AcquireSignal(Ring_T * p_ring)
 static inline void ReleaseSignal(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    Critical_ReleaseSignal(&p_ring->Mutex);
+    Critical_ReleaseLock(&p_ring->Lock);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -83,7 +83,7 @@ static inline void ReleaseSignal(Ring_T * p_ring)
 static inline bool AcquireCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireEnter(&p_ring->Mutex);
+    return Critical_AcquireEnter(&p_ring->Lock);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
@@ -93,7 +93,7 @@ static inline bool AcquireCritical(Ring_T * p_ring)
 static inline void ReleaseCritical(Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    Critical_ReleaseExit(&p_ring->Mutex);
+    Critical_ReleaseExit(&p_ring->Lock);
 #elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
@@ -111,20 +111,24 @@ static inline void ReleaseCritical(Ring_T * p_ring)
     Shrothand wrapper
     abstract away UNIT_SIZE
 */
-static inline void * PtrOf(const Ring_T * p_ring, size_t arrayIndex) { return void_pointer_at(p_ring->CONST.P_BUFFER, p_ring->CONST.UNIT_SIZE, arrayIndex); }
-static inline void Copy(const Ring_T * p_ring, void * p_dest, const void * p_src) { void_copy(p_dest, p_src, p_ring->CONST.UNIT_SIZE); }
+static inline void * PtrOf(const Ring_T * p_ring, size_t arrayIndex) { return ((uint8_t *)p_ring->Buffer + (p_ring->Type.UNIT_SIZE * arrayIndex)); }
+static inline void Copy(const Ring_T * p_ring, void * p_dest, const void * p_src) { void_copy(p_dest, p_src, p_ring->Type.UNIT_SIZE); }
 /* value array only */
-static inline intptr_t ValueOf(const Ring_T * p_ring, size_t arrayIndex) { return void_array_get(p_ring->CONST.P_BUFFER, p_ring->CONST.UNIT_SIZE, arrayIndex); }
+// static inline intptr_t ValueOf(const Ring_T * p_ring, size_t arrayIndex) { return void_array_get(p_ring->P_BUFFER, p_ring->Type.UNIT_SIZE, arrayIndex); }
 
 /* Effective array index of virtual index */
-static inline size_t IndexOf(const Ring_T * p_ring, size_t index)
+static inline size_t IndexOf(const Ring_T * p_ring, size_t ringIndex)
 {
 #if     defined(CONFIG_RING_POW2_COUNTER)
-    return _Ring_IndexWrapOf(p_ring, index);
+    return _Ring_IndexWrapOf(p_ring, ringIndex);
 #elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
-    return index;
+    return ringIndex;
 #endif
 }
+
+// static inline void * PtrOf(const Ring_T * p_ring, size_t ringIndex) { return PtrOf(p_ring, IndexOf(p_ring, ringIndex)); }
+// static inline void * Head(const Ring_T * p_ring) { return PtrOf(p_ring, p_ring->Head); }
+// static inline void * Tail(const Ring_T * p_ring) { return PtrOf(p_ring, p_ring->Tail); }
 
 /* Virtual access. Map virtual index to array index */
 static inline size_t IndexHead(const Ring_T * p_ring)                       { return IndexOf(p_ring, p_ring->Head); }
@@ -162,8 +166,8 @@ static inline void * Seek(Ring_T * p_ring, size_t index)                        
 static inline size_t IndexAt(const Ring_T * p_ring, size_t index)                       { return IndexOf(p_ring, _Ring_IndexIncOf(p_ring, p_ring->Head, index)); }
 static inline size_t IndexFront(const Ring_T * p_ring)                                  { return IndexOf(p_ring, p_ring->Head); }
 static inline size_t IndexBack(const Ring_T * p_ring)                                   { return IndexOf(p_ring, _Ring_IndexDecOf(p_ring, p_ring->Tail, 1)); } /* Tail - 1U */
-static inline size_t IndexFrontWrite(const Ring_T * p_ring)                             { return IndexOf(p_ring, _Ring_IndexDecOf(p_ring, p_ring->Head, 1)); }
 static inline size_t IndexBackWrite(const Ring_T * p_ring)                              { return IndexOf(p_ring, p_ring->Tail); }
+static inline size_t IndexFrontWrite(const Ring_T * p_ring)                             { return IndexOf(p_ring, _Ring_IndexDecOf(p_ring, p_ring->Head, 1)); }
 static inline void * At(const Ring_T * p_ring, size_t index)                            { return PtrOf(p_ring, IndexAt(p_ring, index)); }
 static inline void * Front(const Ring_T * p_ring)                                       { return PtrOf(p_ring, IndexFront(p_ring)); }
 static inline void * Back(const Ring_T * p_ring)                                        { return PtrOf(p_ring, IndexBack(p_ring)); }
@@ -171,26 +175,11 @@ static inline void PeekAt(const Ring_T * p_ring, size_t index, void * p_result) 
 static inline void PeekFront(const Ring_T * p_ring, void * p_result)                    { Copy(p_ring, p_result, Front(p_ring)); }
 static inline void PeekBack(const Ring_T * p_ring, void * p_result)                     { Copy(p_ring, p_result, Back(p_ring)); }
 static inline void PlaceAt(const Ring_T * p_ring, size_t index, const void * p_unit)    { Copy(p_ring, At(p_ring, index), p_unit); }
-static inline void PlaceFront(const Ring_T * p_ring, const void * p_unit)               { Copy(p_ring, Front(p_ring), p_unit); }
-static inline void PlaceBack(const Ring_T * p_ring, const void * p_unit)                { Copy(p_ring, Back(p_ring), p_unit); }
+/* Overwrite */
+static inline void ReplaceFront(const Ring_T * p_ring, const void * p_unit)               { Copy(p_ring, Front(p_ring), p_unit); }
+static inline void ReplaceBack(const Ring_T * p_ring, const void * p_unit)                { Copy(p_ring, Back(p_ring), p_unit); }
 
-/*
-*/
-// static inline size_t ContiguousEnd(const Ring_T * p_ring)           { return IndexHead(p_ring ) < IndexTail(p_ring) ? IndexTail(p_ring) : p_ring->CONST.LENGTH ; }
 
-// static inline void PlaceBackN(const Ring_T * p_ring, const void * p_units, size_t unitCount)
-// {
-//     size_t split = ContiguousEnd(p_ring);
-//     memcpy(Tail(p_ring), p_units, split);
-//     memcpy(p_ring->CONST.P_BUFFER, PtrOf(p_ring, split), unitCount - split);
-// }
-
-// static inline void PeekFrontN(const Ring_T * p_ring, void * p_results, size_t unitCount)
-// {
-//     size_t split = ContiguousEnd(p_ring);
-//     memcpy(p_results, Front(p_ring), split);
-//     memcpy(void_pointer_at(p_results, p_ring->CONST.UNIT_SIZE, split), p_ring->CONST.P_BUFFER, unitCount - split);
-// }
 
 /******************************************************************************/
 /*!
@@ -209,24 +198,8 @@ inline void * Ring_At(const Ring_T * p_ring, size_t index) { return (index < Rin
 // inline void _Ring_PeekFront(Ring_T * p_ring, void * p_result) { if (Ring_IsEmpty(p_ring) == false) { PeekFront(p_ring, p_result); } }
 // inline void _Ring_PeekBack(Ring_T * p_ring, void * p_result)  { if (Ring_IsEmpty(p_ring) == false) { PeekBack(p_ring, p_result); } }
 // inline void _Ring_PeekAt(Ring_T * p_ring, size_t index, void * p_result) { if (index < Ring_GetFullCount(p_ring)) { PeekAt(p_ring, index, p_result); } }
-
-/* alternatively copy for return by pointer */
 // inline void _Ring_Copy(Ring_T * p_ring, void * p_result, const void * p_unit) { if (p_unit != NULL) { Copy(p_ring, p_result, p_unit); } }
-// inline void _Ring_PeekFront(Ring_T * p_ring, void * p_result) { _Ring_Copy(p_ring, p_result, Ring_Front(p_ring)); }
-// inline void _Ring_PeekBack(Ring_T * p_ring, void * p_result)  { _Ring_Copy(p_ring, p_result, Ring_Back(p_ring)); }
 
-/*
-    returns the popped pointer
-    concurrent push/pop may overwrite contents
-*/
-inline void * _Ring_PopFront(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
-inline void * _Ring_PopBack(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
-
-// inline void _Ring_PopFrontTo(Ring_T * p_ring, void * p_result) { _Ring_Copy(p_ring, p_result, _Ring_PopFront(p_ring)); }
-// inline void _Ring_PopBackTo(Ring_T * p_ring, void * p_result)  { _Ring_Copy(p_ring, p_result, _Ring_PopBack(p_ring)); }
-
-inline void _Ring_PushBack(Ring_T * p_ring, const void * p_unit) { if (Ring_IsFull(p_ring) == false) { PushBack(p_ring, p_unit); } }
-inline void _Ring_PushFront(Ring_T * p_ring, const void * p_unit) { if (Ring_IsFull(p_ring) == false) { PushFront(p_ring, p_unit); } }
 
 // inline void _Ring_PushBackN(Ring_T * p_ring, const void * p_units, size_t unitCount)
 // {
@@ -245,8 +218,17 @@ inline void * _Ring_Seek(Ring_T * p_ring, size_t index)             { return (in
     Public
 */
 /******************************************************************************/
-void Ring_Init(Ring_T * p_ring)
+void Ring_Init(const Ring_Context_T * p_ring)
 {
+    Ring_InitFrom(p_ring->P_STATE, &p_ring->TYPE);
+}
+
+void Ring_InitFrom(Ring_T * p_ring, const Ring_Type_T * p_type)
+{
+    /* Ok to cast away const. It is the RAM copy */
+    memcpy((void *)&p_ring->Type, p_type, sizeof(Ring_Type_T));
+    p_ring->Head = 0U;
+    p_ring->Tail = 0U;
     Ring_Clear(p_ring);
 }
 
@@ -258,6 +240,8 @@ void Ring_Clear(Ring_T * p_ring)
 
 bool Ring_PushBack(Ring_T * p_ring, const void * p_unit)
 {
+    assert(p_unit != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsFull(p_ring) == false) { PushBack(p_ring, p_unit); isSuccess = true; }
@@ -268,6 +252,8 @@ bool Ring_PushBack(Ring_T * p_ring, const void * p_unit)
 
 bool Ring_PopFront(Ring_T * p_ring, void * p_result)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsEmpty(p_ring) == false) { PopFront(p_ring, p_result); isSuccess = true; }
@@ -277,6 +263,8 @@ bool Ring_PopFront(Ring_T * p_ring, void * p_result)
 
 bool Ring_PushFront(Ring_T * p_ring, const void * p_unit)
 {
+    assert(p_unit != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsFull(p_ring) == false) { PushFront(p_ring, p_unit); isSuccess = true; }
@@ -286,6 +274,8 @@ bool Ring_PushFront(Ring_T * p_ring, const void * p_unit)
 
 bool Ring_PopBack(Ring_T * p_ring, void * p_result)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsEmpty(p_ring) == false) { PopBack(p_ring, p_result); isSuccess = true; }
@@ -316,12 +306,14 @@ bool Ring_RemoveBack(Ring_T * p_ring, size_t unitCount)
 
 bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t unitCount)
 {
+    assert(p_units != NULL);
+
     bool isSuccess = false;
     if (AcquireCritical(p_ring) == true)
     {
         if (unitCount <= Ring_GetEmptyCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->CONST.UNIT_SIZE, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->Type.UNIT_SIZE, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -331,12 +323,14 @@ bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t unitCount)
 
 bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     if (AcquireCritical(p_ring) == true)
     {
         if (unitCount <= Ring_GetFullCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->CONST.UNIT_SIZE, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->Type.UNIT_SIZE, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -349,12 +343,14 @@ bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount)
 */
 size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unitCount)
 {
+    assert(p_units != NULL);
+
     size_t count = 0U;
     if (AcquireCritical(p_ring) == true)
     {
         count = Ring_GetEmptyCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->CONST.UNIT_SIZE, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->Type.UNIT_SIZE, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -365,12 +361,14 @@ size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unitCount)
 */
 size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount)
 {
+    assert(p_result != NULL);
+
     size_t count = 0U;
     if (AcquireCritical(p_ring) == true)
     {
         count = Ring_GetFullCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->CONST.UNIT_SIZE, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->Type.UNIT_SIZE, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -379,6 +377,8 @@ size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount)
 
 bool Ring_PeekFront(Ring_T * p_ring, void * p_result)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsEmpty(p_ring) == false) { PeekFront(p_ring, p_result); isSuccess = true; }
@@ -388,6 +388,8 @@ bool Ring_PeekFront(Ring_T * p_ring, void * p_result)
 
 bool Ring_PeekBack(Ring_T * p_ring, void * p_result)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (Ring_IsEmpty(p_ring) == false) { PeekBack(p_ring, p_result); isSuccess = true; }
@@ -397,6 +399,8 @@ bool Ring_PeekBack(Ring_T * p_ring, void * p_result)
 
 bool Ring_PeekAt(Ring_T * p_ring, size_t index, void * p_result)
 {
+    assert(p_result != NULL);
+
     bool isSuccess = false;
     EnterCritical(p_ring);
     if (index < Ring_GetFullCount(p_ring)) { PeekAt(p_ring, index, p_result); isSuccess = true; }
@@ -405,3 +409,6 @@ bool Ring_PeekAt(Ring_T * p_ring, size_t index, void * p_result)
 }
 
 
+
+
+// const int8_t * _Ring8_At(const Ring_T * p_ring, size_t index) { return (index < Ring_GetFullCount(p_ring)) ? &as_array_at(int8_t *, p_ring->CONST.P_BUFFER, IndexOf(p_ring, index)) : NULL; }

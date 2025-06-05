@@ -25,7 +25,7 @@
     @file    Blinky.h
     @author FireSourcery
     @brief     Pin Indicator
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef BLINKY_H
@@ -44,39 +44,61 @@
 // }
 // Blinky_Pattern_T;
 
-typedef struct Blinky
+typedef enum Blinky_Mode
 {
-    Pin_T Pin;
+    BLINKY_STATE_DISABLED,
+    BLINKY_STATE_ENABLED,
+}
+Blinky_Mode_T;
+
+struct Blinky;
+
+typedef struct Blinky_State
+{
     Timer_T Timer;
+    Blinky_Mode_T Mode;
     bool IsOn;
     uint32_t Index;
     uint32_t End;
     uint32_t OnTime;
     uint32_t OffTime;
     // uint32_t OffTimeDefault; unchanged between activation types
-    void (*PatternFunction)(struct Blinky * p_this);
+    void (*PatternFunction)(const struct Blinky * p_this);
     // uint8_t ActiveSourceId;
+}
+Blinky_State_T;
+
+typedef const struct Blinky
+{
+    Pin_T PIN;
+    Blinky_State_T * P_STATE; /* Pointer to runtime state */
+    const volatile uint32_t * P_TIMER;
 }
 Blinky_T;
 
 #define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)    \
 {                                                                   \
-    .Pin    = PIN_INIT(p_PinHal, PinId),                            \
-    .Timer  = TIMER_INIT(p_TimerBase, TimerBaseFreq)                \
+    .PIN    = PIN_INIT(p_PinHal, PinId),                            \
+    P_TIMER = p_TimerBase,                                          \
+    .P_STATE = &(Blinky_State_T)                                    \
+    {                                                               \
+        .Timer = TIMER_INIT(p_TimerBase, TimerBaseFreq),            \
+    },                                                              \
 }
 
-static inline void _Blinky_Toggle(Blinky_T * p_blinky) { Pin_Output_Toggle(&p_blinky->Pin); }
+static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_DISABLED; }
+static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_ENABLED; }
 
-extern void Blinky_Init(Blinky_T * p_blinky);
-extern void Blinky_Proc(Blinky_T * p_blinky);
-extern void Blinky_On(Blinky_T * p_blinky);
-extern void Blinky_Off(Blinky_T * p_blinky);
-extern void _Blinky_Toggle(Blinky_T * p_blinky);
-extern void Blinky_Stop(Blinky_T * p_blinky);
-extern void Blinky_Blink_OnOff(Blinky_T * p_blinky, uint32_t duration);
-extern void Blinky_Blink_Toggle(Blinky_T * p_blinky, uint32_t duration);
-extern void Blinky_Blink(Blinky_T * p_blinky, uint32_t onTime);
-extern void Blinky_BlinkN(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat);
-extern void Blinky_StartPeriodic(Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime);
+extern void Blinky_Init(const Blinky_T * p_blinky);
+extern void Blinky_Proc(const Blinky_T * p_blinky);
+
+extern void Blinky_On(const Blinky_T * p_blinky);
+extern void Blinky_Off(const Blinky_T * p_blinky);
+extern void Blinky_Stop(const Blinky_T * p_blinky);
+extern void Blinky_Blink_OnOff(const Blinky_T * p_blinky, uint32_t duration);
+extern void Blinky_Blink_Toggle(const Blinky_T * p_blinky, uint32_t duration);
+extern void Blinky_Blink(const Blinky_T * p_blinky, uint32_t onTime);
+extern void Blinky_BlinkN(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat);
+extern void Blinky_StartPeriodic(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime);
 
 #endif

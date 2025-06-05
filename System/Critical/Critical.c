@@ -25,7 +25,7 @@
     @file   Critical.h
     @author FireSourcery
     @brief  Implements Critical Section
-    @version V0
+
 */
 /******************************************************************************/
 #include "Critical.h"

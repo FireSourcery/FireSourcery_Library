@@ -26,7 +26,6 @@
     @author FireSourcery
     @brief     Analog module import functions.
             User must provide HW functions, or configure peripheral HAL
-    @version V0
 */
 /******************************************************************************/
 #ifndef HAL_ADC_H
@@ -46,12 +45,16 @@
 #define HAL_ADC_PIN_T uint8_t
 #endif
 
-typedef HAL_ADC_VALUE_T adc_t; //adcu_t
+#ifndef HAL_ADC_FIFO_LENGTH_MAX
+#define HAL_ADC_FIFO_LENGTH_MAX 1U
+#endif
+
+typedef HAL_ADC_VALUE_T adc_result_t;
 typedef HAL_ADC_PIN_T adc_pin_t;
+// typedef int16_t adc_prop_t; /* alternatively a seperate type for adc units */
 
-
-
-/*
+#ifndef HAL_PERIPHERAL_PATH
+struct HAL_ADC_T;
 typedef void HAL_ADC_T;
 
 static inline void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel) {}
@@ -77,12 +80,12 @@ static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) {}
 static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) {}
 
 static inline void HAL_ADC_Init(const HAL_ADC_T * p_hal) { (void)p_hal; }
-*/
+#endif
 
 static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
 {
     assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
-    HAL_ADC_WriteFifoCount(p_hal, count);
+    // HAL_ADC_WriteFifoCount(p_hal, count);
     for (uint8_t iPin = 0U; iPin < count; iPin++) { HAL_ADC_WriteFifoPin(p_hal, p_pins[iPin]); }
 }
 
@@ -91,5 +94,7 @@ static inline void HAL_ADC_WriteFifo_ActivateOnLast(HAL_ADC_T * p_hal, adc_pin_t
     HAL_ADC_WriteFifo(p_hal, p_pins, count - 1U);
     HAL_ADC_ActivateFifo(p_hal, p_pins[count - 1U]);
 }
+
+
 
 #endif

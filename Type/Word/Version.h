@@ -25,7 +25,7 @@
     @file   Version.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef VERSION_UTILITY_H

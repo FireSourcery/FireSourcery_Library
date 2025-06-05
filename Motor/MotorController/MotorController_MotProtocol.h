@@ -25,7 +25,7 @@
     @file   MotorController_MotProtocol.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_CONTROLLER_PROTOCOL_H

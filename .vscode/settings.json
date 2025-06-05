@@ -6,13 +6,12 @@
     //     "${workspaceFolder:mcux-sdx}/core/CMSIS/Core/Include/cmsis_gcc.h",
     // ],
     // "C_Cpp.default.includePath": [
-    //     // "${default}",
-    //     "${workspaceFolder:Project}",
-    //     "${workspaceFolder:FireSourcery_Library}",
-    //     "${workspaceFolder:mcux-sdk}/core",
-    //     "${workspaceFolder:mcux-sdk}/core/CMSIS/Core/Include",
-    //     "${workspaceFolder:mcux-sdk}/core/devices",
-    //     "${workspaceFolder:mcux-sdk}/core/drivers/common",
+    //     "${default}",
+    //     // "${workspaceFolder:FireSourcery_Library}",
+    //     // "${workspaceFolder:mcux-sdk}/core",
+    //     // "${workspaceFolder:mcux-sdk}/core/CMSIS/Core/Include",
+    //     // "${workspaceFolder:mcux-sdk}/core/devices",
+    //     // "${workspaceFolder:mcux-sdk}/core/drivers/common",
     // ],
     // "C_Cpp.default.compilerPath": "${workspaceFolder:gcc-arm}/bin/arm-none-eabi-gcc.exe",
 
@@ -37,27 +36,31 @@
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "newLine",
     "C_Cpp.vcFormat.newLine.beforeWhileInDoWhile": true,
+
     "C_Cpp.vcFormat.space.pointerReferenceAlignment": "center",
     "C_Cpp.vcFormat.space.aroundAssignmentOperator": "insert",
     "C_Cpp.vcFormat.space.beforeConstructorColon": false,
+    "C_Cpp.vcFormat.space.afterKeywordsInControlFlowStatements": true,
+    "C_Cpp.vcFormat.space.afterComma": true,
+    "C_Cpp.vcFormat.space.removeBeforeSemicolon": true,
+    "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
+    "C_Cpp.vcFormat.space.withinSquareBrackets": false,
+    "C_Cpp.vcFormat.space.withinLambdaBrackets": true,
+    "C_Cpp.vcFormat.space.removeAroundUnaryOperator": true,
+    "C_Cpp.vcFormat.space.removeAroundMemberOperators": true,
+
     "C_Cpp.vcFormat.space.betweenEmptyBraces": false,
     "C_Cpp.vcFormat.space.beforeBlockOpenBrace": false,
     "C_Cpp.vcFormat.space.withinInitializerListBraces": true,
     "C_Cpp.vcFormat.space.beforeInitializerListOpenBrace": false,
     "C_Cpp.vcFormat.space.preserveInInitializerList": true,
-    "C_Cpp.vcFormat.space.afterKeywordsInControlFlowStatements": true,
-    "C_Cpp.vcFormat.space.afterComma": true,
-    "C_Cpp.vcFormat.space.removeBeforeSemicolon": true,
-    "C_Cpp.vcFormat.space.withinSquareBrackets": false,
-    "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
-    "C_Cpp.vcFormat.space.withinLambdaBrackets": false,
-    "C_Cpp.vcFormat.space.betweenEmptyLambdaBrackets": false,
-    "C_Cpp.vcFormat.space.beforeLambdaOpenParenthesis": false,
+
+    "C_Cpp.vcFormat.space.beforeLambdaOpenParenthesis": true,
     "C_Cpp.vcFormat.space.afterCastCloseParenthesis": false,
     "C_Cpp.vcFormat.space.withinCastParentheses": false,
+    "C_Cpp.vcFormat.space.betweenEmptyLambdaBrackets": false,
 
-    "C_Cpp.vcFormat.space.removeAroundUnaryOperator": true,
-    "C_Cpp.vcFormat.space.removeAroundMemberOperators": true,
+    "C_Cpp.vcFormat.indent.multiLineRelativeTo": "innermostParenthesis",
 
     "C_Cpp.vcFormat.indent.lambdaBracesWhenParameter": false,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": false,
@@ -69,6 +72,7 @@
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
 
     "C_Cpp.doxygen.generatedStyle": "/*!",
+
     "editor.defaultFormatter": "ms-vscode.cpptools",
     "editor.rulers": [
         160
@@ -91,6 +95,7 @@
     // //     "editor.defaultFormatter": "ms-vscode.cpptools",
     // //     "editor.semanticHighlighting.enabled": "configuredByTheme",
     // },
+
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },
@@ -113,6 +118,7 @@
         "statemachine",
         "Svpwm",
         "switchcpy",
+        "synonomous",
         "txsize",
         "ufract"
     ],

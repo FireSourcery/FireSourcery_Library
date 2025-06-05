@@ -25,7 +25,7 @@
     @file   Config.h
     @author FireSourcery
     @brief     Encoder module preprocessor configuration options and defaults.
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_ENCODER_H

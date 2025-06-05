@@ -25,7 +25,7 @@
     @file   HAL_Serial.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_SERIAL_H
@@ -35,9 +35,9 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Serial.h)
 
-// typedef void HAL_Serial_T;
+// typedef struct HAL_Serial HAL_Serial_T;
 
-// void HAL_Serial_WriteTxChar(HAL_Serial_T * p_hal, uint8_t txChar);
+// static void HAL_Serial_WriteTxChar(HAL_Serial_T * p_hal, uint8_t txChar);
 // static inline uint8_t HAL_Serial_ReadRxChar(const HAL_Serial_T * p_hal) {}
 // static inline uint8_t HAL_Serial_ReadTxEmptyCount(const HAL_Serial_T * p_hal) {}
 // static inline uint8_t HAL_Serial_ReadRxFullCount(const HAL_Serial_T * p_hal) {}

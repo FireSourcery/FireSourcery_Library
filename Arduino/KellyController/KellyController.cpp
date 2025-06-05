@@ -25,7 +25,7 @@
     @file   KellyController.cpp
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "KellyController.h"

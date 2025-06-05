@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,13 +26,9 @@
 /*!
     @file   Critical.h
     @author FireSourcery
-    @brief  Implements Critical Section
-    @version V0
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef CRITICAL_H
-#define CRITICAL_H
-
 #include "Config.h"
 
 #include <stdint.h>
@@ -63,71 +61,82 @@ static inline void _Critical_Enter(uint32_t * p_state);
 static inline void _Critical_Exit(uint32_t state);
 #endif
 
-// static inline void Critical_DisableIrq(void)
-// {
-//     __disable_irq();
-//     _Critical_InterruptDisableCount++;
-// }
-
-// static inline void Critical_EnableIrq(void)
-// {
-//     if (_Critical_InterruptDisableCount > 0U)
-//     {
-//         _Critical_InterruptDisableCount--;
-//         if (_Critical_InterruptDisableCount <= 0U) { __enable_irq(); }
-//     }
-// }
-
-/*
-    process must be polling.
-*/
-typedef volatile atomic_flag critical_signal_t;
-
-static inline bool Critical_InitSignal(critical_signal_t * p_signal)
+static inline void Critical_DisableIrq(void)
 {
-    atomic_flag_clear(p_signal);
-}
-
-static inline bool Critical_AcquireSignal(critical_signal_t * p_signal)
-{
-    return (atomic_flag_test_and_set(p_signal) == false); // true if signal is available
-}
-
-static inline void Critical_ReleaseSignal(critical_signal_t * p_signal)
-{
-    atomic_flag_clear(p_signal);
-}
-
-static inline bool Critical_AwaitSignal_Blocking(critical_signal_t * p_signal)
-{
-    while (atomic_flag_test_and_set(p_signal) == true) {}
-}
-
-
-static inline bool Critical_AcquireEnter(critical_signal_t * p_signal)
-{
-#if defined(CONFIG_CRITICAL_USE_MUTEX)
-    return Critical_AcquireSignal(p_signal);
-#else
-    (void)p_signal;
     _Critical_DisableIrq();
-    return true;
-#endif
-// #else
-//     _Critical_Enter(p_signal);
-// #endif
+    _Critical_InterruptDisableCount++;
 }
 
-static inline void Critical_ReleaseExit(critical_signal_t * p_signal)
+static inline void Critical_EnableIrq(void)
 {
-#if defined(CONFIG_CRITICAL_USE_MUTEX)
-    Critical_ReleaseSignal(p_signal);
-#else
-    (void)p_signal;
-    _Critical_EnableIrq();
-#endif
+    if (_Critical_InterruptDisableCount > 0U)
+    {
+        _Critical_InterruptDisableCount--;
+        if (_Critical_InterruptDisableCount <= 0U) { _Critical_EnableIrq(); }
+    }
 }
 
 
+/******************************************************************************/
+/*
+    Lightweight Critical (Mutex Mode)
+*/
+/******************************************************************************/
+typedef volatile atomic_flag critical_lock_t;
 
-#endif
+static inline void Critical_InitLock(critical_lock_t * p_lock) { atomic_flag_clear(p_lock); }
+/* return true if signal is available */
+/* atomic_flag_test_and_set returns previous state */
+static inline bool Critical_AcquireLock(critical_lock_t * p_signal) { return (atomic_flag_test_and_set(p_signal) == false); }
+static inline void Critical_ReleaseLock(critical_lock_t * p_signal) { atomic_flag_clear(p_signal); }
+
+static inline void _Critical_AwaitLock_Blocking(critical_lock_t * p_signal) { while (atomic_flag_test_and_set(p_signal) == true) {} }
+
+/******************************************************************************/
+/*
+    Unified Critical Section Interface
+*/
+/******************************************************************************/
+// typedef volatile atomic_flag critical_lock_t;
+// typedef uint32_t critical_state_t;
+
+// /* Special return value for failed TryEnter */
+// #define CRITICAL_STATE_FAILED  (~(critical_state_t)0)
+
+// static inline critical_state_t Critical_AwaitEnter(critical_lock_t * p_lock)
+// {
+// #ifdef CONFIG_CRITICAL_USE_MUTEX
+//     Critical_Lock(p_lock);
+//     return 0;
+// #else
+//     (void)p_lock;
+//     critical_state_t state = __get_PRIMASK();
+//     __disable_irq();
+//     return state;
+// #endif
+// }
+
+// static inline critical_state_t Critical_TryEnter(critical_lock_t * p_lock)
+// {
+// #ifdef CONFIG_CRITICAL_USE_MUTEX
+//     return Critical_TryLock(p_lock) ? 0 : CRITICAL_STATE_FAILED;
+// #else
+//     (void)p_lock;
+//     critical_state_t state = __get_PRIMASK();
+//     __disable_irq();
+//     return state;
+// #endif
+// }
+
+// static inline void Critical_Exit(critical_lock_t * p_lock, critical_state_t saved_state)
+// {
+// #ifdef CONFIG_CRITICAL_USE_MUTEX
+//     if (saved_state != CRITICAL_STATE_FAILED)
+//     {
+//         Critical_Unlock(p_lock);
+//     }
+// #else
+//     (void)p_lock;
+//     __set_PRIMASK(saved_state);
+// #endif
+// }

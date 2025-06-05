@@ -25,13 +25,13 @@
     @file   Config.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_SERIAL_H
 #define CONFIG_SERIAL_H
 
-#if     defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
+#if       defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
 #elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
 #elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
 #else
@@ -39,7 +39,7 @@
 #endif
 
 #if     defined(CONFIG_SERIAL_HW_FIFO_DISABLE)
-#elif     defined(CONFIG_SERIAL_HW_FIFO_ENABLE)
+#elif   defined(CONFIG_SERIAL_HW_FIFO_ENABLE)
 #else
     #define CONFIG_SERIAL_HW_FIFO_DISABLE
 #endif

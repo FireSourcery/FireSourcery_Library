@@ -25,7 +25,7 @@
     @file   MotPacket.h
     @author FireSourcery
     @brief  MotPacket Packets and Interface Defs
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOT_PACKET_H
@@ -43,7 +43,7 @@
 
 #define MOT_PACKET_START_BYTE           (0xA5U)
 
-#define MOT_PACKET_LENGTH_MAX           (40U)
+#define MOT_PACKET_LENGTH_MAX           (40U) /*  */
 #define MOT_PACKET_LENGTH_MIN           (2U) /* sizeof(MotPacket_Sync_T) */
 #define MOT_PACKET_HEADER_LENGTH        (8U)
 #define MOT_PACKET_PAYLOAD_LENGTH_MAX   (32U)
@@ -101,6 +101,8 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     */
     MOT_PACKET_VAR_READ = 0xB3U,         /* Up to 16 uint16_t values */ /* Up to 8 uint32_t values */
     MOT_PACKET_VAR_WRITE = 0xB4U,        /* Up to 8 uint16_t values */ /* Up to 4 uint32_t values */
+    // MOT_PACKET_VAR32_READ = 0xB5U,
+    // MOT_PACKET_VAR32_WRITE = 0xB6U,
 
     /* Read/Write by Address */
     MOT_PACKET_MEM_READ = 0xD1U,            /* Read Memory Address */

@@ -25,7 +25,7 @@
     @file   HAL_Peripheral.h
     @author FireSourcery
     @brief  Define configurable HAL Peripheral Path
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef HAL_PERIPHERAL_H
@@ -38,6 +38,12 @@
     #define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
 #elif   defined(CONFIG_HAL_PERIPHERAL_PLATFORM)     /* Library platform directory */
     #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
+#else
+    #error "HAL_PERIPHERAL_PATH not defined."
+#endif
+
+#ifndef WEAK
+    #define WEAK __attribute__((weak))
 #endif
 
 #endif

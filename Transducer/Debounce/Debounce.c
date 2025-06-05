@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,81 +24,46 @@
 /*!
     @file   Debounce.c
     @author FireSourcery
-    @brief
-    @version V0
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
 #include "Debounce.h"
 
-void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
+
+/******************************************************************************/
+/*
+    Debounce Functions
+    For switch and sensor debouncing
+*/
+/******************************************************************************/
+/* Time-based debounce */
+// static inline bool debounce(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
+// {
+//     if (input_state != prev_state) return false;  /* State changed, not stable */
+//     return (current_time - last_change_time) >= stability_time;
+// }
+
+// /* Counter-based debounce */
+// static inline bool debounce_(uint16_t * p_counter, uint16_t threshold, bool input_state, bool target_state)
+// {
+//     if (input_state == target_state)
+//     {
+//         if (*p_counter < threshold)  {(*p_counter)++;}
+//     }
+//     else
+//     {
+//         *p_counter = 0;
+//     }
+//     return (*p_counter >= threshold);
+// }
+
+
+void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
 {
-    Pin_Input_Init(&p_debounce->Pin);
     p_debounce->DebounceTime = debounceTime;
-    p_debounce->DebouncedState = Pin_Input_Read(&p_debounce->Pin);
+    p_debounce->DebouncedState = false;
     p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
     p_debounce->PinState = p_debounce->DebouncedState;
 }
 
-/*!
-    @return true if state changed
-*/
-bool Debounce_CaptureState(Debounce_T * p_debounce)
-{
-    bool pinState = Pin_Input_Read(&p_debounce->Pin);
 
-    /*
-        check if state is the same for specified duration,
-        vs preemptive lock out - noise may lock out real input
-    */
-    if (pinState != p_debounce->PinState)
-    {
-        p_debounce->TimeStart = *p_debounce->CONST.P_TIMER;
-        p_debounce->PinState = pinState;
-    }
-    else
-    {
-        if (*p_debounce->CONST.P_TIMER - p_debounce->TimeStart > p_debounce->DebounceTime)
-        {
-            p_debounce->TimeStart = UINT32_MAX - p_debounce->DebounceTime; /* disable repeat set until next change in pin */
-            // if (p_debounce->DebouncedState != p_debounce->DebouncedStatePrev) // same as timer disable
-            p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; /* record the previous state when an edge has occurred */
-            p_debounce->DebouncedState = pinState;
-        }
-    }
-
-    return Debounce_IsEdge(p_debounce);
-}
-
-
-static inline void ClearEdgeState(Debounce_T * p_debounce, bool isEdge)
-    { if (isEdge == true) { p_debounce->DebouncedStatePrev = p_debounce->DebouncedState; } }
-
-/* The last edge, valid until poll, or another edge */
-
-bool Debounce_PollDualEdge(Debounce_T * p_debounce)
-{
-    bool isEdge = Debounce_IsEdge(p_debounce);
-    ClearEdgeState(p_debounce, isEdge);
-    return isEdge;
-}
-
-bool Debounce_PollFallingEdge(Debounce_T * p_debounce)
-{
-    bool isEdge = Debounce_IsFallingEdge(p_debounce);
-    ClearEdgeState(p_debounce, isEdge);
-    return isEdge;
-}
-
-bool Debounce_PollRisingEdge(Debounce_T * p_debounce)
-{
-    bool isEdge = Debounce_IsRisingEdge(p_debounce);
-    ClearEdgeState(p_debounce, isEdge);
-    return isEdge;
-}
-
-Debounce_Edge_T Debounce_PollEdge(Debounce_T * p_debounce)
-{
-    Debounce_Edge_T edge = Debounce_GetEdge(p_debounce);
-    ClearEdgeState(p_debounce, edge != DEBOUNCE_EDGE_NULL);
-    return edge;
-}

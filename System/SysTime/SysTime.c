@@ -25,7 +25,7 @@
     @file   SysTime.c
     @author FireSourcery
     @brief  SysTick Wrapper
-    @version V0
+
 */
 /******************************************************************************/
 #include "SysTime.h"

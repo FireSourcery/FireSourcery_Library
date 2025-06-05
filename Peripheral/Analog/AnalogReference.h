@@ -25,7 +25,7 @@
     @file   AnalogReference.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef ANALOG_REFERENCE_H
@@ -51,5 +51,9 @@ extern const AnalogReference_T ANALOG_REFERENCE;
 
 // static inline int16_t AnalogUnits_OpInvert_Fract16(uint16_t adcuZero, uint16_t adcu) { return ((adcu - adcuZero) * (-1 << 3)); }
 // static inline int16_t AnalogUnits_Fract16(uint16_t adcuZero, uint16_t adcu) { return ((adcu - adcuZero) << 3); }
+
+// static inline int16_t AnalogUnit16_OfResult(uint16_t adcuZero, uint16_t adcu) { return ((adcu - adcuZero) << 3); }
+// static inline int16_t AnalogUnit16(int16_t adcu) { return ((adcu) << 3); }
+// static inline int16_t scaled_adcu16(int16_t adcu) { return ((adcu) << (16-1-ADC_BITS)); }
 
 #endif

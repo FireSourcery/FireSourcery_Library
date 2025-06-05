@@ -25,7 +25,7 @@
     @file   MotPacket.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "MotProtocol.h"
@@ -349,24 +349,31 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 /******************************************************************************/
 /*! Mem */
 /******************************************************************************/
+NvMemory_Status_T ReadMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t size, MotProtocol_MemConfig_T config, uint8_t * p_destBuffer)
+{
+    NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+
+    switch ((MotProtocol_MemConfig_T)config)
+    {
+        case MOT_MEM_CONFIG_RAM: memcpy(p_destBuffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_FLASH: memcpy(p_destBuffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, address, size, p_destBuffer); break;
+        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
+    }
+
+    return status;
+}
+
+
 // caller handle address mapping
 protocol_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
 {
     uint32_t address = p_rxPacket->MemReadReq.Address;
     uint8_t size = p_rxPacket->MemReadReq.Size;
     uint16_t config = p_rxPacket->MemReadReq.Config;
-
     uint8_t * p_buffer = &(p_txPacket->MemReadResp.ByteData[0U]);
-    uint8_t * p_data;
-    NvMemory_Status_T status;
 
-    switch((MotProtocol_MemConfig_T)config)
-    {
-        case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size);  status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_ONCE: status = Flash_ReadOnce_Blocking(p_flash, address, size, p_buffer); break;
-        default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
-    }
+    NvMemory_Status_T status = ReadMem_Blocking(p_flash, address, size, (MotProtocol_MemConfig_T)config, p_buffer);
 
     return MotPacket_MemReadResp_BuildHeader(p_txPacket, size, status);
 }

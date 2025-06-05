@@ -25,7 +25,7 @@
     @file   MotProtocol.c
     @author FireSourcery
     @brief    Implements MotProtocol
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_CMDR_H
@@ -83,7 +83,7 @@ typedef struct MotorCmdr
     int16_t Iq;
 
     // MotorController_T MotorControllerVars;                    /* Use for definations only. */
-    // Motor_T MotorsVars[CONFIG_MOTOR_CMDR_MOTOR_COUNT];        /* Use for definations only. */
+    // Motor_State_T MotorsVars[CONFIG_MOTOR_CMDR_MOTOR_COUNT];        /* Use for definations only. */
 
     /* Alternatively, app implements MotProtocol Interface */
     // MotPacket_Interface_T Interface;

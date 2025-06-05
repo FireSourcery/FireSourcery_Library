@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_KELLY_CONTROLLER_H

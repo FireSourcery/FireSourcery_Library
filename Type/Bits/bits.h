@@ -25,7 +25,7 @@
     @file   general.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef BITS_H

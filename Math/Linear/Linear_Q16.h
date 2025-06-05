@@ -25,7 +25,7 @@
     @file   Linear_Q16_Of.h
     @author FireSourcery
     @brief  Linear Fract16 calc without division
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef LINEAR_Q16_H
@@ -40,7 +40,8 @@
     Fract16     => [-32768:32767],  [-1:1)  in Q1.15
     UFract16    => [0:65535],       [0:2)   in Q1.15
     Percent16   => [0:65535],       [0:1)   in Q0.16
-    Fixed32     => [INT32_MIN:INT32_MAX], [-65536.0:65536.0) in Q16.16
+    Accum32     => [INT32_MIN:INT32_MAX], [2*-32768:2*32768) in Q17.15
+    Fixed32     => [INT32_MIN:INT32_MAX], [-32768:32768) in Q16.16
 */
 /******************************************************************************/
 /*!

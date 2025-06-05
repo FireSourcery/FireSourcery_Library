@@ -24,7 +24,7 @@
 /*!
     @file   Fract16.h
     @author FireSourcery
-    @version V0
+
     @brief  Math with 16 bit fractions in Q1.15 format
 */
 /******************************************************************************/
@@ -41,7 +41,7 @@
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
-typedef int32_t accum32_t;      /*!< Q17.15 */
+typedef int32_t accum32_t;      /*!< Q17.15 [2*[FRACT16_MIN:FRACT16_MAX] << FRACT16_N_BITS] */
 
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
@@ -93,12 +93,12 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
 
+    Paramters as accum32_t, saturation by upper and lower bounds
+
+    case of fract16_mul(int16_t, int16_t) still needs to check for 32768
     fract16_mul(-32768, -32768) => 32768 == 0x8000, over sat 1
     (int16_t)32768 => -32768
-
-    alternatively fract16_mul(int16_t, int16_t)
-    check for 32768 case only
-        (product == +32768) ? 32767 : product;
+    (product == +32768) ? 32767 : product;
 
     @return int16_t [-32767, 32767] <=> (-1:1)
 */
@@ -148,21 +148,45 @@ static inline fract16_t fract16_sqrt(fract16_t x)
 }
 
 /* shift without divisor on max ref */
-/* left shift only */
-static inline int16_t fract16_unit_scalar_shift(int16_t maxRef)
+/* left shift as positive */
+static inline int16_t fract16_norm_shift(int16_t value)
 {
-    return (int16_t)(FRACT16_N_BITS - fixed_bit_width_signed(maxRef));
+    return (int16_t)(FRACT16_N_BITS - fixed_bit_width_signed(value));
 }
 
-static inline int16_t fract16_unit_scalar(int16_t maxRef)
+static inline int16_t fract16_norm_scalar(int16_t value)
 {
-    return (1 << fract16_unit_scalar_shift(maxRef));
+    return (1 << fract16_norm_shift(value));
 }
+
+// static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
+// {
+// }
 
 // static inline int16_t fract16_limit_scalar(uint16_t value, uint16_t max)
 // {
 //     return (value > max) ? fract16_div(max, value) : FRACT16_MAX;
 // }
+
+/* proportional on input */
+// static inline int16_t  feedback_scalar(uint16_t feedback, uint16_t limit, int16_t input)
+// static inline int16_t  feedback_scalar(int16_t input, uint16_t limit, uint16_t feedback)
+// {
+//     return (feedback > limit) ? (int32_t)input * limit / feedback : input;
+// }
+
+// // static inline int16_t limit_feedback_signed(int16_t input, int16_t lower, int16_t upper, int16_t feedback)
+// // {
+// //     int16_t result;
+// //     if      (feedback < lower) { result = (int32_t)input * lower / feedback; }
+// //     else if (feedback > upper) { result = (int32_t)input * upper / feedback; }
+// //     else                       { result = input; }
+// //     return result;
+// // }
+
+/* simplify with return by value */
+// typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
+// typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
 
 /******************************************************************************/
 /*!
@@ -220,9 +244,10 @@ static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
     return ((uint16_t)theta0 < (uint16_t)theta1);
 }
 
-// static inline int16_t angle16_cycle_sign(angle16_t theta0, angle16_t theta1, int16_t sign)
-// {
-// }
+static inline bool angle16_cycle_by_direction(angle16_t theta0, angle16_t theta1, int16_t sign)
+{
+    return ((sign > 0) == angle16_cycle_inc(theta0, theta1));
+}
 
 /* polling freq must be sufficient */
 /* crossing 0 and 180 */
@@ -239,6 +264,13 @@ static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)
 extern fract16_t fract16_sin(angle16_t theta);
 extern fract16_t fract16_cos(angle16_t theta);
 extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/* accum in this case is fract16_accum32 with additional shift */
+// static inline int32_t _accum32_add(int32_t accum, int16_t coeffcient, int16_t input) { return (accum + (((int32_t)input * coeffcient) >> 15)); }
 
 /******************************************************************************/
 /*!

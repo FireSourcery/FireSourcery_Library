@@ -26,7 +26,7 @@
     @file   Motor_Debug.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_DEBUG_H
@@ -36,7 +36,7 @@
 #include "Motor.h"
 
 //todo replace with trace
-static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
+static inline void Motor_Debug_CaptureRefTime(Motor_State_T * p_motor)
 {
 #ifndef NDEBUG
     p_motor->MicrosRef = SysTime_GetMicros();
@@ -45,7 +45,7 @@ static inline void Motor_Debug_CaptureRefTime(Motor_T * p_motor)
 #endif
 }
 
-static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
+static inline void Motor_Debug_CaptureTime(Motor_State_T * p_motor, uint8_t index)
 {
 #ifndef NDEBUG
     p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
@@ -54,7 +54,7 @@ static inline void Motor_Debug_CaptureTime(Motor_T * p_motor, uint8_t index)
 #endif
 }
 
-static inline void Motor_Debug_CapturePeriod(Motor_T * p_motor, uint8_t index)
+static inline void Motor_Debug_CapturePeriod(Motor_State_T * p_motor, uint8_t index)
 {
 #ifndef NDEBUG
     p_motor->DebugTime[index + 1] = SysTime_GetMicros() - p_motor->DebugTime[index];

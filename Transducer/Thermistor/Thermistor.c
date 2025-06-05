@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,119 +24,11 @@
 /*!
     @file   Thermistor.c
     @author FireSourcery
-    @brief
-    @version V0
+    @brief  [Brief description of the file]
 */
+/******************************************************************************/
 /******************************************************************************/
 #include "Thermistor.h"
-#include <string.h>
-#include <math.h>
-
-static void ResetUnitsLinear(Thermistor_T * p_therm)
-{
-    Linear_ADC_Init_Scalar(&p_therm->HeatLimit, p_therm->Config.FaultTrigger_Adcu, p_therm->Config.WarningTrigger_Adcu); /* for Percent16 only */
-
-    // Linear_Init_Map(&p_therm->LinearUnits, p_therm->Config.LinearT0_Adcu, p_therm->Config.LinearT1_Adcu, p_therm->Config.LinearT0_DegC, p_therm->Config.LinearT1_DegC);
-}
-
-void Thermistor_Init(Thermistor_T * p_therm)
-{
-    if (p_therm->CONST.P_CONFIG != NULL) { memcpy(&p_therm->Config, p_therm->CONST.P_CONFIG, sizeof(Thermistor_Config_T)); }
-
-    ResetUnitsLinear(p_therm);
-
-    // type = LinearT_DegC/LinearT_Adcu < 0
-
-    if (p_therm->Config.FaultTrigger_Adcu == 0U)         { p_therm->Config.IsMonitorEnable = false; }
-    if (p_therm->Config.FaultThreshold_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
-    if (p_therm->Config.WarningTrigger_Adcu == 0U)       { p_therm->Config.IsMonitorEnable = false; }
-    if (p_therm->Config.WarningThreshold_Adcu == 0U)     { p_therm->Config.IsMonitorEnable = false; }
-
-    p_therm->Adcu = p_therm->Config.WarningThreshold_Adcu; /* Set to a nominal value, so poll on init does not fault. */
-    p_therm->Status = THERMISTOR_STATUS_OK;
-}
-
-
-// bool isGreaterHeat(Thermistor_Type_T type, uint16_t adcu1, uint16_t adcu2) { return (type == THERMISTOR_TYPE_NTC) ? (adcu1 > adcu2) : (adcu1 < adcu2); }
-// bool isLesserHeat(Thermistor_Type_T type, uint16_t adcu1, uint16_t adcu2) { return (type == THERMISTOR_TYPE_NTC) ? (adcu1 < adcu2) : (adcu1 > adcu2); }
-
-/******************************************************************************/
-/*!
-    Limits Monitor
-*/
-/******************************************************************************/
-
-/*!
-    Monitor: heat < WarningThreshold_DegC < Warning_DegC < FaultThreshold_DegC < Fault_DegC
-    As pulldown
-     NTC Lower adcu is higher heat
-     PTC Lower adcu is lower heat
-    @return
-*/
-Thermistor_Status_T Thermistor_PollMonitor(Thermistor_T * p_therm, uint16_t captureAdcu)
-{
-    Thermistor_Status_T status;
-    uint16_t adcu;
-
-    adcu = (captureAdcu + p_therm->Adcu) / 2U;
-
-    if(p_therm->Config.IsMonitorEnable == true)
-    {
-        // if      (adcu > p_therm->Config.WarningThreshold_Adcu)                                      { p_therm->Status = THERMISTOR_STATUS_OK; }
-        // else if (adcu < p_therm->Config.FaultTrigger_Adcu)                                          { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-        // else if ((adcu < p_therm->Config.FaultThreshold_Adcu) && Thermistor_IsFault(p_therm))       { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
-        // else if (adcu < p_therm->Config.WarningTrigger_Adcu)                                        { p_therm->Status = THERMISTOR_STATUS_WARNING; }
-        // else if ((adcu < p_therm->Config.WarningThreshold_Adcu) && Thermistor_IsWarning(p_therm))   { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
-        // else                                                                                        { p_therm->Status = THERMISTOR_STATUS_OK; }
-
-        bool isNtc = (p_therm->Config.Type == THERMISTOR_TYPE_NTC);
-        int16_t adcuCompare = isNtc ? adcu : -adcu;
-        int16_t warningThresholdCompare = isNtc ? p_therm->Config.WarningThreshold_Adcu : -p_therm->Config.WarningThreshold_Adcu;
-        int16_t faultTriggerCompare = isNtc ? p_therm->Config.FaultTrigger_Adcu : -p_therm->Config.FaultTrigger_Adcu;
-        int16_t faultThresholdCompare = isNtc ? p_therm->Config.FaultThreshold_Adcu : -p_therm->Config.FaultThreshold_Adcu;
-        int16_t warningTriggerCompare = isNtc ? p_therm->Config.WarningTrigger_Adcu : -p_therm->Config.WarningTrigger_Adcu;
-
-        if      (adcuCompare > warningThresholdCompare)                                     { p_therm->Status = THERMISTOR_STATUS_OK; }
-        else if (adcuCompare < faultTriggerCompare)                                         { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-        else if (adcuCompare < faultThresholdCompare && Thermistor_IsFault(p_therm))        { p_therm->Status = THERMISTOR_STATUS_FAULT_THRESHOLD; }
-        else if (adcuCompare < warningTriggerCompare)                                       { p_therm->Status = THERMISTOR_STATUS_WARNING; }
-        else if (adcuCompare < warningThresholdCompare && Thermistor_IsWarning(p_therm))    { p_therm->Status = THERMISTOR_STATUS_WARNING_THRESHOLD; }
-        else                                                                                { p_therm->Status = THERMISTOR_STATUS_OK; }
-    }
-
-    p_therm->Adcu = adcu;
-
-    return p_therm->Status;
-}
-
-
-// with trigger
-// Thermistor_Status_T Thermistor_PollMonitor_Edges(Thermistor_T * p_therm, uint16_t adcu)
-// {
-//     switch (p_therm->Status)
-//     {
-//         case THERMISTOR_STATUS_OK:
-//             if (adcu < p_therm->Config.FaultThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-//             else if (adcu < p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_WARNING; }
-//             break;
-//         case THERMISTOR_STATUS_FAULT:
-//             if (adcu > p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_OK; }
-//             break;
-//         case THERMISTOR_STATUS_FAULT_THRESHOLD:
-//             if (adcu > p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_OK; }
-//             break;
-//         case THERMISTOR_STATUS_WARNING:
-//             if (adcu > p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_OK; }
-//             else if (adcu < p_therm->Config.FaultTrigger_Adcu) { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-//             break;
-//         case THERMISTOR_STATUS_WARNING_THRESHOLD:
-//             if (adcu > p_therm->Config.WarningThreshold_Adcu) { p_therm->Status = THERMISTOR_STATUS_OK; }
-//             else if (adcu < p_therm->Config.FaultTrigger_Adcu) { p_therm->Status = THERMISTOR_STATUS_FAULT; }
-//             break;
-//         default:
-//             break;
-//     }
-// }
 
 /******************************************************************************/
 /*!
@@ -169,121 +61,153 @@ static inline uint16_t adcu_of_r(uint16_t adcMax, uint16_t adcVRef, uint16_t vIn
     return ((uint64_t)vIn * adcMax * rPullDown) / ((uint64_t)adcVRef * (rPullUp + rPullDown));
 }
 
+/* 1 / (1/r1 + 1/r2) */
 static inline uint32_t r_net(uint32_t rParallel1, uint32_t rParallel2)
 {
-    return ((uint64_t)rParallel1 * rParallel2) / (rParallel1 + rParallel2);     /* 1 / (1/r1 + 1/r2) */
+    return ((uint64_t)rParallel1 * rParallel2) / (rParallel1 + rParallel2);
 }
 
+/* 1 / (1/rNet - 1/rParallel) */
 static inline uint32_t r_parallel(uint32_t rNet, uint32_t rParallel)
 {
-    return ((uint64_t)rNet * rParallel) / (rNet - rParallel);                 /* 1 / (1/rNet - 1/rParallel) */
+    return ((uint64_t)rNet * rParallel) / (rNet - rParallel);
 }
+
 
 /*!
     1/T = 1/T0 + (1/B)*ln(R/R0)
     @return 1/T
 */
-static inline double steinhart(double b, double t0, double r0, double rTh)
+static inline double steinhart(uint32_t b, uint32_t t0, uint32_t r0, uint32_t r_thermal)
 {
-    return (log(rTh / r0) / b) + (1.0F / t0);
+    return (log((double)r_thermal / r0) / b) + (1.0F / t0);
 }
 
 /*!
     @return R_Thermistor
 */
-static inline double inv_steinhart(double b, double t0, double r0, double invT_Kelvin)
+static inline double inv_steinhart(uint32_t b, uint32_t t0, uint32_t r0, double invT_Kelvin)
 {
     return exp((invT_Kelvin - 1.0F / t0) * b) * r0;
 }
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+void Thermistor_InitFrom(const Thermistor_T * p_therm, Thermistor_Coeffs_T * p_config)
+{
+    if (p_therm->P_FIXED_COEFFS == NULL && p_therm->P_COEFFS != NULL)
+    {
+        if (p_config != NULL) { *p_therm->P_COEFFS = *p_config; }
+    }
+
+}
+
+
+uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
+{
+    uint32_t rNet = r_pulldown_of_adcu(p_therm->R_SERIES, Thermistor_GetVInRef_MilliV(p_therm), ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_MAX, adcu);
+    return (p_therm->R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->R_PARALLEL) : rNet;
+}
+
+uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermistor)
+{
+    uint32_t rNet = (p_therm->R_PARALLEL != 0U) ? r_net(p_therm->R_PARALLEL, rThermistor) : rThermistor;
+    return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, Thermistor_GetVInRef_MilliV(p_therm), p_therm->R_SERIES, rNet);
+}
+
+/******************************************************************************/
+/*
+    Precomputed shift divide
+*/
+/******************************************************************************/
+/*
+    Linear T0 may select a different T0 than the Coefficients T0.
+*/
+void Thermistor_ToLinear_ROhmsPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
+{
+    uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
+    uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
+    Linear_Init_Map(p_result, adcu0, adcu1, Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
+}
+
+void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
+{
+    uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
+    uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
+    Linear_Init_Map(p_result, adcu0, adcu1, Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm));
+}
+
+void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T * p_result)
+{
+    Linear_Init_Map
+    (
+        p_result,
+        Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm),
+        Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm)
+    );
+}
+
+
+
+
+
 #if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-static float ConvertAdcuToDegK_Steinhart(const Thermistor_T * p_therm, uint16_t adcu)
+float Thermistor_KelvinOfR_Steinhart(const Thermistor_T * p_therm, uint32_t r_thermal)
 {
-    uint32_t rNet = r_pulldown_of_adcu(p_therm->CONST.R_SERIES, p_therm->Config.VInRef_MilliV, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_MAX, adcu);
-    uint32_t rTh = (p_therm->CONST.R_PARALLEL != 0U) ? r_parallel(rNet, p_therm->CONST.R_PARALLEL) : rNet;
-    double invT_Kelvin = steinhart(p_therm->Config.B, p_therm->Config.T0, p_therm->Config.R0, rTh);
-    return (1.0F / invT_Kelvin);
+    return (1.0F / steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), r_thermal));
 }
 
-static uint16_t ConvertDegKToAdcu_Steinhart(const Thermistor_T * p_therm, float degK)
+uint32_t Thermistor_ROfKelvin_Steinhart(const Thermistor_T * p_therm, float degK)
 {
-    double invT_Kelvin = (double)1.0F / (degK);
-    uint32_t rTh = inv_steinhart(p_therm->Config.B, p_therm->Config.T0, p_therm->Config.R0, invT_Kelvin);
-    uint32_t rNet = (p_therm->CONST.R_PARALLEL != 0U) ? r_net(p_therm->CONST.R_PARALLEL, rTh) : rTh;
-    return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, p_therm->Config.VInRef_MilliV, p_therm->CONST.R_SERIES, rNet);
-}
-static float ConvertAdcuToDegC_Steinhart(const Thermistor_T * p_therm, uint16_t adcu)
-{
-    return (ConvertAdcuToDegK_Steinhart(p_therm, adcu) - 273.15F);
+    return (uint32_t)inv_steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), (double)1.0F / (degK));
 }
 
-static uint16_t ConvertDegCToAdcu_Steinhart(const Thermistor_T * p_therm, float degC)
-{
-    return ConvertDegKToAdcu_Steinhart(p_therm, degC + 273.15F);
-}
+static float KelvinOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return Thermistor_KelvinOfR_Steinhart(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu)); }
+
+static uint16_t AdcuOfKelvin_Steinhart(const Thermistor_T * p_therm, float degK) { return Thermistor_AdcuOfROhm(p_therm, Thermistor_ROfKelvin_Steinhart(p_therm, degK)); }
+
+static float CelsiusOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return (KelvinOfAdcu_Steinhart(p_therm, adcu) - 273.15F); }
+
+static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float degC) { return AdcuOfKelvin_Steinhart(p_therm, degC + 273.15F); }
 #endif
 
-static int16_t ConvertAdcuToDegC_Linear(const Thermistor_T * p_therm, uint16_t adcu)     { return Linear_Of(&p_therm->LinearUnits, adcu); }
-static uint16_t ConvertDegCToAdcu_Linear(const Thermistor_T * p_therm, int16_t degC)     { return Linear_InvOf(&p_therm->LinearUnits, degC); }
+// static int16_t CelsiusOfAdcu_Linear(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_Of(&p_therm->LinearUnits, adcu); }
+// static uint16_t AdcuOfCelsius_Linear(const Thermistor_T * p_therm, int16_t degC) { return Linear_InvOf(&p_therm->LinearUnits, degC); }
 
-static thermal_t ConvertAdcuToDegC(const Thermistor_T * p_therm, uint16_t adcu)
+static thermal_t CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
 {
-    thermal_t degC;
+    thermal_t degC = 0;
 #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-    degC = ConvertAdcuToDegC_Linear(p_therm, adcu);
+    // degC = CelsiusOfAdcu_Linear(p_therm, adcu);
 #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    degC = ConvertAdcuToDegC_Steinhart(p_therm, adcu);
+    degC = CelsiusOfAdcu_Steinhart(p_therm, adcu);
 #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
-    degC = ConvertAdcuToDegC_Lut(p_therm, adcu);
+    degC = CelsiusOfAdcu_Lut(p_therm, adcu);
 #endif
     return degC;
 }
 
-static uint16_t ConvertDegCToAdcu(const Thermistor_T * p_therm, thermal_t degC)
+static uint16_t AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC)
 {
-    uint16_t adcu;
+    uint16_t adcu = 0;
 #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-    adcu = ConvertDegCToAdcu_Linear(p_therm, degC);
+    // adcu = AdcuOfCelsius_Linear(p_therm, degC);
 #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    adcu = ConvertDegCToAdcu_Steinhart(p_therm, degC);
+    adcu = AdcuOfCelsius_Steinhart(p_therm, degC);
 #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
-    adcu = ConvertDegCToAdcu_Lut(p_therm, degC);
+    adcu = AdcuOfCelsius_Lut(p_therm, degC);
 #endif
     return adcu;
 }
 
-thermal_t Thermistor_ConvertToDegC(const Thermistor_T * p_therm, uint16_t adcu)                         { return ConvertAdcuToDegC(p_therm, adcu); }
-uint16_t Thermistor_ConvertToAdcu_DegC(const Thermistor_T * p_therm, thermal_t degC)                    { return ConvertDegCToAdcu(p_therm, degC); }
+thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu) { return CelsiusOfAdcu(p_therm, adcu); }
+uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC) { return AdcuOfCelsius(p_therm, degC); }
 
 
-/******************************************************************************/
-/*!
-    Set Limits Config
-*/
-/******************************************************************************/
-void Thermistor_SetFault_DegC(Thermistor_T * p_therm, thermal_t fault_degC, thermal_t faultThreshold_degC)
-{
-    p_therm->Config.FaultTrigger_Adcu = Thermistor_ConvertToAdcu_DegC(p_therm, fault_degC);
-    p_therm->Config.FaultThreshold_Adcu = Thermistor_ConvertToAdcu_DegC(p_therm, faultThreshold_degC);
-}
-
-void Thermistor_SetWarning_DegC(Thermistor_T * p_therm, thermal_t warning_degC, thermal_t warningThreshold_degC)
-{
-    p_therm->Config.WarningTrigger_Adcu = Thermistor_ConvertToAdcu_DegC(p_therm, warning_degC);
-    p_therm->Config.WarningThreshold_Adcu = Thermistor_ConvertToAdcu_DegC(p_therm, warningThreshold_degC);
-}
-
-void Thermistor_SetLimits_DegC(Thermistor_T * p_therm, thermal_t fault, thermal_t faultThreshold, thermal_t warning, thermal_t warningThreshold)
-{
-    Thermistor_SetFault_DegC(p_therm, fault, faultThreshold);
-    Thermistor_SetWarning_DegC(p_therm, warning, warningThreshold);
-    ResetUnitsLinear(p_therm);
-}
-
-thermal_t Thermistor_GetFault_DegC(const Thermistor_T * p_therm)              { return ConvertAdcuToDegC(p_therm, p_therm->Config.FaultTrigger_Adcu); }
-thermal_t Thermistor_GetFaultThreshold_DegC(const Thermistor_T * p_therm)     { return ConvertAdcuToDegC(p_therm, p_therm->Config.FaultThreshold_Adcu); }
-thermal_t Thermistor_GetWarning_DegC(const Thermistor_T * p_therm)            { return ConvertAdcuToDegC(p_therm, p_therm->Config.WarningTrigger_Adcu); }
-thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm)   { return ConvertAdcuToDegC(p_therm, p_therm->Config.WarningThreshold_Adcu); }
 
 
 
@@ -292,63 +216,45 @@ thermal_t Thermistor_GetWarningThreshold_DegC(const Thermistor_T * p_therm)   { 
 
 */
 /******************************************************************************/
-// int32_t Thermistor_VarId_Get(const Thermistor_T * p_thermistor, Thermistor_VarId id)
-// {
-//     int32_t value = 0;
-//     switch (id)
-//     {
-//         case THERMISTOR_CONFIG_VALUE_ADCU:     value = p_thermistor->Adcu;                         break;
-//         case THERMISTOR_CONFIG_STATUS:         value = Thermistor_GetStatus(p_thermistor);         break;
-//         default: value = 0; break;
-//     }
-//     return value;
-// }
-
-int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, Thermistor_ConfigId_T id)
+int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
     {
-        case THERMISTOR_CONFIG_R_SERIES:                   value = p_thermistor->CONST.R_SERIES / 10U;                 break;
-        case THERMISTOR_CONFIG_R_PARALLEL:                 value = p_thermistor->CONST.R_PARALLEL / 10U;               break;
-        case THERMISTOR_CONFIG_R0:                         value = Thermistor_GetR0(p_thermistor) / 10U;               break;
-        case THERMISTOR_CONFIG_T0:                         value = Thermistor_GetT0(p_thermistor);                     break;
-        case THERMISTOR_CONFIG_B:                          value = Thermistor_GetB(p_thermistor);                      break;
-        case THERMISTOR_CONFIG_TYPE:                       value = Thermistor_GetType(p_thermistor);                   break;
-        case THERMISTOR_CONFIG_FAULT_TRIGGER_ADCU:         value = Thermistor_GetFaultTrigger_Adcu(p_thermistor);      break;
-        case THERMISTOR_CONFIG_FAULT_THRESHOLD_ADCU:       value = Thermistor_GetFaultThreshold_Adcu(p_thermistor);    break;
-        case THERMISTOR_CONFIG_WARNING_TRIGGER_ADCU:       value = Thermistor_GetWarningTrigger_Adcu(p_thermistor);    break;
-        case THERMISTOR_CONFIG_WARNING_THRESHOLD_ADCU:     value = Thermistor_GetWarningThreshold_Adcu(p_thermistor);  break;
-        case THERMISTOR_CONFIG_IS_MONITOR_ENABLE:          value = Thermistor_IsMonitorEnable(p_thermistor);           break;
+        case THERMISTOR_CONFIG_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
+        case THERMISTOR_CONFIG_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
+        case THERMISTOR_CONFIG_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
+        case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
+        case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
+        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm) / 10U;            break;
+        case THERMISTOR_CONFIG_T0:              value = Thermistor_GetT0(p_therm);                  break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm) / 10U;  break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_T:  value = Thermistor_GetLinearDeltaT(p_therm);        break;
         default: break;
     }
     return value;
 }
 
-int32_t Thermistor_ConfigId_Get(const Thermistor_T * p_thermistor, Thermistor_ConfigId_T id)
+void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int32_t value)
 {
-    return (p_thermistor != NULL) ? _Thermistor_ConfigId_Get(p_thermistor, id) : 0;
-}
-
-void _Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, Thermistor_ConfigId_T id, int32_t value)
-{
-    switch (id)
+    if (p_therm->P_COEFFS != NULL)
     {
-        case THERMISTOR_CONFIG_R_SERIES:                   break;
-        case THERMISTOR_CONFIG_R_PARALLEL:                 break;
-        case THERMISTOR_CONFIG_R0:                         Thermistor_SetR0(p_thermistor, value);                     break;
-        case THERMISTOR_CONFIG_T0:                         Thermistor_SetT0(p_thermistor, value);                     break;
-        case THERMISTOR_CONFIG_B:                          Thermistor_SetB(p_thermistor, value);                      break;
-        case THERMISTOR_CONFIG_TYPE:                       Thermistor_SetType(p_thermistor, value);                   break;
-        case THERMISTOR_CONFIG_FAULT_TRIGGER_ADCU:         Thermistor_SetFaultTrigger_Adcu(p_thermistor, value);      break;
-        case THERMISTOR_CONFIG_FAULT_THRESHOLD_ADCU:       Thermistor_SetFaultThreshold_Adcu(p_thermistor, value);    break;
-        case THERMISTOR_CONFIG_WARNING_TRIGGER_ADCU:       Thermistor_SetWarningTrigger_Adcu(p_thermistor, value);    break;
-        case THERMISTOR_CONFIG_WARNING_THRESHOLD_ADCU:     Thermistor_SetWarningThreshold_Adcu(p_thermistor, value);  break;
-        case THERMISTOR_CONFIG_IS_MONITOR_ENABLE:          Thermistor_SetIsMonitorEnable(p_thermistor, value);        break;
+        switch (id)
+        {
+            case THERMISTOR_CONFIG_R_SERIES:        break;
+            case THERMISTOR_CONFIG_R_PARALLEL:      break;
+            case THERMISTOR_CONFIG_V_SERIES_MV:     break;
+            case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
+            case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
+            case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value * 10U);            break;
+            case THERMISTOR_CONFIG_T0:              _Thermistor_SetT0(p_therm, value);                  break;
+            case THERMISTOR_CONFIG_LINEAR_DELTA_R:  _Thermistor_SetLinearDeltaR(p_therm, value * 10U);  break;
+            case THERMISTOR_CONFIG_LINEAR_DELTA_T:  _Thermistor_SetLinearDeltaT(p_therm, value);        break;
+            default: break;
+        }
     }
 }
 
-void Thermistor_ConfigId_Set(Thermistor_T * p_thermistor, Thermistor_ConfigId_T id, int32_t value)
-{
-    if (p_thermistor != NULL) { _Thermistor_ConfigId_Set(p_thermistor, id, value); }
-}
+int Thermistor_ConfigId_Get(const Thermistor_T * p_therm, int id) { return (p_therm != NULL) ? _Thermistor_ConfigId_Get(p_therm, id) : 0; }
+
+void Thermistor_ConfigId_Set(const Thermistor_T * p_therm, int id, int value) { if (p_therm != NULL) { _Thermistor_ConfigId_Set(p_therm, id, value); } }

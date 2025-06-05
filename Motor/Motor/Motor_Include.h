@@ -25,11 +25,10 @@
 /*!
     @file   Motor_Include.h
     @author FireSourcery
-    @version V0
+
     @brief
 */
 /******************************************************************************/
-#include "Motor_User.h"
 #include "Motor_Thread.h"
-#include "Motor_Analog.h"
-#include "Motor_Var.h"
+#include "Motor_User.h"
+#include "Motor_Config.h"

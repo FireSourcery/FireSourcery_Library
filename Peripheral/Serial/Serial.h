@@ -25,7 +25,7 @@
     @file   HAL_Serial.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef SERIAL_H
@@ -38,45 +38,39 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef const struct Serial_Const
+typedef const struct Serial
 {
     HAL_Serial_T * const P_HAL_SERIAL;
-}
-Serial_Const_T;
-
-typedef struct Serial
-{
-    const Serial_Const_T CONST;
-    Ring_T RxRing;
-    Ring_T TxRing;
+    const Ring_Context_T RX_RING; /* todo update to const handler */
+    const Ring_Context_T TX_RING;
 }
 Serial_T;
 
-#define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
-{                                                                               \
-    .CONST = { .P_HAL_SERIAL = p_Hal, },                                        \
-    .TxRing = RING_INIT(p_TxBuffer, sizeof(uint8_t), TxBufferSize, 0U),         \
-    .RxRing = RING_INIT(p_RxBuffer, sizeof(uint8_t), RxBufferSize, 0U),         \
-}
+// #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
+// {                                                                               \
+//     .P_HAL_SERIAL = p_Hal,                                         \
+//     .TX_RING = RING_INIT(p_TxBuffer, sizeof(uint8_t), TxBufferSize),         \
+//     .RX_RING = RING_INIT(p_RxBuffer, sizeof(uint8_t), RxBufferSize),         \
+// }
 
 #define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
 {                                                          \
-    .CONST = { .P_HAL_SERIAL = p_Hal, },                   \
-    .TxRing = RING_ALLOC(sizeof(uint8_t), TxBufferSize),   \
-    .RxRing = RING_ALLOC(sizeof(uint8_t), RxBufferSize),   \
+    .P_HAL_SERIAL = p_Hal,                                          \
+    .TX_RING = RING_CONTEXT_ALLOC(sizeof(uint8_t), TxBufferSize),     \
+    .RX_RING = RING_CONTEXT_ALLOC(sizeof(uint8_t), RxBufferSize),     \
 }
 
-static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(&p_serial->RxRing); }
-static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return Ring_GetEmptyCount(&p_serial->TxRing); }
-static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
-static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
-static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
-static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableRxInterrupt(p_serial->CONST.P_HAL_SERIAL); }
+static inline size_t Serial_GetRxFullCount(const Serial_T * p_serial)   { return Ring_GetFullCount(p_serial->RX_RING.P_STATE); }
+static inline size_t Serial_GetTxEmptyCount(const Serial_T * p_serial)  { return Ring_GetEmptyCount(p_serial->TX_RING.P_STATE); }
+static inline void Serial_EnableTxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableTxInterrupt(p_serial->P_HAL_SERIAL); }
+static inline void Serial_DisableTxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL); }
+static inline void Serial_EnableRxIsr(const Serial_T * p_serial)        { HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL); }
+static inline void Serial_DisableRxIsr(const Serial_T * p_serial)       { HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL); }
 
 /* Check for Overrun */
 // static inline bool Serial_IsRxOverrun(const Serial_T * p_serial)
 // {
-//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_IsFull(&p_serial->RxRing) == true));
+//     return ((HAL_Serial_ReadRxOverrun(p_serial->CONST.P_HAL_SERIAL) == true) || (Ring_IsFull(&p_serial->RX_RING) == true));
 // }
 
 /*

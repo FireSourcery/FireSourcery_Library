@@ -25,7 +25,7 @@
     @file   Version.h
     @author FireSourcery
     @brief  For all Motors
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOTOR_VERSION_H

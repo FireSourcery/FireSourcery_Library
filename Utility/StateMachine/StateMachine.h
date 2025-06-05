@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,15 +24,12 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   StateMachine.c
+    @file   StateMachine.h
     @author FireSourcery
-    @version V0
-    @brief     StateMachine module
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef STATE_MACHINE_H
-#define STATE_MACHINE_H
-
+#include "State.h"
 #include "Config.h"
 
 #include "System/Critical/Critical.h"
@@ -40,312 +39,108 @@
 #include <stddef.h>
 #include <stdatomic.h>
 #include <sys/types.h>
-
 #include <assert.h>
 
-#define STATE_MACHINE_INPUT_ID_NULL         (0xFFU)
-#define STATE_MACHINE_INPUT_VALUE_NULL      (0U)
-
-typedef uint8_t state_machine_input_t;      /* Input/Handler Id. Maps to [StateMachine_Input_T]. Index into transition table. Implementation may overwrite with enum. */
-typedef intptr_t state_machine_value_t;     /* User define platform register size */
-
-// id is not passed in a function pointer. will not affect function pointer casting compatibility
-// typedef enum state_machine_input { STATE_MACHINE_INPUT_ID_NULL1 = 0xFF } state_machine_input_t;
-
-typedef uint8_t state_machine_state_t;      /* State ID. User may overwrite with enum */
-struct StateMachine_State;
-
-/* A State Function. Depends only on the State and internal values */
-/* Transition Action/Output */
-typedef void (*StateMachine_Function_T)(void * p_context);
-
-// struct StateMachine_Input
-// {
-//     state_machine_input_t id;
-//     state_machine_value_t value;
-// };
-
-/******************************************************************************/
-/*!
-    Transition Input Handler Function Types
-    Forms the Transition Function - defined by user via P_TRANSITION_TABLE
-
-    @return pointer to new state, if it exists.
-            NULL - no transition, bypass exit and entry, indicates user defined non transition
-            StateMachine_State * - transition, proc exit and entry.
-                return 'this' state -> self transition, proc exit and entry
-
-            HSM case - returning SubStates must be called with [ProcBranchInput] or [ProcSubStateInput]
-                [ProcInput] will not call SubState transitions
-
-    effectively, destination state + on transition logic [struct { P_STATE, ON_TRANSITION }]
-*/
-/******************************************************************************/
-/*
-    Context Input Handler
-    MapFn
-    Transition0
-    Transition Input with context, mapped by id
-    Transit_T, Next_T
-*/
-typedef struct StateMachine_State * (*StateMachine_InputVoid_T)(void * p_context);
-
-/*
-    Value Input Handler
-    Transition1
-    Transition Input with immediate parameter, value/ptr
-    Alternative to passing all parameters by context. reduce assigning temporary variables
-*/
-typedef struct StateMachine_State * (*StateMachine_Input_T)(void * p_context, state_machine_value_t inputValue);
-
-/*
-    returns NULL as input not accepted. effectively handles case of return status.
-*/
-typedef StateMachine_Input_T(*StateMachine_TransitionMapper_T)(void * p_context, state_machine_input_t inputId);
-
-/*
-    User define full handler switch
-*/
-// typedef struct StateMachine_State * (*StateMachine_TransitionHandler_T)(void * p_context, state_machine_input_t inputId, state_machine_value_t inputValue);
-
 
 /******************************************************************************/
 /*
-    Flex input signature types
-    Signatures for inputs passing function pointer
-    Per state inputs can be passed at input time,
-    Inputs maping to a single state, can simply check State ID
+    StateMachine_Def
 */
 /******************************************************************************/
-typedef void(*StateMachine_Set_T)(void * p_context, state_machine_value_t inputValue);
-typedef state_machine_value_t(*StateMachine_Get_T)(void * p_context);
-
-/* Keyd for implementation handle */
-/* optionally i/o mapping for all states, handle lookup with inputK */
-typedef void (*StateMachine_SetK_T)(void * p_context, state_machine_value_t inputK, state_machine_value_t inputV);
-typedef state_machine_value_t(*StateMachine_GetK_T)(void * p_context, state_machine_value_t inputK);
-
-
-/******************************************************************************/
-/*
-    Transition - self contained
-    Alternative mapping Id
-    reverse map [Transition]/[Input] to a [State] or set of [State]s
-    compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
-    Apply transition to State
-
-    effectively [State] local [state_machine_input_t]
-*/
-/******************************************************************************/
-typedef const struct StateMachine_TransitionInput
-{
-    const StateMachine_Input_T TRANSITION; /* To/Destination. Does not return NULL */
-    const struct StateMachine_State * const P_VALID; /* From/Source. Starting State known to accept this input at compile time. */
-}
-StateMachine_TransitionInput_T;
-
-// typedef const struct StateMachine_MultiTransitionInput
-// {
-//     const StateMachine_Input_T TRANSITION; /* To/Destination. Does not return NULL */
-//     const struct StateMachine_State * const PP_VALID; /* From/Source. Starting State known to accept this input at compile time. */
-//     const uint8_t VALID_COUNT;
-// }
-// StateMachine_MultiTransitionInput_T;
-
-
-/*  */
-typedef const struct StateMachine_State
-{
-    /*
-        Internal
-    */
-    const state_machine_state_t ID;             /* Allow [State] instances to remain private, by calling via id */
-    const StateMachine_Function_T ENTRY;        /* Common to all transition to current state, including self transition */
-#ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
-    const StateMachine_Function_T EXIT;
-#endif
-    const StateMachine_Function_T LOOP;         /* Synchronous Output of the State. periodic proc. No null pointer check for top level, implementation must supply empty function */
-                                                /* Inherited by SubState */
-
-    /*
-        Transition Control
-    */
-
-   const StateMachine_InputVoid_T NEXT;     /* Synchronous Context Input Handler. Separate from OUTPUT for SubState regularity. */
-                                            /* Handle Context Transition, "clock only" on internal/[P_CONTEXT] state. no external input. */
-                                            /* Overwritten by SubStates  */
-    /*
-        Array Implementation - 2D input table
-        Map allocates for all possible transitions/inputs for each state, valid and invalid
-        Allocates space for fault transition for invalid inputs
-        Array index as [state_machine_input_t], eliminates search, only space efficient when inputs are common across many states.
-        States belonging to the same [StateMachine] must have same size maps
-
-        Pointer to array of functions that return a pointer to the next state (No null pointer check, user must supply empty table)
-        Not accept input => no process.
-        Non-transition (Output only / Mealy machine style outputs), does not proc entry function => function return NULL
-        Self-transition, proc entry function => function return pointer to self
-    */
-    const StateMachine_Input_T * const P_TRANSITION_TABLE; /* f(state_machine_input_t) input map. Forms the TransitionFunction.  */
-
-    /*
-        Effectively [P_TRANSITION_TABLE] with user implemented switch()
-        return a function pointer, instead of directly returning the State.
-        NULL for not accepted input.
-        Unused by Top Level State
-    */
-    const StateMachine_TransitionMapper_T TRANSITION_MAPPER;
-
-    /* input handler without array mapping. for substate. implementation handle id look up */
-    // const StateMachine_TransitionHandler_T TRANSITION_HANDLER;
-
-    /*
-        for composite pattern, NULL for top level state
-        SubStates mount onto States
-    */
-    const struct StateMachine_State * const P_PARENT;
-    /* SubStates define Top and Depth for runtime optimization */
-    const struct StateMachine_State * const P_ROOT; /* SubState maintain pointer to top level state. */
-    const uint8_t DEPTH; /* Depth of state. Depth must be consistent for iteration */
-    // const state_machine_state_t ROOT_ID;  /* Top level state ID, can remain private via extern id */
-
-    /*
-        pointer to sub state only functions,
-        effectively, struct { State_T base, additional } SubState_T;
-        P_EXT
-    */
-    // StateMachine_SetK_T SET; /* via Key, alternative to passing function pointer */
-
-    // void * (* const CONTEXT)(void * p_context); /* Retrive State Context from Machine Context */
-
-    /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
-#ifdef CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE
-    const struct StateMachine_State * P_LINK_NEXT;
-    const struct StateMachine_State * P_LINK_PREV;
-#endif
-}
-StateMachine_State_T;
-
-/* StateMachine Type */
+// StateMachine_Less
 typedef struct StateMachine_Machine
 {
-    const StateMachine_State_T * const P_STATE_INITIAL;
-    // const StateMachine_Input_T * const * const PP_TRANSITION_TABLE; [state_machine_state_t][state_machine_input_t]
-    // const StateMachine_State_T * const P_ROOT_STATES;
-    const uint8_t TRANSITION_TABLE_LENGTH;  /* state_machine_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
+    const State_T * const P_STATE_INITIAL;
+    const uint8_t TRANSITION_TABLE_LENGTH;  /* state_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
+    // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
+    // const State_T STATES[]; /* auto assign a stateid this way */
+    // alternatively
+    const State_T * const P_STATE_FAULT; /* Optional, if not defined, no fault state */
 }
 StateMachine_Machine_T;
 
+// void StateMachine_Init(const StateMachine_Active_T * p_stateMachine, void * p_context, const StateMachine_Machine_T * p_initial)
+// {
+//     _StateMachine_SetSyncInput(p_active, 0, 0);
+//     atomic_flag_clear(&p_active->InputSignal);
+//     _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
+// }
+
+/* StateMachine StateValues */
+typedef struct StateMachine_Active StateMachine_Active_T;
+
 /*
-
+    [StateMachine_Context_T]
+    In this case of the runtime state _is_ a pointer to STATE in ROM.
+    This const descriptor is only shorthands passing P_CONTEXT for now.
+    reserve for mixin/interface side implemented functions
 */
-typedef const struct StateMachine_Const
+typedef const struct StateMachine
 {
-    const StateMachine_Machine_T * const P_MACHINE;         /* Const definition of state transition behaviors */
-    // const StateMachine_State_T * const P_STATE_INITIAL;
-    // const uint8_t TRANSITION_TABLE_LENGTH;
-    void * const P_CONTEXT;                                 /* Mutable state information per state machine. Includes ref to StateMachine */
-    // const uint32_t * P_TIMER;   /* Auto handle timed state */
-}
-StateMachine_Const_T;
+    /*
+        shorthand passing and container_of
+        StateMachine_ProcState([P_CONTEXT], &([P_CONTEXT]->STATE_MACHINE))
+            ...
+            ([P_CONTEXT]->STATE_MACHINE.P_RUNTIME)->p_ActiveState->LOOP([P_CONTEXT])
+            ...
 
-/* StateMachine Instance */
-typedef struct StateMachine
-{
-    const StateMachine_Const_T CONST;
+        StateMachine_ProcState(&([P_CONTEXT]->STATE_MACHINE))
+            ...
+            ([P_CONTEXT]->STATE_MACHINE.P_RUNTIME)->p_ActiveState->LOOP(([P_CONTEXT]->STATE_MACHINE.P_CONTEXT))
+            ...
+    */
+    void * P_CONTEXT; /* Base Struct */
+    const StateMachine_Machine_T * P_MACHINE; /* Machine def. Const definition of state transition behaviors, via initial state */
+    // const StateMachine_Machine_T MACHINE;    /* Also this could be nested by value, or pass at init. */
 
-    const StateMachine_State_T * p_ActiveState;     /* The Active Top Level State. Keep the top level fast. */
-    const StateMachine_State_T * p_ActiveSubState;  /* Leaf State, defines full path */
+    StateMachine_Active_T * P_ACTIVE;         /* StateMachine "state" data */
 
-    // const StateMachine_State_T * p_ActiveStates; alternative to recursive traverse down
-
-    volatile atomic_flag InputSignal;
-
-    /* Sync machine store result until process */
-    volatile state_machine_input_t SyncInput;
-    volatile state_machine_value_t SyncInputValue;
-    // volatile state_machine_value_t SyncInputStatus;
-
-    // volatile state_machine_value_t InternalInput;
+    /*  */
+    // const State_T ** pp_ActiveStatesBuffer; alternative to recursive traverse down
+    // const void * P_STATE_BUFFERS[STATE_COUNT]; /* a substate buffer for each top state */
 }
 StateMachine_T;
 
-#define STATE_MACHINE_INIT(p_Machine, p_Context, ...)           \
-{                                                               \
-    .CONST =                                                    \
-    {                                                           \
-        .P_MACHINE = p_Machine,                                 \
-        .P_CONTEXT = p_Context,                                 \
-    }                                                           \
-}
+#define STATE_MACHINE_ACTIVE_ALLOC() (&(StateMachine_Active_T){0})
 
-/*
-    Top Level State
-*/
-static inline const StateMachine_State_T * StateMachine_GetActiveState(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveState; }
-static inline state_machine_state_t StateMachine_GetActiveStateId(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveState->ID; }
-static inline bool StateMachine_IsActiveState(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state) { return (p_state == p_stateMachine->p_ActiveState); }
-static inline bool StateMachine_IsActiveStateId(const StateMachine_T * p_stateMachine, state_machine_state_t stateId) { return (stateId == p_stateMachine->p_ActiveState->ID); }
-
-
-static inline const StateMachine_State_T * StateMachine_GetActiveSubState(const StateMachine_T * p_stateMachine)
-    { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
-
-static inline bool StateMachine_IsActiveSubState(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state)
-    { return (p_state == StateMachine_GetActiveSubState(p_stateMachine)); }
-
-static inline state_machine_state_t StateMachine_GetActiveSubStateId(const StateMachine_T * p_stateMachine)
-    { return StateMachine_GetActiveSubState(p_stateMachine)->ID; }
-
-// static inline const StateMachine_State_T * StateMachine_GetActiveSubState(const StateMachine_T * p_stateMachine) { return p_stateMachine->p_ActiveSubState; }
-// static inline const StateMachine_State_T * StateMachine_GetActiveBranch(const StateMachine_T * p_stateMachine)
-//     { return (p_stateMachine->p_ActiveSubState == NULL) ? p_stateMachine->p_ActiveState : p_stateMachine->p_ActiveSubState; }
-
-static inline void _StateMachine_EndSubState(StateMachine_T * p_stateMachine) { p_stateMachine->p_ActiveSubState = p_stateMachine->p_ActiveState; }
+#define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) { .P_CONTEXT = (p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
+#define STATE_MACHINE_ALLOC(p_Context, p_Machine) STATE_MACHINE_INIT(p_Context, p_Machine, &(StateMachine_Active_T){ 0 })
 
 /******************************************************************************/
 /*
     Extern
 */
 /******************************************************************************/
-extern void _StateMachine_SetState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_newState);
-extern void _StateMachine_ProcSyncOutput(StateMachine_T * p_stateMachine);
-extern void _StateMachine_ProcSyncInput(StateMachine_T * p_stateMachine);
-extern void _StateMachine_ProcAsyncInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
-extern void _StateMachine_SetSyncInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
+extern void StateMachine_Init(const StateMachine_T * p_stateMachine);
+extern void StateMachine_Reset(const StateMachine_T * p_stateMachine);
 
-extern void StateMachine_Init(StateMachine_T * p_stateMachine);
-extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
+extern void StateMachine_Sync_ProcState(const StateMachine_T * p_stateMachine);
+extern void StateMachine_Sync_SetInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
+extern void StateMachine_Async_ProcState(const StateMachine_T * p_stateMachine);
+extern void StateMachine_Async_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
 
-extern void StateMachine_Sync_ProcState(StateMachine_T * p_stateMachine);
-extern void StateMachine_Sync_SetInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
+extern void StateMachine_ProcState(const StateMachine_T * p_stateMachine);
+extern void StateMachine_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
+extern void StateMachine_SetInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
 
-extern void StateMachine_Async_ProcState(StateMachine_T * p_stateMachine);
-extern void StateMachine_Async_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
+extern void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_input, state_input_value_t inputValue);
+extern void StateMachine_ForceTransition(const StateMachine_T * p_stateMachine, const State_T * p_state);
+extern void StateMachine_SetValueWith(const StateMachine_T * p_stateMachine, const State_T * p_state, State_Set_T setter, state_input_value_t value);
 
-extern void StateMachine_ProcState(StateMachine_T * p_stateMachine);
-extern void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
-extern void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_machine_input_t inputId, state_machine_value_t inputValue);
-extern void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_input, state_machine_value_t inputValue);
-extern void StateMachine_SetValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value);
+/******************************************************************************/
+/*
+    SubState
+*/
+/******************************************************************************/
+extern void StateMachine_ProcSubStateInput(const StateMachine_T * p_stateMachine, state_input_t id, state_input_value_t value);
 
-/* HSM */
-extern void _StateMachine_SetSubState(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state);
-extern void _StateMachine_ProcSubState(StateMachine_T * p_stateMachine);
-// extern void _StateMachine_EndSubState(StateMachine_T * p_stateMachine);
-extern void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
-
-extern bool StateMachine_IsActiveBranch(const StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state);
-
-extern void _StateMachine_SetBranch(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state);
-extern void _StateMachine_ProcBranch(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_limit);
-extern void _StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
-extern void _StateMachine_ProcBranchSyncInput(StateMachine_T * p_stateMachine);
-
-extern void _StateMachine_ProcBranch_Nested(StateMachine_T * p_stateMachine);
-extern void StateMachine_ProcBranch(StateMachine_T * p_stateMachine);
-extern void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_machine_input_t id, state_machine_value_t value);
-extern void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine, const StateMachine_TransitionInput_T * p_transition, state_machine_value_t inputValue);
-extern void StateMachine_SetBranchValueWith(StateMachine_T * p_stateMachine, const StateMachine_State_T * p_state, StateMachine_Set_T setter, state_machine_value_t value);
-
-#endif
+/******************************************************************************/
+/*
+    HSM
+*/
+/******************************************************************************/
+// extern void _StateMachine_ProcBranch_Nested(const StateMachine_T * p_stateMachine);
+extern void StateMachine_ProcBranch(const StateMachine_T * p_stateMachine);
+extern void StateMachine_ProcBranchInput(const StateMachine_T * p_stateMachine, state_input_t id, state_input_value_t value);
+extern void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_transition, state_input_value_t value);
+extern void StateMachine_SetBranchValueWith(const StateMachine_T * p_stateMachine, const State_T * p_state, State_Set_T setter, state_input_value_t value);

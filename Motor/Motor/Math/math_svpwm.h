@@ -25,7 +25,7 @@
     @file   math_svpwm.h
     @author FireSourcery
     @brief  SVPWM pure math functions.
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MATH_SVPWM_H
@@ -36,8 +36,12 @@
 #include <assert.h>
 
 
+static inline fract16_t svpwm_norm_vbus_inv(int32_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
+
+static inline fract16_t svpwm_norm_vbus(int32_t vBus_fract, fract16_t v_fract) { return fract16_div(v_fract, vBus_fract); }
+
 /*!
-    @param[in] vA, vB, vC - scalars normalized to [-.577F, .577F], such that vA = .577F <=> Phase A voltage output VBus/sqrt(3)
+    @param[in] vA, vB, vC - scalars normalized, range[-.577F:.577F], such that vA = .577F <=> Phase A voltage output VBus/sqrt(3)
 */
 static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
 {
@@ -59,24 +63,23 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     *p_dutyC = ufract16_sat(dutyC);
 }
 
-/*!
-    @param[in] a, b, c - scalars normalized to [-1.0F, 1.0F], such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
-*/
-static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
-{
-    int32_t vA = fract16_mul(a, FRACT16_1_DIV_SQRT3);
-    int32_t vB = fract16_mul(b, FRACT16_1_DIV_SQRT3);
-    int32_t vC = fract16_mul(c, FRACT16_1_DIV_SQRT3);
+// /*!
+//     @param[in] a, b, c - duty scalars normalized range[-1.0F:1.0F], such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
+// */
+// static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
+// {
+//     int32_t vA = fract16_mul(a, FRACT16_1_DIV_SQRT3);
+//     int32_t vB = fract16_mul(b, FRACT16_1_DIV_SQRT3);
+//     int32_t vC = fract16_mul(c, FRACT16_1_DIV_SQRT3);
 
-    svpwm_midclamp_vbus(p_dutyA, p_dutyB, p_dutyC, vA, vB, vC);
-}
-
+//     svpwm_midclamp_vbus(p_dutyA, p_dutyB, p_dutyC, vA, vB, vC);
+// }
 
 /*
     Transform V with midclamp 3rd harmonic adjustment
     without shifting to half Duty
 */
-// static inline void svpwm_midclamp_transform(fract16_t * p_vA, fract16_t * p_vB, fract16_t * p_vC)
+// static inline void svpwm_midclamp_transform(int32_t * p_vA, int32_t * p_vB, int32_t * p_vC)
 // {
 //     // # Find the maximum and minimum of the three phase voltages
 //     int32_t vMax = math_max(math_max(*p_vA, *p_vB), *p_vC);

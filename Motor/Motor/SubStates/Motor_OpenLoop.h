@@ -1,0 +1,55 @@
+
+#pragma once
+
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2025 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   Motor_OpenLoop.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "../Motor_StateMachine.h"
+
+/*
+
+*/
+static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+
+// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
+
+// static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState)
+// {
+//     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState); /* Proc, to allow validate immediately */
+// }
+
+/*
+    Extern
+*/
+/* Activate */
+extern void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T state);
+extern void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T align);
+extern void Motor_OpenLoop_SetAngleAlign(const Motor_T * p_motor, angle16_t angle);
+extern void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction);
+extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);

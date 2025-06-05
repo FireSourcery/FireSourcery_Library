@@ -25,7 +25,7 @@
     @file   Protocol.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef PROTOCOL_CMDR_H

@@ -1,0 +1,126 @@
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2025 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   Motor_Calibration.c
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+/******************************************************************************/
+#include "Motor_Calibration.h"
+
+
+/******************************************************************************/
+/*!
+    Homing SubState, alternatively move to OpenLoop
+*/
+/******************************************************************************/
+/*
+    with position sensor without position feedback loop
+*/
+static void Calibration_HomeEntry(const Motor_T * p_motor)
+{
+    // // for now
+    // p_motor->P_ACTIVE->ControlTimerBase = 0U;
+    // p_motor->P_ACTIVE->CalibrationStateIndex = 0U;
+    // p_motor->P_ACTIVE->FeedbackMode.Current = 0U;
+
+    // Phase_ActivateOutputV0(&p_motor->PHASE);
+    // Timer_StartPeriod_Millis(&p_motor->P_ACTIVE->ControlTimer, 20); // ~1rpm
+    // Ramp_Set(&p_motor->P_ACTIVE->OpenLoopIRamp, p_motor->P_ACTIVE->Config.OpenLoopRampI_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_ACTIVE->Config.OpenLoopRampIFinal_Fract16));
+
+    // p_motor->P_ACTIVE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    // p_motor->P_ACTIVE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+
+    // // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, MOTOR_DIRECTION_CCW);
+    // Motor_FOC_SetDirection_Cast(p_motor, p_motor->P_ACTIVE->Direction);
+}
+
+/*
+
+*/
+// todo step speed calc
+static void Calibration_ProcHome(const Motor_T * p_motor)
+{
+    // // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
+    // /* alternatively use openloop speed */
+    // uint16_t angleDelta = 65536/1000;
+
+    // // MotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
+
+    // if (Timer_Periodic_Poll(&p_motor->P_ACTIVE->ControlTimer) == true)
+    // {
+    //     Motor_PollSensorAngle(p_motor); /*  */
+
+    //     // p_motor->P_ACTIVE->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_ACTIVE->Config.PolePairs;
+    //     p_motor->P_ACTIVE->ElectricalAngle += (angleDelta * p_motor->P_ACTIVE->Config.PolePairs);
+    //     // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_ACTIVE->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+    //     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_ACTIVE->ElectricalAngle, p_motor->P_ACTIVE->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
+    // }
+}
+
+static State_T * Calibration_HomeEnd(const Motor_T * p_motor)
+{
+    // State_T * p_nextState = NULL;
+    // uint16_t angleDelta = 65536 / 1000;
+
+    // /* error on full rev todo */
+    // if (angle16_cycle(Motor_GetMechanicalAngle(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta, (p_motor->P_ACTIVE->Direction == MOTOR_DIRECTION_CCW)) == true)
+    // {
+    //     Phase_ActivateOutputV0(&p_motor->PHASE);
+    //     _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
+    //     p_nextState = &MOTOR_STATE_CALIBRATION;
+    // }
+
+    // p_motor->P_ACTIVE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+
+    return NULL;
+}
+
+static const State_T CALIBRATION_STATE_HOMING =
+{
+    // .ID         = MSM_STATE_ID_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .P_TOP      = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)Calibration_HomeEntry,
+    .LOOP       = (State_Action_T)Calibration_ProcHome,
+    .NEXT       = (State_InputVoid_T)Calibration_HomeEnd,
+};
+
+static State_T * Calibration_StartHome(const Motor_T * p_motor, state_input_value_t null)
+{
+    // if (MotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
+    return &CALIBRATION_STATE_HOMING;
+}
+
+
+/* Transition from any Calibration State */
+void Motor_Calibration_StartHome(const Motor_T * p_motor)
+{
+    static const State_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION =
+        { .P_VALID = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
+
+    StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
+}

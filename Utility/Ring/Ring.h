@@ -25,7 +25,7 @@
     @file   Ring.h
     @author FireSourcery
     @brief  Ring Buffer. Optimized implementation using POW2_MASK over modulus
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef RING_UTILITY_H
@@ -45,27 +45,21 @@
 #include <string.h>
 #include <assert.h>
 
-typedef const struct Ring_Const
-{
-    const size_t UNIT_SIZE;     /* Bytes */
-    const size_t LENGTH;        /* In UNIT_SIZE counts (NOT bytes) */
-#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
-    const size_t POW2_MASK;     /* Index Mask */
-#endif
-    void * const P_BUFFER; /* P_STATE */
-}
-Ring_Const_T;
 
-typedef struct Ring
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+typedef const struct Ring_Type
 {
-    const Ring_Const_T CONST;
-    volatile size_t Head;    /* FIFO Out/Front. */
-    volatile size_t Tail;    /* FIFO In/Back. */
-#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-    volatile critical_signal_t Mutex;
+    size_t UNIT_SIZE;     /* Bytes */
+    size_t LENGTH;        /* In UNIT_SIZE counts (NOT bytes) */
+#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
+    size_t POW2_MASK;     /* Index Mask */
 #endif
 }
-Ring_T;
+Ring_Type_T;
 
 #if     defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
 #define _RING_INIT_POW2(Pow2Mask) .POW2_MASK = Pow2Mask,
@@ -73,20 +67,44 @@ Ring_T;
 #define _RING_INIT_POW2(Pow2Mask)
 #endif
 
+#define _RING_TYPE_INIT(UnitSize, Length) { .UNIT_SIZE = UnitSize, .LENGTH = Length, _RING_INIT_POW2(Length - 1U) }
 
-#define RING_INIT(p_Buffer, UnitSize, Length, ...)  \
-{                                                           \
-    .CONST =                                                \
-    {                                                       \
-        .P_BUFFER       = p_Buffer,                         \
-        .LENGTH         = Length,                           \
-        .UNIT_SIZE      = UnitSize,                         \
-        _RING_INIT_POW2(Length - 1U)                        \
-    },                                                      \
+/*
+    Run time contigous implementation.
+*/
+typedef
+// __attribute__((aligned(sizeof(intptr_t)))) /* align to pointer size */
+struct Ring
+{
+    Ring_Type_T Type;
+    volatile uint32_t Head;    /* FIFO Out/Front. */
+    volatile uint32_t Tail;    /* FIFO In/Back. */
+#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+    volatile critical_lock_t Lock;
+#endif
+    uint8_t Buffer[]; /* MISRA violation. Rationale: Compile-time allocated. */
 }
+Ring_T;
 
-#define RING_ALLOC(UnitSize, Length, ...) RING_INIT((uint8_t[(Length * UnitSize)]){ }, UnitSize, Length, __VA_ARGS__)
-#define RING_ALLOC_AS(TYPE, Length, ...) RING_INIT((TYPE[Length]){ }, sizeof(TYPE), Length, __VA_ARGS__)
+/*
+    For Generic Handling or Runtime Init
+    In the case that Runtime state stores [Ring_Type_T Type], it must be copied at run time.
+*/
+typedef const struct Ring_Context
+{
+    const Ring_Type_T TYPE;
+    Ring_T * const P_STATE;
+}
+Ring_Context_T;
+
+#define IS_POW2(x) (((x) & ((x) - 1U)) == 0U)
+/* alternatively use int/sizeof(int) in case of ascii fill */
+#define _RING_BUFFER_ALLOC(Bytes) ((uint8_t[(Bytes)]){})
+// static_assert(IS_POW2(Length), "Ring length must be power of 2");
+
+#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + (UnitSize)*(Length))))
+#define RING_CONTEXT_INIT(UnitSize, Length, p_State) { .TYPE = _RING_TYPE_INIT(UnitSize, Length), .P_STATE = p_State, }
+#define RING_CONTEXT_ALLOC(UnitSize, Length) RING_CONTEXT_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
 
 /******************************************************************************/
@@ -94,15 +112,31 @@ Ring_T;
     Private
 */
 /******************************************************************************/
-static inline size_t _Ring_Length(const Ring_T * p_ring) { return p_ring->CONST.LENGTH; }
-static inline size_t _Ring_Mask(const Ring_T * p_ring) { return p_ring->CONST.POW2_MASK; }
+static inline size_t _Ring_Length(const Ring_T * p_ring) { return p_ring->Type.LENGTH; }
+
+static inline size_t _Ring_Mask(const Ring_T * p_ring)
+{
+#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
+    return p_ring->Type.POW2_MASK;
+#else
+    (void)p_ring;
+    return 0U;  /* Not used in LENGTH_COMPARE mode */
+#endif
+}
+
+static inline size_t _Ring_IndexMaskedOf(const Ring_T * p_ring, size_t index)
+{
+#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
+    return (index & p_ring->Type.POW2_MASK);
+#endif
+}
 
 static inline size_t _Ring_IndexWrapOf(const Ring_T * p_ring, size_t index)
 {
 #if     defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
-    return (index & p_ring->CONST.POW2_MASK);
+    return _Ring_IndexMaskedOf(p_ring, index);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return (index % p_ring->CONST.LENGTH);
+    return (index % p_ring->Type.LENGTH);
 #endif
 }
 
@@ -113,9 +147,9 @@ static inline size_t _Ring_IndexIncOf(const Ring_T * p_ring, size_t index, size_
     (void)p_ring;
     return index + inc;
 #elif   defined(CONFIG_RING_POW2_WRAP)
-    return _Ring_IndexWrapOf(p_ring, index + inc);
+    return _Ring_IndexMaskedOf(p_ring, index + inc);
 #elif defined(CONFIG_RING_LENGTH_COMPARE)
-    return (index + inc > p_ring->CONST.LENGTH) ? index + inc - p_ring->CONST.LENGTH : index + inc;
+    return (index + inc >= p_ring->Type.LENGTH) ? index + inc - p_ring->Type.LENGTH : index + inc;
 #endif
 }
 
@@ -125,20 +159,20 @@ static inline size_t _Ring_IndexDecOf(const Ring_T * p_ring, size_t index, size_
     (void)p_ring;
     return index - dec;
 #elif   defined(CONFIG_RING_POW2_WRAP)
-    return _Ring_IndexWrapOf(p_ring, index - dec);
+    return _Ring_IndexMaskedOf(p_ring, index - dec);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return ((int32_t)index - dec < 0) ? p_ring->CONST.LENGTH + index - dec : index - dec;
+    return ((int32_t)index - dec < 0) ? p_ring->Type.LENGTH + index - dec : index - dec;
 #endif
 }
 
-// static inline size_t _Ring_ArrayIndexOf(const Ring_T * p_ring, size_t virtualIndex)
-// {
-// #if     defined(CONFIG_RING_POW2_COUNTER)
-//     return _Ring_IndexWrapOf(p_ring, virtualIndex);
-// #elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
-//     return virtualIndex;
-// #endif
-// }
+static inline size_t _Ring_ArrayIndexOf(const Ring_T * p_ring, size_t ringIndex)
+{
+#if     defined(CONFIG_RING_POW2_COUNTER)
+    return _Ring_IndexMaskedOf(p_ring, ringIndex);
+#elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
+    return ringIndex;
+#endif
+}
 
 
 /******************************************************************************/
@@ -160,7 +194,7 @@ static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 #elif   defined(CONFIG_RING_POW2_WRAP)
     return _Ring_IndexWrapOf(p_ring, p_ring->Tail - p_ring->Head);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return (p_ring->Tail >= p_ring->Head) ? (p_ring->Tail - p_ring->Head) : (p_ring->CONST.LENGTH - p_ring->Head + p_ring->Tail);
+    return (p_ring->Tail >= p_ring->Head) ? (p_ring->Tail - p_ring->Head) : (p_ring->Type.LENGTH - p_ring->Head + p_ring->Tail);
 #endif
 }
 
@@ -170,11 +204,11 @@ static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 static inline size_t Ring_GetEmptyCount(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_POW2_COUNTER)
-    return p_ring->CONST.LENGTH + p_ring->Head - p_ring->Tail;
+    return p_ring->Type.LENGTH + p_ring->Head - p_ring->Tail;
 #elif   defined(CONFIG_RING_POW2_WRAP)
-    return _Ring_IndexWrapOf(p_ring, p_ring->CONST.LENGTH + p_ring->Head - p_ring->Tail - 1U);
+    return _Ring_IndexWrapOf(p_ring, p_ring->Type.LENGTH + p_ring->Head - p_ring->Tail - 1U);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return (p_ring->Tail >= p_ring->Head) ? (p_ring->CONST.LENGTH + p_ring->Head - p_ring->Tail - 1U) : (p_ring->Head - p_ring->Tail - 1U);
+    return (p_ring->Tail >= p_ring->Head) ? (p_ring->Type.LENGTH + p_ring->Head - p_ring->Tail - 1U) : (p_ring->Head - p_ring->Tail - 1U);
 #endif
 }
 
@@ -186,11 +220,12 @@ static inline bool Ring_IsEmpty(const Ring_T * p_ring)
 static inline bool Ring_IsFull(const Ring_T * p_ring)
 {
 #if     defined(CONFIG_RING_POW2_COUNTER)
-    return (Ring_GetFullCount(p_ring) == p_ring->CONST.LENGTH);
+    return (Ring_GetFullCount(p_ring) == p_ring->Type.LENGTH);
 #elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
     return (_Ring_IndexIncOf(p_ring, p_ring->Tail, 1U) == p_ring->Head);
 #endif
 }
+
 
 
 /******************************************************************************/
@@ -214,7 +249,8 @@ extern void * _Ring_Seek(Ring_T * p_ring, size_t index);
 /*
 
 */
-extern void Ring_Init(Ring_T * p_ring);
+extern void Ring_Init(const Ring_Context_T * p_ring);
+extern void Ring_InitFrom(Ring_T * p_ring, const Ring_Type_T * p_type);
 extern void Ring_Clear(Ring_T * p_ring);
 extern bool Ring_PushFront(Ring_T * p_ring, const void * p_unit);
 extern bool Ring_PopFront(Ring_T * p_ring, void * p_result);
@@ -235,6 +271,7 @@ extern size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unit
 
 extern bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount);
 extern size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount);
+
 
 
 #endif

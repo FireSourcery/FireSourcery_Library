@@ -25,7 +25,7 @@
 //     @file   HAL_CanBus.h
 //     @author
 //     @brief
-//     @version V0
+//
 // */
 // /******************************************************************************/
 // #ifndef HAL_CAN_BUS_PLATFORM_H

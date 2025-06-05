@@ -25,7 +25,7 @@
     @file   SysTime.h
     @author FireSourcery
     @brief  Init SysTick as System time, 1ms
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef SYSTIME_H

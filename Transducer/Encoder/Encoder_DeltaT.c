@@ -25,7 +25,7 @@
     @file    Encoder_DeltaD.c
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "Encoder_DeltaT.h"
@@ -34,13 +34,13 @@
 /*!
     Protected Init Timer HAL
 */
-void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
+void _Encoder_DeltaT_InitTimer(const Encoder_T * p_encoder)
 {
 
-    // if(p_encoder->CONST.P_HAL_ENCODER_TIMER_INIT) { p_encoder->CONST.P_HAL_ENCODER_TIMER_INIT(); }
+    // if(p_encoder->P_HAL_ENCODER_TIMER_INIT) { p_encoder->P_HAL_ENCODER_TIMER_INIT(); }
     // else{}
 
-    HAL_Encoder_InitTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER);
+    HAL_Encoder_InitTimer(p_encoder->P_HAL_ENCODER_TIMER);
     /*
         RPM * CPR / 60[Seconds] = CPS
         CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
@@ -63,42 +63,43 @@ void _Encoder_DeltaT_InitTimer(Encoder_T * p_encoder)
             => RPM Min ~= 10RPM
     */
 #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
-    // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->Config.CountsPerRevolution * 16666U);
-    uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->CONST.TIMER_FREQ);
-    p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->CONST.EXTENDED_TIMER_FREQ;
+    // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->P_HAL_ENCODER_TIMER, p_encoder->P_STATE->Config.CountsPerRevolution * 16666U);
+    uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->P_HAL_ENCODER_TIMER, p_encoder->TIMER_FREQ);
+    p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->EXTENDED_TIMER_FREQ;
 #else
     /* Compile time defined TIMER_FREQ */
-    HAL_Encoder_InitTimerFreq(p_encoder->CONST.P_HAL_ENCODER_TIMER, p_encoder->CONST.TIMER_FREQ);
-    p_encoder->ExtendedTimerConversion = p_encoder->CONST.TIMER_FREQ / p_encoder->CONST.EXTENDED_TIMER_FREQ;
+    HAL_Encoder_InitTimerFreq(p_encoder->P_HAL_ENCODER_TIMER, p_encoder->TIMER_FREQ);
+    p_encoder->P_STATE->ExtendedTimerConversion = p_encoder->TIMER_FREQ / p_encoder->EXTENDED_TIMER_FREQ;
 #endif
 }
+
 
 /*!
     Uses pin ISR, or polling
 */
-void Encoder_DeltaT_Init(Encoder_T * p_encoder)
+void Encoder_DeltaT_Init(const Encoder_T * p_encoder)
 {
-    if(p_encoder->CONST.P_CONFIG != NULL) { memcpy(&p_encoder->Config, p_encoder->CONST.P_CONFIG, sizeof(Encoder_Config_T)); }
+    if (p_encoder->P_NVM_CONFIG != NULL) { memcpy(&p_encoder->P_STATE->Config, p_encoder->P_NVM_CONFIG, sizeof(Encoder_Config_T)); }
     _Encoder_DeltaT_InitTimer(p_encoder);
-    p_encoder->UnitTime_Freq = p_encoder->CONST.TIMER_FREQ;
-    _Encoder_ResetUnits(p_encoder);
-    p_encoder->DeltaD = 1U; /* Effective for shared functions only */
+    p_encoder->P_STATE->UnitTime_Freq = p_encoder->TIMER_FREQ;
+    _Encoder_ResetUnits(p_encoder->P_STATE);
+    p_encoder->P_STATE->DeltaD = 1U; /* Effective for shared functions only */
     // p_encoder->IsSinglePhasePositive = true;
-    p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder);
+    p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
     Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
     Set initial capture to lowest speed, DeltaT = ENCODER_TIMER_MAX
 */
-void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
+void Encoder_DeltaT_SetInitial(const Encoder_T * p_encoder)
 {
-    HAL_Encoder_ClearTimerOverflow(p_encoder->CONST.P_HAL_ENCODER_TIMER);
-    HAL_Encoder_WriteTimer(p_encoder->CONST.P_HAL_ENCODER_TIMER, 0U);
+    HAL_Encoder_ClearTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER);
+    HAL_Encoder_WriteTimer(p_encoder->P_HAL_ENCODER_TIMER, 0U);
 
-    p_encoder->DeltaT = p_encoder->CONST.TIMER_FREQ; /* Set as 1s 60/Cpr RPM, alternatively multiply for 1rpm */
-    p_encoder->ExtendedTimerPrev = *p_encoder->CONST.P_EXTENDED_TIMER;
-    p_encoder->InterpolateAngleIndex = 0U;
+    p_encoder->P_STATE->DeltaT = p_encoder->TIMER_FREQ; /* Set as 1s 60/Cpr RPM, alternatively multiply for 1rpm */
+    p_encoder->P_STATE->ExtendedTimerPrev = *p_encoder->P_EXTENDED_TIMER;
+    p_encoder->P_STATE->InterpolateAngleIndex = 0U;
     // _Encoder_ZeroPulseCount(p_encoder);
 }
 
@@ -112,14 +113,14 @@ void Encoder_DeltaT_SetInitial(Encoder_T * p_encoder)
     EXTENDED_TIMER_FREQ should be small, 1000, < 65536
     1[S] => 60/CPR[RPM]
 */
-void Encoder_DeltaT_SetExtendedWatchStop_Millis(Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
+void Encoder_DeltaT_SetExtendedWatchStop_Millis(const Encoder_T * p_encoder, uint16_t effectiveStopTime_Millis)
 {
-    p_encoder->Config.ExtendedDeltaTStop = effectiveStopTime_Millis * p_encoder->CONST.EXTENDED_TIMER_FREQ / 1000U;
+    p_encoder->P_STATE->Config.ExtendedDeltaTStop = effectiveStopTime_Millis * p_encoder->EXTENDED_TIMER_FREQ / 1000U;
 }
 
-void Encoder_DeltaT_SetExtendedWatchStop_RPM(Encoder_T * p_encoder)
+void Encoder_DeltaT_SetExtendedWatchStop_RPM(const Encoder_T * p_encoder)
 {
-    // 60U * p_encoder->CONST.EXTENDED_TIMER_FREQ / p_encoder->Config.CountsPerRevolution / rpm
-    p_encoder->Config.ExtendedDeltaTStop = Encoder_DeltaT_OfRotationalSpeed_RPM(p_encoder, 1U) * p_encoder->CONST.EXTENDED_TIMER_FREQ / _Encoder_DeltaT_GetTimerFreq(p_encoder);
+    // 60U * p_encoder->EXTENDED_TIMER_FREQ / p_encoder->P_STATE->Config.CountsPerRevolution / rpm
+    p_encoder->P_STATE->Config.ExtendedDeltaTStop = Encoder_DeltaT_OfRotationalSpeed_RPM(p_encoder->P_STATE, 1U) * p_encoder->EXTENDED_TIMER_FREQ / _Encoder_DeltaT_GetTimerFreq(p_encoder);
 }
 

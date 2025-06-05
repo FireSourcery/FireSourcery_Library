@@ -25,78 +25,82 @@
     @file   .h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "MotNvm.h"
 
-void MotNvm_Init(MotNvm_T * p_this)
+void MotNvm_Init(const MotNvm_T * p_motNvm)
 {
-    Flash_Init(p_this->P_FLASH);
+    Flash_Init(p_motNvm->P_FLASH);
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
-    EEPROM_Init_Blocking(p_this->P_EEPROM);
+    EEPROM_Init_Blocking(p_motNvm->P_EEPROM);
 #endif
 }
 
-NvMemory_Status_T MotNvm_WriteConfig_Blocking(MotNvm_T * p_this, const void * p_nvm, const void * p_ram, size_t sizeBytes)
+NvMemory_Status_T MotNvm_WriteConfig_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
-    return EEPROM_Write_Blocking(p_this->P_EEPROM, (uintptr_t)p_nvm, p_ram, sizeBytes);
+    return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_rom, p_ram, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
-    assert(nvmemory_is_aligned((uintptr_t)p_nvm, FLASH_UNIT_WRITE_SIZE));
-    return Flash_Write_Blocking(p_this->P_FLASH, (uintptr_t)p_nvm, p_ram, sizeBytes);
+    assert(nvmemory_is_aligned((uintptr_t)p_rom, FLASH_UNIT_WRITE_SIZE));
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)p_rom, p_ram, sizeBytes);
 #endif
 }
 
-NvMemory_Status_T MotNvm_ReadManufacture_Blocking(MotNvm_T * p_this, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
+NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
-    return Flash_ReadOnce_Blocking(p_this->P_FLASH, onceAddress, size, p_destBuffer);  // if(p_this->MANUFACTURE_ADDRESS != 0) handle offset
+    return Flash_ReadOnce_Blocking(p_motNvm->P_FLASH, onceAddress, size, p_destBuffer);  // if(p_motNvm->MANUFACTURE_ADDRESS != 0) handle offset
 #elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
-    if (size < p_this->MANUFACTURE_SIZE) { memcpy(p_destBuffer, onceAddress, size); }
+    return (size <= p_motNvm->MANUFACTURE_SIZE) ? ({ memcpy(p_destBuffer, onceAddress, size); true; }) : false;
 #endif
 }
 
-NvMemory_Status_T MotNvm_WriteManufacture_Blocking(MotNvm_T * p_this, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size)
+NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
-    return Flash_WriteOnce_Blocking(p_this->P_FLASH, onceAddress, p_sourceBuffer, size);
+    return Flash_WriteOnce_Blocking(p_motNvm->P_FLASH, onceAddress, p_sourceBuffer, size);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
-    return Flash_Write_Blocking(p_this->P_FLASH, onceAddress, p_dataBuffer, size);
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, onceAddress, p_dataBuffer, size);
 #endif
 }
 
 /* eeprom only. Save on first init. */
-NvMemory_Status_T MotNvm_SaveBootReg_Blocking(MotNvm_T * p_this)
+NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 {
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
-    return EEPROM_Write_Blocking(p_this->P_EEPROM, (uintptr_t)p_this->P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
+    return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_motNvm->P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif
 }
 
-NvMemory_Status_T MotNvm_LoadMotorRefFrom(MotNvm_T * p_this, const struct HAL_Nvm_Manufacturer * p_source)
+NvMemory_Status_T MotNvm_LoadMotorAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
 {
-    MotorAnalogRef_T buffer =
+    MotorAnalogRef_T motorRef =
     {
-        .V_MAX_VOLTS = p_source->V_MAX_VOLTS,
-        .I_MAX_AMPS = p_source->I_MAX_AMPS,
+        .V_MAX_VOLTS = HAL_Nvm_Manufacturer_GetVMaxVolts(p_source),
+        .I_MAX_AMPS =  HAL_Nvm_Manufacturer_GetIMaxAmps(p_source),
         .V_RATED_FRACT16 = HAL_Nvm_Manufacturer_GetVRated_Fract16(p_source),
         .I_RATED_PEAK_FRACT16 = HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(p_source),
     };
 
-    return Flash_Write_Blocking(p_this->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE, (uint8_t *)&buffer, sizeof(MotorAnalogRef_T));
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE, (uint8_t *)&motorRef, sizeof(MotorAnalogRef_T));
 }
 
-NvMemory_Status_T MotNvm_LoadMotorRef(MotNvm_T * p_this)
+NvMemory_Status_T MotNvm_LoadMotorAnalogRef(const MotNvm_T * p_motNvm)
 {
-    struct HAL_Nvm_Manufacturer buffer;
-    MotNvm_ReadManufacture_Blocking(p_this, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), (uint8_t *)&buffer);
-    return MotNvm_LoadMotorRefFrom(p_this, &buffer);
+    struct HAL_Nvm_Manufacturer manufacture;
+    NvMemory_Status_T status;
+
+    status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), (uint8_t *)&manufacture);
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadMotorAnalogRefFrom(p_motNvm, &manufacture); }
+
+    return status;
 }
 
-NvMemory_Status_T MotNvm_LoadMotorBoardRefFrom(MotNvm_T * p_this, const struct HAL_Nvm_Manufacturer * p_source)
+NvMemory_Status_T MotNvm_LoadMotorBoardRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
 {
     MotorAnalogRef_Board_T buffer =
     {
@@ -109,13 +113,13 @@ NvMemory_Status_T MotNvm_LoadMotorBoardRefFrom(MotNvm_T * p_this, const struct H
         .V_PHASE_R2 = p_source->V_PHASE_R2,
     };
 
-    return Flash_Write_Blocking(p_this->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE_BOARD, (uint8_t *)&buffer, sizeof(MotorAnalogRef_Board_T));
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE_BOARD, (uint8_t *)&buffer, sizeof(MotorAnalogRef_Board_T));
 }
 
-NvMemory_Status_T MotNvm_LoadMotorBoardRef(MotNvm_T * p_this)
+NvMemory_Status_T MotNvm_LoadMotorBoardRef(const MotNvm_T * p_motNvm)
 {
     struct HAL_Nvm_Manufacturer buffer;
-    MotNvm_ReadManufacture_Blocking(p_this, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), (uint8_t *)&buffer);
-    return MotNvm_LoadMotorBoardRefFrom(p_this, &buffer);
+    MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), (uint8_t *)&buffer);
+    return MotNvm_LoadMotorBoardRefFrom(p_motNvm, &buffer);
 }
 

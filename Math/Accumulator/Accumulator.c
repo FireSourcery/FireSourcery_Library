@@ -25,9 +25,34 @@
 /*!
     @file   Accumulator.c
     @author FireSourcery
-    @version V0
+
     @brief
 */
 /******************************************************************************/
 #include "Accumulator.h"
 
+// void Accumulator_InitFrom(Accumulator_T * p_accum, const Accumulator_Config_T * p_config)
+// {
+//     if (p_config != NULL) { memcpy(&p_accum->Config, p_config, sizeof(Accumulator_Config_T)); }
+//     ResetGains(p_accum);
+//     Accumulator_SetOutputLimits(p_accum, INT16_MIN, INT16_MAX);
+//     Accumulator_Reset(p_accum);
+// }
+
+void Accumulator_InitFrom(Accumulator_T * p_accum)
+{
+    p_accum->LimitLower = INT16_MIN;
+    p_accum->LimitUpper = INT16_MAX;
+
+}
+
+
+/* Initialization */
+// static inline void Accumulator_Init(Accumulator_T * p_accum, int32_t coefficient, int8_t shift, int16_t limit_lower, int16_t limit_upper, int32_t initial_value)
+// {
+//     p_accum->Coefficient = coefficient;
+//     p_accum->Shift = shift;
+//     p_accum->LimitLower = limit_lower;
+//     p_accum->LimitUpper = limit_upper;
+//     p_accum->State = initial_value << shift;
+// }

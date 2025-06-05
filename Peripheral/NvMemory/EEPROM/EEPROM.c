@@ -25,7 +25,7 @@
     @file
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #include "EEPROM.h"
@@ -93,7 +93,7 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
     p_eeprom->IsVerifyEnable = false;
     p_eeprom->IsOpBuffered = false;
     p_eeprom->IsForceAlignEnable = false;
-    while(HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONST.P_HAL) == false);
+    while (HAL_EEPROM_ReadCompleteFlag(p_eeprom->CONST.P_HAL) == false);
 }
 
 // void EEPROM_ReadIsFirstTime(EEPROM_T * p_eeprom) { HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONST.P_HAL); }

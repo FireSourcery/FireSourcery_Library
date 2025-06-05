@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,71 +26,51 @@
 /*!
     @file   MotorController_StateMachine.h
     @author FireSourcery
-    @brief  MotorController_StateMachine
-    @version V0
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOTOR_CONTROLLER_STATE_MACHINE_H
-#define MOTOR_CONTROLLER_STATE_MACHINE_H
-
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-#include "MotorController_Analog.h"
+// #include "MotorController_Analog.h"
 #include "System/SysTime/SysTime.h"
 
 #include <string.h>
 
-// #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-//     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (1U)
-// #else
-//     #define _MCSM_TRANSITION_TABLE_LENGTH_SERVO (0U)
-// #endif
-
-// #define MCSM_TRANSITION_TABLE_LENGTH (6U + _MCSM_TRANSITION_TABLE_LENGTH_SERVO)
-#define MCSM_TRANSITION_TABLE_LENGTH (8U)
+#define MCSM_TRANSITION_TABLE_LENGTH (4U)
 
 typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_LOCK,
-    MCSM_INPUT_DIRECTION,   /* Drive Direction */
     MCSM_INPUT_CMD,
-    MCSM_INPUT_THROTTLE,    /* Polling inputs */
-    MCSM_INPUT_BRAKE,
-    MCSM_INPUT_SERVO,
-    MCSM_INPUT_CMD_MODE,
-    // MCSM_INPUT_DRIVE,    /* Drive Throttle/Brake */
-    // MCSM_INPUT_RELEASE,
-    // MCSM_INPUT_CMD_IMAGE,
+    MCSM_INPUT_MAIN_MODE,
 }
-MotorController_StateMachine_Input_T;
+MotorController_State_Input_T;
 
-typedef enum MotorController_StateMachine_StateId
+typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
-    MCSM_STATE_ID_PARK,
-    MCSM_STATE_ID_DRIVE,
-    MCSM_STATE_ID_NEUTRAL,
+    MCSM_STATE_ID_MAIN,
+    MCSM_STATE_ID_CMD,
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
-    MCSM_STATE_ID_SERVO,
+    // MCSM_STATE_ID_SERVO,
     // MCSM_STATE_ID_USER,
     // MCSM_STATE_ID_EXTERNAL,
 }
-MotorController_StateMachine_StateId_T;
+MotorController_StateId_T;
 
 /*
     Must be extern for Init
 */
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
-#define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorController) STATE_MACHINE_INIT(&MCSM_MACHINE, p_MotorController, false)
+#define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, p_MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, (&(p_MotorControllerActive)->StateMachine))
 
-extern bool MotorController_StateMachine_IsFault(const MotorController_T * p_mc);
-extern bool MotorController_StateMachine_ExitFault(MotorController_T * p_mc);
-extern void MotorController_StateMachine_EnterFault(MotorController_T * p_mc);
-extern void MotorController_StateMachine_SetFault(MotorController_T * p_mc, uint16_t faultFlags);
-extern bool MotorController_StateMachine_ClearFault(MotorController_T * p_mc, uint16_t faultFlags);
+extern bool MotorController_StateMachine_IsFault(const MotorController_State_T * p_active);
 
-#endif
+extern bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context);
+extern void MotorController_StateMachine_EnterFault(const MotorController_T * p_context);
+// extern void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags);
+extern bool MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags);

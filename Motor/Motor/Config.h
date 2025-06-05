@@ -25,7 +25,7 @@
     @file   Config.h
     @author FireSourcery
     @brief  Motor module preprocessor conditional compilation options and defaults
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef CONFIG_MOTOR_H

@@ -25,7 +25,7 @@
     @file   MotProtocol.h
     @author FireSourcery
     @brief
-    @version V0
+
 */
 /******************************************************************************/
 #ifndef MOT_PROTOCOL_H
@@ -40,6 +40,7 @@
 #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
 /* Generic common status */
+/* HeaderStatus */
 typedef enum MotProtocol_GenericStatus
 {
     MOT_STATUS_OK = 0x00U,
