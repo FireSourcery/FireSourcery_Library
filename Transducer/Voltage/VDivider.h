@@ -94,8 +94,6 @@ static inline void VDivider_ToLinear(const VDivider_T * p_voltage, Linear_T * p_
     Linear_Voltage_Init(p_linear, p_voltage->R1, p_voltage->R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
 }
 
-// static inline  void VDivider_InitUnitsRef_Fract16(const VDivider_T * p_voltage, Linear_T * p_const)
-
 // static inline void VDivider_ToLinearAsChargeLevel(const VDivider_T * p_voltage, int32_t vZero_milliV, int32_t vRef_milliV, Linear_T * p_linear)
 // {
 

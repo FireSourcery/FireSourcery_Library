@@ -32,8 +32,6 @@
 #include "State.h"
 #include "Config.h"
 
-#include "System/Critical/Critical.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -45,26 +43,21 @@
 /******************************************************************************/
 /*
     StateMachine_Def
+    Stateless Machine
 */
 /******************************************************************************/
-// StateMachine_Less
 typedef struct StateMachine_Machine
 {
     const State_T * const P_STATE_INITIAL;
     const uint8_t TRANSITION_TABLE_LENGTH;  /* state_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
-    // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
+    /* Optional */
+    const State_T * const P_STATE_FAULT; /* Optional. for base fault functions */
     // const State_T STATES[]; /* auto assign a stateid this way */
     // alternatively
-    const State_T * const P_STATE_FAULT; /* Optional, if not defined, no fault state */
+    // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
 }
 StateMachine_Machine_T;
 
-// void StateMachine_Init(const StateMachine_Active_T * p_stateMachine, void * p_context, const StateMachine_Machine_T * p_initial)
-// {
-//     _StateMachine_SetSyncInput(p_active, 0, 0);
-//     atomic_flag_clear(&p_active->InputSignal);
-//     _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
-// }
 
 /* StateMachine StateValues */
 typedef struct StateMachine_Active StateMachine_Active_T;
@@ -72,7 +65,7 @@ typedef struct StateMachine_Active StateMachine_Active_T;
 /*
     [StateMachine_Context_T]
     In this case of the runtime state _is_ a pointer to STATE in ROM.
-    This const descriptor is only shorthands passing P_CONTEXT for now.
+    This const context only shorthands passing P_CONTEXT for now.
     reserve for mixin/interface side implemented functions
 */
 typedef const struct StateMachine
@@ -91,9 +84,9 @@ typedef const struct StateMachine
     */
     void * P_CONTEXT; /* Base Struct */
     const StateMachine_Machine_T * P_MACHINE; /* Machine def. Const definition of state transition behaviors, via initial state */
-    // const StateMachine_Machine_T MACHINE;    /* Also this could be nested by value, or pass at init. */
+    // const StateMachine_Machine_T MACHINE;    /* Also this could be nested by value */
 
-    StateMachine_Active_T * P_ACTIVE;         /* StateMachine "state" data */
+    StateMachine_Active_T * P_ACTIVE;         /* StateMachine "state" runtime data */
 
     /*  */
     // const State_T ** pp_ActiveStatesBuffer; alternative to recursive traverse down
@@ -103,21 +96,42 @@ StateMachine_T;
 
 #define STATE_MACHINE_ACTIVE_ALLOC() (&(StateMachine_Active_T){0})
 
-#define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) { .P_CONTEXT = (p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
-#define STATE_MACHINE_ALLOC(p_Context, p_Machine) STATE_MACHINE_INIT(p_Context, p_Machine, &(StateMachine_Active_T){ 0 })
+#define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) { .P_CONTEXT = (void *)(p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
+#define STATE_MACHINE_ALLOC(p_Context, p_Machine) STATE_MACHINE_INIT(p_Context, p_Machine, STATE_MACHINE_ACTIVE_ALLOC())
 
 /******************************************************************************/
 /*
-    Extern
+    Extern on const context
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
+    Top Level StateMachine
 */
 /******************************************************************************/
 extern void StateMachine_Init(const StateMachine_T * p_stateMachine);
 extern void StateMachine_Reset(const StateMachine_T * p_stateMachine);
 
+/* alternatively move as specialized */
+/*
+    MenuMachine,
+    AsyncMachine,
+    SyncMachine,
+*/
 extern void StateMachine_Sync_ProcState(const StateMachine_T * p_stateMachine);
 extern void StateMachine_Sync_SetInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
 extern void StateMachine_Async_ProcState(const StateMachine_T * p_stateMachine);
 extern void StateMachine_Async_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
+
+/* Inline away const context pointers */
+// static inline void StateMachine_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue)
+// {
+//     if (_StateMachine_AcquireAsyncInput(p_stateMachine->P_ACTIVE) == true)
+//     {
+//         _StateMachine_ProcInput(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, inputId, inputValue);
+//         _StateMachine_ReleaseAsyncInput(p_stateMachine->P_ACTIVE);
+//     }
+// }
 
 extern void StateMachine_ProcState(const StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);

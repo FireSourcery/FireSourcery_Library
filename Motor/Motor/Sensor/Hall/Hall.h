@@ -161,17 +161,16 @@ Hall_T;
     .PIN_A = PIN_INIT(p_PinAHal, PinAId),                        \
     .PIN_B = PIN_INIT(p_PinBHal, PinBId),                        \
     .PIN_C = PIN_INIT(p_PinCHal, PinCId),                        \
-    .P_NVM_CONFIG = p_Config,                                    \
-    .P_STATE = p_State,                                          \
+    .P_STATE = (p_State),                                        \
+    .P_NVM_CONFIG = (p_Config),                                  \
 }
+
+#define HALL_ALLOC(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Config) \
+    HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, HALL_STATE_ALLOC(), p_Config)
 
 /*  */
 #define HALL_INIT_CONSTEXPR(PinA, PinB, PinC, p_State, p_Config) \
-    { .PIN_A = PinA, .PIN_B = PinB, .PIN_C = PinC, .P_NVM_CONFIG = p_Config, .P_STATE = p_State }
-
-
-// #define HALL_ALLOC(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Config) \
-//     HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, &(Hall_State_T){0}, p_Config)
+    { .PIN_A = PinA, .PIN_B = PinB, .PIN_C = PinC, .P_NVM_CONFIG = (p_Config), .P_STATE = (p_State), }
 
 // #define HALL_ALLOC_CONSTEXPR(PinA, PinB, PinC, p_Config) \
 //     HALL_INIT_CONSTEXPR(PinA, PinB, PinC, &(Hall_State_T){0}, p_Config)

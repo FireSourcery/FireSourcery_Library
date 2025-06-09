@@ -89,16 +89,10 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_fields, void * p_
     p_fields->p_ActiveSubState = p_fields->p_ActiveState;
 }
 
-inline void _StateMachine_TryTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState)
+inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState)
 {
     assert(p_newState == NULL || p_newState->DEPTH == 0); /* Top level state */
     if (p_newState != NULL) { _StateMachine_Transition(p_fields, p_context, p_newState); }
-}
-
-/* Proc State/SyncOutput */
-inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_fields, void * p_context)
-{
-    _StateMachine_TryTransition(p_fields, p_context, TransitionFunctionSync(p_fields, p_context));
 }
 
 /*
@@ -106,9 +100,16 @@ inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_fields, void 
     Store a local function pointer, reacessing the table by id may return NULL. If an async transition does occur, the previously selected function will run.
 */
 // inline void _StateMachine_Input(
+// inline void _StateMachine_ApplyInput(
 inline void _StateMachine_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value)
 {
-    _StateMachine_TryTransition(p_fields, p_context, TransitionFunctionAsync(p_fields, p_context, id, value));
+    _StateMachine_TransitionTo(p_fields, p_context, TransitionFunctionAsync(p_fields, p_context, id, value));
+}
+
+/* Proc State/SyncOutput */
+inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_fields, void * p_context)
+{
+    _StateMachine_TransitionTo(p_fields, p_context, TransitionFunctionSync(p_fields, p_context));
 }
 
 inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_fields, void * p_context)
@@ -126,6 +127,10 @@ inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_fields, state_i
     p_fields->SyncInput = id;
 }
 
+// inline void _StateMachine_ProcAyncInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value)
+// {
+//     _StateMachine_ProcInput(p_fields, p_context, id, value);
+// }
 
 /******************************************************************************/
 /*
@@ -137,6 +142,16 @@ inline void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_c
 {
     _StateMachine_ProcSyncInput(p_fields, p_context);
     _StateMachine_ProcSyncOutput(p_fields, p_context);
+}
+
+/******************************************************************************/
+/*
+    Cmds
+*/
+/******************************************************************************/
+  void _StateMachine_SetValueWith(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state, State_Set_T setter, state_input_value_t value)
+{
+    if (StateMachine_IsActiveState(p_fields, p_state) == true) { setter(p_context, value); }
 }
 
 
@@ -177,16 +192,13 @@ inline void _StateMachine_TransitionSubState(StateMachine_Active_T * p_fields, v
     assert(p_state != NULL);
     if (p_fields->p_ActiveSubState != NULL) { State_Exit(p_fields->p_ActiveSubState, p_context); }
     p_fields->p_ActiveSubState = p_state;
+    p_fields->p_ActiveState = GetTop(p_state);
     State_Entry(p_state, p_context);
 }
 
-inline void _StateMachine_TryTransitionSubState(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state)
+inline void _StateMachine_TransitionSubStateTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state)
 {
-    if (p_state != NULL)
-    {
-        _StateMachine_TransitionSubState(p_fields, p_context, p_state);
-        p_fields->p_ActiveState = GetTop(p_state);
-    }
+    if (p_state != NULL) { _StateMachine_TransitionSubState(p_fields, p_context, p_state); }
 }
 
 
@@ -198,7 +210,7 @@ inline void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_fields, 
     // if (p_fields->p_ActiveSubState != NULL)
     if (StateMachine_GetActiveSubState(p_fields) != p_fields->p_ActiveState)
     {
-        _StateMachine_TryTransitionSubState(p_fields, p_context, State_TransitionOfContext(p_fields->p_ActiveSubState, p_context));
+        _StateMachine_TransitionSubStateTo(p_fields, p_context, State_TransitionOfContext(p_fields->p_ActiveSubState, p_context));
     }
 }
 
@@ -208,7 +220,7 @@ inline void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_fields, 
 inline void _StateMachine_ProcSubStateInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value)
 {
     // if (StateMachine_GetActiveSubState(p_fields) != p_fields->p_ActiveState)
-    _StateMachine_TryTransitionSubState(p_fields, p_context, State_TransitionOfInput(StateMachine_GetActiveSubState(p_fields), p_context, id, value));
+    _StateMachine_TransitionSubStateTo(p_fields, p_context, State_TransitionOfInput(StateMachine_GetActiveSubState(p_fields), p_context, id, value));
 }
 
 
@@ -237,23 +249,23 @@ void _StateMachine_TraverseTransition(StateMachine_Active_T * p_fields, void * p
     p_fields->p_ActiveState = GetTop(p_state); /* alternatively within subtree only */
 }
 
-void _StateMachine_TryTraverseTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state)
+void _StateMachine_TraverseTransitionTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state)
 {
     if (p_state != NULL) { _StateMachine_TraverseTransition(p_fields, p_context, p_state); }
 }
 
-/* traversing up for now */
-// void _StateMachine_ProcBranchOutputUpTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_end)
+// void _StateMachine_ProcBranchSyncOutputUpTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_end)
 // void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_fields, void * p_context)
 
+/* traversing up for now */
 void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_end)
 {
-    _StateMachine_TryTraverseTransition(p_fields, p_context, State_TraverseTransitionOfContext(StateMachine_GetActiveSubState(p_fields), p_end, p_context));
+    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TraverseTransitionOfContext(StateMachine_GetActiveSubState(p_fields), p_end, p_context));
 }
 
 void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value)
 {
-    _StateMachine_TryTraverseTransition(p_fields, p_context, State_TraverseTransitionOfInput(StateMachine_GetActiveSubState(p_fields), p_context, id, value));
+    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TraverseTransitionOfInput(StateMachine_GetActiveSubState(p_fields), p_context, id, value));
 }
 
 void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_fields, void * p_context)
@@ -274,3 +286,12 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_
     _StateMachine_ProcBranchSyncOutput(p_fields, p_context, p_fields->p_ActiveState);
 }
 
+/*
+    Check Top Level first.
+*/
+void _StateMachine_ProcBranchSyncOutput_(StateMachine_Active_T * p_fields, void * p_context)
+{
+    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TransitionOfContext_AsTop(p_fields->p_ActiveState, p_context));
+    /* If top State transitions. State_TraverseTransitionOfContext returns NULL  */
+    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TraverseTransitionOfContext(StateMachine_GetActiveSubState(p_fields), p_fields->p_ActiveState, p_context));
+}

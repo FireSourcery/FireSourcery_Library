@@ -38,5 +38,5 @@ void MotDrive_InitFrom(MotDrive_Active_T * p_fields, const MotDrive_Config_T * p
 
 void MotDrive_Init(const MotDrive_T * p_handle)
 {
-    MotDrive_InitFrom(p_handle->P_MOT_DRIVE, p_handle->P_NVM_CONFIG);
+    MotDrive_InitFrom(p_handle->P_ACTIVE, p_handle->P_NVM_CONFIG);
 }

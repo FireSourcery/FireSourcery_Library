@@ -343,12 +343,14 @@ typedef const struct Protocol_Const
     const uint8_t PACKET_BUFFER_LENGTH;                         /* Must be greater than Specs RX_LENGTH_MAX */
     void * const P_APP_INTERFACE;                               /* User app context for packet processing */
     void * const P_REQ_STATE_BUFFER;                            /* Child protocol control variables, may be separate from app_interface, must be largest enough to hold substate context referred by specs */
-    const Protocol_PacketClass_T * const * const PP_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
-    const uint8_t SPECS_COUNT;
     const volatile uint32_t * const P_TIMER;
-    const Protocol_Config_T * const P_CONFIG;
+    const Protocol_PacketClass_T * const * const P_SPECS_TABLE;      /* Bound and verify specs selection. Pointer to table of pointers to Specs, Specs not necessarily in a contiguous array */
+    const uint8_t SPECS_COUNT;
+    // const Protocol_Req_T * const P_REQ_TABLE;       /* Protocol_Req_T */
+    // const uint8_t REQ_TABLE_LENGTH;
     const Xcvr_T * const * const P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
     const uint8_t XCVR_COUNT; /* number of Xcvr in table */
+    const Protocol_Config_T * const P_CONFIG;
 }
 Protocol_Const_T;
 
@@ -406,7 +408,7 @@ Protocol_T;
         .PACKET_BUFFER_LENGTH   = PacketBufferLength,            \
         .P_APP_INTERFACE        = p_AppInterface,                \
         .P_REQ_STATE_BUFFER     = p_SubStateBuffer,              \
-        .PP_SPECS_TABLE         = p_SpecsTable,                  \
+        .P_SPECS_TABLE         = p_SpecsTable,                  \
         .SPECS_COUNT            = SpecsCount,                    \
         .P_TIMER                = p_Timer,                       \
         .P_CONFIG               = p_Config,                      \

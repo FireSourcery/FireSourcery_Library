@@ -81,7 +81,7 @@ NvMemory_Status_T EEPROM_SetWrite(EEPROM_T * p_eeprom, uintptr_t destAddress, co
 */
 void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
 {
-    //todo isfirsttime, use startcmd template
+    //todo isfirsttime
     // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->CONST.P_HAL)) { EEPROM_ProgramPartition_Blocking(p_eeprom); }
     // NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
     // if(status == NV_MEMORY_STATUS_SUCCESS)
@@ -111,6 +111,8 @@ NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddre
     }
     return status;
 }
+
+
 
 /*
     Non Blocking - UNTESTED

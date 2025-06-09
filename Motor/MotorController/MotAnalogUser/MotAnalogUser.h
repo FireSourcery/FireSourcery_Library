@@ -72,11 +72,15 @@ MotAnalogUser_DirectionPins_T;
 
 typedef struct MotAnalogUser_Config
 {
-    uint16_t ThrottleZero_Adcu;
-    uint16_t ThrottleMax_Adcu;
-    uint16_t BrakeZero_Adcu;
-    uint16_t BrakeMax_Adcu;
+    // uint16_t ThrottleZero_Adcu;
+    // uint16_t ThrottleMax_Adcu;
+    // uint16_t BrakeZero_Adcu;
+    // uint16_t BrakeMax_Adcu;
 
+    UserAIn_Config_T ThrottleAInConfig; /* Analog input config */
+    UserAIn_Config_T BrakeAInConfig;    /* Analog input config */
+
+    /* alternatively load from Enum */
     union
     {
         struct
@@ -103,6 +107,7 @@ MotAnalogUser_Config_T;
 */
 typedef struct MotAnalogUser_State
 {
+    /* Pass state at init to keep contigous */
     /* Analog input states */
     UserAIn_State_T ThrottleAInState;
     UserAIn_State_T BrakeAInState;
@@ -160,6 +165,31 @@ MotAnalogUser_T;
     .SWITCH_BRAKE_DIN = { .PIN = BistateBrakePin, .P_STATE = &(p_State)->BistateBrakeState, .P_TIMER = p_Timer, .DEBOUNCE_TIME = 10U }, \
     .P_NVM_CONFIG = p_Config,                                                                                           \
 }
+
+/*  NeutralPinHal, NeutralPinId,  */
+#define MOT_ANALOG_USER_INIT_FROM(BrakePinHal, BrakePinId, ThrottlePinHal, ThrottlePinId, ForwardPinHal, ForwardPinId, ReversePinHal, ReversePinId, BistateBrakePinHal, BistateBrakePinId, IsInvert, p_Timer, p_State, p_Config) \
+{ \
+    .P_STATE = (p_State),   \
+    .THROTTLE_AIN =         \
+    {                       \
+        .P_EDGE_PIN = &(UserDIn_T)USER_DIN_INIT_FROM(ThrottlePinHal, ThrottlePinId, IsInvert, &(p_State)->ThrottleEdgePinState, p_Timer, 10U), \
+        .P_STATE = &(p_State)->ThrottleAInState,            \
+        .FILTER_SHIFT = 0U,                                 \
+        .P_NVM_CONFIG = &((p_Config)->ThrottleAInConfig),   \
+    },                                                      \
+    .BRAKE_AIN =                                            \
+    {                                                       \
+        .P_EDGE_PIN = &(UserDIn_T)USER_DIN_INIT_FROM(BrakePinHal, BrakePinId, IsInvert, &(p_State)->BrakeEdgePinState, p_Timer, 10U), \
+        .P_STATE = &(p_State)->BrakeAInState,             \
+        .FILTER_SHIFT = 0U,                               \
+        .P_NVM_CONFIG = &((p_Config)->BrakeAInConfig),    \
+    },                                                    \
+    .FORWARD_DIN        = USER_DIN_INIT_FROM(ForwardPinHal, ForwardPinId, IsInvert, &(p_State)->ForwardState, p_Timer, 10U), \
+    .REVERSE_DIN        = USER_DIN_INIT_FROM(ReversePinHal, ReversePinId, IsInvert, &(p_State)->ReverseState, p_Timer, 10U), \
+    .SWITCH_BRAKE_DIN   = USER_DIN_INIT_FROM(BistateBrakePinHal, BistateBrakePinId, IsInvert, &(p_State)->BistateBrakeState, p_Timer, 10U), \
+    .P_NVM_CONFIG = p_Config,                                                                                          \
+}
+// .SWITCH_BRAKE_DIN = { .PIN = PIN_INIT_INVERT(BistateBrakePinHal, BistateBrakePinId, IsInvert), .P_STATE = &(p_State)->BistateBrakeState, .P_TIMER = p_Timer, .DEBOUNCE_TIME = 10U }, \
 
 /******************************************************************************/
 /*

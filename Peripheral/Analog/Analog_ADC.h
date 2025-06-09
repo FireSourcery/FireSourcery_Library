@@ -35,18 +35,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
-#define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
-#else
-#define ADC_FIFO_LENGTH_MAX 1U
-#endif
-
 
 /******************************************************************************/
 /*
     Module Common Defs
 */
 /******************************************************************************/
+#if defined(CONFIG_ANALOG_ADC_HW_FIFO_ENABLE)
+#define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
+#else
+#define ADC_FIFO_LENGTH_MAX 1U
+#endif
+
 typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Conversion_T */
 
 /******************************************************************************/
@@ -57,13 +57,13 @@ typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Co
 /******************************************************************************/
 typedef const struct Analog_Channel
 {
-    const analog_channel_t ID; /* Virtual Channel Index. index into ADC.P_CONVERSION_STATES */
-    const adc_pin_t PIN; /* Physical Id of the Pin */
+    const analog_channel_t ID;  /* Virtual Channel Index. Index into ADC.P_CONVERSION_STATES */
+    const adc_pin_t PIN;        /* Physical Id of the Pin */
 }
 Analog_Channel_T;
 
-// #define ANALOG_CHANNEL_INIT(Id, p_AnalogAdc, PinId) { .ID = Id, .P_ADC = p_AnalogAdc, .PIN = PinId, }
 #define ANALOG_CHANNEL_INIT(Id, PinId) { .ID = Id, .PIN = PinId, }
+// #define ANALOG_CHANNEL_INIT(Id, p_AnalogAdc, PinId) { .ID = Id, .P_ADC = p_AnalogAdc, .PIN = PinId, }
 
 /******************************************************************************/
 /*
@@ -83,7 +83,7 @@ typedef const struct Analog_Context
 }
 Analog_Context_T;
 
-#define ANALOG_CONTEXT_INIT(Channel, p_Context, CaptureFn) { .P_CONTEXT = p_Context, .CAPTURE = CaptureFn, }
+#define ANALOG_CONTEXT_INIT(p_Context, CaptureFn) { .P_CONTEXT = (void *)(p_Context), .CAPTURE = (Analog_Capture_T)(CaptureFn), }
 
 /******************************************************************************/
 /*
@@ -93,13 +93,14 @@ Analog_Context_T;
 /******************************************************************************/
 typedef const struct Analog_ConversionChannel
 {
-    // Analog_ConversionState_T * P_CHANNEL_STATE; /* alternatively replace channel id, directely used oncomplete */
     Analog_Channel_T CHANNEL;   /* Small enough to copy/store by value */
-    Analog_Context_T CONTEXT;   /* Overwrite capture to ADC Buffer */
+    Analog_Context_T CONTEXT;   /* Context for the callback, can be NULL */
+    // Analog_ConversionState_T * P_CHANNEL_STATE; /* alternatively replace channel id, directly use by oncomplete */
 }
 Analog_ConversionChannel_T;
 
-#define ANALOG_CONVERSION_CHANNEL_INIT(Channel, p_Context, CaptureFn) { .CHANNEL = Channel, .P_CONTEXT = p_Context, .CAPTURE = CaptureFn, }
+#define ANALOG_CONVERSION_CHANNEL_INIT(AnalogChannel, AnalogContext) { .CHANNEL = AnalogChannel, .CONTEXT = AnalogContext, }
+#define ANALOG_CONVERSION_CHANNEL_INIT_FROM(ChannelId, PinId, p_Context, CaptureFn) { .CHANNEL = ANALOG_CHANNEL_INIT(ChannelId, PinId), .CONTEXT = ANALOG_CONTEXT_INIT(p_Context, CaptureFn) }
 
 /*
 
@@ -165,9 +166,9 @@ typedef const struct Analog_ADC
     Analog_ADC_State_T * P_ADC_STATE; /* State data not retained by registers */
 
     /*
-        A writable buffer without critical section requires each possible channel id to be allocated.
+        A writable buffer, marked channels, without critical section
+        each possible channel id allocated.
         ADCs can be started independent of global state.
-        Indicates marked channels without critical section
 
         associate with ADC, at a single point of reference, utilize memory locality
         direct iteration for marked
@@ -178,9 +179,7 @@ typedef const struct Analog_ADC
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /* compile time associates callback */
     volatile Analog_ConversionState_T * P_CONVERSION_STATES;
 
-
     // const Analog_BatchPart_T * const * const P_BATCH_PARTS;
-
     /* alternatively results can be passed seperately */
     // volatile bool * const P_MARKERS;
     // volatile adc_result_t * const P_RESULTS;
@@ -190,8 +189,8 @@ Analog_ADC_T;
 #define ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, p_ConvChannels, p_ConvStates, p_AdcState) \
     { .P_HAL_ADC = p_HalAnalog, .CHANNEL_COUNT = ChannelCount, .P_CONVERSION_CHANNELS = p_ConvChannels, .P_CONVERSION_STATES = p_ConvStates, .P_ADC_STATE = p_AdcState, }
 
-#define ANALOG_ADC_ALLOC(p_HalAnalog, ChannelCount, conversionTable) \
-    ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, conversionTable, (Analog_ConversionState_T[ChannelCount]){}, &(Analog_ADC_State_T){})
+#define ANALOG_ADC_ALLOC(p_HalAnalog, ChannelCount, p_ConvChannels) \
+    ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, p_ConvChannels, (Analog_ConversionState_T[ChannelCount]){0}, &(Analog_ADC_State_T){0})
 
 
 /******************************************************************************/

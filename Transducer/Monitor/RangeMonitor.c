@@ -70,9 +70,6 @@ void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config
 {
     if (p_config != NULL) { p_monitor->Config = *p_config; }
 
-    // p_monitor->MonitorHigh.Config = HighConfigOf(p_config);
-    // p_monitor->MonitorLow.Config = LowConfigOf(p_config);
-
     Monitor_Config_T high = HighConfigOf(p_config);
     Monitor_Config_T low = LowConfigOf(p_config);
     _Monitor_InitFrom(&p_monitor->MonitorHigh, &high);

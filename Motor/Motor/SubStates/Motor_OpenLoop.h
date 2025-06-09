@@ -39,9 +39,10 @@ static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_
 
 // static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
 
+/* alternatively use State_CmdInput_T with addition   entry */
 // static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState)
 // {
-//     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState); /* Proc, to allow validate immediately */
+//     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState);
 // }
 
 /*
@@ -53,3 +54,30 @@ extern void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T ali
 extern void Motor_OpenLoop_SetAngleAlign(const Motor_T * p_motor, angle16_t angle);
 extern void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction);
 extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
+
+
+/*
+    Open Loop SubState
+*/
+// typedef enum Motor_OpenLoopState
+// {
+//     MOTOR_OPEN_LOOP_STATE_ENTER,
+//     MOTOR_OPEN_LOOP_STATE_PASSIVE,
+//     // MOTOR_OPEN_LOOP_STATE_CMD,
+//     MOTOR_OPEN_LOOP_STATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_RUN,
+//     // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
+// }
+// Motor_OpenLoopState_T;
+
+// typedef enum Motor_OpenLoopCmd
+// {
+//     MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
+//     MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
+//     MOTOR_OPEN_LOOP_CMD_ANGLE,
+//     MOTOR_OPEN_LOOP_CMD_ALIGN,
+//     // MOTOR_OPEN_LOOP_CMD_STARTUP,
+// }
+// Motor_OpenLoopCmd_T;

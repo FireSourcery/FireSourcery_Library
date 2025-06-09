@@ -53,7 +53,8 @@
 static protocol_size_t Ping(const MotorController_T * p_context, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    MotorController_User_BeepN(p_context, 500U, 500U, 1U);
+    // MotorController_User_BeepN(p_context, 500U, 500U, 1U);
+    MotorController_BeepShort(p_context);
     return MotPacket_PingResp_Build(p_txPacket, MOT_PACKET_SYNC_ACK);
 }
 

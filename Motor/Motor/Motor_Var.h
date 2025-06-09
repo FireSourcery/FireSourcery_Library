@@ -51,6 +51,7 @@ typedef struct Motor_State Motor_State_T;
     RealTime Read-Only
     Speed/IPhase/VPhase/Power -> UFract16, may over saturate
     cross module selected values
+    Motor_Var_UserOut
 */
 typedef enum Motor_VarOuput_Metric
 {
@@ -337,7 +338,7 @@ typedef struct Motor_VarAccess
 }
 Motor_VarAccess_T;
 
-// .OUT_POSITION_SENSOR         = MOTOR_VAR_ACCESS_INIT_OUTPUT_POSITION_SENSOR(p_Motor), \
+// .OUT_POSITION_SENSOR      = MOTOR_VAR_ACCESS_INIT_OUTPUT_POSITION_SENSOR(p_Motor), \
 .IN                          = MOTOR_VAR_ACCESS_INIT_INPUT(p_Motor), \
 .IO                          = MOTOR_VAR_ACCESS_INIT_IO(p_Motor), \
 // some will need to change to the const struct

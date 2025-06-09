@@ -64,7 +64,6 @@
 #include "Math/Linear/Linear.h"
 #include "Math/Ramp/Ramp.h"
 #include "Math/PID/PID.h"
-// #include "Math/Filter/Filter_MovAvg.h"
 #include "Math/Filter/Filter.h"
 
 #include <stdint.h>
@@ -157,8 +156,8 @@ Motor_FaultFlags_T;
 typedef struct Motor_Config
 {
     MotorSensor_Id_T            SensorMode;
-    Motor_CommutationMode_T     CommutationMode;
     Motor_Direction_T           DirectionForward;
+    Motor_CommutationMode_T     CommutationMode;
 
     /*
         Calibration parameters
@@ -224,7 +223,7 @@ Motor_Config_T;
 
 
 /*
-
+    Timer_T requires const init
 */
 typedef struct Motor_State
 {
@@ -260,7 +259,7 @@ typedef struct Motor_State
     // angle16_t AngularSpeed_DegPerCycle;  /* ElectricalAngleDelta. < 32767 by SpeedRated */
     // int32_t Speed_Fract16;               /* Speed Feedback Variable.*/
 
-    /* StateMachine Gated */
+    /* StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState */
 
@@ -310,7 +309,6 @@ typedef struct Motor_State
     FOC_T Foc;
     PID_T PidIq;                /* Input (IqReq - IqFeedback), Output Vq. Sign as CCW/CW direction */
     PID_T PidId;
-
 
     /*
         Storable Config
@@ -372,19 +370,18 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_ACTIVE;
+    /* This is the only const context dependency of STATEMACHINE
+        alternatively, handle with pointer from state, reduce statemachine context */
+    Phase_T PHASE;
     MotorSensor_Table_T SENSOR_TABLE;
     // const Encoder_T ENCODER;
     // const Hall_T HALL;
     Motor_Analog_T ANALOG;
-
-    /* This is the only const context dependency of STATEMACHINE
-        alternatively, handle with pointer from state, reduce statemachine context */
-    Phase_T PHASE;
+    HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
 
     // const Motor_VSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
     StateMachine_T STATE_MACHINE;
     Motor_VarAccess_T VAR_ACCESS;
-    HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
 
     const Motor_Config_T * P_NVM_CONFIG;
 }
@@ -424,14 +421,14 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 
 /******************************************************************************/
 /*
-
 */
 /******************************************************************************/
 static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return MotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor->P_STATE); }
 
 /******************************************************************************/
 /*
-    Signed Limits
+    Run/Feeback State Limits
+    Signed with CW/CCW direction.
     getters for abstraction, implementaiton may change
 */
 /******************************************************************************/
@@ -458,6 +455,9 @@ static inline fract16_t Motor_IReqLimitOf(const Motor_State_T * p_motor, int16_t
 static inline fract16_t Motor_SpeedReqLimitOf(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, _Motor_GetSpeedLimitCw(p_motor), _Motor_GetSpeedLimitCcw(p_motor)); }
 
 
+/*
+    Non Directional
+*/
 /* Speed limit in [Direction] selected. Forward relative to the user */
 static inline uint16_t Motor_GetSpeedLimitSelected(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
 static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed(p_motor)) > Motor_GetSpeedLimitSelected(p_motor)); }
@@ -680,7 +680,7 @@ static inline int16_t Motor_ElecAngleOfSpeed_Fract16(const Motor_State_T * p_mot
 
 /******************************************************************************/
 /*
-    Direction
+    Direction - User/Unsigned Config
 */
 /******************************************************************************/
 /*!
@@ -699,7 +699,6 @@ static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * 
 static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
 static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
 
-/* GetSpeedDirection */
 static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
 
 

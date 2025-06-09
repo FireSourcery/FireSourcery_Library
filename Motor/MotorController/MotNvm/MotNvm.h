@@ -86,11 +86,12 @@ MotNvm_T;
 */
 extern void MotNvm_Init(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_WriteConfig_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes);
-extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
-extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const uint8_t * p_sourceBuffer, uint8_t size);
+extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, void * p_destBuffer);
+extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size);
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
-extern NvMemory_Status_T MotNvm_LoadMotorAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
-extern NvMemory_Status_T MotNvm_LoadMotorAnalogRef(const MotNvm_T * p_motNvm);
+// extern NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
+// extern NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm);
+extern NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm);
 
 
 #endif

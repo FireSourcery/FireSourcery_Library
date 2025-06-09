@@ -34,7 +34,7 @@
 
 /******************************************************************************/
 /*
-    Open Loop Cmds
+    Open Loop Cmds - Without SubState
 */
 /******************************************************************************/
 /*
@@ -99,18 +99,17 @@ void Motor_StartAlignCmd(const Motor_T * p_motor)
 void Motor_ProcPhaseAlign(const Motor_T * p_motor)
 {
     // int16_t req = Motor_ProcTorqueRampOpenLoop(p_motor->P_ACTIVE);
-
     if (p_motor->P_ACTIVE->FeedbackMode.Current == 1U)
     {
         // if (CaptureIabc)
-        // PID_ProcPI(&p_motor->IPhase, GetIPhase(&p_motor, Phase_ReadAlign(&p_motor->PHASE)), req ); //feedforward align angle or set up analog conversion
+        // PID_ProcPI(&p_motor->IPhase, GetIPhase(&p_motor, Phase_ReadAlign(&p_motor->PHASE)), req ); // feedforward align angle or set up analog conversion
     }
     /* VAlign remain in OpenLoop SubState */
 }
 
 static const State_T OPEN_LOOP_STATE_PHASE_ALIGN =
 {
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    // .ID = MSM_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,

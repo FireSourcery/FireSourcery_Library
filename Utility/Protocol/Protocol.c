@@ -537,7 +537,7 @@ void Protocol_ConfigXcvrBaudRate(Protocol_T * p_protocol, uint32_t baudRate)
 
 void Protocol_SetSpecs(Protocol_T * p_protocol, uint8_t p_specsId)
 {
-    const Protocol_PacketClass_T * p_specs = (p_specsId < p_protocol->CONST.SPECS_COUNT) ? p_protocol->CONST.PP_SPECS_TABLE[p_specsId] : NULL;
+    const Protocol_PacketClass_T * p_specs = (p_specsId < p_protocol->CONST.SPECS_COUNT) ? p_protocol->CONST.P_SPECS_TABLE[p_specsId] : NULL;
 
     if((p_specs != NULL) && (p_specs->RX_LENGTH_MAX <= p_protocol->CONST.PACKET_BUFFER_LENGTH))
     {

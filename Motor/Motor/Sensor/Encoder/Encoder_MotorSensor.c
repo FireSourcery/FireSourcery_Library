@@ -30,17 +30,6 @@
 /******************************************************************************/
 #include "Encoder_MotorSensor.h"
 
-const MotorSensor_VTable_T HALL_VTABLE =
-{
-    .INIT = (MotorSensor_Proc_T)Encoder_MotorSensor_Init,
-    .CAPTURE_ANGLE = (MotorSensor_Capture_T)Encoder_MotorSensor_CaptureAngle,
-    .CAPTURE_SPEED = (MotorSensor_Capture_T)Encoder_MotorSensor_CaptureSpeed,
-    .VERIFY_CALIBRATION = (MotorSensor_Test_T)Encoder_MotorSensor_VerifyCalibration,
-    // .SetInitial = (MotorSensor_Proc_T)Encoder_SetInitial,
-    // .GetElectricalAngle = (MotorSensor_Angle_T)Encoder_GetElectricalAngle,
-    // .GetMechanicalAngle = (MotorSensor_Angle_T)Encoder_GetMechanicalAngle,
-};
-
 
 // const Encoder_MotorSensor_T * OfContext(const MotorSensor_T * p_sensor) { return (Encoder_MotorSensor_T *)p_sensor; }
 
@@ -105,3 +94,15 @@ void Encoder_MotorSensor_InitConfig(const MotorSensor_T * p_sensor, uint16_t spe
 {
     // Encoder_SetUnitsEncoder_MechSpeed(p_sensor, speedRef_Rpm, polePairs);
 }
+
+
+const MotorSensor_VTable_T ENCODER_VTABLE =
+{
+    .INIT = (MotorSensor_Proc_T)Encoder_MotorSensor_Init,
+    .CAPTURE_ANGLE = (MotorSensor_Proc_T)Encoder_MotorSensor_CaptureAngle,
+    .CAPTURE_SPEED = (MotorSensor_Proc_T)Encoder_MotorSensor_CaptureSpeed,
+    .VERIFY_CALIBRATION = (MotorSensor_Test_T)Encoder_MotorSensor_VerifyCalibration,
+    // .SetInitial = (MotorSensor_Proc_T)Encoder_SetInitial,
+    // .GetElectricalAngle = (MotorSensor_Angle_T)Encoder_GetElectricalAngle,
+    // .GetMechanicalAngle = (MotorSensor_Angle_T)Encoder_GetMechanicalAngle,
+};

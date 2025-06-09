@@ -67,7 +67,7 @@
 /******************************************************************************/
 /* ADC Ref Sensor Calibration */
 /* MotorRef_Adc/Board */
-typedef const struct MotorAnalogRef_Board
+typedef const volatile struct MotorAnalogRef_Board
 {
     const uint32_t V_PHASE_R1;
     const uint32_t V_PHASE_R2;

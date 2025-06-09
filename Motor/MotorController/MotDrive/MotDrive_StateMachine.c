@@ -39,23 +39,33 @@
     Staet Mode use full context
 */
 /******************************************************************************/
+/* Alternatively as substates */
 void MotDrive_StartThrottleMode(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Config.ThrottleMode)
+    // switch (p_motDrive->P_ACTIVE->Config.ThrottleMode)
+    // {
+    //     case MOT_DRIVE_THROTTLE_MODE_SPEED:  MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartSpeedMode);     break;
+    //     case MOT_DRIVE_THROTTLE_MODE_TORQUE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartTorqueMode);    break;
+    //     default: break;
+    // }
+    switch (p_motDrive->P_ACTIVE->Config.ThrottleMode)
     {
-        case MOT_DRIVE_THROTTLE_MODE_SPEED:  MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartSpeedMode);     break;
-        case MOT_DRIVE_THROTTLE_MODE_TORQUE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartTorqueMode);    break;
+        case MOT_DRIVE_THROTTLE_MODE_SPEED:  MotMotors_SetFeedbackMode(&p_motDrive->MOTORS, MOTOR_FEEDBACK_MODE_SPEED_CURRENT);  break;
+        case MOT_DRIVE_THROTTLE_MODE_TORQUE: MotMotors_SetFeedbackMode(&p_motDrive->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);  break;
         default: break;
     }
+
+    /* alternatively from Release only */
+    MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_VPWM);
 }
 
 void MotDrive_SetThrottleValue(const MotDrive_T * p_motDrive, uint16_t userCmdThrottle)
 {
     int16_t cmdValue = (int32_t)userCmdThrottle / 2;
-    switch (p_motDrive->P_MOT_DRIVE->Config.ThrottleMode)
+    switch (p_motDrive->P_ACTIVE->Config.ThrottleMode)
     {
-        case MOT_DRIVE_THROTTLE_MODE_SPEED:  MotMotors_ForEachSet(&p_motDrive->MOTORS, Motor_User_SetSpeedCmd_Scalar, cmdValue);     break;
-        case MOT_DRIVE_THROTTLE_MODE_TORQUE: MotMotors_ForEachSet(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, cmdValue);         break;
+        case MOT_DRIVE_THROTTLE_MODE_SPEED:  MotMotors_SetCmdWith(&p_motDrive->MOTORS, Motor_User_SetSpeedCmd_Scalar, (int32_t)cmdValue);     break;
+        case MOT_DRIVE_THROTTLE_MODE_TORQUE: MotMotors_SetCmdWith(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, (int32_t)cmdValue);         break;
         default: break;
     }
 }
@@ -63,12 +73,21 @@ void MotDrive_SetThrottleValue(const MotDrive_T * p_motDrive, uint16_t userCmdTh
 // apply hold on low speed
 void MotDrive_StartBrakeMode(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Config.BrakeMode)
+    // switch (p_motDrive->P_ACTIVE->Config.BrakeMode)
+    // {
+    //     case MOT_DRIVE_BRAKE_MODE_TORQUE:  MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartTorqueMode);   break;
+    //     case MOT_DRIVE_BRAKE_MODE_VOLTAGE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartVoltageMode);  break;
+    //     default: break;
+    // }
+    switch (p_motDrive->P_ACTIVE->Config.BrakeMode)
     {
-        case MOT_DRIVE_BRAKE_MODE_TORQUE:  MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartTorqueMode);   break;
-        case MOT_DRIVE_BRAKE_MODE_VOLTAGE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartVoltageMode);  break;
+        case MOT_DRIVE_BRAKE_MODE_TORQUE:  MotMotors_SetFeedbackMode(&p_motDrive->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);  break;
+        case MOT_DRIVE_BRAKE_MODE_VOLTAGE: MotMotors_SetFeedbackMode(&p_motDrive->MOTORS, MOTOR_FEEDBACK_MODE_VOLTAGE);  break;
         default: break;
     }
+
+    /* alternatively from Release only */
+    MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_VPWM);
 }
 
 /*!
@@ -85,10 +104,10 @@ void MotDrive_SetBrakeValue(const MotDrive_T * p_motDrive, uint16_t userCmdBrake
 {
     int16_t cmdValue = 0 - ((int32_t)userCmdBrake / 2); // 32767 max
 
-    switch (p_motDrive->P_MOT_DRIVE->Config.BrakeMode)
+    switch (p_motDrive->P_ACTIVE->Config.BrakeMode)
     {
-        case MOT_DRIVE_BRAKE_MODE_TORQUE: MotMotors_ForEachSet(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, cmdValue); break;
-        case MOT_DRIVE_BRAKE_MODE_VOLTAGE: MotMotors_ForEachSet(&p_motDrive->MOTORS, Motor_User_SetRegenCmd, 0); break;
+        case MOT_DRIVE_BRAKE_MODE_TORQUE: MotMotors_SetCmdWith(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, cmdValue); break;
+        // case MOT_DRIVE_BRAKE_MODE_VOLTAGE: MotMotors_SetCmdWith(&p_motDrive->MOTORS, Motor_User_SetRegenCmd, 0); break;
         default: break;
     }
 }
@@ -96,10 +115,10 @@ void MotDrive_SetBrakeValue(const MotDrive_T * p_motDrive, uint16_t userCmdBrake
 /* an alternate cmd for float is required */
 void MotDrive_StartDriveZero(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Config.ZeroMode)
+    switch (p_motDrive->P_ACTIVE->Config.ZeroMode)
     {
-        case MOT_DRIVE_ZERO_MODE_FLOAT: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release); break;
-        case MOT_DRIVE_ZERO_MODE_CRUISE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_StartTorqueMode); break;
+        case MOT_DRIVE_ZERO_MODE_FLOAT: MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_FLOAT); break;
+        case MOT_DRIVE_ZERO_MODE_CRUISE: MotMotors_SetFeedbackMode(&p_motDrive->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);  break;
         case MOT_DRIVE_ZERO_MODE_REGEN: /* MotDrive_SetRegenMotorAll(p_this); */ break;
         default: break;
     }
@@ -111,10 +130,10 @@ void MotDrive_StartDriveZero(const MotDrive_T * p_motDrive)
 */
 void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Config.ZeroMode)
+    switch (p_motDrive->P_ACTIVE->Config.ZeroMode)
     {
         case MOT_DRIVE_ZERO_MODE_FLOAT: break;
-        case MOT_DRIVE_ZERO_MODE_CRUISE: MotMotors_ForEachSet(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, 0); break;
+        case MOT_DRIVE_ZERO_MODE_CRUISE: MotMotors_SetCmdWith(&p_motDrive->MOTORS, Motor_User_SetICmd_Scalar, 0); break;
         case MOT_DRIVE_ZERO_MODE_REGEN: break;
         default: break;
     }
@@ -122,7 +141,7 @@ void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive)
 
 static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
 {
-    // if((p_motDrive->P_MOT_DRIVE->Config.BuzzerFlagsEnable.OnReverse == true))
+    // if((p_motDrive->P_ACTIVE->Config.BuzzerFlagsEnable.OnReverse == true))
     // {
     //     if(p_this->DriveDirection == MOT_DRIVE_DIRECTION_REVERSE)
     //     {
@@ -157,6 +176,52 @@ const StateMachine_Machine_T MOT_DRIVE_MACHINE =
 
 /******************************************************************************/
 /*!
+    @brief Drive Set Common
+*/
+/******************************************************************************/
+static State_T * Common_InputPark(const MotDrive_T * p_motDrive)
+{
+    MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, 0);
+    return MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL;
+}
+
+static State_T * Common_InputNeutral(const MotDrive_T * p_motDrive)
+{
+    return &STATE_NEUTRAL; /* apply v float on entry */
+}
+
+static State_T * Common_InputForward(const MotDrive_T * p_motDrive)
+{
+    MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, 1);
+    return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
+}
+
+static State_T * Common_InputReverse(const MotDrive_T * p_motDrive)
+{
+    MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, -1);
+    return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
+}
+
+static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
+{
+    State_T * p_nextState = NULL;
+
+    switch ((MotDrive_Direction_T)direction)
+    {
+        case MOT_DRIVE_DIRECTION_PARK:    p_nextState = Common_InputPark(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = Common_InputNeutral(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
+        default: break;
+    }
+
+    return p_nextState;
+}
+
+
+/******************************************************************************/
+/*!
     @brief
     Motors in Stop State.
     May enter from Neutral State or Drive State
@@ -164,16 +229,12 @@ const StateMachine_Machine_T MOT_DRIVE_MACHINE =
 /******************************************************************************/
 static void Park_Entry(const MotDrive_T * p_motDrive)
 {
-    // assert(MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) == true);
-
-    if (MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) == true) { MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Hold); }
-
-    // MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Stop);
+    if (MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) == true) { MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_V0); }
 }
 
 static void Park_Proc(const MotDrive_T * p_motDrive)
 {
-    if (MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) == false) { p_motDrive->P_MOT_DRIVE->Status = MOT_DRIVE_STATUS_FAULT; }
+    if (MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) == false) { p_motDrive->P_ACTIVE->Status = MOT_DRIVE_STATUS_WARNING; }
 }
 
 // static State_T * Park_InputBlocking(const MotDrive_T * p_motDrive, state_input_value_t lockId)
@@ -186,12 +247,11 @@ static State_T * Park_InputDirection(const MotDrive_T * p_motDrive, state_input_
     State_T * p_nextState = NULL;
     switch ((MotDrive_Direction_T)direction)
     {
-        case MOT_DRIVE_DIRECTION_PARK:       p_nextState = NULL;             break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL;   break;
-        case MOT_DRIVE_DIRECTION_FORWARD:    MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionForward); p_nextState = &STATE_DRIVE; break;
-        case MOT_DRIVE_DIRECTION_REVERSE:    MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionReverse); p_nextState = &STATE_DRIVE; break;
-            // case MOT_DRIVE_DIRECTION_FORWARD:    p_nextState = MotDrive_SetDirectionForwardAll(p_this) ? &STATE_DRIVE : NULL; break;
-            // case MOT_DRIVE_DIRECTION_REVERSE:    p_nextState = MotDrive_SetDirectionReverseAll(p_this) ? &STATE_DRIVE : NULL; break;
+        case MOT_DRIVE_DIRECTION_PARK:      p_nextState = NULL;             break;
+        case MOT_DRIVE_DIRECTION_NEUTRAL:   p_nextState = &STATE_NEUTRAL;   break;
+        case MOT_DRIVE_DIRECTION_FORWARD:   p_nextState = Common_InputForward(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_REVERSE:   p_nextState = Common_InputReverse(p_motDrive); break;
+        // if (p_nextState == NULL) { p_motDrive->P_ACTIVE->Status = MOT_DRIVE_STATUS_FAULT; }
         default: break;
     }
     return p_nextState;
@@ -200,13 +260,12 @@ static State_T * Park_InputDirection(const MotDrive_T * p_motDrive, state_input_
 static const State_Input_T PARK_TRANSITION_TABLE[MOT_DRIVE_TRANSITION_TABLE_LENGTH] =
 {
     [MOT_DRIVE_STATE_INPUT_DIRECTION] = (State_Input_T)Park_InputDirection,
-
     // [MOT_DRIVE_INPUT_FAULT] = (State_Input_T)TransitionFault,
     // [MOT_DRIVE_INPUT_LOCK] = (State_Input_T)Park_InputBlocking,
-    // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-    //     [MOT_DRIVE_INPUT_SERVO]      = (State_Input_T)Park_InputServo,
-    // #endif
-        // [MOT_DRIVE_INPUT_USER_MODE]  = (State_Input_T)Park_InputUser,
+// #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+//     [MOT_DRIVE_INPUT_SERVO]      = (State_Input_T)Park_InputServo,
+// #endif
+    // [MOT_DRIVE_INPUT_USER_MODE]  = (State_Input_T)Park_InputUser,
 };
 
 static const State_T STATE_PARK =
@@ -218,36 +277,6 @@ static const State_T STATE_PARK =
 };
 
 
-/******************************************************************************/
-/*!
-    @brief Drive Set Common
-*/
-/******************************************************************************/
-static State_T * Drive_Common_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
-{
-    State_T * p_nextState = NULL;
-
-    switch ((MotDrive_Direction_T)direction)
-    {
-        case MOT_DRIVE_DIRECTION_PARK:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Stop);
-            p_nextState = MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_FORWARD:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionForward);
-            p_nextState = MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) ? &STATE_DRIVE : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_REVERSE:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionReverse);
-            p_nextState = MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) ? &STATE_DRIVE : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = &STATE_NEUTRAL; break; /* set on entry */
-        case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
-        default: break;
-    }
-
-    return p_nextState;
-}
 
 /******************************************************************************/
 /*!
@@ -267,25 +296,48 @@ static void Drive_Entry(const MotDrive_T * p_motDrive)
     // MotMotors_SetCmdValue(&p_motDrive->MOTORS, 0);
     // MotDrive_StartControlAll(p_this);
     // p_this->StateFlags.IsStopped = 0U;
-    p_motDrive->P_MOT_DRIVE->Input.Cmd = MOT_DRIVE_CMD_RELEASE;
+    p_motDrive->P_ACTIVE->Input.Cmd = MOT_DRIVE_CMD_RELEASE;
 }
 
 /* periodic on values ~ 1-10ms */
 static void Drive_Proc(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Input.Cmd)
+    switch (p_motDrive->P_ACTIVE->Input.Cmd)
     {
-        case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_MOT_DRIVE->Input.BrakeValue); break;
-        case MOT_DRIVE_CMD_THROTTLE: MotDrive_SetThrottleValue(p_motDrive, p_motDrive->P_MOT_DRIVE->Input.ThrottleValue); break;
+        case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_ACTIVE->Input.BrakeValue); break;
+        case MOT_DRIVE_CMD_THROTTLE: MotDrive_SetThrottleValue(p_motDrive, p_motDrive->P_ACTIVE->Input.ThrottleValue); break;
         case MOT_DRIVE_CMD_RELEASE: MotDrive_ProcDriveZero(p_motDrive); break;
         default: break;
     }
 }
 
+// with hsm
+// static State_T * Drive_SyncTransition(const MotDrive_T * p_motDrive)
+// {
+//     State_T * p_nextState = NULL;
+//
+//     if (p_motDrive->P_ACTIVE->Input.Cmd != p_motDrive->P_ACTIVE->Input.CmdPrev)
+//     {
+//         /* handle edge */
+//         switch (p_motDrive->P_ACTIVE->Input.Cmd)
+//         {
+//             case MOT_DRIVE_CMD_BRAKE: p_nextState = &DRIVE_STATE_BRAKE; break;
+//             case MOT_DRIVE_CMD_THROTTLE: p_nextState = &DRIVE_STATE_THROTTLE; break;
+//             case MOT_DRIVE_CMD_RELEASE: p_nextState = &DRIVE_STATE_RELEASE; break;
+//             default: break;
+//         }
+//     }
+
+//     return p_nextState;
+// }
+
 /* handle on edge */
+/* detect on cmd edge */
+
+/* Externally detect */
 static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_input_value_t mode)
 {
-    /* optionally use prevCmd or   substate to handle feedbackonly or activeOutputWith feedback */
+    /* optionally use prevCmd or substate to handle feedback only or activeOutputWith feedback */
     // start control from disabled output onyl,
     // only feedback from active output
     switch ((MotDrive_Cmd_T)mode)
@@ -303,15 +355,10 @@ static State_T * Drive_InputDirection(const MotDrive_T * p_motDrive, state_input
     State_T * p_nextState = NULL;
     switch((MotDrive_Direction_T)direction)
     {
-        case MOT_DRIVE_DIRECTION_PARK:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Stop);
-            p_nextState = MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL;   break;
-        case MOT_DRIVE_DIRECTION_FORWARD:    p_nextState = NULL;             break;
-        case MOT_DRIVE_DIRECTION_REVERSE:    p_nextState = NULL;             break;
-        // case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = MotDrive_SetDirectionForwardAll(p_this) ? &STATE_DRIVE : NULL; break;
-        // case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = MotDrive_SetDirectionReverseAll(p_this) ? &STATE_DRIVE : NULL; break;
+        case MOT_DRIVE_DIRECTION_PARK:      p_nextState = Common_InputPark(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_NEUTRAL:   p_nextState = &STATE_NEUTRAL;   break;
+        case MOT_DRIVE_DIRECTION_FORWARD:   p_nextState = NULL;             break;
+        case MOT_DRIVE_DIRECTION_REVERSE:   p_nextState = NULL;             break;
         default: break;
     }
 
@@ -338,6 +385,55 @@ static const State_T STATE_DRIVE =
 };
 
 
+// static void Throttle_Entry(const MotDrive_T * p_motDrive)
+// {
+//     p_motDrive->P_ACTIVE->Input.Cmd = MOT_DRIVE_CMD_RELEASE;
+//     MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_VPWM);
+// }
+
+// static void Throttle_Proc(const MotDrive_T * p_motDrive)
+// {
+//     // MotMotors_SetCmdWith(&p_motDrive->MOTORS, p_motDrive->P_ACTIVE.p_ThrottleFunction, p_motDrive->P_ACTIVE->Input.ThrottleValue);
+
+//     // switch (id)
+//     // {
+//     //     case MOT_DRIVE_CMD_BRAKE:
+//     //         if (value != 0U) /* ignore brake if simultaneous input for 0, async input only */
+//     //         {
+//     //             MotDrive_StartBrakeMode(p_this);
+//     //             // MotDrive_SetBrakeValue(p_this, value); overwritten unless Start Mode is Async ProcInput
+//     //             p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
+//     //             // MotDrive_StartDriveZero(p_this);
+//     //             // p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         }
+//     //         break;
+//     //     case MOT_DRIVE_CMD_THROTTLE:
+//     //         MotDrive_SetThrottleValue(p_this, value);
+//     //         if (value == 0U)
+//     //         {
+//     //             MotDrive_StartDriveZero(p_this);
+//     //             p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         }
+//     //         break;
+//     //     case MOT_DRIVE_CMD_RELEASE:
+//     //         MotDrive_StartDriveZero(p_this);
+//     //         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         break;
+//     // }
+// }
+
+// /* SubState handles entry */
+// static const State_T DRIVE_STATE_THROTTLE =
+// {
+//     .P_PARENT   = &STATE_DRIVE,
+//     .P_TOP      = &STATE_DRIVE,
+//     .DEPTH      = 1U,
+//     .ENTRY      = (State_Action_T)Throttle_Entry,
+//     .LOOP       = (State_Action_T)Throttle_Proc,
+//     // .NEXT       = (State_InputVoid_T) ,
+// };
+
+
 /******************************************************************************/
 /*!
     @brief  Neutral State
@@ -351,18 +447,20 @@ static const State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(const MotDrive_T * p_motDrive)
 {
-    if (p_motDrive->P_MOT_DRIVE->Input.Cmd != MOT_DRIVE_CMD_BRAKE)
-        { MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release); }  /* If enter neutral while braking, handle discontinuity */
+    // if (p_motDrive->P_ACTIVE->Input.Cmd != MOT_DRIVE_CMD_BRAKE)
+    //     { MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_FLOAT); }  /* If enter neutral while braking, handle discontinuity */
+
+    MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_FLOAT);
 }
 
 static void Neutral_Proc(const MotDrive_T * p_motDrive)
 {
-    switch (p_motDrive->P_MOT_DRIVE->Input.Cmd)
+    switch (p_motDrive->P_ACTIVE->Input.Cmd)
     {
         case MOT_DRIVE_CMD_RELEASE:
             // MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_PASSIVE)
             break;
-        case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_MOT_DRIVE->Input.BrakeValue); break;
+        case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_ACTIVE->Input.BrakeValue); break;
         case MOT_DRIVE_CMD_THROTTLE: break;
         default: break;
     }
@@ -374,18 +472,9 @@ static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_inp
 
     switch((MotDrive_Direction_T)direction)
     {
-        case MOT_DRIVE_DIRECTION_PARK:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Stop);
-            p_nextState = MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_FORWARD:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionForward);
-            p_nextState = MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) ? &STATE_DRIVE : NULL;
-            break;
-        case MOT_DRIVE_DIRECTION_REVERSE:
-            MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_ApplyDirectionReverse);
-            p_nextState = MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) ? &STATE_DRIVE : NULL;
-            break;
+        case MOT_DRIVE_DIRECTION_PARK: p_nextState = Common_InputPark(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
+        case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
         case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = NULL; break;
         case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
         default: break;
@@ -398,7 +487,7 @@ static State_T * Neutral_InputBrake(const MotDrive_T * p_motDrive, state_input_v
 {
     switch ((MotDrive_Cmd_T)mode)
     {
-        case MOT_DRIVE_CMD_RELEASE: MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release); break;
+        case MOT_DRIVE_CMD_RELEASE: MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_FLOAT); break;
         case MOT_DRIVE_CMD_BRAKE: MotDrive_StartBrakeMode(p_motDrive); break;
         case MOT_DRIVE_CMD_THROTTLE: break;
         default: break;

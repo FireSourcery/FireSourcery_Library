@@ -39,8 +39,7 @@
 typedef const struct Encoder_MotorSensor
 {
     const MotorSensor_T MOTOR_SENSOR;
-    const Encoder_T  ENCODER;
-    // MotorSensor_State_T * const P_STATE;
+    const Encoder_T ENCODER;
 }
 Encoder_MotorSensor_T;
 
@@ -48,7 +47,7 @@ extern const MotorSensor_VTable_T ENCODER_VTABLE;
 
 #define ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State) \
 { \
-    .MOTOR_SENSOR = MOTOR_SENSOR_INIT(ENCODER_VTABLE, p_State), \
+    .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), \
     .ENCODER = EncoderStruct, \
 }
 

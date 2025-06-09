@@ -63,11 +63,13 @@ typedef struct Thermistor_Coeffs
     uint16_t B;
     uint32_t R0;
     uint16_t T0; /* In Kelvin. */
-    uint16_t VInRef_MilliV;
+    // uint16_t VInRef_MilliV;
 
     /* Back Up Linear Unit Conversion. */
     uint32_t DeltaR;
     uint16_t DeltaT;
+    // uint32_t LinearR0;
+    // uint16_t LinearT0;
 
     // T_Adcu/T;
     // uint16_t LinearT0_Adcu;
@@ -89,25 +91,27 @@ typedef const struct Thermistor
     /* Board */
     uint32_t R_SERIES;    /* Pull-up */
     uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
-    uint16_t V_SERIES_MV; /* If VRef is different than ADC */
+    uint16_t V_SERIES_MV; /* If VSeries is different than AdcVRef */
 
     /* Non detachable, disable Coefficient set functions */
     const Thermistor_Coeffs_T * P_FIXED_COEFFS; /* Set as Read Only */
-    Thermistor_Coeffs_T * P_COEFFS; /* NULL for Fixed */
 
+    Thermistor_Coeffs_T * P_COEFFS; /* NULL for Fixed */
     const Thermistor_Coeffs_T * P_NVM_COEFFS; /*  */
-    // Linear_T *   P_UNITS_R_PER_ADCU; /* optionally cache partial for any conversion */
+
+    // Linear_T * P_LINEAR_R_OHMS;  /* R per Adcu */
+    // Linear_T * P_LINEAR_T_CELCIUS;
 }
 Thermistor_T;
 
 #define _THERMISTOR_BOARD_INIT(RSeries, RParallel, VSeries) { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, }
 
 #define THERMISTOR_INIT(RSeries, RParallel, VSeries, p_Fixed, p_Coeffs) \
-    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = p_Fixed, .P_COEFFS = p_Coeffs, } \
-    static_assert(p_Fixed == NULL || p_Coeffs == NULL, "Thermistor must have either fixed or configurable coefficients, not both.")
+    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = p_Fixed, .P_COEFFS = p_Coeffs, }
 
+    // static_assert(p_Fixed == NULL || p_Coeffs == NULL, "Thermistor must have either fixed or configurable coefficients, not both.");
 
-/* Init as Configurable */
+/* Init as Configurable/Detachable */
 #define THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, p_Coeffs) \
     THERMISTOR_INIT(RSeries, RParallel, VSeries, NULL, p_Coeffs)
 
@@ -138,7 +142,8 @@ Thermistor_ConfigId_T;
 /*
 */
 /******************************************************************************/
-
+static inline thermal_t _Thermistor_CelsiusOfKelvin(thermal_t kelvin) { return (kelvin + ABSOLUTE_ZERO_CELSIUS); }
+static inline thermal_t _Thermistor_KelvinOfCelsius(thermal_t celsius) { return (celsius - ABSOLUTE_ZERO_CELSIUS); }
 
 /******************************************************************************/
 /*
@@ -173,6 +178,7 @@ static inline uint32_t Thermistor_GetRSeries(const Thermistor_T * p_therm)      
 static inline uint32_t Thermistor_GetRParallel(const Thermistor_T * p_therm)        { return p_therm->R_PARALLEL; } /* 0 for Disable */
 static inline uint16_t _Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)   { return p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
 static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return (p_therm->V_SERIES_MV == 0U) ? ANALOG_REFERENCE.ADC_VREF_MILLIV : p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
+
 // static inline bool Thermistor_IsPulldown(const Thermistor_T * p_therm)
 static inline uint16_t Thermistor_GetVAdcRef_MilliV(void) { return ANALOG_REFERENCE.ADC_VREF_MILLIV; }
 static inline uint16_t Thermistor_GetVAdcMax(void)        { return ANALOG_REFERENCE.ADC_MAX; }
@@ -182,7 +188,7 @@ static inline uint16_t Thermistor_GetVAdcMax(void)        { return ANALOG_REFERE
 /*
 */
 /******************************************************************************/
-extern void Thermistor_InitFrom(const Thermistor_T * p_therm, Thermistor_Coeffs_T * p_config);
+extern void Thermistor_InitFrom(const Thermistor_T * p_therm, const Thermistor_Coeffs_T * p_config);
 
 extern uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu);
 extern uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermistor);
@@ -190,7 +196,6 @@ extern uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rTh
 extern void Thermistor_ToLinear_ROhmsPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result);
 extern void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result);
 extern void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T * p_result);
-
 
 extern thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu);
 extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC);

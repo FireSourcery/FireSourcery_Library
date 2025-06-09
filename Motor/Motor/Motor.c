@@ -55,7 +55,7 @@ void Motor_Init(const Motor_T * p_const)
     // assert(MotorAnalog_GetVSource_Fract16() != 0U); /* Must be set before init */
     // Motor_InitFrom(p_const, p_const->P_NVM_CONFIG);
 
-    if (p_const->P_NVM_CONFIG != NULL) { memcpy(&p_const->P_ACTIVE->Config, p_const->P_NVM_CONFIG, sizeof(Motor_Config_T)); }
+    if (p_const->P_NVM_CONFIG != NULL) { p_const->P_ACTIVE->Config = *p_const->P_NVM_CONFIG; }
 
     /*
         HW Wrappers Init
@@ -68,6 +68,8 @@ void Motor_Init(const Motor_T * p_const)
     p_const->P_ACTIVE->p_ActiveSensor = MotorSensor_Of(&p_const->SENSOR_TABLE, p_const->P_ACTIVE->Config.SensorMode);
     MotorSensor_Init(p_const->P_ACTIVE->p_ActiveSensor);
 
+    // HeatMonitor_Init(&p_motor->Thermistor);
+
     Motor_InitReboot(p_const->P_ACTIVE); // alternatively move to state machine
     StateMachine_Init(&p_const->STATE_MACHINE);
 }
@@ -77,8 +79,6 @@ void Motor_Init(const Motor_T * p_const)
 */
 void Motor_InitReboot(Motor_State_T * p_motor)
 {
-    // HeatMonitor_Init(&p_motor->Thermistor);
-
     /*
         SW Structs
     */
@@ -247,14 +247,13 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
     // vlimit on non
 }
 
-void Motor_SetDirection_Cast(Motor_State_T * p_motor, int direction) { Motor_SetDirection(p_motor, (Motor_Direction_T)direction); }
-
 /*
     Forward/Reverse using calibration param
+    alternatively move to user
 */
 void Motor_SetDirectionForward(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor)); }
 void Motor_SetDirectionReverse(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
-void Motor_SetUserDirection(Motor_State_T * p_motor, int sign) { Motor_SetDirection(p_motor, sign * p_motor->Config.DirectionForward); }
+// void Motor_SetUserDirection(Motor_State_T * p_motor, int sign) { Motor_SetDirection(p_motor, (Motor_Direction_T)(sign * p_motor->Config.DirectionForward)); }
 
 
 /******************************************************************************/

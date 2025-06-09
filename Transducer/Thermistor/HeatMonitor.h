@@ -60,6 +60,14 @@ typedef enum HeatMonitor_Status
 }
 HeatMonitor_Status_T;
 
+// typedef struct HeatMonitor_Config
+// {
+//      HeatMonitor_Config_T Config;
+//      Thermistor_Coeffs_T
+// }
+// HeatMonitor_Config_T;
+
+
 /******************************************************************************/
 /*!
     @brief  HeatMonitor Context - Contains all necessary data for per-thermistor monitoring
@@ -68,6 +76,23 @@ HeatMonitor_Status_T;
     @note   It can be used in a group context for multiple heat monitors.
 */
 /******************************************************************************/
+// typedef const struct HeatMonitor_Context
+// {
+//     HeatMonitor_T * P_STATE;
+//     Linear_T * P_LIMIT_SCALAR;
+//     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
+// }
+// HeatMonitor_Context_T;
+
+// typedef const struct HeatMonitor_Thermistor
+// {
+//     Thermistor_T THERMISTOR;
+//     const Thermistor_Coeffs_T * P_NVM_COEFFS; /* storage seperate from thermistor buffer */
+//     Analog_Conversion_T ANALOG_CONVERSION;
+//     Linear_T * P_LINEAR; /* Optionally for local unit conversion */
+// }
+// HeatMonitor_Thermistor_T;
+
 /*
     HeatMonitor Per Thermistor source
 */
@@ -111,6 +136,9 @@ typedef const struct HeatMonitor_GroupContext
     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 }
 HeatMonitor_GroupContext_T;
+
+#define HEAT_MONITOR_LINEAR_ALLOC() (&(Linear_T){0})
+#define HEAT_MONITOR_STATE_ALLOC() (&(HeatMonitor_T){0})
 
 /******************************************************************************/
 /*

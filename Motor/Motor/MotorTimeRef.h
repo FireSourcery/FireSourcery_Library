@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,15 +24,11 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorTimeReference.h
+    @file   MotorTimeRef.h
     @author FireSourcery
-    @brief  Global Static, for all Motor instances
-
+    @brief  Time/Clock References
 */
 /******************************************************************************/
-#ifndef MOTOR_TIME_REFERENCE_H
-#define MOTOR_TIME_REFERENCE_H
-
 #include "Math/Fixed/fract16.h"
 
 /******************************************************************************/
@@ -46,6 +44,10 @@
 /* OUTER_LOOP */
 /* INNER_CONTROL_FREQ 20000U */
 /* OUTER_CONTROL_FREQ 1000U */
+
+// #ifndef MOTOR_ANALOG_SAMPLE_FREQ
+// #define MOTOR_ANALOG_SAMPLE_FREQ (10000U) /* CONTROL_FREQ / ANALOG_DIVIDER) */
+// #endif
 
 #ifndef MOTOR_I_LOOP_FREQ
 #define MOTOR_I_LOOP_FREQ (10000U) /* CONTROL_FREQ / ANALOG_DIVIDER) */
@@ -91,5 +93,3 @@ static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((
 */
 static inline uint32_t _Motor_MillisOf(uint32_t controlCycles) { return MOTOR_CONTROL_TIME_MS(controlCycles); }
 static inline uint32_t _Motor_ControlCyclesOf(uint32_t millis) { return MOTOR_CONTROL_CYCLES(millis); }
-
-#endif

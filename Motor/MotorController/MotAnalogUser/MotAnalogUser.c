@@ -15,22 +15,24 @@
 /******************************************************************************/
 static inline void InitThrottleAIn(const MotAnalogUser_T * p_user)
 {
-    UserAIn_Config_T throttleConfig = {
-        .AdcZero = p_user->P_STATE->Config.ThrottleZero_Adcu,
-        .AdcMax = p_user->P_STATE->Config.ThrottleMax_Adcu,
-        // .UseEdgePin = p_user->P_STATE->Config.UseThrottleEdgePin
-    };
-    UserAIn_InitFrom(&p_user->THROTTLE_AIN, &throttleConfig);
+    // UserAIn_Config_T throttleConfig = {
+    //     .AdcZero = p_user->P_STATE->Config.ThrottleAInConfig.AdcZero,
+    //     .AdcMax = p_user->P_STATE->Config.ThrottleAInConfig.AdcMax,
+    //     // .UseEdgePin = p_user->P_STATE->Config.UseThrottleEdgePin
+    // };
+    // UserAIn_InitFrom(&p_user->THROTTLE_AIN, &throttleConfig);
+    UserAIn_InitFrom(&p_user->THROTTLE_AIN, &p_user->THROTTLE_AIN.P_STATE->Config);
 }
 
 static inline void InitBrakeAIn(const MotAnalogUser_T * p_user)
 {
-    UserAIn_Config_T brakeConfig = {
-        .AdcZero = p_user->P_STATE->Config.BrakeZero_Adcu,
-        .AdcMax = p_user->P_STATE->Config.BrakeMax_Adcu,
-        // .UseEdgePin = p_user->P_STATE->Config.UseBrakeEdgePin
-    };
-    UserAIn_InitFrom(&p_user->BRAKE_AIN, &brakeConfig);
+    // UserAIn_Config_T brakeConfig = {
+    //     .AdcZero = p_user->P_STATE->Config.BrakeAInConfig.AdcZero,
+    //     .AdcMax = p_user->P_STATE->Config.BrakeAInConfig.AdcMax,
+    //     // .UseEdgePin = p_user->P_STATE->Config.UseBrakeEdgePin
+    // };
+    // UserAIn_InitFrom(&p_user->BRAKE_AIN, &brakeConfig);
+    UserAIn_InitFrom(&p_user->BRAKE_AIN, &p_user->BRAKE_AIN.P_STATE->Config);
 }
 
 /******************************************************************************/
@@ -46,6 +48,7 @@ void MotAnalogUser_Init(const MotAnalogUser_T * p_user)
     /* Initialize analog inputs */
     InitThrottleAIn(p_user);
     InitBrakeAIn(p_user);
+
 
     /* Initialize digital pins */
     UserDIn_Init(&p_user->REVERSE_DIN);
@@ -66,27 +69,27 @@ void MotAnalogUser_Init(const MotAnalogUser_T * p_user)
 /******************************************************************************/
 void MotAnalogUser_SetBrakeZero(const MotAnalogUser_T * p_user, uint16_t zero_Adcu)
 {
-    p_user->P_STATE->Config.BrakeZero_Adcu = zero_Adcu;
+    p_user->P_STATE->Config.BrakeAInConfig.AdcZero = zero_Adcu;
     InitBrakeAIn(p_user);
 }
 
 void MotAnalogUser_SetThrottleZero(const MotAnalogUser_T * p_user, uint16_t zero_Adcu)
 {
-    p_user->P_STATE->Config.ThrottleZero_Adcu = zero_Adcu;
+    p_user->P_STATE->Config.ThrottleAInConfig.AdcZero = zero_Adcu;
     InitThrottleAIn(p_user);
 }
 
 void MotAnalogUser_SetBrakeRange(const MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
-    p_user->P_STATE->Config.BrakeZero_Adcu = zero_Adcu;
-    p_user->P_STATE->Config.BrakeMax_Adcu = max_Adcu;
+    p_user->P_STATE->Config.BrakeAInConfig.AdcZero = zero_Adcu;
+    p_user->P_STATE->Config.BrakeAInConfig.AdcMax = max_Adcu;
     InitBrakeAIn(p_user);
 }
 
 void MotAnalogUser_SetThrottleRange(const MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
-    p_user->P_STATE->Config.ThrottleZero_Adcu = zero_Adcu;
-    p_user->P_STATE->Config.ThrottleMax_Adcu = max_Adcu;
+    p_user->P_STATE->Config.ThrottleAInConfig.AdcZero = zero_Adcu;
+    p_user->P_STATE->Config.ThrottleAInConfig.AdcMax = max_Adcu;
     InitThrottleAIn(p_user);
 }
 
@@ -175,11 +178,11 @@ int32_t MotAnalogUser_ConfigId_Get(const MotAnalogUser_T * p_user, MotAnalogUser
     int32_t value = 0;
     switch (id)
     {
-        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             value = p_user->P_STATE->Config.ThrottleZero_Adcu;              break;
-        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              value = p_user->P_STATE->Config.ThrottleMax_Adcu;               break;
+        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             value = p_user->P_STATE->Config.ThrottleAInConfig.AdcZero;              break;
+        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              value = p_user->P_STATE->Config.ThrottleAInConfig.AdcMax;               break;
         case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    value = p_user->P_STATE->Config.UseThrottleEdgePin;             break;
-        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                value = p_user->P_STATE->Config.BrakeZero_Adcu;                 break;
-        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 value = p_user->P_STATE->Config.BrakeMax_Adcu;                  break;
+        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                value = p_user->P_STATE->Config.BrakeAInConfig.AdcZero;                 break;
+        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 value = p_user->P_STATE->Config.BrakeAInConfig.AdcMax;                  break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       value = p_user->P_STATE->Config.UseBrakeEdgePin;                break;
         case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             value = p_user->P_STATE->Config.BistateBrakeValue_Percent16;    break;
         case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         value = p_user->P_STATE->Config.UseBistateBrakePin;             break;
@@ -192,11 +195,11 @@ void MotAnalogUser_ConfigId_Set(const MotAnalogUser_T * p_user, MotAnalogUser_Co
 {
     switch (id)
     {
-        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             MotAnalogUser_SetThrottleRange(p_user, value, p_user->P_STATE->Config.ThrottleMax_Adcu); break;
-        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              MotAnalogUser_SetThrottleRange(p_user, p_user->P_STATE->Config.ThrottleZero_Adcu, value); break;
+        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             MotAnalogUser_SetThrottleRange(p_user, value, p_user->P_STATE->Config.ThrottleAInConfig.AdcMax); break;
+        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              MotAnalogUser_SetThrottleRange(p_user, p_user->P_STATE->Config.ThrottleAInConfig.AdcZero, value); break;
         case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    p_user->P_STATE->Config.UseThrottleEdgePin = value;             break;
-        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                MotAnalogUser_SetBrakeRange(p_user, value, p_user->P_STATE->Config.BrakeMax_Adcu); break;
-        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 MotAnalogUser_SetBrakeRange(p_user, p_user->P_STATE->Config.BrakeZero_Adcu, value); break;
+        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                MotAnalogUser_SetBrakeRange(p_user, value, p_user->P_STATE->Config.BrakeAInConfig.AdcMax); break;
+        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 MotAnalogUser_SetBrakeRange(p_user, p_user->P_STATE->Config.BrakeAInConfig.AdcZero, value); break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       p_user->P_STATE->Config.UseBrakeEdgePin = value;                break;
         case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             p_user->P_STATE->Config.BistateBrakeValue_Percent16 = value;    break;
         case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         p_user->P_STATE->Config.UseBistateBrakePin = value;             break;

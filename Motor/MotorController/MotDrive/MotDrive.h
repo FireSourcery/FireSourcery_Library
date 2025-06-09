@@ -42,6 +42,7 @@
 typedef enum MotDrive_Status
 {
     MOT_DRIVE_STATUS_OK,
+    MOT_DRIVE_STATUS_WARNING,
     MOT_DRIVE_STATUS_FAULT,
 }
 MotDrive_Status_T;
@@ -134,14 +135,18 @@ MotDrive_Active_T;
 */
 typedef const struct MotDrive
 {
-    MotDrive_Active_T * const P_MOT_DRIVE;
-    const StateMachine_T STATE_MACHINE;
-    const MotMotors_T MOTORS;
-    const Blinky_T * const P_BUZZER;
+    MotDrive_Active_T * P_ACTIVE;
+    StateMachine_T STATE_MACHINE;
+    MotMotors_T MOTORS;
+    const Blinky_T * P_BUZZER;
     const MotDrive_Config_T * const P_NVM_CONFIG;
     /*   VarInterface; for MotDrive_VarId_Set */
 }
 MotDrive_T;
+
+// #define MOT_DRIVE_STATE_MACHINE_INIT(p_MotDriveContext, p_MotDriveActive)
+// #define MOT_DRIVE_STATE_MACHINE_INIT(p_MotDriveContext, p_MotDriveActive) STATE_MACHINE_INIT((p_MotDriveContext), &MOT_DRIVE_MACHINE, &((p_MotDriveActive)->StateMachine))
+// #define MOT_DRIVE_INIT()
 
 /*
 

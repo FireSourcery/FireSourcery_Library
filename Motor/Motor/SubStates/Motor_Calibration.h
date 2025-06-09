@@ -32,14 +32,14 @@
 #include "../Motor_StateMachine.h"
 
 /* Exit the substate and return to the parent state on complete */
-static inline bool Motor_Calibration_IsComplete(const Motor_State_T * p_motor) { return StateMachine_IsActiveSubState(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
-// static inline bool Motor_Calibration_IsComplete(const const Motor_T * p_motor) { return (p_motor->CalibrationState == MOTOR_CALIBRATION_STATE_DISABLE); }
+// static inline bool _Motor_Calibration_IsComplete(const Motor_State_T * p_motor) { return StateMachine_IsActiveSubState(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
 
+static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsActiveSubState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
 
 /* Proc, to allow validate immediately */
 /* StateMachine_ProcInput cannot transitions top level only */
 static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
-static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
+// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
 // static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 static inline void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)p_subState); }
@@ -48,3 +48,19 @@ static inline void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_
 
 */
 extern void Motor_Calibration_StartHome(const Motor_T * p_motor);
+
+
+/*
+    Calibration SubState
+*/
+// typedef enum Motor_CalibrationState
+// {
+//     MOTOR_CALIBRATION_STATE_DISABLE,
+//     MOTOR_CALIBRATION_STATE_ADC,
+//     MOTOR_CALIBRATION_STATE_HALL,
+//     MOTOR_CALIBRATION_STATE_ENCODER,
+//     MOTOR_CALIBRATION_STATE_SIN_COS,
+//     MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
+//     MOTOR_CALIBRATION_STATE_IDLE,
+// }
+// Motor_CalibrationState_T;

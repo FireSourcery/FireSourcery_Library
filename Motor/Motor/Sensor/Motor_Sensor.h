@@ -37,16 +37,6 @@
 typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
-#define MOTOR_SENSOR_INIT_EMPTY(p_MotorState) MOTOR_SENSOR_INIT_AS_EMPTY(&((p_MotorState)->SensorState))
-#define MOTOR_SENSOR_INIT_HALL(p_MotorState, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((p_MotorState)->SensorState))
-
-
-// #define MOTOR_SENSOR_TABLE_INIT(p_MotorState, HallStruct, p_Encoder) \
-// { \
-//     .EMPTY = MOTOR_SENSOR_INIT_AS_EMPTY(&((p_MotorState)->SensorState)), \
-//     .HALL_SENSOR = HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((p_MotorState)->SensorState)), \
-// }
-
 
 // alternatively,
 // static inline MotorSensor_T * _Motor_Sensor_Get(const Motor_T * p_motor)

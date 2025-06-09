@@ -58,6 +58,7 @@ MotorSensor_Id_T;
 /* include all using preprocessor conditions */
 /* There can only be 1 sensor of each type per motor, with fixed corresponding Id */
 /* Mux/Repo */
+// typedef const struct Motor_SensorTable
 typedef const struct MotorSensor_Table
 {
     const MotorSensor_T EMPTY;
@@ -67,6 +68,16 @@ typedef const struct MotorSensor_Table
     const Encoder_MotorSensor_T ENCODER;
 }
 MotorSensor_Table_T;
+
+/*
+    Init with Motor_State_T
+*/
+// #define MOTOR_SENSOR_TABLE_INIT_EMPTY(p_MotorState) MOTOR_SENSOR_INIT_AS_EMPTY(&((p_MotorState)->SensorState))
+// #define MOTOR_SENSOR_TABLE_INIT_HALL(p_MotorState, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((p_MotorState)->SensorState))
+
+#define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) MOTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
+#define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((MotorStateStruct).SensorState))
+#define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
 
 /*

@@ -41,7 +41,7 @@
 /* Sync Output */
 /******************************************************************************/
 /*
-    [Transition Of Context/Tick]
+    [Transition Of Context/Tick/SyncOutput]
     Map SyncProc(p_context) => newState
 */
 static inline const State_T * State_TransitionOfContext(const State_T * p_state, void * p_context)
@@ -92,7 +92,7 @@ static inline State_T * _State_ResolveInputHandler(State_Input_T transition, voi
 }
 
 /*!
-    [Transition Of Input]
+    [Transition Of Input/AsyncInput]
     Map (inputId, inputValue) -> p_newState
     Map inputId to [State_Input_T] and call with inputValue
     @return NULL for internal-only-transition without processing ENTRY.
@@ -146,38 +146,5 @@ static inline void State_OnTransition(const State_T * p_state, const State_T * p
 }
 
 
-/******************************************************************************/
-/*
-    Transition
-    Set [const State_T **] passing runtime state
-    map compile time const to runtime variable
 
-    (const State_T ** pp_current, void * p_context, const State_T * p_new)
-*/
-/******************************************************************************/
-// static inline void State_Init(const State_T ** pp_current, const State_T * p_new, void * p_context)
-// {
-//     State_Entry(p_new, p_context);
-//     *pp_current = p_new;
-// }
 
-// static inline void State_Set(const State_T ** pp_current, const State_T * p_new, void * p_context)
-// {
-//     State_Exit(*pp_current, p_context);
-//     *pp_current = p_new;
-//     State_Entry(p_new, p_context);
-// }
-
-// // static inline void _State_Transition(const State_T ** pp_current, const State_T * p_new, void * p_context)
-// // {
-// //     State_Exit(*pp_current, p_context);
-// //     *pp_current = p_new;
-// //     State_Entry(p_new, p_context);
-// // }
-
-// /* Proc TransitionFunctionAsync result with NULL is no transition */
-// static inline void State_Transition(const State_T ** pp_current, const State_T * p_new, void * p_context)
-// {
-//     assert(*pp_current != NULL);
-//     if (p_new != NULL) { State_Set(pp_current, p_new, p_context); }
-// }

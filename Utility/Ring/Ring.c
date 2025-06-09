@@ -195,22 +195,7 @@ inline void * Ring_Front(const Ring_T * p_ring)     { return (Ring_IsEmpty(p_rin
 inline void * Ring_Back(const Ring_T * p_ring)      { return (Ring_IsEmpty(p_ring) == false) ? Back(p_ring) : NULL; }
 inline void * Ring_At(const Ring_T * p_ring, size_t index) { return (index < Ring_GetFullCount(p_ring)) ? At(p_ring, index) : NULL; }
 
-// inline void _Ring_PeekFront(Ring_T * p_ring, void * p_result) { if (Ring_IsEmpty(p_ring) == false) { PeekFront(p_ring, p_result); } }
-// inline void _Ring_PeekBack(Ring_T * p_ring, void * p_result)  { if (Ring_IsEmpty(p_ring) == false) { PeekBack(p_ring, p_result); } }
-// inline void _Ring_PeekAt(Ring_T * p_ring, size_t index, void * p_result) { if (index < Ring_GetFullCount(p_ring)) { PeekAt(p_ring, index, p_result); } }
-// inline void _Ring_Copy(Ring_T * p_ring, void * p_result, const void * p_unit) { if (p_unit != NULL) { Copy(p_ring, p_result, p_unit); } }
-
-
-// inline void _Ring_PushBackN(Ring_T * p_ring, const void * p_units, size_t unitCount)
-// {
-//     if (unitCount <= Ring_GetEmptyCount(p_ring))
-//     {
-//         PlaceBackN(p_ring, p_units, unitCount);
-//         AddBack(p_ring, unitCount);
-//     }
-// }
-
-inline void * _Ring_Seek(Ring_T * p_ring, size_t index)             { return (index < Ring_GetFullCount(p_ring)) ? Seek(p_ring, index) : NULL; }
+inline void * _Ring_Seek(Ring_T * p_ring, size_t index)  { return (index < Ring_GetFullCount(p_ring)) ? Seek(p_ring, index) : NULL; }
 
 
 /******************************************************************************/

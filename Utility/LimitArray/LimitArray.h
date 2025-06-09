@@ -80,20 +80,20 @@ LimitArray_Augments_T;
 
 // typedef Array_T LimitArray_T;
 
-typedef union
+typedef const union
 {
     Array_T ARRAY;
     struct
     {
-        limit_t * const P_BUFFER;   // Pointer to the p_array buffer
-        const size_t LENGTH;        // Length of the p_array
-        LimitArray_Augments_T * const P_AUGMENTS; // Pointer to the p_array buffer
+        limit_t * P_BUFFER;   // Pointer to the p_array buffer
+        size_t LENGTH;        // Length of the p_array
+        LimitArray_Augments_T * P_AUGMENTS; // Pointer to the p_array buffer
     };
 }
 LimitArray_T;
 
-#define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) ARRAY_INIT(p_Buffer, Length, p_Augments)
-#define LIMIT_ARRAY_ALLOC(Length) ARRAY_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0})
+#define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) { .ARRAY = ARRAY_INIT(p_Buffer, Length, p_Augments) }
+#define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
 
 /*  */
 static inline LimitArray_Augments_T * _LimitArray_State(const LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }

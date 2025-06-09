@@ -39,11 +39,13 @@
 
 /*
     Application handle
+    Feature module holds the pointer. ADC owns the state.
     handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
 */
+/* Analog_ConversionHandle */
 typedef const struct Analog_Conversion
 {
-    Analog_ConversionState_T * P_CONVERSION_STATE;
+    volatile Analog_ConversionState_T * P_CONVERSION_STATE;
     /* reserve interface for extension */
     // Config
     /* for direct start, overwrite */
@@ -52,7 +54,8 @@ typedef const struct Analog_Conversion
 }
 Analog_Conversion_T;
 
-#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE =  &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
+#define ANALOG_CONVERSION_INIT(p_ConversionState) { .P_CONVERSION_STATE = p_ConversionChannel, }
+#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
 
 // #define ANALOG_CONVERSION_INIT_FROM_TYPED(AdcStruct, ChannelId, ExpectedType) \
 // { \

@@ -97,7 +97,7 @@ void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t controlDeg)
 void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward)
 {
     p_motor->Config.DirectionForward = directionForward;
-    PropagateSet(p_motor, Motor_SetDirectionForward);
+    // PropagateSet(p_motor, Motor_SetDirectionForward);
 }
 
 /*

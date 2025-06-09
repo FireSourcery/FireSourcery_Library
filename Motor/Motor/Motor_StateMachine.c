@@ -356,7 +356,7 @@ static void Run_Proc(const Motor_T * p_motor)
     Motor_ProcOuterFeedback(p_motor);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_ProcAngleControl(p_motor->P_ACTIVE);
-    // Motor_FOC_ActivateVPhase(p_motor);
+    Motor_FOC_ActivateVPhase(p_motor);
 }
 
 // static State_T * Run_Next(const Motor_T * p_motor)
@@ -646,9 +646,6 @@ const State_T MOTOR_STATE_FAULT =
 /******************************************************************************/
 /* Fault interface functions */
 /******************************************************************************/
-// bool _Motor_StateMachine_IsFault(const Motor_State_T * p_fields) { return (StateMachine_GetActiveStateId(&p_fields->StateMachine) == MSM_STATE_ID_FAULT); }
-
-bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_FAULT); }
 
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {

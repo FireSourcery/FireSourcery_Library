@@ -206,46 +206,6 @@
 // }
 // Monitor_ThresholdConfig_T;
 
-/******************************************************************************/
-/*
-    Specific Monitor Types - Industry Standard Configurations
-*/
-/******************************************************************************/
-/* Voltage Monitor - Conventional naming */
-typedef enum VoltageMonitor_Status
-{
-    VOLTAGE_STATUS_NORMAL = 0,
-    VOLTAGE_STATUS_UNDERVOLTAGE_WARNING,
-    VOLTAGE_STATUS_UNDERVOLTAGE_ALARM,
-    VOLTAGE_STATUS_UNDERVOLTAGE_CRITICAL,   /* UVLO - UnderVoltage LockOut */
-    VOLTAGE_STATUS_OVERVOLTAGE_WARNING,
-    VOLTAGE_STATUS_OVERVOLTAGE_ALARM,
-    VOLTAGE_STATUS_OVERVOLTAGE_CRITICAL,    /* OVP - OverVoltage Protection */
-}
-VoltageMonitor_Status_T;
-
-/* Temperature Monitor - Conventional naming */
-typedef enum TemperatureMonitor_Status
-{
-    TEMPERATURE_STATUS_NORMAL = 0,
-    TEMPERATURE_STATUS_ELEVATED,           /* Above normal but safe */
-    TEMPERATURE_STATUS_HIGH_WARNING,       /* High temperature warning */
-    TEMPERATURE_STATUS_HIGH_ALARM,         /* High temperature alarm */
-    TEMPERATURE_STATUS_OVERTEMPERATURE,    /* OTP - OverTemperature Protection */
-    TEMPERATURE_STATUS_THERMAL_SHUTDOWN,   /* TSD - Thermal ShutDown */
-}
-TemperatureMonitor_Status_T;
-
-/* Current Monitor - Conventional naming */
-typedef enum CurrentMonitor_Status
-{
-    CURRENT_STATUS_NORMAL = 0,
-    CURRENT_STATUS_OVERCURRENT_WARNING,    /* OCW - OverCurrent Warning */
-    CURRENT_STATUS_OVERCURRENT_ALARM,      /* OCA - OverCurrent Alarm */
-    CURRENT_STATUS_OVERCURRENT_PROTECTION, /* OCP - OverCurrent Protection */
-    CURRENT_STATUS_OVERCURRENT_SHUTDOWN,   /* OCS - OverCurrent Shutdown */
-}
-CurrentMonitor_Status_T;
 
 
 /******************************************************************************/

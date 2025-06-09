@@ -35,18 +35,17 @@
 
 typedef const struct MotAnalogUser_Conversion
 {
-    const Analog_Conversion_T CONVERSION_THROTTLE;
-    const Analog_Conversion_T CONVERSION_BRAKE;
+    const Analog_Conversion_T THROTTLE;
+    const Analog_Conversion_T BRAKE;
 }
 MotAnalogUser_Conversion_T;
 
 
 static inline void MotAnalogUser_Conversion_Mark(const MotAnalogUser_Conversion_T * p_this)
 {
-    Analog_Conversion_MarkConversion(&p_this->CONVERSION_THROTTLE);
-    Analog_Conversion_MarkConversion(&p_this->CONVERSION_BRAKE);
+    Analog_Conversion_MarkConversion(&p_this->THROTTLE);
+    Analog_Conversion_MarkConversion(&p_this->BRAKE);
 }
 
-
-static inline uint16_t MotAnalogUser_Conversion_GetThrottle(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->CONVERSION_THROTTLE); }
-static inline uint16_t MotAnalogUser_Conversion_GetBrake(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->CONVERSION_BRAKE); }
+static inline uint16_t MotAnalogUser_Conversion_GetThrottle(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->THROTTLE); }
+static inline uint16_t MotAnalogUser_Conversion_GetBrake(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->BRAKE); }

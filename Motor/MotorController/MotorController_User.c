@@ -77,11 +77,10 @@ void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context,
 void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
-
     // p_mc->Config.VSupplyRef = Motor_VSourceLimitOf(volts);
     p_mc->Config.VSupplyRef = volts;
-    MotorController_CaptureVSourceActiveRef(p_context);
-    MotorController_ResetVSourceMonitorDefaults(p_mc);
+    MotorController_ResetVSourceMonitorDefaults(p_context);
+    MotorController_CaptureVSource(p_context);
 }
 
 // void MotorController_User_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
@@ -100,14 +99,14 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
             // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Disable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
-                VarAccess_DisableSet(&(MotMotors_ContextAt(p_context, iMotor)->VAR_ACCESS.IO));
+                VarAccess_DisableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
             }
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
             // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Enable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
-                VarAccess_EnableSet(&(MotMotors_ContextAt(p_context, iMotor)->VAR_ACCESS.IO));
+                VarAccess_EnableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
             }
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN:
@@ -135,9 +134,10 @@ uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorCon
     switch (id)
     {
         // case MOT_USER_SYSTEM_RESRV:                           break;
-        case MOT_USER_SYSTEM_BEEP:          MotorController_User_BeepN(p_context, 500U, 500U, value);                break;
-        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_User_BeepStop(p_context);                                break;
-        case MOT_USER_SYSTEM_CLEAR_FAULT:   isSuccess = MotorController_StateMachine_ClearFault(p_context, value);   break;
+        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context );                              break;
+        // case MOT_USER_SYSTEM_BEEP:          MotorController_Beepshort(p_context, 500U, 500U, value);                break;
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);               break;
         case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);                    break;
 
         /* Non Blocking function, host/caller poll Async return status after. */

@@ -42,7 +42,8 @@ void MotDrive_User_SetDirection(const MotDrive_T * p_motDrive, MotDrive_Directio
 {
     if (MotDrive_User_GetDirection(p_motDrive) != direction)
     {
-        _StateMachine_ProcInput(&p_motDrive->P_MOT_DRIVE->StateMachine, p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
+        // _StateMachine_ProcInput(&p_motDrive->P_ACTIVE->StateMachine, p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
+        _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
         if (MotDrive_User_GetDirection(p_motDrive) != direction) { Blinky_Blink(p_motDrive->P_BUZZER, 500U);; } /* effective on motor async proc only */
     }
 }
@@ -69,8 +70,8 @@ uint32_t MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, 
         /* set to state machine */
         case MOT_DRIVE_VAR_DIRECTION:   MotDrive_User_SetDirection(p_motDrive, (MotDrive_Direction_T)value);    break;
         /* set to sync buffer */
-        case MOT_DRIVE_VAR_THROTTLE:    MotDrive_User_SetThrottle(p_motDrive->P_MOT_DRIVE, value);              break;
-        case MOT_DRIVE_VAR_BRAKE:       MotDrive_User_SetBrake(p_motDrive->P_MOT_DRIVE, value);                 break;
+        case MOT_DRIVE_VAR_THROTTLE:    MotDrive_User_SetThrottle(p_motDrive->P_ACTIVE, value);              break;
+        case MOT_DRIVE_VAR_BRAKE:       MotDrive_User_SetBrake(p_motDrive->P_ACTIVE, value);                 break;
     }
 
     return (isSet == true) ? 0 : -1;

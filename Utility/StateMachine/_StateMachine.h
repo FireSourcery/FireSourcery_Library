@@ -83,9 +83,9 @@ static inline bool _StateMachine_AcquireAsyncIsr(StateMachine_Active_T * p_state
 {
 #if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)  /* Case of StateMachine ISR is higher than all Inputs */
     (void)p_stateMachine;
-// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input prioirty higher than ISR */
-//     _Critical_DisableIrq();
-// #endif
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input prioirty higher than ISR */
+    _Critical_DisableIrq();
+#endif
     return true;
 #else
     return Critical_AcquireLock(&p_stateMachine->InputSignal);
@@ -96,9 +96,9 @@ static inline void _StateMachine_ReleaseAsyncIsr(StateMachine_Active_T * p_state
 {
 #if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_stateMachine;
-// #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
-//     _Critical_EnableIrq();
-// #endif
+#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+    _Critical_EnableIrq();
+#endif
 #else
     Critical_ReleaseLock(&p_stateMachine->InputSignal);
 #endif
@@ -162,6 +162,13 @@ static inline void _StateMachine_ReleaseSyncInput(StateMachine_Active_T * p_stat
 }
 
 
+
+/******************************************************************************/
+/*
+    Public Getters directly on StateMachine_Active_T
+*/
+/******************************************************************************/
+
 /******************************************************************************/
 /*
     Top Level State
@@ -187,8 +194,8 @@ static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Activ
 
 static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p_fields, const State_T * p_state) { return (p_state == StateMachine_GetActiveSubState(p_fields)); }
 /* Non unique substate id, handle with p_parentState */
-// static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_fields, const State_T * p_parentState, state_t subStateId)
-//     { return StateMachine_IsActiveState(p_fields, p_parentState) && (subStateId == p_fields->p_ActiveSubState->ID); }
+static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_fields, const State_T * p_parent, state_t subStateId)
+    { return StateMachine_IsActiveState(p_fields, p_parent) && (subStateId == p_fields->p_ActiveSubState->ID); }
 
 /* Is within the active branch */
 /* State is in the active branch. Ancestor of the ActiveSubState */
@@ -197,7 +204,7 @@ static inline bool StateMachine_IsActiveBranch(const StateMachine_Active_T * p_f
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_fields, const State_T * p_state) { return State_IsDirectBranch(StateMachine_GetActiveSubState(p_fields), p_state); }
 
-/*  split branch and substate functions */
+/* split branch and substate functions */
 // static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return p_fields->p_ActiveSubState; }
 // static inline const State_T * StateMachine_GetActiveLeafState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }
 
@@ -214,7 +221,7 @@ static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_f
 */
 extern void _StateMachine_Init(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_initialState);
 extern void _StateMachine_Transition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState);
-extern void _StateMachine_TryTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState);
+extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState);
 extern void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_fields, void * p_context);
 extern void _StateMachine_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value);
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_fields, void * p_context);
@@ -224,12 +231,12 @@ extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_fields, state_i
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_context);
 
 extern void _StateMachine_TransitionSubState(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
-extern void _StateMachine_TryTransitionSubState(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
+extern void _StateMachine_TransitionSubStateTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
 extern void _StateMachine_ProcSubStateInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value);
 extern void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_fields, void * p_context);
 
 extern void _StateMachine_TraverseTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
-extern void _StateMachine_TryTraverseTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
+extern void _StateMachine_TraverseTransitionTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
 extern void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_limit);
 extern void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t id, state_input_value_t value);
 extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_fields, void * p_context);

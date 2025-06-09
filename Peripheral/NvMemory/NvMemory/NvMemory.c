@@ -28,12 +28,6 @@
 
 */
 /*******************************************************************************/
-/******************************************************************************/
-/*!
-    Abstraction details
-    Shared completion and error status -> simultaneous operations not supported.
-*/
-/******************************************************************************/
 #include "NvMemory.h"
 #include <string.h>
 
@@ -56,7 +50,7 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex) CONFIG_
 static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
 {
     /* Start command validated by caller. No null pointer check */
-    p_this->p_OpControl->START_CMD(p_this->CONST.P_HAL, OpCmdAddress(p_this, p_this->OpAddress + opIndex), &p_this->p_OpData[opIndex], 1U);
+    p_this->p_OpControl->START_CMD(p_this->CONST.P_HAL, OpCmdAddress(p_this, p_this->OpAddress + opIndex), &((const uint8_t *)p_this->p_OpData)[opIndex], 1U);
     return (p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == false);
 }
 
@@ -71,21 +65,22 @@ static inline bool StartOpCmd(const NvMemory_T * p_this, size_t opIndex)
 /******************************************************************************/
 void NvMemory_Init(NvMemory_T * p_this)
 {
-    p_this->Status = NV_MEMORY_STATUS_SUCCESS;
-    p_this->State = NV_MEMORY_STATE_IDLE;
-    p_this->OpAddress = 0U;
-    p_this->OpIndex = 0U;
-    p_this->OpSizeAligned = 0U;
-    p_this->IsVerifyEnable = true;
+    // p_this->OpAddress = 0U;
+    // p_this->OpSizeAligned = 0U;
     p_this->IsOpBuffered = (p_this->CONST.BUFFER_SIZE > 0U);
+    p_this->IsVerifyEnable = true;
     p_this->IsForceAlignEnable = false;
+
+    // p_this->Status = NV_MEMORY_STATUS_SUCCESS;
+    // p_this->State = NV_MEMORY_STATE_IDLE;
+    // p_this->OpIndex = 0U;
 }
 
 /******************************************************************************/
 /*!   */
 /******************************************************************************/
 /* When hw verify is not implemented */
-NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_data, size_t size)
+NvMemory_Status_T NvMemory_MemCompare(const void * p_dest, const void * p_data, size_t size)
 {
     return (memcmp(p_dest, p_data, size) == 0U) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_VERIFY;
 }
@@ -93,16 +88,16 @@ NvMemory_Status_T NvMemory_MemCompare(const uint8_t * p_dest, const uint8_t * p_
 static uint32_t Checksum(const uint8_t * p_data, size_t size)
 {
     uint32_t sum = 0U;
-    for(size_t iByte = 0U; iByte < size; iByte++) { sum += p_data[iByte]; }
+    for (size_t iByte = 0U; iByte < size; iByte++) { sum += p_data[iByte]; }
     return sum;
 }
 
 /*
     Non buffered must maintain source data pointed by p_OpData
 */
-bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const uint8_t * p_data, size_t size)
+bool NvMemory_CheckOpChecksum(const NvMemory_T * p_this, const void * p_data, size_t size)
 {
-    return (Checksum((const uint8_t *)p_this->OpAddress, size) == Checksum(p_data, size));
+    return (Checksum((const uint8_t *)p_this->OpAddress, size) == Checksum((const uint8_t *)p_data, size));
 }
 
 /******************************************************************************/
@@ -123,7 +118,7 @@ static inline bool CheckPartitionBoundary(const NvMemory_Partition_T * p_partiti
 
 static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partition_T * p_partitionTable, uint8_t partitionCount, uintptr_t address, size_t size)
 {
-    NvMemory_Partition_T * p_partition = 0U;
+    NvMemory_Partition_T * p_partition = NULL;
 
     for(uint8_t iPartition = 0U; iPartition < partitionCount; iPartition++)
     {
@@ -136,8 +131,9 @@ static inline NvMemory_Partition_T * SearchPartitionTable(const NvMemory_Partiti
 /* Check all partitions for op fit */
 static inline bool ValidateOpPartition(NvMemory_T * p_this, uintptr_t address, size_t size)
 {
-    p_this->p_OpPartition = SearchPartitionTable(p_this->CONST.P_PARTITIONS, p_this->CONST.PARTITION_COUNT, address, size);
-    return (p_this->p_OpPartition != 0U);
+    // p_this->p_OpPartition = SearchPartitionTable(p_this->CONST.P_PARTITIONS, p_this->CONST.PARTITION_COUNT, address, size);
+    // return (p_this->p_OpPartition != 0U);
+    return (SearchPartitionTable(p_this->CONST.P_PARTITIONS, p_this->CONST.PARTITION_COUNT, address, size) != NULL);
 }
 
 
@@ -149,8 +145,8 @@ NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_this, uintptr_t address, 
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     p_this->OpAddress = address;
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, address, size) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
-    if(status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(address, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_this, address, size) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(address, p_this->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
     return status;
 }
 
@@ -158,7 +154,7 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t size)
 {
     NvMemory_Status_T status;
     p_this->OpSize = size;
-    if((p_this->IsForceAlignEnable == true) && (p_this->p_OpControl->FORCE_ALIGN != NULL))
+    if ((p_this->IsForceAlignEnable == true) && (p_this->p_OpControl->FORCE_ALIGN != NULL))
     {
         p_this->OpSizeAligned = p_this->p_OpControl->FORCE_ALIGN(size, p_this->p_OpControl->UNIT_SIZE); // alternatively use getter
         status = NV_MEMORY_STATUS_SUCCESS;
@@ -175,14 +171,14 @@ NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_this, size_t size)
     For Write, or buffered Read
     Accepts p_data == NULL as NV_MEMORY_STATUS_SUCCESS
 */
-NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const uint8_t * p_data, size_t size)
+NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_this, const void * p_data, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
-    if((p_data != NULL) && (p_this->IsOpBuffered == true))
+    if ((p_data != NULL) && (p_this->IsOpBuffered == true))
     {
         status = (size <= p_this->CONST.BUFFER_SIZE) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BUFFER;
-        if(status == NV_MEMORY_STATUS_SUCCESS)
+        if (status == NV_MEMORY_STATUS_SUCCESS)
         {
             memcpy(p_this->CONST.P_BUFFER, p_data, size);
             p_this->p_OpData = p_this->CONST.P_BUFFER;
@@ -206,7 +202,7 @@ NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_this, const NvMemory_OpCo
     return status;
 }
 
-NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, uint8_t * p_data)
+NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_this, p_opControl, address, size); }
@@ -215,7 +211,7 @@ NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_this, const NvMemory
 }
 
 
-NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const uint8_t * p_data, size_t size)
+NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_this, p_opControl, address, size); }
@@ -244,12 +240,12 @@ NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_this, const NvMemor
 static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static void ProcCmd_Blocking(NvMemory_T * p_this, size_t opIndex)
 {
-    if(StartOpCmd(p_this, opIndex) == true)
+    if (StartOpCmd(p_this, opIndex) == true)
     {
-        while(p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == false)
+        while (p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == false)
         {
-            if(p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == true) { break; }
-            if(p_this->Yield != NULL) { p_this->Yield(p_this->p_CallbackContext); }
+            if (p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == true) { break; }
+            if (p_this->Yield != NULL) { p_this->Yield(p_this->p_CallbackContext); }
         }
     }
 }
@@ -259,20 +255,20 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
-    if(p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == true)
+    if (p_this->CONST.READ_COMPLETE_FLAG(p_this->CONST.P_HAL) == true)
     {
         p_this->CONST.CLEAR_ERROR_FLAGS(p_this->CONST.P_HAL);
-        for(size_t opIndex = 0U; opIndex < p_this->OpSizeAligned; opIndex += p_this->p_OpControl->UNIT_SIZE)
+        for (size_t opIndex = 0U; opIndex < p_this->OpSizeAligned; opIndex += p_this->p_OpControl->UNIT_SIZE)
         {
             ProcCmd_Blocking(p_this, opIndex);
-            if(p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == true)
+            if (p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == true)
             {
                 status = (p_this->p_OpControl->PARSE_CMD_ERROR != NULL) ? p_this->p_OpControl->PARSE_CMD_ERROR(p_this) : NV_MEMORY_STATUS_ERROR_CMD;
                 break;
             }
-            if(p_this->p_OpControl->FINALIZE_CMD != NULL)
+            if (p_this->p_OpControl->FINALIZE_CMD != NULL)
             {
-                p_this->p_OpControl->FINALIZE_CMD(p_this->CONST.P_HAL, OpCmdAddress(p_this, p_this->OpAddress + opIndex), 1U, (uint8_t *)&p_this->p_OpData[opIndex]);
+                p_this->p_OpControl->FINALIZE_CMD(p_this->CONST.P_HAL, OpCmdAddress(p_this, p_this->OpAddress + opIndex), 1U, &((uint8_t *)p_this->p_OpData)[opIndex]);
             }
         }
     }
@@ -288,7 +284,7 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_this)
 
 /******************************************************************************/
 /*!
-    Non Blocking - UNTESTED
+    Non Blocking - Experimental
 */
 /******************************************************************************/
 // else  /* if (p_this->CONST.READ_ERROR_FLAGS(p_this->CONST.P_HAL) == false) */

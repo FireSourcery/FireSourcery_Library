@@ -52,7 +52,7 @@ typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_MAIN,
-    MCSM_STATE_ID_CMD,
+    MCSM_STATE_ID_PASS,
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
     // MCSM_STATE_ID_SERVO,
@@ -62,15 +62,20 @@ typedef enum MotorController_StateId
 MotorController_StateId_T;
 
 /*
-    Must be extern for Init
+    extern for Init
 */
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, p_MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, (&(p_MotorControllerActive)->StateMachine))
 
-extern bool MotorController_StateMachine_IsFault(const MotorController_State_T * p_active);
+
+// static inline bool _MotorController_StateMachine_IsFault(const MotorController_State_T * p_active) { return (StateMachine_GetActiveStateId(&p_active->StateMachine) == MCSM_STATE_ID_FAULT); }
+
+static inline bool MotorController_StateMachine_IsFault(const MotorController_T * p_context) { return StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_FAULT); }
+
+// extern bool MotorController_StateMachine_IsFault(const MotorController_State_T * p_active);
 
 extern bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context);
 extern void MotorController_StateMachine_EnterFault(const MotorController_T * p_context);
-// extern void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags);
-extern bool MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags);
+extern void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags);
+extern void MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags);

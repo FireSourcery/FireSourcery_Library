@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,15 +26,9 @@
 /*!
     @file   MotorController_MotProtocol.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOTOR_CONTROLLER_PROTOCOL_H
-#define MOTOR_CONTROLLER_PROTOCOL_H
-
 #include "Utility/Protocol/Protocol.h"
 
 extern const Protocol_PacketClass_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS;
-
-#endif

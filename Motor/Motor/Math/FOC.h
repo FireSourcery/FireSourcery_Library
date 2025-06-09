@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,13 +26,9 @@
 /*!
     @file   FOC.h
     @author FireSourcery
-
-    @brief  FOC math functions with state. Wrapper for pure math functions.
+    @brief  FOC math functions - state wrapper for pure math functions.
 */
 /******************************************************************************/
-#ifndef FOC_H
-#define FOC_H
-
 #include "math_foc.h"
 #include "math_svpwm.h"
 #include "Math/Fixed/fract16.h"
@@ -145,12 +143,16 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 */
 static inline fract16_t _FOC_VOfVNorm(fract16_t vBus_fract, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract); }
 static inline fract16_t _FOC_VNormOfV(fract16_t vBus_fract, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract); }
-static inline fract16_t _FOC_VNormOfV_Inv32(fract16_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
+static inline fract16_t _FOC_VNormOfV_Inv32(int32_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
 
 
 /* precomputed vBusInv_fract32 1.0F/VBus */
 static inline void FOC_ProcSvpwm(FOC_T * p_foc, int32_t vBusInv_fract32)
 {
+    /* Validate vBusInv is reasonable */
+    // assert(vBusInv_fract32 > 0);
+    // assert(vBusInv_fract32  );
+
     svpwm_midclamp_vbus
     (
         &p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC,
@@ -195,26 +197,33 @@ static inline ufract16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC
 /* Store as max modulation, derive vbus */
 /* V_Fract16 when Vd Vq are stored as normalized values */
 #ifdef CONFIG_FOC_V_AS_SCALAR
-static inline ufract16_t FOC_GetVa(const FOC_T * p_foc) { return FOC_VOfVNorm(p_foc, p_foc->Va); }
-static inline ufract16_t FOC_GetVb(const FOC_T * p_foc) { return FOC_VOfVNorm(p_foc, p_foc->Vb); }
-static inline ufract16_t FOC_GetVc(const FOC_T * p_foc) { return FOC_VOfVNorm(p_foc, p_foc->Vc); }
+// static inline ufract16_t FOC_GetVa(const FOC_T * p_foc) { return _FOC_VOfVNorm(p_foc, p_foc->Va); }
+// static inline ufract16_t FOC_GetVb(const FOC_T * p_foc) { return _FOC_VOfVNorm(p_foc, p_foc->Vb); }
+// static inline ufract16_t FOC_GetVc(const FOC_T * p_foc) { return _FOC_VOfVNorm(p_foc, p_foc->Vc); }
 
-static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return FOC_VOfVNorm(p_foc, p_foc->Valpha); }
-static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
+// static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return _FOC_VOfVNorm(p_foc, p_foc->Valpha); }
+// static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
 
-static inline void _FOC_SetVBemfA_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VNormOfV_Inv32(vBusInv_fract32, va); }
-static inline void _FOC_SetVBemfB_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VNormOfV_Inv32(vBusInv_fract32, vb); }
-static inline void _FOC_SetVBemfC_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VNormOfV_Inv32(vBusInv_fract32, vc); }
-
-#endif
+// static inline void _FOC_SetVBemfA_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VNormOfV_Inv32(vBusInv_fract32, va); }
+// static inline void _FOC_SetVBemfB_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VNormOfV_Inv32(vBusInv_fract32, vb); }
+// static inline void _FOC_SetVBemfC_AsNorm(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VNormOfV_Inv32(vBusInv_fract32, vc); }
+#else
 
 static inline ufract16_t FOC_GetVa(const FOC_T * p_foc) { return p_foc->Va; }
 static inline ufract16_t FOC_GetVb(const FOC_T * p_foc) { return p_foc->Vb; }
 static inline ufract16_t FOC_GetVc(const FOC_T * p_foc) { return p_foc->Vc; }
+#endif
+
+
+
 
 /*
     Run-time derived
 */
+static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) != math_sign(p_foc->Iq)); }
+
+
 /* [0:32767] <=> [0:1]AnalogRefMax */
 static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
 static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
@@ -224,14 +233,33 @@ static inline ufract16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return fra
 static inline fract16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
 static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagnitude(p_foc) * math_sign(p_foc->Vq); }
 
-/* [0:49152] <=> [0:1.5]AnalogRefMax */
-// static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIPhase(p_foc), FOC_GetVPhase(p_foc)) * 3 / 2; }
+
+/*
+    Power calculations
+    Optionally handle by host
+*/
+/* [0:49152] <=> [0:1.5]*AnalogRefMax */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Id, p_foc->Vd) + fract16_mul(p_foc->Iq, p_foc->Vq)) * 3 / 2; }
 
-static inline bool FOC_IsMotoring(const FOC_T * p_foc)      { return (math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
-static inline bool FOC_IsGenerating(const FOC_T * p_foc)    { return (math_sign(p_foc->Vq) != math_sign(p_foc->Iq)); }
+/* Active power (torque-producing) */
+static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Iq, p_foc->Vq) * 3 / 2; }
+/* Reactive power (magnetizing) */
+static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Id, p_foc->Vd) * 3 / 2; }
+static inline accum32_t FOC_GetTotalPower(const FOC_T * p_foc) { return FOC_GetActivePower(p_foc) + FOC_GetReactivePower(p_foc); }
 
+static inline ufract16_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div_sat(FOC_GetActivePower(p_foc), FOC_GetTotalPower(p_foc)); }
 
+/* Estimate efficiency based on I²R losses */
+// static inline ufract16_t FOC_GetEfficiency(const FOC_T * p_foc, fract16_t rPhase)
+// {
+//     accum32_t activePower = FOC_GetActivePower(p_foc);
+//     if (activePower <= 0) return 0;
+
+//     ufract16_t iMag = FOC_GetIMagnitude(p_foc);
+//     accum32_t resistiveLoss = fract16_mul(fract16_mul(iMag, iMag), rPhase) * 3;
+
+//     return (activePower << 15) / (activePower + resistiveLoss);
+// }
 
 static inline fract16_t FOC_GetId(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_GetIq(const FOC_T * p_foc) { return p_foc->Iq; }
@@ -246,6 +274,12 @@ static inline fract16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta;
 static inline fract16_t FOC_GetReqD(const FOC_T * p_foc) { return p_foc->ReqD; }
 static inline fract16_t FOC_GetReqQ(const FOC_T * p_foc) { return p_foc->ReqQ; }
 
+
+/******************************************************************************/
+/*!
+    Bemf
+*/
+/******************************************************************************/
 /* Capture */
 static inline void FOC_SetVBemfA(FOC_T * p_foc, ufract16_t va) { p_foc->Va = va; }
 static inline void FOC_SetVBemfB(FOC_T * p_foc, ufract16_t vb) { p_foc->Vb = vb; }
@@ -259,14 +293,22 @@ static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; 
 // static inline void FOC_SetIq(FOC_T * p_foc, fract16_t iq) { p_foc->Iq = iq; }
 
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, fract16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
 extern void FOC_ClearControlState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, fract16_t dMax);
 
-#endif
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 // alternatively, caller handles filter
 // static inline void FOC_CaptureIa(FOC_T * p_foc, fract16_t ia) { p_foc->Ia = (ia + p_foc->Ia) / 2; }
 // static inline void FOC_CaptureIb(FOC_T * p_foc, fract16_t ib) { p_foc->Ib = (ib + p_foc->Ib) / 2; }
@@ -323,4 +365,56 @@ extern void FOC_ClearControlState(FOC_T * p_foc);
 // {
 //     foc_invpark_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
 //     svpwm_midclamp(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, _FOC_DutyOfV(p_foc, p_foc->Valpha), _FOC_DutyOfV(p_foc, p_foc->Vbeta));
+// }
+
+
+// Add field weakening support
+// static inline fract16_t FOC_CalcFieldWeakeningId(const FOC_T * p_foc, fract16_t vBus, fract16_t speed)
+// {
+//     /* Calculate Id for field weakening at high speeds */
+//     fract16_t vLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3);
+//     fract16_t vBemfEst = fract16_mul(speed, MOTOR_KE_CONSTANT);  /* Requires motor constant */
+
+//     if (vBemfEst > vLimit)
+//     {
+//         /* Need field weakening */
+//         return -(vBemfEst - vLimit);  /* Negative Id for field weakening */
+//     }
+
+//     return 0;  /* No field weakening needed */
+// }
+
+// // Add maximum torque per amp (MTPA) calculation
+// static inline void FOC_CalcMTPA(FOC_T * p_foc, fract16_t iqReq)
+// {
+//     /* Simplified MTPA for surface-mounted PM motors */
+//     p_foc->ReqD = 0;  /* Id = 0 for SMPM motors */
+//     p_foc->ReqQ = iqReq;
+
+//     /* For interior PM motors, add MTPA calculation:
+//      * Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
+//      */
+// }
+
+// // Add six-step commutation for high-speed operation
+// static inline void FOC_ProcSixStep(FOC_T * p_foc, angle16_t angle, fract16_t magnitude)
+// {
+//     Motor_SectorId_T sector = FOC_GetSectorId(angle);
+
+//     /* Six-step commutation pattern */
+//     switch (sector)
+//     {
+//         case MOTOR_SECTOR_ID_1:  /* A+, B- */
+//             p_foc->Va = magnitude;  p_foc->Vb = -magnitude; p_foc->Vc = 0; break;
+//         case MOTOR_SECTOR_ID_2:  /* A+, C- */
+//             p_foc->Va = magnitude;  p_foc->Vb = 0; p_foc->Vc = -magnitude; break;
+//         case MOTOR_SECTOR_ID_3:  /* B+, C- */
+//             p_foc->Va = 0; p_foc->Vb = magnitude;  p_foc->Vc = -magnitude; break;
+//         case MOTOR_SECTOR_ID_4:  /* B+, A- */
+//             p_foc->Va = -magnitude; p_foc->Vb = magnitude;  p_foc->Vc = 0; break;
+//         case MOTOR_SECTOR_ID_5:  /* C+, A- */
+//             p_foc->Va = -magnitude; p_foc->Vb = 0; p_foc->Vc = magnitude; break;
+//         case MOTOR_SECTOR_ID_6:  /* C+, B- */
+//             p_foc->Va = 0; p_foc->Vb = -magnitude; p_foc->Vc = magnitude; break;
+//     }
 // }

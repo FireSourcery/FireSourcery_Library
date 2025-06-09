@@ -78,7 +78,8 @@ void MotorController_Init(const MotorController_T * p_context)
     //     /* or prompt user, resets every boot until user saves params */
     // }
 
-    StateMachine_Init(&p_mc->StateMachine);
+    // StateMachine_Init(&p_mc->StateMachine);
+    StateMachine_Init(&p_context->STATE_MACHINE);
 }
 
 /******************************************************************************/
@@ -87,6 +88,13 @@ void MotorController_Init(const MotorController_T * p_context)
     Runtime only
 */
 /******************************************************************************/
+void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
+{
+    static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
+    p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
+}
+
+
 /*
     Set runtime Config (RAM copy) via abstraction layer functions (in user units)
     Convience function over p_mc->Config compile time initializers
@@ -94,7 +102,7 @@ void MotorController_Init(const MotorController_T * p_context)
 */
 void MotorController_LoadConfigDefault(const MotorController_T * p_context)
 {
-    RangeMonitor_Enable(&p_context->V_SOURCE);
+    RangeMonitor_Enable(p_context->V_SOURCE.P_STATE);
     MotorController_ResetVSourceMonitorDefaults(p_context);
 
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
@@ -109,15 +117,8 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
     /*
         following boots will still reload defaults until user save
     */
-    MotorController_ResetBootDefault(p_context); /* Set Boot Options Buffer in RAM */
+    MotorController_ResetBootDefault(p_context->P_ACTIVE); /* Set Boot Options Buffer in RAM */
 }
-
-void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
-{
-    static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
-    p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
-}
-
 
 void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
 {
@@ -187,8 +188,8 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * 
     {
         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
         {
-            p_motor = MotorController_MotorStateAt(p_context, iMotor);
-            p_motorContext = MotorController_MotorContextAt(p_context, iMotor);
+            p_motor = MotMotors_StateAt(&p_context->MOTORS, iMotor);
+            p_motorContext = MotMotors_ContextAt(&p_context->MOTORS, iMotor);
             if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext[iMotor].P_NVM_CONFIG, &p_motor->Config, sizeof(Motor_Config_T)); }
             if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext[iMotor].SENSOR_TABLE.HALL.HALL.P_NVM_CONFIG, &p_motorContext[iMotor].SENSOR_TABLE.HALL.HALL.P_STATE->Config, sizeof(Motor_Config_T)); }
 

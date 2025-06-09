@@ -82,16 +82,13 @@ typedef void (*State_Action_T)(void * p_context);
 /*
     Context Input Handler
     Transition Input with context
-    MapFn
-    Transition0
-    Transit_T, Next_T
+    Next_T
 */
 typedef struct State * (*State_InputVoid_T)(void * p_context);
 
 /*
     Value Input Handler
     Transition Input with immediate parameter, value/ptr
-    Transition1
     Alternative to passing all parameters by context. reduce assigning temporary variables
 */
 typedef struct State * (*State_Input_T)(void * p_context, state_input_value_t inputValue);
@@ -180,7 +177,7 @@ typedef const struct State
 
     /*
         pointer to sub state only functions,
-        effectively, struct { State_T base, additional } SubState_T;
+        effectively, struct { State_T base, (*Get/Set) } SubState_T;
         P_EXT
     */
 
@@ -194,11 +191,11 @@ typedef const struct State
     const struct State * P_LINK_PREV;
 #endif
 
-    // const State_Input_T TRANSITION_TABLE[]; /* alternatively fam */
 }
 State_T;
 
 // #define STATIC_ASSERT_STATE_T(p_state) \
+
 
 /*
     Public/Private Defs
@@ -221,6 +218,7 @@ typedef state_input_value_t(*State_Get_T)(void * p_context);
 /******************************************************************************/
 /*
     Transition - or self contained cmd
+    InputCmd
     Alternative to mapping Id
     reverse map [Transition]/[Input] to a [State] or set of [State]s
     compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
@@ -256,7 +254,12 @@ State_TransitionInput_T;
 // }
 // StateMachine_MultiTransitionInput_T;
 
-// bool State_IsSubState(const State_T * p_state)
-// {
+typedef const struct StateMachine_Cmd
+{
+    uint8_t ID; /* Command ID. User may overwrite with enum */
+    const struct State * const * PP_SOURCE_TABLE; /* From/Source. Starting State known to accept this input at compile time. */
+    uint8_t SOURCE_COUNT;
+    State_Input_T DEST; /* To/Destination. Does not return NULL */
+}
+StateMachine_Cmd_T;
 
-// }

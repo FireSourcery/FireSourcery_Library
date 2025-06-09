@@ -160,17 +160,16 @@ typedef union MotorController_InitFlags
 MotorController_InitFlags_T;
 
 
-/* passthrough for statemachine */
+/* Buffered Input passthrough for statemachine */
 typedef struct MotorController_CmdInput
 {
-    // int8_t Direction;
-    int32_t CmdValue;
     uint8_t MotorId;
-
-    // uint16_t FeedbackMode;
-    // uint16_t ControlState;
-    // uint16_t SpeedLimit;
-    // uint16_t ILimit;
+    int16_t CmdValue;
+    sign_t Direction;
+    Motor_FeedbackMode_T FeedbackMode;
+    Phase_Output_T ControlState;
+    uint16_t SpeedLimit;
+    uint16_t ILimit;
     // uint16_t RampOnOff;
 }
 MotorController_CmdInput_T;
@@ -186,12 +185,10 @@ typedef struct MotorController_Config
     */
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
-
     MotorController_MainMode_T InitMode;
     MotorController_InputMode_T InputMode;
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
-
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
@@ -217,10 +214,12 @@ typedef struct MotorController_State
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
     // MotorController_StateFlags_T StateFlags;
-    MotDrive_Active_T MotDrive;
+    MotDrive_Active_T MotDrive; /* Optionally contain on init */
 
-    // MotDrive_Cmd_T DriveSubState; // change for full values
     MotorController_LockId_T LockSubState;
+
+    MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
+
 
     /* Async return status */
     // union
@@ -273,18 +272,13 @@ typedef const struct MotorController
     Blinky_T METER;
     Pin_T RELAY_PIN;
 
-    /* Conversions */
-    // MotVMonitor_Analog_T MOT_V_MONITOR_CONVERSIONS; /* VMonitor */
-    // MotHeatMonitor_Analog_T MOT_HEAT_MONITOR_CONVERSIONS; /* HeatMonitor */
-    // MotAnalogUser_Conversion_T MOT_ANALOG_USER_CONVERSIONS; /* AnalogUser */
-
     Protocol_T * P_PROTOCOLS; uint8_t PROTOCOL_COUNT; /* Sockets */
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
 
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
-    MotMotors_T MOTORS;
+    MotMotors_T MOTORS; /* MOTOR_CONTEXTS */
     LimitArray_T MOT_SPEED_LIMITS;
     LimitArray_T MOT_I_LIMITS;
 
@@ -292,10 +286,14 @@ typedef const struct MotorController
     StateMachine_T STATE_MACHINE;
     MotDrive_T MOT_DRIVE; /* Drive */
 
+    /* Conversions */
+    // MotVMonitor_Analog_T MOT_V_MONITOR_CONVERSIONS; /* VMonitor */
+    // MotHeatMonitor_Analog_T MOT_HEAT_MONITOR_CONVERSIONS; /* HeatMonitor */
+    // MotAnalogUser_Conversion_T MOT_ANALOG_USER_CONVERSIONS; /* AnalogUser */
     /* Monitor - Detection + response with full context */
     HeatMonitor_Context_T HEAT_PCB;
     HeatMonitor_GroupContext_T HEAT_MOSFETS;
-    VMonitor_Context_T V_SOURCE;/* Controller Supply */
+    VMonitor_Context_T V_SOURCE; /* Controller Supply */
     VMonitor_Context_T V_ACCESSORIES; /* ~12V */
     VMonitor_Context_T V_ANALOG; /* V Analog Sensors ~5V */
 
@@ -317,7 +315,7 @@ MotorController_T;
 */
 /******************************************************************************/
 /* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSourceActiveRef(const MotorController_T * p_context) { MotorAnalog_CaptureVSource_Adcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
+static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { MotorAnalog_CaptureVSource_Adcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
 
 // static inline Motor_State_T * MotorController_MotorStateAt(const MotorController_T * p_context, uint8_t motorIndex) { return &(p_context->MOTORS.P_STATES[motorIndex]); }
 // static inline Motor_T * MotorController_MotorContextAt(const MotorController_T * p_context, uint8_t motorIndex) { return &(p_context->MOTORS.P_CONTEXTS[motorIndex]); }
@@ -342,8 +340,10 @@ static inline void MotorController_BeepPeriodicType1(const MotorController_T * p
 static inline void MotorController_BeepPeriodic(const MotorController_T * p_context)         { Blinky_StartPeriodic(&p_context->BUZZER, 500U, 500U); }
 static inline void MotorController_BeepDouble(const MotorController_T * p_context)           { Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 2U); }
 static inline void MotorController_BeepMonitorTrigger(const MotorController_T * p_context)   { Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 1U); }
+static inline void MotorController_BeepStop(const MotorController_T * p_context)             { Blinky_Stop(&p_context->BUZZER); }
+static inline void MotorController_DisableBuzzer(const MotorController_T * p_context)        { Blinky_Disable(&p_context->BUZZER); }
 
-//buzzer state
+// buzzer state
 // on Init poll
 // if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
 //     if((p_mc->Config.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))

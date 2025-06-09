@@ -82,3 +82,31 @@ void FOC_ClearControlState(FOC_T * p_foc)
     // FOC_ZeroSvpwm(p_foc);
 }
 
+
+bool FOC_ValidateInputs(const FOC_T * p_foc)
+{
+    /* Check for reasonable current values */
+    if (abs(p_foc->Ia) > FRACT16_MAX * 9 / 10) return false;
+    if (abs(p_foc->Ib) > FRACT16_MAX * 9 / 10) return false;
+    if (abs(p_foc->Ic) > FRACT16_MAX * 9 / 10) return false;
+
+    /* Validate Kirchhoff's current law: Ia + Ib + Ic ≈ 0 */
+    int32_t currentSum = (int32_t)p_foc->Ia + p_foc->Ib + p_foc->Ic;
+    if (abs(currentSum) > FRACT16_MAX / 20) return false;  /* 5% tolerance */
+
+    /* Check for reasonable voltage requests */
+    int32_t vMagSq = (int32_t)p_foc->Vd * p_foc->Vd + (int32_t)p_foc->Vq * p_foc->Vq;
+    if (vMagSq > (int32_t)FRACT16_MAX * FRACT16_MAX) return false;
+
+    return true;
+}
+
+bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
+{
+    /* Validate unit circle: sin²θ + cos²θ ≈ 1 */
+    int32_t magnitudeSquared = (int32_t)sine * sine + (int32_t)cosine * cosine;
+    int32_t expected = (int32_t)FRACT16_MAX * FRACT16_MAX;
+    int32_t tolerance = expected / 20;  /* 5% tolerance */
+
+    return abs(magnitudeSquared - expected) < tolerance;
+}

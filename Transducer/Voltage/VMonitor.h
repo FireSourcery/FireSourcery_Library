@@ -57,21 +57,24 @@ typedef const struct VMonitor_Context
 
     Analog_Conversion_T ANALOG_CONVERSION;
     VDivider_T VDIVIDER;
+    // VDivider_T * P_VDIVIDER; // pointer for writable
     Linear_T * P_LINEAR; /* if defined local unit conversion */
 }
 VMonitor_Context_T;
 
-#define VMONITOR_CONTEXT_INIT(p_State, p_Nvm, ConversionStruct, VDividerDtruct, p_Linear) \
+#define VMONITOR_LINEAR_ALLOC() (&(Linear_T){0})
+#define VMONITOR_STATE_ALLOC() (&(VMonitor_T){0})
+
+#define VMONITOR_CONTEXT_INIT(p_State, p_Nvm, ConversionStruct, VDividerStruct, p_Linear) \
 { \
     .P_STATE = (p_State), \
     .P_NVM_CONFIG = (p_Nvm), \
     .ANALOG_CONVERSION = (ConversionStruct), \
-    .VDIVIDER = (VDividerDtruct), \
+    .VDIVIDER = (VDividerStruct), \
     .P_LINEAR = (p_Linear), \
 }
 
-#define VMONITOR_CONTEXT_ALLOC(p_Nvm, ConversionStruct, VDividerDtruct, p_Linear) \
-    VMONITOR_CONTEXT_INIT()
+// #define VMONITOR_CONTEXT_ALLOC(p_Nvm, ConversionStruct, VDividerStruct, p_Linear) VMONITOR_CONTEXT_INIT(
 
 /******************************************************************************/
 /*
@@ -80,9 +83,7 @@ VMonitor_Context_T;
 // static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
 // {
 //     Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-
 //     // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION); /* Optionally mark for start */
-
 //     return (VMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
 // }
 
@@ -98,7 +99,11 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
     return ((uint32_t)(input - p_voltage->Config.FaultUnderLimit.Limit) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.FaultUnderLimit.Limit);
 }
 
-
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 extern void VMonitor_InitLimitsDefault(VMonitor_T * p_vMonitor, int32_t nominal, uint8_t faultPercent, uint8_t warnPercent, uint8_t hystPercent);
+
 extern void VMonitor_InitFrom(const VMonitor_Context_T * p_context, const VMonitor_Config_T * p_config);
 extern void VMonitor_Init(const VMonitor_Context_T * p_context);

@@ -73,7 +73,6 @@ static inline uint32_t r_parallel(uint32_t rNet, uint32_t rParallel)
     return ((uint64_t)rNet * rParallel) / (rNet - rParallel);
 }
 
-
 /*!
     1/T = 1/T0 + (1/B)*ln(R/R0)
     @return 1/T
@@ -91,22 +90,62 @@ static inline double inv_steinhart(uint32_t b, uint32_t t0, uint32_t r0, double 
     return exp((invT_Kelvin - 1.0F / t0) * b) * r0;
 }
 
-
 /******************************************************************************/
 /*
-
+    Direct conversion using steinhart coefficients.
 */
 /******************************************************************************/
-void Thermistor_InitFrom(const Thermistor_T * p_therm, Thermistor_Coeffs_T * p_config)
+#if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+float Thermistor_KelvinOfR_Steinhart(const Thermistor_T * p_therm, uint32_t r_thermal)
 {
-    if (p_therm->P_FIXED_COEFFS == NULL && p_therm->P_COEFFS != NULL)
-    {
-        if (p_config != NULL) { *p_therm->P_COEFFS = *p_config; }
-    }
-
+    return (float)((double)1.0F / steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), r_thermal));
 }
 
+uint32_t Thermistor_ROfKelvin_Steinhart(const Thermistor_T * p_therm, float degK)
+{
+    return (uint32_t)inv_steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), (double)1.0F / (degK));
+}
 
+static float KelvinOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return Thermistor_KelvinOfR_Steinhart(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu)); }
+static uint16_t AdcuOfKelvin_Steinhart(const Thermistor_T * p_therm, float degK) { return Thermistor_AdcuOfROhm(p_therm, Thermistor_ROfKelvin_Steinhart(p_therm, degK)); }
+
+static float CelsiusOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return (KelvinOfAdcu_Steinhart(p_therm, adcu) - 273.15F); }
+static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float degC) { return AdcuOfKelvin_Steinhart(p_therm, degC + 273.15F); }
+#endif
+
+// static int16_t CelsiusOfAdcu_Linear(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_Of(&p_therm->LinearUnits, adcu); }
+// static uint16_t AdcuOfCelsius_Linear(const Thermistor_T * p_therm, int16_t degC) { return Linear_InvOf(&p_therm->LinearUnits, degC); }
+
+// static thermal_t CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
+// {
+//     thermal_t degC = 0;
+// #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+//     // degC = CelsiusOfAdcu_Linear(p_therm, adcu);
+// #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+//     degC = CelsiusOfAdcu_Steinhart(p_therm, adcu);
+// #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
+//     degC = CelsiusOfAdcu_Lut(p_therm, adcu);
+// #endif
+//     return degC;
+// }
+
+// static uint16_t AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC)
+// {
+//     uint16_t adcu = 0;
+// #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+//     // adcu = AdcuOfCelsius_Linear(p_therm, degC);
+// #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+//     adcu = AdcuOfCelsius_Steinhart(p_therm, degC);
+// #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
+//     adcu = AdcuOfCelsius_Lut(p_therm, degC);
+// #endif
+//     return adcu;
+// }
+
+// thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu) { return CelsiusOfAdcu(p_therm, adcu); }
+// uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC) { return AdcuOfCelsius(p_therm, degC); }
+
+/* Direct calculation without linear precomputed */
 uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
 {
     uint32_t rNet = r_pulldown_of_adcu(p_therm->R_SERIES, Thermistor_GetVInRef_MilliV(p_therm), ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_MAX, adcu);
@@ -118,6 +157,20 @@ uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermisto
     uint32_t rNet = (p_therm->R_PARALLEL != 0U) ? r_net(p_therm->R_PARALLEL, rThermistor) : rThermistor;
     return adcu_of_r(ANALOG_REFERENCE.ADC_MAX, ANALOG_REFERENCE.ADC_VREF_MILLIV, Thermistor_GetVInRef_MilliV(p_therm), p_therm->R_SERIES, rNet);
 }
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+void Thermistor_InitFrom(const Thermistor_T * p_therm, const Thermistor_Coeffs_T * p_config)
+{
+    if (p_therm->P_FIXED_COEFFS == NULL && p_therm->P_COEFFS != NULL)
+    {
+        if (p_config != NULL) { *p_therm->P_COEFFS = *p_config; }
+    }
+}
+
 
 /******************************************************************************/
 /*
@@ -150,64 +203,6 @@ void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T 
         Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm)
     );
 }
-
-
-
-
-
-#if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-float Thermistor_KelvinOfR_Steinhart(const Thermistor_T * p_therm, uint32_t r_thermal)
-{
-    return (1.0F / steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), r_thermal));
-}
-
-uint32_t Thermistor_ROfKelvin_Steinhart(const Thermistor_T * p_therm, float degK)
-{
-    return (uint32_t)inv_steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), (double)1.0F / (degK));
-}
-
-static float KelvinOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return Thermistor_KelvinOfR_Steinhart(p_therm, Thermistor_ROhmOfAdcu(p_therm, adcu)); }
-
-static uint16_t AdcuOfKelvin_Steinhart(const Thermistor_T * p_therm, float degK) { return Thermistor_AdcuOfROhm(p_therm, Thermistor_ROfKelvin_Steinhart(p_therm, degK)); }
-
-static float CelsiusOfAdcu_Steinhart(const Thermistor_T * p_therm, uint16_t adcu) { return (KelvinOfAdcu_Steinhart(p_therm, adcu) - 273.15F); }
-
-static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float degC) { return AdcuOfKelvin_Steinhart(p_therm, degC + 273.15F); }
-#endif
-
-// static int16_t CelsiusOfAdcu_Linear(const Thermistor_T * p_therm, uint16_t adcu) { return Linear_Of(&p_therm->LinearUnits, adcu); }
-// static uint16_t AdcuOfCelsius_Linear(const Thermistor_T * p_therm, int16_t degC) { return Linear_InvOf(&p_therm->LinearUnits, degC); }
-
-static thermal_t CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
-{
-    thermal_t degC = 0;
-#if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-    // degC = CelsiusOfAdcu_Linear(p_therm, adcu);
-#elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    degC = CelsiusOfAdcu_Steinhart(p_therm, adcu);
-#elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
-    degC = CelsiusOfAdcu_Lut(p_therm, adcu);
-#endif
-    return degC;
-}
-
-static uint16_t AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC)
-{
-    uint16_t adcu = 0;
-#if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
-    // adcu = AdcuOfCelsius_Linear(p_therm, degC);
-#elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
-    adcu = AdcuOfCelsius_Steinhart(p_therm, degC);
-#elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
-    adcu = AdcuOfCelsius_Lut(p_therm, degC);
-#endif
-    return adcu;
-}
-
-thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu) { return CelsiusOfAdcu(p_therm, adcu); }
-uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC) { return AdcuOfCelsius(p_therm, degC); }
-
-
 
 
 

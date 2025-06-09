@@ -50,7 +50,7 @@ typedef const struct PWM_Module
 }
 PWM_Module_T;
 
-#define PWM_MODULE_INIT(p_Hal, Peroid_Ticks) { .P_HAL_PWM_MODULE = p_Hal, .PERIOD_TICKS = Peroid_Ticks, }
+#define PWM_MODULE_INIT(p_Hal, Peroid_Ticks, ...) { .P_HAL_PWM_MODULE = p_Hal, .PERIOD_TICKS = Peroid_Ticks, }
 
 typedef const struct PWM
 {

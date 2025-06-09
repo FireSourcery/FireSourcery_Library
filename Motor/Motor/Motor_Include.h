@@ -32,3 +32,4 @@
 #include "Motor_Thread.h"
 #include "Motor_User.h"
 #include "Motor_Config.h"
+#include "Motor.h"

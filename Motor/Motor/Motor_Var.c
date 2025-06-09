@@ -139,7 +139,7 @@ void _Motor_VarInput_Set(const Motor_T * p_motor, Motor_VarInput_T varId, int32_
     switch (varId)
     {
         case MOTOR_VAR_CLEAR_FAULT:             Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T) { .Value = varValue }); break; /* var unused for now */
-        case MOTOR_VAR_FORCE_DISABLE_CONTROL:   Motor_User_ForceDisableControl(p_motor);  break;
+        case MOTOR_VAR_FORCE_DISABLE_CONTROL:   Motor_User_ForceDisableControl(p_motor); break;
 
         case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_OpenLoop_Enter(p_motor);                                      break;
         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
@@ -148,7 +148,7 @@ void _Motor_VarInput_Set(const Motor_T * p_motor, Motor_VarInput_T varId, int32_
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
         /*  */
         case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
-        // case MOTOR_VAR_OPEN_LOOP_HOMING:                                  break;
+        // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
 
         // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
         // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
@@ -170,7 +170,7 @@ int32_t _Motor_VarIO_Get(const Motor_State_T * p_motor, Motor_VarIO_T varId)
         case MOTOR_VAR_DIRECTION:           value = Motor_User_GetDirection(p_motor);             break;
         case MOTOR_VAR_USER_SET_POINT:      value = Motor_User_GetSetPoint(p_motor);              break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  value = Motor_User_GetFeedbackMode(p_motor).Value;    break;
-        // case MOTOR_VAR_USER_CONTROL_STATE:  value = Motor_User_GetPhaseState(p_motor);            break; /* effective Stop/hold/run */
+        // case MOTOR_VAR_USER_CONTROL_STATE:  value = Motor_User_GetPhaseState(p_motor);           break; /* effective Stop/hold/run */
         case MOTOR_VAR_USER_SPEED_LIMIT:    value = Motor_User_GetSpeedLimit(p_motor);            break;
         // case MOTOR_VAR_USER_I_LIMIT:        value = Motor_User_GetILimit(p_motor);                break;
         case MOTOR_VAR_USER_I_LIMIT_MOTORING:        value = Motor_User_GetILimitMotoring(p_motor);     break;
@@ -185,6 +185,8 @@ void _Motor_VarIO_Set(const Motor_T * p_motor, Motor_VarIO_T varId, int32_t varV
     switch (varId)
     {
         case MOTOR_VAR_DIRECTION:           Motor_User_ApplyDirection(p_motor, (Motor_Direction_T)math_sign(varValue));   break;
+        // case MOTOR_VAR_V_DIRECTION:         Motor_User_ApplyDirection(p_motor, (Motor_Direction_T)math_sign(varValue));   break;
+        // case MOTOR_VAR_USER_DIRECTION:      Motor_User_ApplyUserDirection(p_motor, math_sign(varValue));                  break;
         case MOTOR_VAR_USER_SET_POINT:      Motor_User_SetActiveCmdValue_Scalar(p_motor->P_ACTIVE, varValue);           break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:  Motor_User_SetFeedbackMode_Cast(p_motor, (uint8_t)varValue);                break;
         case MOTOR_VAR_USER_CONTROL_STATE:  Motor_User_ActivateControlState(p_motor, (Phase_Output_T)varValue);         break;

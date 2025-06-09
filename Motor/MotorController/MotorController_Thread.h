@@ -91,8 +91,8 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
         default: break;
     }
 
-    MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_MOT_DRIVE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_MOT_DRIVE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
+    MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
 
     if (IsDividerAlign(p_mc->MainDividerCounter, p_context->ANALOG_USER_DIVIDER) == true)
         { MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS); }
@@ -194,7 +194,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     }
 
 
-    if (Monitor_IsWarningTriggering(p_context->HEAT_PCB.P_STATE) || Monitor_IsWarningTriggering(&p_context->HEAT_MOSFETS.P_STATE))
+    if (Monitor_IsWarningTriggering(p_context->HEAT_PCB.P_STATE) || Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE))
     {
         MotorController_BeepMonitorTrigger(p_context);
     }
@@ -219,11 +219,11 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
-    RangeMonitor_Poll(&p_context->V_ACCESSORIES, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
-    RangeMonitor_Poll(&p_context->V_ANALOG, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
+    RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
+    RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
 
-    if (RangeMonitor_IsAnyFault(&p_context->V_ACCESSORIES) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
-    if (RangeMonitor_IsAnyFault(&p_context->V_ANALOG) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
 
     if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
 
@@ -242,7 +242,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    switch (RangeMonitor_Poll(&p_context->V_SOURCE, Analog_Conversion_GetResult(&p_context->V_SOURCE)))
+    switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
     {
         //todo
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
@@ -254,7 +254,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
         case VMONITOR_STATUS_WARNING_LOW:
             if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
             {
-                MotorController_CaptureVSourceActiveRef(p_context);
+                MotorController_CaptureVSource(p_context);
                 LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
             }
             break;
@@ -295,10 +295,11 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        _StateMachine_ProcSyncOutput(&p_mc->StateMachine, p_mc); // maybe change this to signal if enter fault is on 1ms thread
+        // _StateMachine_ProcSyncOutput(&p_mc->StateMachine, p_mc); // maybe change this to signal if enter fault is on 1ms thread
+        _StateMachine_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, p_mc);
 
-        /* Proc app Machine */
-        if (StateMachine_IsActiveStateId(&p_mc->StateMachine, MCSM_STATE_ID_MAIN) == true) { MotDrive_Proc_Thread(&p_context->MOT_DRIVE); }
+        /* Proc app Machine */ /* let compiler optimize */
+        // if (StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_MAIN) == true) { MotDrive_Proc_Thread(&p_context->MOT_DRIVE); }
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
@@ -353,13 +354,13 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             _MotorController_ProcOptDin(p_context);
             _MotorController_VMonitorBoard_Thread(p_context); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_context);
-
             /* Can use low priority check, as motor is already in fault state */
-            if (MotMotors_IsAny(&p_context->MOTORS, _Motor_StateMachine_IsFault) == true) { p_mc->FaultFlags.Motors = 1U; }
+            // if (MotMotors_IsAny(&p_context->MOTORS, _Motor_StateMachine_IsFault) == true) { p_mc->FaultFlags.Motors = 1U; }
+            if (MotMotors_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
 
-            MotorController_CaptureVSourceActiveRef(p_context); /* update vout ratios */
+            MotorController_CaptureVSource(p_context); /* update vout ratios */
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
             // _Blinky_Toggle(&p_mc->Meter);
@@ -381,7 +382,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
     _MotorController_VSourceMonitor_Thread(p_context);
 
-    //    BrakeThread(p_mc);
+    // BrakeThread(p_mc);
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
     //     if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_User_ForceDisableControl(p_mc); }
@@ -396,7 +397,6 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 /*
     High Freq, High Priority
 */
-
 /* Alternatively these can be placed directly user main if the compiler does not optimize */
 static inline void MotorController_PWM_Thread(const MotorController_T * p_context)
 {

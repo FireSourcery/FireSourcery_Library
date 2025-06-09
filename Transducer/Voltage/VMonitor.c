@@ -47,7 +47,8 @@ void VMonitor_InitLimitsDefault(VMonitor_T * p_vMonitor, int32_t nominal, uint8_
 
     RangeMonitor_Config_InitSymmetricPercent(&p_vMonitor->Config, nominal, faultPercent, warnPercent, hystPercent);
     /* Reinitialize with new limits */
-    RangeMonitor_InitFrom(p_vMonitor, &p_vMonitor->Config);
+    // RangeMonitor_InitFrom(p_vMonitor, &p_vMonitor->Config);
+    RangeMonitor_InitFrom(p_vMonitor, NULL);
 }
 
 

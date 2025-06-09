@@ -95,13 +95,15 @@ UserAIn_T;
 #define USER_AIN_INIT(p_EdgePin, p_State, Filter, p_Config) \
     { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
 
-#define USER_AIN_ALLOC(p_EdgePin, Filter, p_Config) USER_AIN_INIT(p_EdgePin, &(UserAIn_State_T){ 0 }, Filter, p_Config)
+#define USER_AIN_ALLOC(p_EdgePin, Filter, p_Config) USER_AIN_INIT(p_EdgePin, &(UserAIn_State_T){0}, Filter, p_Config)
 
 /******************************************************************************/
 /*
     Private Helper Functions
 */
 /******************************************************************************/
+static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_GetState(p_pin); }
+
 /*
     Valid for full state capture, or handle EdgePin in getter functions
 */
@@ -109,14 +111,13 @@ static inline bool _UserAIn_IsRisingEdge(const UserAIn_T * p_context) { return (
 static inline bool _UserAIn_IsFallingEdge(const UserAIn_T * p_context) { return (p_context->P_STATE->ValuePrev_Percent16 > 0U) && (p_context->P_STATE->Value_Percent16 <= 0U); }
 static inline bool _UserAIn_IsEdge(const UserAIn_T * p_context) { return (_UserAIn_IsRisingEdge(p_context) || _UserAIn_IsFallingEdge(p_context)); }
 
-static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_GetState(p_pin); }
 
 /******************************************************************************/
 /*
     State Query Functions
 */
 /******************************************************************************/
-/* Edge as threshold - Both on for on, one off for off */
+/* Edge as threshold */
 static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) && (p_context->P_STATE->Value_Percent16 > 0U)); }
 
 /* Check IsOn on get, rather than overwrite 0 when off, Value_U16 remains prev captured value */

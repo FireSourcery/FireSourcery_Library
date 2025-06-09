@@ -37,26 +37,6 @@
 
 /******************************************************************************/
 /*
-    Runtime State
-*/
-/******************************************************************************/
-typedef struct UserDIn_State
-{
-    Debounce_T Debounce;
-}
-UserDIn_State_T;
-
-typedef const struct UserDIn
-{
-    Pin_T PIN;
-    UserDIn_State_T * P_STATE;
-    const volatile uint32_t * const P_TIMER;
-    uint16_t DEBOUNCE_TIME;
-}
-UserDIn_T;
-
-/******************************************************************************/
-/*
     Private Helper Functions
 */
 /******************************************************************************/
@@ -91,7 +71,7 @@ bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return Debounce_PollR
 
 bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return Debounce_PollFallingEdge(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
 
-UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return Debounce_PollEdgeValue(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return (UserDIn_Edge_T)Debounce_PollEdgeValue(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
 
 
 // /******************************************************************************/

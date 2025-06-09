@@ -78,7 +78,7 @@ Monitor_Setpoint_T;
 typedef struct Monitor_FaultLimit
 {
     int32_t Limit;
-    // int32_t RecoveryThreshold;
+    int32_t RecoveryThreshold;
     // uint32_t CooldownTime;      /* Required cooldown before restart */
     // bool AutoRestartEnabled;    /* Allow automatic restart */
 }

@@ -130,14 +130,16 @@ static inline void _RingT_Copy(Ring_Type_T type, void * p_dest, const void * p_s
     }
 }
 
+// static inline void * _RingT_BufferAt(Ring_Type_T type, const void * p_src, size_t arrayIndex) { return ((uint8_t *)p_src + (type.UNIT_SIZE * arrayIndex)); }
+static inline void * _RingT_ArrayAt(Ring_Type_T type, const void * p_array, size_t arrayIndex) { return ((uint8_t *)p_array + (type.UNIT_SIZE * arrayIndex)); }
+
 /******************************************************************************/
 /*!
     Core Operations - Fully Compile-Time Optimized
 */
 /******************************************************************************/
-static inline void * _RingT_ArrayAt(Ring_Type_T type, const Ring_T * p_ring, size_t arrayIndex) { return ((uint8_t *)p_ring->Buffer + (type.UNIT_SIZE * arrayIndex)); }
-static inline void * _RingT_PtrOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return _RingT_ArrayAt(type, p_ring, _RingT_ArrayIndexOf(type, ringIndex)); }
-static inline int _RingT_ValueOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return void_pointer_as_value(_RingT_PtrOf(type, p_ring, ringIndex), type.UNIT_SIZE); }
+// static inline void * _RingT_ArrayAt(Ring_Type_T type, const Ring_T * p_ring, size_t arrayIndex) { return ((uint8_t *)p_ring->Buffer + (type.UNIT_SIZE * arrayIndex)); }
+static inline void * _RingT_PtrOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return _RingT_ArrayAt(type, p_ring->Buffer, _RingT_ArrayIndexOf(type, ringIndex)); }
 
 /* Head/Tail pointer access */
 static inline void * _RingT_Head(Ring_Type_T type, const Ring_T * p_ring) { return _RingT_PtrOf(type, p_ring, p_ring->Head); }
@@ -158,47 +160,45 @@ static inline void _RingT_AddBack(Ring_Type_T type, Ring_T * p_ring, size_t coun
 static inline void _RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count) { p_ring->Tail = _RingT_IndexDecOf(type, p_ring->Tail, count); }
 
 /* FIFO operations */
+static inline void _RingT_PushBack(Ring_Type_T type, Ring_T * p_ring, const void * p_unit)  { _RingT_PlaceTail(type, p_ring, p_unit); _RingT_AddBack(type, p_ring, 1U); }
+static inline void _RingT_PopFront(Ring_Type_T type, Ring_T * p_ring, void * p_result)      { _RingT_PeekHead(type, p_ring, p_result); _RingT_RemoveFront(type, p_ring, 1U); }
 static inline void _RingT_PushFront(Ring_Type_T type, Ring_T * p_ring, const void * p_unit) { _RingT_AddFront(type, p_ring, 1U); _RingT_PlaceHead(type, p_ring, p_unit); }
-static inline void _RingT_PushBack(Ring_Type_T type, Ring_T * p_ring, const void * p_unit) { _RingT_PlaceTail(type, p_ring, p_unit); _RingT_AddBack(type, p_ring, 1U); }
-static inline void _RingT_PopFront(Ring_Type_T type, Ring_T * p_ring, void * p_result) { _RingT_PeekHead(type, p_ring, p_result); _RingT_RemoveFront(type, p_ring, 1U); }
-static inline void _RingT_PopBack(Ring_Type_T type, Ring_T * p_ring, void * p_result) { _RingT_RemoveBack(type, p_ring, 1U); _RingT_PeekTail(type, p_ring, p_result); }
+static inline void _RingT_PopBack(Ring_Type_T type, Ring_T * p_ring, void * p_result)       { _RingT_RemoveBack(type, p_ring, 1U); _RingT_PeekTail(type, p_ring, p_result); }
+
+/* FIFO Each */
+static inline void _RingT_PushBackEach(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)   { for (size_t i = 0U; i < count; ++i) { _RingT_PushBack(type, p_ring, _RingT_ArrayAt(type, p_array, i)); } }
+static inline void _RingT_PopFrontEach(Ring_Type_T type, Ring_T * p_ring, void * p_buffer, size_t count)        { for (size_t i = 0U; i < count; ++i) { _RingT_PopFront(type, p_ring, _RingT_ArrayAt(type, p_buffer, i)); } }
+static inline void _RingT_PushFrontEach(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)  { for (size_t i = 0U; i < count; ++i) { _RingT_PushFront(type, p_ring, _RingT_ArrayAt(type, p_array, i)); } }
+static inline void _RingT_PopBackEach(Ring_Type_T type, Ring_T * p_ring, void * p_buffer, size_t count)         { for (size_t i = 0U; i < count; ++i) { _RingT_PopBack(type, p_ring, _RingT_ArrayAt(type, p_buffer, i)); } }
 
 /* Random access */
 static inline void * _RingT_At(Ring_Type_T type, const Ring_T * p_ring, size_t index) { return _RingT_PtrOf(type, p_ring, _RingT_IndexIncOf(type, p_ring->Head, index)); }
-static inline void _RingT_GetAt(Ring_Type_T type, const Ring_T * p_ring, size_t index, void * p_result) { _RingT_Copy(type, p_result, _RingT_At(type, p_ring, index)); }
-static inline void _RingT_SetAt(Ring_Type_T type, Ring_T * p_ring, size_t index, const void * p_unit) { _RingT_Copy(type, _RingT_At(type, p_ring, index), p_unit); }
+static inline void _RingT_PeekAt(Ring_Type_T type, const Ring_T * p_ring, size_t index, void * p_result) { _RingT_Copy(type, p_result, _RingT_At(type, p_ring, index)); }
+static inline void _RingT_PlaceAt(Ring_Type_T type, Ring_T * p_ring, size_t index, const void * p_unit) { _RingT_Copy(type, _RingT_At(type, p_ring, index), p_unit); }
+
+/* Value access */
+// static inline int _RingT_ValueOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return void_pointer_as_value(_RingT_PtrOf(type, p_ring, ringIndex), type.UNIT_SIZE); }
+// static inline int _RingT_GetValueAt(Ring_Type_T type, const Ring_T * p_ring, size_t index) { _RingT_ValueOf(type, p_ring, _RingT_IndexIncOf(type, p_ring->Head, index)); }
+// static inline void _RingT_SetValueAt(Ring_Type_T type, Ring_T * p_ring, size_t index, int value)
+
 
 /*
 */
-// static inline size_t ContiguousEnd(const Ring_T * p_ring)           { return IndexHead(p_ring ) < IndexTail(p_ring) ? IndexTail(p_ring) : p_ring->CONST.LENGTH ; }
+// static inline size_t ContiguousEnd(const Ring_T * p_ring) { return IndexHead(p_ring ) < IndexTail(p_ring) ? IndexTail(p_ring) : p_ring->CONST.LENGTH ; }
 
-// static inline void PlaceBackN(const Ring_T * p_ring, const void * p_units, size_t unitCount)
+// static inline void PlaceBackWrap(const Ring_T * p_ring, const void * p_units, size_t unitCount)
 // {
 //     size_t split = ContiguousEnd(p_ring);
 //     memcpy(Tail(p_ring), p_units, split);
 //     memcpy(p_ring->CONST.P_BUFFER, PtrOf(p_ring, split), unitCount - split);
 // }
 
-// static inline void PeekFrontN(const Ring_T * p_ring, void * p_results, size_t unitCount)
+// static inline void PeekFrontWrap(const Ring_T * p_ring, void * p_results, size_t unitCount)
 // {
 //     size_t split = ContiguousEnd(p_ring);
 //     memcpy(p_results, Front(p_ring), split);
 //     memcpy(void_pointer_at(p_results, p_ring->CONST.UNIT_SIZE, split), p_ring->CONST.P_BUFFER, unitCount - split);
 // }
-
-/*
-    returns the popped pointer
-    concurrent push/pop may overwrite contents
-*/
-// inline void * _Ring_PopFront(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
-// inline void * _Ring_PopBack(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
-
-// // inline void _Ring_PopFrontTo(Ring_T * p_ring, void * p_result) { _Ring_Copy(p_ring, p_result, _Ring_PopFront(p_ring)); }
-// // inline void _Ring_PopBackTo(Ring_T * p_ring, void * p_result)  { _Ring_Copy(p_ring, p_result, _Ring_PopBack(p_ring)); }
-
-// inline void _Ring_PushBack(Ring_T * p_ring, const void * p_unit) { if (Ring_IsFull(p_ring) == false) { PushBack(p_ring, p_unit); } }
-// inline void _Ring_PushFront(Ring_T * p_ring, const void * p_unit) { if (Ring_IsFull(p_ring) == false) { PushFront(p_ring, p_unit); } }
-
 
 
 /******************************************************************************/
@@ -206,6 +206,8 @@ static inline void _RingT_SetAt(Ring_Type_T type, Ring_T * p_ring, size_t index,
     Protected
 */
 /******************************************************************************/
+static inline void RingT_Clear(Ring_Type_T type, Ring_T * p_ring) { (void)type; p_ring->Head = 0U; p_ring->Tail = 0U; }
+
 /******************************************************************************/
 /*!
     Status Operations - Compile-Time Optimized
@@ -251,13 +253,6 @@ static inline bool RingT_IsEmpty(Ring_Type_T type, const Ring_T * p_ring) { retu
 
 /******************************************************************************/
 /*!
-
-*/
-/******************************************************************************/
-static inline void RingT_Clear(Ring_Type_T type, Ring_T * p_ring) { (void)type; p_ring->Head = 0U; p_ring->Tail = 0U; }
-
-/******************************************************************************/
-/*!
     Boundary-Checked Operations - Compile-Time Optimized
 */
 /******************************************************************************/
@@ -268,65 +263,59 @@ static inline bool RingT_PopBack(Ring_Type_T type, Ring_T * p_ring, void * p_res
 static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count)   { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveFront(type, p_ring, count); true; })); }
 static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count)    { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveBack(type, p_ring, count); true; })); }
 
-
+/*
+    returns the popped pointer
+    concurrent push/pop may overwrite contents
+*/
+// inline void * _Ring_PopFront(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopFront(p_ring)) : NULL; }
+// inline void * _Ring_PopBack(Ring_T * p_ring) { return (Ring_IsEmpty(p_ring) == false) ? (_PopBack(p_ring)) : NULL; }
 
 /******************************************************************************/
 /*!
     Pointer Access Operations - Compile-Time Optimized
 */
 /******************************************************************************/
-static inline void * _RingT_Front_Safe(Ring_Type_T type, const Ring_T * p_ring)
-{
-    return _RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Head(type, p_ring);
-}
+static inline void * RingT_Front(Ring_Type_T type, const Ring_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_Head(type, p_ring); }
+static inline void * RingT_Back(Ring_Type_T type, const Ring_T * p_ring) { return RingT_IsEmpty(type, p_ring) ? NULL : _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U)); }
+static inline void * RingT_At(Ring_Type_T type, const Ring_T * p_ring, size_t index) { return (index >= RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index); }
 
-static inline void * _RingT_Back_Safe(Ring_Type_T type, const Ring_T * p_ring)
-{
-    return _RingT_IsEmpty(type, p_ring) ? NULL : _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U));
-}
+// /******************************************************************************/
+// /*!
+//     Peek Operations - Compile-Time Optimized
+// */
+// /******************************************************************************/
+// static inline bool RingT_PeekFront(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
+// {
+//     if (_RingT_IsEmpty(type, p_ring)) return false;
+//     _RingT_PeekHead(type, p_ring, p_result);
+//     return true;
+// }
 
-static inline void * _RingT_At_Safe(Ring_Type_T type, const Ring_T * p_ring, size_t index)
-{
-    return (index >= _RingT_GetFullCount(type, p_ring)) ? NULL : _RingT_At(type, p_ring, index);
-}
+// static inline bool RingT_PeekBack(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
+// {
+//     if (_RingT_IsEmpty(type, p_ring)) return false;
+//     _RingT_Copy(type, p_result, _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U)));
+//     return true;
+// }
 
-/******************************************************************************/
-/*!
-    Peek Operations - Compile-Time Optimized
-*/
-/******************************************************************************/
-static inline bool _RingT_PeekFront_Safe(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
-{
-    if (_RingT_IsEmpty(type, p_ring)) return false;
-    _RingT_PeekHead(type, p_ring, p_result);
-    return true;
-}
+// static inline bool RingT_PeekAt(Ring_Type_T type, const Ring_T * p_ring, size_t index, void * p_result)
+// {
+//     if (index >= _RingT_GetFullCount(type, p_ring)) return false;
+//     _RingT_GetAt(type, p_ring, index, p_result);
+//     return true;
+// }
 
-static inline bool _RingT_PeekBack_Safe(Ring_Type_T type, const Ring_T * p_ring, void * p_result)
-{
-    if (_RingT_IsEmpty(type, p_ring)) return false;
-    _RingT_Copy(type, p_result, _RingT_PtrOf(type, p_ring, _RingT_IndexDecOf(type, p_ring->Tail, 1U)));
-    return true;
-}
-
-static inline bool _RingT_PeekAt_Safe(Ring_Type_T type, const Ring_T * p_ring, size_t index, void * p_result)
-{
-    if (index >= _RingT_GetFullCount(type, p_ring)) return false;
-    _RingT_GetAt(type, p_ring, index, p_result);
-    return true;
-}
-
-/******************************************************************************/
-/*!
-    Advanced Operations - Compile-Time Optimized
-*/
-/******************************************************************************/
-static inline void * _RingT_Seek(Ring_Type_T type, Ring_T * p_ring, size_t index)
-{
-    if (index >= _RingT_GetFullCount(type, p_ring)) return NULL;
-    _RingT_RemoveFront(type, p_ring, index);
-    return _RingT_Head(type, p_ring);
-}
+// /******************************************************************************/
+// /*!
+//     Advanced Operations - Compile-Time Optimized
+// */
+// /******************************************************************************/
+// static inline void * RingT_Seek(Ring_Type_T type, Ring_T * p_ring, size_t index)
+// {
+//     if (index >= RingT_GetFullCount(type, p_ring)) return NULL;
+//     _RingT_RemoveFront(type, p_ring, index);
+//     return _RingT_Head(type, p_ring);
+// }
 
 
 /******************************************************************************/
@@ -334,91 +323,89 @@ static inline void * _RingT_Seek(Ring_Type_T type, Ring_T * p_ring, size_t index
     Batch Operations - Compile-Time Optimized
 */
 /******************************************************************************/
-static inline size_t _RingT_PushBackArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
+// static inline size_t RingT_PushBackArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
+static inline size_t RingT_PushBackMax(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
 {
-    size_t emptyCount = _RingT_GetEmptyCount(type, p_ring);
-    size_t writeCount = (count <= emptyCount) ? count : emptyCount;
-    const uint8_t * p_src = (const uint8_t *)p_array;
-
-    for (size_t i = 0U; i < writeCount; i++)
-    {
-        _RingT_PushBack(type, p_ring, p_src);
-        p_src += type.UNIT_SIZE;
-    }
-    return writeCount;
+    size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
+    size_t pushCount = (count <= emptyCount) ? count : emptyCount;
+    _RingT_PushBackEach(type, p_ring, p_array, pushCount);
+    return pushCount;
 }
 
-static inline size_t _RingT_PopFrontArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
+static inline bool RingT_PushBackAll(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
 {
-    size_t fullCount = _RingT_GetFullCount(type, p_ring);
-    size_t readCount = (count <= fullCount) ? count : fullCount;
-    uint8_t * p_dest = (uint8_t *)p_array;
-
-    for (size_t i = 0U; i < readCount; i++)
-    {
-        _RingT_PopFront(type, p_ring, p_dest);
-        p_dest += type.UNIT_SIZE;
-    }
-    return readCount;
+    return (count <= Ring_GetEmptyCount(p_ring)) ? ({ _RingT_PushBackEach(type, p_ring, p_array, count); true; }) : false;
 }
 
-static inline size_t _RingT_PushFrontArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
-{
-    size_t emptyCount = _RingT_GetEmptyCount(type, p_ring);
-    size_t writeCount = (count <= emptyCount) ? count : emptyCount;
-    const uint8_t * p_src = (const uint8_t *)p_array;
+// static inline size_t _RingT_PopFrontArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
+// {
+//     size_t fullCount = RingT_GetFullCount(type, p_ring);
+//     size_t readCount = (count <= fullCount) ? count : fullCount;
+//     uint8_t * p_dest = (uint8_t *)p_array;
 
-    for (size_t i = 0U; i < writeCount; i++)
-    {
-        _RingT_PushFront(type, p_ring, p_src);
-        p_src += type.UNIT_SIZE;
-    }
-    return writeCount;
-}
+//     for (size_t i = 0U; i < readCount; i++)
+//     {
+//         _RingT_PopFront(type, p_ring, p_dest);
+//         p_dest += type.UNIT_SIZE;
+//     }
+//     return readCount;
+// }
 
-static inline size_t _RingT_PopBackArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
-{
-    size_t fullCount = _RingT_GetFullCount(type, p_ring);
-    size_t readCount = (count <= fullCount) ? count : fullCount;
-    uint8_t * p_dest = (uint8_t *)p_array;
+// static inline size_t _RingT_PushFrontArray(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t count)
+// {
+//     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
+//     size_t writeCount = (count <= emptyCount) ? count : emptyCount;
+//     const uint8_t * p_src = (const uint8_t *)p_array;
 
-    for (size_t i = 0U; i < readCount; i++)
-    {
-        _RingT_PopBack(type, p_ring, p_dest);
-        p_dest += type.UNIT_SIZE;
-    }
-    return readCount;
-}
+//     for (size_t i = 0U; i < writeCount; i++)
+//     {
+//         _RingT_PushFront(type, p_ring, p_src);
+//         p_src += type.UNIT_SIZE;
+//     }
+//     return writeCount;
+// }
 
-static inline size_t _RingT_PushBackMax(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t maxCount)
-{
-    size_t emptyCount = _RingT_GetEmptyCount(type, p_ring);
-    size_t writeCount = (maxCount <= emptyCount) ? maxCount : emptyCount;
-    const uint8_t * p_src = (const uint8_t *)p_array;
+// static inline size_t _RingT_PopBackArray(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t count)
+// {
+//     size_t fullCount = RingT_GetFullCount(type, p_ring);
+//     size_t readCount = (count <= fullCount) ? count : fullCount;
+//     uint8_t * p_dest = (uint8_t *)p_array;
 
-    for (size_t i = 0U; i < writeCount; i++)
-    {
-        _RingT_PushBack(type, p_ring, p_src);
-        p_src += type.UNIT_SIZE;
-    }
-    return writeCount;
-}
+//     for (size_t i = 0U; i < readCount; i++)
+//     {
+//         _RingT_PopBack(type, p_ring, p_dest);
+//         p_dest += type.UNIT_SIZE;
+//     }
+//     return readCount;
+// }
 
-static inline size_t _RingT_PopFrontMax(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t maxCount)
-{
-    size_t fullCount = _RingT_GetFullCount(type, p_ring);
-    size_t readCount = (maxCount <= fullCount) ? maxCount : fullCount;
-    uint8_t * p_dest = (uint8_t *)p_array;
+// static inline size_t _RingT_PushBackMax(Ring_Type_T type, Ring_T * p_ring, const void * p_array, size_t maxCount)
+// {
+//     size_t emptyCount = RingT_GetEmptyCount(type, p_ring);
+//     size_t writeCount = (maxCount <= emptyCount) ? maxCount : emptyCount;
+//     const uint8_t * p_src = (const uint8_t *)p_array;
 
-    for (size_t i = 0U; i < readCount; i++)
-    {
-        _RingT_PopFront(type, p_ring, p_dest);
-        p_dest += type.UNIT_SIZE;
-    }
-    return readCount;
-}
+//     for (size_t i = 0U; i < writeCount; i++)
+//     {
+//         _RingT_PushBack(type, p_ring, p_src);
+//         p_src += type.UNIT_SIZE;
+//     }
+//     return writeCount;
+// }
 
+// static inline size_t _RingT_PopFrontMax(Ring_Type_T type, Ring_T * p_ring, void * p_array, size_t maxCount)
+// {
+//     size_t fullCount = RingT_GetFullCount(type, p_ring);
+//     size_t readCount = (maxCount <= fullCount) ? maxCount : fullCount;
+//     uint8_t * p_dest = (uint8_t *)p_array;
 
+//     for (size_t i = 0U; i < readCount; i++)
+//     {
+//         _RingT_PopFront(type, p_ring, p_dest);
+//         p_dest += type.UNIT_SIZE;
+//     }
+//     return readCount;
+// }
 
 
 

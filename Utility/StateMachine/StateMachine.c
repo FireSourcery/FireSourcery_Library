@@ -260,9 +260,23 @@ inline void StateMachine_SetInput(const StateMachine_T * p_stateMachine, state_i
     StateMachine_Sync_SetInput(p_stateMachine, inputId, inputValue);
 }
 
+
+/* Set the State within signal guards. Without check on input. e.g. fault state */
+void StateMachine_ForceTransition(const StateMachine_T * p_stateMachine, const State_T * p_state)
+{
+    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+
+    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    {
+        _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_state);
+        _StateMachine_ReleaseAsyncInput(p_active);
+    }
+}
+
 /*
     Invoke a [Transition] or as a Command
-*/
+    */
+// void StateMachine_InvokeCmd(const StateMachine_T * p_stateMachine, const State_Cmd_T * p_cmd, state_input_value_t inputValue)
 void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_transition, state_input_value_t inputValue)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
@@ -272,29 +286,12 @@ void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const 
         if (StateMachine_IsActiveState(p_active, p_transition->P_VALID) == true)
         {
             assert(p_transition->TRANSITION != NULL);
-            _StateMachine_TryTransition(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, inputValue));
+            _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, inputValue));
         }
 
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
-
-/* Set the State within signal guards */
-void StateMachine_ForceTransition(const StateMachine_T * p_stateMachine, const State_T * p_state)
-{
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
-
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
-    {
-        _StateMachine_TryTransition(p_active, p_stateMachine->P_CONTEXT, p_state);
-        _StateMachine_ReleaseAsyncInput(p_active);
-    }
-}
-
-// void _StateMachine_SetValueWith(const StateMachine_T * p_stateMachine, const State_T * p_state, State_Set_T setter, state_input_value_t value)
-// {
-//     if (StateMachine_IsActiveState(p_stateMachine, p_state) == true) { setter(p_stateMachine->P_CONTEXT, value); }
-// }
 
 /*
     Invoke Setter
@@ -388,7 +385,7 @@ void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, 
         {
             assert(State_IsActiveBranch(p_transition->P_VALID, p_stateMachine->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
 
-            _StateMachine_TryTraverseTransition(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
+            _StateMachine_TraverseTransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncInput(p_active);
     }

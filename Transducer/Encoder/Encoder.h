@@ -224,12 +224,12 @@ Encoder_T;
     .P_EXTENDED_TIMER       = p_ExtendedTimer,       .EXTENDED_TIMER_FREQ  = ExtendedTimerFreq,                         \
     .POLLING_FREQ           = PollingFreq,           .SAMPLE_FREQ          = SpeedSampleFreq,                           \
     .SAMPLE_TIME            = TimerFreq/SpeedSampleFreq,                                                                           \
-    .P_NVM_CONFIG           = p_Config,                                                                                 \
     .P_STATE                = p_State,                                                                                   \
+    .P_NVM_CONFIG           = p_Config,                                                                                 \
 }
 
 #define ENCODER_ALLOC(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Config)    \
-    ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, &(Encoder_State_T){ 0 }, p_Config)
+    ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, &(Encoder_State_T){0}, p_Config)
 
 
 typedef enum Encoder_VarId

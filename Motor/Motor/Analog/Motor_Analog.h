@@ -69,13 +69,13 @@ Motor_Analog_T;
 /*
 
 */
-#define MOTOR_ANALOG_CONTEXT_VA_INIT(p_Motor, ChannelVa) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVa)
-#define MOTOR_ANALOG_CONTEXT_VB_INIT(p_Motor, ChannelVb) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVb)
-#define MOTOR_ANALOG_CONTEXT_VC_INIT(p_Motor, ChannelVc) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVc)
-#define MOTOR_ANALOG_CONTEXT_IA_INIT(p_Motor, ChannelIa) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIa)
-#define MOTOR_ANALOG_CONTEXT_IB_INIT(p_Motor, ChannelIb) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIb)
-#define MOTOR_ANALOG_CONTEXT_IC_INIT(p_Motor, ChannelIc) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIc)
-#define MOTOR_ANALOG_CONTEXT_HEAT_INIT(p_Motor, ChannelHeat) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureHeat)
+#define MOTOR_ANALOG_CONTEXT_VA_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVa)
+#define MOTOR_ANALOG_CONTEXT_VB_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVb)
+#define MOTOR_ANALOG_CONTEXT_VC_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVc)
+#define MOTOR_ANALOG_CONTEXT_IA_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIa)
+#define MOTOR_ANALOG_CONTEXT_IB_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIb)
+#define MOTOR_ANALOG_CONTEXT_IC_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIc)
+#define MOTOR_ANALOG_CONTEXT_HEAT_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureHeat)
 
 
 /*
@@ -83,13 +83,13 @@ Motor_Analog_T;
     as ConversionChannels
 */
 /* alternatively context as p_motor->AnalogState */
-#define MOTOR_ANALOG_CONVERSION_VA_INIT(p_Motor, ChannelVa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVa, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVa)
-#define MOTOR_ANALOG_CONVERSION_VB_INIT(p_Motor, ChannelVb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVb, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVb)
-#define MOTOR_ANALOG_CONVERSION_VC_INIT(p_Motor, ChannelVc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVc, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVc)
-#define MOTOR_ANALOG_CONVERSION_IA_INIT(p_Motor, ChannelIa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIa, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIa)
-#define MOTOR_ANALOG_CONVERSION_IB_INIT(p_Motor, ChannelIb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIb, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIb)
-#define MOTOR_ANALOG_CONVERSION_IC_INIT(p_Motor, ChannelIc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIc, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIc)
-#define MOTOR_ANALOG_CONVERSION_HEAT_INIT(p_Motor, ChannelHeat) ANALOG_CONVERSION_CHANNEL_INIT(ChannelHeat, p_Motor, (Analog_Capture_T)Motor_Analog_CaptureHeat)
+#define MOTOR_ANALOG_CONVERSION_VA_INIT(p_Motor, ChannelVa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVa, MOTOR_ANALOG_CONTEXT_VA_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_VB_INIT(p_Motor, ChannelVb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVb, MOTOR_ANALOG_CONTEXT_VB_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_VC_INIT(p_Motor, ChannelVc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVc, MOTOR_ANALOG_CONTEXT_VC_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_IA_INIT(p_Motor, ChannelIa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIa, MOTOR_ANALOG_CONTEXT_IA_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_IB_INIT(p_Motor, ChannelIb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIb, MOTOR_ANALOG_CONTEXT_IB_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_IC_INIT(p_Motor, ChannelIc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIc, MOTOR_ANALOG_CONTEXT_IC_INIT(p_Motor))
+#define MOTOR_ANALOG_CONVERSION_HEAT_INIT(p_Motor, ChannelHeat) ANALOG_CONVERSION_CHANNEL_INIT(ChannelHeat, MOTOR_ANALOG_CONTEXT_HEAT_INIT(p_Motor))
 
 // #define MOTOR_ANALOG_INIT(p_Motor, ChannelVa, ChannelVb, ChannelVc, ChannelIa, ChannelIb, ChannelIc, ChannelHeat) \
 // { \

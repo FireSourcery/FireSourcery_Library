@@ -153,6 +153,12 @@ State_T * State_CommonAncestorOf(const State_T * p_state1, const State_T * p_sta
     State Tree Functions
 */
 /******************************************************************************/
+
+/******************************************************************************/
+/*
+    Traverse OnTransitionActions
+*/
+/******************************************************************************/
 /******************************************************************************/
 /* State Branch Transition */
 /******************************************************************************/
@@ -208,11 +214,18 @@ void State_TraverseTransition(const State_T * p_start, const State_T * p_end, vo
 }
 
 /******************************************************************************/
+/*
+    Traverse Handlers
+*/
+/******************************************************************************/
+/******************************************************************************/
 /* State Branch Sync/Output */
 /******************************************************************************/
 /*
     Proc all Outputs.
-    Top level determines the target State. Transition start from leaf State.
+    Take the Top most transision.
+        Top level determines the target State.
+        Transition start from leaf State.
 
     pass end to skip top levels
 */
@@ -220,13 +233,13 @@ void State_TraverseTransition(const State_T * p_start, const State_T * p_end, vo
 State_T * State_TraverseTransitionOfContext(const State_T * p_start, const State_T * p_end, void * p_context)
 {
     const State_T * p_result = NULL;
-    const State_T * p_next = NULL;
+    const State_T * p_dest = NULL;
     for (const State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
     {
         p_result = State_TransitionOfContext(p_iterator, p_context);
-        if (p_result != NULL) { p_next = p_result; } /* allow top level overwrite */
+        if (p_result != NULL) { p_dest = p_result; } /* top level overwrite. does not break on first. */
     }
-    return p_next;
+    return p_dest;
 }
 
 /******************************************************************************/
