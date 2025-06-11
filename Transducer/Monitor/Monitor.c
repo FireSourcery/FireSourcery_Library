@@ -113,7 +113,8 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
 /******************************************************************************/
 /*
     Monitor returns a status for user handling, function mapping.
-    A "status" rather than a "state" in that transition barriers are not in effect.
+    A "status" rather than a "state" with transition barriers.
+    Call handle latching states.
     Effectively a simple state machine, single input, synchronous processing.
 */
 /******************************************************************************/

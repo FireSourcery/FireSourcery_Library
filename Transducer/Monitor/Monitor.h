@@ -159,6 +159,8 @@ static inline int32_t _Monitor_DirectionOf(Monitor_Setpoint_T * p_setpoint) { re
 static inline int32_t Monitor_GetLastInputComparable(const Monitor_T * p_monitor) { return p_monitor->LastInput * p_monitor->Direction; }
 static inline bool Monitor_IsEnabled(const Monitor_T * p_monitor) { return p_monitor->Direction != MONITOR_DISABLED; }
 
+/* LastOutput = output state of last status hystersis level. set on status poll, or switch on status */
+
 /******************************************************************************/
 /*
     Industry Standard Query Functions

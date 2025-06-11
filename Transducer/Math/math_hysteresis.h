@@ -136,7 +136,7 @@ static inline int32_t hysteresis_clamp_filter(int32_t threshold_upper, int32_t t
 /*!
     @brief  Delta-based noise filter - only updates when change exceeds threshold
 */
-static int32_t hysteresis_delta_filter(int32_t hysteresis, int32_t prev_output, int32_t input)
+static int32_t hysteresis_delta_filter(uint32_t hysteresis, int32_t prev_output, int32_t input)
 {
     return (abs(input - prev_output) > hysteresis) ? input : prev_output;
 }

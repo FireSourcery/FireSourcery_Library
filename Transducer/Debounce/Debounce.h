@@ -147,6 +147,11 @@ extern void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime);
 //     return (current_time - last_change_time) >= stability_time;
 // }
 
+// static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
+// {
+//     return elapsed_time >= stability_time ? input_state : prev_state; /* Return stable state if elapsed time exceeds stability time */
+// }
+
 // /* Counter-based debounce */
 // static inline bool debounce_(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
 // {
