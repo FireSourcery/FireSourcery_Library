@@ -41,7 +41,7 @@
 */
 /******************************************************************************/
 // static inline bool _is_in_hysteresis(int32_t threshold_off, bool state, int32_t input) { return ((state == true) && (input >= threshold_off)); }
-// static inline bool _is_hysteresis_on(int32_t threshold_on, int32_t threshold_off, bool state, int32_t input) { return (input >= threshold_on) || ((state == true) && (input >= threshold_off)); }
+// static inline bool _is_hysteresis_on(int32_t threshold_on, int32_t threshold_off, bool state, int32_t input) { return (input >= threshold_on) || _is_in_hysteresis( ); }
 
 /*!
     @brief  Standard hysteresis function for rising edge trigger
@@ -68,11 +68,19 @@ static inline bool hysteresis_output_state_inverted(int32_t setpoint, int32_t re
     return prev_state; /* Maintain state in hysteresis band */
 }
 
+/* 3 state */
 // static inline int hysteresis_output_region(int32_t setpoint, int32_t resetpoint, int32_t process_value)
 // {
 //     if (process_value <= resetpoint) { return 0; }
 //     if (process_value >= setpoint) { return 1; }
 //     return -1;
+// }
+
+// static inline int hysteresis_output_sign(int32_t setpoint, int32_t resetpoint, int32_t process_value)
+// {
+//     if (process_value <= resetpoint) { return -1; }
+//     if (process_value >= setpoint) { return 1; }
+//     return 0;
 // }
 
 /******************************************************************************/
@@ -99,23 +107,12 @@ static inline int32_t hysteresis_on_rising(int32_t setpoint, int32_t resetpoint,
     return (prev_output <= setpoint) ? setpoint : input;    /* In hysteresis band - check if previously triggered */
 }
 
-
-
-
 /******************************************************************************/
 /*
     Hysteresis Functions - Value Output
     For signal conditioning and noise filtering
 */
 /******************************************************************************/
-/* 3 state */
-// static inline int hysteresis_output_sign(int32_t setpoint, int32_t resetpoint, int32_t process_value)
-// {
-//     if (process_value <= resetpoint) { return -1; }
-//     if (process_value >= setpoint) { return 1; }
-//     return 0;
-// }
-
 /*!
     @brief  Deadband filter with hysteresis - maintains previous output in dead zone
             Pass-through hysteresis - preserves input value outside hysteresis band
@@ -149,21 +146,7 @@ static int32_t hysteresis_delta_filter(int32_t hysteresis, int32_t prev_output, 
 /*
 */
 /******************************************************************************/
-/* Speed ramping with hysteresis */
-// static inline int32_t Hysteresis_RampValue(int32_t threshold_upper, int32_t threshold_lower, int32_t prev_output, int32_t input, int32_t ramp_rate)
-// {
-//     int32_t filtered = Hysteresis_FilterValue(threshold_upper, threshold_lower, prev_output, input);
 
-//     /* Apply ramping if value changed */
-//     if (filtered != prev_output)
-//     {
-//         int32_t delta = filtered - prev_output;
-//         int32_t ramp_delta = CLAMP(delta, -ramp_rate, ramp_rate);
-//         return prev_output + ramp_delta;
-//     }
-
-//     return prev_output;
-// }
 
 /* Edge detection with hysteresis */
 // static inline sign_t hysteresis_crossing_sign(int32_t threshold_upper, int32_t threshold_lower, bool prev_state, int32_t input)

@@ -43,8 +43,8 @@
 
 // typedef struct Ramp_Config_T
 // {
-//     uint16_t Units;         /*   */
-//     uint32_t Time_Cycles;   /* Time to reach Units */
+//     uint16_t Delta;    /*   */
+//     uint32_t Ticks;    /* Time to reach Units */
 // }
 // Ramp_Config_T;
 
@@ -70,16 +70,17 @@ static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Ac
 /* Match Output */
 static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.State = (match << p_ramp->Accumulator.Shift); }
 
+/* Set both */
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
-    p_ramp->Target = (match << p_ramp->Accumulator.Shift);
-    p_ramp->Accumulator.State = p_ramp->Target;
+    Ramp_SetOutput(p_ramp, match);
+    p_ramp->Target = p_ramp->Accumulator.State; /* Set Target to current output */
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 {
-    p_ramp->Target = 0;
     p_ramp->Accumulator.State = 0;
+    p_ramp->Target = 0;
 }
 
 /* ProcAsDisabled */
@@ -93,6 +94,7 @@ static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
 static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == (UINT16_MAX << RAMP_SHIFT)); }
 static inline bool _Ramp_IsEnabled(const Ramp_T * p_ramp) { return  !_Ramp_IsDisabled(p_ramp); }
 static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coefficient = (UINT16_MAX << RAMP_SHIFT); }
+// static inline void _Ramp_Enable(Ramp_T * p_ramp, int32_t) { p_ramp->Accumulator.Coefficient =  ; }
 
 // static inline bool Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == 0); }
 // static inline void Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coefficient = 0; }
@@ -117,3 +119,45 @@ extern void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t du
 #endif
 
 
+// static inline int32_t RateLimit_Update(int32_t input, int32_t prev_output, int32_t max_increase, int32_t max_decrease)
+// {
+//     int32_t delta = input - prev_output;
+
+//     if (delta > max_increase)
+//         return prev_output + max_increase;
+//     else if (delta < -max_decrease)
+//         return prev_output - max_decrease;
+//     else
+//         return input;
+// }
+
+// static inline int32_t RateLimit_Symmetric(int32_t input, int32_t prev_output, int32_t max_rate)
+// {
+//     return RateLimit_Update(input, prev_output, max_rate, max_rate);
+// }
+
+// /* Percentage-based rate limiting */
+// static inline int32_t RateLimit_Percent(int32_t input, int32_t prev_output, uint8_t max_change_percent)
+// {
+//     int32_t max_delta = (int32_t)((int64_t)ABS(prev_output) * max_change_percent / 100);
+//     if (max_delta == 0) max_delta = 1;  /* Minimum change */
+
+//     return RateLimit_Symmetric(input, prev_output, max_delta);
+// }
+
+
+/* Speed ramping with hysteresis */
+// static inline int32_t Hysteresis_RampValue(int32_t threshold_upper, int32_t threshold_lower, int32_t prev_output, int32_t input, int32_t ramp_rate)
+// {
+//     int32_t filtered = Hysteresis_FilterValue(threshold_upper, threshold_lower, prev_output, input);
+
+//     /* Apply ramping if value changed */
+//     if (filtered != prev_output)
+//     {
+//         int32_t delta = filtered - prev_output;
+//         int32_t ramp_delta = CLAMP(delta, -ramp_rate, ramp_rate);
+//         return prev_output + ramp_delta;
+//     }
+
+//     return prev_output;
+// }

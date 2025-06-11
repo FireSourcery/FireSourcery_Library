@@ -59,7 +59,7 @@ int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
     return Ramp_GetOutput(p_ramp);
 }
 
-// int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t target, int16_t lowerLimit, int16_t upperLimit)
+// int32_t Ramp_ProcNext_With(Ramp_T * p_ramp, int16_t lowerLimit, int16_t upperLimit, int16_t target)
 // {
 //     if (Ramp_GetOutput(p_ramp) != target) { p_ramp->Accumulator.State = NextOf(p_ramp, math_clamp(target, lowerLimit, upperLimit)); }
 //     return Ramp_GetOutput(p_ramp);

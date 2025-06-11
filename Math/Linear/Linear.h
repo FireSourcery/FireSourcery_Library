@@ -26,7 +26,6 @@
     @author FireSourcery
     @brief  Mathematical linear function.
             e.g. Dynamic look up table, unit/ADC conversion.
-
 */
 /******************************************************************************/
 #ifndef LINEAR_H
@@ -39,7 +38,11 @@
 
 #include <stdint.h>
 
+/******************************************************************************/
+/*!
 
+*/
+/******************************************************************************/
 typedef struct Linear
 {
 #if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
@@ -56,9 +59,9 @@ typedef struct Linear
     /* Zero-to-peak */
     int32_t XDelta;      /* (XRef - X0), f([X0-XDelta:X0+XDelta]) => [-YRef:YRef] */
     int32_t YDelta;
-    /* Intermediate values, optionally store for saturation check */
-    int32_t XReference;     /* f([X0:XRef]) <=> fixed32(x)[0:65536] */
-    int32_t YReference;     /* f(x)[Y0:YRef] <=> fixed32(x)[0:65536] */
+    /* Optionally store for saturation check */
+    int32_t XReference;     /* f([X0:XRef]) <=> fixed32 [0:65536] */
+    int32_t YReference;     /* f(x)[Y0:YRef] <=> fixed32 [0:65536] */
 }
 Linear_T;
 
@@ -81,17 +84,19 @@ Linear_T;
     Protected
 */
 /******************************************************************************/
-static inline int16_t _Linear_SatSigned16(int32_t value16)           { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t value16)        { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }
-static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16)    { return _Linear_SatUnsigned16(math_abs(value16)); }
-
 /* Getters In case implementation changes */
 static inline int32_t Linear_GetXRef(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDelta; }
 static inline int32_t Linear_GetYRef(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta; }
 static inline int32_t Linear_GetXDelta(const Linear_T * p_linear) { return p_linear->XDelta; }
 static inline int32_t Linear_GetYDelta(const Linear_T * p_linear) { return p_linear->YDelta; }
-static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta * 2; }
-static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDelta * 2; }
+// static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + math_abs(p_linear->YDelta) * 2; }
+// static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + math_abs(p_linear->XDelta) * 2; }
+static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta * ((p_linear->YDelta >= 0) ? 2 : -2); }
+static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDelta * ((p_linear->XDelta >= 0) ? 2 : -2); }
+static inline int32_t Linear_GetXMin(const Linear_T * p_linear) { return math_min(p_linear->X0 - p_linear->XDelta, p_linear->XReference); }  /* X0 + XDelta == XReference  */
+static inline int32_t Linear_GetXMax(const Linear_T * p_linear) { return math_max(p_linear->X0 - p_linear->XDelta, p_linear->XReference); }
+static inline int32_t Linear_GetYMin(const Linear_T * p_linear) { return math_min(p_linear->Y0 - p_linear->YDelta, p_linear->YReference); }
+static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return math_max(p_linear->Y0 - p_linear->YDelta, p_linear->YReference); }
 
 /******************************************************************************/
 /*!
@@ -125,18 +130,17 @@ static inline int32_t Linear_InvOf(const Linear_T * p_linear, int32_t y)
 
 /******************************************************************************/
 /*!
-    Saturated on Input - indirectly saturates output to prevent overflow
+    Saturated on input - indirectly saturate output
 */
 /******************************************************************************/
 static inline int32_t Linear_Of_Sat(const Linear_T * p_linear, int32_t x)
 {
-    return Linear_Of(p_linear, math_clamp(x, p_linear->X0 - p_linear->XDelta, p_linear->XReference));
+    return Linear_Of(p_linear, math_clamp(x, Linear_GetXMin(p_linear), Linear_GetXMax(p_linear)));
 }
 
 static inline int32_t Linear_InvOf_Sat(const Linear_T * p_linear, int32_t y)
 {
-    // return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDelta, p_linear->YReference));
-    return Linear_InvOf(p_linear, math_clamp(y, p_linear->Y0 - p_linear->YDelta * 2, p_linear->Y0 + p_linear->YDelta * 2));
+    return Linear_InvOf(p_linear, math_clamp(y, Linear_GetYMin(p_linear), Linear_GetYMax(p_linear)));
 }
 
 /******************************************************************************/
@@ -163,17 +167,17 @@ static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 }
 
 
-
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
 extern void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef);
-extern void Linear_Init_Map(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef);
+extern void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, int32_t yRef);
+extern void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0, int32_t xRef);
 
-extern int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
-extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
+// extern int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar);
+// extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 
 #endif
 

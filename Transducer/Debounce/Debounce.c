@@ -36,28 +36,6 @@
     For switch and sensor debouncing
 */
 /******************************************************************************/
-/* Time-based debounce */
-// static inline bool debounce(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
-// {
-//     if (input_state != prev_state) return false;  /* State changed, not stable */
-//     return (current_time - last_change_time) >= stability_time;
-// }
-
-// /* Counter-based debounce */
-// static inline bool debounce_(uint16_t * p_counter, uint16_t threshold, bool input_state, bool target_state)
-// {
-//     if (input_state == target_state)
-//     {
-//         if (*p_counter < threshold)  {(*p_counter)++;}
-//     }
-//     else
-//     {
-//         *p_counter = 0;
-//     }
-//     return (*p_counter >= threshold);
-// }
-
-
 void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
 {
     p_debounce->DebounceTime = debounceTime;

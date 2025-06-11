@@ -37,6 +37,8 @@
 /******************************************************************************/
 void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMonitor_Config_T * p_config)
 {
+    assert(p_context->P_STATE != NULL); /* Ensure state is provided */
+
     Monitor_InitFrom(p_context->P_STATE, p_config); /* Monitor_T auto handle invert */
     if (p_context->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(p_context->P_STATE, p_context->P_LIMIT_SCALAR); }
     // if (p_context->P_NVM_COEFFS != NULL) { Thermistor_InitFrom(&p_context->THERMISTOR, p_context->P_NVM_COEFFS); }
@@ -64,14 +66,8 @@ void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group)
     /* Pass the same detection parameters to each */
     for (uint8_t i = 0; i < p_group->COUNT; i++)
     {
-        if (p_group->P_CONTEXTS[i].P_NVM_CONFIG != NULL)
-        {
-            HeatMonitor_Init(&p_group->P_CONTEXTS[i]);
-        }
-        else
-        {
-            HeatMonitor_InitFrom(&p_group->P_CONTEXTS[i], p_group->P_NVM_CONFIG);
-        }
+        if (p_group->P_CONTEXTS[i].P_NVM_CONFIG != NULL) { HeatMonitor_Init(&p_group->P_CONTEXTS[i]); }
+        else { HeatMonitor_InitFrom(&p_group->P_CONTEXTS[i], p_group->P_NVM_CONFIG); }
     }
 }
 

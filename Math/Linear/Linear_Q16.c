@@ -30,32 +30,7 @@
 /******************************************************************************/
 #include "Linear_Q16.h"
 
-/*
-    Allow 2x input interval (XRef-X0), over saturation before overflow
-        f([X0-2*XDelta:X0+2*XDelta]) == [Y0-2*YDelta:Y0+2*YDelta]
-*/
-#define LINEAR_INT32_MAX_SHIFT (30)  // INT32_MAX/2, accum32 << 15
 
-/******************************************************************************/
-/*!
-    Linear Fixed
-    f(x) = q16
-    f([x0:xRef]) = [0:65536]
-
-    Equalvalent to Linear_Init_Map(p_linear, x0, xRef, 0, (1 << nFractionalBits));
-*/
-/******************************************************************************/
-void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0, int32_t xRef)
-{
-    p_linear->Slope = ((int32_t)1 << LINEAR_INT32_MAX_SHIFT) / (xRef - x0);  // (1 << 30) ensures the result is within the [INT32_MAX/2] range
-    p_linear->SlopeShift = (LINEAR_INT32_MAX_SHIFT - nFractionalBits); // Adjust the shift to match the fractional bits
-    p_linear->InvSlope = (xRef - x0);
-    p_linear->InvSlopeShift = nFractionalBits;
-    p_linear->X0 = x0;
-    // unused
-    p_linear->XReference = xRef;
-    p_linear->XDelta = xRef - x0;
-}
 
 /******************************************************************************/
 /*!
@@ -75,7 +50,6 @@ void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef)
 {
     Linear_Fixed_Init(p_linear, 16U, x0, xRef);
 }
-
 
 // void Linear_Fixed_InitAsFract16(Linear_T * p_linear, int32_t x0, int32_t xRef)
 // {

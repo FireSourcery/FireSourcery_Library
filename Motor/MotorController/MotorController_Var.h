@@ -149,7 +149,7 @@ typedef enum MotorController_ConfigId
     MOT_VAR_V_SOURCE_REF_VOLTS,
     MOT_VAR_I_LIMIT_LOW_V,
 
-    // MOT_VAR_DEFAULT_FEEDBACK_MODE,          // Motor_FeedbackMode_T
+    // MOT_VAR_DEFAULT_FEEDBACK_MODE,       // Motor_FeedbackMode_T
     MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
     MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
@@ -197,33 +197,33 @@ MotorController_VarRef_T;
     @return may return null
 */
 /******************************************************************************/
-typedef enum MotVarId_Instance_BoardThermistor
-{
-    // MOT_INSTANCE_THERMISTOR_PCB,
-    // MOT_VAR_ID_THERMISTOR_PCB,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_0,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_1,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_2,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_3,
-}
-MotVarId_Instance_BoardHeatMonitor_T;
+// typedef enum MotVarId_Instance_BoardThermistor
+// {
+//     // MOT_INSTANCE_THERMISTOR_PCB,
+//     // MOT_VAR_ID_THERMISTOR_PCB,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_2,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_3,
+// }
+// MotVarId_Instance_BoardHeatMonitor_T;
 
-typedef enum MotVarId_Instance_VMonitor
-{
-    MOT_VAR_ID_V_MONITOR_SOURCE,
-    MOT_VAR_ID_V_MONITOR_ANALOG,
-    MOT_VAR_ID_V_MONITOR_ACCS,
-}
-MotVarId_Instance_VMonitor_T;
+// typedef enum MotVarId_Instance_VMonitor
+// {
+//     MOT_VAR_ID_V_MONITOR_SOURCE,
+//     MOT_VAR_ID_V_MONITOR_ANALOG,
+//     MOT_VAR_ID_V_MONITOR_ACCS,
+// }
+// MotVarId_Instance_VMonitor_T;
 
-typedef enum MotVarId_Instance_Motor
-{
-    MOT_VAR_ID_MOTOR_0,
-    MOT_VAR_ID_MOTOR_1,
-    MOT_VAR_ID_MOTOR_2,
-    MOT_VAR_ID_MOTOR_3,
-}
-MotVarId_Instance_Motor_State_T;
+// typedef enum MotVarId_Instance_Motor
+// {
+//     MOT_VAR_ID_MOTOR_0,
+//     MOT_VAR_ID_MOTOR_1,
+//     MOT_VAR_ID_MOTOR_2,
+//     MOT_VAR_ID_MOTOR_3,
+// }
+// MotVarId_Instance_Motor_State_T;
 
 /*
     Index corresponds to external user interface

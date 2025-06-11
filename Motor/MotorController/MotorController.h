@@ -220,7 +220,6 @@ typedef struct MotorController_State
 
     MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
 
-
     /* Async return status */
     // union
     // {
@@ -272,6 +271,7 @@ typedef const struct MotorController
     Blinky_T METER;
     Pin_T RELAY_PIN;
 
+    /*  */
     Protocol_T * P_PROTOCOLS; uint8_t PROTOCOL_COUNT; /* Sockets */
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
 
@@ -282,14 +282,6 @@ typedef const struct MotorController
     LimitArray_T MOT_SPEED_LIMITS;
     LimitArray_T MOT_I_LIMITS;
 
-    /* State */
-    StateMachine_T STATE_MACHINE;
-    MotDrive_T MOT_DRIVE; /* Drive */
-
-    /* Conversions */
-    // MotVMonitor_Analog_T MOT_V_MONITOR_CONVERSIONS; /* VMonitor */
-    // MotHeatMonitor_Analog_T MOT_HEAT_MONITOR_CONVERSIONS; /* HeatMonitor */
-    // MotAnalogUser_Conversion_T MOT_ANALOG_USER_CONVERSIONS; /* AnalogUser */
     /* Monitor - Detection + response with full context */
     HeatMonitor_Context_T HEAT_PCB;
     HeatMonitor_GroupContext_T HEAT_MOSFETS;
@@ -297,8 +289,12 @@ typedef const struct MotorController
     VMonitor_Context_T V_ACCESSORIES; /* ~12V */
     VMonitor_Context_T V_ANALOG; /* V Analog Sensors ~5V */
 
+    /* State */
+    StateMachine_T STATE_MACHINE;
+    MotDrive_T MOT_DRIVE; /* Drive */
     MotorController_State_T * P_ACTIVE; /* Pointer to the Runtime buffer */
 
+    /*  */
     uint32_t ANALOG_USER_DIVIDER;  /* In Pow2 - 1 */
     uint32_t MAIN_DIVIDER_10;
     uint32_t MAIN_DIVIDER_1000;

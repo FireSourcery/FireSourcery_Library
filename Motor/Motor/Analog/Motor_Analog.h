@@ -55,7 +55,7 @@ Motor_Analog_T;
 /*
     Pass Struct and Index
 */
-#define MOTOR_ANALOG_INIT(AdcVa, IndexVa, AdcVb, IndexVb, AdcVc, IndexVc, AdcIa, IndexIa, AdcIb, IndexIb, AdcIc, IndexIc,  AdcHeat, IndexHeat) \
+#define MOTOR_ANALOG_INIT(AdcVa, IndexVa, AdcVb, IndexVb, AdcVc, IndexVc, AdcIa, IndexIa, AdcIb, IndexIb, AdcIc, IndexIc, AdcHeat, IndexHeat) \
 { \
     .CONVERSION_VA = ANALOG_CONVERSION_INIT_FROM(AdcVa, IndexVa), \
     .CONVERSION_VB = ANALOG_CONVERSION_INIT_FROM(AdcVb, IndexVb), \

@@ -72,6 +72,21 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 }
 
 
+// Monitor_Status_T _Monitor_EvaluateWindow(Monitor_Base_T * p_low, Monitor_Base_T * p_high, int32_t input)
+// {
+//     /* Poll individual monitors and combine results */
+//     /* Check the most inner limits first, for normal state */
+//     Monitor_Status_T highStatus = _Monitor_EvaluateAsHigh(p_high, input);
+//     Monitor_Status_T lowStatus = _Monitor_EvaluateAsLow(p_low, input);
+//     Monitor_Status_T status;
+
+//     if      (highStatus > lowStatus) { status = highStatus; }
+//     else if (lowStatus > highStatus) { status = (lowStatus * -1); }
+//     else { status = MONITOR_STATUS_NORMAL; } // Both are equal, so normal
+
+//     return status;
+// }
+
 /******************************************************************************/
 /*
     Single Direction Monitor Implementation
@@ -108,6 +123,9 @@ Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
     {
         case MONITOR_DISABLED:
             break;
+        // default:
+        //     p_monitor->LastInput = input;
+        //     p_monitor->StatusPrev = p_monitor->Status;
         case MONITOR_THRESHOLD_LOW:
             p_monitor->LastInput = input;
             p_monitor->StatusPrev = p_monitor->Status;
@@ -127,11 +145,11 @@ Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
     Alternative to mapping edge statuses
     // MONITOR_STATUS_NULL = INT32_MIN,
 */
-Monitor_Status_T * Monitor_PollEdge(Monitor_T * p_monitor, int32_t input)
-{
-    Monitor_Poll(p_monitor, input);
-    return Monitor_IsStatusEdge(p_monitor) ? &p_monitor->Status : NULL;
-}
+// Monitor_Status_T * Monitor_PollEdge(Monitor_T * p_monitor, int32_t input)
+// {
+//     Monitor_Poll(p_monitor, input);
+//     return Monitor_IsStatusEdge(p_monitor) ? &p_monitor->Status : NULL;
+// }
 
 /******************************************************************************/
 /*

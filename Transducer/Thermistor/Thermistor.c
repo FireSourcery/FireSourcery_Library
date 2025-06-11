@@ -184,19 +184,19 @@ void Thermistor_ToLinear_ROhmsPerAdcu(const Thermistor_T * p_therm, Linear_T * p
 {
     uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
     uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
-    Linear_Init_Map(p_result, adcu0, adcu1, Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
+    Linear_Map_Init(p_result, adcu0, adcu1, Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
 }
 
 void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
 {
     uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
     uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
-    Linear_Init_Map(p_result, adcu0, adcu1, Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm));
+    Linear_Map_Init(p_result, adcu0, adcu1, Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm));
 }
 
 void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T * p_result)
 {
-    Linear_Init_Map
+    Linear_Map_Init
     (
         p_result,
         Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm),

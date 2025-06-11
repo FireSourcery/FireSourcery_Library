@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,26 +24,41 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Linear_Q16_Of.h
+    @file   Linear_Q16.h
     @author FireSourcery
-    @brief  Linear Fract16 calc without division
-
+    @brief  Linear Fract16 without division
 */
 /******************************************************************************/
-#ifndef LINEAR_Q16_H
-#define LINEAR_Q16_H
-
 #include "Linear.h"
 
 #include "Math/Fixed/fixed.h"
 
 /******************************************************************************/
 /*!
-    Fract16     => [-32768:32767],  [-1:1)  in Q1.15
-    UFract16    => [0:65535],       [0:2)   in Q1.15
-    Percent16   => [0:65535],       [0:1)   in Q0.16
-    Accum32     => [INT32_MIN:INT32_MAX], [2*-32768:2*32768) in Q17.15
-    Fixed32     => [INT32_MIN:INT32_MAX], [-32768:32768) in Q16.16
+    Fract16     => int16_t      as [-1:1)  in Q1.15
+    UFract16    => uint16_t     as [0:2)   in Q1.15
+    Percent16   => uint16_t     as [0:1)   in Q0.16
+    Accum32     => int32_t      as [-65536:65536) in Q17.15
+    (Storage)   => int32_t      as [-2:2)         in Q2.30
+    Fract32     => int32_t      as [-1:1)         in Q1.31
+    Fixed32     => int32_t      as [-32768:32768) in Q16.16
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*!
+    Helper
+*/
+/******************************************************************************/
+static inline int16_t _Linear_SatSigned16(int32_t value16) { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
+static inline int16_t _Linear_SatSigned16_Abs(int32_t value16) { return _Linear_SatSigned16(math_abs(value16)); }
+static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }
+static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16) { return _Linear_SatUnsigned16(math_abs(value16)); }
+
+
+/******************************************************************************/
+/*!
+
 */
 /******************************************************************************/
 /*!
@@ -49,7 +66,7 @@
         with over saturation of [-65535*2:65535*2] (via INT32_MAX/2)
 
     @param[in]  x [-XRef*2:XRef*2]
-    @return     y_fixed32 q16.16 format. [-65535*2:65535*2]
+    @return     y_fixed32 Q1.16 format. [-65535*2:65535*2]
 */
 static inline int32_t Linear_Q16_Of(const Linear_T * p_linear, int32_t x)
 {
@@ -57,7 +74,7 @@ static inline int32_t Linear_Q16_Of(const Linear_T * p_linear, int32_t x)
 }
 
 /*!
-    @param[in] y_fixed32 in q16.16 format. range bounded to 17-bits
+    @param[in] y_fixed32 in Q1.16 format.
 */
 static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixed32)
 {
@@ -66,49 +83,27 @@ static inline int32_t Linear_Q16_InvOf(const Linear_T * p_linear, int32_t y_fixe
 
 /******************************************************************************/
 /*!
-    Convert and Saturate to int16_t, Q1.15 [-32768:32767]
+    Convert Qx.15
 */
 /******************************************************************************/
-static inline int16_t Linear_Q16_Fract(const Linear_T * p_linear, int32_t x)
-{
-    return _Linear_SatSigned16(Linear_Q16_Of(p_linear, x) / 2);
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, x);
-}
-
-/* [0:2) */
-static inline uint16_t Linear_Q16_UFract(const Linear_T * p_linear, int32_t x)
-{
-    return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x) / 2);
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, x);
-}
+static inline int32_t Linear_Q16_Accum32(const Linear_T * p_linear, int32_t x) { return Linear_Q16_Of(p_linear, x) / 2; } // { return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift + 1, p_linear->X0, x); }
+static inline int16_t Linear_Q16_Fract(const Linear_T * p_linear, int32_t x) { return _Linear_SatSigned16(Linear_Q16_Accum32(p_linear, x)); }
+static inline uint16_t Linear_Q16_UFract(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16(Linear_Q16_Accum32(p_linear, x)); }
 
 /* Input interval units */
-static inline int32_t Linear_Q16_InvFract(const Linear_T * p_linear, int16_t y_fract16)
-{
-    return Linear_Q16_InvOf(p_linear, (int32_t)y_fract16 * 2);
-}
+static inline int32_t Linear_Q16_InvFract(const Linear_T * p_linear, int16_t y_fract16) { return Linear_Q16_InvOf(p_linear, (int32_t)y_fract16 * 2); }
 
 /******************************************************************************/
 /*!
-    Saturate to uint16_t, Q0.16 [0:65535]
+    Saturate to Q0.16 [0:65535]
 */
 /******************************************************************************/
-static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x)
-{
-    return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x));
-    // return linear_shift_f_x0(p_linear->Slope, p_linear->SlopeShift - 1, p_linear->X0, x);
-}
-
-static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x)
-{
-    return _Linear_SatUnsigned16_Abs(Linear_Q16_Of(p_linear, x));
-}
+static inline int32_t _Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return Linear_Q16_Of(p_linear, x); }
+static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x)); }
+static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16_Abs(Linear_Q16_Of(p_linear, x)); }
 
 /* Input interval units */
-static inline int32_t Linear_Q16_InvPercent(const Linear_T * p_linear, uint16_t y_percent16)
-{
-    return Linear_Q16_InvOf(p_linear, y_percent16);
-}
+static inline int32_t Linear_Q16_InvPercent(const Linear_T * p_linear, uint16_t y_percent16) { return Linear_Q16_InvOf(p_linear, y_percent16); }
 
 
 /******************************************************************************/
@@ -129,5 +124,3 @@ static inline int16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
 /******************************************************************************/
 extern void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef);
 
-
-#endif

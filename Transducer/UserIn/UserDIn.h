@@ -34,8 +34,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
-
 typedef enum UserDIn_Edge
 {
     USER_DIN_EDGE_FALLING = -1,
@@ -61,11 +59,12 @@ UserDIn_Edge_T;
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
-    // bool IsInverted;                 /* Runtime invert config */
+    // bool IsInverted;                    /* Runtime invert config */
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
     // UserDIn_Mode_T Mode;
+    // uint16_t DebounceTime;
 }
 UserDIn_State_T;
 

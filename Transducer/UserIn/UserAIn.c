@@ -35,22 +35,23 @@
     Private Helper Functions
 */
 /******************************************************************************/
-static inline bool UseDIn(const UserAIn_T * p_context)
-{
-    // return (p_context->UseEdgePin == false)  && ;
-    return (p_context->P_EDGE_PIN != NULL);
-}
+// static inline bool IsEdgePinMode(const UserAIn_T * p_context)
+// {
+//     // return (p_context->UseEdgePin == false)  && ;
+//     return (p_context->P_EDGE_PIN != NULL);
+// }
 
-static inline uint16_t FilterValue(const UserAIn_T * p_context, uint16_t value)
+static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, uint16_t value)
 {
-    return (value + (p_context->P_STATE->Value_Percent16 << p_context->FILTER_SHIFT)) >> (p_context->FILTER_SHIFT + 1U);
+    return (value + (filteredPrev << filterShift)) >> (filterShift + 1U);
 }
 
 static inline void _UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
 {
-    p_context->P_STATE->RawValue_Adcu = value_adcu;
-    p_context->P_STATE->ValuePrev_Percent16 = p_context->P_STATE->Value_Percent16;
-    p_context->P_STATE->Value_Percent16 = FilterValue(p_context, Linear_ADC_Percent16(&p_context->P_STATE->Units, value_adcu));
+    UserAIn_State_T * p_state = p_context->P_STATE;
+    p_state->RawValue_Adcu = value_adcu;
+    p_state->ValuePrev = p_state->Value;
+    p_state->Value = FilterValue(p_context->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
 }
 
 
@@ -62,20 +63,16 @@ static inline void _UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t v
 void UserAIn_InitFrom(const UserAIn_T * p_context, const UserAIn_Config_T * p_config)
 {
     if (p_context->P_NVM_CONFIG != NULL) { p_context->P_STATE->Config = *p_config; }
-
     if (p_context->P_EDGE_PIN != NULL) { UserDIn_Init(p_context->P_EDGE_PIN); }
 
     /* Initialize linear conversion */
     Linear_Q16_Init(&p_context->P_STATE->Units, p_context->P_STATE->Config.AdcZero, p_context->P_STATE->Config.AdcMax);
 
     /* Initialize state */
-    uint16_t initialPercent = Linear_ADC_Percent16(&p_context->P_STATE->Units, p_context->P_STATE->Config.AdcZero);
-
     p_context->P_STATE->RawValue_Adcu = p_context->P_STATE->Config.AdcZero;
-    p_context->P_STATE->Value_Percent16 = initialPercent;
-    p_context->P_STATE->ValuePrev_Percent16 = initialPercent;
+    p_context->P_STATE->Value = Linear_Q16_Percent(&p_context->P_STATE->Units, p_context->P_STATE->Config.AdcZero);
+    p_context->P_STATE->ValuePrev = p_context->P_STATE->Value;
 }
-
 
 void UserAIn_Init(const UserAIn_T * p_context)
 {
@@ -98,23 +95,28 @@ void UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
     if (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) == true) { _UserAIn_CaptureValue(p_context, value_adcu); }
 }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 bool UserAIn_PollEdge(const UserAIn_T * p_context, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context);
+    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context->P_STATE);
 }
 
 bool UserAIn_PollRisingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context);
+    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context->P_STATE);
 }
 
 /* get value needs to check pin on getter */
 bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context);
+    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context->P_STATE);
 }
 
 
@@ -122,7 +124,7 @@ bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
 /* capture pin to value */
 // static inline bool UserAIn_PollFallingEdge(const UserAIn_T * p_context)
 // {`
-//     bool isValueFallingEdge = ((p_context->P_STATE->ValuePrev_Percent16 > 0U) && (p_context->P_STATE->Value_Percent16 <= 0U));
+//     bool isValueFallingEdge = ((p_context->P_STATE->ValuePrev > 0U) && (p_context->P_STATE->Value <= 0U));
 //     bool isDInFallingEdge = false;
 
 //     if (UseDIn(p_context) == true)
@@ -130,8 +132,8 @@ bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
 //         /* Once 1 part detects falling edge, prevent the other from repeat detect */ /* alternatively handle during access */
 //         if (UserDIn_PollFallingEdge(p_context->P_EDGE_PIN) == true)
 //         {
-//             p_context->P_STATE->ValuePrev_Percent16 = p_context->P_STATE->Value_Percent16;
-//             p_context->P_STATE->Value_Percent16 = 0;
+//             p_context->P_STATE->ValuePrev = p_context->P_STATE->Value;
+//             p_context->P_STATE->Value = 0;
 //         }
 //     }
 

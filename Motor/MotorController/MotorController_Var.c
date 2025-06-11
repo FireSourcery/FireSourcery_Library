@@ -109,7 +109,7 @@ static int32_t _MotVarId_GetMotorVar(const MotorController_T * p_context, MotVar
     {
         case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return Motor_VarOutput_Get(p_motor, id.NameBase);
         case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return Motor_VarOutput_Foc_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: return Motor_VarIO_Get(p_motor, id.NameBase);
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: return Motor_VarIO_Get(p_motor, id.NameBase);
         case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: return 0; /* Commands are write-only */
         case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
         default: return 0;

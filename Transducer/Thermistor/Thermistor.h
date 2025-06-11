@@ -80,8 +80,8 @@ typedef struct Thermistor_Coeffs
 }
 Thermistor_Coeffs_T;
 
-#define _THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .Type = TypeValue, .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
-#define _THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T){ .Type = TypeValue, .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, })
+#define THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .Type = TypeValue, .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
+#define THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin))
 
 /*
 
@@ -95,10 +95,11 @@ typedef const struct Thermistor
 
     /* Non detachable, disable Coefficient set functions */
     const Thermistor_Coeffs_T * P_FIXED_COEFFS; /* Set as Read Only */
-
     Thermistor_Coeffs_T * P_COEFFS; /* NULL for Fixed */
+
     const Thermistor_Coeffs_T * P_NVM_COEFFS; /*  */
 
+    /* Service */
     // Linear_T * P_LINEAR_R_OHMS;  /* R per Adcu */
     // Linear_T * P_LINEAR_T_CELCIUS;
 }
@@ -112,12 +113,12 @@ Thermistor_T;
     // static_assert(p_Fixed == NULL || p_Coeffs == NULL, "Thermistor must have either fixed or configurable coefficients, not both.");
 
 /* Init as Configurable/Detachable */
-#define THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, p_Coeffs) \
-    THERMISTOR_INIT(RSeries, RParallel, VSeries, NULL, p_Coeffs)
+#define THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, p_Coeffs, p_NvmCoeffs) \
+    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = NULL, .P_COEFFS = p_Coeffs, .P_NVM_COEFFS = p_NvmCoeffs }
 
 /* Init as Fixed to Board */
 #define THERMISTOR_FIXED_INIT(RSeries, RParallel, VSeries, TypeValue, BValue, R0Value, T0_Kelvin) \
-    THERMISTOR_INIT(RSeries, RParallel, VSeries, _THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin), NULL)
+    THERMISTOR_INIT(RSeries, RParallel, VSeries, THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin), NULL)
 
 
 /******************************************************************************/

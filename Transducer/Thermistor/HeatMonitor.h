@@ -76,22 +76,13 @@ HeatMonitor_Status_T;
     @note   It can be used in a group context for multiple heat monitors.
 */
 /******************************************************************************/
-// typedef const struct HeatMonitor_Context
+// typedef const struct HeatMonitor_Base
 // {
 //     HeatMonitor_T * P_STATE;
 //     Linear_T * P_LIMIT_SCALAR;
 //     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 // }
-// HeatMonitor_Context_T;
-
-// typedef const struct HeatMonitor_Thermistor
-// {
-//     Thermistor_T THERMISTOR;
-//     const Thermistor_Coeffs_T * P_NVM_COEFFS; /* storage seperate from thermistor buffer */
-//     Analog_Conversion_T ANALOG_CONVERSION;
-//     Linear_T * P_LINEAR; /* Optionally for local unit conversion */
-// }
-// HeatMonitor_Thermistor_T;
+// HeatMonitor_Base_T;
 
 /*
     HeatMonitor Per Thermistor source
@@ -99,13 +90,16 @@ HeatMonitor_Status_T;
 typedef const struct HeatMonitor_Context
 {
     HeatMonitor_T * P_STATE;
+    /* Optional */
     Linear_T * P_LIMIT_SCALAR;
     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
+    /*  */
     Analog_Conversion_T ANALOG_CONVERSION;
     Thermistor_T THERMISTOR;
-    // const Thermistor_Coeffs_T * P_NVM_COEFFS; /* storage seperate from thermistor buffer */
-    Linear_T * P_LINEAR; /* Optionally for local unit conversion */
+    Linear_T * P_LINEAR; /* Optional for local unit conversion */
+    // Linear_T * P_LINEAR_R_OHMS;  /* R per Adcu */
+    // Linear_T * P_LINEAR_T_CELCIUS;
 }
 HeatMonitor_Context_T;
 
@@ -127,7 +121,9 @@ HeatMonitor_Context_T;
 
 typedef const struct HeatMonitor_GroupContext
 {
-    HeatMonitor_Context_T * P_CONTEXTS; /* Array of HeatMonitor_Context_T */
+    /* Array of HeatMonitor_Context_T */
+    /* Include HeatMonitor_T per sensor, for individual status */
+    HeatMonitor_Context_T * P_CONTEXTS;
     uint8_t COUNT;
 
     /* Collective State */

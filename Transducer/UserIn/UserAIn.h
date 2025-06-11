@@ -60,14 +60,13 @@ UserAIn_Config_T;
 typedef struct UserAIn_State
 {
     Linear_T Units;                     /* ADC to percentage conversion */
-    uint16_t Value_Percent16;           /* Current filtered value */
-    uint16_t ValuePrev_Percent16;       /* Previous value for edge detection */
+    uint16_t Value;                     /* Current filtered value. Percent16 by default */
+    uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
     // bool IsEnabled;                  /* Software enable/disable */
     // uint16_t Threshold;
-    // uint16_t FilterShift;
-
     UserAIn_Config_T Config;            /* Hold for runtime updates */
+    // uint16_t FilterShift;
 }
 UserAIn_State_T;
 
@@ -80,17 +79,16 @@ typedef const struct UserAIn
 {
     // optionally direct pointer
     // const volatile uint16_t * P_ADC_VALUE; /* Pointer to ADC register/value */
-
     /* Digital pin acts as enable gate for analog capture, and edge source for edge detection. */
     const UserDIn_T * P_EDGE_PIN;       /* Optional digital pin for threshold/enable */
     // const UserDIn_T EDGE_PIN;
-
     UserAIn_State_T * P_STATE;
-
     uint8_t FILTER_SHIFT;                   /* Filtering Ratio */
-    const UserAIn_Config_T * P_NVM_CONFIG; /* Configuration for ADC to percentage conversion */
+    const UserAIn_Config_T * P_NVM_CONFIG;  /* Configuration for ADC to percentage conversion */
 }
 UserAIn_T;
+
+#define USER_AIN_STATE_ALLOC() (&(UserAIn_State_T){0})
 
 #define USER_AIN_INIT(p_EdgePin, p_State, Filter, p_Config) \
     { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
@@ -105,12 +103,15 @@ UserAIn_T;
 static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_GetState(p_pin); }
 
 /*
+    Analog value only substate without EdgePin
     Valid for full state capture, or handle EdgePin in getter functions
 */
-static inline bool _UserAIn_IsRisingEdge(const UserAIn_T * p_context) { return (p_context->P_STATE->ValuePrev_Percent16 <= 0U) && (p_context->P_STATE->Value_Percent16 > 0U); }
-static inline bool _UserAIn_IsFallingEdge(const UserAIn_T * p_context) { return (p_context->P_STATE->ValuePrev_Percent16 > 0U) && (p_context->P_STATE->Value_Percent16 <= 0U); }
-static inline bool _UserAIn_IsEdge(const UserAIn_T * p_context) { return (_UserAIn_IsRisingEdge(p_context) || _UserAIn_IsFallingEdge(p_context)); }
-
+static inline bool _UserAIn_IsRisingEdge(const UserAIn_State_T * p_state) { return (p_state->ValuePrev <= 0U) && (p_state->Value > 0U); }
+static inline bool _UserAIn_IsFallingEdge(const UserAIn_State_T * p_state) { return (p_state->ValuePrev > 0U) && (p_state->Value <= 0U); }
+static inline bool _UserAIn_IsEdge(const UserAIn_State_T * p_state) { return (_UserAIn_IsRisingEdge(p_state) || _UserAIn_IsFallingEdge(p_state)); }
+// static inline bool _UserAIn_IsEdge(const UserAIn_State_T * p_state) { return is_value_edge(p_state->ValuePrev, p_state->Value); }
+static inline bool _UserAIn_IsOn(const UserAIn_State_T * p_state) { return (p_state->Value > 0U); }
+static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { return p_state->Value; }
 
 /******************************************************************************/
 /*
@@ -118,40 +119,22 @@ static inline bool _UserAIn_IsEdge(const UserAIn_T * p_context) { return (_UserA
 */
 /******************************************************************************/
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) && (p_context->P_STATE->Value_Percent16 > 0U)); }
+// static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) && _UserAIn_IsOn(p_context->P_STATE)); }
+static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_IsOn(p_context->P_STATE) : false; }
 
-/* Check IsOn on get, rather than overwrite 0 when off, Value_U16 remains prev captured value */
-static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? p_context->P_STATE->Value_Percent16 : 0U; }
+/*! @return Percent16 by default */
+/* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */
+static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_GetValue(p_context->P_STATE) : 0U; }
 
 /*!
     Edge detection - considers EdgePin status
     @brief Check for edge without polling (query current state only)
     @note Uses digital pin edge if present, otherwise analog threshold edge
 */
-static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context); }
-static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context); }
-static inline bool UserAIn_IsEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context); }
+static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context->P_STATE); }
+static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context->P_STATE); }
+static inline bool UserAIn_IsEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context->P_STATE); }
 
-
-/*!
-    @brief Get raw analog value
-*/
-// static inline uint16_t UserAIn_GetRawValue(const UserAIn_T * p_context) { return p_context->P_STATE->Value_Percent16; }
-
-/*!
-    @brief Get raw ADC counts
-*/
-// static inline uint16_t UserAIn_GetRawADC(const UserAIn_T * p_context) { return p_context->P_STATE->RawValue_Adcu; }
-
-/*!
-    @brief Check if analog value has changed since last capture (analog only, ignores EdgePin)
-*/
-// static inline bool UserAIn_HasValueChanged(const UserAIn_T * p_context) { return (p_context->P_STATE->Value_Percent16 != p_context->P_STATE->ValuePrev_Percent16); }
-
-/*!
-    @brief Get current edge pin state (passthrough status)
-*/
-// static inline bool UserAIn_GetEdgePinState(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN); }
 
 /******************************************************************************/
 /*

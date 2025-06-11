@@ -59,10 +59,6 @@ static inline uint32_t bits_falling_edges(uint32_t prev_states, uint32_t states)
 */
 /******************************************************************************/
 /* Edge detection based on zero crossing */
-// static inline bool is_value_rising_edge(int32_t prev, int32_t new) { return is_rising_edge((prev != 0), (new != 0)); }
-// static inline bool is_value_falling_edge(int32_t prev, int32_t new) { return is_falling_edge((prev != 0), (new != 0)); }
-// static inline bool is_value_edge(int32_t prev, int32_t new) { return is_edge((prev != 0), (new != 0)); }
-// static inline sign_t value_edge_sign(int32_t prev, int32_t new) { return edge_sign((prev != 0), (new != 0)); }
 /* is_rising_zero_crossing */
 static inline bool is_value_rising_edge(int32_t prev, int32_t new) { return is_rising_edge((prev > 0), (new > 0)); }
 static inline bool is_value_falling_edge(int32_t prev, int32_t new) { return is_falling_edge((prev > 0), (new > 0)); }
@@ -83,7 +79,10 @@ static inline bool is_crossing(int32_t threshold, int32_t prev, int32_t value) {
 static inline sign_t crossing_sign(int32_t threshold, int32_t prev, int32_t value) { return edge_sign((prev >= threshold), (value >= threshold)); }
 
 
+
 /* rising crossing with state */
 static inline bool is_rising_schmitt_trigger(int32_t threshold_on, bool prev_state, int32_t input) { return is_rising_edge(prev_state, (input > threshold_on)); }
 static inline bool is_falling_schmitt_trigger(int32_t threshold_off, bool prev_state, int32_t input) { return is_falling_edge(prev_state, (input < threshold_off)); }
+
+
 

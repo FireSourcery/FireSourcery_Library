@@ -57,7 +57,6 @@ typedef struct Debounce
 }
 Debounce_T;
 
-
 /******************************************************************************/
 /*
 
@@ -80,6 +79,10 @@ static inline bool Debounce_Filter(Debounce_T * p_debounce, uint32_t currentTime
     }
 }
 
+/*
+    Edge detection with debounce
+    alternatively move to UserDin
+*/
 /*!
     @return true if state changed
 */
@@ -135,3 +138,25 @@ static inline uint16_t Debounce_GetTime(const Debounce_T * p_debounce) { return 
 /******************************************************************************/
 extern void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime);
 
+
+/******************************************************************************/
+/* Time-based debounce */
+// static inline bool debounce(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
+// {
+//     if (input_state != prev_state) return false;  /* State changed, not stable */
+//     return (current_time - last_change_time) >= stability_time;
+// }
+
+// /* Counter-based debounce */
+// static inline bool debounce_(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
+// {
+//     if (input_state == target_state)
+//     {
+//         if (*p_counter < threshold)  {(*p_counter)++;}
+//     }
+//     else
+//     {
+//         *p_counter = 0;
+//     }
+//     return (*p_counter >= threshold);
+// }
