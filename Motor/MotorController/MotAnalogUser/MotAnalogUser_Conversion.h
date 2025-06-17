@@ -40,7 +40,6 @@ typedef const struct MotAnalogUser_Conversion
 }
 MotAnalogUser_Conversion_T;
 
-
 static inline void MotAnalogUser_Conversion_Mark(const MotAnalogUser_Conversion_T * p_this)
 {
     Analog_Conversion_MarkConversion(&p_this->THROTTLE);

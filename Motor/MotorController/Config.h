@@ -32,16 +32,7 @@
 #define CONFIG_MOTOR_CONTROLLER_H
 
 
-// #if     defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_1)
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_2) /* Top/Bottom */
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_4) /*  */
-// #elif   defined(CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_N) /*  */
-//     #ifndef p_const->MOT_HEAT_MONITOR_CONVERSIONS.HEAT_MOSFETS_COUNT
-//     #error "p_const->MOT_HEAT_MONITOR_CONVERSIONS.HEAT_MOSFETS_COUNT must be defined"
-//     #endif
-// #else
-//     #define CONFIG_MOTOR_CONTROLLER_HEAT_MOSFETS_1
-// #endif
+
 
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)

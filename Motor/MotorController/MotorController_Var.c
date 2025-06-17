@@ -107,11 +107,11 @@ static int32_t _MotVarId_GetMotorVar(const MotorController_T * p_context, MotVar
 
     switch ((MotVarId_Type_MotorVar_T)id.NameType)
     {
-    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return Motor_VarOutput_Get(p_motor, id.NameBase);
-    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return Motor_VarOutput_Foc_Get(p_motor, id.NameBase);
-    //     // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: return Motor_Var_UserIO_Get(p_motor, id.NameBase);
-    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: return 0; /* Commands are write-only */
-    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_OUT: return Motor_VarOutput_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_FOC_OUT: return Motor_VarOutput_Foc_Get(p_motor, id.NameBase);
+    //     // case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_IO: return Motor_Var_UserIO_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD_IN: return 0; /* Commands are write-only */
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING_IO: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
         default: return 0;
     }
 }
@@ -123,12 +123,12 @@ static MotVarId_Status_T _MotVarId_SetMotorVar(const MotorController_T * p_conte
 
     switch ((MotVarId_Type_MotorVar_T)id.NameType)
     {
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_SENSOR: return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: Motor_Var_UserIO_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
-        // case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: Motor_Var_Cmd_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
-        // case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
+        case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_OUT: return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_ID_TYPE_MOTOR_VAR_FOC_OUT: return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_ID_TYPE_MOTOR_VAR_SENSOR_OUT: return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_IO: Motor_Var_UserIO_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD_IN: Motor_Var_Cmd_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING_IO: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
         default: return MOT_VAR_STATUS_ERROR;
     }
 }

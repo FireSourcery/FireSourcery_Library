@@ -168,6 +168,7 @@ Hall_T;
 #define HALL_STATE_ALLOC() (&(Hall_State_T){0})
 
 /* Init from primitive */
+// #define HALL_INIT_FROM
 #define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_State, p_Config) \
 {                                                                \
     .PIN_A = PIN_INIT(p_PinAHal, PinAId),                        \

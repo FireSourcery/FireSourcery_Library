@@ -43,16 +43,17 @@ void Encoder_InitInterrupts_Quadrature(const Encoder_T * p_encoder)
     HAL_Encoder_InitPinInterruptRisingEdge(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
 }
 
+void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
+{
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
+}
+
+/* as Hall  */
 void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
 {
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
-}
-
-void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
-{
-    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
 }
 
 // static inline void Encoder_Quadrature_InitDirection(Encoder_State_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }

@@ -51,7 +51,7 @@ void Hysteresis_InitThresholds(Hysteresis_T * p_hyst, int32_t setpoint, int32_t 
     // p_hyst->Direction = (setpoint - resetpoint); /* 0 for disable */
 
     p_hyst->Output = resetpoint;  /* Start at inactive state (resetpoint is always inactive) */
-    p_hyst->OutputStatePrev = false;
+    // p_hyst->OutputStatePrev = false;
     p_hyst->OutputState = false;
 }
 

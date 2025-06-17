@@ -75,8 +75,8 @@ typedef struct Hysteresis
     bool OutputState;   /* Current logical state. true as past the setpoint, low or high */
 
     // altneratively caller handle edge detection
-    int32_t OutputPrev;
-    bool OutputStatePrev;
+    // int32_t OutputPrev;
+    // bool OutputStatePrev;
 }
 Hysteresis_T;
 
@@ -129,7 +129,7 @@ static inline bool _Hysteresis_GetOutputState(const Hysteresis_T * p_hyst) { ret
 static inline bool _Hysteresis_Poll(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = _Hysteresis_OutputOf(p_hyst, input);
-    p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
+    // p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
     p_hyst->OutputState = (_Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
 }
@@ -166,7 +166,7 @@ static inline bool _Hysteresis_PollOutput_Inverted(Hysteresis_T * p_hyst, int32_
 static inline bool _Hysteresis_Poll_Inverted(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = _Hysteresis_OutputOf_Inverted(p_hyst, input);
-    p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
+    // p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
     p_hyst->OutputState = (_Hysteresis_RegionOf_Inverted(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
 }
@@ -178,6 +178,7 @@ static inline bool _Hysteresis_Poll_Inverted(Hysteresis_T * p_hyst, int32_t inpu
 */
 /******************************************************************************/
 /*
+    High-acting:
     Rising/Falling symetric - compensate direction/OnOff State on get
     Setpoint > Resetpoint
 */
@@ -234,6 +235,9 @@ static inline bool Hysteresis_OutputState(const Hysteresis_T * p_hyst) { return 
 static inline bool Hysteresis_IsOutputOn(const Hysteresis_T * p_hyst) { return p_hyst->OutputState; }
 static inline bool Hysteresis_IsOutputOff(const Hysteresis_T * p_hyst) { return !p_hyst->OutputState; }
 
+static inline bool Hysteresis_IsActiveHigh(const Hysteresis_T * p_hyst) { return (p_hyst->Setpoint > p_hyst->Resetpoint); }
+static inline bool Hysteresis_IsActiveLow(const Hysteresis_T * p_hyst) { return (p_hyst->Setpoint < p_hyst->Resetpoint); }
+
 static inline int32_t Hysteresis_GetOutputValue(const Hysteresis_T * p_hyst) { return p_hyst->Output; }
 // static inline Hysteresis_Region_T Hysteresis_GetOutputRegion(const Hysteresis_T * p_hyst) { return Hysteresis_RegionOf(p_hyst, p_hyst->Output); }
 
@@ -250,7 +254,7 @@ static inline int32_t Hysteresis_GetDeadbandWidth(const Hysteresis_T * p_hyst) {
 static inline void Hysteresis_Reset(Hysteresis_T * p_hyst)
 {
     p_hyst->Output = p_hyst->Resetpoint;  /* Reset to inactive state */
-    p_hyst->OutputStatePrev = false;
+    // p_hyst->OutputStatePrev = false;
     p_hyst->OutputState = false; /* Reset state */
 }
 

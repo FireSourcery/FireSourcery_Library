@@ -256,8 +256,8 @@ static inline void MotAnalogUser_CaptureInput(const MotAnalogUser_T * p_user, ui
     Direction
 */
 static inline bool _MotAnalogUser_IsNeutralOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseNeutralPin == true) && UserDIn_GetState(&p_user->NEUTRAL_DIN); }
-static inline bool MotAnalogUser_IsForwardOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseForwardPin == true) ? UserDIn_GetState(&p_user->FORWARD_DIN) : !UserDIn_GetState(&p_user->REVERSE_DIN); }
 static inline bool MotAnalogUser_IsReverseOn(const MotAnalogUser_T * p_user) { return UserDIn_GetState(&p_user->REVERSE_DIN); }
+static inline bool MotAnalogUser_IsForwardOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseForwardPin == true) ? UserDIn_GetState(&p_user->FORWARD_DIN) : !UserDIn_GetState(&p_user->REVERSE_DIN); }
 
 static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
 {

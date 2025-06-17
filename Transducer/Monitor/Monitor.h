@@ -268,5 +268,6 @@ Monitor_ConfigId_T;
 
 int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
 void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t value);
+
 int Monitor_ConfigId_Get(const Monitor_T * p_monitor, int id);
 void Monitor_ConfigId_Set(Monitor_T * p_monitor, int id, int value);

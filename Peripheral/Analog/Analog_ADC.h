@@ -102,6 +102,8 @@ Analog_ConversionChannel_T;
 #define ANALOG_CONVERSION_CHANNEL_INIT(AnalogChannel, AnalogContext) { .CHANNEL = AnalogChannel, .CONTEXT = AnalogContext, }
 #define ANALOG_CONVERSION_CHANNEL_INIT_FROM(ChannelId, PinId, p_Context, CaptureFn) { .CHANNEL = ANALOG_CHANNEL_INIT(ChannelId, PinId), .CONTEXT = ANALOG_CONTEXT_INIT(p_Context, CaptureFn) }
 
+// #define ANALOG_CONVERSION_CHANNEL_INIT_FROM_MAP(ChannelArrayTable, Length)
+
 /*
 
 */

@@ -82,6 +82,7 @@ Thermistor_Coeffs_T;
 
 #define THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .Type = TypeValue, .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
 #define THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin))
+#define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){0})
 
 /*
 
@@ -105,6 +106,8 @@ typedef const struct Thermistor
 }
 Thermistor_T;
 
+#define THERMISTOR_V_SERIES_MV_NULL (0U) /* Use AdcVRef */
+
 #define _THERMISTOR_BOARD_INIT(RSeries, RParallel, VSeries) { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, }
 
 #define THERMISTOR_INIT(RSeries, RParallel, VSeries, p_Fixed, p_Coeffs) \
@@ -115,6 +118,9 @@ Thermistor_T;
 /* Init as Configurable/Detachable */
 #define THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, p_Coeffs, p_NvmCoeffs) \
     { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = NULL, .P_COEFFS = p_Coeffs, .P_NVM_COEFFS = p_NvmCoeffs }
+
+#define THERMISTOR_WIRED_ALLOC(RSeries, RParallel, VSeries, p_NvmCoeffs) \
+    THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, THERMISTOR_COEFF_ALLOC_ZERO(), p_NvmCoeffs)
 
 /* Init as Fixed to Board */
 #define THERMISTOR_FIXED_INIT(RSeries, RParallel, VSeries, TypeValue, BValue, R0Value, T0_Kelvin) \

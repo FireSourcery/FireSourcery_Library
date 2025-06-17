@@ -47,19 +47,19 @@
 /*
     Type of NameBase e.g.
     directly corresponds to enum type containing index ids
+        may be n:1 type
 */
 /* Instance count of Motor */
 typedef enum MotVarId_Type_MotorVar
 {
-    MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS,
-    // MOT_VAR_ID_TYPE_MOTOR_STATE_USER,
-    // MOT_VAR_ID_TYPE_MOTOR_STATE_SPEED_ANGLE,
-    MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC,
-    MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_SENSOR, /* Generic */
-    MOT_VAR_ID_TYPE_MOTOR_VAR_IO,
-    MOT_VAR_ID_TYPE_MOTOR_VAR_CMD,
+    MOT_VAR_ID_TYPE_MOTOR_VAR_USER_OUT, // MOT_VAR_ID_TYPE_MOTOR_STATE_USER,
+    MOT_VAR_ID_TYPE_MOTOR_VAR_FOC_OUT,
+    MOT_VAR_ID_TYPE_MOTOR_VAR_SENSOR_OUT, /* Speed Angle */
+    MOT_VAR_ID_TYPE_MOTOR_VAR_USER_IO, /* Setpoints IO */
+    MOT_VAR_ID_TYPE_MOTOR_VAR_CMD_IN,
     // MOT_VAR_ID_TYPE_MOTOR_VAR_OPEN_LOOP_CMD,
-    MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING, /* PID Config with non-Config state permissions  */
+    MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING_IO, /* PID tunning with non-Config state permissions  */
+    // MOT_VAR_ID_TYPE_MOTOR_VAR_HEAT_MONITOR_OUT,
     // _MOT_VAR_ID_TYPE_MOTOR_VAR_END = 15U,
 }
 MotVarId_Type_MotorVar_T;
@@ -81,7 +81,7 @@ MotVarId_Type_MotorConfig_T;
 
 typedef enum MotVarId_Type_MotorSensor
 {
-    // MOT_VAR_ID_TYPE_MOTOR_SENSOR_STATE, // common, generic
+    // MOT_VAR_ID_TYPE_MOTOR_SENSOR_STATE, /* Generic Sensor. */
     // MOT_VAR_ID_TYPE_MOTOR_SENSOR_CONFIG,
     MOT_VAR_ID_TYPE_MOTOR_HALL_STATE,
     MOT_VAR_ID_TYPE_MOTOR_HALL_CONFIG,
@@ -113,8 +113,22 @@ typedef enum MotVarId_Type_Monitor
 {
     MOT_VAR_ID_TYPE_V_MONITOR_STATE, /* all V Monitors */
     MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
+
+    // MOT_VAR_ID_TYPE_V_MONITOR_SOURCE_CONFIG,
+    // MOT_VAR_ID_TYPE_V_MONITOR_AUX_CONFIG,
+    // MOT_VAR_ID_TYPE_V_MONITOR_ACCS_CONFIG,
+    // MOT_VAR_ID_TYPE_V_MONITOR_ANALOG_CONFIG,
     // MOT_VAR_ID_TYPE_V_MONITOR_VDIVIDER_REF, /* alternatively include in board ref */
-    // MOT_VAR_ID_TYPE_HEAT_MONITOR_STATE, /*  */
+
+    /* instance all + mostfet collective */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_STATE, /* Instanced */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_CONFIG, /* Instanced, Mosfets null */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_THERMISTOR_REF, /* Instanced */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_GROUP_STATE,
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_GROUP_CONFIG,
+
+    /* Heat monitors split sub type motor, pcb, mosfet */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_STATE, /* optionally shared state */
     MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_CONFIG,
     MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
@@ -129,7 +143,7 @@ MotVarId_Type_Monitor_T;
 typedef enum MotVarId_Type_Command
 {
     MOT_VAR_ID_TYPE_COMMAND_MOTOR_CONTEXT, /* passthrough */
-    // MOT_VAR_ID_TYPE_COMMAND_MOT_DRIVE, /* MotDrive StateMachine */
+    MOT_VAR_ID_TYPE_COMMAND_MOT_DRIVE, /* MotDrive StateMachine */
     // MOT_VAR_ID_TYPE_COMMAND_SYSTEM, /* Alternatively, handle with Call */
     MOT_VAR_ID_TYPE_COMMAND_BLOCKING, // Nvm + Calibration
     // MOT_VAR_ID_TYPE_COMMAND_NVM,
@@ -141,7 +155,8 @@ MotVarId_Type_Command_T;
 /******************************************************************************/
 /*
     [MotVarId_TypeType]
-    MotVarId_Handler/SubModule
+    MotVarId_Handler / SubModule
+
     Ideally mutually exclusive attribute groups when possible
         determine handler logic by id
 */
@@ -153,8 +168,8 @@ typedef enum MotVarId_TypeType
     MOT_VAR_ID_TYPE_MOTOR_CONFIG,
     MOT_VAR_ID_TYPE_MOTOR_SENSOR, // if types become excess
 
-    MOT_VAR_ID_TYPE_MONITOR,
     MOT_VAR_ID_TYPE_SERVICE,
+    MOT_VAR_ID_TYPE_MONITOR,
     // corresponding write only/subroutine, no retaining var, optionally return a status
     MOT_VAR_ID_TYPE_COMMAND,
 
@@ -169,7 +184,7 @@ typedef union MotVarId
     struct
     {
         uint16_t NameBase       : 4U; /* Name - corresponds 1:1 with enum value */
-        uint16_t NameType       : 4U; /* Name's Type - corresponds 1:1 with enum type */
+        uint16_t NameType       : 4U; /* Name's Type - corresponds with enum type n:1 */
         uint16_t NameTypeType   : 3U; /* Type's Type */
         uint16_t Instance       : 3U; /* TypeInstance1 - Upto 8 Instances Per Type */
         uint16_t Alt            : 2U; /* Alternative unit/format */
