@@ -16,3 +16,13 @@ typedef union MotBuzzer_OptionFlags
     uint16_t Value;
 }
 MotBuzzer_OptionFlags_T;
+
+/******************************************************************************/
+/*
+    move to buzzer
+*/
+/******************************************************************************/
+// static inline void MotorController_User_BeepN(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_context->BUZZER, onTime, offTime, n); }
+// static inline void MotorController_User_BeepStart(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_context->BUZZER, onTime, offTime); }
+// static inline void MotorController_User_BeepStop(const MotorController_T * p_context) { Blinky_Stop(&p_context->BUZZER); }
+// static inline void MotorController_User_DisableBuzzer(const MotorController_T * p_context) { Blinky_Disable(&p_context->BUZZER); }

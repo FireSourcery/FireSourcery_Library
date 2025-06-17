@@ -52,10 +52,19 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     Motor_State_T * p_fields = p_context->P_ACTIVE;
 
     // Motor_Debug_CaptureRefTime(p_context);
-    if (Timer_Periodic_Poll(&p_fields->SpeedTimer) == true) { MotorSensor_CaptureSpeed(p_fields->p_ActiveSensor); }
-    MotorSensor_CaptureAngle(p_fields->p_ActiveSensor);
 
-    // StateMachine_ProcState(&p_context->STATE_MACHINE); /* todo inline */
+    /* Alternatively capture */
+    // if (Timer_Periodic_Poll(&p_fields->SpeedTimer) == true)
+    // {
+    //     MotorSensor_CaptureSpeed(p_fields->p_ActiveSensor);
+    //     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_RUN)
+    //     {
+    //         _Motor_ProcOuterFeedback(p_fields);
+    //     }
+    // }
+    // MotorSensor_CaptureAngle(p_fields->p_ActiveSensor);
+
+    // StateMachine_ProcState(&p_context->STATE_MACHINE);
     StateMachine_Synchronous_Thread(&p_context->STATE_MACHINE);
 
     /* phase out here can inline */
@@ -69,7 +78,8 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     // if (StateMachine_GetActiveStateId(&p_fields->StateMachine) == MSM_STATE_ID_RUN)
     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_RUN)
     {
-        Motor_FOC_WriteDuty(&p_context->PHASE, &p_fields->Foc);
+        // Motor_FOC_WriteDuty(&p_context->PHASE, &p_fields->Foc);
+        Motor_FOC_ActivateVPhase(p_context);
     }
 
     p_fields->ControlTimerBase++;
@@ -99,13 +109,9 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
             // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_context); Motor_Analog_MarkIabc(p_context); break;
         default:            break;
     }
-    //    switch(p_context->AnalogCmd)
-    //    {
-    //        case FOC_I: break;
-    //        case FOC_V: break;
-    //        default: break;
-    //    }
 }
+
+
 
 static inline void Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {

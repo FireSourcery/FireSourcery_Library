@@ -61,7 +61,7 @@ typedef const struct PWM
 PWM_T;
 
 /*  */
-#define PWM_INIT(p_Hal, Peroid_Ticks, Channel) { .P_HAL_PWM = p_Hal, .PERIOD_TICKS = Peroid_Ticks, .CHANNEL_ID = Channel, }
+#define PWM_INIT(p_Hal, ChannelId, Peroid_Ticks) { .P_HAL_PWM = p_Hal, .CHANNEL_ID = ChannelId, .PERIOD_TICKS = Peroid_Ticks, }
 
 #ifndef PWM_DUTY_MAX
     #define PWM_DUTY_MAX (32768U)

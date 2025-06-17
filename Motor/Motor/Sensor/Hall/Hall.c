@@ -60,7 +60,6 @@ void Hall_StartCalibrate(const Hall_T * p_hall) { p_hall->P_STATE->Sensors.Value
 void Hall_CalibrateState(const Hall_T * p_hall, Hall_Id_T calibratedId)
 {
     p_hall->P_STATE->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = calibratedId;
-
 }
 
 /* disable isr */
@@ -78,6 +77,7 @@ bool Hall_Verify(uint8_t sensorsValue)
     return ((sensorsValue != HALL_ANGLE_ERROR_0) && (sensorsValue != HALL_ANGLE_ERROR_7));
 }
 
+/* Check wiring */
 bool Hall_IsStateValid(const Hall_T * p_hall)
 {
     return Hall_Verify(Hall_ReadSensors(p_hall).Value);
@@ -101,6 +101,7 @@ bool Hall_IsTableValid(const Hall_State_T * p_hall)
 /*
     Id Interface
 */
+// void Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int32_t varValue)
 void Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int32_t varValue)
 {
     switch (varId)
@@ -111,7 +112,7 @@ void Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int32_t var
         case HALL_CONFIG_SENSOR_TABLE_4: p_hall->Config.SensorsTable[4U] = varValue; break;
         case HALL_CONFIG_SENSOR_TABLE_5: p_hall->Config.SensorsTable[5U] = varValue; break;
         case HALL_CONFIG_SENSOR_TABLE_6: p_hall->Config.SensorsTable[6U] = varValue; break;
-        case HALL_CONFIG_RUN_CALIBRATION: break;
+        // case HALL_CONFIG_RUN_CALIBRATION: break;
         default: break;
     }
 }
@@ -127,7 +128,7 @@ int32_t Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId)
         case HALL_CONFIG_SENSOR_TABLE_4: value = p_hall->Config.SensorsTable[4U]; break;
         case HALL_CONFIG_SENSOR_TABLE_5: value = p_hall->Config.SensorsTable[5U]; break;
         case HALL_CONFIG_SENSOR_TABLE_6: value = p_hall->Config.SensorsTable[6U]; break;
-        case HALL_CONFIG_RUN_CALIBRATION: break;
+        // case HALL_CONFIG_RUN_CALIBRATION: break;
         default: break;
     }
     return value;

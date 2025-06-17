@@ -121,23 +121,6 @@ Thermistor_T;
     THERMISTOR_INIT(RSeries, RParallel, VSeries, THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin), NULL)
 
 
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-typedef enum Thermistor_ConfigId
-{
-    THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
-    THERMISTOR_CONFIG_R_PARALLEL, // All instance Read-Only
-    THERMISTOR_CONFIG_V_SERIES_MV, // All instance Read-Only
-    THERMISTOR_CONFIG_TYPE,
-    THERMISTOR_CONFIG_B,
-    THERMISTOR_CONFIG_R0,
-    THERMISTOR_CONFIG_T0,
-    THERMISTOR_CONFIG_LINEAR_DELTA_R,
-    THERMISTOR_CONFIG_LINEAR_DELTA_T,
-}
-Thermistor_ConfigId_T;
 
 /******************************************************************************/
 /*
@@ -205,6 +188,20 @@ extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t
 /*
 */
 /******************************************************************************/
+typedef enum Thermistor_ConfigId
+{
+    THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
+    THERMISTOR_CONFIG_R_PARALLEL, // All instance Read-Only
+    THERMISTOR_CONFIG_V_SERIES_MV, // All instance Read-Only
+    THERMISTOR_CONFIG_TYPE,
+    THERMISTOR_CONFIG_B,
+    THERMISTOR_CONFIG_R0,
+    THERMISTOR_CONFIG_T0,
+    THERMISTOR_CONFIG_LINEAR_DELTA_R,
+    THERMISTOR_CONFIG_LINEAR_DELTA_T,
+}
+Thermistor_ConfigId_T;
+
 extern int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id);
 extern void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int32_t value);
 

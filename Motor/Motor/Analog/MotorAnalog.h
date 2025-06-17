@@ -27,6 +27,7 @@
     @file   MotorAnalog.h
     @author FireSourcery
     @brief  Motor Analog Interface. independent of ADC
+            PhaseAnalog
 */
 /******************************************************************************/
 #include "MotorAnalogRef.h"
@@ -42,8 +43,9 @@ typedef volatile struct MotorAnalog_State
     int16_t Ia_Fract16;
     int16_t Ib_Fract16;
     int16_t Ic_Fract16;
-    int16_t Heat;
-    // Bits Sync;
+    // int16_t Heat;
+    // Bits VBatchSync;
+    // Bits IBatchSync;
 }
 MotorAnalog_State_T;
 
@@ -53,7 +55,7 @@ static inline int16_t MotorAnalog_GetVc_Fract16(const MotorAnalog_State_T * p_an
 static inline int16_t MotorAnalog_GetIa_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ia_Fract16; }
 static inline int16_t MotorAnalog_GetIb_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ib_Fract16; }
 static inline int16_t MotorAnalog_GetIc_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ic_Fract16; }
-static inline int16_t MotorAnalog_GetHeat(const MotorAnalog_State_T * p_analogState) { return p_analogState->Heat; }
+// static inline int16_t MotorAnalog_GetHeat(const MotorAnalog_State_T * p_analogState) { return p_analogState->Heat; }
 
 // typedef volatile struct MotorAnalog_VSource
 // {
@@ -62,6 +64,9 @@ static inline int16_t MotorAnalog_GetHeat(const MotorAnalog_State_T * p_analogSt
 // }
 // MotorAnalog_VSource_T;
 
+/*
+    static Global State for VSource/VPhaseBus
+*/
 /* static in .c */
 extern void MotorAnalog_InitVSource_V(uint16_t vSource_V);
 extern void MotorAnalog_CaptureVSource_Adcu(uint16_t vSource_Adcu);

@@ -52,7 +52,7 @@ typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_MAIN,
-    MCSM_STATE_ID_PASS,
+    MCSM_STATE_ID_PASS, /* MOTOR_CMD */
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
     // MCSM_STATE_ID_SERVO,
@@ -66,7 +66,7 @@ MotorController_StateId_T;
 */
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
-#define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, p_MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, (&(p_MotorControllerActive)->StateMachine))
+#define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, &((MotorControllerActive).StateMachine))
 
 
 // static inline bool _MotorController_StateMachine_IsFault(const MotorController_State_T * p_active) { return (StateMachine_GetActiveStateId(&p_active->StateMachine) == MCSM_STATE_ID_FAULT); }

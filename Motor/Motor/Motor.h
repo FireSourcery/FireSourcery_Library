@@ -240,9 +240,12 @@ typedef struct Motor_State
     volatile Phase_Bits_T IBatch;
     volatile Phase_Bits_T VBatch;
     volatile MotorAnalog_State_T AnalogState;
-    VarAccess_State_T VarAccessOuputState;
+    // volatile HeatMonitor_T HeatMonitorState;
+
     VarAccess_State_T VarAccessInputState; /* Input and I/O */
     VarAccess_State_T VarAccessConfigState;
+    /* Optionally */
+    VarAccess_State_T VarAccessOuputState;
 
     /*
         Feedback State
@@ -252,7 +255,6 @@ typedef struct Motor_State
     */
     const MotorSensor_T * p_ActiveSensor;
     MotorSensor_State_T SensorState;
-
     // SpeedAngle_T SpeedAngle;     /* outerfeedback math state */
     // angle16_t MechanicalAngle;
     // angle16_t ElectricalAngle;           /* Angle Feedback */
@@ -370,16 +372,19 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_ACTIVE;
+    // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
+
     /* This is the only const context dependency of STATEMACHINE
         alternatively, handle with pointer from state, reduce statemachine context */
     Phase_T PHASE;
+    // Phase_Analog_T PHASE_ANALOG;
     MotorSensor_Table_T SENSOR_TABLE;
     // const Encoder_T ENCODER;
     // const Hall_T HALL;
+
     Motor_Analog_T ANALOG;
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
 
-    // const Motor_VSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
     StateMachine_T STATE_MACHINE;
     Motor_VarAccess_T VAR_ACCESS;
 
@@ -418,12 +423,26 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 */
 /******************************************************************************/
 
-
 /******************************************************************************/
 /*
+    selected sensor is stored in runtime context.
 */
 /******************************************************************************/
-static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return MotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor->P_STATE); }
+static inline bool Motor_PollCaptureSensor(Motor_State_T * p_motor)
+{
+    bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
+    if (isCaptureSpeed == true)
+    {
+        MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
+        // p_motor->p_ActiveSensor ->Speed_Fract16 = (MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_ACTIVE->Speed_Fract16) / 2;
+    }
+    MotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
+    return isCaptureSpeed;
+    // return (Timer_Periodic_Poll(&p_motor->SpeedTimer) == true) ? ({ MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor); true; }) : false;
+}
+
+static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return MotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+
 
 /******************************************************************************/
 /*
@@ -460,7 +479,7 @@ static inline fract16_t Motor_SpeedReqLimitOf(const Motor_State_T * p_motor, int
 */
 /* Speed limit in [Direction] selected. Forward relative to the user */
 static inline uint16_t Motor_GetSpeedLimitSelected(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
-static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed(p_motor)) > Motor_GetSpeedLimitSelected(p_motor)); }
+// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed(p_motor)) > Motor_GetSpeedLimitSelected(p_motor)); }
 
 static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
@@ -481,6 +500,8 @@ static inline uint16_t Motor_GetVAlign(const Motor_State_T * p_motor) { return f
 static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { return (uint32_t)p_motor->Config.AlignScalar_Fract16 * 3 / 4; }
 
 static inline uint16_t Motor_GetIAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, MotorAnalogRef_GetIRatedPeak_Fract16()); }
+
+
 
 /******************************************************************************/
 /*
@@ -525,7 +546,7 @@ static inline fract16_t _Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 /*
     Pid State on FeedbackMode/Resume
 */
-// void Motor_MatchSpeedFeedbackState(Motor_State_T * p_motor, int32_t torqueReq)
+// void Motor_MatchOuterFeedbackState(Motor_State_T * p_motor, int32_t torqueReq)
 static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int32_t torqueReq)
 {
     if (p_motor->FeedbackMode.Speed == 1U)
@@ -539,23 +560,6 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int32_t 
         Ramp_SetOutput(&p_motor->TorqueRamp, torqueReq);
         Ramp_SetTarget(&p_motor->TorqueRamp, torqueReq);
     }
-}
-
-
-/*
-    selected sensor is stored in runtime context.
-*/
-static inline bool Motor_PollCaptureSensor(Motor_State_T * p_motor)
-{
-    bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
-    if (isCaptureSpeed == true)
-    {
-        MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
-        // p_motor->p_ActiveSensor->P_STATE->Speed_Fract16 = (MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_ACTIVE->Speed_Fract16) / 2;
-    }
-    MotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
-    return isCaptureSpeed;
-    // return (Timer_Periodic_Poll(&p_motor->SpeedTimer) == true) ? ({ MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor); true; }) : false;
 }
 
 /* inline for state machine */
@@ -576,11 +580,90 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
     MotorSensor_CaptureAngle(p_motor->P_ACTIVE->p_ActiveSensor);
 }
 
+/******************************************************************************/
+/*
+    Derived From Config
+    Speed Ref / Conversion
+*/
+/******************************************************************************/
+/*
+    V of Speed
+*/
+static inline uint16_t Motor_RpmOfKvVFract16(const Motor_State_T * p_motor, uint16_t v_fract16) { return (int32_t)p_motor->Config.Kv * v_fract16 * MotorAnalogRef_GetVMaxVolts() >> 15U; }
+static inline uint16_t Motor_VFract16OfKvRpm(const Motor_State_T * p_motor, uint16_t rpm) { return (rpm * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
+
+// static inline uint32_t Motor_ElDegPerCycleOfVFract16(const Motor_State_T * p_motor, uint16_t degPerCycle)
+
+/* SpeedRated via direct Parameter */
+static inline uint32_t Motor_GetSpeedRatedRef_ERpm(const Motor_State_T * p_motor) { return speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle); }
+static inline uint16_t Motor_GetSpeedRatedRef_Rpm(const Motor_State_T * p_motor) { return speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle) / p_motor->Config.PolePairs; }
+
+/* SpeedRated validation via Kv */
+/* updated at run-time */
+static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKvVFract16(p_motor, MotorAnalog_GetVSource_Fract16()); }
+static inline uint16_t Motor_GetSpeedVRef_DegPerCycle(const Motor_State_T * p_motor) { return speed_angle16_of_rpm(MOTOR_CONTROL_FREQ / p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor)); }
+
+static inline uint16_t Motor_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_Rpm(p_motor), FRACT16_2_DIV_SQRT3); }
+static inline uint16_t Motor_GetSpeedVSvpwmRef_DegPerCycle(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_DegPerCycle(p_motor), FRACT16_2_DIV_SQRT3); }
+
+/* V of SpeedRated. debug */
+static inline int32_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_motor) { return Motor_VFract16OfKvRpm(p_motor, Motor_GetSpeedRatedRef_Rpm(p_motor)); }
+
+/* When Speed is scaled to VSource */
+// static inline accum32_t Motor_VOfSpeed_Fract16(accum32_t speed_fract16) { return fract16_mul(speed_fract16, MotorAnalog_GetVSource_Fract16()); }
+// static inline accum32_t Motor_SpeedOfV_Fract16(accum32_t v_fract16)     { return fract16_div(v_fract16, MotorAnalog_GetVSource_Fract16()); }
+
+/*!
+    @return V_Fract16 - VBus using Kv
+*/
+static inline accum32_t Motor_VSpeed_Fract16OfDegPerCycle(const Motor_State_T * p_motor, int32_t speed_degControl)
+    { return speed_degControl * MotorAnalog_GetVSource_Fract16() / Motor_GetSpeedVRef_DegPerCycle(p_motor); }
+    // { return (speed_degControl * MOTOR_CONTROL_FREQ / (65536U / 60U) * 32768U) * p_motor->Config.PolePairs / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
+    // { return (speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts() / p_motor->Config.PolePairs); }
+    // { return Motor_VFract16OfKvRpm(p_motor, speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) / p_motor->Config.PolePairs); }
+
+/* SpeedOfV return DegPerCycle */
+static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_motor, accum32_t v_fract16)
+    { return v_fract16 * Motor_GetSpeedVRef_DegPerCycle(p_motor) / MotorAnalog_GetVSource_Fract16(); }
+
+/*!
+    VPhase approximation via Speed
+    @return
+*/
+static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
+{
+    int32_t result = Motor_VSpeed_Fract16OfDegPerCycle(p_motor, MotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor));
+    // int32_t result = p_motor->AngularSpeed_DegPerCycle * MotorAnalog_GetVSource_Fract16() / p_motor->Config.SpeedRated_DegPerCycle; /* SpeedRated ~= SpeedVRef */
+    return fract16_mul(result, p_motor->Config.VSpeedScalar_Fract16);
+}
+
+
+/******************************************************************************/
+/*
+    Direction - User/Unsigned Config
+*/
+/******************************************************************************/
+/*!
+    Convert between a user reference direction or non directional, to CCW/CW direction
+    @param[in] userCmd int32_t[-65536:65536] fract16 or percent16. positive is forward relative to the user.
+    @return int32_t[-65536:65536],
+    @note Over saturated if input is -32768, caller call clamp. cast may resilt in overflow.
+
+*/
+static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+
+/* */
+static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
+static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
+static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
+static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
+
+static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
+
 
 /******************************************************************************/
 /*! todo as speedangle, SpeedAngle + OuterControl */
 /******************************************************************************/
-
 // static inline void Motor_SetMechAngleFeedforward(MotorSensor_State_T * p_motor, angle16_t angle)
 // {
 //     p_motor->MechanicalAngle = angle;
@@ -607,63 +690,6 @@ static inline void Motor_SetSpeedFeedforward(Motor_State_T * p_motor, int32_t sp
     // Motor_SetElecAngleFeedforward(p_motor, speed_degControl + p_motor->SensorState.ElectricalAngle);
 }
 
-
-
-/******************************************************************************/
-/*
-    Derived From Config
-    Speed Ref / Conversion
-*/
-/******************************************************************************/
-/*
-    V of Speed
-*/
-static inline uint16_t Motor_RpmOfKvVFract16(const Motor_State_T * p_motor, uint16_t v_fract16) { return (int32_t)p_motor->Config.Kv * v_fract16 * MotorAnalogRef_GetVMaxVolts() >> 15U; }
-static inline uint16_t Motor_VFract16OfKvRpm(const Motor_State_T * p_motor, uint16_t rpm) { return (rpm * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
-
-/*
-    Per Control Cycle
-*/
-static inline uint32_t Motor_GetSpeedRatedRef_ERpm(const Motor_State_T * p_motor) { return speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle); }
-static inline uint16_t Motor_GetSpeedRatedRef_Rpm(const Motor_State_T * p_motor) { return speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle) / p_motor->Config.PolePairs; }
-
-/* updated at run-time */
-static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKvVFract16(p_motor, MotorAnalog_GetVSource_Fract16()); }
-static inline uint16_t Motor_GetSpeedVRef_DegPerCycle(const Motor_State_T * p_motor) { return speed_angle16_of_rpm(MOTOR_CONTROL_FREQ / p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor)); }
-
-static inline uint16_t Motor_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_Rpm(p_motor), FRACT16_2_DIV_SQRT3); }
-static inline uint16_t Motor_GetSpeedVSvpwmRef_DegPerCycle(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_DegPerCycle(p_motor), FRACT16_2_DIV_SQRT3); }
-
-
-
-/* Speed is scaled to VSource */
-// static inline accum32_t Motor_VOfSpeed_Fract16(accum32_t speed_fract16) { return fract16_mul(speed_fract16, MotorAnalog_GetVSource_Fract16()); }
-// static inline accum32_t Motor_SpeedOfV_Fract16(accum32_t v_fract16)     { return fract16_div(v_fract16, MotorAnalog_GetVSource_Fract16()); }
-
-/* As VBus using Kv */
-static inline accum32_t Motor_VSpeed_Fract16OfDegPerCycle(const Motor_State_T * p_motor, int32_t speed_degControl)
-    { return speed_degControl * MotorAnalog_GetVSource_Fract16() / Motor_GetSpeedVRef_DegPerCycle(p_motor); }
-
-// static inline accum32_t Motor_VSpeed_Fract16OfDegPerCycle(const Motor_State_T * p_motor, int32_t speed_degControl)
-//     // { return (speed_degControl * MOTOR_CONTROL_FREQ / (65536U / 60U) * 32768U) * p_motor->Config.PolePairs / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
-//     { return (speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts() / p_motor->Config.PolePairs); }
-
-/* SpeedOfV return DegPerCycle */
-static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_motor, accum32_t v_fract16)
-    { return v_fract16 * Motor_GetSpeedVRef_DegPerCycle(p_motor) / MotorAnalog_GetVSource_Fract16(); }
-
-/*!
-    VPhase approximation via Speed
-    @return
-*/
-static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
-{
-    int32_t result = Motor_VSpeed_Fract16OfDegPerCycle(p_motor, MotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor->P_STATE));
-    // int32_t result = p_motor->AngularSpeed_DegPerCycle * MotorAnalog_GetVSource_Fract16() / p_motor->Config.SpeedRated_DegPerCycle; /*  SpeedRated ~= SpeedVRef */
-    return fract16_mul(result, p_motor->Config.VSpeedScalar_Fract16);
-}
-
-
 /*
     replace with math_speed
     SpeedFract16 via RPM Ref
@@ -677,40 +703,14 @@ static inline int32_t Motor_MechSpeedOfAngle_Fract16(const Motor_State_T * p_mot
 static inline int16_t Motor_ElecAngleOfSpeed_Fract16(const Motor_State_T * p_motor, int16_t speed_fract16)
     { return ((int32_t)speed_fract16 * Motor_GetSpeedRatedRef_Rpm(p_motor)) / ((uint32_t)60 * MOTOR_CONTROL_FREQ / 2 / p_motor->Config.PolePairs); }
 
-
-/******************************************************************************/
-/*
-    Direction - User/Unsigned Config
-*/
-/******************************************************************************/
-/*!
-    Convert between a user reference direction or non directional, to CCW/CW direction
-    @param[in] userCmd int32_t[-65536:65536] fract16 or percent16. positive is forward relative to the user.
-    @return int32_t[-65536:65536],
-    @note Over saturated if input is -32768, caller call clamp. cast may resilt in overflow.
-
-*/
-static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
-
-/*
-*/
-static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
-static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
-static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
-static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
-
-static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
-
-
-
 /******************************************************************************/
 /*!
     Extern
 */
 /******************************************************************************/
-extern void Motor_InitFrom(const Motor_T * p_const, const Motor_Config_T * p_config);
-extern void Motor_Init(const Motor_T * p_const);
-extern void Motor_InitReboot(Motor_State_T * p_motor);
+extern void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config);
+extern void Motor_Init(const Motor_T * p_context);
+extern void Motor_Reset(Motor_State_T * p_motor);
 
 extern void Motor_ResetSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_ResetTorqueRamp(Motor_State_T * p_motor);
@@ -719,20 +719,22 @@ extern void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T 
 extern void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int modeValue);
 
 extern void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);
-extern void Motor_SetDirection_Cast(Motor_State_T * p_motor, int direction);
 extern void Motor_SetDirectionForward(Motor_State_T * p_motor);
 extern void Motor_SetDirectionReverse(Motor_State_T * p_motor);
 
 extern void Motor_ResetSpeedLimitActive(Motor_State_T * p_motor);
 extern void Motor_ResetILimitActive(Motor_State_T * p_motor);
+
 extern void Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_SetSpeedLimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16);
 extern void Motor_ClearSpeedLimit(Motor_State_T * p_motor);
+
 extern void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_ufract16);
 extern void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_ufract16);
 extern void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16);
 extern void Motor_ClearILimit(Motor_State_T * p_motor);
+
 extern bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16);
 extern bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_Fract16);
 extern void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);

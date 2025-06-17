@@ -221,10 +221,10 @@ static void Pass_Entry(const MotorController_T * p_context)
     switch (p_mc->Config.InputMode)
     {
         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Disable);
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Enable);
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN:
             break;

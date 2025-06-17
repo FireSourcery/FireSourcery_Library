@@ -64,7 +64,6 @@ NvMemory_Status_T _MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, u
 #elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
     return Flash_Write_Blocking(p_motNvm->P_FLASH, onceAddress, p_dataBuffer, size);
 #endif
-
 }
 
 NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size)

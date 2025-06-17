@@ -94,7 +94,7 @@ static const State_T CALIBRATION_STATE_HALL =
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {
     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
-    // StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &(const State_TransitionInput_T) {.P_VALID = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
+    // StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &(const State_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
 }
 
 /******************************************************************************/

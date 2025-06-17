@@ -45,9 +45,14 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
 };
 
+/******************************************************************************/
+/*!
+    Common
+*/
+/******************************************************************************/
 static State_T * TransitionFault(const Motor_T * p_motor, state_input_value_t faultFlags) { return &MOTOR_STATE_FAULT; }
 
-static void Motor_PollFaultFlags(const Motor_T * p_motor)
+static void Motor_ClearFaultFlags(const Motor_T * p_motor)
 {
     // p_motor->P_ACTIVE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_ACTIVE->Thermistor);
     p_motor->P_ACTIVE->FaultFlags.PositionSensor = !MotorSensor_VerifyCalibration(p_motor->P_ACTIVE->p_ActiveSensor);
@@ -91,7 +96,7 @@ static State_T * Init_Next(const Motor_T * p_motor)
         p_motor->P_ACTIVE->FaultFlags.PositionSensor = !MotorSensor_VerifyCalibration(p_motor->P_ACTIVE->p_ActiveSensor);
         // p_motor->P_ACTIVE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_ACTIVE->Thermistor);
 
-        // Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
+        // Motor_ClearFaultFlags(p_motor); /* Clear the fault flags once */
 
         if (p_motor->P_ACTIVE->FaultFlags.Value != 0U)  { p_nextState = &MOTOR_STATE_FAULT; }
         else                                            { p_nextState = &MOTOR_STATE_STOP; }
@@ -610,7 +615,7 @@ static State_T * Fault_InputClearFault(const Motor_T * p_motor, state_input_valu
     // p_motor->P_ACTIVE->FaultFlags.Value &= ~faultFlags;
     // p_motor->P_ACTIVE->FaultFlags.Value = 0U;
     // p_motor->P_ACTIVE->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); // non polling check
-    Motor_PollFaultFlags(p_motor);
+    Motor_ClearFaultFlags(p_motor);
 
     return (p_motor->P_ACTIVE->FaultFlags.Value == 0U) ? &MOTOR_STATE_STOP : NULL;
 }

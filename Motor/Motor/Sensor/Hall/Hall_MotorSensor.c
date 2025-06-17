@@ -31,43 +31,49 @@
 #include "Hall_MotorSensor.h"
 
 
-void Hall_MotorSensor_Init(const Hall_MotorSensor_T * p_sensor)
+//case
+// const Hall_MotorSensor_T * OfContext(const MotorSensor_T * p_sensor) { return (Hall_MotorSensor_T *)p_sensor; }
+
+static void Hall_MotorSensor_Init(const Hall_MotorSensor_T * p_sensor)
 {
     Hall_Init(&p_sensor->HALL);
     Encoder_ModeDT_Init_Polling(p_sensor->P_ENCODER);
-    #if     defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if     defined(CONFIG_MOTOR_HALL_MODE_ISR)
     Encoder_InitInterrupts_ABC(p_sensor->P_ENCODER);
-    #endif
+#endif
     // Encoder_SetUnitsHall_MechSpeed(p_sensor->P_ENCODER, );
 
     Encoder_ModeDT_SetInitial(p_sensor->P_ENCODER);
 }
 
-
-// const Hall_MotorSensor_T * OfContext(const MotorSensor_T * p_sensor) { return (Hall_MotorSensor_T *)p_sensor; }
-
-void Hall_MotorSensor_CaptureAngle(const Hall_MotorSensor_T * p_sensor)
+static void Hall_MotorSensor_CaptureAngle(const Hall_MotorSensor_T * p_sensor)
 {
+    MotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
+
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true)
     {
         Encoder_SinglePhase_CapturePulse(p_sensor->P_ENCODER); // Encoder_CaptureCount
-        p_sensor->MOTOR_SENSOR.P_STATE->ElectricalAngle = Hall_CaptureAngle(p_sensor->HALL.P_STATE);
-        p_sensor->MOTOR_SENSOR.P_STATE->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE);
+        p_state->ElectricalAngle = Hall_CaptureAngle(p_sensor->HALL.P_STATE);
+        p_state->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE);
         /* on direction diff */
     }
     else
     {
-        p_sensor->MOTOR_SENSOR.P_STATE->ElectricalAngle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
-        p_sensor->MOTOR_SENSOR.P_STATE->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
+        p_state->ElectricalAngle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
+
+        // if capture mech anagle
+        p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
     }
 }
 
-void Hall_MotorSensor_CaptureSpeed(const Hall_MotorSensor_T * p_sensor)
+static void Hall_MotorSensor_CaptureSpeed(const Hall_MotorSensor_T * p_sensor)
 {
+    MotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
+
     Encoder_ModeDT_CaptureVelocity(p_sensor->P_ENCODER);
-    p_sensor->MOTOR_SENSOR.P_STATE->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(p_sensor->P_ENCODER->P_STATE);
-    // p_sensor->P_STATE->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE);
-    p_sensor->MOTOR_SENSOR.P_STATE->Speed_Fract16 = (Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE) + p_sensor->MOTOR_SENSOR.P_STATE->Speed_Fract16) / 2;
+    p_state->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(p_sensor->P_ENCODER->P_STATE);
+    // p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE);
+    p_state->Speed_Fract16 = (Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE) + p_state->Speed_Fract16) / 2;
 }
 
 // uint16_t Hall_MotorSensor_CaptureState(const MotorSensor_T * p_sensor)
@@ -75,24 +81,22 @@ void Hall_MotorSensor_CaptureSpeed(const Hall_MotorSensor_T * p_sensor)
 
 // }
 
-bool Hall_MotorSensor_IsFeedbackAvailable(const Hall_MotorSensor_T * p_sensor) { return true; }
+static bool Hall_MotorSensor_IsFeedbackAvailable(const Hall_MotorSensor_T * p_sensor) { return true; }
 
+static bool Hall_MotorSensor_VerifyCalibration(const Hall_MotorSensor_T * p_sensor) { return Hall_IsTableValid(p_sensor->HALL.P_STATE); }
 
-bool Hall_MotorSensor_VerifyCalibration(const Hall_MotorSensor_T * p_sensor) { return Hall_IsTableValid(p_sensor->HALL.P_STATE); }
-
-int Hall_MotorSensor_GetDirection(const Hall_MotorSensor_T * p_sensor)
+static int Hall_MotorSensor_GetDirection(const Hall_MotorSensor_T * p_sensor)
 {
     return Hall_GetDirection(p_sensor->HALL.P_STATE);
 }
 
-void Hall_MotorSensor_SetDirection(const Hall_MotorSensor_T * p_sensor, int direction)
+static void Hall_MotorSensor_SetDirection(const Hall_MotorSensor_T * p_sensor, int direction)
 {
     Hall_SetDirection(p_sensor->HALL.P_STATE, (Hall_Direction_T)direction);
     Encoder_SinglePhase_SetDirection(p_sensor->P_ENCODER->P_STATE, direction);  /* interpolate as +/- */
 }
 
-
-void Hall_MotorSensor_SetInitial(const Hall_MotorSensor_T * p_sensor)
+static void Hall_MotorSensor_SetInitial(const Hall_MotorSensor_T * p_sensor)
 {
     Hall_SetInitial(&p_sensor->HALL);
     Encoder_ModeDT_SetInitial(p_sensor->P_ENCODER);
@@ -106,7 +110,7 @@ void Hall_MotorSensor_SetInitial(const Hall_MotorSensor_T * p_sensor)
     CPR = PolePairs*6   => GetSpeed => mechanical speed
     CPR = 6             => GetSpeed => electrical speed
 */
-// void Encoder_SetUnitsHall_ElSpeed(Encoder_State_T * p_encoder, uint32_t speedRef_Rpm)
+// static void Encoder_SetUnitsHall_ElSpeed(Encoder_State_T * p_encoder, uint32_t speedRef_Rpm)
 // {
 //     p_encoder->Config.IsQuadratureCaptureEnabled = false;
 //     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
@@ -114,7 +118,7 @@ void Hall_MotorSensor_SetInitial(const Hall_MotorSensor_T * p_sensor)
 //     if (p_encoder->Config.PartitionsPerRevolution != 1U) { Encoder_SetPartitionsPerRevolution(p_encoder, 1U); }
 // }
 
-// void Encoder_SetUnitsHall_MechSpeed(Encoder_State_T * p_encoder, uint16_t speedRef_Rpm, uint8_t polePairs)
+// static void Encoder_SetUnitsHall_MechSpeed(Encoder_State_T * p_encoder, uint16_t speedRef_Rpm, uint8_t polePairs)
 // {
 //     p_encoder->Config.IsQuadratureCaptureEnabled = false;
 //     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
@@ -122,7 +126,7 @@ void Hall_MotorSensor_SetInitial(const Hall_MotorSensor_T * p_sensor)
 //     if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); }     /* Set for electrical cycle */
 // }
 
-void Hall_MotorSensor_SetUnitsHall_ElSpeed(const Hall_MotorSensor_T * p_sensor, uint32_t speedRef_Rpm)
+static void Hall_MotorSensor_SetUnitsHall_ElSpeed(const Hall_MotorSensor_T * p_sensor, uint32_t speedRef_Rpm)
 {
     Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
     p_encoder->Config.IsQuadratureCaptureEnabled = false;
@@ -131,15 +135,23 @@ void Hall_MotorSensor_SetUnitsHall_ElSpeed(const Hall_MotorSensor_T * p_sensor, 
     if (p_encoder->Config.PartitionsPerRevolution != 1U) { Encoder_SetPartitionsPerRevolution(p_encoder, 1U); }
 }
 
-void Hall_MotorSensor_SetUnitsHall_MechSpeed(const Hall_MotorSensor_T * p_sensor, uint16_t speedRef_Rpm, uint8_t polePairs)
+static void Hall_MotorSensor_SetUnitsHall_MechSpeed(const Hall_MotorSensor_T * p_sensor, uint16_t speedRef_Rpm, uint8_t polePairs)
 {
     Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
     p_encoder->Config.IsQuadratureCaptureEnabled = false;
     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
     if (p_encoder->Config.CountsPerRevolution != polePairs * 6U) { Encoder_SetCountsPerRevolution(p_encoder, polePairs * 6U); }
-    if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); }     /* Set for electrical cycle */
+    if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); } /* Set for electrical cycle */
 }
 
+static void Hall_MotorSensor_InitConfig(const Hall_MotorSensor_T * p_sensor, uint16_t speedRef_Rpm, uint8_t polePairs)
+{
+    // Encoder_SetUnitsHall_MechSpeed(p_sensor->P_ENCODER, speedRef_Rpm, polePairs);
+}
+
+/*
+    Interface VTable
+*/
 const MotorSensor_VTable_T HALL_VTABLE =
 {
     .INIT = (MotorSensor_Proc_T)Hall_MotorSensor_Init,
@@ -154,10 +166,3 @@ const MotorSensor_VTable_T HALL_VTABLE =
     // .GetElectricalAngle = (MotorSensor_Angle_T)Hall_GetElectricalAngle,
     // .GetMechanicalAngle = (MotorSensor_Angle_T)Hall_GetMechanicalAngle,
 };
-
-
-
-void Hall_MotorSensor_InitConfig(const Hall_MotorSensor_T * p_sensor, uint16_t speedRef_Rpm, uint8_t polePairs)
-{
-    // Encoder_SetUnitsHall_MechSpeed(p_sensor->P_ENCODER, speedRef_Rpm, polePairs);
-}

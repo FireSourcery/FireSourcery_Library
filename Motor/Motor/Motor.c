@@ -31,60 +31,65 @@
 #include "Motor.h"
 #include <string.h>
 
-// void Motor_InitFrom(const Motor_T * p_const, const Motor_Config_T * p_config)
+
+// void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config)
 // {
-//     if (p_config != NULL) { memcpy(&p_const->P_ACTIVE->Config, p_config, sizeof(Motor_Config_T)); }
+//     if (p_config != NULL) { memcpy(&p_context->P_ACTIVE->Config, p_config, sizeof(Motor_Config_T)); }
 
 //     /*
 //         HW Wrappers Init
 //     */
-//     Phase_Init(&p_const->PHASE);
+//     Phase_Init(&p_context->PHASE);
 // #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 //     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
 // #endif
-//     Motor_Sensor_Init(p_const);
-//     Motor_InitReboot(p_const->P_ACTIVE); // alternatively move to state machine
-//     StateMachine_Init(&p_const->STATE_MACHINE);
+//     Motor_Sensor_Init(p_context);
+//     Motor_Reset(p_context->P_ACTIVE); // alternatively move to state machine
+//     StateMachine_Init(&p_context->STATE_MACHINE);
 // }
 
 /*
 
 */
-void Motor_Init(const Motor_T * p_const)
+void Motor_Init(const Motor_T * p_context)
 {
-    // assert(MotorAnalog_GetVSource_Fract16() != 0U); /* Must be set before init */
-    // Motor_InitFrom(p_const, p_const->P_NVM_CONFIG);
+    assert(MotorAnalog_GetVSource_Fract16() != 0U); /* set before init */
+    // Motor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 
-    if (p_const->P_NVM_CONFIG != NULL) { p_const->P_ACTIVE->Config = *p_const->P_NVM_CONFIG; }
+    /* Config including selected angle sensor init */
+    if (p_context->P_NVM_CONFIG != NULL) { p_context->P_ACTIVE->Config = *p_context->P_NVM_CONFIG; }
 
     /*
         HW Wrappers Init
     */
-    Phase_Init(&p_const->PHASE);
+    Phase_Init(&p_context->PHASE);
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
 #endif
 
-    p_const->P_ACTIVE->p_ActiveSensor = MotorSensor_Of(&p_const->SENSOR_TABLE, p_const->P_ACTIVE->Config.SensorMode);
-    MotorSensor_Init(p_const->P_ACTIVE->p_ActiveSensor);
+    p_context->P_ACTIVE->p_ActiveSensor = MotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_ACTIVE->Config.SensorMode);
+    MotorSensor_Init(p_context->P_ACTIVE->p_ActiveSensor);
 
     // HeatMonitor_Init(&p_motor->Thermistor);
 
-    Motor_InitReboot(p_const->P_ACTIVE); // alternatively move to state machine
-    StateMachine_Init(&p_const->STATE_MACHINE);
+    Motor_Reset(p_context->P_ACTIVE); // alternatively move to state machine
+    StateMachine_Init(&p_context->STATE_MACHINE);
 }
 
 /*
 
 */
-void Motor_InitReboot(Motor_State_T * p_motor)
+void Motor_Reset(Motor_State_T * p_motor)
 {
     /*
         SW Structs
     */
-    Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
-    Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
+   Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
+   Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
+    /*
+       Feedback State
+    */
     FOC_Init(&p_motor->Foc);
     // BEMF_Init(&p_motor->Bemf);
 
@@ -96,6 +101,9 @@ void Motor_InitReboot(Motor_State_T * p_motor)
     PID_Init(&p_motor->PidIBus);
 #endif
 
+    Motor_ResetSpeedLimitActive(p_motor);
+    Motor_ResetILimitActive(p_motor);
+
     Motor_ResetSpeedRamp(p_motor);
     Motor_ResetTorqueRamp(p_motor);
 
@@ -104,9 +112,6 @@ void Motor_InitReboot(Motor_State_T * p_motor)
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeed_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampI_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
 // #endif
-
-    Motor_ResetSpeedLimitActive(p_motor);
-    Motor_ResetILimitActive(p_motor);
 
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);

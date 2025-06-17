@@ -45,7 +45,7 @@ void Motor_Analog_CaptureVc(Motor_State_T * p_motor, adc_result_t adcu) { p_moto
 void Motor_Analog_CaptureIa(Motor_State_T * p_motor, adc_result_t adcu) { p_motor->AnalogState.Ia_Fract16 = _Motor_Analog_IFract16Of(p_motor->Config.IaZeroRef_Adcu, adcu); p_motor->IBatch.A = 1U; }
 void Motor_Analog_CaptureIb(Motor_State_T * p_motor, adc_result_t adcu) { p_motor->AnalogState.Ib_Fract16 = _Motor_Analog_IFract16Of(p_motor->Config.IbZeroRef_Adcu, adcu); p_motor->IBatch.B = 1U; }
 void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu) { p_motor->AnalogState.Ic_Fract16 = _Motor_Analog_IFract16Of(p_motor->Config.IcZeroRef_Adcu, adcu); p_motor->IBatch.C = 1U; }
-void Motor_Analog_CaptureHeat(Motor_State_T * p_motor, adc_result_t adcu) { p_motor->AnalogState.Heat = adcu; }
+// void Motor_Analog_CaptureHeat(Motor_State_T * p_motor, adc_result_t adcu) { p_motor->AnalogState.Heat = adcu; }
 
 
 /******************************************************************************/
@@ -54,37 +54,40 @@ void Motor_Analog_CaptureHeat(Motor_State_T * p_motor, adc_result_t adcu) { p_mo
 */
 /******************************************************************************/
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
-void Motor_Analog_MarkVabc(const Motor_T * p_motorConst)
+void Motor_Analog_MarkVabc(const Motor_T * p_context)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_VA);
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_VB);
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_VC);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VA);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VB);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VC);
 #else
-    (void)p_motorConst;
+    (void)p_context;
 #endif
 }
 
 // void Motor_Analog_MarkVabc(Motor_Analog_T * p_channels)
-// {
-// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-//     Analog_Conversion_MarkConversion(&p_channels->CONVERSION_VA);
-//     Analog_Conversion_MarkConversion(&p_channels->CONVERSION_VB);
-//     Analog_Conversion_MarkConversion(&p_channels->CONVERSION_VC);
-// #else
-//     (void)p_channels;
-// #endif
-// }
 
-void Motor_Analog_MarkIabc(const Motor_T * p_motorConst)
+void Motor_Analog_MarkIabc(const Motor_T * p_context)
 {
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_IA);
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_IB);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IA);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-    Analog_Conversion_MarkConversion(&p_motorConst->ANALOG.CONVERSION_IC);
+    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IC);
 #endif
 }
 
+/*
+    alternatively, directly on register state
+*/
+void Motor_Analog_MarkPhase(const Motor_T * p_context)
+{
+    Phase_Bits_T state = _Phase_ReadState(&p_context->PHASE);
+    Analog_Conversion_MarkConversion((state.A) ? &p_context->ANALOG.CONVERSION_IA : &p_context->ANALOG.CONVERSION_VA);
+    Analog_Conversion_MarkConversion((state.B) ? &p_context->ANALOG.CONVERSION_IB : &p_context->ANALOG.CONVERSION_VB);
+    Analog_Conversion_MarkConversion((state.C) ? &p_context->ANALOG.CONVERSION_IC : &p_context->ANALOG.CONVERSION_VC);
+}
+
+// void Phase_Analog(const Phase_T * p_phase, Motor_Analog_T * p_analog)
 
 /******************************************************************************/
 /*!
@@ -93,51 +96,57 @@ void Motor_Analog_MarkIabc(const Motor_T * p_motorConst)
 /******************************************************************************/
 static void StartCalibration(const Motor_T * p_motor)
 {
-    Motor_State_T * p_fields = p_motor->P_ACTIVE;
+    Motor_State_T * const p_fields = p_motor->P_ACTIVE;
 
-    Timer_StartPeriod_Millis(&p_motor->P_ACTIVE->ControlTimer, 2000U); /* 2 Seconds */
+    Timer_StartPeriod_Millis(&p_fields->ControlTimer, 2000U); /* 2 Seconds */
 
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(&p_motor->PHASE);
 
-    Filter_Init(&p_motor->P_ACTIVE->FilterA);
-    Filter_Init(&p_motor->P_ACTIVE->FilterB);
-    Filter_Init(&p_motor->P_ACTIVE->FilterC);
-    p_motor->P_ACTIVE->Config.IaZeroRef_Adcu = 0U;
-    p_motor->P_ACTIVE->Config.IbZeroRef_Adcu = 0U;
-    p_motor->P_ACTIVE->Config.IcZeroRef_Adcu = 0U;
+    Filter_Init(&p_fields->FilterA);
+    Filter_Init(&p_fields->FilterB);
+    Filter_Init(&p_fields->FilterC);
+    p_fields->Config.IaZeroRef_Adcu = 0U;
+    p_fields->Config.IbZeroRef_Adcu = 0U;
+    p_fields->Config.IcZeroRef_Adcu = 0U;
     Motor_Analog_MarkIabc(p_motor);
-    p_motor->P_ACTIVE->IBatch.Value = PHASE_ID_0;
+    p_fields->IBatch.Value = PHASE_ID_0;
 }
 
 static void ProcCalibration(const Motor_T * p_motor)
 {
-    if (p_motor->P_ACTIVE->IBatch.Value == PHASE_ID_ABC)
+    Motor_State_T * const p_fields = p_motor->P_ACTIVE;
+
+    if (p_fields->IBatch.Value == PHASE_ID_ABC)
     {
-        Filter_Avg(&p_motor->P_ACTIVE->FilterA, MotorAnalog_GetIa_Fract16(&p_motor->P_ACTIVE->AnalogState));
-        Filter_Avg(&p_motor->P_ACTIVE->FilterB, MotorAnalog_GetIb_Fract16(&p_motor->P_ACTIVE->AnalogState));
-        Filter_Avg(&p_motor->P_ACTIVE->FilterC, MotorAnalog_GetIc_Fract16(&p_motor->P_ACTIVE->AnalogState));
+        Filter_Avg(&p_fields->FilterA, MotorAnalog_GetIa_Fract16(&p_fields->AnalogState));
+        Filter_Avg(&p_fields->FilterB, MotorAnalog_GetIb_Fract16(&p_fields->AnalogState));
+        Filter_Avg(&p_fields->FilterC, MotorAnalog_GetIc_Fract16(&p_fields->AnalogState));
         Motor_Analog_MarkIabc(p_motor);
-        p_motor->P_ACTIVE->IBatch.Value = PHASE_ID_0;
+        p_fields->IBatch.Value = PHASE_ID_0;
     }
 }
 
 static State_T * EndCalibration(const Motor_T * p_motor)
 {
+    Motor_State_T * const p_fields = p_motor->P_ACTIVE;
+
     State_T * p_nextState = NULL;
 
-    if (Timer_IsElapsed(&p_motor->P_ACTIVE->ControlTimer) == true)
+    if (Timer_IsElapsed(&p_fields->ControlTimer) == true)
     {
-        p_motor->P_ACTIVE->Config.IaZeroRef_Adcu = Filter_Avg(&p_motor->P_ACTIVE->FilterA, MotorAnalog_GetIa_Fract16(&p_motor->P_ACTIVE->AnalogState));
-        p_motor->P_ACTIVE->Config.IbZeroRef_Adcu = Filter_Avg(&p_motor->P_ACTIVE->FilterB, MotorAnalog_GetIb_Fract16(&p_motor->P_ACTIVE->AnalogState));
-        p_motor->P_ACTIVE->Config.IcZeroRef_Adcu = Filter_Avg(&p_motor->P_ACTIVE->FilterC, MotorAnalog_GetIc_Fract16(&p_motor->P_ACTIVE->AnalogState));
+        p_fields->Config.IaZeroRef_Adcu = Filter_Avg(&p_fields->FilterA, MotorAnalog_GetIa_Fract16(&p_fields->AnalogState));
+        p_fields->Config.IbZeroRef_Adcu = Filter_Avg(&p_fields->FilterB, MotorAnalog_GetIb_Fract16(&p_fields->AnalogState));
+        p_fields->Config.IcZeroRef_Adcu = Filter_Avg(&p_fields->FilterC, MotorAnalog_GetIc_Fract16(&p_fields->AnalogState));
         // Motor_ResetUnitsIabc(p_motor->p_Analog);
         Phase_Float(&p_motor->PHASE);
+        p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }
 
     return p_nextState;
 }
 
+/*  */
 static const State_T CALIBRATION_STATE =
 {
     .P_TOP      = &MOTOR_STATE_CALIBRATION,

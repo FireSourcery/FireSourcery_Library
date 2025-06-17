@@ -24,7 +24,7 @@
 /*!
     @file   Ring.h
     @author FireSourcery
-    @brief  Ring Buffer. Optimized implementation using POW2_MASK over modulus
+    @brief  Ring Buffer. Optimized implementation using POW2_MASK
 
 */
 /******************************************************************************/
@@ -251,6 +251,7 @@ extern void * _Ring_Seek(Ring_T * p_ring, size_t index);
 
 */
 extern void Ring_Init(const Ring_Context_T * p_ring);
+
 extern void Ring_InitFrom(Ring_T * p_ring, const Ring_Type_T * p_type);
 extern void Ring_Clear(Ring_T * p_ring);
 extern bool Ring_PushFront(Ring_T * p_ring, const void * p_unit);

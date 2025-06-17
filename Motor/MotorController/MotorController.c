@@ -37,14 +37,17 @@ void MotorController_Init(const MotorController_T * p_context)
 
     MotNvm_Init(&p_context->MOT_NVM);
 
-    if (p_context->P_NVM_CONFIG != NULL) { memcpy(&p_mc->Config, p_context->P_NVM_CONFIG, sizeof(MotorController_Config_T)); }
+    if (p_context->P_NVM_CONFIG != NULL) { p_mc->Config = *p_context->P_NVM_CONFIG; }
     if (p_context->MOT_NVM.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_context->MOT_NVM.P_BOOT_REF->Word; }
 
     for (uint8_t iAnalog = 0U; iAnalog < p_context->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_context->P_ANALOG_ADCS[iAnalog]); }
     for (uint8_t iSerial = 0U; iSerial < p_context->SERIAL_COUNT; iSerial++) { Serial_Init(&p_context->P_SERIALS[iSerial]); }
+
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     // if(p_mc->Config.IsCanEnable == true) { CanBus_Init(p_context->P_CAN_BUS, p_mc->Config.CanServicesId); }
 #endif
+
+    for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_context->P_PROTOCOLS[iProtocol]); }
 
     MotAnalogUser_Init(&p_context->ANALOG_USER);
 
@@ -61,11 +64,9 @@ void MotorController_Init(const MotorController_T * p_context)
     Blinky_Init(&p_context->BUZZER);
     Blinky_Init(&p_context->METER);
     Pin_Output_Init(&p_context->RELAY_PIN);
-    // UserDIn_Init(&p_context->OPT_DIN, 5U);
+    UserDIn_Init(&p_context->OPT_DIN); /* 5-10ms by default */
 
     Timer_Periodic_Init(&p_mc->TimerMillis, 1U);
-
-    for(uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_context->P_PROTOCOLS[iProtocol]); }
 
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
     Shell_Init(&p_mc->Shell);
@@ -143,10 +144,9 @@ static inline NvMemory_Status_T WriteNvm(const MotorController_T * p_context, co
 NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
-
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     Motor_T * p_motorContext;
-    Motor_State_T * p_motor;
+    // Motor_State_T * p_motorState;
     Protocol_T * p_protocol;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
@@ -155,24 +155,24 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * 
 
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->MOT_NVM.P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T)); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->P_NVM_CONFIG, &p_mc->Config, sizeof(MotorController_Config_T)); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->ANALOG_USER.P_NVM_CONFIG, &p_context->ANALOG_USER.P_STATE->Config, sizeof(MotAnalogUser_Config_T)); }
 
-    /* Fixed: Use the new monitor structure members */
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->ANALOG_USER.P_NVM_CONFIG, &p_context->ANALOG_USER.P_STATE->Config, sizeof(MotAnalogUser_Config_T)); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->V_SOURCE.P_NVM_CONFIG, &p_context->V_SOURCE.P_STATE->Config, sizeof(VMonitor_Config_T)); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->V_ACCESSORIES.P_NVM_CONFIG, &p_context->V_ACCESSORIES.P_STATE->Config, sizeof(VMonitor_Config_T)); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->V_ANALOG.P_NVM_CONFIG, &p_context->V_ANALOG.P_STATE->Config, sizeof(VMonitor_Config_T)); }
-
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->HEAT_PCB.P_NVM_CONFIG, &p_context->HEAT_PCB.P_STATE->Config, sizeof(HeatMonitor_Config_T)); }
+    /* Write the collective config */
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_context->HEAT_MOSFETS.P_NVM_CONFIG, &p_context->HEAT_MOSFETS.P_STATE->Config, sizeof(HeatMonitor_Config_T)); }
 
-    /* Fixed: Use the new group structure for MOSFET heat monitors */
-    if (status == NV_MEMORY_STATUS_SUCCESS)
-    {
-        for (uint8_t iMosfet = 0U; iMosfet < p_context->HEAT_MOSFETS.COUNT; iMosfet++)
-        {
-            status = WriteNvm(p_context, p_context->HEAT_MOSFETS.P_CONTEXTS[iMosfet].P_NVM_CONFIG, &p_context->HEAT_MOSFETS.P_CONTEXTS[iMosfet].P_STATE->Config, sizeof(HeatMonitor_Config_T));
-            if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
-        }
-    }
+
+    // if (status == NV_MEMORY_STATUS_SUCCESS)
+    // {
+    //     for (uint8_t iMosfet = 0U; iMosfet < p_context->HEAT_MOSFETS.COUNT; iMosfet++)
+    //     {
+    //         status = WriteNvm(p_context, p_context->HEAT_MOSFETS.P_CONTEXTS[iMosfet].P_NVM_CONFIG, &p_context->HEAT_MOSFETS.P_CONTEXTS[iMosfet].P_STATE->Config, sizeof(HeatMonitor_Config_T));
+    //         if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
+    //     }
+    // }
 
     if (status == NV_MEMORY_STATUS_SUCCESS)
     {
@@ -188,14 +188,11 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * 
     {
         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
         {
-            p_motor = MotMotors_StateAt(&p_context->MOTORS, iMotor);
             p_motorContext = MotMotors_ContextAt(&p_context->MOTORS, iMotor);
-            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext[iMotor].P_NVM_CONFIG, &p_motor->Config, sizeof(Motor_Config_T)); }
-            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext[iMotor].SENSOR_TABLE.HALL.HALL.P_NVM_CONFIG, &p_motorContext[iMotor].SENSOR_TABLE.HALL.HALL.P_STATE->Config, sizeof(Motor_Config_T)); }
+            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->P_NVM_CONFIG, &p_motorContext->P_ACTIVE->Config, sizeof(Motor_Config_T)); }
 
-            // if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, &p_motor->Config.PidSpeed, &p_motor->PidSpeed.Config, sizeof(PID_Config_T)); }
-            // if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, &p_motor->Config.PidI, &p_motor->PidIq.Config, sizeof(PID_Config_T)); }
-            // if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, &p_motor->Config.PidI, & p_motor->PidId.Config, sizeof(PID_Config_T)); }
+            /* todo table bye sensor def */
+            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->SENSOR_TABLE.HALL.HALL.P_NVM_CONFIG, &p_motorContext->SENSOR_TABLE.HALL.HALL.P_STATE->Config, sizeof(Hall_Config_T)); }
             if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->HEAT_MONITOR_CONTEXT.P_NVM_CONFIG, &p_motorContext->HEAT_MONITOR_CONTEXT.P_STATE->Config, sizeof(HeatMonitor_Config_T)); }
             if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
         }

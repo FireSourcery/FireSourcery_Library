@@ -264,26 +264,28 @@ inline void StateMachine_SetInput(const StateMachine_T * p_stateMachine, state_i
 /* Set the State within signal guards. Without check on input. e.g. fault state */
 void StateMachine_ForceTransition(const StateMachine_T * p_stateMachine, const State_T * p_state)
 {
+    assert(p_state != NULL); /* compile time known state */
+
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_state);
+        _StateMachine_Transition(p_active, p_stateMachine->P_CONTEXT, p_state);
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
 
 /*
     Invoke a [Transition] or as a Command
-    */
-// void StateMachine_InvokeCmd(const StateMachine_T * p_stateMachine, const State_Cmd_T * p_cmd, state_input_value_t inputValue)
+*/
+// void StateMachine_InvokeTransitionCmd(const StateMachine_T * p_stateMachine, const State_Cmd_T * p_cmd, state_input_value_t inputValue)
 void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_transition, state_input_value_t inputValue)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        if (StateMachine_IsActiveState(p_active, p_transition->P_VALID) == true)
+        if (StateMachine_IsActiveState(p_active, p_transition->P_START) == true)
         {
             assert(p_transition->TRANSITION != NULL);
             _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, inputValue));
@@ -371,7 +373,7 @@ void StateMachine_ProcBranchInput(const StateMachine_T * p_stateMachine, state_i
 }
 
 /*
-    result the input handle is any of P_VALID is in the active branch
+    result the input handle is any of P_START is in the active branch
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
     TryTransition
 */
@@ -381,9 +383,9 @@ void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, 
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        if (StateMachine_IsActiveBranch(p_active, p_transition->P_VALID) == true)
+        if (StateMachine_IsActiveBranch(p_active, p_transition->P_START) == true)
         {
-            assert(State_IsActiveBranch(p_transition->P_VALID, p_stateMachine->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
+            assert(State_IsActiveBranch(p_transition->P_START, p_stateMachine->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
 
             _StateMachine_TraverseTransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
         }

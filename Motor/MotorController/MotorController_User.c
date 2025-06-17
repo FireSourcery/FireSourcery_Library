@@ -96,14 +96,14 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     switch (p_mc->Config.InputMode)
     {
         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Disable);
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
                 VarAccess_DisableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
             }
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_VarInput_Enable);
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
                 VarAccess_EnableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
@@ -134,11 +134,11 @@ uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorCon
     switch (id)
     {
         // case MOT_USER_SYSTEM_RESRV:                           break;
-        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context );                              break;
-        // case MOT_USER_SYSTEM_BEEP:          MotorController_Beepshort(p_context, 500U, 500U, value);                break;
+        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                               break;
+        // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 1U);                break;
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break;
-        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);               break;
-        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);                    break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);          break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
 
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */

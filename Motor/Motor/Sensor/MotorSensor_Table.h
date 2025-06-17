@@ -55,6 +55,9 @@ MotorSensor_Id_T;
 // }
 // MotorSensor_State_T;
 
+/*
+    alternatively as Motor_SensorTable_T, part of Motor_T
+*/
 /* include all using preprocessor conditions */
 /* There can only be 1 sensor of each type per motor, with fixed corresponding Id */
 /* Mux/Repo */
@@ -75,6 +78,9 @@ MotorSensor_Table_T;
 // #define MOTOR_SENSOR_TABLE_INIT_EMPTY(p_MotorState) MOTOR_SENSOR_INIT_AS_EMPTY(&((p_MotorState)->SensorState))
 // #define MOTOR_SENSOR_TABLE_INIT_HALL(p_MotorState, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((p_MotorState)->SensorState))
 
+/*
+    Init using shared State
+*/
 #define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) MOTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))

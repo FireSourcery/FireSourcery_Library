@@ -57,7 +57,7 @@ MotDrive_StateId_T;
 
 extern const StateMachine_Machine_T MOT_DRIVE_MACHINE;
 
-#define MOT_DRIVE_STATE_MACHINE_INIT(MotDriveContextStruct, MotDriveActiveStruct) STATE_MACHINE_INIT((&MotDriveContextStruct), &MOT_DRIVE_MACHINE, &((MotDriveActiveStruct).StateMachine))
+#define MOT_DRIVE_STATE_MACHINE_INIT(p_MotDriveContext, MotDriveActiveStruct) STATE_MACHINE_INIT((p_MotDriveContext), &MOT_DRIVE_MACHINE, &((MotDriveActiveStruct).StateMachine))
 
 
 /* proc 1-10ms */

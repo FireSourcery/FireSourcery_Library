@@ -45,16 +45,12 @@ typedef const struct Hall_MotorSensor
 }
 Hall_MotorSensor_T;
 
-extern const MotorSensor_VTable_T HALL_VTABLE;
 
+extern const MotorSensor_VTable_T HALL_VTABLE;
 // #define _HALL_GENERIC_INIT(p_State) MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State)
 
 #define HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) \
-{ \
-    .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State), \
-    .HALL = (HallStruct), \
-    .P_ENCODER = (p_Encoder), \
-}
+    { .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
 
-#define HALL_MOTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
-    HALL_MOTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
+// #define HALL_MOTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
+//     HALL_MOTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)

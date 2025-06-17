@@ -260,8 +260,8 @@ static inline bool RingT_PushBack(Ring_Type_T type, Ring_T * p_ring, const void 
 static inline bool RingT_PopFront(Ring_Type_T type, Ring_T * p_ring, void * p_result)       { return (RingT_IsEmpty(type, p_ring) ? false : ({ _RingT_PopFront(type, p_ring, p_result); true; })); }
 static inline bool RingT_PushFront(Ring_Type_T type, Ring_T * p_ring, const void * p_unit)  { return (RingT_IsFull(type, p_ring) ? false : ({ _RingT_PushFront(type, p_ring, p_unit); true; })); }
 static inline bool RingT_PopBack(Ring_Type_T type, Ring_T * p_ring, void * p_result)        { return (RingT_IsEmpty(type, p_ring) ? false : ({ _RingT_PopBack(type, p_ring, p_result); true; })); }
-static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count)   { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveFront(type, p_ring, count); true; })); }
-static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count)    { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveBack(type, p_ring, count); true; })); }
+static inline bool RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count)       { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveFront(type, p_ring, count); true; })); }
+static inline bool RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count)        { return (count > RingT_GetFullCount(type, p_ring) ? false : ({ _RingT_RemoveBack(type, p_ring, count); true; })); }
 
 /*
     returns the popped pointer
@@ -409,52 +409,3 @@ static inline bool RingT_PushBackAll(Ring_Type_T type, Ring_T * p_ring, const vo
 
 
 
-/******************************************************************************/
-/*!
-    Experimental
-*/
-/******************************************************************************/
-// /*
-//     Give caller exclusive buffer write.
-//     Will flush buffer to start from index. Caller bypass virtual index.
-// */
-// void * Ring_AcquireBuffer(Ring_T * p_ring)
-// {
-//     void * p_buffer = NULL;
-
-//     if (AcquireSignal(p_ring) == true)
-//     {
-//         Ring_Clear(p_ring);
-//         p_buffer = p_ring->CONST.P_BUFFER;
-//     }
-
-//     return p_buffer;
-// }
-
-// void Ring_ReleaseBuffer(Ring_T * p_ring, size_t writeSize)
-// {
-//     p_ring->Tail = writeSize;
-//     ReleaseSignal(p_ring);
-// }
-// #ifdef CONFIG_RING_DYNAMIC_MEMORY_ALLOCATION
-// Ring_T * Ring_New(Ring_Type_T type)
-// {
-//     Ring_T * p_ring = malloc(sizeof(Ring_T));
-//     void * p_buffer = malloc(unitCount * unitSize);
-
-//     if (p_ring != 0U && p_buffer != 0U)
-//     {
-//         *(void *)&p_ring->CONST.P_BUFFER = p_buffer; /* bypass const typedef */
-//         *(size_t)&p_ring->CONST.LENGTH = unitCount;
-//         *(size_t)&p_ring->CONST.UNIT_SIZE = unitSize;
-//         Ring_Init(p_ring);
-//     }
-
-//     return p_ring;
-// }
-
-// void Ring_Free(Ring_T * p_ring)
-// {
-//     free(p_ring);
-// }
-// #endif

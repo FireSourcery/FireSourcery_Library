@@ -382,7 +382,7 @@ void Motor_User_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle)
 // void Motor_User_StartOpenLoopMode(const Motor_T * p_motor) { Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 /*
 */
-void Motor_User_StartOpenLoopState(Motor_T * p_motor)
+void Motor_User_StartOpenLoopState(const Motor_T * p_motor)
 {
     // StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, MOTOR_OPEN_LOOP_STATE_ENTER);
     // StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, state);
@@ -477,10 +477,10 @@ void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCm
 }
 
 
-void Motor_User_SetActiveCmdValue_ScalarCast(Motor_State_T * p_motor, int userCmd)
-{
-    Motor_User_SetActiveCmdValue_Scalar(p_motor, (int16_t)userCmd);
-}
+// void Motor_User_SetActiveCmdValue_ScalarCast(Motor_State_T * p_motor, int userCmd)
+// {
+//     Motor_User_SetActiveCmdValue_Scalar(p_motor, (int16_t)userCmd);
+// }
 
 /*
     Alternatively store Input Value

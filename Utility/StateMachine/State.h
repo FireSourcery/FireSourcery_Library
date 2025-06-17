@@ -221,45 +221,37 @@ typedef state_input_value_t(*State_Get_T)(void * p_context);
     InputCmd
     Alternative to mapping Id
     reverse map [Transition]/[Input] to a [State] or set of [State]s
-    compare [p_transition->P_VALID] to [p_stateMachine->p_ActiveState]
+    compare [p_transition->P_START] to [p_stateMachine->p_ActiveState]
     Apply transition to State
 
     effectively [State] local [state_input_t]
 
-    [StateMachine_InvokeTransition] call
+    [StateMachine_InvokeTransition]
+    Directly invoke. defined at compile time for valid transition
 */
 /******************************************************************************/
 typedef const struct State_TransitionInput
 {
+    const State_T * P_START; /* From/Source. Starting State known to accept this input at compile time. */
     const State_Input_T TRANSITION; /* To/Destination. Does not return NULL */ /* Effectively P_DEST, ON_TRANSITION */
-    const struct State * const P_VALID; /* From/Source. Starting State known to accept this input at compile time. */
 }
 State_TransitionInput_T;
 
 
-/* Directly invoke. defined at compile time for valid transitions */
-// typedef const struct State_Transition
-// {
-//     const State_T * const P_START; /* From/Source. */
-//     /* OnAction + Destination State */
-//     const State_Input_T TRANSITION; /* To/Destination. Does not return NULL */
-// }
-// State_Transition_T;
-
 // typedef const struct StateMachine_MultiTransitionInput
 // {
 //     const State_Input_T TRANSITION; /* To/Destination. Does not return NULL */
-//     const struct State * const * const PP_VALID_LIST; /* From/Source. Starting State known to accept this input at compile time. */
+//     const State_T * const * const PP_VALID_LIST; /* From/Source. Starting State known to accept this input at compile time. */
 //     const uint8_t VALID_COUNT;
 // }
 // StateMachine_MultiTransitionInput_T;
 
-typedef const struct StateMachine_Cmd
-{
-    uint8_t ID; /* Command ID. User may overwrite with enum */
-    const struct State * const * PP_SOURCE_TABLE; /* From/Source. Starting State known to accept this input at compile time. */
-    uint8_t SOURCE_COUNT;
-    State_Input_T DEST; /* To/Destination. Does not return NULL */
-}
-StateMachine_Cmd_T;
+// typedef const struct StateMachine_Cmd
+// {
+//     uint8_t ID; /* Command ID. User may overwrite with enum */
+//     const State_T * const * PP_SOURCE_TABLE; /* From/Source. Starting State known to accept this input at compile time. */
+//     uint8_t SOURCE_COUNT;
+//     State_Input_T DEST; /* To/Destination. Does not return NULL */
+// }
+// StateMachine_Cmd_T;
 

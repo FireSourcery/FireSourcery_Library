@@ -85,6 +85,17 @@ static inline bool PID_IsLimited(const PID_T * p_pid) { return (p_pid->Output ==
     Config
 */
 /******************************************************************************/
+static inline uint32_t _PID_GetSampleFreq(const PID_Config_T * p_config) { return p_config->SampleFreq; }
+static inline int32_t _PID_GetKp_Fixed32(const PID_Config_T * p_config) { return p_config->Kp_Fixed32; }
+static inline int32_t _PID_GetKi_Fixed32(const PID_Config_T * p_config) { return p_config->Ki_Fixed32; }
+static inline int32_t _PID_GetKd_Fixed32(const PID_Config_T * p_config) { return p_config->Kd_Fixed32; }
+static inline int32_t _PID_GetKp_Fixed16(const PID_Config_T * p_config) { return p_config->Kp_Fixed32 >> 8; }
+static inline int32_t _PID_GetKi_Fixed16(const PID_Config_T * p_config) { return p_config->Ki_Fixed32 >> 8; }
+static inline int32_t _PID_GetKd_Fixed16(const PID_Config_T * p_config) { return p_config->Kd_Fixed32 >> 8; }
+
+
+/*
+*/
 static inline uint32_t PID_GetSampleFreq(const PID_T * p_pid) { return p_pid->Config.SampleFreq; }
 
 /* Q17.15 */

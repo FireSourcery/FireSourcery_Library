@@ -32,6 +32,11 @@
 /******************************************************************************/
 #include "MotorSensor.h"
 
+/******************************************************************************/
+/*
+    Empty Instance
+*/
+/******************************************************************************/
 //  uint16_t MotorSensor_CaptureState(const MotorSensor_T * p_sensor){ }
 static void Empty_Init(const MotorSensor_T * p_sensor) { (void)p_sensor; }
 static void Empty_CaptureAngle(const MotorSensor_T * p_sensor) { (void)p_sensor; }

@@ -33,8 +33,6 @@
 #include "Type/accessor.h"
 
 /*
-
-
     check state - restrict state by interface
     map to int accessor, or keyed accessor
     call accessor handle error checking only
@@ -54,7 +52,7 @@
 //     get_t GET;
 //     set_t SET;
 //     proc_t ON_SET;
-//     // int (*CALL)(void * p_context, voit * p_value);
+//     // int (*CALL)(void * p_context, voit * p_value); /* return a status */
 // }
 // VarAccess_Var_T;
 
@@ -91,15 +89,16 @@ VarAccess_State_T;
 */
 typedef const struct
 {
-    void * const P_BASE;
-    const VarAccess_VTable_T * const P_VIRTUAL;
-    VarAccess_State_T * const P_STATE;
+    void * P_BASE;
+    const VarAccess_VTable_T * P_VIRTUAL;
+    // const VarAccess_VTable_T ** const P_VIRTUAL;
+    VarAccess_State_T * P_STATE;
 }
 VarAccess_T;
 
 /* Multiple groups share the same runtime state, or provide direct state access to base */
-#define VAR_ACCESS_INIT(p_Base, p_VTable, p_RunTime) { .P_BASE = (p_Base), .P_VIRTUAL = (p_VTable), .P_STATE = (p_RunTime), }
-#define VAR_ACCESS_ALLOC(p_Base, p_VTable) VAR_ACCESS_INIT(p_Base, p_VTable, &(VarAccess_State_T){ 0 })
+#define VAR_ACCESS_INIT(p_Base, p_VTable, p_RunTime) { .P_BASE = ((void *)(p_Base)), .P_VIRTUAL = (p_VTable), .P_STATE = (p_RunTime), }
+#define VAR_ACCESS_ALLOC(p_Base, p_VTable) VAR_ACCESS_INIT(p_Base, p_VTable, &(VarAccess_State_T){0})
 
 static inline void _VarAccess_EnableSet(VarAccess_State_T * p_state) { p_state->Mode = 1; }
 static inline void _VarAccess_DisableSet(VarAccess_State_T * p_state) { p_state->Mode = 0; }
@@ -108,8 +107,8 @@ static inline void _VarAccess_DisableSet(VarAccess_State_T * p_state) { p_state-
 static inline int _VarAccess_GetAt(const VarAccess_T * p_varAccess, int varId) { return p_varAccess->P_VIRTUAL->GET_AT(p_varAccess->P_BASE, varId); }
 
 static inline int VarAccess_GetAt(const VarAccess_T * p_varAccess, int varId) { return call_get_at(p_varAccess->P_VIRTUAL->GET_AT, p_varAccess->P_BASE, varId); }
+
 static inline void VarAccess_EnableSet(const VarAccess_T * p_varAccess) { _VarAccess_EnableSet(p_varAccess->P_STATE); }
 static inline void VarAccess_DisableSet(const VarAccess_T * p_varAccess) { _VarAccess_EnableSet(p_varAccess->P_STATE); }
-
 
 extern void VarAccess_SetAt(const VarAccess_T * p_varAccess, int varId, int varValue);

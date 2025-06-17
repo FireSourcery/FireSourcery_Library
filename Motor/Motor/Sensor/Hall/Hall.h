@@ -37,6 +37,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 /* Virtual State Where ID => 0bCBA */
 #define HALL_SENSORS_VIRTUAL_A      (0b001U)
 #define HALL_SENSORS_VIRTUAL_B      (0b010U)
@@ -81,6 +86,12 @@ typedef enum Hall_Id
     HALL_ANGLE_150_210 = HALL_SENSORS_VIRTUAL_INV_A,
     HALL_ANGLE_210_270 = HALL_SENSORS_VIRTUAL_C,
     HALL_ANGLE_270_330 = HALL_SENSORS_VIRTUAL_INV_B,
+    // HALL_ANGLE_0 = HALL_SENSORS_VIRTUAL_A,
+    // HALL_ANGLE_60 = HALL_SENSORS_VIRTUAL_INV_C,
+    // HALL_ANGLE_120 = HALL_SENSORS_VIRTUAL_B,
+    // HALL_ANGLE_180 = HALL_SENSORS_VIRTUAL_INV_A,
+    // HALL_ANGLE_240 = HALL_SENSORS_VIRTUAL_C,
+    // HALL_ANGLE_300 = HALL_SENSORS_VIRTUAL_INV_B,
     HALL_ANGLE_ERROR_7 = 7U,
 
     /* Rotor Angle Id via boundary from CCW and CW */
@@ -156,6 +167,7 @@ Hall_T;
 
 #define HALL_STATE_ALLOC() (&(Hall_State_T){0})
 
+/* Init from primitive */
 #define HALL_INIT(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_State, p_Config) \
 {                                                                \
     .PIN_A = PIN_INIT(p_PinAHal, PinAId),                        \
@@ -172,16 +184,11 @@ Hall_T;
 #define HALL_INIT_CONSTEXPR(PinA, PinB, PinC, p_State, p_Config) \
     { .PIN_A = PinA, .PIN_B = PinB, .PIN_C = PinC, .P_NVM_CONFIG = (p_Config), .P_STATE = (p_State), }
 
-// #define HALL_ALLOC_CONSTEXPR(PinA, PinB, PinC, p_Config) \
-//     HALL_INIT_CONSTEXPR(PinA, PinB, PinC, &(Hall_State_T){0}, p_Config)
-
-
 /******************************************************************************/
-/* Stateless Conversions */
+/*
+    Stateless Conversions
+*/
 /******************************************************************************/
-/* +180 degrees */
-static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
-
 /* Center of Hall sensor angle */
 static inline uint16_t _Hall_Angle16Of(Hall_Id_T virtualId)
 {
@@ -200,7 +207,7 @@ static inline uint16_t _Hall_Angle16Of(Hall_Id_T virtualId)
     return _HALL_ANGLE_TABLE[virtualId];
 }
 
-static inline uint16_t _Hall_Angle16BoundaryOf(Hall_Id_T virtualId, int direction)
+static inline uint16_t _Hall_Angle16BoundaryOf(Hall_Id_T virtualId, Hall_Direction_T direction)
 {
     static const uint16_t _HALL_ANGLE_BOUNDARY = 5461U; /* Six 60 degree boundaries, +/- 30 degrees */
 
@@ -213,23 +220,20 @@ static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idN
 {
     Hall_Direction_T direction;
 
-    switch ((idPrev << 3U) | idNew)
+    switch (HALL_DIRECTION_STATE(idPrev, idNew))
     {
-        // case HALL_DIRECTION_STATE(HALL_ANGLE_330_30, HALL_ANGLE_30_90):  direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_A << 3U)        | HALL_SENSORS_VIRTUAL_INV_C):  direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_INV_C << 3U)    | HALL_SENSORS_VIRTUAL_B):      direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_B << 3U)        | HALL_SENSORS_VIRTUAL_INV_A):  direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_INV_A << 3U)    | HALL_SENSORS_VIRTUAL_C):      direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_C << 3U)        | HALL_SENSORS_VIRTUAL_INV_B):  direction = HALL_DIRECTION_CCW; break;
-        case ((HALL_SENSORS_VIRTUAL_INV_B << 3U)    | HALL_SENSORS_VIRTUAL_A):      direction = HALL_DIRECTION_CCW; break;
-
-        case ((HALL_SENSORS_VIRTUAL_A << 3U)        | HALL_SENSORS_VIRTUAL_INV_B):  direction = HALL_DIRECTION_CW;  break;
-        case ((HALL_SENSORS_VIRTUAL_INV_B << 3U)    | HALL_SENSORS_VIRTUAL_C):      direction = HALL_DIRECTION_CW;  break;
-        case ((HALL_SENSORS_VIRTUAL_C << 3U)        | HALL_SENSORS_VIRTUAL_INV_A):  direction = HALL_DIRECTION_CW;  break;
-        case ((HALL_SENSORS_VIRTUAL_INV_A << 3U)    | HALL_SENSORS_VIRTUAL_B):      direction = HALL_DIRECTION_CW;  break;
-        case ((HALL_SENSORS_VIRTUAL_B << 3U)        | HALL_SENSORS_VIRTUAL_INV_C):  direction = HALL_DIRECTION_CW;  break;
-        case ((HALL_SENSORS_VIRTUAL_INV_C << 3U)    | HALL_SENSORS_VIRTUAL_A):      direction = HALL_DIRECTION_CW;  break;
-
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_A,       HALL_SENSORS_VIRTUAL_INV_C):    direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_C,   HALL_SENSORS_VIRTUAL_B):        direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_B,       HALL_SENSORS_VIRTUAL_INV_A):    direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_A,   HALL_SENSORS_VIRTUAL_C):        direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_C,       HALL_SENSORS_VIRTUAL_INV_B):    direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_B,   HALL_SENSORS_VIRTUAL_A):        direction = HALL_DIRECTION_CCW; break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_A,       HALL_SENSORS_VIRTUAL_INV_B):    direction = HALL_DIRECTION_CW;  break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_B,   HALL_SENSORS_VIRTUAL_C):        direction = HALL_DIRECTION_CW;  break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_C,       HALL_SENSORS_VIRTUAL_INV_A):    direction = HALL_DIRECTION_CW;  break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_A,   HALL_SENSORS_VIRTUAL_B):        direction = HALL_DIRECTION_CW;  break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_B,       HALL_SENSORS_VIRTUAL_INV_C):    direction = HALL_DIRECTION_CW;  break;
+        case HALL_DIRECTION_STATE(HALL_SENSORS_VIRTUAL_INV_C,   HALL_SENSORS_VIRTUAL_A):        direction = HALL_DIRECTION_CW;  break;
         default: direction = HALL_DIRECTION_UNKNOWN; break;
     }
 
@@ -237,13 +241,15 @@ static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idN
 }
 
 /******************************************************************************/
-/* Values with only Calibration State */
+/*
+    Values with Calibration State only
+*/
 /******************************************************************************/
 /* Virtual Id */
 static inline Hall_Id_T Hall_IdOf(const Hall_State_T * p_hall, uint8_t physicalSensors) { return p_hall->Config.SensorsTable[physicalSensors]; }
 
 /* Angle Approximation */
-static inline uint16_t Hall_Angle16Of(const Hall_State_T * p_hall, uint8_t physicalSensors, int16_t direction)
+static inline uint16_t Hall_Angle16Of(const Hall_State_T * p_hall, uint8_t physicalSensors, Hall_Direction_T direction)
 {
     return _Hall_Angle16BoundaryOf(p_hall->Config.SensorsTable[physicalSensors], direction);
 }
@@ -254,6 +260,8 @@ static inline uint16_t Hall_DirectionOf(const Hall_State_T * p_hall, uint8_t sen
 }
 
 /* Six-step commutation Id */
+/* +180 degrees */
+// static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
 // static inline Hall_Id_T Hall_CommutationIdOf(const Hall_T * p_hall, uint8_t physicalSensors)
 // {
 //     Hall_Id_T id;
@@ -301,9 +309,9 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
     _Hall_CaptureSensors(p_hall->P_STATE, Hall_ReadSensors(p_hall));
 }
 
-/*
+/*!
     Capture sensor on Hall edge, angle boundary
-    return true on every phase edge. i.e 6x per Hall cycle
+    @return true on every phase edge. i.e 6x per Hall cycle
 */
 static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
 {
@@ -404,7 +412,7 @@ typedef enum Hall_ConfigId
     HALL_CONFIG_SENSOR_TABLE_4,
     HALL_CONFIG_SENSOR_TABLE_5,
     HALL_CONFIG_SENSOR_TABLE_6,
-    HALL_CONFIG_RUN_CALIBRATION,
+    // HALL_CONFIG_RUN_CALIBRATION,
 }
 Hall_ConfigId_T;
 

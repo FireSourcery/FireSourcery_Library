@@ -399,7 +399,7 @@
 // /* individual state test */
 // void Motor_Encoder_StartAlignZero(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
+//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
@@ -410,7 +410,7 @@
 
 // void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
+//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
@@ -422,7 +422,7 @@
 
 // void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_VALID = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
+//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
@@ -525,7 +525,7 @@
 
 // void Motor_Encoder_StartUpChain(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T  START_UP_CHAIN = { .P_VALID = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
+//     static const State_TransitionInput_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
 // }
 

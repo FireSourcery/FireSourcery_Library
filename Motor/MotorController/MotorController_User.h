@@ -85,7 +85,8 @@ static inline void MotorController_User_StartPassMode(const MotorController_T * 
 }
 
 /*
-    Pass outer context incase implementation changes
+    Pass outer context in case implementation changes
+    push to motor state machine on edge
 */
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
@@ -208,7 +209,6 @@ static inline uint8_t MotorController_User_GetLockOpStatus(const MotorController
 /* UserMain, which may use Watchdog  */
 static inline Protocol_T * MotorController_User_GetMainProtocol(const MotorController_T * p_context)
 {
-    // return (p_context->USER_PROTOCOL_INDEX < p_context->PROTOCOL_COUNT) ? &p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX] : &p_context->P_PROTOCOLS[0U];
     assert(p_context->USER_PROTOCOL_INDEX < p_context->PROTOCOL_COUNT);
     return MotorController_GetMainProtocol(p_context);
 }
@@ -217,15 +217,6 @@ static inline void MotorController_User_EnableRxWatchdog(const MotorController_T
 static inline void MotorController_User_DisableRxWatchdog(const MotorController_T * p_context) { Protocol_DisableRxWatchdog(MotorController_User_GetMainProtocol(p_context)); }
 static inline void MotorController_User_SetRxWatchdog(const MotorController_T * p_context, bool isEnable) { Protocol_SetRxWatchdogOnOff(MotorController_User_GetMainProtocol(p_context), isEnable); }
 
-/******************************************************************************/
-/*
-    move to buzzer
-*/
-/******************************************************************************/
-// static inline void MotorController_User_BeepN(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_context->BUZZER, onTime, offTime, n); }
-// static inline void MotorController_User_BeepStart(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_context->BUZZER, onTime, offTime); }
-// static inline void MotorController_User_BeepStop(const MotorController_T * p_context) { Blinky_Stop(&p_context->BUZZER); }
-// static inline void MotorController_User_DisableBuzzer(const MotorController_T * p_context) { Blinky_Disable(&p_context->BUZZER); }
 
 /******************************************************************************/
 /*
@@ -234,18 +225,18 @@ static inline void MotorController_User_SetRxWatchdog(const MotorController_T * 
 /******************************************************************************/
 static inline MotorController_StateId_T MotorController_User_GetStateId(const MotorController_State_T * p_mcState) { return StateMachine_GetActiveStateId(&p_mcState->StateMachine); }
 static inline MotorController_FaultFlags_T MotorController_User_GetFaultFlags(const MotorController_State_T * p_mcState) { return p_mcState->FaultFlags; }
-// static inline MotorController_StateFlags_T MotorController_User_GetStateFlags(const MotorController_State_T * p_mcState) { return p_mcState->StateFlags; }
 
 /*
     Status Flags for User Interface
-    Combined output for protocol convenience
+
+    Combined boolean outputs for protocol convenience
 */
 typedef union MotorController_User_StatusFlags
 {
     struct
     {
-        uint16_t HeatWarning        : 1U; // ILimit by Heat
-        uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
+        // uint16_t HeatWarning        : 1U; // ILimit by Heat
+        // uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
         // uint16_t SpeedLimit         : 1U;
         // uint16_t ILimit             : 1U;
         // uint16_t BuzzerEnable       : 1U;
@@ -258,22 +249,12 @@ typedef union MotorController_User_StatusFlags
 }
 MotorController_User_StatusFlags_T;
 
-// optionally store for poling
-// typedef union MotorController_StateFlags
-// {
-//     struct
-//     {
-//         uint16_t HeatWarning            : 1U; // ILimit by Heat
-//         uint16_t VSourceLow             : 1U; // ILimit by VSourceLow
-//     };
-//     uint16_t Value;
-// }
-// MotorController_StateFlags_T;
-
-static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusFlags(const MotorController_State_T * p_mcState)
+static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusFlags(const MotorController_T * p_mcState)
 {
     return (MotorController_User_StatusFlags_T)
     {
+        // .HeatWarning    = Monitor_GetStatus(p_mcState->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
+        //                   Monitor_GetStatus(p_mcState->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
         // .HeatWarning    = p_mcState->StateFlags.HeatWarning,
         // .VSourceLow     = p_mcState->StateFlags.VSourceLow,
         // .BuzzerEnable   = p_mcState->StateFlags.BuzzerEnable,
@@ -309,8 +290,6 @@ static inline void MotorController_User_SetOptDinMode(MotorController_State_T * 
 static inline void MotorController_User_DisableOptDin(MotorController_State_T * p_mcState)                                    { p_mcState->Config.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
 static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_State_T * p_mcState, uint16_t i_Fract16)          { p_mcState->Config.OptSpeedLimit_Fract16 = i_Fract16; }
 
-// static inline Motor_FeedbackMode_T MotorController_User_GetDefaultFeedbackMode(const MotorController_State_T * p_mcState)      { return p_mcState->Config.DefaultCmdMode; }
-// static inline void MotorController_User_SetDefaultFeedbackMode_Cast(MotorController_State_T * p_mcState, uint16_t wordValue)   { p_mcState->Config.DefaultCmdMode.Value = wordValue; }
 
 
 /******************************************************************************/

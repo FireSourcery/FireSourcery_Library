@@ -62,18 +62,43 @@ MotorController_VarOutput_T;
 /*
     Collective Modules
 */
-typedef enum MotMonitor_VarOutput
-{
-    MOT_MONITOR_V_SOURCE,
-    MOT_MONITOR_V_ACCS,
-    MOT_MONITOR_V_ANALOG,
-    MOT_MONITOR_HEAT_PCB,
-    MOT_MONITOR_HEAT_MOSFETS,
-    MOT_MONITOR_HEAT_MOSFETS_1,
-    MOT_MONITOR_HEAT_MOSFETS_2,
-    MOT_MONITOR_HEAT_MOSFETS_3,
-}
-MotMonitor_VarOutput_T;
+// typedef enum MotVMonitor_VarOutput
+// {
+//     MOT_MONITOR_V_SOURCE,
+//     MOT_MONITOR_V_SOURCE_STATUS,
+//     MOT_MONITOR_V_ACCS,
+//     MOT_MONITOR_V_ACCS_STATUS,
+//     MOT_MONITOR_V_ANALOG,
+//     MOT_MONITOR_V_ANALOG_STATUS,
+// }
+// MotVMonitor_VarOutput_T;
+
+// typedef enum MotVMonitor_VarRef
+// {
+//     MOT_MONITOR_V_SOURCE_R1,
+//     MOT_MONITOR_V_SOURCE_R2,
+//     MOT_MONITOR_V_ACCS_R1,
+//     MOT_MONITOR_V_ACCS_R2,
+//     MOT_MONITOR_V_ANALOG_R1,
+//     MOT_MONITOR_V_ANALOG_R2,
+// }
+// MotVMonitor_VarRef_T;
+
+// typedef enum MotMonitor_VarOutput
+// {
+//     MOT_MONITOR_V_SOURCE,
+//     MOT_MONITOR_V_ACCS,
+//     MOT_MONITOR_V_ANALOG,
+//     MOT_MONITOR_HEAT_PCB,
+//     // MOT_MONITOR_HEAT_MOSFETS_INSTANCED, alternatively
+//     MOT_MONITOR_HEAT_MOSFETS,
+//     MOT_MONITOR_HEAT_MOSFETS_1,
+//     MOT_MONITOR_HEAT_MOSFETS_2,
+//     MOT_MONITOR_HEAT_MOSFETS_3,
+// }
+// MotMonitor_VarOutput_T;
+
+
 
 typedef enum MotorController_VarOutput_Debug
 {
@@ -104,9 +129,9 @@ typedef enum MotorController_Command_MotorContext
     MOTOR_CONTROLLER_USER_FEEDBACK_MODE,                 //
 
     /* handled by call */
-    // MOT_VAR_FORCE_DISABLE_CONTROL,          // Force Disable control Non StateMachine checked, also handled via Call
+    // MOT_USER_FORCE_DISABLE_CONTROL,       // Force Disable control Non StateMachine checked, also handled via Call
+    // MOT_USER_SYSTEM_CLEAR_FAULT,         // fault flags
     // MOT_USER_SYSTEM_BEEP,
-    // MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
     /*  */
     // MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
     // MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
@@ -163,6 +188,10 @@ typedef enum MotorController_ConfigId
     MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_BRAKE_MODE,             // MotDrive_BrakeMode_T
     MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_ZERO_MODE,              // MotDrive_ZeroMode_T
 
+    // MOT_VAR_BOOT_REF_FAST_BOOT,
+    // MOT_VAR_BOOT_REF_BEEP,
+    // MOT_VAR_BOOT_REF_BLINK,
+
     // MOT_VAR_CAN_SERVICES_ID,
     // MOT_VAR_CAN_IS_ENABLE,
     // MOT_VAR_BOOT_REF,
@@ -182,12 +211,15 @@ MotorController_Config_BootRef_T;
 typedef enum MotorController_VarRef
 {
     MOT_VAR_REF_MOTOR_COUNT,
-    MOT_VAR_REF_V_AUX_COUNT,
     MOT_VAR_REF_THERMISTOR_MOSFETS_COUNT,
+    MOT_VAR_REF_PROTOCOL_SOCKET_COUNT,
+    // MOT_VAR_REF_V_AUX_COUNT,
 }
 MotorController_VarRef_T;
 
 
+static inline uint8_t MotorController_Var_GetMotorCount(const MotorController_T * p_context) { return p_context->MOTORS.LENGTH; }
+static inline uint8_t MotorController_Var_GetHeatMosfetCount(const MotorController_T * p_context) { return HeatMonitor_Group_GetInstanceCount(&p_context->HEAT_MOSFETS); }
 
 
 

@@ -54,7 +54,7 @@ void MotAnalogUser_Init(const MotAnalogUser_T * p_user)
     UserDIn_Init(&p_user->REVERSE_DIN);
     if (p_user->P_STATE->Config.UseForwardPin == true) { UserDIn_Init(&p_user->FORWARD_DIN); }
     if (p_user->P_STATE->Config.UseNeutralPin == true) { UserDIn_Init(&p_user->NEUTRAL_DIN); }
-    if (p_user->P_STATE->Config.UseBistateBrakePin == true) { UserDIn_Init(&p_user->SWITCH_BRAKE_DIN); }
+    if (p_user->P_STATE->Config.UseSwitchBrakePin == true) { UserDIn_Init(&p_user->SWITCH_BRAKE_DIN); }
 
     /* Initialize state */
     p_user->P_STATE->Cmd = MOT_ANALOG_USER_CMD_PROC_ZERO;
@@ -105,10 +105,10 @@ void MotAnalogUser_SetThrottleAIn(const MotAnalogUser_T * p_user, uint16_t zero_
     p_user->P_STATE->Config.UseThrottleEdgePin = useThrottleEdgePin;
 }
 
-void MotAnalogUser_SetBistateBrake(const MotAnalogUser_T * p_user, bool useBistateBrake, uint16_t bistateBrakeIntensity_Fract16)
+void MotAnalogUser_SetSwitchBrake(const MotAnalogUser_T * p_user, bool useSwitchBrake, uint16_t bistateBrakeIntensity_Fract16)
 {
-    p_user->P_STATE->Config.UseBistateBrakePin = useBistateBrake;
-    p_user->P_STATE->Config.BistateBrakeValue_Percent16 = bistateBrakeIntensity_Fract16;
+    p_user->P_STATE->Config.UseSwitchBrakePin = useSwitchBrake;
+    p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = bistateBrakeIntensity_Fract16;
 }
 
 void MotAnalogUser_SetDirectionPins(const MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)
@@ -184,8 +184,8 @@ int32_t MotAnalogUser_ConfigId_Get(const MotAnalogUser_T * p_user, MotAnalogUser
         case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                value = p_user->P_STATE->Config.BrakeAInConfig.AdcZero;                 break;
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 value = p_user->P_STATE->Config.BrakeAInConfig.AdcMax;                  break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       value = p_user->P_STATE->Config.UseBrakeEdgePin;                break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             value = p_user->P_STATE->Config.BistateBrakeValue_Percent16;    break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         value = p_user->P_STATE->Config.UseBistateBrakePin;             break;
+        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             value = p_user->P_STATE->Config.SwitchBrakeValue_Percent16;    break;
+        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         value = p_user->P_STATE->Config.UseSwitchBrakePin;             break;
         default: break;
     }
     return value;
@@ -201,8 +201,8 @@ void MotAnalogUser_ConfigId_Set(const MotAnalogUser_T * p_user, MotAnalogUser_Co
         case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                MotAnalogUser_SetBrakeRange(p_user, value, p_user->P_STATE->Config.BrakeAInConfig.AdcMax); break;
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 MotAnalogUser_SetBrakeRange(p_user, p_user->P_STATE->Config.BrakeAInConfig.AdcZero, value); break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       p_user->P_STATE->Config.UseBrakeEdgePin = value;                break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             p_user->P_STATE->Config.BistateBrakeValue_Percent16 = value;    break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         p_user->P_STATE->Config.UseBistateBrakePin = value;             break;
+        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = value;    break;
+        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         p_user->P_STATE->Config.UseSwitchBrakePin = value;             break;
         default: break;
     }
 }

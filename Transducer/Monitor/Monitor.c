@@ -104,7 +104,7 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
     if (p_monitor->Config.IsEnabled == false) { p_monitor->Direction = MONITOR_DISABLED; }
     else
     {
-        p_monitor->Direction = (p_monitor->Config.Fault.Limit > p_monitor->Config.Warning.Setpoint) ? MONITOR_THRESHOLD_HIGH : MONITOR_THRESHOLD_LOW;
+        p_monitor->Direction = (p_monitor->Config.Fault.Limit >= p_monitor->Config.Warning.Setpoint) ? MONITOR_THRESHOLD_HIGH : MONITOR_THRESHOLD_LOW;
     }
 
     Monitor_Reset(p_monitor);
@@ -208,9 +208,23 @@ void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Con
     By Id
 */
 /******************************************************************************/
+// int32_t _Monitor_VarId_Get(const Monitor_T * p_monitor, int id)
+// {
+//     int32_t value = 0;
+
+//     switch (id)
+//     {
+//         case MONITOR_VAR_ID_VALUE:      value = p_monitor->LastInput;   break;
+//         case MONITOR_VAR_ID_STATUS:     value = p_monitor->Status;      break;
+//         default: break;
+//     }
+
+//     return value;
+// }
+
 int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 {
-    switch ((Monitor_ConfigId_T)id)
+    switch (id)
     {
         case MONITOR_CONFIG_FAULT_LIMIT:        return Monitor_GetFaultLimit(p_monitor);
         case MONITOR_CONFIG_WARNING_SETPOINT:   return Monitor_GetWarningSetpoint(p_monitor);
@@ -223,7 +237,7 @@ int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id
 
 void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t value)
 {
-    switch ((Monitor_ConfigId_T)id)
+    switch (id)
     {
         case MONITOR_CONFIG_FAULT_LIMIT:         Monitor_SetFaultLimit(p_monitor, value);           break;
         case MONITOR_CONFIG_WARNING_SETPOINT:    Monitor_SetWarningSetpoint(p_monitor, value);      break;
@@ -236,10 +250,10 @@ void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t
 
 int Monitor_ConfigId_Get(const Monitor_T * p_monitor, int id)
 {
-    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(p_monitor, id) : 0;
+    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(p_monitor, (Monitor_ConfigId_T)id) : 0;
 }
 
 void Monitor_ConfigId_Set(Monitor_T * p_monitor, int id, int value)
 {
-    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, id, value); }
+    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, (Monitor_ConfigId_T)id, value); }
 }

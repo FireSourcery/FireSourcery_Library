@@ -247,7 +247,7 @@ MotorController_State_T;
 typedef const struct MotorController
 {
     /*
-        Hal Thread mapping context
+        Peripheral Thread mapping context
     */
     const Analog_ADC_T * P_ANALOG_ADCS; uint8_t ADC_COUNT; /* Analog ADCs */
 
@@ -325,6 +325,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_contex
     p_context->P_ACTIVE->FaultFlags.RxLost = Protocol_IsRxLost(MotorController_GetMainProtocol(p_context));
     return p_context->P_ACTIVE->FaultFlags.RxLost;
 }
+
 
 /******************************************************************************/
 /*

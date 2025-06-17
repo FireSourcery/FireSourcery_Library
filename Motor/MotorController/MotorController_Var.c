@@ -107,11 +107,11 @@ static int32_t _MotVarId_GetMotorVar(const MotorController_T * p_context, MotVar
 
     switch ((MotVarId_Type_MotorVar_T)id.NameType)
     {
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return Motor_VarOutput_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return Motor_VarOutput_Foc_Get(p_motor, id.NameBase);
-        // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: return Motor_VarIO_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: return 0; /* Commands are write-only */
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return Motor_VarOutput_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return Motor_VarOutput_Foc_Get(p_motor, id.NameBase);
+    //     // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: return Motor_Var_UserIO_Get(p_motor, id.NameBase);
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: return 0; /* Commands are write-only */
+    //     case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
         default: return 0;
     }
 }
@@ -126,9 +126,9 @@ static MotVarId_Status_T _MotVarId_SetMotorVar(const MotorController_T * p_conte
         case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS: return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC: return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_SENSOR: return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: Motor_VarIO_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: Motor_VarInput_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_IO: Motor_Var_UserIO_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD: Motor_Var_Cmd_Set(MotorContext(p_context, id), id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
         default: return MOT_VAR_STATUS_ERROR;
     }
 }
@@ -144,10 +144,10 @@ static int32_t _MotVarId_GetMotorConfig(const MotorController_T * p_context, Mot
 
     switch ((MotVarId_Type_MotorConfig_T)id.NameType)
     {
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION: return Motor_VarConfig_Calibration_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION: return Motor_VarConfig_Actuation_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS: return Motor_VarConfig_CalibrationAlias_Get(p_motor, id.NameBase);
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION: return Motor_VarConfig_Calibration_Get(p_motor, id.NameBase);
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION: return Motor_VarConfig_Actuation_Get(p_motor, id.NameBase);
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID: return Motor_VarConfig_Pid_Get(p_motor, id.NameBase);
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS: return Motor_VarConfig_CalibrationAlias_Get(p_motor, id.NameBase);
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_THERMISTOR: return Motor_VarConfig_Thermistor_Get(p_motor, id.NameBase);
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ROUTINE: return Motor_VarConfig_Routine_Get(p_motor, id.NameBase);
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_BOARD_REF: return Motor_BoardRef_Get(p_context, id.NameBase);
@@ -162,9 +162,9 @@ static MotVarId_Status_T _MotVarId_SetMotorConfig(const MotorController_T * p_co
 
     switch ((MotVarId_Type_MotorConfig_T)id.NameType)
     {
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION: Motor_VarConfig_Calibration_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION: Motor_VarConfig_Actuation_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION: Motor_VarConfig_Calibration_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION: Motor_VarConfig_Actuation_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
+        // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID: Motor_VarConfig_Pid_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS: Motor_VarConfig_CalibrationAlias_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_THERMISTOR: Motor_VarConfig_Thermistor_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
         // case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ROUTINE: Motor_VarConfig_Routine_Set(p_motor, id.NameBase, value); return MOT_VAR_STATUS_OK;
@@ -248,18 +248,19 @@ static int32_t _MotVarId_GetGeneralVar(const MotorController_T * p_context, uint
     // }
 }
 
-static int32_t _MotVarId_GetMonitorVar(const MotorController_T * p_context, uint8_t nameBase, uint8_t instance)
+static int32_t _MotVarId_GetMonitorVar(const MotorController_T * p_context, int nameBase)
 {
     // switch ((MotMonitor_VarOutput_T)nameBase)
     // {
-    //     // case MOT_MONITOR_V_SOURCE: return VMonitor_GetValue(&p_context->V_SOURCE.MONITOR);
-    //     // case MOT_MONITOR_V_ANALOG: return VMonitor_GetValue(&p_context->V_ANALOG.MONITOR);
-    //     // case MOT_MONITOR_V_ACCS: return VMonitor_GetValue(&p_context->V_ACCESSORIES.MONITOR);
-    //     // case MOT_MONITOR_HEAT_PCB: return HeatMonitor_GetValue(&p_context->HEAT_PCB.MONITOR);
-    //     // case MOT_MONITOR_HEAT_MOSFETS: return HeatMonitor_GroupContext_GetValue(&p_context->HEAT_MOSFETS, instance);
-    //     case MOT_MONITOR_HEAT_MOSFETS_1: return HeatMonitor_GroupContext_GetValue(&p_context->HEAT_MOSFETS, 0);
-    //     case MOT_MONITOR_HEAT_MOSFETS_2: return HeatMonitor_GroupContext_GetValue(&p_context->HEAT_MOSFETS, 1);
-    //     case MOT_MONITOR_HEAT_MOSFETS_3: return HeatMonitor_GroupContext_GetValue(&p_context->HEAT_MOSFETS, 2);
+    //     // case MOT_MONITOR_V_SOURCE: return p_context->V_SOURCE.ANALOG_CONVERSION.P_CONVERSION_STATE->Result;
+    //     case MOT_MONITOR_V_SOURCE:  return p_context->V_SOURCE.P_STATE->LastInput;
+    //     case MOT_MONITOR_V_ACCS:    return p_context->V_ACCESSORIES.P_STATE->LastInput;
+    //     case MOT_MONITOR_V_ANALOG:  return p_context->V_ANALOG.P_STATE->LastInput;
+    //     case MOT_MONITOR_HEAT_PCB:  return p_context->HEAT_PCB.P_STATE->LastInput;
+    //     case MOT_MONITOR_HEAT_MOSFETS:   return HeatMonitor_Group_GetInstance(&p_context->HEAT_MOSFETS, 0)->P_STATE->LastInput;
+    //     case MOT_MONITOR_HEAT_MOSFETS_1: return HeatMonitor_Group_GetInstance(&p_context->HEAT_MOSFETS, 1)->P_STATE->LastInput;
+    //     case MOT_MONITOR_HEAT_MOSFETS_2: return HeatMonitor_Group_GetInstance(&p_context->HEAT_MOSFETS, 2)->P_STATE->LastInput;
+    //     case MOT_MONITOR_HEAT_MOSFETS_3: return HeatMonitor_Group_GetInstance(&p_context->HEAT_MOSFETS, 3)->P_STATE->LastInput;
     //     default: return 0;
     // }
 }

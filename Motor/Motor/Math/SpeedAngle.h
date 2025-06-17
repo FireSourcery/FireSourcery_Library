@@ -50,6 +50,9 @@ typedef struct
     SpeedAngle_T SpeedAngle;
     Ramp_T SpeedRamp;  /* Speed Ramp */
     PID_T SpeedPid;  /* Speed PID */
+
+    // uint16_t SpeedLimitForward_Fract16; /* May over saturate */
+    // uint16_t SpeedLimitReverse_Fract16;
 }
 SpeedAngle_Feedback_T;
 

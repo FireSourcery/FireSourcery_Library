@@ -58,7 +58,7 @@ Serial_T;
     .RX_RING = RING_CONTEXT_ALLOC(sizeof(uint8_t), RxBufferSize),     \
 }
 
-//todo with Ring_Context_T
+//todo with RingT
 
 /******************************************************************************/
 /*!
@@ -74,6 +74,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 
     while (HAL_Serial_ReadRxFullCount(p_serial->P_HAL_SERIAL) > 0U) /* Rx until hw buffer is empty */
     {
+        // if (RingT_IsFull(p_serial->RX_RING.TYPE, p_serial->RX_RING.P_STATE))
         if (Ring_IsFull(p_serial->RX_RING.P_STATE) == true) /* Rx until software buffer is full */
         {
             /* if buffer stays full, disable irq to prevent blocking lower priority threads. user must restart rx irq */

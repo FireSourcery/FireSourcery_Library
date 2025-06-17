@@ -46,38 +46,14 @@
 /******************************************************************************/
 /*
     Type of NameBase e.g.
-    corresponds to enum type containing index ids
+    directly corresponds to enum type containing index ids
 */
-typedef enum MotVarId_Type_Service
-{
-    MOT_VAR_ID_TYPE_GENERAL_VAR_OUT, // GENERAL State
-    MOT_VAR_ID_TYPE_GENERAL_CONFIG,
-    // MOT_VAR_ID_TYPE_OPT_DIN_CONFIG,
-
-    MOT_VAR_ID_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
-    MOT_VAR_ID_TYPE_ANALOG_USER_CONFIG,
-
-    MOT_VAR_ID_TYPE_MONITOR_VAR_OUT, /* all monitors */
-    MOT_VAR_ID_TYPE_V_MONITOR_SOURCE_CONFIG,
-    MOT_VAR_ID_TYPE_V_MONITOR_AUX_CONFIG,           /* Instanced */
-    MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,    /* Instanced */
-    MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_CONFIG,
-    // MOT_VAR_ID_TYPE_THERMISTOR_MOSFETS, /* alternatively seperate descriptors */
-    // MOT_VAR_ID_TYPE_THERMISTOR_PCB, /* alternatively seperate descriptors */
-
-    MOT_VAR_ID_TYPE_PROTOCOL_CONFIG, /* Instance by Protocol Count */
-    // MOT_VAR_ID_TYPE_CAN_BUS_CONFIG,
-    MOT_VAR_ID_TYPE_BOOT_REF_CONFIG,
-
-    MOT_VAR_ID_TYPE_BOARD_REF, /* Read-only */
-    MOT_VAR_ID_TYPE_DEBUG,
-}
-MotVarId_Type_Service_T;
-
 /* Instance count of Motor */
 typedef enum MotVarId_Type_MotorVar
 {
     MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_METRICS,
+    // MOT_VAR_ID_TYPE_MOTOR_STATE_USER,
+    // MOT_VAR_ID_TYPE_MOTOR_STATE_SPEED_ANGLE,
     MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_FOC,
     MOT_VAR_ID_TYPE_MOTOR_VAR_OUT_SENSOR, /* Generic */
     MOT_VAR_ID_TYPE_MOTOR_VAR_IO,
@@ -91,9 +67,11 @@ MotVarId_Type_MotorVar_T;
 typedef enum MotVarId_Type_MotorConfig
 {
     MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION,
+    MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS,
     MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION,
     MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID,
-    MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS,
+
+    MOT_VAR_ID_TYPE_MOTOR_CONFIG_HEAT_MONITOR,
     MOT_VAR_ID_TYPE_MOTOR_CONFIG_THERMISTOR,
 
     MOT_VAR_ID_TYPE_MOTOR_CONFIG_ROUTINE, /* Calibration Cmds */
@@ -103,14 +81,50 @@ MotVarId_Type_MotorConfig_T;
 
 typedef enum MotVarId_Type_MotorSensor
 {
-    MOT_VAR_ID_TYPE_MOTOR_SENSOR_STATE, // common, generic
-    MOT_VAR_ID_TYPE_MOTOR_SENSOR_CONFIG,
+    // MOT_VAR_ID_TYPE_MOTOR_SENSOR_STATE, // common, generic
+    // MOT_VAR_ID_TYPE_MOTOR_SENSOR_CONFIG,
     MOT_VAR_ID_TYPE_MOTOR_HALL_STATE,
     MOT_VAR_ID_TYPE_MOTOR_HALL_CONFIG,
     MOT_VAR_ID_TYPE_MOTOR_ENCODER_STATE,
     MOT_VAR_ID_TYPE_MOTOR_ENCODER_CONFIG,
 }
 MotVarId_Type_MotorSensor_T;
+
+// typedef enum MotVarId_Type_Interface
+typedef enum MotVarId_Type_Service
+{
+    MOT_VAR_ID_TYPE_GENERAL_VAR_OUT, // GENERAL State /* STATE_VAR/VAR_OUT */
+    MOT_VAR_ID_TYPE_GENERAL_CONFIG,
+    MOT_VAR_ID_TYPE_BOOT_REF_CONFIG,
+    // MOT_VAR_ID_TYPE_OPT_DIN_CONFIG,
+
+    MOT_VAR_ID_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
+    MOT_VAR_ID_TYPE_ANALOG_USER_CONFIG,
+
+    MOT_VAR_ID_TYPE_PROTOCOL_CONFIG, /* Instance by Protocol Count */
+    // MOT_VAR_ID_TYPE_CAN_BUS_CONFIG,
+
+    MOT_VAR_ID_TYPE_BOARD_REF, /* Read-only */
+    MOT_VAR_ID_TYPE_DEBUG,
+}
+MotVarId_Type_Service_T;
+
+typedef enum MotVarId_Type_Monitor
+{
+    MOT_VAR_ID_TYPE_V_MONITOR_STATE, /* all V Monitors */
+    MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
+    // MOT_VAR_ID_TYPE_V_MONITOR_VDIVIDER_REF, /* alternatively include in board ref */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_STATE, /*  */
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_STATE,
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_CONFIG,
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_STATE,
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE, /* 0-3 */
+    // MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
+    MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF, /* 0-3 */
+}
+MotVarId_Type_Monitor_T;
 
 typedef enum MotVarId_Type_Command
 {
@@ -127,27 +141,26 @@ MotVarId_Type_Command_T;
 /******************************************************************************/
 /*
     [MotVarId_TypeType]
+    MotVarId_Handler/SubModule
     Ideally mutually exclusive attribute groups when possible
         determine handler logic by id
-    MotVarId_Handler/SubModule
 */
 /******************************************************************************/
 typedef enum MotVarId_TypeType
 {
+    /* Instance count of Motor */
+    MOT_VAR_ID_TYPE_MOTOR_VAR,
+    MOT_VAR_ID_TYPE_MOTOR_CONFIG,
+    MOT_VAR_ID_TYPE_MOTOR_SENSOR, // if types become excess
+
+    MOT_VAR_ID_TYPE_MONITOR,
     MOT_VAR_ID_TYPE_SERVICE,
     // corresponding write only/subroutine, no retaining var, optionally return a status
     MOT_VAR_ID_TYPE_COMMAND,
 
-    /* Instance count of Motor */
-    MOT_VAR_ID_TYPE_MOTOR_VAR,
-    // MOT_VAR_ID_TYPE_MOTOR_STREAM,
-    MOT_VAR_ID_TYPE_MOTOR_CONFIG,
-    MOT_VAR_ID_TYPE_MOTOR_SENSOR, // if types become excess
-
     /* Misc submodules */
     // MOT_VAR_ID_TYPE_SUBMODULE,
-
-    MOT_VAR_ID_TYPE_TYPE_END = 8U,
+    _MOT_VAR_ID_TYPE_TYPE_END = 8U,
 }
 MotVarId_TypeType_T;
 

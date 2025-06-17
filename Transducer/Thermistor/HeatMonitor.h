@@ -67,7 +67,6 @@ HeatMonitor_Status_T;
 // }
 // HeatMonitor_Config_T;
 
-
 /******************************************************************************/
 /*!
     @brief  HeatMonitor Context - Contains all necessary data for per-thermistor monitoring
@@ -89,12 +88,14 @@ HeatMonitor_Status_T;
 */
 typedef const struct HeatMonitor_Context
 {
+    /* HeatMonitor_Base_T */
     HeatMonitor_T * P_STATE;
-    /* Optional */
-    Linear_T * P_LIMIT_SCALAR;
-    const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
-    /*  */
+    /* Overwrite for GroupContext */
+    Linear_T * P_LIMIT_SCALAR;
+    const HeatMonitor_Config_T * P_NVM_CONFIG;
+
+    /* Thermistor Context */
     Analog_Conversion_T ANALOG_CONVERSION;
     Thermistor_T THERMISTOR;
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
@@ -103,38 +104,9 @@ typedef const struct HeatMonitor_Context
 }
 HeatMonitor_Context_T;
 
-// #define HEAT_MONITOR_CONTEXT_INIT(HeatMonitorState, AnalogConversion, Thermistor, Linear) \
-
-// typedef struct HeatMonitor_GroupState
-// {
-//     /* Group Management */
-//     uint8_t ActiveSensorIndex;          /* Currently active/monitored sensor */
-//     uint8_t LastProcessedIndex;         /* Last sensor that was processed */
-//     uint32_t GroupPollCounter;          /* Group polling cycle counter */
-//     /* Group State Tracking */
-//     HeatMonitor_Status_T GroupStatus;   /* Overall group status */
-//     uint8_t FaultCount;                 /* Number of sensors in fault */
-//     uint8_t WarningCount;               /* Number of sensors in warning */
-
-// }
-// HeatMonitor_GroupState_T;
-
-typedef const struct HeatMonitor_GroupContext
-{
-    /* Array of HeatMonitor_Context_T */
-    /* Include HeatMonitor_T per sensor, for individual status */
-    HeatMonitor_Context_T * P_CONTEXTS;
-    uint8_t COUNT;
-
-    /* Collective State */
-    HeatMonitor_T * P_STATE;
-    Linear_T * P_LIMIT_SCALAR;
-    const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
-}
-HeatMonitor_GroupContext_T;
-
 #define HEAT_MONITOR_LINEAR_ALLOC() (&(Linear_T){0})
 #define HEAT_MONITOR_STATE_ALLOC() (&(HeatMonitor_T){0})
+// #define HEAT_MONITOR_CONTEXT_INIT(HeatMonitorState, AnalogConversion, Thermistor, Linear) \
 
 /******************************************************************************/
 /*
@@ -167,11 +139,44 @@ static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T 
 static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
 
 
+/* Optionally combine thermistor and monitor ids here */
+// static inline int HeatMonitor_ConfigId_Get(const HeatMonitor_T * p_heat, int id) { return Monitor_ConfigId_Get(p_heat, id); }
+// static inline void HeatMonitor_ConfigId_Set(HeatMonitor_T * p_heat, int id, int value) { Monitor_ConfigId_Set(p_heat, id, value); }
+
+
 /******************************************************************************/
 /*
     Group Context
 */
 /******************************************************************************/
+// typedef struct HeatMonitor_GroupState
+// {
+//     /* Group Management */
+//     uint8_t ActiveSensorIndex;          /* Currently active/monitored sensor */
+//     uint8_t LastProcessedIndex;         /* Last sensor that was processed */
+//     uint32_t GroupPollCounter;          /* Group polling cycle counter */
+//     /* Group State Tracking */
+//     HeatMonitor_Status_T GroupStatus;   /* Overall group status */
+//     uint8_t FaultCount;                 /* Number of sensors in fault */
+//     uint8_t WarningCount;               /* Number of sensors in warning */
+
+// }
+// HeatMonitor_GroupState_T;
+
+typedef const struct HeatMonitor_GroupContext
+{
+    /* Array of HeatMonitor_Context_T */
+    /* Include HeatMonitor_T per sensor, for individual status */
+    HeatMonitor_Context_T * P_CONTEXTS;
+    uint8_t COUNT;
+
+    /* Collective State */
+    HeatMonitor_T * P_STATE;
+    Linear_T * P_LIMIT_SCALAR;
+    const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
+}
+HeatMonitor_GroupContext_T;
+
 
 /* Monitor_GetLastInputComparable returns value for > compare */
 /* Find hottest sensor */
@@ -283,7 +288,7 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollAll(const HeatMonitor_G
 
 /******************************************************************************/
 /*
-    Group Query Functions
+    Group Query Functions - Polling results
 */
 /******************************************************************************/
 static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_GroupContext_T * p_group)
@@ -295,6 +300,57 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor
 {
     return (HeatMonitor_Status_T)Monitor_GetStatus(p_group->P_STATE);
 }
+
+
+/******************************************************************************/
+/*
+    For VarId interface
+
+    Monitor_ConfigId_Get(HeatMonitor_Group_GetMonitor(p_group, instance), id)
+*/
+/******************************************************************************/
+static inline uint8_t HeatMonitor_Group_GetInstanceCount(const HeatMonitor_GroupContext_T * p_group) { return p_group->COUNT; }
+
+static inline HeatMonitor_Context_T * HeatMonitor_Group_GetInstance(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+{
+    return (index < p_group->COUNT) ? &p_group->P_CONTEXTS[index] : NULL;
+}
+
+static inline Thermistor_T * HeatMonitor_Group_GetThermistor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+{
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetInstance(p_group, index);
+    return (p_context != NULL) ? &p_context->THERMISTOR : NULL;
+}
+
+static inline HeatMonitor_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+{
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetInstance(p_group, index);
+    return (p_context != NULL) ? p_context->P_STATE : NULL;
+}
+
+/* Shared Monitor Config */
+static inline int HeatMonitor_Group_MonitorConfig_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id)
+{
+    return Monitor_ConfigId_Get(p_group->P_STATE, id);
+}
+
+static inline void HeatMonitor_Group_MonitorConfig_Set(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id, int value)
+{
+    Monitor_ConfigId_Set(p_group->P_STATE, id, value);
+}
+
+/* instanced */
+static inline int HeatMonitor_Group_ThermistorConfig_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id)
+{
+    return Thermistor_ConfigId_Get(HeatMonitor_Group_GetThermistor(p_group, instance), id);
+}
+
+static inline void HeatMonitor_Group_ThermistorConfig_Set(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id, int value)
+{
+    Thermistor_ConfigId_Set(HeatMonitor_Group_GetThermistor(p_group, instance), id, value);
+}
+
+
 
 /******************************************************************************/
 /*

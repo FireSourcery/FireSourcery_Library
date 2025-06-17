@@ -35,14 +35,17 @@
 */
 /******************************************************************************/
 #include "Config.h"
+
 #include "Peripheral/PWM/PWM.h"
 #include "Peripheral/Pin/Pin.h"
+
 #include <stdint.h>
 #include <assert.h>
 #include <sys/types.h>
 
 
 /* Phase_Id/State */
+/* Phase_Channels */
 typedef union Phase_Bits
 {
     struct
@@ -129,7 +132,7 @@ static inline uint16_t Phase_AngleOf(Phase_Id_T id)
 
 /*
     Output State
-    As collective or 3-state interpertation of a single-phase.
+    As collective ABC ouput or 3-state interpertation of a single-phase.
 */
 typedef enum Phase_Output
 {
@@ -156,9 +159,9 @@ Phase_T;
 #define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)    \
 {                                                                                   \
     .PWM_MODULE = PWM_MODULE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel),  \
-    .PWM_A = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel),        \
-    .PWM_B = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmBChannel),        \
-    .PWM_C = PWM_INIT(p_PwmHal, PwmPeriodTicks, PwmCChannel),        \
+    .PWM_A = PWM_INIT(p_PwmHal, PwmAChannel, PwmPeriodTicks),        \
+    .PWM_B = PWM_INIT(p_PwmHal, PwmBChannel, PwmPeriodTicks),        \
+    .PWM_C = PWM_INIT(p_PwmHal, PwmCChannel, PwmPeriodTicks),        \
     .PIN_A = PIN_INIT(p_PinAHal, PinAId),                            \
     .PIN_B = PIN_INIT(p_PinBHal, PinBId),                            \
     .PIN_C = PIN_INIT(p_PinCHal, PinCId),                            \
@@ -271,6 +274,7 @@ static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
 /******************************************************************************/
 /*!   */
 /******************************************************************************/
+/* ReadChannelsOutput, ReadChannelSwitches */
 static inline Phase_Bits_T _Phase_ReadState(const Phase_T * p_phase)
 {
     return (Phase_Bits_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
@@ -332,6 +336,7 @@ static inline void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t p
     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
+
 // static inline void Phase_Deactivate(const Phase_T * p_phase)
 static inline void Phase_Float(const Phase_T * p_phase)
 {
@@ -377,6 +382,7 @@ static inline bool Phase_IsV0(const Phase_T * p_phase)
     return ((_Phase_ReadState(p_phase).Value == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0));
 }
 
+/* Collective state */
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
@@ -384,6 +390,15 @@ static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
     else if (Phase_IsV0(p_phase) == true)       { state = PHASE_OUTPUT_V0; }
     else                                        { state = PHASE_OUTPUT_VPWM; }
     return state;
+
+    // if (_Phase_ReadState(p_phase).Value == PHASE_ID_0)
+    // {
+    //     return PHASE_OUTPUT_FLOAT;
+    // }
+    // else
+    // {
+    //     return (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
+    // }
 }
 
 static inline void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T state)
@@ -393,12 +408,10 @@ static inline void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Outp
         case PHASE_OUTPUT_FLOAT:    Phase_Float(p_phase);               break;
         case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(p_phase);    break;
         case PHASE_OUTPUT_VPWM:     Phase_ActivateOutputT0(p_phase);    break;
-        // case PHASE_OUTPUT_VPWM:     Phase_ActivateOutput(p_phase);      break;/* restore last active */
+        // case PHASE_OUTPUT_VPWM:     Phase_ActivateOutput(p_phase);      break; /* restore last active */
         default: break;
     }
 }
-
-
 
 
 /******************************************************************************/

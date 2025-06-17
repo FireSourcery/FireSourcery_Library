@@ -83,15 +83,17 @@ extern const State_T MOTOR_STATE_FAULT;
 
 extern const StateMachine_Machine_T MSM_MACHINE;
 
-/* state machine context on Motor const handler */
-#define MOTOR_STATE_MACHINE_INIT(p_MotorConst, p_MotorActive) STATE_MACHINE_INIT((p_MotorConst), &MSM_MACHINE, &((p_MotorActive)->StateMachine))
+/*!
+    @param p_MotorContext const Motor_T*
+    @param MotorActive Motor_Active_T
+*/
+#define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorActive) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorActive).StateMachine))
 
 /* Wrap for interface */
-// static inline bool _Motor_StateMachine_IsState(const Motor_State_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(&p_motor->StateMachine, (Motor_StateId_T)stateId)); }
-// static inline bool Motor_StateMachine_IsState(const Motor_State_T * p_motor, int stateId) { return _Motor_StateMachine_IsState(p_motor, (Motor_StateId_T)stateId); }
+static inline bool _Motor_StateMachine_IsState(const Motor_State_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(&p_motor->StateMachine, (Motor_StateId_T)stateId)); }
 static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE, (Motor_StateId_T)stateId)); }
 
-// bool _Motor_StateMachine_IsFault(const Motor_State_T * p_fields) { return (StateMachine_GetActiveStateId(&p_fields->StateMachine) == MSM_STATE_ID_FAULT); }
+static inline bool _Motor_StateMachine_IsFault(const Motor_State_T * p_fields) { return (StateMachine_GetActiveStateId(&p_fields->StateMachine) == MSM_STATE_ID_FAULT); }
 static inline bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_FAULT); }
 
 /******************************************************************************/

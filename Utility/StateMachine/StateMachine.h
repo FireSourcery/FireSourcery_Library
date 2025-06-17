@@ -137,8 +137,8 @@ extern void StateMachine_ProcState(const StateMachine_T * p_stateMachine);
 extern void StateMachine_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
 extern void StateMachine_SetInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
 
-extern void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_input, state_input_value_t inputValue);
 extern void StateMachine_ForceTransition(const StateMachine_T * p_stateMachine, const State_T * p_state);
+extern void StateMachine_InvokeTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_input, state_input_value_t inputValue);
 extern void StateMachine_SetValueWith(const StateMachine_T * p_stateMachine, const State_T * p_state, State_Set_T setter, state_input_value_t value);
 
 /******************************************************************************/
