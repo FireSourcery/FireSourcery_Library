@@ -46,7 +46,6 @@ VDivider_T;
 
 #define V_DIVIDER_INIT(RefR1, RefR2) { .R1 = (RefR1), .R2 = (RefR2) }
 
-
 /******************************************************************************/
 /*!
 */
@@ -70,20 +69,11 @@ static inline int32_t _VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider
     return value;
 }
 
+static inline int32_t VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T configId)
+{
+    return (p_voltage != NULL) ? _VDivider_RefId_Get(p_voltage, configId) : 0;
+}
 
-static inline int32_t VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T configId) { return (p_voltage != NULL) ? _VDivider_RefId_Get(p_voltage, configId) : 0; }
-
-// static inline void _VDivider_RefId_Set(const VDivider_T * p_voltage, VDivider_RefId_T configId, uint16_t value)
-// {
-//     switch (configId)
-//     {
-//         case VDIVIDER_REF_R1:   break;
-//         case VDIVIDER_REF_R2:   break;
-//         default: break;
-//     }
-// }
-
-// static inline void VDivider_RefId_Set(const VDivider_T * p_voltage, VDivider_RefId_T configId, uint16_t value) { if (p_voltage != NULL) { _VDivider_RefId_Set(p_voltage, configId, value); } }
 
 /******************************************************************************/
 /*!

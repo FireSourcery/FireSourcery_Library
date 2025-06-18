@@ -82,13 +82,17 @@ VMonitor_Context_T;
 /*
 */
 /******************************************************************************/
-// static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
-// {
-//     Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-//     // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION); /* Optionally mark for start */
-//     return (VMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
-// }
+static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
+{
+    return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
+    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION); /* Optionally mark for start */
+    // return (VMonitor_Status_T)RangeMonitor_GetStatus(p_context->P_STATE);
+}
 
+static inline void VMonitor_MarkConversion(const VMonitor_Context_T * p_context)
+{
+    Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION);
+}
 
 /******************************************************************************/
 /*
@@ -101,8 +105,24 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
     return ((uint32_t)(input - p_voltage->Config.FaultUnderLimit.Limit) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.FaultUnderLimit.Limit);
 }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
 static inline VMonitor_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static inline int VMonitor_VarId_Get(const VMonitor_Context_T * p_context, RangeMonitor_VarId_T id) { return RangeMonitor_VarId_Get(p_context->P_STATE, id); }
+
+static inline int VMonitor_ConfigId_Get(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id) { return RangeMonitor_ConfigId_Get(p_context->P_STATE, id); }
+static inline void VMonitor_ConfigId_Set(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id, int value) { RangeMonitor_ConfigId_Set(p_context->P_STATE, id, value); }
+
+static inline int VMonitor_VDivider_RefId_Get(const VMonitor_Context_T * p_context, VDivider_RefId_T id) { return VDivider_RefId_Get(&p_context->VDIVIDER, id); }
+
 
 /******************************************************************************/
 /*

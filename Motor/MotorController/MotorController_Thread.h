@@ -83,7 +83,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
         default: break;
     }
 
-    //if drive mode
+    // if drive mode
     MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
 
@@ -99,8 +99,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true) { MotorController_User_SetCmdValue(p_context, 0U); }
     // else { MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U); }
 
-    if (IsDividerAlign(p_mc->MainDividerCounter, p_context->ANALOG_USER_DIVIDER) == true)
-        { MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS); }
+    if (IsDividerAlign(p_mc->MainDividerCounter, p_context->ANALOG_USER_DIVIDER) == true) { MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS); }
 }
 
 
@@ -109,37 +108,37 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 */
 static inline void _MotorController_ProcOptDin(const MotorController_T * p_context)
 {
-    // MotorController_State_T * p_mc = p_context->P_ACTIVE;
-    // uint8_t dinStatus = 0U;
+    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    uint8_t dinStatus = 0U;
 
-    // if (p_mc->Config.OptDinMode != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
-    // {
-    //     Debounce_PollEdge(&p_mc->OptDin);
+    if (p_mc->Config.OptDinMode != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
+    {
+        UserDIn_PollEdge(&p_context->OPT_DIN);
 
-    //     switch (p_mc->Config.OptDinMode)
-    //     {
-    //         case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
-    //         case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
-    //             switch (Debounce_GetEdge(&p_mc->OptDin))
-    //             {
-    //                 case DEBOUNCE_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
-    //                 case DEBOUNCE_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_context); break;
-    //                 default: break;
-    //             }
-    //             break;
-    //         // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-    //         // case MOTOR_CONTROLLER_OPT_DIN_SERVO:
-    //         //     switch (Debounce_GetEdge(&p_mc->OptDin))
-    //         //     {
-    //         //         case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
-    //         //         case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;
-    //         //         default: break;
-    //         //     }
-    //         //     break;
-    //         // #endif
-    //         default: break;
-    //     }
-    // }
+        switch (p_mc->Config.OptDinMode)
+        {
+            case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
+            case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
+                switch (UserDIn_GetEdge(&p_context->OPT_DIN))
+                {
+                    case USER_DIN_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
+                    case USER_DIN_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_context); break;
+                    default: break;
+                }
+                break;
+            // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+            // case MOTOR_CONTROLLER_OPT_DIN_SERVO:
+            //     switch (Debounce_GetEdge(&p_mc->OptDin))
+            //     {
+            //         case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
+            //         case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;
+            //         default: break;
+            //     }
+            //     break;
+            // #endif
+            default: break;
+        }
+    }
 }
 
 /*
@@ -211,7 +210,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_MarkConversion(&p_context->HEAT_MOSFETS.P_CONTEXTS[i].ANALOG_CONVERSION); }
 
     // /* Process individual motor heat monitoring */
-    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)     { Motor_Heat_Thread(&p_context->P_MOTOR_CONSTS[iMotor]);     }
+    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_context->P_MOTOR_CONSTS[iMotor]);     }
 }
 
 
@@ -400,7 +399,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
     // }
 
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-// _Blinky_Toggle(&p_mc->Meter);
+    // _Blinky_Toggle(&p_mc->Meter);
 #endif
     p_mc->TimerDividerCounter++;
 }

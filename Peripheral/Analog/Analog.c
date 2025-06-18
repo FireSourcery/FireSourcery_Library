@@ -84,7 +84,6 @@
 
 
 
-
 // static inline void _Analog_CaptureLocalPeak(Analog_T * p_analog, adc_result_t result)
 // adc_result_t result = HAL_ADC_ReadResult(p_analog->CONST.P_HAL_ADC, p_activeConversion->PIN);
 // if(p_analog->ActiveOptions.CaptureLocalPeak == true)

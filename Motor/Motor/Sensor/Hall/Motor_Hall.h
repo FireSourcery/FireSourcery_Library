@@ -54,7 +54,7 @@ extern const VarAccess_VTable_T MOTOR_HALL_VAR_OUT;
 // extern const VarAccess_VTable_T MOTOR_HALL_VAR_CONFIG;
 
 extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_HALL;
-#define MOTOR_HALL_VAR_ACCESS_INIT(p_Motor) VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_HALL, &((p_Motor)->VarAccessConfigState))
+#define MOTOR_HALL_VAR_ACCESS_INIT(p_MotorContext, p_Motor) VAR_ACCESS_INIT(p_MotorContext, &MOTOR_VAR_CONFIG_HALL, &((p_Motor)->VarAccessConfigState))
 
 extern int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId);
 extern void Motor_Hall_Config_Set(const Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue);

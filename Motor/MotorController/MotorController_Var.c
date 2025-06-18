@@ -195,42 +195,16 @@ int32_t MotorController_InstancesRef_Get(const MotorController_T * p_context, Mo
 /******************************************************************************/
 static int32_t _HandleMotorVar_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    const Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    if (p_motor == NULL) return 0;
-
-    switch (varId.NameType)
-    {
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_OUT:        return _Motor_Var_UserOut_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_FOC_OUT:         return _Motor_Var_Foc_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_SENSOR_OUT:      return Motor_Var_Sensor_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING_IO:  return _Motor_Var_PidTuning_Get(p_motor->P_ACTIVE, varId.NameBase);
-        // case MOT_VAR_ID_TYPE_MOTOR_VAR_HEAT_MONITOR_OUT: return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_IO:         return _Motor_Var_UserIO_Get(p_motor, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD_IN:          return 0;
-        default: return 0;
-    }
+    return Motor_VarType_Get(MotorAt(p_mc, varId.Instance), varId.NameType, varId.NameBase);
 }
 
 static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_mc, MotVarId_T varId, int32_t value)
 {
     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
     MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-
     if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
 
-    switch (varId.NameType)
-    {
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_OUT:
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_FOC_OUT:
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_SENSOR_OUT: status = MOT_VAR_STATUS_ERROR_READ_ONLY; break;
-
-        /* Wrap with enable check */
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_PID_TUNNING_IO:  VarAccess_SetAt(&p_motor->VAR_ACCESS.IO_PID_TUNNING, varId.NameBase, value);    break;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_USER_IO:         VarAccess_SetAt(&p_motor->VAR_ACCESS.IO, varId.NameBase, value);                break;
-        case MOT_VAR_ID_TYPE_MOTOR_VAR_CMD_IN:          VarAccess_SetAt(&p_motor->VAR_ACCESS.IN, varId.NameBase, value);                break;
-        default: status = MOT_VAR_STATUS_ERROR; break;
-    }
-
+    Motor_VarType_Set(p_motor, varId.NameType, varId.NameBase, value);
     return status;
 }
 
@@ -242,21 +216,7 @@ static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_mc, Mot
 /******************************************************************************/
 static int32_t _HandleMotorConfig_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    if (p_motor == NULL) return 0;
-
-    switch (varId.NameType)
-    {
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION:          return _Motor_VarConfig_Calibration_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS:    return _Motor_VarConfig_CalibrationAlias_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION:            return _Motor_VarConfig_Actuation_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID:                  return _Motor_VarConfig_Pid_Get(p_motor->P_ACTIVE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_HEAT_MONITOR:         return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_THERMISTOR:           return HeatMonitor_ConfigId_Thermistor_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_BOARD_REF:            return Motor_VarRef_Get(varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CMD: break;
-        default: return 0;
-    }
+    return Motor_VarType_Config_Get(MotorAt(p_mc, varId.Instance), varId.NameType, varId.NameBase);
 }
 
 static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_mc, MotVarId_T varId, int32_t value)
@@ -266,29 +226,12 @@ static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_mc, 
     // {
     //     return MOT_VAR_STATUS_ERROR_RUNNING;
     // }
-
     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
+    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
 
-    /* handler check */
-    // if (!Motor_StateMachine_IsConfig(p_motor)) { return MOT_VAR_STATUS_ERROR_RUNNING; }
-
-    switch (varId.NameType)
-    {
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION:      _Motor_VarConfig_Calibration_Set(p_motor->P_ACTIVE, varId.NameBase, value);                     break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_ACTUATION:        _Motor_VarConfig_Actuation_Set(p_motor->P_ACTIVE, varId.NameBase, value);                       break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_PID:              _Motor_VarConfig_Pid_Set(p_motor->P_ACTIVE, varId.NameBase, value);                             break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_HEAT_MONITOR:     HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId.NameBase, value);                break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_THERMISTOR:       HeatMonitor_ConfigId_Thermistor_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId.NameBase, value);     break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CMD:              _Motor_VarConfig_Cmd_Call(p_motor, varId.NameBase, value);                                      break;
-
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_CALIBRATION_ALIAS: break;
-        case MOT_VAR_ID_TYPE_MOTOR_CONFIG_BOARD_REF: return MOT_VAR_STATUS_ERROR_READ_ONLY; // Board ref is read-only
-
-        default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    }
-
-    return MOT_VAR_STATUS_OK;
+    Motor_VarType_Config_Set(p_motor, varId.NameType, varId.NameBase, value);
+    return status;
 }
 
 /******************************************************************************/
@@ -296,38 +239,30 @@ static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_mc, 
     @brief Handle MOTOR_SENSOR variables
 */
 /******************************************************************************/
-static int32_t _HandleMotorSensor_Get(const MotorController_T * p_mc, MotVarId_T varId)
+static int _HandleMotorSensorState_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    if (p_motor == NULL) return 0;
-
-    switch (varId.NameType)
-    {
-        // case MOT_VAR_ID_TYPE_MOTOR_HALL_STATE:     return Motor_Hall_Var_Get(p_motor, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_HALL_CONFIG:    return Motor_Hall_Config_Get(p_motor, varId.NameBase);
-        // case MOT_VAR_ID_TYPE_MOTOR_ENCODER_STATE:  return Motor_Encoder_State_Get(p_motor, varId.NameBase);
-        case MOT_VAR_ID_TYPE_MOTOR_ENCODER_CONFIG: return Motor_Encoder_Config_Get(p_motor, varId.NameBase);
-        default: return 0;
-    }
+    return Motor_SensorTable_VarId_Get(MotorAt(p_mc, varId.Instance), varId.NameType, varId.NameBase);
 }
 
-static MotVarId_Status_T _HandleMotorSensor_Set(const MotorController_T * p_mc, MotVarId_T varId, int32_t value)
+static MotVarId_Status_T _HandleMotorSensorState_Set(const MotorController_T * p_mc, MotVarId_T varId, int value)
 {
     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
+    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
+    Motor_SensorTable_VarId_Set(p_motor, varId.NameType, varId.NameBase, value);
+    return MOT_VAR_STATUS_OK;
+}
 
-    MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+static int _HandleMotorSensorConfig_Get(const MotorController_T * p_mc, MotVarId_T varId)
+{
+    return Motor_SensorTable_ConfigId_Get(MotorAt(p_mc, varId.Instance), varId.NameType, varId.NameBase);
+}
 
-    switch (varId.NameType)
-    {
-        // case MOT_VAR_ID_TYPE_MOTOR_HALL_STATE:    break;
-        // case MOT_VAR_ID_TYPE_MOTOR_ENCODER_STATE: break;
-        case MOT_VAR_ID_TYPE_MOTOR_HALL_CONFIG:         Motor_Hall_Config_Set(p_motor, varId.NameBase, value);      break;
-        case MOT_VAR_ID_TYPE_MOTOR_ENCODER_CONFIG:      Motor_Encoder_Config_Set(p_motor, varId.NameBase, value);   break;
-        default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    }
-
-    return status;
+static MotVarId_Status_T _HandleMotorSensorConfig_Set(const MotorController_T * p_mc, MotVarId_T varId, int value)
+{
+    Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
+    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
+    Motor_SensorTable_ConfigId_Set(p_motor, varId.NameType, varId.NameBase, value);
+    return MOT_VAR_STATUS_OK;
 }
 
 
@@ -344,37 +279,47 @@ static inline Protocol_T * ProtocolAt(const MotorController_T * p_context, uint8
 
 static int32_t _HandleSystemService_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    switch ((MotVarId_Type_SystemService_T)varId.NameType)
+    switch ((MotorController_VarType_SystemService_T)varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_GENERAL_VAR_OUT:       return MotorController_VarOutput_Get(p_mc, varId.NameBase);
-        case MOT_VAR_ID_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_mc, varId.NameBase);
-        case MOT_VAR_ID_TYPE_BOOT_REF_CONFIG:       return MotorController_Config_BootRef_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_GENERAL_VAR_OUT:       return MotorController_VarOutput_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_BOOT_REF_CONFIG:       return MotorController_Config_BootRef_Get(p_mc, varId.NameBase);
 
-        case MOT_VAR_ID_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_Get(&p_mc->ANALOG_USER, varId.NameBase);
-        case MOT_VAR_ID_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_mc->ANALOG_USER, varId.NameBase);
+        case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_Get(&p_mc->ANALOG_USER, varId.NameBase);
+        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_mc->ANALOG_USER, varId.NameBase);
 
-        case MOT_VAR_ID_TYPE_PROTOCOL_CONFIG:       return Protocol_ConfigId_Get(ProtocolAt(p_mc, varId.Instance), varId.NameBase);
-        // case MOT_VAR_ID_TYPE_CAN_BUS_CONFIG:        return CanBus_Config_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       return Protocol_ConfigId_Get(ProtocolAt(p_mc, varId.Instance), varId.NameBase);
+        // case MOT_VAR_TYPE_CAN_BUS_CONFIG:        return CanBus_Config_Get(p_mc, varId.NameBase);
 
-        case MOT_VAR_ID_TYPE_INSTANCES_REF:         return MotorController_InstancesRef_Get(p_mc, varId.NameBase);
-        case MOT_VAR_ID_TYPE_DEBUG:                 return MotorController_VarOutput_Debug_Get(p_mc, varId.NameBase);
+        /* input only for now */
+        // case MOT_VAR_TYPE_USER_INPUT:            return MotorController_VarInput_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_MOT_DRIVE_INPUT:       return MotDrive_VarId_Get(&p_mc->MOT_DRIVE, varId.NameBase);
+        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:      return MotDrive_ConfigId_Get(p_mc->MOT_DRIVE.P_ACTIVE, varId.NameBase);
+
+        case MOT_VAR_TYPE_INSTANCES_REF:         return MotorController_InstancesRef_Get(p_mc, varId.NameBase);
+        case MOT_VAR_TYPE_DEBUG:                 return MotorController_VarOutput_Debug_Get(p_mc, varId.NameBase);
         default: return 0;
     }
 }
 
 static MotVarId_Status_T _HandleSystemService_Set(const MotorController_T * p_mc, MotVarId_T varId, int32_t value)
 {
-    switch (varId.NameType)
+    switch ((MotorController_VarType_SystemService_T)varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_GENERAL_VAR_OUT:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_ANALOG_USER_VAR_OUT:   return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_INSTANCES_REF:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_DEBUG:                 return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_GENERAL_CONFIG:        MotorController_Config_Set(p_mc, varId.NameBase, value);                            break;
-        case MOT_VAR_ID_TYPE_BOOT_REF_CONFIG:       MotorController_Config_BootRef_Set(p_mc, varId.NameBase, value);                    break;
-        case MOT_VAR_ID_TYPE_ANALOG_USER_CONFIG:    MotAnalogUser_ConfigId_Set(&p_mc->ANALOG_USER, varId.NameBase, value);              break;
-        case MOT_VAR_ID_TYPE_PROTOCOL_CONFIG:       Protocol_ConfigId_Set(ProtocolAt(p_mc, varId.Instance), varId.NameBase, value);     break;
-        // case MOT_VAR_ID_TYPE_CAN_BUS_CONFIG:        _HandleSystemService_CanBusConfig_Set(p_mc, varId.NameBase, value);
+        case MOT_VAR_TYPE_GENERAL_VAR_OUT:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_INSTANCES_REF:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_DEBUG:                 return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_GENERAL_CONFIG:        MotorController_Config_Set(p_mc, varId.NameBase, value);                            break;
+        case MOT_VAR_TYPE_BOOT_REF_CONFIG:       MotorController_Config_BootRef_Set(p_mc, varId.NameBase, value);                    break;
+        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    MotAnalogUser_ConfigId_Set(&p_mc->ANALOG_USER, varId.NameBase, value);              break;
+        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       Protocol_ConfigId_Set(ProtocolAt(p_mc, varId.Instance), varId.NameBase, value);     break;
+        // case MOT_VAR_TYPE_CAN_BUS_CONFIG:        _HandleSystemService_CanBusConfig_Set(p_mc, varId.NameBase, value);
+
+        case MOT_VAR_TYPE_USER_INPUT:        MotorController_VarInput_Set(p_mc, varId.NameBase, value); break;
+        case MOT_VAR_TYPE_MOT_DRIVE_INPUT:   MotDrive_VarId_Set(&p_mc->MOT_DRIVE, varId.NameBase, value); break;
+        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:  MotDrive_ConfigId_Set(p_mc->MOT_DRIVE.P_ACTIVE, varId.NameBase, value); break;
+
         default: return MOT_VAR_STATUS_ERROR;
     }
 
@@ -386,9 +331,7 @@ static MotVarId_Status_T _HandleSystemService_Set(const MotorController_T * p_mc
     Monitor Handlers
 */
 /******************************************************************************/
-static inline HeatMonitor_Context_T * MosfetsHeatContextAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetInstance(&p_context->HEAT_MOSFETS, index); }
-static inline HeatMonitor_T * MosfetsHeatMonitorAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetMonitor(&p_context->HEAT_MOSFETS, index); }
-static inline Thermistor_T * MosfetsThermistorAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetThermistor(&p_context->HEAT_MOSFETS, index); }
+static inline HeatMonitor_Context_T * MosfetsHeatContextAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetContext(&p_context->HEAT_MOSFETS, index); }
 
 static inline VMonitor_Context_T * VMonitorContextAt(const MotorController_T * p_context, uint8_t index)
 {
@@ -403,6 +346,12 @@ static inline VMonitor_Context_T * VMonitorContextAt(const MotorController_T * p
     return (VMonitor_Context_T *)p_vMonitor;
 }
 
+/*
+    remove
+*/
+static inline HeatMonitor_T * MosfetsHeatMonitorAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetMonitor(&p_context->HEAT_MOSFETS, index); }
+static inline Thermistor_T * MosfetsThermistorAt(const MotorController_T * p_context, uint8_t index) { return HeatMonitor_Group_GetThermistor(&p_context->HEAT_MOSFETS, index); }
+
 static inline VMonitor_T * VMonitorAt(const MotorController_T * p_context, uint8_t index) { return VMonitor_GetState(VMonitorContextAt(p_context, index)); }
 static inline VDivider_T * VMonitorRefAt(const MotorController_T * p_context, uint8_t index) { return VMonitor_GetVDivider(VMonitorContextAt(p_context, index)); }
 
@@ -414,20 +363,21 @@ static inline VDivider_T * VMonitorRefAt(const MotorController_T * p_context, ui
 /******************************************************************************/
 static int32_t _HandleMonitor_Get(const MotorController_T * p_mc, MotVarId_T varId)
 {
-    switch (varId.NameType)
+    switch ((MotorController_VarType_Monitor_T) varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_STATE:          return RangeMonitor_VarId_Get(VMonitorAt(p_mc, varId.Instance), varId.NameBase);
-        case MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_CONFIG:         return RangeMonitor_ConfigId_Get(VMonitorAt(p_mc, varId.Instance), varId.NameBase);
-        case MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF:   return VDivider_RefId_Get(VMonitorRefAt(p_mc, varId.Instance), varId.NameBase);
+        case MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE:          return RangeMonitor_VarId_Get(VMonitorAt(p_mc, varId.Instance), varId.NameBase);
+        // case MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE:          return VMonitor_VarId_Get(VMonitorContextAt(p_mc, varId.Instance), varId.NameBase);
+        case MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG:         return RangeMonitor_ConfigId_Get(VMonitorAt(p_mc, varId.Instance), varId.NameBase);
+        case MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF:   return VDivider_RefId_Get(VMonitorRefAt(p_mc, varId.Instance), varId.NameBase);
 
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_STATE:            return Monitor_VarId_Get(p_mc->HEAT_PCB.P_STATE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_CONFIG:           return Monitor_ConfigId_Get(p_mc->HEAT_PCB.P_STATE, varId.NameBase);
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF:   return Thermistor_ConfigId_Get(&p_mc->HEAT_PCB.THERMISTOR, varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:            return Monitor_VarId_Get(p_mc->HEAT_PCB.P_STATE, varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:           return Monitor_ConfigId_Get(p_mc->HEAT_PCB.P_STATE, varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF:   return Thermistor_ConfigId_Get(&p_mc->HEAT_PCB.THERMISTOR, varId.NameBase);
 
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_STATE:                    return HeatMonitor_Group_MonitorVar_Get(&p_mc->HEAT_MOSFETS, varId.NameBase);
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:                   return HeatMonitor_Group_MonitorConfig_Get(&p_mc->HEAT_MOSFETS, varId.NameBase);
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:           return Monitor_VarId_Get(MosfetsHeatMonitorAt(p_mc, varId.Instance), varId.NameBase);
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:  return Thermistor_ConfigId_Get(MosfetsThermistorAt(p_mc, varId.Instance), varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE:                    return HeatMonitor_Group_VarId_Get(&p_mc->HEAT_MOSFETS, varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:                   return HeatMonitor_Group_ConfigId_Get(&p_mc->HEAT_MOSFETS, varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:           return Monitor_VarId_Get(MosfetsHeatMonitorAt(p_mc, varId.Instance), varId.NameBase);
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:  return Thermistor_ConfigId_Get(MosfetsThermistorAt(p_mc, varId.Instance), varId.NameBase);
         default: return 0;
     }
 }
@@ -438,33 +388,15 @@ static MotVarId_Status_T _HandleMonitor_Set(const MotorController_T * p_mc, MotV
 
     switch (varId.NameType)
     {
-        case MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_STATE:                      return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_STATE:                        return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_STATE:                    return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:  return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE:                      return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:                        return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE:                    return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:  return MOT_VAR_STATUS_ERROR_READ_ONLY;
 
-        case MOT_VAR_ID_TYPE_V_MONITOR_INSTANCE_CONFIG:     RangeMonitor_ConfigId_Set(VMonitorAt(p_mc, varId.Instance), varId.NameBase, value); break;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_PCB_CONFIG:       Monitor_ConfigId_Set(p_mc->HEAT_PCB.P_STATE, varId.NameBase, value);                break;
-        case MOT_VAR_ID_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:   HeatMonitor_Group_MonitorConfig_Set(&p_mc->HEAT_MOSFETS, varId.NameBase, value);    break;
-        default: return MOT_VAR_STATUS_ERROR;
-    }
-
-    return MOT_VAR_STATUS_OK;
-}
-
-/******************************************************************************/
-/*
-    Command Handlers
-*/
-/******************************************************************************/
-static MotVarId_Status_T _HandleInput_Set(const MotorController_T * p_mc, MotVarId_T varId, int32_t value)
-{
-    switch (varId.NameType)
-    {
-        //input rename
-        case MOT_VAR_ID_TYPE_INPUT_USER:        MotorController_VarInput_Set(p_mc, varId.NameBase, value); break;
-        case MOT_VAR_ID_TYPE_INPUT_MOT_DRIVE:   MotDrive_VarId_Set(&p_mc->MOT_DRIVE, varId.NameBase, value); break;
+        case MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG:     RangeMonitor_ConfigId_Set(VMonitorAt(p_mc, varId.Instance), varId.NameBase, value); break;
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:       Monitor_ConfigId_Set(p_mc->HEAT_PCB.P_STATE, varId.NameBase, value);                break;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:   HeatMonitor_Group_ConfigId_Set(&p_mc->HEAT_MOSFETS, varId.NameBase, value);    break;
         default: return MOT_VAR_STATUS_ERROR;
     }
 
@@ -480,10 +412,10 @@ static MotVarId_Status_T _HandleInput_Set(const MotorController_T * p_mc, MotVar
 // {
 //     switch (varId.NameType)
 //     {
-//         case MOT_VAR_ID_TYPE_COMMAND_NVM:           return _HandleSystemCommand_Nvm_Set(p_mc, varId.NameBase, value);
-//         case MOT_VAR_ID_TYPE_COMMAND_CALIBRATION:   return _HandleSystemCommand_Calibration_Set(p_mc, varId.NameBase, value);
-//         case MOT_VAR_ID_TYPE_COMMAND_BUZZER:        return _HandleSystemCommand_Buzzer_Set(p_mc, varId.NameBase, value);
-//         case MOT_VAR_ID_TYPE_COMMAND_CONFIG:        return _HandleSystemCommand_Config_Set(p_mc, varId.NameBase, value);
+//         case MOT_VAR_TYPE_COMMAND_NVM:           return _HandleSystemCommand_Nvm_Set(p_mc, varId.NameBase, value);
+//         case MOT_VAR_TYPE_COMMAND_CALIBRATION:   return _HandleSystemCommand_Calibration_Set(p_mc, varId.NameBase, value);
+//         case MOT_VAR_TYPE_COMMAND_BUZZER:        return _HandleSystemCommand_Buzzer_Set(p_mc, varId.NameBase, value);
+//         case MOT_VAR_TYPE_COMMAND_CONFIG:        return _HandleSystemCommand_Config_Set(p_mc, varId.NameBase, value);
 //         default: return MOT_VAR_STATUS_ERROR;
 //     }
 // }
@@ -504,11 +436,11 @@ int32_t MotorController_Var_Get(const MotorController_T * p_mc, MotVarId_T varId
     {
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:             return _HandleMotorVar_Get(p_mc, varId);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:          return _HandleMotorConfig_Get(p_mc, varId);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:          return _HandleMotorSensor_Get(p_mc, varId);
+        // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:          return _HandleMotorSensor_Get(p_mc, varId);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleMotorSensorState_Get(p_mc, varId);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleMotorSensorConfig_Get(p_mc, varId);
         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:        return _HandleSystemService_Get(p_mc, varId);
         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:               return _HandleMonitor_Get(p_mc, varId);
-        case MOT_VAR_ID_HANDLER_TYPE_COMMAND:               return 0;
-        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND:        return 0;
         default:            return 0;
     }
 }
@@ -525,7 +457,7 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_mc, MotVar
 
     // // Check protocol control state for non-command variables
     // if (!MotorController_IsProtocolControlEnabled(p_mc) &&
-    //     varId.HandlerType != MOT_VAR_ID_HANDLER_TYPE_COMMAND &&
+    //     varId.HandlerType != MOT_VAR_ID_HANDLER_TYPE_USER_INPUT &&
     //     varId.HandlerType != MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND)
     // {
     //     return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
@@ -540,11 +472,11 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_mc, MotVar
     {
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:         return _HandleMotorVar_Set(p_mc, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:      return _HandleMotorConfig_Set(p_mc, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:      return _HandleMotorSensor_Set(p_mc, varId, value);
+        // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:      return _HandleMotorSensor_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleMotorSensorState_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleMotorSensorConfig_Set(p_mc, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:    return _HandleSystemService_Set(p_mc, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:           return _HandleMonitor_Set(p_mc, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_COMMAND:           return _HandleInput_Set(p_mc, varId, value);
-        // case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND:    return _HandleSystemCommand_Set(p_mc, varId, value);
         default:    return MOT_VAR_STATUS_ERROR;
     }
 }

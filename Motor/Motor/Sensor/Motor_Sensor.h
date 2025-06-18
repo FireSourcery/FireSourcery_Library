@@ -29,12 +29,17 @@
     @brief  Sensor Abstraction/Selection Interface
 */
 /******************************************************************************/
+
+/*
+    Include all sensor types here.
+*/
 #include "Hall/Hall_MotorSensor.h"
 #include "Hall/Motor_Hall.h"
 
 #include "Encoder/Encoder_MotorSensor.h"
 #include "Encoder/Motor_Encoder.h"
 
+#include "MotorSensor_Table.h"
 #include "MotorSensor.h"
 
 /* Part of Motor */
@@ -66,3 +71,22 @@ extern void Motor_Sensor_ResetUnits(Motor_State_T * p_motor);
 // extern void Motor_ResetUnitsSinCos(Motor_State_T * p_motor);
 // extern void Motor_ResetUnitsAngleSpeed_Mech(Motor_State_T * p_motor);
 // extern void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_State_T * p_motor);
+
+/******************************************************************************/
+/*!
+    Id Access
+*/
+/******************************************************************************/
+// typedef enum Motor_SensorTable_VarType
+// {
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_STATE,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_CONFIG,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_STATE,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_CONFIG,
+// }
+// Motor_SensorTable_VarType_T;
+
+int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);

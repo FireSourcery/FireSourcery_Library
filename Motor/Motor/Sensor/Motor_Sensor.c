@@ -432,3 +432,80 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //     }
 // }
 
+int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+{
+    // switch (typeId)
+    // {
+    //     case MOTOR_SENSOR_MODE_HALL:    return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
+    //     case MOTOR_SENSOR_MODE_ENCODER: return Encoder_VarId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId); break;
+    //     // case MOTOR_SENSOR_MODE_SIN_COS: return SinCos_VarId_Get(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId); break;
+    //     // case MOTOR_SENSOR_MODE_SENSORLESS: return Sensorless_VarId_Get(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId); break;
+    //     default: return 0; // or some error value
+    // }
+}
+
+void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+{
+    // switch (typeId)
+    // {
+    //     case MOTOR_SENSOR_MODE_HALL:    Hall_VarId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);            break;
+    //     case MOTOR_SENSOR_MODE_ENCODER: Encoder_VarId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);            break;
+    //     // case MOTOR_SENSOR_MODE_SIN_COS: SinCos_VarId_Set(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId, varValue); break;
+    //     // case MOTOR_SENSOR_MODE_SENSORLESS: Sensorless_VarId_Set(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId, varValue); break;
+    //     default: break; // or some error value
+    // }
+}
+
+
+int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+{
+    // switch (typeId)
+    // {
+    //     case MOTOR_SENSOR_MODE_HALL:    return Hall_ConfigId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
+    //     case MOTOR_SENSOR_MODE_ENCODER: return Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId); break;
+    // }
+}
+
+
+void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+{
+    // switch (typeId)
+    // {
+    //     case MOTOR_SENSOR_MODE_HALL:
+    //         // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_motor->SENSOR_TABLE.HALL.HALL); return; }
+    //         Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);
+    //         break;
+
+    //     case MOTOR_SENSOR_MODE_ENCODER:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue); break;
+    //     default: break; // or some error value
+    // }
+}
+
+// int _Motor_Var_SensorTableConfig_Get(const Motor_T * p_motor, int typeId, int varId) { return MotorSensor_VarId_Get(p_motor->p_ActiveSensor, varId); }
+
+    //     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
+    // if (p_motor == NULL) return 0;
+
+    // switch (varId.NameType)
+    // {
+    //     // case MOTOR_VAR_TYPE_HALL_STATE:     return Motor_Hall_Var_Get(p_motor, varId.NameBase);
+    //     case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_Hall_Config_Get(p_motor, varId.NameBase);
+    //     // case MOTOR_VAR_TYPE_ENCODER_STATE:  return Motor_Encoder_State_Get(p_motor, varId.NameBase);
+    //     case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_Encoder_Config_Get(p_motor, varId.NameBase);
+    //     default: return 0;
+    // }
+    // Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
+    // if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
+
+    // MotVarId_Status_T status = MOT_VAR_STATUS_OK;
+
+    // switch (varId.NameType)
+    // {
+    //     // case MOTOR_VAR_TYPE_HALL_STATE:    break;
+    //     // case MOTOR_VAR_TYPE_ENCODER_STATE: break;
+    //     case MOTOR_VAR_TYPE_HALL_CONFIG:         Motor_Hall_Config_Set(p_motor, varId.NameBase, value);      break;
+    //     case MOTOR_VAR_TYPE_ENCODER_CONFIG:      Motor_Encoder_Config_Set(p_motor, varId.NameBase, value);   break;
+    //     default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
+    // }
+
+    // return status;

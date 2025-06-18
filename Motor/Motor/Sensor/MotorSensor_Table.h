@@ -36,6 +36,7 @@
 /*
     Perserve order for serialization
 */
+// typedef enum Motor_SensorId
 typedef enum MotorSensor_Id
 {
     MOTOR_SENSOR_MODE_HALL,
@@ -61,6 +62,7 @@ MotorSensor_Id_T;
 /* include all using preprocessor conditions */
 /* There can only be 1 sensor of each type per motor, with fixed corresponding Id */
 /* Mux/Repo */
+
 // typedef const struct Motor_SensorTable
 typedef const struct MotorSensor_Table
 {

@@ -41,7 +41,8 @@ void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMon
 
     Monitor_InitFrom(p_context->P_STATE, p_config); /* Monitor_T auto handle invert */
     if (p_context->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(p_context->P_STATE, p_context->P_LIMIT_SCALAR); }
-    // if (p_context->P_NVM_COEFFS != NULL) { Thermistor_InitFrom(&p_context->THERMISTOR, p_context->P_NVM_COEFFS); }
+
+    Thermistor_Init(&p_context->THERMISTOR); /* Configurable/Wired Thermistor load Coeffcients */
     if (p_context->P_LINEAR != NULL) { Thermistor_ToLinear_CelsiusPerAdcu(&p_context->THERMISTOR, p_context->P_LINEAR); }
 }
 

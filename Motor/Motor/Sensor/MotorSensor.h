@@ -195,8 +195,8 @@ static inline angle16_t MotorSensor_PollSpeed(const MotorSensor_T * p_sensor)
 /******************************************************************************/
 /*
     VarId for Generic Common Values
-    Runtime use common
-    Config call sub class
+    Runtime common
+    alternatively mvoe to speedAngle State
 */
 /******************************************************************************/
 typedef enum MotorSensor_VarId
@@ -210,17 +210,5 @@ typedef enum MotorSensor_VarId
 }
 MotorSensor_VarId_T;
 
-static inline angle16_t MotorSensor_VarId_Get(const MotorSensor_T * p_sensor, MotorSensor_VarId_T varId)
-{
-    switch (varId)
-    {
-        case MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE: return _MotorSensor_GetElecticalAngle(p_sensor->P_STATE);
-        case MOTOR_SENSOR_VAR_MECHANICAL_ANGLE: return _MotorSensor_GetMechanicalAngle(p_sensor->P_STATE);
-        case MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE_SPEED: return _MotorSensor_GetElectricalAngleSpeed(p_sensor->P_STATE);
-        case MOTOR_SENSOR_VAR_DIRECTION: return _MotorSensor_GetDirection(p_sensor->P_STATE);
-        // case MOTOR_SENSOR_VAR_ELECTRICAL_SPEED_RADS: return 0; /* todo */
-        // case MOTOR_SENSOR_VAR_MECHANICAL_SPEED_RPM: return 0; /* todo */
-        default: return 0;
-    }
-}
+extern int MotorSensor_VarId_Get(const MotorSensor_T * p_sensor, MotorSensor_VarId_T varId);
 

@@ -179,6 +179,7 @@ static inline uint16_t Thermistor_GetVAdcMax(void)        { return ANALOG_REFERE
 */
 /******************************************************************************/
 extern void Thermistor_InitFrom(const Thermistor_T * p_therm, const Thermistor_Coeffs_T * p_config);
+extern void Thermistor_Init(const Thermistor_T * p_therm);
 
 extern uint32_t Thermistor_ROhmOfAdcu(const Thermistor_T * p_therm, uint16_t adcu);
 extern uint16_t Thermistor_AdcuOfROhm(const Thermistor_T * p_therm, uint32_t rThermistor);
@@ -192,6 +193,7 @@ extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t
 
 /******************************************************************************/
 /*
+    Id Access
 */
 /******************************************************************************/
 typedef enum Thermistor_ConfigId
@@ -211,5 +213,5 @@ Thermistor_ConfigId_T;
 extern int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id);
 extern void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int32_t value);
 
-extern int Thermistor_ConfigId_Get(const Thermistor_T * p_therm, int id);
-extern void Thermistor_ConfigId_Set(const Thermistor_T * p_therm, int id, int value);
+extern int Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id);
+extern void Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int value);

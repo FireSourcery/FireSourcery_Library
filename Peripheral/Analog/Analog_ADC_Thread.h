@@ -29,7 +29,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Analog_ADC.h"
 #include "_Analog_ADC.h"
 
 
@@ -105,14 +104,14 @@ static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
 }
 
 
+static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
+{
+    for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { Analog_ADC_ProcMarked(&p_adcs[iAdc]); }
+}
+
 /* instanced to ensure inlining optimization */
 // static inline void Analog_ADC0_ProcMarked(void)
 // {
 //     Analog_ADC_ProcMarked(&G_ANALOG_ADCS[0U]);
 // }
 
-
-static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
-{
-    for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { Analog_ADC_ProcMarked(&p_adcs[iAdc]); }
-}

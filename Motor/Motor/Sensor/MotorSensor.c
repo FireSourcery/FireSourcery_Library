@@ -59,3 +59,22 @@ const MotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
     .GET_DIRECTION = (MotorSensor_Get_T)Empty_GetDirection,
     // .SET_INITIAL = (MotorSensor_Proc_T)SetInitial,
 };
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+int MotorSensor_VarId_Get(const MotorSensor_T * p_sensor, MotorSensor_VarId_T varId)
+{
+    switch (varId)
+    {
+        case MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE:         return _MotorSensor_GetElecticalAngle(p_sensor->P_STATE);
+        case MOTOR_SENSOR_VAR_MECHANICAL_ANGLE:         return _MotorSensor_GetMechanicalAngle(p_sensor->P_STATE);
+        case MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE_SPEED:   return _MotorSensor_GetElectricalAngleSpeed(p_sensor->P_STATE);
+        case MOTOR_SENSOR_VAR_DIRECTION:                return _MotorSensor_GetDirection(p_sensor->P_STATE);
+            // case MOTOR_SENSOR_VAR_ELECTRICAL_SPEED_RADS: return 0; /* todo */
+            // case MOTOR_SENSOR_VAR_MECHANICAL_SPEED_RPM: return 0; /* todo */
+        default: return 0;
+    }
+}

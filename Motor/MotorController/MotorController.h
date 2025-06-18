@@ -51,6 +51,7 @@
 #include "Transducer/Thermistor/HeatMonitor.h"
 
 #include "Peripheral/Analog/Analog.h"
+#include "Peripheral/Analog/Analog_ADC.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"

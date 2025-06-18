@@ -38,11 +38,6 @@
 #include "../MotProtocol/MotVarId.h"
 #include "System/SysTime/SysTime.h"
 
-// typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
-// typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
-// typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
-// typedef uint32_t mot_var_status_t; // generic status, type depending on input
-
 /******************************************************************************/
 /*
     Var Id Base
@@ -86,10 +81,7 @@ typedef enum MotorController_VarInput
     MOT_VAR_USER_MOTOR_SET_POINT,          // [-32768:32767]
     MOT_VAR_USER_MOTOR_DIRECTION,          //
     MOT_VAR_USER_MOTOR_FEEDBACK_MODE,      //
-    MOT_VAR_USER_MOTOR_PHASE_OUTPUT,       //
-    /*  */
-    // MOT_VAR_TRY_HOLD,                       // bypass FOC, MOT_VAR_USER_CMD = 0, VoltageMode
-    // MOT_VAR_TRY_RELEASE,                    // same as either neutral or driveZero
+    MOT_VAR_USER_MOTOR_PHASE_OUTPUT,       // includes release/hold/float
 
     MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
@@ -99,7 +91,6 @@ typedef enum MotorController_VarInput
 }
 MotorController_VarInput_T;
 
-
 /*
     MotDrive use Submodule
 */
@@ -107,6 +98,51 @@ MotorController_VarInput_T;
 // MOTOR_CONTROLLER_MOT_DRIVE_VAR_BRAKE,                          // [0:65535]
 // MOTOR_CONTROLLER_MOT_DRIVE_CMD_DIRECTION, /* or IO */
 
+/******************************************************************************/
+/*
+    Config - Nvm variables
+*/
+/******************************************************************************/
+typedef enum MotorController_ConfigId
+{
+    MOT_VAR_V_SOURCE_REF_VOLTS,
+    MOT_VAR_I_LIMIT_LOW_V,
+    // MOT_VAR_I_LIMIT_DC,
+
+    // MOT_VAR_BOOT_REF_FAST_BOOT,
+    // MOT_VAR_BOOT_REF_BEEP,
+    // MOT_VAR_BOOT_REF_BLINK,
+    // MOT_VAR_BOOT_REF,
+
+    MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
+    MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
+    MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
+
+    /* OptDin */
+    MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
+    MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
+    MOT_VAR_OPT_I_LIMIT,
+
+    /* Drive */
+    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_THROTTLE_MODE,          // MotDrive_ThrottleMode_T
+    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_BRAKE_MODE,             // MotDrive_BrakeMode_T
+    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_ZERO_MODE,              // MotDrive_ZeroMode_T
+}
+MotorController_ConfigId_T;
+
+typedef enum MotorController_Config_BootRef
+{
+    MOT_VAR_BOOT_REF_FAST_BOOT,
+    MOT_VAR_BOOT_REF_BEEP,
+    MOT_VAR_BOOT_REF_BLINK,
+    // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
+}
+MotorController_Config_BootRef_T;
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /* handled by call */
 // typedef enum MotorController_SystemCommand
 // {
@@ -121,50 +157,10 @@ MotorController_VarInput_T;
 // }
 // MotorController_SystemCommand_T;
 
-
 /******************************************************************************/
-/*
-    Config - Nvm variables
+/*!
 */
 /******************************************************************************/
-typedef enum MotorController_ConfigId
-{
-    MOT_VAR_V_SOURCE_REF_VOLTS,
-    MOT_VAR_I_LIMIT_LOW_V,
-    // MOT_VAR_I_LIMIT_DC,
-
-    // MOT_VAR_DEFAULT_FEEDBACK_MODE,       // Motor_FeedbackMode_T
-    MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
-    MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
-    MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
-
-    /* OptDin */
-    MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
-    MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
-    MOT_VAR_OPT_I_LIMIT,
-
-    /* Drive */
-    MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_THROTTLE_MODE,          // MotDrive_ThrottleMode_T
-    MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_BRAKE_MODE,             // MotDrive_BrakeMode_T
-    MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_ZERO_MODE,              // MotDrive_ZeroMode_T
-
-    // MOT_VAR_BOOT_REF_FAST_BOOT,
-    // MOT_VAR_BOOT_REF_BEEP,
-    // MOT_VAR_BOOT_REF_BLINK,
-    // MOT_VAR_BOOT_REF,
-}
-MotorController_ConfigId_T;
-
-typedef enum MotorController_Config_BootRef
-{
-    MOT_VAR_BOOT_REF_FAST_BOOT,
-    MOT_VAR_BOOT_REF_BEEP,
-    MOT_VAR_BOOT_REF_BLINK,
-    // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
-}
-MotorController_Config_BootRef_T;
-
-
 typedef enum MotorController_InstanceRef
 {
     MOT_VAR_REF_MOTOR_COUNT,
@@ -174,6 +170,97 @@ typedef enum MotorController_InstanceRef
 }
 MotorController_InstanceRef_T;
 
+
+/******************************************************************************/
+/*
+    [MotVarId] Interface
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*
+    Types
+*/
+/******************************************************************************/
+typedef enum MotorController_VarType_SystemService
+{
+    /* General */
+    MOT_VAR_TYPE_GENERAL_VAR_OUT, // GENERAL_STATE */
+    MOT_VAR_TYPE_GENERAL_CONFIG,
+    MOT_VAR_TYPE_BOOT_REF_CONFIG,
+
+    /* Polling inputs */
+    MOT_VAR_TYPE_USER_INPUT,
+    MOT_VAR_TYPE_MOT_DRIVE_INPUT,
+    MOT_VAR_TYPE_MOT_DRIVE_CONFIG,
+
+    /*  */
+    // MOT_VAR_TYPE_OPT_DIN_CONFIG,
+    // MOT_VAR_TYPE_BUZZER_CONFIG,
+    // MOT_VAR_TYPE_RELAY_CONFIG,
+
+    /* Communication */
+    MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
+    MOT_VAR_TYPE_ANALOG_USER_CONFIG,
+
+    MOT_VAR_TYPE_PROTOCOL_CONFIG, /* Instance by Protocol Count */
+    MOT_VAR_TYPE_CAN_BUS_CONFIG,
+
+    // MOT_VAR_TYPE_BOARD_REF, /* Read-only */
+    MOT_VAR_TYPE_INSTANCES_REF, /* Read-only */
+    MOT_VAR_TYPE_DEBUG,
+}
+MotorController_VarType_SystemService_T;
+
+typedef enum MotorController_VarType_Monitor
+{
+    // MOT_VAR_TYPE_V_MONITOR_STATE, /* all V Monitors */
+    MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE,
+    MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
+    MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF, /* alternatively include in board ref */
+
+    /* Heat monitors split sub type motor, pcb, mosfet */
+    // MOT_VAR_TYPE_HEAT_MONITOR_STATE, /* optionally shared state */
+    MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
+    MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
+    MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
+    MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE,
+    MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,
+    MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE, /* 0-3 */
+    // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
+    MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF, /* 0-3 */
+
+    // MOT_VAR_TYPE_V_MONITOR_STATE, /* all V Monitors */
+    // MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG,
+    // MOT_VAR_TYPE_V_MONITOR_AUX_CONFIG,
+    // MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG,
+    // MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG,
+    // MOT_VAR_TYPE_V_MONITOR_VDIVIDER_REF, /* alternatively include in board ref */
+
+    /* instance all + mostfet collective */
+    // MOT_VAR_TYPE_HEAT_MONITOR_STATE, /* Instanced */
+    // MOT_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Instanced, Mosfets null */
+    // MOT_VAR_TYPE_HEAT_MONITOR_THERMISTOR_REF, /* Instanced */
+    // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_GROUP_STATE,
+    // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_GROUP_CONFIG,
+}
+MotorController_VarType_Monitor_T;
+
+/*
+    Non Polling
+    write only/subroutine, no retaining var value state, optionally return a status
+*/
+/* Alternatively, handle with Call */
+// typedef enum MotVarId_Type_SystemCommand
+// {
+//     // MOT_VAR_TYPE_COMMAND_SYSTEM,
+//     // MOT_VAR_TYPE_COMMAND_BLOCKING, // Nvm + Calibration
+//     MOT_VAR_TYPE_COMMAND_NVM,
+//     MOT_VAR_TYPE_COMMAND_CALIBRATION,
+//     MOT_VAR_TYPE_COMMAND_BUZZER,
+//     MOT_VAR_TYPE_COMMAND_CONFIG,
+// }
+// MotVarId_Type_SystemCommand_T;
 
 /******************************************************************************/
 /*!
@@ -223,6 +310,8 @@ static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController
 }
 static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController_T * p_context) { return p_context->PROTOCOL_COUNT; }
 
+
+
 /******************************************************************************/
 /*
     [MotVarId]
@@ -232,41 +321,3 @@ static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController
 extern int32_t MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int32_t varValue);
 
-/*
-    Collective Modules
-*/
-// typedef enum MotVMonitor_VarOutput
-// {
-//     MOT_MONITOR_V_SOURCE,
-//     MOT_MONITOR_V_SOURCE_STATUS,
-//     MOT_MONITOR_V_ACCS,
-//     MOT_MONITOR_V_ACCS_STATUS,
-//     MOT_MONITOR_V_ANALOG,
-//     MOT_MONITOR_V_ANALOG_STATUS,
-// }
-// MotVMonitor_VarOutput_T;
-
-// typedef enum MotVMonitor_VarRef
-// {
-//     MOT_MONITOR_V_SOURCE_R1,
-//     MOT_MONITOR_V_SOURCE_R2,
-//     MOT_MONITOR_V_ACCS_R1,
-//     MOT_MONITOR_V_ACCS_R2,
-//     MOT_MONITOR_V_ANALOG_R1,
-//     MOT_MONITOR_V_ANALOG_R2,
-// }
-// MotVMonitor_VarRef_T;
-
-// typedef enum MotMonitor_VarOutput
-// {
-//     MOT_MONITOR_V_SOURCE,
-//     MOT_MONITOR_V_ACCS,
-//     MOT_MONITOR_V_ANALOG,
-//     MOT_MONITOR_HEAT_PCB,
-//     // MOT_MONITOR_HEAT_MOSFETS_INSTANCED, alternatively
-//     MOT_MONITOR_HEAT_MOSFETS,
-//     MOT_MONITOR_HEAT_MOSFETS_1,
-//     MOT_MONITOR_HEAT_MOSFETS_2,
-//     MOT_MONITOR_HEAT_MOSFETS_3,
-// }
-// MotMonitor_VarOutput_T;

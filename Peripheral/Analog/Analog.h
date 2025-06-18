@@ -30,38 +30,111 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Analog_ADC.h"
+// #include "Analog_ADC.h"
+#include "HAL_ADC.h"
 #include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
 
+/******************************************************************************/
+/*
+    Module Common Defs
+*/
+/******************************************************************************/
+typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Conversion_T */
+
+/******************************************************************************/
+/*
+    Channel
+    Board HAL compile time define.
+*/
+/******************************************************************************/
+typedef const struct Analog_Channel
+{
+    const analog_channel_t ID;  /* Virtual Channel Index. Index into ADC.P_CONVERSION_STATES */
+    const adc_pin_t PIN;        /* Physical Id of the Pin */
+}
+Analog_Channel_T;
+
+#define ANALOG_CHANNEL_INIT(Id, PinId) { .ID = Id, .PIN = PinId, }
+// #define ANALOG_CHANNEL_INIT(Id, p_AnalogAdc, PinId) { .ID = Id, .P_ADC = p_AnalogAdc, .PIN = PinId, }
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+typedef void (*Analog_Callback_T)(void * p_context);
+typedef void (*Analog_Capture_T)(void * p_context, adc_result_t value);
+// typedef void (*Analog_CaptureBatch_T)(void * p_context, uint32_t * p_states); /* caller mask with 16 */
+
+/*
+    Callback Context
+*/
+typedef const struct Analog_Context
+{
+    void * P_CONTEXT;
+    Analog_Capture_T CAPTURE; /* Overwrite capture to ADC Buffer */
+}
+Analog_Context_T;
+
+#define ANALOG_CONTEXT_INIT(p_Context, CaptureFn) { .P_CONTEXT = (void *)(p_Context), .CAPTURE = (Analog_Capture_T)(CaptureFn), }
+
+/******************************************************************************/
+/*
+    Conversion Channel with Callback
+    hold entire oncomplete context
+*/
+/******************************************************************************/
+typedef const struct Analog_ConversionChannel
+{
+    Analog_Channel_T CHANNEL;   /* Small enough to copy/store by value */
+    Analog_Context_T CONTEXT;   /* Context for the callback, can be NULL */
+    // Analog_ConversionState_T * P_CHANNEL_STATE; /* alternatively replace channel id, directly use by oncomplete */
+}
+Analog_ConversionChannel_T;
+
+#define ANALOG_CONVERSION_CHANNEL_INIT(AnalogChannel, AnalogContext) { .CHANNEL = AnalogChannel, .CONTEXT = AnalogContext, }
+#define ANALOG_CONVERSION_CHANNEL_INIT_FROM(ChannelId, PinId, p_Context, CaptureFn) { .CHANNEL = ANALOG_CHANNEL_INIT(ChannelId, PinId), .CONTEXT = ANALOG_CONTEXT_INIT(p_Context, CaptureFn) }
+
+// #define ANALOG_CONVERSION_CHANNEL_INIT_FROM_MAP(ChannelArrayTable, Length)
+
+/*
+
+*/
+typedef union Analog_ConversionState
+{
+    struct
+    {
+        uint32_t Result : 16U;
+        uint32_t IsMarked : 1U;
+        // uint32_t IsComplete : 1U; // new result sync flag
+        // volatile bool IsActive; // allow mark while active /* !IsComplete */
+    };
+    uint32_t State; /* setting State effectively clears IsMarked */
+}
+Analog_ConversionState_T;
+
+
+/******************************************************************************/
 /*
     Application handle
     Feature module holds the pointer. ADC owns the state.
     handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
 */
+/******************************************************************************/
 /* Analog_ConversionHandle */
 typedef const struct Analog_Conversion
 {
     volatile Analog_ConversionState_T * P_CONVERSION_STATE;
     /* reserve interface for extension */
     // Config
-    /* for direct start, overwrite */
-    // Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;
-    // Analog_ADC_T * const P_ADC;
 }
 Analog_Conversion_T;
 
 #define ANALOG_CONVERSION_INIT(p_ConversionState) { .P_CONVERSION_STATE = p_ConversionChannel, }
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
-
-// #define ANALOG_CONVERSION_INIT_FROM_TYPED(AdcStruct, ChannelId, ExpectedType) \
-// { \
-//     .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelId]), \
-//     static_assert(ChannelId < (AdcStruct).CHANNEL_COUNT, "Channel ID out of range") \
-// }
 
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
 static inline void Analog_Conversion_MarkConversion(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->IsMarked = true; }
@@ -70,8 +143,8 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 // typedef const struct Analog_ChannelInit
 // {
-//     Analog_ADC_T * const P_ADC; /* pointer to shared ADC State, in the case shared */
 //     const analog_channel_t ID; /* Virtual Channel Index. index into ADC.P_CONVERSION_STATES */
+//     Analog_ADC_T * const P_ADC; /* pointer to shared ADC State, in the case shared */
 //     // const adc_pin_t PIN; /* Physical Id of the Pin */
 // }
 // Analog_ChannelInit_T;
@@ -144,8 +217,18 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 
 
-
-
+// typedef struct Analog_OptionsFlags
+// {
+//     uint32_t HwTriggerConversion      : 1U;
+//     uint32_t ContinuousConversion     : 1U;
+//     uint32_t CaptureLocalPeak         : 1U; /* for now, conversion stops on 1 local peak in channel set, user must also set ContinuousConversion */
+//     uint32_t HwAveraging              : 1U;
+//     uint32_t HwTriggerChannel         : 1U; /* Per Hw buffer complete. Per Channel if both are set*/
+//     uint32_t Interrupt                : 1U;
+//     uint32_t Dma                      : 1U;
+//     uint8_t Priority
+// }
+// Analog_OptionsFlags_T;
 
 
 

@@ -38,10 +38,10 @@
 #include <stdbool.h>
 
 /* ADCU by default */
-typedef uint16_t heatmonitor_value_t; /* Use heatmonitor_value_t for all logic */
+// typedef uint16_t heat_monitor_value_t; /* Use heat_monitor_value_t for all logic */
 
 /* Use Monitor module for all logic */
-typedef Monitor_T HeatMonitor_T;
+typedef Monitor_T HeatMonitor_T; /* HeatMonitor_State */
 
 /*!
     @brief  Monitor configuration for temperature monitoring
@@ -75,14 +75,6 @@ HeatMonitor_Status_T;
     @note   It can be used in a group context for multiple heat monitors.
 */
 /******************************************************************************/
-// typedef const struct HeatMonitor_Base
-// {
-//     HeatMonitor_T * P_STATE;
-//     Linear_T * P_LIMIT_SCALAR;
-//     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
-// }
-// HeatMonitor_Base_T;
-
 /*
     HeatMonitor Per Thermistor source
 */
@@ -124,33 +116,44 @@ static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_T * p_heat, Linea
     Single Context
 */
 /******************************************************************************/
+static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
+{
+    return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
+    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION);
+    // return (HeatMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
+}
+
+static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
+
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */
 // static inline uint16_t HeatMonitor_ScalarLimitOfInput_Percent16(const HeatMonitor_Context_T * p_heat, int32_t input) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, input); }
 static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_Context_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
 
-static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
-{
-    Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION);
-    return (HeatMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
-}
-
-static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
 
 /******************************************************************************/
 /*
     VarId
 */
 /******************************************************************************/
-/* Optionally combine thermistor and monitor ids here */
-static inline int32_t HeatMonitor_ConfigId_Get(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id) { return Monitor_ConfigId_Get(p_context->P_STATE, id); }
-static inline void HeatMonitor_ConfigId_Set(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id, int32_t value) { Monitor_ConfigId_Set(p_context->P_STATE, id, value); }
+static inline int HeatMonitor_VarId_Get(const HeatMonitor_Context_T * p_context, Monitor_VarId_T id) { return Monitor_VarId_Get(p_context->P_STATE, id); }
 
-static inline int32_t HeatMonitor_ConfigId_Thermistor_Get(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id) { return Thermistor_ConfigId_Get(&p_context->THERMISTOR, id); }
-static inline void HeatMonitor_ConfigId_Thermistor_Set(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id, int32_t value) { Thermistor_ConfigId_Set(&p_context->THERMISTOR, id, value); }
+static inline int HeatMonitor_ConfigId_Get(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id) { return Monitor_ConfigId_Get(p_context->P_STATE, id); }
+static inline void HeatMonitor_ConfigId_Set(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id, int value) { Monitor_ConfigId_Set(p_context->P_STATE, id, value); }
+
+static inline int HeatMonitor_Thermistor_ConfigId_Get(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id) { return Thermistor_ConfigId_Get(&p_context->THERMISTOR, id); }
+static inline void HeatMonitor_Thermistor_ConfigId_Set(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id, int value) { Thermistor_ConfigId_Set(&p_context->THERMISTOR, id, value); }
+
+/******************************************************************************/
+/*
+    Extern
+*/
+/******************************************************************************/
+extern void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMonitor_Config_T * p_config);
+extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
 
 
+/* move */
 /******************************************************************************/
 /*
     Group Context
@@ -311,58 +314,70 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor
 
 /******************************************************************************/
 /*
-    For VarId interface
+    VarId interface
+*/
+/******************************************************************************/
+/* Collective State */
+static inline int HeatMonitor_Group_VarId_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_VarId_T id) { return Monitor_VarId_Get(p_group->P_STATE, id); }
 
-    Monitor_ConfigId_Get(HeatMonitor_Group_GetMonitor(p_group, instance), id)
+/* Shared Monitor Config */
+static inline int HeatMonitor_Group_ConfigId_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id) { return Monitor_ConfigId_Get(p_group->P_STATE, id); }
+static inline void HeatMonitor_Group_ConfigId_Set(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id, int value) { Monitor_ConfigId_Set(p_group->P_STATE, id, value); }
+
+
+/******************************************************************************/
+/*
+    Instance
 */
 /******************************************************************************/
 static inline uint8_t HeatMonitor_Group_GetInstanceCount(const HeatMonitor_GroupContext_T * p_group) { return p_group->COUNT; }
 
-static inline HeatMonitor_Context_T * HeatMonitor_Group_GetInstance(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+static inline HeatMonitor_Context_T * HeatMonitor_Group_GetContext(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
     return (index < p_group->COUNT) ? &p_group->P_CONTEXTS[index] : NULL;
 }
 
 static inline Thermistor_T * HeatMonitor_Group_GetThermistor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
-    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetInstance(p_group, index);
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetContext(p_group, index);
     return (p_context != NULL) ? &p_context->THERMISTOR : NULL;
 }
 
 static inline HeatMonitor_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
-    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetInstance(p_group, index);
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetContext(p_group, index);
     return (p_context != NULL) ? p_context->P_STATE : NULL;
 }
 
-// static inline int HeatMonitor_Group_VarId_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_VarId_T id)
-static inline int HeatMonitor_Group_MonitorVar_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_VarId_T id)
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static inline int HeatMonitor_GroupInstance_VarId_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Monitor_VarId_T id)
 {
-    return Monitor_VarId_Get(p_group->P_STATE, id);
+    return Monitor_VarId_Get(HeatMonitor_Group_GetMonitor(p_group, instance), id);
 }
 
-/* Shared Monitor Config */
-static inline int HeatMonitor_Group_MonitorConfig_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id)
+static inline int HeatMonitor_GroupInstance_ConfigId_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Monitor_ConfigId_T id)
 {
-    return Monitor_ConfigId_Get(p_group->P_STATE, id);
+    return Monitor_ConfigId_Get(HeatMonitor_Group_GetMonitor(p_group, instance), id);
 }
 
-static inline void HeatMonitor_Group_MonitorConfig_Set(const HeatMonitor_GroupContext_T * p_group, Monitor_ConfigId_T id, int value)
+static inline void HeatMonitor_GroupInstance_ConfigId_Set(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Monitor_ConfigId_T id, int value)
 {
-    Monitor_ConfigId_Set(p_group->P_STATE, id, value);
+    Monitor_ConfigId_Set(HeatMonitor_Group_GetMonitor(p_group, instance), id, value);
 }
 
-/* instanced */
-static inline int HeatMonitor_Group_ThermistorConfig_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id)
+static inline int HeatMonitor_GroupInstance_ThermistorConfigId_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id)
 {
     return Thermistor_ConfigId_Get(HeatMonitor_Group_GetThermistor(p_group, instance), id);
+    // return HeatMonitor_Thermistor_ConfigId_Get(HeatMonitor_Group_GetContext(p_group, instance), id);
 }
 
-static inline void HeatMonitor_Group_ThermistorConfig_Set(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id, int value)
+static inline void HeatMonitor_GroupInstance_ThermistorConfigId_Set(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id, int value)
 {
     Thermistor_ConfigId_Set(HeatMonitor_Group_GetThermistor(p_group, instance), id, value);
 }
-
 
 
 /******************************************************************************/
@@ -370,7 +385,5 @@ static inline void HeatMonitor_Group_ThermistorConfig_Set(const HeatMonitor_Grou
     Extern
 */
 /******************************************************************************/
-extern void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMonitor_Config_T * p_config);
-extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
 /* Initialize group with shared resources */
 extern void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group);

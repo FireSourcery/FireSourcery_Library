@@ -124,6 +124,7 @@ RangeMonitor_T;
 */
 /* Severity detection using absolute values */
 /* Get severity level regardless of direction */
+static inline RangeMonitor_Status_T RangeMonitor_GetStatus(const RangeMonitor_T * p_monitor) { return p_monitor->Status; }
 static inline Monitor_Status_T RangeMonitor_GetSeverity(const RangeMonitor_T * p_monitor) { return (Monitor_Status_T)abs(p_monitor->Status); }
 /* abs(±2) == 2 */
 static inline bool RangeMonitor_IsAnyFault(const RangeMonitor_T * p_monitor) { return abs(p_monitor->Status) == MONITOR_STATUS_FAULT; }

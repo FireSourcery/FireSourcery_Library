@@ -191,7 +191,9 @@ static inline void ADC_Activate(const Analog_ADC_T * p_adc, const Analog_ADC_Sta
 //     return indexCount;
 // }
 
-
+/*
+    From Array
+*/
 static inline uint8_t _ADC_FillActiveConversions(const Analog_ConversionChannel_T ** pp_buffer, uint8_t count, const Analog_ConversionChannel_T * p_handles, const volatile Analog_ConversionState_T * p_markers)
 {
     uint8_t activeConversionCount = 0;
@@ -244,22 +246,20 @@ static inline void ADC_SetActiveState(const Analog_ADC_T * p_adc, Analog_ADC_Sta
     p_state->ChannelIndex += _ADC_SetActiveState(p_adc, p_state, p_state->ChannelIndex);
 }
 
-
 /******************************************************************************/
 /*
     Handle Threads
 */
 /******************************************************************************/
 /*
+    ActivateMarked
     Update State and Start
 */
-/* ActivateMarked */
 static void ADC_ProcStart(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 {
     ADC_SetActiveState(p_adc, p_state);
     ADC_Activate(p_adc, p_state);
 }
-
 
 static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 {
@@ -294,6 +294,28 @@ static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T
 #endif
 }
 
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+/*  */
+// static void ADC_StartConversions(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint8_t count)
+
+/*
+    todo include batch
+*/
+/*
+    Multiple ADC Batch
+*/
+// void ADC_StartConversionBatch(const Analog_ADC_T * p_adc, const Analog_ConversionBatch_T * p_batch)
+// {
+
+// }
+
+
 // void ADC_WriteOptions(Analog_ADC_T * p_adc, const Analog_Options_T * p_options)
 // {
 //     // xor with previous
@@ -305,22 +327,3 @@ static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T
 // #endif
 //     if(p_options->ON_OPTIONS != 0U) { p_options->ON_OPTIONS(p_options->P_CALLBACK_CONTEXT); }
 // }
-
-// void StartConversions(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint8_t count)
-
-/*
-    todo include batch
-*/
-/*
-    Multiple ADC Batch
-*/
-// void Analog_StartConversionBatch( const Analog_ConversionBatch_T * p_batch)
-// {
-
-// }
-
-/******************************************************************************/
-/*!
-    Public
-*/
-/******************************************************************************/
