@@ -99,7 +99,7 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
             // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_context);     break;
-            // #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+            // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
         case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_context);     break;
             // #endif
         case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_context);     break;

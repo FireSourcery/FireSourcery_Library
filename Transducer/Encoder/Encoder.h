@@ -531,8 +531,8 @@ extern void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder);
 extern void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder);
 #endif
 
-extern int32_t Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId);
-extern void Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
+extern int32_t _Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId);
+extern void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
 
 
 extern void _Encoder_ResetUnits(Encoder_State_T * p_encoder);

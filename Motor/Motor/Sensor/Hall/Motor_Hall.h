@@ -50,14 +50,12 @@ extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
     Id Access
 */
 /******************************************************************************/
-extern const VarAccess_VTable_T MOTOR_HALL_VAR_OUT;
+// extern const VarAccess_VTable_T MOTOR_HALL_VAR_OUT;
 // extern const VarAccess_VTable_T MOTOR_HALL_VAR_CONFIG;
+// #define MOTOR_HALL_VAR_ACCESS_INIT(p_MotorContext, p_Motor) VAR_ACCESS_INIT(p_MotorContext, &MOTOR_HALL_VAR_CONFIG, &((p_Motor)->VarAccessConfigState))
 
-extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_HALL;
-#define MOTOR_HALL_VAR_ACCESS_INIT(p_MotorContext, p_Motor) VAR_ACCESS_INIT(p_MotorContext, &MOTOR_VAR_CONFIG_HALL, &((p_Motor)->VarAccessConfigState))
-
-extern int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId);
-extern void Motor_Hall_Config_Set(const Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue);
+// extern int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId);
+// extern void Motor_Hall_Config_Set(const Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue);
 
 // extern int Motor_VarConfig_Hall_Get(const Motor_State_T * p_motor, int varId);
 // extern void Motor_VarConfig_Hall_Set(Motor_State_T * p_motor, int varId, int varValue);

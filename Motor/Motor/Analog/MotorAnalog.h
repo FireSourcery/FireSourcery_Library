@@ -27,12 +27,15 @@
     @file   MotorAnalog.h
     @author FireSourcery
     @brief  Motor Analog Interface. independent of ADC
-            PhaseAnalog
+
 */
 /******************************************************************************/
 #include "MotorAnalogRef.h"
 #include "Math/Fixed/fract16.h"
 
+/*
+    [Phase_Analog]
+*/
 /* reserved for abstract interface in case of off-chip capture */
 
 typedef volatile struct MotorAnalog_State

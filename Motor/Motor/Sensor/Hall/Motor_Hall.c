@@ -112,34 +112,19 @@ void Motor_Hall_Calibrate(const Motor_T * p_motor)
 /******************************************************************************/
 /*!
     Additional VarId Interface
+    alternatively checkin handler
 */
 /******************************************************************************/
-int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId) { return Hall_ConfigId_Get(GetHall(p_motor)->P_STATE, varId); }
+// int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId) { return _Hall_ConfigId_Get(GetHall(p_motor)->P_STATE, varId); }
 
-void Motor_Hall_Config_Set(Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue) { Hall_ConfigId_Set(GetHall(p_motor)->P_STATE, varId, varValue); }
+// void Motor_Hall_Config_Set(Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue) { _Hall_ConfigId_Set(GetHall(p_motor)->P_STATE, varId, varValue); }
 
+// static int VarConfig_Get(const Motor_T * p_motor, int varId) { return Motor_Hall_Config_Get(p_motor, varId); }
+// static void VarConfig_Set(const Motor_T * p_motor, int varId, int varValue) { Motor_Hall_Config_Set(p_motor, varId, varValue); }
 
-// int32_t _Motor_VarConfig_Hall_Get(const Motor_State_T * p_motor, Hall_ConfigId_T varId)
+// const VarAccess_VTable_T MOTOR_HALL_VAR_CONFIG =
 // {
-//     // return Hall_ConfigId_Get(&p_motor->Hall, varId);
-// }
-
-// void _Motor_VarConfig_Hall_Set(Motor_State_T * p_motor, Hall_ConfigId_T varId, int32_t varValue)
-// {
-//     // Hall_ConfigId_Set(&p_motor->Hall, varId, varValue);
-//     // alternatively wrap
-//     // switch (varId)
-//     // {
-//     //     case HALL_CONFIG_RUN_CALIBRATION: Motor_Hall_Calibrate(p_motor); break;
-//     // }
-// }
-
-static int VarConfig_Get(const Motor_T * p_motor, int varId) { return Motor_Hall_Config_Get(p_motor, varId); }
-static void VarConfig_Set(const Motor_T * p_motor, int varId, int varValue) { Motor_Hall_Config_Set(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_HALL =
-{
-    .GET_AT = (get_at_t)VarConfig_Get,
-    .SET_AT =  (set_at_t)VarConfig_Set,
-    .TEST_SET = (test_t)Motor_StateMachine_IsConfig,
-};
+//     .GET_AT = (get_at_t)VarConfig_Get,
+//     .SET_AT =  (set_at_t)VarConfig_Set,
+//     .TEST_SET = (test_t)Motor_StateMachine_IsConfig,
+// };

@@ -417,8 +417,8 @@ typedef enum Hall_ConfigId
 }
 Hall_ConfigId_T;
 
-extern int32_t Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId);
-extern void Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int32_t varValue);
+extern int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId);
+extern void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue);
 
 #endif
 

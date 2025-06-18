@@ -1,6 +1,6 @@
 // typedef enum Motor_Analog_Channel
 // {
-// #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+// #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //     MOTOR_ANALOG_CHANNEL_SIN,
 //     MOTOR_ANALOG_CHANNEL_COS,
 // #endif
@@ -11,7 +11,7 @@
 // {
 //     struct
 //     {
-//     #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         const Analog_Conversion_T CONVERSION_SIN;
 //         const Analog_Conversion_T CONVERSION_COS;
 //     #endif
@@ -21,7 +21,7 @@
 
 // void Motor_MarkAnalog_Thread(Motor_State_T * p_motor)
 // {
-// #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+// #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //     if (p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
 //     {
 //         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);

@@ -580,17 +580,17 @@
 // #include "Transducer/Motor_Encoder/Motor_Encoder.h"
 // #include "Transducer/Encoder/Encoder.h"
 
-int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId) { return Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); }
-void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { Encoder_ConfigId_Set(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId, varValue); }
+int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId) { return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); }
+void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { _Encoder_ConfigId_Set(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId, varValue); }
 
 
 
-// int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId) { return Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
+// int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
 
-// void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
+// void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
-// int Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, int varId) { return Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
-// void Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, int varId, int varValue) { Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
+// int Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, int varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
+// void Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, int varId, int varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
 // const VarAccess_VTable_T MOTOR_VAR_CONFIG_ENCODER =
 // {

@@ -27,7 +27,7 @@
     @file   MotorSensor.h
     @author FireSourcery
     @brief  Motor Sensor Generic Interface
-            AngleSensor
+
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
@@ -35,6 +35,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/*
+    [AngleSensor]
+*/
 
 /*
     Implement as conventional interface pattern, Signiture as interface type.
@@ -201,6 +204,7 @@ static inline angle16_t MotorSensor_PollSpeed(const MotorSensor_T * p_sensor)
 /******************************************************************************/
 typedef enum MotorSensor_VarId
 {
+    // MOTOR_SPEED_ANGLE_ELECTRICAL_ANGLE,
     MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE,
     MOTOR_SENSOR_VAR_MECHANICAL_ANGLE,
     MOTOR_SENSOR_VAR_ELECTRICAL_ANGLE_SPEED,

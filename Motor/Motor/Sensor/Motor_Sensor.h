@@ -90,3 +90,5 @@ int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId
 void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
 int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
 void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+
+void Motor_SensorTable_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);

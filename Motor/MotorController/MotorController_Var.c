@@ -470,13 +470,13 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_mc, MotVar
 
     switch ((MotVarId_HandlerType_T)varId.HandlerType)
     {
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:         return _HandleMotorVar_Set(p_mc, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:      return _HandleMotorConfig_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:             return _HandleMotorVar_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:          return _HandleMotorConfig_Set(p_mc, varId, value);
         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:      return _HandleMotorSensor_Set(p_mc, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleMotorSensorState_Set(p_mc, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleMotorSensorConfig_Set(p_mc, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:    return _HandleSystemService_Set(p_mc, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_MONITOR:           return _HandleMonitor_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:        return _HandleSystemService_Set(p_mc, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MONITOR:               return _HandleMonitor_Set(p_mc, varId, value);
         default:    return MOT_VAR_STATUS_ERROR;
     }
 }

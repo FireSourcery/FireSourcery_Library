@@ -67,7 +67,7 @@ MotorSensor_Id_T;
 typedef const struct MotorSensor_Table
 {
     const MotorSensor_T EMPTY;
-// #if defined(CONFIG_MOTOR_SENSORS_HALL_ENABLE)
+// #if defined(CONFIG_MOTOR_SENSOR_HALL_ENABLE)
     const Hall_MotorSensor_T HALL;
 // #endif
     const Encoder_MotorSensor_T ENCODER;
@@ -101,3 +101,7 @@ static inline MotorSensor_T * MotorSensor_Of(const MotorSensor_Table_T * p_table
     }
 }
 
+// static inline Hall_T * Motor_SensorTable_GetHall(const MotorSensor_Table_T * p_table)
+// {
+//     return &p_table->HALL.HALL;
+// }

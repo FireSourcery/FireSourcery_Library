@@ -27,18 +27,19 @@
     @file   Motor_Analog.h
     @author FireSourcery
     @brief  ADC Conversions
-            - callbacks depending on Motor_State_T
-            Motor_ADC, Phase_AnalogConversions
+            - callbacks on Motor_State_T
 */
 /******************************************************************************/
 #include "Peripheral/Analog/Analog.h"
+
+/*
+    [Phase_AnalogConversions]
+*/
 
 /* Part of Motor */
 typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
-// typedef const struct Motor_ADC
-// typedef const struct Phase_AnalogConversions
 typedef const struct Motor_Analog
 {
     const Analog_Conversion_T CONVERSION_VA;
@@ -47,8 +48,6 @@ typedef const struct Motor_Analog
     const Analog_Conversion_T CONVERSION_IA;
     const Analog_Conversion_T CONVERSION_IB;
     const Analog_Conversion_T CONVERSION_IC;
-    // const Analog_Conversion_T CONVERSION_HEAT;
-    // const Analog_Conversion_T * P_CONVERSION_VSOURCE;
     // MotorAnalog_Config_T CONFIG;
 }
 Motor_Analog_T;
@@ -65,43 +64,27 @@ Motor_Analog_T;
     .CONVERSION_IB = ANALOG_CONVERSION_INIT_FROM(AdcIb, IndexIb), \
     .CONVERSION_IC = ANALOG_CONVERSION_INIT_FROM(AdcIc, IndexIc), \
 }
-// .CONVERSION_HEAT = ANALOG_CONVERSION_INIT_FROM(AdcHeat, IndexHeat), \
 
 /*
-
+    Analog_Context_T
 */
-#define MOTOR_ANALOG_CONTEXT_VA_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVa)
-#define MOTOR_ANALOG_CONTEXT_VB_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVb)
-#define MOTOR_ANALOG_CONTEXT_VC_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureVc)
-#define MOTOR_ANALOG_CONTEXT_IA_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIa)
-#define MOTOR_ANALOG_CONTEXT_IB_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIb)
-#define MOTOR_ANALOG_CONTEXT_IC_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureIc)
-// #define MOTOR_ANALOG_CONTEXT_HEAT_INIT(p_Motor) ANALOG_CONTEXT_INIT(p_Motor, (Analog_Capture_T)Motor_Analog_CaptureHeat)
+#define MOTOR_ANALOG_CONTEXT_VA_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureVa)
+#define MOTOR_ANALOG_CONTEXT_VB_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureVb)
+#define MOTOR_ANALOG_CONTEXT_VC_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureVc)
+#define MOTOR_ANALOG_CONTEXT_IA_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureIa)
+#define MOTOR_ANALOG_CONTEXT_IB_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureIb)
+#define MOTOR_ANALOG_CONTEXT_IC_INIT(p_MotorState) ANALOG_CONTEXT_INIT(p_MotorState, (Analog_Capture_T)Motor_Analog_CaptureIc)
 
 
 /*
-    Initialize Motor_Analog_T
-    as ConversionChannels
+    Analog_ConversionChannel_T
 */
-/* alternatively context as p_motor->AnalogState */
 #define MOTOR_ANALOG_CONVERSION_VA_INIT(p_Motor, ChannelVa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVa, MOTOR_ANALOG_CONTEXT_VA_INIT(p_Motor))
 #define MOTOR_ANALOG_CONVERSION_VB_INIT(p_Motor, ChannelVb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVb, MOTOR_ANALOG_CONTEXT_VB_INIT(p_Motor))
 #define MOTOR_ANALOG_CONVERSION_VC_INIT(p_Motor, ChannelVc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelVc, MOTOR_ANALOG_CONTEXT_VC_INIT(p_Motor))
 #define MOTOR_ANALOG_CONVERSION_IA_INIT(p_Motor, ChannelIa) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIa, MOTOR_ANALOG_CONTEXT_IA_INIT(p_Motor))
 #define MOTOR_ANALOG_CONVERSION_IB_INIT(p_Motor, ChannelIb) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIb, MOTOR_ANALOG_CONTEXT_IB_INIT(p_Motor))
 #define MOTOR_ANALOG_CONVERSION_IC_INIT(p_Motor, ChannelIc) ANALOG_CONVERSION_CHANNEL_INIT(ChannelIc, MOTOR_ANALOG_CONTEXT_IC_INIT(p_Motor))
-// #define MOTOR_ANALOG_CONVERSION_HEAT_INIT(p_Motor, ChannelHeat) ANALOG_CONVERSION_CHANNEL_INIT(ChannelHeat, MOTOR_ANALOG_CONTEXT_HEAT_INIT(p_Motor))
-
-// #define MOTOR_ANALOG_INIT(p_Motor, ChannelVa, ChannelVb, ChannelVc, ChannelIa, ChannelIb, ChannelIc, ChannelHeat) \
-// { \
-//     .CONVERSION_VA = MOTOR_ANALOG_CONVERSION_VA_INIT(p_Motor, ChannelVa), \
-//     .CONVERSION_VB = MOTOR_ANALOG_CONVERSION_VB_INIT(p_Motor, ChannelVb), \
-//     .CONVERSION_VC = MOTOR_ANALOG_CONVERSION_VC_INIT(p_Motor, ChannelVc), \
-//     .CONVERSION_IA = MOTOR_ANALOG_CONVERSION_IA_INIT(p_Motor, ChannelIa), \
-//     .CONVERSION_IB = MOTOR_ANALOG_CONVERSION_IB_INIT(p_Motor, ChannelIb), \
-//     .CONVERSION_IC = MOTOR_ANALOG_CONVERSION_IC_INIT(p_Motor, ChannelIc), \
-//     .CONVERSION_HEAT = MOTOR_ANALOG_CONVERSION_HEAT_INIT(p_Motor, ChannelHeat), \
-// }
 
 // typedef struct Motor_Analog_Config
 // {
@@ -147,3 +130,14 @@ extern void Motor_Analog_MarkIabc(const Motor_T * p_motorConst);
 
 extern void Motor_Analog_Calibrate(const Motor_T * p_motorConst);
 
+
+// #define MOTOR_ANALOG_INIT(p_Motor, ChannelVa, ChannelVb, ChannelVc, ChannelIa, ChannelIb, ChannelIc, ChannelHeat) \
+// { \
+//     .CONVERSION_VA = MOTOR_ANALOG_CONVERSION_VA_INIT(p_Motor, ChannelVa), \
+//     .CONVERSION_VB = MOTOR_ANALOG_CONVERSION_VB_INIT(p_Motor, ChannelVb), \
+//     .CONVERSION_VC = MOTOR_ANALOG_CONVERSION_VC_INIT(p_Motor, ChannelVc), \
+//     .CONVERSION_IA = MOTOR_ANALOG_CONVERSION_IA_INIT(p_Motor, ChannelIa), \
+//     .CONVERSION_IB = MOTOR_ANALOG_CONVERSION_IB_INIT(p_Motor, ChannelIb), \
+//     .CONVERSION_IC = MOTOR_ANALOG_CONVERSION_IC_INIT(p_Motor, ChannelIc), \
+//     .CONVERSION_HEAT = MOTOR_ANALOG_CONVERSION_HEAT_INIT(p_Motor, ChannelHeat), \
+// }

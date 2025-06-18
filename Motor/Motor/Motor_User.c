@@ -532,10 +532,10 @@ int16_t Motor_User_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:        speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
         case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 #endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
 #endif
         default:                             speed = 0;     break;
@@ -552,10 +552,10 @@ int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor)
     {
         case MOTOR_SENSOR_MODE_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
         case MOTOR_SENSOR_MODE_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 #endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
 #endif
         default:                             speed = 0;     break;
@@ -570,10 +570,10 @@ void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiamet
     {
         case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
         case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 #endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
 #endif
         default:     break;
@@ -586,10 +586,10 @@ void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiamet
     {
         case MOTOR_SENSOR_MODE_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
         case MOTOR_SENSOR_MODE_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 #endif
-#if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:     speed = 0;     break;
 #endif
         default:                             break;

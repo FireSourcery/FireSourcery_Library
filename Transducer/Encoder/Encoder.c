@@ -493,7 +493,7 @@ int32_t Enocder_VarOutput_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T
 // bool IsALeadBPositive;              /* User runtime calibration for encoder install direction. Accounts for LUT calibration */
 // /* Optionally combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
 //
-int32_t Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId)
+int32_t _Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId)
 {
     int32_t value = 0;
     switch (varId)
@@ -509,7 +509,7 @@ int32_t Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId
     return value;
 }
 
-void Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
+void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
 {
     switch (varId)
     {

@@ -251,7 +251,7 @@ extern void Motor_User_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scala
 extern void Motor_User_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 extern void Motor_User_StartOpenLoopState(const Motor_T * p_motor);
 
 extern void Motor_User_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16);

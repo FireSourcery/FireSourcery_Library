@@ -152,7 +152,7 @@ MotVarId_T;
 //         //         case MOTOR_VAR_TYPE_USER_OUT:
 //         //         case MOTOR_VAR_TYPE_FOC_OUT:
 //         //         case MOTOR_VAR_TYPE_SENSOR_OUT: return true;  // *_OUT types are read-only
-//         //         case MOTOR_VAR_TYPE_PID_TUNNING_IO:
+//         //         case MOTOR_VAR_TYPE_PID_TUNING_IO:
 //         //         case MOTOR_VAR_TYPE_USER_IO: return false; // *_IO types are read-write
 //         //         case MOTOR_VAR_TYPE_CMD_IN: return false; // Commands are execute-only (writable)
 //         //         default: return true;  // Default to read-only for safety

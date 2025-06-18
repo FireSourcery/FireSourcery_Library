@@ -102,14 +102,14 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
             // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
-                VarAccess_DisableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
+                Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
             }
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
             // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
             for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
             {
-                VarAccess_EnableSet(&(MotMotors_ContextAt(&p_context->MOTORS, iMotor)->VAR_ACCESS.IO));
+                Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
             }
             break;
         case MOTOR_CONTROLLER_INPUT_MODE_CAN:

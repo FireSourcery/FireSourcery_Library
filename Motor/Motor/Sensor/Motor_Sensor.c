@@ -29,6 +29,7 @@
 /******************************************************************************/
 #include "Motor_Sensor.h"
 #include "../Motor.h"
+#include "../Motor_StateMachine.h"
 
 
 void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
@@ -44,13 +45,13 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
         case MOTOR_SENSOR_MODE_ENCODER:
             // Motor_ResetUnitsEncoder(p_motor);
             break;
-        #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
         case MOTOR_SENSOR_MODE_SIN_COS:
             // Motor_ResetUnitsSinCos(&p_motor->SinCos);
             // Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
             break;
         #endif
-        #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+        #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
         case MOTOR_SENSOR_MODE_SENSORLESS:
             // Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
             break;
@@ -102,12 +103,12 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->ENCODER);
 //             Encoder_EnableQuadratureMode(&p_motor->ENCODER);
 //             break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:
 //             SinCos_Init(&p_motor->SinCos);
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:
 //             break;
 //         #endif
@@ -128,11 +129,11 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             break;
 //         case MOTOR_SENSOR_MODE_ENCODER:
 //             break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:
 //             break;
 //         #endif
@@ -168,7 +169,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->ENCODER);
 //             break;
 
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:
 //             SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 //             electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
@@ -177,7 +178,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:
 //             //todo observer
 //             electricalAngle = 0;
@@ -206,10 +207,10 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //     // {
 //     //     case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
 //     //     case MOTOR_SENSOR_MODE_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
-//     //     #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//     //     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //     //     case MOTOR_SENSOR_MODE_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
 //     //     #endif
-//     //     #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//     //     #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //     //     case MOTOR_SENSOR_MODE_SENSORLESS: angle = 0; break;
 //     //     #endif
 //     //     default: angle = 0; break;
@@ -236,10 +237,10 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS: speed = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));    break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS: break;
 //         #endif
 //         default: speed = 0; break;
@@ -266,11 +267,11 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //         case MOTOR_SENSOR_MODE_ENCODER:
 //             Encoder_ModeDT_SetInitial(&p_motor->ENCODER);
 //             break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:
 //             Motor_SetPositionFeedback(p_motor, 0U);
 //             break;
@@ -287,10 +288,10 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
 //         case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(p_motor->ENCODER.P_STATE);    break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:  isAvailable = false;    break;
 //         #endif
 //         default: isAvailable = false; break;
@@ -300,7 +301,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 
 // static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 // {
-//     // #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+//     // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 //     return (p_motor->P_ACTIVE->FeedbackMode.OpenLoop == 1U);
 //     // #else
 //     //     (void)p_motor; return false;
@@ -320,11 +321,11 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // //             break;
 // //         case MOTOR_SENSOR_MODE_ENCODER:
 // //             break;
-// //         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+// //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 // //         case MOTOR_SENSOR_MODE_SIN_COS:
 // //             break;
 // //         #endif
-// //         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+// //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 // //         case MOTOR_SENSOR_MODE_SENSORLESS:
 // //             break;
 // //         #endif
@@ -347,7 +348,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //             break;
 //         case MOTOR_SENSOR_MODE_ENCODER:
 //             break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:  break;
 //         #endif
 //         default: break;
@@ -416,13 +417,13 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //         case MOTOR_SENSOR_MODE_ENCODER:
 //             // Motor_ResetUnitsEncoder(p_motor);
 //             break;
-//         #if defined(CONFIG_MOTOR_SENSORS_SIN_COS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SIN_COS:
 //             // Motor_ResetUnitsSinCos(&p_motor->SinCos);
 //             // Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSORS_SENSORLESS_ENABLE)
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case MOTOR_SENSOR_MODE_SENSORLESS:
 //             // Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
 //             break;
@@ -456,29 +457,70 @@ void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeI
     // }
 }
 
-
+/* caller checks for null pointer */
 int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
 {
-    // switch (typeId)
-    // {
-    //     case MOTOR_SENSOR_MODE_HALL:    return Hall_ConfigId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
-    //     case MOTOR_SENSOR_MODE_ENCODER: return Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId); break;
-    // }
+    if (p_motor == NULL) return 0;
+
+    switch (typeId)
+    {
+        case MOTOR_SENSOR_MODE_HALL:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId); break;
+        case MOTOR_SENSOR_MODE_ENCODER: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
+    }
 }
 
 
+// void Motor_Sensor_VarType_Config_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
 void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
 {
-    // switch (typeId)
-    // {
-    //     case MOTOR_SENSOR_MODE_HALL:
-    //         // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_motor->SENSOR_TABLE.HALL.HALL); return; }
-    //         Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);
-    //         break;
+    if (p_motor == NULL) return;
+    if (!Motor_StateMachine_IsConfig(p_motor)) return;
 
-    //     case MOTOR_SENSOR_MODE_ENCODER:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue); break;
-    //     default: break; // or some error value
-    // }
+    switch (typeId)
+    {
+        case MOTOR_SENSOR_MODE_HALL:
+            // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_motor->SENSOR_TABLE.HALL.HALL); return; }
+            _Hall_ConfigId_Set(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId, varValue);
+            break;
+
+        case MOTOR_SENSOR_MODE_ENCODER:
+            _Encoder_ConfigId_Set(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId, varValue);
+            break;
+        default: break;
+    }
+}
+
+/*!
+    @param[in] MotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
+*/
+// void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
+void Motor_SensorTable_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
+{
+    if (p_motor == NULL) return;
+    if (!Motor_StateMachine_IsConfig(p_motor)) return;
+
+    switch (varId)
+    {
+        case MOTOR_SENSOR_MODE_HALL: Motor_Hall_Calibrate(p_motor); break;
+        case MOTOR_SENSOR_MODE_ENCODER:
+            // switch (varValue)
+            // {
+
+            // }
+            // Encoder_Calibrate(&p_motor->SENSOR_TABLE.ENCODER.ENCODER);
+            break;
+        #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+        case MOTOR_SENSOR_MODE_SIN_COS:
+            // SinCos_Calibrate(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS);
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+        case MOTOR_SENSOR_MODE_SENSORLESS:
+            // Sensorless_Calibrate(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS);
+            break;
+        #endif
+        default: break;
+    }
 }
 
 // int _Motor_Var_SensorTableConfig_Get(const Motor_T * p_motor, int typeId, int varId) { return MotorSensor_VarId_Get(p_motor->p_ActiveSensor, varId); }
