@@ -222,19 +222,20 @@ void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Con
     By Id
 */
 /******************************************************************************/
-// int32_t _Monitor_VarId_Get(const Monitor_T * p_monitor, int id)
-// {
-//     int32_t value = 0;
+int32_t _Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
+{
+    switch (varId)
+    {
+        case MONITOR_VAR_STATUS:  return (int32_t)p_monitor->Status;
+        case MONITOR_VAR_VALUE:   return p_monitor->LastInput;
+        default: return 0;
+    }
+}
 
-//     switch (id)
-//     {
-//         case MONITOR_VAR_ID_VALUE:      value = p_monitor->LastInput;   break;
-//         case MONITOR_VAR_ID_STATUS:     value = p_monitor->Status;      break;
-//         default: break;
-//     }
-
-//     return value;
-// }
+int32_t Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
+{
+    return (p_monitor != NULL) ? _Monitor_VarId_Get(p_monitor, varId) : 0;
+}
 
 int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 {

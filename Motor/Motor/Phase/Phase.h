@@ -336,6 +336,18 @@ static inline void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t p
     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
+/* Using Register State */
+static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+{
+    Phase_Bits_T state = _Phase_ReadState(p_phase);
+
+    if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
+    if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
+    if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
+    if (state.Value != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Value); }
+}
+
+
 
 // static inline void Phase_Deactivate(const Phase_T * p_phase)
 static inline void Phase_Float(const Phase_T * p_phase)
@@ -386,19 +398,21 @@ static inline bool Phase_IsV0(const Phase_T * p_phase)
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
-    if      (Phase_IsFloat(p_phase) == true)    { state = PHASE_OUTPUT_FLOAT; }
-    else if (Phase_IsV0(p_phase) == true)       { state = PHASE_OUTPUT_V0; }
-    else                                        { state = PHASE_OUTPUT_VPWM; }
+
+    switch (_Phase_ReadState(p_phase).Value)
+    {
+        case PHASE_ID_0:
+            state = PHASE_OUTPUT_FLOAT;
+            break;
+        case PHASE_ID_ABC:
+            state = (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
+            break;
+        default:
+            state = PHASE_OUTPUT_VPWM;
+            break;
+    }
     return state;
 
-    // if (_Phase_ReadState(p_phase).Value == PHASE_ID_0)
-    // {
-    //     return PHASE_OUTPUT_FLOAT;
-    // }
-    // else
-    // {
-    //     return (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
-    // }
 }
 
 static inline void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T state)

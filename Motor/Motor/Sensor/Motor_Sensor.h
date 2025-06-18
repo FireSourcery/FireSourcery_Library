@@ -30,7 +30,11 @@
 */
 /******************************************************************************/
 #include "Hall/Hall_MotorSensor.h"
+#include "Hall/Motor_Hall.h"
+
 #include "Encoder/Encoder_MotorSensor.h"
+#include "Encoder/Motor_Encoder.h"
+
 #include "MotorSensor.h"
 
 /* Part of Motor */

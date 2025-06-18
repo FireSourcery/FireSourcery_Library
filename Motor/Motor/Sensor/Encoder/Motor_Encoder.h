@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,32 +26,28 @@
 /*!
     @file   Motor_Encoder.h
     @author FireSourcery
-
-    @brief
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOTOR_ENCODER_H
-#define MOTOR_ENCODER_H
 
-#include "../../Motor_StateMachine.h"
-#include "../../Motor.h"
-// #include "../../Motor_Var.h"
-// #include "../../Motor_FOC.h"
-// #include "../MotorSensor.h"
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 
+/* Include with Motor_Sensor */
+typedef const struct Motor Motor_T;
+typedef struct Motor_State Motor_State_T;
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 void Motor_Encoder_StartHoming(Motor_State_T * p_motor);
 void Motor_Encoder_CalibrateHomeOffset(Motor_State_T * p_motor);
 
 void Motor_Encoder_StartUpChain(Motor_State_T * p_motor);
 
 /*  */
-extern int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId);
-extern void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);
+// extern int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId);
+// extern void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);
 
-extern int Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, int varId);
-extern void Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, int varId, int varValue);
-
-#endif
-
+extern int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId);
+extern void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);

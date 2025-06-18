@@ -265,10 +265,10 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, f
     ProcAngleOutput(p_motor);
 }
 
-/* Begin Observe, Ifeedback not updated */
+/* Begin passive monitor, Ifeedback not updated */
 void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
 {
-    FOC_ClearControlState(&p_motor->Foc); /* Clear for view, updated again on enter control */
+    FOC_ClearCaptureState(&p_motor->Foc); /* Clear for view, updated again on enter control */
     PID_Reset(&p_motor->PidIq);
     PID_Reset(&p_motor->PidId);
     PID_Reset(&p_motor->PidSpeed);
@@ -327,7 +327,7 @@ void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */
 }
 
-void Motor_FOC_SetDirection_Cast(Motor_State_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, (Motor_Direction_T)direction); }
+// void Motor_FOC_SetDirection_Cast(Motor_State_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, (Motor_Direction_T)direction); }
 void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor) { Motor_FOC_SetDirection(p_motor, p_motor->Config.DirectionForward); }
 
 

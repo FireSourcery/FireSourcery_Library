@@ -46,3 +46,21 @@ void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)
     StateMachine_ProcState(p_stateMachine);
 }
 #endif
+
+
+/* alternatively move as specialized */
+/*
+    MenuMachine,
+    AsyncMachine,
+    SyncMachine,
+*/
+extern void StateMachine_Sync_ProcState(const StateMachine_T * p_stateMachine);
+extern void StateMachine_Sync_SetInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
+extern void StateMachine_Async_ProcState(const StateMachine_T * p_stateMachine);
+extern void StateMachine_Async_ProcInput(const StateMachine_T * p_stateMachine, state_input_t inputId, state_input_value_t inputValue);
+
+// extern void AsyncMachine_Proc(const StateMachine_T * p_stateMachine)
+// extern void SyncMachine_Proc(const StateMachine_T * p_stateMachine)
+// extern void MenuMachine_Proc(const StateMachine_T * p_stateMachine)
+
+

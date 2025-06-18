@@ -238,3 +238,25 @@ void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0);
 }
 
+
+
+
+/******************************************************************************/
+/*
+    Vard Id
+*/
+/******************************************************************************/
+void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_VarCmd_T varId, int32_t varValue)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_OpenLoop_Enter(p_motor);                                      break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
+        case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
+        case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
+        /*  */
+        case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
+        // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
+    }
+}

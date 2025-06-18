@@ -72,7 +72,7 @@
 
 // // bool Motor_SetSpeedLimitEntry_Scalar(Motor_State_T * p_motor, uint8_t id, uint16_t scalar_ufract16)
 // // {
-// //     // int32_t speed_ufract16 = fract16_mul(Motor_GetSpeedLimitSelected(p_motor), scalar_ufract16); // of base
+// //     // int32_t speed_ufract16 = fract16_mul(Motor_GetSpeedLimitActive(p_motor), scalar_ufract16); // of base
 // //     // bool isActiveLimit = LimitArray_SetEntry(&p_motor->SpeedLimit, id, speed_ufract16);
 // //     // if (isActiveLimit == true) { Motor_SetSpeedLimitArray_Scalar(p_motor, scalar_ufract16); }
 // //     // return isActiveLimit;

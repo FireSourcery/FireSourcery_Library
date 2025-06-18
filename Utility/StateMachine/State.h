@@ -237,6 +237,12 @@ typedef const struct State_TransitionInput
 }
 State_TransitionInput_T;
 
+/* Convenience for inline call [StateMachine_InvokeTransition] */
+// static inline State_TransitionInput_T State_TransitionCmd_Create(const State_T * p_start, const State_Input_T transition)
+// {
+//     return (State_TransitionInput_T) { .P_START = p_start, .TRANSITION = transition };
+// }
+
 
 // typedef const struct StateMachine_MultiTransitionInput
 // {

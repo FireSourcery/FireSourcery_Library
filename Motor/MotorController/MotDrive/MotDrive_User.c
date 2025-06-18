@@ -82,7 +82,9 @@ int32_t MotDrive_VarId_Get(const MotDrive_T * p_motDrive, MotDrive_VarId_T id)
     int32_t value = 0;
     switch (id)
     {
-        case MOT_DRIVE_VAR_DIRECTION:   value = MotDrive_User_GetDirection(p_motDrive);    break;
+        case MOT_DRIVE_VAR_DIRECTION:   value = MotDrive_User_GetDirection(p_motDrive);     break;
+        // case MOT_DRIVE_VAR_THROTTLE:    value = p_motDrive->P_ACTIVE->Input.ThrottleValue;  break;
+        // case MOT_DRIVE_VAR_BRAKE:       value = p_motDrive->P_ACTIVE->Input.BrakeValue;     break;
         // case MOT_DRIVE_VAR_THROTTLE:      value = MotDrive_User_GetCmdThrottle(p_motDrive);  break;
         // case MOT_DRIVE_VAR_BRAKE:         value = MotDrive_User_GetCmdBrake(p_motDrive);     break;
     }

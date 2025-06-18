@@ -40,6 +40,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// typedef enum Motor_UserDirection
+// {
+//     MOTOR_DIRECTION_REVERSE = -1,
+//     MOTOR_DIRECTION_STOP = 0,
+//     MOTOR_DIRECTION_FORWARD = 1,
+// }
+// Motor_UserDirection_T;
+
 /******************************************************************************/
 /*!
     Inline Getters/Setters
@@ -100,46 +108,44 @@ static inline thermal_t Motor_User_GetHeat_DegC(const Motor_State_T * p_motor)  
 static inline angle16_t Motor_User_GetElectricalAngle(const Motor_State_T * p_motor) { return MotorSensor_GetElecticalAngle(p_motor->p_ActiveSensor); }
 static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_motor) { return MotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor); }
 
+
+/*
+    StateMachine Status
+    Set via interface functions
+*/
 /* altneratively use outer context */
 static inline Motor_StateId_T Motor_User_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
 static inline uint8_t Motor_User_GetSubStateId(const Motor_State_T * p_motor) { return _StateMachine_GetActiveSubStateId(&p_motor->StateMachine); } /* 0 during substate */
 
-static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
-
-
-
-/*
-    Set via interface functions
-*/
-/* GetRotaryDirection */
-static inline Motor_Direction_T Motor_User_GetDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
+static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 static inline int Motor_User_GetDirectionSign(const Motor_State_T * p_motor) { return Motor_GetUserDirection(p_motor); }
 
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
+static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
 
 
 /*
     User reference direction
     Effective Limits
 */
-static inline uint16_t Motor_User_GetSpeedLimitForward(const Motor_State_T * p_motor) { return p_motor->SpeedLimitForward_Fract16; }
-static inline uint16_t Motor_User_GetSpeedLimitReverse(const Motor_State_T * p_motor) { return p_motor->SpeedLimitReverse_Fract16; }
-static inline uint16_t Motor_User_GetSpeedLimit(const Motor_State_T * p_motor)        { return Motor_GetSpeedLimitSelected(p_motor); }
+static inline uint16_t Motor_User_GetSpeedLimitForward(const Motor_State_T * p_motor)   { return p_motor->SpeedLimitForward_Fract16; }
+static inline uint16_t Motor_User_GetSpeedLimitReverse(const Motor_State_T * p_motor)   { return p_motor->SpeedLimitReverse_Fract16; }
+static inline uint16_t Motor_User_GetSpeedLimitActive(const Motor_State_T * p_motor)    { return Motor_GetSpeedLimitActive(p_motor); }
 
 static inline uint16_t Motor_User_GetILimitMotoring(const Motor_State_T * p_motor)    { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_User_GetILimitGenerating(const Motor_State_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
 // static inline uint16_t Motor_User_GetILimit(const Motor_State_T * p_motor)            { return Motor_FOC_GetILimit(p_motor); }
 
+/*
+*/
 static inline bool Motor_User_IsILimitSet(const Motor_State_T * p_motor)
 {
-    return (p_motor->ILimitMotoring_Fract16 != p_motor->Config.ILimitMotoring_Fract16) ||
-        (p_motor->ILimitGenerating_Fract16 != p_motor->Config.ILimitGenerating_Fract16);
+    return (p_motor->ILimitMotoring_Fract16 != p_motor->Config.ILimitMotoring_Fract16) || (p_motor->ILimitGenerating_Fract16 != p_motor->Config.ILimitGenerating_Fract16);
 }
 
 static inline bool Motor_User_IsSpeedLimitSet(const Motor_State_T * p_motor)
 {
-    return (p_motor->SpeedLimitForward_Fract16 != p_motor->Config.SpeedLimitForward_Fract16) ||
-        (p_motor->SpeedLimitReverse_Fract16 != p_motor->Config.SpeedLimitReverse_Fract16);
+    return (p_motor->SpeedLimitForward_Fract16 != p_motor->Config.SpeedLimitForward_Fract16) || (p_motor->SpeedLimitReverse_Fract16 != p_motor->Config.SpeedLimitReverse_Fract16);
 }
 
 /* SubStates */
@@ -148,11 +154,9 @@ static inline bool Motor_User_IsSpeedLimitSet(const Motor_State_T * p_motor)
 // static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_State_T * p_motor)  { return p_motor->CalibrationState; }
 // static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_State_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
-
-static inline bool Motor_User_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
+// static inline bool Motor_User_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
 /*
-    On poll only
     Consolidate all status flags into a single word
 */
 typedef union Motor_User_StatusFlags
@@ -208,17 +212,17 @@ extern void Motor_User_ActivateControlWith(const Motor_T * p_const, Motor_Feedba
 extern void Motor_User_ActivateControl(const Motor_T * p_const);
 extern void Motor_User_Release(const Motor_T * p_const);
 extern void Motor_User_Hold(const Motor_T * p_const);
-extern void Motor_User_ActivateControlState(const Motor_T * p_const, Phase_Output_T state);
-extern void Motor_User_ForceDisableControl(const Motor_T * p_const);
+extern void Motor_User_ActivatePhaseOutput(const Motor_T * p_const, Phase_Output_T state);
+
 extern void Motor_User_SetFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_const, int modeValue);
 
-extern void Motor_User_ApplyDirection(const Motor_T * p_const, Motor_Direction_T direction);
+extern void Motor_User_Stop(const Motor_T * p_const);
+extern void Motor_User_ApplyRotaryDirection(const Motor_T * p_const, Motor_Direction_T direction);
 extern void Motor_User_ApplyDirectionForward(const Motor_T * p_const);
 extern void Motor_User_ApplyDirectionReverse(const Motor_T * p_const);
-extern void Motor_User_Stop(const Motor_T * p_const);
-
 extern void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, int sign);
+extern void Motor_User_ForceDisableControl(const Motor_T * p_const);
 
 extern void Motor_User_StartVoltageMode(const Motor_T * p_const);
 extern void Motor_User_StartIMode(const Motor_T * p_const);

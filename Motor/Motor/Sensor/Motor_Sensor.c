@@ -61,11 +61,20 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 }
 
 
-// int32_t _Motor_VarOutput_PositionSensor_Get(const Motor_State_T * p_motor, Motor_VarOutput_PositionSensor_T varId)
+
+
+// static inline int32_t Motor_Sensor_Config_Get(const Motor_T * p_motor, MotorSensor_Id_T sensor, uint8_t configId)
 // {
-
+//     const MotorSensor_Table_T * p_table = &p_motor->SENSOR_TABLE;
+//     switch (sensor)
+//     {
+//         case MOTOR_SENSOR_MODE_HALL: return Motor_Hall_Config_Get(&p_table->HALL.HALL, configId);
+//         // case MOTOR_SENSOR_MODE_ENCODER: return Encoder_MotorSensor_Config_Get(&p_table->ENCODER, configId);
+//         // case MOTOR_SENSOR_MODE_SIN_COS: return SinCos_MotorSensor_Config_Get(&p_table->SinCos, configId);
+//         // case MOTOR_SENSOR_MODE_SENSORLESS: return Sensorless_MotorSensor_Config_Get(&p_table->Sensorless, configId);
+//         default: return 0; // or some default value
+//     }
 // }
-
 
 
 /******************************************************************************/

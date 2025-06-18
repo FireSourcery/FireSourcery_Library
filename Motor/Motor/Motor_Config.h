@@ -49,12 +49,10 @@
 #define MOTOR_OPEN_LOOP_MAX_SCALAR FRACT16(0.1F)
 #endif
 
-/* Rated Limit */
-static inline uint16_t MotorAnalogRef_ILimitOf(uint16_t i_fract16) { return math_min(MotorAnalogRef_GetIRatedPeak_Fract16(), i_fract16); }
-static inline uint16_t MotorAnalogRef_VLimitOf(uint16_t v_fract16) { return math_min(MotorAnalogRef_GetVRated_Fract16(), v_fract16); }
 
 static inline uint16_t _Motor_Config_GetOpenLoopScalarLimit(const Motor_State_T * p_motor) { return math_min(p_motor->Config.OpenLoopScalarLimit_Fract16, MOTOR_OPEN_LOOP_MAX_SCALAR); }
 static inline uint16_t _Motor_Config_GetOpenLoopILimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), MotorAnalogRef_GetIRatedPeak_Fract16()); }
+static inline uint16_t _Motor_Config_GetOpenLoopVLimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), MotorAnalogRef_GetVRated_Fract16()); }
 
 /******************************************************************************/
 /*
@@ -191,5 +189,27 @@ extern void Motor_Config_SetILimitMotoring_Amp(Motor_State_T * p_motor, uint16_t
 extern void Motor_Config_SetILimitGenerating_Amp(Motor_State_T * p_motor, uint16_t generating_Amp);
 extern void Motor_Config_SetILimit_Amp(Motor_State_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
 #endif
+
+
+// int32_t _Motor_Config_Calibration_Get(const Motor_Config_T * p_config, Motor_VarConfig_Calibration_T varId)
+// {
+//     int32_t value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_COMMUTATION_MODE:              value = p_config->CommutationMode;                          break;
+//         case MOTOR_VAR_SENSOR_MODE:                   value = p_config->SensorMode;                               break;
+//         // case MOTOR_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_motor);      break;
+//         // case MOTOR_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
+//         // case MOTOR_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
+//         // case MOTOR_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
+//         // case MOTOR_VAR_SPEED_RATED_DEG:               value = Motor_Config_GetSpeedRated(p_motor);                break;
+//         // case MOTOR_VAR_IA_ZERO_ADCU:                  value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
+//         // case MOTOR_VAR_IB_ZERO_ADCU:                  value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
+//         // case MOTOR_VAR_IC_ZERO_ADCU:                  value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
+//             // case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
+//     }
+//     return value;
+// }
+
 
 #endif

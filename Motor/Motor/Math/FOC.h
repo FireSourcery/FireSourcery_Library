@@ -301,7 +301,7 @@ static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; 
 extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, fract16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
-extern void FOC_ClearControlState(FOC_T * p_foc);
+extern void FOC_ClearCaptureState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, fract16_t dMax);
 
 

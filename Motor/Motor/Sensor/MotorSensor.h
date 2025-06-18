@@ -49,6 +49,7 @@ typedef void(*MotorSensor_Set_T)(const struct MotorSensor * p_sensor, int value)
 /* alternatively */
 // typedef angle16_t(*MotorSensor_Capture_T)(const struct MotorSensor * p_sensor);
 // typedef int(*MotorSensor_Capture_T)(const struct MotorSensor * p_sensor);
+// typedef void(*MotorSensor_Proc_T)(MotorSensor_State_T * p_sensor);
 /* inline vtable */
 // typedef void(*MotorSensor_InstanceProc_T)(void);
 

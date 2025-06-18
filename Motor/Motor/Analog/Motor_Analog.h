@@ -137,13 +137,13 @@ extern void Motor_Analog_CaptureVc(Motor_State_T * p_motor, adc_result_t adcu);
 extern void Motor_Analog_CaptureIa(Motor_State_T * p_motor, adc_result_t adcu);
 extern void Motor_Analog_CaptureIb(Motor_State_T * p_motor, adc_result_t adcu);
 extern void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu);
-extern void Motor_Analog_CaptureHeat(Motor_State_T * p_motor, adc_result_t adcu);
+// extern void Motor_Analog_CaptureHeat(Motor_State_T * p_motor, adc_result_t adcu);
 
 /*
 */
 extern void Motor_Analog_MarkVabc(const Motor_T * p_motorConst);
 extern void Motor_Analog_MarkIabc(const Motor_T * p_motorConst);
-extern void Motor_Analog_MarkHeat(const Motor_T * p_motorConst);
+// extern void Motor_Analog_MarkHeat(const Motor_T * p_motorConst);
 
 extern void Motor_Analog_Calibrate(const Motor_T * p_motorConst);
 

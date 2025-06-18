@@ -1,35 +1,39 @@
-// /******************************************************************************/
-// /*!
-//     @section LICENSE
+/******************************************************************************/
+/*!
+    @section LICENSE
 
-//     Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
-//     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
-//     This program is free software: you can redistribute it and/or modify
-//     it under the terms of the GNU General Public License as published by
-//     the Free Software Foundation, either version 3 of the License, or
-//     (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-//     This program is distributed in the hope that it will be useful,
-//     but WITHOUT ANY WARRANTY; without even the implied warranty of
-//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//     GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-//     You should have received a copy of the GNU General Public License
-//     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// */
-// /******************************************************************************/
-// /******************************************************************************/
-// /*!
-//     @file   Motor_Encoder.c
-//     @author FireSourcery
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   Motor_Encoder.c
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "Motor_Encoder.h"
 
-//     @brief
-// */
-// /******************************************************************************/
-// #include "Motor_Encoder.h"
-
+#include "../../Motor_StateMachine.h"
+#include "../../Motor.h"
+#include "../../Motor_Var.h"
+#include "../../Motor_FOC.h"
+#include "../MotorSensor.h"
 
 // /******************************************************************************/
 // /*
@@ -175,7 +179,7 @@
 //     {
 //         // Encoder_CalibrateQuadratureDirection(&p_motor->ENCODER, p_motor->Direction == MOTOR_DIRECTION_CCW);
 //         // /* _StateMachine_EndSubState(&p_motor->STATE_MACHINE); */
-//         // StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CONTROL_STATE, PHASE_OUTPUT_FLOAT);
+//         // StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT);
 //         p_nextState = &MOTOR_STATE_CALIBRATION;
 //     }
 
@@ -576,12 +580,16 @@
 // #include "Transducer/Motor_Encoder/Motor_Encoder.h"
 // #include "Transducer/Encoder/Encoder.h"
 
+int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId) { return Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); }
+void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { Encoder_ConfigId_Set(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId, varValue); }
+
+
+
 // int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId) { return Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
 
 // void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
 // int Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, int varId) { return Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
-
 // void Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, int varId, int varValue) { Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
 // const VarAccess_VTable_T MOTOR_VAR_CONFIG_ENCODER =

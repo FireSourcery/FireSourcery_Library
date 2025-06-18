@@ -61,7 +61,7 @@ void FOC_ZeroSvpwm(FOC_T * p_foc)
     p_foc->DutyC = FRACT16_1_DIV_2;
 }
 
-void FOC_ClearControlState(FOC_T * p_foc)
+void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Ia = 0;  /* ADC */
     p_foc->Ib = 0;

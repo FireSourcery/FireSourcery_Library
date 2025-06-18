@@ -76,6 +76,8 @@ VMonitor_Context_T;
 
 // #define VMONITOR_CONTEXT_ALLOC(p_Nvm, ConversionStruct, VDividerStruct, p_Linear) VMONITOR_CONTEXT_INIT(
 
+// #define VMonitor_ConfigId_Get RangeMonitor_ConfigId_Get
+
 /******************************************************************************/
 /*
 */
@@ -98,6 +100,9 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
 {
     return ((uint32_t)(input - p_voltage->Config.FaultUnderLimit.Limit) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.FaultUnderLimit.Limit);
 }
+
+static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
+static inline VMonitor_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
 
 /******************************************************************************/
 /*

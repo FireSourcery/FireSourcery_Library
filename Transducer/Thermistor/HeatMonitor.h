@@ -138,10 +138,17 @@ static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T 
 
 static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
 
-
+/******************************************************************************/
+/*
+    VarId
+*/
+/******************************************************************************/
 /* Optionally combine thermistor and monitor ids here */
-// static inline int HeatMonitor_ConfigId_Get(const HeatMonitor_T * p_heat, int id) { return Monitor_ConfigId_Get(p_heat, id); }
-// static inline void HeatMonitor_ConfigId_Set(HeatMonitor_T * p_heat, int id, int value) { Monitor_ConfigId_Set(p_heat, id, value); }
+static inline int32_t HeatMonitor_ConfigId_Get(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id) { return Monitor_ConfigId_Get(p_context->P_STATE, id); }
+static inline void HeatMonitor_ConfigId_Set(const HeatMonitor_Context_T * p_context, Monitor_ConfigId_T id, int32_t value) { Monitor_ConfigId_Set(p_context->P_STATE, id, value); }
+
+static inline int32_t HeatMonitor_ConfigId_Thermistor_Get(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id) { return Thermistor_ConfigId_Get(&p_context->THERMISTOR, id); }
+static inline void HeatMonitor_ConfigId_Thermistor_Set(const HeatMonitor_Context_T * p_context, Thermistor_ConfigId_T id, int32_t value) { Thermistor_ConfigId_Set(&p_context->THERMISTOR, id, value); }
 
 
 /******************************************************************************/
@@ -326,6 +333,12 @@ static inline HeatMonitor_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_Gro
 {
     HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetInstance(p_group, index);
     return (p_context != NULL) ? p_context->P_STATE : NULL;
+}
+
+// static inline int HeatMonitor_Group_VarId_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_VarId_T id)
+static inline int HeatMonitor_Group_MonitorVar_Get(const HeatMonitor_GroupContext_T * p_group, Monitor_VarId_T id)
+{
+    return Monitor_VarId_Get(p_group->P_STATE, id);
 }
 
 /* Shared Monitor Config */

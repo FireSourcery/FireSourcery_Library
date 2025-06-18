@@ -185,6 +185,7 @@ static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_
 */
 /******************************************************************************/
 /* Checked on get and set */
+/* chck handling */
 static inline void _StateMachine_EndSubState(StateMachine_Active_T * p_fields) { p_fields->p_ActiveSubState = p_fields->p_ActiveState; }
 
 static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }

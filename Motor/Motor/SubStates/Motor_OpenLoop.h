@@ -72,12 +72,24 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 // }
 // Motor_OpenLoopState_T;
 
-// typedef enum Motor_OpenLoopCmd
-// {
-//     MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
-//     MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
-//     MOTOR_OPEN_LOOP_CMD_ANGLE,
-//     MOTOR_OPEN_LOOP_CMD_ALIGN,
-//     // MOTOR_OPEN_LOOP_CMD_STARTUP,
-// }
-// Motor_OpenLoopCmd_T;
+
+/*
+    Id directly correponding to VarId
+*/
+typedef enum Motor_OpenLoop_VarCmd
+{
+    MOTOR_OPEN_LOOP_CMD_PHASE_CONTROL,
+    MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
+    MOTOR_OPEN_LOOP_CMD_ANGLE,
+    MOTOR_OPEN_LOOP_CMD_ALIGN,
+    // MOTOR_OPEN_LOOP_CMD_STARTUP,
+
+    // MOTOR_VAR_OPEN_LOOP_CONTROL,        /* Enter State. optional pass sub statecmd */
+    // MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
+    // MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
+    // MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
+    // MOTOR_VAR_OPEN_LOOP_JOG,
+    // MOTOR_VAR_OPEN_LOOP_RUN,
+}
+Motor_OpenLoop_VarCmd_T;
+

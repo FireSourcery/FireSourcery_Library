@@ -154,6 +154,21 @@ void RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t nominal) { p_mo
     By Id
 */
 /******************************************************************************/
+int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId)
+{
+    switch (varId)
+    {
+        case RANGE_MONITOR_VAR_STATUS:  return (int32_t)p_monitor->Status;
+        case RANGE_MONITOR_VAR_VALUE:   return p_monitor->LastInput;
+        default: return 0;
+    }
+}
+
+int32_t RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId)
+{
+    return (p_monitor != NULL) ? _RangeMonitor_VarId_Get(p_monitor, varId) : 0;
+}
+
 int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId)
 {
     switch ((RangeMonitor_ConfigId_T)configId)

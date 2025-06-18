@@ -30,29 +30,3 @@
 /******************************************************************************/
 #include "Timer.h"
 
-
-// bool Timer_Poll(Timer_T * p_timer)
-// {
-//     bool isElapsed;
-
-//     if (p_timer->Mode == TIMER_MODE_STOPPED) { isElapsed = false; }
-//     else
-//     {
-//         isElapsed = Timer_IsElapsed(p_timer);
-//         if (isElapsed == true)
-//         {
-//             switch (p_timer->Mode)
-//             {
-//                 case TIMER_MODE_PERIODIC: Timer_Restart(p_timer); break;
-//                 case TIMER_MODE_ONE_SHOT: p_timer->Mode = TIMER_MODE_STOPPED; break;
-//                 case TIMER_MODE_MULTI_SHOT:
-//                     if (p_timer->Counter > 0U) { p_timer->Counter--; Timer_Restart(p_timer); }
-//                     else { p_timer->Mode = TIMER_MODE_STOPPED; }
-//                     break;
-//                 default: break;
-//             }
-//         }
-//     }
-
-//     return isElapsed;
-// }

@@ -58,6 +58,9 @@ bool MotorController_User_ClearILimitAll(const MotorController_T * p_context)
     MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
 }
 
+/******************************************************************************/
+/*   */
+/******************************************************************************/
 void MotorController_User_SetOptSpeedLimitOnOff(const MotorController_T * p_context, bool isEnable)
 {
     if (isEnable == true) { MotorController_User_SetSpeedLimitAll(p_context, p_context->P_ACTIVE->Config.OptSpeedLimit_Fract16); }

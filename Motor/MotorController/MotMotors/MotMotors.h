@@ -106,7 +106,7 @@ static inline void MotMotors_SetFeedbackMode(const MotMotors_T * p_ctx, Motor_Fe
     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
 static inline void MotMotors_ActivateControlState(const MotMotors_T * p_ctx, Phase_Output_T state)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ActivateControlState(&p_ctx->P_CONTEXTS[iMotor], state); } }
+    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
 
 static inline void MotMotors_ApplyUserDirection(const MotMotors_T * p_ctx, int sign)
     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ApplyDirectionSign(&p_ctx->P_CONTEXTS[iMotor], sign); } }

@@ -44,7 +44,6 @@
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/Motor_StateMachine.h"
-#include "Motor/Motor/MotorTimeRef.h"
 // #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"
@@ -66,10 +65,8 @@
 #include "Utility/Shell/Shell.h"
 #endif
 #include "Utility/BootRef/BootRef.h"
-#include "Type/Array/struct_array.h"
 #include "Type/Word/Version.h"
 
-#include "Transducer/Voltage/Linear_Voltage.h"
 #include "Math/Linear/Linear.h"
 
 #include <stdint.h>
@@ -100,7 +97,10 @@ typedef enum MotorController_OptDinMode
 }
 MotorController_OptDinMode_T;
 
-
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /* todo as substate */
 /* Blocking SubState/Function Id */
 typedef enum MotorController_LockId
@@ -118,6 +118,49 @@ typedef enum MotorController_LockId
 }
 MotorController_LockId_T;
 
+typedef enum MotorController_LockOpStatus
+{
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
+}
+MotorController_LockOpStatus_T;
+
+/*
+    System Cmds
+    Pass 2+ arguments. Host does not hold var value state.
+*/
+typedef enum MotorController_User_CallId
+{
+    MOT_USER_SYSTEM_BEEP,
+    MOT_USER_SYSTEM_BEEP_STOP,
+    MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
+    MOT_USER_SYSTEM_LOCK_STATE_INPUT,  // MotorController_LockId_T as input
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
+    MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
+    // MOT_USER_SYSTEM_SERVO, // servo mode
+    // drive direction
+}
+MotorController_User_CallId_T;
+
+// typedef enum MotorController_SystemCommand
+// {
+//     MOT_USER_FORCE_DISABLE_CONTROL,       // Force Disable control Non StateMachine checked, also handled via Call
+//     MOT_USER_SYSTEM_CLEAR_FAULT,          // fault flags
+//     MOT_USER_SYSTEM_BEEP,
+// // MotorController_Command_Blocking
+//     // MOTOR_CONTROLLER_CMD_CALIBRATE, /* begin each motor sequence, use per motor cmd instead */
+//     MOTOR_CONTROLLER_CMD_CALIBRATE_ADC,
+//     MOTOR_CONTROLLER_CMD_NVM_SAVE_CONFIG,
+//     MOTOR_CONTROLLER_CMD_NVM_RESTORE_CONFIG,
+// }
+// MotorController_SystemCommand_T;
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /*
     Fault SubState flags
     Faults flags retain set state until user clears
@@ -164,7 +207,7 @@ MotorController_InitFlags_T;
 typedef struct MotorController_CmdInput
 {
     uint8_t MotorId;
-    int16_t CmdValue;
+    int16_t CmdValue; /* [-32768:32767] */
     sign_t Direction;
     Motor_FeedbackMode_T FeedbackMode;
     Phase_Output_T ControlState;
@@ -189,6 +232,8 @@ typedef struct MotorController_Config
     MotorController_InputMode_T InputMode;
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
+
+    /* OptDin */
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
@@ -209,6 +254,8 @@ typedef struct MotorController_State
     uint32_t StateCounter;
     uint32_t ControlCounter;
 
+    MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
+
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
@@ -216,10 +263,7 @@ typedef struct MotorController_State
     // MotorController_StateFlags_T StateFlags;
     MotDrive_Active_T MotDrive; /* Optionally contain on init */
 
-    MotorController_LockId_T LockSubState;
-
-    MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
-
+    MotorController_LockId_T LockSubState; /* todo depreciate */
     /* Async return status */
     // union
     // {
