@@ -73,6 +73,11 @@
 #include <stdint.h>
 #include <string.h>
 
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 /* Init Mode */
 typedef enum MotorController_MainMode
 {
@@ -97,66 +102,6 @@ typedef enum MotorController_OptDinMode
     MOTOR_CONTROLLER_OPT_DIN_USER_FUNCTION,
 }
 MotorController_OptDinMode_T;
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-/* todo as substate */
-/* Blocking SubState/Function Id */
-typedef enum MotorController_LockId
-{
-    MOTOR_CONTROLLER_LOCK_ENTER,
-    MOTOR_CONTROLLER_LOCK_EXIT,
-    MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
-    MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
-    MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
-    MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
-    MOTOR_CONTROLLER_LOCK_REBOOT,
-    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
-    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
-    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
-}
-MotorController_LockId_T;
-
-typedef enum MotorController_LockOpStatus
-{
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
-}
-MotorController_LockOpStatus_T;
-
-/*
-    System Cmds
-    Pass 2+ arguments. Host does not hold var value state.
-*/
-typedef enum MotorController_User_CallId
-{
-    MOT_USER_SYSTEM_BEEP,
-    MOT_USER_SYSTEM_BEEP_STOP,
-    MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
-    MOT_USER_SYSTEM_LOCK_STATE_INPUT,  // MotorController_LockId_T as input
-    MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
-    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
-    MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
-    // MOT_USER_SYSTEM_SERVO, // servo mode
-    // drive direction
-}
-MotorController_User_CallId_T;
-
-// typedef enum MotorController_SystemCommand
-// {
-//     MOT_USER_FORCE_DISABLE_CONTROL,       // Force Disable control Non StateMachine checked, also handled via Call
-//     MOT_USER_SYSTEM_CLEAR_FAULT,          // fault flags
-//     MOT_USER_SYSTEM_BEEP,
-// // MotorController_Command_Blocking
-//     // MOTOR_CONTROLLER_CMD_CALIBRATE, /* begin each motor sequence, use per motor cmd instead */
-//     MOTOR_CONTROLLER_CMD_CALIBRATE_ADC,
-//     MOTOR_CONTROLLER_CMD_NVM_SAVE_CONFIG,
-//     MOTOR_CONTROLLER_CMD_NVM_RESTORE_CONFIG,
-// }
-// MotorController_SystemCommand_T;
 
 /******************************************************************************/
 /*!
@@ -245,6 +190,40 @@ typedef struct MotorController_Config
 #endif
 }
 MotorController_Config_T;
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/* todo as substate */
+/* Blocking SubState/Function Id */
+// typedef enum MotorController_LockCmd
+typedef enum MotorController_LockId
+{
+    MOTOR_CONTROLLER_LOCK_ENTER,
+    MOTOR_CONTROLLER_LOCK_EXIT,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
+    MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
+    MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
+    MOTOR_CONTROLLER_LOCK_REBOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
+    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
+}
+MotorController_LockId_T;
+
+typedef enum MotorController_LockOpStatus
+{
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
+}
+MotorController_LockOpStatus_T;
+
+
+
+
 
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State

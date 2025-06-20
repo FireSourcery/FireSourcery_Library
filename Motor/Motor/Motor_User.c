@@ -99,7 +99,7 @@ inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output
 */
 inline void Motor_User_SetFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if (mode.Value != p_motor->P_ACTIVE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
+    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeValue)
@@ -141,14 +141,15 @@ void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor-
 */
 void Motor_User_ApplyRotaryDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (p_motor->P_ACTIVE->Direction != direction) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+    if (p_motor->P_MOTOR_STATE->Direction != direction) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
 }
 
-void Motor_User_ApplyDirectionForward(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_ACTIVE->Config.DirectionForward); }
-void Motor_User_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_ACTIVE)); }
+void Motor_User_ApplyDirectionForward(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }
+void Motor_User_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_MOTOR_STATE)); }
+
 
 /* 1, 0, -1 */
-void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, int sign) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_ACTIVE->Config.DirectionForward * sign); }
+void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, int sign) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward * sign); }
 
 /******************************************************************************/
 /*
@@ -157,12 +158,12 @@ void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, int sign) { Motor_Us
 /******************************************************************************/
 // bool Motor_User_TryDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 // {
-//     if (p_motor->P_ACTIVE->Direction != direction) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
-//     return (direction == p_motor->P_ACTIVE->Direction);
+//     if (p_motor->P_MOTOR_STATE->Direction != direction) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+//     return (direction == p_motor->P_MOTOR_STATE->Direction);
 // }
 
-// bool Motor_User_TryDirectionForward(const Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->P_ACTIVE->Config.DirectionForward); }
-// bool Motor_User_TryDirectionReverse(const Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_ACTIVE)); }
+// bool Motor_User_TryDirectionForward(const Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }
+// bool Motor_User_TryDirectionReverse(const Motor_T * p_motor) { return Motor_User_TryDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_MOTOR_STATE)); }
 
 
 /******************************************************************************/
@@ -284,7 +285,7 @@ void Motor_User_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 /******************************************************************************/
 // void Motor_User_StartTorqueMode(const Motor_T * p_motor)
 // {
-//     if (p_motor->P_ACTIVE->FeedbackMode.Current == 1U) { Motor_User_StartIMode(p_motor); }
+//     if (p_motor->P_MOTOR_STATE->FeedbackMode.Current == 1U) { Motor_User_StartIMode(p_motor); }
 //     else { Motor_User_StartVoltageMode(p_motor); }
 // }
 

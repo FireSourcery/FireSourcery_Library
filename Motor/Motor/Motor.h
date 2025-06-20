@@ -375,18 +375,22 @@ Motor_State_T;
 */
 typedef const struct Motor
 {
-    Motor_State_T * P_ACTIVE;
+    Motor_State_T * P_MOTOR_STATE;
     // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
 
-    /* This is the only const context dependency of STATEMACHINE
-        alternatively, handle with pointer from state, reduce statemachine context */
+    /*
+        This is the only const context dependency of STATEMACHINE
+        alternatively, reduce statemachine context
+        handle with pointer from state,
+        PHASE include P_PHASE_STATE for buffered on off
+    */
     Phase_T PHASE;
     // Phase_Analog_T PHASE_ANALOG;
+    Motor_Analog_T ANALOG;
     MotorSensor_Table_T SENSOR_TABLE;
     // const Encoder_T ENCODER;
     // const Hall_T HALL;
 
-    Motor_Analog_T ANALOG;
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
 
     StateMachine_T STATE_MACHINE;
@@ -438,7 +442,7 @@ static inline bool Motor_PollCaptureSensor(Motor_State_T * p_motor)
     if (isCaptureSpeed == true)
     {
         MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
-        // p_motor->p_ActiveSensor ->Speed_Fract16 = (MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_ACTIVE->Speed_Fract16) / 2;
+        // p_motor->p_ActiveSensor ->Speed_Fract16 = (MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2;
     }
     MotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
     return isCaptureSpeed;
@@ -578,16 +582,16 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
 {
     // if (Motor_PollCaptureSpeed(p_motor) == true)
     // {
-    //     _Motor_ProcOuterFeedback(p_motor->P_ACTIVE);
+    //     _Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     // }
 
-    if (Timer_Periodic_Poll(&p_motor->P_ACTIVE->SpeedTimer) == true)
+    if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer) == true)
     {
-        MotorSensor_CaptureSpeed(p_motor->P_ACTIVE->p_ActiveSensor);
-        _Motor_ProcOuterFeedback(p_motor->P_ACTIVE);
+        MotorSensor_CaptureSpeed(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        _Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     }
 
-    MotorSensor_CaptureAngle(p_motor->P_ACTIVE->p_ActiveSensor);
+    MotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
 }
 
 /******************************************************************************/
@@ -599,10 +603,8 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
 /*
     V of Speed
 */
-static inline uint16_t Motor_RpmOfKvVFract16(const Motor_State_T * p_motor, uint16_t v_fract16) { return (int32_t)p_motor->Config.Kv * v_fract16 * MotorAnalogRef_GetVMaxVolts() >> 15U; }
-static inline uint16_t Motor_VFract16OfKvRpm(const Motor_State_T * p_motor, uint16_t rpm) { return (rpm * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
-
-// static inline uint32_t Motor_ElDegPerCycleOfVFract16(const Motor_State_T * p_motor, uint16_t degPerCycle)
+static inline uint16_t Motor_RpmOfKv(const Motor_State_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
+static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts())); }
 
 /* SpeedRated via direct Parameter */
 static inline uint32_t Motor_GetSpeedRatedRef_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }
@@ -611,27 +613,30 @@ static inline uint16_t Motor_GetSpeedRatedRef_Rpm(const Motor_State_T * p_motor)
 
 /* SpeedRated validation via Kv */
 /* updated at run-time */
-static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKvVFract16(p_motor, MotorAnalog_GetVSource_Fract16()); }
-static inline uint16_t Motor_GetSpeedVRef_DegPerCycle(const Motor_State_T * p_motor) { return speed_angle16_of_rpm(MOTOR_CONTROL_FREQ / p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor)); }
+static inline uint16_t Motor_GetSpeedVRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, MotorAnalog_GetVSource_Fract16()); }
+static inline uint16_t Motor_GetSpeedVRef_DegPerCycle(const Motor_State_T * p_motor) { return angle16_of_rpm(MOTOR_CONTROL_PERIOD_MINUTES_FRACT32 * p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor)); }
+// static inline uint16_t Motor_GetSpeedVRef_DegPerCycle(const Motor_State_T * p_motor) { return speed_angle16_of_rpm(MOTOR_CONTROL_FREQ / p_motor->Config.PolePairs, Motor_GetSpeedVRef_Rpm(p_motor)); }
 
 static inline uint16_t Motor_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_Rpm(p_motor), FRACT16_2_DIV_SQRT3); }
 static inline uint16_t Motor_GetSpeedVSvpwmRef_DegPerCycle(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedVRef_DegPerCycle(p_motor), FRACT16_2_DIV_SQRT3); }
 
 /* V of SpeedRated. debug */
-static inline int32_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_motor) { return Motor_VFract16OfKvRpm(p_motor, Motor_GetSpeedRatedRef_Rpm(p_motor)); }
+static inline int32_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_motor) { return Motor_VFract16OfKv(p_motor, Motor_GetSpeedRatedRef_Rpm(p_motor)); }
 
 /* When Speed is scaled to VSource */
+/* SpeedRated ~= SpeedVRef */
 // static inline accum32_t Motor_VOfSpeed_Fract16(accum32_t speed_fract16) { return fract16_mul(speed_fract16, MotorAnalog_GetVSource_Fract16()); }
 // static inline accum32_t Motor_SpeedOfV_Fract16(accum32_t v_fract16)     { return fract16_div(v_fract16, MotorAnalog_GetVSource_Fract16()); }
 
 /*!
     @return V_Fract16 - VBus using Kv
 */
+/* alternatively convert kv to electrical */
 static inline accum32_t Motor_VSpeed_Fract16OfDegPerCycle(const Motor_State_T * p_motor, int32_t speed_degControl)
     { return speed_degControl * MotorAnalog_GetVSource_Fract16() / Motor_GetSpeedVRef_DegPerCycle(p_motor); }
     // { return (speed_degControl * MOTOR_CONTROL_FREQ / (65536U / 60U) * 32768U) * p_motor->Config.PolePairs / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
     // { return (speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) * 32768U) / (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts() / p_motor->Config.PolePairs); }
-    // { return Motor_VFract16OfKvRpm(p_motor, speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) / p_motor->Config.PolePairs); }
+    // { return Motor_VFract16OfKv(p_motor, speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, speed_degControl) / p_motor->Config.PolePairs); }
 
 /* SpeedOfV return DegPerCycle */
 static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_motor, accum32_t v_fract16)

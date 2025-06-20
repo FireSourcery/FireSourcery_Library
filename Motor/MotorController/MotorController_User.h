@@ -37,6 +37,36 @@
 #include "../Version.h"
 
 
+/*
+    System Cmds
+
+    Pass 2+ arguments. Host does not hold var value state.
+
+    Non Polling Cmds
+    write only/subroutine, no retaining var value state, optionally return a status
+
+    CallId also functions as VarType
+    MotVarId_Type_SystemCommand
+*/
+typedef enum MotorController_User_SystemCmd
+{
+    MOT_USER_SYSTEM_BEEP, /* Beep N */
+    MOT_USER_SYSTEM_BEEP_STOP,
+    /* alterntively as general */
+    MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
+    MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL,     // Force Disable control Non StateMachine checked, also handled via MOT_PACKET_STOP_ALL
+    MOT_USER_SYSTEM_LOCK_STATE_INPUT,  // MotorController_LockId_T as input, Nvm + Calibration
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
+    MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
+    // MOT_USER_SYSTEM_SERVO, // servo mode
+//     // MOT_VAR_TYPE_COMMAND_BUZZER,
+//     // MOT_VAR_TYPE_COMMAND_RELAY,
+//     MOT_VAR_TYPE_COMMAND_NVM,
+//     MOT_VAR_TYPE_COMMAND_CALIBRATION,
+    _MOT_USER_SYSTEM_CMD_END = 16U,
+}
+MotorController_User_SystemCmd_T;
 
 
 /******************************************************************************/
@@ -247,7 +277,7 @@ extern void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_c
 extern void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts);
 extern void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode);
 
-extern uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorController_User_CallId_T id, int32_t value);
+extern uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int32_t value);
 
 // extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 // extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);

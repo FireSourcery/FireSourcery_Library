@@ -47,27 +47,29 @@
 #endif
 
 /*   */
-typedef enum Thermistor_Type
-{
-    THERMISTOR_TYPE_NTC,
-    THERMISTOR_TYPE_PTC,
-    THERMISTOR_TYPE_LINEAR,
-    THERMISTOR_TYPE_LUT,
-}
-Thermistor_Type_T;
+// typedef enum Thermistor_Type
+// {
+//     THERMISTOR_TYPE_NTC,
+//     THERMISTOR_TYPE_NTC_PULL_UP,
+//     THERMISTOR_TYPE_PTC,
+//     THERMISTOR_TYPE_PTC_PULL_UP,
+//     THERMISTOR_TYPE_LINEAR,
+//     THERMISTOR_TYPE_LUT,
+// }
+// Thermistor_Type_T;
 
 // in configurable Config, or FIXED
 typedef struct Thermistor_Coeffs
 {
-    Thermistor_Type_T Type;
+    // Thermistor_Type_T Type;
     uint16_t B;
     uint32_t R0;
     uint16_t T0; /* In Kelvin. */
     // uint16_t VInRef_MilliV;
 
     /* Back Up Linear Unit Conversion. */
-    uint32_t DeltaR;
-    uint16_t DeltaT;
+    int32_t DeltaR;
+    int16_t DeltaT;
     // uint32_t LinearR0;
     // uint16_t LinearT0;
 
@@ -80,7 +82,7 @@ typedef struct Thermistor_Coeffs
 }
 Thermistor_Coeffs_T;
 
-#define THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .Type = TypeValue, .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
+#define THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
 #define THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin))
 #define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){0})
 
@@ -139,13 +141,13 @@ static inline thermal_t _Thermistor_KelvinOfCelsius(thermal_t celsius) { return 
 /*
 */
 /******************************************************************************/
-static inline Thermistor_Type_T _Thermistor_GetType(const Thermistor_T * p_therm)   { return p_therm->P_COEFFS->Type; }
+// static inline Thermistor_Type_T _Thermistor_GetType(const Thermistor_T * p_therm)   { return p_therm->P_COEFFS->Type; }
 static inline uint32_t _Thermistor_GetR0(const Thermistor_T * p_therm)              { return p_therm->P_COEFFS->R0; }
 static inline uint16_t _Thermistor_GetT0(const Thermistor_T * p_therm)              { return p_therm->P_COEFFS->T0; } /* Degrees Kelvin */
 static inline uint16_t _Thermistor_GetT0_DegC(const Thermistor_T * p_therm)         { return p_therm->P_COEFFS->T0 + ABSOLUTE_ZERO_CELSIUS; }
 static inline uint16_t _Thermistor_GetB(const Thermistor_T * p_therm)               { return p_therm->P_COEFFS->B; }
 
-static inline void _Thermistor_SetType(const Thermistor_T * p_therm, uint16_t value)      { p_therm->P_COEFFS->Type = value; }
+// static inline void _Thermistor_SetType(const Thermistor_T * p_therm, uint16_t value)      { p_therm->P_COEFFS->Type = value; }
 static inline void _Thermistor_SetR0(const Thermistor_T * p_therm, uint32_t value)        { p_therm->P_COEFFS->R0 = value; }
 static inline void _Thermistor_SetT0(const Thermistor_T * p_therm, uint16_t value)        { p_therm->P_COEFFS->T0 = value; } /* Degrees Kelvin */
 static inline void _Thermistor_SetT0_DegC(const Thermistor_T * p_therm, uint16_t value)   { p_therm->P_COEFFS->T0 = value - ABSOLUTE_ZERO_CELSIUS; }
@@ -155,14 +157,14 @@ static inline void _Thermistor_SetLinearDeltaT(const Thermistor_T * p_therm, uin
 
 static inline const Thermistor_Coeffs_T * Thermistor_GetCoeffs(const Thermistor_T * p_therm) { return (p_therm->P_FIXED_COEFFS != NULL) ? p_therm->P_FIXED_COEFFS : p_therm->P_COEFFS; }
 
-static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return Thermistor_GetCoeffs(p_therm)->Type; }
+// static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return Thermistor_GetCoeffs(p_therm)->Type; }
 static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return Thermistor_GetCoeffs(p_therm)->B; }
 static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return Thermistor_GetCoeffs(p_therm)->R0; }
 static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return Thermistor_GetCoeffs(p_therm)->T0; }
 static inline uint16_t Thermistor_GetT0_Kelvin(const Thermistor_T * p_therm)        { return Thermistor_GetCoeffs(p_therm)->T0; }
 static inline uint16_t Thermistor_GetT0_Celsius(const Thermistor_T * p_therm)       { return (Thermistor_GetT0(p_therm) + ABSOLUTE_ZERO_CELSIUS); }
-static inline uint16_t Thermistor_GetLinearDeltaR(const Thermistor_T * p_therm)     { return Thermistor_GetCoeffs(p_therm)->DeltaR; }
-static inline uint16_t Thermistor_GetLinearDeltaT(const Thermistor_T * p_therm)     { return Thermistor_GetCoeffs(p_therm)->DeltaT; }
+static inline int16_t Thermistor_GetLinearDeltaR(const Thermistor_T * p_therm)     { return Thermistor_GetCoeffs(p_therm)->DeltaR; }
+static inline int16_t Thermistor_GetLinearDeltaT(const Thermistor_T * p_therm)     { return Thermistor_GetCoeffs(p_therm)->DeltaT; }
 
 static inline uint32_t Thermistor_GetRSeries(const Thermistor_T * p_therm)          { return p_therm->R_SERIES; }
 static inline uint32_t Thermistor_GetRParallel(const Thermistor_T * p_therm)        { return p_therm->R_PARALLEL; } /* 0 for Disable */
@@ -198,9 +200,11 @@ extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t
 /******************************************************************************/
 typedef enum Thermistor_ConfigId
 {
+    /* RefId */
     THERMISTOR_CONFIG_R_SERIES, // All instance Read-Only
     THERMISTOR_CONFIG_R_PARALLEL, // All instance Read-Only
     THERMISTOR_CONFIG_V_SERIES_MV, // All instance Read-Only
+    /* CoeffId */
     THERMISTOR_CONFIG_TYPE,
     THERMISTOR_CONFIG_B,
     THERMISTOR_CONFIG_R0,

@@ -41,7 +41,8 @@ static inline fract16_t svpwm_norm_vbus_inv(int32_t vBusInv_fract32, fract16_t v
 static inline fract16_t svpwm_norm_vbus(int32_t vBus_fract, fract16_t v_fract) { return fract16_div(v_fract, vBus_fract); }
 
 /*!
-    @param[in] vA, vB, vC - scalars normalized, range[-.577F:.577F], such that vA = .577F <=> Phase A voltage output VBus/sqrt(3)
+    @param[in] vA, vB, vC - scalars normalized to VBus as 1. range [-1/sqrt(3):1/sqrt(3)].
+                            vA = 1/sqrt(3) <=> Phase A voltage output VBus/sqrt(3)
 */
 static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
 {
@@ -58,14 +59,15 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     int32_t dutyC = vC - vZero;
 
     // # Saturate the duty cycles to ensure they are within the range of 0 to 1
-    *p_dutyA = ufract16_sat(dutyA);
-    *p_dutyB = ufract16_sat(dutyB);
-    *p_dutyC = ufract16_sat(dutyC);
+    *p_dutyA = fract16_sat_positive(dutyA);
+    *p_dutyB = fract16_sat_positive(dutyB);
+    *p_dutyC = fract16_sat_positive(dutyC);
 }
 
-// /*!
-//     @param[in] a, b, c - duty scalars normalized range[-1.0F:1.0F], such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
-// */
+/*!
+    @param[in] a, b, c - duty scalars normalized range [-1.0F:1.0F].
+                            such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
+*/
 // static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
 // {
 //     int32_t vA = fract16_mul(a, FRACT16_1_DIV_SQRT3);
@@ -277,9 +279,9 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
 //             break;
 //     }
 
-//     *p_dutyA = ufract16_sat(dutyA);
-//     *p_dutyB = ufract16_sat(dutyB);
-//     *p_dutyC = ufract16_sat(dutyC);
+//     *p_dutyA = fract16_sat_positive(dutyA);
+//     *p_dutyB = fract16_sat_positive(dutyB);
+//     *p_dutyC = fract16_sat_positive(dutyC);
 // }
 
 #endif

@@ -40,7 +40,7 @@
 #include "Utility/StateMachine/StateMachine_Thread.h"
 
 
-static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return MotorTimeRef_IsAnalogCycle(p_context->P_ACTIVE->ControlTimerBase); }
+static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return MotorTimeRef_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
 
 /* Alternatively move singleton capture to this module */
 // static inline void Motor_CaptureVSource(uint16_t vBus_adcu) { MotorAnalog_CaptureVSource_Adcu(vBus_adcu); }
@@ -52,7 +52,7 @@ static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return Motor
 */
 static inline void Motor_PWM_Thread(const Motor_T * p_context)
 {
-    Motor_State_T * p_fields = p_context->P_ACTIVE;
+    Motor_State_T * p_fields = p_context->P_MOTOR_STATE;
 
     // Motor_Debug_CaptureRefTime(p_context);
 
@@ -60,7 +60,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     // if (Timer_Periodic_Poll(&p_fields->SpeedTimer) == true)
     // {
     //     MotorSensor_CaptureSpeed(p_fields->p_ActiveSensor);
-    //     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_RUN)
+    //     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_MOTOR_STATE) == MSM_STATE_ID_RUN)
     //     {
     //         _Motor_ProcOuterFeedback(p_fields);
     //     }
@@ -75,7 +75,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     if (Phase_ReadOutputState(&p_context->PHASE) == PHASE_OUTPUT_VPWM) { Motor_FOC_ActivateVPhase(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
     // if (StateMachine_GetActiveStateId(&p_fields->StateMachine) == MSM_STATE_ID_RUN)
-    // if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_RUN)
+    // if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_MOTOR_STATE) == MSM_STATE_ID_RUN)
     // {
     //     // Motor_FOC_WriteDuty(&p_context->PHASE, &p_fields->Foc);
     //     Motor_FOC_ActivateVPhase(p_context);
@@ -93,7 +93,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
     // MotorSensor_MarkAnalog(&p_context->Sensor);
-    switch (StateMachine_GetActiveStateId(&p_context->P_ACTIVE->StateMachine)) /* or set on state entry */
+    switch (StateMachine_GetActiveStateId(&p_context->P_MOTOR_STATE->StateMachine)) /* or set on state entry */
     {
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_context);     break;
             // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
@@ -115,7 +115,7 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
 
 static inline void Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
-    // todo change timer
+    // or called handle offset
     if (Motor_IsAnalogCycle(p_context) == true) { _Motor_MarkAnalog_Thread(p_context); }
 }
 
@@ -135,7 +135,7 @@ static inline void Motor_Heat_Thread(const Motor_T * p_context)
             // Motor_SetILimitMotoringEntry_Scalar(p_context, MOTOR_I_LIMIT_HEAT_THIS, HeatMonitor_GetScalarLimit_Percent16(&p_context->Thermistor));
             break;
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            p_context->P_ACTIVE->FaultFlags.Overheat = 1U;
+            p_context->P_MOTOR_STATE->FaultFlags.Overheat = 1U;
             Motor_StateMachine_EnterFault(p_context); // Motor_StateMachine_SetFault(p_context, MOTOR_FAULT_FLAG_OVERHEAT);
             break;
         default: break;

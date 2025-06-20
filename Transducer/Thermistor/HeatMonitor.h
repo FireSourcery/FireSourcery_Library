@@ -83,7 +83,7 @@ typedef const struct HeatMonitor_Context
     /* HeatMonitor_Base_T */
     HeatMonitor_T * P_STATE;
 
-    /* Overwrite for GroupContext */
+    /* Overwritten in GroupContext */
     Linear_T * P_LIMIT_SCALAR;
     const HeatMonitor_Config_T * P_NVM_CONFIG;
 
@@ -91,8 +91,9 @@ typedef const struct HeatMonitor_Context
     Analog_Conversion_T ANALOG_CONVERSION;
     Thermistor_T THERMISTOR;
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
-    // Linear_T * P_LINEAR_R_OHMS;  /* R per Adcu */
+    // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
     // Linear_T * P_LINEAR_T_CELCIUS;
+    // Linear_T * P_LINEAR_T_DEGREES; /* Degree units using config */
 }
 HeatMonitor_Context_T;
 
@@ -119,8 +120,6 @@ static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_T * p_heat, Linea
 static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
 {
     return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION);
-    // return (HeatMonitor_Status_T)Monitor_GetStatus(p_context->P_STATE);
 }
 
 static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
@@ -176,7 +175,7 @@ extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
 typedef const struct HeatMonitor_GroupContext
 {
     /* Array of HeatMonitor_Context_T */
-    /* Include HeatMonitor_T per sensor, for individual status */
+    /* HeatMonitor_T per sensor, for individual status */
     HeatMonitor_Context_T * P_CONTEXTS;
     uint8_t COUNT;
 
@@ -217,6 +216,8 @@ static inline uint8_t _HeatMonitor_Group_PollEach_Index(const HeatMonitor_GroupC
         HeatMonitor_Poll(&p_group->P_CONTEXTS[i]);
         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
         if (compare > max) { max = compare; index = i; }
+
+        /* optionally mark on same loop */
     }
 
     return index;
@@ -295,6 +296,11 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollAll(const HeatMonitor_G
     return (HeatMonitor_Status_T)Monitor_Poll(p_group->P_STATE, p_group->P_CONTEXTS[_HeatMonitor_Group_PollEach_Index(p_group)].P_STATE->LastInput);
 }
 
+static inline void HeatMonitor_Group_MarkEach(const HeatMonitor_GroupContext_T * p_group)
+{
+    for (uint8_t i = 0U; i < p_group->COUNT; i++) { HeatMonitor_MarkConversion(&p_group->P_CONTEXTS[i]); }
+}
+
 
 /******************************************************************************/
 /*
@@ -310,7 +316,6 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor
 {
     return (HeatMonitor_Status_T)Monitor_GetStatus(p_group->P_STATE);
 }
-
 
 /******************************************************************************/
 /*

@@ -61,9 +61,12 @@ extern MotDrive_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_this
     Config Options
 */
 /******************************************************************************/
+// static inline MotDrive_BrakeMode_T _MotDrive_Config_GetBrakeMode(const MotDrive_Config_T * p_config) { return p_config; }
+
 static inline MotDrive_BrakeMode_T MotDrive_Config_GetBrakeMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.BrakeMode; }
 static inline MotDrive_ThrottleMode_T MotDrive_Config_GetThrottleMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.ThrottleMode; }
 static inline MotDrive_ZeroMode_T MotDrive_Config_GetZeroMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.ZeroMode; }
+
 static inline void MotDrive_Config_SetBrakeMode(MotDrive_Active_T * p_motDriveState, MotDrive_BrakeMode_T mode) { p_motDriveState->Config.BrakeMode = mode; }
 static inline void MotDrive_Config_SetThrottleMode(MotDrive_Active_T * p_motDriveState, MotDrive_ThrottleMode_T mode) { p_motDriveState->Config.ThrottleMode = mode; }
 static inline void MotDrive_Config_SetZeroMode(MotDrive_Active_T * p_motDriveState, MotDrive_ZeroMode_T mode) { p_motDriveState->Config.ZeroMode = mode; }

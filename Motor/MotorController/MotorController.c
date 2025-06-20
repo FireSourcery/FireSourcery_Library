@@ -189,7 +189,7 @@ NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * 
         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
         {
             p_motorContext = MotMotors_ContextAt(&p_context->MOTORS, iMotor);
-            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->P_NVM_CONFIG, &p_motorContext->P_ACTIVE->Config, sizeof(Motor_Config_T)); }
+            if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->P_NVM_CONFIG, &p_motorContext->P_MOTOR_STATE->Config, sizeof(Motor_Config_T)); }
 
             /* todo table bye sensor def */
             if (status == NV_MEMORY_STATUS_SUCCESS) { status = WriteNvm(p_context, p_motorContext->SENSOR_TABLE.HALL.HALL.P_NVM_CONFIG, &p_motorContext->SENSOR_TABLE.HALL.HALL.P_STATE->Config, sizeof(Hall_Config_T)); }

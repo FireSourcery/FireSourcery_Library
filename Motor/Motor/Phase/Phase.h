@@ -31,7 +31,6 @@
     Treats each phase as a complementary PWM output.
     2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
     e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
-
 */
 /******************************************************************************/
 #include "Config.h"
@@ -43,9 +42,12 @@
 #include <assert.h>
 #include <sys/types.h>
 
-
-/* Phase_Id/State */
-/* Phase_Channels */
+/******************************************************************************/
+/*!
+    PhaseId Common
+*/
+/******************************************************************************/
+/* Phase_Channels IdBits */
 typedef union Phase_Bits
 {
     struct
@@ -55,7 +57,7 @@ typedef union Phase_Bits
         uint8_t C : 1U;
         uint8_t Resv : 5U;
     };
-    uint8_t Value;
+    uint8_t Id;
 }
 Phase_Bits_T;
 
@@ -75,8 +77,8 @@ typedef enum Phase_Id
 }
 Phase_Id_T;
 
-// static inline Phase_Id_T Phase_IdOf(Phase_Bits_T bits) { return (Phase_Id_T)bits.Value; }
-static inline Phase_Bits_T Phase_BitsOf(Phase_Id_T id) { return (Phase_Bits_T){ .Value = id }; }
+// static inline Phase_Id_T Phase_IdOf(Phase_Bits_T bits) { return (Phase_Id_T)bits.Id; }
+static inline Phase_Bits_T Phase_BitsOf(Phase_Id_T id) { return (Phase_Bits_T) { .Id = id }; }
 
 /* Virtual CCW */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
@@ -138,11 +140,50 @@ typedef enum Phase_Output
 {
     PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, it is the result of Pin Low/0 */
     PHASE_OUTPUT_V0,     /* VDuty 0, Pin High/1 */
-    /* PHASE_STATE_RESV = 0b10 */ /* This way bit0 reflects pin on/off, bit1 reflects pwm value */
+    /* PHASE_STATE_RESV = 0b01 */ /* This way bit0 reflects pin on/off, bit1 reflects pwm value */
     PHASE_OUTPUT_VPWM,   /* VDuty +, Pin High/1 */
 }
 Phase_Output_T;
 
+/*
+
+*/
+// typedef enum Motor_SectorId
+// {
+//     MOTOR_SECTOR_ID_0 = 0U,
+//     MOTOR_SECTOR_ID_1 = 1U, /* 0_60 */
+//     MOTOR_SECTOR_ID_2 = 2U,
+//     MOTOR_SECTOR_ID_3 = 3U,
+//     MOTOR_SECTOR_ID_4 = 4U,
+//     MOTOR_SECTOR_ID_5 = 5U,
+//     MOTOR_SECTOR_ID_6 = 6U,
+//     MOTOR_SECTOR_ID_7 = 7U,
+// }
+// Motor_SectorId_T;
+
+// Motor_SectorId_T Motor_SectorIdOfAngle(angle16_t angle)
+// {
+//     Motor_SectorId_T sectorId;
+//     if (angle < ANGLE16_180)
+//     {
+//         if (angle < ANGLE16_60) { sectorId = MOTOR_SECTOR_ID_1; }
+//         else if (angle < ANGLE16_120) { sectorId = MOTOR_SECTOR_ID_2; }
+//         else { sectorId = MOTOR_SECTOR_ID_3; }
+//     }
+//     else
+//     {
+//         if (angle < ANGLE16_240) { sectorId = MOTOR_SECTOR_ID_4; }
+//         else if (angle < ANGLE16_300) { sectorId = MOTOR_SECTOR_ID_5; }
+//         else { sectorId = MOTOR_SECTOR_ID_6; }
+//     }
+//     return sectorId;
+// }
+
+/******************************************************************************/
+/*!
+    Phase Context
+*/
+/******************************************************************************/
 typedef const struct Phase
 {
     const PWM_Module_T PWM_MODULE;
@@ -155,7 +196,7 @@ typedef const struct Phase
 }
 Phase_T;
 
-/* Module same as Channels */
+/* Module common for all Channels */
 #define PHASE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel, p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId)    \
 {                                                                                   \
     .PWM_MODULE = PWM_MODULE_INIT(p_PwmHal, PwmPeriodTicks, PwmAChannel, PwmBChannel, PwmCChannel),  \
@@ -173,7 +214,7 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 
 /******************************************************************************/
 /*!
-    Phase State
+    Phase Output Control
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -234,7 +275,7 @@ static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 // #ifdef CONFIG_PHASE_INDIVIDUAL_CHANNEL_CONTROL
     return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
 // #else
-// return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Value);
+// return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Id);
 // #endif
 }
 
@@ -344,7 +385,7 @@ static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint1
     if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
     if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
     if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
-    if (state.Value != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Value); }
+    if (state.Id != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Id); }
 }
 
 
@@ -386,12 +427,12 @@ static inline void Phase_ActivateOutputT0(const Phase_T * p_phase)
 
 static inline bool Phase_IsFloat(const Phase_T * p_phase)
 {
-    return (_Phase_ReadState(p_phase).Value == PHASE_ID_0);
+    return (_Phase_ReadState(p_phase).Id == PHASE_ID_0);
 }
 
 static inline bool Phase_IsV0(const Phase_T * p_phase)
 {
-    return ((_Phase_ReadState(p_phase).Value == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0));
+    return ((_Phase_ReadState(p_phase).Id == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0));
 }
 
 /* Collective state */
@@ -399,13 +440,13 @@ static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
 
-    switch (_Phase_ReadState(p_phase).Value)
+    switch (_Phase_ReadState(p_phase).Id)
     {
         case PHASE_ID_0:
             state = PHASE_OUTPUT_FLOAT;
             break;
         case PHASE_ID_ABC:
-            state = (_Phase_ReadDutyState(p_phase).Value == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
+            state = (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
             break;
         default:
             state = PHASE_OUTPUT_VPWM;
@@ -454,15 +495,3 @@ extern Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty);
 /******************************************************************************/
 /*! @} */
 /******************************************************************************/
-
-// extern void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-// extern void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-// extern void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC);
-// extern void Phase_ActivateOutput(const Phase_T * p_phase);
-// extern void Phase_Float(const Phase_T * p_phase);
-// extern void Phase_ActivateOutputV0(const Phase_T * p_phase);
-// extern void Phase_ActivateOutputT0(const Phase_T * p_phase);
-// extern bool Phase_IsV0(const Phase_T * p_phase);
-// extern bool Phase_IsFloat(const Phase_T * p_phase);
-// extern Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase);
-// extern void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Output_T state);

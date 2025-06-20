@@ -34,7 +34,7 @@
 
 // void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config)
 // {
-//     if (p_config != NULL) { memcpy(&p_context->P_ACTIVE->Config, p_config, sizeof(Motor_Config_T)); }
+//     if (p_config != NULL) { memcpy(&p_context->P_MOTOR_STATE->Config, p_config, sizeof(Motor_Config_T)); }
 
 //     /*
 //         HW Wrappers Init
@@ -44,7 +44,7 @@
 //     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
 // #endif
 //     Motor_Sensor_Init(p_context);
-//     Motor_Reset(p_context->P_ACTIVE); // alternatively move to state machine
+//     Motor_Reset(p_context->P_MOTOR_STATE); // alternatively move to state machine
 //     StateMachine_Init(&p_context->STATE_MACHINE);
 // }
 
@@ -57,7 +57,7 @@ void Motor_Init(const Motor_T * p_context)
     // Motor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 
     /* Config including selected angle sensor init */
-    if (p_context->P_NVM_CONFIG != NULL) { p_context->P_ACTIVE->Config = *p_context->P_NVM_CONFIG; }
+    if (p_context->P_NVM_CONFIG != NULL) { p_context->P_MOTOR_STATE->Config = *p_context->P_NVM_CONFIG; }
 
     /*
         HW Wrappers Init
@@ -67,12 +67,12 @@ void Motor_Init(const Motor_T * p_context)
     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
 #endif
 
-    p_context->P_ACTIVE->p_ActiveSensor = MotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_ACTIVE->Config.SensorMode);
-    MotorSensor_Init(p_context->P_ACTIVE->p_ActiveSensor);
+    p_context->P_MOTOR_STATE->p_ActiveSensor = MotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_MOTOR_STATE->Config.SensorMode);
+    MotorSensor_Init(p_context->P_MOTOR_STATE->p_ActiveSensor);
 
     // HeatMonitor_Init(&p_motor->Thermistor);
 
-    Motor_Reset(p_context->P_ACTIVE); // alternatively move to state machine
+    Motor_Reset(p_context->P_MOTOR_STATE); // alternatively move to state machine
     StateMachine_Init(&p_context->STATE_MACHINE);
 }
 

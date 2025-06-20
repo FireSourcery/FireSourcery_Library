@@ -91,12 +91,6 @@ typedef enum MotorController_VarInput
 }
 MotorController_VarInput_T;
 
-/*
-    MotDrive use Submodule
-*/
-// MOTOR_CONTROLLER_MOT_DRIVE_VAR_THROTTLE,                       // [0:65535]
-// MOTOR_CONTROLLER_MOT_DRIVE_VAR_BRAKE,                          // [0:65535]
-// MOTOR_CONTROLLER_MOT_DRIVE_CMD_DIRECTION, /* or IO */
 
 /******************************************************************************/
 /*
@@ -122,11 +116,6 @@ typedef enum MotorController_ConfigId
     MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
     MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
     MOT_VAR_OPT_I_LIMIT,
-
-    /* Drive */
-    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_THROTTLE_MODE,          // MotDrive_ThrottleMode_T
-    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_BRAKE_MODE,             // MotDrive_BrakeMode_T
-    // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_ZERO_MODE,              // MotDrive_ZeroMode_T
 }
 MotorController_ConfigId_T;
 
@@ -138,24 +127,6 @@ typedef enum MotorController_Config_BootRef
     // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
 }
 MotorController_Config_BootRef_T;
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-/* handled by call */
-// typedef enum MotorController_SystemCommand
-// {
-//     MOT_USER_FORCE_DISABLE_CONTROL,       // Force Disable control Non StateMachine checked, also handled via Call
-//     MOT_USER_SYSTEM_CLEAR_FAULT,         // fault flags
-//     MOT_USER_SYSTEM_BEEP,
-// // MotorController_Command_Blocking
-//     // MOTOR_CONTROLLER_CMD_CALIBRATE, /* begin each motor sequence, use per motor cmd instead */
-//     MOTOR_CONTROLLER_CMD_CALIBRATE_ADC,
-//     MOTOR_CONTROLLER_CMD_NVM_SAVE_CONFIG,
-//     MOTOR_CONTROLLER_CMD_NVM_RESTORE_CONFIG,
-// }
-// MotorController_SystemCommand_T;
 
 /******************************************************************************/
 /*!
@@ -176,7 +147,6 @@ MotorController_InstanceRef_T;
     [MotVarId] Interface
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*
     Types
@@ -191,7 +161,7 @@ typedef enum MotorController_VarType_SystemService
 
     /* Polling inputs */
     MOT_VAR_TYPE_USER_INPUT,
-    MOT_VAR_TYPE_MOT_DRIVE_INPUT,
+    MOT_VAR_TYPE_MOT_DRIVE_CONTROL, /* MotDrive Submodule */
     MOT_VAR_TYPE_MOT_DRIVE_CONFIG,
 
     /*  */
@@ -246,21 +216,6 @@ typedef enum MotorController_VarType_Monitor
 }
 MotorController_VarType_Monitor_T;
 
-/*
-    Non Polling
-    write only/subroutine, no retaining var value state, optionally return a status
-*/
-/* Alternatively, handle with Call */
-// typedef enum MotVarId_Type_SystemCommand
-// {
-//     // MOT_VAR_TYPE_COMMAND_SYSTEM,
-//     // MOT_VAR_TYPE_COMMAND_BLOCKING, // Nvm + Calibration
-//     MOT_VAR_TYPE_COMMAND_NVM,
-//     MOT_VAR_TYPE_COMMAND_CALIBRATION,
-//     MOT_VAR_TYPE_COMMAND_BUZZER,
-//     MOT_VAR_TYPE_COMMAND_CONFIG,
-// }
-// MotVarId_Type_SystemCommand_T;
 
 /******************************************************************************/
 /*!
@@ -318,6 +273,6 @@ static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController
     Type index
 */
 /******************************************************************************/
-extern int32_t MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
-extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int32_t varValue);
+extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
+extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
 

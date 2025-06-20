@@ -87,8 +87,8 @@ typedef struct MotAnalogUser_Config
         {
             uint8_t UseThrottleEdgePin : 1U;
             uint8_t UseBrakeEdgePin : 1U;
-            uint8_t UseNeutralPin : 1U;
-            uint8_t UseForwardPin : 1U;
+            uint8_t UseNeutralPin : 1U; /*  alternatively as compile time enable */
+            uint8_t UseForwardPin : 1U; /*  alternatively as compile time enable */
             uint8_t UseSwitchBrakePin : 1U;
         };
     };
@@ -136,8 +136,9 @@ typedef const struct MotAnalogUser
 
     /* UserDIn instances */
     UserDIn_T REVERSE_DIN;
-    UserDIn_T FORWARD_DIN;
-    UserDIn_T NEUTRAL_DIN;
+    UserDIn_T FORWARD_DIN; /* altneratively as compile time enable */
+    UserDIn_T NEUTRAL_DIN; /* altneratively as compile time enable */
+
     UserDIn_T SWITCH_BRAKE_DIN;
 
     const MotAnalogUser_Config_T * P_NVM_CONFIG;
@@ -381,7 +382,7 @@ typedef enum MotAnalogUser_VarId
     MOT_ANALOG_USER_THROTTLE_DIN,
     MOT_ANALOG_USER_BRAKE,
     MOT_ANALOG_USER_BRAKE_DIN,
-    MOT_ANALOG_USER_ON_OFF_BRAKE_DIN,
+    MOT_ANALOG_USER_SWITCH_BRAKE_DIN,
     MOT_ANALOG_USER_FORWARD_DIN,
     MOT_ANALOG_USER_NEUTRAL_DIN,
     MOT_ANALOG_USER_REVERSE_DIN,
@@ -397,8 +398,8 @@ typedef enum MotAnalogUser_ConfigId
     MOT_ANALOG_USER_BRAKE_ZERO_ADCU,
     MOT_ANALOG_USER_BRAKE_MAX_ADCU,
     MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE,
-    MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE,
-    MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE,
+    MOT_ANALOG_USER_SWITCH_BRAKE_VALUE,
+    MOT_ANALOG_USER_SWITCH_BRAKE_IS_ENABLE,
     MOT_ANALOG_USER_DIRECTION_PINS,
 }
 MotAnalogUser_ConfigId_T;

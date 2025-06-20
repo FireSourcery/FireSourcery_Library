@@ -85,8 +85,6 @@ VMonitor_Context_T;
 static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
 {
     return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-    // Analog_Channel_MarkConversion(&p_context->ANALOG_CONVERSION); /* Optionally mark for start */
-    // return (VMonitor_Status_T)RangeMonitor_GetStatus(p_context->P_STATE);
 }
 
 static inline void VMonitor_MarkConversion(const VMonitor_Context_T * p_context)

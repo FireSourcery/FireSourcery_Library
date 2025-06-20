@@ -127,7 +127,7 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     todo regularize return status
 */
 /******************************************************************************/
-uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorController_User_CallId_T id, int32_t value)
+uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int32_t value)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 

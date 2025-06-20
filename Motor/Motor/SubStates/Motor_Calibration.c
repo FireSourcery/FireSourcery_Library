@@ -42,19 +42,19 @@
 static void Calibration_HomeEntry(const Motor_T * p_motor)
 {
     // // for now
-    // p_motor->P_ACTIVE->ControlTimerBase = 0U;
-    // p_motor->P_ACTIVE->CalibrationStateIndex = 0U;
-    // p_motor->P_ACTIVE->FeedbackMode.Current = 0U;
+    // p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
+    // p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
+    // p_motor->P_MOTOR_STATE->FeedbackMode.Current = 0U;
 
     // Phase_ActivateOutputV0(&p_motor->PHASE);
-    // Timer_StartPeriod_Millis(&p_motor->P_ACTIVE->ControlTimer, 20); // ~1rpm
-    // Ramp_Set(&p_motor->P_ACTIVE->OpenLoopIRamp, p_motor->P_ACTIVE->Config.OpenLoopRampI_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_ACTIVE->Config.OpenLoopRampIFinal_Fract16));
+    // Timer_StartPeriod_Millis(&p_motor->P_MOTOR_STATE->ControlTimer, 20); // ~1rpm
+    // Ramp_Set(&p_motor->P_MOTOR_STATE->OpenLoopIRamp, p_motor->P_MOTOR_STATE->Config.OpenLoopRampI_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16));
 
-    // p_motor->P_ACTIVE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // p_motor->P_ACTIVE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    // p_motor->P_MOTOR_STATE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    // p_motor->P_MOTOR_STATE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
     // // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, MOTOR_DIRECTION_CCW);
-    // Motor_FOC_SetDirection_Cast(p_motor, p_motor->P_ACTIVE->Direction);
+    // Motor_FOC_SetDirection_Cast(p_motor, p_motor->P_MOTOR_STATE->Direction);
 }
 
 /*
@@ -69,14 +69,14 @@ static void Calibration_ProcHome(const Motor_T * p_motor)
 
     // // MotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
 
-    // if (Timer_Periodic_Poll(&p_motor->P_ACTIVE->ControlTimer) == true)
+    // if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true)
     // {
     //     Motor_PollSensorAngle(p_motor); /*  */
 
-    //     // p_motor->P_ACTIVE->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_ACTIVE->Config.PolePairs;
-    //     p_motor->P_ACTIVE->ElectricalAngle += (angleDelta * p_motor->P_ACTIVE->Config.PolePairs);
-    //     // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_ACTIVE->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
-    //     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_ACTIVE->ElectricalAngle, p_motor->P_ACTIVE->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
+    //     // p_motor->P_MOTOR_STATE->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR_STATE->Config.PolePairs;
+    //     p_motor->P_MOTOR_STATE->ElectricalAngle += (angleDelta * p_motor->P_MOTOR_STATE->Config.PolePairs);
+    //     // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_MOTOR_STATE->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+    //     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->P_MOTOR_STATE->ElectricalAngle, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
     // }
 }
 
@@ -86,14 +86,14 @@ static State_T * Calibration_HomeEnd(const Motor_T * p_motor)
     // uint16_t angleDelta = 65536 / 1000;
 
     // /* error on full rev todo */
-    // if (angle16_cycle(Motor_GetMechanicalAngle(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta, (p_motor->P_ACTIVE->Direction == MOTOR_DIRECTION_CCW)) == true)
+    // if (angle16_cycle(Motor_GetMechanicalAngle(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta, (p_motor->P_MOTOR_STATE->Direction == MOTOR_DIRECTION_CCW)) == true)
     // {
     //     Phase_ActivateOutputV0(&p_motor->PHASE);
-    //     _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
+    //     _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_MOTOR_STATE);
     //     p_nextState = &MOTOR_STATE_CALIBRATION;
     // }
 
-    // p_motor->P_ACTIVE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    // p_motor->P_MOTOR_STATE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
     return NULL;
 }

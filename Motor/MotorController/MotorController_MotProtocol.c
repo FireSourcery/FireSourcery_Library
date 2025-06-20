@@ -85,7 +85,7 @@ static protocol_size_t StopAll(const MotorController_T * p_context, MotPacket_St
 /* Generic status response, type depending on input */
 static protocol_size_t Call_Blocking(const MotorController_T * p_context, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
-    uint16_t status = MotorController_User_Call(p_context, (MotorController_User_CallId_T)p_rxPacket->CallReq.Id, p_rxPacket->CallReq.Arg);
+    uint16_t status = MotorController_User_Call(p_context, (MotorController_User_SystemCmd_T)p_rxPacket->CallReq.Id, p_rxPacket->CallReq.Arg);
     return MotPacket_CallResp_Build(p_txPacket, p_rxPacket->CallReq.Id, status);
 }
 

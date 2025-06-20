@@ -70,12 +70,12 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 #define FRACT16_FLOAT_MIN (-1.0F)
 #define FRACT16(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
+// #define FRACT16_UNSAT(x) ((accum32_t)((x)*32768.0F))
 #define FRACT16_ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
 static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
-static inline fract16_t fract16_sat(accum32_t value)    { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
-// static inline ufract16_t fract16_sat_abs(accum32_t value)
-static inline ufract16_t ufract16_sat(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); } /* range of [0:2). Refer to 1 as saturated */
+static inline fract16_t fract16_sat(accum32_t value)            { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
+static inline ufract16_t fract16_sat_positive(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); }
 
 /*!
     @brief Unsaturated Multiply

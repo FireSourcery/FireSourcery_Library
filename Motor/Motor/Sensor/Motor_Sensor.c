@@ -89,7 +89,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // {
 //     // MotorSensor_Init(&p_motor->Sensor Interface);
 
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //             Hall_Init(&p_motor->HALL);
@@ -121,7 +121,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // bool Motor_VerifySensorCalibration(const Motor_T * p_motor)
 // {
 //     bool isValid = true;
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //             // if (Hall_IsStateValid(&p_motor->HALL.P_STATE) == false) { isValid = false; }
@@ -148,7 +148,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // {
 //     angle16_t electricalAngle; /* [0, 65535] maps to negative portions of angle16_t */
 
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
@@ -196,14 +196,14 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 
 // angle16_t Motor_CaptureAngle(const Motor_T * p_motor)
 // {
-//     p_motor->P_ACTIVE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-//     return p_motor->P_ACTIVE->ElectricalAngle;
+//     p_motor->P_MOTOR_STATE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+//     return p_motor->P_MOTOR_STATE->ElectricalAngle;
 // }
 
 // angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 // {
 //     // angle16_t angle;
-//     // switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     // switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     // {
 //     //     case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
 //     //     case MOTOR_SENSOR_MODE_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
@@ -224,12 +224,12 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // int32_t Motor_PollSensorSpeed(const Motor_T * p_motor)
 // {
 //     int32_t speed;
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         /* Using assigned direction */
 //         case MOTOR_SENSOR_MODE_HALL:
 //             Encoder_ModeDT_CaptureVelocity(&p_motor->ENCODER);
-//             p_motor->P_ACTIVE->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(&p_motor->ENCODER);
+//             p_motor->P_MOTOR_STATE->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(&p_motor->ENCODER);
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 //         case MOTOR_SENSOR_MODE_ENCODER:
@@ -251,14 +251,14 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 
 // bool Motor_PollCaptureSpeed(const Motor_T * p_motor)
 // {
-//     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->P_ACTIVE->SpeedTimer);
-//     if (isCaptureSpeed == true) { p_motor->P_ACTIVE->Speed_Fract16 = (Motor_PollSensorSpeed(p_motor) + p_motor->P_ACTIVE->Speed_Fract16) / 2; }
+//     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer);
+//     if (isCaptureSpeed == true) { p_motor->P_MOTOR_STATE->Speed_Fract16 = (Motor_PollSensorSpeed(p_motor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2; }
 //     return isCaptureSpeed;
 // }
 
 // void Motor_ZeroSensor(const Motor_T * p_motor)
 // {
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //             Hall_SetInitial(&p_motor->HALL);
@@ -284,7 +284,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
 // {
 //     bool isAvailable;
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
 //         case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(p_motor->ENCODER.P_STATE);    break;
@@ -302,7 +302,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 // {
 //     // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-//     return (p_motor->P_ACTIVE->FeedbackMode.OpenLoop == 1U);
+//     return (p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop == 1U);
 //     // #else
 //     //     (void)p_motor; return false;
 //     // #endif
@@ -315,7 +315,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 
 // // Motor_Direction_T Motor_GetDirection(const Motor_T * p_motor)
 // // {
-// //     switch (p_motor->P_ACTIVE->Config.SensorMode)
+// //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 // //     {
 // //         case MOTOR_SENSOR_MODE_HALL:
 // //             break;
@@ -340,7 +340,7 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 // */
 // void Motor_SetSensorDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 // {
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //             Hall_SetDirection(p_motor->HALL.P_STATE, (Hall_Direction_T)direction);
@@ -407,12 +407,12 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 
 // void Motor_ResetUnitsSensor(const Motor_T * p_motor)
 // {
-//     switch (p_motor->P_ACTIVE->Config.SensorMode)
+//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case MOTOR_SENSOR_MODE_HALL:
 //             // Motor_ResetUnitsHallEncoder_ElSpeed(p_motor);
 //             // Motor_ResetUnitsHallEncoder_MechSpeed(p_motor);
-//             Encoder_SetUnitsHall_MechSpeed(&p_motor->ENCODER, Motor_GetSpeedRatedRef_Rpm(p_motor->P_ACTIVE), p_motor->P_ACTIVE->Config.PolePairs);
+//             Encoder_SetUnitsHall_MechSpeed(&p_motor->ENCODER, Motor_GetSpeedRatedRef_Rpm(p_motor->P_MOTOR_STATE), p_motor->P_MOTOR_STATE->Config.PolePairs);
 //             break;
 //         case MOTOR_SENSOR_MODE_ENCODER:
 //             // Motor_ResetUnitsEncoder(p_motor);
@@ -433,7 +433,12 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 //     }
 // }
 
-int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+// static inline MotorSensor_T * _Motor_Sensor_Get(const Motor_T * p_motor)
+// {
+//     return MotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode);
+// }
+
+int Motor_Sensor_VarType_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
 {
     // switch (typeId)
     // {
@@ -445,7 +450,7 @@ int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId
     // }
 }
 
-void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+void Motor_Sensor_VarType_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
 {
     // switch (typeId)
     // {
@@ -458,7 +463,7 @@ void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeI
 }
 
 /* caller checks for null pointer */
-int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+int Motor_Sensor_VarTypeConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
 {
     if (p_motor == NULL) return 0;
 
@@ -469,9 +474,7 @@ int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typ
     }
 }
 
-
-// void Motor_Sensor_VarType_Config_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
-void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+void Motor_Sensor_VarTypeConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
@@ -493,8 +496,7 @@ void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T ty
 /*!
     @param[in] MotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
 */
-// void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
-void Motor_SensorTable_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
@@ -523,31 +525,15 @@ void Motor_SensorTable_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_
     }
 }
 
-// int _Motor_Var_SensorTableConfig_Get(const Motor_T * p_motor, int typeId, int varId) { return MotorSensor_VarId_Get(p_motor->p_ActiveSensor, varId); }
+// int _Motor_Var_SensorTableConfig_Get(const Motor_T * p_motor, int typeId, int varId) { return Motor_Var_AngleSpeed_Get(p_motor->p_ActiveSensor, varId); }
+//     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
+// if (p_motor == NULL) return 0;
 
-    //     Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    // if (p_motor == NULL) return 0;
-
-    // switch (varId.NameType)
-    // {
-    //     // case MOTOR_VAR_TYPE_HALL_STATE:     return Motor_Hall_Var_Get(p_motor, varId.NameBase);
-    //     case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_Hall_Config_Get(p_motor, varId.NameBase);
-    //     // case MOTOR_VAR_TYPE_ENCODER_STATE:  return Motor_Encoder_State_Get(p_motor, varId.NameBase);
-    //     case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_Encoder_Config_Get(p_motor, varId.NameBase);
-    //     default: return 0;
-    // }
-    // Motor_T * p_motor = MotorAt(p_mc, varId.Instance);
-    // if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-
-    // MotVarId_Status_T status = MOT_VAR_STATUS_OK;
-
-    // switch (varId.NameType)
-    // {
-    //     // case MOTOR_VAR_TYPE_HALL_STATE:    break;
-    //     // case MOTOR_VAR_TYPE_ENCODER_STATE: break;
-    //     case MOTOR_VAR_TYPE_HALL_CONFIG:         Motor_Hall_Config_Set(p_motor, varId.NameBase, value);      break;
-    //     case MOTOR_VAR_TYPE_ENCODER_CONFIG:      Motor_Encoder_Config_Set(p_motor, varId.NameBase, value);   break;
-    //     default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    // }
-
-    // return status;
+// switch (varId.NameType)
+// {
+//     // case MOTOR_VAR_TYPE_HALL_STATE:     return Motor_Hall_Var_Get(p_motor, varId.NameBase);
+//     case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_Hall_Config_Get(p_motor, varId.NameBase);
+//     // case MOTOR_VAR_TYPE_ENCODER_STATE:  return Motor_Encoder_State_Get(p_motor, varId.NameBase);
+//     case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_Encoder_Config_Get(p_motor, varId.NameBase);
+//     default: return 0;
+// }

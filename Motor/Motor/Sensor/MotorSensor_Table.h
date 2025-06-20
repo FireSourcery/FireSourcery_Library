@@ -36,7 +36,7 @@
 /*
     Perserve order for serialization
 */
-// typedef enum Motor_SensorId
+// typedef enum [Motor_SensorId]
 typedef enum MotorSensor_Id
 {
     MOTOR_SENSOR_MODE_HALL,
@@ -57,12 +57,12 @@ MotorSensor_Id_T;
 // MotorSensor_State_T;
 
 /*
-    alternatively as Motor_SensorTable_T, part of Motor_T
+    alternatively as [Motor_SensorTable_T], part of Motor_T
 */
 /* include all using preprocessor conditions */
 /* There can only be 1 sensor of each type per motor, with fixed corresponding Id */
-/* Mux/Repo */
 
+/* Mux/Repo */
 // typedef const struct Motor_SensorTable
 typedef const struct MotorSensor_Table
 {
@@ -76,11 +76,6 @@ MotorSensor_Table_T;
 
 /*
     Init with Motor_State_T
-*/
-// #define MOTOR_SENSOR_TABLE_INIT_EMPTY(p_MotorState) MOTOR_SENSOR_INIT_AS_EMPTY(&((p_MotorState)->SensorState))
-// #define MOTOR_SENSOR_TABLE_INIT_HALL(p_MotorState, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((p_MotorState)->SensorState))
-
-/*
     Init using shared State
 */
 #define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) MOTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
@@ -100,6 +95,7 @@ static inline MotorSensor_T * MotorSensor_Of(const MotorSensor_Table_T * p_table
         default: return &p_table->EMPTY;
     }
 }
+
 
 // static inline Hall_T * Motor_SensorTable_GetHall(const MotorSensor_Table_T * p_table)
 // {

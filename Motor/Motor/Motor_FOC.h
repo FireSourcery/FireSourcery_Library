@@ -66,7 +66,7 @@ static inline void Motor_FOC_WriteDuty(const Phase_T * p_phase, const FOC_T * p_
     Phase_WriteDuty_Fract16(p_phase, FOC_GetDutyA(p_foc), FOC_GetDutyB(p_foc), FOC_GetDutyC(p_foc));
 }
 
-static inline void Motor_FOC_ActivateVPhase(const Motor_T * p_motor) { Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_ACTIVE->Foc); }
+static inline void Motor_FOC_ActivateVPhase(const Motor_T * p_motor) { Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_MOTOR_STATE->Foc); }
 
 /******************************************************************************/
 /*!

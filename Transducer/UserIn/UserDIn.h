@@ -59,6 +59,7 @@ UserDIn_Edge_T;
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
+    // bool IsEnabled;
     // bool IsInverted;                    /* Runtime invert config */
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */

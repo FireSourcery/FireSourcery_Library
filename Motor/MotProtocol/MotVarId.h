@@ -64,7 +64,6 @@ typedef enum MotVarId_HandlerType
     /* Instance count of Motor */
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR,
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
-    // MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR,
     /* Sensor Table Entries */
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE,
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG,
@@ -151,7 +150,7 @@ MotVarId_T;
 //         //     {
 //         //         case MOTOR_VAR_TYPE_USER_OUT:
 //         //         case MOTOR_VAR_TYPE_FOC_OUT:
-//         //         case MOTOR_VAR_TYPE_SENSOR_OUT: return true;  // *_OUT types are read-only
+//         //         case MOTOR_VAR_TYPE_SPEED_ANGLE_OUT: return true;  // *_OUT types are read-only
 //         //         case MOTOR_VAR_TYPE_PID_TUNING_IO:
 //         //         case MOTOR_VAR_TYPE_USER_IO: return false; // *_IO types are read-write
 //         //         case MOTOR_VAR_TYPE_CMD_IN: return false; // Commands are execute-only (writable)

@@ -74,6 +74,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     // }
 
 
+    // if drive mode
     // switch on app macchine
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
@@ -83,7 +84,6 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
         default: break;
     }
 
-    // if drive mode
     MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
 
@@ -176,13 +176,14 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
         case HEAT_MONITOR_STATUS_WARNING_HIGH:
             /*
+                Apply thermal current limiting based on hottest MOSFET
+                Does not check for edge trigger
                 Thermistor Adcu is roughly linear in Warning region
                 Increasing Limit only, reset on warning clear.
             */
-            /* Apply thermal current limiting based on hottest MOSFET */
-            // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) { }
             LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
             MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+            // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) {MotorController_BeepMonitorTrigger(p_context); }
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:
@@ -205,36 +206,12 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
 
     /* Mark analog conversions for next cycle */
-    Analog_Conversion_MarkConversion(&p_context->HEAT_PCB.ANALOG_CONVERSION);
-    /* Mark all MOSFET conversions */
-    for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_MarkConversion(&p_context->HEAT_MOSFETS.P_CONTEXTS[i].ANALOG_CONVERSION); }
+    HeatMonitor_Group_MarkEach(&p_context->HEAT_MOSFETS);
+    HeatMonitor_MarkConversion(&p_context->HEAT_PCB);
 
     // /* Process individual motor heat monitoring */
-    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_context->P_MOTOR_CONSTS[iMotor]);     }
+    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_context->P_MOTOR_CONSTS[iMotor]); }
 }
-
-
-/******************************************************************************/
-/*
-   VAux Monitor Thread
-*/
-/******************************************************************************/
-static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T * p_context)
-{
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
-
-    RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
-    RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
-
-    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
-    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
-
-    if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
-
-    Analog_Conversion_MarkConversion(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
-    Analog_Conversion_MarkConversion(&p_context->V_ANALOG.ANALOG_CONVERSION);
-}
-
 
 /******************************************************************************/
 /*
@@ -278,6 +255,26 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 #endif
 }
 
+/******************************************************************************/
+/*
+   VAux Monitor Thread
+*/
+/******************************************************************************/
+static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T * p_context)
+{
+    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+
+    RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
+    RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
+
+    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
+
+    if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
+
+    Analog_Conversion_MarkConversion(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
+    Analog_Conversion_MarkConversion(&p_context->V_ANALOG.ANALOG_CONVERSION);
+}
 
 
 /******************************************************************************/
@@ -403,6 +400,8 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 #endif
     p_mc->TimerDividerCounter++;
 }
+
+
 
 /*
     High Freq, High Priority

@@ -59,14 +59,14 @@ static inline void ProcClarkePark(Motor_State_T * p_motor)
 
 static bool CaptureIabc(Motor_State_T * p_motor)
 {
-    bool isCaptureI = (p_motor->IBatch.Value == PHASE_ID_ABC);
+    bool isCaptureI = (p_motor->IBatch.Id == PHASE_ID_ABC);
     if (isCaptureI == true)  /* alternatively use batch callback */
     {
         Motor_FOC_CaptureIa(p_motor);
         Motor_FOC_CaptureIb(p_motor);
         Motor_FOC_CaptureIc(p_motor);
         ProcClarkePark(p_motor);
-        p_motor->IBatch.Value = PHASE_ID_0;
+        p_motor->IBatch.Id = PHASE_ID_0;
     }
     return isCaptureI;
 }
@@ -151,7 +151,7 @@ static void ProcOuterFeedback(Motor_State_T * p_motor)
 /* From Vdq to Vabc */
 static void ProcAngleOutput(Motor_State_T * p_motor)
 {
-    FOC_ProcOutputV(&p_motor->Foc, MotorAnalog_GetVSourceInvScalar());  /* Set Vabc */
+    FOC_ProcOutputV_VBusInv(&p_motor->Foc, MotorAnalog_GetVSourceInvScalar());  /* Set Vabc */
     // Phase_WriteDuty_Fract16(&p_motor->PHASE, FOC_GetDutyA(&p_motor->Foc), FOC_GetDutyB(&p_motor->Foc), FOC_GetDutyC(&p_motor->Foc));
 }
 
@@ -173,7 +173,7 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
 
 // void Motor_FOC_ActivateOutputZero(const Motor_T * p_motor)
 // {
-//     FOC_ZeroSvpwm(&p_motor->P_ACTIVE->Foc);
+//     FOC_ZeroSvpwm(&p_motor->P_MOTOR_STATE->Foc);
 //     Motor_FOC_ActivateOutput(p_motor);
 // }
 
@@ -219,13 +219,13 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
     // Motor_PollCaptureSpeed(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->SensorState.ElectricalAngle);
 
-    if (p_motor->VBatch.Value == PHASE_ID_ABC)
+    if (p_motor->VBatch.Id == PHASE_ID_ABC)
     {
         Motor_FOC_CaptureVa(p_motor);
         Motor_FOC_CaptureVb(p_motor);
         Motor_FOC_CaptureVc(p_motor);
         FOC_ProcVBemfClarkePark(&p_motor->Foc);
-        p_motor->VBatch.Value = PHASE_ID_0;
+        p_motor->VBatch.Id = PHASE_ID_0;
     }
 }
 
@@ -274,8 +274,8 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
     PID_Reset(&p_motor->PidSpeed);
     Ramp_SetOutput(&p_motor->SpeedRamp, 0);
     Ramp_SetOutput(&p_motor->TorqueRamp, 0);
-    p_motor->IBatch.Value = 0U;
-    p_motor->VBatch.Value = 0U;
+    p_motor->IBatch.Id = 0U;
+    p_motor->VBatch.Id = 0U;
 }
 
 /*!

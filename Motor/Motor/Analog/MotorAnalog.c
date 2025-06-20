@@ -45,7 +45,7 @@ void MotorAnalog_InitVSource_V(uint16_t vSource_V)
 void MotorAnalog_CaptureVSource_Adcu(uint16_t vSource_Adcu)
 {
     VSource_Fract16 = vSource_Adcu << MOTOR_ANALOG_V_FRACT16_SHIFT;
-    VSourceInvScalar = FRACT16_MAX * 65536U / VSource_Fract16; /* shift 16 as frac32 */
+    VSourceInvScalar = FRACT16_MAX * 65536U / VSource_Fract16; /* shift 16 as fract32 */
 }
 
 uint16_t MotorAnalog_GetVSource_Fract16(void)  { return VSource_Fract16; }
@@ -54,9 +54,6 @@ uint16_t MotorAnalog_GetVSourceInvScalar(void) { return VSourceInvScalar; }
 // uint16_t MotorAnalog_GetVSource_Adcu(void)     { return VSource_Fract16 >> MOTOR_ANALOG_V_FRACT16_SHIFT; }
 
 // uint16_t MotorAnalog_GetVSourceNominal_V(void) { return VSourceNominal_V; }
-
-// static MotorAnalogRef_T MotorAnalogReference;
-// MotorAnalogRef_T MotorAnalogRef_RunTime(void) { return MotorAnalogReference; }
 
 // void InitUnitsVSource(void)
 // {

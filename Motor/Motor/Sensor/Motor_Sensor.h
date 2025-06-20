@@ -26,7 +26,7 @@
 /*!
     @file   Motor_Sensor.h
     @author FireSourcery
-    @brief  Sensor Abstraction/Selection Interface
+    @brief  Sensor Repo/Selection.
 */
 /******************************************************************************/
 
@@ -43,15 +43,12 @@
 #include "MotorSensor.h"
 
 /* Part of Motor */
+/* non inline, include by Motor */
 typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
 
-// alternatively,
-// static inline MotorSensor_T * _Motor_Sensor_Get(const Motor_T * p_motor)
-// {
-//     return MotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_ACTIVE->Config.SensorMode);
-// }
+
 
 extern void Motor_Sensor_ResetUnits(Motor_State_T * p_motor);
 
@@ -86,9 +83,9 @@ extern void Motor_Sensor_ResetUnits(Motor_State_T * p_motor);
 // }
 // Motor_SensorTable_VarType_T;
 
-int Motor_SensorTable_VarId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
-void Motor_SensorTable_VarId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
-int Motor_SensorTable_ConfigId_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
-void Motor_SensorTable_ConfigId_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+int Motor_Sensor_VarType_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+void Motor_Sensor_VarType_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+int Motor_Sensor_VarTypeConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+void Motor_Sensor_VarTypeConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
 
-void Motor_SensorTable_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);

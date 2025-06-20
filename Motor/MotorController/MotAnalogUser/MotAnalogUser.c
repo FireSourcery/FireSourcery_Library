@@ -15,23 +15,11 @@
 /******************************************************************************/
 static inline void InitThrottleAIn(const MotAnalogUser_T * p_user)
 {
-    // UserAIn_Config_T throttleConfig = {
-    //     .AdcZero = p_user->P_STATE->Config.ThrottleAInConfig.AdcZero,
-    //     .AdcMax = p_user->P_STATE->Config.ThrottleAInConfig.AdcMax,
-    //     // .UseEdgePin = p_user->P_STATE->Config.UseThrottleEdgePin
-    // };
-    // UserAIn_InitFrom(&p_user->THROTTLE_AIN, &throttleConfig);
     UserAIn_InitFrom(&p_user->THROTTLE_AIN, &p_user->THROTTLE_AIN.P_STATE->Config);
 }
 
 static inline void InitBrakeAIn(const MotAnalogUser_T * p_user)
 {
-    // UserAIn_Config_T brakeConfig = {
-    //     .AdcZero = p_user->P_STATE->Config.BrakeAInConfig.AdcZero,
-    //     .AdcMax = p_user->P_STATE->Config.BrakeAInConfig.AdcMax,
-    //     // .UseEdgePin = p_user->P_STATE->Config.UseBrakeEdgePin
-    // };
-    // UserAIn_InitFrom(&p_user->BRAKE_AIN, &brakeConfig);
     UserAIn_InitFrom(&p_user->BRAKE_AIN, &p_user->BRAKE_AIN.P_STATE->Config);
 }
 
@@ -48,7 +36,6 @@ void MotAnalogUser_Init(const MotAnalogUser_T * p_user)
     /* Initialize analog inputs */
     InitThrottleAIn(p_user);
     InitBrakeAIn(p_user);
-
 
     /* Initialize digital pins */
     UserDIn_Init(&p_user->REVERSE_DIN);
@@ -79,6 +66,9 @@ void MotAnalogUser_SetThrottleZero(const MotAnalogUser_T * p_user, uint16_t zero
     InitThrottleAIn(p_user);
 }
 
+/*
+    optional
+*/
 void MotAnalogUser_SetBrakeRange(const MotAnalogUser_T * p_user, uint16_t zero_Adcu, uint16_t max_Adcu)
 {
     p_user->P_STATE->Config.BrakeAInConfig.AdcZero = zero_Adcu;
@@ -145,7 +135,7 @@ int32_t MotAnalogUser_VarId_Get(const MotAnalogUser_T * p_user, MotAnalogUser_Va
         case MOT_ANALOG_USER_BRAKE:              value = UserAIn_GetValue(&p_user->BRAKE_AIN);                 break;
         case MOT_ANALOG_USER_THROTTLE_DIN:       value = UserDIn_GetState(p_user->THROTTLE_AIN.P_EDGE_PIN);    break;
         case MOT_ANALOG_USER_BRAKE_DIN:          value = UserDIn_GetState(p_user->BRAKE_AIN.P_EDGE_PIN);       break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_DIN:   value = UserDIn_GetState(&p_user->SWITCH_BRAKE_DIN);          break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = UserDIn_GetState(&p_user->SWITCH_BRAKE_DIN);          break;
         case MOT_ANALOG_USER_FORWARD_DIN:        value = UserDIn_GetState(&p_user->FORWARD_DIN);               break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = UserDIn_GetState(&p_user->REVERSE_DIN);               break;
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = UserDIn_GetState(&p_user->NEUTRAL_DIN);               break;
@@ -159,15 +149,15 @@ int32_t MotAnalogUser_VarId_GetAsRead(const MotAnalogUser_T * p_user, MotAnalogU
     int32_t value = 0;
     switch (id)
     {
-        case MOT_ANALOG_USER_THROTTLE:           value = p_user->THROTTLE_AIN.P_STATE->RawValue_Adcu;                break;
-        case MOT_ANALOG_USER_BRAKE:              value = p_user->BRAKE_AIN.P_STATE->RawValue_Adcu;                   break;
-        case MOT_ANALOG_USER_THROTTLE_DIN:       value = Pin_Input_ReadPhysical(&p_user->THROTTLE_AIN.P_EDGE_PIN->PIN);    break;
-        case MOT_ANALOG_USER_BRAKE_DIN:          value = Pin_Input_ReadPhysical(&p_user->BRAKE_AIN.P_EDGE_PIN->PIN);       break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_DIN:   value = Pin_Input_ReadPhysical(&p_user->SWITCH_BRAKE_DIN.PIN);      break;
-        case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_user->FORWARD_DIN.PIN);           break;
-        case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_user->REVERSE_DIN.PIN);           break;
-        case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_user->NEUTRAL_DIN.PIN);           break;
-            // case MOT_ANALOG_USER_OPT_DIN:            value = Pin_Input_ReadPhysical(&p_user->OptDin.Pin);                          break;
+        case MOT_ANALOG_USER_THROTTLE:           value = p_user->THROTTLE_AIN.P_STATE->RawValue_Adcu;                       break;
+        case MOT_ANALOG_USER_BRAKE:              value = p_user->BRAKE_AIN.P_STATE->RawValue_Adcu;                          break;
+        case MOT_ANALOG_USER_THROTTLE_DIN:       value = Pin_Input_ReadPhysical(&p_user->THROTTLE_AIN.P_EDGE_PIN->PIN);     break;
+        case MOT_ANALOG_USER_BRAKE_DIN:          value = Pin_Input_ReadPhysical(&p_user->BRAKE_AIN.P_EDGE_PIN->PIN);        break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = Pin_Input_ReadPhysical(&p_user->SWITCH_BRAKE_DIN.PIN);             break;
+        case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_user->FORWARD_DIN.PIN);                  break;
+        case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_user->REVERSE_DIN.PIN);                  break;
+        case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_user->NEUTRAL_DIN.PIN);                  break;
+        // case MOT_ANALOG_USER_OPT_DIN:            value = Pin_Input_ReadPhysical(&p_user->OptDin.Pin);                          break;
         default: break;
     }
     return value;
@@ -180,12 +170,12 @@ int32_t MotAnalogUser_ConfigId_Get(const MotAnalogUser_T * p_user, MotAnalogUser
     {
         case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             value = p_user->P_STATE->Config.ThrottleAInConfig.AdcZero;              break;
         case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              value = p_user->P_STATE->Config.ThrottleAInConfig.AdcMax;               break;
-        case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    value = p_user->P_STATE->Config.UseThrottleEdgePin;             break;
+        case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    value = p_user->P_STATE->Config.UseThrottleEdgePin;                     break;
         case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                value = p_user->P_STATE->Config.BrakeAInConfig.AdcZero;                 break;
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 value = p_user->P_STATE->Config.BrakeAInConfig.AdcMax;                  break;
-        case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       value = p_user->P_STATE->Config.UseBrakeEdgePin;                break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             value = p_user->P_STATE->Config.SwitchBrakeValue_Percent16;    break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         value = p_user->P_STATE->Config.UseSwitchBrakePin;             break;
+        case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       value = p_user->P_STATE->Config.UseBrakeEdgePin;                        break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:             value = p_user->P_STATE->Config.SwitchBrakeValue_Percent16;             break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_IS_ENABLE:         value = p_user->P_STATE->Config.UseSwitchBrakePin;                      break;
         default: break;
     }
     return value;
@@ -195,14 +185,17 @@ void MotAnalogUser_ConfigId_Set(const MotAnalogUser_T * p_user, MotAnalogUser_Co
 {
     switch (id)
     {
-        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             MotAnalogUser_SetThrottleRange(p_user, value, p_user->P_STATE->Config.ThrottleAInConfig.AdcMax); break;
-        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              MotAnalogUser_SetThrottleRange(p_user, p_user->P_STATE->Config.ThrottleAInConfig.AdcZero, value); break;
-        case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    p_user->P_STATE->Config.UseThrottleEdgePin = value;             break;
-        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                MotAnalogUser_SetBrakeRange(p_user, value, p_user->P_STATE->Config.BrakeAInConfig.AdcMax); break;
-        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 MotAnalogUser_SetBrakeRange(p_user, p_user->P_STATE->Config.BrakeAInConfig.AdcZero, value); break;
-        case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       p_user->P_STATE->Config.UseBrakeEdgePin = value;                break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_VALUE:             p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = value;    break;
-        case MOT_ANALOG_USER_ON_OFF_BRAKE_IS_ENABLE:         p_user->P_STATE->Config.UseSwitchBrakePin = value;             break;
+        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:             MotAnalogUser_SetThrottleRange(p_user, value, p_user->P_STATE->Config.ThrottleAInConfig.AdcMax);   break;
+        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:              MotAnalogUser_SetThrottleRange(p_user, p_user->P_STATE->Config.ThrottleAInConfig.AdcZero, value);  break;
+        case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:    p_user->P_STATE->Config.UseThrottleEdgePin = value;                                                break;
+        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:                MotAnalogUser_SetBrakeRange(p_user, value, p_user->P_STATE->Config.BrakeAInConfig.AdcMax);         break;
+        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:                 MotAnalogUser_SetBrakeRange(p_user, p_user->P_STATE->Config.BrakeAInConfig.AdcZero, value);        break;
+
+        /* handle ad compile */
+        case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:       p_user->P_STATE->Config.UseBrakeEdgePin = value;                                                   break;
+
+        case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:             p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = value;                                        break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_IS_ENABLE:         p_user->P_STATE->Config.UseSwitchBrakePin = value;                                                 break;
         default: break;
     }
 }

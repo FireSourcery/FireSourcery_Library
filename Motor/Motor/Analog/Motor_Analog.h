@@ -42,12 +42,13 @@ typedef struct Motor_State Motor_State_T;
 
 typedef const struct Motor_Analog
 {
-    const Analog_Conversion_T CONVERSION_VA;
-    const Analog_Conversion_T CONVERSION_VB;
-    const Analog_Conversion_T CONVERSION_VC;
-    const Analog_Conversion_T CONVERSION_IA;
-    const Analog_Conversion_T CONVERSION_IB;
-    const Analog_Conversion_T CONVERSION_IC;
+    Analog_Conversion_T CONVERSION_VA;
+    Analog_Conversion_T CONVERSION_VB;
+    Analog_Conversion_T CONVERSION_VC;
+    Analog_Conversion_T CONVERSION_IA;
+    Analog_Conversion_T CONVERSION_IB;
+    Analog_Conversion_T CONVERSION_IC;
+    // Analog_Conversion_T * P_VBUS;
     // MotorAnalog_Config_T CONFIG;
 }
 Motor_Analog_T;

@@ -90,9 +90,9 @@ void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
 }
 
 /* 1 as 1/2 vBus */
-void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar_frac16)
+void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar_fract16)
 {
-    Phase_Align(p_phase, id, scalar_frac16 * 3 / 4);
+    Phase_Align(p_phase, id, scalar_fract16 * 3 / 4);
 }
 
 /*
@@ -107,7 +107,7 @@ void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar
 /*
     State
 */
-Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase) { return _Phase_ReadDutyState(p_phase).Value; }
+Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase) { return _Phase_ReadDutyState(p_phase).Id; }
 Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
 Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }
 
