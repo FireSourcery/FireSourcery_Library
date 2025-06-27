@@ -184,13 +184,11 @@ MotorController_VarType_SystemService_T;
 
 typedef enum MotorController_VarType_Monitor
 {
-    // MOT_VAR_TYPE_V_MONITOR_STATE, /* all V Monitors */
     MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE,
     MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
     MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF, /* alternatively include in board ref */
 
     /* Heat monitors split sub type motor, pcb, mosfet */
-    // MOT_VAR_TYPE_HEAT_MONITOR_STATE, /* optionally shared state */
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */

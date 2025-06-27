@@ -36,25 +36,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct AngleSpeed
-{
-    angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
-    angle16_t ElectricalSpeed_DegPerCycle;
-    int32_t Speed_Fract16;      /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
-    angle16_t MechanicalAngle;
-}
-AngleSpeed_T;
+// typedef struct AngleSpeed
+// {
 
-typedef struct
-{
-    AngleSpeed_T AngleSpeed;
-    Ramp_T SpeedRamp;  /* Speed Ramp */
-    PID_T SpeedPid;  /* Speed PID */
+// }
+// AngleSpeed_T;
 
-    // uint16_t SpeedLimitForward_Fract16; /* May over saturate */
-    // uint16_t SpeedLimitReverse_Fract16;
-}
-AngleSpeed_Feedback_T;
+// typedef struct
+// {
+//     AngleSpeed_T AngleSpeed;
+//     Ramp_T SpeedRamp;  /* Speed Ramp */
+//     PID_T SpeedPid;  /* Speed PID */
+
+//     // uint16_t SpeedLimitForward_Fract16; /* May over saturate */
+//     // uint16_t SpeedLimitReverse_Fract16;
+// }
+// AngleSpeed_Feedback_T;
 
 
 // static inline void AngleSpeed(AngleSpeed_T *    )

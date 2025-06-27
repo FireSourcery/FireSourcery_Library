@@ -107,6 +107,7 @@ void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar
 /*
     State
 */
+/* valid after align output only */
 Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase) { return _Phase_ReadDutyState(p_phase).Id; }
 Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
 Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }

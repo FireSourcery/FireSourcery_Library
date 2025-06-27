@@ -33,14 +33,14 @@
 #include "Math/PID/PID.h"
 #include "Math/Ramp/Ramp.h"
 
-typedef struct FOC_Feedback
-{
-    FOC_T Foc;
-    Ramp_T TorqueRamp;
-    PID_T PidIq;
-    PID_T PidId;
-}
-FOC_Feedback_T;
+// typedef struct FOC_Feedback
+// {
+//     FOC_T Foc;
+//     // Ramp_T TorqueRamp;
+//     PID_T PidIq;
+//     PID_T PidId;
+// }
+// FOC_Feedback_T;
 
 // static inline void FOC_ProcIFeedback(FOC_T * p_foc, PID_T * p_pidId, PID_T * p_pidIq)
 // {

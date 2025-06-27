@@ -223,8 +223,6 @@ MotorController_LockOpStatus_T;
 
 
 
-
-
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {

@@ -32,22 +32,6 @@
 #include <string.h>
 
 
-// void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config)
-// {
-//     if (p_config != NULL) { memcpy(&p_context->P_MOTOR_STATE->Config, p_config, sizeof(Motor_Config_T)); }
-
-//     /*
-//         HW Wrappers Init
-//     */
-//     Phase_Init(&p_context->PHASE);
-// #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-//     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
-// #endif
-//     Motor_Sensor_Init(p_context);
-//     Motor_Reset(p_context->P_MOTOR_STATE); // alternatively move to state machine
-//     StateMachine_Init(&p_context->STATE_MACHINE);
-// }
-
 /*
 
 */

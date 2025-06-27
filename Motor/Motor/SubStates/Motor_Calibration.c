@@ -27,7 +27,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-/******************************************************************************/
 #include "Motor_Calibration.h"
 
 
@@ -120,6 +119,5 @@ static State_T * Calibration_StartHome(const Motor_T * p_motor, state_input_valu
 void Motor_Calibration_StartHome(const Motor_T * p_motor)
 {
     static const State_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
-
     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 }

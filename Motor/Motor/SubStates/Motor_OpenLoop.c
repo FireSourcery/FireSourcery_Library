@@ -74,36 +74,48 @@ void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction)
 /******************************************************************************/
 /******************************************************************************/
 /*
-    Phase Align. With or without I Feedback
-    V only for now
+    Phase Align. With or without I Feedback. V mode appy ramp only.
 */
 /******************************************************************************/
 /* ElectricalAngle set by caller */
-/* same as FOC  */
-void Motor_StartAlignCmd(const Motor_T * p_motor)
+void Motor_StartAlignCmd(Motor_State_T * p_motor)
 {
-    Phase_ActivateOutput(&p_motor->PHASE);
-    Ramp_SetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
-
-    if (p_motor->P_MOTOR_STATE->FeedbackMode.Current == 1U)
+    Ramp_SetOutput(&p_motor->TorqueRamp, 0);
+    if (p_motor->FeedbackMode.Current == 1U)
     {
     }
     // else
     // {
     //     Phase_Align(&p_motor->PHASE, Phase_ReadAlign(&p_motor->PHASE), Motor_GetVAlign_Duty(p_motor));
     // }
-
 }
 
-void Motor_ProcPhaseAlign(const Motor_T * p_motor)
+void Motor_ProcPhaseAlign(Motor_State_T * p_motor)
 {
-    // int16_t req = Motor_ProcTorqueRampOpenLoop(p_motor->P_MOTOR_STATE);
+    Motor_ProcTorqueRampOpenLoop(p_motor);
+}
+
+static void PhaseAlign_Entry(const Motor_T * p_motor)
+{
+    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Motor_StartAlignCmd(p_motor->P_MOTOR_STATE);
+}
+
+static void PhaseAlign_Loop(const Motor_T * p_motor)
+{
+    Phase_Id_T alignPhase = Phase_ReadAlign(&p_motor->PHASE);
+    Motor_ProcPhaseAlign(p_motor->P_MOTOR_STATE);
     if (p_motor->P_MOTOR_STATE->FeedbackMode.Current == 1U)
     {
         // if (CaptureIabc)
-        // PID_ProcPI(&p_motor->IPhase, GetIPhase(&p_motor, Phase_ReadAlign(&p_motor->PHASE)), req ); // feedforward align angle or set up analog conversion
+        // PID_ProcPI(&p_motor->P_MOTOR_STATE->PidId, Motor_GetIPhase_Fract16(&p_motor, alignPhase), Ramp_GetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp));
+        Phase_Align(&p_motor->PHASE, alignPhase, PID_GetOutput(&p_motor->P_MOTOR_STATE->PidId)); /* Id or Iphase */
     }
-    /* VAlign remain in OpenLoop SubState */
+    else
+    {
+        // Phase_Align(&p_motor->PHASE, alignPhase, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE));
+        Phase_Align(&p_motor->PHASE, alignPhase, Ramp_GetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp));
+    }
 }
 
 static const State_T OPEN_LOOP_STATE_PHASE_ALIGN =
@@ -112,22 +124,13 @@ static const State_T OPEN_LOOP_STATE_PHASE_ALIGN =
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
-    .ENTRY = (State_Action_T)Motor_StartAlignCmd,
-    .LOOP = (State_Action_T)Motor_ProcPhaseAlign,
+    .ENTRY = (State_Action_T)PhaseAlign_Entry,
+    .LOOP = (State_Action_T)PhaseAlign_Loop,
     .NEXT = NULL,
 };
 
 static State_T * OpenLoop_PhaseAlign(const Motor_T * p_motor, state_input_value_t phaseAlign)
 {
-    Motor_SetElecAngleFeedforward(p_motor->P_MOTOR_STATE, Phase_AngleOf(phaseAlign));
-
-    if (p_motor->P_MOTOR_STATE->FeedbackMode.Current == 0U)
-    {
-        Phase_Align(&p_motor->PHASE, phaseAlign, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE));
-        Phase_ActivateOutput(&p_motor->PHASE);
-        //optional return open loop
-    }
-
     return &OPEN_LOOP_STATE_PHASE_ALIGN;
 }
 
@@ -143,6 +146,17 @@ void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T align)
     With Current Loop only
 */
 /******************************************************************************/
+static void AngleAlign_Entry(const Motor_T * p_motor)
+{
+    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Motor_FOC_StartAlignCmd(p_motor->P_MOTOR_STATE); // using commutation mode
+}
+
+static void AngleAlign_Loop(const Motor_T * p_motor)
+{
+    Motor_FOC_ProcAlignCmd(p_motor->P_MOTOR_STATE);
+}
+
 /*
     Angle Cmd and User Current/Voltage Cmd
 */
@@ -152,16 +166,15 @@ static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
-    .ENTRY = (State_Action_T)Motor_FOC_StartAlignCmd,
-    .LOOP = (State_Action_T)Motor_FOC_ProcAlignCmd,
+    .ENTRY = (State_Action_T)AngleAlign_Entry,
+    .LOOP = (State_Action_T)AngleAlign_Loop,
     .NEXT = NULL,
 };
 
 static State_T * OpenLoop_AngleAlign(const Motor_T * p_motor, state_input_value_t angle)
 {
-    Phase_ActivateOutput(&p_motor->PHASE);
     // p_motor->P_MOTOR_STATE->ElectricalAngle = angle;
-    Motor_SetElecAngleFeedforward(p_motor->P_MOTOR_STATE, angle);
+    // Motor_SetElecAngleFeedforward(p_motor->P_MOTOR_STATE, angle);
     return &OPEN_LOOP_STATE_ANGLE_ALIGN;
 }
 
@@ -182,6 +195,16 @@ void Motor_OpenLoop_SetAngleAlign_Phase(const Motor_T * p_motor, Phase_Id_T alig
     Run Chain
 */
 /******************************************************************************/
+static void Run_Entry(const Motor_T * p_motor)
+{
+    Motor_FOC_StartOpenLoop(p_motor->P_MOTOR_STATE);
+}
+
+static void Run_Loop(const Motor_T * p_motor)
+{
+    Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR_STATE);
+}
+
 /*
 */
 static const State_T OPEN_LOOP_STATE_RUN =
@@ -190,15 +213,29 @@ static const State_T OPEN_LOOP_STATE_RUN =
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
-    .ENTRY = (State_Action_T)Motor_FOC_StartOpenLoop,
-    .LOOP = (State_Action_T)Motor_FOC_ProcOpenLoop,
+    .ENTRY = (State_Action_T)Run_Entry,
+    .LOOP = (State_Action_T)Run_Loop,
     .NEXT = NULL,
 };
 
-
-static State_T * OpenLoop_StartUpAlignEnd(const Motor_T * p_motor)
+/******************************************************************************/
+/*
+    Run Chain
+*/
+/******************************************************************************/
+static void StartUp_Entry(const Motor_T * p_motor)
 {
-    /* todo if algin b */
+    Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR_STATE);
+}
+
+static void StartUp_Loop(const Motor_T * p_motor)
+{
+    Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR_STATE);
+}
+
+static State_T * StartUp_Next(const Motor_T * p_motor)
+{
+    /* todo  algin b */
     return (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
 }
 
@@ -209,9 +246,9 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
-    .ENTRY = (State_Action_T)Motor_FOC_StartStartUpAlign,
-    .LOOP = (State_Action_T)Motor_FOC_ProcStartUpAlign,
-    .NEXT = (State_InputVoid_T)OpenLoop_StartUpAlignEnd,
+    .ENTRY = (State_Action_T)StartUp_Entry,
+    .LOOP = (State_Action_T)StartUp_Loop,
+    .NEXT = (State_InputVoid_T)StartUp_Next,
 };
 
 // test branch
