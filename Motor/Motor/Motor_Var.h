@@ -75,6 +75,7 @@ Motor_Var_UserOut_T;
     Angle Sensor + Feedback
     Read-Only, RealTime
 */
+// typedef enum Motor_Var_Rotor
 typedef enum Motor_Var_AngleSpeed
 {
     // MOTOR_VAR_ELECTRICAL_ANGLE,
@@ -150,7 +151,7 @@ Motor_Var_Foc_T;
 //     MOTOR_VAR_CMD_VOLTAGE,
 //     MOTOR_VAR_CMD_ANGLE,
 // }
-// Motor_Var_Input_T;
+// Motor_Var_Setpoint_T;
 
 /*
     [Var_ControlState]
@@ -179,6 +180,9 @@ typedef enum Motor_Var_UserControl
     MOTOR_VAR_USER_I_LIMIT_MOTORING,
     MOTOR_VAR_USER_I_LIMIT_GENERATING,
     // MOTOR_VAR_RAMP_ON_OFF,           // 1:Enable, 0:Disable
+
+    // MOTOR_VAR_USER_FAULT_FLAGS,      // Writable to clear
+    // MOTOR_VAR_FORCE_DISABLE_CONTROL,
 }
 Motor_Var_UserControl_T;
 
@@ -190,19 +194,22 @@ typedef enum Motor_Var_StateCmd
 {
     MOTOR_VAR_CLEAR_FAULT,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
-
     // MOTOR_VAR_USER_START,
     // MOTOR_VAR_USER_STOP,
-    // MOTOR_VAR_CMD_FEEDBACK_MODE,
+
     // MOTOR_VAR_CMD_OPEN_LOOP,
-    MOTOR_VAR_OPEN_LOOP_CONTROL,        /* Enter State. optional pass sub statecmd */
+    MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
     MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
     MOTOR_VAR_OPEN_LOOP_JOG,
     MOTOR_VAR_OPEN_LOOP_RUN,
     // MOTOR_VAR_OPEN_LOOP_HOMING,
-    // MOTOR_VAR_CALIBRATION_ENTER,
+
+    // altneratively
+    // MOTOR_VAR_CMD_EXIT_FAULT,
+    // MOTOR_VAR_CMD_ENTER_CALIBRATION,
+    // MOTOR_VAR_CMD_ENTER_OPEN_LOOP,
 }
 Motor_Var_StateCmd_T;
 
@@ -291,6 +298,7 @@ Motor_VarConfig_Pid_T;
 typedef enum Motor_VarConfigCmd
 {
     MOTOR_VAR_CONFIG_RUN_ADC_CALIBRATION,
+    // MOTOR_VAR_CONFIG_ENTER_ CALIBRATION,
     // MOTOR_VAR_CONFIG_RUN_SENSOR_CALIBRATION, /* Generic call for each type */
     // MOTOR_VAR_CONFIG_RUN_VIRTUAL_HOME,
 }
@@ -330,7 +338,7 @@ extern const VarAccess_VTable_T _MOTOR_VAR_ACCESS_PID_TUNING;
 extern const VarAccess_VTable_T _MOTOR_VAR_ACCESS_USER_CONTROL;
 extern const VarAccess_VTable_T _MOTOR_VAR_ACCESS_STATE_CMD;
 /* check VarAccessControl user set state */
-#define MOTOR_VAR_ACCESS_INIT_PID_TUNING(p_Motor)                   VAR_ACCESS_INIT(p_Motor, &_MOTOR_VAR_ACCESS_PID_TUNING, &((p_Motor)->VarAccessInputState))
+#define MOTOR_VAR_ACCESS_INIT_PID_TUNING(p_Motor)                   VAR_ACCESS_INIT(p_Motor, &_MOTOR_VAR_ACCESS_PID_TUNING, &((p_Motor)->VarAccessPidTunningState))
 #define MOTOR_VAR_ACCESS_INIT_USER_CONTROL(p_MotorContext, p_Motor) VAR_ACCESS_INIT(p_MotorContext, &_MOTOR_VAR_ACCESS_USER_CONTROL, &((p_Motor)->VarAccessInputState))
 #define MOTOR_VAR_ACCESS_INIT_STATE_CMD(p_MotorContext, p_Motor)    VAR_ACCESS_INIT(p_MotorContext, &_MOTOR_VAR_ACCESS_STATE_CMD, &((p_Motor)->VarAccessInputState))
 

@@ -36,7 +36,7 @@
 // // #include "../../Motor_FOC.h"
 // #include "../../Motor.h"
 
-#include "Utility/Var/VarAccess.h"
+// #include "Utility/Var/VarAccess.h"
 
 /* Part of Motor */
 /* include for Calibration state */
@@ -44,6 +44,8 @@ typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
 // static inline Hall_T * Motor_Hall_Get(const Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.HALL.HALL; }
+
+// extern void Motor_Hall_ResetUnits(const Motor_T * p_motor);
 
 extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
 

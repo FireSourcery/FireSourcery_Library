@@ -40,14 +40,14 @@ typedef struct Motor_State Motor_State_T;
 /*!
 */
 /******************************************************************************/
-void Motor_Encoder_StartHoming(Motor_State_T * p_motor);
-void Motor_Encoder_CalibrateHomeOffset(Motor_State_T * p_motor);
+void Motor_Encoder_StartHoming(const Motor_T * p_motor);
+void Motor_Encoder_CalibrateHomeOffset(const Motor_T * p_motor);
 
-void Motor_Encoder_StartUpChain(Motor_State_T * p_motor);
+void Motor_Encoder_StartUpChain(const Motor_T * p_motor);
 
 /*  */
 // extern int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId);
 // extern void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);
 
-extern int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId);
-extern void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);
+// extern int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId);
+// extern void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);

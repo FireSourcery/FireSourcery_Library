@@ -34,7 +34,6 @@
 */
 static inline Motor_T * MotorAt(const MotorController_T * p_context, uint8_t motor) { return (motor < p_context->MOTORS.LENGTH) ? MotMotors_ContextAt(&p_context->MOTORS, motor) : NULL; }
 
-
 /******************************************************************************/
 /*
     MotorController Module General
@@ -72,12 +71,9 @@ int MotorController_VarOutput_Debug_Get(const MotorController_T * p_context, Mot
     return value;
 }
 
-/******************************************************************************/
 /* Inputs disabled on Analog Mode */
-/******************************************************************************/
 void MotorController_VarInput_Set(const MotorController_T * p_context, MotorController_VarInput_T id, int value)
 {
-    // bool isSuccess = true;
     switch (id)
     {
         case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, value);                     break;
@@ -91,12 +87,12 @@ void MotorController_VarInput_Set(const MotorController_T * p_context, MotorCont
         case MOT_VAR_USER_RELAY_TOGGLE:                 break;
         case MOT_VAR_USER_METER_TOGGLE:                 break;
     }
-
-    // return (isSuccess == true) ? 0 : -1;
 }
 
 /******************************************************************************/
-/* Config */
+/*
+    Config
+*/
 /******************************************************************************/
 int MotorController_Config_Get(const MotorController_T * p_context, MotorController_ConfigId_T id)
 {
@@ -117,10 +113,6 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
         // case MOT_DRIVE_CONFIG_THROTTLE_MODE:     value = p_state->Config.ThrottleMode;          break;
         // case MOT_DRIVE_CONFIG_BRAKE_MODE:        value = p_state->Config.BrakeMode;             break;
         // case MOT_DRIVE_CONFIG_ZERO_MODE:         value = p_state->Config.ZeroMode;              break;
-
-        // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_THROTTLE_MODE
-        // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_BRAKE_MODE
-        // MOTOR_CONTROLLER_MOT_DRIVE_CONFIG_ZERO_MODE
     }
     return value;
 }
@@ -145,7 +137,6 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
         // case MOT_DRIVE_CONFIG_ZERO_MODE:               p_state->Config.ZeroMode = (MotDrive_ZeroMode_T)value;     break;
     }
 }
-
 
 int MotorController_Config_BootRef_Get(const MotorController_T * p_context, MotorController_Config_BootRef_T id)
 {
@@ -186,7 +177,6 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_context, MotorC
         default: return 0;
     }
 }
-
 
 
 /******************************************************************************/
@@ -251,10 +241,11 @@ static int _HandleMotorSensorState_Get(const MotorController_T * p_context, MotV
 
 static MotVarId_Status_T _HandleMotorSensorState_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    Motor_T * p_motor = MotorAt(p_context, varId.Instance);
-    if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
-    Motor_Sensor_VarType_Set(p_motor, varId.NameType, varId.NameBase, value);
-    return MOT_VAR_STATUS_OK;
+    return MOT_VAR_STATUS_ERROR_READ_ONLY; // Sensor state variables are read-only
+    // Motor_T * p_motor = MotorAt(p_context, varId.Instance);
+    // if (p_motor == NULL) return MOT_VAR_STATUS_ERROR;
+    // Motor_Sensor_VarType_Set(p_motor, varId.NameType, varId.NameBase, value);
+    // return MOT_VAR_STATUS_OK;
 }
 
 static int _HandleMotorSensorConfig_Get(const MotorController_T * p_context, MotVarId_T varId)

@@ -30,6 +30,8 @@
 /******************************************************************************/
 #include "MotNvm.h"
 
+#include <string.h>
+
 void MotNvm_Init(const MotNvm_T * p_motNvm)
 {
     Flash_Init(p_motNvm->P_FLASH);
@@ -38,12 +40,16 @@ void MotNvm_Init(const MotNvm_T * p_motNvm)
 #endif
 }
 
-NvMemory_Status_T MotNvm_WriteConfig_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes)
+NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes)
 {
+    assert(p_rom != NULL);
+    assert(p_ram != NULL);
+    assert(sizeBytes > 0U);
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_rom, p_ram, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     assert(nvmemory_is_aligned((uintptr_t)p_rom, FLASH_UNIT_WRITE_SIZE));
+    assert(nvmemory_is_aligned((uintptr_t)p_ram, FLASH_UNIT_WRITE_SIZE));
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)p_rom, p_ram, sizeBytes);
 #endif
 }
@@ -78,6 +84,11 @@ NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, ui
     return status;
 }
 
+/******************************************************************************/
+/*!
+    with defined parameters
+*/
+/******************************************************************************/
 /* eeprom only. Save on first init. */
 NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 {
@@ -88,6 +99,29 @@ NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 #endif
 }
 
+NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
+{
+    const MotNvm_Entry_T * p_entry;
+    NvMemory_Status_T status;
+
+    for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
+    {
+        p_entry = &p_motNvm->P_PARTITIONS[i];
+        /* Write if updated */
+        if (memcmp(p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE) != 0U)
+            { status = MotNvm_Write_Blocking(p_motNvm, p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE); }
+
+        if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
+    }
+
+    return status;
+}
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
 {
     MotorAnalogRef_T motorRef =
@@ -118,22 +152,27 @@ NvMemory_Status_T MotNvm_LoadBoardRefFrom(const MotNvm_T * p_motNvm, const struc
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE_BOARD, (const void *)&boardRef, sizeof(MotorAnalogRef_Board_T));
 }
 
-NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm)
-{
-    struct HAL_Nvm_Manufacturer buffer;
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadAnalogRefFrom(p_motNvm, &buffer); }
+/******************************************************************************/
+/*!
+    with defined parameters
+*/
+/******************************************************************************/
+// NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm)
+// {
+//     struct HAL_Nvm_Manufacturer buffer;
+//     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadAnalogRefFrom(p_motNvm, &buffer); }
 
-    return status;
-}
+//     return status;
+// }
 
-NvMemory_Status_T MotNvm_LoadBoardRef(const MotNvm_T * p_motNvm)
-{
-    struct HAL_Nvm_Manufacturer buffer;
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadBoardRefFrom(p_motNvm, &buffer); }
-    return status;
-}
+// NvMemory_Status_T MotNvm_LoadBoardRef(const MotNvm_T * p_motNvm)
+// {
+//     struct HAL_Nvm_Manufacturer buffer;
+//     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadBoardRefFrom(p_motNvm, &buffer); }
+//     return status;
+// }
 
 NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm)
 {

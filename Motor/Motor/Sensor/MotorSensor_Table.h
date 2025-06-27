@@ -57,13 +57,13 @@ MotorSensor_Id_T;
 // MotorSensor_State_T;
 
 /*
-    alternatively as [Motor_SensorTable_T], part of Motor_T
+    Mux/Repo
+    Holds all selectable sensors. Map common AngleSpeed State
+    include all using preprocessor conditions
+    There can only be 1 sensor of each type per motor, with fixed corresponding Id
 */
-/* include all using preprocessor conditions */
-/* There can only be 1 sensor of each type per motor, with fixed corresponding Id */
-
-/* Mux/Repo */
 // typedef const struct Motor_SensorTable
+// alternatively as [Motor_SensorTable_T], part of Motor_T
 typedef const struct MotorSensor_Table
 {
     const MotorSensor_T EMPTY;

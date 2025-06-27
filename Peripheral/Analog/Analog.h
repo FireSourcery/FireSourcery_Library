@@ -30,7 +30,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-// #include "Analog_ADC.h"
 #include "HAL_ADC.h"
 #include "Config.h"
 

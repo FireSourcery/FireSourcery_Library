@@ -379,6 +379,7 @@ void Motor_User_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle)
 
 */
 // void Motor_User_StartOpenLoopMode(const Motor_T * p_motor) { Motor_User_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
+
 /*
 */
 void Motor_User_StartOpenLoopState(const Motor_T * p_motor)
@@ -399,7 +400,7 @@ void Motor_User_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16)
 /* Calibration - set CCW first */
 void Motor_User_SetOpenLoopI(Motor_State_T * p_motor, int16_t amps_fract16)
 {
-    Ramp_SetTarget(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(p_motor, amps_fract16)); /* setting as directional, altneratively clmap wiht 0 */
+    Ramp_SetTarget(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(p_motor, amps_fract16)); /* setting as directional, altneratively clamp wiht 0 */
 }
 
 /*!
@@ -515,7 +516,7 @@ int32_t Motor_User_GetSetPoint(const Motor_State_T * p_motor) { return Motor_Dir
 //     return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetPoint_Scalar(p_motor));
 // }
 
-static inline bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEnabled(_Motor_User_GetActiveRamp(p_motor)); }
+bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEnabled(_Motor_User_GetActiveRamp(p_motor)); }
 // static inline void Motor_User_SetRampOnOff(Motor_State_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
 
 

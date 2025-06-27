@@ -50,17 +50,15 @@ extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const struct HAL_Nvm_Manufactur
 extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
 extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
 
-/* config table */
-// struct HAL_MemMap_MainConfig;
-/* altnernatively as descriptor table. non contigous */
-// typedef struct MotNvm_Entry
-// {
-//     const void * const nvm_address;     /* NVM/Flash address */
-//     void * const ram_address;           /* RAM address */
-//     const size_t size;                  /* Size in bytes */
-//     const uint32_t checksum_seed;       /* For validation */
-// }
-// MotNvm_Entry_T;
+/* Config Mem descriptor table. */
+typedef struct MotNvm_Entry
+{
+    const void * const NVM_ADDRESS;     /* NVM/Flash address */
+    void * const RAM_ADDRESS;           /* RAM address */
+    const size_t SIZE;                  /* Size in bytes */
+    // const uint32_t checksum_seed;    /* For validation */
+}
+MotNvm_Entry_T;
 
 
 typedef const struct
@@ -73,6 +71,10 @@ typedef const struct
     /* Flash params start. */
     uintptr_t MAIN_CONFIG_ADDRESS;
     uint16_t MAIN_CONFIG_SIZE;
+
+    const MotNvm_Entry_T * P_PARTITIONS; /* NVM Partitions */
+    size_t PARTITION_COUNT;        /* Number of NVM Partitions */
+
     // alternatively use  P_FLASH->P_PARTITIONS[id]
     uintptr_t MANUFACTURE_ADDRESS;
     uint8_t MANUFACTURE_SIZE;
@@ -85,10 +87,11 @@ MotNvm_T;
 /*
 */
 extern void MotNvm_Init(const MotNvm_T * p_motNvm);
-extern NvMemory_Status_T MotNvm_WriteConfig_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes);
+extern NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes);
 extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, void * p_destBuffer);
 extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size);
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
+extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 // extern NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
 // extern NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm);

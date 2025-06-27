@@ -88,7 +88,7 @@ MotorController_User_SystemCmd_T;
 /******************************************************************************/
 static inline void MotorController_User_StartPassthroughMode(const MotorController_T * p_context)
 {
-    _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_STATE_ID_PASS, 0);
+    _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_STATE_ID_MOTORS, 0);
 }
 
 /*

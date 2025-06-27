@@ -134,5 +134,15 @@ int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId)
     return value;
 }
 
+void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue)
+{
+    if (p_hall == NULL) return;
+    _Hall_ConfigId_Set(p_hall->P_STATE, varId, varValue);
+}
 
+int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId)
+{
+    if (p_hall == NULL) return 0;
+    return _Hall_ConfigId_Get(p_hall->P_STATE, varId);
+}
 

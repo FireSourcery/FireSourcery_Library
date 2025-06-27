@@ -123,6 +123,7 @@ static inline bool _Motor_StateMachine_IsOpenLoop(const Motor_State_T * p_fields
 static inline bool Motor_StateMachine_IsConfig(const Motor_T * p_motor)
 {
     return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP);
+    // return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION);
     // || MSM_STATE_ID_FAULT || MSM_STATE_ID_CALIBRATION
 }
 

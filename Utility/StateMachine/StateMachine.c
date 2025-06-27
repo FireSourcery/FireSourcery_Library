@@ -375,8 +375,8 @@ void StateMachine_ProcBranchInput(const StateMachine_T * p_stateMachine, state_i
 /*
     result the input handle is any of P_START is in the active branch
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
-    TryTransition
 */
+// void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, const State_T * p_test, State_Input_T transition, state_input_value_t value)
 void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_transition, state_input_value_t value)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
@@ -396,7 +396,6 @@ void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, 
 /*
     Effective for all States descending from the selected State
     i.e. the active SubState is below the selected State, in the active branch.
-    TrySetWith
 */
 void StateMachine_SetBranchValueWith(const StateMachine_T * p_stateMachine, const State_T * p_state, State_Set_T setter, state_input_value_t value)
 {

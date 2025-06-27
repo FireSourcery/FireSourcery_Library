@@ -150,15 +150,15 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_State_T * p_
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_State_T * p_encoder)
 {
-    p_encoder->InterpolateAngleIndex++; /* todo replace index for sum */
-    return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolateAngleIndex);
+    // p_encoder->InterpolateAngleIndex++; /* todo replace index for sum */
+    // return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolateAngleIndex);
     // p_encoder->InterpolateAngleSum += p_encoder->PollingAngleDelta;
     // return p_encoder->InterpolateAngleSum >> 16;
 }
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_State_T * p_encoder)
 {
-    p_encoder->InterpolateAngleIndex = 0U;
+    // p_encoder->InterpolateAngleIndex = 0U;
     p_encoder->InterpolateAngleSum = 0U;
 }
 
@@ -214,15 +214,15 @@ static inline uint32_t Encoder_DeltaT_ToLinearSpeed(const Encoder_State_T * p_en
 
 
 
-// /******************************************************************************/
-// /*!
-//     @brief Angular/Rotational Speed
-// */
-// /******************************************************************************/
-// static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder)
-// {
-//     return Encoder_DeltaT_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaT);
-// }
+/******************************************************************************/
+/*!
+    @brief Angular/Rotational Speed
+*/
+/******************************************************************************/
+static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder)
+{
+    return Encoder_DeltaT_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaT);
+}
 
 // static inline uint32_t Encoder_DeltaT_GetAngularSpeed(const Encoder_State_T * p_encoder)
 // {

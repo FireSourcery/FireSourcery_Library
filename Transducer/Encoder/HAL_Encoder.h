@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,25 +24,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    HAL.h
+    @file   HAL_Encoder.h
     @author FireSourcery
-    @brief     User must provide HW functions, or configure HAL
-
- */
+    @brief  [Brief description of the file]
+*/
 /******************************************************************************/
-#ifndef HAL_ENCODER_H
-#define HAL_ENCODER_H
-
-#define XSTR(String) #String
-#define STR(String) XSTR(String)
 
 #if defined(CONFIG_HAL_ENCODER_PATH)
+    #define XSTR(String) #String
+    #define STR(String) XSTR(String)
     #include STR(CONFIG_HAL_ENCODER_PATH/HAL_Encoder.h)
-#elif defined(CONFIG_HAL_ENCODER_PLATFORM)
-    #include STR(HAL/Platform/CONFIG_HAL_ENCODER_PLATFORM/HAL_Encoder.h)
 #elif defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
     #include "Peripheral/HAL/HAL_Peripheral.h"
     #include HAL_PERIPHERAL_PATH(HAL_Encoder.h)
-#endif
-
 #endif

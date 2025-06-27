@@ -36,7 +36,7 @@
 #include "Transducer/Encoder/Encoder_ISR.h"
 
 
-/* typedef const struct Hall_Sensor */
+/* typedef const struct Hall_Sensor / Hall_SensorInterface */
 typedef const struct Hall_MotorSensor
 {
     const MotorSensor_T MOTOR_SENSOR; /* _SUPER */
@@ -44,7 +44,6 @@ typedef const struct Hall_MotorSensor
     const Encoder_T * const P_ENCODER;
 }
 Hall_MotorSensor_T;
-
 
 extern const MotorSensor_VTable_T HALL_VTABLE;
 // #define _HALL_GENERIC_INIT(p_State) MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State)
@@ -54,3 +53,4 @@ extern const MotorSensor_VTable_T HALL_VTABLE;
 
 // #define HALL_MOTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
 //     HALL_MOTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
+

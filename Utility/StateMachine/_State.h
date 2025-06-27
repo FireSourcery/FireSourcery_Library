@@ -117,7 +117,7 @@ static inline State_T * State_TransitionOfInput_AsTop(const State_T * p_state, v
 /******************************************************************************/
 /* Transition */
 /******************************************************************************/
-static inline void State_Entry(const State_T * p_state,  void * p_context)
+static inline void State_Entry(const State_T * p_state, void * p_context)
 {
     if (p_state->ENTRY != NULL) { p_state->ENTRY(p_context); }
 }

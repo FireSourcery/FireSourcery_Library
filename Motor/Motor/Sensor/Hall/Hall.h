@@ -420,5 +420,8 @@ Hall_ConfigId_T;
 extern int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId);
 extern void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue);
 
+void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue);
+int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId);
+
 #endif
 

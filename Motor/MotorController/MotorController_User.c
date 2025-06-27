@@ -80,8 +80,7 @@ void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context,
 void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
-    // p_mc->Config.VSupplyRef = Motor_VSourceLimitOf(volts);
-    p_mc->Config.VSupplyRef = volts;
+    p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context);
     MotorController_CaptureVSource(p_context);
 }

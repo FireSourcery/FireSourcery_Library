@@ -159,34 +159,34 @@ static inline bool Motor_User_IsSpeedLimitSet(const Motor_State_T * p_motor)
 /*
     Consolidate all status flags into a single word
 */
-typedef union Motor_User_StatusFlags
-{
-    struct
-    {
-        uint16_t HeatWarning    : 1U;
-        // uint16_t ILimitSet      : 1U;
-        // uint16_t SpeedLimitSet  : 1U;
-        uint16_t ILimited       : 1U;
-        uint16_t SpeedLimited   : 1U;
-        // uint16_t PhaseOutputState    : 2U;
-        // uint16_t Hold           : 1U;
-        // uint16_t Release        : 1U;
-    };
-    uint16_t Value;
-}
-Motor_User_StatusFlags_T;
+// typedef union Motor_User_StatusFlags
+// {
+//     struct
+//     {
+//         uint16_t HeatWarning    : 1U;
+//         // uint16_t ILimitSet      : 1U;
+//         // uint16_t SpeedLimitSet  : 1U;
+//         uint16_t ILimited       : 1U;
+//         uint16_t SpeedLimited   : 1U;
+//         // uint16_t PhaseOutputState    : 2U;
+//         // uint16_t Hold           : 1U;
+//         // uint16_t Release        : 1U;
+//     };
+//     uint16_t Value;
+// }
+// Motor_User_StatusFlags_T;
 
-static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_State_T * p_motor)
-{
-    return (Motor_User_StatusFlags_T)
-    {
-        // .HeatWarning    = HeatMonitor_IsWarning(&p_motor->Thermistor), // alternatively as separate enum
-        // .ILimitSet      = Motor_User_IsILimitSet(p_motor),
-        // .SpeedLimitSet  = Motor_User_IsSpeedLimitSet(p_motor),
-        // .ILimited       = Motor_FOC_IsILimitReached(p_motor),
-        // .SpeedLimited   = Motor_IsSpeedLimitReached(p_motor),
-    };
-}
+// static inline Motor_User_StatusFlags_T Motor_User_GetStatusFlags(const Motor_State_T * p_motor)
+// {
+//     return (Motor_User_StatusFlags_T)
+//     {
+//         // .HeatWarning    = HeatMonitor_IsWarning(&p_motor->Thermistor), // alternatively as separate enum
+//         // .ILimitSet      = Motor_User_IsILimitSet(p_motor),
+//         // .SpeedLimitSet  = Motor_User_IsSpeedLimitSet(p_motor),
+//         // .ILimited       = Motor_FOC_IsILimitReached(p_motor),
+//         // .SpeedLimited   = Motor_IsSpeedLimitReached(p_motor),
+//     };
+// }
 
 /* buffered copy implementation */
 // typedef struct Motor_User_Input

@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,17 +26,14 @@
 /*!
     @file   HAL_Encoder.h
     @author FireSourcery
-    @brief     Encoder Timer Counter HAL for S32K
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef HAL_ENCODER_PLATFORM_H
-#define HAL_ENCODER_PLATFORM_H
-
 #include "KE0x.h"
 
 #include <stdint.h>
 #include <stdbool.h>
+
 
 #ifndef HAL_ENCODER_CLOCK_SOURCE_FREQ
 #define HAL_ENCODER_CLOCK_SOURCE_FREQ CPU_FREQ
@@ -44,6 +43,11 @@ typedef FTM_Type HAL_Encoder_Pin_T;
 typedef FTM_Type HAL_Encoder_Timer_T;
 typedef FTM_Type HAL_Encoder_Counter_T;
 
+/******************************************************************************/
+/*!
+    @section HAL_Encoder_Timer_T
+*/
+/******************************************************************************/
 /* Clear interrupt. Read-after-write sequence to guarantee required serialization of memory operations */
 static inline void HAL_Encoder_ClearTimerOverflow(HAL_Encoder_Timer_T * p_encoder)          { p_encoder->SC &= ~FTM_SC_TOF_MASK; (void)p_encoder->SC; }
 static inline bool HAL_Encoder_ReadTimerOverflow(const HAL_Encoder_Timer_T * p_encoder)     { return p_encoder->SC & FTM_SC_TOF_MASK; }
@@ -69,7 +73,7 @@ static inline uint32_t HAL_Encoder_InitTimerFreq(HAL_Encoder_Timer_T * p_encoder
 {
     uint32_t preScalerValue = HAL_ENCODER_CLOCK_SOURCE_FREQ / freq;
     uint8_t preScaler = 0U;
-    while((preScalerValue >> preScaler) > 1U) { preScaler++; } /* log2 */
+    while ((preScalerValue >> preScaler) > 1U) { preScaler++; } /* log2 */
     p_encoder->SC &= ~FTM_SC_CLKS_MASK;
     p_encoder->SC = (p_encoder->SC & ~FTM_SC_PS_MASK) | FTM_SC_PS(preScaler);
     p_encoder->SC |= FTM_SC_CLKS(0b01U);
@@ -83,9 +87,11 @@ static inline void HAL_Encoder_InitTimer(HAL_Encoder_Timer_T * p_encoder)
     // HAL_Encoder_InitTimerFreq(p_encoder, HAL_ENCODER_TIMER_FREQ);
 }
 
+/******************************************************************************/
 /*
     Counter Mode - KE0x No Counter/quadrature decoder mode support
 */
+/******************************************************************************/
 static inline bool HAL_Encoder_ReadCounterOverflow(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
 static inline void HAL_Encoder_ClearCounterOverflow(HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
 static inline uint32_t HAL_Encoder_ReadCounter(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
@@ -97,9 +103,13 @@ static inline bool HAL_Encoder_ReadCounterDirection(const HAL_Encoder_Counter_T 
 static inline bool HAL_Encoder_ReadCounterOverflowIncrement(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; return (0U); }
 static inline bool HAL_Encoder_ReadCounterOverflowDecrement(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; return (0U); }
 
-/* alternatively typedef HAL_Encoder_Pin_T uint32_t* */
+/******************************************************************************/
 /*
-    Emulated via edge interrupt
+
+*/
+/******************************************************************************/
+/*
+    Emulated Couner via edge interrupt
 */
 static inline bool HAL_Encoder_ReadPinInterrupt(const HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)   { return (p_encoder->CONTROLS[phaseId].CnSC & FTM_CnSC_CHF_MASK); }
 static inline void HAL_Encoder_ClearPinInterrupt(HAL_Encoder_Pin_T * p_encoder, uint32_t phaseId)        { p_encoder->CONTROLS[phaseId].CnSC &= ~FTM_CnSC_CHF_MASK; }
@@ -124,5 +134,3 @@ static inline void HAL_Encoder_InitPinInterruptRisingEdge(HAL_Encoder_Pin_T * p_
 //         case 2: NVIC_EnableIRQ(FTM2_IRQn); break;
 //     }
 // }
-
-#endif

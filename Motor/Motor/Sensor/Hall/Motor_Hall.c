@@ -31,9 +31,13 @@
 
 // #include "../../Motor_Config.h"
 #include "../../Motor_StateMachine.h"
-// #include "../../Motor_FOC.h"
 #include "../../Motor.h"
 
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.HALL.HALL; }
 
 /******************************************************************************/

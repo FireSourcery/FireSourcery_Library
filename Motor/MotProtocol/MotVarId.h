@@ -88,17 +88,17 @@ typedef union MotVarId
     struct
     {
         uint16_t NameBase       : 4U; /* Name - corresponds 1:1 with enum value */
-        uint16_t NameType       : 4U; /* Name's Type - corresponds with enum type + instance type n:1 */
-        // uint16_t AccessType  : 2U;
+        uint16_t NameType       : 4U; /* Name's Type - corresponds with enum type. may be a subtype, instance type n:1, in case of discontinous mapping */
         uint16_t Instance       : 3U; /* TypeInstance - Upto 8 Instances Per Type */
         uint16_t HandlerType    : 3U; /* NameType's Type */
         uint16_t Resv           : 2U; /* Resv/Alternative unit/format */
     };
-    /* Correspond to host side */
+
     struct
     {
-        uint16_t NamePart       : 11U; /* name can be determined by nameId + nameId_Type if prefix maps to nameId_Type 1:1 */
+        uint16_t NamePart       : 8U;
         uint16_t InstancePart   : 3U;
+        uint16_t HandlerPart    : 3U;
         uint16_t ResvPart       : 2U;
     };
     uint16_t Value;

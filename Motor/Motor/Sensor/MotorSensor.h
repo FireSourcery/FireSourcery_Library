@@ -49,6 +49,8 @@ typedef bool(*MotorSensor_Test_T)(const struct MotorSensor * p_sensor);
 typedef int (*MotorSensor_Get_T)(const struct MotorSensor * p_sensor);
 typedef void(*MotorSensor_Set_T)(const struct MotorSensor * p_sensor, int value);
 
+typedef void(*MotorSensor_InitFrom_T)(const struct MotorSensor * p_sensor, const void * p_config);
+
 /* alternatively */
 // typedef void(*MotorSensor_Capture_T)(const struct MotorSensor * p_sensor, AngleSpeed_T * p_state);
 // typedef int(*MotorSensor_Capture_T)(const struct MotorSensor * p_sensor);
@@ -70,10 +72,25 @@ typedef const struct MotorSensor_VTable
     MotorSensor_Set_T SET_DIRECTION; // SET_CAPTURE_DIRECTION;
 
     /* Config */
-    MotorSensor_Proc_T RESET_UNITS;
+    MotorSensor_InitFrom_T INIT_UNITS_FROM;
     MotorSensor_Test_T VERIFY_CALIBRATION;
 }
 MotorSensor_VTable_T;
+
+
+/*
+    [MotorSensor_Config_T]
+*/
+typedef struct MotorSensor_Config
+{
+    uint8_t PolePairs;                  /* Motor Pole Pairs. Config Mech/Electrical conversion */
+    uint16_t SpeedRated_DegPerCycle;    /* ~Speed at nominal VSource. Config scalar speed.
+
+                                            as electrical speed in degrees per cycle.
+                                            as mech speed >= VSource*Kv */
+    // uint16_t SpeedRated_Rpm;
+}
+MotorSensor_Config_T;
 
 /*
     [MotorSensor_State_T]
@@ -82,9 +99,9 @@ MotorSensor_VTable_T;
 typedef struct MotorSensor_State
 {
     angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
-    int32_t AngularSpeed_DegPerCycle; /* Electrical Delta Angle */
-    // angle16_t ElectricalAngleSpeed;
-    // angle16_t ElectricalAnglePerCycle;
+    int32_t AngularSpeed_DegPerCycle; /* Electrical Speed, ElectricalDeltaAngle. < 32767 by SpeedRated */
+    // angle16_t ElectricalSpeedAngle; // [DegreesPerControlCycle]
+
     int32_t Speed_Fract16;  /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
     // int32_t SpeedPrev_Fract16; /* common filter */
 
@@ -149,6 +166,7 @@ extern const MotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY;
 static inline void MotorSensor_Init(const MotorSensor_T * p_sensor)
 {
     p_sensor->P_VTABLE->INIT(p_sensor);
+    // p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor);
     _MotorSensor_Reset(p_sensor->P_STATE);
 }
 
@@ -169,13 +187,16 @@ static inline bool MotorSensor_IsFeedbackAvailable(const MotorSensor_T * p_senso
     Config
 */
 static inline bool MotorSensor_VerifyCalibration(const MotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
-static inline void MotorSensor_ResetUnits(const MotorSensor_T * p_sensor) { p_sensor->P_VTABLE->RESET_UNITS(p_sensor); }
+static inline void MotorSensor_InitUnitsFrom(const MotorSensor_T * p_sensor, const MotorSensor_Config_T * p_config) { p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config); }
 
 /******************************************************************************/
 /*!
     Query Functions
 */
 /******************************************************************************/
+
+
+
 static inline int32_t MotorSensor_GetElecticalAngle(const MotorSensor_T * p_sensor) { return p_sensor->P_STATE->ElectricalAngle; }
 static inline int32_t MotorSensor_GetMechanicalAngle(const MotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 static inline int32_t MotorSensor_GetElectricalAngleSpeed(const MotorSensor_T * p_sensor) { return p_sensor->P_STATE->AngularSpeed_DegPerCycle; }

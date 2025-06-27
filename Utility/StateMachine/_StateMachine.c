@@ -40,7 +40,7 @@
     Top Level State [p_ActiveState]
 */
 /******************************************************************************/
-static inline const State_T * TransitionFunctionSync(const StateMachine_Active_T * p_fields, void * p_context)
+static inline State_T * TransitionFunctionSync(const StateMachine_Active_T * p_fields, void * p_context)
 {
     return State_TransitionOfContext_AsTop(p_fields->p_ActiveState, p_context); /* Top level LOOP always defined */
 }
@@ -277,9 +277,18 @@ void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_fields, void * 
     }
 }
 
+// void _StateMachine_TraverseTransition_Nested(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_top, const State_T * p_leaf)
+// {
+//     State_TraverseTransition(StateMachine_GetActiveSubState(p_fields), p_leaf, p_context);
+//     p_fields->p_ActiveSubState = p_leaf;
+//     p_fields->p_ActiveState = p_top; /* alternatively within subtree only */
+// }
+
 /*
     Proc traverse up excluding Top State, for cases where implementation include [_StateMachine_ProcBranch_Nested] in only some [p_ActiveState->LOOP]
     Caller clears SubStates
+
+    // _StateMachine_ProcSubTree
 */
 void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_context)
 {
@@ -287,7 +296,7 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_
 }
 
 /*
-    Check Top Level first.
+    traverse Top Level first. then leaf to top-1
 */
 void _StateMachine_ProcBranchSyncOutput_(StateMachine_Active_T * p_fields, void * p_context)
 {

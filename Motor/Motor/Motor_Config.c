@@ -52,7 +52,7 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 
 /* or use transition mapper */
 /* or move interface to Var layer */
-// void Motor_Config_Set(Motor_State_T * p_motor, State_Set_T setter, int32_t value)
+// void Motor_Config_SetWith(Motor_State_T * p_motor, State_Set_T setter, int32_t value)
 // {
 //     StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION, setter, value);
 // }
@@ -64,11 +64,17 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
     Optionally propagate values during set, or wait for reboot
 */
 /******************************************************************************/
+
+/******************************************************************************/
+/*
+    Speed Position Calibration
+*/
+/******************************************************************************/
 /* Reboot unless deinit is implemented in HAL */
 void Motor_Config_SetSensorMode(Motor_State_T * p_motor, MotorSensor_Id_T mode)
 {
     p_motor->Config.SensorMode = mode;
-    // PropagateSet(p_motor, Motor_Sensor_Init);
+    PropagateSet(p_motor, Motor_Sensor_Reinit);
 }
 
 void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
@@ -91,11 +97,6 @@ void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t controlDeg)
     PropagateSet(p_motor, Motor_Sensor_ResetUnits);
 }
 
-void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward)
-{
-    p_motor->Config.DirectionForward = directionForward;
-    // PropagateSet(p_motor, Motor_SetDirectionForward);
-}
 
 /*
     V of Speed Ref
@@ -105,6 +106,28 @@ void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Directi
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_State_T * p_motor, uint16_t scalar) { p_motor->Config.VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
 
 
+#ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
+static inline void Motor_Config_SetPhaseMode(Motor_State_T * p_motor, Phase_Polar_Mode_T mode) { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->PHASE, mode); }
+#endif
+
+/* Kv * VSource */
+#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+void Motor_Config_SetSpeedVRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
+{
+    // p_motor->Config.Kv = rpm / MotorAnalog_GetVSource_V();
+    // PropagateSet(p_motor, Motor_Sensor_ResetUnits);
+    Motor_Config_SetKv(p_motor, MotorAnalog_GetVSource_V());
+}
+
+void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
+{
+    Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
+}
+#endif
+
+/*
+
+*/
 void Motor_Config_SetSpeedRated_Rpm(Motor_State_T * p_motor, uint16_t rpm)
 {
     Motor_Config_SetSpeedRated(p_motor, speed_angle16_of_rpm(MOTOR_CONTROL_FREQ / p_motor->Config.PolePairs, rpm));
@@ -115,26 +138,13 @@ void Motor_Config_SetSpeedRated_Rpm(Motor_State_T * p_motor, uint16_t rpm)
 //     p_motor->Config.SpeedRated_DegPerCycle = Motor_GetSpeedVSvpwmRef_DegPerCycle(p_motor);
 // }
 
-#ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
-static inline void Motor_Config_SetPhaseMode(Motor_State_T * p_motor, Phase_Polar_Mode_T mode) { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->PHASE, mode); }
-#endif
 
-/* Kv * VSource */
-#if defined(CONFIG_MOTOR_DEBUG_ENABLE)
-void Motor_Config_SetSpeedVRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
-{
-    p_motor->Config.Kv = rpm / MotorAnalog_GetVSource_V();
-    PropagateSet(p_motor, Motor_Sensor_ResetUnits);
-}
 
-void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
-{
-    Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
-}
-#endif
 
 /******************************************************************************/
-/* ISensorRef */
+/*
+    ISensorRef
+*/
 /******************************************************************************/
 void Motor_Config_SetIaZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_motor->Config.IaZeroRef_Adcu = adcu; /* PropagateSet(p_motor, Motor_ResetUnitsIa); */ }
 void Motor_Config_SetIbZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_motor->Config.IbZeroRef_Adcu = adcu; /* PropagateSet(p_motor, Motor_ResetUnitsIb); */ }

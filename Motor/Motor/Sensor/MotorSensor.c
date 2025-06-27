@@ -40,7 +40,7 @@
 static void Empty_Init(const MotorSensor_T * p_sensor) { (void)p_sensor; }
 static void Empty_CaptureAngle(const MotorSensor_T * p_sensor) { (void)p_sensor; }
 static void Empty_CaptureSpeed(const MotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_ResetUnits(const MotorSensor_T * p_sensor) { (void)p_sensor; }
+static void Empty_ResetUnits(const MotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
 static bool Empty_IsFeedbackAvailable(const MotorSensor_T * p_sensor) { (void)p_sensor; return false; }
 static bool Empty_VerifyCalibration(const MotorSensor_T * p_sensor) { (void)p_sensor; return false; }
 static int Empty_GetDirection(const MotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
@@ -51,11 +51,11 @@ const MotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
     .INIT = (MotorSensor_Proc_T)Empty_Init,
     .CAPTURE_ANGLE = (MotorSensor_Proc_T)Empty_CaptureAngle,
     .CAPTURE_SPEED = (MotorSensor_Proc_T)Empty_CaptureSpeed,
-    .VERIFY_CALIBRATION = (MotorSensor_Test_T)Empty_VerifyCalibration,
     .IS_FEEDBACK_AVAILABLE = (MotorSensor_Test_T)Empty_IsFeedbackAvailable,
-    .RESET_UNITS = (MotorSensor_Proc_T)Empty_ResetUnits,
     .SET_DIRECTION = (MotorSensor_Set_T)Empty_SetDirection,
     .GET_DIRECTION = (MotorSensor_Get_T)Empty_GetDirection,
     // .SET_INITIAL = (MotorSensor_Proc_T)SetInitial,
+    .INIT_UNITS_FROM = (MotorSensor_InitFrom_T)Empty_ResetUnits,
+    .VERIFY_CALIBRATION = (MotorSensor_Test_T)Empty_VerifyCalibration,
 };
 

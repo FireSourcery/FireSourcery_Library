@@ -164,6 +164,7 @@ void Motor_ResetCurrentPid(Motor_State_T * p_motor)
     PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
 }
 
+
 /******************************************************************************/
 /*
     Propagate limits Common

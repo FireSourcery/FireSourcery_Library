@@ -123,6 +123,7 @@ static inline uint16_t MotorAnalogRef_GetVRated_Fract16(void) { return MOTOR_ANA
 static inline uint16_t MotorAnalogRef_GetIRatedPeak_Fract16(void) { return MOTOR_ANALOG_REFERENCE.I_RATED_PEAK_FRACT16; }
 // static inline int16_t MotorAnalogRef_GetVRated_Adcu(void) { return MotorAnalogRef_GetVRated_Fract16() / MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
 // static inline int16_t MotorAnalogRef_GetIRatedPeak_Adcu(void){ return MotorAnalogRef_GetIRatedPeak_Fract16() / MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
+static inline uint16_t MotorAnalogRef_GetVRated_V(void) { return MotorAnalogRef_GetVRated_Fract16() * MotorAnalogRef_GetVMaxVolts() / 32768; }
 
 static inline bool _MotorAnalogRef_IsLoaded(uint16_t value) { return (value != 0U && value != 0xFFFFU); }
 static inline bool MotorAnalogRef_IsLoaded(void)

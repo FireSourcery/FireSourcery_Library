@@ -64,7 +64,6 @@ void Encoder_MotorSensor_CaptureSpeed(const MotorSensor_T * p_sensor)
 
 // uint16_t Encoder_MotorSensor_CaptureState(const MotorSensor_T * p_sensor)
 // {
-
 }
 
 bool Encoder_MotorSensor_VerifyCalibration(const MotorSensor_T * p_sensor)

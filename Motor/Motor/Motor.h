@@ -155,18 +155,18 @@ Motor_FaultFlags_T;
 */
 typedef struct Motor_Config
 {
-    MotorSensor_Id_T            SensorMode;
-    Motor_Direction_T           DirectionForward;
     Motor_CommutationMode_T     CommutationMode;
+    Motor_Direction_T           DirectionForward;
+    MotorSensor_Id_T            SensorMode;
 
     /*
         Calibration parameters
     */
-    uint8_t PolePairs;          /* Motor Pole Pairs. Use to derive Hall/Encoder speed calibration */
-    uint16_t Kv;                /* Motor Constant. Use to derive SpeedVRef */
-
+    uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     /* Config stored in Electrical Degrees need to sync with pole pairs */
-    uint16_t SpeedRated_DegPerCycle; /* Speed at nominal VSource. Clamp or scale limits. >= VSource*Kv */
+    uint16_t SpeedRated_DegPerCycle;    /* Speed at nominal VSource. Clamp or scale limits. >= VSource*Kv */
+
+    uint16_t Kv;                    /* Motor Constant. Use to derive SpeedVRef */
     uint16_t VSpeedScalar_Fract16;  /* Use to derive SpeedVMatchRef, ensure resume control at lower speed. */
     // Motor_ResumeMode_T ResumeMode; // option Scale to VSpeed or VBemf on resume
 
@@ -243,8 +243,9 @@ typedef struct Motor_State
     // volatile HeatMonitor_T HeatMonitorState;
 
     VarAccess_State_T VarAccessInputState; /* Input and I/O */
-    VarAccess_State_T VarAccessConfigState;
+    VarAccess_State_T VarAccessPidTunningState;
     /* Optionally */
+    VarAccess_State_T VarAccessConfigState;
     VarAccess_State_T VarAccessOuputState;
 
     /*
@@ -256,27 +257,12 @@ typedef struct Motor_State
     Timer_T SpeedTimer;                 /* Outer Speed Loop Timer */
     const MotorSensor_T * p_ActiveSensor;
     MotorSensor_State_T SensorState;
-    // SpeedAngle_T SpeedAngle;         /* outerfeedback math state */
-    // angle16_t MechanicalAngle;
-    // angle16_t ElectricalAngle;           /* Angle Feedback */
-    // angle16_t AngularSpeed_DegPerCycle;  /* ElectricalAngleDelta. < 32767 by SpeedRated */
-    // int32_t Speed_Fract16;               /* Speed Feedback Variable.*/
+    // SpeedAngle_T SpeedAngle;         /* Speed Feedback State. Speed_Fract16, AngularSpeed_DegPerCycle, ElectricalAngle */
+                                        /* outer feedback math state */
 
     /* StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState */
-
-    /*
-        User Input Ramps
-        UserCmdValue as RampTarget. Updated without StateMachine check
-    */
-    // fract16_t UserCmd; /* altneratively, as it is on a seperate thread */
-    Ramp_T SpeedRamp;               /* Output [-32767:32767] SetPoint => SpeedReq */
-    Ramp_T TorqueRamp;              /* Output [-32767:32767] SetPoint => IReq */
-
-    /* Openloop Preset, StartUp */
-    Ramp_T OpenLoopSpeedRamp;       /* OpenLoopSpeed Ramp */
-    Ramp_T OpenLoopIRamp;           /* OpenLoopI Ramp */
 
     /*
         Active Limits
@@ -303,9 +289,20 @@ typedef struct Motor_State
     // int16_t ILimitCw_Fract16;       /* - */
 
     /*
+        User Input Ramps
+        UserCmdValue as RampTarget. Updated without StateMachine check
+    */
+    // fract16_t UserCmd; /* altneratively, as it is on a seperate thread */
+    Ramp_T SpeedRamp;               /* Output [-32767:32767] SetPoint => SpeedReq */
+    Ramp_T TorqueRamp;              /* Output [-32767:32767] SetPoint => IReq */
+
+    /* Openloop Preset, StartUp */
+    Ramp_T OpenLoopSpeedRamp;       /* OpenLoopSpeed Ramp */
+    Ramp_T OpenLoopIRamp;           /* OpenLoopI Ramp */
+
+    /*
         Speed Feedback
     */
-    // SpeeadAngle_T SpeedAngle;        /* Speed Feedback State. Speed_Fract16, AngularSpeed_DegPerCycle, ElectricalAngle */
     PID_T PidSpeed;                     /* Input PidSpeed(RampCmd - Speed_Fract16), Output => VPwm, Vq, Iq. */
     // PID_T PidPosition;
 
@@ -604,7 +601,7 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
     V of Speed
 */
 static inline uint16_t Motor_RpmOfKv(const Motor_State_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
-static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts())); }
+static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_motor->Config.Kv * MotorAnalogRef_GetVMaxVolts()); }
 
 /* SpeedRated via direct Parameter */
 static inline uint32_t Motor_GetSpeedRatedRef_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }

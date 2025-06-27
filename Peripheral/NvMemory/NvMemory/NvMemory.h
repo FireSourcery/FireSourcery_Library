@@ -67,37 +67,11 @@ typedef enum NvMemory_Status
 }
 NvMemory_Status_T;
 
-/*
-    Partition Group
-    Partition defines writable ranges. Checked on op cmd.
-    Only provides range check. Caller account for overlapping address id
-*/
-typedef const struct NvMemory_Partition
-{
-    uintptr_t ADDRESS;
-    size_t SIZE;
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
-    ptrdiff_t OP_ADDRESS_OFFSET;
-#endif
-}
-NvMemory_Partition_T;
-
-#if defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
-#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset) .OP_ADDRESS_OFFSET = OpAddressOffset,
-#else
-#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
-#endif
-
-#define NV_MEMORY_INIT_PARTITION(AddressStart, SizeBytes, OpAddressOffset)  \
-{                                                                           \
-    .ADDRESS    = AddressStart,                                             \
-    .SIZE       = SizeBytes,                                                \
-    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                       \
-}
-
+/******************************************************************************/
 /*
     HAL typedefs
 */
+/******************************************************************************/
 typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
 typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
 
@@ -129,7 +103,6 @@ NvMemory_OpControl_T;
 
 // typedef const struct NvMemory_OpCommon
 // {
-//     void * const P_HAL;
 //     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
 //     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
 //     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
@@ -145,6 +118,41 @@ NvMemory_OpControl_T;
     .CLEAR_ERROR_FLAGS  = (HAL_NvMemory_ClearFlags_T)ClearErrorFlags,
 
 
+/******************************************************************************/
+/*
+    Partition Group
+    Partition defines writable ranges. Checked on op cmd.
+    Only provides range check. Caller account for overlapping address id
+*/
+/******************************************************************************/
+typedef const struct NvMemory_Partition
+{
+    uintptr_t ADDRESS;
+    size_t SIZE;
+#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
+    ptrdiff_t OP_ADDRESS_OFFSET;
+#endif
+}
+NvMemory_Partition_T;
+
+#if defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset) .OP_ADDRESS_OFFSET = OpAddressOffset,
+#else
+#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
+#endif
+
+#define NV_MEMORY_INIT_PARTITION(AddressStart, SizeBytes, OpAddressOffset)  \
+{                                                                           \
+    .ADDRESS    = AddressStart,                                             \
+    .SIZE       = SizeBytes,                                                \
+    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                       \
+}
+
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 // typedef enum NvMemory_OpState
 // {
 //     NV_MEMORY_STATE_IDLE,

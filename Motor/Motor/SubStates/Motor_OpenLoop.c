@@ -27,7 +27,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-/******************************************************************************/
 #include "Motor_OpenLoop.h"
 
 /* part of Motor_StateMachine */
@@ -227,7 +226,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 
 static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_input_value_t null)
 {
-    // Motor_FOC_ActivateOutputZero(p_motor); //in case it has been disabled
+    // Motor_FOC_ActivateOutputZero(p_motor); // in case it has been disabled
     Phase_ActivateOutputT0(&p_motor->PHASE);
     return &OPEN_LOOP_STATE_START_UP_ALIGN;
 }
@@ -246,16 +245,15 @@ void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
     Vard Id
 */
 /******************************************************************************/
-void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_VarCmd_T varId, int32_t varValue)
+void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T varId, int32_t varValue)
 {
     switch (varId)
     {
-        case MOTOR_VAR_OPEN_LOOP_CONTROL:       Motor_OpenLoop_Enter(p_motor);                                      break;
+        case MOTOR_VAR_OPEN_LOOP_ENTER:         Motor_OpenLoop_Enter(p_motor);                                      break;
         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
         case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
         case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
-        /*  */
         case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
         // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
     }

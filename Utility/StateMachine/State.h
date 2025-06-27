@@ -49,8 +49,7 @@ typedef intptr_t state_input_value_t;   /* Optional input parameter. User define
 // id is not passed in a function pointer. will not affect function pointer casting compatibility
 // typedef enum state_input_meta { STATE_INPUT_ID_NULL1 = 0xFF } state_input_meta_t;
 
-/* A State Function. Depends only on the State and internal values */
-/* Transition Action/Output */
+/* A State Action/Output. On Transition. Mapped per State.*/
 typedef void (*State_Action_T)(void * p_context);
 
 /******************************************************************************/
@@ -121,20 +120,21 @@ typedef const struct State
 #endif
 
     /*
-        Synchronous Output of the State.
+        [Synchronous Output] - Sync modes only. Periodic processing.
+        Separate parts for SubState regularity.
     */
     /* [Internal Transition] - A "transition" internal to [P_CONTEXT] only. Mutation of P_CONTEXT */
-    const State_Action_T LOOP;      /* Synchronous Output of the State. No null pointer check for TOP level. Implementation supply empty function */
+    const State_Action_T LOOP;      /* No null pointer check for TOP level. Implementation supply empty function */
                                     /* Inherited by SubState */
                                     /* SYNC_OUTPUT */
 
-    /* [Transition of Internal/Context] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
-    const State_InputVoid_T NEXT;   /* Synchronous Transition Handler. Separate from OUTPUT for SubState regularity. */
+    /* [State Transition of Context/Clock] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
+    const State_InputVoid_T NEXT;   /* Synchronous Transition Handler.  */
                                     /* Overwritten by SubStates. Separate from LOOP to allow overwrite transition only */
-                                    /* SYNC_TRANSITION */
+                                    /* SYNC_OUTPUT_TRANSITION */
 
     /*
-        [Transition of Input]
+        [State Transition of Input] - Sync/Async
     */
     /*!
         Array Implementation - 2D input table

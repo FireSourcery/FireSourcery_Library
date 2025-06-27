@@ -24,7 +24,6 @@
 /*!
     @file   .h
     @author FireSourcery
-
     @brief  Limits Input
 */
 /******************************************************************************/
@@ -38,9 +37,8 @@
 
 typedef enum MotILimit_Id
 {
-    /* Heat Limits are polling, optionally share 1 Id */
     // MOT_I_LIMIT_HEAT_MOTOR,    /* MotorHeat */
-    MOT_I_LIMIT_HEAT_MC,       /* From upper module */
+    MOT_I_LIMIT_HEAT_MC,
     MOT_I_LIMIT_V_LOW,
     MOT_I_LIMIT_USER,
 }
@@ -49,7 +47,7 @@ MotILimit_Id_T;
 /* SpeedLimitId */
 typedef enum MotSpeedLimit_Id
 {
-    MOT_SPEED_LIMIT_MC,    /* From upper module */
+    MOT_SPEED_LIMIT_MC,
     MOT_SPEED_LIMIT_USER,
 }
 MotSpeedLimit_Id_T;
@@ -61,11 +59,11 @@ MotSpeedLimit_Id_T;
 // }
 // MotLimits_T;
 
-#define MOT_LIMITS_INIT(p_this)                         \
-{                                                       \
-    .SpeedLimit = LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT),    \
-    .ILimit = LIMIT_ALLOC(I_LIMIT_ID_COUNT),            \
-};
+// #define MOT_LIMITS_INIT(p_this)                         \
+// {                                                       \
+//     .SpeedLimit = LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT),    \
+//     .ILimit = LIMIT_ALLOC(I_LIMIT_ID_COUNT),            \
+// };
 
 // #define MOT_SPEED_LIMITS_INIT(p_this) LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT)
 // #define MOT_I_LIMITS_INIT(p_this) LIMIT_ALLOC(I_LIMIT_ID_COUNT)

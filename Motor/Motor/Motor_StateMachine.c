@@ -98,8 +98,8 @@ static State_T * Init_Next(const Motor_T * p_motor)
 
         // Motor_ClearFaultFlags(p_motor); /* Clear the fault flags once */
 
-        if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U)  { p_nextState = &MOTOR_STATE_FAULT; }
-        else                                            { p_nextState = &MOTOR_STATE_STOP; }
+        if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; }
+        else                                                { p_nextState = &MOTOR_STATE_STOP; }
     }
 
     return p_nextState;
@@ -301,7 +301,14 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_input_value
 static State_T * Passive_InputDirection(const Motor_T * p_motor, state_input_value_t direction)
 {
     State_T * p_nextState = NULL;
-
+    /* validate input */
+    // switch ((Motor_Direction_T)direction)
+    // {
+    //     case MOTOR_DIRECTION_NULL: if (Motor_GetSpeed(p_motor->P_MOTOR_STATE) == 0U) { p_nextState = &MOTOR_STATE_STOP; } break;
+    //     case MOTOR_DIRECTION_CW: break;
+    //     case MOTOR_DIRECTION_CCW: break;
+    // }
+    // Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
     if (Motor_GetSpeed(p_motor->P_MOTOR_STATE) == 0U)
     {
         /* validate direction */
@@ -596,7 +603,7 @@ static State_T * Calibration_InputCalibration(const Motor_T * p_motor, state_inp
 {
     State_T * p_state = (State_T *)statePtr;
 
-    assert(p_state == NULL ||  p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP  == &MOTOR_STATE_CALIBRATION);
+    assert(p_state == NULL || p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
 
     return p_state;
 }
