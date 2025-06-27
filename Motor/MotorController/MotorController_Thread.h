@@ -84,8 +84,8 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
         default: break;
     }
 
-    MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_ACTIVE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
+    MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
 
     // else
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))

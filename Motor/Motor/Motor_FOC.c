@@ -183,7 +183,7 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
     Feedback Control Loop
     StateMachine calls each PWM, ~20kHz
 
-    f(
+    Inputs:
         Angle,
         FeebackMode,
         ReqQ/PidSpeed/TorqueRampOutput,
@@ -191,7 +191,6 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
         PidIq,
         PidId,
         VSourceInvScalar,
-    )
 */
 void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 {
@@ -229,40 +228,7 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
     }
 }
 
-/*
-    Activate angle with or without current feedback
-    for align and openloop
-*/
-void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
-{
-    // Motor_SetElecAngleFeedforward(p_motor, angle);
-    FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetReqD(&p_motor->Foc, dReq);
-    FOC_SetReqQ(&p_motor->Foc, qReq);
-    ProcInnerFeedback(p_motor);
-    ProcAngleOutput(p_motor);
-}
 
-// void Motor_FOC_SetAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
-// {
-//     Motor_SetElecAngleFeedforward(p_motor, angle);
-//     FOC_SetTheta(&p_motor->Foc, angle);
-//     FOC_SetReqD(&p_motor->Foc, dReq);
-//     FOC_SetReqQ(&p_motor->Foc, qReq);
-// }
-
-/*
-    Feed forward voltage angle without feedback on current
-*/
-void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
-{
-    // p_motor->ElectricalAngle = angle;
-    // Motor_SetElecAngleFeedforward(p_motor, angle);
-    FOC_SetTheta(&p_motor->Foc, angle);
-    FOC_SetVd(&p_motor->Foc, vd);
-    FOC_SetVq(&p_motor->Foc, vq);
-    ProcAngleOutput(p_motor);
-}
 
 /* Begin passive monitor, Ifeedback not updated */
 void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
@@ -333,34 +299,44 @@ void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor) { Motor_FOC_SetDirec
 /******************************************************************************/
 /*!
     Open Loop
-    StateMachine mapping
 */
 /******************************************************************************/
-/* Align using user cmd value */
-void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
-{
-    /* ElectricalAngle set by caller  */
-    // Phase_ActivateOutput(&p_motor->PHASE);
-    Ramp_SetOutput(&p_motor->TorqueRamp, 0); /* reset the voltage to start at 0 */
-    p_motor->FeedbackMode.Current = 1U;
-}
-
-/* User ramp */
-void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
-{
-    int16_t req = Ramp_ProcOutput(&p_motor->TorqueRamp);
-    req = (p_motor->FeedbackMode.Current == 1U) ?
-        Motor_OpenLoopILimitOf(p_motor, req) :
-        Motor_OpenLoopVLimitOf(p_motor, req);
-
-    // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, req, 0);
-}
-
-/******************************************************************************/
-/*!
-    Open Loop Run
+/*
+    Activate angle with or without current feedback
+    for align and openloop
 */
-/******************************************************************************/
+void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
+{
+    // Motor_SetElecAngleFeedforward(p_motor, angle);
+    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetReqD(&p_motor->Foc, dReq);
+    FOC_SetReqQ(&p_motor->Foc, qReq);
+    ProcInnerFeedback(p_motor);
+    ProcAngleOutput(p_motor);
+}
+
+// void Motor_FOC_SetAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
+// {
+//     Motor_SetElecAngleFeedforward(p_motor, angle);
+//     FOC_SetTheta(&p_motor->Foc, angle);
+//     FOC_SetReqD(&p_motor->Foc, dReq);
+//     FOC_SetReqQ(&p_motor->Foc, qReq);
+// }
+
+/*
+    Feed forward voltage angle without feedback on current
+*/
+void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
+{
+    // p_motor->ElectricalAngle = angle;
+    // Motor_SetElecAngleFeedforward(p_motor, angle);
+    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetVd(&p_motor->Foc, vd);
+    FOC_SetVq(&p_motor->Foc, vq);
+    ProcAngleOutput(p_motor);
+}
+
+
 /******************************************************************************/
 /*! todo as speedangle, SpeedAngle + OuterControl */
 /******************************************************************************/
@@ -403,7 +379,41 @@ static inline int32_t Motor_MechSpeedOfAngle_Fract16(const Motor_State_T * p_mot
 static inline int16_t Motor_ElecAngleOfSpeed_Fract16(const Motor_State_T * p_motor, int16_t speed_fract16)
     { return ((int32_t)speed_fract16 * Motor_GetSpeedRatedRef_Rpm(p_motor)) / ((uint32_t)60 * MOTOR_CONTROL_FREQ / 2 / p_motor->Config.PolePairs); }
 
+/******************************************************************************/
+/*! */
+/******************************************************************************/
 
+/******************************************************************************/
+/*!
+    Open Loop
+    StateMachine mapping
+*/
+/******************************************************************************/
+/* Align using user cmd value */
+void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
+{
+    /* ElectricalAngle set by caller  */
+    // Phase_ActivateOutput(&p_motor->PHASE);
+    Ramp_SetOutput(&p_motor->TorqueRamp, 0); /* reset the voltage to start at 0 */
+    p_motor->FeedbackMode.Current = 1U;
+}
+
+/* User ramp */
+void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
+{
+    int16_t req = Ramp_ProcOutput(&p_motor->TorqueRamp);
+    req = (p_motor->FeedbackMode.Current == 1U) ?
+        Motor_OpenLoopILimitOf(p_motor, req) :
+        Motor_OpenLoopVLimitOf(p_motor, req);
+
+    // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, req, 0);
+}
+
+/******************************************************************************/
+/*!
+    Open Loop Run
+*/
+/******************************************************************************/
 /*
     preset align OpenLoopIRamp
 */

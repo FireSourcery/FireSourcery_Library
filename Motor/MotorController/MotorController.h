@@ -239,7 +239,7 @@ typedef struct MotorController_State
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
     // MotorController_StateFlags_T StateFlags;
-    MotDrive_Active_T MotDrive; /* Optionally contain on init */
+    MotDrive_State_T MotDrive; /* Optionally contain on init */
 
     MotorController_LockId_T LockSubState; /* todo depreciate */
     /* Async return status */

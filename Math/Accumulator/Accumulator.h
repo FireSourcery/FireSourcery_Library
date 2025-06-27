@@ -31,6 +31,7 @@
 */
 /******************************************************************************/
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
     Accumulator32 Store as shifted

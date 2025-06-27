@@ -110,7 +110,7 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
     MotMotors_ForceDisableControl(&p_context->MOTORS);
 
     /* if drive mode */
-    MotDrive_User_SetZero(p_context->MOT_DRIVE.P_ACTIVE); // set drive to zero
+    MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
     MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_NEUTRAL); // set drive direction to neutral
 
     /* General StateMachine Input */

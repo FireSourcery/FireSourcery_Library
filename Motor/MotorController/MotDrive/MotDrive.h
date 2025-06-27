@@ -119,7 +119,7 @@ typedef struct MotDrive_Config
 }
 MotDrive_Config_T;
 
-typedef struct MotDrive_Active
+typedef struct MotDrive_State
 {
     MotDrive_Config_T Config;
     MotDrive_Input_T Input;
@@ -127,15 +127,15 @@ typedef struct MotDrive_Active
     MotDrive_Status_T Status;
     StateMachine_Active_T StateMachine;
 }
-MotDrive_Active_T;
-
+MotDrive_State_T;
 
 /*
+    [MotDrive Context]
     StateMachine with Sync Input
 */
 typedef const struct MotDrive
 {
-    MotDrive_Active_T * P_ACTIVE;
+    MotDrive_State_T * P_MOT_DRIVE_STATE;
     StateMachine_T STATE_MACHINE;
     MotMotors_T MOTORS;
     const Blinky_T * P_BUZZER;

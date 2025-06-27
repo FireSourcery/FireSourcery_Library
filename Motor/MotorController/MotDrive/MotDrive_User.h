@@ -44,9 +44,9 @@
 /*
     Set buffer asysnc. proc in thread
 */
-static inline void MotDrive_User_SetThrottle(MotDrive_Active_T * p_motDriveState, uint16_t userCmd) { p_motDriveState->Input.ThrottleValue = userCmd; }
-static inline void MotDrive_User_SetBrake(MotDrive_Active_T * p_motDriveState, uint16_t userCmd)    { p_motDriveState->Input.BrakeValue = userCmd; }
-static inline void MotDrive_User_SetZero(MotDrive_Active_T * p_motDriveState)
+static inline void MotDrive_User_SetThrottle(MotDrive_State_T * p_motDriveState, uint16_t userCmd) { p_motDriveState->Input.ThrottleValue = userCmd; }
+static inline void MotDrive_User_SetBrake(MotDrive_State_T * p_motDriveState, uint16_t userCmd)    { p_motDriveState->Input.BrakeValue = userCmd; }
+static inline void MotDrive_User_SetZero(MotDrive_State_T * p_motDriveState)
 {
     p_motDriveState->Input.ThrottleValue = 0U;
     p_motDriveState->Input.BrakeValue = 0U;
@@ -63,13 +63,13 @@ extern MotDrive_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_this
 /******************************************************************************/
 // static inline MotDrive_BrakeMode_T _MotDrive_Config_GetBrakeMode(const MotDrive_Config_T * p_config) { return p_config; }
 
-static inline MotDrive_BrakeMode_T MotDrive_Config_GetBrakeMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.BrakeMode; }
-static inline MotDrive_ThrottleMode_T MotDrive_Config_GetThrottleMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.ThrottleMode; }
-static inline MotDrive_ZeroMode_T MotDrive_Config_GetZeroMode(const MotDrive_Active_T * p_motDriveState) { return p_motDriveState->Config.ZeroMode; }
+static inline MotDrive_BrakeMode_T MotDrive_Config_GetBrakeMode(const MotDrive_State_T * p_motDriveState) { return p_motDriveState->Config.BrakeMode; }
+static inline MotDrive_ThrottleMode_T MotDrive_Config_GetThrottleMode(const MotDrive_State_T * p_motDriveState) { return p_motDriveState->Config.ThrottleMode; }
+static inline MotDrive_ZeroMode_T MotDrive_Config_GetZeroMode(const MotDrive_State_T * p_motDriveState) { return p_motDriveState->Config.ZeroMode; }
 
-static inline void MotDrive_Config_SetBrakeMode(MotDrive_Active_T * p_motDriveState, MotDrive_BrakeMode_T mode) { p_motDriveState->Config.BrakeMode = mode; }
-static inline void MotDrive_Config_SetThrottleMode(MotDrive_Active_T * p_motDriveState, MotDrive_ThrottleMode_T mode) { p_motDriveState->Config.ThrottleMode = mode; }
-static inline void MotDrive_Config_SetZeroMode(MotDrive_Active_T * p_motDriveState, MotDrive_ZeroMode_T mode) { p_motDriveState->Config.ZeroMode = mode; }
+static inline void MotDrive_Config_SetBrakeMode(MotDrive_State_T * p_motDriveState, MotDrive_BrakeMode_T mode) { p_motDriveState->Config.BrakeMode = mode; }
+static inline void MotDrive_Config_SetThrottleMode(MotDrive_State_T * p_motDriveState, MotDrive_ThrottleMode_T mode) { p_motDriveState->Config.ThrottleMode = mode; }
+static inline void MotDrive_Config_SetZeroMode(MotDrive_State_T * p_motDriveState, MotDrive_ZeroMode_T mode) { p_motDriveState->Config.ZeroMode = mode; }
 
 
 /******************************************************************************/
@@ -98,6 +98,6 @@ MotDrive_VarId_T;
 extern uint32_t MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, int32_t value);
 extern int32_t MotDrive_VarId_Get(const MotDrive_T * p_motDrive, MotDrive_VarId_T id);
 
-extern int32_t MotDrive_ConfigId_Get(const MotDrive_Active_T * p_motDriveState, MotDrive_ConfigId_T id);
-extern uint32_t MotDrive_ConfigId_Set(MotDrive_Active_T * p_motDriveState, MotDrive_ConfigId_T id, int32_t value);
+extern int32_t MotDrive_ConfigId_Get(const MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id);
+extern uint32_t MotDrive_ConfigId_Set(MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id, int32_t value);
 

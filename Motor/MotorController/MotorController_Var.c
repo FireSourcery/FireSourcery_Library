@@ -279,7 +279,7 @@ static int _HandleSystemService_Get(const MotorController_T * p_context, MotVarI
         /* read only for now */
         // case MOT_VAR_TYPE_USER_INPUT:            return MotorController_VarInput_Get(p_mc, varId.NameBase);
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:     return MotDrive_VarId_Get(&p_context->MOT_DRIVE, varId.NameBase);
-        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:      return MotDrive_ConfigId_Get(p_context->MOT_DRIVE.P_ACTIVE, varId.NameBase);
+        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:      return MotDrive_ConfigId_Get(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.NameBase);
 
         case MOT_VAR_TYPE_INSTANCES_REF:         return MotorController_InstancesRef_Get(p_context, varId.NameBase);
         case MOT_VAR_TYPE_DEBUG:                 return MotorController_VarOutput_Debug_Get(p_context, varId.NameBase);
@@ -322,7 +322,7 @@ static MotVarId_Status_T _HandleSystemService_Set(const MotorController_T * p_co
 
         case MOT_VAR_TYPE_USER_INPUT:           MotorController_VarInput_Set(p_context, varId.NameBase, value); break;
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:    MotDrive_VarId_Set(&p_context->MOT_DRIVE, varId.NameBase, value); break;
-        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:     MotDrive_ConfigId_Set(p_context->MOT_DRIVE.P_ACTIVE, varId.NameBase, value); break;
+        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:     MotDrive_ConfigId_Set(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.NameBase, value); break;
 
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }

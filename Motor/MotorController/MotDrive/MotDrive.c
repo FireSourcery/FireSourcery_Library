@@ -31,12 +31,12 @@
 #include "MotDrive.h"
 
 
-void MotDrive_InitFrom(MotDrive_Active_T * p_fields, const MotDrive_Config_T * p_config)
+void MotDrive_InitFrom(MotDrive_State_T * p_fields, const MotDrive_Config_T * p_config)
 {
     if (p_config != NULL) { p_fields->Config = *p_config; }
 }
 
 void MotDrive_Init(const MotDrive_T * p_handle)
 {
-    MotDrive_InitFrom(p_handle->P_ACTIVE, p_handle->P_NVM_CONFIG);
+    MotDrive_InitFrom(p_handle->P_MOT_DRIVE_STATE, p_handle->P_NVM_CONFIG);
 }

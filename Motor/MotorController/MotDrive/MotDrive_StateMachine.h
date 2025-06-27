@@ -33,7 +33,7 @@
 #include "Utility/StateMachine/StateMachine.h"
 
 // typedef struct MotDrive MotDrive_T;
-// typedef struct MotDrive_Active MotDrive_Active_T;
+// typedef struct MotDrive_State MotDrive_State_T;
 
 /*
     State Machine
@@ -67,9 +67,9 @@ extern const StateMachine_Machine_T MOT_DRIVE_MACHINE;
 */
 static inline void MotDrive_Proc_Thread(const MotDrive_T * p_motDrive)
 {
-    if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_ACTIVE->Input) == true)
+    if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_MOT_DRIVE_STATE->Input) == true)
     {
-        switch (p_motDrive->P_ACTIVE->Input.Cmd)
+        switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
         {
             case MOT_DRIVE_CMD_BRAKE: _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_BRAKE); break;
             case MOT_DRIVE_CMD_THROTTLE: _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_THROTTLE); break;
@@ -119,5 +119,5 @@ static inline bool MotDrive_StateMachine_CheckExit(const MotDrive_T * p_motDrive
 // static inline MotDrive_Status_T MotDrive_StateMachine_GetStatus(const MotDrive_T * p_handle)
 // {
 //     // StateMachine_GetActiveStateId(&p_handle->STATE_MACHINE);
-//     return (p_handle->STATE_MACHINE.P_ACTIVE->p_ActiveState == &MOT_DRIVE_STATE_PARK) ? MOT_DRIVE_STATUS_FAULT : MOT_DRIVE_STATUS_OK;
+//     return (p_handle->STATE_MACHINE.P_MOT_DRIVE_STATE->p_ActiveState == &MOT_DRIVE_STATE_PARK) ? MOT_DRIVE_STATUS_FAULT : MOT_DRIVE_STATUS_OK;
 // }
