@@ -50,12 +50,11 @@
 
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
-// #include "Transducer/Thermistor/Thermistor.h"
 #include "Transducer/Thermistor/HeatMonitor.h"
 
 #include "Utility/Var/VarAccess.h"
 #include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine.h"
+#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
 #include "Utility/Timer/Timer.h"
 #include "Utility/LimitArray/LimitArray.h"
 
@@ -78,7 +77,7 @@
 #include "Motor_Var.h"
 #include "Analog/Motor_Analog.h"
 #include "Sensor/Motor_Sensor.h"
-// #include "Motor_ConfigRef.h"
+// #include "Motor_Config.h"
 
 /******************************************************************************/
 /*
