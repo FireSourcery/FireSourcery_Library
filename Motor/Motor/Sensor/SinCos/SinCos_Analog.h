@@ -27,6 +27,6 @@
 //         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
 //     }
-//     // MotorSensor_MarkAnalog(&p_motor->Sensor);
+//     // RotorSensor_MarkAnalog(&p_motor->Sensor);
 // #endif
 // }

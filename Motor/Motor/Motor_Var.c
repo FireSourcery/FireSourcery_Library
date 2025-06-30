@@ -68,10 +68,10 @@ int _Motor_Var_AngleSpeed_Get(const Motor_State_T * p_motor, Motor_Var_AngleSpee
 {
     switch (varId)
     {
-        case MOTOR_VAR_ANGLE_SPEED_ELECTRICAL_ANGLE:   return _MotorSensor_GetElecticalAngle(&p_motor->SensorState);
-        case MOTOR_VAR_ANGLE_SPEED_MECHANICAL_ANGLE:   return _MotorSensor_GetMechanicalAngle(&p_motor->SensorState);
-        case MOTOR_VAR_ANGLE_SPEED_ELECTRICAL_SPEED:   return _MotorSensor_GetElectricalSpeed(&p_motor->SensorState);
-        case MOTOR_VAR_ANGLE_SPEED_DIRECTION:          return _MotorSensor_GetDirection(&p_motor->SensorState);
+        case MOTOR_VAR_ANGLE_SPEED_ELECTRICAL_ANGLE:   return _RotorSensor_GetElecticalAngle(&p_motor->SensorState);
+        case MOTOR_VAR_ANGLE_SPEED_MECHANICAL_ANGLE:   return _RotorSensor_GetMechanicalAngle(&p_motor->SensorState);
+        case MOTOR_VAR_ANGLE_SPEED_ELECTRICAL_SPEED:   return _RotorSensor_GetElectricalSpeed(&p_motor->SensorState);
+        case MOTOR_VAR_ANGLE_SPEED_DIRECTION:          return _RotorSensor_GetDirection(&p_motor->SensorState);
         // case MOTOR_VAR_ANGLE_SPEED_ELECTRICAL_SPEED_RADS: return 0; /* todo */
         // case MOTOR_VAR_ANGLE_SPEED_MECHANICAL_SPEED_RPM: return 0; /* todo */
         default: return 0;
@@ -421,7 +421,7 @@ int Motor_VarRef_Get(Motor_VarRef_T varId)
 
 // int _Motor_VarConfig_HeatMonitor_Get(const Motor_State_T * p_motor, HeatMonitor_ConfigId_T varId) { return HeatMonitor_ConfigId_Get(&p_motor->Thermistor, varId); }
 // void _Motor_VarConfig_HeatMonitor_Set(Motor_State_T * p_motor, HeatMonitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->Thermistor, varId, varValue); }
-// extern void _Motor_VarSensorCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);
+// extern void _Motor_VarSensorCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
 
 /******************************************************************************/
 /*
@@ -643,24 +643,24 @@ void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T ty
     Wrap
 */
 /******************************************************************************/
-int Motor_VarType_SensorState_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+int Motor_VarType_SensorState_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId)
 {
     if (p_motor == NULL) return 0;
 
-    return MotorSensor_VarType_Get(&p_motor->SENSOR_TABLE, typeId, varId);
+    return RotorSensor_VarType_Get(&p_motor->SENSOR_TABLE, typeId, varId);
 }
 
-int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId)
 {
     if (p_motor == NULL) return 0;
 
-    return MotorSensor_VarTypeConfig_Get(&p_motor->SENSOR_TABLE, typeId, varId);
+    return RotorSensor_VarTypeConfig_Get(&p_motor->SENSOR_TABLE, typeId, varId);
 }
 
-void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
 
-    MotorSensor_VarTypeConfig_Set(&p_motor->SENSOR_TABLE, typeId, varId, varValue);
+    RotorSensor_VarTypeConfig_Set(&p_motor->SENSOR_TABLE, typeId, varId, varValue);
 }

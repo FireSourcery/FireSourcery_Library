@@ -54,7 +54,7 @@ static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return Motor
 /* Optionally mark on Start */
 static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
-    // MotorSensor_MarkAnalog(&p_context->Sensor);
+    // RotorSensor_MarkAnalog(&p_context->Sensor);
     switch (StateMachine_GetActiveStateId(&p_context->P_MOTOR_STATE->StateMachine))
     {
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_context);     break;
@@ -101,14 +101,14 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     /* Alternatively capture */
     // if (Timer_Periodic_Poll(&p_fields->SpeedTimer) == true)
     // {
-    //     MotorSensor_CaptureSpeed(p_fields->p_ActiveSensor);
+    //     RotorSensor_CaptureSpeed(p_fields->p_ActiveSensor);
     //     alt set syncflag
     //     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_MOTOR_STATE) == MSM_STATE_ID_RUN)
     //     {
     //         _Motor_ProcOuterFeedback(p_fields);
     //     }
     // }
-    // MotorSensor_CaptureAngle(p_fields->p_ActiveSensor);
+    // RotorSensor_CaptureAngle(p_fields->p_ActiveSensor);
 
     StateMachine_Synchronous_Thread(&p_context->STATE_MACHINE);
 

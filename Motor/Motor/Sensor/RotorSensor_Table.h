@@ -29,17 +29,17 @@
     @brief  Sensor Abstraction/Selection Interface
 */
 /******************************************************************************/
-#include "Hall/Hall_MotorSensor.h"
-#include "Encoder/Encoder_MotorSensor.h"
-#include "MotorSensor.h"
+#include "Hall/Hall_Sensor.h"
+#include "Encoder/Encoder_Sensor.h"
+#include "RotorSensor.h"
 
 /*
-    [RotorSensor_TypeId]
+    [RotorSensor_Id]
     TypeId
     Generic access
     Perserve order for serialization
 */
-typedef enum MotorSensor_Id
+typedef enum RotorSensor_Id
 {
     ROTOR_SENSOR_ID_HALL,
     ROTOR_SENSOR_ID_ENCODER,
@@ -49,7 +49,7 @@ typedef enum MotorSensor_Id
     // ROTOR_SENSOR_ID_VTABLE,
     ROTOR_SENSOR_ID_COUNT,
 }
-MotorSensor_Id_T;
+RotorSensor_Id_T;
 
 
 /*
@@ -61,15 +61,15 @@ MotorSensor_Id_T;
 */
 // typedef const struct Motor_SensorTable
 // alternatively as [Motor_SensorTable_T], part of Motor_T
-typedef const struct MotorSensor_Table
+typedef const struct RotorSensor_Table
 {
-    const MotorSensor_T EMPTY;
+    const RotorSensor_T EMPTY;
 // #if defined(CONFIG_MOTOR_SENSOR_HALL_ENABLE)
-    const Hall_MotorSensor_T HALL;
+    const Hall_RotorSensor_T HALL;
 // #endif
-    const Encoder_MotorSensor_T ENCODER;
+    const Encoder_RotorSensor_T ENCODER;
 }
-MotorSensor_Table_T;
+RotorSensor_Table_T;
 
 // #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) MOTOR_SENSOR_INIT_AS_EMPTY(p_State)
 // #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
@@ -87,7 +87,7 @@ MotorSensor_Table_T;
 /*
     get by const id, mux with named indexs
 */
-static inline MotorSensor_T * MotorSensor_Of(const MotorSensor_Table_T * p_table, MotorSensor_Id_T id)
+static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table, RotorSensor_Id_T id)
 {
     switch (id)
     {
@@ -97,13 +97,12 @@ static inline MotorSensor_T * MotorSensor_Of(const MotorSensor_Table_T * p_table
     }
 }
 
-// static inline Hall_T * MotorSensor_GetHall(const MotorSensor_Table_T * p_table)// {//     return &p_table->HALL.HALL;// }
 
 /******************************************************************************/
 /*!
     Var Id
 */
 /******************************************************************************/
-extern int MotorSensor_VarType_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId);
-extern int MotorSensor_VarTypeConfig_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId);
-extern void MotorSensor_VarTypeConfig_Set(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId, int varValue);
+extern int RotorSensor_VarType_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId);
+extern int RotorSensor_VarTypeConfig_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId);
+extern void RotorSensor_VarTypeConfig_Set(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId, int varValue);

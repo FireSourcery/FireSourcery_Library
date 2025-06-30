@@ -61,8 +61,8 @@ static inline int32_t Motor_User_GetSpeed_Fract16(const Motor_State_T * p_motor)
 /*! @return [0:65535] <=> [0:2) */
 static inline uint16_t Motor_User_GetSpeed_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetSpeed(p_motor)); }
 
-static inline int16_t Motor_User_GetSpeed_DegPerCycle(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, MotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
-static inline uint16_t Motor_User_GetSpeed_UDegControl(const Motor_State_T * p_motor) { return math_abs(MotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
+static inline int16_t Motor_User_GetSpeed_DegPerCycle(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
+static inline uint16_t Motor_User_GetSpeed_UDegControl(const Motor_State_T * p_motor) { return math_abs(RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
 
 static inline int32_t Motor_User_GetVSpeedEffective_Fract16(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 2); }
 static inline uint16_t Motor_User_GetVSpeedEffective_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetVSpeed_Fract16(p_motor) / 2); }
@@ -105,8 +105,8 @@ static inline int32_t Motor_User_GetElectricalPower_VA(const Motor_State_T * p_m
 static inline thermal_t Motor_User_GetHeat_DegC(const Motor_State_T * p_motor)           { return HeatMonitor_CelsiusOfAdcu(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
-static inline angle16_t Motor_User_GetElectricalAngle(const Motor_State_T * p_motor) { return MotorSensor_GetElecticalAngle(p_motor->p_ActiveSensor); }
-static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_motor) { return MotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor); }
+static inline angle16_t Motor_User_GetElectricalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetElecticalAngle(p_motor->p_ActiveSensor); }
+static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor); }
 
 
 /*

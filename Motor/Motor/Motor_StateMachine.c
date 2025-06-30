@@ -55,7 +55,7 @@ static State_T * TransitionFault(const Motor_T * p_motor, state_input_value_t fa
 static void Motor_ClearFaultFlags(const Motor_T * p_motor)
 {
     // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
-    p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !MotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+    p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
 }
 
 /******************************************************************************/
@@ -93,7 +93,7 @@ static State_T * Init_Next(const Motor_T * p_motor)
     {
         // (Motor_CheckConfig() == true)    // check params, sync config limits
         if (MotorAnalogRef_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outter module parse */
-        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !MotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
         // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
 
         // Motor_ClearFaultFlags(p_motor); /* Clear the fault flags once */
@@ -277,8 +277,8 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_input_value
         case PHASE_OUTPUT_VPWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
             {
-                // MotorSensor_Zero(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-                if (MotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true)
+                // RotorSensor_Zero(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+                if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true)
                 {
                     // Motor_ZeroSensor(p_motor);
                     p_nextState = &MOTOR_STATE_RUN;

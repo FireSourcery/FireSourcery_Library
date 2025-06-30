@@ -113,13 +113,3 @@ void Motor_Hall_Calibrate(const Motor_T * p_motor)
     // StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &(State_TransitionInput_T)State_TransitionCmd_Create(&MOTOR_STATE_CALIBRATION, Calibration_Start), 0);
 }
 
-/******************************************************************************/
-/*!
-    Additional VarId Interface
-    alternatively checkin handler
-*/
-/******************************************************************************/
-// int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId) { return _Hall_ConfigId_Get(GetHall(p_motor)->P_STATE, varId); }
-
-// void Motor_Hall_Config_Set(Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue) { _Hall_ConfigId_Set(GetHall(p_motor)->P_STATE, varId, varValue); }
-

@@ -31,7 +31,7 @@
 #ifndef MOTOR_FOC_H
 #define MOTOR_FOC_H
 
-// #include "Sensor/MotorSensor.h"
+// #include "Sensor/RotorSensor.h"
 #include "Analog/MotorAnalog.h"
 
 #include "Motor.h"

@@ -71,16 +71,16 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 */
 /******************************************************************************/
 /* Reboot unless deinit is implemented in HAL */
-void Motor_Config_SetSensorMode(Motor_State_T * p_motor, MotorSensor_Id_T mode)
+void Motor_Config_SetSensorMode(Motor_State_T * p_motor, RotorSensor_Id_T mode)
 {
     p_motor->Config.SensorMode = mode;
-    PropagateSet(p_motor, Motor_Sensor_Reinit);
+    PropagateSet(p_motor, Motor_ReinitSensor);
 }
 
 void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 {
     p_motor->Config.PolePairs = polePairs;
-    PropagateSet(p_motor, Motor_Sensor_ResetUnits);
+    PropagateSet(p_motor, Motor_ResetUnits);
 }
 
 /* Setting Kv overwrites SpeedRefs. SpeedRefs can be set independently from Kv or lock */
@@ -88,13 +88,13 @@ void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
-    PropagateSet(p_motor, Motor_Sensor_ResetUnits);
+    PropagateSet(p_motor, Motor_ResetUnits);
 }
 
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t controlDeg)
 {
     p_motor->Config.SpeedRated_DegPerCycle = math_max(controlDeg, Motor_GetSpeedVRef_DegPerCycle(p_motor));
-    PropagateSet(p_motor, Motor_Sensor_ResetUnits);
+    PropagateSet(p_motor, Motor_ResetUnits);
 }
 
 
@@ -115,7 +115,7 @@ static inline void Motor_Config_SetPhaseMode(Motor_State_T * p_motor, Phase_Pola
 void Motor_Config_SetSpeedVRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
 {
     // p_motor->Config.Kv = rpm / MotorAnalog_GetVSource_V();
-    // PropagateSet(p_motor, Motor_Sensor_ResetUnits);
+    // PropagateSet(p_motor, Motor_ResetUnits);
     Motor_Config_SetKv(p_motor, MotorAnalog_GetVSource_V());
 }
 

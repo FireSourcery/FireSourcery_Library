@@ -28,45 +28,11 @@
 */
 /******************************************************************************/
 #include "Motor_Sensor.h"
-#include "../Motor.h"
+
 #include "../Motor_StateMachine.h"
 
-#include "../Math/math_speed.h"
+// #include "../Math/math_speed.h"
 
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-/*
-    Wrapper for Propagate Set
-*/
-void Motor_Sensor_Reinit(Motor_State_T * p_motor)
-{
-    MotorSensor_Init(p_motor->p_ActiveSensor);
-}
-
-/*
-    propagate Motor Config to sensor module params
-*/
-void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
-{
-    MotorSensor_Config_T config =
-    {
-       .ElSpeedRated_DegPerCycle = Motor_GetSpeedRatedRef_DegPerCycle(p_motor),
-       .MechSpeedRated_Rpm = Motor_GetSpeedRatedRef_Rpm(p_motor),
-       .PolePairs = p_motor->Config.PolePairs,
-    };
-
-    MotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
-}
 
 
 /******************************************************************************/
@@ -77,9 +43,9 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 */
 /******************************************************************************/
 /*!
-    @param[in] MotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
+    @param[in] RotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
 */
-void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
@@ -110,58 +76,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 
 
 
-/******************************************************************************/
-/*
-    alternatively on SensorTable
-*/
-/******************************************************************************/
-int Motor_Sensor_VarType_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
-{
-    const MotorSensor_Table_T * p_table = &p_motor->SENSOR_TABLE;
-    if (p_motor == NULL) return 0;
 
-    switch (typeId)
-    {
-        // case ROTOR_SENSOR_ID_HALL:    return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
-        case ROTOR_SENSOR_ID_ENCODER: return Enocder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
-            // case ROTOR_SENSOR_ID_SIN_COS: return SinCos_VarId_Get(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId); break;
-            // case ROTOR_SENSOR_ID_SENSORLESS: return Sensorless_VarId_Get(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId); break;
-        default: return 0; // or some error value
-    }
-}
-
-/* caller checks for null pointer */
-int Motor_Sensor_VarTypeConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
-{
-    const MotorSensor_Table_T * p_table = &p_motor->SENSOR_TABLE;
-    if (p_motor == NULL) return 0;
-
-    switch (typeId)
-    {
-        case ROTOR_SENSOR_ID_HALL:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId); break;
-        case ROTOR_SENSOR_ID_ENCODER: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
-    }
-}
-
-
-void Motor_Sensor_VarTypeConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
-{
-    if (p_motor == NULL) return;
-    if (!Motor_StateMachine_IsConfig(p_motor)) return;
-
-    switch (typeId)
-    {
-        case ROTOR_SENSOR_ID_HALL:
-            // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_motor->SENSOR_TABLE.HALL.HALL); return; }
-            Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);
-            break;
-
-        case ROTOR_SENSOR_ID_ENCODER:
-            Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);
-            break;
-        default: break;
-    }
-}
 
 /******************************************************************************/
 /*!

@@ -38,10 +38,3 @@ typedef struct Motor_State Motor_State_T;
 extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
 // extern void Motor_Hall_Cmd(const Motor_T * p_motor, int cmdId);
 
-/******************************************************************************/
-/*!
-    Id Access
-*/
-/******************************************************************************/
-// extern int32_t Motor_Hall_Config_Get(const Motor_T * p_motor, Hall_ConfigId_T varId);
-// extern void Motor_Hall_Config_Set(const Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue);

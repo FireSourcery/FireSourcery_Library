@@ -38,8 +38,8 @@
 #include "Analog/MotorAnalogRef.h"
 
 #include "Phase/Phase.h"
-#include "Sensor/MotorSensor.h"
-#include "Sensor/MotorSensor_Table.h"
+#include "Sensor/RotorSensor.h"
+#include "Sensor/RotorSensor_Table.h"
 // #include "Hall/Hall.h"
 // #include "SinCos/SinCos.h"
 
@@ -168,7 +168,7 @@ typedef struct Motor_Config
 {
     Motor_CommutationMode_T     CommutationMode;
     Motor_Direction_T           DirectionForward;
-    MotorSensor_Id_T            SensorMode;
+    RotorSensor_Id_T            SensorMode;
 
     /*
         Calibration parameters
@@ -268,8 +268,8 @@ typedef struct Motor_State
         Position Sensor
     */
     Timer_T SpeedTimer;                 /* Outer Speed Loop Timer */
-    const MotorSensor_T * p_ActiveSensor;
-    MotorSensor_State_T SensorState;
+    const RotorSensor_T * p_ActiveSensor;
+    RotorSensor_State_T SensorState;
     // SpeedAngle_T SpeedAngle;         /* Speed Feedback State. Speed_Fract16, ElectricalSpeed_DegPerCycle, ElectricalAngle */
                                         /* outer feedback math state */
 
@@ -399,7 +399,7 @@ typedef const struct Motor
     Phase_T PHASE;
     Motor_Analog_T ANALOG; // PhaseAnalog_T PHASE_ANALOG;
 
-    MotorSensor_Table_T SENSOR_TABLE; // RotorSensor_Table_T SENSOR_TABLE;
+    RotorSensor_Table_T SENSOR_TABLE; // RotorSensor_Table_T SENSOR_TABLE;
     // const Encoder_T ENCODER;
     // const Hall_T HALL;
 
@@ -430,7 +430,7 @@ typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value
 typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
 
 
-// static inline MotorSensor_T * _Motor_GetSensor(const Motor_T * p_motor) { return MotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
+// static inline RotorSensor_T * _Motor_GetSensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 
 
 /******************************************************************************/
@@ -506,19 +506,19 @@ static inline bool Motor_PollCaptureSensor(Motor_State_T * p_motor)
     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
     if (isCaptureSpeed == true)
     {
-        MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
-        // p_motor->p_ActiveSensor ->Speed_Fract16 = (MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2;
+        RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
+        // p_motor->p_ActiveSensor ->Speed_Fract16 = (RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2;
     }
-    MotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
+    RotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
     return isCaptureSpeed;
-    // return (Timer_Periodic_Poll(&p_motor->SpeedTimer) == true) ? ({ MotorSensor_CaptureSpeed(p_motor->p_ActiveSensor); true; }) : false;
+    // return (Timer_Periodic_Poll(&p_motor->SpeedTimer) == true) ? ({ RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor); true; }) : false;
 }
 
 /*
     Interface Wrap
 */
 /* Feedback Speed */
-static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return MotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 
 
 /******************************************************************************/
@@ -660,11 +660,11 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
 
     if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer) == true)
     {
-        MotorSensor_CaptureSpeed(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        RotorSensor_CaptureSpeed(p_motor->P_MOTOR_STATE->p_ActiveSensor);
         _Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     }
 
-    MotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+    RotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
 }
 
 
@@ -681,7 +681,7 @@ static inline fract16_t Motor_ProcOuterFeedback(const Motor_T * p_motor)
 /******************************************************************************/
 static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
 {
-    int32_t result = Motor_VSpeed_Fract16OfDegPerCycle(p_motor, MotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor));
+    int32_t result = Motor_VSpeed_Fract16OfDegPerCycle(p_motor, RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor));
     // int32_t result = p_motor->ElectricalSpeed_DegPerCycle * MotorAnalog_GetVSource_Fract16() / p_motor->Config.SpeedRated_DegPerCycle; /* SpeedRated ~= SpeedVRef */
     return fract16_mul(result, p_motor->Config.VSpeedScalar_Fract16);
 }
@@ -717,9 +717,12 @@ static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return
     Extern
 */
 /******************************************************************************/
-extern void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config);
+// extern void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config);
 extern void Motor_Init(const Motor_T * p_context);
 extern void Motor_Reset(Motor_State_T * p_motor);
+
+extern void Motor_ReinitSensor(Motor_State_T * p_motor);
+extern void Motor_ResetUnits(Motor_State_T * p_motor);
 
 extern void Motor_ResetSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_ResetTorqueRamp(Motor_State_T * p_motor);

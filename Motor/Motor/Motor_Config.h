@@ -84,7 +84,7 @@ static inline void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor,
 /*
     Set with Propagate
 */
-static inline MotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_State_T * p_motor)              { return p_motor->Config.SensorMode; }
+static inline RotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_State_T * p_motor)              { return p_motor->Config.SensorMode; }
 static inline uint8_t Motor_Config_GetPolePairs(const Motor_State_T * p_motor)                        { return p_motor->Config.PolePairs; }
 static inline uint16_t Motor_Config_GetKv(const Motor_State_T * p_motor)                              { return p_motor->Config.Kv; }
 static inline uint16_t Motor_Config_GetSpeedRated(const Motor_State_T * p_motor)                      { return p_motor->Config.SpeedRated_DegPerCycle; }
@@ -153,7 +153,7 @@ static inline uint16_t Motor_Config_GetOpenLoopIRamp_Millis(const Motor_State_T 
 // extern void Motor_Config_SetWith(Motor_State_T * p_motor, State_Set_T setter, int32_t value);
 
 // extern void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward);
-extern void Motor_Config_SetSensorMode(Motor_State_T * p_motor, MotorSensor_Id_T mode);
+extern void Motor_Config_SetSensorMode(Motor_State_T * p_motor, RotorSensor_Id_T mode);
 extern void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs);
 extern void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv);
 extern void Motor_Config_SetVSpeedScalar_UFract16(Motor_State_T * p_motor, uint16_t scalar);

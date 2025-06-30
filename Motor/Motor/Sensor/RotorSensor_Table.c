@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 /******************************************************************************/
-#include "MotorSensor_Table.h"
+#include "RotorSensor_Table.h"
 
 
 /******************************************************************************/
@@ -36,7 +36,7 @@
     Var Id
 */
 /******************************************************************************/
-int MotorSensor_VarType_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId)
+int RotorSensor_VarType_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId)
 {
     switch (typeId)
     {
@@ -48,7 +48,7 @@ int MotorSensor_VarType_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_
     }
 }
 
-int MotorSensor_VarTypeConfig_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId)
+int RotorSensor_VarTypeConfig_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId)
 {
     switch (typeId)
     {
@@ -57,18 +57,13 @@ int MotorSensor_VarTypeConfig_Get(const MotorSensor_Table_T * p_table, MotorSens
     }
 }
 
-void MotorSensor_VarTypeConfig_Set(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId, int varValue)
+void RotorSensor_VarTypeConfig_Set(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId, int varValue)
 {
     switch (typeId)
     {
-        case ROTOR_SENSOR_ID_HALL:
-            // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_table->HALL.HALL); return; }
-            Hall_ConfigId_Set(&p_table->HALL.HALL, varId, varValue);
-            break;
-
-        case ROTOR_SENSOR_ID_ENCODER:
-            Encoder_ConfigId_Set(&p_table->ENCODER.ENCODER, varId, varValue);
-            break;
+        case ROTOR_SENSOR_ID_HALL:      Hall_ConfigId_Set(&p_table->HALL.HALL, varId, varValue);            break;
+        case ROTOR_SENSOR_ID_ENCODER:   Encoder_ConfigId_Set(&p_table->ENCODER.ENCODER, varId, varValue);   break;
         default: break;
     }
+    // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_table->HALL.HALL); return; }
 }

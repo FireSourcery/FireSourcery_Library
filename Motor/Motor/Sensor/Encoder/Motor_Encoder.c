@@ -33,20 +33,20 @@
 #include "../../Motor.h"
 #include "../../Motor_Var.h"
 #include "../../Motor_FOC.h"
-#include "../MotorSensor.h"
+#include "../RotorSensor.h"
 
 // /******************************************************************************/
 // /*
 //     Interface Table
 // */
 // /******************************************************************************/
-// MotorSensor_VTable_T MOTOR_ENCODER =
+// RotorSensor_VTable_T MOTOR_ENCODER =
 // {
-//     .Init = (MotorSensor_Proc_T)Encoder_ModeDT_Init_InterruptQuadrature,
-//     // .VerifyCalibration = (MotorSensor_Test_T)Encoder_ModeDT_VerifyCalibration,
-//     // .PollAngle = (MotorSensor_Angle_T)Encoder_ModeDT_GetAngle,
-//     // .PollSpeed = (MotorSensor_Speed_T)Encoder_ModeDT_GetSpeed,
-//     // .Zero = (MotorSensor_Proc_T)Encoder_ModeDT_SetInitial,
+//     .Init = (RotorSensor_Proc_T)Encoder_ModeDT_Init_InterruptQuadrature,
+//     // .VerifyCalibration = (RotorSensor_Test_T)Encoder_ModeDT_VerifyCalibration,
+//     // .PollAngle = (RotorSensor_Angle_T)Encoder_ModeDT_GetAngle,
+//     // .PollSpeed = (RotorSensor_Speed_T)Encoder_ModeDT_GetSpeed,
+//     // .Zero = (RotorSensor_Proc_T)Encoder_ModeDT_SetInitial,
 // };
 
 

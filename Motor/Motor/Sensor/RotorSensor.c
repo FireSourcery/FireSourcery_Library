@@ -24,38 +24,38 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorSensor.c
+    @file   RotorSensor.c
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
 /******************************************************************************/
-#include "MotorSensor.h"
+#include "RotorSensor.h"
 
 /******************************************************************************/
 /*
     Empty Instance
 */
 /******************************************************************************/
-static void Empty_Init(const MotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_CaptureAngle(const MotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_CaptureSpeed(const MotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_ResetUnits(const MotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
-static bool Empty_IsFeedbackAvailable(const MotorSensor_T * p_sensor) { (void)p_sensor; return false; }
-static bool Empty_VerifyCalibration(const MotorSensor_T * p_sensor) { (void)p_sensor; return false; }
-static int Empty_GetDirection(const MotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
-static void Empty_SetDirection(const MotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
+static void Empty_Init(const RotorSensor_T * p_sensor) { (void)p_sensor; }
+static void Empty_CaptureAngle(const RotorSensor_T * p_sensor) { (void)p_sensor; }
+static void Empty_CaptureSpeed(const RotorSensor_T * p_sensor) { (void)p_sensor; }
+static void Empty_ResetUnits(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
+static bool Empty_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
+static bool Empty_VerifyCalibration(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
+static int Empty_GetDirection(const RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
+static void Empty_SetDirection(const RotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
 
-const MotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
+const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
 {
-    .INIT = (MotorSensor_Proc_T)Empty_Init,
-    .CAPTURE_ANGLE = (MotorSensor_Proc_T)Empty_CaptureAngle,
-    .CAPTURE_SPEED = (MotorSensor_Proc_T)Empty_CaptureSpeed,
-    .IS_FEEDBACK_AVAILABLE = (MotorSensor_Test_T)Empty_IsFeedbackAvailable,
-    .SET_DIRECTION = (MotorSensor_Set_T)Empty_SetDirection,
-    .GET_DIRECTION = (MotorSensor_Get_T)Empty_GetDirection,
-    // .SET_INITIAL = (MotorSensor_Proc_T)SetInitial,
-    .INIT_UNITS_FROM = (MotorSensor_InitFrom_T)Empty_ResetUnits,
-    .VERIFY_CALIBRATION = (MotorSensor_Test_T)Empty_VerifyCalibration,
+    .INIT = (RotorSensor_Proc_T)Empty_Init,
+    .CAPTURE_ANGLE = (RotorSensor_Proc_T)Empty_CaptureAngle,
+    .CAPTURE_SPEED = (RotorSensor_Proc_T)Empty_CaptureSpeed,
+    .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Empty_IsFeedbackAvailable,
+    .SET_DIRECTION = (RotorSensor_Set_T)Empty_SetDirection,
+    .GET_DIRECTION = (RotorSensor_Get_T)Empty_GetDirection,
+    // .SET_INITIAL = (RotorSensor_Proc_T)SetInitial,
+    .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Empty_ResetUnits,
+    .VERIFY_CALIBRATION = (RotorSensor_Test_T)Empty_VerifyCalibration,
 };
 

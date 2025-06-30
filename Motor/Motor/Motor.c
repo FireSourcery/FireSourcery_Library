@@ -53,9 +53,8 @@ void Motor_Init(const Motor_T * p_context)
 #endif
 
     /* Using Config Id */
-    p_context->P_MOTOR_STATE->p_ActiveSensor = MotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_MOTOR_STATE->Config.SensorMode);
-    MotorSensor_Init(p_context->P_MOTOR_STATE->p_ActiveSensor);
-
+    p_context->P_MOTOR_STATE->p_ActiveSensor = RotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_MOTOR_STATE->Config.SensorMode);
+    RotorSensor_Init(p_context->P_MOTOR_STATE->p_ActiveSensor);
 
     // HeatMonitor_Init(&p_context->HEAT_MONITOR_CONTEXT);
 
@@ -68,7 +67,7 @@ void Motor_Init(const Motor_T * p_context)
 */
 void Motor_Reset(Motor_State_T * p_motor)
 {
-    Motor_Sensor_ResetUnits(p_motor);
+    Motor_ResetUnits(p_motor);
 
     /*
         SW Structs
@@ -115,6 +114,30 @@ void Motor_Reset(Motor_State_T * p_motor)
 
 */
 /******************************************************************************/
+/*
+    Wrapper for Propagate Set
+*/
+void Motor_ReinitSensor(Motor_State_T * p_motor)
+{
+    RotorSensor_Init(p_motor->p_ActiveSensor);
+}
+
+/*
+    propagate Motor Config to sensor module params
+*/
+void Motor_ResetUnits(Motor_State_T * p_motor)
+{
+    RotorSensor_Config_T config =
+    {
+       .ElSpeedRated_DegPerCycle = Motor_GetSpeedRatedRef_DegPerCycle(p_motor),
+       .MechSpeedRated_Rpm = Motor_GetSpeedRatedRef_Rpm(p_motor),
+       .PolePairs = p_motor->Config.PolePairs,
+    };
+
+    RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
+}
+
+
 void Motor_ResetBaseOpenLoopILimit(Motor_State_T * p_motor)
 {
     // p_motor->Config.OpenLoopScalarLimit_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_MAX_SCALAR);

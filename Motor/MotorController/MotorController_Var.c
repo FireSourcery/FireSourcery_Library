@@ -235,29 +235,26 @@ static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_cont
     @brief Handle MOTOR_SENSOR variables
 */
 /******************************************************************************/
-static int _HandleMotorSensorState_Get(const MotorController_T * p_context, MotVarId_T varId)
+static int _HandleRotorSensorState_Get(const MotorController_T * p_context, MotVarId_T varId)
 {
-    // return Motor_Sensor_VarType_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
     return Motor_VarType_SensorState_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
 }
 
-static MotVarId_Status_T _HandleMotorSensorState_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
+static MotVarId_Status_T _HandleRotorSensorState_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
     return MOT_VAR_STATUS_ERROR_READ_ONLY; // Sensor state variables are read-only
 }
 
-static int _HandleMotorSensorConfig_Get(const MotorController_T * p_context, MotVarId_T varId)
+static int _HandleRotorSensorConfig_Get(const MotorController_T * p_context, MotVarId_T varId)
 {
-    // return Motor_Sensor_VarTypeConfig_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
     return Motor_VarType_SensorConfig_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
 }
 
-static MotVarId_Status_T _HandleMotorSensorConfig_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
+static MotVarId_Status_T _HandleRotorSensorConfig_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
     if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     if (!MotorController_User_IsConfigState(p_context)) return MOT_VAR_STATUS_ERROR_RUNNING;
 
-    // Motor_Sensor_VarTypeConfig_Set(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase, value);
     Motor_VarType_SensorConfig_Set(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -452,8 +449,8 @@ int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varI
     {
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:             return _HandleMotorVar_Get(p_context, varId);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:          return _HandleMotorConfig_Get(p_context, varId);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleMotorSensorState_Get(p_context, varId);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleMotorSensorConfig_Get(p_context, varId);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleRotorSensorState_Get(p_context, varId);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleRotorSensorConfig_Get(p_context, varId);
         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:        return _HandleSystemService_Get(p_context, varId);
         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:               return _HandleMonitor_Get(p_context, varId);
         default: return 0;
@@ -487,8 +484,8 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
     {
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:             return _HandleMotorVar_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:          return _HandleMotorConfig_Set(p_context, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleMotorSensorState_Set(p_context, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleMotorSensorConfig_Set(p_context, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE:    return _HandleRotorSensorState_Set(p_context, varId, value);
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleRotorSensorConfig_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:        return _HandleSystemService_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:               return _HandleMonitor_Set(p_context, varId, value);
         default:    return MOT_VAR_STATUS_ERROR;

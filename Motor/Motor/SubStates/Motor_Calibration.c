@@ -66,7 +66,7 @@ static void Calibration_ProcHome(const Motor_T * p_motor)
     // /* alternatively use openloop speed */
     // uint16_t angleDelta = 65536/1000;
 
-    // // MotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
+    // // RotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
 
     // if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true)
     // {
@@ -110,7 +110,7 @@ static const State_T CALIBRATION_STATE_HOMING =
 
 static State_T * Calibration_StartHome(const Motor_T * p_motor, state_input_value_t null)
 {
-    // if (MotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
+    // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
     return &CALIBRATION_STATE_HOMING;
 }
 

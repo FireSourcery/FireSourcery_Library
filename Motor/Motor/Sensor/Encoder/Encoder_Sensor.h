@@ -24,32 +24,34 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Hall_MotorSensor.h
+    @file   Encoder_RotorSensor.h
     @author FireSourcery
-    @brief  Implement the MotorSensor interface for Hall sensors.
+    @brief  Implement the RotorSensor interface for Encoder sensors.
 */
 /******************************************************************************/
-#include "../MotorSensor.h"
-#include "Hall.h"
+#include "../RotorSensor.h"
 #include "Transducer/Encoder/Encoder.h" /* alternatively, split encoder math */
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
 
 
-/* typedef const struct Hall_Sensor / Hall_SensorInterface */
-typedef const struct Hall_MotorSensor
+/* typedef const struct Encoder_Sensor */
+typedef const struct Encoder_RotorSensor
 {
-    const MotorSensor_T MOTOR_SENSOR; /* _SUPER */
-    const Hall_T HALL;
-    const Encoder_T * const P_ENCODER;
+    const RotorSensor_T MOTOR_SENSOR;
+    const Encoder_T ENCODER;
 }
-Hall_MotorSensor_T;
+Encoder_RotorSensor_T;
 
-extern const MotorSensor_VTable_T HALL_VTABLE;
+extern const RotorSensor_VTable_T ENCODER_VTABLE;
 
-#define HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) \
-    { .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
+#define ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State) \
+{ \
+    .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), \
+    .ENCODER = EncoderStruct, \
+}
 
-// #define HALL_MOTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
-//     HALL_MOTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
 
+// void Encoder_RotorSensor_Init(const RotorSensor_T * p_sensor);
+// void Encoder_RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor);
+// void Encoder_RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor);

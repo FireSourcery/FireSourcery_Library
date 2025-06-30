@@ -101,7 +101,12 @@ bool Hall_IsTableValid(const Hall_State_T * p_hall)
 /*
     Id Interface
 */
-// void _Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int varValue)
+// void _Hall_VarId_Get(Hall_Config_T * p_hall, Hall_VarId_T varId, int varValue)
+// {
+
+// }
+
+
 void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue)
 {
     switch (varId)

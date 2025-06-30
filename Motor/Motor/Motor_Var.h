@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "Sensor/Motor_Sensor.h" /* for calibration cmd */
-#include "Sensor/MotorSensor.h"
+#include "Sensor/RotorSensor.h"
 
 #include "Utility/Var/VarAccess.h"
 #include <assert.h>
@@ -222,7 +222,7 @@ Motor_Var_StateCmd_T;
 typedef enum Motor_VarConfig_Calibration
 {
     MOTOR_VAR_COMMUTATION_MODE,       /* Motor_CommutationMode_T, if runtime supported */
-    MOTOR_VAR_SENSOR_MODE,            /* MotorSensor_Id_T, */
+    MOTOR_VAR_SENSOR_MODE,            /* RotorSensor_Id_T, */
     MOTOR_VAR_DIRECTION_CALIBRATION,  /* Motor_DirectionCalibration_T */
     MOTOR_VAR_POLE_PAIRS,
     MOTOR_VAR_KV,
@@ -472,7 +472,7 @@ typedef enum Motor_VarType_Config
     MOTOR_VAR_TYPE_CONFIG_THERMISTOR,
 
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Calibration Cmds */
-    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Invoke Sub StateMachine. Using Motor MotorSensor_Id_T as [varId] */
+    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Invoke Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
     MOTOR_VAR_TYPE_CONFIG_BOARD_REF,    /* Not instanced */
 }
 Motor_VarType_Config_T;
@@ -485,11 +485,11 @@ extern void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Conf
 
 /******************************************************************************/
 /*
-    Wrap on MotorSensor_Id_T MotorSensor_Table
-    MotorSensor_Id_T implementation in MotorSensor.h/c
+    Wrap on RotorSensor_Id_T RotorSensor_Table
+    RotorSensor_Id_T implementation in RotorSensor.h/c
 */
 /******************************************************************************/
-extern int Motor_VarType_SensorState_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+extern int Motor_VarType_SensorState_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId);
 
-extern int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
-extern void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+extern int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId);
+extern void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId, int varValue);
