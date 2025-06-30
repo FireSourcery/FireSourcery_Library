@@ -174,7 +174,7 @@ static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
 static State_T * OpenLoop_AngleAlign(const Motor_T * p_motor, state_input_value_t angle)
 {
     // p_motor->P_MOTOR_STATE->ElectricalAngle = angle;
-    // Motor_SetElecAngleFeedforward(p_motor->P_MOTOR_STATE, angle);
+    // Motor_SetElAngleFeedforward(p_motor->P_MOTOR_STATE, angle);
     return &OPEN_LOOP_STATE_ANGLE_ALIGN;
 }
 

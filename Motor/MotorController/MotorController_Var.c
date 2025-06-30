@@ -30,9 +30,6 @@
 #include "MotorController_Var.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
 
-/*
-*/
-static inline Motor_T * MotorAt(const MotorController_T * p_context, uint8_t motor) { return (motor < p_context->MOTORS.LENGTH) ? MotMotors_ContextAt(&p_context->MOTORS, motor) : NULL; }
 
 /******************************************************************************/
 /*
@@ -56,7 +53,7 @@ int MotorController_VarOutput_Get(const MotorController_T * p_context, MotorCont
 int MotorController_VarOutput_Debug_Get(const MotorController_T * p_context, MotorController_VarOutput_Debug_T id)
 {
     int value = 0;
-    Motor_State_T * p_motor = MotorAt(p_context, 0)->P_MOTOR_STATE;
+    Motor_State_T * p_motor = MotMotors_ContextAt(&p_context->MOTORS, 0)->P_MOTOR_STATE;
     switch (id)
     {
         case MOT_VAR_DEBUG0: value = p_motor->DebugTime[4];    break;
@@ -78,7 +75,7 @@ void MotorController_VarInput_Set(const MotorController_T * p_context, MotorCont
     {
         case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, value);                     break;
         case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);            break;
-        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, math_sign(value));         break;
+        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, value);                    break;
         case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value); break;
 
         case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_context, value);          break;
@@ -186,6 +183,16 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_context, MotorC
 /******************************************************************************/
 /******************************************************************************/
 /*!
+    Motor_T Helper
+*/
+/******************************************************************************/
+static inline Motor_T * MotorAt(const MotorController_T * p_context, uint8_t motor)
+{
+    return (motor < p_context->MOTORS.LENGTH) ? MotMotors_ContextAt(&p_context->MOTORS, motor) : NULL;
+}
+
+/******************************************************************************/
+/*!
     @brief Handle MOTOR_VAR variables
 */
 /******************************************************************************/
@@ -230,7 +237,8 @@ static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_cont
 /******************************************************************************/
 static int _HandleMotorSensorState_Get(const MotorController_T * p_context, MotVarId_T varId)
 {
-    return Motor_Sensor_VarType_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
+    // return Motor_Sensor_VarType_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
+    return Motor_VarType_SensorState_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
 }
 
 static MotVarId_Status_T _HandleMotorSensorState_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
@@ -240,7 +248,8 @@ static MotVarId_Status_T _HandleMotorSensorState_Set(const MotorController_T * p
 
 static int _HandleMotorSensorConfig_Get(const MotorController_T * p_context, MotVarId_T varId)
 {
-    return Motor_Sensor_VarTypeConfig_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
+    // return Motor_Sensor_VarTypeConfig_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
+    return Motor_VarType_SensorConfig_Get(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase);
 }
 
 static MotVarId_Status_T _HandleMotorSensorConfig_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
@@ -248,7 +257,8 @@ static MotVarId_Status_T _HandleMotorSensorConfig_Set(const MotorController_T * 
     if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     if (!MotorController_User_IsConfigState(p_context)) return MOT_VAR_STATUS_ERROR_RUNNING;
 
-    Motor_Sensor_VarTypeConfig_Set(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase, value);
+    // Motor_Sensor_VarTypeConfig_Set(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase, value);
+    Motor_VarType_SensorConfig_Set(MotorAt(p_context, varId.Instance), varId.NameType, varId.NameBase, value);
     return MOT_VAR_STATUS_OK;
 }
 
@@ -320,8 +330,8 @@ static MotVarId_Status_T _HandleSystemService_Set(const MotorController_T * p_co
         case MOT_VAR_TYPE_PROTOCOL_CONFIG:       Protocol_ConfigId_Set(ProtocolAt(p_context, varId.Instance), varId.NameBase, value);     break;
         // case MOT_VAR_TYPE_CAN_BUS_CONFIG:     CanBusConfig_Set(p_context, varId.NameBase, value);    break;
 
-        case MOT_VAR_TYPE_USER_INPUT:           MotorController_VarInput_Set(p_context, varId.NameBase, value); break;
-        case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:    MotDrive_VarId_Set(&p_context->MOT_DRIVE, varId.NameBase, value); break;
+        case MOT_VAR_TYPE_USER_INPUT:           MotorController_VarInput_Set(p_context, varId.NameBase, value);     break;
+        case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:    MotDrive_VarId_Set(&p_context->MOT_DRIVE, varId.NameBase, value);   break;
         case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:     MotDrive_ConfigId_Set(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.NameBase, value); break;
 
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;

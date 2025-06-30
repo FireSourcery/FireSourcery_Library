@@ -196,6 +196,7 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 #define ANGLE16_MAX (65536UL)
+#define ANGLE16_PER_REVOLUTION (65536U)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -210,7 +211,7 @@ static const angle16_t ANGLE16_270 = 0xC000U;  /*! 49152, -16384, 270 == -90 */
 static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
-static const angle16_t ANGLE16_PER_RAD = 10430UL; /* = 65536 / (2 * PI) */
+static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
 
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
@@ -251,11 +252,13 @@ static inline bool angle16_cycle_by_direction(angle16_t theta0, angle16_t theta1
 
 /* polling freq must be sufficient */
 /* crossing 0 and 180 */
+/* angle16_half_cycle */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
 {
     return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); /* ((theta0 ^ theta1) < 0); */
 }
 
+/* angle16_quarter_cycle */
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)
 {
     return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U);
@@ -264,13 +267,6 @@ static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)
 extern fract16_t fract16_sin(angle16_t theta);
 extern fract16_t fract16_cos(angle16_t theta);
 extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-/* accum in this case is fract16_accum32 with additional shift */
-// static inline int32_t _accum32_add(int32_t accum, int16_t coeffcient, int16_t input) { return (accum + (((int32_t)input * coeffcient) >> 15)); }
 
 /******************************************************************************/
 /*!

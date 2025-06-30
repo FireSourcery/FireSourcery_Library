@@ -36,20 +36,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// typedef struct AngleSpeed
-// {
-
-// }
-// AngleSpeed_T;
+typedef struct AngleSpeed
+{
+    angle16_t Angle;
+    angle16_t Speed_DegPerCycle;
+}
+AngleSpeed_T;
 
 // typedef struct
 // {
 //     AngleSpeed_T AngleSpeed;
-//     Ramp_T SpeedRamp;  /* Speed Ramp */
 //     PID_T SpeedPid;  /* Speed PID */
 
 //     // uint16_t SpeedLimitForward_Fract16; /* May over saturate */
 //     // uint16_t SpeedLimitReverse_Fract16;
+//     Ramp_T SpeedRamp;  /* Speed Ramp */
 // }
 // AngleSpeed_Feedback_T;
 
@@ -58,3 +59,6 @@
 
 /* AngleSpeed OuterLoop */
 // static inline void AngleSpeed_ProcFeedback(AngleSpeed_T *  , PID_T *  )
+
+//query
+//feedforward

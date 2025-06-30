@@ -22,7 +22,7 @@
 // void Motor_MarkAnalog_Thread(Motor_State_T * p_motor)
 // {
 // #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE) || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     if (p_motor->Config.SensorMode == MOTOR_SENSOR_MODE_SIN_COS)
+//     if (p_motor->Config.SensorMode == ROTOR_SENSOR_ID_SIN_COS)
 //     {
 //         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
 //         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);

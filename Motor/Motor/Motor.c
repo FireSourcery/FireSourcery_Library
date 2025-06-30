@@ -35,10 +35,10 @@
 /*
 
 */
+// Motor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 void Motor_Init(const Motor_T * p_context)
 {
     assert(MotorAnalog_GetVSource_Fract16() != 0U); /* set before init */
-    // Motor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 
     /* Config including selected angle sensor init */
     if (p_context->P_NVM_CONFIG != NULL) { p_context->P_MOTOR_STATE->Config = *p_context->P_NVM_CONFIG; }
@@ -47,14 +47,17 @@ void Motor_Init(const Motor_T * p_context)
         HW Wrappers Init
     */
     Phase_Init(&p_context->PHASE);
+    // Phase_Analog_Init(&p_context->PHASE);
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
 #endif
 
+    /* Using Config Id */
     p_context->P_MOTOR_STATE->p_ActiveSensor = MotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_MOTOR_STATE->Config.SensorMode);
     MotorSensor_Init(p_context->P_MOTOR_STATE->p_ActiveSensor);
 
-    // HeatMonitor_Init(&p_motor->Thermistor);
+
+    // HeatMonitor_Init(&p_context->HEAT_MONITOR_CONTEXT);
 
     Motor_Reset(p_context->P_MOTOR_STATE); // alternatively move to state machine
     StateMachine_Init(&p_context->STATE_MACHINE);
@@ -65,6 +68,8 @@ void Motor_Init(const Motor_T * p_context)
 */
 void Motor_Reset(Motor_State_T * p_motor)
 {
+    Motor_Sensor_ResetUnits(p_motor);
+
     /*
         SW Structs
     */
@@ -93,8 +98,8 @@ void Motor_Reset(Motor_State_T * p_motor)
 
 // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
-    Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeed_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
-    Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampI_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
+    // Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeed_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
+    // Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampI_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
 // #endif
 
     /* Keep for physical units and external reading */

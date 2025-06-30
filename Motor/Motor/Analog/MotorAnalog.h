@@ -46,7 +46,6 @@ typedef volatile struct MotorAnalog_State
     int16_t Ia_Fract16;
     int16_t Ib_Fract16;
     int16_t Ic_Fract16;
-    // int16_t Heat;
     // Bits VBatchSync;
     // Bits IBatchSync;
 }
@@ -58,7 +57,6 @@ static inline int16_t MotorAnalog_GetVc_Fract16(const MotorAnalog_State_T * p_an
 static inline int16_t MotorAnalog_GetIa_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ia_Fract16; }
 static inline int16_t MotorAnalog_GetIb_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ib_Fract16; }
 static inline int16_t MotorAnalog_GetIc_Fract16(const MotorAnalog_State_T * p_analogState) { return p_analogState->Ic_Fract16; }
-// static inline int16_t MotorAnalog_GetHeat(const MotorAnalog_State_T * p_analogState) { return p_analogState->Heat; }
 
 // typedef volatile struct MotorAnalog_VSource
 // {

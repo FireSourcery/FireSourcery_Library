@@ -104,8 +104,6 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     @param[in] alpha scaled to VBus
 
     Prescaled Normalized by a factor of sqrt(3)/2, such that alpha 1.15 => a = 1.0
-
-    altneratively pass Vbus
 */
 // static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
 // {

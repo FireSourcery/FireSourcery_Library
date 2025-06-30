@@ -162,7 +162,7 @@ typedef struct Encoder_State
     uint32_t UnitPollingAngle;              /*!< [(1 << DEGREES_BITS) * UnitTime_Freq / POLLING_FREQ / CountsPerRevolution] */
     uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
 
-    uint32_t UnitScalarSpeed;               /*!< Percentage Speed of ScalarSpeedRef_Rpm, given max speed, as 65535 */
+    uint32_t UnitScalarSpeed;               /*!< Percentage Speed of ScalarSpeedRef_Rpm, given max speed */
     uint32_t UnitAngularSpeed;              /*!< [(1 << DEGREES_BITS) * UnitTime_Freq / CountsPerRevolution] => AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
     uint32_t UnitSurfaceSpeed;              /*!< [UnitD * UnitTime_Freq] => Speed = DeltaD * UnitSpeed / DeltaT */
     uint8_t UnitScalarSpeedShift;

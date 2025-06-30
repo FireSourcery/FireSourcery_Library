@@ -34,29 +34,26 @@
 #include "MotorSensor.h"
 
 /*
+    [RotorSensor_TypeId]
+    TypeId
+    Generic access
     Perserve order for serialization
 */
-// typedef enum [Motor_SensorId]
 typedef enum MotorSensor_Id
 {
-    MOTOR_SENSOR_MODE_HALL,
-    MOTOR_SENSOR_MODE_ENCODER,
-    MOTOR_SENSOR_MODE_SIN_COS,
-    MOTOR_SENSOR_MODE_SENSORLESS,
-    // MOTOR_SENSOR_MODE_EXTERN,
-    // MOTOR_SENSOR_MODE_VTABLE,
-    MOTOR_SENSOR_MODE_COUNT,
+    ROTOR_SENSOR_ID_HALL,
+    ROTOR_SENSOR_ID_ENCODER,
+    ROTOR_SENSOR_ID_SIN_COS,
+    ROTOR_SENSOR_ID_SENSORLESS,
+    // ROTOR_SENSOR_ID_EXTERN,
+    // ROTOR_SENSOR_ID_VTABLE,
+    ROTOR_SENSOR_ID_COUNT,
 }
 MotorSensor_Id_T;
 
-// typedef struct MotorSensor
-// {
-//     MotorSensor_T * p_Active;
-//     SpeedAngle_T SpeedAngle;
-// }
-// MotorSensor_State_T;
 
 /*
+    [AngleSensor_Table_T]
     Mux/Repo
     Holds all selectable sensors. Map common AngleSpeed State
     include all using preprocessor conditions
@@ -74,6 +71,10 @@ typedef const struct MotorSensor_Table
 }
 MotorSensor_Table_T;
 
+// #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) MOTOR_SENSOR_INIT_AS_EMPTY(p_State)
+// #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
+// #define ROTOR_SENSOR_TABLE_INIT_ENCODER(p_State, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State)
+
 /*
     Init with Motor_State_T
     Init using shared State
@@ -84,20 +85,25 @@ MotorSensor_Table_T;
 
 
 /*
-    get by const id instead of generic mux
+    get by const id, mux with named indexs
 */
 static inline MotorSensor_T * MotorSensor_Of(const MotorSensor_Table_T * p_table, MotorSensor_Id_T id)
 {
     switch (id)
     {
-        case MOTOR_SENSOR_MODE_HALL: return &p_table->HALL.MOTOR_SENSOR;
-        case MOTOR_SENSOR_MODE_ENCODER: return &p_table->ENCODER.MOTOR_SENSOR;
+        case ROTOR_SENSOR_ID_HALL: return &p_table->HALL.MOTOR_SENSOR;
+        case ROTOR_SENSOR_ID_ENCODER: return &p_table->ENCODER.MOTOR_SENSOR;
         default: return &p_table->EMPTY;
     }
 }
 
+// static inline Hall_T * MotorSensor_GetHall(const MotorSensor_Table_T * p_table)// {//     return &p_table->HALL.HALL;// }
 
-// static inline Hall_T * Motor_SensorTable_GetHall(const MotorSensor_Table_T * p_table)
-// {
-//     return &p_table->HALL.HALL;
-// }
+/******************************************************************************/
+/*!
+    Var Id
+*/
+/******************************************************************************/
+extern int MotorSensor_VarType_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId);
+extern int MotorSensor_VarTypeConfig_Get(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId);
+extern void MotorSensor_VarTypeConfig_Set(const MotorSensor_Table_T * p_table, MotorSensor_Id_T typeId, int varId, int varValue);

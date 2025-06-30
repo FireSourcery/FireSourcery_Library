@@ -49,7 +49,6 @@ typedef const struct Motor_Analog
     Analog_Conversion_T CONVERSION_IB;
     Analog_Conversion_T CONVERSION_IC;
     // Analog_Conversion_T * P_VBUS;
-    // MotorAnalog_Config_T CONFIG;
 }
 Motor_Analog_T;
 

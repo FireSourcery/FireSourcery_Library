@@ -42,9 +42,8 @@
 
 #define MOTOR_CONTROL_PERIOD_US (1000000U / MOTOR_CONTROL_FREQ) /* us */
 
-#define MOTOR_CONTROL_PERIOD_SECONDS_FRACT32 (INT32_MAX / MOTOR_CONTROL_FREQ) /* s */
-#define MOTOR_CONTROL_PERIOD_MINUTES_FRACT32 ((INT32_MAX / MOTOR_CONTROL_FREQ) / 60U) /* min */
-
+// #define MOTOR_CONTROL_PERIOD_SECONDS_FRACT32 (INT32_MAX / MOTOR_CONTROL_FREQ) /* s */
+// #define MOTOR_CONTROL_PERIOD_MINUTES_FRACT32 ((MOTOR_CONTROL_PERIOD_SECONDS_FRACT32) / 60U) /* min */
 
 
 /* INNER_LOOP */
@@ -100,3 +99,5 @@ static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((
 */
 static inline uint32_t _Motor_MillisOf(uint32_t controlCycles) { return MOTOR_CONTROL_TIME_MS(controlCycles); }
 static inline uint32_t _Motor_ControlCyclesOf(uint32_t millis) { return MOTOR_CONTROL_CYCLES(millis); }
+
+

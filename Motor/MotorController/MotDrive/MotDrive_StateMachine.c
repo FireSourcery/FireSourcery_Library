@@ -155,8 +155,6 @@ static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotD
 }
 
 
-
-
 /******************************************************************************/
 /*
     State Machine

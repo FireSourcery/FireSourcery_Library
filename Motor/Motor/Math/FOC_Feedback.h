@@ -36,19 +36,9 @@
 // typedef struct FOC_Feedback
 // {
 //     FOC_T Foc;
-//     // Ramp_T TorqueRamp;
+//     // Ramp_T TorqueRamp; shared
 //     PID_T PidIq;
 //     PID_T PidId;
 // }
 // FOC_Feedback_T;
 
-// static inline void FOC_ProcIFeedback(FOC_T * p_foc, PID_T * p_pidId, PID_T * p_pidIq)
-// {
-//     p_foc->Vq = PID_ProcPI(p_pidIq, p_foc->Iq, p_foc->ReqQ);
-//     p_foc->Vd = PID_ProcPI(p_pidId, p_foc->Id, p_foc->ReqD);
-// }
-
-// static inline void Motor_FOC_WriteDuty(const Phase_T * p_phase, const FOC_T * p_foc)
-// {
-//     Phase_WriteDuty_Fract16(p_phase, FOC_GetDutyA(p_foc), FOC_GetDutyB(p_foc), FOC_GetDutyC(p_foc));
-// }

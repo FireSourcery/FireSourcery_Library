@@ -243,6 +243,7 @@ extern void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_fields, void
 extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_fields, void * p_context);
 extern void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_context);
 
+
 #ifdef STATE_MACHINE_IMPLEMENTATION
 /*
     extern implementation

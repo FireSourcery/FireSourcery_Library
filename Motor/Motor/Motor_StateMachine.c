@@ -368,7 +368,7 @@ const State_T MOTOR_STATE_PASSIVE =
 
 /******************************************************************************/
 /*!
-    @brief  Run State
+    @brief Run State
     Spin with Feedback State
     Active Control, FeedbackLoop is in effect
         UserCmd => RampOutput => PID => AngleControl
@@ -376,13 +376,12 @@ const State_T MOTOR_STATE_PASSIVE =
 /******************************************************************************/
 static void Run_Entry(const Motor_T * p_motor)
 {
-    /* Optionally poll angle sensor or let interpolate angle be off by 1 */
     // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    /* check update vbus */
     _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* including substate of another state */
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
     Phase_ActivateOutputT0(&p_motor->PHASE);
+    /* alterntaively Update Vbus on start Angle Control */
 }
 
 static void Run_Proc(const Motor_T * p_motor)
@@ -390,7 +389,7 @@ static void Run_Proc(const Motor_T * p_motor)
     Motor_ProcOuterFeedback(p_motor);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
-    // Motor_FOC_ActivateVPhase(p_motor);
+    // Motor_FOC_WriteDuty(p_motor);
 }
 
 // static State_T * Run_Next(const Motor_T * p_motor)

@@ -58,7 +58,7 @@ void Encoder_MotorSensor_CaptureSpeed(const MotorSensor_T * p_sensor)
 {
 //     Encoder_MotorSensor_T * p_this = (Encoder_MotorSensor_T *)p_sensor;
 //     Encoder_ModeDT_CaptureVelocity(p_this->P_ENCODER);
-//     p_sensor->P_STATE->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(p_this->P_ENCODER);
+//     p_sensor->P_STATE->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(p_this->P_ENCODER);
 //     p_sensor->P_STATE->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_this->P_ENCODER);
 // }
 
@@ -72,27 +72,8 @@ bool Encoder_MotorSensor_VerifyCalibration(const MotorSensor_T * p_sensor)
     // return Encoder_IsTableValid(p_this->HALL.P_STATE);
 }
 
-// void Encoder_SetUnitsEncoder_ElSpeed(Encoder_State_T * p_encoder, uint32_t speedRef_Rpm)
-// {
-//     p_encoder->Config.IsQuadratureCaptureEnabled = false;
-//     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
-//     if (p_encoder->Config.CountsPerRevolution != 6U) { Encoder_SetCountsPerRevolution(p_encoder, 6U); }
-//     if (p_encoder->Config.PartitionsPerRevolution != 1U) { Encoder_SetPartitionsPerRevolution(p_encoder, 1U); }
-// }
-
-// void Encoder_SetUnitsEncoder_MechSpeed(Encoder_State_T * p_encoder, uint16_t speedRef_Rpm, uint8_t polePairs)
-// {
-//     p_encoder->Config.IsQuadratureCaptureEnabled = false;
-//     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
-//     if (p_encoder->Config.CountsPerRevolution != polePairs * 6U) { Encoder_SetCountsPerRevolution(p_encoder, polePairs * 6U); }
-//     if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); }     /* Set for electrical cycle */
-// }
 
 
-void Encoder_MotorSensor_InitConfig(const MotorSensor_T * p_sensor, uint16_t speedRef_Rpm, uint8_t polePairs)
-{
-    // Encoder_SetUnitsEncoder_MechSpeed(p_sensor, speedRef_Rpm, polePairs);
-}
 
 
 const MotorSensor_VTable_T ENCODER_VTABLE =

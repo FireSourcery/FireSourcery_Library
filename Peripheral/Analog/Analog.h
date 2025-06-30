@@ -108,6 +108,7 @@ typedef union Analog_ConversionState
     {
         uint32_t Result : 16U;
         uint32_t IsMarked : 1U;
+        uint32_t Reserved : 15U;
         // uint32_t IsComplete : 1U; // new result sync flag
         // volatile bool IsActive; // allow mark while active /* !IsComplete */
     };
@@ -128,7 +129,7 @@ typedef const struct Analog_Conversion
 {
     volatile Analog_ConversionState_T * P_CONVERSION_STATE;
     /* reserve interface for extension */
-    // Config
+    // Options/Config
 }
 Analog_Conversion_T;
 

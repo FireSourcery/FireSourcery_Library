@@ -273,6 +273,21 @@ void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDi
 }
 
 
+//   void Encoder_SetUnitsHall_ElSpeed(Encoder_State_T * p_encoder, uint32_t speedRef_Rpm)
+// {
+//     p_encoder->Config.IsQuadratureCaptureEnabled = false;
+//     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
+//     if (p_encoder->Config.CountsPerRevolution != 6U) { Encoder_SetCountsPerRevolution(p_encoder, 6U); }
+//     if (p_encoder->Config.PartitionsPerRevolution != 1U) { Encoder_SetPartitionsPerRevolution(p_encoder, 1U); }
+// }
+
+//   void Encoder_SetUnitsHall_MechSpeed(Encoder_State_T * p_encoder, uint16_t speedRef_Rpm, uint8_t polePairs)
+// {
+//     p_encoder->Config.IsQuadratureCaptureEnabled = false;
+//     if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
+//     if (p_encoder->Config.CountsPerRevolution != polePairs * 6U) { Encoder_SetCountsPerRevolution(p_encoder, polePairs * 6U); }
+//     if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); }     /* Set for electrical cycle */
+// }
 
 
 /******************************************************************************/

@@ -31,10 +31,7 @@
 /******************************************************************************/
 
 /*
-    Include all sensor types here.
-        Calibration State
-        Propagate Set wrappers
-        Id Access
+    Include all sensor Calibration
 */
 #include "Hall/Hall_MotorSensor.h"
 #include "Hall/Motor_Hall.h"
@@ -64,24 +61,19 @@ extern void Motor_Sensor_ResetUnits(Motor_State_T * p_motor);
     Id Access
 */
 /******************************************************************************/
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);
+
+/* this can move to table */
 int Motor_Sensor_VarType_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
 
 int Motor_Sensor_VarTypeConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
 void Motor_Sensor_VarTypeConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
 
-void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue);
-
-/* alt */
-// typedef enum Motor_SensorTable_VarType
-// {
-//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_STATE,
-//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_CONFIG,
-//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_STATE,
-//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_CONFIG,
-// }
-// Motor_SensorTable_VarType_T;
-
-
+/******************************************************************************/
+/*!
+  bk
+*/
+/******************************************************************************/
 //handled by interface
 // extern angle16_t Motor_PollSensorAngle(const Motor_T * p_motor);
 // extern angle16_t Motor_CaptureAngle(const Motor_T * p_motor);
@@ -98,3 +90,13 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // extern void Motor_ResetUnitsSinCos(Motor_State_T * p_motor);
 // extern void Motor_ResetUnitsAngleSpeed_Mech(Motor_State_T * p_motor);
 // extern void Motor_ResetUnitsAngleSpeed_ElecControl(Motor_State_T * p_motor);
+
+/* alt */
+// typedef enum Motor_SensorTable_VarType
+// {
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_STATE,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_HALL_CONFIG,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_STATE,
+//     MOTOR_SENSOR_TABLE_VAR_TYPE_ENCODER_CONFIG,
+// }
+// Motor_SensorTable_VarType_T;

@@ -227,23 +227,23 @@ void StateMachine_Async_ProcInput(const StateMachine_T * p_stateMachine, state_i
     supports both operation at expense of additional condition check
 */
 /******************************************************************************/
-inline void StateMachine_ProcState(const StateMachine_T * p_stateMachine)
-{
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+// inline void StateMachine_ProcState(const StateMachine_T * p_stateMachine)
+// {
+//     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
-#if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
-    /* [Async_ProcInput] disables ISR, runs to completion, same as Sync case  */
-    StateMachine_Sync_ProcState(p_active, p_stateMachine->P_CONTEXT);
-#elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
-    /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
-    if (_StateMachine_AcquireAsyncIsr(p_active) == true)
-    {
-        /* Proc SyncInput must use sentinel, AsyncInput releases lock without valid SyncInput */
-        _StateMachine_ProcState(p_active, p_stateMachine->P_CONTEXT);
-        _StateMachine_ReleaseAsyncIsr(p_active);
-    }
-#endif
-}
+// #if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
+//     /* [Async_ProcInput] disables ISR, runs to completion, same as Sync case  */
+//     StateMachine_Sync_ProcState(p_active, p_stateMachine->P_CONTEXT);
+// #elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
+//     /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
+//     /* Proc SyncInput must use sentinel, AsyncInput releases lock without valid SyncInput */
+//     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
+//     {
+//         _StateMachine_ProcState(p_active, p_stateMachine->P_CONTEXT);
+//         _StateMachine_ReleaseAsyncIsr(p_active);
+//     }
+// #endif
+// }
 
 /*
     Input Functions

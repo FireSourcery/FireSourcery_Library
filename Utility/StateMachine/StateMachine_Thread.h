@@ -33,7 +33,10 @@
 #include "_StateMachine.h" /* Include the private header for inline defs */
 
 /******************************************************************************/
-/* inline for compile time expansion */
+/*
+    StateMachine Thread
+    inline for compile time expansion
+*/
 /******************************************************************************/
 static inline void _StateMachine_Synchronous_Thread(StateMachine_Active_T * p_active, void * p_context)
 {
@@ -42,13 +45,13 @@ static inline void _StateMachine_Synchronous_Thread(StateMachine_Active_T * p_ac
     StateMachine_Sync_ProcState(p_active, p_context);
 #elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
     /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
+    /* Disabled when input is processing. ensure any transition is completed */
+    /* ProcSyncInput must use sentinel, AsyncInput releases lock without valid SyncInput */
     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
     {
-        /* Disabled when input is processing. ensure any transition is completed */
-        /* ProcSyncInput must use sentinel, AsyncInput releases lock without valid SyncInput */
         _StateMachine_ProcState(p_active, p_context);
         _StateMachine_ReleaseAsyncIsr(p_active);
-}
+    }
 #endif
 }
 

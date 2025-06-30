@@ -29,7 +29,7 @@
     @brief  Var - Field-like Property Interface Getter/Setter via Id Key
 */
 /******************************************************************************/
-#include "Sensor/Motor_Sensor.h"
+#include "Sensor/Motor_Sensor.h" /* for calibration cmd */
 #include "Sensor/MotorSensor.h"
 
 #include "Utility/Var/VarAccess.h"
@@ -394,53 +394,11 @@ extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_ROUTINE;
 #define MOTOR_VAR_ACCESS_INIT_OUTPUT_FOC(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_FOC, &((p_Motor)->VarAccessOuputState))
 #define MOTOR_VAR_ACCESS_INIT_OUTPUT_SENSOR(p_Motor)            VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_SENSOR, &((p_Motor)->VarAccessOuputState))
 
-// #define CONFIG_MOTOR_SENSOR_HALL_ENABLED
-
-// #ifdef CONFIG_MOTOR_SENSOR_HALL_ENABLED
-// #define MOTOR_VAR_ACCESS_INCLUDE_CONFIG_HALL(p_MotorContext, p_Motor) .CONFIG_HALL = MOTOR_HALL_VAR_ACCESS_INIT(p_MotorContext, p_Motor),
-// #else
-// #define MOTOR_VAR_ACCESS_INCLUDE_CONFIG_HALL(p_MotorContext, p_Motor)
-// #endif
-
-// typedef struct Motor_VarAccess
-// {
-//     const VarAccess_T OUT_USER;
-//     const VarAccess_T OUT_FOC;
-//     const VarAccess_T OUT_SENSOR;
-//     const VarAccess_T IO_PID_TUNING; /* PID Tunning */
-//     const VarAccess_T IO;
-//     const VarAccess_T IN;
-//     const VarAccess_T CONFIG_CALIBRATION;
-//     const VarAccess_T CONFIG_CALIBRATION_ALIAS;
-//     const VarAccess_T CONFIG_ACTUATION;
-//     const VarAccess_T CONFIG_PID;
-//     const VarAccess_T CONFIG_ROUTINE;
-// #ifdef CONFIG_MOTOR_SENSOR_HALL_ENABLED
-//     const VarAccess_T CONFIG_HALL;
-// #endif
-// }
-// Motor_VarAccess_T;
-
-// #define MOTOR_VAR_ACCESS_INIT(p_MotorContext, p_Motor) \
-// { \
-//     .OUT_USER                    = MOTOR_VAR_ACCESS_INIT_OUTPUT_USER(p_Motor), \
-//     .OUT_FOC                     = MOTOR_VAR_ACCESS_INIT_OUTPUT_FOC(p_Motor), \
-//     .OUT_SENSOR                  = MOTOR_VAR_ACCESS_INIT_OUTPUT_SENSOR(p_Motor), \
-//     .IO_PID_TUNING              = MOTOR_VAR_ACCESS_INIT_PID_TUNING(p_Motor), \
-//     .IN                          = MOTOR_VAR_ACCESS_INIT_INPUT(p_MotorContext, p_Motor), \
-//     .IO                          = MOTOR_VAR_ACCESS_INIT_IO(p_MotorContext, p_Motor), \
-//     .CONFIG_CALIBRATION          = MOTOR_VAR_ACCESS_INIT_CONFIG_CALIBRATION(p_Motor), \
-//     .CONFIG_CALIBRATION_ALIAS    = MOTOR_VAR_ACCESS_INIT_CONFIG_CALIBRATION_ALIAS(p_Motor), \
-//     .CONFIG_ACTUATION            = MOTOR_VAR_ACCESS_INIT_CONFIG_ACTUATION(p_Motor), \
-//     .CONFIG_PID                  = MOTOR_VAR_ACCESS_INIT_CONFIG_PID(p_Motor), \
-//     .CONFIG_ROUTINE              = MOTOR_VAR_ACCESS_INIT_CONFIG_ROUTINE(p_Motor), \
-//     MOTOR_VAR_ACCESS_INCLUDE_CONFIG_HALL(p_MotorContext, p_Motor) \
-// }
 
 
 /******************************************************************************/
 /*
-   Extern
+   Base Id Access
 */
 /******************************************************************************/
 extern int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T varId);
@@ -485,8 +443,6 @@ extern void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T
 /******************************************************************************/
 /*
     Module handled type
-
-    MotorSensor_Id_T implementation in Motor_Sensor.h/c
 */
 /******************************************************************************/
 typedef enum Motor_VarType
@@ -521,19 +477,19 @@ typedef enum Motor_VarType_Config
 }
 Motor_VarType_Config_T;
 
-int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId);
-void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
+extern int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId);
+extern void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 
-int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId);
-void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId, int varValue);
+extern int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId);
+extern void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId, int varValue);
 
-// int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
-// void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
+/******************************************************************************/
+/*
+    Wrap on MotorSensor_Id_T MotorSensor_Table
+    MotorSensor_Id_T implementation in MotorSensor.h/c
+*/
+/******************************************************************************/
+extern int Motor_VarType_SensorState_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
 
-// int Motor_VarType_SensorState_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
-// void Motor_VarType_SensorState_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);
-
-/* alternatively additional typedef  */
-// typedef enum Motor_Var_SensorTypeId
-// int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_Sensor_VarType_T typeId, int varId);
-
+extern int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId);
+extern void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue);

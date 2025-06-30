@@ -274,7 +274,7 @@ void Motor_Config_SetOpenLoopRampITime_Millis(Motor_State_T * p_motor, uint16_t 
 */
 void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_State_T * p_motor, uint16_t speed_fract16)
 {
-    p_motor->Config.OpenLoopRampSpeedFinal_Fract16 = speed_fract16; /* optionally limit */
+    // p_motor->Config.OpenLoopRampSpeedFinal_Fract16 = speed_fract16; /* optionally limit */
     // PropagateSet(p_motor, Motor_ResetOpenLoopRamp);
 }
 

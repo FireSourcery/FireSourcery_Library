@@ -31,15 +31,14 @@
 #include "../Motor.h"
 #include "../Motor_StateMachine.h"
 
+#include "../Math/math_speed.h"
+
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-// static inline MotorSensor_T * _Motor_Sensor_Get(const Motor_T * p_motor)
-// {
-//     return MotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode);
-// }
+
 
 /******************************************************************************/
 /*
@@ -61,12 +60,55 @@ void Motor_Sensor_ResetUnits(Motor_State_T * p_motor)
 {
     MotorSensor_Config_T config =
     {
-       .SpeedRated_DegPerCycle = p_motor->Config.SpeedRated_DegPerCycle,
+       .ElSpeedRated_DegPerCycle = Motor_GetSpeedRatedRef_DegPerCycle(p_motor),
+       .MechSpeedRated_Rpm = Motor_GetSpeedRatedRef_Rpm(p_motor),
        .PolePairs = p_motor->Config.PolePairs,
     };
 
     MotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
+
+
+/******************************************************************************/
+/*
+    Collective Calibration access
+    requires Motor StateMachine Context with substate
+    cannot move to Sensor Interface
+*/
+/******************************************************************************/
+/*!
+    @param[in] MotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
+*/
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
+{
+    if (p_motor == NULL) return;
+    if (!Motor_StateMachine_IsConfig(p_motor)) return;
+
+    switch (varId)
+    {
+        case ROTOR_SENSOR_ID_HALL: Motor_Hall_Calibrate(p_motor); break;
+        case ROTOR_SENSOR_ID_ENCODER:
+            // switch (varValue)
+            // {
+
+            // }
+            // Encoder_Calibrate(&p_motor->SENSOR_TABLE.ENCODER.ENCODER);
+            break;
+        #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+        case ROTOR_SENSOR_ID_SIN_COS:
+            // SinCos_Calibrate(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS);
+            break;
+        #endif
+        #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+        case ROTOR_SENSOR_ID_SENSORLESS:
+            // Sensorless_Calibrate(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS);
+            break;
+        #endif
+        default: break;
+    }
+}
+
+
 
 /******************************************************************************/
 /*
@@ -80,10 +122,10 @@ int Motor_Sensor_VarType_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, i
 
     switch (typeId)
     {
-        // case MOTOR_SENSOR_MODE_HALL:    return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
-        case MOTOR_SENSOR_MODE_ENCODER: return Enocder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
-            // case MOTOR_SENSOR_MODE_SIN_COS: return SinCos_VarId_Get(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId); break;
-            // case MOTOR_SENSOR_MODE_SENSORLESS: return Sensorless_VarId_Get(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId); break;
+        // case ROTOR_SENSOR_ID_HALL:    return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
+        case ROTOR_SENSOR_ID_ENCODER: return Enocder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
+            // case ROTOR_SENSOR_ID_SIN_COS: return SinCos_VarId_Get(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId); break;
+            // case ROTOR_SENSOR_ID_SENSORLESS: return Sensorless_VarId_Get(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId); break;
         default: return 0; // or some error value
     }
 }
@@ -96,8 +138,8 @@ int Motor_Sensor_VarTypeConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typ
 
     switch (typeId)
     {
-        case MOTOR_SENSOR_MODE_HALL:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId); break;
-        case MOTOR_SENSOR_MODE_ENCODER: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
+        case ROTOR_SENSOR_ID_HALL:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId); break;
+        case ROTOR_SENSOR_ID_ENCODER: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId); break;
     }
 }
 
@@ -109,57 +151,17 @@ void Motor_Sensor_VarTypeConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T ty
 
     switch (typeId)
     {
-        case MOTOR_SENSOR_MODE_HALL:
+        case ROTOR_SENSOR_ID_HALL:
             // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_motor->SENSOR_TABLE.HALL.HALL); return; }
             Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);
             break;
 
-        case MOTOR_SENSOR_MODE_ENCODER:
+        case ROTOR_SENSOR_ID_ENCODER:
             Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);
             break;
         default: break;
     }
 }
-
-/******************************************************************************/
-/*
-    requires Motor Context with StateMachine substate
-*/
-/******************************************************************************/
-/*!
-    @param[in] MotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
-*/
-void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T varId, int varValue)
-{
-    if (p_motor == NULL) return;
-    if (!Motor_StateMachine_IsConfig(p_motor)) return;
-
-    switch (varId)
-    {
-        case MOTOR_SENSOR_MODE_HALL: (void)varValue; Motor_Hall_Calibrate(p_motor); break;
-        case MOTOR_SENSOR_MODE_ENCODER:
-            // switch (varValue)
-            // {
-
-            // }
-            // Encoder_Calibrate(&p_motor->SENSOR_TABLE.ENCODER.ENCODER);
-            break;
-        #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-        case MOTOR_SENSOR_MODE_SIN_COS:
-            // SinCos_Calibrate(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS);
-            break;
-        #endif
-        #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-        case MOTOR_SENSOR_MODE_SENSORLESS:
-            // Sensorless_Calibrate(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS);
-            break;
-        #endif
-        default: break;
-    }
-}
-
-
-
 
 /******************************************************************************/
 /*!
@@ -171,22 +173,22 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // {
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             // Motor_ResetUnitsHallEncoder_ElSpeed(p_motor);
 //             // Motor_ResetUnitsHallEncoder_MechSpeed(p_motor);
 //             Encoder_SetUnitsHall_MechSpeed(&p_motor->ENCODER, Motor_GetSpeedRatedRef_Rpm(p_motor->P_MOTOR_STATE), p_motor->P_MOTOR_STATE->Config.PolePairs);
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             // Motor_ResetUnitsEncoder(p_motor);
 //             break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:
+//         case ROTOR_SENSOR_ID_SIN_COS:
 //             // Motor_ResetUnitsSinCos(&p_motor->SinCos);
 //             // Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
 //             break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//         case ROTOR_SENSOR_ID_SENSORLESS:
 //             // Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
 //             break;
 //         #endif
@@ -200,7 +202,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // {
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             Hall_Init(&p_motor->HALL);
 //         #if     defined(CONFIG_MOTOR_HALL_MODE_POLLING) || !defined(CONFIG_MOTOR_HALL_MODE_ISR)
 //             Encoder_ModeDT_Init_Polling(&p_motor->ENCODER);
@@ -208,17 +210,17 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //             Encoder_InitInterrupts_ABC(&p_motor->ENCODER);
 //         #endif
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->ENCODER);
 //             Encoder_EnableQuadratureMode(&p_motor->ENCODER);
 //             break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:
+//         case ROTOR_SENSOR_ID_SIN_COS:
 //             SinCos_Init(&p_motor->SinCos);
 //             break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//         case ROTOR_SENSOR_ID_SENSORLESS:
 //             break;
 //         #endif
 //         default:
@@ -234,7 +236,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
 //             if (Hall_PollCaptureSensors(&p_motor->HALL) == true)
 //             {
@@ -248,13 +250,13 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //             /* handle direction reset */
 //             break;
 
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             electricalAngle = Encoder_GetPartitionAngle(&p_motor->ENCODER);
 //             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->ENCODER);
 //             break;
 
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:
+//         case ROTOR_SENSOR_ID_SIN_COS:
 //             SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 //             electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
 //             //todo group
@@ -263,7 +265,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //             break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//         case ROTOR_SENSOR_ID_SENSORLESS:
 //             //todo observer
 //             electricalAngle = 0;
 //             p_motor->FeedbackMode.OpenLoop = 1U;
@@ -289,13 +291,13 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //     // angle16_t angle;
 //     // switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     // {
-//     //     case MOTOR_SENSOR_MODE_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
-//     //     case MOTOR_SENSOR_MODE_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
+//     //     case ROTOR_SENSOR_ID_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
+//     //     case ROTOR_SENSOR_ID_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
 //     //     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//     //     case MOTOR_SENSOR_MODE_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
+//     //     case ROTOR_SENSOR_ID_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
 //     //     #endif
 //     //     #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     //     case MOTOR_SENSOR_MODE_SENSORLESS: angle = 0; break;
+//     //     case ROTOR_SENSOR_ID_SENSORLESS: angle = 0; break;
 //     //     #endif
 //     //     default: angle = 0; break;
 //     // }
@@ -311,26 +313,26 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         /* Using assigned direction */
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             Encoder_ModeDT_CaptureVelocity(&p_motor->ENCODER);
-//             p_motor->P_MOTOR_STATE->AngularSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(&p_motor->ENCODER);
+//             p_motor->P_MOTOR_STATE->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(&p_motor->ENCODER);
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             Encoder_ModeDT_CaptureVelocity(&p_motor->ENCODER);
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS: speed = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));    break;
+//         case ROTOR_SENSOR_ID_SIN_COS: speed = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));    break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS: break;
+//         case ROTOR_SENSOR_ID_SENSORLESS: break;
 //         #endif
 //         default: speed = 0; break;
 //     }
 //     return speed;
-//     // return p_motor->AngularSpeed_DegPerCycle;
+//     // return p_motor->ElectricalSpeed_DegPerCycle;
 // }
 
 // bool Motor_PollCaptureSpeed(const Motor_T * p_motor)
@@ -344,19 +346,19 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // {
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             Hall_SetInitial(&p_motor->HALL);
 //             Encoder_ModeDT_SetInitial(&p_motor->ENCODER);
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             Encoder_ModeDT_SetInitial(&p_motor->ENCODER);
 //             break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:
+//         case ROTOR_SENSOR_ID_SIN_COS:
 //             break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//         case ROTOR_SENSOR_ID_SENSORLESS:
 //             Motor_SetPositionFeedback(p_motor, 0U);
 //             break;
 //         #endif
@@ -370,13 +372,13 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //     bool isAvailable;
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:    isAvailable = true;         break;
-//         case MOTOR_SENSOR_MODE_ENCODER: isAvailable = Encoder_IsAligned(p_motor->ENCODER.P_STATE);    break;
+//         case ROTOR_SENSOR_ID_HALL:    isAvailable = true;         break;
+//         case ROTOR_SENSOR_ID_ENCODER: isAvailable = Encoder_IsAligned(p_motor->ENCODER.P_STATE);    break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:     isAvailable = true;     break;
+//         case ROTOR_SENSOR_ID_SIN_COS:     isAvailable = true;     break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:  isAvailable = false;    break;
+//         case ROTOR_SENSOR_ID_SENSORLESS:  isAvailable = false;    break;
 //         #endif
 //         default: isAvailable = false; break;
 //     }
@@ -401,16 +403,16 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // // {
 // //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 // //     {
-// //         case MOTOR_SENSOR_MODE_HALL:
+// //         case ROTOR_SENSOR_ID_HALL:
 // //             break;
-// //         case MOTOR_SENSOR_MODE_ENCODER:
+// //         case ROTOR_SENSOR_ID_ENCODER:
 // //             break;
 // //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-// //         case MOTOR_SENSOR_MODE_SIN_COS:
+// //         case ROTOR_SENSOR_ID_SIN_COS:
 // //             break;
 // //         #endif
 // //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-// //         case MOTOR_SENSOR_MODE_SENSORLESS:
+// //         case ROTOR_SENSOR_ID_SENSORLESS:
 // //             break;
 // //         #endif
 // //         default:
@@ -426,14 +428,14 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 // {
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             Hall_SetDirection(p_motor->HALL.P_STATE, (Hall_Direction_T)direction);
 //             Encoder_SinglePhase_SetDirection(&p_motor->ENCODER, direction);  /* interpolate as +/- */
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:  break;
+//         case ROTOR_SENSOR_ID_SENSORLESS:  break;
 //         #endif
 //         default: break;
 //     }
@@ -445,18 +447,18 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, MotorSensor_Id_T 
 //     bool isValid = true;
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
-//         case MOTOR_SENSOR_MODE_HALL:
+//         case ROTOR_SENSOR_ID_HALL:
 //             // if (Hall_IsStateValid(&p_motor->HALL.P_STATE) == false) { isValid = false; }
 //             if (Hall_IsTableValid(&p_motor->HALL.P_STATE) == false) { isValid = false; }
 //             break;
-//         case MOTOR_SENSOR_MODE_ENCODER:
+//         case ROTOR_SENSOR_ID_ENCODER:
 //             break;
 //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SIN_COS:
+//         case ROTOR_SENSOR_ID_SIN_COS:
 //             break;
 //         #endif
 //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case MOTOR_SENSOR_MODE_SENSORLESS:
+//         case ROTOR_SENSOR_ID_SENSORLESS:
 //             break;
 //         #endif
 //         default:

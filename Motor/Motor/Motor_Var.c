@@ -637,3 +637,30 @@ void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T ty
         case MOTOR_VAR_TYPE_CONFIG_BOARD_REF:           break; // Not used
     }
 }
+
+/******************************************************************************/
+/*
+    Wrap
+*/
+/******************************************************************************/
+int Motor_VarType_SensorState_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+{
+    if (p_motor == NULL) return 0;
+
+    return MotorSensor_VarType_Get(&p_motor->SENSOR_TABLE, typeId, varId);
+}
+
+int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId)
+{
+    if (p_motor == NULL) return 0;
+
+    return MotorSensor_VarTypeConfig_Get(&p_motor->SENSOR_TABLE, typeId, varId);
+}
+
+void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, MotorSensor_Id_T typeId, int varId, int varValue)
+{
+    if (p_motor == NULL) return;
+    if (!Motor_StateMachine_IsConfig(p_motor)) return;
+
+    MotorSensor_VarTypeConfig_Set(&p_motor->SENSOR_TABLE, typeId, varId, varValue);
+}

@@ -28,10 +28,10 @@
 */
 /******************************************************************************/
 #include "Motor_Hall.h"
+#include "Hall.h"
 
 // #include "../../Motor_Config.h"
 #include "../../Motor_StateMachine.h"
-#include "../../Motor.h"
 
 
 /******************************************************************************/
@@ -123,12 +123,3 @@ void Motor_Hall_Calibrate(const Motor_T * p_motor)
 
 // void Motor_Hall_Config_Set(Motor_T * p_motor, Hall_ConfigId_T varId, int32_t varValue) { _Hall_ConfigId_Set(GetHall(p_motor)->P_STATE, varId, varValue); }
 
-// static int VarConfig_Get(const Motor_T * p_motor, int varId) { return Motor_Hall_Config_Get(p_motor, varId); }
-// static void VarConfig_Set(const Motor_T * p_motor, int varId, int varValue) { Motor_Hall_Config_Set(p_motor, varId, varValue); }
-
-// const VarAccess_VTable_T MOTOR_HALL_VAR_CONFIG =
-// {
-//     .GET_AT = (get_at_t)VarConfig_Get,
-//     .SET_AT =  (set_at_t)VarConfig_Set,
-//     .TEST_SET = (test_t)Motor_StateMachine_IsConfig,
-// };

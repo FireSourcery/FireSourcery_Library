@@ -94,6 +94,8 @@ static inline void MotorController_User_StartPassthroughMode(const MotorControll
 /*
     Pass outer context in case implementation changes
     push to motor state machine on edge
+
+    Validate by statemachine
 */
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
