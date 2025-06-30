@@ -69,13 +69,44 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, &((MotorControllerActive).StateMachine))
 
-
-// static inline bool _MotorController_StateMachine_IsFault(const MotorController_State_T * p_active) { return (StateMachine_GetActiveStateId(&p_active->StateMachine) == MCSM_STATE_ID_FAULT); }
-
+// static inline bool MotorController_StateMachine_IsState(const MotorController_T * p_context, ) { return StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE,  ); }
+static inline bool _MotorController_StateMachine_IsFault(const MotorController_State_T * p_active) { return (StateMachine_IsActiveStateId(&p_active->StateMachine, MCSM_STATE_ID_FAULT)); }
 static inline bool MotorController_StateMachine_IsFault(const MotorController_T * p_context) { return StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_FAULT); }
 
-// extern bool MotorController_StateMachine_IsFault(const MotorController_State_T * p_active);
+/******************************************************************************/
+/*!
+    Blocking SubState/Function Id
+    LockCmd
+*/
+/******************************************************************************/
+/* Lock_InputLockOp_Blocking  */
+typedef enum MotorController_LockId
+{
+    MOTOR_CONTROLLER_LOCK_ENTER,
+    MOTOR_CONTROLLER_LOCK_EXIT,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
+    MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
+    MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
+    MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
+    MOTOR_CONTROLLER_LOCK_REBOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
+    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
+    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
+}
+MotorController_LockId_T;
 
+typedef enum MotorController_LockOpStatus
+{
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
+}
+MotorController_LockOpStatus_T;
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
 extern bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context);
 extern void MotorController_StateMachine_EnterFault(const MotorController_T * p_context);
 extern void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags);

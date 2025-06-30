@@ -124,7 +124,7 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
         case MOT_VAR_USER_INIT_MODE:        p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
         case MOT_VAR_USER_INPUT_MODE:       MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
-        // case MOT_VAR_BUZZER_FLAGS_ENABLE:           p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
+        // case MOT_VAR_BUZZER_FLAGS_ENABLE:    p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;

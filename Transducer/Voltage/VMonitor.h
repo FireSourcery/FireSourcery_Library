@@ -89,7 +89,7 @@ static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p
 
 static inline void VMonitor_MarkConversion(const VMonitor_Context_T * p_context)
 {
-    Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->ANALOG_CONVERSION);
 }
 
 /******************************************************************************/

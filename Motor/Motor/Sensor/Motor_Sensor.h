@@ -47,6 +47,11 @@
 typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
+// typedef enum Motor_Sensor_CalibrationStatus
+// {
+// }
+// Motor_Sensor_CalibrationStatus_T;
+
 /******************************************************************************/
 /*!
     Id Access

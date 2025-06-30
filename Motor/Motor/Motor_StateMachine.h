@@ -117,9 +117,9 @@ static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, Motor_Sta
 static inline bool _Motor_StateMachine_IsFault(const Motor_State_T * p_fields) { return (_Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_FAULT)); }
 static inline bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_FAULT); }
 
-static inline bool _Motor_StateMachine_IsOpenLoop(const Motor_State_T * p_fields) { return _Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_OPEN_LOOP); }
+// static inline bool _Motor_StateMachine_IsOpenLoop(const Motor_State_T * p_fields) { return _Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_OPEN_LOOP); }
 
-// static inline bool Motor_VarConfig_IsConfigState_Context(const Motor_T * p_motor)
+// static inline bool Motor_User_IsConfigState(const Motor_T * p_motor)
 static inline bool Motor_StateMachine_IsConfig(const Motor_T * p_motor)
 {
     return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP);

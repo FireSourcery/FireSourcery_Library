@@ -42,9 +42,6 @@ void MotNvm_Init(const MotNvm_T * p_motNvm)
 
 NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes)
 {
-    assert(p_rom != NULL);
-    assert(p_ram != NULL);
-    assert(sizeBytes > 0U);
 #if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_rom, p_ram, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
@@ -99,18 +96,38 @@ NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 #endif
 }
 
+
+
+NvMemory_Status_T SaveEntry_Blocking(const MotNvm_T * p_motNvm, const MotNvm_Entry_T * p_entry)
+{
+    assert(p_entry != NULL);
+    assert(p_entry->NVM_ADDRESS != NULL);
+    assert(p_entry->RAM_ADDRESS != NULL);
+    assert(p_entry->SIZE > 0U);
+
+    return MotNvm_Write_Blocking(p_motNvm, p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE);
+}
+
 NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 {
-    const MotNvm_Entry_T * p_entry;
     NvMemory_Status_T status;
+
+#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
+    /* compare if updated */
+    // for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
+    // {
+    //     const MotNvm_Entry_T * p_entry;
+    //     if (memcmp(p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE) != 0U)
+    // }
+
+    /* Flash Erase Full block */
+    status = Flash_Erase_Blocking(p_motNvm->P_FLASH, p_motNvm->MAIN_CONFIG_ADDRESS, p_motNvm->MAIN_CONFIG_SIZE);
+    if (status != NV_MEMORY_STATUS_SUCCESS) { return status; }
+#endif
 
     for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
     {
-        p_entry = &p_motNvm->P_PARTITIONS[i];
-        /* Write if updated */
-        if (memcmp(p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE) != 0U)
-            { status = MotNvm_Write_Blocking(p_motNvm, p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE); }
-
+        status = SaveEntry_Blocking(p_motNvm, &p_motNvm->P_PARTITIONS[i]);
         if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
     }
 

@@ -137,7 +137,8 @@ Analog_Conversion_T;
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
 
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
-static inline void Analog_Conversion_MarkConversion(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->IsMarked = true; }
+static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->Result = 0; }
+static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->IsMarked = true; }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->IsMarked; }
 
 

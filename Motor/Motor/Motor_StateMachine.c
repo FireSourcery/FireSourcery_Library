@@ -395,9 +395,7 @@ static void Run_Proc(const Motor_T * p_motor)
 // static State_T * Run_Next(const Motor_T * p_motor)
 // {
 //     State_T * p_nextState = NULL;
-
 //     if (Motor_GetSpeed(p_motor->P_MOTOR_STATE) < ) { p_nextState = &MOTOR_STATE_; }
-
 //     return p_nextState;
 // }
 
@@ -501,7 +499,7 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_input_valu
     {
         case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE;              break;
         case PHASE_OUTPUT_V0:       /* Phase_ActivateOutputV0(&p_motor->PHASE); */   break;
-        case PHASE_OUTPUT_VPWM:     /* Phase_ActivateOutputT0(&p_motor->PHASE); */     break;
+        case PHASE_OUTPUT_VPWM:     /* Phase_ActivateOutputT0(&p_motor->PHASE); */   break;
         /* No resume from OpenLoop, freewheel state check stop */
     }
 
@@ -675,9 +673,10 @@ const State_T MOTOR_STATE_FAULT =
 
 
 /******************************************************************************/
-/* Fault interface functions */
+/*
+    Fault interface functions
+*/
 /******************************************************************************/
-
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {
     if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0U); }

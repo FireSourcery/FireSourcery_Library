@@ -32,6 +32,7 @@
 
 /******************************************************************************/
 /*
+    User Setting Limit
 */
 /******************************************************************************/
 bool MotorController_User_SetSpeedLimitAll(const MotorController_T * p_context, uint16_t limit_fract16)
@@ -61,6 +62,7 @@ bool MotorController_User_ClearILimitAll(const MotorController_T * p_context)
 /******************************************************************************/
 /*   */
 /******************************************************************************/
+/* using user channel */
 void MotorController_User_SetOptSpeedLimitOnOff(const MotorController_T * p_context, bool isEnable)
 {
     if (isEnable == true) { MotorController_User_SetSpeedLimitAll(p_context, p_context->P_ACTIVE->Config.OptSpeedLimit_Fract16); }
@@ -74,7 +76,9 @@ void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context,
 }
 
 /******************************************************************************/
-/* Config */
+/*
+    Config
+*/
 /******************************************************************************/
 /*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSupplyRef */
 void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
@@ -117,8 +121,6 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     }
 }
 
-
-
 /******************************************************************************/
 /*
     Call via Key/Value, State/SubStates Cmds
@@ -126,11 +128,11 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     todo regularize return status
 */
 /******************************************************************************/
-uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int32_t value)
+int MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int value)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
-    uint32_t status = 0;
+    int status = 0;
     bool isSuccess = true;
 
     switch (id)
@@ -138,9 +140,10 @@ uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorCon
         // case MOT_USER_SYSTEM_RESRV:                           break;
         case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                               break;
         // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 1U);                break;
-        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break;
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break; /* Stop active periodic. does not disable */
+
         case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);          break;
-        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
+        case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_User_ForceDisableControl(p_context);        break;
 
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
@@ -150,10 +153,7 @@ uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorCon
             // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOT_DRIVE_DIRECTION_PARK);
             // MotDrive_SetDirection(&p_mc->MotDrive, MOT_DRIVE_DIRECTION_PARK);
             MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);
-
-            /* failed to enter lock */
-            if (((MotorController_LockId_T)value != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_User_IsLockState(p_context) == false))
-                { MotorController_BeepShort(p_context); }
+            if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
 
             status = MotorController_User_GetLockOpStatus(p_context); // returns block status, async op always returns 0
             break;
@@ -164,6 +164,8 @@ uint32_t MotorController_User_Call(const MotorController_T * p_context, MotorCon
             // if (MotorController_User_IsLockOpComplete(p_context) == true)
             status = MotorController_User_GetLockOpStatus(p_context);
             break;
+
+        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
 
         // include for convenience
         // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);

@@ -122,7 +122,7 @@ static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T 
     return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
 }
 
-static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_MarkConversion(&p_context->ANALOG_CONVERSION); }
+static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_Mark(&p_context->ANALOG_CONVERSION); }
 
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */

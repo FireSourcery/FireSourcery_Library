@@ -56,9 +56,9 @@ void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu) { p_moto
 void Motor_Analog_MarkVabc(const Motor_T * p_context)
 {
 #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VA);
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VB);
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_VC);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_VA);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_VB);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_VC);
 #else
     (void)p_context;
 #endif
@@ -68,10 +68,10 @@ void Motor_Analog_MarkVabc(const Motor_T * p_context)
 
 void Motor_Analog_MarkIabc(const Motor_T * p_context)
 {
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IA);
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IB);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_IA);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_IB);
 #if defined(CONFIG_MOTOR_I_SENSORS_ABC)
-    Analog_Conversion_MarkConversion(&p_context->ANALOG.CONVERSION_IC);
+    Analog_Conversion_Mark(&p_context->ANALOG.CONVERSION_IC);
 #endif
 }
 
@@ -81,9 +81,9 @@ void Motor_Analog_MarkIabc(const Motor_T * p_context)
 // void Phase_MarkAnalog(const Phase_T * p_phase, const Motor_Analog_T * p_analog)
 // {
 //     Phase_Bits_T state = _Phase_ReadState(p_phase);
-//     Analog_Conversion_MarkConversion((state.A) ? &p_analog->CONVERSION_IA : &p_analog->CONVERSION_VA);
-//     Analog_Conversion_MarkConversion((state.B) ? &p_analog->CONVERSION_IB : &p_analog->CONVERSION_VB);
-//     Analog_Conversion_MarkConversion((state.C) ? &p_analog->CONVERSION_IC : &p_analog->CONVERSION_VC);
+//     Analog_Conversion_Mark((state.A) ? &p_analog->CONVERSION_IA : &p_analog->CONVERSION_VA);
+//     Analog_Conversion_Mark((state.B) ? &p_analog->CONVERSION_IB : &p_analog->CONVERSION_VB);
+//     Analog_Conversion_Mark((state.C) ? &p_analog->CONVERSION_IC : &p_analog->CONVERSION_VC);
 // }
 
 // void Motor_Analog_MarkPhase(const Motor_T * p_context)

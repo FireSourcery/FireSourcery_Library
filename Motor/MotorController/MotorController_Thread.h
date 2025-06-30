@@ -250,7 +250,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 
     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true) { MotorController_BeepMonitorTrigger(p_context); }
 
-    Analog_Conversion_MarkConversion(&p_context->V_SOURCE.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);
 
 #endif
 }
@@ -272,8 +272,8 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
 
     if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
 
-    Analog_Conversion_MarkConversion(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
-    Analog_Conversion_MarkConversion(&p_context->V_ANALOG.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
 }
 
 

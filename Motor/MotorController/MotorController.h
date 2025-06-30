@@ -195,34 +195,6 @@ MotorController_Config_T;
 /*!
 */
 /******************************************************************************/
-/* todo as substate */
-/* Blocking SubState/Function Id */
-// typedef enum MotorController_LockCmd
-typedef enum MotorController_LockId
-{
-    MOTOR_CONTROLLER_LOCK_ENTER,
-    MOTOR_CONTROLLER_LOCK_EXIT,
-    MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR,
-    MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC,
-    MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
-    MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
-    MOTOR_CONTROLLER_LOCK_REBOOT,
-    // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
-    // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
-    // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
-}
-MotorController_LockId_T;
-
-typedef enum MotorController_LockOpStatus
-{
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
-}
-MotorController_LockOpStatus_T;
-
-
-
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
@@ -241,14 +213,10 @@ typedef struct MotorController_State
     // MotorController_StateFlags_T StateFlags;
     MotDrive_State_T MotDrive; /* Optionally contain on init */
 
-    MotorController_LockId_T LockSubState; /* todo depreciate */
-    /* Async return status */
-    // union
-    // {
-    NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
+    /* Generic async return status */
     uint8_t LockOpStatus; /* async status */
+    NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
     // Calibration_Status_T CalibrationStatus;
-    // } AsyncStatus;
 
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
@@ -383,6 +351,6 @@ extern void MotorController_LoadConfigDefault(const MotorController_T * p_contex
 extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
-extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
+// extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
 
 

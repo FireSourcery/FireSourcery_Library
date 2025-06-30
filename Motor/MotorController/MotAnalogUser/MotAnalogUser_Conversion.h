@@ -42,8 +42,8 @@ MotAnalogUser_Conversion_T;
 
 static inline void MotAnalogUser_Conversion_Mark(const MotAnalogUser_Conversion_T * p_this)
 {
-    Analog_Conversion_MarkConversion(&p_this->THROTTLE);
-    Analog_Conversion_MarkConversion(&p_this->BRAKE);
+    Analog_Conversion_Mark(&p_this->THROTTLE);
+    Analog_Conversion_Mark(&p_this->BRAKE);
 }
 
 static inline uint16_t MotAnalogUser_Conversion_GetThrottle(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->THROTTLE); }

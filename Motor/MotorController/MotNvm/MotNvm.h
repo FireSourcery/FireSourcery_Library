@@ -41,14 +41,14 @@
 
 /* externally define */
 struct HAL_Nvm_Manufacturer;
-// typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
+typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
 
-extern uint32_t HAL_Nvm_Manufacturer_GetVMaxVolts(const struct HAL_Nvm_Manufacturer * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const struct HAL_Nvm_Manufacturer * p_this);
-// extern uint32_t HAL_Nvm_Manufacturer_GetVRated(const struct HAL_Nvm_Manufacturer * p_this);
-// extern uint32_t HAL_Nvm_Manufacturer_GetIRatedRms(const struct HAL_Nvm_Manufacturer * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const struct HAL_Nvm_Manufacturer * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetVMaxVolts(const HAL_Nvm_Manufacturer_T * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const HAL_Nvm_Manufacturer_T * p_this);
+// extern uint32_t HAL_Nvm_Manufacturer_GetVRated(const HAL_Nvm_Manufacturer_T * p_this);
+// extern uint32_t HAL_Nvm_Manufacturer_GetIRatedRms(const HAL_Nvm_Manufacturer_T * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const HAL_Nvm_Manufacturer_T * p_this);
+extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const HAL_Nvm_Manufacturer_T * p_this);
 
 /* Config Mem descriptor table. */
 typedef struct MotNvm_Entry
@@ -59,7 +59,6 @@ typedef struct MotNvm_Entry
     // const uint32_t checksum_seed;    /* For validation */
 }
 MotNvm_Entry_T;
-
 
 typedef const struct
 {

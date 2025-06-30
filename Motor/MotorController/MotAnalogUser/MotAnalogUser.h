@@ -125,6 +125,7 @@ typedef struct MotAnalogUser_State
 }
 MotAnalogUser_State_T;
 
+#define MOT_ANALOG_USER_STATE_ALLOC() (&(MotAnalogUser_State_T){0})
 
 typedef const struct MotAnalogUser
 {

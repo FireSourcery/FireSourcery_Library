@@ -711,7 +711,6 @@ static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return
 
 
 
-
 /******************************************************************************/
 /*!
     Extern
