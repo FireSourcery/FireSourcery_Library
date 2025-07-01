@@ -97,8 +97,8 @@ void Motor_Reset(Motor_State_T * p_motor)
 
 // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
-    // Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeed_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
-    // Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampI_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
+    // Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
+    // Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
 // #endif
 
     /* Keep for physical units and external reading */

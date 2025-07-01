@@ -41,12 +41,12 @@ typedef const struct ArrayMeta
     // const size_t TYPE_SIZE; // Size of each element in the p_array
     void * const P_BUFFER;
     const size_t LENGTH;    // Length of the p_array
+    void * const P_AUGMENTS;
 
     // effective add to the unified interface, non value types
     // Array_State_T * const P_STATE;  // Pointer to the p_array buffer, with augments
     /* or seperate for extensions */
     // void * const P_BUFFER;
-    void * const P_AUGMENTS;
 }
 Array_T;
 

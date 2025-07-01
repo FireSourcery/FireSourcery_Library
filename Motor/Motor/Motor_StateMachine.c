@@ -144,7 +144,7 @@ static void Stop_Entry(const Motor_T * p_motor)
 
 static void Stop_Proc(const Motor_T * p_motor)
 {
-    Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* altneratively move to thread */
+    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* altneratively move to thread */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
@@ -243,7 +243,7 @@ static void Passive_Proc(const Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
-    Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alternatively move to thread */
+    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alternatively move to thread */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);
 }
 
@@ -386,7 +386,7 @@ static void Run_Entry(const Motor_T * p_motor)
 
 static void Run_Proc(const Motor_T * p_motor)
 {
-    Motor_ProcOuterFeedback(p_motor);
+    Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
     // Motor_FOC_WriteDuty(p_motor);
@@ -632,7 +632,6 @@ const State_T MOTOR_STATE_CALIBRATION =
 static void Fault_Entry(const Motor_T * p_motor) { Phase_Float(&p_motor->PHASE); }
 
 static void Fault_Proc(const Motor_T * p_motor) { Phase_Float(&p_motor->PHASE); }
-
 
 static State_T * Fault_InputClearFault(const Motor_T * p_motor, state_input_value_t faultFlags)
 {

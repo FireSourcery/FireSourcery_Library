@@ -103,11 +103,6 @@ typedef enum MotorController_ConfigId
     MOT_VAR_I_LIMIT_LOW_V,
     // MOT_VAR_I_LIMIT_DC,
 
-    // MOT_VAR_BOOT_REF_FAST_BOOT,
-    // MOT_VAR_BOOT_REF_BEEP,
-    // MOT_VAR_BOOT_REF_BLINK,
-    // MOT_VAR_BOOT_REF,
-
     MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
     MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
@@ -124,6 +119,7 @@ typedef enum MotorController_Config_BootRef
     MOT_VAR_BOOT_REF_FAST_BOOT,
     MOT_VAR_BOOT_REF_BEEP,
     MOT_VAR_BOOT_REF_BLINK,
+    // MOT_VAR_BOOT_REF_WORD_VALUE,
     // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
 }
 MotorController_Config_BootRef_T;
@@ -150,6 +146,9 @@ MotorController_InstanceRef_T;
 /******************************************************************************/
 /*
     Types
+    Type of NameBase
+        directly corresponds to enum type containing index ids
+        may be n:1 type
 */
 /******************************************************************************/
 typedef enum MotorController_VarType_SystemService

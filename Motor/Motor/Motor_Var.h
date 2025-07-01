@@ -29,8 +29,7 @@
     @brief  Var - Field-like Property Interface Getter/Setter via Id Key
 */
 /******************************************************************************/
-#include "Sensor/Motor_Sensor.h" /* for calibration cmd */
-#include "Sensor/RotorSensor.h"
+#include "Sensor/RotorSensor_Table.h"
 
 #include "Utility/Var/VarAccess.h"
 #include <assert.h>
@@ -67,6 +66,7 @@ typedef enum Motor_Var_UserOut
     MOTOR_VAR_POWER,
     MOTOR_VAR_I_DC,
     MOTOR_VAR_V_SPEED_EFFECTIVE,
+    MOTOR_VAR_ELECTRICAL_SPEED,
     // MOTOR_VAR_RAMP_SET_POINT,
 }
 Motor_Var_UserOut_T;

@@ -347,7 +347,6 @@ void StateMachine_ProcSubStateInput(const StateMachine_T * p_stateMachine, state
     [p_ActiveState][p_ActiveSubState]
 */
 /******************************************************************************/
-
 /* Including Top level state */
 void StateMachine_ProcBranch(const StateMachine_T * p_stateMachine)
 {
@@ -373,10 +372,11 @@ void StateMachine_ProcBranchInput(const StateMachine_T * p_stateMachine, state_i
 }
 
 /*
+    ActiveState is an Descendant of the selected State.
+
     result the input handle is any of P_START is in the active branch
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
 */
-// void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, const State_T * p_test, State_Input_T transition, state_input_value_t value)
 void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, const State_TransitionInput_T * p_transition, state_input_value_t value)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
@@ -392,6 +392,26 @@ void StateMachine_InvokeBranchTransition(const StateMachine_T * p_stateMachine, 
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
+
+// void StateMachine_InvokeBranchTransitionFrom(const StateMachine_T * p_stateMachine, const State_T * p_ , State_Input_T transition, state_input_value_t value)
+/*
+    Invoke a Branch Transition when
+        ActiveState is an Ancestor of the selected State.
+*/
+void StateMachine_InvokeBranchTransitionFrom(const StateMachine_T * p_stateMachine, const State_T * p_deepest, State_Input_T transition, state_input_value_t value)
+{
+    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+
+    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    {
+        if (State_IsActiveBranch(p_deepest, StateMachine_GetActiveSubState(p_active)) == true)
+        {
+            _StateMachine_TraverseTransitionTo(p_active, p_stateMachine->P_CONTEXT, transition(p_stateMachine->P_CONTEXT, value));
+        }
+        _StateMachine_ReleaseAsyncInput(p_active);
+    }
+}
+
 
 /*
     Effective for all States descending from the selected State

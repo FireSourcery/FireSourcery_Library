@@ -65,7 +65,7 @@ extern const StateMachine_Machine_T MOT_DRIVE_MACHINE;
     No sync lock. inputs are on the same thread
     handle edge actions
 */
-static inline void MotDrive_Proc_Thread(const MotDrive_T * p_motDrive)
+static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
 {
     if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_MOT_DRIVE_STATE->Input) == true)
     {
@@ -81,43 +81,24 @@ static inline void MotDrive_Proc_Thread(const MotDrive_T * p_motDrive)
     _StateMachine_ProcState(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive);
 }
 
-
 /*
-
+    transition from park
 */
-static inline MotDrive_Direction_T _MotDrive_GetDirection(const MotDrive_T * p_motDrive)
-{
-    MotDrive_Direction_T direction;
-    if      (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true)  { direction = MOT_DRIVE_DIRECTION_FORWARD; }
-    else if (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true)  { direction = MOT_DRIVE_DIRECTION_REVERSE; }
-    else                                                                                { direction = MOT_DRIVE_DIRECTION_ERROR; }
-    return direction;
-}
-
-static inline MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive)
-{
-    MotDrive_Direction_T direction;
-    switch (StateMachine_GetActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE))
-    {
-        case MOT_DRIVE_STATE_ID_PARK:       direction = MOT_DRIVE_DIRECTION_PARK;            break;
-        case MOT_DRIVE_STATE_ID_NEUTRAL:    direction = MOT_DRIVE_DIRECTION_NEUTRAL;         break;
-        case MOT_DRIVE_STATE_ID_DRIVE:      direction = _MotDrive_GetDirection(p_motDrive);  break;
-        default:                            direction = MOT_DRIVE_DIRECTION_ERROR;           break;
-    }
-    return direction;
-}
-
-
-/*
-    transition form park
-    */
-static inline bool MotDrive_StateMachine_CheckExit(const MotDrive_T * p_motDrive)
-{
-    return StateMachine_IsActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE, MOT_DRIVE_STATE_ID_PARK);
-}
+// static inline bool MotDrive_StateMachine_CheckExit(const MotDrive_T * p_motDrive)
+// {
+//     return StateMachine_IsActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE, MOT_DRIVE_STATE_ID_PARK);
+// }
 
 // static inline MotDrive_Status_T MotDrive_StateMachine_GetStatus(const MotDrive_T * p_handle)
 // {
 //     // StateMachine_GetActiveStateId(&p_handle->STATE_MACHINE);
 //     return (p_handle->STATE_MACHINE.P_MOT_DRIVE_STATE->p_ActiveState == &MOT_DRIVE_STATE_PARK) ? MOT_DRIVE_STATUS_FAULT : MOT_DRIVE_STATUS_OK;
 // }
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+extern MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive);

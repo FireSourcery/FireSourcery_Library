@@ -61,18 +61,11 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdThrottle(p_mc, 0U);                                              break;
     //     // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdDriveZero(p_mc);                                                 break;
     //     // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_NEUTRAL);                       break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:
-    //         // MotorController_User_ExitLockState(p_mc);
-    //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_FORWARD);
-    //         break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:
-    //     // MotorController_User_ExitLockState(p_mc);
-    //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_REVERSE);
-    //         break;
+    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_FORWARD);    //         break;
+    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_REVERSE);    //         break;
     //     case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:  break;
     //     default: break;
     // }
-
 
     // if drive mode
     // switch on app macchine
@@ -88,16 +81,24 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
 
     // else
+    /* Cmd Mode */
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(&p_context->MOT_DRIVE, 1);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(&p_context->MOT_DRIVE, -1);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(&p_context->MOT_DRIVE, 0);   break;
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(&p_context, 1);   break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(&p_context, -1);   break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(&p_context, 0);   break;
     //     default: break;
     // }
 
-    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true) { MotorController_User_SetCmdValue(p_context, 0U); }
-    // else { MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U); }
+    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
+    // {
+    //     // MotorController_User_SetCmdValue(p_context, 0U);
+    //     MotorController_User_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
+    // }
+    // else
+    // {
+    //     MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U);
+    // }
 
     if (IsDividerAlign(p_mc->MainDividerCounter, p_context->ANALOG_USER_DIVIDER) == true) { MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS); }
 }
@@ -295,12 +296,11 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         */
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        // _StateMachine_ProcSyncOutput(&p_mc->StateMachine, p_mc); // maybe change this to signal if enter fault is on 1ms thread
-        _StateMachine_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, p_mc);
+        // maybe change this to signal if enter fault is on 1ms thread
+        _StateMachine_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 
         /* Proc app Machine */ /* let compiler optimize */
-        // if (StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_MAIN) == true) { MotDrive_Proc_Thread(&p_context->MOT_DRIVE); }
-
+        // if (StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_MAIN) == true) { MotDrive_StatMachine_Proc(&p_context->MOT_DRIVE); }
         // switch (p_mc->StateMachine.State)
         // {
         //     case MOTOR_CONTROLLER_STATE_INIT:   break;
@@ -319,15 +319,18 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         switch (p_mc->Config.InputMode)
         {
             // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
-            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_context);  break;
+            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+                _MotorController_ProcAnalogUser(p_context);
+                break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+                /* optionally */
                 // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_User_ForceDisableControl(p_mc); }
                 /* Only active when Serial is selected as primary input */
-                if (MotorController_PollRxLost(p_context) == true)
-                {
-                    MotorController_User_ForceDisableControl(p_context);
-                    MotorController_StateMachine_EnterFault(p_context);
-                }
+                // if (MotorController_PollRxLost(p_context) == true)
+                // {
+                //     MotorController_User_ForceDisableControl(p_context);
+                //     MotorController_StateMachine_EnterFault(p_context);
+                // }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
             default:  break;
@@ -369,7 +372,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
 
-            MotorController_CaptureVSource(p_context); /* update vout ratios */
+            MotorController_CaptureVSource(p_context); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 

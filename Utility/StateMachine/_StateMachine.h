@@ -184,19 +184,20 @@ static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_
     SubState
 */
 /******************************************************************************/
-/* Checked on get and set */
-/* chck handling */
-static inline void _StateMachine_EndSubState(StateMachine_Active_T * p_fields) { p_fields->p_ActiveSubState = p_fields->p_ActiveState; }
-
 static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }
 
 /* Id indicator, for when the Active TOP state is known. use for serialization. */
-static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_fields) { return StateMachine_GetActiveSubState(p_fields)->ID; }
+static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_fields) { return p_fields->p_ActiveSubState->ID; }
 
 static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p_fields, const State_T * p_state) { return (p_state == StateMachine_GetActiveSubState(p_fields)); }
 /* Non unique substate id, handle with p_parentState */
 static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_fields, const State_T * p_parent, state_t subStateId)
     { return StateMachine_IsActiveState(p_fields, p_parent) && (subStateId == p_fields->p_ActiveSubState->ID); }
+
+
+/* split branch and substate functions */
+// static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return p_fields->p_ActiveSubState; }
+// static inline const State_T * StateMachine_GetActiveBranchState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }
 
 /* Is within the active branch */
 /* State is in the active branch. Ancestor of the ActiveSubState */
@@ -205,10 +206,11 @@ static inline bool StateMachine_IsActiveBranch(const StateMachine_Active_T * p_f
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_fields, const State_T * p_state) { return State_IsDirectBranch(StateMachine_GetActiveSubState(p_fields), p_state); }
 
-/* split branch and substate functions */
-// static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return p_fields->p_ActiveSubState; }
-// static inline const State_T * StateMachine_GetActiveLeafState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }
 
+/* depreciate */
+/* Checked on get and set */
+/* chck handling */
+static inline void _StateMachine_EndSubState(StateMachine_Active_T * p_fields) { p_fields->p_ActiveSubState = p_fields->p_ActiveState; }
 
 /******************************************************************************/
 /*!

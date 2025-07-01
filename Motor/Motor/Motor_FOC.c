@@ -78,20 +78,22 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 /******************************************************************************/
 /*
     Current Feedback Loop
-
-    input ReqQ
 */
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
-    // PID_SetOutputLimits(&p_motor->PidIq,  ,  );
     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
     FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalog_GetVSource_Fract16());
-    // if (FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalogRef_GetVSource_Fract16()))
-    // {
-    //     PID_SetOutputLimits(&p_motor->PidIq, -FOC_GetVq(&p_motor->Foc), FOC_GetVq(&p_motor->Foc));
-    // }
 }
+
+/* dynamic limit */
+// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// {
+//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
+//     if (FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalog_GetVSource_Fract16()))
+//         { _PID_SetOutputLimits(&p_motor->PidIq, -FOC_GetVq(&p_motor->Foc), FOC_GetVq(&p_motor->Foc)); }
+//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
+// }
 
 /* From Iabc to Idq to Vdq */
 static void ProcInnerFeedback(Motor_State_T * p_motor)
@@ -122,11 +124,7 @@ static void ProcInnerFeedback(Motor_State_T * p_motor)
 }
 
 /*
-    Speed Feedback Loop
-
-    Ramp input ~100Hz,
-    SpeedRamp/SpeedFeedback update 1000Hz,
-
+    Apply Outer results
     input   User SpeedRamp or TorqueRamp
     output  IqReq or VqReq
 */
@@ -176,8 +174,6 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 {
-    // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
     FOC_SetTheta(&p_motor->Foc, p_motor->SensorState.ElectricalAngle);
 
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
@@ -195,9 +191,6 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 {
-    // p_motor->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // FOC_SetTheta(&p_motor->Foc, p_motor->ElectricalAngle);
-    // Motor_PollCaptureSpeed(p_motor);
     FOC_SetTheta(&p_motor->Foc, p_motor->SensorState.ElectricalAngle);
 
     if (p_motor->VBatch.Id == PHASE_ID_ABC)
@@ -293,7 +286,6 @@ void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor) { Motor_FOC_SetDirec
 */
 void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
 {
-    // Motor_SetElAngleFeedforward(p_motor, angle);
     FOC_SetTheta(&p_motor->Foc, angle);
     FOC_SetReqD(&p_motor->Foc, dReq);
     FOC_SetReqQ(&p_motor->Foc, qReq);
@@ -301,21 +293,11 @@ void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fr
     ProcAngleOutput(p_motor);
 }
 
-// void Motor_FOC_SetAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
-// {
-//     Motor_SetElAngleFeedforward(p_motor, angle);
-//     FOC_SetTheta(&p_motor->Foc, angle);
-//     FOC_SetReqD(&p_motor->Foc, dReq);
-//     FOC_SetReqQ(&p_motor->Foc, qReq);
-// }
-
 /*
     Feed forward voltage angle without feedback on current
 */
 void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
 {
-    // p_motor->ElectricalAngle = angle;
-    // Motor_SetElAngleFeedforward(p_motor, angle);
     FOC_SetTheta(&p_motor->Foc, angle);
     FOC_SetVd(&p_motor->Foc, vd);
     FOC_SetVq(&p_motor->Foc, vq);
@@ -328,23 +310,22 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, f
     Angle Speed Wrap
 */
 /******************************************************************************/
+static inline void _Motor_SetFeedforwardDelta(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
+{
+    p_motor->SensorState.ElectricalAngle += elSpeed_degPerCycle;
+    p_motor->SensorState.ElectricalSpeed_DegPerCycle = elSpeed_degPerCycle;
+    p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRatedRef_ERpm(p_motor), elSpeed_degPerCycle);
+    p_motor->SensorState.MechanicalAngle += (elSpeed_degPerCycle / p_motor->Config.PolePairs);
+}
+
 static inline void Motor_SetElAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
 {
-    angle16_t angleDelta = angle - p_motor->SensorState.ElectricalAngle;
-    p_motor->SensorState.ElectricalAngle = angle;
-    p_motor->SensorState.ElectricalSpeed_DegPerCycle = angleDelta;
-
-    p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRatedRef_ERpm(p_motor), angleDelta);
-    p_motor->SensorState.MechanicalAngle += (angleDelta / p_motor->Config.PolePairs); /* user view */
+    _Motor_SetFeedforwardDelta(p_motor, angle - p_motor->SensorState.ElectricalAngle);
 }
 
 static inline void Motor_SetElSpeedFeedforward(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
 {
-    p_motor->SensorState.ElectricalAngle += elSpeed_degPerCycle;
-    p_motor->SensorState.ElectricalSpeed_DegPerCycle = elSpeed_degPerCycle;
-
-    p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRatedRef_ERpm(p_motor), elSpeed_degPerCycle);
-    p_motor->SensorState.MechanicalAngle += (elSpeed_degPerCycle / p_motor->Config.PolePairs);
+    _Motor_SetFeedforwardDelta(p_motor, elSpeed_degPerCycle);
 }
 
 // static inline void Motor_SetMechAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
@@ -360,23 +341,17 @@ static inline void Motor_SetElSpeedFeedforward(Motor_State_T * p_motor, angle16_
 */
 /******************************************************************************/
 /* Align using user cmd value */
+/* ElectricalAngle set by caller */
 void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 {
-    /* ElectricalAngle set by caller  */
-    // Phase_ActivateOutput(&p_motor->PHASE);
     Ramp_SetOutput(&p_motor->TorqueRamp, 0); /* reset the voltage to start at 0 */
-    p_motor->FeedbackMode.Current = 1U;
+    p_motor->FeedbackMode.Current = 1U; /* config alternatively */
 }
 
 /* User ramp */
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
-    int16_t req = Ramp_ProcOutput(&p_motor->TorqueRamp);
-    req = (p_motor->FeedbackMode.Current == 1U) ?
-        Motor_OpenLoopILimitOf(p_motor, req) :
-        Motor_OpenLoopVLimitOf(p_motor, req);
-
-    // Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->ElectricalAngle, req, 0);
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->SensorState.ElectricalAngle, Motor_ProcTorqueRampOpenLoop(p_motor), 0);
 }
 
 /******************************************************************************/
@@ -384,8 +359,6 @@ void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
     Open Loop Run
 */
 /******************************************************************************/
-
-
 /*
     preset align [OpenLoopIRamp]
 */
@@ -393,11 +366,9 @@ void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 {
     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
     Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.AlignTime_Cycles, 0, Motor_GetIAlign(p_motor));
-    // Ramp_SetOutput(&p_motor->OpenLoopIRamp, 0);
-    // Ramp_SetTarget(&p_motor->OpenLoopIRamp, Motor_GetIAlign(p_motor));
-    p_motor->FeedbackMode.Current = 1U; /* config alternatively */
+
+    p_motor->FeedbackMode.Current = 1U; /* StarttUp always select current feedback */
     p_motor->SensorState.ElectricalAngle = 0U;
-    // Motor_SetElAngleFeedforward(p_motor, 0); /* set angle to 0 */
 }
 
 void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
@@ -411,12 +382,11 @@ void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 {
-    // Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampI_Cycles, 0, p_motor->Config.OpenLoopRampIFinal_Fract16); /* shared with align */
-    /* altneritvely continue with same current */
+    Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, 0, p_motor->Config.OpenLoopRampIFinal_Fract16); /* Update slope set by align */
+    // Ramp_SetTarget(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampIFinal_Fract16); /* continue from align current */
 
-    Ramp_Set(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeed_Cycles, 0, p_motor->Config.OpenLoopRampSpeedFinal_DegPerCycle * p_motor->Direction);
-    // Ramp_SetOutput(&p_motor->OpenLoopSpeedRamp, 0);
-    // Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction);
+    Ramp_SetOutput(&p_motor->OpenLoopSpeedRamp, 0);
+    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedFinal_DegPerCycle * p_motor->Direction);
 
     p_motor->SensorState.ElectricalSpeed_DegPerCycle = 0;
     p_motor->SensorState.Speed_Fract16 = 0;

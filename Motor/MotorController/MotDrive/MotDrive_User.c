@@ -36,13 +36,12 @@ MotDrive_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_motDrive)
 }
 
 /*
-    sets async
+    set to state machine  async
 */
 void MotDrive_User_SetDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
 {
     if (MotDrive_User_GetDirection(p_motDrive) != direction)
     {
-        // _StateMachine_ProcInput(&p_motDrive->P_MOT_DRIVE_STATE->StateMachine, p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
         _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
         if (MotDrive_User_GetDirection(p_motDrive) != direction) { Blinky_Blink(p_motDrive->P_BUZZER, 500U);; } /* effective on motor async proc only */
     }
@@ -59,34 +58,26 @@ bool MotDrive_User_CheckDirection(const MotDrive_T * p_motDrive, MotDrive_Direct
 
 
 /******************************************************************************/
-/* Inputs disabled on Analog Mode */
+/* Var Id */
 /******************************************************************************/
-uint32_t MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, int32_t value)
+void MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, int value)
 {
-    bool isSet = true;
-
     switch (id)
     {
-        /* set to state machine */
-        case MOT_DRIVE_VAR_DIRECTION:   MotDrive_User_SetDirection(p_motDrive, (MotDrive_Direction_T)value);    break;
-        /* set to sync buffer */
-        case MOT_DRIVE_VAR_THROTTLE:    MotDrive_User_SetThrottle(p_motDrive->P_MOT_DRIVE_STATE, value);              break;
-        case MOT_DRIVE_VAR_BRAKE:       MotDrive_User_SetBrake(p_motDrive->P_MOT_DRIVE_STATE, value);                 break;
+        case MOT_DRIVE_VAR_DIRECTION:   MotDrive_User_SetDirection(p_motDrive, (MotDrive_Direction_T)value);            break;
+        case MOT_DRIVE_VAR_THROTTLE:    MotDrive_User_SetThrottle(p_motDrive->P_MOT_DRIVE_STATE, (uint16_t)value);      break;
+        case MOT_DRIVE_VAR_BRAKE:       MotDrive_User_SetBrake(p_motDrive->P_MOT_DRIVE_STATE, (uint16_t)value);         break;
     }
-
-    return (isSet == true) ? 0 : -1;
 }
 
-int32_t MotDrive_VarId_Get(const MotDrive_T * p_motDrive, MotDrive_VarId_T id)
+int MotDrive_VarId_Get(const MotDrive_T * p_motDrive, MotDrive_VarId_T id)
 {
-    int32_t value = 0;
+    int value = 0;
     switch (id)
     {
         case MOT_DRIVE_VAR_DIRECTION:   value = MotDrive_User_GetDirection(p_motDrive);     break;
-        // case MOT_DRIVE_VAR_THROTTLE:     value = p_motDrive->P_MOT_DRIVE_STATE->Input.ThrottleValue;  break;
-        // case MOT_DRIVE_VAR_BRAKE:        value = p_motDrive->P_MOT_DRIVE_STATE->Input.BrakeValue;     break;
-        // case MOT_DRIVE_VAR_THROTTLE:      value = MotDrive_User_GetCmdThrottle(p_motDrive);  break;
-        // case MOT_DRIVE_VAR_BRAKE:         value = MotDrive_User_GetCmdBrake(p_motDrive);     break;
+        case MOT_DRIVE_VAR_THROTTLE:    value = p_motDrive->P_MOT_DRIVE_STATE->Input.ThrottleValue;  break;
+        case MOT_DRIVE_VAR_BRAKE:       value = p_motDrive->P_MOT_DRIVE_STATE->Input.BrakeValue;     break;
     }
     return value;
 }
@@ -95,9 +86,9 @@ int32_t MotDrive_VarId_Get(const MotDrive_T * p_motDrive, MotDrive_VarId_T id)
 /******************************************************************************/
 /* */
 /******************************************************************************/
-int32_t MotDrive_ConfigId_Get(const MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id)
+int MotDrive_ConfigId_Get(const MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id)
 {
-    int32_t value = 0;
+    int value = 0;
     switch (id)
     {
         case MOT_DRIVE_CONFIG_THROTTLE_MODE:    value = p_motDriveState->Config.ThrottleMode;                 break;
@@ -107,7 +98,7 @@ int32_t MotDrive_ConfigId_Get(const MotDrive_State_T * p_motDriveState, MotDrive
     return value;
 }
 
-uint32_t MotDrive_ConfigId_Set(MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id, int32_t value)
+void MotDrive_ConfigId_Set(MotDrive_State_T * p_motDriveState, MotDrive_ConfigId_T id, int value)
 {
     switch (id)
     {

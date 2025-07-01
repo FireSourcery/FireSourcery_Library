@@ -59,6 +59,12 @@ MotSpeedLimit_Id_T;
 // }
 // MotLimits_T;
 
+// typedef struct
+// {
+//      MotMotors_T MOTORS;
+// }
+// MotLimits_Context_T;
+
 // #define MOT_LIMITS_INIT(p_this)                         \
 // {                                                       \
 //     .SpeedLimit = LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT),    \

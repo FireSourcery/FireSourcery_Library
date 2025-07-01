@@ -38,6 +38,17 @@
 */
 /******************************************************************************/
 
+/*
+    Nth Ancestor
+    No NULL check, as this is a private function for compile time defined values
+*/
+static inline const State_T * _State_IterateUp(const State_T * p_start, int8_t iterations)
+{
+    const State_T * p_iterator = p_start;
+    for (int8_t count = 0; count < iterations; count++) { p_iterator = p_iterator->P_PARENT; }
+    return p_iterator;
+}
+
 /******************************************************************************/
 /*
     Query
@@ -51,17 +62,6 @@ static inline bool State_IsSubState(const State_T * p_state) { return (p_state->
     Generic [Parent Node Tree] Relations
 */
 /******************************************************************************/
-/*
-    Nth Ancestor
-    No NULL check, as this is a private function for compile time defined values
-*/
-static inline const State_T * _State_IterateUp(const State_T * p_start, int8_t iterations)
-{
-    const State_T * p_iterator = p_start;
-    for (int8_t count = 0; count < iterations; count++) { p_iterator = p_iterator->P_PARENT; }
-    return p_iterator;
-}
-
 extern bool State_IsAncestor(const State_T * p_reference, const State_T * p_isAncestor);
 extern bool State_IsDescendant(const State_T * p_reference, const State_T * p_isDescendant);
 extern bool State_IsActiveBranch(const State_T * p_active, const State_T * p_test);

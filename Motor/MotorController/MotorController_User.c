@@ -30,34 +30,6 @@
 /******************************************************************************/
 #include "MotorController_User.h"
 
-/******************************************************************************/
-/*
-    User Setting Limit
-*/
-/******************************************************************************/
-bool MotorController_User_SetSpeedLimitAll(const MotorController_T * p_context, uint16_t limit_fract16)
-{
-    LimitArray_SetEntry(&p_context->MOT_SPEED_LIMITS, MOT_SPEED_LIMIT_USER, limit_fract16);
-    MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS);
-}
-
-bool MotorController_User_ClearSpeedLimitAll(const MotorController_T * p_context)
-{
-    LimitArray_ClearEntry(&p_context->MOT_SPEED_LIMITS, MOT_SPEED_LIMIT_USER);
-    MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS);
-}
-
-bool MotorController_User_SetILimitAll(const MotorController_T * p_context, uint16_t limit_fract16)
-{
-    LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_USER, limit_fract16);
-    MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
-}
-
-bool MotorController_User_ClearILimitAll(const MotorController_T * p_context)
-{
-    LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_USER);
-    MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
-}
 
 /******************************************************************************/
 /*   */
@@ -145,6 +117,8 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);          break;
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_User_ForceDisableControl(p_context);        break;
 
+        // case MOT_USER_SYSTEM_DISABLE_CONTROL: MotorController_User_DisableControl(p_context);        break;
+
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
@@ -155,14 +129,21 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
             MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);
             if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
 
-            status = MotorController_User_GetLockOpStatus(p_context); // returns block status, async op always returns 0
+            status = MotorController_User_GetLockOpStatus(p_context);
             break;
-        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
-            status = MotorController_User_GetLockState(p_context);
-            break;
+
         case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS: // union status, 0 as success
             // if (MotorController_User_IsLockOpComplete(p_context) == true)
             status = MotorController_User_GetLockOpStatus(p_context);
+            break;
+
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
+            status = MotorController_User_GetLockState(p_context);
+            break;
+
+        case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
+            MotorController_User_InputMainMode(p_context, (MotorController_MainMode_T)value);
+            status = 0;
             break;
 
         case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;

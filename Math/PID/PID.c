@@ -97,8 +97,10 @@ int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
     return p_pid->Output;
 }
 
-int16_t PID_ProcPI_WithLimits(PID_T * p_pid, int32_t feedback, int32_t setpoint, int32_t min, int32_t max)
+int16_t PID_ProcPI_WithLimits(PID_T * p_pid, int16_t min, int16_t max, int32_t feedback, int32_t setpoint)
 {
+    // _PID_SetOutputLimits(p_pid, min, max);
+    // return PID_ProcPI(p_pid, feedback, setpoint);
 }
 
 

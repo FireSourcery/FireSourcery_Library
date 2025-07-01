@@ -36,6 +36,7 @@
     MotorController Module General
 */
 /******************************************************************************/
+/* UserInput */
 int MotorController_VarOutput_Get(const MotorController_T * p_context, MotorController_VarOutput_T id)
 {
     int value = 0;
@@ -50,9 +51,30 @@ int MotorController_VarOutput_Get(const MotorController_T * p_context, MotorCont
     return value;
 }
 
+/* Inputs disabled on Analog Mode */
+void MotorController_VarInput_Set(const MotorController_T * p_context, MotorController_VarInput_T id, int value)
+{
+    // if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return; }
+
+    switch (id)
+    {
+        case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, (int16_t)value);                break;
+        case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);                break;
+        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, (sign_t)value);                break;
+        case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value);     break;
+
+        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
+        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:        MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
+
+        case MOT_VAR_USER_RELAY_TOGGLE:                 break;
+        case MOT_VAR_USER_METER_TOGGLE:                 break;
+    }
+}
+
 int MotorController_VarOutput_Debug_Get(const MotorController_T * p_context, MotorController_VarOutput_Debug_T id)
 {
     int value = 0;
+    // #ifndef NDEBUG
     Motor_State_T * p_motor = MotMotors_ContextAt(&p_context->MOTORS, 0)->P_MOTOR_STATE;
     switch (id)
     {
@@ -65,25 +87,8 @@ int MotorController_VarOutput_Debug_Get(const MotorController_T * p_context, Mot
         case MOT_VAR_DEBUG6: value = 0;    break;
         case MOT_VAR_DEBUG7: value = 0;    break;
     }
+    // #endif
     return value;
-}
-
-/* Inputs disabled on Analog Mode */
-void MotorController_VarInput_Set(const MotorController_T * p_context, MotorController_VarInput_T id, int value)
-{
-    switch (id)
-    {
-        case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, value);                     break;
-        case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);            break;
-        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, value);                    break;
-        case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value); break;
-
-        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_context, value);          break;
-        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:        MotorController_User_SetOptILimitOnOff(p_context, value);              break;
-
-        case MOT_VAR_USER_RELAY_TOGGLE:                 break;
-        case MOT_VAR_USER_METER_TOGGLE:                 break;
-    }
 }
 
 /******************************************************************************/
@@ -303,7 +308,7 @@ static MotVarId_Status_T _HandleSystemService_Set(const MotorController_T * p_co
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
         case MOT_VAR_TYPE_PROTOCOL_CONFIG:
-        // case MOT_VAR_TYPE_CAN_BUS_CONFIG:
+        case MOT_VAR_TYPE_CAN_BUS_CONFIG:
             if (!MotorController_User_IsConfigState(p_context)) return MOT_VAR_STATUS_ERROR_RUNNING;
             break;
 
@@ -488,6 +493,6 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG:   return _HandleRotorSensorConfig_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:        return _HandleSystemService_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:               return _HandleMonitor_Set(p_context, varId, value);
-        default:    return MOT_VAR_STATUS_ERROR;
+        default:    return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
 }

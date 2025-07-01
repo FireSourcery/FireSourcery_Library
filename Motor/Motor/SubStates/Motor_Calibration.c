@@ -47,7 +47,7 @@ static void Calibration_HomeEntry(const Motor_T * p_motor)
 
     // Phase_ActivateOutputV0(&p_motor->PHASE);
     // Timer_StartPeriod_Millis(&p_motor->P_MOTOR_STATE->ControlTimer, 20); // ~1rpm
-    // Ramp_Set(&p_motor->P_MOTOR_STATE->OpenLoopIRamp, p_motor->P_MOTOR_STATE->Config.OpenLoopRampI_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16));
+    // Ramp_Set(&p_motor->P_MOTOR_STATE->OpenLoopIRamp, p_motor->P_MOTOR_STATE->Config.OpenLoopRampITime_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16));
 
     // p_motor->P_MOTOR_STATE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
     // p_motor->P_MOTOR_STATE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);

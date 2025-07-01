@@ -260,7 +260,7 @@ void Motor_Config_SetOpenLoopRampIFinal_Fract16(Motor_State_T * p_motor, uint16_
 
 void Motor_Config_SetOpenLoopRampITime_Cycles(Motor_State_T * p_motor, uint32_t cycles)
 {
-    p_motor->Config.OpenLoopRampI_Cycles = cycles;
+    p_motor->Config.OpenLoopRampITime_Cycles = cycles;
     // PropagateSet(p_motor, Motor_ResetOpenLoopRamp);
 }
 
@@ -281,7 +281,7 @@ void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_State_T * p_motor, uin
 
 void Motor_Config_SetOpenLoopRampSpeedTime_Cycles(Motor_State_T * p_motor, uint32_t cycles)
 {
-    p_motor->Config.OpenLoopRampSpeed_Cycles = cycles;
+    p_motor->Config.OpenLoopRampSpeedTime_Cycles = cycles;
     // PropagateSet(p_motor, Motor_ResetOpenLoopRamp);
 }
 

@@ -67,20 +67,14 @@ typedef enum MotDrive_Cmd
 }
 MotDrive_Cmd_T;
 
+/* altneratively convert to common interface */
 typedef struct MotDrive_Input
 {
     MotDrive_Direction_T Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     MotDrive_Cmd_T Cmd;
-    MotDrive_Cmd_T CmdPrev; /* as substate */
-
-    //     uint16_t SpeedLimit;
-    //     uint16_t ILimit;
-    // uint16_t CmdValue;
-//     uint16_t FeedbackMode;
-//     uint16_t ControlState;
-//     uint16_t RampOnOff;
+    MotDrive_Cmd_T CmdPrev;
 }
 MotDrive_Input_T;
 

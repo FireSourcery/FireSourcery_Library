@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -27,10 +29,6 @@
     @brief  User [Interface] Input/Output/Cmd functions, includes error checking.
 */
 /******************************************************************************/
-#ifndef MOTOR_USER_H
-#define MOTOR_USER_H
-
-
 #include "Motor_StateMachine.h"
 #include "Motor/Motor/SubStates/Motor_Calibration.h"
 #include "Motor/Motor/SubStates/Motor_OpenLoop.h"
@@ -64,8 +62,8 @@ static inline uint16_t Motor_User_GetSpeed_UFract16(const Motor_State_T * p_moto
 static inline int16_t Motor_User_GetSpeed_DegPerCycle(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
 static inline uint16_t Motor_User_GetSpeed_UDegControl(const Motor_State_T * p_motor) { return math_abs(RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor)); }
 
-static inline int32_t Motor_User_GetVSpeedEffective_Fract16(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 2); }
-static inline uint16_t Motor_User_GetVSpeedEffective_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetVSpeed_Fract16(p_motor) / 2); }
+static inline int32_t Motor_User_GetVSpeedEffective_Fract16(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, Motor_GetVSpeed_Fract16(p_motor)); }
+static inline uint16_t Motor_User_GetVSpeedEffective_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetVSpeed_Fract16(p_motor)); }
 
 /*
     Conversion functions only on user call. No periodic proc.
@@ -119,6 +117,7 @@ static inline uint8_t Motor_User_GetSubStateId(const Motor_State_T * p_motor) { 
 
 static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 static inline int Motor_User_GetDirectionSign(const Motor_State_T * p_motor) { return Motor_GetUserDirection(p_motor); }
+static inline bool Motor_User_IsDirectionSign(const Motor_State_T * p_motor, int direction) { return (direction == Motor_GetUserDirection(p_motor)); }
 
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
@@ -134,7 +133,7 @@ static inline uint16_t Motor_User_GetSpeedLimitActive(const Motor_State_T * p_mo
 
 static inline uint16_t Motor_User_GetILimitMotoring(const Motor_State_T * p_motor)    { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_User_GetILimitGenerating(const Motor_State_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
-// static inline uint16_t Motor_User_GetILimit(const Motor_State_T * p_motor)            { return Motor_FOC_GetILimit(p_motor); }
+// static inline uint16_t Motor_User_GetILimit(const Motor_State_T * p_motor)         { return Motor_FOC_GetILimit(p_motor); }
 
 /*
 */
@@ -235,11 +234,10 @@ extern void Motor_User_StartSpeedMode(const Motor_T * p_const);
 extern void Motor_User_SetVoltageCmd(Motor_State_T * p_motor, int16_t volts_fract16);
 extern void Motor_User_SetVoltageCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
 extern void Motor_User_SetVSpeedScalarCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
-extern void Motor_User_SetRegenCmd(Motor_State_T * p_motor, motor_value_t scalar_fract16);
+extern void Motor_User_SetRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
 
 extern void Motor_User_SetICmd(Motor_State_T * p_motor, int16_t i_fract16);
 extern void Motor_User_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
-// extern void Motor_User_SetICmd_Scalar(Motor_State_T * p_motor, motor_value_t scalar_fract16);
 
 extern void Motor_User_SetTorqueCmd(Motor_State_T * p_motor, int16_t torque);
 extern void Motor_User_SetTorqueCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
@@ -247,7 +245,6 @@ extern void Motor_User_SetTorqueCmd_Scalar(Motor_State_T * p_motor, int16_t scal
 extern void Motor_User_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16);
 extern void Motor_User_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
 
-// extern void Motor_User_SetSpeedCmd_Scalar(Motor_State_T * p_motor, motor_value_t scalar_fract16);
 extern void Motor_User_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 
@@ -267,13 +264,5 @@ extern int32_t Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor);
 
 extern void Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, int16_t userCmd);
 extern void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd);
-// extern void Motor_User_SetActiveCmdValue_ScalarCast(Motor_State_T * p_motor, int userCmd);
 
 
-#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
-extern int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor);
-extern void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
-extern void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
-#endif
-
-#endif

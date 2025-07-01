@@ -194,7 +194,8 @@ typedef union MOT_PACKET_PACKED MotPacket
 MotPacket_T;
 
 
-// todo passing payload separately eliminates need for combined packet + payload struct
+// todo remove Packet wrap. keep payload
+// pass payload separately eliminates need for combined packet + payload struct
 // extern uint8_t MotPacket_VersionResp1_Build(MotPacket_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
 
 /******************************************************************************/
@@ -240,13 +241,16 @@ typedef struct MotPacket_StopResp { MotPacket_Header_T Header; MotPacket_StopRes
 /******************************************************************************/
 /*! Call - Arbitrary Functions */
 /******************************************************************************/
+/* Id/Address */
 typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t Arg; }                                     MotPacket_CallReq_Payload_T;
 typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Status; }                                 MotPacket_CallResp_Payload_T;
+
 typedef struct MotPacket_CallReq { MotPacket_Header_T Header; MotPacket_CallReq_Payload_T CallReq; }        MotPacket_CallReq_T;
 typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallResp_Payload_T CallResp; }     MotPacket_CallResp_T;
 
 // multiple parameters
-// typedef struct MotPacket_CallVectorReq_Payload { uint16_t Id; uint16_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; } MotPacket_CallReq_Payload_T;
+// typedef struct MotPacket_CallArgVReq_Payload { uint32_t AddressId; uint16_t Flags; uint16_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; }   MotPacket_CallReq_Payload_T;
+// typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Flags; uint16_t Status; }                                                          MotPacket_CallResp_Payload_T;
 
 /******************************************************************************/
 /*!

@@ -85,11 +85,11 @@ typedef struct MotAnalogUser_Config
     {
         struct
         {
-            uint8_t UseThrottleEdgePin : 1U;
-            uint8_t UseBrakeEdgePin : 1U;
-            uint8_t UseNeutralPin : 1U; /*  alternatively as compile time enable */
-            uint8_t UseForwardPin : 1U; /*  alternatively as compile time enable */
-            uint8_t UseSwitchBrakePin : 1U;
+            uint8_t UseNeutralPin       : 1U; /*  alternatively as compile time enable */
+            uint8_t UseForwardPin       : 1U; /*  alternatively as compile time enable */
+            uint8_t UseThrottleEdgePin  : 1U;
+            uint8_t UseBrakeEdgePin     : 1U;
+            uint8_t UseSwitchBrakePin   : 1U;
         };
     };
 
@@ -114,10 +114,10 @@ typedef struct MotAnalogUser_State
     /* Digital input states */
     UserDIn_State_T ThrottleEdgePinState;
     UserDIn_State_T BrakeEdgePinState;
+    UserDIn_State_T SwitchBrakeState;
     UserDIn_State_T ReverseState;
     UserDIn_State_T ForwardState;
     UserDIn_State_T NeutralState;
-    UserDIn_State_T SwitchBrakeState;
 
     MotAnalogUser_Cmd_T Cmd; /* Store last active Cmd */
 
@@ -134,6 +134,9 @@ typedef const struct MotAnalogUser
     /* UserAIn instances */
     UserAIn_T THROTTLE_AIN;
     UserAIn_T BRAKE_AIN;
+
+    // const Analog_Conversion_T THROTTLE;
+    // const Analog_Conversion_T BRAKE;
 
     /* UserDIn instances */
     UserDIn_T REVERSE_DIN;
@@ -190,7 +193,6 @@ MotAnalogUser_T;
     .SWITCH_BRAKE_DIN   = USER_DIN_INIT_FROM(SwitchBrakePinHal, SwitchBrakePinId, IsInvert, &(p_State)->SwitchBrakeState, p_Timer, 10U), \
     .P_NVM_CONFIG = p_Config,                                                                                          \
 }
-// .SWITCH_BRAKE_DIN = { .PIN = PIN_INIT_INVERT(SwitchBrakePinHal, SwitchBrakePinId, IsInvert), .P_STATE = &(p_State)->SwitchBrakeState, .P_TIMER = p_Timer, .DEBOUNCE_TIME = 10U }, \
 
 /******************************************************************************/
 /*
@@ -228,6 +230,54 @@ static inline void MotAnalogUser_CaptureInput(const MotAnalogUser_T * p_user, ui
 //     return ((Debounce_GetState(&p_user->BrakeAIn.EdgePin) == true) || (Debounce_GetState(&p_user->SwitchBrakePin) == true)) ;
 // }
 
+/******************************************************************************/
+/*
+    Shifter Direction
+*/
+/******************************************************************************/
+static inline bool _MotAnalogUser_IsNeutralOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseNeutralPin == true) && UserDIn_GetState(&p_user->NEUTRAL_DIN); }
+static inline bool MotAnalogUser_IsReverseOn(const MotAnalogUser_T * p_user) { return UserDIn_GetState(&p_user->REVERSE_DIN); }
+static inline bool MotAnalogUser_IsForwardOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseForwardPin == true) ? UserDIn_GetState(&p_user->FORWARD_DIN) : !UserDIn_GetState(&p_user->REVERSE_DIN); }
+
+static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
+{
+    MotAnalogUser_Direction_T direction;
+
+    if (_MotAnalogUser_IsNeutralOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
+    else if (MotAnalogUser_IsReverseOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_REVERSE; }
+    else if (MotAnalogUser_IsForwardOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_FORWARD; }
+    else { direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
+
+    return direction;
+}
+
+
+static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirectionEdge(const MotAnalogUser_T * p_user)
+{
+    MotAnalogUser_Direction_T direction;
+
+    if (_MotAnalogUser_IsNeutralOn(p_user) == true)
+    {
+        direction = UserDIn_IsRisingEdge(&p_user->NEUTRAL_DIN) ? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
+    }
+    else if (MotAnalogUser_IsReverseOn(p_user) == true)
+    {
+        direction = UserDIn_IsRisingEdge(&p_user->REVERSE_DIN) ? MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE : MOT_ANALOG_USER_DIRECTION_REVERSE;
+    }
+    else if (MotAnalogUser_IsForwardOn(p_user) == true)
+    {
+        direction = UserDIn_IsRisingEdge(&p_user->FORWARD_DIN) ? MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE : MOT_ANALOG_USER_DIRECTION_FORWARD;
+    }
+    else
+    {
+        direction = ((UserDIn_IsFallingEdge(&p_user->FORWARD_DIN) == true) || (UserDIn_IsFallingEdge(&p_user->REVERSE_DIN) == true)) ?
+            MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
+    }
+
+    return direction;
+}
+
+
 // static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(const MotAnalogUser_T * p_user)
 // {
 //     MotAnalogUser_Direction_T direction;
@@ -254,63 +304,43 @@ static inline void MotAnalogUser_CaptureInput(const MotAnalogUser_T * p_user, ui
 // }
 
 
+/******************************************************************************/
 /*
-    Direction
+    DinBrake/Handbrake
 */
-static inline bool _MotAnalogUser_IsNeutralOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseNeutralPin == true) && UserDIn_GetState(&p_user->NEUTRAL_DIN); }
-static inline bool MotAnalogUser_IsReverseOn(const MotAnalogUser_T * p_user) { return UserDIn_GetState(&p_user->REVERSE_DIN); }
-static inline bool MotAnalogUser_IsForwardOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseForwardPin == true) ? UserDIn_GetState(&p_user->FORWARD_DIN) : !UserDIn_GetState(&p_user->REVERSE_DIN); }
-
-static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnalogUser_T * p_user)
-{
-    MotAnalogUser_Direction_T direction;
-
-    if (_MotAnalogUser_IsNeutralOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
-    else if (MotAnalogUser_IsReverseOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_REVERSE; }
-    else if (MotAnalogUser_IsForwardOn(p_user) == true) { direction = MOT_ANALOG_USER_DIRECTION_FORWARD; }
-    else { direction = MOT_ANALOG_USER_DIRECTION_NEUTRAL; }
-
-    return direction;
-}
-
-/*
-    Get Direction
-*/
-static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirectionEdge(const MotAnalogUser_T * p_user)
-{
-    MotAnalogUser_Direction_T direction;
-
-    if (_MotAnalogUser_IsNeutralOn(p_user) == true)
-    {
-        direction = UserDIn_IsRisingEdge(&p_user->NEUTRAL_DIN) ? MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
-    }
-    else if (MotAnalogUser_IsReverseOn(p_user) == true)
-    {
-        direction = UserDIn_IsRisingEdge(&p_user->REVERSE_DIN) ? MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE : MOT_ANALOG_USER_DIRECTION_REVERSE;
-    }
-    else if (MotAnalogUser_IsForwardOn(p_user) == true)
-    {
-        direction = UserDIn_IsRisingEdge(&p_user->FORWARD_DIN) ? MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE : MOT_ANALOG_USER_DIRECTION_FORWARD;
-    }
-    else
-    {
-        direction = ((UserDIn_IsFallingEdge(&p_user->FORWARD_DIN) == true) || (UserDIn_IsFallingEdge(&p_user->REVERSE_DIN) == true)) ?
-            MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE : MOT_ANALOG_USER_DIRECTION_NEUTRAL;
-    }
-
-    return direction;
-}
-
-/*
-    BiState/Handbrake
-*/
+/******************************************************************************/
 static inline bool MotAnalogUser_IsSwitchBrakeOn(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseSwitchBrakePin == true) && UserDIn_GetState(&p_user->SWITCH_BRAKE_DIN); }
 static inline bool MotAnalogUser_IsSwitchBrakeFallingEdge(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseSwitchBrakePin == true) && UserDIn_IsFallingEdge(&p_user->SWITCH_BRAKE_DIN); }
 
 /* Edge pins are polled automatically in UserAIn_CaptureValue, just check states */
 static inline bool MotAnalogUser_IsAnyBrakeOn(const MotAnalogUser_T * p_user) { return (UserAIn_IsOn(&p_user->BRAKE_AIN) == true) || (MotAnalogUser_IsSwitchBrakeOn(p_user) == true); }
 
+/******************************************************************************/
+/*
+    Throttle/Brake
+*/
+/******************************************************************************/
+static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) { return UserAIn_GetValue(&p_user->THROTTLE_AIN); }
 
+static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
+{
+    uint16_t brakeValue = UserAIn_GetValue(&p_user->BRAKE_AIN);
+    if ((MotAnalogUser_IsSwitchBrakeOn(p_user) == true) && (p_user->P_STATE->Config.SwitchBrakeValue_Percent16 > brakeValue))
+    {
+        brakeValue = p_user->P_STATE->Config.SwitchBrakeValue_Percent16;
+    }
+    return brakeValue;
+}
+
+/* Diagnostic functions */
+// static inline uint16_t MotAnalogUser_GetThrottleRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->THROTTLE_AIN); }
+// static inline uint16_t MotAnalogUser_GetBrakeRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->BRAKE_AIN); }
+
+/******************************************************************************/
+/*
+    Collective Command/Status
+*/
+/******************************************************************************/
 /*
     Get Command from current state
     Directly call Query functions to get current state. Poll to clear edge is not required since update.
@@ -344,22 +374,6 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_GetCmd(const MotAnalogUser_T * p
     return cmd;
 }
 
-
-static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) { return UserAIn_GetValue(&p_user->THROTTLE_AIN); }
-
-static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
-{
-    uint16_t brakeValue = UserAIn_GetValue(&p_user->BRAKE_AIN);
-    if ((MotAnalogUser_IsSwitchBrakeOn(p_user) == true) && (p_user->P_STATE->Config.SwitchBrakeValue_Percent16 > brakeValue))
-    {
-        brakeValue = p_user->P_STATE->Config.SwitchBrakeValue_Percent16;
-    }
-    return brakeValue;
-}
-
-/* Diagnostic functions */
-// static inline uint16_t MotAnalogUser_GetThrottleRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->THROTTLE_AIN); }
-// static inline uint16_t MotAnalogUser_GetBrakeRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->BRAKE_AIN); }
 
 /******************************************************************************/
 /*

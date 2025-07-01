@@ -78,8 +78,8 @@ typedef struct LimitArray_Augments
 }
 LimitArray_Augments_T;
 
-// typedef Array_T LimitArray_T;
 
+// typedef Array_T LimitArray_T;
 typedef const union
 {
     Array_T ARRAY;
@@ -96,8 +96,8 @@ LimitArray_T;
 #define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
 
 /*  */
-static inline LimitArray_Augments_T * _LimitArray_State(const LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }
 static inline limit_t * _LimitArray_Values(const LimitArray_T * p_limit) { return (limit_t *)p_limit->P_BUFFER; }
+static inline LimitArray_Augments_T * _LimitArray_State(const LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }
 
 /*  */
 static inline void _LimitArray_ClearState(LimitArray_Augments_T * p_state)

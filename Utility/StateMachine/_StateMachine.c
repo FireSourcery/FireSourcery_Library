@@ -82,16 +82,18 @@ inline void _StateMachine_Init(StateMachine_Active_T * p_fields, void * p_contex
 */
 inline void _StateMachine_Transition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState)
 {
+    assert(p_newState->DEPTH == 0); /* Top level state */
+
     State_Exit(p_fields->p_ActiveState, p_context);
     p_fields->p_ActiveState = p_newState;
     State_Entry(p_newState, p_context);
-    /* if used in combination with HSM */
+
+    /* if used in combination with HSM. Clear the SubState on a Top level State Transition */
     p_fields->p_ActiveSubState = p_fields->p_ActiveState;
 }
 
 inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_newState)
 {
-    assert(p_newState == NULL || p_newState->DEPTH == 0); /* Top level state */
     if (p_newState != NULL) { _StateMachine_Transition(p_fields, p_context, p_newState); }
 }
 
@@ -157,7 +159,7 @@ inline void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_c
 
 /******************************************************************************/
 /*
-    [SubState] as fixed 2nd level [p_ActiveSubState]
+
 */
 /******************************************************************************/
 const State_T * GetTop(const State_T * p_state)
@@ -165,25 +167,23 @@ const State_T * GetTop(const State_T * p_state)
 #ifndef NDEBUG
     assert(_State_IterateUp(p_state, p_state->DEPTH) == p_state->P_TOP);
 #endif
-    // State_T * p_top;
-
-    // p_top = p_state->P_TOP;
-
-    // /* Assume Top is the [P_PARENT] if it is not defined at compile time */
-    // // if      (p_state->P_TOP  != NULL)   { p_top = p_state->P_TOP ; }
-    // // else if (p_state->P_PARENT != NULL) { p_top = p_state->P_PARENT; }
-    // // else                                { p_top = p_state; }
-    // // return (p_state->P_TOP != NULL) ? p_state->P_TOP  : ((p_state->P_PARENT != NULL) ? p_state->P_PARENT : p_state);
-
-    // assert(p_top->DEPTH == 0);
-
-    // return p_top;
-
+    /* Compile Time define Top State */
     /* A top state may define its own P_TOP as NULL or itself */
     /* alternatively iterate if not defined */
     return (p_state->P_TOP == NULL) ? p_state : p_state->P_TOP;
+
+    // State_T * p_top;
+    // /* Assume Top is the [P_PARENT] if it is not defined at compile time */
+    // return (p_state->P_TOP != NULL) ? p_state->P_TOP  : ((p_state->P_PARENT != NULL) ? p_state->P_PARENT : p_state);
+
+    // return p_top;
 }
 
+/******************************************************************************/
+/*
+    [SubState] as fixed 2nd level [p_ActiveSubState]
+*/
+/******************************************************************************/
 /*
     Set SubState. Does not traverse Exit/Entry.
 */
@@ -298,9 +298,9 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_
 /*
     traverse Top Level first. then leaf to top-1
 */
-void _StateMachine_ProcBranchSyncOutput_(StateMachine_Active_T * p_fields, void * p_context)
-{
-    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TransitionOfContext_AsTop(p_fields->p_ActiveState, p_context));
-    /* If top State transitions. State_TraverseTransitionOfContext returns NULL  */
-    _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TraverseTransitionOfContext(StateMachine_GetActiveSubState(p_fields), p_fields->p_ActiveState, p_context));
-}
+// void _StateMachine_ProcBranchSyncOutput_(StateMachine_Active_T * p_fields, void * p_context)
+// {
+//     _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TransitionOfContext_AsTop(p_fields->p_ActiveState, p_context));
+//     /* If top State transitions. State_TraverseTransitionOfContext returns NULL  */
+//     _StateMachine_TraverseTransitionTo(p_fields, p_context, State_TraverseTransitionOfContext(StateMachine_GetActiveSubState(p_fields), p_fields->p_ActiveState, p_context));
+// }

@@ -40,23 +40,10 @@
 
 /******************************************************************************/
 /*
-    [MotVarId]
-    Type index
-*/
-/******************************************************************************/
-/*
-    Type of NameBase e.g.
-    directly corresponds to enum type containing index ids
-        may be n:1 type
-*/
-
-/******************************************************************************/
-/*
     [MotVarId_HandlerType]
-    MotVarId_Handler / Source FIle Module
-
+    Handler by Source File Module
+    determine handler logic by id
     Ideally mutually exclusive attribute groups when possible
-        determine handler logic by id
 */
 /******************************************************************************/
 typedef enum MotVarId_HandlerType
@@ -69,13 +56,11 @@ typedef enum MotVarId_HandlerType
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG,
 
     /* */
-    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE,
+    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE,   // MOT_VAR_ID_HANDLER_TYPE_USER_INPUT,
     MOT_VAR_ID_HANDLER_TYPE_MONITOR,
-
-    // MOT_VAR_ID_HANDLER_TYPE_USER_INPUT,
     // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
 
-    _MOT_VAR_ID_HANDLER_TYPE_END = 8U,
+    _MOT_VAR_ID_HANDLER_TYPE_END,
 }
 MotVarId_HandlerType_T;
 

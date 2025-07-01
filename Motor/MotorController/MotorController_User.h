@@ -33,35 +33,34 @@
 #define MOTOR_CONTROLLER_USER_H
 
 #include "MotorController_StateMachine.h"
-// #include "MotorController_Analog.h"
 #include "../Version.h"
 
 
 /*
     System Cmds
 
-    Pass 2+ arguments. Host does not hold var value state.
+    Non Polling Cmds, write only, subroutine
+    Pass 2+ arguments. Host does not retain var value state.
+    optionally return a status
 
-    Non Polling Cmds
-    write only/subroutine, no retaining var value state, optionally return a status
-
-    CallId also functions as VarType
-    MotVarId_Type_SystemCommand
+    Directly as VarTypeId, MotVarId_Type_SystemCommand
 */
 typedef enum MotorController_User_SystemCmd
 {
     MOT_USER_SYSTEM_BEEP, /* Beep N */
     MOT_USER_SYSTEM_BEEP_STOP,
     /* alterntively as general */
-    MOT_USER_SYSTEM_CLEAR_FAULT, // fault flags
-    MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL,     // Force Disable control Non StateMachine checked, also handled via MOT_PACKET_STOP_ALL
-    MOT_USER_SYSTEM_LOCK_STATE_INPUT,  // MotorController_LockId_T as input, Nvm + Calibration
+    MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL,  // Force Disable control Non StateMachine checked, also handled via MOT_PACKET_STOP_ALL
+    MOT_USER_SYSTEM_CLEAR_FAULT,            // Fault State / Flags
+    MOT_USER_SYSTEM_LOCK_STATE_INPUT,       // MotorController_LockId_T as input: Nvm, Calibration
     // MOT_USER_SYSTEM_LOCK_STATE_EXIT,
-    MOT_USER_SYSTEM_LOCK_STATE_STATUS, // MotorController_LockId_T as status
-    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS, // Async operation status
-    MOT_USER_SYSTEM_RX_WATCHDOG, // on/off
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // MotorController_LockId_T as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // Async operation status. optionally pass MotorController_LockId_T for selection
+    MOT_USER_SYSTEM_MAIN_MODE_INPUT,
+    MOT_USER_SYSTEM_RX_WATCHDOG,        // on/off
     // MOT_USER_SYSTEM_SERVO, // servo mode
-//     // MOT_VAR_TYPE_COMMAND_BUZZER,
+    // MOT_USER_SYSTEM_BEEP_CMD, /* disable/enable/config */
+//     // MOT_VAR_TYPE_COMMAND_METER, move to other services
 //     // MOT_VAR_TYPE_COMMAND_RELAY,
 //     MOT_VAR_TYPE_COMMAND_NVM,
 //     MOT_VAR_TYPE_COMMAND_CALIBRATION,
@@ -83,16 +82,39 @@ MotorController_User_SystemCmd_T;
 */
 /******************************************************************************/
 
+
+/******************************************************************************/
+/*
+    Main Mode
+*/
+/******************************************************************************/
+static inline void MotorController_User_InputMainMode(const MotorController_T * p_context, MotorController_MainMode_T value)
+{
+    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_input_value_t)value);
+    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_input_value_t)value);
+}
+
 /******************************************************************************/
 /*
     passthrough Common
     Push to all or primary motor
 */
 /******************************************************************************/
-static inline void MotorController_User_StartPassthroughMode(const MotorController_T * p_context)
+/*
+    Apply in MCSM_STATE_ID_MOTORS State only
+*/
+// id for the input that has been set
+// static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context, Motor_State_Input_T inputId)
+static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context)
 {
-    _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_STATE_ID_MOTORS, 0);
+    p_context->P_ACTIVE->CmdInput.IsUpdated = true; /* sync Input 10ms-50ms, Proc 1ms */
+    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTORS_CMD, inputId);
 }
+
+// static inline void _MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
+// static inline void _MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
+// static inline void _MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; }
+// static inline void _MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; }
 
 /*
     Pass outer context in case implementation changes
@@ -100,42 +122,30 @@ static inline void MotorController_User_StartPassthroughMode(const MotorControll
 
     Validate by statemachine
 */
-static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
-static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
+static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
+static inline void MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
+static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
+static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
-static inline void MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; }
-static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; }
+
 // static inline void MotorController_User_Release(MotorController_T * p_context) { _StateMachine_ProcAsyncInput(&p_context->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_RELEASE); }
 // static inline void MotorController_User_Hold(MotorController_T * p_context) { _StateMachine_ProcAsyncInput(&p_context->StateMachine, MCSM_INPUT_MODE, MOTOR_CONTROLLER_HOLD); }
-
-/* Buffered Input passthrough for statemachine */
-// typedef struct MotorController_CmdInput
-// {
-//     uint8_t MotorId;
-//     int16_t CmdValue;
-//     sign_t Direction;
-//     Motor_FeedbackMode_T FeedbackMode;
-//     Phase_Output_T ControlState;
-//     uint16_t SpeedLimit;
-//     uint16_t ILimit;
-//     // uint16_t RampOnOff;
-// }
-// MotorController_CmdInput_T;
 
 
 /* Non StateMachine checked disable motors. Caller ensure non field weakening state */
 static inline void MotorController_User_ForceDisableControl(const MotorController_T * p_context)
 {
     MotMotors_ForceDisableControl(&p_context->MOTORS);
+    p_context->P_ACTIVE->CmdInput.CmdValue = 0;
+    p_context->P_ACTIVE->CmdInput.ControlState = PHASE_OUTPUT_FLOAT;
+    p_context->P_ACTIVE->CmdInput.Direction = SIGN_ZERO;
+    p_context->P_ACTIVE->CmdInput.IsUpdated = true;
 
     /* if drive mode */
     MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
     MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_NEUTRAL); // set drive direction to neutral
 
-    /* General StateMachine Input */
-    _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_CMD, 0);
 }
-
 
 /******************************************************************************/
 /*
@@ -145,7 +155,8 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
 /******************************************************************************/
 static inline void MotorController_User_InputLock(const MotorController_T * p_context, MotorController_LockId_T id)
 {
-    _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
+    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
+    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
 }
 
 static inline bool MotorController_User_IsLockState(const const MotorController_T * p_context)
@@ -173,7 +184,8 @@ static inline bool MotorController_User_ExitLockState(const MotorController_T * 
 static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_context)
 {
     // return (p_context->P_ACTIVE->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER);
-    // StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, );
+    // StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK);
+    // return MotorController_User_IsLockState(p_context)
 }
 
 /* return union status */
@@ -189,9 +201,7 @@ static inline bool MotorController_User_IsConfigState(const MotorController_T * 
     return (MotorController_User_IsLockState(p_context) || MotorController_StateMachine_IsFault(p_context));
 }
 
-/******************************************************************************/
-// remove
-// Save RAM to NVM
+/* Save RAM to NVM */
 static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const MotorController_T * p_context)
 {
     MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
@@ -199,12 +209,46 @@ static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const M
 }
 
 /* Lock State returns to ENTER */
-static inline MotorController_LockId_T MotorController_User_GetLockState(const const MotorController_T * p_context)
+static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_context)
 {
     // return MotorController_User_IsLockState(p_context) ? p_context->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
     // return p_context->P_ACTIVE->LockSubState;
+    // return MotorController_User_IsLockState(p_context) ? _StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE) : MOTOR_CONTROLLER_LOCK_EXIT;
+
+    // if (MotorController_User_IsLockState(p_context) && !StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK))
+    // {
+    //     return (MotorController_LockId_T)_StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE);
+    // }
+    // else
+    // {
+    //     return MOTOR_CONTROLLER_LOCK_EXIT;
+    // }
 }
 
+/******************************************************************************/
+/*
+    User Setting Limit
+*/
+/******************************************************************************/
+static inline bool MotorController_User_SetSpeedLimitAll(const MotorController_T * p_context, uint16_t limit_fract16)
+{
+    MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, limit_fract16);
+}
+
+static inline bool MotorController_User_ClearSpeedLimitAll(const MotorController_T * p_context)
+{
+    MotorController_ClearSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER);
+}
+
+static inline bool MotorController_User_SetILimitAll(const MotorController_T * p_context, uint16_t limit_fract16)
+{
+    MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, limit_fract16);
+}
+
+static inline bool MotorController_User_ClearILimitAll(const MotorController_T * p_context)
+{
+    MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_USER);
+}
 
 /******************************************************************************/
 /*
@@ -275,11 +319,11 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
 /*
     Boot Buffer
 */
-static inline BootRef_T MotorController_User_GetBootReg(const MotorController_State_T * p_mcState)                { return p_mcState->BootRef; }
-static inline void MotorController_User_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg)        { p_mcState->BootRef.Word = bootReg.Word; }
-static inline void MotorController_User_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable)           { p_mcState->BootRef.FastBoot = isEnable; }
-static inline void MotorController_User_SetBeep(MotorController_State_T * p_mcState, bool isEnable)               { p_mcState->BootRef.Beep  = isEnable; }
-static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcState, bool isEnable)              { p_mcState->BootRef.Blink = isEnable; }
+static inline BootRef_T MotorController_User_GetBootReg(const MotorController_State_T * p_mcState)          { return p_mcState->BootRef; }
+static inline void MotorController_User_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg)  { p_mcState->BootRef.Word = bootReg.Word; }
+static inline void MotorController_User_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable)     { p_mcState->BootRef.FastBoot = isEnable; }
+static inline void MotorController_User_SetBeep(MotorController_State_T * p_mcState, bool isEnable)         { p_mcState->BootRef.Beep  = isEnable; }
+static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcState, bool isEnable)        { p_mcState->BootRef.Blink = isEnable; }
 
 /*
     Controller NvM Variables Config
@@ -304,10 +348,6 @@ static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcS
     Extern
 */
 /******************************************************************************/
-extern bool MotorController_User_SetSpeedLimitAll(const MotorController_T * p_context, uint16_t limit_fract16);
-extern bool MotorController_User_ClearSpeedLimitAll(const MotorController_T * p_context);
-extern bool MotorController_User_SetILimitAll(const MotorController_T * p_context, uint16_t limit_fract16);
-extern bool MotorController_User_ClearILimitAll(const MotorController_T * p_context);
 extern void MotorController_User_SetOptSpeedLimitOnOff(const MotorController_T * p_context, bool isEnable);
 extern void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context, bool isEnable);
 

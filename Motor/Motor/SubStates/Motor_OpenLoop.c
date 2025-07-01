@@ -31,6 +31,9 @@
 
 /* part of Motor_StateMachine */
 
+
+/* StateMachine_InvokeBranchTransition from any OpenLoop State */
+
 /******************************************************************************/
 /*
     Open Loop Cmds - Without SubState

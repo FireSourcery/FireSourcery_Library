@@ -31,9 +31,9 @@
 /******************************************************************************/
 #include "Motor_Var.h"
 
+#include "Sensor/Motor_Sensor.h" /* for calibration cmd */
 #include "Motor_User.h"
 #include "Motor_Config.h"
-// #include "Motor_FOC.h"
 #include "Motor.h"
 
 
@@ -48,7 +48,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
     switch (varId)
     {
         case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_UFract16(p_motor);              break;
-        // case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_DegPerCycle(p_motor);              break;
+        case MOTOR_VAR_ELECTRICAL_SPEED:            value = Motor_User_GetSpeed_DegPerCycle(p_motor);           break;
         case MOTOR_VAR_I_PHASE:                     value = Motor_User_GetIPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_User_GetVPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_POWER:                       value = Motor_User_GetElectricalPower_UFract16(p_motor);    break;
@@ -291,9 +291,9 @@ int _Motor_VarConfig_Actuation_Get(const Motor_State_T * p_motor, Motor_VarConfi
         case MOTOR_VAR_ALIGN_POWER:                 value = Motor_Config_GetAlignPowerScalar(p_motor);              break;
         case MOTOR_VAR_ALIGN_TIME:                  value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
     // #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-        case MOTOR_VAR_OPEN_LOOP_RAMP_I_FINAL:      value = Motor_Config_GetOpenLoopI_Fract16(p_motor);             break;
+        case MOTOR_VAR_OPEN_LOOP_RAMP_I_FINAL:      value = Motor_Config_GetOpenLoopIFinal_Fract16(p_motor);        break;
         case MOTOR_VAR_OPEN_LOOP_RAMP_I_TIME:       value = Motor_Config_GetOpenLoopIRamp_Millis(p_motor);          break;
-        case MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_FINAL:  value = Motor_Config_GetOpenLoopSpeed_Fract16(p_motor);         break;
+        case MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_FINAL:  value = Motor_Config_GetOpenLoopSpeedFinal_Fract16(p_motor);    break;
         case MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_TIME:   value = Motor_Config_GetOpenLoopSpeedRamp_Millis(p_motor);      break;
     // #endif
     // #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)

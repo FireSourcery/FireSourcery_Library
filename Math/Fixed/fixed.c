@@ -62,43 +62,6 @@ uint16_t fixed_sqrt(uint32_t x)
     return result;
 }
 
-// /*!
-//     @brief Calculates square root
-
-//     Babylonian method
-//     y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
-
-//     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
-// */
-// uint16_t _fixed_sqrt(int32_t x)
-// {
-//     uint32_t yPrev;
-//     uint32_t y;
-
-//     if(x > 0)
-//     {
-//         /*
-//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
-
-//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
-//             128*128 == (1 << 14), solve < 1048576
-//             1048576U == (1 << 20)
-//         */
-//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
-//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
-//         {
-//             y = (yPrev + (x / yPrev)) / 2U;
-//             if(y == yPrev) { break; }
-//             yPrev = y;
-//         }
-//     }
-//     else
-//     {
-//         y = 0U;
-//     }
-
-//     return (uint16_t)y;
-// }
 
 uint8_t _leading_zeros(uint32_t x)
 {
@@ -224,3 +187,40 @@ uint32_t fixed_pow2_round(uint32_t x)
     return (pow2Upper - x) < (x - pow2Lower) ? pow2Upper : pow2Lower;
 }
 
+// /*!
+//     @brief Calculates square root
+
+//     Babylonian method
+//     y[n] = ( y[n-1] + (x / y[n-1]) ) / 2
+
+//     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
+// */
+// uint16_t _fixed_sqrt(int32_t x)
+// {
+//     uint32_t yPrev;
+//     uint32_t y;
+
+//     if(x > 0)
+//     {
+//         /*
+//             Set y initial to value such that 0 < x <= UINT32_MAX is solved in 6 iterations or less
+
+//             8192*8192 == (1 << 26), solve 0x7FFFFFFF in 6 iterations
+//             128*128 == (1 << 14), solve < 1048576
+//             1048576U == (1 << 20)
+//         */
+//         yPrev = ((uint32_t)x > 1048576U) ? 8192U : 128U;
+//         for(uint8_t iteration = 0U; iteration < 6U; iteration++)
+//         {
+//             y = (yPrev + (x / yPrev)) / 2U;
+//             if(y == yPrev) { break; }
+//             yPrev = y;
+//         }
+//     }
+//     else
+//     {
+//         y = 0U;
+//     }
+
+//     return (uint16_t)y;
+// }

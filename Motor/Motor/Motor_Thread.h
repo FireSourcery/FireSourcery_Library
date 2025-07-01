@@ -98,30 +98,14 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     // Motor_Debug_CaptureRefTime(p_context);
 
-    /* Alternatively capture */
-    // if (Timer_Periodic_Poll(&p_fields->SpeedTimer) == true)
-    // {
-    //     RotorSensor_CaptureSpeed(p_fields->p_ActiveSensor);
-    //     alt set syncflag
-    //     if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_MOTOR_STATE) == MSM_STATE_ID_RUN)
-    //     {
-    //         _Motor_ProcOuterFeedback(p_fields);
-    //     }
-    // }
-    // RotorSensor_CaptureAngle(p_fields->p_ActiveSensor);
+    Motor_CaptureSensor(p_context);
 
     StateMachine_Synchronous_Thread(&p_context->STATE_MACHINE);
 
-    /* phase out here can inline */
+    /* Innline Phase Out */
     /* Directly read register state */
     if (Phase_ReadOutputState(&p_context->PHASE) == PHASE_OUTPUT_VPWM) { Motor_FOC_WriteDuty(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
-
-    // if (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_MOTOR_STATE) == MSM_STATE_ID_RUN)
-    // {
-    //     Motor_FOC_WriteDuty(p_context);
-    // }
-
 
     p_fields->ControlTimerBase++;
 

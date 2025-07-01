@@ -383,4 +383,88 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 // }
 
 
+// #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+// extern int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor);
+// extern void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
+// extern void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
+// #endif
 
+
+// /******************************************************************************/
+// /*
+//     Ground Speed
+// */
+// /******************************************************************************/
+// #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+// int16_t Motor_User_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
+// {
+//     int16_t speed;
+
+//     switch (p_motor->Config.SensorMode)
+//     {
+//         case ROTOR_SENSOR_ID_HALL:        speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
+//         case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         case ROTOR_SENSOR_ID_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+//         #endif
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
+//         #endif
+//         default:                             speed = 0;     break;
+//     }
+
+//     return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+// }
+
+// int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor)
+// {
+//     int16_t speed;
+
+//     switch (p_motor->Config.SensorMode)
+//     {
+//         case ROTOR_SENSOR_ID_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
+//         case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         case ROTOR_SENSOR_ID_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+//         #endif
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
+//         #endif
+//         default:                             speed = 0;     break;
+//     }
+
+//     return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+// }
+
+// void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+// {
+//     switch (p_motor->Config.SensorMode)
+//     {
+//         case ROTOR_SENSOR_ID_HALL:        Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+//         case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         case ROTOR_SENSOR_ID_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+//         #endif
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
+//         #endif
+//         default:     break;
+//     }
+// }
+
+// void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+// {
+//     switch (p_motor->Config.SensorMode)
+//     {
+//         case ROTOR_SENSOR_ID_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+//         case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
+//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         case ROTOR_SENSOR_ID_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
+//         #endif
+//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
+//         #endif
+//         default:                             break;
+//     }
+// }
+// #endif

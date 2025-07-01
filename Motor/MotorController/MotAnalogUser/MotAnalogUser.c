@@ -146,6 +146,8 @@ int32_t MotAnalogUser_VarId_Get(const MotAnalogUser_T * p_user, MotAnalogUser_Va
 
 int32_t MotAnalogUser_VarId_GetAsRead(const MotAnalogUser_T * p_user, MotAnalogUser_VarId_T id)
 {
+    // MotAnalogUser_CapturePins
+    // MotAnalogUser_CaptureInput
     int32_t value = 0;
     switch (id)
     {

@@ -39,29 +39,28 @@
     Generic [Parent Node Tree] Relations
 */
 /******************************************************************************/
-
-// bool State_IsAncestor(const State_T * p_reference, const State_T * p_isAncestor)
+// bool State_IsAncestor(const State_T * p_reference, const State_T * p_testAncestor)
 // {
-//     return (p_isAncestor == IterateUp(p_reference, p_reference->DEPTH - p_isAncestor->DEPTH));
+//     return (p_testAncestor == IterateUp(p_reference, p_reference->DEPTH - p_testAncestor->DEPTH));
 // }
 
-// bool State_IsDescendant(const State_T * p_reference, const State_T * p_isDescendant)
+// bool State_IsDescendant(const State_T * p_reference, const State_T * p_testDescendant)
 // {
-//     return (p_isDescendant == IterateUp(p_isDescendant, p_isDescendant->DEPTH - p_reference->DEPTH));
+//     return (p_testDescendant == IterateUp(p_testDescendant, p_testDescendant->DEPTH - p_reference->DEPTH));
 // }
 
 /*
     Is [test] a Ancestor of [ref]
 */
-bool State_IsAncestor(const State_T * p_reference, const State_T * p_isAncestor)
+bool State_IsAncestor(const State_T * p_reference, const State_T * p_testAncestor)
 {
     assert(p_reference != NULL);
-    assert(p_isAncestor != NULL);
+    assert(p_testAncestor != NULL);
 
     bool isAncestor = false;
-    for (const State_T * p_descendant = p_reference; (p_descendant->DEPTH > p_isAncestor->DEPTH); p_descendant = p_descendant->P_PARENT)
+    for (const State_T * p_descendant = p_reference; (p_descendant->DEPTH > p_testAncestor->DEPTH); p_descendant = p_descendant->P_PARENT)
     {
-        if (p_descendant->P_PARENT == p_isAncestor) { isAncestor = true; break; } /* Compare the parent. p_descendant->DEPTH returns 0 before p_descendant reaches NULL */
+        if (p_descendant->P_PARENT == p_testAncestor) { isAncestor = true; break; } /* Compare the parent. p_descendant->DEPTH returns 0 before p_descendant reaches NULL */
     }
     return isAncestor;
 }
@@ -69,13 +68,13 @@ bool State_IsAncestor(const State_T * p_reference, const State_T * p_isAncestor)
 /*
 
 */
-bool State_IsDescendant(const State_T * p_reference, const State_T * p_isDescendant)
+bool State_IsDescendant(const State_T * p_reference, const State_T * p_testDescendant)
 {
     assert(p_reference != NULL);
-    assert(p_isDescendant != NULL);
+    assert(p_testDescendant != NULL);
 
     bool isDescendant = false;
-    for (const State_T * p_descendant = p_isDescendant; (p_descendant->DEPTH > p_reference->DEPTH); p_descendant = p_descendant->P_PARENT)
+    for (const State_T * p_descendant = p_testDescendant; (p_descendant->DEPTH > p_reference->DEPTH); p_descendant = p_descendant->P_PARENT)
     {
         if (p_descendant->P_PARENT == p_reference) { isDescendant = true; break; }
     }
@@ -101,6 +100,11 @@ bool State_IsDirectBranch(const State_T * p_active, const State_T * p_test)
 // bool State_IsReachableBranch(const State_T * p_active, const State_T * p_common, const State_T * p_test)
 // {
 //     return ((p_active == p_test) || State_IsCousin(p_active, p_common, p_test));
+// }
+
+// bool State_IsInactiveBranch(const State_T * p_active, const State_T * p_test)
+// {
+//     return State_IsDescendant(p_active, p_test);
 // }
 
 // bool State_IsInactiveBranch(const State_T * p_active, const State_T * p_test)

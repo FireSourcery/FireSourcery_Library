@@ -184,37 +184,22 @@ void Motor_User_ForceDisableControl(const Motor_T * p_motor)
 */
 /******************************************************************************/
 
-
-// /* alternatively using cmd pattern */
-// typedef const struct Motor_Cmd
-// {
-//     Motor_FeedbackMode_T FEEDBACK_MODE; /* Feedback Mode */
-//     void(*SET_CMD)(Motor_State_T * p_motor, int16_t value_fract16);
-//     void(*SET_CMD_SCALAR)(Motor_State_T * p_motor, int16_t scalar_fract16);
-// }
-// Motor_Cmd_T;
-
-// static inline void Motor_User_StartCmdMode(Motor_State_T * p_motor, Motor_Cmd_T cmd) { Motor_User_SetFeedbackMode(p_motor, cmd.FEEDBACK_MODE); }
-// static inline void Motor_User_SetCmdValue(Motor_State_T * p_motor, Motor_Cmd_T cmd, int16_t value) { cmd.SET_CMD(p_motor, value); }
-// static inline void Motor_User_SetCmdValueScalar(Motor_State_T * p_motor, Motor_Cmd_T cmd, int16_t value) { cmd.SET_CMD_SCALAR(p_motor, value); }
-
 /******************************************************************************/
 /*
     Cmd Value
-    Concurrency note: only 1 thread updates RampTarget. StateMachine_Proc thread only updates OutputState
-
-    alternatively split ramp by thread of execution
+    Concurrency note:
+        Input thread updates Ramp Target.
+        StateMachine_Proc thread updates Ramp OutputState
 */
 /******************************************************************************/
-
 /*
     Helper
 */
-static inline void _Motor_User_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_DirectionalValueOf(p_motor, userCmd)); }
-static inline int32_t _Motor_User_GetTorqueCmd(const Motor_State_T * p_motor) { return Ramp_GetTarget(&p_motor->TorqueRamp); }
-static inline int32_t _Motor_User_GetTorqueSetPoint(const Motor_State_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp); }
-static inline int32_t Motor_User_GetTorqueCmd(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)); }
-static inline int32_t Motor_User_GetTorqueSetPoint(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)); }
+static inline void _Motor_User_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd)   { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_DirectionalValueOf(p_motor, userCmd)); }
+static inline int32_t _Motor_User_GetTorqueCmd(const Motor_State_T * p_motor)           { return Ramp_GetTarget(&p_motor->TorqueRamp); }
+static inline int32_t _Motor_User_GetTorqueSetPoint(const Motor_State_T * p_motor)      { return Ramp_GetOutput(&p_motor->TorqueRamp); }
+static inline int32_t Motor_User_GetTorqueCmd(const Motor_State_T * p_motor)            { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)); }
+static inline int32_t Motor_User_GetTorqueSetPoint(const Motor_State_T * p_motor)       { return Motor_DirectionalValueOf(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)); }
 
 
 /******************************************************************************/
@@ -520,83 +505,6 @@ bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEn
 // static inline void Motor_User_SetRampOnOff(Motor_State_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
 
 
-/******************************************************************************/
-/*
-    Ground Speed
-*/
-/******************************************************************************/
-#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
-int16_t Motor_User_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
-{
-    int16_t speed;
 
-    switch(p_motor->Config.SensorMode)
-    {
-        case ROTOR_SENSOR_ID_HALL:        speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-        case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-        case ROTOR_SENSOR_ID_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-        case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             speed = 0;     break;
-    }
-
-    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor)
-{
-    int16_t speed;
-
-    switch(p_motor->Config.SensorMode)
-    {
-        case ROTOR_SENSOR_ID_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-        case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-        case ROTOR_SENSOR_ID_SIN_COS:     speed =  Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-        case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             speed = 0;     break;
-    }
-
-    return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
-}
-
-void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-    switch(p_motor->Config.SensorMode)
-    {
-        case ROTOR_SENSOR_ID_HALL:        Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-        case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-        case ROTOR_SENSOR_ID_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-        case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
-#endif
-        default:     break;
-    }
-}
-
-void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
-{
-    switch(p_motor->Config.SensorMode)
-    {
-        case ROTOR_SENSOR_ID_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-        case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-#if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-        case ROTOR_SENSOR_ID_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
-#endif
-#if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-        case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
-#endif
-        default:                             break;
-    }
-}
-#endif
 
 

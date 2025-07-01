@@ -43,9 +43,8 @@ typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_LOCK,
-    MCSM_INPUT_CMD,
-    // MCSM_INPUT_RELEASE,
     MCSM_INPUT_MAIN_MODE,
+    // MCSM_INPUT_MOTORS_CMD,
 }
 MotorController_State_Input_T;
 
@@ -53,9 +52,9 @@ typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_MAIN,
-    MCSM_STATE_ID_MOTORS,
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
+    // MCSM_STATE_ID_MOTORS,
     // MCSM_STATE_ID_SERVO,
     // MCSM_STATE_ID_USER,
     // MCSM_STATE_ID_EXTERNAL,

@@ -81,11 +81,16 @@
 /* Init Mode */
 typedef enum MotorController_MainMode
 {
+    // MOTOR_CONTROLLER_MAIN_MODE_DISABLE,
+    MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
     MOTOR_CONTROLLER_MAIN_MODE_DRIVE,
     MOTOR_CONTROLLER_MAIN_MODE_SERVO,
 }
 MotorController_MainMode_T;
 
+/*
+    InputMux
+*/
 typedef enum MotorController_InputMode
 {
     MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
@@ -150,6 +155,7 @@ MotorController_InitFlags_T;
 
 
 /* Buffered Input passthrough for statemachine */
+/* optionally generalize as motor input interface */
 typedef struct MotorController_CmdInput
 {
     uint8_t MotorId;
@@ -160,6 +166,7 @@ typedef struct MotorController_CmdInput
     uint16_t SpeedLimit;
     uint16_t ILimit;
     // uint16_t RampOnOff;
+    bool IsUpdated;
 }
 MotorController_CmdInput_T;
 
@@ -205,6 +212,7 @@ typedef struct MotorController_State
     uint32_t ControlCounter;
 
     MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
+    MotorController_CmdInput_T CmdInputPrev; /* Previous buffered Input for StateMachine */
 
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
@@ -303,9 +311,6 @@ MotorController_T;
 /* Set Motor Ref using read Value */
 static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { MotorAnalog_CaptureVSource_Adcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
 
-// static inline Motor_State_T * MotorController_MotorStateAt(const MotorController_T * p_context, uint8_t motorIndex) { return &(p_context->MOTORS.P_STATES[motorIndex]); }
-// static inline Motor_T * MotorController_MotorContextAt(const MotorController_T * p_context, uint8_t motorIndex) { return &(p_context->MOTORS.P_CONTEXTS[motorIndex]); }
-
 static inline Protocol_T * MotorController_GetMainProtocol(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
@@ -350,6 +355,11 @@ extern void MotorController_Init(const MotorController_T * p_context);
 extern void MotorController_LoadConfigDefault(const MotorController_T * p_context);
 extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
+
+extern bool MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16);
+extern bool MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id);
+extern bool MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16);
+extern bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id);
 
 // extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
 
