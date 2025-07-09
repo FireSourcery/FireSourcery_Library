@@ -97,6 +97,12 @@ static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table
     }
 }
 
+static inline bool RotorSensor_Validate(const RotorSensor_Table_T * p_table, const RotorSensor_T * p_sensor, RotorSensor_Id_T id)
+{
+    if (id >= ROTOR_SENSOR_ID_COUNT) { return false; }
+    if (RotorSensor_Of(p_table, id) != p_sensor) { return false; }
+    return true;
+}
 
 /******************************************************************************/
 /*!

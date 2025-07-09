@@ -35,11 +35,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/*
-    [AngleSensor]
-*/
 
 /*
+    Rotor Angle Sensor
     Implement as conventional interface pattern, Signiture as interface type.
 */
 struct RotorSensor;
@@ -95,7 +93,6 @@ typedef struct RotorSensor_Config
 RotorSensor_Config_T;
 
 /*
-    [RotorSensor_State_T]
     [AngleSpeed_T]
 */
 /* altneratively move with feedbackstate */
@@ -103,7 +100,7 @@ typedef struct RotorSensor_State
 {
     angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
     angle16_t ElectricalSpeed_DegPerCycle;  /* Electrical Speed, ElectricalDeltaAngle. < 32768 by SpeedRated */
-                                            // ElectricalDeltaAngle [Degrees Per ControlCycle]
+                                            // ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
 
     int32_t Speed_Fract16;  /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
     // int32_t SpeedPrev_Fract16; /* common filter */
@@ -136,7 +133,7 @@ static inline void _RotorSensor_Reset(RotorSensor_State_T * p_state)
 }
 
 /*
-    [AngleSensor_T]
+    [RotorSensor_T]
     Instance/Entry
     No backpointer to container. Use as first member in container.
 */

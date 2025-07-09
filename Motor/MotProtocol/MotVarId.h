@@ -39,32 +39,6 @@
 // typedef int(*get_var_t)(const void * p_context, size_t key);
 
 /******************************************************************************/
-/*
-    [MotVarId_HandlerType]
-    Handler by Source File Module
-    determine handler logic by id
-    Ideally mutually exclusive attribute groups when possible
-*/
-/******************************************************************************/
-typedef enum MotVarId_HandlerType
-{
-    /* Instance count of Motor */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR,
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
-    /* Sensor Table Entries */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE,
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG,
-
-    /* */
-    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE,   // MOT_VAR_ID_HANDLER_TYPE_USER_INPUT,
-    MOT_VAR_ID_HANDLER_TYPE_MONITOR,
-    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
-
-    _MOT_VAR_ID_HANDLER_TYPE_END,
-}
-MotVarId_HandlerType_T;
-
-/******************************************************************************/
 /*!
 */
 /******************************************************************************/
@@ -72,151 +46,15 @@ typedef union MotVarId
 {
     struct
     {
-        uint16_t NameBase       : 4U; /* Name - corresponds 1:1 with enum value */
-        uint16_t NameType       : 4U; /* Name's Type - corresponds with enum type. may be a subtype, instance type n:1, in case of discontinous mapping */
-        uint16_t Instance       : 3U; /* TypeInstance - Upto 8 Instances Per Type */
-        uint16_t HandlerType    : 3U; /* NameType's Type */
-        uint16_t Resv           : 2U; /* Resv/Alternative unit/format */
-    };
-
-    struct
-    {
-        uint16_t NamePart       : 8U;
-        uint16_t InstancePart   : 3U;
-        uint16_t HandlerPart    : 3U;
-        uint16_t ResvPart       : 2U;
+        uint16_t Base           : 4U; /* Name - corresponds with enum index value */
+        uint16_t InnerType      : 4U; /* Accessor. Corresponds with Base enum type, maybe n:1 handlers to enum type literal. */
+        uint16_t OuterType      : 4U; /* Handler. InnerType's Type */
+        uint16_t Instance       : 3U; /* Instance - Upto 8 Instances for each combination. */
+        uint16_t Resv           : 1U; /* Resv/Alternative unit/format */
     };
     uint16_t Value;
 }
 MotVarId_T;
-
-
-/******************************************************************************/
-/*!
-    @brief Access control functions based on NameType patterns
-*/
-/******************************************************************************/
-// static inline bool MotVarId_IsConfig(MotVarId_T varId)
-// {
-//     switch(varId.HandlerType)
-//     {
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
-//             return true; // Config types are always config
-
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
-//             // switch (varId.NameType)
-//             // {
-//             //     case MOTOR_VAR_TYPE_HALL_CONFIG:
-//             //     case MOTOR_VAR_TYPE_ENCODER_CONFIG: return true; // Sensor config types are config
-//             //     default: return false; // Other sensor types are not config
-//             // }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:
-//             switch (varId.NameType)
-//             {
-//                 case MOT_VAR_TYPE_GENERAL_CONFIG:
-//                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
-//                 case MOT_VAR_TYPE_PROTOCOL_CONFIG:
-//                 case MOT_VAR_TYPE_CAN_BUS_CONFIG: return true; // System service config types are config
-//                 default: return false; // Other system service types are not config
-//             }
-
-//         default: return false; // Default to not config for other handlers
-//     }
-// }
-
-// // Access pattern detection by NameType suffix/pattern
-// static inline bool MotVarId_IsReadOnly(MotVarId_T varId)
-// {
-//     switch(varId.HandlerType)
-//     {
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:
-//         //     switch (varId.NameType)
-//         //     {
-//         //         case MOTOR_VAR_TYPE_USER_OUT:
-//         //         case MOTOR_VAR_TYPE_FOC_OUT:
-//         //         case MOTOR_VAR_TYPE_SPEED_ANGLE_OUT: return true;  // *_OUT types are read-only
-//         //         case MOTOR_VAR_TYPE_PID_TUNING_IO:
-//         //         case MOTOR_VAR_TYPE_USER_IO: return false; // *_IO types are read-write
-//         //         case MOTOR_VAR_TYPE_CMD_IN: return false; // Commands are execute-only (writable)
-//         //         default: return true;  // Default to read-only for safety
-//         //     }
-
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
-//         //     return false; // Config types are read-write
-
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
-//         //     switch (varId.NameType)
-//         //     {
-//         //         case MOTOR_VAR_TYPE_HALL_STATE:
-//         //         case MOTOR_VAR_TYPE_ENCODER_STATE: return true;  // State types are read-only
-//         //         case MOTOR_VAR_TYPE_HALL_CONFIG:
-//         //         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return false; // Config types are read-write
-//         //         default: return true;  // Default to read-only for safety
-//         //     }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_SERVICE:
-//             switch (varId.NameType)
-//             {
-//                 case MOT_VAR_TYPE_GENERAL_VAR_OUT:
-//                 case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT: return true;  // *_OUT types are read-only
-//                 case MOT_VAR_TYPE_GENERAL_CONFIG:
-//                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG: return false; // Config types are read-write
-//                 case MOT_VAR_TYPE_PROTOCOL_CONFIG:
-//                 case MOT_VAR_TYPE_CAN_BUS_CONFIG: return false; // Protocol and CAN bus configs are read-write
-//                 case MOT_VAR_TYPE_INSTANCES_REF:
-//                 case MOT_VAR_TYPE_DEBUG: return true;  // Read-only
-//                 default: return true;  // Default to read-only for safety
-//             }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:
-//             switch (varId.NameType)
-//             {
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE: return true;
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE: return true;
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE: return true;  // State types are read-only
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF: return true;  // VDivider reference is read-only
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF: return true;  // Thermistor reference is read-only
-
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG:
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG: return false; // Config types are read-write
-//                 default: return true;  // Default to read-only for safety
-//             }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_USER_INPUT: return false; // Commands are execute-only (writable)
-
-//         default: return true;  // Default to read-only for safety
-//     }
-// }
-
-
-// // Main access control functions
-// static inline bool MotVarId_IsReadable(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsReadOnly_ByNameType(name_type, handler_type) ||
-//         MotVarId_IsReadWrite_ByNameType(name_type, handler_type);
-// }
-
-// static inline bool MotVarId_IsWritable(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsReadWrite_ByNameType(name_type, handler_type) ||
-//         MotVarId_IsCommand_ByNameType(name_type, handler_type);
-// }
-
-// static inline bool MotVarId_IsCommand(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsCommand_ByNameType(name_type, handler_type);
-// }
 
 
 /*

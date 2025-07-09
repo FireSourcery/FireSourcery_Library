@@ -222,22 +222,23 @@ void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Con
     By Id
 */
 /******************************************************************************/
-int32_t _Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
+int _Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
 {
     switch (varId)
     {
-        case MONITOR_VAR_STATUS:  return (int32_t)p_monitor->Status;
+        case MONITOR_VAR_STATUS:  return (int)p_monitor->Status;
         case MONITOR_VAR_VALUE:   return p_monitor->LastInput;
         default: return 0;
     }
 }
 
-int32_t Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
+int Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
 {
     return (p_monitor != NULL) ? _Monitor_VarId_Get(p_monitor, varId) : 0;
 }
 
-int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
+// int _Monitor_ConfigId_Get(const Monitor_Config_T * p_monitor, Monitor_ConfigId_T id)
+int _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 {
     switch (id)
     {
@@ -250,7 +251,7 @@ int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id
     }
 }
 
-void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t value)
+void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value)
 {
     switch (id)
     {
@@ -263,13 +264,13 @@ void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t
     }
 }
 
-int Monitor_ConfigId_Get(const Monitor_T * p_monitor, int id)
+int Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 {
-    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(p_monitor, (Monitor_ConfigId_T)id) : 0;
+    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(p_monitor, id) : 0;
 }
 
-void Monitor_ConfigId_Set(Monitor_T * p_monitor, int id, int value)
+void Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value)
 {
-    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, (Monitor_ConfigId_T)id, value); }
+    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, id, value); }
     // Monitor_InitFrom(p_monitor, &p_monitor->Config);
 }

@@ -94,7 +94,7 @@ typedef struct Monitor_Base
 {
     int32_t FaultLimit;             /* Fault level (hard limit, no hysteresis) */
     Hysteresis_T Warning;           /* Warning level with hysteresis */
-    // Hysteresis_T Levels[]
+    // Hysteresis_T Levels[]//correspond with status for fast access evaluted output
 }
 Monitor_Base_T;
 
@@ -263,8 +263,8 @@ typedef enum Monitor_VarId
 }
 Monitor_VarId_T;
 
-int32_t _Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId);
-int32_t Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId);
+int _Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId);
+int Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId);
 
 typedef enum Monitor_ConfigId
 {
@@ -276,8 +276,8 @@ typedef enum Monitor_ConfigId
 }
 Monitor_ConfigId_T;
 
-int32_t _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
-void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int32_t value);
+int _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
+void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value);
 
-int Monitor_ConfigId_Get(const Monitor_T * p_monitor, int id);
-void Monitor_ConfigId_Set(Monitor_T * p_monitor, int id, int value);
+int Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
+void Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value);

@@ -214,6 +214,7 @@ static inline uint8_t _HeatMonitor_Group_PollEach_Index(const HeatMonitor_GroupC
     for (uint8_t i = 0U; i < p_group->COUNT; i++)
     {
         HeatMonitor_Poll(&p_group->P_CONTEXTS[i]);
+        // todo handle normalizing each capture value, if coeffecients are different
         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
         if (compare > max) { max = compare; index = i; }
 

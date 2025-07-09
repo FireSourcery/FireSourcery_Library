@@ -76,15 +76,6 @@ extern void MotDrive_User_SetDirection(const MotDrive_T * p_this, MotDrive_Direc
     VarId Interface
 */
 /******************************************************************************/
-typedef enum MotDrive_ConfigId
-{
-    MOT_DRIVE_CONFIG_THROTTLE_MODE,     /* MotDrive_ThrottleMode_T */
-    MOT_DRIVE_CONFIG_BRAKE_MODE,        /* MotDrive_BrakeMode_T */
-    MOT_DRIVE_CONFIG_ZERO_MODE,         /* MotDrive_ZeroMode_T */
-}
-MotDrive_ConfigId_T;
-
-
 typedef enum MotDrive_VarId
 {
     MOT_DRIVE_VAR_DIRECTION,          // MotDrive_Direction_T,
@@ -92,6 +83,14 @@ typedef enum MotDrive_VarId
     MOT_DRIVE_VAR_BRAKE,              // [0:65535]
 }
 MotDrive_VarId_T;
+
+typedef enum MotDrive_ConfigId
+{
+    MOT_DRIVE_CONFIG_THROTTLE_MODE,     /* MotDrive_ThrottleMode_T */
+    MOT_DRIVE_CONFIG_BRAKE_MODE,        /* MotDrive_BrakeMode_T */
+    MOT_DRIVE_CONFIG_ZERO_MODE,         /* MotDrive_ZeroMode_T */
+}
+MotDrive_ConfigId_T;
 
 /* IO vars use full context */
 extern void MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, int value);

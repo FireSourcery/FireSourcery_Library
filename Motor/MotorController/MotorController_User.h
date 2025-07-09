@@ -69,6 +69,14 @@ typedef enum MotorController_User_SystemCmd
 MotorController_User_SystemCmd_T;
 
 
+// typedef enum MotorController_User_GenericStatus
+// {
+//     MOT_USER_CALL_STATUS_OK = 0,
+//     MOT_USER_CALL_STATUS_ERROR = 1,
+// }
+// MotorController_User_GenericStatus_T;
+
+
 /******************************************************************************/
 /*
     User Input Interface; into StateMachine process
@@ -284,8 +292,8 @@ typedef union MotorController_User_StatusFlags
 {
     struct
     {
-        // uint16_t HeatWarning        : 1U; // ILimit by Heat
-        // uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
+        uint16_t HeatWarning        : 1U; // ILimit by Heat
+        uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
         // uint16_t SpeedLimit         : 1U;
         // uint16_t ILimit             : 1U;
         // uint16_t BuzzerEnable       : 1U;

@@ -126,19 +126,22 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
             // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);
             // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOT_DRIVE_DIRECTION_PARK);
             // MotDrive_SetDirection(&p_mc->MotDrive, MOT_DRIVE_DIRECTION_PARK);
+            // checks the park state
             MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);
             if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
 
             status = MotorController_User_GetLockOpStatus(p_context);
             break;
 
+        // LOCK_STATE_ACTIVCE
+        //  (MotorController_LockId_T)
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
+            status = MotorController_User_GetLockState(p_context);
+            break;
+
         case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS: // union status, 0 as success
             // if (MotorController_User_IsLockOpComplete(p_context) == true)
             status = MotorController_User_GetLockOpStatus(p_context);
-            break;
-
-        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
-            status = MotorController_User_GetLockState(p_context);
             break;
 
         case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
@@ -149,6 +152,7 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
 
         // include for convenience
+        // case MOT_USER_SYSTEM_STATE:
         // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);
         // case MOT_USER_SYSTEM_SERVO: MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
         default: break;
