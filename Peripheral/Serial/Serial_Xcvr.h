@@ -32,6 +32,6 @@
 #include "Serial.h"
 #include "../Xcvr/Xcvr.h"
 
-extern const Xcvr_Interface_T SERIAL_XCVR;
+extern const Xcvr_VTable_T SERIAL_XCVR_VTABLE;
 
-#define SERIAL_XCVR_INIT(p_Serial) XCVR_INIT(((void *)p_Serial), &SERIAL_XCVR)
+#define SERIAL_XCVR_INIT(p_Serial) XCVR_INIT((p_Serial), &SERIAL_XCVR_VTABLE)

@@ -56,7 +56,9 @@
 #define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
 #endif
 
+/*
 
+*/
 #define KE0x_FLASH_RESERVED_START                   0x0000UL    /* */
 #define KE0x_FLASH_RESERVED_END                     0x040FUL    /* */
 #define KE0x_FLASH_RESERVED_IFR_START               0x0000UL    /* */
@@ -228,16 +230,25 @@ static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FS
 static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U); }
 
+/*
+    Collective Error Flags
+*/
 static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK | FTMRx_FSTAT_FPVIOL_MASK | FTMRx_FSTAT_ACCERR_MASK)) != 0U); }
 static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)      { (void)p_regs; FTMRx->FSTAT = (uint8_t)(FTMRx_FSTAT_ACCERR_MASK | FTMRx_FSTAT_FPVIOL_MASK); }
 
+/*
+    Error Parsing
+*/
 static inline bool HAL_Flash_ReadErrorVerifyFlag(const HAL_Flash_T * p_regs)        { (void)p_regs; return _HAL_Flash_ReadErrorFlagShared(p_regs); }
 // static inline bool HAL_Flash_ReadErrorFlagsVerify(const HAL_Flash_T * p_regs)    { (void)p_regs; return _HAL_Flash_ReadErrorFlagShared(p_regs); }
 static inline bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs)    { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_FPVIOL_MASK) != 0U); }
 
 static inline bool HAL_Flash_ReadSecurityFlag(const HAL_Flash_T * p_regs)           { (void)p_regs; return ((FTMRx->FSEC & FTMRx_FSEC_SEC_MASK) >> FTMRE_FSEC_SEC_SHIFT != 0x02U); }
 
+/*
+    Cmds
+*/
 static inline void HAL_Flash_StartCmdWritePage(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
     _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_PROGRAM);

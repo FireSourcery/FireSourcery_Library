@@ -44,12 +44,12 @@ typedef const struct Serial
 }
 Serial_T;
 
-#define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
-{                                                                               \
-    .P_HAL_SERIAL = p_Hal,                                                      \
-    .TX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
-    .RX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
-}
+// #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
+// {                                                                               \
+//     .P_HAL_SERIAL = p_Hal,                                                      \
+//     .TX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
+//     .RX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
+// }
 
 #define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
 {                                                          \

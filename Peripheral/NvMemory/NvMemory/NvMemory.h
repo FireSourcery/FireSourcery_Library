@@ -129,9 +129,10 @@ typedef const struct NvMemory_Partition
 {
     uintptr_t ADDRESS;
     size_t SIZE;
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
+    #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
     ptrdiff_t OP_ADDRESS_OFFSET;
-#endif
+    #endif
+    // uintptr_t RAM_ADDRESS;
 }
 NvMemory_Partition_T;
 

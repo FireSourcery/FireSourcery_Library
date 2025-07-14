@@ -86,6 +86,11 @@ struct Ring
 }
 Ring_T;
 
+#define _RING_BUFFER_ALLOC(Bytes) ((uint8_t[(Bytes)]){})
+/* alternatively use int/sizeof(int) in case of ascii fill */
+
+#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + (UnitSize)*(Length))))
+
 /*
     For Generic Handling or Runtime Init
     In the case that Runtime state stores [Ring_Type_T Type], it must be copied at run time.
@@ -98,11 +103,8 @@ typedef const struct Ring_Context
 Ring_Context_T;
 
 #define IS_POW2(x) (((x) & ((x) - 1U)) == 0U)
-/* alternatively use int/sizeof(int) in case of ascii fill */
-#define _RING_BUFFER_ALLOC(Bytes) ((uint8_t[(Bytes)]){})
 // static_assert(IS_POW2(Length), "Ring length must be power of 2");
 
-#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + (UnitSize)*(Length))))
 #define RING_CONTEXT_INIT(UnitSize, Length, p_State) { .TYPE = _RING_TYPE_INIT(UnitSize, Length), .P_STATE = p_State, }
 #define RING_CONTEXT_ALLOC(UnitSize, Length) RING_CONTEXT_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
@@ -161,7 +163,7 @@ static inline size_t _Ring_IndexDecOf(const Ring_T * p_ring, size_t index, size_
 #elif   defined(CONFIG_RING_POW2_WRAP)
     return _Ring_IndexMaskedOf(p_ring, index - dec);
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
-    return ((int32_t)index - dec < 0) ? p_ring->Type.LENGTH + index - dec : index - dec;
+    return ((int32_t)index - (int32_t)dec < 0) ? p_ring->Type.LENGTH + index - dec : index - dec;
 #endif
 }
 

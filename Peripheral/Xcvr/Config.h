@@ -31,14 +31,14 @@
 #ifndef CONFIG_XCVR_H
 #define CONFIG_XCVR_H
 
-#if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-    // #if defined(CONFIG_XCVR_SERIAL_ENABLE)
-    // #endif
-    #if defined(CONFIG_XCVR_INTERFACE_VTABLE)
-    #endif
-#elif defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-#else
+// #if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
+//     // #if defined(CONFIG_XCVR_SERIAL_ENABLE)
+//     // #endif
+//     #if defined(CONFIG_XCVR_INTERFACE_VTABLE)
+//     #endif
+// #elif defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
+// #else
 
-#endif
+// #endif
 
 #endif

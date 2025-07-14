@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Serial_Xcvr.h"
 
-const Xcvr_Interface_T SERIAL_XCVR =
+const Xcvr_VTable_T SERIAL_XCVR_VTABLE =
 {
     .TX_BYTE = (Xcvr_TxByte_T)Serial_SendByte,
     .RX_BYTE = (Xcvr_RxByte_T)Serial_RecvByte,

@@ -44,11 +44,10 @@ typedef size_t  (*Xcvr_RxMax_T)     (void * p_xcvr, uint8_t * p_destBuffer, size
 typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, const uint8_t * p_src, size_t length);
 typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, uint8_t * p_dest, size_t length);
 typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
-typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value);
+typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value); // optionally split init and compare
 // typedef bool(*Xcvr_RxN_T)        (void * p_xcvr, size_t length, uint8_t * p_dest);
 
-/* Xcvr_VTable */
-typedef const struct Xcvr_Interface
+typedef const struct Xcvr_VTable
 {
     Xcvr_TxByte_T       TX_BYTE;
     Xcvr_RxByte_T       RX_BYTE;
@@ -59,41 +58,42 @@ typedef const struct Xcvr_Interface
     Xcvr_GetCount_T     GET_TX_EMPTY_COUNT;
     Xcvr_GetCount_T     GET_RX_FULL_COUNT;
     Xcvr_SetConfig_T    CONFIG_BAUD_RATE;
+    // Xcvr_SetConfig_T    INIT_BAUD_RATE;
+    // Xcvr_SetConfig_T    COMPARE_BAUD_RATE;
 }
-Xcvr_Interface_T;
+Xcvr_VTable_T;
 
 /*
     Xcvr Instance
 */
 typedef const struct Xcvr
 {
-    void * const P_BASE; /* Xcvr data struct */
-    Xcvr_Interface_T * const P_INTERFACE;
-    // void * const P_STATE;
+    void * P_BASE; /* Xcvr data struct */
+    const Xcvr_VTable_T * P_VTABLE;
     // Xcvr_Type_T TYPE; // remove type and use vtable only
 }
 Xcvr_T;
 
-#define XCVR_INIT(p_XcvrBase, p_Interface) { .P_BASE = p_XcvrBase, .P_INTERFACE = p_Interface, }
+#define XCVR_INIT(p_XcvrBase, p_VTable) { .P_BASE = (void *)(p_XcvrBase), .P_VTABLE = (p_VTable), }
 
 /*
     Inline wrap
 */
-static inline bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar) { return p_xcvr->P_INTERFACE->TX_BYTE(p_xcvr->P_BASE, txChar); }
-static inline bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar) { return p_xcvr->P_INTERFACE->RX_BYTE(p_xcvr->P_BASE, p_rxChar); }
-static inline bool Xcvr_TxN(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_INTERFACE->TX_N(p_xcvr->P_BASE, p_src, length); }
-static inline bool Xcvr_RxN(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_INTERFACE->RX_N(p_xcvr->P_BASE, p_dest, length); }
-static inline size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize) { return p_xcvr->P_INTERFACE->TX_MAX(p_xcvr->P_BASE, p_srcBuffer, srcSize); }
-static inline size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize) { return p_xcvr->P_INTERFACE->RX_MAX(p_xcvr->P_BASE, p_destBuffer, destSize); }
-static inline size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_INTERFACE->GET_RX_FULL_COUNT(p_xcvr->P_BASE); }
-static inline size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_INTERFACE->GET_TX_EMPTY_COUNT(p_xcvr->P_BASE); }
+static inline bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar) { return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr->P_BASE, txChar); }
+static inline bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar) { return p_xcvr->P_VTABLE->RX_BYTE(p_xcvr->P_BASE, p_rxChar); }
+static inline bool Xcvr_TxN(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length) { return p_xcvr->P_VTABLE->TX_N(p_xcvr->P_BASE, p_src, length); }
+static inline bool Xcvr_RxN(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length) { return p_xcvr->P_VTABLE->RX_N(p_xcvr->P_BASE, p_dest, length); }
+static inline size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize) { return p_xcvr->P_VTABLE->TX_MAX(p_xcvr->P_BASE, p_srcBuffer, srcSize); }
+static inline size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize) { return p_xcvr->P_VTABLE->RX_MAX(p_xcvr->P_BASE, p_destBuffer, destSize); }
+static inline size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_VTABLE->GET_RX_FULL_COUNT(p_xcvr->P_BASE); }
+static inline size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr) { return p_xcvr->P_VTABLE->GET_TX_EMPTY_COUNT(p_xcvr->P_BASE); }
 static inline bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)         { return Xcvr_TxN(p_xcvr, p_src, length); }
 static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)    { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
 
 static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 {
     bool isSuccess = true;
-    if (p_xcvr->P_INTERFACE->CONFIG_BAUD_RATE != NULL) { isSuccess = p_xcvr->P_INTERFACE->CONFIG_BAUD_RATE(p_xcvr->P_BASE, baudRate); }
+    if (p_xcvr->P_VTABLE->CONFIG_BAUD_RATE != NULL) { isSuccess = p_xcvr->P_VTABLE->CONFIG_BAUD_RATE(p_xcvr->P_BASE, baudRate); }
     return isSuccess;
 }
 
@@ -133,14 +133,14 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 // Xcvr_Type_T;
 // static inline bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar)
 // {
-//     return p_xcvr->p_Xcvr->P_INTERFACE->TX_BYTE(p_xcvr->p_Xcvr->P_BASE, txChar);
-//     // return p_xcvr->P_INTERFACE->TX_BYTE(p_xcvr->P_BASE, txChar);
-//     // return p_xcvr->P_INTERFACE->TX_BYTE(p_xcvr, txChar);
+//     return p_xcvr->p_Xcvr->P_VTABLE->TX_BYTE(p_xcvr->p_Xcvr->P_BASE, txChar);
+//     // return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr->P_BASE, txChar);
+//     // return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr, txChar);
 // }
 
 // static inline bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)
 // {
-//     return p_xcvr->p_Xcvr->P_INTERFACE->RX_BYTE(p_xcvr->p_Xcvr->P_BASE, p_rxChar);
+//     return p_xcvr->p_Xcvr->P_VTABLE->RX_BYTE(p_xcvr->p_Xcvr->P_BASE, p_rxChar);
 // }
 
 // static inline bool Xcvr_TxN(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)
@@ -156,19 +156,19 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //         default:                    status = false;     break;
 //     }
 // #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     status = p_xcvr->p_Xcvr->P_INTERFACE->TX_N(p_xcvr->p_Xcvr->P_BASE, p_src, length);
+//     status = p_xcvr->p_Xcvr->P_VTABLE->TX_N(p_xcvr->p_Xcvr->P_BASE, p_src, length);
 // #endif
 //     return status;
 // }
 
 // static inline bool Xcvr_RxN(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
 // {
-//     return p_xcvr->p_Xcvr->P_INTERFACE->RX_N(p_xcvr->p_Xcvr->P_BASE, p_dest, length);
+//     return p_xcvr->p_Xcvr->P_VTABLE->RX_N(p_xcvr->p_Xcvr->P_BASE, p_dest, length);
 // }
 
 // static inline size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)
 // {
-//     return p_xcvr->p_Xcvr->P_INTERFACE->TX_MAX(p_xcvr->p_Xcvr->P_BASE, p_srcBuffer, srcSize);
+//     return p_xcvr->p_Xcvr->P_VTABLE->TX_MAX(p_xcvr->p_Xcvr->P_BASE, p_srcBuffer, srcSize);
 // }
 
 // static inline size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)
@@ -184,7 +184,7 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //         default:                    rxCount = 0U; break;
 //     }
 // #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     rxCount = p_xcvr->p_Xcvr->P_INTERFACE->RX_MAX(p_xcvr->p_Xcvr->P_BASE, p_destBuffer, destSize);
+//     rxCount = p_xcvr->p_Xcvr->P_VTABLE->RX_MAX(p_xcvr->p_Xcvr->P_BASE, p_destBuffer, destSize);
 // #endif
 //     return rxCount;
 // }
@@ -202,7 +202,7 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //         default:                    count = 0U; break;
 //     }
 // #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     count = p_xcvr->p_Xcvr->P_INTERFACE->GET_RX_FULL_COUNT(p_xcvr->p_Xcvr->P_BASE);
+//     count = p_xcvr->p_Xcvr->P_VTABLE->GET_RX_FULL_COUNT(p_xcvr->p_Xcvr->P_BASE);
 // #endif
 //     return count;
 // }
@@ -220,7 +220,7 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //         default:                    count = 0U; break;
 //     }
 // #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     count = p_xcvr->p_Xcvr->P_INTERFACE->GET_TX_EMPTY_COUNT(p_xcvr->p_Xcvr->P_BASE);
+//     count = p_xcvr->p_Xcvr->P_VTABLE->GET_TX_EMPTY_COUNT(p_xcvr->p_Xcvr->P_BASE);
 // #endif
 //     return count;
 // }
@@ -238,7 +238,7 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //         default: break;
 //     }
 // #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     if (p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_INTERFACE->CONST_BAUD_RATE(p_xcvr->p_Xcvr->P_BASE, baudRate); }
+//     if (p_xcvr->p_Xcvr->P_VTABLE->CONST_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_VTABLE->CONST_BAUD_RATE(p_xcvr->p_Xcvr->P_BASE, baudRate); }
 // #endif
 //     return isSuccess;
 // }

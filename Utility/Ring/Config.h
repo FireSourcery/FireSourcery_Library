@@ -33,11 +33,12 @@
 
 #if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. */
     #define CONFIG_RING_POW2_COUNTER
-#elif   defined(CONFIG_RING_POW2_COUNTER)      /* Power 2 length only. Mask on access */
+#elif   defined(CONFIG_RING_POW2_COUNTER)   /* Power 2 length only. Mask on access */
 #elif   defined(CONFIG_RING_POW2_WRAP)      /* Power 2 length only. Mask once on update index, -1 capacity */
 #elif   defined(CONFIG_RING_LENGTH_COMPARE)
 #else
-    #define CONFIG_RING_LENGTH_COMPARE
+    // #define CONFIG_RING_LENGTH_COMPARE
+    #error "Ring Buffer: No length compare or pow2 defined. Please define one of CONFIG_RING_LENGTH_POW2, CONFIG_RING_POW2_COUNTER, CONFIG_RING_POW2_WRAP or CONFIG_RING_LENGTH_COMPARE"
 #endif
 
 #if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)

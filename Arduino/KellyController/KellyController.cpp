@@ -36,7 +36,7 @@ uint32_t KellyController::millisTimer;
 static size_t HardwareSerial_ReadBytes(HardwareSerial * p_context, uint8_t * p_destBuffer, size_t max) { return p_context->readBytes(p_destBuffer, max); }
 static bool HardwareSerial_Write(HardwareSerial * p_context, const uint8_t * p_src, size_t length) { return (p_context->write(p_src, length) == length); } // no error handling on write success return
 
-const Xcvr_Interface_T XCVR_INTERFACE_ARDUINO_SERIAL =
+const Xcvr_VTable_T XCVR_INTERFACE_ARDUINO_SERIAL =
 {
     .RX_MAX = (Xcvr_Interface_RxMax_T)HardwareSerial_ReadBytes,
     .TX_N = (Xcvr_Interface_TxN_T)HardwareSerial_Write,
