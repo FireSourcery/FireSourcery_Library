@@ -310,7 +310,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         //     default: break;
         // }
 
-        for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Protocol_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
+        for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
     #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
         if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }

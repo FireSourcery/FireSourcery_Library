@@ -37,6 +37,13 @@
 #include <stdbool.h>
 
 /******************************************************************************/
+
+/******************************************************************************/
+#ifndef PWM_DUTY_MAX
+#define PWM_DUTY_MAX (32768U)
+#endif
+
+/******************************************************************************/
 /*!
     @brief  Implementation of PWM Module and Channel
             With Channel as primary interface, and Module as shared component.
@@ -63,9 +70,7 @@ PWM_T;
 /*  */
 #define PWM_INIT(p_Hal, ChannelId, Peroid_Ticks) { .P_HAL_PWM = p_Hal, .CHANNEL_ID = ChannelId, .PERIOD_TICKS = Peroid_Ticks, }
 
-#ifndef PWM_DUTY_MAX
-    #define PWM_DUTY_MAX (32768U)
-#endif
+
 
 /******************************************************************************/
 /*

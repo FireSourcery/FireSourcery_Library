@@ -130,15 +130,15 @@ static inline void _RingT_Copy(Ring_Type_T type, void * p_dest, const void * p_s
     }
 }
 
-// static inline void * _RingT_BufferAt(Ring_Type_T type, const void * p_src, size_t arrayIndex) { return ((uint8_t *)p_src + (type.UNIT_SIZE * arrayIndex)); }
-static inline void * _RingT_ArrayAt(Ring_Type_T type, const void * p_array, size_t arrayIndex) { return ((uint8_t *)p_array + (type.UNIT_SIZE * arrayIndex)); }
 
 /******************************************************************************/
 /*!
     Core Operations - Fully Compile-Time Optimized
 */
 /******************************************************************************/
+static inline void * _RingT_ArrayAt(Ring_Type_T type, const void * p_array, size_t arrayIndex) { return ((uint8_t *)p_array + (type.UNIT_SIZE * arrayIndex)); }
 // static inline void * _RingT_ArrayAt(Ring_Type_T type, const Ring_T * p_ring, size_t arrayIndex) { return ((uint8_t *)p_ring->Buffer + (type.UNIT_SIZE * arrayIndex)); }
+
 static inline void * _RingT_PtrOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return _RingT_ArrayAt(type, p_ring->Buffer, _RingT_ArrayIndexOf(type, ringIndex)); }
 
 /* Head/Tail pointer access */
@@ -154,10 +154,10 @@ static inline void _RingT_PlaceHead(Ring_Type_T type, const Ring_T * p_ring, con
 static inline void _RingT_PlaceTail(Ring_Type_T type, const Ring_T * p_ring, const void * p_unit) { _RingT_Copy(type, _RingT_Tail(type, p_ring), p_unit); }
 
 /* Index operations */
-static inline void _RingT_AddFront(Ring_Type_T type, Ring_T * p_ring, size_t count) { p_ring->Head = _RingT_IndexDecOf(type, p_ring->Head, count); }
-static inline void _RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count) { p_ring->Head = _RingT_IndexIncOf(type, p_ring->Head, count); }
-static inline void _RingT_AddBack(Ring_Type_T type, Ring_T * p_ring, size_t count) { p_ring->Tail = _RingT_IndexIncOf(type, p_ring->Tail, count); }
-static inline void _RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count) { p_ring->Tail = _RingT_IndexDecOf(type, p_ring->Tail, count); }
+static inline void _RingT_AddFront(Ring_Type_T type, Ring_T * p_ring, size_t count)     { p_ring->Head = _RingT_IndexDecOf(type, p_ring->Head, count); }
+static inline void _RingT_RemoveFront(Ring_Type_T type, Ring_T * p_ring, size_t count)  { p_ring->Head = _RingT_IndexIncOf(type, p_ring->Head, count); }
+static inline void _RingT_AddBack(Ring_Type_T type, Ring_T * p_ring, size_t count)      { p_ring->Tail = _RingT_IndexIncOf(type, p_ring->Tail, count); }
+static inline void _RingT_RemoveBack(Ring_Type_T type, Ring_T * p_ring, size_t count)   { p_ring->Tail = _RingT_IndexDecOf(type, p_ring->Tail, count); }
 
 /* FIFO operations */
 static inline void _RingT_PushBack(Ring_Type_T type, Ring_T * p_ring, const void * p_unit)  { _RingT_PlaceTail(type, p_ring, p_unit); _RingT_AddBack(type, p_ring, 1U); }

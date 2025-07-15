@@ -31,6 +31,8 @@
 #ifndef CONFIG_RING_H
 #define CONFIG_RING_H
 
+
+
 #if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. */
     #define CONFIG_RING_POW2_COUNTER
 #elif   defined(CONFIG_RING_POW2_COUNTER)   /* Power 2 length only. Mask on access */

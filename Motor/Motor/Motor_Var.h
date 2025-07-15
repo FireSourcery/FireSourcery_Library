@@ -84,7 +84,7 @@ typedef enum Motor_Var_UserControl
 
     /* StateMachine Inputs */
     MOTOR_VAR_USER_DIRECTION,           // 1:Forward, -1:Reverse, 0:Stop
-    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop
+    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop, todo let Rotor Var handle this
     MOTOR_VAR_USER_FEEDBACK_MODE,
     MOTOR_VAR_USER_PHASE_OUTPUT,        /* Phase Output State: Float/Hold/VPwm. Direction must be set */
 
@@ -102,16 +102,15 @@ Motor_Var_UserControl_T;
 // typedef enum Motor_Var_UserSetpoint
 // {
 //     MOTOR_VAR_USER_CMD,              // Active mode value
-//     MOTOR_VAR_CMD_SPEED,             // UserCmd as Speed
-//     MOTOR_VAR_CMD_CURRENT,
-//     MOTOR_VAR_CMD_VOLTAGE,
-//     MOTOR_VAR_CMD_ANGLE,
+//     MOTOR_VAR_USER_CMD_SPEED,        // UserCmd as Speed
+//     MOTOR_VAR_USER_CMD_CURRENT,
+//     MOTOR_VAR_USER_CMD_VOLTAGE,
+//     MOTOR_VAR_USER_CMD_ANGLE,
 // }
 // Motor_Var_UserSetpoint_T;
 
-
 /*
-    Angle Sensor + Feedback
+    Common Rotor Angle/Speed State + Feedback
     Read-Only, RealTime
 */
 typedef enum Motor_Var_Rotor
@@ -127,6 +126,14 @@ typedef enum Motor_Var_Rotor
     // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
 }
 Motor_Var_Rotor_T;
+
+// typedef enum Motor_Var_Phase
+// {
+//     MOTOR_VAR_PHASE_OUTPUT,
+//     MOTOR_VAR_PHASE_PIN_A,
+//     MOTOR_VAR_PHASE_PWM_A,
+// }
+// Motor_Var_Phase_T;
 
 /*
 

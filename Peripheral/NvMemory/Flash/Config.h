@@ -33,6 +33,13 @@
 
 #include "Peripheral/NvMemory/NvMemory/Config.h"
 
+// #if     defined(FLASH_VERIFY_ERASE_N_UNITS)
+// #elif   defined(FLASH_VERIFY_ERASE_1_UNIT)
+// #else
+// #define FLASH_VERIFY_ERASE_1_UNIT
+// #endif
+
+
 #if     defined(CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS)
 #elif   defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
 #else

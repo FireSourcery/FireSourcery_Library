@@ -31,4 +31,6 @@
 /******************************************************************************/
 #include "Utility/Protocol/Protocol.h"
 
-extern const Protocol_PacketClass_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS;
+#define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (10U)
+// extern const PacketClass_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS;
+extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];

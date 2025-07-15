@@ -66,7 +66,7 @@ typedef uint16_t checksum_t;
     May process directly as cmd, or lead extended cmd id
     Essentially the packets "OpCode"
 */
-// typedef enum MotProtocol_HeaderId
+// typedef enum MotProtocol_Id
 typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
 {
     /*
@@ -79,6 +79,7 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
     MOT_PACKET_SYNC_NACK = 0xA3U,
     MOT_PACKET_SYNC_ABORT = 0xA4U,
     MOT_PACKET_SYNC_RESV = MOT_PACKET_START_BYTE,
+    // MOT_PACKET_FLOW_ = ,
     MOT_PACKET_PING_ALT = 0xAAU,
     MOT_PACKET_PING_BOOT = 0xABU,
     // MOT_PACKET_PING_WATCHDOG = 0xAAU,
@@ -119,76 +120,58 @@ typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
 }
 MotPacket_Id_T;
 
-/*
-    Untyped format sizes
-    alternatively
-    Packet struct defs use sized type
-    Method Functions use type cast
-*/
 
 /* 2-Byte Sync Packet */
+// typedef struct MOT_PACKET_PACKED MotPacket_ControlChar
+// typedef struct MOT_PACKET_PACKED MotPacket_Min
 typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
-    uint8_t SyncId; /* MotPacket_HeaderId_T */
+    uint8_t SyncId; /* MotPacket_Id_T */
 }
 MotPacket_Sync_T;
-
-// /* Header as Fixed */
-// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
-// {
-//     uint8_t Start;
-//     uint8_t Id;
-// }
-// MotPacket_HeaderId_T;
-
-// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
-// {
-//     uint8_t Start;
-//     uint8_t Id;
-//     uint16_t Checksum;
-// }
-// MotPacket_HeaderFixed_T;
-
-// alternatively use 8bit checksum + trailer data checksum
-// typedef struct MOT_PACKET_PACKED MotPacket_HeaderFixed
-// {
-//     uint8_t Start;
-//     uint8_t Id;
-//     uint16_t Checksum;
-//     struct { uint8_t Length; uint8_t Flex0; uint8_t Flex1; uint8_t Flex2; };
-// }
-// MotPacket_HeaderVariable_T;
 
 // generic via union
 typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
-    uint8_t Id;     /* MotPacket_HeaderId_T */
+    uint8_t Id;     /* MotPacket_Id_T */
     uint16_t Checksum;
     union
     {
-        struct { uint8_t Length; uint8_t Flex0; uint8_t Flex1; uint8_t Flex2; };
-        struct { uint8_t _Length; uint8_t _Flex0; uint16_t Status; };
-        struct { uint16_t FlexLower16; uint16_t FlexUpper16; };
-        uint32_t FlexValue;
+        struct { uint8_t Length; uint8_t Sequence; uint8_t Flags0; uint8_t Flags1; };
+        struct { uint16_t SubId; uint16_t Flags; };  /*  */
+        struct { uint8_t SourceId; uint16_t Status; };
+        struct { uint16_t Lower16; uint16_t Upper16; };
+        // uint32_t FlexValue;
     };
 }
 MotPacket_Header_T;
+
+
+// 4-byte, checksum at end
+// typedef struct MOT_PACKET_PACKED MotPacket_Header
+// {
+//     uint8_t Start;  /* MOT_PACKET_START_BYTE */
+//     uint8_t Id;     /* MotPacket_Id_T */
+//     union
+//     {
+//         struct { uint8_t Length; uint8_t Sequence; };
+//         uint16_t Flags;
+//         uint16_t SubId;
+//         uint16_t Status;
+//     };
+// }
+// MotPacket_Header_T;
 
 typedef union MOT_PACKET_PACKED MotPacket
 {
     struct
     {
         MotPacket_Header_T Header;
+        // struct { uint16_t Source; uint16_t Dest; } Ext;
         uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)];
     };
-    // struct
-    // {
-    //     MotPacket_HeaderFixed_T Header;
-    //     uint32_t FixedData;
-    //     // uint8_t Payload[MOT_PACKET_LENGTH_MAX - sizeof(MotPacket_Header_T)];
-    // };
     uint8_t Bytes[MOT_PACKET_LENGTH_MAX];
 }
 MotPacket_T;
@@ -227,8 +210,10 @@ typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Libra
 typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionResp { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
+
 typedef struct MotPacket_VersionFlexResp_Payload { uint32_t Versions[MOT_PACKET_PAYLOAD_LENGTH_MAX / sizeof(uint32_t)]; }   MotPacket_VersionFlexResp_Payload_T;
 typedef struct MotPacket_VersionFlexResp { MotPacket_Header_T Header; MotPacket_VersionFlexResp_Payload_T VersionResp; }    MotPacket_VersionFlexResp_T;
+// typedef struct MotPacket_SoftwareVersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; }                    MotPacket_VersionResp_Payload_T;
 
 /******************************************************************************/
 /*! Stop - Stop All */
@@ -265,12 +250,12 @@ typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallRes
 /******************************************************************************/
 /*!
     Read Vars - flex length extensible
-    Req     [Start, Id, Checksum[2]], [Length, IdSum/SenderId, Flags16],   [MotVarIds][16]
-    Resp    [Start, Id, Checksum[2]], [Length, IdSum/SenderId, Status16],  [Value16][16]
+    Req     [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Flags16],   [MotVarIds][16]
+    Resp    [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Status16],  [Value16][16]
 
     Alt 32-bit
-    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16_Alt],   [MotVarIds][8]
-    Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],      [Value32][8]
+    Req     [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Flags16_Alt],   [MotVarIds][8]
+    Resp    [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Status16],      [Value32][8]
 */
 /******************************************************************************/
 typedef struct MotPacket_VarReadReq_Payload { uint16_t MotVarIds[16U]; }                                            MotPacket_VarReadReq_Payload_T;
@@ -281,12 +266,12 @@ typedef struct MotPacket_VarReadResp { MotPacket_Header_T Header; MotPacket_VarR
 /******************************************************************************/
 /*!
     Write Vars - extensible flex Up to 8 uint16_t, 4 uint32_t
-    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16],    [MotVarIds, Value16][8]
-    Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],   [VarStatus8][8]
+    Req     [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Flags16],    [MotVarIds, Value16][8]
+    Resp    [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Status16],   [VarStatus8][8]
 
     Alt 32-bit
-    Req     [Start, Id, Checksum[2]], [Length, IdSum, Flags16],   [MotVarId16, Value32][5]
-    Resp    [Start, Id, Checksum[2]], [Length, IdSum, Status16],  [Status8][4]
+    Req     [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Flags16],   [MotVarId16, Value32][5]
+    Resp    [Start, Id, Checksum[2]], [Length, IdFlags/Meta, Status16],  [Status8][4]
 */
 /******************************************************************************/
 typedef struct MotPacket_VarWriteReq_Payload { struct { uint16_t MotVarId; uint16_t Value16; } Pairs[8U]; }             MotPacket_VarWriteReq_Payload_T;
@@ -435,10 +420,10 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataP
 /******************************************************************************/
 /*! Cmdr side */
 /******************************************************************************/
-// extern uint8_t MotPacket_GetRespLength(MotPacket_HeaderId_T headerId);
+// extern uint8_t MotPacket_GetRespLength(MotPacket_Id_T headerId);
 // extern uint8_t MotPacket_PingReq_GetRespLength(void);
 // extern uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket);
-// extern MotPacket_HeaderId_T MotPacket_PingResp_Parse(const MotPacket_PingResp_T * p_respPacket);
+// extern MotPacket_Id_T MotPacket_PingResp_Parse(const MotPacket_PingResp_T * p_respPacket);
 
 // // extern uint8_t MotPacket_StopReq_GetRespLength(void);
 // extern uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket);

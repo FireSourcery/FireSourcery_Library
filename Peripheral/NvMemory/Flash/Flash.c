@@ -260,9 +260,9 @@ static Flash_Status_T SetEraseAll(Flash_T * p_flash)
 /******************************************************************************/
 void Flash_Init(Flash_T * p_flash)
 {
-    HAL_Flash_Init(p_flash->CONST.P_HAL);
+    HAL_Flash_Init(p_flash-> P_HAL);
     NvMemory_Init(p_flash);
-    p_flash->IsForceAlignEnable = true;
+    p_flash->P_STATE->IsForceAlignEnable = true;
 }
 
 
@@ -287,18 +287,25 @@ Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
 // alt move to NvMemory, with flexible buffer
 static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
 {
-    Flash_Status_T status;
-    size_t remainder = p_flash->OpSize - p_flash->OpSizeAligned; /* unaligned size */
-    // size_t remainder = NvMemory_GetOpSizeRemainder(p_flash);
+    NvMemory_State_T * p_state = p_flash->P_STATE;
+
+    size_t remainder = p_state->OpSize - p_state->OpSizeAligned; /* unaligned size */
+    // size_t remainder = NvMemory_GetOpSizeRemainder(p_state);
     uint8_t alignedData[MAX_WRITE_SIZE]; //= { [0U ... (MAX_WRITE_SIZE - 1U)] = FLASH_UNIT_ERASE_PATTERN };
+    Flash_Status_T status;
 
-    memset(&alignedData[0U], FLASH_UNIT_ERASE_PATTERN, MAX_WRITE_SIZE);
-    memcpy(&alignedData[0U], &((const uint8_t *)p_flash->p_OpData)[p_flash->OpSizeAligned], remainder); /* Start from remaining data, OpSize AlignDown */
+    if (remainder > MAX_WRITE_SIZE) { status = NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
+    else
+    {
+        memset(&alignedData[0U], FLASH_UNIT_ERASE_PATTERN, MAX_WRITE_SIZE);
+        memcpy(&alignedData[0U], &((const uint8_t *)p_state->p_OpData)[p_state->OpSizeAligned], remainder); /* Start from remaining data, OpSize AlignDown */
 
-    p_flash->p_OpData = &alignedData[0U];
-    p_flash->OpAddress = p_flash->OpAddress + p_flash->OpSizeAligned; /* Update previous aligned down address  */
-    p_flash->OpSizeAligned = unitSize;
-    status = Flash_ProcThisOp_Blocking(p_flash);
+        p_state->p_OpData = &alignedData[0U];
+        p_state->OpAddress = p_state->OpAddress + p_state->OpSizeAligned; /* Update previous aligned down address  */
+        p_state->OpSizeAligned = unitSize;
+        status = Flash_ProcThisOp_Blocking(p_flash);
+    }
+
     return status;
 }
 
@@ -316,7 +323,7 @@ static inline Flash_Status_T ProcAfterSet(Flash_T * p_flash, Flash_Status_T stat
 Flash_Status_T Flash_Write_Blocking(Flash_T * p_flash, uintptr_t flashAddress, const void * p_data, size_t size)
 {
     Flash_Status_T status = ProcAfterSet(p_flash, SetWrite(p_flash, flashAddress, p_data, size));
-    if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSize != p_flash->OpSizeAligned) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { if (p_flash->P_STATE->OpSize > p_flash->P_STATE->OpSizeAligned) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_SIZE); } }
     return status;
 }
 
@@ -335,10 +342,10 @@ Flash_Status_T Flash_SetContinueWrite(Flash_T * p_flash, uintptr_t flashAddress,
 */
 Flash_Status_T Flash_ContinueWrite_Blocking(Flash_T * p_flash, const void * p_data, size_t size)
 {
-    assert(p_flash->OpSize == p_flash->OpSizeAligned); /* Previous Write must have ended on an aligned boundary */
+    assert(p_flash->P_STATE->OpSize == p_flash->P_STATE->OpSizeAligned); /* Previous Write must have ended on an aligned boundary */
 
-    Flash_Status_T status = Flash_Write_Blocking(p_flash, p_flash->OpAddress, p_data, size);
-    p_flash->OpAddress += size;
+    Flash_Status_T status = Flash_Write_Blocking(p_flash, p_flash->P_STATE->OpAddress, p_data, size);
+    p_flash->P_STATE->OpAddress += size;
     return status;
 }
 

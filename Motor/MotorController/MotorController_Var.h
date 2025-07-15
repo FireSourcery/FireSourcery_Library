@@ -270,35 +270,6 @@ typedef enum MotVarId_Instance_VMonitor
 }
 MotVarId_Instance_VMonitor_T;
 
-/*
-    Index corresponds to external user interface
-*/
-typedef enum MotVarId_Instance_HeatMonitorMosfets
-{
-    MOT_VAR_ID_THERMISTOR_MOSFETS_0,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_1,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_2,
-    MOT_VAR_ID_THERMISTOR_MOSFETS_3,
-}
-MotVarId_Instance_HeatMonitorMosfets_T;
-
-typedef enum MotVarId_Instance_Motor
-{
-    MOT_VAR_ID_MOTOR_0,
-    MOT_VAR_ID_MOTOR_1,
-    MOT_VAR_ID_MOTOR_2,
-    MOT_VAR_ID_MOTOR_3,
-}
-MotVarId_Instance_Motor_T;
-
-typedef enum MotVarId_Instance_ProtocolSocket
-{
-    MOT_VAR_ID_PROTOCOL_SOCKET_0,
-    MOT_VAR_ID_PROTOCOL_SOCKET_1,
-    MOT_VAR_ID_PROTOCOL_SOCKET_2,
-    MOT_VAR_ID_PROTOCOL_SOCKET_3,
-}
-MotVarId_Instance_ProtocolSocket_T;
 
 /******************************************************************************/
 /*!
@@ -322,6 +293,35 @@ static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController
 extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
 
+/*
+    Index corresponds to external user interface
+*/
+// typedef enum MotVarId_Instance_HeatMonitorMosfets
+// {
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_2,
+//     MOT_VAR_ID_THERMISTOR_MOSFETS_3,
+// }
+// MotVarId_Instance_HeatMonitorMosfets_T;
+
+// typedef enum MotVarId_Instance_Motor
+// {
+//     MOT_VAR_ID_MOTOR_0,
+//     MOT_VAR_ID_MOTOR_1,
+//     MOT_VAR_ID_MOTOR_2,
+//     MOT_VAR_ID_MOTOR_3,
+// }
+// MotVarId_Instance_Motor_T;
+
+// typedef enum MotVarId_Instance_ProtocolSocket
+// {
+//     MOT_VAR_ID_PROTOCOL_SOCKET_0,
+//     MOT_VAR_ID_PROTOCOL_SOCKET_1,
+//     MOT_VAR_ID_PROTOCOL_SOCKET_2,
+//     MOT_VAR_ID_PROTOCOL_SOCKET_3,
+// }
+// MotVarId_Instance_ProtocolSocket_T;
 
 /******************************************************************************/
 /*!

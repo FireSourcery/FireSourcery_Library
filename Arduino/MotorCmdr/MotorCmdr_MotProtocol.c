@@ -192,7 +192,7 @@ static const Protocol_Req_T REQ_TABLE[] =
 /******************************************************************************/
 /*! BuildTxReq */
 /******************************************************************************/
-void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, protocol_req_id_t reqId)
+void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_T * p_app, packet_id_t reqId)
 {
     switch(reqId)
     {
@@ -233,12 +233,12 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
     }
 }
 
-const Protocol_PacketClass_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
+const PacketClass_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 {
     .RX_LENGTH_MIN         = MOT_PACKET_LENGTH_MIN,
     .RX_LENGTH_MAX         = MOT_PACKET_LENGTH_MAX,
-    .PARSE_RX_META         = (Protocol_ParseRxMeta_T)MotProtocol_ParseRxMeta,
-    .BUILD_TX_SYNC         = (Protocol_BuildTxSync_T)MotProtocol_BuildTxSync,
+    .PARSE_RX_META         = (Packet_ParseRxMeta_T)MotProtocol_ParseRxMeta,
+    .BUILD_TX_SYNC         = (Packet_BuildTxSync_T)MotProtocol_BuildTxSync,
 
     .P_REQ_TABLE         = &REQ_TABLE[0U],
     .REQ_TABLE_LENGTH     = sizeof(REQ_TABLE)/sizeof(Protocol_Req_T),

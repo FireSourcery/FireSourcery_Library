@@ -30,18 +30,20 @@
 */
 /******************************************************************************/
 #include "void_array.h"
+#include "generic_array.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
+// typedef const struct ArrayContext
 typedef const struct ArrayMeta
 {
     // const size_t TYPE_SIZE; // Size of each element in the p_array
-    void * const P_BUFFER;
-    const size_t LENGTH;    // Length of the p_array
-    void * const P_AUGMENTS;
+    void * P_BUFFER;
+    size_t LENGTH;    // Length of the p_array
+    void * P_AUGMENTS;
 
     // effective add to the unified interface, non value types
     // Array_State_T * const P_STATE;  // Pointer to the p_array buffer, with augments
@@ -50,8 +52,11 @@ typedef const struct ArrayMeta
 }
 Array_T;
 
+// static allocation only, for inline convenience
 #define _BUFFER_ALLOC(Bytes) ((void *)(uint8_t[(Bytes)]){})
 #define _ARRAY_ALLOC(T, Length) ((void *)(T[(Length)]){})
+// #define _BUFFER_ALLOC_STATIC(Bytes) ((void *)((static uint8_t[(Bytes)]){0}))
+// #define _ARRAY_ALLOC_STATIC(T, Length) ((void *)((static T[(Length)]){0}))
 
 /*
     Length in Units
@@ -60,43 +65,7 @@ Array_T;
 #define ARRAY_ALLOC_AS(T, Length, p_Augments) ARRAY_INIT(_ARRAY_ALLOC(T, Length), Length, p_Augments)
 
 
-/*
-    Generic array implementation - using Macros with _Generic selection for type safety
 
-    Compile time typed
-    effectively void array expressed with type prior to what compiler may optimize
-    alternative to handling size parameter, may be faster depending on compiler.
-*/
-/*
-    Allow sub-module to configure type using a single parameter
-*/
-// #define as_pointer(T, p_buffer) ((T *)p_buffer)
-#define as_pointer(T, p_buffer) \
-    _Generic((T)0, \
-        int8_t  : ((int8_t *)p_buffer), \
-        int16_t : ((int16_t *)p_buffer), \
-        int32_t : ((int32_t *)p_buffer), \
-        int8_t *: ((int8_t *)p_buffer), \
-        int16_t *: ((int16_t *)p_buffer), \
-        int32_t *: ((int32_t *)p_buffer), \
-        int64_t *: ((int64_t *)p_buffer) \
-    )
-
-#define as_ref(T, p_buffer) (as_pointer(T, p_buffer)[0U])
-
-#define as_value(T, p_buffer) as_ref(T, p_buffer)
-
-#define as(T, p_buffer) \
-    _Generic((T)0, \
-        int8_t  : as_value(T, p_buffer), \
-        int16_t : as_value(T, p_buffer), \
-        int32_t : as_value(T, p_buffer), \
-        int8_t * : as_pointer(T, p_buffer), \
-        int16_t *: as_pointer(T, p_buffer) \
-    )
-
-
-#define as_array_at(T, p_buffer, index) (as_pointer(T, p_buffer)[index])
 
 #define Array_At(T, p_ArrayMeta, index) (as_array_at(T, p_ArrayMeta->P_BUFFER, index))
 
@@ -170,10 +139,16 @@ static inline void ArrayStruct_Set(size_t type, Array_T * p_array, size_t index,
 
 // #define Array_ForEach(T, p_array, unit_op) (for (size_t index = 0U; index < p_array->LENGTH; index++) { unit_op(((T *)p_array->P_BUFFER)); })
 
-static inline void Array_ForEach(size_t type, const Array_T * p_array, proc_t unit_op)
-{
-    for (size_t index = 0U; index < p_array->LENGTH; index++) { unit_op(void_pointer_at(p_array->P_BUFFER, type, index)); }
-}
+// static inline void Array_ForEach(size_t type, const Array_T * p_array, proc_t unit_op)
+// {
+//     for (size_t index = 0U; index < p_array->LENGTH; index++) { unit_op(void_pointer_at(p_array->P_BUFFER, type, index)); }
+// }
+
+// #define array_foreach(T, p_buffer, count, unit_op) \
+//     _Generic((T)0, \
+//         int8_t  : void_array_foreach(p_buffer, 1, count, unit_op), \
+//         default  : void_array_foreach(p_buffer, sizeof(T), count, unit_op), \
+//     )
 
 // static inline void Array_SetEach(const Array_T * p_array, set_t unit_op, intptr_t value)
 // {

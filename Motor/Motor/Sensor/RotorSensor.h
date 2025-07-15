@@ -106,7 +106,7 @@ typedef struct RotorSensor_State
     // int32_t SpeedPrev_Fract16; /* common filter */
 
     angle16_t MechanicalAngle;
-    int Direction;
+    int Direction; /* RotorSensor_Direction */
     // Units
 }
 RotorSensor_State_T;

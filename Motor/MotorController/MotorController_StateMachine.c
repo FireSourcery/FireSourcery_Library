@@ -435,17 +435,11 @@ static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_i
         switch ((MotorController_MainMode_T)mainMode)
         {
             // case MOTOR_CONTROLLER_MAIN_MODE_DISABLE:
-            case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:
-                p_nextState = &MAIN_STATE_MOTOR_CMD; /* Return to Motors State */
-                break;
-            case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:
-                p_nextState = &MAIN_STATE_MOTOR_CMD; /* Return to Motors State */
-                // p_nextState = &STATE_DRIVE; /* Enter Drive State */
-                break;
-                // case MOTOR_CONTROLLER_MAIN_MODE_SERVO:
-                //     p_nextState = &MAIN_STATE_MOTOR_CMD; /* Return to Motors State */
-                //     // p_nextState = &STATE_SERVO; /* Enter Servo State */
-                //     break;
+            case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:      p_nextState = &MAIN_STATE_MOTOR_CMD;                break;
+            case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:          p_nextState = &MAIN_STATE_MOT_DRIVE;                break;
+            // case MOTOR_CONTROLLER_MAIN_MODE_SERVO:
+            //     // p_nextState = &STATE_SERVO; /* Enter Servo State */
+            //     break;
             default:
                 p_nextState = &MAIN_STATE_MOTOR_CMD;
                 break;

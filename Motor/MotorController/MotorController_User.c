@@ -34,77 +34,17 @@
 /******************************************************************************/
 /*   */
 /******************************************************************************/
-/* using user channel */
-void MotorController_User_SetOptSpeedLimitOnOff(const MotorController_T * p_context, bool isEnable)
-{
-    if (isEnable == true) { MotorController_User_SetSpeedLimitAll(p_context, p_context->P_ACTIVE->Config.OptSpeedLimit_Fract16); }
-    else { MotorController_User_ClearSpeedLimitAll(p_context); }
-}
-
-void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context, bool isEnable)
-{
-    if (isEnable == true) { MotorController_User_SetILimitAll(p_context, p_context->P_ACTIVE->Config.OptILimit_Fract16); }
-    else { MotorController_User_ClearILimitAll(p_context); }
-}
-
-/******************************************************************************/
-/*
-    Config
-*/
-/******************************************************************************/
-/*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSupplyRef */
-void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
-{
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
-    p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_context);
-    MotorController_CaptureVSource(p_context);
-}
-
-// void MotorController_User_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
-// {
-// }
-
-void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
-{
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
-
-    p_mc->Config.InputMode = mode;
-
-    switch (p_mc->Config.InputMode)
-    {
-        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
-            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-            {
-                Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-            }
-            break;
-        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
-            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-            {
-                Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-            }
-            break;
-        case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-            break;
-        default:  break;
-    }
-}
-
 /******************************************************************************/
 /*
     Call via Key/Value, State/SubStates Cmds
     vars not stored in host view cache
-    todo regularize return status
 */
 /******************************************************************************/
 int MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int value)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
-    int status = 0;
+    int status = 0; // MotorController_User_GenericStatus_T
     bool isSuccess = true;
 
     switch (id)
@@ -163,3 +103,48 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
 }
 
 
+/******************************************************************************/
+/*
+    Config
+*/
+/******************************************************************************/
+/*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSupplyRef */
+void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
+{
+    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
+    MotorController_ResetVSourceMonitorDefaults(p_context);
+    MotorController_CaptureVSource(p_context);
+}
+
+// void MotorController_User_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
+// {
+// }
+
+void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
+{
+    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+
+    p_mc->Config.InputMode = mode;
+
+    switch (p_mc->Config.InputMode)
+    {
+        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
+            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
+            {
+                Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
+            }
+            break;
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
+            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
+            {
+                Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
+            }
+            break;
+        case MOTOR_CONTROLLER_INPUT_MODE_CAN:
+            break;
+        default:  break;
+    }
+}

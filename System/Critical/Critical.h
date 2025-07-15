@@ -90,7 +90,7 @@ static inline void Critical_InitLock(critical_lock_t * p_lock) { atomic_flag_cle
 static inline bool Critical_AcquireLock(critical_lock_t * p_signal) { return (atomic_flag_test_and_set(p_signal) == false); }
 static inline void Critical_ReleaseLock(critical_lock_t * p_signal) { atomic_flag_clear(p_signal); }
 
-static inline void _Critical_AwaitLock_Blocking(critical_lock_t * p_signal) { while (atomic_flag_test_and_set(p_signal) == true) {} }
+static inline void Critical_AwaitLock_Blocking(critical_lock_t * p_signal, void (*yield)(void)) { while (atomic_flag_test_and_set(p_signal) == true) { yield(); } }
 
 /******************************************************************************/
 /*

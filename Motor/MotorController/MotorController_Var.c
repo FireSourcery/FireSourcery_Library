@@ -408,7 +408,7 @@ static MotVarId_Status_T _HandleMonitor_Set(const MotorController_T * p_context,
     Communication
 */
 /******************************************************************************/
-static inline Protocol_T * ProtocolAt(const MotorController_T * p_context, uint8_t protocolIndex)
+static inline Socket_T * SocketAt(const MotorController_T * p_context, uint8_t protocolIndex)
 {
     return (protocolIndex < p_context->PROTOCOL_COUNT) ? &p_context->P_PROTOCOLS[protocolIndex] : NULL;
 }
@@ -417,7 +417,7 @@ static int _HandleCommunication_Get(const MotorController_T * p_context, MotVarI
 {
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       return Protocol_ConfigId_Get(ProtocolAt(p_context, varId.Instance), varId.Base);
+        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:        return 0; //return CanBus_Config_Get(p_mc, varId.Base);
         default: return 0;
     }
@@ -429,7 +429,7 @@ static MotVarId_Status_T _HandleCommunication_Set(const MotorController_T * p_co
 
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       Protocol_ConfigId_Set(ProtocolAt(p_context, varId.Instance), varId.Base, value);     break;
+        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       Socket_ConfigId_Set(SocketAt(p_context, varId.Instance), varId.Base, value);     break;
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:        break; // CanBusConfig_Set(p_context, varId.Base, value);
         default: return MOT_VAR_STATUS_ERROR;
     }

@@ -46,7 +46,7 @@
     mapping directly to Protocol Specs
 */
 /******************************************************************************/
-void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_txSize, Protocol_TxSyncId_T txId)
+void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_txSize, Protocol_TxSyncId_T txId)
 {
     MotPacket_Id_T syncChar;
 
@@ -68,8 +68,12 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
+// void MotProtocol_BuildTxHeader(MotPacket_T * p_header, MotPacket_T * p_txPacket, packet_size_t * p_txSize, packet_id_t txId)
+// {
 
-Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, protocol_size_t rxCount)
+// }
+
+Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, packet_size_t rxCount)
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
 
@@ -115,6 +119,18 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
     return rxCode;
 }
 
+const PacketClass_T MOT_PROTOCOL_PACKET_CLASS =
+{
+    .RX_LENGTH_MIN  = MOT_PACKET_LENGTH_MIN,
+    .RX_LENGTH_MAX  = MOT_PACKET_LENGTH_MAX,
+    .PARSE_RX_META  = (Packet_ParseRxMeta_T)MotProtocol_ParseRxMeta,
+    .BUILD_TX_SYNC  = (Packet_BuildTxSync_T)MotProtocol_BuildTxSync,
+    .RX_START_ID    = MOT_PACKET_START_BYTE,
+    .RX_TIMEOUT     = MOT_PROTOCOL_TIMEOUT_RX,
+    .REQ_TIMEOUT    = MOT_PROTOCOL_TIMEOUT_REQ,
+};
+
+
 /******************************************************************************/
 /*!
     Ctrlr Side Functions
@@ -141,7 +157,7 @@ Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContex
     p_subState->DataModeAddress = MotPacket_DataModeReq_ParseAddress(p_rxPacket);
     p_subState->DataModeSize = MotPacket_DataModeReq_ParseSize(p_rxPacket);
     p_subState->DataIndex = 0U;
-    *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_OK);
+    *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_SUCCESS);
     *p_reqContext->p_SubStateIndex = 1U;
     reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE; // after receiving ack, control is transferred back to MotProtocol_DataModeReadData
 
@@ -167,7 +183,7 @@ Protocol_ReqCode_T MotProtocol_DataModeReadData(void * p_app, Protocol_ReqContex
     }
     else
     {
-        *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_OK);
+        *p_reqContext->p_TxSize = MotPacket_DataModeReadResp_Build((MotPacket_DataModeResp_T *)p_txPacket, MOT_STATUS_SUCCESS);
         *p_reqContext->p_SubStateIndex = 2U;
         reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
     }
@@ -301,6 +317,7 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
             reqCode = PROTOCOL_REQ_CODE_AWAIT_RX_CONTINUE;
             break;
         case 2U: /* Write Data - rxPacket is DataPacket */
+            /* assert(id == MOT_PACKET_DATA_MODE_DATA) */
             reqCode = MotProtocol_Flash_DataModeWriteData_Blocking(p_flash, p_reqContext);
             // if (reqCode == PROTOCOL_REQ_CODE_TX_CONTINUE) *p_reqContext->p_SubStateIndex = 3 ;
             //     (reqCode == PROTOCOL_REQ_CODE_PROCESS_COMPLETE) *p_reqContext->p_SubStateIndex = 0 ;
@@ -366,7 +383,7 @@ NvMemory_Status_T ReadMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t
 
 
 // caller handle address mapping
-protocol_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
+packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
 {
     uint32_t address = p_rxPacket->MemReadReq.Address;
     uint8_t size = p_rxPacket->MemReadReq.Size;
@@ -378,7 +395,7 @@ protocol_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemRea
     return MotPacket_MemReadResp_BuildHeader(p_txPacket, size, status);
 }
 
-protocol_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_MemWriteResp_T * p_txPacket, const MotPacket_MemWriteReq_T * p_rxPacket)
+packet_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_MemWriteResp_T * p_txPacket, const MotPacket_MemWriteReq_T * p_rxPacket)
 {
     uint32_t address = p_rxPacket->MemWriteReq.Address;
     const uint8_t * p_data = &(p_rxPacket->MemWriteReq.ByteData[0U]);
@@ -404,10 +421,9 @@ protocol_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_MemWr
 /******************************************************************************/
 /*! Reboot */
 /******************************************************************************/
-protocol_size_t MotProtocol_Reboot(void * p_flash, void * p_txPacket, const void * p_rxPacket)
-{
+// packet_size_t MotProtocol_Reboot(void * p_flash, void * p_txPacket, const void * p_rxPacket)
+// {
 
-}
-
+// }
 
 

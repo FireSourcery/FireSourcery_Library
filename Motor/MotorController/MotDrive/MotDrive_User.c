@@ -43,7 +43,7 @@ void MotDrive_User_SetDirection(const MotDrive_T * p_motDrive, MotDrive_Directio
     if (MotDrive_User_GetDirection(p_motDrive) != direction)
     {
         _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
-        if (MotDrive_User_GetDirection(p_motDrive) != direction) { Blinky_Blink(p_motDrive->P_BUZZER, 500U);; } /* effective on motor async proc only */
+        if (MotDrive_User_GetDirection(p_motDrive) != direction) { Blinky_Blink(p_motDrive->P_BUZZER, 500U); } /* effective on motor async proc only */
     }
 }
 

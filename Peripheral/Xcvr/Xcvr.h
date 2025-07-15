@@ -26,7 +26,7 @@
 /*!
     @file   Xcvr.h
     @author FireSourcery
-    @brief  DataLink Peripheral
+    @brief
 */
 /******************************************************************************/
 
@@ -36,7 +36,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-
+/*
+    Serial Interface
+*/
 typedef bool    (*Xcvr_TxByte_T)    (void * p_xcvr, uint8_t txChar);
 typedef bool    (*Xcvr_RxByte_T)    (void * p_xcvr, uint8_t * p_rxChar);
 typedef size_t  (*Xcvr_TxMax_T)     (void * p_xcvr, const uint8_t * p_srcBuffer, size_t bufferSize);
@@ -51,10 +53,10 @@ typedef const struct Xcvr_VTable
 {
     Xcvr_TxByte_T       TX_BYTE;
     Xcvr_RxByte_T       RX_BYTE;
-    Xcvr_TxMax_T        TX_MAX;
-    Xcvr_RxMax_T        RX_MAX;
-    Xcvr_TxN_T          TX_N;
-    Xcvr_RxN_T          RX_N;
+    Xcvr_TxMax_T        TX_MAX; /* TxBytes */
+    Xcvr_RxMax_T        RX_MAX; /* RxBytes */
+    Xcvr_TxN_T          TX_N; /* TxFrame */
+    Xcvr_RxN_T          RX_N; /* RxFrame */
     Xcvr_GetCount_T     GET_TX_EMPTY_COUNT;
     Xcvr_GetCount_T     GET_RX_FULL_COUNT;
     Xcvr_SetConfig_T    CONFIG_BAUD_RATE;

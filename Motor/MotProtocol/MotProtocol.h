@@ -39,16 +39,30 @@
 #define MOT_PROTOCOL_TIMEOUT_RX         (2000U)     /* Timeout Rx Packet */
 #define MOT_PROTOCOL_TIMEOUT_REQ        (5000U)     /* Timeout Req */
 
-/* Generic common status */
-/* HeaderStatus */
-typedef enum MotProtocol_GenericStatus
+/* Common status */
+typedef enum MotProtocol_StatusCode
 {
-    MOT_STATUS_OK = 0x00U,
-    MOT_STATUS_ERROR = 0x01U,
-    // MOT_STATUS_WAITING = 0x02U,
-    // MOT_STATUS_RESERVED = 0xFFU,
+    MOT_STATUS_SUCCESS           = 0x00U,
+    MOT_STATUS_INVALID_COMMAND   = 0x01U,
+    MOT_STATUS_INVALID_PARAMETER = 0x02U,
+    MOT_STATUS_DEVICE_BUSY       = 0x03U,
+    MOT_STATUS_CHECKSUM_ERROR    = 0x04U,
+    MOT_STATUS_TIMEOUT           = 0x05U,
+    MOT_STATUS_ACCESS_DENIED     = 0x06U,
 }
-MotProtocol_GenericStatus_T;
+MotProtocol_StatusCode_T;
+
+// HTTP/REST patterns
+// typedef enum MotProtocol_Status
+// {
+//     MOT_STATUS_OK = 200,
+//     MOT_STATUS_BAD_REQUEST = 400,
+//     MOT_STATUS_UNAUTHORIZED = 401,
+//     MOT_STATUS_NOT_FOUND = 404,
+//     MOT_STATUS_TIMEOUT = 408,
+//     MOT_STATUS_INTERNAL_ERROR = 500,
+//     MOT_STATUS_NOT_IMPLEMENTED = 501
+// } MotProtocol_Status_T;
 
 /* expandable to bitfields */
 typedef enum MotProtocol_MemConfig
@@ -92,12 +106,14 @@ MotProtocol_DataModeState_T;
 // static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
 // extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 
-extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, protocol_size_t * p_txSize, Protocol_TxSyncId_T txId);
-extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, protocol_size_t rxCount);
+extern const PacketClass_T MOT_PROTOCOL_PACKET_CLASS;
+
+extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_txSize, Protocol_TxSyncId_T txId);
+extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, packet_size_t rxCount);
 
 extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
 extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
-// extern protocol_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
-// extern protocol_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
+// extern packet_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
+// extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
 
 #endif

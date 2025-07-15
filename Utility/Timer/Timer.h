@@ -45,6 +45,13 @@ typedef enum
 }
 Timer_Mode_T;
 
+// typedef const struct Timer_Base
+// {
+//      const volatile uint32_t * P_BASE; /* Base Timer */
+//      uint32_t BASE_FREQ; /* for conversions */
+// }
+// Timer_Base_T;
+
 typedef struct Timer
 {
     struct
@@ -64,13 +71,28 @@ Timer_T;
 
 // typedef const struct Timer_Context
 // {
-//      const volatile uint32_t *   P_BASE; /* Base Timer */
+//      const volatile uint32_t * P_BASE; /* Base Timer */
 //      uint32_t BASE_FREQ; /* for conversions */
-//      Timer_T * P_STATE; /* Pointer to Timer State */
+//      uint32_t DIVIDER;
+//      Timer_T * P_STATE; /* Pointer to Timer State */// Optional: can be NULL for dynamic binding
 // }
 // Timer_Context_T;
 
 #define TIMER_INIT(p_BaseValue, BaseFreqValue) { { .p_Base = p_BaseValue, .BaseFreq = BaseFreqValue, }, }
+
+// static inline uint32_t timer_elapsed_wrapped(const volatile uint32_t * p_timer, uint32_t timeRef)
+// {
+//     uint32_t time = *p_timer;
+//     return (time < timeRef) ? (UINT32_MAX - timeRef + time) : (time - timeRef);
+// }
+
+// static inline uint32_t timer_elapsed_direct(const volatile uint32_t * p_timer, uint32_t timeRef)
+// {
+//     return (*p_timer - timeRef);
+// }
+
+// bool Timer_Base_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state);
+// bool Timer_Poll(const Timer_Context_T * p_context);
 
 /******************************************************************************/
 /*!

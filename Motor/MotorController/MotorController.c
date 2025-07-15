@@ -47,7 +47,7 @@ void MotorController_Init(const MotorController_T * p_context)
     // if(p_mc->Config.IsCanEnable == true) { CanBus_Init(p_context->P_CAN_BUS, p_mc->Config.CanServicesId); }
 #endif
 
-    for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Protocol_Init(&p_context->P_PROTOCOLS[iProtocol]); }
+    for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_context->P_PROTOCOLS[iProtocol]); }
 
     MotAnalogUser_Init(&p_context->ANALOG_USER);
 
@@ -218,7 +218,7 @@ bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILim
 //         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++)
 //         {
 //             p_protocol = &p_context->P_PROTOCOLS[iProtocol];
-//             status = WriteNvm(p_context, p_protocol->CONST.P_CONFIG, &p_protocol->Config, sizeof(Protocol_Config_T));
+//             status = WriteNvm(p_context, p_protocol->CONST.P_CONFIG, &p_protocol->Config, sizeof(Socket_Config_T));
 //             if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
 //         }
 //     }

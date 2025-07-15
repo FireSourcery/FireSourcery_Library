@@ -41,8 +41,8 @@
 typedef NvMemory_Partition_T EEPROM_Partition_T;
 typedef NvMemory_T EEPROM_T;
 
-#define EEPROM_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
-    NV_MEMORY_INIT(p_Hal, HAL_EEPROM_ReadCompleteFlag, HAL_EEPROM_ReadErrorFlags, HAL_EEPROM_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
+#define EEPROM_INIT(p_Hal, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
+    NV_MEMORY_INIT(p_Hal, HAL_EEPROM_ReadCompleteFlag, HAL_EEPROM_ReadErrorFlags, HAL_EEPROM_ClearErrorFlags, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
 extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
 extern NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes);

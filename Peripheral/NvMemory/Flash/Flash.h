@@ -48,6 +48,7 @@
 #define FLASH_UNIT_READ_ONCE_SIZE       HAL_FLASH_UNIT_READ_ONCE_SIZE
 #define FLASH_UNIT_ERASE_PATTERN        HAL_FLASH_UNIT_ERASE_PATTERN
 
+
 typedef enum Flash_Operation
 {
     FLASH_OPERATION_WRITE,
@@ -63,10 +64,10 @@ typedef NvMemory_Status_T Flash_Status_T;
 typedef NvMemory_Partition_T Flash_Partition_T;
 typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION */
 
-#define FLASH_INIT(p_Hal, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
-    NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_Partitions, PartitionCount, p_Buffer, BufferSize)
+#define FLASH_INIT(p_Hal, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
+    NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
-static inline bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->CONST.P_HAL); }
+static inline bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->P_HAL); }
 
 /* Yield must point to RAM address for Flash case  */
 static inline void Flash_SetYield(Flash_T * p_flash, NvMemory_Callback_T yield, void * p_callbackData) { NvMemory_SetYield(p_flash, yield, p_callbackData); }

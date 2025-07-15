@@ -62,6 +62,7 @@
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Protocol/Protocol.h"
+#include "Utility/Protocol/Socket.h"
 #if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
 #include "Utility/Shell/Shell.h"
 #endif
@@ -270,7 +271,7 @@ typedef const struct MotorController
     Pin_T RELAY_PIN;
 
     /*  */
-    Protocol_T * P_PROTOCOLS; uint8_t PROTOCOL_COUNT; /* Sockets */
+    Socket_T * P_PROTOCOLS; uint8_t PROTOCOL_COUNT; /* Sockets */
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
 
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
@@ -311,13 +312,13 @@ MotorController_T;
 /* Set Motor Ref using read Value */
 static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { MotorAnalog_CaptureVSource_Adcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
 
-static inline Protocol_T * MotorController_GetMainProtocol(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
+static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
 static inline bool MotorController_PollRxLost(const MotorController_T * p_context)
 {
     assert(p_context->USER_PROTOCOL_INDEX < p_context->PROTOCOL_COUNT);
-    p_context->P_ACTIVE->FaultFlags.RxLost = Protocol_IsRxLost(MotorController_GetMainProtocol(p_context));
+    p_context->P_ACTIVE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_context));
     return p_context->P_ACTIVE->FaultFlags.RxLost;
 }
 

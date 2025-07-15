@@ -46,6 +46,25 @@
 #include <assert.h>
 
 
+
+//todo as wrap around RingT
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+// #ifndef RING_ALIGNED
+// #define RING_ALIGNED __attribute__((aligned(sizeof(intptr_t)))) /* Align to register size */
+// #endif
+
+// #if      defined(RING_INDEX_POW2_COUNTER)   /* Power 2 length only. Mask on access */
+// #elif    defined(RING_INDEX_POW2_WRAP)      /* Power 2 length only. Mask once on update index, -1 capacity */
+// #elif    defined(RING_INDEX_LENGTH_COMPARE)
+// #else
+//     #error "Ring Buffer:  "
+// #endif
+
+
 /******************************************************************************/
 /*!
 
@@ -73,10 +92,10 @@ Ring_Type_T;
     Run time contigous implementation.
 */
 typedef
-// __attribute__((aligned(sizeof(intptr_t)))) /* align to pointer size */
+// __attribute__((aligned(sizeof(intptr_t)))) /* align to register size */
 struct Ring
 {
-    Ring_Type_T Type;
+    const Ring_Type_T Type;
     volatile uint32_t Head;    /* FIFO Out/Front. */
     volatile uint32_t Tail;    /* FIFO In/Back. */
 #if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
@@ -229,7 +248,11 @@ static inline bool Ring_IsFull(const Ring_T * p_ring)
 }
 
 
-//todo with context call ringT
+// todo with context call ringT
+// static inline size_t Ring_GetFullCount(const Ring_Context_T * p_ring)
+// {
+//     return RingT_GetFullCount(p_ring->TYPE, p_ring->P_STATE);
+// }
 
 /******************************************************************************/
 /*!
