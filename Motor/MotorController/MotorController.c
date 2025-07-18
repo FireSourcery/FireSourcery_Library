@@ -72,6 +72,8 @@ void MotorController_Init(const MotorController_T * p_context)
     Shell_Init(&p_mc->Shell);
 #endif
 
+    MotDrive_Init(&p_context->MOT_DRIVE);
+
     /* Load derived values to RAM */
     // if (BootRef_IsValid() == false)
     // {
