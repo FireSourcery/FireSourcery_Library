@@ -61,6 +61,7 @@ void Socket_Init(Socket_T * p_socket)
 /******************************************************************************/
 /*!
     Proc
+    move to packet
 */
 /******************************************************************************/
 /*
@@ -159,6 +160,11 @@ static bool ProcTxNackRxRepeat(const Socket_T * p_socket, Socket_State_T * p_sta
     return isFinal;
 }
 
+/******************************************************************************/
+/*!
+    Proc
+*/
+/******************************************************************************/
 // static inline bool IsRxLost(Socket_T * p_socket)
 // {
 //     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
@@ -236,7 +242,7 @@ static inline Protocol_RxCode_T ProcRxState(const Socket_T * p_socket, Socket_St
 
             /*
                 Continue CaptureRx during ReqExt processing
-                Buffers will not be overwritten until user function returns. (No repeat process on same Rx)
+                Buffers may be overwritten after Req returns. (No repeat process on same Rx)
                 Req ensure packet data is processed, or copied
                 Rx can queue out of sequence. Invalid Rx sequence until timeout buffer flush
 
@@ -267,7 +273,7 @@ static inline Protocol_RxCode_T ProcRxState(const Socket_T * p_socket, Socket_St
     PROTOCOL_RX_CODE_NACK,
     PROTOCOL_RX_CODE_ABORT,
 
-    Handle Outside
+    Handle by ProcRxState
     PROTOCOL_RX_CODE_ERROR_TIMEOUT,
     PROTOCOL_RX_CODE_ERROR_META,
     PROTOCOL_RX_CODE_ERROR_DATA,

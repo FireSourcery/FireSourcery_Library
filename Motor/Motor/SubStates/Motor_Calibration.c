@@ -122,3 +122,32 @@ void Motor_Calibration_StartHome(const Motor_T * p_motor)
     static const State_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 }
+
+
+/******************************************************************************/
+/*!
+    @brief Calibration
+*/
+/******************************************************************************/
+// static const State_T CALIBRATION_STATE_CONFIG =
+// {
+//     // .ID         = MSM_STATE_ID_CALIBRATION,
+//     .P_PARENT = &MOTOR_STATE_CALIBRATION,
+//     .P_TOP = &MOTOR_STATE_CALIBRATION,
+//     .DEPTH = 1U,
+//     .ENTRY = (State_Action_T)Calibration_TuningEntry,
+//     .LOOP = (State_Action_T)Calibration_TuningLoop,
+//     .NEXT = (State_InputVoid_T)Calibration_TuningEnd,
+// };
+
+
+// static const State_T RUN_STATE_TUNNING =
+// {
+//     // .ID         = MSM_STATE_ID_CALIBRATION,
+//     .P_PARENT = &MOTOR_STATE_RUN,
+//     .P_TOP = &MOTOR_STATE_RUN,
+//     .DEPTH = 1U,
+//     .ENTRY = (State_Action_T)Calibration_TuningEntry,
+//     .LOOP = (State_Action_T)Calibration_TuningLoop,
+//     .NEXT = (State_InputVoid_T)Calibration_TuningEnd,
+// };

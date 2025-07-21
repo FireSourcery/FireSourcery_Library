@@ -56,17 +56,12 @@ typedef enum Protocol_RxCode
     PROTOCOL_RX_CODE_ERROR_DATA,        /* Error Req Packet Checksum/CRC */
 
     /* Sync packets allocated RxCode */
-    // PROTOCOL_RX_CODE_SYNC, /* Sync type for further parsing */
+    // PROTOCOL_RX_CODE_CONTROL_META, /* Sync type for further parsing */
     PROTOCOL_RX_CODE_ACK,
     PROTOCOL_RX_CODE_NACK,
     PROTOCOL_RX_CODE_ABORT,
 
     // PROTOCOL_RX_CODE_REQ_ID,
-
-    /* Special Context Functions, parent module mapped req table */
-    //    PROTOCOL_RX_CODE_REQ_VAR,
-    //    PROTOCOL_RX_CODE_REQ_DATAGRAM,
-    //    PROTOCOL_RX_CODE_REQ_FLASH,
 }
 Protocol_RxCode_T;
 
@@ -75,6 +70,7 @@ typedef struct Protocol_HeaderMeta
 {
     packet_id_t ReqId;    /* packet_id_t values defined by child module. Index into P_REQ_TABLE */
     packet_size_t Length;     /* Rx Packet Total Length. */
+    // uint32_t Sequence;
 }
 Protocol_HeaderMeta_T;
 

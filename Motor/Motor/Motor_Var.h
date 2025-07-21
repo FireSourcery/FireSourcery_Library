@@ -110,54 +110,6 @@ Motor_Var_UserControl_T;
 // Motor_Var_UserSetpoint_T;
 
 /*
-    Common Rotor Angle/Speed State + Feedback
-    Read-Only, RealTime
-*/
-typedef enum Motor_Var_Rotor
-{
-    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,
-    MOTOR_VAR_ROTOR_ELECTRICAL_SPEED,
-    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,
-    MOTOR_VAR_ROTOR_SPEED_FRACT16,
-    MOTOR_VAR_ROTOR_DIRECTION,
-    MOTOR_VAR_ROTOR_SPEED_REQ, // effectively SpeedRamp
-    // MOTOR_VAR_ROTOR_INTERGRAL, /* I or V Req */
-    // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
-    // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
-}
-Motor_Var_Rotor_T;
-
-// typedef enum Motor_Var_Phase
-// {
-//     MOTOR_VAR_PHASE_OUTPUT,
-//     MOTOR_VAR_PHASE_PIN_A,
-//     MOTOR_VAR_PHASE_PWM_A,
-// }
-// Motor_Var_Phase_T;
-
-/*
-
-*/
-typedef enum Motor_Var_Foc
-{
-    MOTOR_VAR_FOC_IA,
-    MOTOR_VAR_FOC_IB,
-    MOTOR_VAR_FOC_IC,
-    MOTOR_VAR_FOC_IQ,
-    MOTOR_VAR_FOC_ID,
-    MOTOR_VAR_FOC_REQ_Q, // effectively TorqueRamp
-    MOTOR_VAR_FOC_REQ_D,
-    MOTOR_VAR_FOC_VQ,
-    MOTOR_VAR_FOC_VD,
-    MOTOR_VAR_FOC_VA,
-    MOTOR_VAR_FOC_VB,
-    MOTOR_VAR_FOC_VC,
-    MOTOR_VAR_FOC_INTEGRAL_Q,
-    MOTOR_VAR_FOC_INTEGRAL_D,
-}
-Motor_Var_Foc_T;
-
-/*
     [Var_ControlState]
     Fixed struct member
     Motor_Var_UserControl out only
@@ -179,6 +131,56 @@ Motor_Var_Foc_T;
 //     MOTOR_VAR_EFFECTIVE_RAMP_ON_OFF,
 // }
 // Motor_Var_State_T;
+
+// typedef enum Motor_Var_Phase
+// {
+//     MOTOR_VAR_PHASE_OUTPUT,
+//     MOTOR_VAR_PHASE_PIN_A,
+//     MOTOR_VAR_PHASE_PWM_A,
+// }
+// Motor_Var_Phase_T;
+
+/*
+    Rotor Angle/Speed State + Feedback
+    Read-Only, RealTime
+*/
+typedef enum Motor_Var_Rotor
+{
+    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,
+    MOTOR_VAR_ROTOR_ELECTRICAL_SPEED,
+    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,
+    MOTOR_VAR_ROTOR_SPEED_FRACT16,
+    MOTOR_VAR_ROTOR_DIRECTION,
+    MOTOR_VAR_ROTOR_SPEED_REQ, // effectively SpeedRamp
+    // MOTOR_VAR_ROTOR_INTERGRAL, /* I or V Req */
+    // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
+    // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
+}
+Motor_Var_Rotor_T;
+
+/*
+    FOC State
+    Read-Only, RealTime
+*/
+typedef enum Motor_Var_Foc
+{
+    MOTOR_VAR_FOC_IA,
+    MOTOR_VAR_FOC_IB,
+    MOTOR_VAR_FOC_IC,
+    MOTOR_VAR_FOC_IQ,
+    MOTOR_VAR_FOC_ID,
+    MOTOR_VAR_FOC_REQ_Q, // effectively TorqueRamp
+    MOTOR_VAR_FOC_REQ_D,
+    MOTOR_VAR_FOC_VQ,
+    MOTOR_VAR_FOC_VD,
+    MOTOR_VAR_FOC_VA,
+    MOTOR_VAR_FOC_VB,
+    MOTOR_VAR_FOC_VC,
+    MOTOR_VAR_FOC_INTEGRAL_Q,
+    MOTOR_VAR_FOC_INTEGRAL_D,
+}
+Motor_Var_Foc_T;
+
 
 /*!
     [Var_StateCmd]
@@ -272,6 +274,7 @@ Motor_VarConfig_Actuation_T;
 /*
     PID
     Fixed 16 Set with interface functions
+    Shared with Tuning
 */
 typedef enum Motor_VarConfig_Pid
 {
@@ -350,7 +353,8 @@ Motor_VarAccess_T;
     .ACCESS_USER_CONTROL    = MOTOR_VAR_ACCESS_INIT_USER_CONTROL(p_MotorContext, p_Motor), \
     .ACCESS_STATE_CMD       = MOTOR_VAR_ACCESS_INIT_STATE_CMD(p_MotorContext, p_Motor), \
 }
-
+/* staticc instance */
+// extern VarAccess_State_T VarAccessInputState;
 
 /******************************************************************************/
 /*
@@ -358,8 +362,11 @@ Motor_VarAccess_T;
 */
 /******************************************************************************/
 extern const VarAccess_VTable_T MOTOR_VAR_OUT_USER;
+extern const VarAccess_VTable_T MOTOR_VAR_OUT_ROTOR;
 extern const VarAccess_VTable_T MOTOR_VAR_OUT_FOC;
-extern const VarAccess_VTable_T MOTOR_VAR_OUT_SENSOR;
+#define MOTOR_VAR_ACCESS_INIT_OUTPUT_USER(p_Motor)              VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_USER, &((p_Motor)->VarAccessOuputState))
+#define MOTOR_VAR_ACCESS_INIT_OUTPUT_ROTOR(p_Motor)             VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_ROTOR, &((p_Motor)->VarAccessOuputState))
+#define MOTOR_VAR_ACCESS_INIT_OUTPUT_FOC(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_FOC, &((p_Motor)->VarAccessOuputState))
 
 /*
     Shared Enable/Disable Set in VarAccess
@@ -370,11 +377,7 @@ extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION_ALIAS;
 extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_ACTUATION;
 extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_PID;
 extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_ROUTINE;
-
 // extern const VarAccess_VTable_T MOTOR_VAR_REF;
-
-/* staticc instance */
-// extern VarAccess_State_T VarAccessInputState;
 
 /* check StateMachine Config State */
 #define MOTOR_VAR_ACCESS_INIT_CONFIG_CALIBRATION(p_Motor)       VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_CALIBRATION, &((p_Motor)->VarAccessConfigState))
@@ -383,10 +386,6 @@ extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_ROUTINE;
 #define MOTOR_VAR_ACCESS_INIT_CONFIG_PID(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_PID, &((p_Motor)->VarAccessConfigState))
 #define MOTOR_VAR_ACCESS_INIT_CONFIG_ROUTINE(p_Motor)           VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_ROUTINE, &((p_Motor)->VarAccessConfigState))
 
-/* Optionally */
-#define MOTOR_VAR_ACCESS_INIT_OUTPUT_USER(p_Motor)              VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_USER, &((p_Motor)->VarAccessOuputState))
-#define MOTOR_VAR_ACCESS_INIT_OUTPUT_FOC(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_FOC, &((p_Motor)->VarAccessOuputState))
-#define MOTOR_VAR_ACCESS_INIT_OUTPUT_SENSOR(p_Motor)            VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_SENSOR, &((p_Motor)->VarAccessOuputState))
 
 
 

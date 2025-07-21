@@ -46,8 +46,9 @@
             handle with input image buffer, input queue, spin-lock delegates to Xcvr buffer, or client side constraints
 
     Async Mode -
+        Block or delay PWM while processing input
         Need critical section during input/ input transition
-        No Critical during transistion -> Prev State Proc may overwrite new State Entry.
+        No Critical during transition -> Prev State Proc may overwrite new State Entry.
 
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
@@ -123,6 +124,14 @@ inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeVal
 // {
 //     Motor_User_ActivateControlWith(p_motor, Motor_FeedbackMode_Cast(modeValue));
 // }
+// combine for
+// typedef struct
+// {
+//     uint32_t PhaseOutput    : 2;   /* [Phase_Output_T] Active/Release/Hold */
+//     uint32_t FeedbackMode   : 4;   /* [FeedbackMode_T] flags */
+//     uint32_t Direction      : 2;   /* [Motor_Direction_T] Ccw/Cw Start/Stop */
+// }
+// Motor_ControlInput_T;
 
 /******************************************************************************/
 /*!

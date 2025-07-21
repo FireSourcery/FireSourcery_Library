@@ -42,7 +42,7 @@ static inline void _StateMachine_Synchronous_Thread(StateMachine_Active_T * p_ac
 {
 #if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
     /* [Async_ProcInput] disables ISR, runs to completion => same as SynchronousMachine case  */
-    StateMachine_Sync_ProcState(p_active, p_context);
+    _StateMachine_Sync_ProcState(p_active, p_context);
 #elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
     /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
     /* Disabled when input is processing. ensure any transition is completed */
@@ -59,3 +59,9 @@ static inline void StateMachine_Synchronous_Thread(const StateMachine_T * p_stat
 {
     _StateMachine_Synchronous_Thread(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
 }
+
+// hsm
+// static inline void StateMachine_Traversal_Synchronous_Thread(const StateMachine_T * p_stateMachine)
+// {
+
+// }

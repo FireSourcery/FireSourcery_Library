@@ -174,6 +174,25 @@ static inline void void_pointer_assign_as_value(void * p_unit, size_t type, valu
     }
 }
 
+// static inline void void_pointer_assign_as_struct(void * p_unit, size_t type, const void * p_value)
+// {
+//     memcpy(p_unit, p_value, type);
+// }
+
+// static inline void void_pointer_assign_as(void * p_unit, size_t type, uintptr_t arg)
+// {
+//     switch (type)
+//     {
+//         case sizeof(uint8_t) : *((uint8_t  *)p_unit) = (uint8_t)arg; break;
+//         case sizeof(uint16_t): *((uint16_t *)p_unit) = (uint16_t)arg; break;
+//         case sizeof(uint32_t): *((uint32_t *)p_unit) = (uint32_t)arg; break;
+// #if (REGISTER_SIZE_64)
+//         case sizeof(uint64_t) : *((uint64_t *)p_unit) = (uint64_t)arg; break;
+// #endif
+//         default: memcpy(p_unit, (const void *)arg, type); break;
+//     }
+// }
+
 /*
     array
     singlt unit at index by value

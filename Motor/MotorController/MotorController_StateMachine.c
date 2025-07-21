@@ -153,6 +153,7 @@ static const State_T STATE_INIT =
 /******************************************************************************/
 /*!
     @brief Main App State
+    Main top state as Stop, or implement common parked state
 */
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
@@ -243,6 +244,8 @@ static const State_T MAIN_STATE_MOT_DRIVE =
 /******************************************************************************/
 /*!
     @brief Motors passthrough SubState
+    proc CmdInput
+    marker for accepting Motor_Var interface inputs
 */
 /******************************************************************************/
 static void Motors_Entry(const MotorController_T * p_context)
@@ -302,7 +305,7 @@ static void Motors_Proc(const MotorController_T * p_context)
     }
 }
 
-static const State_T MAIN_STATE_MOTOR_CMD =
+  const State_T MAIN_STATE_MOTOR_CMD =
 {
     .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
     .DEPTH      = 1U,
@@ -424,6 +427,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
 }
 
 /* Transition from lock only */
+/* for run time experimental mode without reboot. alternatively on init only */
 static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_input_value_t mainMode)
 {
     State_T * p_nextState = NULL;

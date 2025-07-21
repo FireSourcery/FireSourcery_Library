@@ -63,8 +63,8 @@ void MotorController_VarInput_Set(const MotorController_T * p_context, MotorCont
         case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, (sign_t)value);                break;
         case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value);     break;
 
-        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:    MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
-        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:        MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
+        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
+        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
 
         case MOT_VAR_USER_RELAY_TOGGLE:                 break;
         case MOT_VAR_USER_METER_TOGGLE:                 break;
@@ -208,10 +208,13 @@ static int _HandleMotorVar_Get(const MotorController_T * p_context, MotVarId_T v
 
 static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     // Analog mode does not allow these variables to be set
-    if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_READ_ONLY; }
-    /* access control handled by Motor_VarType_Set */
+    if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED; }
+
+    // outer module handle access control
+    if (!MotorController_StateMachine_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
+
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     Motor_VarType_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -228,9 +231,9 @@ static int _HandleMotorConfig_Get(const MotorController_T * p_context, MotVarId_
 
 static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     if (!MotorController_User_IsConfigState(p_context)) return MOT_VAR_STATUS_ERROR_RUNNING;
 
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
     Motor_VarType_Config_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -304,7 +307,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
 
         case MOT_VAR_TYPE_USER_INPUT:
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:
-            if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_READ_ONLY;
+            if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
         default: break;
     }

@@ -54,9 +54,6 @@ typedef enum MotorController_StateId
     MCSM_STATE_ID_MAIN,
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
-    // MCSM_STATE_ID_MOTORS,
-    // MCSM_STATE_ID_SERVO,
-    // MCSM_STATE_ID_USER,
     // MCSM_STATE_ID_EXTERNAL,
 }
 MotorController_StateId_T;
@@ -66,7 +63,14 @@ MotorController_StateId_T;
 */
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
+extern const State_T MAIN_STATE_MOTOR_CMD;
+
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, &((MotorControllerActive).StateMachine))
+
+// is exact substate, faster check without traversal
+static inline bool MotorController_StateMachine_IsLeafState(const MotorController_T * p_context, const State_T * p_state) { return StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, p_state); }
+
+static inline bool MotorController_StateMachine_IsMotorCmd(const MotorController_T * p_context) { return StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &MAIN_STATE_MOTOR_CMD); }
 
 // static inline bool MotorController_StateMachine_IsState(const MotorController_T * p_context, ) { return StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE,  ); }
 static inline bool _MotorController_StateMachine_IsFault(const MotorController_State_T * p_active) { return (StateMachine_IsActiveStateId(&p_active->StateMachine, MCSM_STATE_ID_FAULT)); }

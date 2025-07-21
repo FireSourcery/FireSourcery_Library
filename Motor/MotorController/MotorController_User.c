@@ -127,24 +127,24 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
 
     p_mc->Config.InputMode = mode;
 
-    switch (p_mc->Config.InputMode)
-    {
-        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
-            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-            {
-                Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-            }
-            break;
-        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-            // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
-            for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-            {
-                Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-            }
-            break;
-        case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-            break;
-        default:  break;
-    }
+    // switch (p_mc->Config.InputMode)
+    // {
+    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+    //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
+    //         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
+    //         {
+    //             Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
+    //         }
+    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+    //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
+    //         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
+    //         {
+    //             Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
+    //         }
+    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:
+    //         break;
+    //     default:  break;
+    // }
 }

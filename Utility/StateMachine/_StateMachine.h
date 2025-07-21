@@ -59,8 +59,9 @@ typedef struct StateMachine_Active
     // volatile state_input_value_t SyncInputStatus;
 
     // proc the last input of each unique id
-    // effectively becomes polling
     // alternatively SyncInputs[TRANSITION_TABLE_LENGTH_MAX]
+    //  state_input_value_t * p_SyncInputs; // null for complete
+    // extern void _StateMachine_SetSyncInputBuffer(StateMachine_Active_T * p_fields, state_input_value_t * p_values, state_input_t id, state_input_value_t value);
 
     // uint32_t FaultFlags;
 }
@@ -181,7 +182,7 @@ static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_
 
 /******************************************************************************/
 /*
-    SubState
+    SubState/LeafState
 */
 /******************************************************************************/
 static inline const State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_fields) { return (p_fields->p_ActiveSubState == NULL) ? p_fields->p_ActiveState : p_fields->p_ActiveSubState; }
@@ -230,6 +231,7 @@ extern void _StateMachine_ProcInput(StateMachine_Active_T * p_fields, void * p_c
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_fields, void * p_context);
 extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_fields, state_input_t id, state_input_value_t value);
 
+
 /*  */
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_context);
 
@@ -246,18 +248,18 @@ extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_fields, 
 extern void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_fields, void * p_context);
 
 
-#ifdef STATE_MACHINE_IMPLEMENTATION
-/*
-    extern implementation
-*/
-// void _StateMachine_Sync_ProcState(StateMachine_Active_T * p_fields, void * p_context);
-// void _StateMachine_Sync_SetInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
-// void _StateMachine_Async_ProcState(StateMachine_Active_T * p_fields, void * p_context);
-// void _StateMachine_Async_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
-// void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_context);
-// void _StateMachine_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
-// void _StateMachine_SetInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
-// void _StateMachine_InvokeTransition(StateMachine_Active_T * p_fields, void * p_context, const State_TransitionInput_T * p_transition, state_input_value_t inputValue);
-// void _StateMachine_ForceTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
-// void _StateMachine_SetValueWith(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state, State_Set_T setter, state_input_value_t value);
-#endif
+// #ifdef STATE_MACHINE_IMPLEMENTATION
+// /*
+//     extern implementation
+// */
+// // void _StateMachine_Sync_ProcState(StateMachine_Active_T * p_fields, void * p_context);
+// // void _StateMachine_Sync_SetInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
+// // void _StateMachine_Async_ProcState(StateMachine_Active_T * p_fields, void * p_context);
+// // void _StateMachine_Async_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
+// // void _StateMachine_ProcState(StateMachine_Active_T * p_fields, void * p_context);
+// // void _StateMachine_ProcInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
+// // void _StateMachine_SetInput(StateMachine_Active_T * p_fields, void * p_context, state_input_t inputId, state_input_value_t inputValue);
+// // void _StateMachine_InvokeTransition(StateMachine_Active_T * p_fields, void * p_context, const State_TransitionInput_T * p_transition, state_input_value_t inputValue);
+// // void _StateMachine_ForceTransition(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state);
+// // void _StateMachine_SetValueWith(StateMachine_Active_T * p_fields, void * p_context, const State_T * p_state, State_Set_T setter, state_input_value_t value);
+// #endif

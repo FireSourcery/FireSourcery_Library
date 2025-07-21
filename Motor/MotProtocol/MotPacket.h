@@ -143,11 +143,10 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
         struct { uint16_t SubId; uint16_t Flags; };  /*  */
         struct { uint8_t SourceId; uint16_t Status; };
         struct { uint16_t Lower16; uint16_t Upper16; };
-        // uint32_t FlexValue;
+        uint32_t FlexValue;
     };
 }
 MotPacket_Header_T;
-
 
 // 4-byte, checksum at end
 // typedef struct MOT_PACKET_PACKED MotPacket_Header

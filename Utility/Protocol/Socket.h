@@ -191,9 +191,9 @@ static inline void _Socket_DisableOnInit(Socket_State_T * p_socket) { p_socket->
 /*!
     @return true if WatchdogTimeout reached, a successful Req has not occurred
 */
-static inline bool Socket_IsRxLost(Socket_T * p_socket)
+static inline bool Socket_IsRxLost(const Socket_T * p_socket)
 {
-    Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
+    const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
 }
 
@@ -204,6 +204,7 @@ extern const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTab
 
 extern void Socket_Init(const Socket_T * p_socket);
 extern void Socket_Proc(const Socket_T * p_socket);
+
 extern void Socket_SetXcvr(const Socket_T * p_socket, uint8_t xcvrId);
 extern void Socket_ConfigXcvrBaudRate(const Socket_T * p_socket, uint32_t baudRate);
 extern void Socket_SetSpecs(const Socket_T * p_socket, uint8_t specsId);

@@ -79,10 +79,9 @@
 /*!
 */
 /******************************************************************************/
-/* Init Mode */
+/* Operation Mode */
 typedef enum MotorController_MainMode
 {
-    // MOTOR_CONTROLLER_MAIN_MODE_DISABLE,
     MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
     MOTOR_CONTROLLER_MAIN_MODE_DRIVE,
     MOTOR_CONTROLLER_MAIN_MODE_SERVO,

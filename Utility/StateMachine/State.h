@@ -79,7 +79,7 @@ typedef void (*State_Action_T)(void * p_context);
 
 /*!@{*/
 /*
-    Context Input Handler
+    Context/Clock Input Handler
     Transition Input with context
     Next_T
 */
@@ -106,6 +106,22 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
 // typedef struct State * (*State_TransitionHandler_T)(void * p_context, state_input_t inputId, state_input_value_t inputValue);
 
 /*!@}*/
+
+/******************************************************************************/
+/*
+    Flex input signature types
+    Signatures for inputs passing function pointer
+    Per state inputs can be passed at input time,
+    Inputs maping to a single state, can simply check State ID
+
+    [StateMachine_SetValueWith]
+*/
+/******************************************************************************/
+typedef void(*State_Set_T)(void * p_context, state_input_value_t inputValue);
+typedef state_input_value_t(*State_Get_T)(void * p_context);
+
+// typedef void(*State_SetEntry_T)(void * p_context, state_input_t inputId, state_input_value_t inputValue);
+// typedef state_input_value_t(*State_GetEntry_T)(void * p_context, state_input_t inputId);
 
 /******************************************************************************/
 /*
@@ -183,6 +199,10 @@ typedef const struct State
 
     // void * (* const GET_CONTEXT)(void * p_context); /* Retrive State data from p_context */
 
+    // mapped input without transition, no critical section
+    // const State_Get_T * const P_GET_TABLE;
+    // const State_GetEntry_T GET_ENTRY; /* Get Context data */
+
     /*
     */
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
@@ -194,25 +214,8 @@ typedef const struct State
 }
 State_T;
 
-// #define STATIC_ASSERT_STATE_T(p_state) \
+// #define STATIC_ASSERT_STATE_T(p_state) \ validate p_top and depth consistency
 
-
-/*
-    Public/Private Defs
-*/
-
-/******************************************************************************/
-/*
-    Flex input signature types
-    Signatures for inputs passing function pointer
-    Per state inputs can be passed at input time,
-    Inputs maping to a single state, can simply check State ID
-
-    [StateMachine_SetValueWith]
-*/
-/******************************************************************************/
-typedef void(*State_Set_T)(void * p_context, state_input_value_t inputValue);
-typedef state_input_value_t(*State_Get_T)(void * p_context);
 
 
 /******************************************************************************/
@@ -242,7 +245,6 @@ State_TransitionInput_T;
 // {
 //     return (State_TransitionInput_T) { .P_START = p_start, .TRANSITION = transition };
 // }
-
 
 // typedef const struct StateMachine_MultiTransitionInput
 // {

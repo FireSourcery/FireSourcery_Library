@@ -31,23 +31,9 @@
 #ifndef CONFIG_MOTOR_H
 #define CONFIG_MOTOR_H
 
-// #if     defined(CONFIG_MOTOR_DEBUG)
-// #elif   defined(CONFIG_MOTOR_DEBUG_ENABLE)
-//     #define CONFIG_MOTOR_OPEN_LOOP_ENABLE
-//     #define CONFIG_MOTOR_DEBUG
-// #elif   defined(CONFIG_MOTOR_DEBUG_DISABLE)
-//   #define CONFIG_MOTOR_DEBUG 0U
-// #else
-    // #define CONFIG_MOTOR_DEBUG_DISABLE
-    #define CONFIG_MOTOR_DEBUG (!NDEBUG)
-// #endif
+#define CONFIG_MOTOR_DEBUG (!NDEBUG)
 
-//depreciate
-// #if     defined(CONFIG_MOTOR_I_SENSORS_NONINVERT)
-// #elif   defined(CONFIG_MOTOR_I_SENSORS_INVERT)
-// #else
-//     #define CONFIG_MOTOR_I_SENSORS_INVERT
-// #endif
+
 
 #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
 #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)

@@ -99,6 +99,25 @@ static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) {
 
 static inline void ArrayStruct_Set(size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(void_pointer_at(p_array->P_BUFFER, type, index), p_value, type); }
 
+//altneratively layer wrapping for enchanced type safety
+// static inline int8_t Array8_Get(const Array_T * p_array, size_t index) { return as_pointer(int8_t, p_array->P_BUFFER)[index]; }
+// static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { as_pointer(int8_t, p_array->P_BUFFER)[index] = value; }
+
+// static inline int16_t Array16_Get(const Array_T * p_array, size_t index) { return as_pointer(int16_t, p_array->P_BUFFER)[index]; }
+// static inline void Array16_Set(Array_T * p_array, size_t index, int16_t value) { as_pointer(int16_t, p_array->P_BUFFER)[index] = value; }
+
+// #define Array_GetAs(T, p_ArrayMeta, index) (as_pointer(T, p_ArrayMeta->P_BUFFER)[index])
+// #define Array_GetAs(T, p_ArrayMeta, index) \
+//     _Generic((T)0, \
+//         int8_t  : Array8_Get, \
+//         int16_t : Array16_Get, \
+//         int32_t : Array32_Get, \
+//         default  : void_pointer_at(p_ArrayMeta->P_BUFFER, sizeof(T), index) \
+//     )(p_ArrayMeta, index)
+
+
+
+
 
 
 /*
@@ -115,6 +134,26 @@ static inline void ArrayStruct_Set(size_t type, Array_T * p_array, size_t index,
 // typedef const struct Array32 { Array_State_T * const P_STATE; const size_t LENGTH; } Array32_T;
 // typedef const struct Array64 { Array_State_T * const P_STATE; const size_t LENGTH; } Array64_T;
 // typedef const struct ArrayPtr { Array_State_T * const P_STATE; const size_t LENGTH; } ArrayPtr_T;
+
+// typedef const struct GenericArray
+// {
+//     union
+//     {
+//         void * P_BUFFER;
+//         uint8_t * const P_ARRAY8;
+//         uint16_t * const P_ARRAY16;
+//         uint32_t * const P_ARRAY32;
+//         uint64_t * const P_ARRAY64;
+//     };
+//     size_t LENGTH;    // Length of the p_array
+//     void * P_AUGMENTS;
+
+//     // effective add to the unified interface, non value types
+//     // Array_State_T * const P_STATE;  // Pointer to the p_array buffer, with augments
+//     /* or seperate for extensions */
+//     // void * const P_BUFFER;
+// }
+// GenericArray_T;
 
 /* cast the wrapper type */
 // #define Array_Get(p_array, index) \

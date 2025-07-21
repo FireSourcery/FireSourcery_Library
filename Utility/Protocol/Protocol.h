@@ -108,6 +108,11 @@ typedef enum Protocol_ReqCode
     //remove
     // PROTOCOL_REQ_CODE_AWAIT_PROCESS,                 /* Child Protocol NonBlocking Wait ReqExt processing */
     // PROTOCOL_REQ_CODE_AWAIT_PROCESS_EXTEND_TIMER,    /* Child Protocol NonBlocking Wait, Extend timer for RxLost and Timeout */
+
+    /* Special Context Functions, parent module mapped req table */
+    //    PROTOCOL_RX_CODE_REQ_VAR,
+    //    PROTOCOL_RX_CODE_REQ_DATAGRAM,
+    //    PROTOCOL_RX_CODE_REQ_FLASH,
 }
 Protocol_ReqCode_T;
 
@@ -226,8 +231,8 @@ typedef enum Protocol_ReqState
 }
 Protocol_ReqState_T;
 
-
-// typedef struct Protocol_Base
+// mux
+// typedef struct Protocol_Context
 // {
 //     const Protocol_Req_T * P_REQ_TABLE;
 //     uint8_t REQ_TABLE_LENGTH;
@@ -240,6 +245,17 @@ Protocol_ReqState_T;
 //     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
 //     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 //     // alternatively fixed // const Xcvr_T * P_XCVR;
+
+//     const volatile uint32_t * P_TIMER;
+// }
+// Protocol_Context_T;
+
+// typedef struct Protocol_Base
+// {
+//     const Protocol_Req_T * P_REQ_TABLE;
+//     uint8_t REQ_TABLE_LENGTH;
+//     // REQ_TIMEOUT
+//     const PacketClass_T *   P_PACKET_CLASS
 
 //     const volatile uint32_t * P_TIMER;
 // }

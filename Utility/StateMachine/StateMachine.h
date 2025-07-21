@@ -88,6 +88,8 @@ typedef const struct StateMachine
 
     StateMachine_Active_T * P_ACTIVE;         /* StateMachine "state" runtime data */
 
+    // state_input_value_t * P_SYNC_INPUTS;
+
     /*  */
     // const State_T ** pp_ActiveStatesBuffer; alternative to recursive traverse down
     // const void * P_STATE_BUFFERS[STATE_COUNT]; /* a substate buffer for each top state */

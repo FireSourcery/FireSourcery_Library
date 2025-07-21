@@ -195,7 +195,6 @@ MotorController_VarType_General_T;
 // }
 // MotorController_VarType_VMonitor_T;
 
-
 // altnerively share  instancce id type when not applicable
 typedef enum MotorController_VarType_Monitor
 {
