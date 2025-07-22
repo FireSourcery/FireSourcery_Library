@@ -276,7 +276,7 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
 {
     switch ((MotorController_VarType_General_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_GENERAL_VAR_OUT:       return MotorController_VarOutput_Get(p_context, varId.Base);
+        case MOT_VAR_TYPE_GENERAL_USER_OUT:       return MotorController_VarOutput_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:       return MotorController_Config_BootRef_Get(p_context, varId.Base);
 
@@ -284,7 +284,7 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_context->ANALOG_USER, varId.Base);
 
         /* read only for now */
-        case MOT_VAR_TYPE_USER_INPUT:            return 0; //return MotorController_VarInput_Get(p_mc, varId.Base);
+        case MOT_VAR_TYPE_GENERAL_USER_IN:            return 0; //return MotorController_VarInput_Get(p_mc, varId.Base);
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:     return MotDrive_VarId_Get(&p_context->MOT_DRIVE, varId.Base);
         case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:      return MotDrive_ConfigId_Get(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.Base);
 
@@ -305,7 +305,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
             if (!MotorController_User_IsConfigState(p_context)) return MOT_VAR_STATUS_ERROR_RUNNING;
             break;
 
-        case MOT_VAR_TYPE_USER_INPUT:
+        case MOT_VAR_TYPE_GENERAL_USER_IN:
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:
             if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
             break;
@@ -315,7 +315,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
 
     switch ((MotorController_VarType_General_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_GENERAL_VAR_OUT:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_GENERAL_USER_OUT:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_REF:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_DEBUG:                 return MOT_VAR_STATUS_ERROR_READ_ONLY;
@@ -323,7 +323,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:       MotorController_Config_BootRef_Set(p_context, varId.Base, value);                    break;
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    MotAnalogUser_ConfigId_Set(&p_context->ANALOG_USER, varId.Base, value);              break;
 
-        case MOT_VAR_TYPE_USER_INPUT:           MotorController_VarInput_Set(p_context, varId.Base, value);     break;
+        case MOT_VAR_TYPE_GENERAL_USER_IN:           MotorController_VarInput_Set(p_context, varId.Base, value);     break;
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:    MotDrive_VarId_Set(&p_context->MOT_DRIVE, varId.Base, value);   break;
         case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:     MotDrive_ConfigId_Set(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.Base, value); break;
 

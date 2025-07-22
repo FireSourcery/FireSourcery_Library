@@ -303,6 +303,7 @@ Motor_VarConfig_Cmd_T;
 
 /*
     Read-Only Ref
+    ConfigConst
 */
 typedef enum Motor_VarRef
 {
@@ -421,9 +422,6 @@ extern void _Motor_VarConfig_Pid_Set(Motor_State_T * p_motor, Motor_VarConfig_Pi
 extern void _Motor_VarConfig_Cmd_Call(const Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int varValue);
 
 
-/*  */
-extern int Motor_VarRef_Get(Motor_VarRef_T varId);
-
 /* With Access Control */
 extern void Motor_Var_DisableInput(Motor_State_T * p_motor);
 extern void Motor_Var_EnableInput(Motor_State_T * p_motor);
@@ -432,6 +430,9 @@ extern void Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserCon
 extern void Motor_Var_PidTuning_Set(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int varValue);
 extern void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
 
+
+/*  */
+extern int Motor_VarRef_Get(Motor_VarRef_T varId);
 
 /******************************************************************************/
 /*
@@ -465,7 +466,7 @@ typedef enum Motor_VarType_Config
 
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Calibration Cmds */
     MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Invoke Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
-    MOTOR_VAR_TYPE_CONFIG_BOARD_REF,    /* Not instanced */
+    MOTOR_VAR_TYPE_CONFIG_BOARD_REF,    /* Not instanced, altneratively */
 
     // MOTOR_VAR_TYPE_CONFIG_SENSOR_ENCODER,
     // MOTOR_VAR_TYPE_CONFIG_SENSOR_HALL,

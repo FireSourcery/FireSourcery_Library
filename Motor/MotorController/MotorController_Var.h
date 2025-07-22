@@ -97,6 +97,7 @@ MotorController_VarInput_T;
     Config - Nvm variables
 */
 /******************************************************************************/
+// typedef enum MotorController_Config_Base
 typedef enum MotorController_ConfigId
 {
     MOT_VAR_V_SUPPLY_VOLTS,
@@ -161,13 +162,13 @@ MotorController_GeneralRef_T;
 typedef enum MotorController_VarType_General
 {
     /* General */
-    MOT_VAR_TYPE_GENERAL_VAR_OUT, // GENERAL_STATE */
+    MOT_VAR_TYPE_GENERAL_USER_OUT,
+    MOT_VAR_TYPE_GENERAL_USER_IN, /* Polling inputs */
     MOT_VAR_TYPE_GENERAL_CONFIG,
     MOT_VAR_TYPE_BOOT_REF_CONFIG,
 
-    /* Polling inputs */
-    MOT_VAR_TYPE_USER_INPUT,
-    MOT_VAR_TYPE_MOT_DRIVE_CONTROL, /* MotDrive Submodule */
+    /* MotDrive Submodule */
+    MOT_VAR_TYPE_MOT_DRIVE_CONTROL,
     MOT_VAR_TYPE_MOT_DRIVE_CONFIG,
 
     /*  */
@@ -179,6 +180,7 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
 
     MOT_VAR_TYPE_GENERAL_REF, /* Read-only */
+    // MOT_VAR_TYPE_MOTOR_REF, /* Read-only */
     MOT_VAR_TYPE_DEBUG,
 
     // MOT_VAR_TYPE_V_MONITOR_SUPPLY_STATE,
@@ -198,7 +200,7 @@ MotorController_VarType_General_T;
 // altnerively share  instancce id type when not applicable
 typedef enum MotorController_VarType_Monitor
 {
-    MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE,
+    MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE, /* Output */
     MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
     MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF,
 
@@ -232,10 +234,10 @@ MotorController_VarType_Communication_T;
 typedef enum MotVarId_HandlerType
 {
     /* Instance count of Motor */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR,
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR, //IO
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
     /* Sensor Table Entries */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE,
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE, // Sensor Out
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG,
 
     /* */
@@ -389,7 +391,7 @@ extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_con
 //         case MOT_VAR_ID_HANDLER_TYPE_GENERAL:
 //             switch (varId.InnerType)
 //             {
-//                 case MOT_VAR_TYPE_GENERAL_VAR_OUT:
+//                 case MOT_VAR_TYPE_GENERAL_USER_OUT:
 //                 case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT: return true;  // *_OUT types are read-only
 //                 case MOT_VAR_TYPE_GENERAL_CONFIG:
 //                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG: return false; // Config types are read-write

@@ -179,8 +179,10 @@ typedef struct MotorController_Config
         Config.VSupplyRef -> user set nominal voltage
         MotorAnalogReference.VSource_V-> live voltage
     */
+    //alternatively split motor static instance
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
+
     MotorController_MainMode_T InitMode;
     MotorController_InputMode_T InputMode;
     // MotorController_BuzzerFlags_T BuzzerEnable;

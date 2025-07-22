@@ -387,6 +387,7 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_MOTOR_STATE;
+    // alternatively MotorBus_T static instance
     // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
 
     /*
