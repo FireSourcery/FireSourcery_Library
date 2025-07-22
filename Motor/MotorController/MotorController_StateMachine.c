@@ -125,6 +125,13 @@ static State_T * Init_Next(const MotorController_T * p_context)
         {
             MotorController_BeepShort(p_context);
             p_nextState = &STATE_MAIN; // GetInitialState(p_context);
+
+            // switch (p_mc->Config.InitMode)
+            // {
+            //     case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  break;
+            //     case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:   break;
+            //     default: break;
+            // }
         }
         else
         {

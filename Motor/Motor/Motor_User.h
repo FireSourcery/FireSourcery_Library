@@ -38,13 +38,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// typedef enum Motor_UserDirection
-// {
-//     MOTOR_DIRECTION_REVERSE = -1,
-//     MOTOR_DIRECTION_STOP = 0,
-//     MOTOR_DIRECTION_FORWARD = 1,
-// }
-// Motor_UserDirection_T;
+typedef enum Motor_UserDirection
+{
+    MOTOR_DIRECTION_REVERSE = -1,
+    MOTOR_DIRECTION_STOP = 0,
+    MOTOR_DIRECTION_FORWARD = 1,
+}
+Motor_UserDirection_T;
 
 /******************************************************************************/
 /*!

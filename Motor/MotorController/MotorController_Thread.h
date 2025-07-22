@@ -299,16 +299,6 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         // maybe change this to signal if enter fault is on 1ms thread
         _StateMachine_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 
-        /* Proc app Machine */ /* let compiler optimize */
-        // if (StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_MAIN) == true) { MotDrive_StatMachine_Proc(&p_context->MOT_DRIVE); }
-        // switch (p_mc->StateMachine.State)
-        // {
-        //     case MOTOR_CONTROLLER_STATE_INIT:   break;
-        //     case MOTOR_CONTROLLER_STATE_MAIN:    break;
-        //     case MOTOR_CONTROLLER_STATE_LOCK:   break;
-        //     case MOTOR_CONTROLLER_STATE_FAULT:  break;
-        //     default: break;
-        // }
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 

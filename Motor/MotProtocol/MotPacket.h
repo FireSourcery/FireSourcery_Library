@@ -209,7 +209,7 @@ typedef struct MotPacket_VersionResp_Payload { uint32_t Protocol; uint32_t Libra
 typedef MotPacket_Header_T                                                                                                  MotPacket_VersionReq_T;
 typedef struct MotPacket_VersionResp { MotPacket_Header_T Header; MotPacket_VersionResp_Payload_T VersionResp; }            MotPacket_VersionResp_T;
 
-
+/* fixed 8 */
 typedef struct MotPacket_VersionFlexResp_Payload { uint32_t Versions[MOT_PACKET_PAYLOAD_LENGTH_MAX / sizeof(uint32_t)]; }   MotPacket_VersionFlexResp_Payload_T;
 typedef struct MotPacket_VersionFlexResp { MotPacket_Header_T Header; MotPacket_VersionFlexResp_Payload_T VersionResp; }    MotPacket_VersionFlexResp_T;
 // typedef struct MotPacket_SoftwareVersionResp_Payload { uint32_t Protocol; uint32_t Library; uint32_t Firmware; }                    MotPacket_VersionResp_Payload_T;
