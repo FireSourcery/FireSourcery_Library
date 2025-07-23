@@ -31,7 +31,6 @@
 #ifndef HALL_H
 #define HALL_H
 
-#include "Config.h"
 #include "Peripheral/Pin/Pin.h"
 
 #include <stdint.h>

@@ -265,10 +265,10 @@ void _Monitor_ConfigId_Set(Monitor_Config_T * p_monitor, Monitor_ConfigId_T id, 
 
 int Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 {
-    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(p_monitor, id) : 0;
+    return (p_monitor != NULL) ? _Monitor_ConfigId_Get(&p_monitor->Config, id) : 0;
 }
 
 void Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value)
 {
-    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, id, value); Monitor_InitFrom(p_monitor, &p_monitor->Config); }
+    if (p_monitor != NULL) { _Monitor_ConfigId_Set(&p_monitor->Config, id, value); Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 }

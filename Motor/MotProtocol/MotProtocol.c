@@ -112,14 +112,14 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
 }
 
 // uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
-uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta)
-{
-    p_packet->Header.Start = MOT_PACKET_START_BYTE;
-    p_packet->Header.Id = p_meta->Id;
-    p_packet->Header.Length = p_meta->Length;
-    p_packet->Header.Checksum = Packet_Checksum(p_packet, p_meta->Length);
-    return p_packet->Header.Length;
-}
+// uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta)
+// {
+//     p_packet->Header.Start = MOT_PACKET_START_BYTE;
+//     p_packet->Header.Id = p_meta->Id;
+//     p_packet->Header.Length = p_meta->Length;
+//     p_packet->Header.Checksum = Packet_Checksum(p_packet, p_meta->Length);
+//     return p_packet->Header.Length;
+// }
 
 
 const PacketClass_T MOT_PROTOCOL_PACKET_CLASS =
