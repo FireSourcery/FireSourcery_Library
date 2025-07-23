@@ -61,10 +61,49 @@ static packet_size_t Ping(const MotorController_T * p_context, MotPacket_PingRes
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
+typedef struct PACKET_PACKED MotorController_Version
+{
+    Version_T MainVersion;
+    Version_T LibraryVersion;
+    Version_T ProtocolVersion;
+    // Version_T HardwareVersion;
+    // Version_T BootloaderVersion;
+    uint8_t MotorCount;
+    uint8_t VMonitorCount;
+    uint8_t ThermistorMosfetsCount;
+    uint8_t ProtocolSocketCount;
+    uint8_t CanSocketCount;
+}
+MotorController_Version_T;
+
+// static packet_size_t Version(const MotorController_T * p_context, MotPacket_VersionResp_T * p_txPayload, const MotPacket_VersionReq_T * p_rxPayload)
+// {
+//     (void)p_rxPayload;
+//     MotorController_Version_T * p_payload = (MotorController_Version_T *)p_txPayload;
+
+//     p_payload->MainVersion.Value = p_context->MAIN_VERSION.Value;
+//     p_payload->LibraryVersion.Value = MOTOR_LIBRARY_VERSION;
+//     p_payload->ProtocolVersion.Value = MOT_PACKET_VERSION_WORD32;
+//     // p_payload->HardwareVersion.Value = p_context->HARDWARE_VERSION.Value;
+//     // p_payload->BootloaderVersion.Value = p_context->BOOTLOADER_VERSION.Value;
+//     p_payload->MotorCount = p_context->MOTORS.LENGTH;
+//     p_payload->VMonitorCount = 3U;
+//     p_payload->ThermistorMosfetsCount = p_context->HEAT_MOSFETS.COUNT;
+//     p_payload->ProtocolSocketCount = p_context->PROTOCOL_COUNT;
+// #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+//     p_payload->CanSocketCount = p_context->CAN_SOCKET_COUNT;
+// #else
+//     p_payload->CanSocketCount = 0U;
+// #endif
+// return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_Payload_T));
+//     return sizeof(MotorController_Version_T);
+// }
+
 static packet_size_t Version(const MotorController_T * p_context, MotPacket_VersionResp_T * p_txPacket, const MotPacket_VersionReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
     return MotPacket_VersionResp_Build(p_txPacket, p_context->MAIN_VERSION.Word32.Value32);
+
     // with variable length
     // return MotPacket_VersionFlexResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_context), 0);
 }

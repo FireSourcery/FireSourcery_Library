@@ -220,7 +220,6 @@ typedef struct MotorController_State
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
-    // MotorController_StateFlags_T StateFlags;
     MotDrive_State_T MotDrive; /* Optionally contain on init */
 
     /* Generic async return status */
@@ -231,6 +230,7 @@ typedef struct MotorController_State
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
 
+    // there can move to calibration as static
     Filter_T AvgBuffer0;
     Filter_T AvgBuffer1;
 
@@ -294,8 +294,9 @@ typedef const struct MotorController
     MotDrive_T MOT_DRIVE; /* Drive */
     MotorController_State_T * P_ACTIVE; /* Pointer to the Runtime buffer */
 
-    /*  */
-    uint32_t ANALOG_USER_DIVIDER;  /* In Pow2 - 1 */
+    /* Thread dividers, these should compile time optimze. alternatively as ifndef def  */
+    /* In Pow2 - 1 */
+    uint32_t ANALOG_USER_DIVIDER;
     uint32_t MAIN_DIVIDER_10;
     uint32_t MAIN_DIVIDER_1000;
     uint32_t TIMER_DIVIDER_1000;

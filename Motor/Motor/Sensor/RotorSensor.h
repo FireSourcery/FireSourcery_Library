@@ -51,6 +51,8 @@ typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value)
 
 typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_Config * p_config);
 
+
+
 /* alternatively */
 // typedef void(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor, AngleSpeed_T * p_state);
 // typedef int(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor);

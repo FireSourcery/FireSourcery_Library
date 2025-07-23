@@ -117,6 +117,7 @@ static inline int32_t Accumulator_Add_Limited(Accumulator_T * p_accum, int16_t i
 
 /* Accessors */
 static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->State >> p_accum->Shift); }
+
 static inline int32_t Accumulator_GetCoefficient(const Accumulator_T * p_accum) { return p_accum->Coefficient; }
 static inline int8_t Accumulator_GetShift(const Accumulator_T * p_accum) { return p_accum->Shift; }
 static inline int32_t Accumulator_GetLimitUpper(const Accumulator_T * p_accum) { return p_accum->LimitUpper; }

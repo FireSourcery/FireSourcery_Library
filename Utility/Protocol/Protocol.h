@@ -66,13 +66,15 @@
 */
 /******************************************************************************/
 typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPacket, const uint8_t * p_rxPacket);
-// alternatively,
-//req response
-// typedef packet_size_t (*MotProtocol_Fixed_T)(const void * p_context, MotPayload_T * p_txPayload, const MotPayload_T * p_rxPayload);
-// typedef packet_size_t (*MotProtocol_Variable_T)(const void * p_context, MotPayload_T * p_txPayload, const MotPayload_T * p_rxPayload, packet_size_t rxLength);
 
-// typedef packet_size_t(*Protocol_ParseProcReq_T)(void * p_appContext, const uint8_t * p_rxPayload);
-// typedef packet_size_t(*Protocol_BuildResponse_T)(void * p_appContext, uint8_t * p_txPayload);
+// alternatively,
+// with payload,   builder header double buffers
+// typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const Protocol_HeaderMeta_T * p_rxMeta);
+// typedef void(*Protocol_BuildResp_T)(void * p_appContext, uint8_t * p_txPayload, Protocol_HeaderMeta_T * p_txMeta);
+
+// typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const uint8_t * p_rxHeader);
+// typedef void(*Protocol_BuildResp_T)(void * p_appContext, uint8_t * p_txPayload, uint8_t * p_txHeader);
+
 
 /******************************************************************************/
 /*
@@ -123,12 +125,15 @@ Protocol_ReqCode_T;
 /* ReqParameters */
 typedef const struct Protocol_ReqContext
 {
-    void * const p_SubState;
-    uint32_t * const p_SubStateIndex;
-    const Protocol_HeaderMeta_T * const p_RxMeta;
-    const void * const p_RxPacket;
-    void * const p_TxPacket;
-    packet_size_t * const p_TxSize;
+    void * p_SubState;
+    uint32_t * p_SubStateIndex;
+    const Protocol_HeaderMeta_T * p_RxMeta;
+    const void * p_RxPacket;
+    // const void * p_RxPayload;
+    void * p_TxPacket;
+    // void * p_TxPayload;
+    packet_size_t * p_TxSize;
+    // Protocol_HeaderMeta_T * p_TxMeta;
 }
 Protocol_ReqContext_T;
 
@@ -174,15 +179,15 @@ typedef const struct Protocol_Req
     const Protocol_ProcReqResp_T    PROC;
     const Protocol_ProcReqExt_T     PROC_EXT;
     const Protocol_ReqSync_T        SYNC;
-    //    const uint32_t     TIMEOUT; /* overwrite common timeout */
+    const uint32_t                  TIMEOUT; /* overwrite common timeout */
 }
 Protocol_Req_T;
 
-#define PROTOCOL_REQ(ReqId, ProcReqResp, ProcExt, ReqSync) \
-    { .ID = (packet_id_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, }
+#define PROTOCOL_REQ(Id, ProcReqResp, ProcExt, ReqSync, ...) \
+    { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, __VA_ARGS__ }
 
-#define PROTOCOL_REQ_EXT(ReqId, ProcReqResp, ProcExt, ReqSyncExt) \
-    { .ID = (packet_id_t)ReqId, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
+// #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt) \
+//     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
 
 /******************************************************************************/

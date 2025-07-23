@@ -53,9 +53,9 @@
 
 #define HALL_SENSORS_TABLE_LENGTH (8U)
 
-#if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-typedef void (*Hall_CommutationPhase_T)(void * p_context);
-#endif
+// #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
+// typedef void (*Hall_CommutationPhase_T)(void * p_context);
+// #endif
 
 typedef union Hall_Sensors
 {

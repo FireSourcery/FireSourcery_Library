@@ -130,6 +130,7 @@ MotorController_Config_BootRef_T;
     Read-only Reference
 */
 /******************************************************************************/
+// typedef enum MotorController_Var_GeneralRef
 typedef enum MotorController_GeneralRef
 {
     MOT_VAR_REF_MOTOR_COUNT,
@@ -180,7 +181,7 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
 
     MOT_VAR_TYPE_GENERAL_REF, /* Read-only */
-    // MOT_VAR_TYPE_MOTOR_REF, /* Read-only */
+    // MOT_VAR_TYPE_MOTOR_STATIC_REF, /* Read-only */
     MOT_VAR_TYPE_DEBUG,
 
     // MOT_VAR_TYPE_V_MONITOR_SUPPLY_STATE,
@@ -271,6 +272,16 @@ typedef enum MotVarId_Instance_VMonitor
 }
 MotVarId_Instance_VMonitor_T;
 
+/* Map to sub module if supported */
+/* reduce module type handles by half. 2-3 bits */
+// typedef enum MotVarId_AccessType
+// {
+//     MOT_VAR_ACCESS_VAR_IO,
+//     MOT_VAR_ACCESS_VAR_CMD,
+//     MOT_VAR_ACCESS_CONFIG,
+//     MOT_VAR_ACCESS_CONFIG_CMD,
+//     MOT_VAR_ACCESS_CONST_INFO,
+// } MotVarId_AccessType_T;
 
 /******************************************************************************/
 /*!

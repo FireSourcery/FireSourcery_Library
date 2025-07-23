@@ -42,3 +42,29 @@
 // }
 // FOC_Feedback_T;
 
+// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// {
+//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
+//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
+//     FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalog_GetVSource_Fract16());
+// }
+
+// void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
+// {
+//     // int32_t vq = Motor_GetVSpeed_Fract16(p_motor) / 2; // match without ad sampling
+//     int16_t vq = FOC_GetVMagnitude(&p_motor->Foc) * p_motor->Direction;
+//     int16_t qReq;
+
+//     if (p_motor->FeedbackMode.Current == 1U)
+//     {
+//         PID_SetOutputState(&p_motor->PidIq, vq);
+//         PID_SetOutputState(&p_motor->PidId, 0);
+//         qReq = FOC_GetIq(&p_motor->Foc); /* if transitioning without release into freewheel */
+//     }
+//     else
+//     {
+//         qReq = vq;
+//     }
+
+//     Motor_MatchSpeedTorqueState(p_motor, qReq);
+// }

@@ -177,7 +177,7 @@ int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonito
         case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:    return RangeMonitor_GetFaultUnderLimit(p_monitor);
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:   return RangeMonitor_GetWarningLimitHigh(p_monitor);
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:    return RangeMonitor_GetWarningLimitLow(p_monitor);
-        case RANGE_MONITOR_CONFIG_WARNING_DEADBAND:     return RangeMonitor_GetWarningDeadband(p_monitor);
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:     return RangeMonitor_GetWarningDeadband(p_monitor);
         case RANGE_MONITOR_CONFIG_NOMINAL:              return RangeMonitor_GetNominal(p_monitor);
         case RANGE_MONITOR_CONFIG_IS_ENABLED:           return RangeMonitor_IsEnabled(p_monitor);
         default: return 0;
@@ -192,7 +192,7 @@ void _RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, RangeMonitor_ConfigI
         case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:    RangeMonitor_SetFaultUnderLimit(p_monitor, value);     break;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:   RangeMonitor_SetWarningLimitHigh(p_monitor, value);    break;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:    RangeMonitor_SetWarningLimitLow(p_monitor, value);     break;
-        case RANGE_MONITOR_CONFIG_WARNING_DEADBAND:     RangeMonitor_SetWarningDeadband(p_monitor, value);     break;
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:     RangeMonitor_SetWarningDeadband(p_monitor, value);     break;
         case RANGE_MONITOR_CONFIG_NOMINAL:              RangeMonitor_SetNominal(p_monitor, value);             break;
         case RANGE_MONITOR_CONFIG_IS_ENABLED:           RangeMonitor_SetEnabled(p_monitor, value != 0);        break;
         default: break;

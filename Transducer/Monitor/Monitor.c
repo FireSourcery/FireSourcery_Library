@@ -213,7 +213,7 @@ bool Monitor_IsValidConfig(const Monitor_Config_T * p_config)
 
 void Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) { p_monitor->Config.Fault.Limit = limit; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetWarningSetpoint(Monitor_T * p_monitor, int32_t setpoint) { p_monitor->Config.Warning.Setpoint = setpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
-void Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint) { p_monitor->Config.Warning.Resetpoint = resetpoint;  Monitor_InitFrom(p_monitor, &p_monitor->Config); }
+void Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint) { p_monitor->Config.Warning.Resetpoint = resetpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Config.Nominal = nominal; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 
 
@@ -237,29 +237,28 @@ int Monitor_VarId_Get(const Monitor_T * p_monitor, Monitor_VarId_T varId)
     return (p_monitor != NULL) ? _Monitor_VarId_Get(p_monitor, varId) : 0;
 }
 
-// int _Monitor_ConfigId_Get(const Monitor_Config_T * p_monitor, Monitor_ConfigId_T id)
-int _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
+int _Monitor_ConfigId_Get(const Monitor_Config_T * p_monitor, Monitor_ConfigId_T id)
 {
     switch (id)
     {
-        case MONITOR_CONFIG_FAULT_LIMIT:        return Monitor_GetFaultLimit(p_monitor);
-        case MONITOR_CONFIG_WARNING_SETPOINT:   return Monitor_GetWarningSetpoint(p_monitor);
-        case MONITOR_CONFIG_WARNING_RESETPOINT: return Monitor_GetWarningResetpoint(p_monitor);
-        case MONITOR_CONFIG_NOMINAL:            return Monitor_GetNominal(p_monitor);
-        case MONITOR_CONFIG_IS_ENABLED:         return Monitor_IsConfigEnabled(p_monitor);
+        case MONITOR_CONFIG_FAULT_LIMIT:        return p_monitor->Fault.Limit;
+        case MONITOR_CONFIG_WARNING_SETPOINT:   return p_monitor->Warning.Setpoint;
+        case MONITOR_CONFIG_WARNING_RESETPOINT: return p_monitor->Warning.Resetpoint;
+        case MONITOR_CONFIG_NOMINAL:            return p_monitor->Nominal;
+        case MONITOR_CONFIG_IS_ENABLED:         return p_monitor->IsEnabled;
         default: return 0;
     }
 }
 
-void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value)
+void _Monitor_ConfigId_Set(Monitor_Config_T * p_monitor, Monitor_ConfigId_T id, int value)
 {
     switch (id)
     {
-        case MONITOR_CONFIG_FAULT_LIMIT:         Monitor_SetFaultLimit(p_monitor, value);           break;
-        case MONITOR_CONFIG_WARNING_SETPOINT:    Monitor_SetWarningSetpoint(p_monitor, value);      break;
-        case MONITOR_CONFIG_WARNING_RESETPOINT:  Monitor_SetWarningResetpoint(p_monitor, value);    break;
-        case MONITOR_CONFIG_NOMINAL:             Monitor_SetNominal(p_monitor, value);              break;
-        case MONITOR_CONFIG_IS_ENABLED:          Monitor_SetEnabled(p_monitor, value != 0);         break;
+        case MONITOR_CONFIG_FAULT_LIMIT:         p_monitor->Fault.Limit = value;           break;
+        case MONITOR_CONFIG_WARNING_SETPOINT:    p_monitor->Warning.Setpoint = value;      break;
+        case MONITOR_CONFIG_WARNING_RESETPOINT:  p_monitor->Warning.Resetpoint = value;    break;
+        case MONITOR_CONFIG_NOMINAL:             p_monitor->Nominal = value;               break;
+        case MONITOR_CONFIG_IS_ENABLED:          p_monitor->IsEnabled = (value != 0);      break;
         default: break;
     }
 }
@@ -271,6 +270,5 @@ int Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id)
 
 void Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value)
 {
-    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, id, value); }
-    // Monitor_InitFrom(p_monitor, &p_monitor->Config);
+    if (p_monitor != NULL) { _Monitor_ConfigId_Set(p_monitor, id, value); Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 }

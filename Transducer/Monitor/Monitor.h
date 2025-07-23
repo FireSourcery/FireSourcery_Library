@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef int32_t monitor_t;
+// typedef int32_t monitor_t;
 // typedef uint16_t monitor_t; /* Directly ADC values */
 
 /******************************************************************************/
@@ -94,7 +94,7 @@ typedef struct Monitor_Base
 {
     int32_t FaultLimit;             /* Fault level (hard limit, no hysteresis) */
     Hysteresis_T Warning;           /* Warning level with hysteresis */
-    // Hysteresis_T Levels[]//correspond with status for fast access evaluted output
+    // Hysteresis_T Levels[] // correspond with status for fast access evaluted output
 }
 Monitor_Base_T;
 
@@ -103,8 +103,8 @@ Monitor_Base_T;
 */
 // typedef struct Monitor_Result
 // {
-//     Monitor_Status_T Status;            /* Current status for this direction */
-//     Monitor_Status_T StatusPrev;        /* Previous status for edge detection */
+//     int Status;            /* Current status for this direction */
+//     int StatusPrev;        /* Previous status for edge detection */
 //     int32_t LastInput;                  /* Last input value */
 // }
 // Monitor_Result_T;
@@ -151,9 +151,8 @@ Monitor_T;
 
 */
 /******************************************************************************/
-/* -1 for low-acting, 1 for high-acting */
-/* 0 for disable */
-static inline int32_t _Monitor_DirectionOf(Monitor_Setpoint_T * p_setpoint) { return (p_setpoint->Setpoint - p_setpoint->Resetpoint); }
+/* -1 for low-acting, 1 for high-acting, 0 for disable */
+static inline int _Monitor_DirectionOf(Monitor_Setpoint_T * p_setpoint) { return (p_setpoint->Setpoint - p_setpoint->Resetpoint); }
 
 /* Direction normalized compare value. Invert if lower value is higher serverity */
 static inline int32_t Monitor_GetLastInputComparable(const Monitor_T * p_monitor) { return p_monitor->LastInput * p_monitor->Direction; }
@@ -276,8 +275,8 @@ typedef enum Monitor_ConfigId
 }
 Monitor_ConfigId_T;
 
-int _Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
-void _Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value);
+int _Monitor_ConfigId_Get(const Monitor_Config_T * p_monitor, Monitor_ConfigId_T id);
+void _Monitor_ConfigId_Set(Monitor_Config_T * p_monitor, Monitor_ConfigId_T id, int value);
 
 int Monitor_ConfigId_Get(const Monitor_T * p_monitor, Monitor_ConfigId_T id);
 void Monitor_ConfigId_Set(Monitor_T * p_monitor, Monitor_ConfigId_T id, int value);

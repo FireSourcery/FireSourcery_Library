@@ -36,11 +36,6 @@
 typedef struct FOC
 {
     ufract16_t Modulation;
-    // ufract16_t VBus;
-    // ufract16_t VBusInvScalar;
-    // ufract16_t VPhaseLimit;
-    // ufract16_t VdLimit;
-    // value_t * p_VBus;
 
     /* Inputs - Capture by ADC */
     fract16_t Ia;
@@ -396,5 +391,20 @@ extern void FOC_ClearCaptureState(FOC_T * p_foc);
 //             p_foc->Va = -magnitude; p_foc->Vb = 0; p_foc->Vc = magnitude; break;
 //         case MOTOR_SECTOR_ID_6:  /* C+, B- */
 //             p_foc->Va = 0; p_foc->Vb = -magnitude; p_foc->Vc = magnitude; break;
+//     }
+// }
+
+// static inline void FOC_AnalyzeCurrentHarmonics(const FOC_T * p_foc, uint16_t * p_thd)
+// {
+//     /* Total Harmonic Distortion estimation */
+//     ufract16_t fundamental = FOC_GetIMagnitude(p_foc);
+
+//     /* Estimate harmonics from current ripple */
+//     fract16_t ripple_a = p_foc->Ia - (p_foc->Ialpha * FRACT16_COS_0 + p_foc->Ibeta * FRACT16_SIN_0);
+//     /* Add similar calculations for other phases */
+
+//     if (fundamental > 0)
+//     {
+//         *p_thd = (abs(ripple_a) << 15) / fundamental;
 //     }
 // }

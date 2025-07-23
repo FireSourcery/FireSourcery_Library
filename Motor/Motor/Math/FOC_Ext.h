@@ -32,18 +32,3 @@
 // #include "FOC.h"
 
 
-// // Add harmonic analysis for motor condition monitoring
-// static inline void FOC_AnalyzeCurrentHarmonics(const FOC_T * p_foc, uint16_t * p_thd)
-// {
-//     /* Total Harmonic Distortion estimation */
-//     ufract16_t fundamental = FOC_GetIMagnitude(p_foc);
-
-//     /* Estimate harmonics from current ripple */
-//     fract16_t ripple_a = p_foc->Ia - (p_foc->Ialpha * FRACT16_COS_0 + p_foc->Ibeta * FRACT16_SIN_0);
-//     /* Add similar calculations for other phases */
-
-//     if (fundamental > 0)
-//     {
-//         *p_thd = (abs(ripple_a) << 15) / fundamental;
-//     }
-// }

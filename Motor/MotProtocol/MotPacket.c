@@ -31,9 +31,17 @@
 #include "MotPacket.h"
 #include "../Version.h"
 
+#include "Utility/Protocol/Packet/Packet.h"
+
 #include <string.h>
 #include <stddef.h>
 #include <assert.h>
+
+
+
+
+
+
 
 /******************************************************************************/
 /*!
@@ -67,7 +75,7 @@ bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize)
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
 {
-    // assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
+    assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
     p_txPacket->Start = MOT_PACKET_START_BYTE;
     p_txPacket->SyncId = syncId;
     return sizeof(MotPacket_Sync_T);
@@ -93,6 +101,18 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Header.Length;
 }
+
+
+// void MotPacket_BuildHeader(Packet_Builder_T builderContext)
+// {
+//     MotPacket_T * p_packet = builderContext.p_packet;
+
+//     p_packet->Header.Start = MOT_PACKET_START_BYTE;
+//     p_packet->Header.Id = builderContext.headerId;
+//     p_packet->Header.Length = builderContext.payloadLength + sizeof(MotPacket_Header_T);
+//     p_packet->Header.Checksum = Packet_Checksum(p_packet, builderContext.payloadLength + sizeof(MotPacket_Header_T));
+// }
+
 
 /******************************************************************************/
 /*!
@@ -186,7 +206,7 @@ uint8_t MotPacket_VersionFlexResp_Build(MotPacket_VersionFlexResp_T * p_respPack
 /******************************************************************************/
 /*! ReadVars */
 /******************************************************************************/
-uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_VarReadReq_T * p_reqPacket)            { return MotPacket_GetPayloadLength((MotPacket_T *)p_reqPacket) / sizeof(uint16_t); }
+uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_VarReadReq_T * p_reqPacket)            { return MotPacket_ParsePayloadLength((MotPacket_T *)p_reqPacket) / sizeof(uint16_t); }
 uint16_t MotPacket_VarReadReq_ParseVarId(const MotPacket_VarReadReq_T * p_reqPacket, uint8_t index) { return p_reqPacket->VarReadReq.MotVarIds[index]; }
 
 void MotPacket_VarReadResp_BuildVarValue(MotPacket_VarReadResp_T * p_respPacket, uint8_t index, uint16_t value) { p_respPacket->VarReadResp.Value16[index] = value; }
@@ -205,7 +225,7 @@ void MotPacket_VarReadResp_BuildMeta(MotPacket_VarReadResp_T * p_respPacket, uin
 /******************************************************************************/
 /*! WriteVars */
 /******************************************************************************/
-uint8_t MotPacket_VarWriteReq_ParseVarCount(const MotPacket_VarWriteReq_T * p_reqPacket)                    { return MotPacket_GetPayloadLength((MotPacket_T *)p_reqPacket) / sizeof(uint16_t) / 2U; }
+uint8_t MotPacket_VarWriteReq_ParseVarCount(const MotPacket_VarWriteReq_T * p_reqPacket)                    { return MotPacket_ParsePayloadLength((MotPacket_T *)p_reqPacket) / sizeof(uint16_t) / 2U; }
 
 uint16_t MotPacket_VarWriteReq_ParseVarId(const MotPacket_VarWriteReq_T * p_reqPacket, uint8_t index)       { return p_reqPacket->VarWriteReq.Pairs[index].MotVarId; }
 uint16_t MotPacket_VarWriteReq_ParseVarValue(const MotPacket_VarWriteReq_T * p_reqPacket, uint8_t index)    { return p_reqPacket->VarWriteReq.Pairs[index].Value16; }
@@ -279,7 +299,7 @@ uint8_t MotPacket_ByteData_Build(MotPacket_DataMode_T * p_dataPacket, const uint
 }
 
 const uint8_t * MotPacket_ByteData_ParsePtrData(const MotPacket_DataMode_T * p_dataPacket)  { return &p_dataPacket->DataMode.ByteData[0U]; } /* Flash loader handle from here */
-uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket)             { return MotPacket_GetPayloadLength((MotPacket_T *)p_dataPacket); }
+uint8_t MotPacket_ByteData_ParseSize(const MotPacket_DataMode_T * p_dataPacket)             { return MotPacket_ParsePayloadLength((MotPacket_T *)p_dataPacket); }
 
 // void MotPacket_DataRead_BuildMeta(MotPacket_DataMode_T * p_dataPacket,  uint16_t sequence)
 // {

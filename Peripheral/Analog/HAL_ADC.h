@@ -24,12 +24,16 @@
 /*!
     @file   HAL_ADC.h
     @author FireSourcery
-    @brief     Analog module import functions.
-            User must provide HW functions, or configure peripheral HAL
+    @brief  Analog module import functions.
+            User provide HW functions, or configure peripheral HAL
 */
 /******************************************************************************/
 #ifndef HAL_ADC_H
 #define HAL_ADC_H
+
+// typedef struct HAL_ADC_T HAL_ADC_T;
+// __attribute__((weak)) void HAL_ADC_Init(HAL_ADC_T * p_hal) { (void)p_hal; }
+// // static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
 
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_ADC.h)
@@ -51,11 +55,10 @@
 
 typedef HAL_ADC_VALUE_T adc_result_t;
 typedef HAL_ADC_PIN_T adc_pin_t;
-// typedef int16_t adc_prop_t; /* alternatively a seperate type for adc units */
+// typedef int16_t adc_normalized_t; /* alternatively a seperate type for adc units */
 
 #ifndef HAL_PERIPHERAL_PATH
-struct HAL_ADC_T;
-typedef void HAL_ADC_T;
+typedef struct HAL_ADC_T HAL_ADC_T;
 
 static inline void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel) {}
 static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel) {}
@@ -79,8 +82,9 @@ static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal) {}
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) {}
 static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) {}
 
-static inline void HAL_ADC_Init(const HAL_ADC_T * p_hal) { (void)p_hal; }
+static inline void HAL_ADC_Init(HAL_ADC_T * p_hal) { (void)p_hal; }
 #endif
+
 
 static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
 {

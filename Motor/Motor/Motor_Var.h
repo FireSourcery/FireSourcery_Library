@@ -130,7 +130,7 @@ Motor_Var_UserControl_T;
 //     MOTOR_VAR_EFFECTIVE_I_LIMIT,
 //     MOTOR_VAR_EFFECTIVE_RAMP_ON_OFF,
 // }
-// Motor_Var_State_T;
+// Motor_Var_ControlState_T;
 
 // typedef enum Motor_Var_Phase
 // {
@@ -215,6 +215,7 @@ Motor_Var_StateCmd_T;
     Config Field Id
 */
 /******************************************************************************/
+// typedef enum Motor_Var_ConfigCalibration
 typedef enum Motor_VarConfig_Calibration
 {
     MOTOR_VAR_COMMUTATION_MODE,       /* Motor_CommutationMode_T, if runtime supported */
@@ -301,11 +302,14 @@ typedef enum Motor_VarConfig_Cmd
 }
 Motor_VarConfig_Cmd_T;
 
+
+/******************************************************************************/
 /*
     Read-Only Ref
     ConfigConst
 */
-typedef enum Motor_VarRef
+/******************************************************************************/
+typedef enum Motor_Var_StaticRef
 {
     MOTOR_VAR_REF_V_RATED,
     MOTOR_VAR_REF_I_RATED,
@@ -321,7 +325,7 @@ typedef enum Motor_VarRef
     MOTOR_VAR_REF_BOARD_V_RATED_VOLTS,
     MOTOR_VAR_REF_BOARD_I_RATED_AMPS,
 }
-Motor_VarRef_T;
+Motor_Var_StaticRef_T;
 
 
 /******************************************************************************/
@@ -432,7 +436,7 @@ extern void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T
 
 
 /*  */
-extern int Motor_VarRef_Get(Motor_VarRef_T varId);
+extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
 
 /******************************************************************************/
 /*

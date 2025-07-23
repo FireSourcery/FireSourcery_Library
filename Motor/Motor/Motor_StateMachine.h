@@ -53,8 +53,8 @@ typedef enum Motor_State_Input
     MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Active/Release/Hold */
     MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T] flags */
     MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Start/Stop */
-    MSM_INPUT_OPEN_LOOP,
-    MSM_INPUT_CALIBRATION,
+    MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
+    MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MSM_INPUT_USER_BUFFER,
 }
 Motor_State_Input_T;
@@ -69,11 +69,11 @@ Motor_State_Input_T;
     Feedback On / Ouput VPWM
 
     Passive
-    Feedback Off / Ouput Float
-    Feedback Off / Ouput V0 - alternatively remove
+    Feedback Off / Ouput VFloat
+    Feedback Off / Ouput V0 - optionally
 
     Stop
-    Feedback Off / Ouput Float / 0 speed
+    Feedback Off / Ouput VFloat / 0 speed
     Feedback Off / Ouput V0 / 0 speed
 
     OpenLoop

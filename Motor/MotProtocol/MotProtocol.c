@@ -35,11 +35,8 @@
 #include <stddef.h>
 #include <string.h>
 
-/******************************************************************************/
-/*!
-    Common functions, p_appContext independent
-*/
-/******************************************************************************/
+
+
 /******************************************************************************/
 /*!
     Packet Interface
@@ -68,12 +65,6 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_tx
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
-// void MotProtocol_BuildTxHeader(MotPacket_T * p_header, MotPacket_T * p_txPacket, packet_size_t * p_txSize, packet_id_t txId)
-// {
-
-// }
-
-// Protocol_RxCode_T MotProtocol_ParseRxMeta(const MotPacket_T * p_rxPacket, Protocol_HeaderMeta_T * p_rxMeta, packet_size_t rxCount)
 Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, packet_size_t rxCount)
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
@@ -85,11 +76,11 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
     }
     else if(rxCount > MOT_PACKET_LENGTH_INDEX) /* Length Field is valid */
     {
-        p_rxMeta->Length = MotPacket_GetTotalLength(p_rxPacket);
+        p_rxMeta->Length = MotPacket_ParseTotalLength(p_rxPacket);
     }
     else if(rxCount > MOT_PACKET_ID_INDEX)
     {
-        p_rxMeta->ReqId = p_rxPacket->Header.Id;
+        p_rxMeta->Id = p_rxPacket->Header.Id;
         switch(p_rxPacket->Header.Id)
         {
             /* complete */
@@ -120,6 +111,17 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
     return rxCode;
 }
 
+// uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, uint8_t payloadLength)
+uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta)
+{
+    p_packet->Header.Start = MOT_PACKET_START_BYTE;
+    p_packet->Header.Id = p_meta->Id;
+    p_packet->Header.Length = p_meta->Length;
+    p_packet->Header.Checksum = Packet_Checksum(p_packet, p_meta->Length);
+    return p_packet->Header.Length;
+}
+
+
 const PacketClass_T MOT_PROTOCOL_PACKET_CLASS =
 {
     .RX_LENGTH_MIN  = MOT_PACKET_LENGTH_MIN,
@@ -130,6 +132,7 @@ const PacketClass_T MOT_PROTOCOL_PACKET_CLASS =
     .RX_TIMEOUT     = MOT_PROTOCOL_TIMEOUT_RX,
     .REQ_TIMEOUT    = MOT_PROTOCOL_TIMEOUT_REQ,
 };
+
 
 
 /******************************************************************************/

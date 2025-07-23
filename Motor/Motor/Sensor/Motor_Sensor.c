@@ -47,25 +47,30 @@ static inline RotorSensor_T * Sensor(const Motor_T * p_motor)
 /******************************************************************************/
 /*!
     @param[in] RotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
+
+    // varId as sensorId, varValue as cmdId
 */
-void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue)
+void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T sensorId, int cmdId)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
     // If the sensor is not the selected [p_ActiveSensor], do not calibrate.
-    if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->p_ActiveSensor, varId)) return;
-    if (p_motor->P_MOTOR_STATE->Config.SensorMode != varId) return;
+    if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->p_ActiveSensor, sensorId)) return;
+    if (p_motor->P_MOTOR_STATE->Config.SensorMode != sensorId) return;
 
-    switch (varId)
+    // RotorSensor_Calibrate(p_motor->P_MOTOR_STATE->p_ActiveSensor, p_motor, sensorId, cmdId);
+
+
+    switch (sensorId)
     {
         case ROTOR_SENSOR_ID_HALL:
-            (void)varValue; // unused
+            (void)cmdId; // unused
             assert(p_motor->P_MOTOR_STATE->p_ActiveSensor == &p_motor->SENSOR_TABLE.HALL);
             assert(p_motor->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL);
             Motor_Hall_Calibrate(p_motor);
             break;
         case ROTOR_SENSOR_ID_ENCODER:
-            // switch (varValue)
+            // switch (cmdId)
             // {
 
             // }

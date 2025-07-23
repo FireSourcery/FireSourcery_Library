@@ -32,6 +32,7 @@
 #include "Math/Fixed/fract16.h"
 
 
+// math_angular
 
 /*
     [Delta Angle] at [Polling Freq]. Angle Per Poll
@@ -52,8 +53,8 @@ static inline int32_t speed_cps_of_angle16_direct(uint32_t pollingFreq, int16_t 
 */
 #define SECONDS_PER_MINUTE (60U)
 
-#define SPEED_ANGLE16_PER_RPM(pollingFreq) ((double)(ANGLE16_PER_REVOLUTION / (SECONDS_PER_MINUTE * pollingFreq)))
-#define SPEED_RPM_PER_ANGLE16(pollingFreq) ((double)(pollingFreq * SECONDS_PER_MINUTE / ANGLE16_PER_REVOLUTION))
+#define SPEED_ANGLE16_PER_RPM(pollingFreq) (((double)ANGLE16_PER_REVOLUTION / (SECONDS_PER_MINUTE * pollingFreq)))
+#define SPEED_RPM_PER_ANGLE16(pollingFreq) (((double)pollingFreq * SECONDS_PER_MINUTE / ANGLE16_PER_REVOLUTION))
 
 #define SPEED_ANGLE16_OF_RPM(pollingFreq, rpm)      (((int64_t)rpm * ANGLE16_PER_REVOLUTION) / (SECONDS_PER_MINUTE * pollingFreq))
 #define SPEED_RPM_OF_ANGLE16(pollingFreq, angle16)  (((int64_t)angle16 * pollingFreq * SECONDS_PER_MINUTE) / ANGLE16_PER_REVOLUTION)

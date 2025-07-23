@@ -38,8 +38,11 @@
 
 typedef struct AngleSpeed
 {
-    angle16_t Angle;
-    angle16_t Speed_DegPerCycle;
+    // angle16_t Angle;
+    // angle16_t Speed ;
+    // angle16_t AnglePerPulse;
+    // angle16_t Theta;
+    // angle16_t Delta;
 }
 AngleSpeed_T;
 

@@ -394,7 +394,7 @@ void _Motor_VarConfig_Cmd_Call(const Motor_T * p_motor, Motor_VarConfig_Cmd_T va
     const
     Alternate access to board reference values
 */
-int Motor_VarRef_Get(Motor_VarRef_T varId)
+int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId)
 {
     int value = 0;
     switch (varId)
@@ -600,9 +600,9 @@ void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
         case MOTOR_VAR_TYPE_FOC_OUT:             break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:    break;
             /* Access Control on */
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:      Motor_Var_PidTuning_Set(p_motor, varId, varValue);      break;
         case MOTOR_VAR_TYPE_USER_CONTROL:       Motor_Var_UserControl_Set(p_motor, varId, varValue);    break;
         case MOTOR_VAR_TYPE_STATE_CMD:          Motor_Var_StateCmd_Set(p_motor, varId, varValue);       break;
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:      Motor_Var_PidTuning_Set(p_motor, varId, varValue);      break;
     }
 }
 
@@ -618,7 +618,7 @@ int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typ
         case MOTOR_VAR_TYPE_CONFIG_PID:                 return _Motor_VarConfig_Pid_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_CONFIG_HEAT_MONITOR:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_CONFIG_THERMISTOR:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
-        case MOTOR_VAR_TYPE_CONFIG_BOARD_REF:           return Motor_VarRef_Get(varId);
+        case MOTOR_VAR_TYPE_CONFIG_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
         case MOTOR_VAR_TYPE_CONFIG_CMD:                 return 0; // Write only, no read access
         case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:          return 0; // Write only, no read access
     }

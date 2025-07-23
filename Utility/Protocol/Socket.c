@@ -298,7 +298,7 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET: reqStatus = PROTOCOL_REQ_CODE_TX_CONTINUE; break;
                 case PROTOCOL_RX_CODE_PACKET_COMPLETE:
-                    p_state->p_ReqActive = _Protocol_SearchReqTable(p_socket->P_REQ_TABLE, p_socket->REQ_TABLE_LENGTH, p_state->RxMeta.ReqId);
+                    p_state->p_ReqActive = _Protocol_SearchReqTable(p_socket->P_REQ_TABLE, p_socket->REQ_TABLE_LENGTH, p_state->RxMeta.Id);
 
                     if (p_state->p_ReqActive != NULL)
                     {

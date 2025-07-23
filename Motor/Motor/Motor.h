@@ -152,12 +152,12 @@ Motor_FaultFlags_T;
 /*
     Number formats
 
-    [Fract16]     [-1:1) <=> [-32768:32767] in Q1.15
-    [UFract16]    [0:2) <=> [0:65535] in Q1.15
-    [Accum32]     [-2:2] <=> [-65536:65536] in Q1.15      Max [INT32_MIN:INT32_MAX]
-    [Percent16]   [0:1) <=> [0:65535] in Q0.16
-    [Fixed16]     [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
-    [Fixed32]     [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
+    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
+    [UFract16]          [0:2) <=> [0:65535] in Q1.15
+    [Accum32]           [-2:2] <=> [-65536:65536] in Q1.15      Max [INT32_MIN:INT32_MAX]
+    [Percent16/Unit16]  [0:1) <=> [0:65535] in Q0.16
+    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
+    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
 */
 /******************************************************************************/
 
@@ -248,15 +248,14 @@ typedef struct Motor_State
     uint8_t CalibrationStateIndex;
 
     /* Interface buffers */
+    volatile MotorAnalog_State_T AnalogState;
     volatile Phase_Bits_T IBatch;
     volatile Phase_Bits_T VBatch;
-    volatile MotorAnalog_State_T AnalogState;
-    volatile HeatMonitor_T HeatMonitorState;
     volatile bool SpeedUpdateFlag;           /* Sync Feedback update */
+    volatile HeatMonitor_T HeatMonitorState;
 
     VarAccess_State_T VarAccessInputState; /* Input and I/O Input */
     VarAccess_State_T VarAccessPidTunningState; /*  */
-
     /* Optionally */
     // VarAccess_State_T VarAccessConfigState; /* use StateMachine */
     // VarAccess_State_T VarAccessOuputState;
@@ -269,7 +268,7 @@ typedef struct Motor_State
     */
     Timer_T SpeedTimer;                 /* Outer Speed Loop Timer */
     const RotorSensor_T * p_ActiveSensor;
-    RotorSensor_State_T SensorState;
+    RotorSensor_State_T SensorState;    /* Compile time configured address. Sensor State */
     // SpeedAngle_T SpeedAngle;         /* Outer/Speed Feedback State. */
 
     /* StateMachine Controlled */
@@ -387,6 +386,7 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_MOTOR_STATE;
+
     // alternatively MotorBus_T static instance
     // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
 

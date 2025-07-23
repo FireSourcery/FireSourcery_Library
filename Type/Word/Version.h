@@ -39,6 +39,7 @@ typedef union Version
 {
     struct { uint8_t Fix; uint8_t Minor; uint8_t Major; uint8_t Opt; };
     Word32_T Word32;
+    uint32_t Value;
 }
 Version_T;
 

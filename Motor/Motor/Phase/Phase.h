@@ -45,6 +45,7 @@
 /******************************************************************************/
 /*!
     PhaseId Common
+    alternatively move as interface header
 */
 /******************************************************************************/
 /* Phase_Channels IdBits */
@@ -167,7 +168,6 @@ typedef enum Phase_Output
 {
     PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, it is the result of Pin Low/0 */
     PHASE_OUTPUT_V0,     /* VDuty 0, Pin High/1 */
-    /* PHASE_STATE_RESV = 0b01 */ /* This way bit0 reflects pin on/off, bit1 reflects pwm value */
     PHASE_OUTPUT_VPWM,   /* VDuty +, Pin High/1 */
 }
 Phase_Output_T;
@@ -240,8 +240,7 @@ static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm)
 
 static inline void _Phase_WriteOnOff(const Pin_T * p_pin, const PWM_T * p_pwm, bool isOn)
 {
-    if (isOn == true) { _Phase_Enable(p_pin, p_pwm); }
-    else { _Phase_Disable(p_pin, p_pwm); }
+    if (isOn == true) { _Phase_Enable(p_pin, p_pwm); } else { _Phase_Disable(p_pin, p_pwm); }
 }
 
 /* ReadOnOff using register state */

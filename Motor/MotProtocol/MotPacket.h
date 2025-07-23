@@ -323,10 +323,10 @@ typedef struct MotPacket_DataMode { MotPacket_Header_T Header; MotPacket_DataMod
 /******************************************************************************/
 /*! Common */
 /******************************************************************************/
-static inline uint8_t MotPacket_GetPayloadLength(const MotPacket_T * p_packet)  { return p_packet->Header.Length - sizeof(MotPacket_Header_T); }
-static inline uint8_t MotPacket_GetTotalLength(const MotPacket_T * p_packet)    { return p_packet->Header.Length; }
-static inline void MotPacket_SetPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength)    { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
-static inline void MotPacket_SetTotalLength(MotPacket_T * p_packet, uint8_t totalLength)        { p_packet->Header.Length = totalLength; }
+static inline uint8_t MotPacket_ParsePayloadLength(const MotPacket_T * p_packet)  { return p_packet->Header.Length - sizeof(MotPacket_Header_T); }
+static inline uint8_t MotPacket_ParseTotalLength(const MotPacket_T * p_packet)    { return p_packet->Header.Length; }
+static inline void MotPacket_BuildPayloadLength(MotPacket_T * p_packet, uint8_t payloadLength)    { p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T); }
+static inline void MotPacket_BuildTotalLength(MotPacket_T * p_packet, uint8_t totalLength)        { p_packet->Header.Length = totalLength; }
 
 /******************************************************************************/
 /*!

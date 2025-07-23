@@ -31,12 +31,6 @@
 /******************************************************************************/
 #include <stdint.h>
 
-// typedef union { uint32_t Unsigned; int32_t Signed; } var32_t;
-// typedef union { uint16_t Unsigned; int16_t Signed; } var16_t;
-// typedef union { uint8_t Unsigned; int8_t Signed; } var8_t;
-
-// typedef void (*set_var_t)(void * p_context, size_t key, int value);
-// typedef int(*get_var_t)(const void * p_context, size_t key);
 
 /******************************************************************************/
 /*!
@@ -66,9 +60,10 @@ typedef enum MotVarId_Status
     MOT_VAR_STATUS_ERROR,
     MOT_VAR_STATUS_ERROR_INVALID_ID,
     MOT_VAR_STATUS_ERROR_READ_ONLY,
-    MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED,
-    MOT_VAR_STATUS_ERROR_RUNNING, // Not in config state
-    // MOT_VAR_STATUS_ASYNC,
+    MOT_VAR_STATUS_ERROR_WRITE_ONLY,
+    MOT_VAR_STATUS_ERROR_ACCESS_DISABLED,
+    MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE,
+    MOT_VAR_STATUS_ERROR_NOT_RUNNING_STATE,
     MOT_VAR_STATUS_RESERVED = 0xFFU,
 }
 MotVarId_Status_T;

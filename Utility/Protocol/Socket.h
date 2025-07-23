@@ -118,6 +118,8 @@ typedef const struct Socket
     /*
         Protocol Context common
     */
+   // alternatively Map overlaping sockets for selection
+    // const Protocol_Base_T * P_PROTOCOL_CONTEXT;
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
@@ -141,7 +143,7 @@ Socket_T;
     .P_TX_PACKET_BUFFER     = p_TxBuffer,                   \
     .PACKET_BUFFER_LENGTH   = BufferLength,                 \
     .P_APP_CONTEXT          = p_AppContext,                 \
-    .P_REQ_STATE_BUFFER     = p_SubstateBuffer,                \
+    .P_REQ_STATE_BUFFER     = p_SubstateBuffer,             \
     .P_NVM_CONFIG           = p_Config,                     \
     .P_REQ_TABLE            = p_ReqTable,                   \
     .REQ_TABLE_LENGTH       = ReqCount,                     \

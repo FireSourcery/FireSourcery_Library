@@ -61,6 +61,7 @@ RotorSensor_Id_T;
 */
 // typedef const struct Motor_SensorTable
 // alternatively as [Motor_SensorTable_T], part of Motor_T
+// RotorSensor_T ** P_SENSOR_TABLE; may simplify external addition of sensor
 typedef const struct RotorSensor_Table
 {
     const RotorSensor_T EMPTY;
@@ -68,20 +69,20 @@ typedef const struct RotorSensor_Table
     const Hall_RotorSensor_T HALL;
 // #endif
     const Encoder_RotorSensor_T ENCODER;
+    // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
+
 }
 RotorSensor_Table_T;
+
+// typedef void(*RotorSensor_Calibration_T)(const void * p_motor, const struct RotorSensor * p_sensor, int cmdId);
+// typedef enum Motor_Sensor_CalibrationStatus
+// {
+// }
+// Motor_Sensor_CalibrationStatus_T;
 
 // #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) MOTOR_SENSOR_INIT_AS_EMPTY(p_State)
 // #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
 // #define ROTOR_SENSOR_TABLE_INIT_ENCODER(p_State, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State)
-
-/*
-    Init with Motor_State_T
-    Init using shared State
-*/
-#define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) MOTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
-#define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((MotorStateStruct).SensorState))
-#define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
 
 /*

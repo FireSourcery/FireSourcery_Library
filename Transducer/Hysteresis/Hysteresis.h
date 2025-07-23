@@ -266,6 +266,7 @@ static inline void Hysteresis_Reset(Hysteresis_T * p_hyst)
 extern void Hysteresis_InitThresholds(Hysteresis_T * p_hyst, int32_t setpoint, int32_t resetpoint);
 extern void Hysteresis_InitAsActiveHigh(Hysteresis_T * p_hyst, int32_t setpoint, int32_t deadband_width);
 extern void Hysteresis_InitAsActiveLow(Hysteresis_T * p_hyst, int32_t setpoint, int32_t deadband_width);
+// extern void Hysteresis_Init_BandActiveLow(Hysteresis_T * p_hyst, int32_t setpoint, int32_t deadband_width);
 // extern void Hysteresis_InitSymmetric(Hysteresis_T * p_hyst, int32_t center_point, int32_t deadband_width);
 
 /******************************************************************************/

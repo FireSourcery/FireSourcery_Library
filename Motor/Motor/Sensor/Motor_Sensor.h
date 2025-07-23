@@ -40,17 +40,20 @@
 #include "Encoder/Motor_Encoder.h"
 
 #include "RotorSensor_Table.h"
-// #include "RotorSensor.h"
 
 /* Part of Motor */
 /* non inline, include by Motor */
 typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
-// typedef enum Motor_Sensor_CalibrationStatus
-// {
-// }
-// Motor_Sensor_CalibrationStatus_T;
+
+/*
+    Init with Motor_State_T
+    Init using shared State
+*/
+#define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) MOTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
+#define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, &((MotorStateStruct).SensorState))
+#define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
 /******************************************************************************/
 /*!
