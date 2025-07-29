@@ -77,16 +77,16 @@
 // }
 
 
-// int32_t Motor_VarConfig_SinCos_Get(const Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId) {}
+// int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId) {}
 
-// void Motor_VarConfig_SinCos_Set(Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue) {}
+// void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue) {}
 
 // const VarAccess_VTable_T MOTOR_VAR_CONFIG_SIN_COS =
 // {
-//     .GET_AT = Motor_VarConfig_SinCos_Get,
-//     .SET_AT = Motor_VarConfig_SinCos_Set,
+//     .GET_AT = Motor_Var_ConfigSinCos_Get,
+//     .SET_AT = Motor_Var_ConfigSinCos_Set,
 //     .TEST_SET = Motor_Config_IsConfigState,
 // };
 
-// extern int32_t Motor_VarConfig_SinCos_Get(const Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId);
-// extern void Motor_VarConfig_SinCos_Set(Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue);
+// extern int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId);
+// extern void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue);

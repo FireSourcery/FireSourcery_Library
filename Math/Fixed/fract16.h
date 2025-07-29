@@ -195,8 +195,9 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 /******************************************************************************/
 typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
-#define ANGLE16_MAX (65536UL)
-#define ANGLE16_PER_REVOLUTION (65536U)
+#define ANGLE16_SIGNED_MAX (INT16_MAX)
+#define ANGLE16_CYCLE (65536UL)
+#define ANGLE16_PER_REVOLUTION (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */

@@ -102,7 +102,9 @@ static void StartCalibration(const Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR_STATE;
 
-    Timer_StartPeriod_Millis(&p_fields->ControlTimer, 2000U); /* 2 Seconds */
+    // Timer_StartPeriod_Millis(&p_fields->ControlTimer, 2000U); /* 2 Seconds */
+
+    TimerT_Periodic_Set(&p_motor->CONTROL_TIMER, 40000U); /* 2 Seconds */
 
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(&p_motor->PHASE);

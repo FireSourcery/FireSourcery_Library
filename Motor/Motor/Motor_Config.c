@@ -48,16 +48,6 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 }
 
 
-// functions as full width variable to preserve calling convention, alternatively caller handle check set state
-
-/* or use transition mapper */
-/* or move interface to Var layer */
-// void Motor_Config_SetWith(Motor_State_T * p_motor, State_Set_T setter, int32_t value)
-// {
-//     StateMachine_SetValueWith(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION, setter, value);
-// }
-/* alternatively TRANSITION_MAPPER */
-
 /******************************************************************************/
 /*
     Nvm Reference/Calibration
@@ -70,6 +60,9 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
     Speed Position Calibration
 */
 /******************************************************************************/
+/* Wrapper for Propagate Set */
+void Motor_ReinitSensor(Motor_State_T * p_motor) { RotorSensor_Init(p_motor->p_ActiveSensor); }
+
 /* Reboot unless deinit is implemented in HAL */
 void Motor_Config_SetSensorMode(Motor_State_T * p_motor, RotorSensor_Id_T mode)
 {

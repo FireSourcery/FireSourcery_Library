@@ -51,11 +51,11 @@ extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const HAL_Nvm_Manufacture
 extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const HAL_Nvm_Manufacturer_T * p_this);
 
 /* Config Mem descriptor table. */
-typedef struct MotNvm_Entry
+typedef const struct MotNvm_Entry
 {
-    const void * const NVM_ADDRESS;     /* NVM/Flash address */
-    void * const RAM_ADDRESS;           /* RAM address */
-    const size_t SIZE;                  /* Size in bytes */
+    const void * NVM_ADDRESS;     /* NVM/Flash address */
+    void * RAM_ADDRESS;           /* RAM address */
+    size_t SIZE;                  /* Size in bytes */
     // const uint32_t checksum_seed;    /* For validation */
 }
 MotNvm_Entry_T;
@@ -71,14 +71,14 @@ typedef const struct
     uintptr_t MAIN_CONFIG_ADDRESS;
     uint16_t MAIN_CONFIG_SIZE;
 
-    const MotNvm_Entry_T * P_PARTITIONS; /* NVM Partitions */
+    MotNvm_Entry_T * P_PARTITIONS; /* NVM Partitions */
     size_t PARTITION_COUNT;        /* Number of NVM Partitions */
 
     // alternatively use  P_FLASH->P_PARTITIONS[id]
     uintptr_t MANUFACTURE_ADDRESS;
     uint8_t MANUFACTURE_SIZE;
 
-    const MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
+    MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
     const BootRef_T * P_BOOT_REF;
 }
 MotNvm_T;

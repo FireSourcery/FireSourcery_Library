@@ -38,28 +38,26 @@
 #include "Analog/MotorAnalogRef.h"
 
 #include "Phase/Phase.h"
-#include "Sensor/RotorSensor.h"
 #include "Sensor/RotorSensor_Table.h"
-// #include "Hall/Hall.h"
-// #include "SinCos/SinCos.h"
+#include "Sensor/RotorSensor.h"
 
 #include "Math/math_speed.h"
 #include "Math/FOC.h"
 
 #include "Peripheral/Analog/Analog.h"
+#include "Peripheral/Analog/Linear_ADC.h"
 
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
-#include "Transducer/Thermistor/HeatMonitor.h"
+#include "Transducer/Monitor/Heat/HeatMonitor.h"
 
-#include "Utility/Var/VarAccess.h"
+// #include "Utility/Var/VarAccess.h"
 #include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
+#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Utility/Timer/Timer.h"
 #include "Utility/LimitArray/LimitArray.h"
 
 #include "Math/Fixed/fixed.h"
-#include "Math/Linear/Linear_ADC.h"
 #include "Math/Linear/Linear.h"
 #include "Math/Ramp/Ramp.h"
 #include "Math/PID/PID.h"
@@ -74,7 +72,7 @@
     Parts - with dependency on Motor_T forward declared
     This way sub modules contain handling details
 */
-#include "Motor_Var.h"
+// #include "Motor_Var.h"
 #include "Analog/Motor_Analog.h"
 #include "Sensor/Motor_Sensor.h"
 // #include "Motor_Config.h"
@@ -166,9 +164,9 @@ Motor_FaultFlags_T;
 */
 typedef struct Motor_Config
 {
-    Motor_CommutationMode_T     CommutationMode;
-    Motor_Direction_T           DirectionForward;
-    RotorSensor_Id_T            SensorMode;
+    Motor_CommutationMode_T CommutationMode;
+    Motor_Direction_T DirectionForward;
+    RotorSensor_Id_T SensorMode;
 
     /*
         Calibration parameters
@@ -234,7 +232,7 @@ Motor_Config_T;
 
 
 /*
-    Timer_T requires const init
+    Motor State - Runtime variable state.
 */
 typedef struct Motor_State
 {
@@ -251,13 +249,13 @@ typedef struct Motor_State
     volatile MotorAnalog_State_T AnalogState;
     volatile Phase_Bits_T IBatch;
     volatile Phase_Bits_T VBatch;
-    volatile bool SpeedUpdateFlag;           /* Sync Feedback update */
-    volatile HeatMonitor_T HeatMonitorState;
+    volatile bool SpeedUpdateFlag;              /* Sync Feedback update */
+    HeatMonitor_T HeatMonitorState;
 
-    VarAccess_State_T VarAccessInputState; /* Input and I/O Input */
-    VarAccess_State_T VarAccessPidTunningState; /*  */
+    // VarAccess_State_T VarAccessInputState;   /* Input and I/O Input */
+    // VarAccess_State_T VarAccessPidTunningState; /*  */
     /* Optionally */
-    // VarAccess_State_T VarAccessConfigState; /* use StateMachine */
+    // VarAccess_State_T VarAccessConfigState;  /* use StateMachine */
     // VarAccess_State_T VarAccessOuputState;
 
     /*
@@ -266,10 +264,10 @@ typedef struct Motor_State
     /*
         Position Sensor
     */
-    Timer_T SpeedTimer;                 /* Outer Speed Loop Timer */
+    // Timer_T SpeedTimer;                  /* Outer Speed Loop Timer */
     const RotorSensor_T * p_ActiveSensor;
-    RotorSensor_State_T SensorState;    /* Compile time configured address. Sensor State */
-    // SpeedAngle_T SpeedAngle;         /* Outer/Speed Feedback State. */
+    RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State */
+    // SpeedAngle_T SpeedAngle;             /* Outer/Speed Feedback State. */
 
     /* StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. */
@@ -386,31 +384,27 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_MOTOR_STATE;
-
     // alternatively MotorBus_T static instance
     // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
 
     /*
         This is the only const context dependency of StateMachine
-        alternatively, reduce StateMachine context
-        handle with pointer from state,
-        PHASE include P_PHASE_STATE for buffered on off
+        alternatively, reduce StateMachine context, handle with pointer from state,
+        or PHASE include P_PHASE_STATE for buffered on off
     */
     Phase_T PHASE;
     Motor_Analog_T ANALOG; // PhaseAnalog_T PHASE_ANALOG;
-
     RotorSensor_Table_T SENSOR_TABLE;
-    // const Encoder_T ENCODER;
-    // const Hall_T HALL;
-
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
-
     StateMachine_T STATE_MACHINE;
-    Motor_VarAccess_T VAR_ACCESS;
-
+    TimerT_T CONTROL_TIMER; /* Init time map to ControlTimerBase */
+    TimerT_T SPEED_TIMER;   /* Millis */
+    // Motor_VarAccess_T VAR_ACCESS;
     const Motor_Config_T * P_NVM_CONFIG;
 }
 Motor_T;
+
+// #define MOTOR_CONTROL_TIMER_INIT(p_MotorContext, MotorState) TIMER_T_ALLOC(
 
 
 /*
@@ -443,7 +437,6 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 /*
 */
 /******************************************************************************/
-
 /*
     V of Speed
 */
@@ -487,7 +480,7 @@ static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_
 
 /* Local Unit Conversion */
 // static inline accum32_t Motor_Speed_Fract16OfRpm(const Motor_State_T * p_motor, int16_t speed_rpm)        { return speed_rpm * INT16_MAX / Motor_GetSpeedRatedRef_Rpm(p_motor); }
-// static inline int16_t   Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, accum32_t speed_fract16)  { return speed_fract16 * Motor_GetSpeedRatedRef_Rpm(p_motor) / 32768; }
+// static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, accum32_t speed_fract16)  { return speed_fract16 * Motor_GetSpeedRatedRef_Rpm(p_motor) / 32768; }
 // static inline int16_t Motor_Speed_RpmOfDeg(const Motor_State_T * p_motor, accum32_t speed_degPerCycle) { return speed_mech_rpm_of_el_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, speed_degPerCycle); }
 
 /******************************************************************************/
@@ -495,39 +488,25 @@ static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_
     Capture State
 */
 /******************************************************************************/
-/*
-    selected sensor is stored in runtime context.
-*/
-// static inline bool Motor_PollCaptureSensor(Motor_State_T * p_motor)
-// {
-//     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->SpeedTimer);
-//     if (isCaptureSpeed == true)
-//     {
-//         RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor);
-//         // p_motor->p_ActiveSensor ->Speed_Fract16 = (RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2;
-//     }
-//     RotorSensor_CaptureAngle(p_motor->p_ActiveSensor);
-//     return isCaptureSpeed;
-//     // return (Timer_Periodic_Poll(&p_motor->SpeedTimer) == true) ? ({ RotorSensor_CaptureSpeed(p_motor->p_ActiveSensor); true; }) : false;
-// }
-
 /* inline for state machine */
 static inline void Motor_CaptureSensor(const Motor_T * p_motor)
 {
-    if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer) == true)
+    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
-        RotorSensor_CaptureSpeed(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-        p_motor->P_MOTOR_STATE->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */
+        RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
+        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */
     }
-    RotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+    RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
 }
 
 /*
     Interface Wrap
 */
 /* Feedback Speed */
-static inline int32_t Motor_GetSpeed(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
-// p_motor->ElectricalSpeed_DegPerCycle,
+static inline int32_t Motor_GetSpeed_Fract16(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+static inline int32_t Motor_GetDigitalSpeed(const Motor_State_T * p_motor) { return RotorSensor_GetElectricalAngleSpeed(p_motor->p_ActiveSensor); }
+
 
 /******************************************************************************/
 /*
@@ -586,7 +565,7 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 */
 /* Speed limit in [Direction] selected. Forward relative to the user */
 static inline uint16_t Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
-// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed(p_motor)) > Motor_GetSpeedLimitActive(p_motor)); }
+// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed_Fract16(p_motor)) > Motor_GetSpeedLimitActive(p_motor)); }
 
 static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
 static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
@@ -628,18 +607,18 @@ static inline fract16_t Motor_ProcSpeedRamp(Motor_State_T * p_motor) { return Ra
     Ramp input ~100Hz,
     SpeedFeedback update 1000Hz - SpeedRamp, SpeedPid
 */
-static inline fract16_t _Motor_ProcOuterFeedback(Motor_State_T * p_motor)
+static inline fract16_t Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
         // pass limits on proc to remove limits sync dependency
-        // _PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
-        PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeed(p_motor), Motor_ProcSpeedRamp(p_motor));
+        // _PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); todo switch on region
+        PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeed_Fract16(p_motor), Motor_ProcSpeedRamp(p_motor));
     }
-    // else
+    // else /* Voltage/Current Mode */
     // {
         // todo on sign change
-        // PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeed(p_motor), (int32_t)Motor_GetSpeedLimitActive(p_motor) * p_motor->Direction);
+        // PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeed_Fract16(p_motor), (int32_t)Motor_GetSpeedLimitActive(p_motor) * p_motor->Direction);
         // if (Motor_IsSpeedLimitReached(p_motor) == true) { Ramp_SetOutput(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); }
     // }
 }
@@ -648,8 +627,8 @@ static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 {
     if (p_motor->SpeedUpdateFlag == true)
     {
-        p_motor->SpeedUpdateFlag = false; /* reset flag */
-        _Motor_ProcOuterFeedback(p_motor);
+        p_motor->SpeedUpdateFlag = false;
+        Motor_ProcSpeedFeedback(p_motor);
     }
 }
 
@@ -662,8 +641,8 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int32_t 
     if (p_motor->FeedbackMode.Speed == 1U)
     {
         PID_SetOutputState(&p_motor->PidSpeed, torqueReq);
-        Ramp_SetOutput(&p_motor->SpeedRamp, Motor_GetSpeed(p_motor));
-        Ramp_SetTarget(&p_motor->SpeedRamp, Motor_GetSpeed(p_motor)); /* maybe overwritten by input thread */
+        Ramp_SetOutput(&p_motor->SpeedRamp, Motor_GetSpeed_Fract16(p_motor));
+        Ramp_SetTarget(&p_motor->SpeedRamp, Motor_GetSpeed_Fract16(p_motor)); /* maybe overwritten by input thread */
     }
     else
     {
@@ -672,22 +651,6 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int32_t 
     }
 }
 
-/* inline for state machine */
-// static inline void Motor_ProcOuterFeedback(const Motor_T * p_motor)
-// {
-//     // if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer) == true)
-//     // {
-//     //     RotorSensor_CaptureSpeed(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-//     //     _Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
-//     // }
-//     // RotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-
-//     if (p_motor->P_MOTOR_STATE->SpeedUpdateFlag == true)
-//     {
-//         p_motor->P_MOTOR_STATE->SpeedUpdateFlag = false; /* reset flag */
-//         _Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
-//     }
-// }
 
 
 /******************************************************************************/
@@ -729,7 +692,6 @@ static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * 
 static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
 static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != 0U); }
 
-static inline int Motor_GetUserDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
 
 
 
@@ -770,10 +732,6 @@ extern void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_ufract
 extern void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16);
 extern void Motor_ClearILimit(Motor_State_T * p_motor);
 
-extern bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16);
-extern bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_Fract16);
-extern void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
-extern void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
 
 
 #endif

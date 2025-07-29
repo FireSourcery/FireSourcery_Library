@@ -109,7 +109,7 @@ static const State_T CALIBRATION_STATE_HOMING =
     .NEXT       = (State_InputVoid_T)Calibration_HomeEnd,
 };
 
-static State_T * Calibration_StartHome(const Motor_T * p_motor, state_input_value_t null)
+static State_T * Calibration_StartHome(const Motor_T * p_motor, state_value_t null)
 {
     // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
     return &CALIBRATION_STATE_HOMING;
@@ -119,7 +119,7 @@ static State_T * Calibration_StartHome(const Motor_T * p_motor, state_input_valu
 /* Transition from any Calibration State */
 void Motor_Calibration_StartHome(const Motor_T * p_motor)
 {
-    static const State_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
+    static const StateMachine_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 }
 

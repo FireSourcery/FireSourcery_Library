@@ -38,11 +38,11 @@
 static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
 
 
-// static State_T * _OpenLoop_Enter(const Motor_T * p_motor, state_input_value_t null) { return &MOTOR_STATE_OPEN_LOOP; }
+// static State_T * _OpenLoop_Enter(const Motor_T * p_motor, state_value_t null) { return &MOTOR_STATE_OPEN_LOOP; }
 
 // void Motor_OpenLoop_Enter(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)_OpenLoop_Enter, };
+//     static const StateMachine_TransitionInput_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)_OpenLoop_Enter, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0U);
 // }
 
@@ -84,23 +84,23 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 /*
     Access by Id - directly correpond to VarId
 */
-typedef enum Motor_OpenLoop_Cmd
-{
-    MOTOR_OPEN_LOOP_CMD_ENTER,
-    MOTOR_OPEN_LOOP_CMD_PHASE_OUTPUT,
-    MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
-    MOTOR_OPEN_LOOP_CMD_ANGLE_ALIGN,
-    MOTOR_OPEN_LOOP_CMD_JOG,
-    MOTOR_OPEN_LOOP_CMD_STARTUP,
+// typedef enum Motor_OpenLoop_Cmd
+// {
+//     MOTOR_OPEN_LOOP_CMD_ENTER,
+//     MOTOR_OPEN_LOOP_CMD_PHASE_OUTPUT,
+//     MOTOR_OPEN_LOOP_CMD_PHASE_ALIGN,
+//     MOTOR_OPEN_LOOP_CMD_ANGLE_ALIGN,
+//     MOTOR_OPEN_LOOP_CMD_JOG,
+//     MOTOR_OPEN_LOOP_CMD_STARTUP,
 
-    // MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
-    // MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
-    // MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
-    // MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
-    // MOTOR_VAR_OPEN_LOOP_JOG,
-    // MOTOR_VAR_OPEN_LOOP_RUN,
-}
-Motor_OpenLoop_Cmd_T;
+//     // MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
+//     // MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
+//     // MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
+//     // MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
+//     // MOTOR_VAR_OPEN_LOOP_JOG,
+//     // MOTOR_VAR_OPEN_LOOP_RUN,
+// }
+// Motor_OpenLoop_Cmd_T;
 
 // static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T cmd)
 // {

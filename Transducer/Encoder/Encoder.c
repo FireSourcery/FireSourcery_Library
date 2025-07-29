@@ -71,7 +71,7 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
 
 
 /*
-    UnitAngle == [DEGREES/EncoderCount] = DegreesPerRevolution[DEGREES/1]/CountsPerRevolution[EncoderCounts/1]
+    UnitAngle[DEGREES/EncoderCount] = [DEGREES]/CountsPerRevolution[EncoderCounts/1]
 
     Angle = Counts * [(DEGREES << SHIFT) / CountsPerRevolution] >> SHIFT
 */

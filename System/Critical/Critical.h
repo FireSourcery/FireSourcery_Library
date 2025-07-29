@@ -29,53 +29,47 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Config.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdatomic.h>
 
-extern uint32_t _Critical_InterruptDisableCount;
 
 /*
-    HAL implement within module.
-    Alternatively, implement in parent HAL and include.
+    HAL implementation
 */
-#ifdef CONFIG_SYSTEM_MCU_ARM
 
-#include "External/CMSIS/Core/Include/cmsis_compiler.h"
+typedef uint32_t critical_state_t;
 
-/*
-    No nesting Critical within Critical
-*/
+#if defined(__GNUC__) || defined(__CMSIS_COMPILER_H)
 static inline void _Critical_DisableIrq(void) { __disable_irq(); }
 static inline void _Critical_EnableIrq(void) { __enable_irq(); }
 
-static inline void _Critical_Enter(uint32_t * p_state)  { *p_state = __get_PRIMASK(); __disable_irq(); }
-static inline void _Critical_Exit(uint32_t state)       { __set_PRIMASK(state); }
+// extern uint32_t _Critical_InterruptDisableCount;
 
-#elif defined(CONFIG_CRITICAL_DISABLED)
-static inline void _Critical_DisableIrq(void) {}
-static inline void _Critical_EnableIrq(void) {}
-static inline void _Critical_Enter(uint32_t * p_state);
-static inline void _Critical_Exit(uint32_t state);
+// static inline void Critical_DisableIrq(void)
+// {
+//     _Critical_DisableIrq();
+//     _Critical_InterruptDisableCount++;
+// }
+
+// static inline void Critical_EnableIrq(void)
+// {
+//     if (_Critical_InterruptDisableCount > 0U)
+//     {
+//         _Critical_InterruptDisableCount--;
+//         if (_Critical_InterruptDisableCount <= 0U) { _Critical_EnableIrq(); }
+//     }
+// }
 #endif
 
-static inline void Critical_DisableIrq(void)
-{
-    _Critical_DisableIrq();
-    _Critical_InterruptDisableCount++;
-}
-
-static inline void Critical_EnableIrq(void)
-{
-    if (_Critical_InterruptDisableCount > 0U)
-    {
-        _Critical_InterruptDisableCount--;
-        if (_Critical_InterruptDisableCount <= 0U) { _Critical_EnableIrq(); }
-    }
-}
-
+// #include "External/CMSIS/Core/Include/cmsis_compiler.h"
+#ifdef __CMSIS_COMPILER_H
+static inline void _Critical_Enter(critical_state_t * p_state)  { *p_state = __get_PRIMASK(); __disable_irq(); }
+static inline void _Critical_Exit(critical_state_t state)       { __set_PRIMASK(state); }
+#else
+void _Critical_Enter(critical_state_t * p_state);
+void _Critical_Exit(critical_state_t state);
+#endif
 
 /******************************************************************************/
 /*
@@ -85,58 +79,10 @@ static inline void Critical_EnableIrq(void)
 typedef volatile atomic_flag critical_lock_t;
 
 static inline void Critical_InitLock(critical_lock_t * p_lock) { atomic_flag_clear(p_lock); }
-/* return true if signal is available */
-/* atomic_flag_test_and_set returns previous state */
+/* return true if signal is available - atomic_flag_test_and_set returns previous state */
 static inline bool Critical_AcquireLock(critical_lock_t * p_signal) { return (atomic_flag_test_and_set(p_signal) == false); }
 static inline void Critical_ReleaseLock(critical_lock_t * p_signal) { atomic_flag_clear(p_signal); }
 
 static inline void Critical_AwaitLock_Blocking(critical_lock_t * p_signal, void (*yield)(void)) { while (atomic_flag_test_and_set(p_signal) == true) { yield(); } }
 
-/******************************************************************************/
-/*
-    Unified Critical Section Interface
-*/
-/******************************************************************************/
-// typedef volatile atomic_flag critical_lock_t;
-// typedef uint32_t critical_state_t;
 
-// /* Special return value for failed TryEnter */
-// #define CRITICAL_STATE_FAILED  (~(critical_state_t)0)
-
-// static inline critical_state_t Critical_AwaitEnter(critical_lock_t * p_lock)
-// {
-// #ifdef CONFIG_CRITICAL_USE_MUTEX
-//     Critical_Lock(p_lock);
-//     return 0;
-// #else
-//     (void)p_lock;
-//     critical_state_t state = __get_PRIMASK();
-//     __disable_irq();
-//     return state;
-// #endif
-// }
-
-// static inline critical_state_t Critical_TryEnter(critical_lock_t * p_lock)
-// {
-// #ifdef CONFIG_CRITICAL_USE_MUTEX
-//     return Critical_TryLock(p_lock) ? 0 : CRITICAL_STATE_FAILED;
-// #else
-//     (void)p_lock;
-//     critical_state_t state = __get_PRIMASK();
-//     __disable_irq();
-//     return state;
-// #endif
-// }
-
-// static inline void Critical_Exit(critical_lock_t * p_lock, critical_state_t saved_state)
-// {
-// #ifdef CONFIG_CRITICAL_USE_MUTEX
-//     if (saved_state != CRITICAL_STATE_FAILED)
-//     {
-//         Critical_Unlock(p_lock);
-//     }
-// #else
-//     (void)p_lock;
-//     __set_PRIMASK(saved_state);
-// #endif
-// }

@@ -96,8 +96,6 @@ NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 #endif
 }
 
-
-
 NvMemory_Status_T SaveEntry_Blocking(const MotNvm_T * p_motNvm, const MotNvm_Entry_T * p_entry)
 {
     assert(p_entry != NULL);

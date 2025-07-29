@@ -31,6 +31,13 @@
 /******************************************************************************/
 #include "Accumulator.h"
 
+
+
+/******************************************************************************/
+/*
+    Init
+*/
+/******************************************************************************/
 // void Accumulator_InitFrom(Accumulator_T * p_accum, const Accumulator_Config_T * p_config)
 // {
 //     if (p_config != NULL) { memcpy(&p_accum->Config, p_config, sizeof(Accumulator_Config_T)); }
@@ -46,9 +53,8 @@ void Accumulator_InitFrom(Accumulator_T * p_accum)
 
 }
 
-
 /* Initialization */
-// static inline void Accumulator_Init(Accumulator_T * p_accum, int32_t coefficient, int8_t shift, int16_t limit_lower, int16_t limit_upper, int32_t initial_value)
+// void Accumulator_Init(Accumulator_T * p_accum, int32_t coefficient, int8_t shift, int16_t limit_lower, int16_t limit_upper, int32_t initial_value)
 // {
 //     p_accum->Coefficient = coefficient;
 //     p_accum->Shift = shift;
@@ -56,3 +62,53 @@ void Accumulator_InitFrom(Accumulator_T * p_accum)
 //     p_accum->LimitUpper = limit_upper;
 //     p_accum->State = initial_value << shift;
 // }
+
+
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+int32_t Accumulator_Feedback(Accumulator_T * p_accum, int16_t prev)
+{
+    int32_t error_shifted = (prev << p_accum->Shift) - p_accum->State;
+
+    // if (error_shifted != 0) { p_accum->State += (error_shifted * p_accum->Coefficient); }
+    if (error_shifted != 0) { Accumulator_Add(p_accum, (error_shifted * p_accum->Coefficient)); }
+
+    return (p_accum->State >> p_accum->Shift);
+}
+
+
+// int32_t Accumulator_Ramp(Accumulator_T * p_accum, int16_t target)
+// {
+
+// }
+
+/*  */
+int32_t _Accumulator_SatShifted(Accumulator_T * p_accum, int32_t output_shifted)
+{
+    int32_t output_unshifted = output_shifted >> p_accum->Shift;
+
+    if (output_unshifted > p_accum->LimitUpper)
+    {
+        p_accum->State = (int32_t)p_accum->LimitUpper << p_accum->Shift;
+        return p_accum->LimitUpper;
+    }
+    else if (output_unshifted < p_accum->LimitLower)
+    {
+        p_accum->State = (int32_t)p_accum->LimitLower << p_accum->Shift;
+        return p_accum->LimitLower;
+    }
+    else
+    {
+        p_accum->State = output_shifted;
+        return output_unshifted;
+    }
+}
+
+int32_t Accumulator_Add_Limited(Accumulator_T * p_accum, int16_t input)
+{
+    return _Accumulator_SatShifted(p_accum, _Accumulator_Add(p_accum, input));
+}

@@ -37,26 +37,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// typedef struct
-// {
-//     void (*Pattern)(void * p_context);
-//     void * p_Context;
-// }
-// Blinky_Pattern_T;
-
-typedef enum Blinky_Mode
-{
-    BLINKY_STATE_DISABLED,
-    BLINKY_STATE_ENABLED,
-}
-Blinky_Mode_T;
-
 struct Blinky;
 
 typedef struct Blinky_State
 {
-    Timer_T Timer;
-    Blinky_Mode_T Mode;
+    // Timer_T Timer;
+    // Blinky_Mode_T Mode;
     bool IsOn;
     uint32_t Index;
     uint32_t End;
@@ -72,19 +58,23 @@ typedef const struct Blinky
 {
     Pin_T PIN;
     Blinky_State_T * P_STATE; /* Pointer to runtime state */
-    const volatile uint32_t * P_TIMER;
+    const TimerT_T TIMER;
+    // const volatile uint32_t * P_TIMER;
 }
 Blinky_T;
 
-#define BLINKY_INIT(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)    \
+#define BLINKY_ALLOC(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)   \
 {                                                                   \
-    .PIN     = PIN_INIT(p_PinHal, PinId),                           \
-    .P_TIMER = p_TimerBase,                                         \
-    .P_STATE = &(Blinky_State_T){ .Timer = TIMER_INIT(p_TimerBase, TimerBaseFreq), }, \
+    .PIN = PIN_INIT(p_PinHal, PinId),                               \
+    .TIMER = TIMER_T_ALLOC(p_TimerBase, TimerBaseFreq),             \
+    .P_STATE = &(Blinky_State_T){ 0 },                               \
 }
 
-static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_DISABLED; }
-static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_ENABLED; }
+
+// static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_DISABLED; }
+// static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_ENABLED; }
+static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->TIMER.P_STATE->Mode = TIMER_MODE_DISABLED; }
+static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->TIMER.P_STATE->Mode = TIMER_MODE_STOPPED; }
 
 extern void Blinky_Init(const Blinky_T * p_blinky);
 extern void Blinky_Proc(const Blinky_T * p_blinky);

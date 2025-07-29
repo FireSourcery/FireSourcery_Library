@@ -34,7 +34,7 @@
 
 
 /*
-    Optionally a generic interface for selection
+    Optionally a generic buffer interface for selection
 */
 typedef struct Filter
 {

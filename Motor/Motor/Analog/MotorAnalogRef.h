@@ -69,15 +69,15 @@
 /* MotorRef_Adc/Board */
 typedef const volatile struct MotorAnalogRef_Board
 {
-    const uint32_t V_PHASE_R1;
-    const uint32_t V_PHASE_R2;
+    uint32_t V_PHASE_R1;
+    uint32_t V_PHASE_R2;
 
-    const uint16_t I_PHASE_R_BASE;
-    const uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
-    const uint16_t I_PHASE_GAIN;        /* x10 */
+    uint16_t I_PHASE_R_BASE;
+    uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
+    uint16_t I_PHASE_GAIN;        /* x10 */
 
-    const uint16_t V_RATED;             /* VSource Limit */
-    const uint16_t I_RATED_RMS;         /* */
+    uint16_t V_RATED;             /* VSource Limit */
+    uint16_t I_RATED_RMS;         /* */
 }
 MotorAnalogRef_Board_T;
 
@@ -100,11 +100,11 @@ static inline uint16_t MotorAnalogRef_GetIRatedRms(void) { return MOTOR_ANALOG_R
 /* */
 typedef const volatile struct MotorAnalogRef
 {
-    const uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
-    const uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
+    uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
+    uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
 
-    const uint16_t V_RATED_FRACT16;
-    const uint16_t I_RATED_PEAK_FRACT16;
+    uint16_t V_RATED_FRACT16;
+    uint16_t I_RATED_PEAK_FRACT16;
 }
 MotorAnalogRef_T;
 

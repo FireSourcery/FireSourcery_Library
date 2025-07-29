@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,298 +26,142 @@
 /*!
     @file   Timer.h
     @author FireSourcery
-    @brief  Elapsed time
-
+    @brief  Main Header
 */
 /******************************************************************************/
-#ifndef TIMER_UTILITY_H
-#define TIMER_UTILITY_H
-
-#include "Config.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum
+/******************************************************************************/
+/*!
+    @brief Embedded Template Library Pattern
+        "Stratified Static Polymorphism Pattern"
+
+    A 3-layer architecture providing compile-time polymorphism for embedded systems:
+
+    Layer 1 (_TimerT.h): Template Core
+    - Static polymorphism through function parameters
+    - Maximum performance, minimal overhead
+    - Building blocks for higher layers
+
+    Layer 2 (Timer_General.h): Runtime Interface
+    - Self-contained objects
+    - Familiar C++ style API
+    - Good performance for general use
+
+    Layer 3 (TimerT.h): Optimized Context
+    - Compile-time constants
+    - Zero-cost abstractions
+    - Hardware-optimized performance
+
+    @pattern Template Method + Policy-Based Design + Static Polymorphism
+    @performance Zero runtime overhead when using Layer 3
+    @usability Progressive complexity - choose appropriate layer
+*/
+/******************************************************************************/
+/* Timer Traits/Type */
+typedef const struct Timer_Base
+{
+    const volatile uint32_t * P_TIME; /* Base Register or Counter */
+    uint32_t FREQ; /* for conversions */
+    // const uint32_t TICKS_PER_MS;            // BaseFreq / 1000
+    // const uint32_t TICKS_PER_US;            // BaseFreq / 1000000
+    // const uint32_t MS_PER_TICK_SHIFT;       // Log2 optimization for /FREQ
+}
+Timer_Base_T;
+
+#define TIMER_BASE_INIT(p_BaseTimer, BaseFreq) { .P_TIME = p_BaseTimer, .FREQ = BaseFreq, }
+
+typedef enum Timer_Mode
 {
     TIMER_MODE_DISABLED,    /* Disable Timer */
     TIMER_MODE_STOPPED,     /* OneShot/MultiShot Complete */
     TIMER_MODE_PERIODIC,
     TIMER_MODE_ONE_SHOT,
-    TIMER_MODE_MULTI_SHOT,
+    TIMER_MODE_MULTI_SHOT,  /* N Repeat */
 }
 Timer_Mode_T;
 
-// typedef const struct Timer_Base
-// {
-//      const volatile uint32_t * P_BASE; /* Base Timer */
-//      uint32_t BASE_FREQ; /* for conversions */
-// }
-// Timer_Base_T;
-
-typedef struct Timer
+typedef struct Timer_State
 {
-    struct
-    {
-        const volatile uint32_t * const p_Base; /* Base Timer */
-        const uint32_t BaseFreq; /* for conversions */
-    };
+    uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
     uint32_t TimeRef;
-    uint32_t Period;                /* In Base Freq Ticks, 0 is Disable */
-
-    /* mode with disable */
-    bool IsOneShot;
-    Timer_Mode_T Mode;
-    uint32_t Counter; /* Repeat */
+    uint32_t Counter;   /* Repeat */
+    Timer_Mode_T Mode;  /* Mode with disable. */   // bool IsOneShot;
 }
-Timer_T;
+Timer_State_T;
 
-// typedef const struct Timer_Context
+// alternatively as a common def
+// typedef struct Timer
 // {
-//      const volatile uint32_t * P_BASE; /* Base Timer */
-//      uint32_t BASE_FREQ; /* for conversions */
-//      uint32_t DIVIDER;
-//      Timer_T * P_STATE; /* Pointer to Timer State */// Optional: can be NULL for dynamic binding
+//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. Unused for Static case */
+    // uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
+    // uint32_t TimeRef;
+    // uint32_t Counter;   /* Repeat */
+    // Timer_Mode_T Mode;  /* Mode with disable. */   // bool IsOneShot;
 // }
-// Timer_Context_T;
-
-#define TIMER_INIT(p_BaseValue, BaseFreqValue) { { .p_Base = p_BaseValue, .BaseFreq = BaseFreqValue, }, }
-
-// static inline uint32_t timer_elapsed_wrapped(const volatile uint32_t * p_timer, uint32_t timeRef)
-// {
-//     uint32_t time = *p_timer;
-//     return (time < timeRef) ? (UINT32_MAX - timeRef + time) : (time - timeRef);
-// }
-
-// static inline uint32_t timer_elapsed_direct(const volatile uint32_t * p_timer, uint32_t timeRef)
-// {
-//     return (*p_timer - timeRef);
-// }
-
-// bool Timer_Base_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state);
-// bool Timer_Poll(const Timer_Context_T * p_context);
+// Timer_T;
 
 /******************************************************************************/
-/*!
-    @brief    Timer Common
+/*
+    Stateless
 */
 /******************************************************************************/
-static inline uint32_t Timer_GetBase(const Timer_T * p_timer) { return *p_timer->p_Base; }
+/* or move as counter math */
+static inline uint32_t timer_elapsed_wrapped(uint32_t timer, uint32_t time_ref) { return (timer < time_ref) ? (UINT32_MAX - time_ref + timer) : (timer - time_ref); }
+static inline uint32_t timer_elapsed_direct(uint32_t timer, uint32_t time_ref) { return (timer - time_ref); }
 
-/* Only this functions casts away P_BASE const. Call with writable base only */
-static inline void Timer_ZeroBase(Timer_T * p_timer)
+static inline uint32_t timer_elapsed_of(uint32_t timer, uint32_t time_ref)
 {
-    *((volatile uint32_t *)p_timer->p_Base) = 0U;
-    p_timer->TimeRef = *p_timer->p_Base;
-}
-
-static inline uint32_t _Timer_GetElapsed_Wrapped(const Timer_T * p_timer)
-{
-    uint32_t time = *p_timer->p_Base;
-    return (time < p_timer->TimeRef) ? (UINT32_MAX - p_timer->TimeRef + time) : (time - p_timer->TimeRef);
-}
-
-/*  */
-static inline uint32_t Timer_GetElapsed(const Timer_T * p_timer)
-{
-#ifdef CONFIG_TIMER_OVERFLOW_WRAP /* Not necessary if overflow time is in days. e.g using millis */
-    return _Timer_GetElapsed_Wrapped(p_timer);
+#ifdef TIMER_OVERFLOW_WRAP /* Not necessary if overflow time is in days. e.g using millis */
+    return timer_elapsed_wrapped(timer, time_ref);
 #else
-    return (*p_timer->p_Base - p_timer->TimeRef);
+    return timer_elapsed_direct(timer, time_ref);
 #endif
 }
 
-/* has elapsed */
-static inline bool Timer_IsElapsed(Timer_T * p_timer) { return (Timer_GetElapsed(p_timer) >= p_timer->Period); }
+static inline bool timer_is_elapsed_of(uint32_t timer, uint32_t time_ref, uint32_t period) { return (timer_elapsed_of(timer, time_ref) >= period); }
 
-/*  */
-static inline void Timer_Restart(Timer_T * p_timer) { p_timer->TimeRef = *p_timer->p_Base; }
-
-/* Async processing */
-static inline void Timer_RestartIfElapsed(Timer_T * p_timer) { if (Timer_IsElapsed(p_timer) == true) { Timer_Restart(p_timer); } }
-
-/*
-
-*/
-static inline void Timer_SetPeriod(Timer_T * p_timer, uint32_t ticks) { p_timer->Period = ticks; }
-
-static inline void Timer_StartPeriod(Timer_T * p_timer, uint32_t ticks) { Timer_SetPeriod(p_timer, ticks); Timer_Restart(p_timer); }
-
-/*
-    Unit Conversions
-*/
-static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer)  { return Timer_GetElapsed(p_timer) / p_timer->BaseFreq; }
-/* overflow at 1 hour for millis, 3 min for 20khz */
-static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer)   { return Timer_GetElapsed(p_timer) * 1000U / p_timer->BaseFreq; }
-
-static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
+static inline bool timer_poll_elapsed(uint32_t * p_time_ref, uint32_t timer, uint32_t time_ref, uint32_t period)
 {
-    uint32_t ticks = Timer_GetElapsed(p_timer);
-    return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->BaseFreq * 1000000U) : (ticks * 1000000U / p_timer->BaseFreq);
+    if (timer_elapsed_of(timer, time_ref) >= period) { *p_time_ref = timer; return true; } else { return false; }
 }
 
-/* freq != 0U, freq < BaseFreq */
-static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq)              { p_timer->Period = p_timer->BaseFreq / freq; }
-static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis)   { p_timer->Period = p_timer->BaseFreq * millis / 1000U; }
-static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) { Timer_SetPeriod_Millis(p_timer, millis); Timer_Restart(p_timer); }
-
-/******************************************************************************/
-/*!
-    Timer Both Modes
-*/
-/******************************************************************************/
-static inline bool Timer_Poll(Timer_T * p_timer)
-{
-    bool isElapsed = (p_timer->Period > 0U) && (Timer_IsElapsed(p_timer) == true);
-    if (isElapsed == true)
-    {
-        if (p_timer->IsOneShot == true) { p_timer->Period = 0U; }
-        else { Timer_Restart(p_timer); }
-    }
-    return isElapsed;
-}
-
-static inline void Timer_Init(Timer_T * p_timer)                            { p_timer->IsOneShot = false; p_timer->Period = 0U; }
-static inline void Timer_InitPeriodic(Timer_T * p_timer, uint32_t ticks)    { p_timer->IsOneShot = false; p_timer->Period = ticks;}
-static inline void Timer_InitOneShot(Timer_T * p_timer)                     { p_timer->IsOneShot = true; p_timer->Period = 0U; }
-static inline void Timer_SetPeriodic(Timer_T * p_timer)                     { p_timer->IsOneShot = false; }
-static inline void Timer_SetOneShot(Timer_T * p_timer)                      { p_timer->IsOneShot = true; }
-
-static inline void Timer_StartOneShot(Timer_T * p_timer, uint32_t ticks)    { p_timer->IsOneShot = true; Timer_StartPeriod(p_timer, ticks); }
-static inline void Timer_StartPeriodic(Timer_T * p_timer, uint32_t ticks)   { p_timer->IsOneShot = false; Timer_StartPeriod(p_timer, ticks); }
-static inline void Timer_Stop(Timer_T * p_timer)                            { p_timer->IsOneShot = true; p_timer->Period = 0U; }
-
-static inline bool Timer_IsOneShot(const Timer_T * p_timer)                 { return p_timer->IsOneShot; }
-static inline bool Timer_IsPeriodic(const Timer_T * p_timer)                { return !p_timer->IsOneShot; }
-
-/******************************************************************************/
-/*!
-    With Mode + Disable
-*/
-/******************************************************************************/
-// static inline bool Timer_Generic_Poll(Timer_T * p_timer)
+// static inline uint32_t timer_elapsed(const volatile uint32_t * p_timer, uint32_t time_ref) { return timer_elapsed_of(*p_timer, time_ref); }
+// static inline bool timer_is_elapsed(const volatile uint32_t * p_timer, uint32_t time_ref, uint32_t period) { return (timer_is_elapsed_of(*p_timer, time_ref, period)); }
+// static inline bool timer_poll_elapsed(const volatile uint32_t * p_timer, uint32_t * p_time_ref, uint32_t period)
 // {
-//     bool isElapsed;
-//     // switch (p_timer->Mode)
-//     // {
-//     //     case TIMER_MODE_DISABLED: break;
-//     //     case TIMER_MODE_STOPPED: break;
-//     //     case TIMER_MODE_PERIODIC:
-//     //         isElapsed = Timer_IsElapsed(p_timer);
-//     //         if (isElapsed == true) { Timer_Restart(p_timer); }
-//     //         break;
-//     //     case TIMER_MODE_ONE_SHOT:
-//     //         isElapsed = Timer_IsElapsed(p_timer);
-//     //         if (isElapsed == true) { p_timer->Mode = TIMER_MODE_STOPPED; }
-//     //         break;
-//     //     case TIMER_MODE_MULTI_SHOT:
-//     //         isElapsed = Timer_IsElapsed(p_timer);
-//     //         if (isElapsed == true)
-//     //         {
-//     //             if (p_timer->Counter > 0U) { p_timer->Counter--; }
-//     //             else { p_timer->Mode = TIMER_MODE_STOPPED; }
-//     //         }
-//     //         break;
-//     //     default: break;
-//     // }
-
-//     switch (p_timer->Mode)
-//     {
-//         case TIMER_MODE_DISABLED: break;
-//         case TIMER_MODE_STOPPED: break;
-//         default: isElapsed = Timer_IsElapsed(p_timer); /* intentional fallthrough */
-//         case TIMER_MODE_ONE_SHOT: /* p_timer->Counter = 1 */
-//         case TIMER_MODE_MULTI_SHOT:
-//             if (isElapsed == true)
-//             {
-//                 if (p_timer->Counter > 0U) { p_timer->Counter--; }
-//                 else { p_timer->Mode = TIMER_MODE_STOPPED; }
-//             }
-//         case TIMER_MODE_PERIODIC: if (isElapsed == true) { Timer_Restart(p_timer); }
-//     }
-
-//     return isElapsed;
+//     uint32_t time = *p_timer;
+//     if (timer_elapsed_of(time, *p_time_ref) >= period) { *p_time_ref = time; return true; } else { return false; }
 // }
 
-/* module handle disable */
-// static inline void Timer_StartPeriodic(Timer_T * p_timer, uint32_t ticks)
-// {
-//     if (p_timer->Mode != TIMER_MODE_DISABLED) { p_timer->Mode = TIMER_MODE_PERIODIC; Timer_StartPeriod(p_timer, ticks); } /* set mode */
-// }
+static inline bool timer_counter_is_aligned(uint32_t counter, uint32_t mask) { return ((counter & mask) == 0UL); }
+static inline bool timer_counter_poll_aligned(uint32_t * p_counter, uint32_t mask) { *p_counter++; return timer_counter_is_aligned(*p_counter, mask); }
 
-/* Disables Start */
-// static inline void Timer_Disable(Timer_T * p_timer) { p_timer->Mode = TIMER_MODE_DISABLED; }
-// static inline Timer_Mode_T Timer_GetMode(Timer_T * p_timer) { return p_timer->Mode; }
+// static inline bool timer_counter_tick(uint32_t * p_counter)
 
 /******************************************************************************/
-/*!
-    Periodic Only Timer
-*/
-/******************************************* ***********************************/
-static inline bool Timer_Periodic_Poll(Timer_T * p_timer)
-{
-    // bool isElapsed = Timer_IsElapsed(p_timer);
-    // if (isElapsed == true) { Timer_Restart(p_timer); }
-    // return isElapsed;
-    return Timer_IsElapsed(p_timer) ? ({ Timer_Restart(p_timer); true; }) : false;
-}
-
-static inline void Timer_Periodic_Init(Timer_T * p_timer, uint32_t ticks) { p_timer->IsOneShot = false; p_timer->Period = ticks; }
-
-
-/******************************************************************************/
-/*!
-    OneShot Only Timer
+/*
+    Common Query
 */
 /******************************************************************************/
-static inline bool Timer_OneShot_Poll(Timer_T * p_timer)
-{
-    // bool isElapsed = (p_timer->Period > 0U) && (Timer_IsElapsed(p_timer) == true);
-    // if (isElapsed == true) { p_timer->Period = 0U; }
-    // return isElapsed;
-    return ((p_timer->Period > 0U) && (Timer_IsElapsed(p_timer) == true)) ? ({ p_timer->Period = 0U; true; }) : false;
-    // return ((p_timer->Mode == TIMER_MODE_ONE_SHOT) && Timer_IsElapsed(p_timer)) ? ({ p_timer->Mode == TIMER_MODE_STOPPED; true; }) : false;
-}
+static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; }
+static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 
-static inline void Timer_OneShot_Init(Timer_T * p_timer) { p_timer->IsOneShot = true; p_timer->Period = 0U; }
+/* Polling with general mode only */
+static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
+static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
+static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }
+static inline bool Timer_IsOneShot(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_ONE_SHOT); }
+
 
 /******************************************************************************/
-/*!
-    MultiShot Timer
+/*
+    Export
 */
 /******************************************************************************/
-static inline bool Timer_MultiShot_Poll(Timer_T * p_timer)
-{
-    bool isElapsed = ((p_timer->Period > 0U) && Timer_Periodic_Poll(p_timer));
-    if (isElapsed == true)
-    {
-        if (p_timer->Counter > 0U) { p_timer->Counter--; }
-        else { p_timer->Period = 0U; }
-    }
-    return isElapsed;
+#include "Timer_General.h"
+#include "TimerT.h"
 
-    // bool isElapsed = false;
-    // switch (p_timer->Mode)
-    // {
-    //     case TIMER_MODE_DISABLED: break;
-    //     case TIMER_MODE_STOPPED: break;
 
-    //     case TIMER_MODE_ONE_SHOT:
-    //     case TIMER_MODE_MULTI_SHOT:
-    //         if (Timer_IsElapsed(p_timer) == true)
-    //         {
-    //             if (p_timer->Counter > 0U) { p_timer->Counter--; }
-    //             else { p_timer->Mode = TIMER_MODE_STOPPED; }
-    //             Timer_Restart(p_timer);
-    //             isElapsed = true;/* true per tick */
-    //         }
-    //         break;
-    //     default: break;
-    // }
-    // return isElapsed;
-}
 
-// extern bool Timer_Poll(Timer_T * p_timer);
-// extern bool Timer_Periodic_Poll(Timer_T * p_timer);
-// extern bool Timer_OneShot_Poll(Timer_T * p_timer);
-
-#endif /* TIMER_H */

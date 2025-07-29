@@ -56,6 +56,7 @@ typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const
 /* alternatively */
 // typedef void(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor, AngleSpeed_T * p_state);
 // typedef int(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor);
+
 /* inline vtable */
 // typedef void(*RotorSensor_InstanceProc_T)(void);
 
@@ -100,6 +101,7 @@ RotorSensor_Config_T;
 /* altneratively move with feedbackstate */
 typedef struct RotorSensor_State
 {
+    // AngleSpeed_T AngleSpeed; /* Angle and Speed State */
     angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
     angle16_t ElectricalSpeed_DegPerCycle;  /* Electrical Speed, ElectricalDeltaAngle. < 32768 by SpeedRated */
                                             // ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
@@ -188,6 +190,12 @@ static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_senso
 */
 static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->VERIFY_CALIBRATION(p_sensor); }
 static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config) { p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config); }
+
+/******************************************************************************/
+/*!
+    Base class helpers
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!

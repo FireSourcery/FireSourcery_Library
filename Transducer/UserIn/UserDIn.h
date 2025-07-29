@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Transducer/Debounce/Debounce.h"
+#include "Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
 #include <stdbool.h>

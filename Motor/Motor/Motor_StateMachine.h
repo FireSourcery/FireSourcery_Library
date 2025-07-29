@@ -33,32 +33,20 @@
 #include "Motor.h"
 
 #include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine.h"
+#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
 
 #include "System/Critical/Critical.h"
 #include "System/SysTime/SysTime.h"
 
-#ifndef MOTOR_STATE_MACHINE_INIT_WAIT
-#define MOTOR_STATE_MACHINE_INIT_WAIT (1500U) /* For 1S polling to run twice */
-#endif
 
 /******************************************************************************/
 /*
-    Motor State Machine Inputs
+    Motor State Machine
 */
 /******************************************************************************/
-typedef enum Motor_State_Input
-{
-    MSM_INPUT_FAULT,            /* Toggle Fault */
-    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Active/Release/Hold */
-    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T] flags */
-    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Start/Stop */
-    MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
-    MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
-    // MSM_INPUT_USER_BUFFER,
-}
-Motor_State_Input_T;
-
+#ifndef MOTOR_STATE_MACHINE_INIT_WAIT
+#define MOTOR_STATE_MACHINE_INIT_WAIT (1500U) /* For 1S polling to run twice */
+#endif
 
 /******************************************************************************/
 /*!
@@ -85,13 +73,32 @@ typedef enum Motor_StateId
     MSM_STATE_ID_INIT,
     MSM_STATE_ID_STOP,      /* 0 speed. */
     MSM_STATE_ID_PASSIVE,   /* without feedback */
-    MSM_STATE_ID_RUN,       /* Feedback Loop */
     // MSM_STATE_ID_FREEWHEEL,
+    MSM_STATE_ID_RUN,       /* Feedback Loop */
     MSM_STATE_ID_OPEN_LOOP,
     MSM_STATE_ID_CALIBRATION,
     MSM_STATE_ID_FAULT,
 }
 Motor_StateId_T;
+
+/******************************************************************************/
+/*
+    Motor State Machine Inputs
+*/
+/******************************************************************************/
+typedef enum Motor_State_Input
+{
+    MSM_INPUT_FAULT,            /* Toggle Fault */
+    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Active/Release/Hold */
+    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T] flags */
+    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Start/Stop */
+    MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
+    MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
+    // MSM_INPUT_USER_BUFFER,
+}
+Motor_State_Input_T;
+
+
 
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;
@@ -105,10 +112,10 @@ extern const State_T MOTOR_STATE_FAULT;
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 /*!
-    @param p_MotorContext const Motor_T*
-    @param MotorActive Motor_Active_T
+    @param p_MotorContext [const Motor_T *]
+    @param MotorActive [Motor_State_T]
 */
-#define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorActive) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorActive).StateMachine))
+#define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorState) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorState).StateMachine))
 
 /* Wrap for interface */
 /* Does not include substates */
@@ -127,6 +134,19 @@ static inline bool Motor_StateMachine_IsConfig(const Motor_T * p_motor)
     // return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION);
     // || MSM_STATE_ID_FAULT || MSM_STATE_ID_CALIBRATION
 }
+
+/******************************************************************************/
+/*
+    Handle set using StateId
+*/
+/******************************************************************************/
+// caller handle check set state
+// static inline bool Motor_Config_IsConfigState(const Motor_State_T * p_motor)
+// {
+//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
+//     // || MSM_STATE_ID_FAULT
+// }
+
 
 /******************************************************************************/
 /*

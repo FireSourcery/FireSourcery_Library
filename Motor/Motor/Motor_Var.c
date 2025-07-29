@@ -1,5 +1,3 @@
-
-
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -111,37 +109,6 @@ int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId)
     IO
 */
 /******************************************************************************/
-/*
-    Runtime Tuning version
-*/
-int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_VarConfig_Pid_T varId)
-{
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_motor->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_motor->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_motor->PidSpeed);    break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_motor->PidIq);       break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16:    value = PID_GetKp_Fixed16(&p_motor->PidIq);       break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16:    value = PID_GetKi_Fixed16(&p_motor->PidIq);       break;
-    }
-    return value;
-}
-
-void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_VarConfig_Pid_T varId, int varValue)
-{
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue); PID_SetKp_Fixed16(&p_motor->PidId, varValue); break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue); PID_SetKi_Fixed16(&p_motor->PidId, varValue); break;
-    }
-}
-
 /* call handle switch logic */
 // void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue)
 // {
@@ -166,7 +133,7 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
     {
         case MOTOR_VAR_USER_SET_POINT:          value = Motor_User_GetSetPoint(p_motor->P_MOTOR_STATE);                break;
 
-        case MOTOR_VAR_USER_DIRECTION:          value = Motor_User_GetDirectionSign(p_motor->P_MOTOR_STATE);           break;
+        case MOTOR_VAR_USER_DIRECTION:          value = Motor_User_GetDirection(p_motor->P_MOTOR_STATE);           break;
         case MOTOR_VAR_USER_ROTARY_DIRECTION:   value = Motor_User_GetRotaryDirection(p_motor->P_MOTOR_STATE);         break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      value = Motor_User_GetFeedbackMode(p_motor->P_MOTOR_STATE).Value;      break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:       value = Motor_User_GetPhaseState(p_motor);                        break;
@@ -189,7 +156,7 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
 
         /* Calls to StateMachine use full context */
         /* StateMachine validates input */
-        case MOTOR_VAR_USER_DIRECTION:        Motor_User_ApplyDirectionSign(p_motor, math_sign(varValue));              break;
+        case MOTOR_VAR_USER_DIRECTION:        Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)math_sign(varValue));              break;
         case MOTOR_VAR_USER_ROTARY_DIRECTION: Motor_User_ApplyRotaryDirection(p_motor, (Motor_Direction_T)varValue);    break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:    Motor_User_SetFeedbackMode_Cast(p_motor, varValue);                       break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:     Motor_User_ActivatePhaseOutput(p_motor, (Phase_Output_T)varValue);        break;
@@ -217,13 +184,12 @@ void _Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId
     }
 }
 
-
 /******************************************************************************/
 /*
     Config
 */
 /******************************************************************************/
-int _Motor_VarConfig_Calibration_Get(const Motor_State_T * p_motor, Motor_VarConfig_Calibration_T varId)
+int _Motor_Var_ConfigCalibration_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId)
 {
     int value = 0;
     switch (varId)
@@ -243,7 +209,7 @@ int _Motor_VarConfig_Calibration_Get(const Motor_State_T * p_motor, Motor_VarCon
     return value;
 }
 
-void _Motor_VarConfig_Calibration_Set(Motor_State_T * p_motor, Motor_VarConfig_Calibration_T varId, int varValue)
+void _Motor_Var_ConfigCalibration_Set(Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId, int varValue)
 {
     switch (varId)
     {
@@ -261,17 +227,17 @@ void _Motor_VarConfig_Calibration_Set(Motor_State_T * p_motor, Motor_VarConfig_C
     }
 }
 
-int _Motor_VarConfig_CalibrationAlias_Get(const Motor_State_T * p_motor, Motor_VarConfig_CalibrationAlias_T varId)
+int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId)
 {
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED_RATED_RPM:               value = Motor_Config_GetSpeedRated_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:               value = Motor_Config_GetSpeedVRef_Rpm(p_motor);              break;
-        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:         value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
-        case MOTOR_VAR_SPEED_V_SVPWM_REF_RPM:         value = Motor_Config_GetSpeedVSvpwmRef_Rpm(p_motor);         break;
+        case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_Config_GetSpeedRated_Rpm(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_Config_GetSpeedVRef_Rpm(p_motor);              break;
+        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+        case MOTOR_VAR_SPEED_V_SVPWM_REF_RPM:           value = Motor_Config_GetSpeedVSvpwmRef_Rpm(p_motor);         break;
         // case MOTOR_VAR_SPEED_RATED_ERPM:              value = Motor_GetSpeedRatedRef_Erpm(p_motor);                break;
-        case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:     value = Motor_GetSpeedVRef_DegPerCycle(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVRef_DegPerCycle(p_motor);             break;
         // case MOTOR_VAR_SPEED_V_MATCH_REF_DEG_PER_CYCLE: value = Motor_GetSpeedVMatchRef_DegPerCycle(p_motor);       break;
         case MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE: value = Motor_GetSpeedVSvpwmRef_DegPerCycle(p_motor);       break;
         case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_GetVSpeedRated_Fract16(p_motor);       break;
@@ -279,7 +245,7 @@ int _Motor_VarConfig_CalibrationAlias_Get(const Motor_State_T * p_motor, Motor_V
     return value;
 }
 
-int _Motor_VarConfig_Actuation_Get(const Motor_State_T * p_motor, Motor_VarConfig_Actuation_T varId)
+int _Motor_Var_ConfigActuation_Get(const Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId)
 {
     int value = 0;
     switch (varId)
@@ -306,7 +272,7 @@ int _Motor_VarConfig_Actuation_Get(const Motor_State_T * p_motor, Motor_VarConfi
     return value;
 }
 
-void _Motor_VarConfig_Actuation_Set(Motor_State_T * p_motor, Motor_VarConfig_Actuation_T varId, int varValue)
+void _Motor_Var_ConfigActuation_Set(Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId, int varValue)
 {
     switch (varId)
     {
@@ -328,7 +294,7 @@ void _Motor_VarConfig_Actuation_Set(Motor_State_T * p_motor, Motor_VarConfig_Act
 }
 
 
-int _Motor_VarConfig_Pid_Get(const Motor_State_T * p_motor, Motor_VarConfig_Pid_T varId)
+int _Motor_Var_ConfigPid_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId)
 {
     int value = 0;
     switch (varId)
@@ -347,7 +313,7 @@ int _Motor_VarConfig_Pid_Get(const Motor_State_T * p_motor, Motor_VarConfig_Pid_
 
 
 /* Coeffcients in 9.7 */
-void _Motor_VarConfig_Pid_Set(Motor_State_T * p_motor, Motor_VarConfig_Pid_T varId, int varValue)
+void _Motor_Var_ConfigPid_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
     switch (varId)
     {
@@ -378,15 +344,48 @@ void _Motor_VarConfig_Pid_Set(Motor_State_T * p_motor, Motor_VarConfig_Pid_T var
 /*
 
 */
-void _Motor_VarConfig_Cmd_Call(const Motor_T * p_motor, Motor_VarConfig_Cmd_T varId, int varValue)
+void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T varId, int varValue)
 {
     switch (varId)
     {
-        case MOTOR_VAR_CONFIG_RUN_ADC_CALIBRATION:  Motor_Analog_Calibrate(p_motor);        break;
-        case MOTOR_VAR_CONFIG_RUN_VIRTUAL_HOME:     Motor_Calibration_StartHome(p_motor);   break;
+        case MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION:  Motor_Analog_Calibrate(p_motor);        break;
+        case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME:     Motor_Calibration_StartHome(p_motor);   break;
         // case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME:  Motor_Encoder_StartHoming(p_motor);     break;
         // case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME:  Motor_Calibration_StartHome(p_motor);   break;
         // case ENCODER_CONFIG_RUN_HOMING:          Motor_Encoder_StartHoming(p_motor);     break;
+    }
+}
+
+/*
+    Runtime Tuning version
+*/
+int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId)
+{
+    int value = 0;
+    switch (varId)
+    {
+        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_motor->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_motor->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_motor->PidSpeed);    break;
+        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_motor->PidIq);       break;
+        case MOTOR_VAR_PID_CURRENT_KP_FIXED16:    value = PID_GetKp_Fixed16(&p_motor->PidIq);       break;
+        case MOTOR_VAR_PID_CURRENT_KI_FIXED16:    value = PID_GetKi_Fixed16(&p_motor->PidIq);       break;
+    }
+    return value;
+}
+
+void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
+{
+    // if (!Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_CALIBRATION)) { return; }
+
+    switch (varId)
+    {
+        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
+        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
+        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
+        case MOTOR_VAR_PID_CURRENT_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue); PID_SetKp_Fixed16(&p_motor->PidId, varValue); break;
+        case MOTOR_VAR_PID_CURRENT_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue); PID_SetKi_Fixed16(&p_motor->PidId, varValue); break;
     }
 }
 
@@ -421,156 +420,13 @@ int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId)
     return value;
 }
 
-/*
-    Submodule wrap
-*/
-/* SensorCapture */
-// int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId) { return Motor_Var_Rotor_Get(p_motor->p_ActiveSensor, varId); }
-// int _Motor_VarConfig_HeatMonitor_Get(const Motor_State_T * p_motor, HeatMonitor_ConfigId_T varId) { return HeatMonitor_ConfigId_Get(&p_motor->Thermistor, varId); }
-// void _Motor_VarConfig_HeatMonitor_Set(Motor_State_T * p_motor, HeatMonitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->Thermistor, varId, varValue); }
-// extern void _Motor_VarSensorCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
-
-/******************************************************************************/
-/*
-    Input - Access control using State Flags
-*/
-/******************************************************************************/
-// alternatively use substate
-static int Var_PidTuning_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_PidTuning_Get(p_motor, varId); }
-static void Var_PidTuning_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_Var_PidTuning_Set(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T _MOTOR_VAR_ACCESS_PID_TUNING =
-{
-    .GET_AT = (get_at_t)Var_PidTuning_Get,
-    .SET_AT = (set_at_t)Var_PidTuning_Set,
-    .TEST_SET = NULL,
-};
-
-static int Var_UserControl_Get(const Motor_T * p_motor, int varId) { return _Motor_Var_UserControl_Get(p_motor, varId); }
-static void Var_UserControl_Set(const Motor_T * p_motor, int varId, int varValue) { _Motor_Var_UserControl_Set(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T _MOTOR_VAR_ACCESS_USER_CONTROL =
-{
-    .GET_AT = (get_at_t)Var_UserControl_Get,
-    .SET_AT = (set_at_t)Var_UserControl_Set,
-    .TEST_SET = NULL,
-};
-
-static void Var_StateCmd_Set(const Motor_T * p_motor, int varId, int varValue) { _Motor_Var_StateCmd_Set(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T _MOTOR_VAR_ACCESS_STATE_CMD =
-{
-    .GET_AT = NULL,
-    .SET_AT = (set_at_t)Var_StateCmd_Set,
-    .TEST_SET = NULL,
-};
-
-
-void Motor_Var_PidTuning_Set(const Motor_T * p_motor, Motor_VarConfig_Pid_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_PID_TUNING, varId, varValue); }
-void Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_USER_CONTROL, varId, varValue); }
-void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_STATE_CMD, varId, varValue); }
-
-void Motor_Var_DisableInput(Motor_State_T * p_motor) { _VarAccess_DisableSet(&p_motor->VarAccessInputState); }
-void Motor_Var_EnableInput(Motor_State_T * p_motor) { _VarAccess_EnableSet(&p_motor->VarAccessInputState); }
-
-/******************************************************************************/
-/*
-    Config - alternatively check state in handler
-*/
-/******************************************************************************/
-static int VarConfig_Calibration_Get(const Motor_State_T * p_motor, int varId) { return _Motor_VarConfig_Calibration_Get(p_motor, varId); }
-static int VarConfig_CalibrationAlias_Get(const Motor_State_T * p_motor, int varId) { return _Motor_VarConfig_CalibrationAlias_Get(p_motor, varId); }
-static int VarConfig_Actuation_Get(const Motor_State_T * p_motor, int varId) { return _Motor_VarConfig_Actuation_Get(p_motor, varId); }
-static int VarConfig_Pid_Get(const Motor_State_T * p_motor, int varId) { return _Motor_VarConfig_Pid_Get(p_motor, varId); }
-
-static void VarConfig_Calibration_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_VarConfig_Calibration_Set(p_motor, varId, varValue); }
-static void VarConfig_Actuation_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_VarConfig_Actuation_Set(p_motor, varId, varValue); }
-static void VarConfig_Pid_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_VarConfig_Pid_Set(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION =
-{
-    .GET_AT = (get_at_t)VarConfig_Calibration_Get,
-    .SET_AT = (set_at_t)VarConfig_Calibration_Set,
-    .TEST_SET = (test_t)Motor_Config_IsConfigState,
-};
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION_ALIAS =
-{
-    .GET_AT = (get_at_t)VarConfig_CalibrationAlias_Get,
-    .SET_AT = NULL,
-    .TEST_SET = NULL,
-};
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_ACTUATION =
-{
-    .GET_AT = (get_at_t)VarConfig_Actuation_Get,
-    .SET_AT = (set_at_t)VarConfig_Actuation_Set,
-    .TEST_SET = (test_t)Motor_Config_IsConfigState,
-};
-
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_PID =
-{
-    .GET_AT = (get_at_t)VarConfig_Pid_Get,
-    .SET_AT = (set_at_t)VarConfig_Pid_Set,
-    .TEST_SET = (test_t)Motor_Config_IsConfigState,
-};
-
-
-/******************************************************************************/
-/*
-    Config Cmds
-*/
-/******************************************************************************/
-static void VarConfig_Cmd_Call(const Motor_T * p_motor, int varId, int varValue) { _Motor_VarConfig_Cmd_Call(p_motor, varId, varValue); }
-
-const VarAccess_VTable_T MOTOR_VAR_CONFIG_ROUTINE =
-{
-    .GET_AT = NULL,
-    .SET_AT = (set_at_t)VarConfig_Cmd_Call,
-    .TEST_SET = (test_t)Motor_StateMachine_IsConfig, /* Check [StopState] to transition to [CalibrationState] */
-};
-
-
-/******************************************************************************/
-/*
-    Output - optionally access control
-*/
-/******************************************************************************/
-static int Var_UserOut_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_UserOut_Get(p_motor, varId); }
-static int Var_Sensor_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_Rotor_Get(p_motor, varId); }
-static int Var_Foc_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_Foc_Get(p_motor, varId); }
-
-const VarAccess_VTable_T MOTOR_VAR_OUT_USER =
-{
-    .GET_AT = (get_at_t)Var_UserOut_Get,
-    .SET_AT = NULL,
-    .TEST_SET = NULL,
-};
-
-const VarAccess_VTable_T MOTOR_VAR_OUT_FOC =
-{
-    .GET_AT = (get_at_t)Var_Foc_Get,
-    .SET_AT = NULL,
-    .TEST_SET = NULL,
-};
-
-const VarAccess_VTable_T MOTOR_VAR_OUT_ROTOR =
-{
-    .GET_AT = (get_at_t)Var_Sensor_Get,
-    .SET_AT = NULL,
-    .TEST_SET = NULL,
-};
-
-
 /******************************************************************************/
 /*
     [VarType]
-
     Typed Per SensorId handled by Motor_Sensor.h/c
 */
 /******************************************************************************/
-int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId)
+int Motor_VarType_Control_Get(const Motor_T * p_motor, Motor_VarType_Control_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
 
@@ -579,9 +435,7 @@ int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId
         case MOTOR_VAR_TYPE_USER_OUT:           return _Motor_Var_UserOut_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_ROTOR_OUT:          return _Motor_Var_Rotor_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_FOC_OUT:            return _Motor_Var_Foc_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:      return _Motor_Var_PidTuning_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_USER_CONTROL:       return _Motor_Var_UserControl_Get(p_motor, varId);
-        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:   return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_STATE_CMD:          return 0;
     }
     return 0;
@@ -589,7 +443,7 @@ int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId
 
 // access control use on/off flag, or caller handle
 // mapping to statemachine requires multiple substate.
-void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
+void Motor_VarType_Control_Set(const Motor_T * p_motor, Motor_VarType_Control_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) { return; }
 
@@ -598,11 +452,9 @@ void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
         case MOTOR_VAR_TYPE_USER_OUT:            break;
         case MOTOR_VAR_TYPE_ROTOR_OUT:           break;
         case MOTOR_VAR_TYPE_FOC_OUT:             break;
-        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:    break;
-            /* Access Control on */
-        case MOTOR_VAR_TYPE_USER_CONTROL:       Motor_Var_UserControl_Set(p_motor, varId, varValue);    break;
-        case MOTOR_VAR_TYPE_STATE_CMD:          Motor_Var_StateCmd_Set(p_motor, varId, varValue);       break;
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:      Motor_Var_PidTuning_Set(p_motor, varId, varValue);      break;
+        /* Access Control on */
+        case MOTOR_VAR_TYPE_USER_CONTROL:       _Motor_Var_UserControl_Set(p_motor, varId, varValue);    break;
+        case MOTOR_VAR_TYPE_STATE_CMD:          _Motor_Var_StateCmd_Set(p_motor, varId, varValue);       break;
     }
 }
 
@@ -612,13 +464,10 @@ int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typ
 
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         return _Motor_VarConfig_Calibration_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   return _Motor_VarConfig_CalibrationAlias_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           return _Motor_VarConfig_Actuation_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CONFIG_PID:                 return _Motor_VarConfig_Pid_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CONFIG_HEAT_MONITOR:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
-        case MOTOR_VAR_TYPE_CONFIG_THERMISTOR:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
-        case MOTOR_VAR_TYPE_CONFIG_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
+        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         return _Motor_Var_ConfigCalibration_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   return _Motor_Var_ConfigCalibrationAlias_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           return _Motor_Var_ConfigActuation_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_CONFIG_PID:                 return _Motor_Var_ConfigPid_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_CONFIG_CMD:                 return 0; // Write only, no read access
         case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:          return 0; // Write only, no read access
     }
@@ -628,19 +477,49 @@ int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typ
 void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) { return; }
-    if (!Motor_StateMachine_IsConfig(p_motor)) { return; }  //optionally as calibration substate
+    if (!Motor_StateMachine_IsConfig(p_motor)) { return; }  // optionally as calibration substate
 
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         _Motor_VarConfig_Calibration_Set(p_motor->P_MOTOR_STATE, varId, varValue);                  break;
-        case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           _Motor_VarConfig_Actuation_Set(p_motor->P_MOTOR_STATE, varId, varValue);                    break;
-        case MOTOR_VAR_TYPE_CONFIG_PID:                 _Motor_VarConfig_Pid_Set(p_motor->P_MOTOR_STATE, varId, varValue);                          break;
-        case MOTOR_VAR_TYPE_CONFIG_HEAT_MONITOR:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue);                  break;
-        case MOTOR_VAR_TYPE_CONFIG_THERMISTOR:          HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue);       break;
-        case MOTOR_VAR_TYPE_CONFIG_CMD:                 _Motor_VarConfig_Cmd_Call(p_motor, varId, varValue);                                         break;
+        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         _Motor_Var_ConfigCalibration_Set(p_motor->P_MOTOR_STATE, varId, varValue);                  break;
+        case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           _Motor_Var_ConfigActuation_Set(p_motor->P_MOTOR_STATE, varId, varValue);                    break;
+        case MOTOR_VAR_TYPE_CONFIG_PID:                 _Motor_Var_ConfigPid_Set(p_motor->P_MOTOR_STATE, varId, varValue);                          break;
+        case MOTOR_VAR_TYPE_CONFIG_CMD:                 _Motor_Var_ConfigCmd_Call(p_motor, varId, varValue);                                        break;
         case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:          Motor_Sensor_CalibrationCmd_Call(p_motor, varId, varValue);                                 break;
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   break; // Read only, no set access
-        case MOTOR_VAR_TYPE_CONFIG_BOARD_REF:           break; // Read only, no set access
+    }
+}
+
+int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId)
+{
+    if (p_motor == NULL) { return 0; }
+
+    switch (typeId)
+    {
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
+        case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
+        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor->P_MOTOR_STATE, varId);
+    }
+    return 0;
+}
+
+void Motor_VarType_SubModule_Set(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue)
+{
+    if (p_motor == NULL) { return; }
+
+    switch (typeId)
+    {
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:       break;
+        case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:
+            if (Motor_StateMachine_IsConfig(p_motor)) { HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue); }
+            break;
+        case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:
+            if (Motor_StateMachine_IsConfig(p_motor)) { HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue); }
+            break;
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:          _Motor_Var_PidTuning_Set(p_motor->P_MOTOR_STATE, varId, varValue);      break;
+        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:       break; // Read only, no set access
     }
 }
 
@@ -649,24 +528,171 @@ void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T ty
     Wrap
 */
 /******************************************************************************/
-int Motor_VarType_SensorState_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId)
+int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId)
 {
     if (p_motor == NULL) return 0;
 
-    return RotorSensor_VarType_Get(&p_motor->SENSOR_TABLE, typeId, varId);
+    switch (typeId)
+    {
+        // case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId); break;
+        case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);  break;
+        case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId);              break;
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);     break;
+        // case MOTOR_VAR_TYPE_SIN_COS: return SinCos_VarId_Get(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId); break;
+        // case MOTOR_VAR_TYPE_SENSORLESS: return Sensorless_VarId_Get(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId); break;
+        default: return 0; // or some error value
+    }
+    // RotorSensor_Of(   p_table,   id) tood typed
 }
 
-int Motor_VarType_SensorConfig_Get(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId)
-{
-    if (p_motor == NULL) return 0;
-
-    return RotorSensor_VarTypeConfig_Get(&p_motor->SENSOR_TABLE, typeId, varId);
-}
-
-void Motor_VarType_SensorConfig_Set(const Motor_T * p_motor, RotorSensor_Id_T typeId, int varId, int varValue)
+void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) return;
     if (!Motor_StateMachine_IsConfig(p_motor)) return;
 
-    RotorSensor_VarTypeConfig_Set(&p_motor->SENSOR_TABLE, typeId, varId, varValue);
+    switch (typeId)
+    {
+        case MOTOR_VAR_TYPE_HALL_CONFIG:      Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);            break;
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);   break;
+        case MOTOR_VAR_TYPE_HALL_STATE:                  break;
+        case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
+        // case ROTOR_SENSOR_ID_SENSORLESS: Sensorless_ConfigId_Set(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId, varValue); break;
+        // case ROTOR_SENSOR_ID_SIN_COS:    SinCos_ConfigId_Set(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId, varValue);    break;
+        default: break;
+    }
 }
+
+
+// /******************************************************************************/
+// /*
+//     Input - Access control using State Flags
+// */
+// /******************************************************************************/
+// // alternatively use substate
+// static int Var_PidTuning_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_PidTuning_Get(p_motor, varId); }
+// static void Var_PidTuning_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_Var_PidTuning_Set(p_motor, varId, varValue); }
+
+// const VarAccess_VTable_T MOTOR_VAR_ACCESS_PID_TUNING =
+// {
+//     .GET_AT = (get_field_t)Var_PidTuning_Get,
+//     .SET_AT = (set_field_t)Var_PidTuning_Set,
+//     .TEST_SET = NULL,
+// };
+
+// static int Var_UserControl_Get(const Motor_T * p_motor, int varId) { return _Motor_Var_UserControl_Get(p_motor, varId); }
+// static void Var_UserControl_Set(const Motor_T * p_motor, int varId, int varValue) { _Motor_Var_UserControl_Set(p_motor, varId, varValue); }
+
+// const VarAccess_VTable_T MOTOR_VAR_ACCESS_USER_CONTROL =
+// {
+//     .GET_AT = (get_field_t)Var_UserControl_Get,
+//     .SET_AT = (set_field_t)Var_UserControl_Set,
+//     .TEST_SET = NULL,
+// };
+
+// static void Var_StateCmd_Set(const Motor_T * p_motor, int varId, int varValue) { _Motor_Var_StateCmd_Set(p_motor, varId, varValue); }
+
+// const VarAccess_VTable_T MOTOR_VAR_ACCESS_STATE_CMD =
+// {
+//     .GET_AT = NULL,
+//     .SET_AT = (set_field_t)Var_StateCmd_Set,
+//     .TEST_SET = NULL,
+// };
+
+
+// void Motor_Var_PidTuning_Set(const Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_PID_TUNING, varId, varValue); }
+// void Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_USER_CONTROL, varId, varValue); }
+// void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue) { _VarAccess_SetAt(&p_motor->VAR_ACCESS.ACCESS_STATE_CMD, varId, varValue); }
+
+// void Motor_Var_DisableInput(Motor_State_T * p_motor) { _VarAccess_DisableSet(&p_motor->VarAccessInputState); }
+// void Motor_Var_EnableInput(Motor_State_T * p_motor) { _VarAccess_EnableSet(&p_motor->VarAccessInputState); }
+
+// /******************************************************************************/
+// /*
+//     Config - alternatively check state in handler
+// */
+// /******************************************************************************/
+// static int VarConfig_Calibration_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_ConfigCalibration_Get(p_motor, varId); }
+// static int VarConfig_CalibrationAlias_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_ConfigCalibrationAlias_Get(p_motor, varId); }
+// static int VarConfig_Actuation_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_ConfigActuation_Get(p_motor, varId); }
+// static int VarConfig_Pid_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_ConfigPid_Get(p_motor, varId); }
+
+// static void VarConfig_Calibration_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_Var_ConfigCalibration_Set(p_motor, varId, varValue); }
+// static void VarConfig_Actuation_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_Var_ConfigActuation_Set(p_motor, varId, varValue); }
+// static void VarConfig_Pid_Set(Motor_State_T * p_motor, int varId, int varValue) { _Motor_Var_ConfigPid_Set(p_motor, varId, varValue); }
+
+// const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION =
+// {
+//     .GET_AT = (get_field_t)VarConfig_Calibration_Get,
+//     .SET_AT = (set_field_t)VarConfig_Calibration_Set,
+//     .TEST_SET = (test_t)Motor_Config_IsConfigState,
+// };
+
+// const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION_ALIAS =
+// {
+//     .GET_AT = (get_field_t)VarConfig_CalibrationAlias_Get,
+//     .SET_AT = NULL,
+//     .TEST_SET = NULL,
+// };
+
+// const VarAccess_VTable_T MOTOR_VAR_CONFIG_ACTUATION =
+// {
+//     .GET_AT = (get_field_t)VarConfig_Actuation_Get,
+//     .SET_AT = (set_field_t)VarConfig_Actuation_Set,
+//     .TEST_SET = (test_t)Motor_Config_IsConfigState,
+// };
+
+
+// const VarAccess_VTable_T MOTOR_VAR_CONFIG_PID =
+// {
+//     .GET_AT = (get_field_t)VarConfig_Pid_Get,
+//     .SET_AT = (set_field_t)VarConfig_Pid_Set,
+//     .TEST_SET = (test_t)Motor_Config_IsConfigState,
+// };
+
+
+// /******************************************************************************/
+// /*
+//     Config Cmds
+// */
+// /******************************************************************************/
+// static void VarConfig_Cmd_Call(const Motor_T * p_motor, int varId, int varValue) { _Motor_Var_ConfigCmd_Call(p_motor, varId, varValue); }
+
+// const VarAccess_VTable_T MOTOR_VAR_CONFIG_CMD =
+// {
+//     .GET_AT = NULL,
+//     .SET_AT = (set_field_t)VarConfig_Cmd_Call,
+//     .TEST_SET = (test_t)Motor_StateMachine_IsConfig, /* Check [StopState] to transition to [CalibrationState] */
+// };
+
+
+// /******************************************************************************/
+// /*
+//     Output - optionally access control
+// */
+// /******************************************************************************/
+// static int Var_UserOut_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_UserOut_Get(p_motor, varId); }
+// static int Var_Sensor_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_Rotor_Get(p_motor, varId); }
+// static int Var_Foc_Get(const Motor_State_T * p_motor, int varId) { return _Motor_Var_Foc_Get(p_motor, varId); }
+
+// const VarAccess_VTable_T MOTOR_VAR_OUT_USER =
+// {
+//     .GET_AT = (get_field_t)Var_UserOut_Get,
+//     .SET_AT = NULL,
+//     .TEST_SET = NULL,
+// };
+
+// const VarAccess_VTable_T MOTOR_VAR_OUT_FOC =
+// {
+//     .GET_AT = (get_field_t)Var_Foc_Get,
+//     .SET_AT = NULL,
+//     .TEST_SET = NULL,
+// };
+
+// const VarAccess_VTable_T MOTOR_VAR_OUT_ROTOR =
+// {
+//     .GET_AT = (get_field_t)Var_Sensor_Get,
+//     .SET_AT = NULL,
+//     .TEST_SET = NULL,
+// };
+
+

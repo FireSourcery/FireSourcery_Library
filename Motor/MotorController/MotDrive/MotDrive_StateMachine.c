@@ -189,7 +189,7 @@ static State_T * Common_InputReverse(const MotDrive_T * p_motDrive)
     return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
 }
 
-static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
+static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 {
     State_T * p_nextState = NULL;
 
@@ -224,12 +224,12 @@ static void Park_Proc(const MotDrive_T * p_motDrive)
     if (MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) == false) { p_motDrive->P_MOT_DRIVE_STATE->Status = MOT_DRIVE_STATUS_WARNING; }
 }
 
-// static State_T * Park_InputBlocking(const MotDrive_T * p_motDrive, state_input_value_t lockId)
+// static State_T * Park_InputBlocking(const MotDrive_T * p_motDrive, state_value_t lockId)
 // {
 //     return ((MotDrive_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER) ? &STATE_LOCK : NULL;
 // }
 
-static State_T * Park_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
+static State_T * Park_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 {
     State_T * p_nextState = NULL;
     switch ((MotDrive_Direction_T)direction)
@@ -322,7 +322,7 @@ static void Drive_Proc(const MotDrive_T * p_motDrive)
 /* detect on cmd edge */
 
 /* Externally detect */
-static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_input_value_t mode)
+static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_value_t mode)
 {
     /* optionally use prevCmd or substate to handle feedback only or activeOutputWith feedback */
     // start control from disabled output onyl,
@@ -337,7 +337,7 @@ static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_input_
     return NULL;
 }
 
-static State_T * Drive_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
+static State_T * Drive_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 {
     State_T * p_nextState = NULL;
     switch((MotDrive_Direction_T)direction)
@@ -453,7 +453,7 @@ static void Neutral_Proc(const MotDrive_T * p_motDrive)
     }
 }
 
-static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_input_value_t direction)
+static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 {
     State_T * p_nextState = NULL;
 
@@ -470,7 +470,7 @@ static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_inp
     return p_nextState;
 }
 
-static State_T * Neutral_InputBrake(const MotDrive_T * p_motDrive, state_input_value_t mode)
+static State_T * Neutral_InputBrake(const MotDrive_T * p_motDrive, state_value_t mode)
 {
     switch ((MotDrive_Cmd_T)mode)
     {

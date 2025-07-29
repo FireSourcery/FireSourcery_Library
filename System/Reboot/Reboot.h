@@ -31,7 +31,7 @@
 #ifndef REBOOT_H
 #define REBOOT_H
 
-// #ifdef CONFIG_SYSTEM_MCU_ARM
+// #ifdef __CMSIS_COMPILER_H
 
 // #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 

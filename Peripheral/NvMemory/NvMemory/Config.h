@@ -37,12 +37,6 @@
     #define CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
 #endif
 
-/* For placing functions into ram section */
-#if defined(CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION)
-#else
-    #warning 'Undefined CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION'
-    #define CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION
-    // #define CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section(".code_ram")))
-#endif
+
 
 #endif

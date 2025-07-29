@@ -125,6 +125,9 @@
 // //     Motor_ResetUnitsEncoder(p_motor);
 // // }
 
+// angle resolution 65536/cpr
+// el angle per tick = 65536/cpr * polepairs
+// counts per electrical revolution = cpr/polepairs
 // // /* Common, Set after PolePairs */
 // // void Motor_ResetUnitsEncoder(const Motor_T * p_motor)
 // // {
@@ -221,7 +224,7 @@
 // */
 // /******************************************************************************/
 // // aligning assuming phase a has not been found.
-// // static void OpenLoop_EncoderAlignZero(const Motor_T * p_motor, state_input_value_t null)
+// // static void OpenLoop_EncoderAlignZero(const Motor_T * p_motor, state_value_t null)
 // // {
 // //     Motor_CommutationModeFn_Call(p_motor, Motor_FOC_StartStartUpAlign, NULL);
 // // }
@@ -393,7 +396,7 @@
 // };
 
 
-// static State_T * Cmd_Align(const Motor_T * p_motor, state_input_value_t null)
+// static State_T * Cmd_Align(const Motor_T * p_motor, state_value_t null)
 // {
 //     // Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
 //     // Phase_WriteDuty_Fract16(&p_motor->PHASE, Motor_GetVAlign_Duty( p_motor), 0U, 0U);
@@ -403,30 +406,30 @@
 // /* individual state test */
 // void Motor_Encoder_StartAlignZero(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
+//     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
-// static State_T * Cmd_ValidateAlign(const Motor_T * p_motor, state_input_value_t null)
+// static State_T * Cmd_ValidateAlign(const Motor_T * p_motor, state_value_t null)
 // {
 //     return &VALIDATE_ALIGN;
 // }
 
 // void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
+//     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 
-// static State_T * Cmd_ValidateClosedLoop(const Motor_T * p_motor, state_input_value_t null)
+// static State_T * Cmd_ValidateClosedLoop(const Motor_T * p_motor, state_value_t null)
 // {
 //     return &VALIDATE_CLOSED_LOOP;
 // }
 
 // void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
+//     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
@@ -521,7 +524,7 @@
 //     return &START_UP;
 // }
 
-// State_T * StartUpChain(const Motor_T * p_motor, state_input_value_t null)
+// State_T * StartUpChain(const Motor_T * p_motor, state_value_t null)
 // {
 //     if (p_motor->Speed_Fract16 == 0U)    return &START_UP;
 //     else return NULL;
@@ -529,7 +532,7 @@
 
 // void Motor_Encoder_StartUpChain(const Motor_T * p_motor)
 // {
-//     static const State_TransitionInput_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
+//     static const StateMachine_TransitionInput_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
 // }
 
@@ -585,16 +588,16 @@
 
 
 
-// int32_t _Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
+// int32_t _Motor_Var_ConfigEncoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
 
-// void _Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
+// void _Motor_Var_ConfigEncoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
-// int Motor_VarConfig_Encoder_Get(const Motor_State_T * p_motor, int varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
-// void Motor_VarConfig_Encoder_Set(Motor_State_T * p_motor, int varId, int varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
+// int Motor_Var_ConfigEncoder_Get(const Motor_State_T * p_motor, int varId) { return _Encoder_ConfigId_Get(&p_motor->ENCODER, varId); }
+// void Motor_Var_ConfigEncoder_Set(Motor_State_T * p_motor, int varId, int varValue) { _Encoder_ConfigId_Set(&p_motor->ENCODER, varId, varValue); }
 
 // const VarAccess_VTable_T MOTOR_VAR_CONFIG_ENCODER =
 // {
-//     .GET_AT = (get_at_t)Motor_VarConfig_Encoder_Get,
-//     .SET_AT = (set_at_t)Motor_VarConfig_Encoder_Set,
+//     .GET_AT = (get_field_t)Motor_Var_ConfigEncoder_Get,
+//     .SET_AT = (set_field_t)Motor_Var_ConfigEncoder_Set,
 //     .TEST_SET = (test_t)Motor_Config_IsConfigState,
 // };

@@ -90,9 +90,7 @@ static inline void HAL_ADC_AbortConversion(HAL_ADC_T * p_hal) { p_hal->SC1 |= AD
 */
 static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_hal)
 {
-    p_hal->SC1 &= ~ADC_SC1_COCO_MASK;
-    p_hal->SC1 &= ~ADC_SC1_AIEN_MASK;
-    p_hal->SC1 |= ADC_SC1_ADCH_MASK;
+    p_hal->SC1 = (p_hal->SC1 & ~(ADC_SC1_COCO_MASK | ADC_SC1_AIEN_MASK)) | ADC_SC1_ADCH_MASK;
 }
 
 static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
@@ -129,8 +127,8 @@ static inline void HAL_ADC_Init(HAL_ADC_T * p_hal)
     /*!< 12-bit conversion (N = 12) >*/
     /*!< Divide ration = 1, and clock rate = Input clock. >*/
     // p_hal->SC3 = ADC_SC3_ADICLK(2U) | ADC_SC3_MODE(2U) | ADC_SC3_ADIV(0U);
-    // tmp32 |= ADC_SC3_ADLPC_MASK; enableLowPower
-    // tmp32 |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
+    //   |= ADC_SC3_ADLPC_MASK; enableLowPower
+    //   |= ADC_SC3_ADLSMP_MASK; enableLongSampleTime
 }
 
 #endif

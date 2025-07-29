@@ -47,11 +47,12 @@
 // #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"
-#include "Transducer/Voltage/VMonitor.h"
-#include "Transducer/Thermistor/HeatMonitor.h"
+#include "Transducer/Monitor/Voltage/VMonitor.h"
+#include "Transducer/Monitor/Heat/HeatMonitor.h"
 
 #include "Peripheral/Analog/Analog.h"
 #include "Peripheral/Analog/Analog_ADC.h"
+#include "Peripheral/Analog/Analog_Conversion.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
@@ -154,22 +155,6 @@ typedef union MotorController_InitFlags
 MotorController_InitFlags_T;
 
 
-/* Buffered Input passthrough for statemachine */
-/* optionally generalize as motor input interface */
-typedef struct MotorController_CmdInput
-{
-    uint8_t MotorId;
-    int16_t CmdValue; /* [-32768:32767] */
-    sign_t Direction;
-    Motor_FeedbackMode_T FeedbackMode;
-    Phase_Output_T ControlState;
-    uint16_t SpeedLimit;
-    uint16_t ILimit;
-    // uint16_t RampOnOff;
-    bool IsUpdated;
-}
-MotorController_CmdInput_T;
-
 typedef struct MotorController_Config
 {
     /*
@@ -207,14 +192,14 @@ MotorController_Config_T;
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
-    Timer_T TimerMillis;
-    uint32_t MainDividerCounter;
-    uint32_t TimerDividerCounter;
-    uint32_t StateCounter;
-    uint32_t ControlCounter;
+    // Timer_T TimerMillis;
+    // uint32_t MainDividerCounter;
+    // uint32_t TimerDividerCounter;
+    uint32_t StateCounter; /* calibration */
+    uint32_t ControlCounter; /* pwm */
 
-    MotorController_CmdInput_T CmdInput; /* Buffered Input for StateMachine */
-    MotorController_CmdInput_T CmdInputPrev; /* Previous buffered Input for StateMachine */
+    Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
+    Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
 
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
@@ -249,10 +234,12 @@ typedef const struct MotorController
     /*
         Peripheral Thread mapping context
     */
-    const Analog_ADC_T * P_ANALOG_ADCS; uint8_t ADC_COUNT; /* Analog ADCs */
+    Analog_ADC_T * P_ANALOG_ADCS;
+    uint8_t ADC_COUNT; /* Analog ADCs */
 
     /* Simultaneous active serial */
-    const Serial_T * P_SERIALS; uint8_t SERIAL_COUNT;
+    Serial_T * P_SERIALS;
+    uint8_t SERIAL_COUNT;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * P_CAN_BUS;
@@ -265,20 +252,19 @@ typedef const struct MotorController
     MotAnalogUser_T ANALOG_USER;
     MotAnalogUser_Conversion_T ANALOG_USER_CONVERSIONS; /* AnalogUser Conversions */
     UserDIn_T OPT_DIN;     /* Configurable input */
-
-    /* Output */
     Blinky_T BUZZER;
     Blinky_T METER;
     Pin_T RELAY_PIN;
 
     /*  */
-    Socket_T * P_PROTOCOLS; uint8_t PROTOCOL_COUNT; /* Sockets */
+    Socket_T * P_PROTOCOLS;
+    uint8_t PROTOCOL_COUNT; /* Sockets */
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
 
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
-    MotMotors_T MOTORS; /* MOTOR_CONTEXTS */
+    MotMotors_T MOTORS;
     LimitArray_T MOT_SPEED_LIMITS;
     LimitArray_T MOT_I_LIMITS;
 
@@ -290,16 +276,17 @@ typedef const struct MotorController
     VMonitor_Context_T V_ANALOG; /* V Analog Sensors ~5V */
 
     /* State */
+    TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
     MotDrive_T MOT_DRIVE; /* Drive */
     MotorController_State_T * P_ACTIVE; /* Pointer to the Runtime buffer */
 
     /* Thread dividers, these should compile time optimze. alternatively as ifndef def  */
     /* In Pow2 - 1 */
-    uint32_t ANALOG_USER_DIVIDER;
-    uint32_t MAIN_DIVIDER_10;
-    uint32_t MAIN_DIVIDER_1000;
-    uint32_t TIMER_DIVIDER_1000;
+    // uint32_t ANALOG_USER_DIVIDER;
+    // uint32_t MAIN_DIVIDER_10;
+    // uint32_t MAIN_DIVIDER_1000;
+    // uint32_t TIMER_DIVIDER_1000;
 
     Version_T MAIN_VERSION;
     const MotorController_Config_T * P_NVM_CONFIG;
@@ -340,7 +327,7 @@ static inline void MotorController_DisableBuzzer(const MotorController_T * p_con
 
 // buzzer state
 // on Init poll
-// if(p_mc->InitFlags.Word != 0U) { wait = true; }   // indirectly poll inputs
+// if(p_mc->InitFlags.Word != 0U) { wait = true; }
 //     if((p_mc->Config.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
 //     {
 //         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;

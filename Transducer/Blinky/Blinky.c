@@ -41,7 +41,8 @@ void Blinky_Init(const Blinky_T * p_blinky)
 {
     Pin_Output_Init(&p_blinky->PIN);
     Pin_Output_Off(&p_blinky->PIN);
-    Timer_Init(&p_blinky->P_STATE->Timer);
+    // TimerT_Init(&p_blinky->TIMER);
+    // TimerT_Init(&p_blinky->TIMER);
     p_blinky->P_STATE->PatternFunction = NULL;
 }
 
@@ -55,39 +56,69 @@ static void Pattern_PeriodicToggle(const Blinky_T * p_blinky);
 void Blinky_Proc(const Blinky_T * p_blinky)
 {
     Blinky_State_T * p_state = p_blinky->P_STATE;
-
-    switch (p_blinky->P_STATE->Mode)
+    if (TimerT_Modal_Poll(&p_blinky->TIMER) == true)
     {
-        case BLINKY_STATE_DISABLED:  break;
-        case BLINKY_STATE_ENABLED:
-            if (Timer_Poll(&p_state->Timer) == true)
-            {
-                if (Timer_IsOneShot(&p_state->Timer) == true) /* Timer is in OneShot Mode */
+        switch (p_blinky->TIMER.P_STATE->Mode)
+        {
+            case TIMER_MODE_DISABLED:  break;
+            case TIMER_MODE_STOPPED: // todo with counter mode
+                if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
                 {
-                    if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
-                    {
-                        Pattern_PeriodicToggle(p_blinky);
-                        Timer_Restart(&p_state->Timer);
-                        p_state->Index++;
-                    }
-                    else
-                    {
-                        // _Blinky_Toggle(p_state);
-                        Pin_Output_Off(&p_blinky->PIN); /* Turn off */
-                        Timer_StartPeriodic(&p_state->Timer, p_state->OffTime);  /* Restore Periodic */
-                    }
+                    Pattern_PeriodicToggle(p_blinky);
+                    TimerT_RestartOneShot(&p_blinky->TIMER);
+                    p_state->Index++;
                 }
-                else /* Timer is in Periodic Mode */
+                else
                 {
-                    if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
+                    Pin_Output_Off(&p_blinky->PIN); /* Turn off */
+                    TimerT_StartPeriodic(&p_blinky->TIMER, p_state->OffTime);  /* Restore Periodic */
                 }
-            }
-            break;
-
-        default:
-            break;
+                break;
+            case TIMER_MODE_ONE_SHOT:
+                break;
+            case TIMER_MODE_PERIODIC:
+                if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
+                break;
+            default:
+                break;
+        }
     }
 }
+
+// void Blinky_Proc(const Blinky_T * p_blinky)
+// {
+//     Blinky_State_T * p_state = p_blinky->P_STATE;
+//     switch (p_blinky->P_STATE->Mode)
+//     {
+//         case BLINKY_STATE_DISABLED:  break;
+//         case BLINKY_STATE_ENABLED:
+//             if (Timer_Poll(&p_blinky->TIMER) == true)
+//             {
+//                 if (Timer_IsOneShot(&p_blinky->TIMER) == true) /* Timer is in OneShot Mode */
+//                 {
+//                     if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
+//                     {
+//                         Pattern_PeriodicToggle(p_blinky);
+//                         Timer_Restart(&p_blinky->TIMER);
+//                         p_state->Index++;
+//                     }
+//                     else
+//                     {
+//                         // _Blinky_Toggle(p_state);
+//                         Pin_Output_Off(&p_blinky->PIN); /* Turn off */
+//                         Timer_StartPeriodic(&p_blinky->TIMER, p_state->OffTime);  /* Restore Periodic */
+//                     }
+//                 }
+//                 else /* Timer is in Periodic Mode */
+//                 {
+//                     if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
+//                 }
+//             }
+//             break;
+//         default:
+//             break;
+//     }
+// }
 
 void Blinky_On(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = true; Pin_Output_High(&p_blinky->PIN); }
 void Blinky_Off(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = false; Pin_Output_Low(&p_blinky->PIN); }
@@ -96,7 +127,7 @@ void Blinky_Toggle(const Blinky_T * p_blinky) { if (p_blinky->P_STATE->IsOn == t
 
 void Blinky_Stop(const Blinky_T * p_blinky)
 {
-    Timer_Stop(&p_blinky->P_STATE->Timer);
+    TimerT_Stop(&p_blinky->TIMER);
     Blinky_Off(p_blinky);
     p_blinky->P_STATE->PatternFunction = NULL;
 }
@@ -105,14 +136,14 @@ void Blinky_Stop(const Blinky_T * p_blinky)
 void Blinky_Blink_OnOff(const Blinky_T * p_blinky, uint32_t duration)
 {
     Blinky_On(p_blinky);
-    Timer_StartOneShot(&p_blinky->P_STATE->Timer, duration);
+    TimerT_StartOneShot(&p_blinky->TIMER, duration);
 }
 
 /* Toggle */
 void Blinky_Blink_Toggle(const Blinky_T * p_blinky, uint32_t duration)
 {
     _Blinky_Toggle(p_blinky);
-    Timer_StartOneShot(&p_blinky->P_STATE->Timer, duration);
+    TimerT_StartOneShot(&p_blinky->TIMER, duration);
 }
 
 void Blinky_Blink(const Blinky_T * p_blinky, uint32_t onTime)
@@ -141,12 +172,12 @@ static void Pattern_PeriodicToggle(const Blinky_T * p_blinky)
     if (p_blinky->P_STATE->IsOn == true)
     {
         Blinky_Off(p_blinky);
-        Timer_SetPeriod(&p_blinky->P_STATE->Timer, p_blinky->P_STATE->OffTime);
+        TimerT_SetPeriod(&p_blinky->TIMER, p_blinky->P_STATE->OffTime);
     }
     else
     {
         Blinky_On(p_blinky);
-        Timer_SetPeriod(&p_blinky->P_STATE->Timer, p_blinky->P_STATE->OnTime);
+        TimerT_SetPeriod(&p_blinky->TIMER, p_blinky->P_STATE->OnTime);
     }
 }
 
@@ -155,7 +186,7 @@ void Blinky_StartPeriodic(const Blinky_T * p_blinky, uint32_t onTime, uint32_t o
     p_blinky->P_STATE->OnTime = onTime;
     p_blinky->P_STATE->OffTime = offTime;
     p_blinky->P_STATE->PatternFunction = Pattern_PeriodicToggle;
-    Timer_StartPeriodic(&p_blinky->P_STATE->Timer, offTime);
+    TimerT_StartPeriodic(&p_blinky->TIMER, offTime);
 }
 
 /******************************************************************************/

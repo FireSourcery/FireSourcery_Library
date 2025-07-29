@@ -47,7 +47,7 @@ static void Servo_Proc(MotorController_T * p_mc)
 #endif
 }
 
-static State_T * Servo_InputExit(MotorController_T * p_mc, state_input_value_t _void)
+static State_T * Servo_InputExit(MotorController_T * p_mc, state_value_t _void)
 {
     (void)_void;
     MotMotors_ForEach(&p_mc->CONST.MOTORS, Motor_User_Release);
@@ -55,7 +55,7 @@ static State_T * Servo_InputExit(MotorController_T * p_mc, state_input_value_t _
 }
 
 /*! @param[in] cmdValue int16  */
-static State_T * Servo_InputCmd(MotorController_T * p_mc, state_input_value_t cmdValue)
+static State_T * Servo_InputCmd(MotorController_T * p_mc, state_value_t cmdValue)
 {
 #if defined(CONFIG_MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
     MotorController_ServoExtern_SetCmd(p_mc, cmdValue);
@@ -67,7 +67,7 @@ static State_T * Servo_InputCmd(MotorController_T * p_mc, state_input_value_t cm
     return NULL;
 }
 
-// static State_T * Servo_InputDirection(MotorController_T * p_mc, state_input_value_t direction)
+// static State_T * Servo_InputDirection(MotorController_T * p_mc, state_value_t direction)
 // {
 //     State_T * p_nextState = NULL;
 //     switch((MotDrive_Direction_T)direction)
@@ -81,7 +81,7 @@ static State_T * Servo_InputCmd(MotorController_T * p_mc, state_input_value_t cm
 //     return p_nextState;
 // }
 
-static State_T * Servo_InputServo(MotorController_T * p_mc, state_input_value_t servoMode)
+static State_T * Servo_InputServo(MotorController_T * p_mc, state_value_t servoMode)
 {
     State_T * p_nextState = NULL;
     switch ((MotorController_ServoMode_T)servoMode)

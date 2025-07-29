@@ -122,5 +122,34 @@ static inline int16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
     Extern
 */
 /******************************************************************************/
-extern void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef);
+
+/******************************************************************************/
+/*!
+    Q0.16 and Q1.15
+    signed/unsigned 16-bit precision, using 32-bits for intermediate calculations
+
+    [x0:xRef] => [0:65536] => [y0_Units:yRef_Units]
+        direct shift back is Q16.16
+    f(x0) = y0_Fixed == 0
+    f(xRef) = 65535
+*/
+/******************************************************************************/
+/*!
+    Map [x0, xRef] to [0, 65535]
+*/
+static void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef)
+{
+    Linear_Fixed_Init(p_linear, 16U, x0, xRef);
+}
+
+// void Linear_Fixed_InitAsFract16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// {
+//     Linear_Fixed_Init(p_linear, 15U, x0, xRef);
+// }
+
+// void Linear_Fixed_InitAsPercent16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// {
+//     Linear_Fixed_Init(p_linear, 16U, x0, xRef);
+// }
+
 

@@ -30,111 +30,41 @@
 /******************************************************************************/
 #include "Serial.h"
 
+
+#ifndef SERIAL_ENTER_CRITICAL
+#define SERIAL_ENTER_CRITICAL(p_serial) _Critical_DisableIrq()
+#endif
+#ifndef SERIAL_EXIT_CRITICAL
+#define SERIAL_EXIT_CRITICAL(p_serial) _Critical_EnableIrq()
+#endif
+
+#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
+    #define _ENTER_CRITICAL(local,...)   local
+    #define _EXIT_CRITICAL(local,...)    local
+#elif  defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+    #define _ENTER_CRITICAL(local,...)   __VA_ARGS__
+    #define _EXIT_CRITICAL(local,...)    __VA_ARGS__
+#else
+    #define _ENTER_CRITICAL(local,...)
+    #define _EXIT_CRITICAL(local,...)
+#endif
+
 /*
     Single threaded buffer read/write only need disable channel ISR
     if interrupt occurs after checking sw buffer, it will run to completion,
     sw write occur in between hw read/write
+    Multithread disable all interrupts for entire duration
+    Enter critical section before checking sw buffer
 */
-/*
-    Multithread always disable all interrupts for entire duration
-    must enter critical section before checking sw buffer
-*/
-static inline void EnterCriticalTx(Serial_T * p_serial)
-{
-#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    (void)p_serial;
-    _Critical_DisableIrq();
-#endif
-}
-
-static inline void ExitCriticalTx(Serial_T * p_serial)
-{
-    (void)p_serial;
-#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    /* EnableTxInterrupt determine by checking of buffer */
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    _Critical_EnableIrq();
-#endif
-}
-
-static inline void EnterCriticalRx(Serial_T * p_serial)
-{
-#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    (void)p_serial;
-    _Critical_DisableIrq();
-#endif
-}
-
-static inline void ExitCriticalRx(Serial_T * p_serial)
-{
-#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL) || defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    (void)p_serial;
-    _Critical_EnableIrq();
-#endif
-}
-
-
-/*
-    Selection between mutex and critical
-*/
-static inline bool AcquireCriticalTx(Serial_T * p_serial)
-{
-#if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    return Critical_AcquireLock(&p_serial->TxMutex);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
-    (void)p_serial;
-    _Critical_DisableIrq();
-    return true;
-#elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL);
-    return true;
-#endif
-}
-
-static inline void ReleaseCriticalTx(Serial_T * p_serial)
-{
-#if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseLock(&p_serial->TxMutex);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
-    (void)p_serial;
-    _Critical_EnableIrq();
-#elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    (void)p_serial;
-    /* EnableTxInterrupt determine by checking of buffer */
-#endif
-}
-
-static inline bool AcquireCriticalRx(Serial_T * p_serial)
-{
-#if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    return Critical_AcquireLock(&p_serial->RxMutex);
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
-    (void)p_serial;
-    _Critical_DisableIrq();
-    return true;
-#elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL);
-    return true;
-#endif
-}
-
-static inline void ReleaseCriticalRx(Serial_T * p_serial)
-{
-#if        defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-    Critical_ReleaseLock(&p_serial->RxMutex);
-#elif    defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
-    (void)p_serial;
-    _Critical_EnableIrq();
-#elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
-    HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL);
-#endif
-}
+static inline void EnterCriticalTx(Serial_T * p_serial) { _ENTER_CRITICAL(HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL), SERIAL_ENTER_CRITICAL(p_serial)); }
+/* EnableTxInterrupt determine by checking of buffer */
+static inline void ExitCriticalTx(Serial_T * p_serial) { _EXIT_CRITICAL((void)p_serial, SERIAL_EXIT_CRITICAL(p_serial)); }
+static inline void EnterCriticalRx(Serial_T * p_serial) { _ENTER_CRITICAL(HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL), SERIAL_ENTER_CRITICAL(p_serial)); }
+static inline void ExitCriticalRx(Serial_T * p_serial) { _EXIT_CRITICAL(HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL), SERIAL_EXIT_CRITICAL(p_serial)); }
+static inline bool AcquireCriticalTx(Serial_T * p_serial) { _ENTER_CRITICAL(HAL_Serial_DisableTxInterrupt(p_serial->P_HAL_SERIAL); return true, SERIAL_ENTER_CRITICAL(p_serial)); }
+static inline void ReleaseCriticalTx(Serial_T * p_serial) { _EXIT_CRITICAL((void)p_serial, SERIAL_EXIT_CRITICAL(p_serial)); }
+static inline bool AcquireCriticalRx(Serial_T * p_serial) { _ENTER_CRITICAL(HAL_Serial_DisableRxInterrupt(p_serial->P_HAL_SERIAL); return true, SERIAL_ENTER_CRITICAL(p_serial)); }
+static inline void ReleaseCriticalRx(Serial_T * p_serial) { _EXIT_CRITICAL(HAL_Serial_EnableRxInterrupt(p_serial->P_HAL_SERIAL), SERIAL_EXIT_CRITICAL(p_serial)); }
 
 /*
 

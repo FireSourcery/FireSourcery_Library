@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,32 +26,29 @@
 /*!
     @file   Config.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef CONFIG_RING_H
-#define CONFIG_RING_H
-
-
-
-#if     defined(CONFIG_RING_LENGTH_POW2)    /* Power 2 length only. */
-    #define CONFIG_RING_POW2_COUNTER
-#elif   defined(CONFIG_RING_POW2_COUNTER)   /* Power 2 length only. Mask on access */
-#elif   defined(CONFIG_RING_POW2_WRAP)      /* Power 2 length only. Mask once on update index, -1 capacity */
-#elif   defined(CONFIG_RING_LENGTH_COMPARE)
+#if      defined(RING_INDEX_POW2_COUNTER)       /*! Power 2 length only. Mask on each access */
+#elif    defined(RING_INDEX_POW2_WRAP)          /*! Power 2 length only. Mask once on update index. -1 capacity */
+#elif    defined(RING_INDEX_LENGTH_COMPARE)     /*! Flexible: any buffer size */
 #else
-    // #define CONFIG_RING_LENGTH_COMPARE
-    #error "Ring Buffer: No length compare or pow2 defined. Please define one of CONFIG_RING_LENGTH_POW2, CONFIG_RING_POW2_COUNTER, CONFIG_RING_POW2_WRAP or CONFIG_RING_LENGTH_COMPARE"
+    #define RING_INDEX_POW2_COUNTER
+    #warning "Ring Buffer: No index mode defined. Defaulting to RING_INDEX_POW2_COUNTER"
 #endif
 
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE) /* Disable Critical at Ring Buffer 'class' level */
+/* Critical at Ring module level */
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
+    #define RING_LOCAL_CRITICAL
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
 #else
-    #define CONFIG_RING_LOCAL_CRITICAL_DISABLE
+    #define RING_LOCAL_CRITICAL_DISABLE
 #endif
 
-#endif
+// #if     defined(RING_ALIGNMENT_ENABLE)
+// #endif
+
+
 
 
 

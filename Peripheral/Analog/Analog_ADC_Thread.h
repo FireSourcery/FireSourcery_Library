@@ -65,51 +65,43 @@ static inline void Analog_ADC_PollComplete(const Analog_ADC_T * p_adc)
 
 /*!
     @brief Activate marked channels
-    Only a single thread starts the conversions.
-    No Critical is needed
+    Only a single thread starts the conversions. No Critical is needed.
 */
 static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
 {
-    /* if Adc is still active, channels will remain marked until the next call */
     /*
-        no possibility of interrupt when this function is called by a single thread
-    */
-    if (Analog_ADC_ReadIsActive(p_adc) == false) /* ISR should not start witin this block */
+        If Adc is still active, remaining channels will continue processing until the next call.
+        ISR should not start witin this block, when this function is called by a single thread
+     */
+    if (Analog_ADC_ReadIsActive(p_adc) == false)
     {
-        if (p_adc->P_ADC_STATE->ChannelIndex >= p_adc->CHANNEL_COUNT)
-        {
-            /*
-                State Error.
-                ADC did not complete all Marked since previous called, and should be Active or in the ISR.
-                ADC is not active, and also not inside the ISR.
-            */
-        #ifndef NDEBUG
-            p_adc->P_ADC_STATE->ErrorCount++;
-        #endif
-            // assert(false);
-            p_adc->P_ADC_STATE->ChannelIndex = 0U;
-        }
-
-        // /* Ensure no active conversions from previous incomplete cycle */
-        // if (p_adc->P_ADC_STATE->ActiveConversionCount != 0U)
-        // {
-        // #ifndef NDEBUG
-        //     p_adc->P_ADC_STATE->ErrorCount++;
-        // #endif
-        //     p_adc->P_ADC_STATE->ActiveConversionCount = 0U;
-        // }
+    #ifndef NDEBUG
+        /*
+            State Error.
+            ADC did not complete all Marked since previous called, and should be Active or in the ISR.
+            ADC is not active, and also not inside the ISR.
+        */
+        if (p_adc->P_ADC_STATE->ActiveConversionCount != 0U) { p_adc->P_ADC_STATE->ErrorCount++; }
+        if (p_adc->P_ADC_STATE->ChannelMarkers != 0U) { p_adc->P_ADC_STATE->ErrorCount++; }
+    #endif
 
         ADC_ProcStart(p_adc, p_adc->P_ADC_STATE);
     }
+#ifndef NDEBUG
+    else
+    {
+        p_adc->P_ADC_STATE->IncompleteCycles++;
+    }
+#endif
 }
 
 
 /*
 */
-static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
-{
-    for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { Analog_ADC_ProcMarked(&p_adcs[iAdc]); }
-}
+// static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)
+// {
+//     for (uint8_t iAdc = 0U; iAdc < count; iAdc++) { Analog_ADC_ProcMarked(&p_adcs[iAdc]); }
+// }
 
 /* instanced to ensure inlining optimization */
 // static inline void Analog_ADC0_ProcMarked(void)

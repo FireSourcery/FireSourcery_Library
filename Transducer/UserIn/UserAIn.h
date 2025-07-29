@@ -31,7 +31,7 @@
 */
 /******************************************************************************/
 #include "UserDIn.h"
-#include "Math/Linear/Linear_ADC.h"
+#include "Math/Linear/Linear.h"
 #include "Math/Linear/Linear_Q16.h"
 
 #include <stdint.h>
@@ -80,8 +80,7 @@ typedef const struct UserAIn
     // optionally direct pointer
     // const volatile uint16_t * P_ADC_VALUE; /* Pointer to ADC register/value */
     /* Digital pin acts as enable gate for analog capture, and edge source for edge detection. */
-    const UserDIn_T * P_EDGE_PIN;       /* Optional digital pin for threshold/enable */
-    // const UserDIn_T EDGE_PIN;
+    const UserDIn_T * P_EDGE_PIN;           /* Optional digital pin for threshold/enable */
     UserAIn_State_T * P_STATE;
     uint8_t FILTER_SHIFT;                   /* Filtering Ratio */
     const UserAIn_Config_T * P_NVM_CONFIG;  /* Configuration for ADC to percentage conversion */
@@ -93,7 +92,7 @@ UserAIn_T;
 #define USER_AIN_INIT(p_EdgePin, p_State, Filter, p_Config) \
     { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
 
-#define USER_AIN_ALLOC(p_EdgePin, Filter, p_Config) USER_AIN_INIT(p_EdgePin, &(UserAIn_State_T){0}, Filter, p_Config)
+#define USER_AIN_ALLOC(p_EdgePin, Filter, p_Config) USER_AIN_INIT(p_EdgePin, USER_AIN_STATE_ALLOC(), Filter, p_Config)
 
 /******************************************************************************/
 /*

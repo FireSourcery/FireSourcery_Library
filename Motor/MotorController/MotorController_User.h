@@ -97,8 +97,8 @@ MotorController_User_SystemCmd_T;
 /******************************************************************************/
 static inline void MotorController_User_InputMainMode(const MotorController_T * p_context, MotorController_MainMode_T value)
 {
-    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_input_value_t)value);
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_input_value_t)value);
+    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
+    _StateMachine_ProcBranchInputTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
 }
 
 /******************************************************************************/
@@ -157,7 +157,7 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
 static inline void MotorController_User_InputLock(const MotorController_T * p_context, MotorController_LockId_T id)
 {
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
+    _StateMachine_ProcBranchInputTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
 }
 
 static inline bool MotorController_User_IsLockState(const const MotorController_T * p_context)
@@ -324,7 +324,6 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
         // .BuzzerEnable   = p_context->StateFlags.BuzzerEnable,
     };
 }
-
 
 /******************************************************************************/
 /*

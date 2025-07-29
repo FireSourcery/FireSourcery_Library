@@ -68,9 +68,9 @@ typedef struct FOC
     fract16_t Vbeta;
 
     /* VBemf Inputs during Freewheel - Capture by ADC */
-    ufract16_t Va;
-    ufract16_t Vb;
-    ufract16_t Vc;
+    fract16_t Va;
+    fract16_t Vb;
+    fract16_t Vc;
 
     /* Scalar */
     ufract16_t DutyA;

@@ -42,16 +42,46 @@ static inline void fill_bit(uint32_t * p_bits, uint8_t index) { *p_bits |= (1U <
 static inline void clear_bit(uint32_t * p_bits, uint8_t index) { *p_bits &= ~(1U << index); }
 static inline void set_bit(uint32_t * p_bits, uint8_t index, bool value) { (value) ? fill_bit(p_bits, index) : clear_bit(p_bits, index); }
 
-static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1U << index)) | (value << index); }
+static inline void set_bits(uint32_t * p_bits, uint8_t index, uint32_t value) { *p_bits = (*p_bits & ~(1UL << index)) | (value << index); }
 
-static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))
-{
-    for (uint8_t i = 0U; i < width; i++) { if (bit_at(bits, i) == true) { fn(i); } }
-}
-
-static inline uint32_t bitmask_of(uint8_t index, uint32_t width) { return ((1U << width) - 1U) << index; }
+static inline uint32_t bitmask_of(uint8_t width, uint8_t index) { return ((1UL << width) - 1UL) << index; }
 static inline uint32_t bits_of(uint32_t bits, uint8_t index, uint8_t width) { return (bits & bitmask_of(width, index)) >> index; }
 
+
+#if defined(__GNUC__)
+
+static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(void * p_context, uint8_t index), void * p_context)
+{
+    while (bits != 0)
+    {
+        // int bit_pos = __builtin_ctz(bits); // Find lowest set bit // Maps to ARM RBIT + CLZ
+        fn(p_context, __builtin_ctz(bits)); // Process this input
+        bits &= (bits - 1);  // Clear rightmost set bit
+    }
+}
+
+#else
+static inline void _bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))
+{
+    for (uint8_t i = 0U; i < width; i++) { if (bit_at(bits, i)) { fn(i); } }
+}
+static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))
+{
+    if (bits != 0U)
+    {
+        if (bits & 0x0000FFFFUL != 0U)
+        {
+            if (bits & 0x000000FFUL != 0U) { _bits_foreach(bits & 0x000000FFUL, 8U, fn); }
+            if (bits & 0x0000FF00UL != 0U) { _bits_foreach(bits & 0x0000FF00UL, 8U, fn); }
+        }
+        if (bits & 0xFFFF0000UL != 0U)
+        {
+            if (bits & 0x00FF0000UL != 0U) { _bits_foreach(bits & 0x00FF0000UL, 8U, fn); }
+            if (bits & 0xFF000000UL != 0U) { _bits_foreach(bits & 0xFF000000UL, 8U, fn); }
+        }
+    }
+}
+#endif
 
 #endif
 

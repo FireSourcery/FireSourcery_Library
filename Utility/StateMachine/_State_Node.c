@@ -39,12 +39,12 @@
     Generic [Parent Node Tree] Relations
 */
 /******************************************************************************/
-// bool State_IsAncestor(const State_T * p_reference, const State_T * p_testAncestor)
+// bool State_IsAncestor(State_T * p_reference, State_T * p_testAncestor)
 // {
 //     return (p_testAncestor == IterateUp(p_reference, p_reference->DEPTH - p_testAncestor->DEPTH));
 // }
 
-// bool State_IsDescendant(const State_T * p_reference, const State_T * p_testDescendant)
+// bool State_IsDescendant(State_T * p_reference, State_T * p_testDescendant)
 // {
 //     return (p_testDescendant == IterateUp(p_testDescendant, p_testDescendant->DEPTH - p_reference->DEPTH));
 // }
@@ -52,13 +52,13 @@
 /*
     Is [test] a Ancestor of [ref]
 */
-bool State_IsAncestor(const State_T * p_reference, const State_T * p_testAncestor)
+bool State_IsAncestor(State_T * p_reference, State_T * p_testAncestor)
 {
     assert(p_reference != NULL);
     assert(p_testAncestor != NULL);
 
     bool isAncestor = false;
-    for (const State_T * p_descendant = p_reference; (p_descendant->DEPTH > p_testAncestor->DEPTH); p_descendant = p_descendant->P_PARENT)
+    for (State_T * p_descendant = p_reference; (p_descendant->DEPTH > p_testAncestor->DEPTH); p_descendant = p_descendant->P_PARENT)
     {
         if (p_descendant->P_PARENT == p_testAncestor) { isAncestor = true; break; } /* Compare the parent. p_descendant->DEPTH returns 0 before p_descendant reaches NULL */
     }
@@ -68,55 +68,55 @@ bool State_IsAncestor(const State_T * p_reference, const State_T * p_testAncesto
 /*
 
 */
-bool State_IsDescendant(const State_T * p_reference, const State_T * p_testDescendant)
+bool State_IsDescendant(State_T * p_reference, State_T * p_testDescendant)
 {
     assert(p_reference != NULL);
     assert(p_testDescendant != NULL);
 
     bool isDescendant = false;
-    for (const State_T * p_descendant = p_testDescendant; (p_descendant->DEPTH > p_reference->DEPTH); p_descendant = p_descendant->P_PARENT)
+    for (State_T * p_descendant = p_testDescendant; (p_descendant->DEPTH > p_reference->DEPTH); p_descendant = p_descendant->P_PARENT)
     {
         if (p_descendant->P_PARENT == p_reference) { isDescendant = true; break; }
     }
     return isDescendant;
 }
 
-// bool State_IsCousin(const State_T * p_reference, const State_T * p_common, const State_T * p_isCousin)
+// bool State_IsCousin(State_T * p_reference, State_T * p_common, State_T * p_isCousin)
 // {
 //     return (State_IsAncestor(p_reference, p_common) && State_IsDescendant(p_common, p_isCousin));
 // }
 
 /* State as a Branch from root to itself. */
-bool State_IsActiveBranch(const State_T * p_active, const State_T * p_test)
+bool State_IsActiveBranch(State_T * p_active, State_T * p_test)
 {
     return ((p_active == p_test) || State_IsAncestor(p_active, p_test));
 }
 
-bool State_IsDirectBranch(const State_T * p_active, const State_T * p_test)
+bool State_IsDirectBranch(State_T * p_active, State_T * p_test)
 {
     return ((p_active == p_test) || State_IsAncestor(p_active, p_test) || State_IsDescendant(p_active, p_test));
 }
 
-// bool State_IsReachableBranch(const State_T * p_active, const State_T * p_common, const State_T * p_test)
+// bool State_IsReachableBranch(State_T * p_active, State_T * p_common, State_T * p_test)
 // {
 //     return ((p_active == p_test) || State_IsCousin(p_active, p_common, p_test));
 // }
 
-// bool State_IsInactiveBranch(const State_T * p_active, const State_T * p_test)
+// bool State_IsInactiveBranch(State_T * p_active, State_T * p_test)
 // {
 //     return State_IsDescendant(p_active, p_test);
 // }
 
-// bool State_IsInactiveBranch(const State_T * p_active, const State_T * p_test)
+// bool State_IsInactiveBranch(State_T * p_active, State_T * p_test)
 // {
 //     return State_IsDescendant(p_active, p_test);
 // }
 
 /* May include itself */
-State_T * State_CommonAncestorOf(const State_T * p_state1, const State_T * p_state2)
+State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 {
-    const State_T * p_iterator1 = p_state1;
-    const State_T * p_iterator2 = p_state2;
+    State_T * p_iterator1 = p_state1;
+    State_T * p_iterator2 = p_state2;
 
     if (p_iterator1 != NULL && p_iterator2 != NULL)
     {
@@ -142,9 +142,9 @@ State_T * State_CommonAncestorOf(const State_T * p_state1, const State_T * p_sta
 }
 
 /* Capture on Traverse Up, store for iterative traverse down. */
-// static inline void State_CaptureTraverseUp(const State_T * p_descendant, const State_T ** p_buffer, uint8_t * p_count)
+// static inline void State_CaptureTraverseUp(State_T * p_descendant, State_T ** p_buffer, uint8_t * p_count)
 // {
-//     for (const State_T * p_iterator = p_descendant; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
+//     for (State_T * p_iterator = p_descendant; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
 //     {
 //         p_buffer[(*p_count)++] = p_iterator;
 //     }
@@ -157,6 +157,111 @@ State_T * State_CommonAncestorOf(const State_T * p_state1, const State_T * p_sta
     State Tree Functions
 */
 /******************************************************************************/
+/******************************************************************************/
+/*
+    Traverse
+        LOOP
+        NEXT
+        P_TRANSITION_TABLE
+*/
+/******************************************************************************/
+/******************************************************************************/
+/* State Branch Sync/Output */
+/******************************************************************************/
+/*
+    Proc Synchronous State Outputs.
+
+    pass end to skip top levels
+*/
+/* end works on NULL and known ActiveState */
+State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
+{
+    State_T * p_next = NULL;
+    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
+    {
+        p_next = State_TransitionOfOutput(p_iterator, p_context);
+        if (p_next != NULL) { break; } /* substate takes precedence */
+    }
+    return p_next;
+}
+
+/*
+    Optionally
+    Take the Top most transision. Higher level determines the target State.
+*/
+// State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
+// {
+//     State_T * p_result = NULL;
+//     State_T * p_dest = NULL;
+//     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
+//     {
+//         p_result = State_TransitionOfOutput(p_iterator, p_context);
+//         if (p_result != NULL) { p_dest = p_result; } /* not break on first. let upper level overwrites. */
+//     }
+//     return p_dest;
+// }
+
+/******************************************************************************/
+/* State Branch Input */
+/******************************************************************************/
+/*
+    Take the first transition that accepts the input
+    Inputs using id always include top level
+*/
+State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId)
+{
+    State_Input_T result = NULL;
+    for (State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
+    {
+        result = State_AcceptInput(p_iterator, p_context, inputId);
+        if (result != NULL) { break; }
+    }
+    return result;
+}
+
+State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue)
+{
+    return _State_CallInput(State_TraverseAcceptInput(p_start, p_context, inputId), p_context, inputValue);
+}
+
+/******************************************************************************/
+/*
+exper
+*/
+/******************************************************************************/
+// State_Input_T __State_TraverseAcceptInput(State_T * p_start, uint8_t endDepth, void * p_context, state_input_t inputId)
+// {
+//     State_Input_T result = NULL;
+//     //skip null check when depth are compiel time in sync
+//     for (State_T * p_iterator = p_start; p_iterator->DEPTH < endDepth; p_iterator = p_iterator->P_PARENT)
+//     {
+//         assert(p_iterator != NULL);
+//         result = State_AcceptInput(p_iterator, p_context, inputId);
+//         if (result != NULL) { break; }
+//     }
+
+//     return result;
+// }
+
+// static const uintptr_t State_AcceptInputOfMapper1 = (uintptr_t)State_AcceptInputOfMapper;
+
+// const void * _State_TraverseApplyGeneric(const void * const fn, State_T * p_start, State_T * p_end, void * p_context, state_input_t inputId, state_value_t inputValue)
+// {
+//     State_Input_T result = NULL;
+//     for (State_T * p_iterator = p_start; p_iterator != p_end; p_iterator = p_iterator->P_PARENT)
+//     {
+//         switch ((uintptr_t)fn)
+//         {
+//             // case ((uintptr_t)State_AcceptInputOfMapper1): result = State_AcceptInputOfMapper1(p_iterator, p_context, inputId); break;
+//             case ((uintptr_t)State_AcceptInputOfMapper1): result = State_AcceptInputOfMapper(p_iterator, p_context, inputId); break;
+//             default: result = NULL; // unsupported function
+//         }
+//         if (result != NULL) { break; }
+//     }
+//     return result;
+// }
+
+
 
 /******************************************************************************/
 /*
@@ -170,10 +275,10 @@ State_T * State_CommonAncestorOf(const State_T * p_state1, const State_T * p_sta
     Call Exit traversing up the tree
     @param[in] p_start == NULL => no effect
 */
-static inline void TraverseExit(const State_T * p_start, const State_T * p_common, void * p_context)
+static inline void TraverseExit(State_T * p_start, State_T * p_common, void * p_context)
 {
 #ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
-    for (const State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_common); p_iterator = p_iterator->P_PARENT)
+    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_common); p_iterator = p_iterator->P_PARENT)
     {
         if (p_iterator->EXIT != NULL) { p_iterator->EXIT(p_context); }
     }
@@ -182,11 +287,11 @@ static inline void TraverseExit(const State_T * p_start, const State_T * p_commo
 
 /*!
     Call Entry traversing down the tree
-    recursive climb up the tree for now,
-    iterative traverse need capture first
+        recursive climb up the tree for now
+        iterative traverse need capture first
     @param[in] p_common == NULL => repeat ROOT entry.
 */
-static inline void TraverseEntry(const State_T * p_common, const State_T * p_end, void * p_context)
+static inline void TraverseEntry(State_T * p_common, State_T * p_end, void * p_context)
 {
     if ((p_end != NULL) && (p_end != p_common))
     {
@@ -201,7 +306,7 @@ static inline void TraverseEntry(const State_T * p_common, const State_T * p_end
     @param[in] p_start == NULL, start from [p_common]
     @param[in] p_common == NULL, traverse to top
 */
-void State_TraverseTransitionThrough(const State_T * p_start, const State_T * p_common, const State_T * p_end, void * p_context)
+void State_TraverseTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
 {
     TraverseExit(p_start, p_common, p_context);
     TraverseEntry(p_common, p_end, p_context);
@@ -209,62 +314,10 @@ void State_TraverseTransitionThrough(const State_T * p_start, const State_T * p_
 
 
 /*!
-    TraverseOnTransition
+    Traverse_OnTransition
     @param[in] p_start == NULL => p_common = NULL
 */
-void State_TraverseTransition(const State_T * p_start, const State_T * p_end, void * p_context)
+void State_TraverseTransition(State_T * p_start, State_T * p_end, void * p_context)
 {
     State_TraverseTransitionThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
-}
-
-/******************************************************************************/
-/*
-    Traverse Handlers
-*/
-/******************************************************************************/
-/******************************************************************************/
-/* State Branch Sync/Output */
-/******************************************************************************/
-/*
-    Proc all Outputs.
-    Take the Top most transision.
-        Top level determines the target State.
-        Transition start from leaf State.
-
-    pass end to skip top levels
-*/
-/* traverse up only for now */
-State_T * State_TraverseTransitionOfContext(const State_T * p_start, const State_T * p_end, void * p_context)
-{
-    const State_T * p_result = NULL;
-    const State_T * p_dest = NULL;
-    for (const State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
-    {
-        p_result = State_TransitionOfContext(p_iterator, p_context);
-        if (p_result != NULL) { p_dest = p_result; } /* top level overwrite. does not break on first. */
-    }
-    return p_dest;
-}
-
-/******************************************************************************/
-/* State Branch Input */
-/******************************************************************************/
-/*
-    Take the first transition that accepts the input
-    Inputs using id always include top level
-*/
-State_Input_T State_TraverseAcceptInput(const State_T * p_start, void * p_context, state_input_t inputId)
-{
-    State_Input_T result = NULL;
-    for (const State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-    {
-        result = State_AcceptInput(p_iterator, p_context, inputId);
-        if (result != NULL) { break; }
-    }
-    return result;
-}
-
-State_T * State_TraverseTransitionOfInput(const State_T * p_start, void * p_context, state_input_t inputId, state_input_value_t inputValue)
-{
-    return _State_ResolveInputHandler(State_TraverseAcceptInput(p_start, p_context, inputId), p_context, inputValue);
 }

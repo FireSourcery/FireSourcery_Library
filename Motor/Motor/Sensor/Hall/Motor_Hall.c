@@ -48,7 +48,8 @@ static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSO
 /* Include [Phase] and [P_PARENT] State */
 static void Calibration_Entry(const Motor_T * p_motor)
 {
-    Timer_StartPeriod(&p_motor->P_MOTOR_STATE->ControlTimer, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+    // Timer_StartPeriod(&p_motor->P_MOTOR_STATE->ControlTimer, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+    TimerT_Start(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     Phase_ActivateOutputV0(&p_motor->PHASE);
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }
@@ -93,7 +94,7 @@ static State_T * Calibration_End(const Motor_T * p_motor)
 
 static const State_T CALIBRATION_STATE_HALL =
 {
-    .P_TOP  = &MOTOR_STATE_CALIBRATION,
+    .P_TOP = &MOTOR_STATE_CALIBRATION,
     .P_PARENT = &MOTOR_STATE_CALIBRATION,
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)Calibration_Entry,
@@ -109,7 +110,7 @@ static const State_T CALIBRATION_STATE_HALL =
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {
     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
-    // StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &(const State_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
-    // StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &(State_TransitionInput_T)State_TransitionCmd_Create(&MOTOR_STATE_CALIBRATION, Calibration_Start), 0);
+    // StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &(const StateMachine_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
+    // StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &(StateMachine_TransitionInput_T)State_TransitionCmd_Create(&MOTOR_STATE_CALIBRATION, Calibration_Start), 0);
 }
 

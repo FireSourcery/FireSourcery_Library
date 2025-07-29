@@ -8,6 +8,7 @@
 */
 typedef const void entry_t;
 typedef const entry_t * const entry_table_t;
+// typedef const entry_t * const mux_t; entry_t ** pp_entry
 
 
 // typedef const struct

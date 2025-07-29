@@ -362,9 +362,9 @@ void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 /*
     preset align [OpenLoopIRamp]
 */
+/* Caller sets time */
 void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 {
-    Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_Cycles);
     Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.AlignTime_Cycles, 0, Motor_GetIAlign(p_motor));
 
     p_motor->FeedbackMode.Current = 1U; /* StarttUp always select current feedback */

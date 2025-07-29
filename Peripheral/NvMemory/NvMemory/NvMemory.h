@@ -37,6 +37,14 @@
 #include <stddef.h>
 #include <assert.h>
 
+/* For placing functions into ram section */
+#ifndef NV_MEMORY_ATTRIBUTE_RAM_SECTION
+#warning 'Undefined NV_MEMORY_ATTRIBUTE_RAM_SECTION'
+#define NV_MEMORY_ATTRIBUTE_RAM_SECTION
+// #define NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section(".code_ram")))
+#endif
+
+
 /******************************************************************************/
 /*
     Common return status by public module functions
@@ -87,7 +95,7 @@ typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t 
 
 /* status moves to hal */
 typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(const void * p_hal);
-// typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(NvMemory_T * p_hal); // or nvm
+// typedef NvMemory_Status_T(*NvMemory_MapStatus_T)(NvMemory_T * p_this); // or nvm
 
 /* Per Cmd VTable. NvMemory_Cmd */
 typedef const struct NvMemory_OpControl
@@ -97,6 +105,7 @@ typedef const struct NvMemory_OpControl
     HAL_NvMemory_MapStatus_T PARSE_CMD_ERROR;   /* On end all Cmd iteration, Op Complete Error */
     size_t UNIT_SIZE;                           /* Align Size */
     size_t(*FORCE_ALIGN)(uintptr_t value, size_t align); /* Align up or down, alternatively as enum */
+
     // size_t UNITS_PER_CMD;    /* count of UNIT_SIZE. Used by EraseVerify for now */
     // size_t BytesPerCmd;      /* Used by Erase for now */ /* overwrite if not equal unit size. BytesPerCmd = unitsPerCmd * unitSize */
 }
@@ -113,9 +122,9 @@ typedef const struct NvMemory_Partition
 {
     uintptr_t ADDRESS;
     size_t SIZE;
-    #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
+#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
     ptrdiff_t OP_ADDRESS_OFFSET;
-    #endif
+#endif
     // uintptr_t RAM_ADDRESS;
 }
 NvMemory_Partition_T;
@@ -138,15 +147,6 @@ NvMemory_Partition_T;
 /*
 */
 /******************************************************************************/
-// typedef enum NvMemory_OpState
-// {
-//     NV_MEMORY_STATE_IDLE,
-//     NV_MEMORY_STATE_ACTIVE,
-//     NV_MEMORY_STATE_WRITE,
-//     NV_MEMORY_STATE_VERIFY,
-// }
-// NvMemory_OpState_T;
-
 /*  */
 typedef void (*NvMemory_Callback_T)(void * p_callbackData);
 
@@ -167,32 +167,23 @@ typedef struct NvMemory_State
     // const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check */
     size_t OpSizeAligned;       /* Cached calculation. alternatively use getter */
 
-    /* Config Options */
+    /* Config Options, todo as bits */
     bool IsOpBuffered;          /* copy to buffer first or use pointer to source */
     bool IsVerifyEnable;        /* Auto call verify, alternatively user call */
     bool IsForceAlignEnable;    /* if implement in this module, need buffer of UNIT_WRITE_SIZE for fill with erase pattern (Even if IsOpBuffered is not used ) */
 
     void * p_CallbackContext;
     NvMemory_Callback_T Yield;  /* On Block */
-
-/* Nonblocking use only */
-// NvMemory_StateId_T State;
-// NvMemory_Status_T Status;
-// size_t OpIndex;     /* in bytes */
-// NvMemory_Callback_T OnComplete;     /*!< OnComplete */
 }
 NvMemory_State_T;
-
-#define NV_MEMORY_STATE_ALLOC() (&(NvMemory_State_T){0})
-
 
 /* Flash must store a copy in RAM */
 typedef const struct NvMemory
 {
     /* Per sub-type VTable, abstract functions provided by concrete child class */
     void * const P_HAL;
-    const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
-    const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
+    const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM for Flash case */
+    const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM for Flash case */
     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
 
     /* Instance. In most cases there will only be one instance per type */
@@ -205,9 +196,14 @@ typedef const struct NvMemory
     /* Allocated buffer for internal use */
     uint8_t * const P_BUFFER;
     const size_t BUFFER_SIZE;
+
+    /* On Block */
+    // void * P_YIELD_CONTEXT;
+    // NvMemory_Callback_T YIELD;
 }
 NvMemory_T;
 
+// BaseVTable
 // typedef const struct NvMemory_OpCommon
 // {
 //     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
@@ -232,13 +228,15 @@ NvMemory_T;
     .P_BUFFER           = p_Buffer,                     \
     .BUFFER_SIZE        = BufferSize,
 
+#define NV_MEMORY_STATE_ALLOC() (&(NvMemory_State_T){0})
+
 /*
     ReadOnce must provide buffer here, or in calling function
 */
 #define NV_MEMORY_INIT(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags, p_State, p_Partitions, PartitionsCount, p_Buffer, BufferSize) \
 {   \
     _NV_MEMORY_INIT_HAL(p_Hal, p_HAL_ReadCompleteFlag, p_HAL_ReadErrorFlags, p_HAL_ClearErrorFlags)                                                 \
-    .P_STATE = p_State,                                                                                                                         \
+    .P_STATE = p_State,                                                                                                                             \
     _NV_MEMORY_INIT_PARTITIONS(p_Partitions, PartitionsCount)                                                                                       \
     _NV_MEMORY_INIT_BUFFER(p_Buffer, BufferSize)                                                                                                    \
 }
@@ -276,14 +274,15 @@ static inline void NvMemory_SetYield(const NvMemory_T * p_context, NvMemory_Call
 /*
     Blocking
 */
-// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context);
 
 extern void NvMemory_Init(NvMemory_T * p_context);
 
-// extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_context, const void * p_source, size_t size);
 extern NvMemory_Status_T NvMemory_MemCompare(const void * p_dest, const void * p_source, size_t size);
 // extern NvMemory_Status_T NvMemory_VerifyByMemCompare(NvMemory_T * p_context);
+// extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_context, const void * p_source, size_t size);
+
 /* Destination is not intended to be dereference, pass as uintptr_t type */
 extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_context, uintptr_t address, size_t size);
 extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_context, size_t size);
@@ -295,6 +294,22 @@ extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_context, con
 /*
     Non Blocking
 */
+
+// typedef enum NvMemory_OpState
+// {
+//     NV_MEMORY_STATE_IDLE,
+//     NV_MEMORY_STATE_ACTIVE,
+//     NV_MEMORY_STATE_WRITE,
+//     NV_MEMORY_STATE_VERIFY,
+// }
+// NvMemory_OpState_T;
+
+/* Nonblocking use only */
+// NvMemory_StateId_T State;
+// NvMemory_Status_T Status;
+// size_t OpIndex;     /* in bytes */
+// NvMemory_Callback_T OnComplete;     /*!< OnComplete */
+
 extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_context);
 extern bool NvMemory_ProcOp(NvMemory_T * p_context);
 extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_context);

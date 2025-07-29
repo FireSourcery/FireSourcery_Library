@@ -53,7 +53,7 @@ RotorSensor_Id_T;
 
 
 /*
-    [AngleSensor_Table_T]
+    [AngleSensor_Mux_T]
     Mux/Repo
     Holds all selectable sensors. Map common AngleSpeed State
     include all using preprocessor conditions
@@ -71,6 +71,8 @@ typedef const struct RotorSensor_Table
     const Encoder_RotorSensor_T ENCODER;
     // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
 
+    // const Encoder_T ENCODER;
+    // const Hall_T HALL;
 }
 RotorSensor_Table_T;
 

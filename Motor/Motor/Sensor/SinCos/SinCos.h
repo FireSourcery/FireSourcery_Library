@@ -110,7 +110,7 @@ static inline angle16_t SinCos_GetElectricalAngle(SinCos_T * p_sincos) { return 
 // static inline void SinCos_SetDirectionCcw(SinCos_T * p_sincos)     { p_sincos->IsDirectionPositive = p_sincos->Config.IsCcwPositive; }
 // static inline void SinCos_SetDirectionCw(SinCos_T * p_sincos)     { p_sincos->IsDirectionPositive = !p_sincos->Config.IsCcwPositive; }
 
-typedef enum Motor_VarConfig_SinCos
+typedef enum Motor_Var_ConfigSinCos
 {
     MOTOR_VAR_SIN_COS_ZERO_ADCU,
     MOTOR_VAR_SIN_COS_MAX_ADCU,
@@ -119,9 +119,9 @@ typedef enum Motor_VarConfig_SinCos
     MOTOR_VAR_SIN_COS_IS_B_POSITIVE,
     MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
 }
-Motor_VarConfig_SinCos_T;
+Motor_Var_ConfigSinCos_T;
 
-// int32_t Motor_VarConfig_SinCos_Get(const Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId)
+// int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId)
 // {
 //     int32_t value = 0;
 
@@ -138,7 +138,7 @@ Motor_VarConfig_SinCos_T;
 //     return value;
 // }
 
-// void Motor_VarConfig_SinCos_Set(Motor_State_T * p_motor, Motor_VarConfig_SinCos_T varId, int32_t varValue)
+// void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue)
 // {
 
 //     switch (varId)

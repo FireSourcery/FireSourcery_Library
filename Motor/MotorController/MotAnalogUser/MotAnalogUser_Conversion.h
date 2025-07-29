@@ -32,6 +32,7 @@
 /******************************************************************************/
 
 #include "Peripheral/Analog/Analog.h"
+#include "Peripheral/Analog/Analog_Conversion.h"
 
 typedef const struct MotAnalogUser_Conversion
 {

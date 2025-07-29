@@ -241,6 +241,7 @@ Encoder_T;
 /*!
 */
 /******************************************************************************/
+// typedef enum Encoder_StateField
 typedef enum Encoder_VarId
 {
     ENCODER_VAR_FREQ,

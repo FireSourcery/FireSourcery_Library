@@ -44,18 +44,18 @@
 /******************************************************************************/
 static inline void EnterCritical(const Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     _Critical_DisableIrq();
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
 static inline void ExitCritical(const Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     _Critical_EnableIrq();
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
@@ -63,9 +63,9 @@ static inline void ExitCritical(const Ring_T * p_ring)
 /* Multithreaded may use disable interrupts, if-test, or spin-wait with thread scheduler */
 static inline bool AcquireSignal(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     return Critical_AcquireLock(&p_ring->Lock);
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
 #endif
@@ -73,18 +73,18 @@ static inline bool AcquireSignal(Ring_T * p_ring)
 
 static inline void ReleaseSignal(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     Critical_ReleaseLock(&p_ring->Lock);
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
 
 static inline bool AcquireCritical(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     return Critical_AcquireEnter(&p_ring->Lock);
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
     return true;
 #endif
@@ -92,9 +92,9 @@ static inline bool AcquireCritical(Ring_T * p_ring)
 
 static inline void ReleaseCritical(Ring_T * p_ring)
 {
-#if     defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if     defined(RING_LOCAL_CRITICAL_ENABLE)
     Critical_ReleaseExit(&p_ring->Lock);
-#elif   defined(CONFIG_RING_LOCAL_CRITICAL_DISABLE)
+#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
     (void)p_ring;
 #endif
 }
@@ -119,9 +119,9 @@ static inline void Copy(const Ring_T * p_ring, void * p_dest, const void * p_src
 /* Effective array index of virtual index */
 static inline size_t IndexOf(const Ring_T * p_ring, size_t ringIndex)
 {
-#if     defined(CONFIG_RING_POW2_COUNTER)
+#if     defined(RING_INDEX_POW2_COUNTER)
     return _Ring_IndexWrapOf(p_ring, ringIndex);
-#elif   defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
+#elif   defined(RING_INDEX_POW2_WRAP) || defined(RING_INDEX_LENGTH_COMPARE)
     return ringIndex;
 #endif
 }

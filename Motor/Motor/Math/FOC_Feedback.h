@@ -36,11 +36,18 @@
 // typedef struct FOC_Feedback
 // {
 //     FOC_T Foc;
-//     // Ramp_T TorqueRamp; shared
+//     Ramp_T TorqueRamp;
 //     PID_T PidIq;
 //     PID_T PidId;
 // }
 // FOC_Feedback_T;
+
+
+// static void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
+// {
+//     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, p_foc->ReqD);
+//     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, p_foc->ReqQ);
+// }
 
 // static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // {

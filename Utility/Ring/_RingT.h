@@ -34,7 +34,7 @@
 
 #include "Type/Array/void_array.h"
 
-#if defined(CONFIG_RING_LOCAL_CRITICAL_ENABLE)
+#if defined(RING_LOCAL_CRITICAL_ENABLE)
 #include "System/Critical/Critical.h"
 #endif
 
@@ -69,7 +69,7 @@ static inline size_t _RingT_Length(Ring_Type_T type) { return type.LENGTH; }
 
 static inline size_t _RingT_Mask(Ring_Type_T type)
 {
-#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
+#if defined(RING_INDEX_POW2_COUNTER) || defined(RING_INDEX_POW2_WRAP)
     return type.POW2_MASK;
 #else
     (void)type; return 0U;
@@ -78,40 +78,40 @@ static inline size_t _RingT_Mask(Ring_Type_T type)
 
 static inline size_t _RingT_IndexWrapOf(Ring_Type_T type, size_t index)
 {
-#if defined(CONFIG_RING_POW2_COUNTER) || defined(CONFIG_RING_POW2_WRAP)
+#if defined(RING_INDEX_POW2_COUNTER) || defined(RING_INDEX_POW2_WRAP)
     return (index & type.POW2_MASK);
-#elif defined(CONFIG_RING_LENGTH_COMPARE)
+#elif defined(RING_INDEX_LENGTH_COMPARE)
     return (index % type.LENGTH);
 #endif
 }
 
 static inline size_t _RingT_IndexIncOf(Ring_Type_T type, size_t index, size_t inc)
 {
-#if defined(CONFIG_RING_POW2_COUNTER)
+#if defined(RING_INDEX_POW2_COUNTER)
     (void)type; return index + inc;
-#elif defined(CONFIG_RING_POW2_WRAP)
+#elif defined(RING_INDEX_POW2_WRAP)
     return _RingT_IndexWrapOf(type, index + inc);
-#elif defined(CONFIG_RING_LENGTH_COMPARE)
+#elif defined(RING_INDEX_LENGTH_COMPARE)
     return (index + inc >= type.LENGTH) ? index + inc - type.LENGTH : index + inc;
 #endif
 }
 
 static inline size_t _RingT_IndexDecOf(Ring_Type_T type, size_t index, size_t dec)
 {
-#if defined(CONFIG_RING_POW2_COUNTER)
+#if defined(RING_INDEX_POW2_COUNTER)
     (void)type; return index - dec;
-#elif defined(CONFIG_RING_POW2_WRAP)
+#elif defined(RING_INDEX_POW2_WRAP)
     return _RingT_IndexWrapOf(type, index - dec);
-#elif defined(CONFIG_RING_LENGTH_COMPARE)
+#elif defined(RING_INDEX_LENGTH_COMPARE)
     return ((int32_t)index - dec < 0) ? type.LENGTH + index - dec : index - dec;
 #endif
 }
 
 static inline size_t _RingT_ArrayIndexOf(Ring_Type_T type, size_t ringIndex)
 {
-#if defined(CONFIG_RING_POW2_COUNTER)
+#if defined(RING_INDEX_POW2_COUNTER)
     return _RingT_IndexWrapOf(type, ringIndex);
-#elif defined(CONFIG_RING_POW2_WRAP) || defined(CONFIG_RING_LENGTH_COMPARE)
+#elif defined(RING_INDEX_POW2_WRAP) || defined(RING_INDEX_LENGTH_COMPARE)
     (void)type; return ringIndex;
 #endif
 }
@@ -216,7 +216,7 @@ static inline void RingT_Clear(Ring_Type_T type, Ring_T * p_ring) { (void)type; 
 static inline size_t RingT_GetCapacity(Ring_Type_T type, const Ring_T * p_ring)
 {
     (void)p_ring;
-#if defined(CONFIG_RING_POW2_COUNTER)
+#if defined(RING_INDEX_POW2_COUNTER)
     return type.LENGTH;  /* Full capacity usable */
 #else
     return type.LENGTH - 1U;  /* One slot reserved for empty detection */
@@ -224,15 +224,15 @@ static inline size_t RingT_GetCapacity(Ring_Type_T type, const Ring_T * p_ring)
 }
 
 /*
-    CONFIG_RING_POW2_COUNTER
+    RING_INDEX_POW2_COUNTER
     Max usable capacity is length
 
-    CONFIG_RING_POW2_WRAP, CONFIG_RING_LENGTH_COMPARE
+    RING_INDEX_POW2_WRAP, RING_INDEX_LENGTH_COMPARE
     Empty space detection method. Tail always points to empty space. Max usable capacity is length - 1
 */
 static inline size_t RingT_GetFullCount(Ring_Type_T type, const Ring_T * p_ring)
 {
-#if defined(CONFIG_RING_POW2_COUNTER)
+#if defined(RING_INDEX_POW2_COUNTER)
     (void)type; return p_ring->Tail - p_ring->Head;
 #else
     size_t head = _RingT_ArrayIndexOf(type, p_ring->Head);

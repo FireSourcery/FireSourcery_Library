@@ -114,7 +114,7 @@ void Encoder_ModeDT_SetInitial(const Encoder_T * p_encoder)
 
 */
 /******************************************************************************/
-int32_t Enocder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId)
+int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId)
 {
     int32_t value = 0;
     switch (varId)

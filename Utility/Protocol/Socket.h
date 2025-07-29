@@ -110,6 +110,7 @@ typedef const struct Socket
     uint8_t * P_RX_PACKET_BUFFER;
     uint8_t * P_TX_PACKET_BUFFER;
     uint8_t PACKET_BUFFER_LENGTH;           /* Must be greater than Specs RX_LENGTH_MAX */
+
     void * P_APP_CONTEXT;                   /* User app context for packet processing */
     void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
 

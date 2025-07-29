@@ -33,7 +33,7 @@
 #define MOTOR_CONFIG_H
 
 #include "Motor.h"
-#include "Motor_StateMachine.h"
+// #include "Motor_StateMachine.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,15 +41,14 @@
 #define MOTOR_TICKS_OF_SPEED_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (RampInterval) / (UnitsPerS))
 #define MOTOR_TICKS_OF_TORQUE_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (RampInterval) / (UnitsPerS)) /* V or I */
 
-/* const expr speed_angle16_of_rpm */
-// #define MOTOR_EL_SPEED_OF_MECH_RPM(PolePairs, MechRpm) (((uint32_t)MechRpm * 65536U) / (60U * MOTOR_CONTROL_FREQ / PolePairs))
-// #define MOTOR_EL_SPEED_OF_MECH_RPM(PolePairs, MechRpm) SPEED_ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, MechRpm * PolePairs)
 
 /* scale to rated max */
 #ifndef MOTOR_OPEN_LOOP_MAX_SCALAR
 #define MOTOR_OPEN_LOOP_MAX_SCALAR FRACT16(0.1F)
 #endif
 
+/* const expr speed_angle16_of_rpm */
+// #define MOTOR_EL_SPEED_OF_MECH_RPM(PolePairs, MechRpm) SPEED_ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, MechRpm * PolePairs)
 
 static inline uint16_t _Motor_Config_GetOpenLoopScalarLimit(const Motor_State_T * p_motor) { return math_min(p_motor->Config.OpenLoopScalarLimit_Fract16, MOTOR_OPEN_LOOP_MAX_SCALAR); }
 static inline uint16_t _Motor_Config_GetOpenLoopILimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), MotorAnalogRef_GetIRatedPeak_Fract16()); }
@@ -60,16 +59,6 @@ static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min
 static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(MotorAnalogRef_GetVRated_Fract16(), v_fract16); }
 
 
-/******************************************************************************/
-/*
-    Handle set using StateId
-*/
-/******************************************************************************/
-static inline bool Motor_Config_IsConfigState(const Motor_State_T * p_motor)
-{
-    return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
-    // || MSM_STATE_ID_FAULT
-}
 
 /******************************************************************************/
 /*

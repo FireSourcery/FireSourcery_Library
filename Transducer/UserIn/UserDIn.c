@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "UserDIn.h"
 
-#include "Transducer/Debounce/Debounce.h"
+#include "Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
 #include <stdbool.h>

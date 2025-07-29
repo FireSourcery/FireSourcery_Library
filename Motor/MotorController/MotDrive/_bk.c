@@ -2,14 +2,14 @@
 
 
 /* either set drive 0 first, Motor set control twice. or motor directly transition */
-// static State_T * Drive_InputThrottle(const MotDrive_T * p_motDrive, state_input_value_t cmdValue)
+// static State_T * Drive_InputThrottle(const MotDrive_T * p_motDrive, state_value_t cmdValue)
 // {
 //     // if (cmdValue == 0U) { SetDriveZero(p_this, MOT_DRIVE_CMD_THROTTLE); } else { SetThrottle(p_this, cmdValue); }
 //     // return NULL;
 //     return _Drive_InputDrive(p_this, MOT_DRIVE_CMD_THROTTLE, cmdValue);
 // }
 
-// static State_T * Drive_InputBrake(const MotDrive_T * p_motDrive, state_input_value_t cmdValue)
+// static State_T * Drive_InputBrake(const MotDrive_T * p_motDrive, state_value_t cmdValue)
 // {
 //     // if (cmdValue == 0U) { SetDriveZero(p_this, MOT_DRIVE_CMD_BRAKE); } else { SetBrake(p_this, cmdValue); }
 //     // return NULL;

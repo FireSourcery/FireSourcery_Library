@@ -43,9 +43,9 @@
     Var Id Base
 */
 /******************************************************************************/
-// MOTOR_CONTROLLER_VAR ,
-typedef enum MotorController_VarOutput
+typedef enum MotorController_Var_Output
 {
+    // MOTOR_CONTROLLER_VAR ,
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
     MOT_VAR_MC_STATE,
@@ -53,9 +53,9 @@ typedef enum MotorController_VarOutput
     MOT_VAR_MC_FAULT_FLAGS,
     // MOT_DRIVE_DIRECTION,
 }
-MotorController_VarOutput_T;
+MotorController_Var_Output_T;
 
-typedef enum MotorController_VarOutput_Debug
+typedef enum MotorController_Var_OutputDebug
 {
     MOT_VAR_DEBUG0,
     MOT_VAR_DEBUG1,
@@ -66,7 +66,7 @@ typedef enum MotorController_VarOutput_Debug
     MOT_VAR_DEBUG6,
     MOT_VAR_DEBUG7,
 }
-MotorController_VarOutput_Debug_T;
+MotorController_Var_OutputDebug_T;
 
 /******************************************************************************/
 /*
@@ -76,7 +76,7 @@ MotorController_VarOutput_Debug_T;
     Collective set motors for convenience
     Write only, or io
 */
-typedef enum MotorController_VarInput
+typedef enum MotorController_Var_Input
 {
     MOT_VAR_USER_MOTOR_SET_POINT,          // [-32768:32767]
     MOT_VAR_USER_MOTOR_DIRECTION,          //
@@ -89,16 +89,14 @@ typedef enum MotorController_VarInput
     MOT_VAR_USER_RELAY_TOGGLE,
     MOT_VAR_USER_METER_TOGGLE,
 }
-MotorController_VarInput_T;
-
+MotorController_Var_Input_T;
 
 /******************************************************************************/
 /*
     Config - Nvm variables
 */
 /******************************************************************************/
-// typedef enum MotorController_Config_Base
-typedef enum MotorController_ConfigId
+typedef enum MotorController_Var_Config
 {
     MOT_VAR_V_SUPPLY_VOLTS,
     MOT_VAR_I_LIMIT_LOW_V,
@@ -113,9 +111,9 @@ typedef enum MotorController_ConfigId
     MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
     MOT_VAR_OPT_I_LIMIT,
 }
-MotorController_ConfigId_T;
+MotorController_Var_Config_T;
 
-typedef enum MotorController_Config_BootRef
+typedef enum MotorController_Var_ConfigBootRef
 {
     MOT_VAR_BOOT_REF_FAST_BOOT,
     MOT_VAR_BOOT_REF_BEEP,
@@ -123,15 +121,14 @@ typedef enum MotorController_Config_BootRef
     // MOT_VAR_BOOT_REF_WORD_VALUE,
     // MOT_VAR_BOOT_REF_PROTOCOL_INDEX,
 }
-MotorController_Config_BootRef_T;
+MotorController_Var_ConfigBootRef_T;
 
 /******************************************************************************/
 /*!
     Read-only Reference
 */
 /******************************************************************************/
-// typedef enum MotorController_Var_GeneralRef
-typedef enum MotorController_GeneralRef
+typedef enum MotorController_Var_StaticRef
 {
     MOT_VAR_REF_MOTOR_COUNT,
     MOT_VAR_REF_V_MONITOR_COUNT, /*  */
@@ -140,13 +137,8 @@ typedef enum MotorController_GeneralRef
     MOT_VAR_REF_CAN_SOCKET_COUNT,
     // MOT_VAR_REF_MAIN_SOFTWARE_VERSION, /* Read-only */
 }
-MotorController_GeneralRef_T;
+MotorController_Var_StaticRef_T;
 
-/******************************************************************************/
-/*
-    [MotVarId] Interface
-*/
-/******************************************************************************/
 /******************************************************************************/
 /*
     Types
@@ -167,59 +159,62 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_GENERAL_USER_IN, /* Polling inputs */
     MOT_VAR_TYPE_GENERAL_CONFIG,
     MOT_VAR_TYPE_BOOT_REF_CONFIG,
+    MOT_VAR_TYPE_GENERAL_DEBUG,
+    MOT_VAR_TYPE_GENERAL_REF, /* Read-only */
 
     /* MotDrive Submodule */
     MOT_VAR_TYPE_MOT_DRIVE_CONTROL,
     MOT_VAR_TYPE_MOT_DRIVE_CONFIG,
 
-    /*  */
-    // MOT_VAR_TYPE_OPT_DIN_CONFIG,
-    // MOT_VAR_TYPE_BUZZER_CONFIG,
-    // MOT_VAR_TYPE_RELAY_CONFIG,
-
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
 
-    MOT_VAR_TYPE_GENERAL_REF, /* Read-only */
-    // MOT_VAR_TYPE_MOTOR_STATIC_REF, /* Read-only */
-    MOT_VAR_TYPE_DEBUG,
+    // MOT_VAR_TYPE_BUZZER_CONTROL,
+    // MOT_VAR_TYPE_BUZZER_CONFIG,
 
-    // MOT_VAR_TYPE_V_MONITOR_SUPPLY_STATE,
-    // MOT_VAR_TYPE_V_MONITOR_SUPPLY_CONFIG,
+    /*  */
+    // MOT_VAR_TYPE_OPT_DIN_CONFIG,
+    // MOT_VAR_TYPE_RELAY_CONFIG,
 }
 MotorController_VarType_General_T;
 
-// alternatively vMonitors as named, staticc order
-// typedef enum MotorController_VarType_VMonitor
-// {
-//     MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE,
-//     MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
-//     MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF,
-// }
-// MotorController_VarType_VMonitor_T;
-
-// altnerively share  instancce id type when not applicable
-typedef enum MotorController_VarType_Monitor
+typedef enum MotorController_VarType_VMonitor
 {
-    MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE, /* Output */
-    MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG, /* Instanced */
-    MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF,
+    MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE,
+    MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG,
+    MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF,
 
+    MOT_VAR_TYPE_V_MONITOR_ACCS_STATE,
+    MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG,
+    MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER_REF,
+
+    MOT_VAR_TYPE_V_MONITOR_ANALOG_STATE,
+    MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG,
+    MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER_REF,
+}
+MotorController_VarType_VMonitor_T;
+
+typedef enum MotorController_VarType_HeatMonitor
+{
     /* Heat monitors sub types motor, pcb, mosfet */
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
+
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE, /* 0-3 */
-    // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF, /* 0-3 */
+    // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
 }
-MotorController_VarType_Monitor_T;
+MotorController_VarType_HeatMonitor_T;
 
 typedef enum MotorController_VarType_Communication
 {
+    MOT_VAR_TYPE_PROTOCOL_STATE,
     MOT_VAR_TYPE_PROTOCOL_CONFIG, /* Instance by Protocol Count */
+
+    MOT_VAR_TYPE_CAN_BUS_STATE,
     MOT_VAR_TYPE_CAN_BUS_CONFIG,
 }
 MotorController_VarType_Communication_T;
@@ -230,71 +225,26 @@ MotorController_VarType_Communication_T;
     Handler by Source File Module
     determine handler logic by id
     Ideally mutually exclusive attribute groups when possible
+
+    Corresponds to the "object type". accounts for type literal and specialized properties.
+
+    partition for contigously expandable ids
 */
 /******************************************************************************/
 typedef enum MotVarId_HandlerType
 {
-    /* Instance count of Motor */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR, //IO
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL,
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
-    /* Sensor Table Entries */
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_STATE, // Sensor Out
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR_CONFIG,
-
-    /* */
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR, /* Generic */
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SUB_MODULE,
     MOT_VAR_ID_HANDLER_TYPE_GENERAL,
-    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
-    MOT_VAR_ID_HANDLER_TYPE_MONITOR,
+    MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
+    MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-
+    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
     _MOT_VAR_ID_HANDLER_TYPE_END,
-
-    // normalized to instance type, host side handler alone determines instance type
-    // MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
-    // MOT_VAR_ID_HANDLER_TYPE_PROTOCOL,
-    // MOT_VAR_ID_HANDLER_TYPE_PCB_MONITOR, /*  */
-    // MOT_VAR_ID_HANDLER_TYPE_MOSFETS_MONITOR, /*  */
 }
 MotVarId_HandlerType_T;
-
-/******************************************************************************/
-/*!
-    Instance Select
-*/
-/******************************************************************************/
-// optionally separate as only type named
-typedef enum MotVarId_Instance_VMonitor
-{
-    MOT_VAR_ID_V_MONITOR_SOURCE,
-    MOT_VAR_ID_V_MONITOR_ACCS,
-    MOT_VAR_ID_V_MONITOR_ANALOG,
-    // MOT_VAR_ID_V_MONITOR_AUX,
-}
-MotVarId_Instance_VMonitor_T;
-
-/* Map to sub module if supported */
-/* reduce module type handles by half. 2-3 bits */
-// typedef enum MotVarId_AccessType
-// {
-//     MOT_VAR_ACCESS_VAR_IO,
-//     MOT_VAR_ACCESS_VAR_CMD,
-//     MOT_VAR_ACCESS_CONFIG,
-//     MOT_VAR_ACCESS_CONFIG_CMD,
-//     MOT_VAR_ACCESS_CONST_INFO,
-// } MotVarId_AccessType_T;
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-static inline uint8_t MotorController_Var_GetMotorCount(const MotorController_T * p_context) { return p_context->MOTORS.LENGTH; }
-static inline uint8_t MotorController_Var_GetHeatMosfetCount(const MotorController_T * p_context) { return HeatMonitor_Group_GetInstanceCount(&p_context->HEAT_MOSFETS); }
-static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController_T * p_context)
-{
-    return (p_context->V_SOURCE.P_STATE != NULL) + (p_context->V_ACCESSORIES.P_STATE != NULL) + (p_context->V_ANALOG.P_STATE != NULL);
-}
-static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController_T * p_context) { return p_context->PROTOCOL_COUNT; }
-
 
 /******************************************************************************/
 /*
@@ -304,6 +254,33 @@ static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController
 /******************************************************************************/
 extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
+
+
+
+/* Map to sub module if supported */
+// typedef enum MotVarId_AccessType
+// {
+//     MOT_VAR_ACCESS_VAR_IO,
+//     MOT_VAR_ACCESS_VAR_CMD,
+//     MOT_VAR_ACCESS_CONFIG,
+//     MOT_VAR_ACCESS_CONFIG_CMD,
+//     MOT_VAR_ACCESS_CONST_INFO,
+// } MotVarId_AccessType_T;
+
+
+/******************************************************************************/
+/*!
+    Instance Select
+*/
+/******************************************************************************/
+// typedef enum MotVarId_Instance_VMonitor
+// {
+//     MOT_VAR_ID_V_MONITOR_SOURCE,
+//     MOT_VAR_ID_V_MONITOR_ACCS,
+//     MOT_VAR_ID_V_MONITOR_ANALOG,
+//     // MOT_VAR_ID_V_MONITOR_AUX,
+// }
+// MotVarId_Instance_VMonitor_T;
 
 /*
     Index corresponds to external user interface
@@ -334,130 +311,3 @@ extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_con
 //     MOT_VAR_ID_PROTOCOL_SOCKET_3,
 // }
 // MotVarId_Instance_ProtocolSocket_T;
-
-/******************************************************************************/
-/*!
-    @brief Access control functions based on InnerType patterns
-*/
-/******************************************************************************/
-// static inline bool MotVarId_IsConfig(MotVarId_T varId)
-// {
-//     switch(varId.OuterType)
-//     {
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
-//             return true; // Config types are always config
-
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
-//             // switch (varId.InnerType)
-//             // {
-//             //     case MOTOR_VAR_TYPE_HALL_CONFIG:
-//             //     case MOTOR_VAR_TYPE_ENCODER_CONFIG: return true; // Sensor config types are config
-//             //     default: return false; // Other sensor types are not config
-//             // }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL:
-//             switch (varId.InnerType)
-//             {
-//                 case MOT_VAR_TYPE_GENERAL_CONFIG:
-//                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
-//                 case MOT_VAR_TYPE_PROTOCOL_CONFIG:
-//                 case MOT_VAR_TYPE_CAN_BUS_CONFIG: return true; // System service config types are config
-//                 default: return false; // Other system service types are not config
-//             }
-
-//         default: return false; // Default to not config for other handlers
-//     }
-// }
-
-// // Access pattern detection by InnerType suffix/pattern
-// static inline bool MotVarId_IsReadOnly(MotVarId_T varId)
-// {
-//     switch(varId.OuterType)
-//     {
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_VAR:
-//         //     switch (varId.InnerType)
-//         //     {
-//         //         case MOTOR_VAR_TYPE_USER_OUT:
-//         //         case MOTOR_VAR_TYPE_FOC_OUT:
-//         //         case MOTOR_VAR_TYPE_ROTOR_OUT: return true;  // *_OUT types are read-only
-//         //         case MOTOR_VAR_TYPE_PID_TUNING_IO:
-//         //         case MOTOR_VAR_TYPE_USER_IO: return false; // *_IO types are read-write
-//         //         case MOTOR_VAR_TYPE_CMD_IN: return false; // Commands are execute-only (writable)
-//         //         default: return true;  // Default to read-only for safety
-//         //     }
-
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
-//         //     return false; // Config types are read-write
-
-//         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
-//         //     switch (varId.InnerType)
-//         //     {
-//         //         case MOTOR_VAR_TYPE_HALL_STATE:
-//         //         case MOTOR_VAR_TYPE_ENCODER_STATE: return true;  // State types are read-only
-//         //         case MOTOR_VAR_TYPE_HALL_CONFIG:
-//         //         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return false; // Config types are read-write
-//         //         default: return true;  // Default to read-only for safety
-//         //     }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL:
-//             switch (varId.InnerType)
-//             {
-//                 case MOT_VAR_TYPE_GENERAL_USER_OUT:
-//                 case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT: return true;  // *_OUT types are read-only
-//                 case MOT_VAR_TYPE_GENERAL_CONFIG:
-//                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG: return false; // Config types are read-write
-//                 case MOT_VAR_TYPE_PROTOCOL_CONFIG:
-//                 case MOT_VAR_TYPE_CAN_BUS_CONFIG: return false; // Protocol and CAN bus configs are read-write
-//                 case MOT_VAR_TYPE_GENERAL_REF:
-//                 case MOT_VAR_TYPE_DEBUG: return true;  // Read-only
-//                 default: return true;  // Default to read-only for safety
-//             }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_MONITOR:
-//             switch (varId.InnerType)
-//             {
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_STATE: return true;
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE: return true;
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE: return true;  // State types are read-only
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_VDIVIDER_REF: return true;  // VDivider reference is read-only
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF: return true;  // Thermistor reference is read-only
-
-//                 case MOT_VAR_TYPE_V_MONITOR_INSTANCE_CONFIG:
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:
-//                 case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG: return false; // Config types are read-write
-//                 default: return true;  // Default to read-only for safety
-//             }
-
-//         case MOT_VAR_ID_HANDLER_TYPE_USER_INPUT: return false; // Commands are execute-only (writable)
-
-//         default: return true;  // Default to read-only for safety
-//     }
-// }
-
-
-// // Main access control functions
-// static inline bool MotVarId_IsReadable(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsReadOnly_ByNameType(name_type, handler_type) ||
-//         MotVarId_IsReadWrite_ByNameType(name_type, handler_type);
-// }
-
-// static inline bool MotVarId_IsWritable(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsReadWrite_ByNameType(name_type, handler_type) ||
-//         MotVarId_IsCommand_ByNameType(name_type, handler_type);
-// }
-
-// static inline bool MotVarId_IsCommand(MotVarId_T var_id)
-// {
-//     uint8_t handler_type = (var_id.Value >> 8) & 0x7;
-//     uint8_t name_type = (var_id.Value >> 4) & 0xF;
-
-//     return MotVarId_IsCommand_ByNameType(name_type, handler_type);
-// }

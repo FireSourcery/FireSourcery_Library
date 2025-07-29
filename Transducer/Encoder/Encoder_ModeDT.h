@@ -214,6 +214,6 @@ extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
 /*
 */
 /******************************************************************************/
-extern int32_t Enocder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
+extern int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
 
 #endif

@@ -24,6 +24,74 @@
 /*  */
 static inline void * void_pointer_at(const void * p_buffer, size_t type, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 
+/*!
+    swtich copy
+    @brief Copy data from source to destination based on the size.
+    @param dest Pointer to the destination buffer.
+    @param src Pointer to the source buffer.
+    @param size Size of the data to copy.
+*/
+static inline void void_copy(void * p_dest, const void * p_src, size_t size)
+{
+    switch (size)
+    {
+        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
+        case sizeof(uint16_t): *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
+        case sizeof(uint32_t): *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
+#if (REGISTER_SIZE_64)
+        case sizeof(uint64_t) : *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
+#endif
+        default: memcpy(p_dest, p_src, size); break;
+    }
+}
+
+static inline void void_pointer_assign(void * p_unit, size_t type, const void * p_value) { void_copy(p_unit, p_value, type); }
+
+/* this should inline with type */
+// static inline value_t as_value(size_t type, const void * p_unit)
+static inline value_t void_pointer_as_value(const void * p_unit, size_t type)
+{
+    value_t value = 0;
+    switch (type)
+    {
+        case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
+        case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
+        case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
+#if (REGISTER_SIZE_64)
+        case sizeof(int64_t): value = *((const int64_t *)p_unit); break;
+#endif
+        default: break;
+    }
+    return value;
+}
+
+static inline void void_pointer_assign_as_value(void * p_unit, size_t type, value_t value)
+{
+    switch (type)
+    {
+        case sizeof(int8_t):  *((int8_t *)p_unit)  = (int8_t)value;  break;
+        case sizeof(int16_t): *((int16_t *)p_unit) = (int16_t)value; break;
+        case sizeof(int32_t): *((int32_t *)p_unit) = (int32_t)value; break;
+#if (REGISTER_SIZE_64)
+        case sizeof(int64_t): *((int64_t *)p_unit) = (int64_t)value; break;
+#endif
+        default: break;
+    }
+}
+
+// static inline void void_pointer_assign_as_cast(void * p_unit, size_t type, uintptr_t arg)
+// {
+//     switch (type)
+//     {
+//         case sizeof(uint8_t) : *((uint8_t  *)p_unit) = (uint8_t)arg; break;
+//         case sizeof(uint16_t): *((uint16_t *)p_unit) = (uint16_t)arg; break;
+//         case sizeof(uint32_t): *((uint32_t *)p_unit) = (uint32_t)arg; break;
+// #if (REGISTER_SIZE_64)
+//         case sizeof(uint64_t) : *((uint64_t *)p_unit) = (uint64_t)arg; break;
+// #endif
+//         default: memcpy(p_unit, (const void *)arg, type); break;
+//     }
+// }
 
 /******************************************************************************/
 /*
@@ -113,106 +181,24 @@ static inline bool void_array_for_any_set(void * p_buffer, size_t type, size_t l
     value arary
 */
 /******************************************************************************/
-/*!
-    swtich copy
-    @brief Copy data from source to destination based on the size.
-    @param dest Pointer to the destination buffer.
-    @param src Pointer to the source buffer.
-    @param size Size of the data to copy.
-*/
-static inline void void_copy(void * p_dest, const void * p_src, size_t size)
-{
-    switch (size)
-    {
-        case sizeof(uint8_t) : *((uint8_t  *)p_dest) = *((const uint8_t  *)p_src); break;
-        case sizeof(uint16_t): *((uint16_t *)p_dest) = *((const uint16_t *)p_src); break;
-        case sizeof(uint32_t): *((uint32_t *)p_dest) = *((const uint32_t *)p_src); break;
-#if (REGISTER_SIZE_64)
-        case sizeof(uint64_t) : *((uint64_t *)p_dest) = *((const uint64_t *)p_src); break;
-#endif
-        default: memcpy(p_dest, p_src, size); break;
-    }
-}
-
-static inline void void_pointer_assign(void * p_unit, size_t type, const void * p_value) { void_copy(p_unit, p_value, type); }
-
 /*
     multiple units by pointer
 */
 static inline void void_array_copy_to(const void * p_buffer, size_t type, void * p_to, size_t count) { memcpy(p_to, p_buffer, type * count); }
 static inline void void_array_copy_from(void * p_buffer, size_t type, const void * p_from, size_t count) { memcpy(p_buffer, p_from, type * count); }
 
-
-/* this should inline with type */
-static inline value_t void_pointer_as_value(const void * p_unit, size_t type)
-{
-    value_t value = 0;
-    switch (type)
-    {
-        case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
-        case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
-        case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
-#if (REGISTER_SIZE_64)
-        case sizeof(int64_t): value = *((const int64_t *)p_unit); break;
-#endif
-        default: break;
-    }
-    return value;
-}
-
-static inline void void_pointer_assign_as_value(void * p_unit, size_t type, value_t value)
-{
-    switch (type)
-    {
-        case sizeof(int8_t):  *((int8_t *)p_unit)  = (int8_t)value;  break;
-        case sizeof(int16_t): *((int16_t *)p_unit) = (int16_t)value; break;
-        case sizeof(int32_t): *((int32_t *)p_unit) = (int32_t)value; break;
-#if (REGISTER_SIZE_64)
-        case sizeof(int64_t): *((int64_t *)p_unit) = (int64_t)value; break;
-#endif
-        default: break;
-    }
-}
-
-// static inline void void_pointer_assign_as_struct(void * p_unit, size_t type, const void * p_value)
-// {
-//     memcpy(p_unit, p_value, type);
-// }
-
-// static inline void void_pointer_assign_as(void * p_unit, size_t type, uintptr_t arg)
-// {
-//     switch (type)
-//     {
-//         case sizeof(uint8_t) : *((uint8_t  *)p_unit) = (uint8_t)arg; break;
-//         case sizeof(uint16_t): *((uint16_t *)p_unit) = (uint16_t)arg; break;
-//         case sizeof(uint32_t): *((uint32_t *)p_unit) = (uint32_t)arg; break;
-// #if (REGISTER_SIZE_64)
-//         case sizeof(uint64_t) : *((uint64_t *)p_unit) = (uint64_t)arg; break;
-// #endif
-//         default: memcpy(p_unit, (const void *)arg, type); break;
-//     }
-// }
-
 /*
     array
-    singlt unit at index by value
+    single unit at index by value
 */
-static inline value_t void_array_get(const void * p_buffer, size_t type, size_t index)
-{
-    return void_pointer_as_value(void_pointer_at(p_buffer, type, index), type);
-}
-
-static inline void void_array_set(void * p_buffer, size_t type, size_t index, value_t value)
-{
-    void_pointer_assign_as_value(void_pointer_at(p_buffer, type, index), type, value);
-}
+static inline value_t void_array_get(const void * p_buffer, size_t type, size_t index) { return void_pointer_as_value(void_pointer_at(p_buffer, type, index), type); }
+static inline void void_array_set(void * p_buffer, size_t type, size_t index, value_t value) { void_pointer_assign_as_value(void_pointer_at(p_buffer, type, index), type, value); }
 
 /******************************************************************************/
 /*
     Value Array Iteration
 */
 /******************************************************************************/
-
 /*
     handles numeric types
 */
@@ -278,19 +264,3 @@ static inline void * void_array_max_with(void * p_buffer, size_t type, size_t le
 
 #endif // VOID_ARRAY_H
 
-
-// static inline value_t as_value(size_t type, const void * p_unit)
-// {
-//     value_t value = 0;
-//     switch (type)
-//     {
-//         case sizeof(int8_t):  value = *((const int8_t *)p_unit);  break;
-//         case sizeof(int16_t): value = *((const int16_t *)p_unit); break;
-//         case sizeof(int32_t): value = *((const int32_t *)p_unit); break;
-// #if (REGISTER_SIZE_64)
-//         case sizeof(int64_t): value = *((const int64_t *)p_unit); break;
-// #endif
-//         default: break;
-//     }
-//     return value;
-// }

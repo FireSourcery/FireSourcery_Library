@@ -71,9 +71,9 @@ static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
     {
         switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
         {
-            case MOT_DRIVE_CMD_BRAKE: _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_BRAKE); break;
-            case MOT_DRIVE_CMD_THROTTLE: _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_THROTTLE); break;
-            case MOT_DRIVE_CMD_RELEASE: _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_RELEASE); break;
+            case MOT_DRIVE_CMD_BRAKE: _StateMachine_ProcAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_BRAKE); break;
+            case MOT_DRIVE_CMD_THROTTLE: _StateMachine_ProcAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_THROTTLE); break;
+            case MOT_DRIVE_CMD_RELEASE: _StateMachine_ProcAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_RELEASE); break;
             default: break;
         }
     }

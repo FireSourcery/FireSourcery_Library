@@ -128,7 +128,7 @@ static inline void MotMotors_ForceDisableControl(const MotMotors_T * p_ctx)
 //     return isEvery;
 // }
 
-// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_input_value_t value)
+// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_value_t value)
 //     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
 
 static inline void MotMotors_EnterCalibration(const MotMotors_T * p_ctx)

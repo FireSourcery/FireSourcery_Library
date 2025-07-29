@@ -36,18 +36,17 @@
     Private
 */
 /******************************************************************************/
-static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
+static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address) NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
 static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address)
 {
 #ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
-    // return (address + p_state->p_OpPartition->OP_ADDRESS_OFFSET);
-    (void)p_context; (void)p_state; return address;
+    return (address + p_state->p_OpPartition->OP_ADDRESS_OFFSET);
 #elif defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
     (void)p_context; (void)p_state; return address;
 #endif
 }
 
-static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 {
     /* Start command validated by caller. No null pointer check */
@@ -69,7 +68,7 @@ static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State
 /*
     Store in RAM for case of Flash.
 */
-static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 {
     if (StartOpCmd(p_context, p_state, opIndex) == true)
@@ -82,7 +81,7 @@ static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_
     }
 }
 
-// NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) CONFIG_NV_MEMORY_ATTRIBUTE_RAM_SECTION; // potentially remove from RAM
+// NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION; // potentially remove from RAM
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context)
 {
     NvMemory_State_T * p_state = p_context->P_STATE;

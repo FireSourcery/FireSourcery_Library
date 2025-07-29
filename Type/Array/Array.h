@@ -37,13 +37,31 @@
 #include <stddef.h>
 #include <string.h>
 
+
+
+/******************************************************************************/
+/*
+    Wrapper around values array, preset functions for int types and operations
+*/
+/******************************************************************************/
+
+typedef const union
+{
+    void * P_BUFFER;
+    uint8_t * P_ARRAY8;
+    uint16_t * P_ARRAY16;
+    uint32_t * P_ARRAY32;
+    uint64_t * P_ARRAY64;
+}
+GenericArray_T;
+
 // typedef const struct ArrayContext
 typedef const struct ArrayMeta
 {
     // const size_t TYPE_SIZE; // Size of each element in the p_array
     void * P_BUFFER;
     size_t LENGTH;    // Length of the p_array
-    void * P_AUGMENTS;
+    void * P_AUGMENTS; // P_HEADER/P_STATE
 
     // effective add to the unified interface, non value types
     // Array_State_T * const P_STATE;  // Pointer to the p_array buffer, with augments
@@ -66,8 +84,69 @@ Array_T;
 
 
 
+/*
+    Generic array implementation - using Macros with _Generic selection for type safety
+
+    Compile time typed
+    effectively void array expressed with type prior to what compiler may optimize
+    alternative to handling size parameter, may be faster depending on compiler.
+*/
+/*
+    Allow sub-module to configure type using a single parameter
+*/
+// #define as_pointer(T, p_buffer) ((T *)p_buffer)
+#define as_pointer(T, p_buffer) \
+    _Generic((T)0, \
+        int8_t  : ((int8_t *)p_buffer), \
+        int16_t : ((int16_t *)p_buffer), \
+        int32_t : ((int32_t *)p_buffer), \
+        int8_t *: ((int8_t *)p_buffer), \
+        int16_t *: ((int16_t *)p_buffer), \
+        int32_t *: ((int32_t *)p_buffer), \
+        int64_t *: ((int64_t *)p_buffer) \
+    )
+
+// #define as_pointer(T, p_buffer) \
+//     _Generic((T)0, \
+//         int8_t    : ((int8_t *)p_buffer), \
+//         uint8_t   : ((uint8_t *)p_buffer), \
+//         int16_t   : ((int16_t *)p_buffer), \
+//         uint16_t  : ((uint16_t *)p_buffer), \
+//         int32_t   : ((int32_t *)p_buffer), \
+//         uint32_t  : ((uint32_t *)p_buffer), \
+//         int64_t   : ((int64_t *)p_buffer), \
+//         uint64_t  : ((uint64_t *)p_buffer), \
+//         float     : ((float *)p_buffer), \
+//         double    : ((double *)p_buffer), \
+//         default   : ((void *)p_buffer) \
+//     )
+
+#define as_ref(T, p_buffer) (as_pointer(T, p_buffer)[0U])
+
+#define as_value(T, p_buffer) as_ref(T, p_buffer)
+
+// #define as(T, p_buffer) \
+//     _Generic((T)0, \
+//         int8_t  : as_value(T, p_buffer), \
+//         int16_t : as_value(T, p_buffer), \
+//         int32_t : as_value(T, p_buffer), \
+//         int8_t * : as_pointer(T, p_buffer), \
+//         int16_t *: as_pointer(T, p_buffer) \
+//     )
+
+
+#define as_array_at(T, p_buffer, index) (as_pointer(T, p_buffer)[index])
 
 #define Array_At(T, p_ArrayMeta, index) (as_array_at(T, p_ArrayMeta->P_BUFFER, index))
+
+#define ArrayContextT(p_ArrayMeta, index) \
+    _Generic(p_ArrayMeta, \
+        Array8_T *: int8_t, \
+        Array16_T *: int16_t, \
+        Array32_T *: int32_t \
+    )
+
+#define ArrayContext_At_(p_ArrayMeta, index) (as_array_at(ArrayContextT(p_ArrayMeta, index), p_ArrayMeta->P_BUFFER, index))
 
 /*!
     @brief Generically Get the value of an element at a specific index.
@@ -86,7 +165,7 @@ Array_T;
 #define Array_SetAs(T, p_ArrayMeta, index, value) (Array_At(T, p_ArrayMeta, index) = value)
 
 /*
-    Wrap for saftey
+    Type safe wrapper around common implementation
 */
 static inline int8_t Array8_Get(const Array_T * p_array, size_t index) { return ((int8_t *)p_array->P_BUFFER)[index]; }
 static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { ((int8_t *)p_array->P_BUFFER)[index] = value; }
@@ -140,10 +219,10 @@ static inline void ArrayStruct_Set(size_t type, Array_T * p_array, size_t index,
 //     union
 //     {
 //         void * P_BUFFER;
-//         uint8_t * const P_ARRAY8;
-//         uint16_t * const P_ARRAY16;
-//         uint32_t * const P_ARRAY32;
-//         uint64_t * const P_ARRAY64;
+//         uint8_t * P_ARRAY8;
+//         uint16_t * P_ARRAY16;
+//         uint32_t * P_ARRAY32;
+//         uint64_t * P_ARRAY64;
 //     };
 //     size_t LENGTH;    // Length of the p_array
 //     void * P_AUGMENTS;

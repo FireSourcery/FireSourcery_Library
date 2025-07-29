@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,13 +26,9 @@
 /*!
     @file   Motor_Commutation.h
     @author FireSourcery
-
-    @brief
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOTOR_COMMUTATION_H
-#define MOTOR_COMMUTATION_H
-
 #include "Motor_FOC.h"
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
 #include "Motor_SixStep.h"
@@ -80,7 +78,3 @@ static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_moto
 // static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) {
 //     ((typeof(Motor_FOC_SetDirection) *)(_Motor_CommutationModeFn(p_motor, Motor_FOC_SetDirection, Motor_SetDirection)))(p_motor, direction);
 // }
-
-
-
-#endif // MOTOR_COMMUTATION_H

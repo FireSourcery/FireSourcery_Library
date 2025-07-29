@@ -35,7 +35,6 @@
 /*
 
 */
-// Motor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 void Motor_Init(const Motor_T * p_context)
 {
     assert(MotorAnalog_GetVSource_Fract16() != 0U); /* set before init */
@@ -44,12 +43,12 @@ void Motor_Init(const Motor_T * p_context)
     if (p_context->P_NVM_CONFIG != NULL) { p_context->P_MOTOR_STATE->Config = *p_context->P_NVM_CONFIG; }
 
     /*
-        HW Wrappers Init
+        HW Modules Init
     */
     Phase_Init(&p_context->PHASE);
     // Phase_Analog_Init(&p_context->PHASE);
 #if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-    Phase_Polar_ActivateMode(&p_motor->PHASE, p_motor->Config.PhasePwmMode);
+    Phase_Polar_ActivateMode(&p_context->PHASE, p_context->P_MOTOR_STATE->Config.PhasePwmMode);
 #endif
 
     /* Using Config Id */
@@ -58,12 +57,14 @@ void Motor_Init(const Motor_T * p_context)
 
     // HeatMonitor_Init(&p_context->HEAT_MONITOR_CONTEXT);
 
+    TimerT_Periodic_Init(&p_context->CONTROL_TIMER, 1U);
+    TimerT_Periodic_Init(&p_context->SPEED_TIMER, 1U);
+
     Motor_Reset(p_context->P_MOTOR_STATE); // alternatively move to state machine
     StateMachine_Init(&p_context->STATE_MACHINE);
 }
 
 /*
-
 */
 void Motor_Reset(Motor_State_T * p_motor)
 {
@@ -72,8 +73,6 @@ void Motor_Reset(Motor_State_T * p_motor)
     /*
         SW Structs
     */
-   Timer_InitPeriodic(&p_motor->ControlTimer, 1U);
-   Timer_InitPeriodic(&p_motor->SpeedTimer, 1U);
 
     /*
        Feedback State
@@ -114,13 +113,6 @@ void Motor_Reset(Motor_State_T * p_motor)
 
 */
 /******************************************************************************/
-/*
-    Wrapper for Propagate Set
-*/
-void Motor_ReinitSensor(Motor_State_T * p_motor)
-{
-    RotorSensor_Init(p_motor->p_ActiveSensor);
-}
 
 /*
     propagate Motor Config to sensor module params
@@ -354,50 +346,4 @@ void Motor_ClearILimit(Motor_State_T * p_motor)
     ApplyILimit(p_motor);
 }
 
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
-{
-    bool isLimit = false;
-    switch (Motor_GetUserDirection(p_motor))
-    {
-        case 1:
-            if (speed_ufract16 > p_motor->SpeedLimitForward_Fract16) { Motor_SetSpeedLimitForward(p_motor, speed_ufract16); isLimit = true; }
-            break;
-        case -1:
-            if (speed_ufract16 > p_motor->SpeedLimitReverse_Fract16) { Motor_SetSpeedLimitReverse(p_motor, speed_ufract16); isLimit = true; }
-            break;
-        default: break;
-    }
-
-    return isLimit;
-}
-
-bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
-{
-    bool isLimit = false;
-    if (i_Fract16 < p_motor->ILimitMotoring_Fract16) { p_motor->ILimitMotoring_Fract16 = i_Fract16; isLimit = true; }
-    if (i_Fract16 < p_motor->ILimitGenerating_Fract16) { p_motor->ILimitGenerating_Fract16 = i_Fract16; isLimit = true; }
-    if (isLimit == true) { ApplyILimit(p_motor); }
-    return isLimit;
-}
-
-/*
-    Interface
-    Set using comparison struct
-*/
-void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-{
-    if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    // else                                        { Motor_ClearSpeedLimit(p_motor); }
-}
-
-void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-{
-    if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    // else                                        { Motor_ClearILimit(p_motor); }
-}
 

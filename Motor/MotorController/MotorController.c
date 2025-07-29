@@ -66,7 +66,7 @@ void MotorController_Init(const MotorController_T * p_context)
     Pin_Output_Init(&p_context->RELAY_PIN);
     UserDIn_Init(&p_context->OPT_DIN); /* 5-10ms by default */
 
-    Timer_Periodic_Init(&p_mc->TimerMillis, 1U);
+    TimerT_Periodic_Init(&p_context->MILLIS_TIMER, 1U);
 
 #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
     Shell_Init(&p_mc->Shell);
@@ -81,7 +81,6 @@ void MotorController_Init(const MotorController_T * p_context)
     //     /* or prompt user, resets every boot until user saves params */
     // }
 
-    // StateMachine_Init(&p_mc->StateMachine);
     StateMachine_Init(&p_context->STATE_MACHINE);
 }
 
