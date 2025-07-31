@@ -162,6 +162,7 @@ PacketClass_T;
 // } Packet_HeaderClass_T;
 
 // optionally compile time define contigous context
+// static inline   Packet_Action(const PacketClass_T * , uint8_t *, ...)
 // typedef const struct Packet_Context
 // {
 //     const PacketClass_T * P_SPECS;

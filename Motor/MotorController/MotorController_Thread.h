@@ -248,7 +248,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
-#if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
     switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
     {
 
@@ -278,7 +278,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 
     Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);
 
-#endif
+// #endif
 }
 
 /******************************************************************************/

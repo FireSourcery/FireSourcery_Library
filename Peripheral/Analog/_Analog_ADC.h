@@ -157,12 +157,15 @@ static void ADC_StartConversions(const Analog_ADC_T * p_adc, Analog_ConversionCh
 }
 
 // switchs context
-// static void ADC_StartConversionsFrom(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
-// {
-//     p_adc->P_ADC_STATE->p_ConversionChannels = p_conversions;
-//     ADC_SetStateFrom(p_adc->P_ADC_STATE, p_conversions, markers);
-//     ADC_Activate(p_adc, p_adc->P_ADC_STATE);
-// }
+static void ADC_StartFrom(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
+{
+    if (markers != 0U)
+    {
+        // p_adc->P_ADC_STATE->p_ConversionChannels = p_conversions;
+        ADC_SetStateFrom(p_adc->P_ADC_STATE, p_conversions, markers);
+        ADC_Activate(p_adc, p_adc->P_ADC_STATE);
+    }
+}
 
 /******************************************************************************/
 /*
@@ -177,9 +180,7 @@ static void ADC_StartConversions(const Analog_ADC_T * p_adc, Analog_ConversionCh
 */
 static void ADC_ProcStart(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 {
-    ADC_SetStateFrom(p_state, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
-    ADC_Activate(p_adc, p_state);
-    // ADC_StartConversions(p_adc, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
+    ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
     // p_state->ChannelMarkers &= ~processed;
 }
 

@@ -33,8 +33,6 @@
 
 #define CONFIG_MOTOR_DEBUG (!NDEBUG)
 
-
-
 #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
 #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
 #else

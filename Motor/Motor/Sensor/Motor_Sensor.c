@@ -65,7 +65,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
     {
         case ROTOR_SENSOR_ID_HALL:
             (void)varValue; // unused
-            assert(p_motor->P_MOTOR_STATE->p_ActiveSensor == &p_motor->SENSOR_TABLE.HALL);
+            assert(p_motor->P_MOTOR_STATE->p_ActiveSensor == (RotorSensor_T *)&p_motor->SENSOR_TABLE.HALL);
             assert(p_motor->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL);
             Motor_Hall_Calibrate(p_motor);
             break;
