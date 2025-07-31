@@ -57,7 +57,8 @@ typedef const struct VMonitor_Context
     // void (*ON_FAULT)(void * p_context); /* Optionally callback table */
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
-    Analog_Conversion_T ANALOG_CONVERSION;
+    Analog_Conversion_T ANALOG_CONVERSION; // move to upper layer, for interface
+    //
     VDivider_T VDIVIDER;
     // VDivider_T * P_VDIVIDER; // pointer for writable
     Linear_T * P_LINEAR; /* if defined local unit conversion */

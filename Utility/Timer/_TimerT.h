@@ -80,8 +80,9 @@ static inline void __TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p
 /******************************************************************************/
 /*
     Specialized functions for each mode (fastest approach)
-    Does not involve the disabled State. Caller handle.
 
+    Does not involve the disabled State. Caller handle.
+    Period == 0 => tick at BASE_FREQ
     MISRA violation: Early return - Better Code readability. Less intermediate variables.
 */
 /******************************************************************************/

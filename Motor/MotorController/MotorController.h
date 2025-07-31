@@ -232,35 +232,31 @@ MotorController_State_T;
 typedef const struct MotorController
 {
     /*
-        Peripheral Thread mapping context
+        Peripheral Init
     */
     Analog_ADC_T * P_ANALOG_ADCS;
     uint8_t ADC_COUNT; /* Analog ADCs */
-
-    /* Simultaneous active serial */
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
-
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * P_CAN_BUS;
 #endif
 
     /*
-        Services Context
+        Peripheral Services Context
     */
     /* Transducer */
     MotAnalogUser_T ANALOG_USER;
     MotAnalogUser_Conversion_T ANALOG_USER_CONVERSIONS; /* AnalogUser Conversions */
-    UserDIn_T OPT_DIN;     /* Configurable input */
+    UserDIn_T OPT_DIN; /* Configurable input */
     Blinky_T BUZZER;
     Blinky_T METER;
     Pin_T RELAY_PIN;
 
-    /*  */
-    Socket_T * P_PROTOCOLS;
-    uint8_t PROTOCOL_COUNT; /* Sockets */
+    /* Peripheral */
+    Socket_T * P_PROTOCOLS;  /* Sockets */
+    uint8_t PROTOCOL_COUNT;
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
-
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
@@ -271,22 +267,15 @@ typedef const struct MotorController
     /* Monitor - Detection + response with full context */
     HeatMonitor_Context_T HEAT_PCB;
     HeatMonitor_GroupContext_T HEAT_MOSFETS;
-    VMonitor_Context_T V_SOURCE; /* Controller Supply */
-    VMonitor_Context_T V_ACCESSORIES; /* ~12V */
-    VMonitor_Context_T V_ANALOG; /* V Analog Sensors ~5V */
+    VMonitor_Context_T V_SOURCE;        /* Controller Supply */
+    VMonitor_Context_T V_ACCESSORIES;   /* ~12V */
+    VMonitor_Context_T V_ANALOG;        /* V Analog Sensors ~5V */
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
     MotDrive_T MOT_DRIVE; /* Drive */
     MotorController_State_T * P_ACTIVE; /* Pointer to the Runtime buffer */
-
-    /* Thread dividers, these should compile time optimze. alternatively as ifndef def  */
-    /* In Pow2 - 1 */
-    // uint32_t ANALOG_USER_DIVIDER;
-    // uint32_t MAIN_DIVIDER_10;
-    // uint32_t MAIN_DIVIDER_1000;
-    // uint32_t TIMER_DIVIDER_1000;
 
     Version_T MAIN_VERSION;
     const MotorController_Config_T * P_NVM_CONFIG;

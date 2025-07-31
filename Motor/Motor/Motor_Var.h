@@ -146,6 +146,7 @@ typedef enum Motor_Var_StateCmd
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
     // MOTOR_VAR_USER_START, // handle by direction for now
     // MOTOR_VAR_USER_STOP,
+
     MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
     MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,

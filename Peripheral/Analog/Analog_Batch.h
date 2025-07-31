@@ -52,6 +52,7 @@
 //     // uint8_t COUNT;                                // Number of conversions in the batch
 //     Analog_BatchPart_T * P_BATCH_PARTS;  // per map channel per  adc
 //     uint8_t ADC_COUNT;
+//
 // }
 // Analog_ConversionBatch_T;
 
@@ -64,13 +65,13 @@
 // {
 //     for (uint8_t index = 0U; index < p_batch->ADC_COUNT; index++)
 //     {
-//         Analog_BatchPart_T * p_part = &p_batch->P_BATCH_PARTS[index];
 //         Analog_ADC_T * p_adc = p_part->P_ADC;
+//         Analog_BatchPart_T * p_part = &p_batch->P_BATCH_PARTS[index];
 //         Analog_ContextState_T * p_state = p_part->ADC_CONTEXT.P_STATE;
 
 //         // mark all channels
-//         p_state->ChannelMarkers |= p_part->ADC_CONTEXT.P_STATE->ChannelMarkers;
-//         // p_state->CompleteMarkers |= p_part->ADC_CONTEXT.P_STATE->CompleteMarkers;
+//         p_state->ChannelMarkers |= (1 << p_part->ADC_CONTEXT.Count) - 1 ;
+//         // p_state->CompleteMarkers = 0;
 
 //         // mark all channels
 //         for (uint8_t channelIndex = 0U; channelIndex < p_adc->CHANNEL_COUNT; channelIndex++)
@@ -88,19 +89,19 @@
 // static inline adc_result_t _Analog_Batch_Result_ADC(const Analog_ConversionBatch_T * p_batch, uint8_t batchIndex) { return _Analog_Channel_GetResult(&p_batch->P_CHANNELS[batchIndex]); }
 
 // static inline bool _Analog_Batch_IsComplete_ADC(const Analog_ConversionBatch_T * p_batch)
+// void _Analog_Batch_IsComplete(uint32_t * p_completed, uint8_t count)
 // {
-//     for (uint8_t index = 0U; index < p_batch->COUNT; index++)
+//     for (uint8_t index = 0U; index < count; index++)
 //     {
-//         if (_Analog_Channel_IsMarked(&p_batch->P_CHANNELS[index]) == false) { return false; } marked channels clear on start
+//         if ((p_completed[index] & 0xFFFFFFFFUL/* or batchMMask */) != 0UL) { return false; } // check if any channel is marked
 //     }
+//     return true;
 // }
 
 // static inline bool Analog_Batch_IsComplete(const Analog_ConversionBatch_T * p_batch)
 // {
 //
 // }
-
-
 
 // static   void AddActiveConversion(Analog_ADC_State_T * p_state, const Analog_ConversionChannel_T * p_handle)
 // {

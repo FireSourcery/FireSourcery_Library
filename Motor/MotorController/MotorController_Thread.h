@@ -58,7 +58,6 @@
 // #define MOTOR_CONTROLLER_TIMER_DIVIDER_1000 1023U /* Approx. 1 S */
 // #endif
 
-// static inline bool IsDividerAlign(uint32_t counter, uint32_t align) { return ((counter & align) == 0UL); }
 
 /******************************************************************************/
 /*
@@ -125,7 +124,6 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     {
         MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS);
     }
-    // if (IsDividerAlign(p_mc->MainDividerCounter, p_context->ANALOG_USER_DIVIDER) == true) { MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS); }
 }
 
 
@@ -335,7 +333,10 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         {
             // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-                _MotorController_ProcAnalogUser(p_context);
+                // if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
+                {
+                    _MotorController_ProcAnalogUser(p_context);
+                }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* optionally */
@@ -351,18 +352,10 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             default:  break;
         }
 
-        /* As polling */
-        // for(uint8_t iSerial = 0U; iSerial < p_context->SERIAL_COUNT; iSerial++)
-            // {
-            //     Serial_PollRxData(&p_context->P_SERIALS[iSerial]);
-            //     Serial_PollTxData(&p_context->P_SERIALS[iSerial]);
-            // }
-
-            /*
-                Low Freq, Low Priority, ~10ms ~16ms, 100Hz
-            */
+        /*
+            Low Freq, Low Priority, ~10ms ~16ms, 100Hz
+        */
         if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
-            // if (IsDividerAlign(p_mc->MainDividerCounter, p_context->MAIN_DIVIDER_10) == true)
         {
         #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
             Shell_Proc(&p_mc->Shell);
@@ -375,7 +368,6 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             Low Freq, Low Priority, ~1s ~1024ms
         */
         if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_1000) == true)
-            // if (IsDividerAlign(p_mc->MainDividerCounter, p_context->MAIN_DIVIDER_1000) == true)
         {
             /* In case of Serial Rx Overflow Timeout */
             for (uint8_t iSerial = 0U; iSerial < p_context->SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_context->P_SERIALS[iSerial]); }

@@ -89,7 +89,6 @@ static inline void HAL_ADC_Init(HAL_ADC_T * p_hal) { (void)p_hal; }
 static inline void HAL_ADC_WriteFifo(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
 {
     assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
-    // HAL_ADC_WriteFifoCount(p_hal, count);
     for (uint8_t iPin = 0U; iPin < count; iPin++) { HAL_ADC_WriteFifoPin(p_hal, p_pins[iPin]); }
 }
 
@@ -99,6 +98,14 @@ static inline void HAL_ADC_WriteFifo_ActivateOnLast(HAL_ADC_T * p_hal, adc_pin_t
     HAL_ADC_ActivateFifo(p_hal, p_pins[count - 1U]);
 }
 
-
+static inline void HAL_ADC_ActivateEach(HAL_ADC_T * p_hal, adc_pin_t * p_pins, uint8_t count)
+{
+#if HAL_ADC_FIFO_LENGTH_MAX > 1U
+    HAL_ADC_WriteFifoCount(p_hal, count);
+    HAL_ADC_WriteFifo_ActivateOnLast(p_hal, p_pins, count); // select on define
+#else
+    HAL_ADC_Activate(p_hal, p_pins[0U]);
+#endif
+}
 
 #endif

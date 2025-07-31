@@ -100,6 +100,7 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
     RangeMonitor_Enable(p_context->V_SOURCE.P_STATE);
     MotorController_ResetVSourceMonitorDefaults(p_context);
 
+
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);
     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
