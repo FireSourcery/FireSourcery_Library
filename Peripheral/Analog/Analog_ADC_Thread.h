@@ -44,19 +44,18 @@
 
     ADC_SetStateInternal
 */
-
 static void ADC_ProcStart(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 {
-    ADC_SetStateFrom(p_state, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
-    ADC_Activate(p_adc, p_state);
-    // ADC_StartConversions(p_adc, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
+    ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
+
     // p_state->ChannelMarkers &= ~processed;
+    // p_state->ChannelMarkers &= ~ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[0U], p_state->ChannelMarkers);
 }
 
 // from settable pointer
-// static void ADC_ProcStartFlex(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
+// static void ADC_ProcStartContext(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 // {
-// p_adc->P_ADC_STATE->p_ConversionChannels = p_conversions;
+//      p_adc->P_ADC_STATE->p_ConversionChannels = p_conversions;
 //     ADC_StartConversions(p_state, &p_adc->P_ADC_STATE->p_ConversionChannels, p_state->ChannelMarkers);
 // }
 
@@ -129,15 +128,6 @@ static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
      */
     if (Analog_ADC_ReadIsActive(p_adc) == false)
     {
-    #ifndef NDEBUG
-        /*
-            State Error.
-            ADC did not complete all Marked since previous called, and should be Active or in the ISR.
-            ADC is not active, and also not inside the ISR.
-        */
-        if (p_adc->P_ADC_STATE->ChannelMarkers != 0U) { p_adc->P_ADC_STATE->ErrorCount++; }
-    #endif
-
         ADC_ProcStart(p_adc, p_adc->P_ADC_STATE);
     }
 #ifndef NDEBUG

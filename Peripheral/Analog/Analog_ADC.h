@@ -140,19 +140,23 @@ Analog_ConversionChannel_T;
 // }
 // Analog_ContextState_T;
 
-// /*
-//     subsitute fixed channels
-//     Analog_ConversionTable/Mux
-//     Analog_ADC_Conversion
-// */
-// typedef const struct Analog_ConversionContext
-// {
-//     Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /* [0,1,2,3] => [adc_channel_x, adc_channel_y, adc_channel_z] */
-//     Analog_ContextState_T * P_STATE;
+/*
+    subsitute fixed channels
+    Analog_ConversionTable/Mux
+    Analog_ADC_Conversion
+*/
+typedef const struct Analog_ConversionContext
+{
+    Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /* [0,1,2,3] => [adc_channel_x, adc_channel_y, adc_channel_z] */
+    // Analog_ContextState_T * P_STATE;
+    uint32_t CHANNELS; /* in case of sparse channels */
+    volatile uint32_t * P_COMPLETE_MARKERS;
 
-//     Analog_Context_T CALLBACK; /* on all complete */
-// }
-// Analog_ConversionContext_T;
+    // Analog_CaptureBatch_T CAPTURE; /* Overwrite capture to ADC Buffer */
+    // void * P_CONTEXT;
+    // Analog_Context_T CALLBACK; /* on all complete */
+}
+Analog_ConversionContext_T;
 
 
 /******************************************************************************/
@@ -161,18 +165,16 @@ Analog_ConversionChannel_T;
     Critical section buffer shared by ISR and StartConversions.
 */
 /******************************************************************************/
-/*
-    Result buffer outside of ADC_State allows for the ADC state use as purely setup control
-        remain unmodified through the entire conversion process.
-*/
 typedef struct Analog_ADC_State
 {
     // const adc_channel_t ActiveConversions[ADC_FIFO_LENGTH_MAX];
-    // uint8_t ActiveConversionCount; //validation
 
     /*
         Reg/Fifo State
         maintained by software in case of fifo where direct id map is not available.
+
+        Result buffer outside of ADC_State allows for the ADC state use as purely setup control
+        remain unmodified through the entire conversion process.
 
         More concise to let compile optimize array of 1.
     */
@@ -195,7 +197,7 @@ typedef struct Analog_ADC_State
     // volatile Analog_Context_T OnComplete; /* on all complete */
 
     // full context include call back in context
-    // const Analog_ConversionContext_T * p_ActiveContext; // channels + marker
+    const Analog_ConversionContext_T * p_ActiveContext; // channels + marker
 
 #ifndef NDEBUG
     uint32_t ErrorCount;
@@ -215,7 +217,6 @@ typedef const struct Analog_ADC
 {
     HAL_ADC_T * P_HAL_ADC;              /* ADC register map base address */
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
-
     // alternativel similified implementation, map by adc_channel_t
     // adc_pin_t * P_PIN_MAP;
     // adc_result_t * P_RESULT_BUFFER;
@@ -224,11 +225,10 @@ typedef const struct Analog_ADC
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
     // const Analog_ConversionChannel_T ** P_CONVERSION_CHANNELS; /* alternatively, may simplify compile time maping */
     // const Analog_ConversionContext_T * P_CONVERSION_CONTEXT;
-
-    // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to update batch status */
+    // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to notify batch status */
 
     // compile time const
-    analog_channel_t CHANNEL_COUNT;     /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
+    analog_channel_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
 }
 Analog_ADC_T;
 
@@ -243,8 +243,6 @@ Analog_ADC_T;
 
 #define ANALOG_ADC_ALLOC(p_HalAnalog, ChannelCount, p_ConvChannels) \
     ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, p_ConvChannels, &(Analog_ADC_State_T){0})
-
-
 
 
 
@@ -281,53 +279,7 @@ static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analo
     HAL_ADC_ReadConversionCompleteFlag will not be set if called from lower priority thread
 */
 static inline bool Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc) { return HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC); }
-
 static inline void Analog_ADC_Deactivate(const Analog_ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
-
-
-
-
-// typedef const struct Analog_ConversionBatchEntry
-// {
-//     const Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;   // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
-//     const volatile uint32_t * p_ChannelMarkers;                 // [1,0,1]
-// };
-
-/******************************************************************************/
-/*!
-    ( Analog_ConversionChannel_T,  uint32_t markers) interface
-     select from mapped or parameters
-*/
-/******************************************************************************/
-/* Cancels ongoing conversions */
-// start a conversion immediately
-// single threaded or atomic flag test and set
-// static void _Analog_ADC_StartConversions(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
-// {
-//     if (Analog_ADC_ReadIsActive(p_adc) == false)
-//     {
-//         ADC_StartConversions(p_adc->P_ADC_STATE, p_conversions, markers);
-//     }
-//     else
-//     {
-//         Analog_ADC_MarkConversion(p_adc, p_conversions); // mask as adc fixed
-//     }
-// }
-
-// static void _Analog_ADC_StartConversion(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversion)
-// {
-//     ADC_StartConversions(p_adc->P_ADC_STATE, p_conversion, 1U);
-// }
-
-
-
-/*
-    Multiple ADC Batch
-*/
-// void Analog_ADC_StartConversionBatch(const Analog_ADC_T * p_adc, const Analog_ConversionBatch_T * p_batch)
-// {
-
-// }
 
 
 /******************************************************************************/
