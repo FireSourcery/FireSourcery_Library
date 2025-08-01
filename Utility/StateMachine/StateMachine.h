@@ -141,31 +141,31 @@ StateMachine_T;
 #define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) { .P_CONTEXT = (void *)(p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
 #define STATE_MACHINE_ALLOC(p_Context, p_Machine) STATE_MACHINE_INIT(p_Context, p_Machine, STATE_MACHINE_ACTIVE_ALLOC())
 
-/******************************************************************************/
-/*
-    Value Accessor Interface
-*/
-/******************************************************************************/
-static inline state_value_t StateMachine_Access(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK, state_value_t valueV)
-{
-    return _StateMachine_Access(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK, valueV);
-}
-
-static inline void StateMachine_Set(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK, state_value_t valueV)
-{
-    _StateMachine_SetValue(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK, valueV);
-}
-
-static inline state_value_t StateMachine_Get(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK)
-{
-    return _StateMachine_GetValue(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK);
-}
 
 /******************************************************************************/
-/*
+/*!
+    Public Functions
     Let context optimize. Pass literals to _StateMachine as common compilation unit
 */
 /******************************************************************************/
+static void StateMachine_Init(StateMachine_T * p_stateMachine)
+{
+    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    p_active->SyncInputMask = 0UL;
+    Critical_ReleaseLock(&p_active->InputSignal);
+    _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
+}
+
+static void StateMachine_Reset(StateMachine_T * p_stateMachine)
+{
+    p_stateMachine->P_ACTIVE->p_SyncNextState = p_stateMachine->P_MACHINE->P_STATE_INITIAL;
+    // StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    // if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    // {
+    //     _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
+    //     _StateMachine_ReleaseAsyncInput(p_active);
+    // }
+}
 
 /******************************************************************************/
 /*
@@ -233,6 +233,26 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, State
     }
 }
 
+/******************************************************************************/
+/*
+    Value Accessor Interface
+    Top level state only
+*/
+/******************************************************************************/
+static inline state_value_t StateMachine_Access(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK, state_value_t valueV)
+{
+    return _StateMachine_Access(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK, valueV);
+}
+
+static inline void StateMachine_Set(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK, state_value_t valueV)
+{
+    _StateMachine_SetValue(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK, valueV);
+}
+
+static inline state_value_t StateMachine_Get(StateMachine_T * p_stateMachine, state_input_t id, state_value_t valueK)
+{
+    return _StateMachine_GetValue(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, id, valueK);
+}
 
 /******************************************************************************/
 /*
@@ -256,7 +276,6 @@ static void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, stat
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
-
 
 
 /******************************************************************************/
@@ -322,8 +341,8 @@ static void StateMachine_InvokeBranchTransitionFrom(StateMachine_T * p_stateMach
     Extern
 */
 /******************************************************************************/
-extern void StateMachine_Init(StateMachine_T * p_stateMachine);
-extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
+// extern void StateMachine_Init(StateMachine_T * p_stateMachine);
+// extern void StateMachine_Reset(StateMachine_T * p_stateMachine);
 
 // extern void StateMachine_ForceTransition(StateMachine_T * p_stateMachine, State_T * p_state);
 // extern void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, StateMachine_TransitionInput_T * p_input, state_value_t inputValue);

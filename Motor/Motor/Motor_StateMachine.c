@@ -31,8 +31,6 @@
 #include "Motor_StateMachine.h"
 
 
-#define MSM_TRANSITION_TABLE_LENGTH (7U)
-
 /******************************************************************************/
 /*!
     @brief State Machine
@@ -175,7 +173,7 @@ static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t dire
         case MOTOR_DIRECTION_NULL: break;
         case MOTOR_DIRECTION_CW:    p_nextState = &MOTOR_STATE_PASSIVE; break;
         case MOTOR_DIRECTION_CCW:   p_nextState = &MOTOR_STATE_PASSIVE; break;
-        default: assert(false); break; /* Invalid direction */
+        default: break; /* Invalid direction */
     }
     Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, direction);
@@ -305,16 +303,13 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
     if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U)
     {
         /* validate direction */
-        // switch ((Motor_Direction_T)direction)
-        // {
-        //     case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_STOP; break;
-        //     case MOTOR_DIRECTION_CW: break;
-        //     case MOTOR_DIRECTION_CCW: break;
-        // }
-        // Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
-
-        Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
-        if (direction == MOTOR_DIRECTION_NULL) { p_nextState = &MOTOR_STATE_STOP; }
+        switch ((Motor_Direction_T)direction)
+        {
+            case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_STOP; break;
+            case MOTOR_DIRECTION_CW:  Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction); break;
+            case MOTOR_DIRECTION_CCW:  Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction); break;
+            default: break; /* Invalid direction */
+        }
     }
 
     return p_nextState;
@@ -392,25 +387,17 @@ static void Run_Proc(const Motor_T * p_motor)
 //     return p_nextState;
 // }
 
-/*
-    StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
-    Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
-*/
 static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     State_T * p_nextState = NULL;
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:
-            //   (Motor_CheckSpeed(p_motor) == true) ? &MOTOR_STATE_FREEWHEEL : 0U; // check speed range
-            p_nextState = &MOTOR_STATE_PASSIVE;
-            break;
-        case PHASE_OUTPUT_V0:
+        //   (Motor_CheckSpeed(p_motor) == true) ? &MOTOR_STATE_FREEWHEEL : 0U; // check speed range
+        case PHASE_OUTPUT_FLOAT: p_nextState = &MOTOR_STATE_PASSIVE; break;
             // switch(p_motor->P_MOTOR_STATE->FeedbackMode)
-            break;
+        case PHASE_OUTPUT_V0:   break;
         case PHASE_OUTPUT_VPWM: break;
-            // switch(p_motor->P_MOTOR_STATE->FeedbackMode)
         default: break;
     }
 
@@ -420,28 +407,20 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
 {
     /* check speed or return to passive */
-    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
-    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
+    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
 }
 
+/*
+    StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
+    Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
+*/
 static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
     State_T * p_nextState = NULL;
-
-    // if (feedbackMode != p_motor->P_MOTOR_STATE->FeedbackMode.Value)
-    {
-        Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
-        p_nextState = &MOTOR_STATE_RUN;
-        /* Run_Entry Procs synchronous */ /* Alternatively, transition through Freewheel */
-
-        // alternative to lock set 2nd buffer first
-        // if transition updates to sync only, can this run lock free?
-        // Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
-        // Torque and Speed mode switch, no redefined variables?
-        // Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
-        // p_nextState = &MOTOR_STATE_RUN;
-    }
-
+    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
+    p_nextState = &MOTOR_STATE_RUN;
+    /* Run_Entry Procs synchronous */ /* Alternatively, transition through Freewheel */
     return p_nextState;
 }
 

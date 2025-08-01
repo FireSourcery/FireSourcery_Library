@@ -76,12 +76,12 @@ void _StateMachine_TraverseTransitionTo(StateMachine_Active_T * p_active, void *
 /* traversing up for now */
 void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, State_T * p_end)
 {
-    _StateMachine_TraverseTransitionTo(p_active, p_context, State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_end, p_context));
+    _StateMachine_TraverseTransitionTo(p_active, p_context, TransitionFunctionOfBranchState(p_active, p_end, p_context));
 }
 
 void _StateMachine_ProcBranchInputTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_TraverseTransitionTo(p_active, p_context, State_TraverseTransitionOfInput(StateMachine_GetLeafState(p_active), p_context, id, value));
+    _StateMachine_TraverseTransitionTo(p_active, p_context, TransitionFunctionOfBranchInput(p_active, p_context, id, value));
 }
 
 void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context)
@@ -100,16 +100,22 @@ void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * 
 
 void _StateMachine_ProcBranchAsyncInputTransition(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_TraverseTransitionTo(p_active, p_context, p_active->p_SyncNextState);
-    p_active->p_SyncNextState = NULL; /* Clear next state */
+    _StateMachine_TraverseTransitionTo(p_active, p_context, p_active->p_SyncNextSubState);
+    p_active->p_SyncNextSubState = NULL; /* Clear next state */
 }
 
 
 void _StateMachine_ProcBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    p_active->p_SyncNextState = TransitionFunctionOfBranchInput(p_active, p_context, id, value);
+    p_active->p_SyncNextSubState = TransitionFunctionOfBranchInput(p_active, p_context, id, value);
 }
 
+
+/******************************************************************************/
+/*
+    Proc State
+*/
+/******************************************************************************/
 /* Including Top level state */
 void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context)
 {
@@ -121,8 +127,6 @@ void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context
 /*
     Proc traverse up excluding Top State, for cases where implementation include [_StateMachine_ProcBranch_Nested] in only some [p_ActiveState->LOOP]
     Caller clears SubStates
-
-    // _StateMachine_ProcSubBranch
 */
 void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_context)
 {
@@ -142,18 +146,18 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_
 /*
     traverse Top Level first. then leaf to top-1
 */
-// void _StateMachine_ProcBranch_(StateMachine_Active_T * p_active, void * p_context)
-// {
-//     _StateMachine_TraverseTransitionTo(p_active, p_context, State_TransitionOfOutput_AsTop(p_active->p_ActiveState, p_context));
-//     /* If top State transitions. State_TraverseTransitionOfOutput returns NULL  */
-//     _StateMachine_TraverseTransitionTo(p_active, p_context, State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_active->p_ActiveState, p_context));
-// }
+void _StateMachine_ProcBranchRootFirst(StateMachine_Active_T * p_active, void * p_context)
+{
+    _StateMachine_TraverseTransitionTo(p_active, p_context, State_TransitionOfOutput_AsTop(p_active->p_ActiveState, p_context));
+    /* If top State transitions. State_TraverseTransitionOfOutput returns NULL  */
+    _StateMachine_TraverseTransitionTo(p_active, p_context, State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_active->p_ActiveState, p_context));
+}
 
 
 // root first, then leaf to top-1
-void _StateMachine_ProcRootInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+void _StateMachine_ProcInputRootFirst(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    State_TransitionOfInput(StateMachine_GetRootState(p_active), p_context, id, value);
+    State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
 
     _StateMachine_TraverseTransitionTo(p_active, p_context, State_TraverseTransitionOfInput(StateMachine_GetLeafState(p_active), p_context, id, value));
 }

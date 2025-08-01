@@ -129,7 +129,7 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 // Analog_BatchPart_T;
 
 
-// typedef const struct Analog_ConversionBatch
+// typedef const struct Analog_Batch
 // {
 //     // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
 //     // uint8_t COUNT;                                // Number of conversions in the batch
@@ -137,14 +137,12 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 //     uint8_t ADC_COUNT;
 //
 // }
-// Analog_ConversionBatch_T;
-
-
+// Analog_Batch_T;
 
 // #define ANALOG_CONVERSION_BATCH_ALLOC(p_Channels, Count, p_Context, Callback) \
 //     ANALOG_CONVERSION_BATCH_INIT(p_Channels, Count, p_Context, Callback, (Analog_ConversionState_T[Count]){})
 
-// void Analog_Batch_MarkConversions(const Analog_ConversionBatch_T * p_batch)
+// void Analog_Batch_MarkConversions(const Analog_Batch_T * p_batch)
 // {
 //     for (uint8_t index = 0U; index < p_batch->ADC_COUNT; index++)
 //     {
@@ -169,9 +167,9 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 
 /* by adc state */
-// static inline adc_result_t _Analog_Batch_Result_ADC(const Analog_ConversionBatch_T * p_batch, uint8_t batchIndex) { return _Analog_Channel_GetResult(&p_batch->P_CHANNELS[batchIndex]); }
+// static inline adc_result_t _Analog_Batch_Result_ADC(const Analog_Batch_T * p_batch, uint8_t batchIndex) { return _Analog_Channel_GetResult(&p_batch->P_CHANNELS[batchIndex]); }
 
-// static inline bool _Analog_Batch_IsComplete_ADC(const Analog_ConversionBatch_T * p_batch)
+// static inline bool _Analog_Batch_IsComplete_ADC(const Analog_Batch_T * p_batch)
 // void _Analog_Batch_IsComplete(uint32_t * p_completed, uint8_t count)
 // {
 //     for (uint8_t index = 0U; index < count; index++)
@@ -181,7 +179,7 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 //     return true;
 // }
 
-// static inline bool Analog_Batch_IsComplete(const Analog_ConversionBatch_T * p_batch)
+// static inline bool Analog_Batch_IsComplete(const Analog_Batch_T * p_batch)
 // {
 //
 // }
@@ -191,7 +189,7 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 // }
 
-// void _Analog_Batch_ActivateConversions(const Analog_ConversionBatch_T * p_batch)
+// void _Analog_Batch_ActivateConversions(const Analog_Batch_T * p_batch)
 // {
 
 // }

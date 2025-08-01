@@ -291,7 +291,7 @@ typedef enum Motor_Var_ConfigCmd
 {
     MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION,
     MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
-    // MOTOR_VAR_CONFIG_ENTER_CALIBRATION, // enforce config in calibration state, rather than stop state
+    MOTOR_VAR_CONFIG_ENTER_CALIBRATION, // enforce config in calibration state, rather than stop state
     // MOTOR_VAR_CONFIG_CMD_SENSOR_CALIBRATION, /* Generic call for active type */
 }
 Motor_Var_ConfigCmd_T;

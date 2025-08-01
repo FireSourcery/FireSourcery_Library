@@ -44,6 +44,8 @@
     Motor State Machine
 */
 /******************************************************************************/
+#define MSM_TRANSITION_TABLE_LENGTH (7U)
+
 #ifndef MOTOR_STATE_MACHINE_INIT_WAIT
 #define MOTOR_STATE_MACHINE_INIT_WAIT (1500U) /* For 1S polling to run twice */
 #endif
@@ -127,25 +129,14 @@ static inline bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return 
 
 // static inline bool _Motor_StateMachine_IsOpenLoop(const Motor_State_T * p_fields) { return _Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_OPEN_LOOP); }
 
-// static inline bool Motor_User_IsConfigState(const Motor_T * p_motor)
 static inline bool Motor_StateMachine_IsConfig(const Motor_T * p_motor)
 {
-    return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP);
-    // return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION);
-    // || MSM_STATE_ID_FAULT || MSM_STATE_ID_CALIBRATION
+    return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP) ||
+           (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION) ||
+           (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_FAULT);
 }
 
-/******************************************************************************/
-/*
-    Handle set using StateId
-*/
-/******************************************************************************/
-// caller handle check set state
-// static inline bool Motor_Config_IsConfigState(const Motor_State_T * p_motor)
-// {
-//     return (StateMachine_GetActiveStateId(&p_motor->StateMachine) == MSM_STATE_ID_STOP);
-//     // || MSM_STATE_ID_FAULT
-// }
+
 
 
 /******************************************************************************/

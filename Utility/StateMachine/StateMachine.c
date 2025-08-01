@@ -36,34 +36,6 @@
 
 
 
-/******************************************************************************/
-/*!
-    Public Functions
-*/
-/******************************************************************************/
-/*
-    States const strut defined at compile time
-*/
-void StateMachine_Init(StateMachine_T * p_stateMachine)
-{
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
-    /* sync mode uses no lock as valid input, no sentenial, set to run dummy input once */
-    /* same as case of async unlock with write through dummy input */
-    _StateMachine_SetSyncInput(p_active, 0, 0);
-    Critical_ReleaseLock(&p_active->InputSignal);
-    _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
-}
-
-
-void StateMachine_Reset(StateMachine_T * p_stateMachine)
-{
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
-    {
-        _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
-        _StateMachine_ReleaseAsyncInput(p_active);
-    }
-}
 
 
 

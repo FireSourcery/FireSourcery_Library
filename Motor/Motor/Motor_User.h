@@ -295,3 +295,5 @@ extern bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16);
 extern bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_Fract16);
 extern void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
 extern void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
+
+extern void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_input);

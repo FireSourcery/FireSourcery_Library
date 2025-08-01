@@ -77,6 +77,7 @@ static State_T * Common_InputLock(MotorController_T * p_context, state_value_t l
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
         if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_LOCK; }
+        // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == true) { p_nextState = &STATE_LOCK; }
     }
     return p_nextState;
 }
@@ -107,8 +108,8 @@ static void Init_Proc(const MotorController_T * p_context)
 static State_T * Init_Next(const MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
-
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
+
     /* Wait for initial ADC readings */
     // wait for every motor exit init
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT + 50U)
@@ -126,12 +127,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
             MotorController_BeepShort(p_context);
             p_nextState = &STATE_MAIN; // GetInitialState(p_context);
 
-            // switch (p_mc->Config.InitMode)
-            // {
-            //     case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  break;
-            //     case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:   break;
-            //     default: break;
-            // }
+
         }
         else
         {
@@ -163,9 +159,21 @@ static const State_T STATE_INIT =
     Main top state as Stop, or implement common parked state
 */
 /******************************************************************************/
-static void Main_Entry(const MotorController_T * p_context)
+static State_T * GetMainState(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    switch (p_mc->Config.InitMode)
+    {
+        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MAIN_STATE_MOTOR_CMD;
+        case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:      return &MAIN_STATE_MOT_DRIVE;
+        default: return &MAIN_STATE_MOTOR_CMD;
+    }
+}
+
+static void Main_Entry(const MotorController_T * p_context)
+{
+    // MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    _StateMachine_TraverseTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, GetMainState(p_context));
 }
 
 // static void Main_Exit(const MotorController_T * p_context)
@@ -237,7 +245,7 @@ static const State_Input_T MOT_DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENG
     [MCSM_INPUT_LOCK] = (State_Input_T)MotDrive_InputLock,
 };
 
-static const State_T MAIN_STATE_MOT_DRIVE =
+const State_T MAIN_STATE_MOT_DRIVE =
 {
     .ID         = MOTOR_CONTROLLER_MAIN_MODE_DRIVE,
     .DEPTH      = 1U,
@@ -258,7 +266,6 @@ static const State_T MAIN_STATE_MOT_DRIVE =
 static void Motors_Entry(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
-
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_VPWM); /* Set PWM Output */
 }
 
@@ -267,59 +274,17 @@ static void Motors_Proc(const MotorController_T * p_context)
     // MotorController_State_T * p_mc = p_context->P_ACTIVE;
     Motor_User_Input_T * p_input = &p_context->P_ACTIVE->CmdInput;
     Motor_User_Input_T * p_prev = &p_context->P_ACTIVE->CmdInputPrev;
-
-    if (p_input->IsUpdated == true) /* Sync to update rate */
-    {
-        p_input->IsUpdated = false; /* Reset Update Flag */
-
-        if (p_input->ControlState != p_prev->ControlState)
-        {
-            p_prev->ControlState = p_input->ControlState;
-            MotMotors_ActivateControlState(&p_context->MOTORS, p_input->ControlState);
-        }
-
-        if (p_input->FeedbackMode.Value != p_prev->FeedbackMode.Value)
-        {
-            p_prev->FeedbackMode = p_input->FeedbackMode;
-            MotMotors_SetFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode);
-        }
-
-        if (p_input->Direction != p_prev->Direction)
-        {
-            p_prev->Direction = p_input->Direction;
-            MotMotors_ApplyUserDirection(&p_context->MOTORS, p_input->Direction);
-        }
-
-        if (p_input->CmdValue != p_prev->CmdValue)
-        {
-            p_prev->CmdValue = p_input->CmdValue;
-            MotMotors_SetCmdWith(&p_context->MOTORS, Motor_User_SetActiveCmdValue_Scalar, p_input->CmdValue);
-            if (p_input->CmdValue != 0) { MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_VPWM); }
-            // if (cmdValue == 0) { MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release); }
-        }
-
-        if (p_input->SpeedLimit != p_prev->SpeedLimit)
-        {
-            p_prev->SpeedLimit = p_input->SpeedLimit;
-            MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
-        }
-
-        if (p_input->ILimit != p_prev->ILimit)
-        {
-            p_prev->ILimit = p_input->ILimit;
-            MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
-        }
-    }
+    MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
 }
 
-  const State_T MAIN_STATE_MOTOR_CMD =
+const State_T MAIN_STATE_MOTOR_CMD =
 {
-    .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
-    .DEPTH      = 1U,
-    .P_TOP      = &STATE_MAIN,
-    .P_PARENT   = &STATE_MAIN,
-    .ENTRY      = (State_Action_T)Motors_Entry,
-    .LOOP       = (State_Action_T)Motors_Proc,
+    .ID = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
+    .DEPTH = 1U,
+    .P_TOP = &STATE_MAIN,
+    .P_PARENT = &STATE_MAIN,
+    .ENTRY = (State_Action_T)Motors_Entry,
+    .LOOP = (State_Action_T)Motors_Proc,
     // .NEXT       = (State_InputVoid_T)Motors_Next,
     // .P_TRANSITION_TABLE = &MOTORS_TRANSITION_TABLE[0U],
 };
@@ -439,26 +404,25 @@ static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_v
 {
     State_T * p_nextState = NULL;
 
-    if (!StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK)) { p_nextState = NULL; }
+    if (!StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK)) { p_nextState = NULL; }
     else if (!MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) { p_nextState = NULL; }
     else
     {
         switch ((MotorController_MainMode_T)mainMode)
         {
             // case MOTOR_CONTROLLER_MAIN_MODE_DISABLE:
-            case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:      p_nextState = &MAIN_STATE_MOTOR_CMD;                break;
-            case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:          p_nextState = &MAIN_STATE_MOT_DRIVE;                break;
+            case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  p_nextState = &MAIN_STATE_MOTOR_CMD;    break;
+            case MOTOR_CONTROLLER_MAIN_MODE_DRIVE:      p_nextState = &MAIN_STATE_MOT_DRIVE;    break;
             // case MOTOR_CONTROLLER_MAIN_MODE_SERVO:
             //     // p_nextState = &STATE_SERVO; /* Enter Servo State */
             //     break;
-            default:
-                p_nextState = &MAIN_STATE_MOTOR_CMD;
-                break;
+            default:    p_nextState = &MAIN_STATE_MOTOR_CMD; break;
         }
     }
 
     return p_nextState;
 }
+
 static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]      = (State_Input_T)TransitionFault,

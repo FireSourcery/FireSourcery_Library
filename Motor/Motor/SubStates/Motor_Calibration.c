@@ -129,23 +129,87 @@ void Motor_Calibration_StartHome(const Motor_T * p_motor)
     @brief Calibration
 */
 /******************************************************************************/
+static void Calibration_TuningEntry(const Motor_T * p_motor)
+{
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
+    Phase_ActivateOutputT0(&p_motor->PHASE);
+}
+
+
+static void Calibration_ProcTuning(const Motor_T * p_motor)
+{
+    Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
+    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
+    // Motor_FOC_WriteDuty(p_motor);
+}
+
+static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultFlags) { return &MOTOR_STATE_FAULT; }
+
+static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
+{
+    State_T * p_nextState = NULL;
+
+    switch ((Phase_Output_T)phaseOutput)
+    {
+        //   (Motor_CheckSpeed(p_motor) == true) ? &MOTOR_STATE_FREEWHEEL : 0U; // check speed range
+        case PHASE_OUTPUT_FLOAT: p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_OUTPUT_V0: break;
+        case PHASE_OUTPUT_VPWM: break;
+        default: break;
+    }
+
+    return p_nextState;
+}
+
+static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
+{
+    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+}
+
+static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
+{
+    State_T * p_nextState = NULL;
+    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
+    p_nextState = &CALIBRATION_STATE_TUNNING;
+    return p_nextState;
+}
+
+const State_T CALIBRATION_STATE_TUNNING =
+{
+    .ID         = MSM_STATE_ID_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .P_TOP      = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)Calibration_TuningEntry,
+    .LOOP       = (State_Action_T)Calibration_ProcTuning,
+    // .NEXT       = (State_InputVoid_T)Calibration_TuningEnd,
+};
+
+static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+{
+    [MSM_INPUT_FAULT]           = NULL,
+    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Run_InputFeedbackMode,
+    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
+    [MSM_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
+    [MSM_INPUT_CALIBRATION]     = NULL, /* inherit parrent */
+    [MSM_INPUT_OPEN_LOOP]       = NULL,
+};
+
+
+void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
+{
+    StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
+}
+
+
+
+
+
 // static const State_T CALIBRATION_STATE_CONFIG =
 // {
 //     // .ID         = MSM_STATE_ID_CALIBRATION,
 //     .P_PARENT = &MOTOR_STATE_CALIBRATION,
 //     .P_TOP = &MOTOR_STATE_CALIBRATION,
-//     .DEPTH = 1U,
-//     .ENTRY = (State_Action_T)Calibration_TuningEntry,
-//     .LOOP = (State_Action_T)Calibration_TuningLoop,
-//     .NEXT = (State_InputVoid_T)Calibration_TuningEnd,
-// };
-
-
-// static const State_T RUN_STATE_TUNNING =
-// {
-//     // .ID         = MSM_STATE_ID_CALIBRATION,
-//     .P_PARENT = &MOTOR_STATE_RUN,
-//     .P_TOP = &MOTOR_STATE_RUN,
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)Calibration_TuningEntry,
 //     .LOOP = (State_Action_T)Calibration_TuningLoop,

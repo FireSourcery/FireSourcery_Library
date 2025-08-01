@@ -55,6 +55,7 @@ typedef struct StateMachine_Active
         or set sync buffer
     */
     State_T * volatile p_SyncNextState;
+    State_T * volatile p_SyncNextSubState;
 
     /*
         Sync machine store result until process
@@ -126,8 +127,9 @@ static inline void _StateMachine_EndSubState(StateMachine_Active_T * p_active) {
 static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value)
 {
     p_active->SyncInputs[id] = value;
-    p_active->SyncInputMask |= (1U << id);
+    p_active->SyncInputMask |= (1UL << id);
 }
+
 /******************************************************************************/
 /*!
     Accessor - Value without Transition

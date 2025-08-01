@@ -64,6 +64,7 @@ MotorController_StateId_T;
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
 extern const State_T MAIN_STATE_MOTOR_CMD;
+extern const State_T MAIN_STATE_MOT_DRIVE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, &((MotorControllerActive).StateMachine))
 

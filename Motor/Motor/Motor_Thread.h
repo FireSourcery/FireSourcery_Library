@@ -58,17 +58,17 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
     switch (StateMachine_GetActiveStateId(&p_context->P_MOTOR_STATE->StateMachine))
     {
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_context);     break;
-            // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
+        // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_context);     break;
             // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
         case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_context);     break;
             // #endif
         case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_context);     break;
-            // case MSM_STATE_ID_CALIBRATION:  Motor_Analog_MarkIabc(p_context);     break;
+        // case MSM_STATE_ID_CALIBRATION:  Motor_Analog_MarkIabc(p_context);     break;
         case MSM_STATE_ID_CALIBRATION:      break;
         case MSM_STATE_ID_INIT:             break;
-            // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_context); Motor_Analog_MarkIabc(p_context); break;
+        // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_context); Motor_Analog_MarkIabc(p_context); break;
         default:            break;
     }
 
@@ -102,7 +102,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     StateMachine_Synchronous_Thread(&p_context->STATE_MACHINE);
 
-    /* Innline Phase Out */
+    /* Inline Phase Out */
     /* Directly read register state */
     if (Phase_ReadOutputState(&p_context->PHASE) == PHASE_OUTPUT_VPWM) { Motor_FOC_WriteDuty(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
@@ -153,7 +153,6 @@ static inline void Motor_Heat_Thread(const Motor_T * p_context)
     Sensor ISR
 */
 /******************************************************************************/
-
 /* Optionally use Hall ISR */
 static inline void Motor_HallEncoderA_ISR(const Motor_T * p_context)
 {

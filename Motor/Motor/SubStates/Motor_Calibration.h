@@ -31,9 +31,10 @@
 /******************************************************************************/
 #include "../Motor_StateMachine.h"
 
+extern const State_T CALIBRATION_STATE_TUNNING;
+
 /* Exit the substate and return to the parent state on complete */
 // static inline bool _Motor_Calibration_IsComplete(const Motor_State_T * p_motor) { return StateMachine_IsActiveSubState(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
-
 static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsActiveSubState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
 
 /* Proc, to allow validate immediately */
@@ -64,3 +65,5 @@ extern void Motor_Calibration_StartHome(const Motor_T * p_motor);
 //     MOTOR_CALIBRATION_STATE_IDLE,
 // }
 // Motor_CalibrationState_T;
+
+extern void Motor_Calibration_EnterTuning(const Motor_T * p_motor);

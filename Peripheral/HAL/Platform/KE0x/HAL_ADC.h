@@ -45,7 +45,7 @@ static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinC
 static inline void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_AIEN_MASK | ADC_SC1_ADCH(pinChannel); }
 
 static inline void HAL_ADC_WriteFifoCount(HAL_ADC_T * p_hal, uint32_t count) { p_hal->SC4 = ADC_SC4_AFDEP(count - 1U); }
-static inline uint8_t HAL_ADC_ReadFifoCount(HAL_ADC_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
+static inline uint8_t HAL_ADC_ReadFifoCount(const HAL_ADC_T * p_hal) { return ((p_hal->SC4 & ADC_SC4_AFDEP_MASK) + 1U); }
 static inline void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel) { p_hal->SC1 = ADC_SC1_ADCH(pinChannel); }
 static inline void HAL_ADC_ActivateFifo(HAL_ADC_T * p_hal, uint32_t pinChannel) { HAL_ADC_Activate(p_hal, pinChannel); }
 
@@ -60,9 +60,9 @@ static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_hal) { (void)p_hal; NVI
 /*
     Clear interrupt - Clears on reading p_hal->R
 */
-static inline void HAL_ADC_ClearConversionCompleteFlag(const HAL_ADC_T * p_hal)   { (void)p_hal; }
-static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_hal)    { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
-static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_hal)      { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
+static inline void HAL_ADC_ClearConversionCompleteFlag(HAL_ADC_T * p_hal) { (void)p_hal; }
+static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_hal) { return ((p_hal->SC1 & (uint32_t)ADC_SC1_COCO_MASK) != 0U); }
+static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_hal) { return ((p_hal->SC2 & (uint32_t)ADC_SC2_ADACT_MASK) != 0U); }
 
 /*
     Any conversion in progress is aborted in the following cases:

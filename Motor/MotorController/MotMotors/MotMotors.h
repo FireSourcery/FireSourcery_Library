@@ -95,6 +95,9 @@ static inline void MotMotors_SetCmdWith(const MotMotors_T * p_ctx, Motor_User_Se
 // static inline void MotMotors_SetCmdValue(const MotMotors_T * p_ctx, int16_t userCmd)
 //     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetActiveCmdValue_Scalar(&p_ctx->P_STATES[iMotor], userCmd); } }
 
+static inline void MotMotors_ApplyInputs(const MotMotors_T * p_ctx, Motor_User_Input_T * p_input)
+    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
+
 
 
 /******************************************************************************/

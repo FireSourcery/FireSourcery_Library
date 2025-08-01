@@ -350,6 +350,7 @@ void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T va
     {
         case MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION:  Motor_Analog_Calibrate(p_motor);        break;
         case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME:     Motor_Calibration_StartHome(p_motor);   break;
+        case MOTOR_VAR_CONFIG_ENTER_CALIBRATION:    Motor_Calibration_EnterTuning(p_motor); break;
         // case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME:  Motor_Encoder_StartHoming(p_motor);     break;
         // case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME:  Motor_Calibration_StartHome(p_motor);   break;
         // case ENCODER_CONFIG_RUN_HOMING:          Motor_Encoder_StartHoming(p_motor);     break;
@@ -376,7 +377,7 @@ int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_
 
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
-    // if (!Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_CALIBRATION)) { return; }
+    if (!_Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_CALIBRATION)) { return; }
 
     switch (varId)
     {

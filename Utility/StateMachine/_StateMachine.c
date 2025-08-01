@@ -112,7 +112,6 @@ inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * 
     Store a local function pointer, reacessing the table by id may return NULL.
     If an async transition does occur, the previously selected function will run.
 */
-// inline void _StateMachine_ApplyInput(
 inline void _StateMachine_ProcInputTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
@@ -161,6 +160,7 @@ inline void _StateMachine_ProcAsyncInputTransition(StateMachine_Active_T * p_act
     [State_Entry]
     [State_Action_T LOOP]
 */
+/* ProcInputSetTransition */
 inline void _StateMachine_ProcAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     p_active->p_SyncNextState = TransitionFunctionOfInput(p_active, p_context, id, value); /* wait for next transition. transition will run before SYNC_OUTPUT */

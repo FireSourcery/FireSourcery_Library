@@ -64,7 +64,7 @@ HeatMonitor_Status_T;
 // typedef struct HeatMonitor_Config
 // {
 //      HeatMonitor_Config_T Config;
-//      Thermistor_Coeffs_T
+//      Thermistor_Coeffs_T Coeffs; /* Coefficients for thermistor conversion */
 // }
 // HeatMonitor_Config_T;
 
@@ -85,7 +85,7 @@ typedef const struct HeatMonitor_Context
     HeatMonitor_T * P_STATE;
 
     /* Thermistor Context */
-    Analog_Conversion_T ANALOG_CONVERSION;
+    Analog_Conversion_T ANALOG_CONVERSION; //todo move this to outer
     Thermistor_T THERMISTOR;
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
     // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
@@ -119,18 +119,20 @@ static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_T * p_heat, Linea
     Single Context
 */
 /******************************************************************************/
-static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
-{
-    return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-}
-
-static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_Mark(&p_context->ANALOG_CONVERSION); }
+static inline HeatMonitor_Status_T _HeatMonitor_Poll(const HeatMonitor_Context_T * p_context, int32_t input) { return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, input); }
 
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */
 // static inline uint16_t HeatMonitor_ScalarLimitOfInput_Percent16(const HeatMonitor_Context_T * p_heat, int32_t input) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, input); }
 static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_Context_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
 
+/// todo move
+static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_Context_T * p_context)
+{
+    return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
+}
+
+static inline void HeatMonitor_MarkConversion(const HeatMonitor_Context_T * p_context) { Analog_Conversion_Mark(&p_context->ANALOG_CONVERSION); }
 
 /******************************************************************************/
 /*
@@ -191,7 +193,7 @@ HeatMonitor_GroupContext_T;
 
 /* Monitor_GetLastInputComparable returns value for > compare */
 /* Find hottest sensor */
-static inline uint8_t HeatMonitor_Group_FindHottest(const HeatMonitor_GroupContext_T * p_group)
+static inline uint8_t _HeatMonitor_Group_FindHottest(const HeatMonitor_GroupContext_T * p_group)
 {
     uint8_t index = 0U;
     int32_t max = 0;
@@ -205,6 +207,29 @@ static inline uint8_t HeatMonitor_Group_FindHottest(const HeatMonitor_GroupConte
 
     return index;
 }
+
+// static inline uint8_t _HeatMonitor_Group_PollInstance_Hottest(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, int32_t  value)
+// {
+//     uint8_t index = 0U;
+//     int32_t max = 0; /* Monitor_GetLastInputComparable returns value for > direction compare. sensor values > 0 */
+//     int32_t compare;
+//     for (uint8_t i = 0U; i < p_group->COUNT; i++)
+//     {
+//         _HeatMonitor_Poll(&p_group->P_CONTEXTS[i], value);
+//         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+//         if (compare > Monitor_GetLastInputComparable(p_group->P_STATE)) { p_group->P_STATE->LastInput = compare; }
+//     }
+//     return index;
+// }
+
+static inline HeatMonitor_Status_T _HeatMonitor_Group_PollCollective(const HeatMonitor_GroupContext_T * p_group)
+{
+    // return (HeatMonitor_Status_T)Monitor_Poll(p_group->P_STATE, p_group->P_CONTEXTS[_HeatMonitor_Group_FindHottest(p_group)].P_STATE->LastInput);
+    return (HeatMonitor_Status_T)Monitor_Poll(p_group->P_STATE, p_group->P_STATE->LastInput);
+}
+
+
+/// with analog
 
 /* This function polls all sensors and returns the index of the hottest */
 static inline uint8_t _HeatMonitor_Group_PollEach_Index(const HeatMonitor_GroupContext_T * p_group)
@@ -225,7 +250,6 @@ static inline uint8_t _HeatMonitor_Group_PollEach_Index(const HeatMonitor_GroupC
 
     return index;
 }
-
 
 /*
     Poll and store results into collective state,

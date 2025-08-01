@@ -539,3 +539,93 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_GetUpper(p_limit)); }
     // else                                        { Motor_ClearILimit(p_motor); }
 }
+
+
+
+
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_input)
+{
+    if (p_input->IsUpdated == true) /* Sync to update rate */
+    {
+        p_input->IsUpdated = false; /* Reset Update Flag */
+
+        if (p_input->ControlState != Motor_User_GetPhaseState(p_motor))
+        {
+            Motor_User_ActivatePhaseOutput(p_motor, p_input->ControlState);
+        }
+        Motor_User_ActivatePhaseOutput(p_motor, p_input->ControlState);
+        Motor_User_SetFeedbackMode(p_motor, p_input->FeedbackMode);
+        Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)p_input->Direction);
+
+        if (p_input->CmdValue != Motor_User_GetCmd(p_motor->P_MOTOR_STATE))
+        {
+            Motor_User_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+            // if (Motor_User_GetCmd(p_motor) == 0UL) { Motor_User_ActivatePhaseOutput(p_motor, PHASE_OUTPUT_VPWM); }
+            // Motor_User_SetCmdWith(p_motor, Motor_User_SetActiveCmdValue_Scalar, p_input->CmdValue);
+            // if (p_input->CmdValue == 0) { Motor_User_Release(p_motor); }
+        }
+
+        // if (p_input->SpeedLimit != p_prev->SpeedLimit)
+        // {
+        //     p_prev->SpeedLimit = p_input->SpeedLimit;
+        //     MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+        // }
+
+        // if (p_input->ILimit != p_prev->ILimit)
+        // {
+        //     p_prev->ILimit = p_input->ILimit;
+        //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
+        // }
+    }
+}
+// static void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_prev, Motor_User_Input_T * p_input)
+// {
+//     if (p_input->IsUpdated == true) /* Sync to update rate */
+//     {
+//         p_input->IsUpdated = false; /* Reset Update Flag */
+
+//         if (p_input->ControlState != p_prev->ControlState)
+//         {
+//             p_prev->ControlState = p_input->ControlState;
+//             Motor_User_ActivatePhaseOutput(p_motor, p_input->ControlState);
+//         }
+
+//         if (p_input->FeedbackMode.Value != p_prev->FeedbackMode.Value)
+//         {
+//             p_prev->FeedbackMode = p_input->FeedbackMode;
+//             Motor_User_SetFeedbackMode(p_motor, p_input->FeedbackMode);
+//         }
+
+//         if (p_input->Direction != p_prev->Direction)
+//         {
+//             p_prev->Direction = p_input->Direction;
+//             Motor_User_ApplyDirectionSign(p_motor, p_input->Direction);
+//         }
+
+//         if (p_input->CmdValue != p_prev->CmdValue)
+//         {
+//             p_prev->CmdValue = p_input->CmdValue;
+//             // Motor_User_SetCmdWith(p_motor, Motor_User_SetActiveCmdValue_Scalar, p_input->CmdValue);
+//             Motor_User_SetActiveCmdValue_Scalar(p_motor, p_input->CmdValue);
+//             if (p_input->CmdValue != 0) { Motor_User_ActivatePhaseOutput(p_motor, PHASE_OUTPUT_VPWM); }
+//             // if (p_input->CmdValue == 0) { Motor_User_Release(p_motor); }
+//         }
+
+//         // if (p_input->SpeedLimit != p_prev->SpeedLimit)
+//         // {
+//         //     p_prev->SpeedLimit = p_input->SpeedLimit;
+//         //     MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+//         // }
+
+//         // if (p_input->ILimit != p_prev->ILimit)
+//         // {
+//         //     p_prev->ILimit = p_input->ILimit;
+//         //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
+//         // }
+//     }
+// }
