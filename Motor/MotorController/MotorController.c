@@ -81,6 +81,14 @@ void MotorController_Init(const MotorController_T * p_context)
     //     /* or prompt user, resets every boot until user saves params */
     // }
 
+    /* Alternatively set nominal on init */
+    // TimerT_Counter_InitTickOnInit(&p_context->MILLIS_TIMER, 1U);
+    HeatMonitor_Group_MarkEach(&p_context->HEAT_MOSFETS);
+    HeatMonitor_MarkConversion(&p_context->HEAT_PCB);
+    Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
+
     StateMachine_Init(&p_context->STATE_MACHINE);
 }
 
@@ -99,7 +107,10 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
 {
     RangeMonitor_Enable(p_context->V_SOURCE.P_STATE);
     MotorController_ResetVSourceMonitorDefaults(p_context);
+    int t1 = MotorAnalogRef_GetVMaxVolts();
+    int t2 = MOTOR_ANALOG_REFERENCE.V_MAX_VOLTS;
 
+    volatile int t3 = t1+t2;
 
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);

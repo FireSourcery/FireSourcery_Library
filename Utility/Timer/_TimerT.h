@@ -64,8 +64,6 @@ static inline bool _TimerT_PollElapsedCount(const Timer_Base_T * p_base, Timer_S
     if (_TimerT_PollElapsed(p_base, p_state)) { p_state->Counter++; return true; } else { return false; }
 }
 
-/* Async processing */
-
 /*
     Common
 */
@@ -73,6 +71,7 @@ static inline void __TimerT_Init(const Timer_Base_T * p_base, Timer_State_T * p_
 static inline void __TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; _TimerT_Restart(p_base, p_state); }
 // static inline void __TimerT_Stop(const Timer_Base_T * p_base, Timer_State_T * p_state) {
 
+/* Async processing */
 /* Async Restart */
 // static inline bool _TimerT_Async_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_IsElapsed(p_base, p_state); }
 // static inline void _TimerT_Async_Restart(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_PollElapsed(p_base, p_state); }
@@ -94,11 +93,12 @@ static inline void _TimerT_Periodic_Stop(const Timer_Base_T * p_base, Timer_Stat
 
 
 /*
-    Periodic Counter
+    Periodic Counter / Count Up
     Poll Elapsed Count
 */
 static inline bool _TimerT_Counter_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_PollElapsedCount(p_base, p_state); }
 static inline void _TimerT_Counter_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { __TimerT_Init(p_base, p_state, period); }
+// static inline void _TimerT_Counter_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Counter = (uint32_t)-1; }
 static inline void _TimerT_Counter_Set(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Period = period; }
 static inline bool _TimerT_Counter_IsAligned(const Timer_State_T * p_state, uint32_t mask) { return timer_counter_is_aligned(p_state->Counter, mask); }
 
@@ -109,7 +109,7 @@ static inline bool _TimerT_Counter_IsAligned(const Timer_State_T * p_state, uint
 // }
 
 /*
-    Counter with N repeat
+    Counter with N repeat / Count Down
     or as OneShotCounter
 */
 static inline bool _TimerT_CountN_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state)
@@ -248,6 +248,7 @@ static inline void _TimerT_InitMode(Timer_State_T * p_state, Timer_Mode_T mode)
     p_state->Counter = 0U;
     p_state->TimeRef = 0U;
 }
+static inline void _TimerT_Init(Timer_State_T * p_state) { _TimerT_InitMode(p_state, TIMER_MODE_STOPPED); }
 
 static inline void _TimerT_InitPeriodic(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Mode = TIMER_MODE_PERIODIC; _TimerT_Periodic_Init(p_base, p_state, period); }
 static inline void _TimerT_InitOneShot(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t ticks) { p_state->Mode = TIMER_MODE_ONE_SHOT; _TimerT_OneShot_Init(p_base, p_state, ticks); }

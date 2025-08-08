@@ -91,6 +91,8 @@ static inline bool TimerT_Modal_Poll(TimerT_T * p_timer) { return _TimerT_Modal_
 
 /* Context initialization and control */
 static inline void TimerT_InitMode(TimerT_T * p_timer, Timer_Mode_T mode) { _TimerT_InitMode(p_timer->P_STATE, mode); }
+static inline void TimerT_Init(TimerT_T * p_timer) { _TimerT_Init(p_timer->P_STATE); }
+
 static inline void TimerT_Start(TimerT_T * p_timer, uint32_t period) { _TimerT_Start(&p_timer->BASE, p_timer->P_STATE, period); }
 static inline void TimerT_Stop(TimerT_T * p_timer) { _TimerT_Stop(p_timer->P_STATE); }
 static inline void TimerT_SetPeriod(TimerT_T * p_timer, uint32_t ticks) { _TimerT_SetPeriod(p_timer->P_STATE, ticks); }

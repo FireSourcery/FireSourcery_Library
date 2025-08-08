@@ -67,7 +67,7 @@
 /******************************************************************************/
 /* ADC Ref Sensor Calibration */
 /* MotorRef_Adc/Board */
-typedef const volatile struct MotorAnalogRef_Board
+typedef const struct MotorAnalogRef_Board
 {
     uint32_t V_PHASE_R1;
     uint32_t V_PHASE_R2;
@@ -98,13 +98,13 @@ static inline uint16_t MotorAnalogRef_GetIRatedRms(void) { return MOTOR_ANALOG_R
 */
 /* applies to external sensor */
 /* */
-typedef const volatile struct MotorAnalogRef
+typedef const struct MotorAnalogRef
 {
-    uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
-    uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
+    volatile uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
+    volatile uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
 
-    uint16_t V_RATED_FRACT16;
-    uint16_t I_RATED_PEAK_FRACT16;
+    volatile uint16_t V_RATED_FRACT16;
+    volatile uint16_t I_RATED_PEAK_FRACT16;
 }
 MotorAnalogRef_T;
 
@@ -126,7 +126,7 @@ static inline uint16_t MotorAnalogRef_GetIRatedPeak_Fract16(void) { return MOTOR
 static inline uint16_t MotorAnalogRef_GetVRated_V(void) { return MotorAnalogRef_GetVRated_Fract16() * MotorAnalogRef_GetVMaxVolts() / 32768; }
 
 static inline bool _MotorAnalogRef_IsLoaded(uint16_t value) { return (value != 0U && value != 0xFFFFU); }
-static inline bool MotorAnalogRef_IsLoaded(void)
+static bool MotorAnalogRef_IsLoaded(void)
 {
     return
     (

@@ -126,8 +126,6 @@ static State_T * Init_Next(const MotorController_T * p_context)
         {
             MotorController_BeepShort(p_context);
             p_nextState = &STATE_MAIN; // GetInitialState(p_context);
-
-
         }
         else
         {

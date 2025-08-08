@@ -41,8 +41,7 @@ void Blinky_Init(const Blinky_T * p_blinky)
 {
     Pin_Output_Init(&p_blinky->PIN);
     Pin_Output_Off(&p_blinky->PIN);
-    // TimerT_Init(&p_blinky->TIMER);
-    // TimerT_Init(&p_blinky->TIMER);
+    TimerT_Init(&p_blinky->TIMER);
     p_blinky->P_STATE->PatternFunction = NULL;
 }
 

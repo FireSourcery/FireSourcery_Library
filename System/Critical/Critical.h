@@ -44,22 +44,22 @@ typedef uint32_t critical_state_t;
 static inline void _Critical_DisableIrq(void) { __disable_irq(); }
 static inline void _Critical_EnableIrq(void) { __enable_irq(); }
 
-// extern uint32_t _Critical_InterruptDisableCount;
+extern uint32_t _Critical_InterruptDisableCount;
 
-// static inline void Critical_DisableIrq(void)
-// {
-//     _Critical_DisableIrq();
-//     _Critical_InterruptDisableCount++;
-// }
+static inline void Critical_DisableIrq(void)
+{
+    _Critical_DisableIrq();
+    _Critical_InterruptDisableCount++;
+}
 
-// static inline void Critical_EnableIrq(void)
-// {
-//     if (_Critical_InterruptDisableCount > 0U)
-//     {
-//         _Critical_InterruptDisableCount--;
-//         if (_Critical_InterruptDisableCount <= 0U) { _Critical_EnableIrq(); }
-//     }
-// }
+static inline void Critical_EnableIrq(void)
+{
+    if (_Critical_InterruptDisableCount > 0U)
+    {
+        _Critical_InterruptDisableCount--;
+        if (_Critical_InterruptDisableCount <= 0U) { _Critical_EnableIrq(); }
+    }
+}
 #endif
 
 // #include "External/CMSIS/Core/Include/cmsis_compiler.h"
