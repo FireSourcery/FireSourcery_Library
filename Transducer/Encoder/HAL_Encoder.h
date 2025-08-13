@@ -34,7 +34,7 @@
     #define XSTR(String) #String
     #define STR(String) XSTR(String)
     #include STR(CONFIG_HAL_ENCODER_PATH/HAL_Encoder.h)
-#elif defined(CONFIG_HAL_PERIPHERAL_PATH) || defined(CONFIG_HAL_PERIPHERAL_PLATFORM)
+#elif defined(HAL_PERIPHERAL_PATH_DIRECTORY) || defined(HAL_PERIPHERAL_PATH_PLATFORM)
     #include "Peripheral/HAL/HAL_Peripheral.h"
     #include HAL_PERIPHERAL_PATH(HAL_Encoder.h)
 #endif

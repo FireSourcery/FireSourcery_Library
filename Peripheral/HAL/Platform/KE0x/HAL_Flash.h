@@ -34,7 +34,7 @@
 #include "KE0x.h"
 
 /*
-    Use CONFIG_FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
+    Use FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
 */
 #include "Peripheral/NvMemory/Flash/Config.h"
 
@@ -56,31 +56,24 @@
 #define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
 #endif
 
+#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+
 /*
 
 */
 #define KE0x_FLASH_RESERVED_START                   0x0000UL    /* */
 #define KE0x_FLASH_RESERVED_END                     0x040FUL    /* */
-#define KE0x_FLASH_RESERVED_IFR_START               0x0000UL    /* */
-#define KE0x_FLASH_RESERVED_IFR_END                 0x03FFUL    /* */
-#define KE0x_FLASH_RESERVED_PROGRAM_ONCE_START      0x03C0UL
-#define KE0x_FLASH_RESERVED_PROGRAM_ONCE_END        0x03FFUL
-#define KE0x_FLASH_RESERVED_FLEX_NVM_CODE           0x03FCUL
-#define KE0x_FLASH_RESERVED_EEPROM_SIZE             0x03FDUL
 #define KE0x_FLASH_RESERVED_CONFIG_START            0x0400UL    /* */
 #define KE0x_FLASH_RESERVED_CONFIG_END              0x040FUL    /* */
 #define KE0x_FLASH_RESERVED_BACKDOOR_KEY_START      0x0400UL    /* 8 bytes */
 #define KE0x_FLASH_RESERVED_BACKDOOR_KEY_END        0x0407UL    /* 8 bytes */
-#define KE0x_FLASH_RESERVED_FPROT3                  0x0408UL
-#define KE0x_FLASH_RESERVED_FPROT2                  0x0409UL
-#define KE0x_FLASH_RESERVED_FPROT1                  0x040AUL
-#define KE0x_FLASH_RESERVED_FPROT0                  0x040BUL
-#define KE0x_FLASH_RESERVED_FDPROT                  0x040FUL
-#define KE0x_FLASH_RESERVED_FEPROT                  0x040EUL
-#define KE0x_FLASH_RESERVED_FOPT                    0x040DUL
-#define KE0x_FLASH_RESERVED_FSEC                    0x040CUL
 
-#define KE0x_FLASH_PROGRAM_ONCE_START               0x0000UL /* Index access */
+#define KE0x_FLASH_RESERVED_FOPT                    0x040FUL
+#define KE0x_FLASH_RESERVED_FSEC                    0x040EUL
+#define KE0x_FLASH_RESERVED_FPROT                   0x040DUL
+#define KE0x_FLASH_RESERVED_FRESV                   0x040CUL
+
+#define KE0x_FLASH_PROGRAM_ONCE_START               0x0000UL /* Map Index access */
 #define KE0x_FLASH_PROGRAM_ONCE_END                 0x003FUL
 #define KE0x_FLASH_PROGRAM_ONCE_SIZE                0x40U
 
@@ -164,7 +157,6 @@
 #endif
 /* @} */
 
-#define KE0x_FLASH_CLK_DIVIER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
 
 /*
     Map to upper software layer
@@ -221,19 +213,19 @@ static void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data
 static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK)) != 0U); }
 
 /* Cmd Functions - when inline only _HAL_Flash_LaunchCmd need to reside in RAM */
-static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT |= FTMRx_FSTAT_CCIF_MASK; }
 
 /*
     API Common
 */
-static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U); }
 
 /*
     Collective Error Flags
 */
-static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK | FTMRx_FSTAT_FPVIOL_MASK | FTMRx_FSTAT_ACCERR_MASK)) != 0U); }
 static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)      { (void)p_regs; FTMRx->FSTAT = (uint8_t)(FTMRx_FSTAT_ACCERR_MASK | FTMRx_FSTAT_FPVIOL_MASK); }
 
@@ -350,10 +342,10 @@ static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)
     if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U))
     {
         /* FCLKDIV register is not locked.*/
-        FTMRx->FCLKDIV = (uint8_t)(FTMRx->FCLKDIV & (~FTMRx_FCLKDIV_FDIV_MASK)) | FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIER);
+        FTMRx->FCLKDIV = (uint8_t)(FTMRx->FCLKDIV & (~FTMRx_FCLKDIV_FDIV_MASK)) | FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIDER);
     }
 
-    assert((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIV_MASK) == FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIER));
+    assert((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIV_MASK) == FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIDER));
 }
 
 #endif /* HAL_FLASH_H */

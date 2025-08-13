@@ -49,13 +49,12 @@ typedef struct StateMachine_Active
     State_T * p_ActiveSubState;  /* HSM - Leaf State, defines full path. ActiveLeaf */
 
     /*
-        Buffered transition. For restricting transition during proc state only
-        Lock depends on user handler
+        Buffered transition. For restricting transition to during proc state only
+        Lock depending on user handler
         In this case user still needs to selectively lock on some inputs, where proc state should not run without input completion
         or set sync buffer
     */
     State_T * volatile p_SyncNextState;
-    State_T * volatile p_SyncNextSubState;
 
     /*
         Sync machine store result until process
@@ -65,9 +64,9 @@ typedef struct StateMachine_Active
     */
     volatile uint32_t SyncInputMask; /* Bit mask of inputs that have been set. */
     state_value_t SyncInputs[STATE_TRANSITION_TABLE_LENGTH_MAX]; /* alternatively, context pointer or fam */
-    /* mapper version needs separate buffer  */
+    /* mapper version needs separate buffer */
 
-    volatile atomic_flag InputSignal;  /* SignalLock */
+    volatile atomic_flag InputSignal; /* SignalLock */
 
     // volatile state_input_t SyncInput;
     // volatile state_value_t SyncInputValue;
@@ -162,10 +161,10 @@ extern void _StateMachine_Init(StateMachine_Active_T * p_active, void * p_contex
 extern void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
 extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
 extern void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcInputTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
 // extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value);
-extern void _StateMachine_ProcAsyncInputTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context);

@@ -38,9 +38,9 @@
 /* Global Static Const  */
 typedef const struct AnalogReference
 {
-    const uint16_t ADC_BITS;
-    const uint16_t ADC_MAX;
-    const uint16_t ADC_VREF_MILLIV;
+    uint16_t ADC_BITS;
+    uint16_t ADC_MAX;
+    uint16_t ADC_VREF_MILLIV;
 }
 AnalogReference_T;
 

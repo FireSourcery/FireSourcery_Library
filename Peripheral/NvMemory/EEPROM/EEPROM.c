@@ -86,8 +86,7 @@ void EEPROM_Init_Blocking(EEPROM_T * p_eeprom)
     //todo isfirsttime
     // if(HAL_EEPROM_ReadIsFirstTime(p_eeprom->P_HAL)) { EEPROM_ProgramPartition_Blocking(p_eeprom); }
     // NvMemory_Status_T status = EEPROM_SetInit(p_eeprom);
-    // if(status == NV_MEMORY_STATUS_SUCCESS)
-    // { status = NvMemory_ProcOp_Blocking(p_eeprom);
+    // if(status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_ProcOp_Blocking(p_eeprom);
 
     HAL_EEPROM_Init_Blocking(p_eeprom->P_HAL);
     NvMemory_Init(p_eeprom);

@@ -29,7 +29,9 @@
 */
 /******************************************************************************/
 #include "Flash.h"
+
 #include "System/Critical/Critical.h"
+
 #include <string.h>
 #include <assert.h>
 // #include <stdalign.h>
@@ -43,13 +45,13 @@
 /*!
 */
 /******************************************************************************/
-static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
 
 static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWritePage(p_hal, address, p_data); }
 static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdEraseSector(p_hal, address); }
@@ -272,7 +274,7 @@ void Flash_Init(Flash_T * p_flash)
     Proc Include Set and Activate
 */
 /******************************************************************************/
-Flash_Status_T Flash_ProcThisOp_Blocking(Flash_T * p_flash)
+Flash_Status_T ProcOp_Blocking(Flash_T * p_flash)
 {
     Flash_Status_T status;
     _Critical_DisableIrq(); /* Flash Op must not invoke isr table stored in flash */
@@ -303,7 +305,7 @@ static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
         p_state->p_OpData = &alignedData[0U];
         p_state->OpAddress = p_state->OpAddress + p_state->OpSizeAligned; /* Update previous aligned down address  */
         p_state->OpSizeAligned = unitSize;
-        status = Flash_ProcThisOp_Blocking(p_flash);
+        status = ProcOp_Blocking(p_flash);
     }
 
     return status;
@@ -312,7 +314,7 @@ static Flash_Status_T WriteRemainder(Flash_T * p_flash, uint8_t unitSize)
 /* Shortcut check status proc */
 static inline Flash_Status_T ProcAfterSet(Flash_T * p_flash, Flash_Status_T status)
 {
-    return (status == NV_MEMORY_STATUS_SUCCESS) ? Flash_ProcThisOp_Blocking(p_flash) : status;
+    return (status == NV_MEMORY_STATUS_SUCCESS) ? ProcOp_Blocking(p_flash) : status;
 }
 
 /******************************************************************************/
@@ -376,6 +378,7 @@ Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddres
     return ProcAfterSet(p_flash, SetWriteOnce(p_flash, flashAddress, p_data, size));
 }
 
+/* Caller ensure align */
 Flash_Status_T Flash_ReadOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddress, size_t size, void * p_result)
 {
     return ProcAfterSet(p_flash, SetReadOnce(p_flash, flashAddress, size, p_result));

@@ -57,7 +57,7 @@ typedef struct Socket_State
         Active Refs
     */
     const Xcvr_T * p_Xcvr;
-    const PacketClass_T * p_Specs; /* Active protocol */
+    const Packet_Class_T * p_Specs;
     // Datagram_T Datagram; // configurable broadcast
 
     /*
@@ -119,13 +119,13 @@ typedef const struct Socket
     /*
         Protocol Context common
     */
-   // alternatively Map overlaping sockets for selection
+    // alternatively Map overlaping sockets for selection
     // const Protocol_Base_T * P_PROTOCOL_CONTEXT;
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
 
-    const PacketClass_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
+    const Packet_Class_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
     uint8_t PACKET_CLASS_COUNT;
 
     /*  */
@@ -180,7 +180,8 @@ static inline Protocol_ReqCode_T _Socket_GetReqStatus(const Socket_State_T * p_s
 
 static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
 static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
-static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { (isEnable == true) ? _Socket_EnableRxWatchdog(p_socket) : _Socket_DisableRxWatchdog(p_socket); }
+static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable)
+    { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.

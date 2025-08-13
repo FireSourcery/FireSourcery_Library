@@ -73,12 +73,12 @@ static void _ADC_ActivateFrom(HAL_ADC_T * p_hal, Analog_ConversionChannel_T * co
 /*
     Unified Interface implementation independent
 */
-static inline void ADC_Capture(const Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
+static inline void ADC_Capture(Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
 {
 #ifdef ANALOG_ADC_HW_FIFO_ENABLE
     _ADC_CaptureTo(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], p_state->ActiveConversionCount);
 #else
-    _ADC_CaptureResult(&p_state->ActiveConversions[0U], HAL_ADC_ReadResult(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->CHANNEL.PIN));
+    _ADC_CaptureResult(p_state->ActiveConversions[0U], HAL_ADC_ReadResult(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->CHANNEL.PIN));
 #endif
     // _ADC_CaptureTo(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], ADC_ReadActiveCount());
 }
@@ -86,7 +86,7 @@ static inline void ADC_Capture(const Analog_ADC_T * p_adc, const Analog_ADC_Stat
 /*
     Activate and wait for return
 */
-static inline void ADC_Activate(const Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
+static inline void ADC_Activate(Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
 {
 #ifdef ANALOG_ADC_HW_FIFO_ENABLE
     _ADC_ActivateFrom(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], p_state->ActiveConversionCount);
@@ -132,7 +132,7 @@ static inline uint32_t ADC_SetStateFrom(Analog_ADC_State_T * p_state, Analog_Con
 }
 
 
-static void ADC_StartFrom(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
+static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
     ADC_SetStateFrom(p_adc->P_ADC_STATE, p_conversions, markers);
     // p_state->ChannelMarkers =
@@ -151,14 +151,8 @@ static void ADC_StartFrom(const Analog_ADC_T * p_adc, Analog_ConversionChannel_T
 /******************************************************************************/
 static void _Analog_ADC_StartConversions(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
-    if (Analog_ADC_ReadIsActive(p_adc) == false)
-    {
-        ADC_StartFrom(p_adc, p_conversions, markers);
-    }
-    else
-    {
-        Analog_ADC_MarkAll(p_adc, markers);
-    }
+    if (Analog_ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
+    else { Analog_ADC_MarkAll(p_adc, markers); }
 }
 
 static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversion)

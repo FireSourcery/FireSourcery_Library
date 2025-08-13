@@ -62,7 +62,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
 
     const uint16_t duty = Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE);
 
-    if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true)
+    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
         switch (p_motor->P_MOTOR_STATE->CalibrationStateIndex) /* Phase_ReadAlign() */
         {
@@ -110,7 +110,6 @@ static const State_T CALIBRATION_STATE_HALL =
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {
     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
-    // StateMachine_InvokeBranchTransition(&p_motor->StateMachine, &(const StateMachine_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
-    // StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &(StateMachine_TransitionInput_T)State_TransitionCmd_Create(&MOTOR_STATE_CALIBRATION, Calibration_Start), 0);
+    // StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &(const StateMachine_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
 }
 

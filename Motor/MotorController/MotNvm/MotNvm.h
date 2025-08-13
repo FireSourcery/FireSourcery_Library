@@ -78,7 +78,7 @@ typedef const struct
     uintptr_t MANUFACTURE_ADDRESS;
     uint8_t MANUFACTURE_SIZE;
 
-    MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
+    // MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
     const BootRef_T * P_BOOT_REF;
 }
 MotNvm_T;
@@ -91,6 +91,7 @@ extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motN
 extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size);
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
+
 // extern NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
 // extern NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm);

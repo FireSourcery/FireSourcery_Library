@@ -191,9 +191,6 @@ MotorController_Config_T;
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
-    // Timer_T TimerMillis;
-    // uint32_t MainDividerCounter;
-    // uint32_t TimerDividerCounter;
     uint32_t StateCounter; /* calibration */
     uint32_t ControlCounter; /* pwm */
 
@@ -235,6 +232,7 @@ typedef const struct MotorController
     */
     Analog_ADC_T * P_ANALOG_ADCS;
     uint8_t ADC_COUNT; /* Analog ADCs */
+
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
 #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
@@ -256,6 +254,7 @@ typedef const struct MotorController
     Socket_T * P_PROTOCOLS;  /* Sockets */
     uint8_t PROTOCOL_COUNT;
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */
+
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */

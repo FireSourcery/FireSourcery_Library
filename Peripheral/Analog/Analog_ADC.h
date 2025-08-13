@@ -207,7 +207,7 @@ typedef struct Analog_ADC_State
 
     /* Batch State */
     /* If left non atomic. a mark channel call may be missed. */
-    volatile uint32_t ChannelMarkers; /* Bitmask of active channels. 1 << ChannelIndex */
+    volatile uint32_t ChannelMarkers; /* Bitmask of selected channels. 1 << ChannelIndex */
     // volatile uint32_t CompleteMarkers;
 
     // const Analog_BatchContext_T * p_BatchContext;
@@ -247,7 +247,7 @@ typedef const struct Analog_ADC
     // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to notify batch status */
 
     // compile time const
-    analog_channel_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
+    uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
 }
 Analog_ADC_T;
 

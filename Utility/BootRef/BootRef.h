@@ -58,7 +58,7 @@ typedef union BootRef
         volatile uint32_t Beep          : 1U;
         volatile uint32_t Blink         : 1U;
         // volatile uint32_t LoadDefault   : 1U;
-        volatile uint32_t ProtocolId    : 2U;
+        // volatile uint32_t ProtocolId    : 2U;
     };
     volatile uint32_t Word;
 }
@@ -70,15 +70,14 @@ BootRef_T;
 
 /*
     User define externally
-    Align to minium NvM write size
+    Align to minimum NvM write size
 */
 #define BOOT_REF ((BootRef_T *)BOOT_REF_ADDRESS)
 
+static inline BootRef_T * BootRef(void) { return BOOT_REF; }
+
 /* !IsFirstTime */
-static inline bool BootRef_IsValid(void)
-{
-    return ((BOOT_REF->IsValid == BOOT_REF_IS_VALID_01) || (BOOT_REF->IsValid == BOOT_REF_IS_VALID_10));
-}
+static inline bool BootRef_IsValid(void) { return ((BOOT_REF->IsValid == BOOT_REF_IS_VALID_01) || (BOOT_REF->IsValid == BOOT_REF_IS_VALID_10)); }
 
 /* No FastBoot by default */
 static inline bool BootRef_IsFastBoot(void) { return ((BootRef_IsValid() == true) && (BOOT_REF->FastBoot == 1U)); }

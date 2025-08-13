@@ -26,7 +26,8 @@
 /*!
     @file   _StateMachine_Tree.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Hierarchical State Machine
+            via Parent Node Tree, following most UML conventions
 */
 /******************************************************************************/
 #include "_StateMachine.h"
@@ -42,10 +43,10 @@ static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * 
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
 /* State is within the active branch. */
-static inline bool StateMachine_IsActiveBranch(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsActiveBranch(StateMachine_GetLeafState(p_active), p_state); }
+static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsAncestorOrSelf(StateMachine_GetLeafState(p_active), p_state); }
 
 /* Ancestor or Descendant */
-static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectBranch(StateMachine_GetLeafState(p_active), p_state); }
+static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
 /******************************************************************************/
 /*!
@@ -53,14 +54,17 @@ static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_a
 */
 /******************************************************************************/
 /* _StateMachine_Branch */
-extern void _StateMachine_TraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_TraverseTransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, State_T * p_limit);
-extern void _StateMachine_ProcBranchInputTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
-extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcBranchAsyncInputTransition(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_TransitionBranch(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_TransitionBranchTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
+extern void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
+
+extern void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
 extern void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context);
+
+extern void _StateMachine_ProcRootFirst(StateMachine_Active_T * p_active, void * p_context);

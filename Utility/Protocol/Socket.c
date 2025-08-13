@@ -566,7 +566,7 @@ void Socket_ConfigXcvrBaudRate(Socket_T * p_socket, uint32_t baudRate)
 void Socket_SetSpecs(Socket_T * p_socket, uint8_t p_specsId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    const PacketClass_T * p_specs = (p_specsId < p_socket->PACKET_CLASS_COUNT) ? p_socket->P_PACKET_CLASS_TABLE[p_specsId] : NULL;
+    const Packet_Class_T * p_specs = (p_specsId < p_socket->PACKET_CLASS_COUNT) ? p_socket->P_PACKET_CLASS_TABLE[p_specsId] : NULL;
 
     if ((p_specs != NULL) && (p_specs->RX_LENGTH_MAX <= p_socket->PACKET_BUFFER_LENGTH))
     {

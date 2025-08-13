@@ -77,9 +77,10 @@ typedef enum Timer_Mode
     TIMER_MODE_DISABLED,    /* Disable Timer */
     TIMER_MODE_STOPPED,     /* OneShot/MultiShot Complete */
     TIMER_MODE_PERIODIC,
-    // TIMER_MODE_PERIODIC_COUNTER,
     TIMER_MODE_ONE_SHOT,
-    TIMER_MODE_MULTI_SHOT,  /* N Repeat */
+    TIMER_MODE_MULTI_SHOT,  /*  N Repeat */
+    // TIMER_MODE_PERIODIC_COUNTER,
+    // TIMER_MODE_ONE_SHOT_COUNTER,
 }
 Timer_Mode_T;
 
@@ -95,7 +96,7 @@ Timer_State_T;
 // alternatively as a common def
 // typedef struct Timer
 // {
-//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. Unused for Static case */
+//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. allocate unused for Static case */
     // uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
     // uint32_t TimeRef;
     // uint32_t Counter;   /* Repeat */

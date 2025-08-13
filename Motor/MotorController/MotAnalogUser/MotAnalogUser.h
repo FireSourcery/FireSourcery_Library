@@ -125,8 +125,6 @@ typedef struct MotAnalogUser_State
 }
 MotAnalogUser_State_T;
 
-#define MOT_ANALOG_USER_STATE_ALLOC() (&(MotAnalogUser_State_T){0})
-
 typedef const struct MotAnalogUser
 {
     MotAnalogUser_State_T * P_STATE;
@@ -148,6 +146,8 @@ typedef const struct MotAnalogUser
     const MotAnalogUser_Config_T * P_NVM_CONFIG;
 }
 MotAnalogUser_T;
+
+#define MOT_ANALOG_USER_STATE_ALLOC() (&(MotAnalogUser_State_T){0})
 
 /* Pins can pass by value */
 #define MOT_ANALOG_USER_INIT(p_State, BrakePin, ThrottlePin, ForwardPin, ReversePin, NeutralPin, SwitchBrakePin, p_Timer, p_Config) \
@@ -220,16 +220,6 @@ static inline void MotAnalogUser_CaptureInput(const MotAnalogUser_T * p_user, ui
     MotAnalogUser_CaptureBrakeValue(p_user, brake_Adcu);
 }
 
-// static inline bool _MotAnalogUser_PollSwitchBrakeFallingEdge(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseSwitchBrakePin == true) && UserDIn_PollFallingEdge(&p_user->SWITCH_BRAKE_DIN); }
-
-/* Optionally Separate Brake only polling */
-// static inline bool MotAnalogUser_PollBrakePins(const MotAnalogUser_T * p_user)
-// {
-//     if(p_user->Config.UseBrakeEdgePin == true)      { Debounce_PollEdge(&p_user->BrakeAIn.EdgePin); }
-//     if(p_user->Config.UseSwitchBrakePin == true)   { Debounce_PollEdge(&p_user->SwitchBrakePin); }
-//     return ((Debounce_GetState(&p_user->BrakeAIn.EdgePin) == true) || (Debounce_GetState(&p_user->SwitchBrakePin) == true)) ;
-// }
-
 /******************************************************************************/
 /*
     Shifter Direction
@@ -277,6 +267,16 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirectionEdge(const Mot
     return direction;
 }
 
+
+// static inline bool _MotAnalogUser_PollSwitchBrakeFallingEdge(const MotAnalogUser_T * p_user) { return (p_user->P_STATE->Config.UseSwitchBrakePin == true) && UserDIn_PollFallingEdge(&p_user->SWITCH_BRAKE_DIN); }
+
+/* Optionally Separate Brake only polling */
+// static inline bool MotAnalogUser_PollBrakePins(const MotAnalogUser_T * p_user)
+// {
+//     if(p_user->Config.UseBrakeEdgePin == true)      { Debounce_PollEdge(&p_user->BrakeAIn.EdgePin); }
+//     if(p_user->Config.UseSwitchBrakePin == true)   { Debounce_PollEdge(&p_user->SwitchBrakePin); }
+//     return ((Debounce_GetState(&p_user->BrakeAIn.EdgePin) == true) || (Debounce_GetState(&p_user->SwitchBrakePin) == true)) ;
+// }
 
 // static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(const MotAnalogUser_T * p_user)
 // {
@@ -333,8 +333,8 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
 }
 
 /* Diagnostic functions */
-// static inline uint16_t MotAnalogUser_GetThrottleRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->THROTTLE_AIN); }
-// static inline uint16_t MotAnalogUser_GetBrakeRaw(const MotAnalogUser_T * p_user) { return UserAIn_GetRawValue(&p_user->BRAKE_AIN); }
+// static inline uint16_t MotAnalogUser_GetThrottleInput(const MotAnalogUser_T * p_user) { return UserAIn_GetInputValue(&p_user->THROTTLE_AIN); }
+// static inline uint16_t MotAnalogUser_GetBrakeInput(const MotAnalogUser_T * p_user) { return UserAIn_GetInputValue(&p_user->BRAKE_AIN); }
 
 /******************************************************************************/
 /*

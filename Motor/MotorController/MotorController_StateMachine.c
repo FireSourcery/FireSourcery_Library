@@ -34,25 +34,30 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
 
-static const State_T STATE_INIT;
-static const State_T STATE_MAIN;
-static const State_T STATE_LOCK;
-static const State_T STATE_FAULT;
-
 /******************************************************************************/
 /*!
     @brief
 */
 /******************************************************************************/
+static const State_T STATE_INIT;
+static const State_T STATE_MAIN;
+static const State_T STATE_LOCK;
+static const State_T STATE_FAULT;
+
 const StateMachine_Machine_T MCSM_MACHINE =
 {
     .P_STATE_INITIAL = &STATE_INIT,
     .TRANSITION_TABLE_LENGTH = MCSM_TRANSITION_TABLE_LENGTH,
 };
 
+/******************************************************************************/
+/*!
+    @brief Common
+*/
+/******************************************************************************/
 static State_T * TransitionFault(const MotorController_T * p_context, state_value_t _void) { (void)_void; return &STATE_FAULT; }
 
-
+/* Clear Latching */
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
 void MotorController_ClearFaultFlags(const MotorController_T * p_context)
 {
@@ -65,11 +70,7 @@ void MotorController_ClearFaultFlags(const MotorController_T * p_context)
     p_mc->FaultFlags.MosfetsOverheat    = (HeatMonitor_Group_GetStatus(&p_context->HEAT_MOSFETS) == MONITOR_STATUS_FAULT);
 }
 
-/******************************************************************************/
-/*!
-    Check Lock Common
-*/
-/******************************************************************************/
+/* Check Lock Common */
 static State_T * Common_InputLock(MotorController_T * p_context, state_value_t lockId)
 {
     (void)lockId;
@@ -90,6 +91,10 @@ static State_T * Common_InputLock(MotorController_T * p_context, state_value_t l
     Init State does not transistion to fault, wait for ADC
 */
 /******************************************************************************/
+#define MC_STATE_MACHINE_INIT_WAIT (1500U + 50U) /* Let 1000ms ADC sampling process once */
+
+static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
+
 static void Init_Entry(const MotorController_T * p_context)
 {
     (void)p_context;
@@ -112,12 +117,16 @@ static State_T * Init_Next(const MotorController_T * p_context)
 
     /* Wait for initial ADC readings */
     // wait for every motor exit init
-    if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT + 50U)
+    if (SysTime_GetMillis() > MC_STATE_MACHINE_INIT_WAIT)
     {
         MotorController_ClearFaultFlags(p_context); /* Clear fault flags set by sensor polling in Main thread */
 
         if (MotorAnalogRef_IsLoaded() == false) { p_mc->FaultFlags.InitCheck = 1U; }
-        if (RangeMonitor_IsEnabled(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.VSourceLimit = 1U; } /* Enforce VMonitor Enable */
+        /* Enforce VMonitor Enable */ /* Disabled on invalid config */
+        if (RangeMonitor_IsEnabled(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VSourceLimit = 1U; }
+        // if (RangeMonitor_ValidateConfig(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.VSourceLimit = 1U; }
+
+        // if (BootRef_IsValid() == false) { MotorController_InitVSupplyAutoValue(p_context); } /* optionally auto on first time boot */
 
         if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { p_mc->FaultFlags.Motors = 1U; }
 
@@ -171,7 +180,7 @@ static State_T * GetMainState(const MotorController_T * p_context)
 static void Main_Entry(const MotorController_T * p_context)
 {
     // MotorController_State_T * p_mc = p_context->P_ACTIVE;
-    _StateMachine_TraverseTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, GetMainState(p_context));
+    _StateMachine_TransitionBranch(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, GetMainState(p_context));
 }
 
 // static void Main_Exit(const MotorController_T * p_context)
@@ -271,18 +280,22 @@ static void Motors_Proc(const MotorController_T * p_context)
 {
     // MotorController_State_T * p_mc = p_context->P_ACTIVE;
     Motor_User_Input_T * p_input = &p_context->P_ACTIVE->CmdInput;
-    Motor_User_Input_T * p_prev = &p_context->P_ACTIVE->CmdInputPrev;
-    MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
+    // Motor_User_Input_T * p_prev = &p_context->P_ACTIVE->CmdInputPrev;
+    if (p_input->IsUpdated == true)
+    {
+        MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
+        p_input->IsUpdated = false;
+    }
 }
 
 const State_T MAIN_STATE_MOTOR_CMD =
 {
-    .ID = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
-    .DEPTH = 1U,
-    .P_TOP = &STATE_MAIN,
-    .P_PARENT = &STATE_MAIN,
-    .ENTRY = (State_Action_T)Motors_Entry,
-    .LOOP = (State_Action_T)Motors_Proc,
+    .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
+    .DEPTH      = 1U,
+    .P_TOP      = &STATE_MAIN,
+    .P_PARENT   = &STATE_MAIN,
+    .ENTRY      = (State_Action_T)Motors_Entry,
+    .LOOP       = (State_Action_T)Motors_Proc,
     // .NEXT       = (State_InputVoid_T)Motors_Next,
     // .P_TRANSITION_TABLE = &MOTORS_TRANSITION_TABLE[0U],
 };

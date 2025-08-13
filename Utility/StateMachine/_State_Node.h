@@ -42,14 +42,25 @@
     Nth Ancestor
     No NULL check, as this is a private function for compile time defined values
 */
-static inline State_T * _State_IterateUp(State_T * p_start, uint8_t iterations)
+static inline State_T * _State_IterateUp(State_T * p_start, int8_t iterations)
 {
     State_T * p_iterator = p_start;
-    for (uint8_t count = 0U; count < iterations; count++) { p_iterator = p_iterator->P_PARENT; }
+    for (int8_t count = 0; count < iterations; count++)
+    {
+        p_iterator = p_iterator->P_PARENT;
+        assert(p_iterator != NULL); /* known at compile time */
+    }
     return p_iterator;
 }
 
 
+// #ifndef NDEBUG
+//     assert(_State_IterateUp(p_state, p_state->DEPTH) == p_state->P_TOP);
+// #endif
+    // assert((p_state->P_TOP == NULL) || (p_state->P_PARENT != NULL));
+/* Compile Time define Top State */
+/* A top state may define its own P_TOP as NULL or itself */
+/* alternatively iterate if not defined */
 static inline State_T * _State_GetRoot(State_T * p_start)
 {
     return (p_start->P_TOP == NULL) ? p_start : p_start->P_TOP;
@@ -70,8 +81,8 @@ static inline bool State_IsSubState(State_T * p_state) { return (p_state->DEPTH 
 /******************************************************************************/
 extern bool State_IsAncestor(State_T * p_reference, State_T * p_isAncestor);
 extern bool State_IsDescendant(State_T * p_reference, State_T * p_isDescendant);
-extern bool State_IsActiveBranch(State_T * p_active, State_T * p_test);
-extern bool State_IsDirectBranch(State_T * p_active, State_T * p_test);
+extern bool State_IsAncestorOrSelf(State_T * p_active, State_T * p_test);
+extern bool State_IsDirectLineage(State_T * p_active, State_T * p_test);
 extern State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2);
 
 
@@ -80,8 +91,17 @@ extern State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2);
     Transition Process
 */
 /******************************************************************************/
-extern void State_TraverseTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context);
-extern void State_TraverseTransition(State_T * p_start, State_T * p_end, void * p_context);
-extern State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId);
-extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context);
+extern void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context);
+extern void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void * p_context);
+
+/*  */
+// extern State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId);
 extern State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue);
+extern State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue);
+
+
+extern State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel);
+
+// extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context);
+// extern State_T * State_TraverseTransitionOfOutput_Full(State_T * p_start, void * p_context);
+// extern State_T * State_TraverseTransitionOfOutput_UptoRoot(State_T * p_start, void * p_context);

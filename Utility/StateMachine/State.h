@@ -157,7 +157,7 @@ typedef const struct State
     */
     /* [Internal Transition] - A "transition" internal of [P_CONTEXT]. Mutation of P_CONTEXT */
     /* No null pointer check for TOP level. Implementation supply empty function */
-    State_Action_T LOOP; /* SYNCHRONOUS */
+    State_Action_T LOOP; /* SYNCHRONOUS/SYNC_ACTION */
 
     /* [State Transition of State/Output/Clock] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
     /* Separate from LOOP to allow overwrite transition only */

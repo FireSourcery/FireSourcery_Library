@@ -32,24 +32,6 @@
 
 volatile uint32_t SysTime_Millis = 0U;
 
-// static void (*Yield)(void);
-
-/* Blocking delay */
-void SysTime_Delay(uint32_t ms, void (*yield)(void))
-{
-    uint32_t start = SysTime_Millis;
-    uint32_t time = SysTime_Millis;
-
-    while(SysTime_Millis < start + ms)
-    {
-        if(yield != 0U) { yield(); }
-        while(SysTime_Millis <= time);
-        time = SysTime_Millis;
-    }
-}
-
-// void SysTime_SetDelayYield(void (*fp)(void)) { Yield = fp; }
-
 /* App init must set priority */
 void SysTime_Init(void)
 {
@@ -59,4 +41,18 @@ void SysTime_Init(void)
     SYST_CVR = 0U;
     SYST_CSR = SYST_CSR_CLKSOURCE_MASK | SYST_CSR_TICKINT_MASK | SYST_CSR_ENABLE_MASK;
 #endif
+}
+
+/* Blocking delay */
+void SysTime_Delay(uint32_t ms, void (*yield)(void))
+{
+    uint32_t start = SysTime_Millis;
+    uint32_t time = SysTime_Millis;
+
+    while (SysTime_Millis < start + ms)
+    {
+        if (yield != 0U) { yield(); }
+        while (SysTime_Millis <= time);
+        time = SysTime_Millis;
+    }
 }

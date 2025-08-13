@@ -25,7 +25,6 @@
     @file   HAL_ADC.h
     @author
     @brief
-
 */
 /******************************************************************************/
 #ifndef HAL_ADC_PLATFORM_H
@@ -94,10 +93,10 @@ static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_hal)
     p_hal->SC1 = (p_hal->SC1 & ~(ADC_SC1_COCO_MASK | ADC_SC1_AIEN_MASK)) | ADC_SC1_ADCH_MASK;
 }
 
-static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal)     { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
-static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal)    { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
+static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal) { p_hal->SC2 |= ADC_SC2_ADTRG_MASK; }
+static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal) { p_hal->SC2 &= ~(ADC_SC2_ADTRG_MASK); }
 static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 &= ~ADC_SC1_ADCO_MASK; }
-static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal)  { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
+static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) { p_hal->SC1 |= ADC_SC1_ADCO_MASK; }
 
 /*
     Reference Manual pg 326

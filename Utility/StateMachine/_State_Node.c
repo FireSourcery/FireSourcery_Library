@@ -39,16 +39,6 @@
     Generic [Parent Node Tree] Relations
 */
 /******************************************************************************/
-// bool State_IsAncestor(State_T * p_reference, State_T * p_testAncestor)
-// {
-//     return (p_testAncestor == IterateUp(p_reference, p_reference->DEPTH - p_testAncestor->DEPTH));
-// }
-
-// bool State_IsDescendant(State_T * p_reference, State_T * p_testDescendant)
-// {
-//     return (p_testDescendant == IterateUp(p_testDescendant, p_testDescendant->DEPTH - p_reference->DEPTH));
-// }
-
 /*
     Is [test] a Ancestor of [ref]
 */
@@ -70,47 +60,35 @@ bool State_IsAncestor(State_T * p_reference, State_T * p_testAncestor)
 */
 bool State_IsDescendant(State_T * p_reference, State_T * p_testDescendant)
 {
-    assert(p_reference != NULL);
-    assert(p_testDescendant != NULL);
-
-    bool isDescendant = false;
-    for (State_T * p_descendant = p_testDescendant; (p_descendant->DEPTH > p_reference->DEPTH); p_descendant = p_descendant->P_PARENT)
-    {
-        if (p_descendant->P_PARENT == p_reference) { isDescendant = true; break; }
-    }
-    return isDescendant;
+    return State_IsAncestor(p_testDescendant, p_reference);
 }
+
+/* State as a Branch from root to itself. */
+bool State_IsAncestorOrSelf(State_T * p_active, State_T * p_test)
+{
+    return ((p_active == p_test) || State_IsAncestor(p_active, p_test));
+}
+
+bool State_IsDirectLineage(State_T * p_active, State_T * p_test)
+{
+    return ((p_active == p_test) || State_IsAncestor(p_active, p_test) || State_IsDescendant(p_active, p_test));
+}
+
+// bool State_IsInactiveBranch(State_T * p_active, State_T * p_test)
+// {
+//     return State_IsDescendant(p_active, p_test);
+// }
 
 // bool State_IsCousin(State_T * p_reference, State_T * p_common, State_T * p_isCousin)
 // {
 //     return (State_IsAncestor(p_reference, p_common) && State_IsDescendant(p_common, p_isCousin));
 // }
 
-/* State as a Branch from root to itself. */
-bool State_IsActiveBranch(State_T * p_active, State_T * p_test)
-{
-    return ((p_active == p_test) || State_IsAncestor(p_active, p_test));
-}
-
-bool State_IsDirectBranch(State_T * p_active, State_T * p_test)
-{
-    return ((p_active == p_test) || State_IsAncestor(p_active, p_test) || State_IsDescendant(p_active, p_test));
-}
-
 // bool State_IsReachableBranch(State_T * p_active, State_T * p_common, State_T * p_test)
 // {
 //     return ((p_active == p_test) || State_IsCousin(p_active, p_common, p_test));
 // }
 
-// bool State_IsInactiveBranch(State_T * p_active, State_T * p_test)
-// {
-//     return State_IsDescendant(p_active, p_test);
-// }
-
-// bool State_IsInactiveBranch(State_T * p_active, State_T * p_test)
-// {
-//     return State_IsDescendant(p_active, p_test);
-// }
 
 /* May include itself */
 State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
@@ -142,14 +120,29 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 }
 
 /* Capture on Traverse Up, store for iterative traverse down. */
-// static inline void State_CaptureTraverseUp(State_T * p_descendant, State_T ** p_buffer, uint8_t * p_count)
+/*!
+    Build path from ancestor to descendant for efficient downward traversal
+    Returns path length, or 0 if not descendant
+*/
+// static uint8_t State_BuildPath(State_T * p_ancestor, State_T * p_descendant, State_T ** p_path, uint8_t maxDepth)
 // {
-//     for (State_T * p_iterator = p_descendant; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-//     {
-//         p_buffer[(*p_count)++] = p_iterator;
-//     }
-// }
+//     if (p_descendant == NULL || p_ancestor == NULL) return 0;
+//     if (p_descendant->DEPTH <= p_ancestor->DEPTH) return 0;
 
+//     uint8_t pathLength = p_descendant->DEPTH - p_ancestor->DEPTH;
+//     if (pathLength > maxDepth) return 0;
+
+//     // Build path backwards
+//     State_T * p_current = p_descendant;
+//     for (int8_t i = pathLength - 1; i >= 0; i--)
+//     {
+//         p_path[i] = p_current;
+//         p_current = p_current->P_PARENT;
+//     }
+
+//     // Verify ancestor relationship
+//     return (p_current == p_ancestor) ? pathLength : 0;
+// }
 
 
 /******************************************************************************/
@@ -159,35 +152,65 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 /******************************************************************************/
 /******************************************************************************/
 /*
-    Traverse
+    Traverse Branch States
+    User handlers and map next State
         LOOP
         NEXT
         P_TRANSITION_TABLE
 */
 /******************************************************************************/
 /******************************************************************************/
-/* State Branch Sync/Output */
-/******************************************************************************/
 /*
-    Proc Synchronous State Outputs.
+    State Branch Sync/Output
 
-    pass end to skip top levels
+    SubStates/InnerStates first.
+    Take first transition. (RootFirst Proc to account for top level precedence)
+        optionally process remaining.
 */
-/* end works on NULL and known ActiveState */
-State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
+/******************************************************************************/
+/* _State_TransitionOfTraverseOutput, _State_TraversiveTransitionOfOutput */
+State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel)
 {
     State_T * p_next = NULL;
-    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
+    /* use (p_iterator != NULL) for now to handle boundary case of stopLevel == 0 */
+    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= stopLevel); p_iterator = p_iterator->P_PARENT)
     {
+        // assert(p_iterator != NULL); /* known at compile time. should not exceed depth */
         p_next = State_TransitionOfOutput(p_iterator, p_context);
-        if (p_next != NULL) { break; } /* substate takes precedence */
+        if (p_next != NULL) { break; }
     }
     return p_next;
 }
 
+// State_T * State_TraverseTransitionOfOutput_Full(State_T * p_start, void * p_context)
+// {
+//     return _State_TraverseTransitionOfOutput(p_start, p_context, 0U);
+// }
+
+// State_T * State_TraverseTransitionOfOutput_UptoRoot(State_T * p_start, void * p_context)
+// {
+//     return _State_TraverseTransitionOfOutput(p_start, p_context, 1U);
+// }
+
+
+/*
+    pass end to skip top levels
+*/
+/* end works on NULL and known ActiveState */
+// State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
+// {
+//     State_T * p_next = NULL;
+//     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
+//     {
+//         p_next = State_TransitionOfOutput(p_iterator, p_context);
+//         if (p_next != NULL) { break; } /* substate takes precedence */
+//     }
+//     return p_next;
+// }
+
 /*
     Optionally
-    Take the Top most transision. Higher level determines the target State.
+    Take the Top/Outer most transision. Higher level determines the target State.
 */
 // State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
 // {
@@ -202,7 +225,9 @@ State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, v
 // }
 
 /******************************************************************************/
-/* State Branch Input */
+/*
+    State Branch Input
+*/
 /******************************************************************************/
 /*
     Take the first transition that accepts the input
@@ -219,30 +244,34 @@ State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, sta
     return result;
 }
 
+/* Transition of Traverse Input */
 State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
     return _State_CallInput(State_TraverseAcceptInput(p_start, p_context, inputId), p_context, inputValue);
 }
 
+State_Input_T _State_TraverseAcceptInput(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId)
+{
+    State_Input_T result = NULL;
+    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= stopLevel); p_iterator = p_iterator->P_PARENT)
+    {
+        // assert(p_iterator != NULL);
+        result = State_AcceptInput(p_iterator, p_context, inputId);
+        if (result != NULL) { break; }
+    }
+    return result;
+}
+
+State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue)
+{
+    return _State_CallInput(_State_TraverseAcceptInput(p_start, p_context, stopLevel, inputId), p_context, inputValue);
+}
+
 /******************************************************************************/
 /*
-exper
+
 */
 /******************************************************************************/
-// State_Input_T __State_TraverseAcceptInput(State_T * p_start, uint8_t endDepth, void * p_context, state_input_t inputId)
-// {
-//     State_Input_T result = NULL;
-//     //skip null check when depth are compiel time in sync
-//     for (State_T * p_iterator = p_start; p_iterator->DEPTH < endDepth; p_iterator = p_iterator->P_PARENT)
-//     {
-//         assert(p_iterator != NULL);
-//         result = State_AcceptInput(p_iterator, p_context, inputId);
-//         if (result != NULL) { break; }
-//     }
-
-//     return result;
-// }
-
 // static const uintptr_t State_AcceptInputOfMapper1 = (uintptr_t)State_AcceptInputOfMapper;
 
 // const void * _State_TraverseApplyGeneric(const void * const fn, State_T * p_start, State_T * p_end, void * p_context, state_input_t inputId, state_value_t inputValue)
@@ -265,7 +294,7 @@ exper
 
 /******************************************************************************/
 /*
-    Traverse OnTransitionActions
+    Traverse OnTransition State_Actions
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -306,7 +335,7 @@ static inline void TraverseEntry(State_T * p_common, State_T * p_end, void * p_c
     @param[in] p_start == NULL, start from [p_common]
     @param[in] p_common == NULL, traverse to top
 */
-void State_TraverseTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
+void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
 {
     TraverseExit(p_start, p_common, p_context);
     TraverseEntry(p_common, p_end, p_context);
@@ -316,8 +345,10 @@ void State_TraverseTransitionThrough(State_T * p_start, State_T * p_common, Stat
 /*!
     Traverse_OnTransition
     @param[in] p_start == NULL => p_common = NULL
+
+    optionally build path on CA, for non recursive Entry traverse
 */
-void State_TraverseTransition(State_T * p_start, State_T * p_end, void * p_context)
+void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void * p_context)
 {
-    State_TraverseTransitionThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
+    State_TraverseOnTransitionThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
 }

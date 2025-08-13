@@ -117,15 +117,14 @@ StateMachine_Machine_T;
 // #endif
 
 /*
-    [StateMachine_Context_T] - as Context around mutable state
-        In this case of the runtime state _is_ a mainly pointer to STATE in ROM.
     [StateMachine_T] - as interface instance for P_CONTEXT as subtype
-        StateMachine_Machine_T instance - State_T Map with mutable context.
+        StateMachine_Machine_T instance - State_T Map + mutable context.
+        In this case of the runtime state _is_ a mainly pointer to STATE in ROM.
 */
 typedef const struct StateMachine
 {
     /* shorthand passing and container_of */
-    void * P_CONTEXT;                           /* Base Struct */
+    void * P_CONTEXT;                           /* Base Struct. Const during handling */
     StateMachine_Active_T * P_ACTIVE;           /* StateMachine "state" runtime data */
     const StateMachine_Machine_T * P_MACHINE;   /* Machine def. Const definition of state transition behaviors, via initial state */
 
@@ -167,6 +166,8 @@ static void StateMachine_Reset(StateMachine_T * p_stateMachine)
     // }
 }
 
+
+
 /******************************************************************************/
 /*
     Top Level StateMachine
@@ -188,6 +189,9 @@ static void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_input_
     }
 }
 
+/*
+    HSM Common
+*/
 static void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
@@ -219,16 +223,16 @@ static void StateMachine_ForceTransition(StateMachine_T * p_stateMachine, State_
 */
 static void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, StateMachine_TransitionInput_T * p_transition, state_value_t inputValue)
 {
+    assert(p_transition->TRANSITION != NULL);
+
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
         if (StateMachine_IsActiveState(p_active, p_transition->P_START) == true)
         {
-            assert(p_transition->TRANSITION != NULL);
             _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, inputValue));
         }
-
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
@@ -266,16 +270,16 @@ static inline state_value_t StateMachine_Get(StateMachine_T * p_stateMachine, st
     caller call _StateMachine_EndSubState to end loop
 */
 /******************************************************************************/
-static void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
-{
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+// static void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
+// {
+//     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
-    {
-        _StateMachine_ProcSubStateInput(p_active, p_stateMachine->P_CONTEXT, id, value);
-        _StateMachine_ReleaseAsyncInput(p_active);
-    }
-}
+//     if (_StateMachine_AcquireAsyncInput(p_active) == true)
+//     {
+//         _StateMachine_ProcSubStateInput(p_active, p_stateMachine->P_CONTEXT, id, value);
+//         _StateMachine_ReleaseAsyncInput(p_active);
+//     }
+// }
 
 
 /******************************************************************************/
@@ -284,6 +288,9 @@ static void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, stat
     [p_ActiveState][p_ActiveSubState]
 */
 /******************************************************************************/
+/*
+    Proc Input with Traversal from Leaf up
+*/
 static void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
@@ -307,11 +314,10 @@ static void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine,
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        if (StateMachine_IsActiveBranch(p_active, p_transition->P_START) == true)
+        if (StateMachine_IsActivePath(p_active, p_transition->P_START) == true)
         {
-            assert(State_IsActiveBranch(p_transition->P_START, p_stateMachine->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
-
-            _StateMachine_TraverseTransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
+            assert(State_IsAncestorOrSelf(p_transition->P_START, p_active->p_ActiveState)); /* ensure substate is in sync with top level state */
+            _StateMachine_TransitionBranchTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncInput(p_active);
     }
@@ -327,9 +333,9 @@ static void StateMachine_InvokeBranchTransitionFrom(StateMachine_T * p_stateMach
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        if (State_IsActiveBranch(p_deepest, StateMachine_GetActiveSubState(p_active)) == true)
+        if (State_IsAncestorOrSelf(p_deepest, StateMachine_GetActiveSubState(p_active)) == true)
         {
-            _StateMachine_TraverseTransitionTo(p_active, p_stateMachine->P_CONTEXT, transition(p_stateMachine->P_CONTEXT, value));
+            _StateMachine_TransitionBranchTo(p_active, p_stateMachine->P_CONTEXT, transition(p_stateMachine->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncInput(p_active);
     }

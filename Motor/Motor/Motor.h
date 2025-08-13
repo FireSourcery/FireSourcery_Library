@@ -174,6 +174,7 @@ typedef struct Motor_Config
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     /* Config stored in Electrical Degrees need to sync with pole pairs */
     uint16_t SpeedRated_DegPerCycle;    /* Speed at nominal VSource. Clamp or scale limits. Mech >= VSource*Kv */
+    // uint16_t DigitalSpeedRated;
 
     uint16_t Kv;                    /* Motor Constant. Use to derive SpeedVRef */
     uint16_t VSpeedScalar_Fract16;  /* Use to derive SpeedVMatchRef, ensure resume control at lower speed. */
@@ -239,9 +240,8 @@ typedef struct Motor_State
     /*
         State and SubStates
     */
-    Timer_T ControlTimer;                       /* State Timer */
-    uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
     StateMachine_Active_T StateMachine;
+    uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
     Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
     uint8_t CalibrationStateIndex;
 
@@ -252,19 +252,12 @@ typedef struct Motor_State
     volatile bool SpeedUpdateFlag;              /* Sync Feedback update */
     HeatMonitor_T HeatMonitorState;
 
-    // VarAccess_State_T VarAccessInputState;   /* Input and I/O Input */
-    // VarAccess_State_T VarAccessPidTunningState; /*  */
-    /* Optionally */
-    // VarAccess_State_T VarAccessConfigState;  /* use StateMachine */
-    // VarAccess_State_T VarAccessOuputState;
-
     /*
         Feedback State
     */
     /*
         Position Sensor
     */
-    // Timer_T SpeedTimer;                  /* Outer Speed Loop Timer */
     const RotorSensor_T * p_ActiveSensor;
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State */
     // SpeedAngle_T SpeedAngle;             /* Outer/Speed Feedback State. */
@@ -294,6 +287,7 @@ typedef struct Motor_State
     /* Speed direction  */
     // int16_t SpeedLimitCcw_Fract16;  /* + */
     // int16_t SpeedLimitCw_Fract16;   /* - */
+    /* alternatively store in torqueramp in current mode */
     // int16_t ILimitCcw_Fract16;      /* + */
     // int16_t ILimitCw_Fract16;       /* - */
 
@@ -303,7 +297,7 @@ typedef struct Motor_State
     */
     // fract16_t UserCmd; /* altneratively, as it is on a seperate thread */
     Ramp_T SpeedRamp;               /* Output [-32767:32767] SetPoint => SpeedReq */
-    Ramp_T TorqueRamp;              /* Output [-32767:32767] SetPoint => IReq */
+    Ramp_T TorqueRamp;              /* Output [-32767:32767] SetPoint => IReq/VReq */
 
     /* OpenLoop Preset, StartUp */
     Ramp_T OpenLoopSpeedRamp;       /* Preset Speed Ramp */
@@ -323,7 +317,7 @@ typedef struct Motor_State
     PID_T PidIq;                /* Input (IqReq - IqFeedback), Output Vq. Sign as CCW/CW direction */
     PID_T PidId;
 
-    PID_T PidIPhase;    /* Align */
+    PID_T PidIPhase; /* Align */
 
     /*
         Storable Config
@@ -365,13 +359,19 @@ typedef struct Motor_State
     uint32_t OpenLoopCommutationPeriod;
 #endif
 
-#if  defined(CONFIG_MOTOR_DEBUG_ENABLE)
+#if  defined(CONFIG_MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     volatile uint32_t MicrosRef;
     // volatile bool DebugFlag;
     // volatile uint32_t DebugError;
     volatile uint32_t DebugTime[10U];
     volatile uint32_t DebugCounter;
 #endif
+
+    // VarAccess_State_T VarAccessInputState;   /* Input and I/O Input */
+    // VarAccess_State_T VarAccessPidTunningState; /*  */
+    /* Optionally */
+    // VarAccess_State_T VarAccessConfigState;  /* use StateMachine */
+    // VarAccess_State_T VarAccessOuputState;
 }
 Motor_State_T;
 
@@ -397,8 +397,8 @@ typedef const struct Motor
     RotorSensor_Table_T SENSOR_TABLE;
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
     StateMachine_T STATE_MACHINE;
-    TimerT_T CONTROL_TIMER; /* Init time map to ControlTimerBase */
-    TimerT_T SPEED_TIMER;   /* Millis */
+    TimerT_T CONTROL_TIMER;  /* State Timer. Map to ControlTimerBase */
+    TimerT_T SPEED_TIMER;   /* Outer Speed Loop Timer. Millis */
     // Motor_VarAccess_T VAR_ACCESS;
     const Motor_Config_T * P_NVM_CONFIG;
 }
@@ -476,7 +476,6 @@ static inline int32_t Motor_SpeedV_DegPerCycleOfFract16(const Motor_State_T * p_
 /* SpeedRated ~= SpeedVRef */
 // static inline accum32_t Motor_VOfSpeed_Fract16(accum32_t speed_fract16) { return fract16_mul(speed_fract16, MotorAnalog_GetVSource_Fract16()); }
 // static inline accum32_t Motor_SpeedOfV_Fract16(accum32_t v_fract16)     { return fract16_div(v_fract16, MotorAnalog_GetVSource_Fract16()); }
-
 
 /* Local Unit Conversion */
 // static inline accum32_t Motor_Speed_Fract16OfRpm(const Motor_State_T * p_motor, int16_t speed_rpm)        { return speed_rpm * INT16_MAX / Motor_GetSpeedRatedRef_Rpm(p_motor); }

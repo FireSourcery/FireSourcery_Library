@@ -31,24 +31,5 @@
 #ifndef CONFIG_FLASH_H
 #define CONFIG_FLASH_H
 
-#include "Peripheral/NvMemory/NvMemory/Config.h"
-
-// #if     defined(FLASH_VERIFY_ERASE_N_UNITS)
-// #elif   defined(FLASH_VERIFY_ERASE_1_UNIT)
-// #else
-// #define FLASH_VERIFY_ERASE_1_UNIT
-// #endif
-
-
-#if     defined(CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS)
-#elif   defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
-#else
-    #define CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
-#endif
-
-#if defined(CONFIG_FLASH_ATTRIBUTE_RAM_SECTION)
-#else
-    #define CONFIG_FLASH_ATTRIBUTE_RAM_SECTION NV_MEMORY_ATTRIBUTE_RAM_SECTION
-#endif
 
 #endif

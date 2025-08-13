@@ -80,15 +80,9 @@ MotorController_User_SystemCmd_T;
 /*
     User Input Interface; into StateMachine process
 
-    [StateMachine_Sync] mode
-        process last set input, once per ms
-        SetSyncInput will overwrite previous input
-        effectively limit to 1 input per ms/packet
-
     _StateMachine_ProcInput Same Thread as Proc
 */
 /******************************************************************************/
-
 
 /******************************************************************************/
 /*
@@ -98,7 +92,7 @@ MotorController_User_SystemCmd_T;
 static inline void MotorController_User_InputMainMode(const MotorController_T * p_context, MotorController_MainMode_T value)
 {
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
-    _StateMachine_ProcBranchInputTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
+    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
 }
 
 /******************************************************************************/
@@ -114,25 +108,32 @@ static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T *
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTORS_CMD, inputId);
 }
 
-// id for the input that has been set
-// static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context, Motor_State_Input_T inputId)
-// static inline void _MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
-// static inline void _MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
-// static inline void _MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; }
-// static inline void _MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; }
-
 /*
     Pass outer context in case implementation changes
     push to motor state machine on edge
     Validate by statemachine
+
+    set the buffer, let state machine handle depending on mode
+    proc is on the same thread
 */
+// id for the input that has been set
+// static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context, Motor_State_Input_T inputId)
+// static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; }
+// static inline void MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; }
+// static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; }
+// static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; }
+// static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_ACTIVE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_ACTIVE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_ACTIVE->CmdInput.ControlState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_ACTIVE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 
+/******************************************************************************/
+/*
 
+*/
+/******************************************************************************/
 /* Non StateMachine checked disable motors. Caller ensure non field weakening state */
 static inline void MotorController_User_ForceDisableControl(const MotorController_T * p_context)
 {
@@ -148,85 +149,7 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
 
 }
 
-/******************************************************************************/
-/*
-    Lock/Blocking
-    Safe state actions, maybe blocking
-*/
-/******************************************************************************/
-static inline void MotorController_User_InputLock(const MotorController_T * p_context, MotorController_LockId_T id)
-{
-    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
-    _StateMachine_ProcBranchInputTransition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
-}
 
-static inline bool MotorController_User_IsLockState(const const MotorController_T * p_context)
-{
-    return StateMachine_IsActiveStateId(p_context->STATE_MACHINE.P_ACTIVE, MCSM_STATE_ID_LOCK);
-}
-
-static inline bool MotorController_User_IsEnterLockError(const const MotorController_T * p_context, MotorController_LockId_T id)
-{
-    return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_User_IsLockState(p_context) == false));
-}
-
-static inline bool MotorController_User_EnterLockState(const MotorController_T * p_context)
-{
-    MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER);
-    return MotorController_User_IsLockState(p_context);
-}
-
-static inline bool MotorController_User_ExitLockState(const MotorController_T * p_context)
-{
-    MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT);
-    return !MotorController_User_IsLockState(p_context); /* Park or Servo */
-}
-
-
-/* return union status */
-static inline int MotorController_User_GetLockOpStatus(const MotorController_T * p_context)
-{
-    return p_context->P_ACTIVE->LockOpStatus;
-    // return nvm on nvm
-}
-
-/*
-*/
-static inline bool MotorController_User_IsConfigState(const MotorController_T * p_context)
-{
-    return (MotorController_User_IsLockState(p_context) || MotorController_StateMachine_IsFault(p_context));
-}
-
-/* Save RAM to NVM */
-static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const MotorController_T * p_context)
-{
-    MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
-    return p_context->P_ACTIVE->NvmStatus;
-}
-
-/* Lock State returns to ENTER */
-static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_context)
-{
-    // return MotorController_User_IsLockState(p_context) ? p_context->LockSubState : MOTOR_CONTROLLER_LOCK_EXIT;
-    // return p_context->P_ACTIVE->LockSubState;
-    // return MotorController_User_IsLockState(p_context) ? _StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE) : MOTOR_CONTROLLER_LOCK_EXIT;
-
-    // if (MotorController_User_IsLockState(p_context) && !StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK))
-    // {
-        //     return (MotorController_LockId_T)_StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE);
-        // }
-        // else
-        // {
-            //     return MOTOR_CONTROLLER_LOCK_EXIT;
-            // }
-}
-
-static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_context)
-{
-    // return (p_context->P_ACTIVE->LockSubState == MOTOR_CONTROLLER_LOCK_ENTER);
-    // StateMachine_IsActiveSubState(p_context->STATE_MACHINE.P_ACTIVE, &STATE_LOCK);
-    // return MotorController_User_IsLockState(p_context)
-}
 /******************************************************************************/
 /*
     User Setting Speed/I Limit
@@ -336,8 +259,10 @@ static inline MotorController_User_StatusFlags_T MotorController_User_GetStatusF
 static inline BootRef_T MotorController_User_GetBootReg(const MotorController_State_T * p_mcState)          { return p_mcState->BootRef; }
 static inline void MotorController_User_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg)  { p_mcState->BootRef.Word = bootReg.Word; }
 static inline void MotorController_User_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable)     { p_mcState->BootRef.FastBoot = isEnable; }
-static inline void MotorController_User_SetBeep(MotorController_State_T * p_mcState, bool isEnable)         { p_mcState->BootRef.Beep  = isEnable; }
+static inline void MotorController_User_SetBeep(MotorController_State_T * p_mcState, bool isEnable)         { p_mcState->BootRef.Beep = isEnable; }
 static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcState, bool isEnable)        { p_mcState->BootRef.Blink = isEnable; }
+
+// static inline bool MotorController_User_IsB(const MotorController_T * p_mc) { return (p_mc->P_ACTIVE->BootRef.IsValid == p_mc->MOT_NVM.P_BOOT_REF->IsValid); }
 
 /*
     Controller NvM Variables Config
@@ -362,7 +287,6 @@ static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcS
     Extern
 */
 /******************************************************************************/
-
 extern void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts);
 extern void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode);
 

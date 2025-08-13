@@ -233,7 +233,7 @@ void Cmdr_BuildTxReq(uint8_t * p_txPacket, size_t * p_txLength, const MotorCmdr_
     }
 }
 
-const PacketClass_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
+const Packet_Class_T MOTOR_CMDR_MOT_PROTOCOL_SPECS =
 {
     .RX_LENGTH_MIN         = MOT_PACKET_LENGTH_MIN,
     .RX_LENGTH_MAX         = MOT_PACKET_LENGTH_MAX,

@@ -32,7 +32,6 @@
 #define FLASH_H
 
 #include "HAL_Flash.h"
-#include "Config.h"
 
 #include "Peripheral/NvMemory/NvMemory/NvMemory.h"
 
@@ -48,6 +47,11 @@
 #define FLASH_UNIT_READ_ONCE_SIZE       HAL_FLASH_UNIT_READ_ONCE_SIZE
 #define FLASH_UNIT_ERASE_PATTERN        HAL_FLASH_UNIT_ERASE_PATTERN
 
+// #if     defined(FLASH_VERIFY_ERASE_N_UNITS)
+// #elif   defined(FLASH_VERIFY_ERASE_1_UNIT)
+// #else
+// #define FLASH_VERIFY_ERASE_1_UNIT
+// #endif
 
 typedef enum Flash_Operation
 {

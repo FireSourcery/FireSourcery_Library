@@ -41,6 +41,10 @@ typedef const struct MotMotors
     Motor_State_T * const P_STATES;
     const Motor_T * const P_CONTEXTS;
     const size_t LENGTH;
+
+    // optionally collective parameters
+    // LimitArray_T MOT_SPEED_LIMITS;
+    // LimitArray_T MOT_I_LIMITS;
 }
 MotMotors_T;
 

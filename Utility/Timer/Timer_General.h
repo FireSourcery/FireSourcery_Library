@@ -42,7 +42,7 @@
 /******************************************************************************/
 typedef struct Timer
 {
-    const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. Unused for Static case */
+    const Timer_Base_T Base;
     Timer_State_T State;
 }
 Timer_T;

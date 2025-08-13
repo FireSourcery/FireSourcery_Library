@@ -108,25 +108,6 @@ inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeVal
     Motor_User_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
 }
 
-
-/*
-    Set [FeedbackMode] and Transition to Run State
-*/
-// merge or deprecate /* input buffer feedback mode or pass with combined cmd */
-// inline void Motor_User_ActivateControlWith(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
-// {
-//     Motor_User_SetFeedbackMode(p_motor, mode);
-//     StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM);
-// }
-
-// /* Generic array functions use */
-// void Motor_User_ActivateControlWith_Cast(const Motor_T * p_motor, int modeValue)
-// {
-//     Motor_User_ActivateControlWith(p_motor, Motor_FeedbackMode_Cast(modeValue));
-// }
-// combine for
-
-
 /******************************************************************************/
 /*!
     Direction/Stop
@@ -171,7 +152,6 @@ void Motor_User_ForceDisableControl(const Motor_T * p_motor)
     Cmd Modes
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*
     Cmd Value
@@ -546,13 +526,14 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 
 /******************************************************************************/
 /*
+    Specialized Sync input
 */
 /******************************************************************************/
 void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_input)
 {
-    if (p_input->IsUpdated == true) /* Sync to update rate */
-    {
-        p_input->IsUpdated = false; /* Reset Update Flag */
+    // if (p_input->IsUpdated == true) /* Sync to update rate */
+    // {
+    //     p_input->IsUpdated = false; /* Reset Update Flag */
 
         if (p_input->ControlState != Motor_User_GetPhaseState(p_motor))
         {
@@ -581,7 +562,7 @@ void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_in
         //     p_prev->ILimit = p_input->ILimit;
         //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
         // }
-    }
+    // }
 }
 // static void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_prev, Motor_User_Input_T * p_input)
 // {
@@ -629,3 +610,23 @@ void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_in
 //         // }
 //     }
 // }
+
+
+
+/*
+    Set [FeedbackMode] and Transition to Run State
+*/
+// merge or deprecate /* input buffer feedback mode or pass with combined cmd */
+// inline void Motor_User_ActivateControlWith(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
+// {
+//     Motor_User_SetFeedbackMode(p_motor, mode);
+//     StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM);
+// }
+
+// /* Generic array functions use */
+// void Motor_User_ActivateControlWith_Cast(const Motor_T * p_motor, int modeValue)
+// {
+//     Motor_User_ActivateControlWith(p_motor, Motor_FeedbackMode_Cast(modeValue));
+// }
+// combine for
+

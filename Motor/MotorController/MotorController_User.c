@@ -113,8 +113,8 @@ void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uin
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
     p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_context);
-    MotorController_CaptureVSource(p_context);
+    MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
+    MotorController_CaptureVSource(p_context); /* optionally */
 }
 
 // void MotorController_User_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
@@ -131,17 +131,9 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     // {
     //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
     //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
-    //         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-    //         {
-    //             Motor_Var_DisableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-    //         }
     //         break;
     //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
     //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
-    //         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
-    //         {
-    //             Motor_Var_EnableInput(MotMotors_StateAt(&p_context->MOTORS, iMotor));
-    //         }
     //         break;
     //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:
     //         break;

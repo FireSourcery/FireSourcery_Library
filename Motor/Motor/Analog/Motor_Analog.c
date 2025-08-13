@@ -139,7 +139,7 @@ static State_T * EndCalibration(const Motor_T * p_motor)
 
     State_T * p_nextState = NULL;
 
-    if (Timer_IsElapsed(&p_fields->ControlTimer) == true)
+    if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
         p_fields->Config.IaZeroRef_Adcu = Filter_Avg(&p_fields->FilterA, MotorAnalog_GetIa_Fract16(&p_fields->AnalogState));
         p_fields->Config.IbZeroRef_Adcu = Filter_Avg(&p_fields->FilterB, MotorAnalog_GetIb_Fract16(&p_fields->AnalogState));

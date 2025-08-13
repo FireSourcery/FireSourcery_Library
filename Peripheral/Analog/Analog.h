@@ -45,7 +45,6 @@
     handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
 
     swap file contents with Analog.h
-
 */
 /******************************************************************************/
 /* Analog_VirtualChannel/Analog_Handler */
@@ -59,11 +58,9 @@ typedef const struct Analog_Conversion
 }
 Analog_Conversion_T;
 
-// #define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) { .P_ADC = &(p_AdcStruct), .CHANNEL = (p_ConversionChannel).CHANNEL.ID, .P_CONVERSION_STATE = (p_ConversionChannel).P_CONVERSION_STATE, }
-
-// #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
+#define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel).CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), }
-
+// #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
 
 // static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
 // static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->Result = 0U; }
@@ -128,11 +125,11 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 // }
 // Analog_BatchPart_T;
 
-
 // typedef const struct Analog_Batch
 // {
-//     // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
-//     // uint8_t COUNT;                                // Number of conversions in the batch
+    // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
+    // uint8_t COUNT;                                // Number of conversions in the batch
+    // Collective mask or
 //     Analog_BatchPart_T * P_BATCH_PARTS;  // per map channel per  adc
 //     uint8_t ADC_COUNT;
 //
@@ -141,29 +138,6 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 // #define ANALOG_CONVERSION_BATCH_ALLOC(p_Channels, Count, p_Context, Callback) \
 //     ANALOG_CONVERSION_BATCH_INIT(p_Channels, Count, p_Context, Callback, (Analog_ConversionState_T[Count]){})
-
-// void Analog_Batch_MarkConversions(const Analog_Batch_T * p_batch)
-// {
-//     for (uint8_t index = 0U; index < p_batch->ADC_COUNT; index++)
-//     {
-//         Analog_ADC_T * p_adc = p_part->P_ADC;
-//         Analog_BatchPart_T * p_part = &p_batch->P_BATCH_PARTS[index];
-//         Analog_ContextState_T * p_state = p_part->ADC_CONTEXT.P_STATE;
-
-//         // mark all channels
-//         p_state->ChannelMarkers |= (1 << p_part->ADC_CONTEXT.Count) - 1 ;
-//         // p_state->CompleteMarkers = 0;
-
-//         // mark all channels
-//         for (uint8_t channelIndex = 0U; channelIndex < p_adc->CHANNEL_COUNT; channelIndex++)
-//         {
-//             if (p_adc->P_CONVERSION_CHANNELS[channelIndex].P_CONVERSION_STATE != NULL)
-//             {
-//                 p_adc->P_CONVERSION_CHANNELS[channelIndex].P_CONVERSION_STATE->IsMarked = true;
-//             }
-//         }
-//     }
-// }
 
 
 /* by adc state */
@@ -209,13 +183,3 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 // Analog_OptionsFlags_T;
 
 
-/******************************************************************************/
-/*
-    Channel
-    Board HAL compile time define.
-    Implementation as mapping ADC Host to ADC Channel.
-    This way ADC_T does not need to be defined per Board HAL.
-    stuctured by caller source, alternatively split by threading
-*/
-/******************************************************************************/
-// #define ANALOG_CHANNEL_INIT(Channel, p_AnalogAdc, PinId) { .ID = Channel, .P_ADC = p_AnalogAdc, .PIN = PinId, }

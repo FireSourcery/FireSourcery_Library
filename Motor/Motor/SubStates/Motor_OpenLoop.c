@@ -240,7 +240,7 @@ static void StartUp_Loop(const Motor_T * p_motor)
 static State_T * StartUp_Next(const Motor_T * p_motor)
 {
     /* todo  algin b */
-    return (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
+    return (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
 }
 
 /* Align with Aux Ramp */

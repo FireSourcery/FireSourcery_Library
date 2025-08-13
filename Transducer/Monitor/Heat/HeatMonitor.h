@@ -86,7 +86,7 @@ typedef const struct HeatMonitor_Context
 
     /* Thermistor Context */
     Analog_Conversion_T ANALOG_CONVERSION; //todo move this to outer
-    Thermistor_T THERMISTOR;
+    Thermistor_T THERMISTOR; // alternatively as pointer for flexible write region
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
     // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
     // Linear_T * P_LINEAR_T_CELCIUS;

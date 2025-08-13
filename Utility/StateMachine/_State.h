@@ -89,9 +89,9 @@ static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_contex
 /*
     Resolve on transition action and return new [State]
 */
-static inline State_T * _State_CallInput(State_Input_T transition, void * p_context, state_value_t inputValue)
+static inline State_T * _State_CallInput(State_Input_T inputFn, void * p_context, state_value_t inputValue)
 {
-    return (transition != NULL) ? transition(p_context, inputValue) : NULL;
+    return (inputFn != NULL) ? inputFn(p_context, inputValue) : NULL;
 }
 
 /*!
@@ -105,7 +105,7 @@ static inline State_T * _State_CallInput(State_Input_T transition, void * p_cont
     @note the result of State_AcceptInput must be stored in a local variable
     without critical section, a mismatched input function may run, however it should not run NULL
 */
-// static inline State_T * State_TransitionOfInputByMapper(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
+// State_TransitionOfInputByMapper
 static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
     assert(p_state != NULL);

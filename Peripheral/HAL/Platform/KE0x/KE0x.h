@@ -35,6 +35,8 @@
 #include "MKE06Z4/MKE06Z4.h"
 #elif   defined(KE02Z4_SERIES)
 #include "MKE02Z4/MKE02Z4.h"
+#else
+#error "No valid CPU defined!"
 #endif
 
 #endif

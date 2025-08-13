@@ -106,7 +106,7 @@ MotProtocol_DataModeState_T;
 // static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
 // extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 
-extern const PacketClass_T MOT_PROTOCOL_PACKET_CLASS;
+extern const Packet_Class_T MOT_PROTOCOL_PACKET_CLASS;
 
 extern void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_txSize, Protocol_TxSyncId_T txId);
 extern Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, packet_size_t rxCount);

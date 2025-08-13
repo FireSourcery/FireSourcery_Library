@@ -22,15 +22,9 @@
     // int16_t Ib;
     // int16_t Ic;
 // }
+// PhaseIn_T;
 // PhaseAnalog_T;
 
-// typedef const struct PhaseAnalog_VBus
-// {
-//    uint16_t Voltage;
-//    uint32_t PerV_Fract32;
-//    uint16_t VNominal;
-// }
-// PhaseAnalog_VBus_T;
 
 // typedef const struct PhaseAnalog
 // {

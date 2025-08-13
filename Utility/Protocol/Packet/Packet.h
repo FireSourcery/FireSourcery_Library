@@ -120,7 +120,7 @@ typedef void (* const Packet_BuildTxMeta_T)(void * p_txPacket, const Protocol_He
 
 /******************************************************************************/
 /*!
-    Packet Class Variables / Format Specs
+    Packet Class Variables / Meta/Format Specs
     Protocol_Transport
 */
 /******************************************************************************/
@@ -145,7 +145,7 @@ typedef const struct PacketClass
 
     // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 }
-PacketClass_T;
+Packet_Class_T;
 
 
 // alternative to PARSE_RX_META
@@ -162,10 +162,10 @@ PacketClass_T;
 // } Packet_HeaderClass_T;
 
 // optionally compile time define contigous context
-// static inline   Packet_Action(const PacketClass_T * , uint8_t *, ...)
+// static inline   Packet_Action(const Packet_Class_T * , uint8_t *, ...)
 // typedef const struct Packet_Context
 // {
-//     const PacketClass_T * P_SPECS;
+//     const Packet_Class_T * P_SPECS;
 //     uint8_t * P_BUFFER;
 //     //   * P_RX_STATE;
 //     Protocol_HeaderMeta_T * P_META;

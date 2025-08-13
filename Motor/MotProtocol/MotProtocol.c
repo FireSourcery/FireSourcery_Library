@@ -122,7 +122,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
 // }
 
 
-const PacketClass_T MOT_PROTOCOL_PACKET_CLASS =
+const Packet_Class_T MOT_PROTOCOL_PACKET_CLASS =
 {
     .RX_LENGTH_MIN  = MOT_PACKET_LENGTH_MIN,
     .RX_LENGTH_MAX  = MOT_PACKET_LENGTH_MAX,

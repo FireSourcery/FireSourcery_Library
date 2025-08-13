@@ -62,42 +62,13 @@
 /******************************************************************************/
 /*
     extern
-    Writable via Flash
 */
 /******************************************************************************/
-/* ADC Ref Sensor Calibration */
-/* MotorRef_Adc/Board */
-typedef const struct MotorAnalogRef_Board
-{
-    uint32_t V_PHASE_R1;
-    uint32_t V_PHASE_R2;
-
-    uint16_t I_PHASE_R_BASE;
-    uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
-    uint16_t I_PHASE_GAIN;        /* x10 */
-
-    uint16_t V_RATED;             /* VSource Limit */
-    uint16_t I_RATED_RMS;         /* */
-}
-MotorAnalogRef_Board_T;
-
-extern const MotorAnalogRef_Board_T MOTOR_ANALOG_REFERENCE_BOARD; /* Optionally */
-
-static inline uint16_t MotorAnalogRef_GetVRated(void) { return MOTOR_ANALOG_REFERENCE_BOARD.V_RATED; }
-static inline uint16_t MotorAnalogRef_GetIRatedRms(void) { return MOTOR_ANALOG_REFERENCE_BOARD.I_RATED_RMS; }
-
 /*
-    Run-time convert
+    Units Calibration
+    Sensor common
 */
-// static inline uint16_t MotorAnalogRef_GetVRated_Fract16(void) { return fract16(MotorAnalogRef_GetVRated(), MotorAnalogRef_GetVMaxVolts()); }
-// static inline uint16_t MotorAnalogRef_GetIRatedPeak_Fract16(void) { return (uint32_t)MotorAnalogRef_GetIRatedRms() * FRACT16_SQRT2 / MotorAnalogRef_GetIMaxAmps(); }
-
-
-/*
-    Units
-*/
-/* applies to external sensor */
-/* */
+/* PhaseAnalogRef */
 typedef const struct MotorAnalogRef
 {
     volatile uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
@@ -107,25 +78,26 @@ typedef const struct MotorAnalogRef
     volatile uint16_t I_RATED_PEAK_FRACT16;
 }
 MotorAnalogRef_T;
+// volatile MotorAnalogRef_T;
 
 /* Init */
 // #define MOTOR_ANALOG_I_MAX_INIT(Shunt_UOhm, Gain_10, VRef_MilliV) ((uint16_t)((1000.0F * VRef_MilliV * MOTOR_ANALOG_I_MAX_ADCU / 4096) / ((Shunt) * (Gain) / 10.0F)))
 
 /* Define in Main App */
-/* extern const allows run-time overwrite */
+/* run-time overwrite or compile time def. */
 extern const MotorAnalogRef_T MOTOR_ANALOG_REFERENCE;
 
 /* Getter interface. */
 static inline uint16_t MotorAnalogRef_GetIMaxAmps(void) { return MOTOR_ANALOG_REFERENCE.I_MAX_AMPS; }
 static inline uint16_t MotorAnalogRef_GetVMaxVolts(void) { return MOTOR_ANALOG_REFERENCE.V_MAX_VOLTS; }
-
 static inline uint16_t MotorAnalogRef_GetVRated_Fract16(void) { return MOTOR_ANALOG_REFERENCE.V_RATED_FRACT16; }
 static inline uint16_t MotorAnalogRef_GetIRatedPeak_Fract16(void) { return MOTOR_ANALOG_REFERENCE.I_RATED_PEAK_FRACT16; }
+
+static inline uint16_t MotorAnalogRef_GetVRated_V(void) { return MotorAnalogRef_GetVRated_Fract16() * MotorAnalogRef_GetVMaxVolts() / 32768; }
 // static inline int16_t MotorAnalogRef_GetVRated_Adcu(void) { return MotorAnalogRef_GetVRated_Fract16() / MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
 // static inline int16_t MotorAnalogRef_GetIRatedPeak_Adcu(void){ return MotorAnalogRef_GetIRatedPeak_Fract16() / MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
-static inline uint16_t MotorAnalogRef_GetVRated_V(void) { return MotorAnalogRef_GetVRated_Fract16() * MotorAnalogRef_GetVMaxVolts() / 32768; }
 
-static inline bool _MotorAnalogRef_IsLoaded(uint16_t value) { return (value != 0U && value != 0xFFFFU); }
+static inline bool _MotorAnalogRef_IsLoaded(uint16_t value) { return ((value != 0U) && (value != 0xFFFFU)); }
 static bool MotorAnalogRef_IsLoaded(void)
 {
     return
@@ -136,6 +108,35 @@ static bool MotorAnalogRef_IsLoaded(void)
         _MotorAnalogRef_IsLoaded(MotorAnalogRef_GetIRatedPeak_Fract16())
     );
 }
+
+
+/* Optionally */
+/* ADC Ref Sensor Calibration */
+/* MotorRef_Adc/Board */
+typedef const struct MotorAnalogRef_Board
+{
+    volatile uint32_t V_PHASE_R1;
+    volatile uint32_t V_PHASE_R2;
+
+    volatile uint16_t I_PHASE_R_BASE;
+    volatile uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
+    volatile uint16_t I_PHASE_GAIN;        /* x10 */
+
+    volatile uint16_t V_RATED;             /* VSource Limit */
+    volatile uint16_t I_RATED_RMS;         /* */
+}
+MotorAnalogRef_Board_T;
+
+extern const MotorAnalogRef_Board_T MOTOR_ANALOG_REFERENCE_BOARD;
+
+static inline uint16_t MotorAnalogRef_GetVRated(void) { return MOTOR_ANALOG_REFERENCE_BOARD.V_RATED; }
+static inline uint16_t MotorAnalogRef_GetIRatedRms(void) { return MOTOR_ANALOG_REFERENCE_BOARD.I_RATED_RMS; }
+
+/*
+    Run-time convert
+*/
+// static inline uint16_t MotorAnalogRef_GetVRated_Fract16(void) { return fract16(MotorAnalogRef_GetVRated(), MotorAnalogRef_GetVMaxVolts()); }
+// static inline uint16_t MotorAnalogRef_GetIRatedPeak_Fract16(void) { return (uint32_t)MotorAnalogRef_GetIRatedRms() * FRACT16_SQRT2 / MotorAnalogRef_GetIMaxAmps(); }
 
 
 /*

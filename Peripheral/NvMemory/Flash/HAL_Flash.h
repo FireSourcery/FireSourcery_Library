@@ -31,13 +31,18 @@
 #ifndef HAL_FLASH_H
 #define HAL_FLASH_H
 
-#include "Config.h"
+/* Include by HAL_Flash.h */
+//alternatively __attribute__((always_inline))
+#ifndef FLASH_ATTRIBUTE_RAM_SECTION
+#define FLASH_ATTRIBUTE_RAM_SECTION NV_MEMORY_ATTRIBUTE_RAM_SECTION
+#endif
+
 
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Flash.h)
 
-// extern bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
-// extern bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) CONFIG_FLASH_ATTRIBUTE_RAM_SECTION;
+// extern bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
+// extern bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 // extern void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs);
 // extern bool HAL_Flash_ReadErrorVerifyFlag(const HAL_Flash_T * p_regs);
 // extern bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs);

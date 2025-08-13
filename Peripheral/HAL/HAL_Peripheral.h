@@ -34,10 +34,10 @@
 #define XSTR(String) #String
 #define STR(String) XSTR(String)
 
-#if     defined(CONFIG_HAL_PERIPHERAL_PATH)         /* External directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(CONFIG_HAL_PERIPHERAL_PATH/File)
-#elif   defined(CONFIG_HAL_PERIPHERAL_PLATFORM)     /* Library platform directory */
-    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/CONFIG_HAL_PERIPHERAL_PLATFORM/File)
+#if     defined(HAL_PERIPHERAL_PATH_DIRECTORY)      /* External directory */
+    #define HAL_PERIPHERAL_PATH(File) STR(HAL_PERIPHERAL_PATH_DIRECTORY/File)
+#elif   defined(HAL_PERIPHERAL_PATH_PLATFORM)       /* Library platform directory */
+    #define HAL_PERIPHERAL_PATH(File) STR(Peripheral/HAL/Platform/HAL_PERIPHERAL_PATH_PLATFORM/File)
 #else
     #error "HAL_PERIPHERAL_PATH not defined."
 #endif

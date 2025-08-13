@@ -49,32 +49,20 @@ typedef enum Hysteresis_Region
 }
 Hysteresis_Region_T;
 
-// typedef enum Hysteresis_Mode
-// {
-//     HYSTERESIS_MODE_LOW_ACTIVE = -1,    /* Low-acting hysteresis: activate on low, deactivate on high */
-//     HYSTERESIS_MODE_DISABLED = 0,       /* Disabled hysteresis: no activation/deactivation */
-//     HYSTERESIS_MODE_HIGH_ACTIVE = 1,    /* High-acting hysteresis: activate on high, deactivate on low */
-// }
-// Hysteresis_Mode_T;
-
-/* Complete hysteresis instance */
+/*
+    Complete hysteresis instance
+    Call handle direction
+*/
 typedef struct Hysteresis
 {
     int32_t Setpoint;                   /* Activation threshold (trip point) */
     int32_t Resetpoint;                 /* Deactivation threshold (reset point) */
 
-    // Threshold_Setpoint_T Threshold;  /* Setpoint and resetpoint as threshold setpoint */
-    // Hysteresis_Mode_T Mode;          /* internal handle direction */   /* Hysteresis mode: high-acting, low-acting, or disabled */
-
-    // preprocess for compare logic
-    // int32_t ThresholdHigh;
-    // int32_t ThresholdLow;
-
     int32_t Output;     /* Conditioned value as state */
-    // altneratively derive with getter
+    // alternatively derive with getter
     bool OutputState;   /* Current logical state. true as past the setpoint, low or high */
 
-    // altneratively caller handle edge detection
+    // alternatively caller handle edge detection
     // int32_t OutputPrev;
     // bool OutputStatePrev;
 }
@@ -92,17 +80,17 @@ Hysteresis_T;
     activate when value >= setpoint, deactivate when value <= resetpoint
 */
 /******************************************************************************/
-/* Alternative implementation */
-static inline bool _Hysteresis_OutputStateOf(const Hysteresis_T * p_hyst, int32_t input)
-{
-    return hysteresis_output_state(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
-}
-
 /* Apply hysteresis conditioning to input value */
 /* hysteresis effective in reset direction only */
 static inline int32_t _Hysteresis_OutputOf(const Hysteresis_T * p_hyst, int32_t input)
 {
     return hysteresis_on_falling(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->Output, input);
+}
+
+/* Alternative implementation */
+static inline bool _Hysteresis_OutputStateOf(const Hysteresis_T * p_hyst, int32_t input)
+{
+    return hysteresis_output_state(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
 }
 
 /* Determine region of any value - works for both input analysis and output state */
@@ -114,18 +102,16 @@ static inline Hysteresis_Region_T _Hysteresis_RegionOf(const Hysteresis_T * p_hy
     else                                { return HYSTERESIS_REGION_DEADBAND; }
 }
 
+/*
+
+*/
 static inline bool _Hysteresis_PollOutput(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = _Hysteresis_OutputOf(p_hyst, input);
     return (_Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
 }
 
-/* Getters for output state */
-/* output in deadband on rising only, effectively off */
-static inline Hysteresis_Region_T _Hysteresis_GetOutputRegion(const Hysteresis_T * p_hyst) { return _Hysteresis_RegionOf(p_hyst, p_hyst->Output); }
-static inline bool _Hysteresis_GetOutputState(const Hysteresis_T * p_hyst) { return (p_hyst->Output >= p_hyst->Setpoint); }
-
-/* Poll with edge */
+/* Storing boolean state */
 static inline bool _Hysteresis_Poll(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = _Hysteresis_OutputOf(p_hyst, input);
@@ -133,6 +119,11 @@ static inline bool _Hysteresis_Poll(Hysteresis_T * p_hyst, int32_t input)
     p_hyst->OutputState = (_Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
 }
+
+/* Getters for output state */
+/* output in deadband on rising only, effectively off */
+static inline Hysteresis_Region_T _Hysteresis_GetOutputRegion(const Hysteresis_T * p_hyst) { return _Hysteresis_RegionOf(p_hyst, p_hyst->Output); }
+static inline bool _Hysteresis_GetOutputState(const Hysteresis_T * p_hyst) { return (p_hyst->Output >= p_hyst->Setpoint); }
 
 /******************************************************************************/
 /*
@@ -193,7 +184,6 @@ static inline int32_t Hysteresis_PollOutputFilter(Hysteresis_T * p_hyst, int32_t
     p_hyst->Output = Hysteresis_OutputFilter(p_hyst, input);
     return p_hyst->Output;
 }
-
 
 /* Bidirectional delta filter */
 // static inline int32_t Hysteresis_OutputFilter_Delta(const Hysteresis_T * p_hyst, int32_t input)
@@ -423,3 +413,11 @@ static void Hysteresis_InitAsActiveLow(Hysteresis_T * p_hyst, int32_t setpoint, 
 //     return new_output;
 // }
 
+
+// typedef enum Hysteresis_Mode
+// {
+//     HYSTERESIS_MODE_LOW_ACTIVE = -1,    /* Low-acting hysteresis: activate on low, deactivate on high */
+//     HYSTERESIS_MODE_DISABLED = 0,       /* Disabled hysteresis: no activation/deactivation */
+//     HYSTERESIS_MODE_HIGH_ACTIVE = 1,    /* High-acting hysteresis: activate on high, deactivate on low */
+// }
+// Hysteresis_Mode_T;

@@ -243,7 +243,7 @@ Protocol_ReqState_T;
 //     uint8_t REQ_TABLE_LENGTH;
 //     // REQ_TIMEOUT
 
-//     const PacketClass_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
+//     const Packet_Class_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
 //     uint8_t PACKET_CLASS_COUNT;
 
 //     /*  */
@@ -260,7 +260,7 @@ Protocol_ReqState_T;
 //     const Protocol_Req_T * P_REQ_TABLE;
 //     uint8_t REQ_TABLE_LENGTH;
 //     // REQ_TIMEOUT
-//     const PacketClass_T *   P_PACKET_CLASS
+//     const Packet_Class_T *   P_PACKET_CLASS
 
 //     const volatile uint32_t * P_TIMER;
 // }

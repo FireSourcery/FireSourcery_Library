@@ -58,7 +58,7 @@ typedef const struct Blinky
 {
     Pin_T PIN;
     Blinky_State_T * P_STATE; /* Pointer to runtime state */
-    const TimerT_T TIMER;
+    TimerT_T TIMER;
     // const volatile uint32_t * P_TIMER;
 }
 Blinky_T;

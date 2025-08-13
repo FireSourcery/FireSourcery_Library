@@ -180,7 +180,7 @@ NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorContr
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_User_IsConfigState(p_context) == true) { status = MotNvm_ReadManufacture_Blocking(&p_context->MOT_NVM, onceAddress, size, p_destBuffer); }
+    if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_ReadManufacture_Blocking(&p_context->MOT_NVM, onceAddress, size, p_destBuffer); }
     return status;
 }
 
@@ -189,7 +189,7 @@ NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(const MotorCont
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_User_IsConfigState(p_context) == true) { status = MotNvm_WriteManufacture_Blocking(&p_context->MOT_NVM, onceAddress, p_source, size); }
+    if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_WriteManufacture_Blocking(&p_context->MOT_NVM, onceAddress, p_source, size); }
     return status;
 }
 
@@ -298,7 +298,7 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[] =
 // #endif
 };
 
-// const PacketClass_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
+// const Packet_Class_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
 // {
 //     .RX_LENGTH_MIN = MOT_PACKET_LENGTH_MIN,
 //     .RX_LENGTH_MAX = MOT_PACKET_LENGTH_MAX,

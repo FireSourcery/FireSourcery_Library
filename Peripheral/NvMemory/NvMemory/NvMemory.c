@@ -124,11 +124,11 @@ void NvMemory_Init(NvMemory_T * p_context)
     p_state->IsOpBuffered = (p_context->BUFFER_SIZE > 0U);
     p_state->IsVerifyEnable = true;
     p_state->IsForceAlignEnable = false;
-    // p_state->OpAddress = 0U;
-    // p_state->OpSizeAligned = 0U;
 
     // p_state->Status = NV_MEMORY_STATUS_SUCCESS;
     // p_state->State = NV_MEMORY_STATE_IDLE;
+    // p_state->OpAddress = 0U;
+    // p_state->OpSizeAligned = 0U;
     // p_state->OpIndex = 0U;
 }
 

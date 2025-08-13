@@ -29,9 +29,6 @@
     @brief
 */
 /******************************************************************************/
-
-#include "Config.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -47,7 +44,7 @@ typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, const uint8_t * p_src, size_
 typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, uint8_t * p_dest, size_t length);
 typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
 typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value); // optionally split init and compare
-// typedef bool(*Xcvr_RxN_T)        (void * p_xcvr, size_t length, uint8_t * p_dest);
+// typedef void(*Xcvr_Init_T)        (void * p_xcvr );
 
 typedef const struct Xcvr_VTable
 {
@@ -247,7 +244,6 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 
 // static inline bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)         { return Xcvr_TxN(p_xcvr, p_src, length); }
 // static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)    { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
-
 
 
 // #if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)

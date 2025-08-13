@@ -54,15 +54,19 @@ static inline void StateMachine_Synchronous_Thread(StateMachine_T * p_stateMachi
     _StateMachine_Synchronous_Thread(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
 }
 
-// hsm
-// static inline void StateMachine_TreeSynchronous_Thread(  StateMachine_T * p_stateMachine)
-// {
-//     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
-//     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
-//     {
-//         _StateMachine_ProcBranchSyncInput(p_active, p_stateMachine->P_CONTEXT);
-//         _StateMachine_ProcBranchSyncOutput(p_active, p_stateMachine->P_CONTEXT, NULL);
-//         _StateMachine_ReleaseAsyncIsr(p_active);
-//     }
-// }
+/*
+    HSM
+*/
+static inline void _StateMachine_Synchronous_RootFirst_Thread(StateMachine_Active_T * p_active, void * p_context)
+{
+    if (_StateMachine_AcquireAsyncIsr(p_active) == true)
+    {
+        _StateMachine_ProcRootFirst(p_active, p_context);
+        _StateMachine_ReleaseAsyncIsr(p_active);
+    }
+}
 
+static inline void StateMachine_Synchronous_RootFirst_Thread(StateMachine_T * p_stateMachine)
+{
+    _StateMachine_Synchronous_RootFirst_Thread(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
+}

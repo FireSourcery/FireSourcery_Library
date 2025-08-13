@@ -47,6 +47,7 @@ typedef NvMemory_T EEPROM_T;
 extern void EEPROM_Init_Blocking(EEPROM_T * p_eeprom);
 extern NvMemory_Status_T EEPROM_Write_Blocking(EEPROM_T * p_eeprom, uintptr_t destAddress, const void * p_source, size_t sizeBytes);
 
+
 // extern void EEPROM_Init_NonBlocking(EEPROM_T * p_eeprom);
 // extern bool EEPROM_ProcOp_NonBlocking(EEPROM_T * p_flash);
 // extern bool EEPROM_ReadIsOpComplete(EEPROM_T * p_eeprom);

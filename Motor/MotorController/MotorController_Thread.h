@@ -321,7 +321,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /* Handle Inputs as they are received */
         // maybe change this to signal if enter fault is on 1ms thread
         _StateMachine_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
-        // MotDrive_StateMachine_Proc(&p_context->MOT_DRIVE); //maybe better for optimzing passthrough parameters
+        // MotDrive_StateMachine_Proc(&p_context->MOT_DRIVE); // maybe better for optimzing passthrough parameters
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
@@ -388,6 +388,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         #endif
         }
 
+        // feedwatchdog
         // p_mc->MainDividerCounter++;
     }
     // todo transient recorder proc

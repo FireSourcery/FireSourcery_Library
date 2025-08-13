@@ -99,6 +99,10 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
     /* if used in combination with HSM. Clear the SubState on a Top level State Transition */
     p_active->p_ActiveSubState = p_active->p_ActiveState;
 // #endif
+
+    // alternatively always set as hsm
+    // p_active->p_ActiveState = p_newState->P_TOP;
+    // p_active->p_ActiveSubState = p_newState;
 }
 
 inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
@@ -112,7 +116,7 @@ inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * 
     Store a local function pointer, reacessing the table by id may return NULL.
     If an async transition does occur, the previously selected function will run.
 */
-inline void _StateMachine_ProcInputTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
 }
@@ -122,29 +126,33 @@ inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void 
     _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
 }
 
-/* higher priority proc */
+/*
+    Proc each Transition individually in case of dependencies on transition updates
+
+    Proc entirely at [ProcState]/ISR priority
+    [P_TRANSITION_TABLE[id]]
+    [State_Exit]
+    [State_Entry]
+    [LOOP]
+*/
 inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context)
 {
-    uint32_t inputMask = p_active->SyncInputMask;
-
-    while (inputMask != 0UL)
+    for (uint32_t inputMask = p_active->SyncInputMask; inputMask != 0UL; inputMask &= (inputMask - 1))
     {
         state_input_t input = __builtin_ctz(inputMask);
-
-        assert(input < STATE_TRANSITION_TABLE_LENGTH_MAX); /* Ensure input is within range */
-
-        _StateMachine_ProcInputTransition(p_active, p_context, input, p_active->SyncInputs[input]); /* may update [p_active->p_ActiveState]. optionally return early */
-        inputMask &= (inputMask - 1);
+        // assert(input < STATE_TRANSITION_TABLE_LENGTH_MAX); /* Ensure input is within range */
+        _StateMachine_ProcInput(p_active, p_context, input, p_active->SyncInputs[input]); /* may update [p_ActiveState] */
     }
-
     p_active->SyncInputMask = 0UL;
 }
 
-/*  */
-inline void _StateMachine_ProcAsyncInputTransition(StateMachine_Active_T * p_active, void * p_context)
+/* SyncTransitionOfAsyncInput */
+inline void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_TransitionTo(p_active, p_context, p_active->p_SyncNextState);
-    p_active->p_SyncNextState = NULL; /* Clear next state */
+    _StateMachine_TransitionTo(p_active, p_context, p_active->p_SyncNextState); /* check proc with local variable */
+    p_active->p_SyncNextState = NULL;
+
+    // alternatively  ignore DEPTH != 0U
 }
 
 /*
@@ -155,96 +163,92 @@ inline void _StateMachine_ProcAsyncInputTransition(StateMachine_Active_T * p_act
     User can selectively sync on some [state_input_t] inputs - SetSyncInput or lock
         where proc state should not run without input completion
 
-    [State_Input_T P_TRANSITION_TABLE[id]] <- [ProcState] can only interrupt user Input handler
+    [P_TRANSITION_TABLE[id]] <- [ProcState] can only interrupt user Input handler
+    ...
     [State_Exit]
     [State_Entry]
-    [State_Action_T LOOP]
+    [LOOP]
 */
 /* ProcInputSetTransition */
 inline void _StateMachine_ProcAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    p_active->p_SyncNextState = TransitionFunctionOfInput(p_active, p_context, id, value); /* wait for next transition. transition will run before SYNC_OUTPUT */
+    p_active->p_SyncNextState = TransitionFunctionOfInput(p_active, p_context, id, value); /* transition will run before SYNC_OUTPUT */
+    assert(p_active->p_SyncNextState == NULL || p_active->p_SyncNextState->DEPTH == 0U);
 }
 
 
 /******************************************************************************/
 /*
-    Combined to inline contents within compilation unit
+    Combined to inline contents within this compilation unit
 */
 /******************************************************************************/
+/* check for an async transition first */
+/* if a [Transition] occured.  */
+/* Continue processing [Output] of the new State */
 void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_ProcAsyncInputTransition(p_active, p_context); /* check for an async transition first */
-    /* Continue processing [Output] of the new State  */
-    /* if a [Transition] occured. SyncInputs are not applied to the new State.  */
+    _StateMachine_ProcPendingTransition(p_active, p_context);
     _StateMachine_ProcSyncInput(p_active, p_context);
     _StateMachine_ProcSyncOutput(p_active, p_context);
 }
 
+/* run loop actions first, then transitions. */
+// void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
+// {
+//     _StateMachine_ProcSyncOutput(p_active, p_context);
+//     _StateMachine_ProcPendingTransition(p_active, p_context);
+//     _StateMachine_ProcSyncInput(p_active, p_context);
+// }
 
 /******************************************************************************/
 /*
     [SubState] as fixed 2nd level [p_ActiveSubState]
 */
 /******************************************************************************/
+// State_T * GetTop(State_T * p_state)
+// {
+//     return (p_state->P_TOP == NULL) ? p_state : p_state->P_TOP;
+// }
 
 
-/******************************************************************************/
-/*
-    HSM todo split file
-*/
-/******************************************************************************/
-State_T * GetTop(State_T * p_state)
-{
-// #ifndef NDEBUG
-//     assert(_State_IterateUp(p_state, p_state->DEPTH) == p_state->P_TOP);
-// #endif
-    // assert(!((p_state->P_TOP == NULL) && (p_state->P_PARENT != NULL))); /*   */
-    /* Compile Time define Top State */
-    /* A top state may define its own P_TOP as NULL or itself */
-    /* alternatively iterate if not defined */
-    return (p_state->P_TOP == NULL) ? p_state : p_state->P_TOP;
-}
+// /*
+//     Set SubState. Does not traverse Exit/Entry.
+// */
+// inline void _StateMachine_TransitionSubState(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
+// {
+//     assert(p_state != NULL);
+//     if (p_active->p_ActiveSubState != NULL) { State_Exit(p_active->p_ActiveSubState, p_context); }
+//     p_active->p_ActiveSubState = p_state;
+//     p_active->p_ActiveState = GetTop(p_state);
+//     // /* Assume Top is the [P_PARENT] if it is not defined at compile time */
+//     // return (p_state->P_TOP != NULL) ? p_state->P_TOP  : ((p_state->P_PARENT != NULL) ? p_state->P_PARENT : p_state);
+//     State_Entry(p_state, p_context);
+// }
 
+// inline void _StateMachine_TransitionSubStateTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
+// {
+//     if (p_state != NULL) { _StateMachine_TransitionSubState(p_active, p_context, p_state); }
+// }
 
-/*
-    Set SubState. Does not traverse Exit/Entry.
-*/
-inline void _StateMachine_TransitionSubState(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
-{
-    assert(p_state != NULL);
-    if (p_active->p_ActiveSubState != NULL) { State_Exit(p_active->p_ActiveSubState, p_context); }
-    p_active->p_ActiveSubState = p_state;
-    p_active->p_ActiveState = GetTop(p_state);
-    // /* Assume Top is the [P_PARENT] if it is not defined at compile time */
-    // return (p_state->P_TOP != NULL) ? p_state->P_TOP  : ((p_state->P_PARENT != NULL) ? p_state->P_PARENT : p_state);
-    State_Entry(p_state, p_context);
-}
+// /*
+//     Proc inside p_active->p_ActiveState->LOOP
+// */
+// void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_active, void * p_context)
+// {
+//     // if (p_active->p_ActiveSubState != NULL)
+//     if (StateMachine_GetActiveSubState(p_active) != p_active->p_ActiveState)
+//     {
+//         _StateMachine_TransitionSubStateTo(p_active, p_context, State_TransitionOfOutput(p_active->p_ActiveSubState, p_context));
+//     }
+// }
 
-inline void _StateMachine_TransitionSubStateTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
-{
-    if (p_state != NULL) { _StateMachine_TransitionSubState(p_active, p_context, p_state); }
-}
-
-/*
-    Proc inside p_active->p_ActiveState->LOOP
-*/
-void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_active, void * p_context)
-{
-    // if (p_active->p_ActiveSubState != NULL)
-    if (StateMachine_GetActiveSubState(p_active) != p_active->p_ActiveState)
-    {
-        _StateMachine_TransitionSubStateTo(p_active, p_context, State_TransitionOfOutput(p_active->p_ActiveSubState, p_context));
-    }
-}
-
-/*
-    Either the select input id, is handled by [ProcSubStateInput] only, or handle with _StateMachine_TransitionSubState within the input handler
-*/
-void _StateMachine_ProcSubStateInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-{
-    // if (StateMachine_GetActiveSubState(p_active) != p_active->p_ActiveState)
-    _StateMachine_TransitionSubStateTo(p_active, p_context, State_TransitionOfInput(StateMachine_GetActiveSubState(p_active), p_context, id, value));
-}
+// /*
+//     Either the select input id, is handled by [ProcSubStateInput] only, or handle with _StateMachine_TransitionSubState within the input handler
+// */
+// void _StateMachine_ProcSubStateInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+// {
+//     // if (StateMachine_GetActiveSubState(p_active) != p_active->p_ActiveState)
+//     _StateMachine_TransitionSubStateTo(p_active, p_context, State_TransitionOfInput(StateMachine_GetActiveSubState(p_active), p_context, id, value));
+// }
 
 

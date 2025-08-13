@@ -13,15 +13,8 @@
     Private Helper Functions
 */
 /******************************************************************************/
-static inline void InitThrottleAIn(const MotAnalogUser_T * p_user)
-{
-    UserAIn_InitFrom(&p_user->THROTTLE_AIN, &p_user->P_STATE->Config.ThrottleAInConfig);
-}
-
-static inline void InitBrakeAIn(const MotAnalogUser_T * p_user)
-{
-    UserAIn_InitFrom(&p_user->BRAKE_AIN, &p_user->P_STATE->Config.BrakeAInConfig);
-}
+static inline void InitThrottleAIn(const MotAnalogUser_T * p_user) { UserAIn_InitFrom(&p_user->THROTTLE_AIN, &p_user->P_STATE->Config.ThrottleAInConfig); }
+static inline void InitBrakeAIn(const MotAnalogUser_T * p_user) { UserAIn_InitFrom(&p_user->BRAKE_AIN, &p_user->P_STATE->Config.BrakeAInConfig); }
 
 /******************************************************************************/
 /*
