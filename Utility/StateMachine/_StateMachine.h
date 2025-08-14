@@ -88,6 +88,7 @@ StateMachine_Active_T;
 static inline State_T * StateMachine_GetActiveState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 static inline state_t StateMachine_GetActiveStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState); }
+// optionally remove
 static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->ID); }
 
 /******************************************************************************/

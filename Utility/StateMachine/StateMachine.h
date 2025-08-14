@@ -196,7 +196,7 @@ static void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_input_t
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
-    /* Disables [ProcInput] portion of [Sync_ProcState]. */
+    /* Disables [ProcInput] portion of [Sync_ProcState]. When MultiThreaded + non atomic */
     if (_StateMachine_AcquireSyncInput(p_active) == true)
     {
         _StateMachine_SetSyncInput(p_active, inputId, inputValue);

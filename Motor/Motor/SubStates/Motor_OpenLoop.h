@@ -36,6 +36,7 @@
 
 */
 static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
 
 
 // static State_T * _OpenLoop_Enter(const Motor_T * p_motor, state_value_t null) { return &MOTOR_STATE_OPEN_LOOP; }
@@ -46,8 +47,6 @@ static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0U);
 // }
 
-
-// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
 
 /* alternatively use State_CmdInput_T with addition   entry */
 // static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState)

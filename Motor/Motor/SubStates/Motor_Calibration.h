@@ -43,6 +43,7 @@ static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachi
 // static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
 // static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
+/* if every cmd is also a substate */
 static inline void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_ApplyBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)p_subState); }
 
 /*

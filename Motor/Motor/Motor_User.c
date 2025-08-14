@@ -72,6 +72,7 @@ inline void Motor_User_Release(const Motor_T * p_motor) { StateMachine_ApplyInpu
 
 inline void Motor_User_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
+//validate enum
 inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 /******************************************************************************/
@@ -125,7 +126,11 @@ void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor
 */
 void Motor_User_ApplyRotaryDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (p_motor->P_MOTOR_STATE->Direction != direction) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+    if (p_motor->P_MOTOR_STATE->Direction != direction)
+    {
+        //validate enum
+        StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction);
+    }
 }
 
 void Motor_User_ApplyDirectionForward(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }

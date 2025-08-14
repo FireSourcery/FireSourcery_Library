@@ -332,7 +332,7 @@ static void Lock_Entry(const MotorController_T * p_context)
     // _StateMachine_EndSubState(p_context->STATE_MACHINE.P_ACTIVE);
 
     MotMotors_EnterCalibration(&p_context->MOTORS); /* Enter Calibration State for all motors */
-    if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
+    // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
 
     p_mc->LockOpStatus = 0U;
 
@@ -343,7 +343,7 @@ static void Lock_Proc(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_ACTIVE;
 
-    if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
+    // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
 
     // _StateMachine_ProcBranch_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
