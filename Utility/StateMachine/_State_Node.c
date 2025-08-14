@@ -182,14 +182,32 @@ State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context,
     return p_next;
 }
 
-// State_T * State_TraverseTransitionOfOutput_Full(State_T * p_start, void * p_context)
+
+/*
+    micro optimize
+*/
+// State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context)
 // {
-//     return _State_TraverseTransitionOfOutput(p_start, p_context, 0U);
+//     State_T * p_next = NULL;
+//     for (State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
+//     {
+//         p_next = State_TransitionOfOutput(p_iterator, p_context);
+//         if (p_next != NULL) { break; }
+//     }
+//     return p_next;
 // }
 
-// State_T * State_TraverseTransitionOfOutput_UptoRoot(State_T * p_start, void * p_context)
+// passing 0 excludes root
+// State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t endLevel)
 // {
-//     return _State_TraverseTransitionOfOutput(p_start, p_context, 1U);
+//     State_T * p_next = NULL;
+//     for (State_T * p_iterator = p_start; p_iterator->DEPTH > endLevel; p_iterator = p_iterator->P_PARENT)
+//     {
+//         // assert(p_iterator != NULL); /* known at compile time. should not exceed depth */
+//         p_next = State_TransitionOfOutput(p_iterator, p_context);
+//         if (p_next != NULL) { break; }
+//     }
+//     return p_next;
 // }
 
 
@@ -306,7 +324,7 @@ State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, 
 */
 static inline void TraverseExit(State_T * p_start, State_T * p_common, void * p_context)
 {
-#ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
+#ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_common); p_iterator = p_iterator->P_PARENT)
     {
         if (p_iterator->EXIT != NULL) { p_iterator->EXIT(p_context); }

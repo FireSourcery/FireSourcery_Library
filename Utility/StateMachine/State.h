@@ -147,7 +147,7 @@ typedef const struct State
 {
     state_t ID;               /* [State] instances may optionally remain private, by calling via id */
     State_Action_T ENTRY;     /* Common to all transition to current state, including self transition */
-#ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
+#ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
     State_Action_T EXIT;
 #endif
 
@@ -160,7 +160,7 @@ typedef const struct State
     State_Action_T LOOP; /* SYNCHRONOUS/SYNC_ACTION */
 
     /* [State Transition of State/Output/Clock] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
-    /* Separate from LOOP to allow overwrite transition only */
+    /* Separate from LOOP for separate overwrite transition control */
     State_InputVoid_T NEXT; /* SYNCHRONOUS_TRANSITION */ /* Synchronous Transition Handler. */
 
     /*
@@ -230,7 +230,7 @@ typedef const struct State
     // void * (* const SUBSTATE_CONTEXT)(void * p_context); /* Retrieve mutable State data from p_context. */
 
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
-#ifdef CONFIG_STATE_MACHINE_LINKED_STATES_ENABLE
+#ifdef STATE_MACHINE_LINKED_STATES_ENABLE
     struct State * P_LINK_NEXT;
     struct State * P_LINK_PREV;
 #endif

@@ -50,11 +50,11 @@ MotorController_ServoMode_T;
 */
 /******************************************************************************/
 #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
-static inline void MotorController_User_InputServoMode(MotorController_T * p_mc, MotorController_ServoMode_T servoMode) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode); }
+static inline void MotorController_User_InputServoMode(MotorController_T * p_mc, MotorController_ServoMode_T servoMode) { _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, servoMode); }
 static inline bool MotorController_User_IsServoState(MotorController_T * p_mc) { return (StateMachine_GetActiveStateId(&p_mc->StateMachine) == MCSM_STATE_ID_SERVO); }
 
-static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_INPUT_VALUE_NULL); }
-static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) { _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_EnterServoMode(MotorController_T * p_mc) { _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_INPUT_VALUE_NULL); }
+static inline void MotorController_User_ExitServoMode(MotorController_T * p_mc) { _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MCSM_INPUT_SERVO, STATE_INPUT_VALUE_NULL); }
 
 // static inline void MotorController_User_StartControlMode(MotorController_T * p_mc, uint8_t feedbackMode)
 // {

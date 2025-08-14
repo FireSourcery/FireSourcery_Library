@@ -37,7 +37,7 @@
 
     Motor State Machine Thread Safety
     State Proc in PWM thread.
-    User Input [StateMachine_ProcInput] in Main thread.
+    User Input [StateMachine_ApplyInput] in Main thread.
 
     Sync Mode -
         Inputs do not directly proc transition, set for sync proc
@@ -66,13 +66,13 @@
     Phase Output directly mapping to a Control State: Feedback Run, Freewheel, Hold
 */
 /******************************************************************************/
-inline void Motor_User_ActivateControl(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM); }
+inline void Motor_User_ActivateControl(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM); }
 
-inline void Motor_User_Release(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT); }
+inline void Motor_User_Release(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT); }
 
-inline void Motor_User_Hold(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
+inline void Motor_User_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
-inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 /******************************************************************************/
 /*!
@@ -117,7 +117,7 @@ inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeVal
     Transition to Stop
     Release stays in ready mode. Stop disables inputs until next Start.
 */
-void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
+void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /*
     ProcInput use Critical, as States may transition during input
@@ -125,7 +125,7 @@ void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor-
 */
 void Motor_User_ApplyRotaryDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (p_motor->P_MOTOR_STATE->Direction != direction) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+    if (p_motor->P_MOTOR_STATE->Direction != direction) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
 }
 
 void Motor_User_ApplyDirectionForward(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }
@@ -337,7 +337,7 @@ void _Motor_User_StartOpenLoopMode(const Motor_T * p_motor) { Motor_User_SetFeed
 */
 void Motor_User_EnterOpenLoopState(const Motor_T * p_motor)
 {
-    StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
+    StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
     // StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, state);
 }
 
@@ -620,7 +620,7 @@ void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_in
 // inline void Motor_User_ActivateControlWith(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 // {
 //     Motor_User_SetFeedbackMode(p_motor, mode);
-//     StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM);
+//     StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM);
 // }
 
 // /* Generic array functions use */

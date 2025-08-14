@@ -144,7 +144,7 @@ static inline void State_Entry(State_T * p_state, void * p_context)
 
 static inline void State_Exit(State_T * p_state, void * p_context)
 {
-#ifdef CONFIG_STATE_MACHINE_EXIT_FUNCTION_ENABLE
+#ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
     _State_Action(p_state->EXIT, p_context);
 #else
     (void)p_state;

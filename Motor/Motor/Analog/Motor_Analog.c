@@ -165,5 +165,5 @@ static const State_T CALIBRATION_STATE =
 
 void Motor_Analog_Calibrate(const Motor_T * p_motor)
 {
-    StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
+    StateMachine_ApplyBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
 }

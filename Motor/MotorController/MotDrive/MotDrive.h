@@ -175,6 +175,6 @@ extern void MotDrive_Init(const MotDrive_T * p_handle);
 // extern void MotDrive_StartDriveZero(const MotDrive_T * p_motDrive);
 // extern void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive);
 
-// static inline void MotDrive_User_StartThrottle(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_THROTTLE, userCmd); }
-// static inline void MotDrive_User_StartBrake(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ProcAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_BRAKE, userCmd); }
+// static inline void MotDrive_User_StartThrottle(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_THROTTLE, userCmd); }
+// static inline void MotDrive_User_StartBrake(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_BRAKE, userCmd); }
 

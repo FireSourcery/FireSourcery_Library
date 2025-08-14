@@ -178,13 +178,13 @@ static void StateMachine_Reset(StateMachine_T * p_stateMachine)
     Handles Top level transitions only
     [State_Input_T] must not return a substate.
 */
-static void StateMachine_ProcInput(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
+static void StateMachine_ApplyInput(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        _StateMachine_ProcAsyncInput(p_active, p_stateMachine->P_CONTEXT, inputId, inputValue);
+        _StateMachine_ApplyAsyncInput(p_active, p_stateMachine->P_CONTEXT, inputId, inputValue);
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
@@ -291,13 +291,13 @@ static inline state_value_t StateMachine_Get(StateMachine_T * p_stateMachine, st
 /*
     Proc Input with Traversal from Leaf up
 */
-static void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
+static void StateMachine_ApplyBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
 {
     StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
-        _StateMachine_ProcBranchAsyncInput(p_active, p_stateMachine->P_CONTEXT, id, value);
+        _StateMachine_ApplyBranchAsyncInput(p_active, p_stateMachine->P_CONTEXT, id, value);
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }
@@ -355,7 +355,7 @@ static void StateMachine_InvokeBranchTransitionFrom(StateMachine_T * p_stateMach
 
 // extern void StateMachine_ProcSubStateInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value);
 
-// extern void StateMachine_ProcBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value);
+// extern void StateMachine_ApplyBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value);
 // extern void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine, StateMachine_TransitionInput_T * p_transition, state_value_t value);
 
 

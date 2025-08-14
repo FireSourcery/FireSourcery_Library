@@ -40,10 +40,10 @@
     user can directly call _StateMachine_() private functions for lockless operation
 */
 /******************************************************************************/
-#if     defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL) /* Disable all system IRQs for entire duration of processing Input. */
-#elif   defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)   /* Disables ProcState only */
+#if     defined(STATE_MACHINE_ASYNC_CRITICAL) /* Disable all system IRQs for entire duration of processing Input. */
+#elif   defined(STATE_MACHINE_ASYNC_SIGNAL)   /* Disables ProcState only */
 #else
-    #define CONFIG_STATE_MACHINE_ASYNC_LOCK_FREE
+    #define STATE_MACHINE_ASYNC_LOCK_FREE
 #endif
 
 /*
@@ -59,13 +59,13 @@ static inline bool _StateMachine_AcquireAsyncIsr(StateMachine_Active_T * p_activ
     /* Disabled when input is processing. ensure any transition is completed */
     /* Checks if an [Async_ProcInput] has the signal, skip until next cycle */
     /* [Async_ProcInput] disables ISR, runs to completion => same as SynchronousMachine case */
-#if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
+#if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input prioirty higher than ProcState */
+#if STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input prioirty higher than ProcState */
     _Critical_DisableIrq();
 #endif
     return true;
-#elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
+#elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     return Critical_AcquireLock(&p_active->InputSignal);
 #else
     (void)p_active; return true;
@@ -74,12 +74,12 @@ static inline bool _StateMachine_AcquireAsyncIsr(StateMachine_Active_T * p_activ
 
 static inline void _StateMachine_ReleaseAsyncIsr(StateMachine_Active_T * p_active)
 {
-#if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
+#if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
-#if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+#if STATE_MACHINE_INPUT_MULTITHREADED
     _Critical_EnableIrq();
 #endif
-#elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
+#elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     Critical_ReleaseLock(&p_active->InputSignal);
 #else
     (void)p_active;
@@ -88,11 +88,11 @@ static inline void _StateMachine_ReleaseAsyncIsr(StateMachine_Active_T * p_activ
 
 static inline bool _StateMachine_AcquireAsyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
+#if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
     _Critical_DisableIrq();
     return true;
-#elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
+#elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     return Critical_AcquireLock(&p_active->InputSignal);
 #else
     (void)p_active; return true;
@@ -101,10 +101,10 @@ static inline bool _StateMachine_AcquireAsyncInput(StateMachine_Active_T * p_act
 
 static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(CONFIG_STATE_MACHINE_ASYNC_CRITICAL)
+#if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
     _Critical_EnableIrq();
-#elif defined(CONFIG_STATE_MACHINE_ASYNC_SIGNAL)
+#elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     Critical_ReleaseLock(&p_active->InputSignal);
 #else
     (void)p_active;
@@ -118,10 +118,10 @@ static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_act
 /******************************************************************************/
 static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(CONFIG_STATE_MACHINE_SYNC_INPUT_CRITICAL)
+#if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
     _Critical_DisableIrq();
     return true;
-#elif defined(CONFIG_STATE_MACHINE_SYNC_INPUT_SIGNAL)
+#elif defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
     return Critical_AcquireLock(&p_active->InputSignal);
 #else
     (void)p_active; return true;
@@ -130,9 +130,9 @@ static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_acti
 
 static inline void _StateMachine_ReleaseSyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(CONFIG_STATE_MACHINE_SYNC_INPUT_CRITICAL)
+#if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
     _Critical_EnableIrq();
-#elif defined(CONFIG_STATE_MACHINE_SYNC_INPUT_SIGNAL)
+#elif defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
     Critical_ReleaseLock(&p_active->InputSignal);
 #else
     (void)p_active;

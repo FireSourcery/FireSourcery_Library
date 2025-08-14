@@ -64,7 +64,7 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);
-            // _StateMachine_ProcAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOT_DRIVE_DIRECTION_PARK);
+            // _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOT_DRIVE_DIRECTION_PARK);
             // MotDrive_SetDirection(&p_mc->MotDrive, MOT_DRIVE_DIRECTION_PARK);
             // checks the park state
             MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);

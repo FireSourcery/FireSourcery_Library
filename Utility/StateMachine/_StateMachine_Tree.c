@@ -94,7 +94,7 @@ void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_active, void * p_co
 
 void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context)
 {
-    // assert(__builtin_clz(p_active->SyncInputMask) < STATE_TRANSITION_TABLE_LENGTH_MAX);
+    // assert(__builtin_clz(p_active->SyncInputMask) < 32 STATE_TRANSITION_TABLE_LENGTH_MAX);
     for (uint32_t inputMask = p_active->SyncInputMask; inputMask != 0UL; inputMask &= (inputMask - 1))
     {
         state_input_t input = __builtin_ctz(inputMask);
@@ -114,7 +114,7 @@ void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active,
 /*
     Input
 */
-void _StateMachine_ProcBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+void _StateMachine_ApplyBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     p_active->p_SyncNextState = TransitionFunctionOfBranchInput(p_active, p_context, id, value);
 }
@@ -167,31 +167,31 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_
     Hybrid usage
 
     ProcInput function may be selected per [state_input_t] call.
-        StateMachine_ProcInput -   ignores substate exit functions.
-        StateMachine_ProcBranchInput
+        StateMachine_ApplyInput -   ignores substate exit functions.
+        StateMachine_ApplyBranchInput
         opt StateMachine_ProcRootFirstInput - 0, n to 1, early return on root transition. optional
 
-    ProcRootFirstState requires unique implementation, since common buffers must be consumed
-
-    _StateMachine_ProcState(p_active, p_context);
-    _StateMachine_ProcBranchLeafToRoot(p_active, p_context);
+    ProcRootFirstState requires unique implementation,
+        common buffers must be consumed by first proc
         Early return functions slightly more optimal
+
+        _StateMachine_ProcState(p_active, p_context);
+        _StateMachine_ProcBranchLeafToRoot(p_active, p_context);
 
     ProcState
         StateMachine_ProcState
-        StateMachine_ProcBranchState - n to 0
-        StateMachine_ProcStateRootFirst - 0, n to 1
-        StateMachine_ProcStateRootFirst - 0, n to 1
+        StateMachine_ProcBranch - n to 0
+        StateMachine_ProcRootFirst - 0, n to 1
 */
 /******************************************************************************/
-// static inline State_T * _RootFirstOutput(StateMachine_Active_T * p_active, void * p_context)
+// static inline State_T * RootFirstOutput(StateMachine_Active_T * p_active, void * p_context)
 // {
 //     State_T * p_next = State_TransitionOfOutput_AsTop(StateMachine_GetRootState(p_active), p_context);
 //     if (p_next == NULL) { p_next = _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, 1U); }
 //     return p_next;
 // }
 
-// static inline State_T * _RootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+// static inline State_T * RootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 // {
 //     State_T * p_next = State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
 //     if (p_next == NULL) { p_next = _State_TraverseTransitionOfInput(StateMachine_GetLeafState(p_active), p_context, 1U, id, value); }
@@ -269,7 +269,7 @@ void _StateMachine_ProcRootFirstPendingTransition(StateMachine_Active_T * p_acti
     Store only; application deferred to processing phase.
     Last input wins
 */
-void _StateMachine_ProcRootFirstAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+void _StateMachine_ApplyRootFirstAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     p_active->p_SyncNextState = State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
     if (p_active->p_SyncNextState == NULL)

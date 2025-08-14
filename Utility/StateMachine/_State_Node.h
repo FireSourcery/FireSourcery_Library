@@ -101,7 +101,4 @@ extern State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_co
 
 
 extern State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel);
-
 // extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context);
-// extern State_T * State_TraverseTransitionOfOutput_Full(State_T * p_start, void * p_context);
-// extern State_T * State_TraverseTransitionOfOutput_UptoRoot(State_T * p_start, void * p_context);

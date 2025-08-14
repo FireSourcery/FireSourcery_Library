@@ -100,7 +100,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     Motor_CaptureSensor(p_context);
 
-    StateMachine_Synchronous_Thread(&p_context->STATE_MACHINE);
+    StateMachine_Synchronous_RootFirst_Thread(&p_context->STATE_MACHINE);
 
     /* Inline Phase Out */
     /* Directly read register state */

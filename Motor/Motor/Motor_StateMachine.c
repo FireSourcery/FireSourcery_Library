@@ -134,7 +134,7 @@ const State_T MOTOR_STATE_INIT =
 static void Stop_Entry(const Motor_T * p_motor)
 {
     Phase_Float(&p_motor->PHASE);
-    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
+    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
@@ -231,7 +231,7 @@ static void Passive_Entry(const Motor_T * p_motor)
 {
     assert((p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)); /* Set on exit stop */
     Phase_Float(&p_motor->PHASE);
-    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
+    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
@@ -366,7 +366,7 @@ static void Run_Entry(const Motor_T * p_motor)
 {
     // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* including substate of another state */
+    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* including substate of another state */
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
     Phase_ActivateOutputT0(&p_motor->PHASE);
     /* alterntaively Update Vbus on start Angle Control */
@@ -456,7 +456,7 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
     Phase_ActivateOutputT0(&p_motor->PHASE);
     // Phase_ActivateOutputV0(&p_motor->PHASE);
     FOC_ClearCaptureState(&p_motor->P_MOTOR_STATE->Foc);
-    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* 'unmount' last operation */
+    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* 'unmount' last operation */
     // determine initial substate from stop
     p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop = 1U; /* limits user cmd input */
 }
@@ -466,7 +466,7 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
 */
 static void OpenLoop_Proc(const Motor_T * p_motor)
 {
-    _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
+    // _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
 }
 
 /* maintain consistent interface with other states, use substate cmd for phase output without exiting */
@@ -482,7 +482,7 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t ph
         /* No resume from OpenLoop, freewheel state check stop */
     }
 
-    if (p_nextState == &MOTOR_STATE_PASSIVE) { _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); }
+    // if (p_nextState == &MOTOR_STATE_PASSIVE) { _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); }
     return p_nextState;
 }
 
@@ -536,14 +536,14 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 static void Calibration_Entry(const Motor_T * p_motor)
 {
     Phase_ActivateOutputV0(&p_motor->PHASE);
-    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
+    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }
 
 static void Calibration_Proc(const Motor_T * p_motor)
 {
-    _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
+    // _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
 }
 
 static State_T * Calibration_Next(const Motor_T * p_motor)
@@ -558,8 +558,8 @@ static State_T * Calibration_InputControl(const Motor_T * p_motor, state_value_t
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);               _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);     break;
-        case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->PHASE);    _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);     break;
+        case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);                break;
+        case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->PHASE);     break;
         case PHASE_OUTPUT_VPWM:     break;
     }
 
@@ -657,13 +657,13 @@ const State_T MOTOR_STATE_FAULT =
 /******************************************************************************/
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0U); }
+    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0U); }
 }
 
 /*! @return true if no fault remains */
 bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0U); }
+    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0U); }
     return !Motor_StateMachine_IsFault(p_motor);
 }
 
@@ -673,14 +673,14 @@ bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
     // p_motor->STATE_MACHINE.P_MOTOR_STATE->FaultFlags.Value |= faultFlags.Value;
-    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
+    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
 }
 
 /* faultFlags unused for now */
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
     // p_motor->STATE_MACHINE.P_MOTOR_STATE->FaultFlags.Value &= ~faultFlags.Value;
-    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
+    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
 }
 
 

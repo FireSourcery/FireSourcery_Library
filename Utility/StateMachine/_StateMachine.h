@@ -47,6 +47,7 @@ typedef struct StateMachine_Active
 {
     State_T * p_ActiveState;     /* HSM - The Active Top Level State. Keep the top level fast. ActiveBranch */
     State_T * p_ActiveSubState;  /* HSM - Leaf State, defines full path. ActiveLeaf */
+    /* Optionally p_ActiveState->P_ROOT for top level. */
 
     /*
         Buffered transition. For restricting transition to during proc state only
@@ -68,9 +69,6 @@ typedef struct StateMachine_Active
 
     volatile atomic_flag InputSignal; /* SignalLock */
 
-    // volatile state_input_t SyncInput;
-    // volatile state_value_t SyncInputValue;
-    // volatile state_value_t SyncInputStatus;
     // uint32_t FaultFlags;
 }
 StateMachine_Active_T;
@@ -113,10 +111,6 @@ static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T *
     { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
 
 
-/* depreciate */
-/* Checked on get and set */
-/* check handling */
-static inline void _StateMachine_EndSubState(StateMachine_Active_T * p_active) { p_active->p_ActiveSubState = p_active->p_ActiveState; }
 
 /******************************************************************************/
 /*!
@@ -163,9 +157,10 @@ extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * 
 extern void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
-// extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value);
 extern void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+
+// extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value);
+extern void _StateMachine_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context);
 

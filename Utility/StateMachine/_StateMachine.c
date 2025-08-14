@@ -95,7 +95,7 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
     State_Entry(p_newState, p_context);
 
     p_active->p_ActiveState = p_newState;
-// #ifdef CONFIG_STATE_MACHINE_HSM_ENABLE
+// #ifdef STATE_MACHINE_HSM_ENABLE
     /* if used in combination with HSM. Clear the SubState on a Top level State Transition */
     p_active->p_ActiveSubState = p_active->p_ActiveState;
 // #endif
@@ -170,7 +170,7 @@ inline void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active
     [LOOP]
 */
 /* ProcInputSetTransition */
-inline void _StateMachine_ProcAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+inline void _StateMachine_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     p_active->p_SyncNextState = TransitionFunctionOfInput(p_active, p_context, id, value); /* transition will run before SYNC_OUTPUT */
     assert(p_active->p_SyncNextState == NULL || p_active->p_SyncNextState->DEPTH == 0U);

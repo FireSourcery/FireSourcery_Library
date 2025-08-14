@@ -148,4 +148,4 @@ extern bool Motor_StateMachine_ExitFault(const Motor_T * p_motor);
 extern void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
 extern void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
 
-// static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_State_Input_T input, uintptr_t value) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, input, value); }
+// static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_State_Input_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }

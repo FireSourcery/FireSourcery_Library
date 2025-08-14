@@ -38,12 +38,12 @@ extern const State_T CALIBRATION_STATE_TUNNING;
 static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsActiveSubState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
 
 /* Proc, to allow validate immediately */
-/* StateMachine_ProcInput cannot transitions top level only */
-static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
-// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
-// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
+/* StateMachine_ApplyInput cannot transitions top level only */
+static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
+// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
+// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
-static inline void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)p_subState); }
+static inline void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_ApplyBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)p_subState); }
 
 /*
 

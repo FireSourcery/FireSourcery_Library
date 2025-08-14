@@ -37,10 +37,10 @@
 //     Linked Menus
 // */
 // /******************************************************************************/
-// // #ifdef CONFIG_STATE_MACHINE_LINKED_STATES_ENABLE
+// // #ifdef STATE_MACHINE_LINKED_STATES_ENABLE
 // void StateMachine_Menu_ProcInput(StateMachine_T * p_stateMachine, state_input_t input, state_value_t inputValue)
 // {
-//     StateMachine_ProcInput(p_stateMachine, input, inputValue)
+//     StateMachine_ApplyInput(p_stateMachine, input, inputValue)
 // }
 
 // State_T * StateMachine_Menu_GetPtrActive(StateMachine_T * p_stateMachine)
@@ -72,7 +72,7 @@
 
 // void StateMachine_Menu_ProcFunction(StateMachine_T * p_stateMachine, state_input_t input, state_value_t inputValue)
 // {
-//     StateMachine_ProcInput(p_stateMachine, input, inputValue)
+//     StateMachine_ApplyInput(p_stateMachine, input, inputValue)
 // }
 
 // void StateMachine_Menu_ProcLoop(StateMachine_T * p_stateMachine)

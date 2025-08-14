@@ -182,7 +182,7 @@
 //     {
 //         // Encoder_CalibrateQuadratureDirection(&p_motor->ENCODER, p_motor->Direction == MOTOR_DIRECTION_CCW);
 //         // /* _StateMachine_EndSubState(&p_motor->STATE_MACHINE); */
-//         // StateMachine_ProcInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT);
+//         // StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT);
 //         p_nextState = &MOTOR_STATE_CALIBRATION;
 //     }
 
@@ -204,7 +204,7 @@
 
 // void Motor_Encoder_StartHoming(const Motor_T * p_motor)
 // {
-//     StateMachine_ProcBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+//     StateMachine_ApplyBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 // }
 
 // /*  */

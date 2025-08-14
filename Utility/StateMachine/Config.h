@@ -28,20 +28,20 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_STATE_MACHINE_H
-#define CONFIG_STATE_MACHINE_H
+#ifndef STATE_MACHINE_H
+#define STATE_MACHINE_H
 
 
 
-// #if     defined(CONFIG_STATE_MACHINE_INPUT_MULTITHREADED)
-// #elif   defined(CONFIG_STATE_MACHINE_INPUT_SINGLE_THREADED)
+// #if     defined(STATE_MACHINE_INPUT_MULTITHREADED)
+// #elif   defined(STATE_MACHINE_INPUT_SINGLE_THREADED)
 // #else
 // #endif
 
-#if     defined(CONFIG_STATE_MACHINE_LINKED_MENU_ENABLE)
-#elif   defined(CONFIG_STATE_MACHINE_LINKED_MENU_DISABLE)
+#if     defined(STATE_MACHINE_LINKED_MENU_ENABLE)
+#elif   defined(STATE_MACHINE_LINKED_MENU_DISABLE)
 #else
-    #define CONFIG_STATE_MACHINE_LINKED_MENU_DISABLE
+    #define STATE_MACHINE_LINKED_MENU_DISABLE
 #endif
 
 #endif

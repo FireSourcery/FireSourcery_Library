@@ -80,7 +80,7 @@
 //             [InputSignal] flag is not cleared/1, always overwritten by [SetInput], bufferHasData/0
 //             [SyncInput] does not need to clear as additional sentinel value
 //         */
-//     #if CONFIG_STATE_MACHINE_INPUT_MULTITHREADED
+//     #if STATE_MACHINE_INPUT_MULTITHREADED
 //         _StateMachine_ProcSyncInput(p_active, p_stateMachine->P_CONTEXT);
 //     #else
 //         _StateMachine_ProcInput(p_active, p_stateMachine->P_CONTEXT, p_active->SyncInput, p_active->SyncInputValue);
