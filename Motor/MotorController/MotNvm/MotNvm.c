@@ -112,13 +112,6 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
     NvMemory_Status_T status;
 
 #if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
-    /* compare if updated */
-    // for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
-    // {
-    //     const MotNvm_Entry_T * p_entry;
-    //     if (memcmp(p_entry->NVM_ADDRESS, p_entry->RAM_ADDRESS, p_entry->SIZE) != 0U)
-    // }
-
     /* Flash Erase Full block */
     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, p_motNvm->MAIN_CONFIG_ADDRESS, p_motNvm->MAIN_CONFIG_SIZE);
     if (status != NV_MEMORY_STATUS_SUCCESS) { return status; }
@@ -154,6 +147,8 @@ NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const stru
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE, (const void *)&motorRef, sizeof(MotorAnalogRef_T));
 }
 
+// NvMemory_Status_T MotNvm_MapBoardRef(const void * p_manufacture, MotorAnalogRef_Board_T * p_buffer)
+
 NvMemory_Status_T MotNvm_LoadBoardRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
 {
     //todo getter wrappers
@@ -185,21 +180,5 @@ NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm)
     return status;
 }
 
-// NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm)
-// {
-//     struct HAL_Nvm_Manufacturer buffer;
-//     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
-//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadAnalogRefFrom(p_motNvm, &buffer); }
-
-//     return status;
-// }
-
-// NvMemory_Status_T MotNvm_LoadBoardRef(const MotNvm_T * p_motNvm)
-// {
-//     struct HAL_Nvm_Manufacturer buffer;
-//     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
-//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadBoardRefFrom(p_motNvm, &buffer); }
-//     return status;
-// }
 
 

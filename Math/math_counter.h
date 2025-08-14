@@ -1,9 +1,10 @@
+#pragma once
 
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,54 +24,10 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Motor_Debug.h
+    @file   math_state.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOTOR_DEBUG_H
-#define MOTOR_DEBUG_H
+#include "math_edge.h"
 
-#include "System/SysTime/SysTime.h"
-#include "Motor.h"
-
-
-
-//todo replace with trace
-static inline void Motor_Debug_CaptureRefTime(Motor_State_T * p_motor)
-{
-#ifndef NDEBUG
-    p_motor->MicrosRef = SysTime_GetMicros();
-#else
-    (void)p_motor;
-#endif
-}
-
-static inline void Motor_Debug_CaptureTime(Motor_State_T * p_motor, uint8_t index)
-{
-#ifndef NDEBUG
-    p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
-#else
-    (void)p_motor; (void)index;
-#endif
-}
-
-static inline void Motor_Debug_CapturePeriod(Motor_State_T * p_motor, uint8_t index)
-{
-#ifndef NDEBUG
-    p_motor->DebugTime[index + 1] = SysTime_GetMicros() - p_motor->DebugTime[index];
-    p_motor->DebugTime[index] = SysTime_GetMicros();
-#else
-    (void)p_motor; (void)index;
-#endif
-}
-
-#ifndef NDEBUG
-extern void Debug_LED(void);
-extern void Debug_LedOn(void);
-extern void Debug_LedOff(void);
-extern void Debug_Beep(void);
-#endif
-
-#endif

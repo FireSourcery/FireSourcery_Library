@@ -73,10 +73,18 @@ static inline uint32_t Millis(void)                 { return SysTime_GetMillis()
 static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }
 
 #if defined(CONFIG_SYSTIME_SYSTICK) && defined(CPU_FREQ)
+static inline uint32_t SysTime_GetTicks(void) { return (uint32_t)((CPU_FREQ / 1000U - 1U) - SYST_CVR); }
+
+#define MICROS_PER_TICK_SHIFT 16U
+#define MICROS_PER_TICK ((uint32_t)(((uint64_t)1000000ULL << MICROS_PER_TICK_SHIFT) / (uint64_t)CPU_FREQ))
+
 static inline uint32_t SysTime_GetMicros(void)
 {
-    uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); /* SYST_CVR ticks down */
-    return SysTime_Millis * 1000U + micros;
+    // uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); /* SYST_CVR ticks down */
+    // return SysTime_Millis * 1000U + micros;
+
+    /* us within current ms = ticksElapsed * (1e6 / CPU_FREQ). Wraps every 1000 */
+    return ((SysTime_GetTicks() * MICROS_PER_TICK) >> MICROS_PER_TICK_SHIFT);
 }
 
 static inline uint32_t Micros(void) { return SysTime_GetMicros(); }

@@ -232,6 +232,17 @@ void MotDrive_Entry(const MotorController_T * p_context)
 /* Proc Per ms */
 void MotDrive_Proc(const MotorController_T * p_context)
 {
+    // switch (p_context->P_ACTIVE->Config.InputMode)
+    // {
+    //     // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+    //     default:  break;
+    // }
+
     MotDrive_StatMachine_Proc(&p_context->MOT_DRIVE);
 }
 

@@ -215,6 +215,9 @@ typedef struct MotorController_State
     Filter_T AvgBuffer0;
     Filter_T AvgBuffer1;
 
+    uint32_t MicrosRef;
+    uint32_t ControlLoopProfile;
+
 #if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
     Shell_T Shell;
     uint16_t ShellSubState;

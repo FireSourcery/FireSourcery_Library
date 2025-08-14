@@ -109,6 +109,8 @@ Timer_State_T;
     Stateless
 */
 /******************************************************************************/
+static inline uint32_t timer_counter_wrapped(uint32_t wrap, uint32_t time_ref, uint32_t timer) { return (timer < time_ref) ? (wrap - time_ref + timer) : (timer - time_ref); }
+
 /* or move as counter math */
 static inline uint32_t timer_elapsed_wrapped(uint32_t timer, uint32_t time_ref) { return (timer < time_ref) ? (UINT32_MAX - time_ref + timer) : (timer - time_ref); }
 static inline uint32_t timer_elapsed_direct(uint32_t timer, uint32_t time_ref) { return (timer - time_ref); }

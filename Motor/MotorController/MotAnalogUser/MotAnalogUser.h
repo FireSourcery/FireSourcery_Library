@@ -72,11 +72,6 @@ MotAnalogUser_DirectionPins_T;
 
 typedef struct MotAnalogUser_Config
 {
-    // uint16_t ThrottleZero_Adcu;
-    // uint16_t ThrottleMax_Adcu;
-    // uint16_t BrakeZero_Adcu;
-    // uint16_t BrakeMax_Adcu;
-
     UserAIn_Config_T ThrottleAInConfig; /* Analog input config */
     UserAIn_Config_T BrakeAInConfig;    /* Analog input config */
 
@@ -132,9 +127,6 @@ typedef const struct MotAnalogUser
     /* UserAIn instances */
     UserAIn_T THROTTLE_AIN;
     UserAIn_T BRAKE_AIN;
-
-    // const Analog_Conversion_T THROTTLE;
-    // const Analog_Conversion_T BRAKE;
 
     /* UserDIn instances */
     UserDIn_T REVERSE_DIN;

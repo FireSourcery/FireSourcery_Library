@@ -88,7 +88,8 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     // }
 
     // if drive mode
-    // switch on app macchine
+    // switch on app macchine,
+    // todo move to state machine
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
         case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_FORWARD);   break;
@@ -207,6 +208,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
             */
             LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
             MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+            //todo
             // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) {MotorController_BeepMonitorTrigger(p_context); }
             break;
 
@@ -389,7 +391,6 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         }
 
         // feedwatchdog
-        // p_mc->MainDividerCounter++;
     }
     // todo transient recorder proc
 }
@@ -411,7 +412,6 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);
 #endif
-    // p_mc->TimerDividerCounter++;
 }
 
 
@@ -428,6 +428,9 @@ static inline void MotorController_PWM_Thread(const MotorController_T * p_contex
     // {
     //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
     // }
+
+    // p_fields->MicrosRef = SysTime_GetMicros();
+    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 
     if (MotorTimeRef_IsAnalogCycle(p_context->P_ACTIVE->ControlCounter) == true)
     {

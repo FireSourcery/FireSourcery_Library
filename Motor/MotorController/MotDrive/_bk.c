@@ -219,3 +219,72 @@
 //         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
 //         break;
 // }
+
+
+
+// with hsm
+// static State_T * Drive_SyncTransition(const MotDrive_T * p_motDrive)
+// {
+//     State_T * p_nextState = NULL;
+//
+//     if (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd != p_motDrive->P_MOT_DRIVE_STATE->Input.CmdPrev)
+//     {
+//         /* handle edge */
+//         switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
+//         {
+//             case MOT_DRIVE_CMD_BRAKE: p_nextState = &DRIVE_STATE_BRAKE; break;
+//             case MOT_DRIVE_CMD_THROTTLE: p_nextState = &DRIVE_STATE_THROTTLE; break;
+//             case MOT_DRIVE_CMD_RELEASE: p_nextState = &DRIVE_STATE_RELEASE; break;
+//             default: break;
+//         }
+//     }
+
+//     return p_nextState;
+// }
+// static void Throttle_Entry(const MotDrive_T * p_motDrive)
+// {
+//     p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd = MOT_DRIVE_CMD_RELEASE;
+//     MotMotors_ActivateControlState(&p_motDrive->MOTORS, PHASE_OUTPUT_VPWM);
+// }
+
+// static void Throttle_Proc(const MotDrive_T * p_motDrive)
+// {
+//     // MotMotors_SetCmdWith(&p_motDrive->MOTORS, p_motDrive->P_MOT_DRIVE_STATE.p_ThrottleFunction, p_motDrive->P_MOT_DRIVE_STATE->Input.ThrottleValue);
+
+//     // switch (id)
+//     // {
+//     //     case MOT_DRIVE_CMD_BRAKE:
+//     //         if (value != 0U) /* ignore brake if simultaneous input for 0, async input only */
+//     //         {
+//     //             MotDrive_StartBrakeMode(p_this);
+//     //             // MotDrive_SetBrakeValue(p_this, value); overwritten unless Start Mode is Async ProcInput
+//     //             p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
+//     //             // MotDrive_StartDriveZero(p_this);
+//     //             // p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         }
+//     //         break;
+//     //     case MOT_DRIVE_CMD_THROTTLE:
+//     //         MotDrive_SetThrottleValue(p_this, value);
+//     //         if (value == 0U)
+//     //         {
+//     //             MotDrive_StartDriveZero(p_this);
+//     //             p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         }
+//     //         break;
+//     //     case MOT_DRIVE_CMD_RELEASE:
+//     //         MotDrive_StartDriveZero(p_this);
+//     //         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
+//     //         break;
+//     // }
+// }
+
+// /* SubState handles entry */
+// static const State_T DRIVE_STATE_THROTTLE =
+// {
+//     .P_PARENT   = &STATE_DRIVE,
+//     .P_TOP      = &STATE_DRIVE,
+//     .DEPTH      = 1U,
+//     .ENTRY      = (State_Action_T)Throttle_Entry,
+//     .LOOP       = (State_Action_T)Throttle_Proc,
+//     // .NEXT       = (State_InputVoid_T) ,
+// };

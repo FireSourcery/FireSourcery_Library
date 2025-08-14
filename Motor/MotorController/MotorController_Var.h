@@ -51,6 +51,8 @@ typedef enum MotorController_Var_Output
     MOT_VAR_MC_STATE,
     MOT_VAR_MC_STATUS_FLAGS,
     MOT_VAR_MC_FAULT_FLAGS,
+    MOT_VAR_CONTROL_LOOP_PROFILE,
+    MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
     // MOT_DRIVE_DIRECTION,
 }
 MotorController_Var_Output_T;
@@ -144,7 +146,7 @@ MotorController_Var_StaticRef_T;
     Types
     Type of Base
         directly corresponds to enum type containing index ids
-        may be n:1
+        Corresponds to the "object type". accounts for type literal and specialized properties.
 */
 /******************************************************************************/
 /*
@@ -223,11 +225,9 @@ MotorController_VarType_Communication_T;
 /*
     [MotorController_VarHandlerType]
     Handler by Source File Module
+    Effectively name space for types
     determine handler logic by id
-    Ideally mutually exclusive attribute groups when possible
-
-    Corresponds to the "object type". accounts for type literal and specialized properties.
-
+    Mutually exclusive attributes when possible
     partition for contigously expandable ids
 */
 /******************************************************************************/

@@ -359,8 +359,8 @@ typedef struct Motor_State
     uint32_t OpenLoopCommutationPeriod;
 #endif
 
-#if  defined(CONFIG_MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     volatile uint32_t MicrosRef;
+#if  defined(CONFIG_MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     // volatile bool DebugFlag;
     // volatile uint32_t DebugError;
     volatile uint32_t DebugTime[10U];

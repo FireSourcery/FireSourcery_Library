@@ -42,11 +42,12 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_ZERO:              value = 0;                                                              break;
-        case MOT_VAR_MILLIS:            value = Millis();                                                       break;
-        case MOT_VAR_MC_STATE:          value = MotorController_User_GetStateId(p_context->P_ACTIVE);           break;
-        case MOT_VAR_MC_FAULT_FLAGS:    value = MotorController_User_GetFaultFlags(p_context->P_ACTIVE).Value;  break;
-        case MOT_VAR_MC_STATUS_FLAGS:   value = MotorController_User_GetStatusFlags(p_context).Value;           break;
+        case MOT_VAR_ZERO:                  value = 0;                                                                  break;
+        case MOT_VAR_MILLIS:                value = Millis();                                                           break;
+        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_ACTIVE);               break;
+        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_ACTIVE).Value;      break;
+        case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStatusFlags(p_context).Value;               break;
+        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_ACTIVE->ControlLoopProfile;                            break;
     }
     return value;
 }
@@ -79,7 +80,7 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_context, Mot
     Motor_State_T * p_motor = MotMotors_ContextAt(&p_context->MOTORS, 0)->P_MOTOR_STATE;
     switch (id)
     {
-        case MOT_VAR_DEBUG0: value = p_motor->DebugTime[4];    break;
+        case MOT_VAR_DEBUG0: value = 0;    break;
         case MOT_VAR_DEBUG1: value = 0;    break;
         case MOT_VAR_DEBUG2: value = 0;    break;
         case MOT_VAR_DEBUG3: value = 0;    break;
