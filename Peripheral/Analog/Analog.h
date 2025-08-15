@@ -169,7 +169,7 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 // }
 
 
-// typedef struct Analog_OptionsFlags
+// typedef struct Analog_Options
 // {
 //     uint32_t HwTriggerConversion      : 1U;
 //     uint32_t ContinuousConversion     : 1U;
@@ -180,6 +180,6 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 //     uint32_t Dma                      : 1U;
 //     uint8_t Priority
 // }
-// Analog_OptionsFlags_T;
+// Analog_Options_T;
 
 

@@ -300,7 +300,7 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
 {
     State_T * p_nextState = NULL;
 
-    if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U)
+    if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U) //todo ceck
     {
         /* validate direction */
         switch ((Motor_Direction_T)direction)
@@ -535,7 +535,7 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 /******************************************************************************/
 static void Calibration_Entry(const Motor_T * p_motor)
 {
-    Phase_ActivateOutputV0(&p_motor->PHASE);
+    // Phase_ActivateOutputV0(&p_motor->PHASE);
     // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
@@ -563,7 +563,8 @@ static State_T * Calibration_InputControl(const Motor_T * p_motor, state_value_t
         case PHASE_OUTPUT_VPWM:     break;
     }
 
-    return p_nextState;
+    // return p_nextState;
+    return &MOTOR_STATE_CALIBRATION; /* Stops the SubState */
 }
 
 static State_T * Calibration_InputStop(const Motor_T * p_motor, state_value_t direction)

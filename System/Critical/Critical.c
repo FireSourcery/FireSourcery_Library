@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,11 +22,11 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Critical.h
+    @file   Critical.c
     @author FireSourcery
-    @brief  Implements Critical Section
-
+    @brief  [Brief description of the file]
 */
+/******************************************************************************/
 /******************************************************************************/
 #include "Critical.h"
 

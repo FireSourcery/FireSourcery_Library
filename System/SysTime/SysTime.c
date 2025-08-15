@@ -2,7 +2,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,9 +24,9 @@
 /*!
     @file   SysTime.c
     @author FireSourcery
-    @brief  SysTick Wrapper
-
+    @brief  [Brief description of the file]
 */
+/******************************************************************************/
 /******************************************************************************/
 #include "SysTime.h"
 
@@ -35,7 +35,7 @@ volatile uint32_t SysTime_Millis = 0U;
 /* App init must set priority */
 void SysTime_Init(void)
 {
-#ifdef CONFIG_SYSTIME_SYSTICK
+#ifdef SYSTIME_SYSTICK
     // SysTick_Config(ticks)
     SYST_RVR = (CPU_FREQ / 1000U) - 1U;
     SYST_CVR = 0U;

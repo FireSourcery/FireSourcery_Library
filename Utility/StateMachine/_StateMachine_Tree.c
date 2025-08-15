@@ -37,12 +37,12 @@
     SubState as a branch
 */
 /******************************************************************************/
-static inline State_T * TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context)
-{
-    return _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, 0U);
-}
+// static inline State_T * TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context)
+// {
+//     return _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, 0U);
+// }
 
-static inline State_T * _TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
+static inline State_T * TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
 {
     return _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, stopLevel);
 }
@@ -82,7 +82,7 @@ void _StateMachine_TransitionBranchTo(StateMachine_Active_T * p_active, void * p
 /* traversing up for now */
 void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
 {
-    _StateMachine_TransitionBranchTo(p_active, p_context, _TransitionFunctionOfBranchState(p_active, p_context, stopLevel));
+    _StateMachine_TransitionBranchTo(p_active, p_context, TransitionFunctionOfBranchState(p_active, p_context, stopLevel));
 }
 
 /* Transition immediately */

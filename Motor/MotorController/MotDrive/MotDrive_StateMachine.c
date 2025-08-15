@@ -167,12 +167,16 @@ const StateMachine_Machine_T MOT_DRIVE_MACHINE =
     @brief Drive Set Common
 */
 /******************************************************************************/
+//todo change to check first
 static State_T * Common_InputPark(const MotDrive_T * p_motDrive)
 {
+    //check 0 speed
     MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, MOTOR_DIRECTION_STOP);
-    return MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL; //todo check on
+    // return MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP) ? &STATE_PARK : NULL; //todo check on
+    return &STATE_PARK;
 }
 
+/* Motors to PASSIVE, keep direction */
 static State_T * Common_InputNeutral(const MotDrive_T * p_motDrive)
 {
     return &STATE_NEUTRAL; /* apply v float on entry */
@@ -181,31 +185,45 @@ static State_T * Common_InputNeutral(const MotDrive_T * p_motDrive)
 static State_T * Common_InputForward(const MotDrive_T * p_motDrive)
 {
     MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, MOTOR_DIRECTION_FORWARD);
-    return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
+    // return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
+    return &STATE_DRIVE;
+}
+
+static State_T * Neutral_InputForward(const MotDrive_T * p_motDrive)
+{
+    if (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true)
+    {
+        return &STATE_DRIVE;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 static State_T * Common_InputReverse(const MotDrive_T * p_motDrive)
 {
     MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, MOTOR_DIRECTION_REVERSE);
-    return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
+    // return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
+    return &STATE_DRIVE;
 }
 
-static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
-{
-    State_T * p_nextState = NULL;
+// static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
+// {
+//     State_T * p_nextState = NULL;
 
-    switch ((MotDrive_Direction_T)direction)
-    {
-        case MOT_DRIVE_DIRECTION_PARK:    p_nextState = Common_InputPark(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = Common_InputNeutral(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
-        default: break;
-    }
+//     switch ((MotDrive_Direction_T)direction)
+//     {
+//         case MOT_DRIVE_DIRECTION_PARK:    p_nextState = Common_InputPark(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = Common_InputNeutral(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
+//         default: break;
+//     }
 
-    return p_nextState;
-}
+//     return p_nextState;
+// }
 
 
 /******************************************************************************/
@@ -227,7 +245,7 @@ static void Park_Proc(const MotDrive_T * p_motDrive)
 
 // static State_T * Park_InputBlocking(const MotDrive_T * p_motDrive, state_value_t lockId)
 // {
-//     return ((MotDrive_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER) ? &STATE_LOCK : NULL;
+//     return ((MotDrive_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER) ? &MC_STATE_LOCK : NULL;
 // }
 
 static State_T * Park_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)

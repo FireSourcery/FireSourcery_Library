@@ -124,6 +124,7 @@ MotPacket_Id_T;
 /* 2-Byte Sync Packet */
 // typedef struct MOT_PACKET_PACKED MotPacket_ControlChar
 // typedef struct MOT_PACKET_PACKED MotPacket_Min
+// typedef struct MOT_PACKET_PACKED MotPacket_HeaderId
 typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
     uint8_t Start;  /* MOT_PACKET_START_BYTE */
@@ -233,8 +234,8 @@ typedef struct MotPacket_CallReq { MotPacket_Header_T Header; MotPacket_CallReq_
 typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallResp_Payload_T CallResp; }     MotPacket_CallResp_T;
 
 // multiple parameters
-// typedef struct MotPacket_CallArgVReq_Payload { uint32_t AddressId; uint16_t Flags; uint16_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; }   MotPacket_CallReq_Payload_T;
-// typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Flags; uint16_t Status; }                                                          MotPacket_CallResp_Payload_T;
+// typedef struct MotPacket_CallArgVReq_Payload { uint32_t Id; uint16_t Flags; uint16_t ArgC; uint32_t ArgV[MOT_PACKET_PAYLOAD_LENGTH_MAX - 8U]; }   MotPacket_CallReq_Payload_T;
+// typedef struct MotPacket_CallArgVResp_Payload { uint32_t Id; uint16_t Flags; uint16_t Status; }                                                   MotPacket_CallResp_Payload_T;
 
 /******************************************************************************/
 /*!

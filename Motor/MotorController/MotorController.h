@@ -167,7 +167,7 @@ typedef struct MotorController_Config
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
 
-    MotorController_MainMode_T InitMode;
+    MotorController_MainMode_T InitMode; /* alternatively state_t stand in */
     MotorController_InputMode_T InputMode;
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
@@ -276,7 +276,7 @@ typedef const struct MotorController
     TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
     MotDrive_T MOT_DRIVE; /* Drive */
-    MotorController_State_T * P_ACTIVE; /* Pointer to the Runtime buffer */
+    MotorController_State_T * P_MC_STATE; /* Pointer to the Runtime buffer */
 
     Version_T MAIN_VERSION;
     const MotorController_Config_T * P_NVM_CONFIG;
@@ -297,8 +297,8 @@ static inline Socket_T * MotorController_GetMainSocket(const MotorController_T *
 static inline bool MotorController_PollRxLost(const MotorController_T * p_context)
 {
     assert(p_context->USER_PROTOCOL_INDEX < p_context->PROTOCOL_COUNT);
-    p_context->P_ACTIVE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_context));
-    return p_context->P_ACTIVE->FaultFlags.RxLost;
+    p_context->P_MC_STATE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_context));
+    return p_context->P_MC_STATE->FaultFlags.RxLost;
 }
 
 

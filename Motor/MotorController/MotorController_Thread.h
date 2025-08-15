@@ -66,7 +66,7 @@
 /******************************************************************************/
 static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     MotAnalogUser_Cmd_T cmd;
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
@@ -133,7 +133,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 */
 static inline void _MotorController_ProcOptDin(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     uint8_t dinStatus = 0U;
 
     if (p_mc->Config.OptDinMode != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
@@ -176,7 +176,7 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_conte
 /******************************************************************************/
 static inline void _MotorController_HeatMonitor_Thread(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     HeatMonitor_Status_T status;
 
     /* Poll PCB Temperature Monitor */
@@ -246,7 +246,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 /******************************************************************************/
 static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
 // #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
     switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
@@ -288,7 +288,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 /******************************************************************************/
 static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
     RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
@@ -311,7 +311,7 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
 /******************************************************************************/
 static inline void MotorController_Main_Thread(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     /* High Freq, Low Priority */
     if (TimerT_Counter_Poll(&p_context->MILLIS_TIMER) == true)
@@ -322,7 +322,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
         // maybe change this to signal if enter fault is on 1ms thread
-        _StateMachine_ProcRootFirst(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
+        // _StateMachine_ProcRootFirst(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
+        _StateMachine_ProcRootFirstSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
         // MotDrive_StateMachine_Proc(&p_context->MOT_DRIVE); // maybe better for optimzing passthrough parameters
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
@@ -400,7 +401,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 */
 static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     _MotorController_VSourceMonitor_Thread(p_context);
 
     // BrakeThread(p_mc);
@@ -432,12 +433,12 @@ static inline void MotorController_PWM_Thread(const MotorController_T * p_contex
     // p_fields->MicrosRef = SysTime_GetMicros();
     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 
-    if (MotorTimeRef_IsAnalogCycle(p_context->P_ACTIVE->ControlCounter) == true)
+    if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
     {
         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
     }
 
-    // if (MotorTimeRef_IsAnalogCycle(p_context->P_ACTIVE->ControlCounter) == true) /* removable */
+    // if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 
 
@@ -445,5 +446,5 @@ static inline void MotorController_PWM_Thread(const MotorController_T * p_contex
 
     // HAL_PWM_ClearInterrupt(p_context->HAL_PWM); /* BOARD_PWM_HAL */
     // Motor_ClearInterrupt(&p_context->MOTORS.P_ARRAY[0U]);
-    p_context->P_ACTIVE->ControlCounter++;
+    p_context->P_MC_STATE->ControlCounter++;
 }

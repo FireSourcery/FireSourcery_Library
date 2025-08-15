@@ -32,7 +32,6 @@
 #include "_Analog_ADC.h"
 #include "Analog_ADC.h"
 
-
 /******************************************************************************/
 /*!
     Thread
@@ -64,8 +63,6 @@ static void ADC_ProcStart(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_sta
 
 static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T * p_state)
 {
-    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
-
     if (p_state->ActiveConversionCount > 0U)
     {
         ADC_Capture(p_adc, p_state);
@@ -117,6 +114,7 @@ static inline void ADC_OnComplete(const Analog_ADC_T * p_adc, Analog_ADC_State_T
 */
 static inline void Analog_ADC_OnComplete_ISR(const Analog_ADC_T * p_adc)
 {
+    HAL_ADC_ClearConversionCompleteFlag(p_adc->P_HAL_ADC);
     ADC_OnComplete(p_adc, p_adc->P_ADC_STATE);
 }
 

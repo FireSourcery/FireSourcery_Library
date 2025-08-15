@@ -67,6 +67,15 @@ extern void _StateMachine_ApplyBranchAsyncInput(StateMachine_Active_T * p_active
 extern void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_context);
 
+
+/* Root First */
+extern void _StateMachine_TransitionRoot(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+
+extern void _StateMachine_ProcRootFirstSyncOutput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcRootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_ProcRootFirstSyncInput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcRootFirstPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+
 extern void _StateMachine_ApplyRootFirstAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
 extern void _StateMachine_ProcRootFirst(StateMachine_Active_T * p_active, void * p_context);

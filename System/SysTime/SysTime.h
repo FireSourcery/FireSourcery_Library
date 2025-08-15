@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,17 +26,22 @@
 /*!
     @file   SysTime.h
     @author FireSourcery
-    @brief  Init SysTick as System time, 1ms
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef SYSTIME_H
-#define SYSTIME_H
-
-#include "Config.h"
 #include <stdint.h>
 
-#ifdef CONFIG_SYSTIME_SYSTICK
+#if defined(CPU_FREQ)
+#else
+#error "SysTime - Undefined CPU_FREQ"
+#endif
+
+#ifdef SYSTIME_SYSTICK
+#else
+#error "SysTime - Undefined SYSTIME_HAL"
+#endif
+
+#ifdef SYSTIME_SYSTICK
 #define SYST_CSR    (*((uint32_t *)0xE000E010))        /* SysTick Control and Status Register */
 #define SYST_RVR    (*((uint32_t *)0xE000E014))        /* SysTick Reload Value Register */
 #define SYST_CVR    (*((uint32_t *)0xE000E018))        /* SysTick Current Value Register */
@@ -58,6 +65,11 @@
 #define SYST_COUNT() (SYST_CVR)
 #endif
 
+#if defined(SYSTIME_SYSTICK) && defined(CPU_FREQ)
+/* SYST_CVR ticks down */
+static inline uint32_t SysTime_GetTicks(void) { return (uint32_t)((CPU_FREQ / 1000U - 1U) - SYST_CVR); }
+#endif
+
 #define MILLIS_TIMER_FREQ (1000U)
 
 extern volatile uint32_t SysTime_Millis;
@@ -72,24 +84,15 @@ static inline uint32_t Millis(void)                 { return SysTime_GetMillis()
 
 static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }
 
-#if defined(CONFIG_SYSTIME_SYSTICK) && defined(CPU_FREQ)
-static inline uint32_t SysTime_GetTicks(void) { return (uint32_t)((CPU_FREQ / 1000U - 1U) - SYST_CVR); }
-
+/*
+    Tick/Micros
+*/
 #define MICROS_PER_TICK_SHIFT 16U
-#define MICROS_PER_TICK ((uint32_t)(((uint64_t)1000000ULL << MICROS_PER_TICK_SHIFT) / (uint64_t)CPU_FREQ))
+#define MICROS_PER_TICK ((uint32_t)(((uint64_t)1000000ULL << MICROS_PER_TICK_SHIFT) / CPU_FREQ))
 
-static inline uint32_t SysTime_GetMicros(void)
-{
-    // uint32_t micros = (CPU_FREQ / 1000U - 1U) - (SYST_CVR / (CPU_FREQ / 1000000U)); /* SYST_CVR ticks down */
-    // return SysTime_Millis * 1000U + micros;
-
-    /* us within current ms = ticksElapsed * (1e6 / CPU_FREQ). Wraps every 1000 */
-    return ((SysTime_GetTicks() * MICROS_PER_TICK) >> MICROS_PER_TICK_SHIFT);
-}
+/* us within current ms = ticksElapsed * (1e6 / CPU_FREQ). Wraps every 1000 */
+static inline uint32_t SysTime_GetMicros(void) { return ((SysTime_GetTicks() * MICROS_PER_TICK) >> MICROS_PER_TICK_SHIFT); }
 
 static inline uint32_t Micros(void) { return SysTime_GetMicros(); }
-#endif
 
 extern void SysTime_Init(void);
-
-#endif /* SYSTIME_H */

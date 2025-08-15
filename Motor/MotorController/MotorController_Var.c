@@ -44,10 +44,11 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_ACTIVE);               break;
-        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_ACTIVE).Value;      break;
+        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_MC_STATE);               break;
+        case MOT_VAR_MC_SUB_STATE:          value = MotorController_User_GetSubStateId(p_context->P_MC_STATE);               break;
+        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_MC_STATE).Value;      break;
         case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStatusFlags(p_context).Value;               break;
-        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_ACTIVE->ControlLoopProfile;                            break;
+        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;                            break;
     }
     return value;
 }
@@ -56,14 +57,14 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
 void MotorController_Var_Input_Set(const MotorController_T * p_context, MotorController_Var_Input_T id, int value)
 {
     // configurable condition todo
-    if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return; }
+    if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return; }
 
     switch (id)
     {
-        case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, (int16_t)value);                break;
-        case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);                break;
-        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, (sign_t)value);                break;
-        case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value);     break;
+        case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, (int16_t)value);                    break;
+        case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);                    break;
+        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);    break;
+        case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value);         break;
 
         case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
         case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
@@ -100,7 +101,7 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_context, Mot
 /******************************************************************************/
 int MotorController_Config_Get(const MotorController_T * p_context, MotorController_Var_Config_T id)
 {
-    MotorController_State_T * p_state = p_context->P_ACTIVE;
+    MotorController_State_T * p_state = p_context->P_MC_STATE;
 
     int value = 0;
     switch (id)
@@ -123,7 +124,7 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
 
 void MotorController_Config_Set(const MotorController_T * p_context, MotorController_Var_Config_T id, int value)
 {
-    MotorController_State_T * p_state = p_context->P_ACTIVE;
+    MotorController_State_T * p_state = p_context->P_MC_STATE;
 
     switch (id)
     {
@@ -144,7 +145,7 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
 
 int MotorController_Var_ConfigBootRef_Get(const MotorController_T * p_context, MotorController_Var_ConfigBootRef_T id)
 {
-    MotorController_State_T * p_state = p_context->P_ACTIVE;
+    MotorController_State_T * p_state = p_context->P_MC_STATE;
     int value = 0;
 
     switch (id)
@@ -159,7 +160,7 @@ int MotorController_Var_ConfigBootRef_Get(const MotorController_T * p_context, M
 
 void MotorController_Var_ConfigBootRef_Set(const MotorController_T * p_context, MotorController_Var_ConfigBootRef_T id, int value)
 {
-    MotorController_State_T * p_state = p_context->P_ACTIVE;
+    MotorController_State_T * p_state = p_context->P_MC_STATE;
     switch (id)
     {
         case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_SetFastBoot(p_state, value);     break;
@@ -226,7 +227,7 @@ static int _HandleMotorVar_Get(const MotorController_T * p_context, MotVarId_T v
 static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
     // Analog mode does not allow these variables to be set
-    if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED; }
+    if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED; }
 
     // outer module handle access control
     if (!MotorController_StateMachine_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
@@ -332,7 +333,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
 
         case MOT_VAR_TYPE_GENERAL_USER_IN:
         case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:
-            if (p_context->P_ACTIVE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
         default: break;
     }

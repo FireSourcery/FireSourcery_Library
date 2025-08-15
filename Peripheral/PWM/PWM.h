@@ -32,7 +32,6 @@
 #define PWM_H
 
 #include "HAL_PWM.h"
-#include "Config.h"
 #include <stdint.h>
 #include <stdbool.h>
 

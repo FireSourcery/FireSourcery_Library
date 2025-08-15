@@ -327,16 +327,15 @@ typedef struct Motor_State
     /*
         Unit Conversions
     */
-    Linear_T UnitsIa;           /* Fract16 and Amps */
-    Linear_T UnitsIb;
-    Linear_T UnitsIc;
-    Linear_T UnitsVabc;         /* Vbemf/VPhase Fract16 conversion of adcu */
-    Linear_T UnitsVSpeed;       /* VbemfSpeed. Vbemf_Fract16 of Speed_Fract16. Resume voltage, calculated Vbemf */
+    // Linear_T UnitsIa;           /* Fract16 and Amps */
+    // Linear_T UnitsIb;
+    // Linear_T UnitsIc;
+    // Linear_T UnitsVabc;         /* Vbemf/VPhase Fract16 conversion of adcu */
+    // Linear_T UnitsVSpeed;       /* VbemfSpeed. Vbemf_Fract16 of Speed_Fract16. Resume voltage, calculated Vbemf */
 
     Filter_T FilterA;           /* Calibration use */
     Filter_T FilterB;
     Filter_T FilterC;
-
 
     /* Jog */
     // uint32_t JogIndex;
@@ -359,8 +358,8 @@ typedef struct Motor_State
     uint32_t OpenLoopCommutationPeriod;
 #endif
 
-    volatile uint32_t MicrosRef;
 #if  defined(CONFIG_MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
+    volatile uint32_t MicrosRef;
     // volatile bool DebugFlag;
     // volatile uint32_t DebugError;
     volatile uint32_t DebugTime[10U];
@@ -384,13 +383,10 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_MOTOR_STATE;
-    // alternatively MotorBus_T static instance
-    // const MotorVSource_T * const P_VSOURCE; /*  VSource_Fract16, VSourceInvScalar */
 
     /*
-        This is the only const context dependency of StateMachine
-        alternatively, reduce StateMachine context, handle with pointer from state,
-        or PHASE include P_PHASE_STATE for buffered on off
+        const context dependency of StateMachine: PHASE, TIMER
+        alternatively, reduce StateMachine context, handle with pointer from state
     */
     Phase_T PHASE;
     Motor_Analog_T ANALOG; // PhaseAnalog_T PHASE_ANALOG;

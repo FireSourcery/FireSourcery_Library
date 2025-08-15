@@ -79,7 +79,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
     }
 }
 
-// static void Calibration_Proc_I(const Motor_T * p_motor)
+// static void Calibration_Proc_IFeedback(const Motor_T * p_motor)
 // {
 //     uint16_t vPhase = PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), Motor_GetVAlign_Duty( p_motor)); // use phase pid or align to angle
 //     const uint16_t duty = vPhase * MotorAnalog_GetVSourceInvScalar() >> 16;
@@ -94,12 +94,13 @@ static State_T * Calibration_End(const Motor_T * p_motor)
 
 static const State_T CALIBRATION_STATE_HALL =
 {
-    .P_TOP = &MOTOR_STATE_CALIBRATION,
-    .P_PARENT = &MOTOR_STATE_CALIBRATION,
-    .DEPTH = 1U,
-    .ENTRY = (State_Action_T)Calibration_Entry,
-    .LOOP = (State_Action_T)Calibration_Proc,
-    .NEXT = (State_InputVoid_T)Calibration_End,
+    .ID         = 0U,
+    .P_TOP      = &MOTOR_STATE_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)Calibration_Entry,
+    .LOOP       = (State_Action_T)Calibration_Proc,
+    .NEXT       = (State_InputVoid_T)Calibration_End,
 };
 
 /******************************************************************************/

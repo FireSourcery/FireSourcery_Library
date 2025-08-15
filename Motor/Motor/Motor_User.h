@@ -97,8 +97,8 @@ static inline int32_t Motor_User_GetElectricalPower_VA(const Motor_State_T * p_m
 static inline thermal_t Motor_User_GetHeat_DegC(const Motor_State_T * p_motor)           { return HeatMonitor_CelsiusOfAdcu(&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
-static inline angle16_t Motor_User_GetElectricalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetElecticalAngle(p_motor->p_ActiveSensor); }
-static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor); }
+// static inline angle16_t Motor_User_GetElectricalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetElecticalAngle(p_motor->p_ActiveSensor); }
+// static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_motor) { return RotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor); }
 
 
 /*
@@ -107,8 +107,18 @@ static inline angle16_t Motor_User_GetMechanicalAngle(const Motor_State_T * p_mo
 */
 /* alternatively use outer context */
 static inline Motor_StateId_T Motor_User_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+
 /* 0 during substate */
-static inline uint8_t Motor_User_GetSubStateId(const Motor_State_T * p_motor) { return _StateMachine_GetActiveSubStateId(&p_motor->StateMachine); }
+static inline state_t Motor_User_GetSubStateId(const Motor_State_T * p_motor) {
+
+    // switch (Motor_User_GetStateId(p_motor))
+    // {
+    //     case MSM_STATE_ID_CALIBRATION: return Motor_Calibration_GetActiveSubStateId(p_motor);
+    //     default: break;
+    // }
+    return _StateMachine_GetActiveSubStateId(&p_motor->StateMachine);
+}
+
 static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
@@ -167,7 +177,7 @@ typedef struct Motor_User_Input
 {
     uint8_t MotorId;
     int16_t CmdValue; /* [-32768:32767] */
-    sign_t Direction;
+    Motor_User_Direction_T Direction;
     Motor_FeedbackMode_T FeedbackMode;
     Phase_Output_T ControlState;
     uint16_t SpeedLimit;

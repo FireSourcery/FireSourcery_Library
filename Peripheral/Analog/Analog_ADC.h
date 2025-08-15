@@ -37,6 +37,7 @@
 #include <stdbool.h>
 
 
+
 #ifdef HAL_ADC_FIFO_LENGTH_MAX
 #define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
 #endif

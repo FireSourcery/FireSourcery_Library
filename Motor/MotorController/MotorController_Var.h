@@ -43,14 +43,15 @@
     Var Id Base
 */
 /******************************************************************************/
+// MOTOR_CONTROLLER_VAR,
 typedef enum MotorController_Var_Output
 {
-    // MOTOR_CONTROLLER_VAR ,
     MOT_VAR_ZERO,
     MOT_VAR_MILLIS,
     MOT_VAR_MC_STATE,
-    MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_SUB_STATE,
     MOT_VAR_MC_FAULT_FLAGS,
+    MOT_VAR_MC_STATUS_FLAGS,
     MOT_VAR_CONTROL_LOOP_PROFILE,
     MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
     // MOT_DRIVE_DIRECTION,
@@ -198,7 +199,6 @@ MotorController_VarType_VMonitor_T;
 
 typedef enum MotorController_VarType_HeatMonitor
 {
-    /* Heat monitors sub types motor, pcb, mosfet */
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
@@ -226,7 +226,6 @@ MotorController_VarType_Communication_T;
     [MotorController_VarHandlerType]
     Handler by Source File Module
     Effectively name space for types
-    determine handler logic by id
     Mutually exclusive attributes when possible
     partition for contigously expandable ids
 */
@@ -256,58 +255,3 @@ extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
 
 
-
-/* Map to sub module if supported */
-// typedef enum MotVarId_AccessType
-// {
-//     MOT_VAR_ACCESS_VAR_IO,
-//     MOT_VAR_ACCESS_VAR_CMD,
-//     MOT_VAR_ACCESS_CONFIG,
-//     MOT_VAR_ACCESS_CONFIG_CMD,
-//     MOT_VAR_ACCESS_CONST_INFO,
-// } MotVarId_AccessType_T;
-
-
-/******************************************************************************/
-/*!
-    Instance Select
-*/
-/******************************************************************************/
-// typedef enum MotVarId_Instance_VMonitor
-// {
-//     MOT_VAR_ID_V_MONITOR_SOURCE,
-//     MOT_VAR_ID_V_MONITOR_ACCS,
-//     MOT_VAR_ID_V_MONITOR_ANALOG,
-//     // MOT_VAR_ID_V_MONITOR_AUX,
-// }
-// MotVarId_Instance_VMonitor_T;
-
-/*
-    Index corresponds to external user interface
-*/
-// typedef enum MotVarId_Instance_HeatMonitorMosfets
-// {
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_0,
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_1,
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_2,
-//     MOT_VAR_ID_THERMISTOR_MOSFETS_3,
-// }
-// MotVarId_Instance_HeatMonitorMosfets_T;
-
-// typedef enum MotVarId_Instance_Motor
-// {
-//     MOT_VAR_ID_MOTOR_0,
-//     MOT_VAR_ID_MOTOR_1,
-//     MOT_VAR_ID_MOTOR_2,
-//     MOT_VAR_ID_MOTOR_3,
-// }
-// MotVarId_Instance_Motor_T;
-
-// typedef enum MotVarId_Instance_ProtocolSocket
-// {
-//     MOT_VAR_ID_PROTOCOL_SOCKET_0,
-//     MOT_VAR_ID_PROTOCOL_SOCKET_1,
-//     MOT_VAR_ID_PROTOCOL_SOCKET_2,
-//     MOT_VAR_ID_PROTOCOL_SOCKET_3,
-// }
-// MotVarId_Instance_ProtocolSocket_T;

@@ -42,7 +42,7 @@
 /******************************************************************************/
 int MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int value)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     int status = 0; // MotorController_User_GenericStatus_T
     bool isSuccess = true;
@@ -51,12 +51,11 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
     {
         // case MOT_USER_SYSTEM_RESRV:                           break;
         case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                               break;
-        // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 1U);                break;
+        // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, value);                break;
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break; /* Stop active periodic. does not disable */
 
         case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);          break;
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_User_ForceDisableControl(p_context);        break;
-
         // case MOT_USER_SYSTEM_DISABLE_CONTROL: MotorController_User_DisableControl(p_context);        break;
 
         /* Non Blocking function, host/caller poll Async return status after. */
@@ -73,8 +72,6 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
             status = MotorController_User_GetLockOpStatus(p_context);
             break;
 
-        // LOCK_STATE_ACTIVCE
-        //  (MotorController_LockId_T)
         case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
             status = MotorController_User_GetLockState(p_context);
             break;
@@ -111,7 +108,7 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
 /*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSupplyRef */
 void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
     MotorController_CaptureVSource(p_context); /* optionally */
@@ -123,7 +120,7 @@ void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uin
 
 void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     p_mc->Config.InputMode = mode;
 

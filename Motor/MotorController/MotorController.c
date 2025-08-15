@@ -33,7 +33,7 @@
 
 void MotorController_Init(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_ACTIVE;
+    MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     MotNvm_Init(&p_context->MOT_NVM);
 
@@ -113,7 +113,7 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
 
 void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
 {
-    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_ACTIVE->Config.VSupplyRef), 25, 15, 5);
+    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
 }
 
 void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
@@ -129,7 +129,7 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 /******************************************************************************/
 void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
-    p_context->P_ACTIVE->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
+    p_context->P_MC_STATE->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
 }
 

@@ -35,7 +35,12 @@ extern const State_T CALIBRATION_STATE_TUNNING;
 
 /* Exit the substate and return to the parent state on complete */
 // static inline bool _Motor_Calibration_IsComplete(const Motor_State_T * p_motor) { return StateMachine_IsActiveSubState(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
-static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsActiveSubState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
+static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
+
+/* IsComplete SubState = TopState =  MSM_STATE_ID_CALIBRATION */
+
+/* return MSM_STATE_ID_CALIBRATION when parent state is MSM_STATE_ID_CALIBRATION. return 0xff otherwise including state == MSM_STATE_ID_CALIBRATION */
+// static inline state_t Motor_Calibration_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
 
 /* Proc, to allow validate immediately */
 /* StateMachine_ApplyInput cannot transitions top level only */
