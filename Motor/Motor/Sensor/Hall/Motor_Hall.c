@@ -49,7 +49,7 @@ static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSO
 static void Calibration_Entry(const Motor_T * p_motor)
 {
     // Timer_StartPeriod(&p_motor->P_MOTOR_STATE->ControlTimer, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
-    TimerT_Start(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+    TimerT_Periodic_Set(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     Phase_ActivateOutputV0(&p_motor->PHASE);
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }

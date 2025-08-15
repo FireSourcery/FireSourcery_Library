@@ -46,7 +46,7 @@ NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * 
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_rom, p_ram, sizeBytes);
 #elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
     assert(nvmemory_is_aligned((uintptr_t)p_rom, FLASH_UNIT_WRITE_SIZE));
-    assert(nvmemory_is_aligned((uintptr_t)p_ram, FLASH_UNIT_WRITE_SIZE));
+    // assert(nvmemory_is_aligned((uintptr_t)p_ram, FLASH_UNIT_WRITE_SIZE));
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)p_rom, p_ram, sizeBytes);
 #endif
 }

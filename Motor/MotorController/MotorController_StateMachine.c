@@ -373,8 +373,14 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                MotMotors_StopAll(&p_context->MOTORS);
-                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
+                // MotMotors_StopAll(&p_context->MOTORS);
+                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == true)
+                {
+                    MotMotors_StopAll(&p_context->MOTORS);
+                    p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+                    p_nextState = &MC_STATE_MAIN;
+                }
+                else if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
                 {
                     p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = &MC_STATE_MAIN;
