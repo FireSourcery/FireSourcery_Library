@@ -551,6 +551,7 @@ static inline int16_t Motor_OpenLoopVLimitOf(const Motor_State_T * p_motor, int1
 
 static inline uint16_t Motor_GetIAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, MotorAnalogRef_GetIRatedPeak_Fract16()); }
 static inline uint16_t Motor_GetVAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, MotorAnalog_GetVSource_Fract16() / 2); }
+
 /* fract16_div((uint32_t)Motor_GetVAlign(p_motor) * 2 / 3, MotorAnalog_GetVSource_Fract16() / 2) */
 static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { return (uint32_t)p_motor->Config.AlignScalar_Fract16 * 3 / 4; }
 
@@ -562,8 +563,8 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 static inline uint16_t Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
 // static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeed_Fract16(p_motor)) > Motor_GetSpeedLimitActive(p_motor)); }
 
-static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
-static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
+// static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
+// static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
 
 
 /******************************************************************************/

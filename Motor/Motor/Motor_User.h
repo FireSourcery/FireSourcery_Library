@@ -256,6 +256,7 @@ extern void Motor_User_ApplyRotaryDirection(const Motor_T * p_const, Motor_Direc
 extern void Motor_User_ApplyDirectionForward(const Motor_T * p_const);
 extern void Motor_User_ApplyDirectionReverse(const Motor_T * p_const);
 extern void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, Motor_User_Direction_T sign);
+
 extern void Motor_User_ForceDisableControl(const Motor_T * p_const);
 
 extern void Motor_User_StartVoltageMode(const Motor_T * p_const);
@@ -293,9 +294,9 @@ extern void Motor_User_SetOpenLoopCmd_Scalar(Motor_State_T * p_motor, int16_t sc
 extern void Motor_User_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_fract16);
 #endif
 
-extern int32_t Motor_User_GetCmd(const Motor_State_T * p_motor);
-extern int32_t Motor_User_GetSetPoint(const Motor_State_T * p_motor);
-extern int32_t Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor);
+extern int16_t Motor_User_GetCmd(const Motor_State_T * p_motor);
+extern int16_t Motor_User_GetSetPoint(const Motor_State_T * p_motor);
+extern int16_t Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor);
 
 extern void Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, int16_t userCmd);
 extern void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd);

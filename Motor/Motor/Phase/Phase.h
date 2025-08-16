@@ -231,19 +231,19 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 */
 /******************************************************************************/
 static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_High(p_pin), PWM_Enable(p_pwm)); }
-// static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_High(p_pin); PWM_Enable(p_pwm); }
 /* PWM_Disable as alt for high z */
 static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_Low(p_pin), PWM_Disable(p_pwm)); }
+// static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_High(p_pin); PWM_Enable(p_pwm); }
 // static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_Low(p_pin); PWM_Disable(p_pwm); }
 
 static inline void _Phase_WriteOnOff(const Pin_T * p_pin, const PWM_T * p_pwm, bool isOn)
 {
     if (isOn == true) { _Phase_Enable(p_pin, p_pwm); } else { _Phase_Disable(p_pin, p_pwm); }
+    // _PHASE_PIN_DEF(Pin_Output_WritePhysical(p_pin, isOn), PWM_WriteEnable(p_pwm, isOn));
 }
 
 /* ReadOnOff using register state */
 static inline bool _Phase_ReadOnOff(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_ReadPhysical(p_pin), PWM_ReadOutputState(p_pwm)); }
-
 
 static inline void _Phase_EnableA(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_A, &p_phase->PWM_A); }
 static inline void _Phase_EnableB(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_B, &p_phase->PWM_B); }
