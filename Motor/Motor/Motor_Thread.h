@@ -103,14 +103,14 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     StateMachine_Synchronous_RootFirst_Thread(&p_context->STATE_MACHINE);
 
+    p_fields->ControlTimerBase++;
     /* Inline Phase Out */
     /* Directly read register state */
-    if (Phase_ReadOutputState(&p_context->PHASE) == PHASE_OUTPUT_VPWM) { Motor_FOC_WriteDuty(p_context); }
+    if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
 
     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 
-    p_fields->ControlTimerBase++;
 
 #ifdef CONFIG_MOTOR_PWM_INTERRUPT_CLEAR_PER_MOTOR
     Motor_ClearInterrupt(p_context);

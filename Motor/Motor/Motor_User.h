@@ -87,7 +87,7 @@ static inline uint16_t Motor_User_GetIdc_UFract16(const Motor_State_T * p_motor)
 
 /*  */
 // static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_State_T * p_motor) { return MotorAnalog_GetHeat((MotorAnalog_State_T*)&p_motor->AnalogState); }
-static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_State_T * p_motor) { return  Monitor_GetValue(&p_motor->HeatMonitorState); }
+static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
 #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
 static inline int16_t Motor_User_GetSpeed_Rpm(const Motor_State_T * p_motor)             { return _Motor_ConvertSpeed_Fract16ToRpm(p_motor, Motor_User_GetSpeed_Fract16(p_motor)); }

@@ -112,12 +112,12 @@ int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId)
 /* call handle switch logic */
 // void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue)
 // {
-// // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);    break;
-// // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);     break;
-// // case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);         break;
-// // case MOTOR_VAR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);   break;
-// // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);  break;
-// // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);  break;
+// // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);  break;
+// // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);        break;
+// // case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);            break;
+// // case MOTOR_VAR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);      break;
+// // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);     break;
+// // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);     break;
 // }
 
 /******************************************************************************/
@@ -131,14 +131,15 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_USER_SET_POINT:          value = Motor_User_GetSetPoint_Scalar(p_motor->P_MOTOR_STATE);                break;
+        // alternatively disable on read
+        case MOTOR_VAR_USER_SET_POINT:          value = Motor_User_GetSetPoint_Scalar(p_motor->P_MOTOR_STATE);          break;
 
-        case MOTOR_VAR_USER_DIRECTION:          value = Motor_User_GetDirection(p_motor->P_MOTOR_STATE);           break;
-        case MOTOR_VAR_USER_ROTARY_DIRECTION:   value = Motor_User_GetRotaryDirection(p_motor->P_MOTOR_STATE);         break;
-        case MOTOR_VAR_USER_FEEDBACK_MODE:      value = Motor_User_GetFeedbackMode(p_motor->P_MOTOR_STATE).Value;      break;
-        case MOTOR_VAR_USER_PHASE_OUTPUT:       value = Motor_User_GetPhaseState(p_motor);                        break;
+        case MOTOR_VAR_USER_DIRECTION:          value = Motor_User_GetDirection(p_motor->P_MOTOR_STATE);                break;
+        case MOTOR_VAR_USER_ROTARY_DIRECTION:   value = Motor_User_GetRotaryDirection(p_motor->P_MOTOR_STATE);          break;
+        case MOTOR_VAR_USER_FEEDBACK_MODE:      value = Motor_User_GetFeedbackMode(p_motor->P_MOTOR_STATE).Value;       break;
+        case MOTOR_VAR_USER_PHASE_OUTPUT:       value = Motor_User_GetPhaseState(p_motor);                              break;
 
-        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_User_GetSpeedLimitActive(p_motor->P_MOTOR_STATE);        break;
+        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_User_GetSpeedLimitActive(p_motor->P_MOTOR_STATE);         break;
         // case MOTOR_VAR_USER_I_LIMIT:         value = Motor_User_GetILimit(p_motor);                  break;
         case MOTOR_VAR_USER_I_LIMIT_MOTORING:   value = Motor_User_GetILimitMotoring(p_motor->P_MOTOR_STATE);     break;
         case MOTOR_VAR_USER_I_LIMIT_GENERATING: value = Motor_User_GetILimitGenerating(p_motor->P_MOTOR_STATE);   break;
@@ -156,8 +157,8 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
 
         /* Calls to StateMachine use full context */
         /* StateMachine validates input */
-        case MOTOR_VAR_USER_DIRECTION:        Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)math_sign(varValue));              break;
-        case MOTOR_VAR_USER_ROTARY_DIRECTION: Motor_User_ApplyRotaryDirection(p_motor, (Motor_Direction_T)varValue);    break;
+        case MOTOR_VAR_USER_DIRECTION:        Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)math_sign(varValue));  break;
+        case MOTOR_VAR_USER_ROTARY_DIRECTION: Motor_User_ApplyRotaryDirection(p_motor, (Motor_Direction_T)math_sign(varValue));     break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:    Motor_User_SetFeedbackMode_Cast(p_motor, varValue);                       break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:     Motor_User_ActivatePhaseOutput(p_motor, (Phase_Output_T)varValue);        break;
 

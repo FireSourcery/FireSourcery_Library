@@ -116,14 +116,12 @@ static inline uint16_t Motor_Config_GetILimitGenerating_Fract16(const Motor_Stat
 /******************************************************************************/
 static inline uint32_t Motor_Config_GetSpeedRampTime_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRampTime_Cycles; }
 static inline uint32_t Motor_Config_GetTorqueRampTime_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.TorqueRampTime_Cycles; }
-static inline uint16_t Motor_Config_GetSpeedRampTime_Millis(const Motor_State_T * p_motor) { /* return _Motor_MillisOf(p_motor->Config.SpeedRampTime_Cycles); */ }
+static inline uint16_t Motor_Config_GetSpeedRampTime_Millis(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRampTime_Cycles; } /* Base Cycle in Millis */
 static inline uint16_t Motor_Config_GetTorqueRampTime_Millis(const Motor_State_T * p_motor) { return _Motor_MillisOf(p_motor->Config.TorqueRampTime_Cycles); }
 
 /******************************************************************************/
 /* OpenLoop Ramp/Limit */
 /******************************************************************************/
-
-
 static inline uint16_t Motor_Config_GetOpenLoopScalarLimit(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopScalarLimit_Fract16; }
 
 static inline uint16_t Motor_Config_GetAlignPowerScalar(const Motor_State_T * p_motor) { return p_motor->Config.AlignScalar_Fract16; }
@@ -134,7 +132,7 @@ static inline uint16_t Motor_Config_GetAlignTime_Millis(const Motor_State_T * p_
 // static inline uint16_t Motor_Config_GetOpenLoopSpeedFinal_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampSpeedFinal_Fract16; }
 static inline uint16_t Motor_Config_GetOpenLoopSpeedFinal_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampSpeedFinal_DegPerCycle ; }
 static inline uint32_t Motor_Config_GetOpenLoopSpeedRamp_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampSpeedTime_Cycles; }
-static inline uint16_t Motor_Config_GetOpenLoopSpeedRamp_Millis(const Motor_State_T * p_motor) { return _Motor_MillisOf(p_motor->Config.OpenLoopRampSpeedTime_Cycles); }
+static inline uint16_t Motor_Config_GetOpenLoopSpeedRamp_Millis(const Motor_State_T * p_motor) { return _Motor_MillisOf(p_motor->Config.OpenLoopRampSpeedTime_Cycles); } /*  */
 
 static inline uint16_t Motor_Config_GetOpenLoopIFinal_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampIFinal_Fract16; }
 static inline uint32_t Motor_Config_GetOpenLoopIRamp_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampITime_Cycles; }

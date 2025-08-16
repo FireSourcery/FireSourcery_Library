@@ -104,7 +104,7 @@ static void ProcInnerFeedback(Motor_State_T * p_motor)
         {
             ProcIFeedback(p_motor, p_motor->Foc.ReqD, p_motor->Foc.ReqQ);
         }
-        else if (p_motor->FeedbackMode.Current == 0U) /* Voltage Control mode - Apply limits only */
+        else /* if (p_motor->FeedbackMode.Current == 0U)  *//* Voltage Control mode - Apply limits only */
         {
             /* todo on decrement */
             // ProcIFeedback(p_motor, 0, Motor_FOC_GetILimit(p_motor) * p_motor->Direction); /* sign(p_motor->Foc.ReqQ)-sign(p_motor->Foc.Iq) */
@@ -116,8 +116,8 @@ static void ProcInnerFeedback(Motor_State_T * p_motor)
             // }
             // else
             // {
-            //     FOC_SetVq(&p_motor->Foc, p_motor->Foc.ReqQ);
-            //     FOC_SetVd(&p_motor->Foc, p_motor->Foc.ReqD);
+                FOC_SetVq(&p_motor->Foc, p_motor->Foc.ReqQ);
+                FOC_SetVd(&p_motor->Foc, p_motor->Foc.ReqD);
             // }
         }
     }

@@ -243,7 +243,7 @@ static inline void _Phase_WriteOnOff(const Pin_T * p_pin, const PWM_T * p_pwm, b
 }
 
 /* ReadOnOff using register state */
-static inline bool _Phase_ReadOnOff(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_ReadPhysical(p_pin), PWM_ReadOutputState(p_pwm)); }
+static inline bool _Phase_ReadOnOff(const Pin_T * p_pin, const PWM_T * p_pwm) { return _PHASE_PIN_DEF(Pin_Output_ReadPhysical(p_pin), PWM_ReadOutputState(p_pwm)); }
 
 static inline void _Phase_EnableA(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_A, &p_phase->PWM_A); }
 static inline void _Phase_EnableB(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_B, &p_phase->PWM_B); }
@@ -436,27 +436,31 @@ static inline bool Phase_IsFloat(const Phase_T * p_phase)
     return (_Phase_ReadState(p_phase).Id == PHASE_ID_0);
 }
 
+static inline bool Phase_IsVDuty(const Phase_T * p_phase)
+{
+    // return !Phase_IsFloat(p_phase);
+    return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Id != PHASE_ID_0);
+}
+
 static inline bool Phase_IsV0(const Phase_T * p_phase)
 {
-    return ((_Phase_ReadState(p_phase).Id == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0));
+    // return ((_Phase_ReadState(p_phase).Id == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0)); //alternatively check active channels only
+    return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0));
 }
 
 /* Collective state */
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
+
     switch (_Phase_ReadState(p_phase).Id)
     {
-        case PHASE_ID_0:
-            state = PHASE_OUTPUT_FLOAT;
-            break;
-        case PHASE_ID_ABC:
-            state = (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM;
-            break;
+        case PHASE_ID_0: state = PHASE_OUTPUT_FLOAT; break;
+        //alternatively check active channels only
+        // case PHASE_ID_ABC:
+        //     break;
         /* Including Polar Ouputs */
-        default:
-            state = PHASE_OUTPUT_VPWM;
-            break;
+        default: state = (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM; break;
     }
     return state;
 }
