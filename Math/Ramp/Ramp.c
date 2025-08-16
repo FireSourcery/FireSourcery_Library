@@ -114,7 +114,7 @@ void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration
 void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {
     assert(duration_Ticks != 0U);
-    p_ramp->Accumulator.Coefficient = (range << p_ramp->Accumulator.Shift) / duration_Ticks;
+    p_ramp->Accumulator.Coefficient = ((int32_t)range << p_ramp->Accumulator.Shift) / duration_Ticks;
 }
 
 /* [0:UINT16_MAX] / Tick */

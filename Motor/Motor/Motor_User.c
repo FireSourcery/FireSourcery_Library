@@ -231,7 +231,8 @@ void Motor_User_SetICmd(Motor_State_T * p_motor, int16_t i_Fract16)
 /* Scalar of Config.Limit */
 void Motor_User_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
-    int32_t limitedCmd = fract16_mul(((scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16), scalar_fract16);
+    // int32_t limitedCmd = fract16_mul(((scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16), scalar_fract16);
+    int32_t limitedCmd = fract16_mul(p_motor->Config.ILimitMotoring_Fract16, scalar_fract16);
     _Motor_User_SetTorqueCmd(p_motor, limitedCmd);
 }
 
@@ -308,7 +309,8 @@ void Motor_User_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16)
 void Motor_User_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
     // if (p_motor->FeedbackMode.Speed == 1U)
-    int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(Motor_GetSpeedLimitActive(p_motor), scalar_fract16) : 0;
+    // int32_t limitedCmd = (scalar_fract16 > 0) ? fract16_mul(Motor_GetSpeedLimitActive(p_motor), scalar_fract16) : 0;
+    int32_t limitedCmd = fract16_mul(p_motor->Config.SpeedLimitForward_Fract16, scalar_fract16);
     _Motor_User_SetSpeedCmd(p_motor, limitedCmd);
 }
 
@@ -460,19 +462,20 @@ static inline int32_t _Motor_User_GetSetPoint(const Motor_State_T * p_motor) { r
 int32_t Motor_User_GetCmd(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetCmd(p_motor)); }
 int32_t Motor_User_GetSetPoint(const Motor_State_T * p_motor) { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetPoint(p_motor)); }
 
-// /*! @return [-32767:32767] <=> [-1:1] */
-// int32_t _Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
-// {
-//     int32_t cmd;
-//     if (p_motor->FeedbackMode.Speed == 1U)  { cmd = fract16_div(Ramp_GetOutput(&p_motor->SpeedRamp), INT16_MAX); }
-//     else                                    { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), MotorAnalogRef_GetIRatedPeak_Fract16()); }
-//     return cmd;
-// }
+/*! @return [-32767:32767] <=> [-1:1] */
+int32_t _Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
+{
+    int32_t cmd;
+    if (p_motor->FeedbackMode.Speed == 1U)  { cmd = fract16_div(Ramp_GetOutput(&p_motor->SpeedRamp), p_motor->Config.SpeedLimitForward_Fract16); }
+    else if (p_motor->FeedbackMode.Current == 1U) { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), p_motor->Config.ILimitMotoring_Fract16); }
+    else { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), MotorAnalog_GetVSource_Fract16() / 2); }
+    return cmd;
+}
 
-// int32_t Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
-// {
-//     return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetPoint_Scalar(p_motor));
-// }
+int32_t Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
+{
+    return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetPoint_Scalar(p_motor));
+}
 
 bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEnabled(_Motor_User_GetActiveRamp(p_motor)); }
 // static inline void Motor_User_SetRampOnOff(Motor_State_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }

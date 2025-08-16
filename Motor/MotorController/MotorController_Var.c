@@ -230,7 +230,7 @@ static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context
     if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED; }
 
     // outer module handle access control
-    if (!MotorController_StateMachine_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+    // if (!MotorController_StateMachine_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
     if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
 
     Motor_VarType_Control_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);

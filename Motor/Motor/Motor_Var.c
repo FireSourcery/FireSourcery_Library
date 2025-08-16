@@ -71,7 +71,7 @@ int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId)
         case MOTOR_VAR_ROTOR_MECHANICAL_ANGLE:   return _RotorSensor_GetMechanicalAngle(&p_motor->SensorState);
         case MOTOR_VAR_ROTOR_DIRECTION:          return _RotorSensor_GetDirection(&p_motor->SensorState);
         case MOTOR_VAR_ROTOR_SPEED_FRACT16:      return _RotorSensor_GetSpeed_Fract16(&p_motor->SensorState);
-        // case MOTOR_VAR_ROTOR_SPEED_REQ:          return PID_GetSetpoint(&p_motor->PidSpeed); /* Speed Setpoint */
+        case MOTOR_VAR_ROTOR_SPEED_REQ:          return Ramp_GetOutput(&p_motor->SpeedRamp); /* Speed Setpoint */
         // case MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS: return 0; /* todo */
         // case MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM: return 0; /* todo */
         default: return 0;
@@ -131,7 +131,7 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_USER_SET_POINT:          value = Motor_User_GetSetPoint(p_motor->P_MOTOR_STATE);                break;
+        case MOTOR_VAR_USER_SET_POINT:          value = Motor_User_GetSetPoint_Scalar(p_motor->P_MOTOR_STATE);                break;
 
         case MOTOR_VAR_USER_DIRECTION:          value = Motor_User_GetDirection(p_motor->P_MOTOR_STATE);           break;
         case MOTOR_VAR_USER_ROTARY_DIRECTION:   value = Motor_User_GetRotaryDirection(p_motor->P_MOTOR_STATE);         break;

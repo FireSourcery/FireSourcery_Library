@@ -62,8 +62,10 @@ Ramp_T;
 */
 /******************************************************************************/
 /* [-UINT16_MAX:UINT16_MAX] */
-static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Accumulator.Shift); }
-static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Accumulator.Shift); }
+// static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Accumulator.Shift); }
+// static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Accumulator.Shift); }
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return p_ramp->Target; }
+static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = target; }
 
 /*  */
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.State >> p_ramp->Accumulator.Shift); }
@@ -74,7 +76,8 @@ static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accu
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
     Ramp_SetOutput(p_ramp, match);
-    p_ramp->Target = p_ramp->Accumulator.State; /* Set Target to current output */
+    // p_ramp->Target = p_ramp->Accumulator.State; /* Set Target to current output */
+    p_ramp->Target = Ramp_GetOutput(p_ramp); /* Set Target to current output */
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
@@ -86,7 +89,7 @@ static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 /* ProcAsDisabled */
 static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
 {
-    p_ramp->Accumulator.State = p_ramp->Target;
+    p_ramp->Accumulator.State = (p_ramp->Target << p_ramp->Accumulator.Shift);
     return Ramp_GetOutput(p_ramp);
 }
 

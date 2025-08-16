@@ -124,7 +124,7 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_IC,
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_ID,
-    MOTOR_VAR_FOC_REQ_Q, // effectively TorqueRamp
+    MOTOR_VAR_FOC_REQ_Q,
     MOTOR_VAR_FOC_REQ_D,
     MOTOR_VAR_FOC_VQ,
     MOTOR_VAR_FOC_VD,
