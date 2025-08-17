@@ -226,6 +226,7 @@ static void SetKp_Fixed32(PID_T * p_pid, uint32_t kp_Fixed32)
 static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
 {
     assert(ki_Fixed32 < INT32_MAX / 2);
+    assert(p_pid->Config.SampleFreq != 0);
 
     p_pid->IntegralGainShift = math_limit_lower(15 - fixed_bit_width(ki_Fixed32 / p_pid->Config.SampleFreq), 0); /* left shift only */
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;

@@ -48,7 +48,6 @@
     @param[in] a
     @param[in] b
     @param[in] c
-    @return  void
  */
  /******************************************************************************/
 static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
@@ -131,7 +130,6 @@ static inline void foc_invclarke(fract16_t * p_a, fract16_t * p_b, fract16_t * p
     @param[in] Ialpha
     @param[in] Ibeta
     @param[in] theta - rotating frame angle in q1.15 format
-    @return void
 */
 /******************************************************************************/
 /* shared sin cos calc */
@@ -156,8 +154,8 @@ static inline void foc_park(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, f
 /*!
     @brief  Inverse Park
 
-    alpha = -q*sin(theta) + d*cos(theta)
-    beta = q*cos(theta) + d*sin(theta)
+    alpha = d*cos(theta) - q*sin(theta)
+    beta = d*sin(theta) + q*cos(theta)
 */
 /******************************************************************************/
 static inline void foc_invpark_vector(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
@@ -245,16 +243,20 @@ static inline ufract16_t foc_circle_limit_q(fract16_t magnitude_limit, fract16_t
     @param[in]  sin_theta Sine of the electrical angle.
     @param[in]  cos_theta Cosine of the electrical angle.
 */
-// static inline void foc_clarke_park
+// static inline void foc_dq0
 // (
 //     fract16_t * p_d, fract16_t * p_q,
 //     fract16_t a, fract16_t b, fract16_t c,
-//     fract16_t sin_theta, fract16_t cos_theta,
-//     fract16_t sin_theta_120, fract16_t cos_theta_120,
-//     fract16_t sin_theta_240, fract16_t cos_theta_240
+//     fract16_t cos_theta, fract16_t sin_theta,
+//     fract16_t cos_theta_120, fract16_t sin_theta_120,
+//     fract16_t cos_theta_240, fract16_t sin_theta_240
 // )
+// {
 
-// static inline void foc_clarke_park(fract16_t * p_d, fract16_t * p_q, fract16_t a, fract16_t b, fract16_t c, fract16_t sin_theta, fract16_t cos_theta)
+// }
+
+
+// static inline void foc_dq0(fract16_t * p_d, fract16_t * p_q, fract16_t a, fract16_t b, fract16_t c, fract16_t sin_theta, fract16_t cos_theta)
 // {
 //     // Precompute constants for efficiency
 //     fract16_t sin_theta_120 = fract16_mul(sin_theta, FRACT16_COS_120) - fract16_mul(cos_theta, FRACT16_SIN_120);
@@ -270,4 +272,25 @@ static inline ufract16_t foc_circle_limit_q(fract16_t magnitude_limit, fract16_t
 //     // Scale by 2/3 (precomputed as FRACT16_2_DIV_3)
 //     *p_d = fract16_sat(fract16_mul(d, FRACT16_2_DIV_3));
 //     *p_q = fract16_sat(fract16_mul(q, FRACT16_2_DIV_3));
+// }
+
+
+// static inline void foc_inv_dq0
+// (
+//     fract16_t * p_a, fract16_t * p_b, fract16_t * p_c,
+//     fract16_t d, fract16_t q,
+//     fract16_t cos_theta, fract16_t sin_theta,
+//     fract16_t cos_theta_120, fract16_t sin_theta_120,
+//     fract16_t cos_theta_240, fract16_t sin_theta_240
+// )
+// {
+//     // Compute a, b, c directly
+//     int32_t a = fract16_mul(d, cos_theta) - fract16_mul(q, sin_theta);
+//     int32_t b = fract16_mul(d, cos_theta_120) - fract16_mul(q, sin_theta_120);
+//     int32_t c = fract16_mul(d, cos_theta_240) - fract16_mul(q, sin_theta_240);
+
+//     // Scale by 3/2 (precomputed as FRACT16_3_DIV_2)
+//     *p_a = fract16_sat(fract16_mul(a, FRACT16_3_DIV_2));
+//     *p_b = fract16_sat(fract16_mul(b, FRACT16_3_DIV_2));
+//     *p_c = fract16_sat(fract16_mul(c, FRACT16_3_DIV_2));
 // }

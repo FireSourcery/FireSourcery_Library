@@ -398,10 +398,8 @@ void Motor_User_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_degPerCy
     Generic Mode
 */
 /******************************************************************************/
-/*
-    Mixed units
-*/
 /*!
+    Mixed units
     Untyped scalar to calibration ref, clamp by limit of the active mode
     @param[in] userCmd[-32768:32767] mixed units
 */
@@ -437,7 +435,9 @@ bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEn
 /*
     Unitless scalar
 */
-/* Scalar to limit */
+/*
+    Scalar to Config value for consistent user handling
+*/
 void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd)
 {
     Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
@@ -450,7 +450,7 @@ void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCm
 }
 
 /*
-    Scalar to Config value for consistent user handling
+    call mode versions when possible.
 */
 /*! @return [-32767:32767] <=> [-1:1] */
 int16_t _Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
@@ -460,7 +460,7 @@ int16_t _Motor_User_GetSetPoint_Scalar(const Motor_State_T * p_motor)
     else
     {
         if (p_motor->FeedbackMode.Current == 1U) { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), p_motor->Config.ILimitMotoring_Fract16); }
-        else                                     { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), MotorAnalog_GetVSource_Fract16() / 2); }
+        else                                     { cmd = fract16_div(Ramp_GetOutput(&p_motor->TorqueRamp), (MotorAnalog_GetVSource_Fract16() + 1) / 2); }
     }
     return cmd;
 }

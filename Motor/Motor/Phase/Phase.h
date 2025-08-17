@@ -230,9 +230,9 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
     Phase On/Off Output Control
 */
 /******************************************************************************/
-static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_High(p_pin), PWM_Enable(p_pwm)); }
+static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF((void)p_pwm; Pin_Output_High(p_pin), PWM_Enable(p_pwm)); }
 /* PWM_Disable as alt for high z */
-static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF(Pin_Output_Low(p_pin), PWM_Disable(p_pwm)); }
+static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF((void)p_pwm; Pin_Output_Low(p_pin), PWM_Disable(p_pwm)); }
 // static inline void _Phase_Enable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_High(p_pin); PWM_Enable(p_pwm); }
 // static inline void _Phase_Disable(const Pin_T * p_pin, const PWM_T * p_pwm) { Pin_Output_Low(p_pin); PWM_Disable(p_pwm); }
 

@@ -254,7 +254,7 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
     FOC Direction
 */
 /******************************************************************************/
-static inline int32_t Motor_FOC_GetVPhaseRef(void) { (fract16_mul(MotorAnalog_GetVSource_Fract16(), FRACT16_1_DIV_SQRT3)); }
+static inline int32_t Motor_FOC_GetVPhaseRef(void) { return fract16_mul(MotorAnalog_GetVSource_Fract16(), FRACT16_1_DIV_SQRT3); }
 
 static inline ufract16_t VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? Motor_FOC_GetVPhaseRef() : 0; }
 

@@ -115,34 +115,23 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     ProcVout
 */
 /*
-    Normalize V to Duty Scalar
-    [-VBus/sqrt3:VBus/sqrt3] <=> [-1:1]
-    Svpwm input as [-1:1] = VPhase/(VBus/sqrt(3))
-*/
-// static inline accum32_t _FOC_VOfVNorm(int32_t vBus_fract, fract16_t vNorm) { return fract16_mul(vNorm, fract16_mul(vBus_fract, FRACT16_1_DIV_SQRT3)); }
-// static inline accum32_t _FOC_VNormOfV(int32_t vBus_fract, fract16_t v_fract) { return fract16_div_sat(v_fract, fract16_mul(vBus_fract, FRACT16_1_DIV_SQRT3)); }
-
-/*
     Normalize V to VBus as 1.0F
     [-VBus/sqrt3:VBus/sqrt3] <=> [-1/sqrt3:1/sqrt3]
     Svpwm input as VPhase/VBus
 */
-static inline fract16_t _FOC_VOfVNorm(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
-static inline fract16_t _FOC_VNormOfV(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
-
 /*!
     @note overflow
     v_fract16 < vBus_fract16
     vBusInv_fract32 = INT32_MAX / vBus_fract16
     v_fract16 * vBusInv_fract32 < INT32_MAX
 */
+static inline fract16_t _FOC_VOfVNorm(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
+static inline fract16_t _FOC_VNormOfV(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
 static inline fract16_t _FOC_VNormOfV_VBusInv(uint32_t vBusInv_fract32, fract16_t v_fract16) { return (int32_t)v_fract16 * vBusInv_fract32 / 65536; }
 
 /* precomputed vBusInv_fract32 <=> 1.0F/VBus */
 static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
 {
-    /* Validate vBusInv is reasonable */
-    // assert(
     fract16_t vNormA = _FOC_VNormOfV_VBusInv(vBusInv_fract32, p_foc->Va);
     fract16_t vNormB = _FOC_VNormOfV_VBusInv(vBusInv_fract32, p_foc->Vb);
     fract16_t vNormC = _FOC_VNormOfV_VBusInv(vBusInv_fract32, p_foc->Vc);
@@ -171,15 +160,6 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
     foc_park_vector(&p_foc->Vd, &p_foc->Vq, p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
 }
 
-
-/* Update VBusInvScalar */
-// static inline void FOC_CaptureVBus(FOC_T * p_foc, fract16_t vBus)
-// {
-//     p_foc->VBus = vBus;
-//     p_foc->VBusInvScalar = INT32_MAX / p_foc->VBus; /* vDuty16 = vPhase/VBus */
-//     p_foc->VdLimit = fract16_mul(p_foc->VBus, FRACT16_1_DIV_SQRT3);
-//     p_foc->VPhaseLimit = fract16_mul(p_foc->VBus, FRACT16_1_DIV_SQRT3);
-// }
 
 /******************************************************************************/
 /*

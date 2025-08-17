@@ -74,5 +74,5 @@ extern void MotorAnalog_CaptureVSource_Adcu(uint16_t vSource_Adcu);
 extern uint16_t MotorAnalog_GetVSource_Fract16(void);
 extern uint16_t MotorAnalog_GetVSource_Adcu(void);
 extern uint16_t MotorAnalog_GetVSource_V(void);
-extern uint16_t MotorAnalog_GetVSourceInvScalar(void);
+extern uint32_t MotorAnalog_GetVSourceInvScalar(void);
 // extern uint16_t MotorAnalog_GetVNominal_V(void);

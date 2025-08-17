@@ -572,6 +572,8 @@ static inline uint16_t Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) 
     Ramp
 */
 /******************************************************************************/
+/* optionally cache 20khz getters */
+/* optionally move target outside */
 static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)           { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 static inline fract16_t Motor_ProcTorqueRampAsVoltage(Motor_State_T * p_motor)  { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 

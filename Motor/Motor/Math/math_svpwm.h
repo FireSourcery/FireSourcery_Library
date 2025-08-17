@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -25,16 +27,9 @@
     @file   math_svpwm.h
     @author FireSourcery
     @brief  SVPWM pure math functions.
-
 */
 /******************************************************************************/
-#ifndef MATH_SVPWM_H
-#define MATH_SVPWM_H
-
 #include "Math/Fixed/fract16.h"
-
-#include <assert.h>
-
 
 static inline fract16_t svpwm_norm_vbus_inv(int32_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
 
@@ -43,22 +38,24 @@ static inline fract16_t svpwm_norm_vbus(int32_t vBus_fract, fract16_t v_fract) {
 /*!
     @param[in] vA, vB, vC - scalars normalized to VBus as 1. range [-1/sqrt(3):1/sqrt(3)].
                             vA = 1/sqrt(3) <=> Phase A voltage output VBus/sqrt(3)
+
+    @param[out] p_dutyA, p_dutyB, p_dutyC - [0:32767]
 */
 static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    // # Find the maximum and minimum of the three phase voltages
+    // Find the maximum and minimum of the three phase voltages
     int32_t vMax = math_max(math_max(vA, vB), vC);
     int32_t vMin = math_min(math_min(vA, vB), vC);
 
-    // # Calculate the zero - sequence voltage(midclamp adjustment)
+    // Calculate the zero - sequence voltage(midclamp adjustment)
     int32_t vZero = (vMax + vMin) / 2 - FRACT16_1_DIV_2;
 
-    // # Adjust the phase voltages to ensure midclamp
+    // Adjust the phase voltages to ensure midclamp
     int32_t dutyA = vA - vZero;
     int32_t dutyB = vB - vZero;
     int32_t dutyC = vC - vZero;
 
-    // # Saturate the duty cycles to ensure they are within the range of 0 to 1
+    // Saturate the duty cycles to ensure they are within the range of 0 to 1
     *p_dutyA = fract16_sat_positive(dutyA);
     *p_dutyB = fract16_sat_positive(dutyB);
     *p_dutyC = fract16_sat_positive(dutyC);
@@ -282,4 +279,3 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
 //     *p_dutyC = fract16_sat_positive(dutyC);
 // }
 
-#endif

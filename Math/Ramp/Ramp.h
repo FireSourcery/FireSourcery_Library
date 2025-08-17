@@ -41,6 +41,10 @@
 
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
 
+#define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
+
+#define RAMP_RATE_PER_SECOND(updateFreq_Hz, ratePerS) (((int32_t)ratePerS << RAMP_SHIFT) / updateFreq_Hz)
+
 // typedef struct Ramp_Config_T
 // {
 //     uint16_t Delta;    /*   */
@@ -61,6 +65,7 @@ Ramp_T;
 
 */
 /******************************************************************************/
+/* GetInput */
 /* [-UINT16_MAX:UINT16_MAX] */
 // static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return (p_ramp->Target >> p_ramp->Accumulator.Shift); }
 // static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = (target << p_ramp->Accumulator.Shift); }
@@ -77,7 +82,7 @@ static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
     Ramp_SetOutput(p_ramp, match);
     // p_ramp->Target = p_ramp->Accumulator.State; /* Set Target to current output */
-    p_ramp->Target = Ramp_GetOutput(p_ramp); /* Set Target to current output */
+    p_ramp->Target = match; /* Set Target to current output */
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)

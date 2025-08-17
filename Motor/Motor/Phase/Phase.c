@@ -159,3 +159,10 @@ Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
 /*! */
 /******************************************************************************/
 
+// typedef enum Motor_Var_Phase
+// {
+//     MOTOR_VAR_PHASE_OUTPUT,
+//     MOTOR_VAR_PHASE_PIN_A,
+//     MOTOR_VAR_PHASE_PWM_A,
+// }
+// Motor_Var_Phase_T;

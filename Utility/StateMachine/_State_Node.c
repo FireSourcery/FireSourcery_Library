@@ -291,16 +291,28 @@ State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, 
 */
 /******************************************************************************/
 // static const uintptr_t State_AcceptInputOfMapper1 = (uintptr_t)State_AcceptInputOfMapper;
+// typedef enum
+// {
+//     id_1,
+//     id_2
+// } NodeOpId;
 
-// const void * _State_TraverseApplyGeneric(const void * const fn, State_T * p_start, State_T * p_end, void * p_context, state_input_t inputId, state_value_t inputValue)
+// struct NodeOp
+// {
+//     void * (*func)();
+//     NodeOpId id;
+// };
+// struct NodeOp t = { .func = State_AcceptInputOfMapper, .id = id_1 };
+
+//   const void * _State_TraverseApplyGeneric(struct NodeOp op, State_T * p_start, State_T * p_end, void * p_context )
 // {
 //     State_Input_T result = NULL;
 //     for (State_T * p_iterator = p_start; p_iterator != p_end; p_iterator = p_iterator->P_PARENT)
 //     {
-//         switch ((uintptr_t)fn)
+//         switch (op.id)
 //         {
 //             // case ((uintptr_t)State_AcceptInputOfMapper1): result = State_AcceptInputOfMapper1(p_iterator, p_context, inputId); break;
-//             case ((uintptr_t)State_AcceptInputOfMapper1): result = State_AcceptInputOfMapper(p_iterator, p_context, inputId); break;
+//             case id_1: result = op.func(p_iterator, p_context, inputId); break;
 //             default: result = NULL; // unsupported function
 //         }
 //         if (result != NULL) { break; }

@@ -31,7 +31,6 @@
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
 
-
 // math_angular, angle_speed
 
 typedef int32_t angle_accum32_t;

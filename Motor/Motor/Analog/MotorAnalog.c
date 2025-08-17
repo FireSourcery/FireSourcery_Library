@@ -54,7 +54,7 @@ uint16_t MotorAnalog_GetVSource_Fract16(void)  { return VSource_Fract16; }
 uint16_t MotorAnalog_GetVSource_V(void)        { return fract16_mul(VSource_Fract16, MotorAnalogRef_GetVMaxVolts()); }
 // uint16_t MotorAnalog_GetVSource_Adcu(void)     { return VSource_Fract16 >> MOTOR_ANALOG_V_FRACT16_SHIFT; }
 
-uint16_t MotorAnalog_GetVSourceInvScalar(void) { return VSourceInvScalar; }
+uint32_t MotorAnalog_GetVSourceInvScalar(void) { return VSourceInvScalar; }
 
 // uint16_t MotorAnalog_GetVSourceNominal_V(void) { return VSourceNominal_V; }
 

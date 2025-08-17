@@ -254,6 +254,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
         /* if the signal is not acquired, main will check fault flags and enter */
+        // todo transition immediately
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_context); break;
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
