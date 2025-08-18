@@ -90,20 +90,18 @@ static inline void Encoder_ModeDT_CaptureVelocity(const Encoder_T * p_encoder)
 }
 
 /*
-    Capture with derived values
-*/
-/*
     Capture Angular Speed in POLLING_FREQ
     Using FreqD to interpolate Angle
 
     FreqD * [ENCODER_ANGLE_DEGREES * PartitionsPerRevolution / CountsPerRevolution / POLLING_FREQ]
 
+    Capture with derived values
     Capture as shifted
 
     returns Degrees / POLLING_FREQ
+
+    call with Encoder_ModeDT_CaptureVelocity
 */
-/* CaptureSpeedAngle */
-/* CaptureInterpolateAngleDelta */
 static inline uint32_t Encoder_ModeDT_CapturePollingAngle(Encoder_State_T * p_encoder)
 {
     p_encoder->PollingAngleDelta = p_encoder->FreqD * p_encoder->UnitPollingAngle;

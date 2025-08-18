@@ -39,7 +39,7 @@
 typedef struct Accumulator
 {
     /* [2 * [INT16_MIN:INT16_MAX] << 15] */
-    int32_t State; /* Output as shifted */ // int32_t Accumulator;
+    int32_t State; /* Output shifted */ // int32_t Accumulator;
 
     // int32_t CoefficientRef;
     int32_t Coefficient; /* shifted */
@@ -66,8 +66,6 @@ static inline int32_t Accumulator_Add(Accumulator_T * p_accum, int16_t input)
     p_accum->State += ((int32_t)input * p_accum->Coefficient);
     return (p_accum->State >> p_accum->Shift);
 }
-
-
 
 
 

@@ -149,9 +149,9 @@ static inline fract16_t fract16_sqrt(fract16_t x)
 
 /* shift without divisor on max ref */
 /* left shift as positive */
-static inline int16_t fract16_norm_shift(int16_t value)
+static inline int8_t fract16_norm_shift(int16_t value)
 {
-    return (int16_t)(FRACT16_N_BITS - fixed_bit_width_signed(value));
+    return (int8_t)(FRACT16_N_BITS - fixed_bit_width_signed(value));
 }
 
 static inline int16_t fract16_norm_scalar(int16_t value)
@@ -163,30 +163,7 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 // {
 // }
 
-// static inline int16_t fract16_limit_scalar(uint16_t value, uint16_t max)
-// {
-//     return (value > max) ? fract16_div(max, value) : FRACT16_MAX;
-// }
 
-/* proportional on input */
-// static inline int16_t  feedback_scalar(uint16_t feedback, uint16_t limit, int16_t input)
-// static inline int16_t  feedback_scalar(int16_t input, uint16_t limit, uint16_t feedback)
-// {
-//     return (feedback > limit) ? (int32_t)input * limit / feedback : input;
-// }
-
-// // static inline int16_t limit_feedback_signed(int16_t input, int16_t lower, int16_t upper, int16_t feedback)
-// // {
-// //     int16_t result;
-// //     if      (feedback < lower) { result = (int32_t)input * lower / feedback; }
-// //     else if (feedback > upper) { result = (int32_t)input * upper / feedback; }
-// //     else                       { result = input; }
-// //     return result;
-// // }
-
-/* simplify with return by value */
-// typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */
-// typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t;
 
 /******************************************************************************/
 /*!
@@ -195,9 +172,9 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 /******************************************************************************/
 typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
-#define ANGLE16_SIGNED_MAX (INT16_MAX)
-#define ANGLE16_CYCLE (65536UL)
 #define ANGLE16_PER_REVOLUTION (65536UL)
+// #define ANGLE16_SIGNED_MAX (INT16_MAX)
+// #define ANGLE16_360 (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -231,11 +208,6 @@ static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
     return (angle16_quadrant_t)((uint16_t)theta & ANGLE16_QUADRANT_MASK);
 }
 
-static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
-{
-    return (((uint16_t)theta0 > (uint16_t)theta1) == incrementing);
-}
-
 static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
 {
     return ((uint16_t)theta0 > (uint16_t)theta1);
@@ -246,7 +218,12 @@ static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
     return ((uint16_t)theta0 < (uint16_t)theta1);
 }
 
-static inline bool angle16_cycle_by_direction(angle16_t theta0, angle16_t theta1, int16_t sign)
+static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
+{
+    return (angle16_cycle_inc(theta0, theta1) == incrementing);
+}
+
+static inline bool angle16_cycle_by_direction(angle16_t theta0, angle16_t theta1, int sign)
 {
     return ((sign > 0) == angle16_cycle_inc(theta0, theta1));
 }

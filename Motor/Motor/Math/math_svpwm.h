@@ -31,14 +31,12 @@
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
 
-static inline fract16_t svpwm_norm_vbus_inv(int32_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
-
-static inline fract16_t svpwm_norm_vbus(int32_t vBus_fract, fract16_t v_fract) { return fract16_div(v_fract, vBus_fract); }
+static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_fract32, fract16_t v_fract) { return v_fract * vBusInv_fract32 / 65536; }
+static inline fract16_t svpwm_norm_vbus(uint32_t vBus_fract, fract16_t v_fract) { return fract16_div(v_fract, vBus_fract); }
 
 /*!
-    @param[in] vA, vB, vC - scalars normalized to VBus as 1. range [-1/sqrt(3):1/sqrt(3)].
-                            vA = 1/sqrt(3) <=> Phase A voltage output VBus/sqrt(3)
-
+    @param[in] vA, vB, vC - scalars normalized to VBus as 1.0F. range [-1/sqrt3:1/sqrt3].
+                            vA = 1/sqrt3 <=> Phase A voltage output VBus/sqrt3
     @param[out] p_dutyA, p_dutyB, p_dutyC - [0:32767]
 */
 static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
@@ -63,7 +61,7 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
 
 /*!
     @param[in] a, b, c - duty scalars normalized range [-1.0F:1.0F].
-                            such that a = 1 <=> Phase A voltage output VBus/sqrt(3)
+                            such that a = 1 <=> Phase A voltage output VBus/sqrt3
 */
 // static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
 // {
@@ -100,7 +98,7 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
 
     @param[in] alpha scaled to VBus
 
-    Prescaled Normalized by a factor of sqrt(3)/2, such that alpha 1.15 => a = 1.0
+    Prescaled Normalized by a factor of sqrt3/2, such that alpha 1.15 => a = 1.0
 */
 // static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
 // {

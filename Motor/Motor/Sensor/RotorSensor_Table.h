@@ -70,7 +70,6 @@ typedef const struct RotorSensor_Table
 // #endif
     const Encoder_RotorSensor_T ENCODER;
     // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
-
     // const Encoder_T ENCODER;
     // const Hall_T HALL;
 }
@@ -107,11 +106,3 @@ static inline bool RotorSensor_Validate(const RotorSensor_Table_T * p_table, con
     return true;
 }
 
-/******************************************************************************/
-/*!
-    Var Id
-*/
-/******************************************************************************/
-extern int RotorSensor_VarType_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId);
-extern int RotorSensor_VarTypeConfig_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId);
-extern void RotorSensor_VarTypeConfig_Set(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId, int varValue);

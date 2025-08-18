@@ -58,4 +58,3 @@ static inline int32_t Filter_Avg(Filter_T * p_filter, int32_t in)
     return p_filter->Accumulator.State / p_filter->Index;
 }
 
-

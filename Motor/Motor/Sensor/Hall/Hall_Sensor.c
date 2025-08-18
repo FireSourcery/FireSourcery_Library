@@ -102,6 +102,7 @@ static void Hall_RotorSensor_SetInitial(const Hall_RotorSensor_T * p_sensor)
 
 /*!
     Hall sensors as speed encoder.
+    Config ScalarSpeed
     CPR = PolePairs*6   => GetSpeed => mechanical speed
     CPR = 6             => GetSpeed => electrical speed
 */
@@ -110,10 +111,10 @@ void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, con
     Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
     p_encoder->Config.IsQuadratureCaptureEnabled = false;
 
-    // speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle) / p_motor->Config.PolePairs
-    Encoder_SetScalarSpeedRef(p_encoder, p_config->ElSpeedRated_DegPerCycle); // ERpm
     Encoder_SetCountsPerRevolution(p_encoder, 6U);
     Encoder_SetPartitionsPerRevolution(p_encoder, 1U);
+    // speed_rpm_of_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle) / p_motor->Config.PolePairs
+    // Encoder_SetScalarSpeedRef(p_encoder, p_config->ElSpeedRated_DegPerCycle); // ERpm
 
     // if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_ERpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_ERpm); }
     // if (p_encoder->Config.CountsPerRevolution != 6U) { Encoder_SetCountsPerRevolution(p_encoder, 6U); }
@@ -125,9 +126,10 @@ void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, c
     Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
     p_encoder->Config.IsQuadratureCaptureEnabled = false;
 
-    Encoder_SetScalarSpeedRef(p_encoder, p_config->MechSpeedRated_Rpm); /* mech rpm */
     Encoder_SetCountsPerRevolution(p_encoder, p_config->PolePairs * 6U);
     Encoder_SetPartitionsPerRevolution(p_encoder, p_config->PolePairs);  /* Set for electrical cycle */
+    // speed_mech_rpm_of_el_angle16(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, p_motor->Config.SpeedRated_DegPerCycle)
+    Encoder_SetScalarSpeedRef(p_encoder, p_config->MechSpeedRated_Rpm); /* mech rpm */
 
     // if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
     // if (p_encoder->Config.CountsPerRevolution != polePairs * 6U) { Encoder_SetCountsPerRevolution(p_encoder, polePairs * 6U); }

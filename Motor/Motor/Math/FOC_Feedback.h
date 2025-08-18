@@ -49,17 +49,17 @@
 //     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, p_foc->ReqQ);
 // }
 
-// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// static void ProcIFeedback(FOC_T * p_foc, int16_t idReq, int16_t iqReq)
 // {
 //     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
 //     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
 //     FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalog_GetVSource_Fract16());
 // }
 
-// void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
+// void Motor_FOC_MatchFeedbackState(FOC_T * p_foc,)
 // {
 //     // int32_t vq = Motor_GetVSpeed_Fract16(p_motor) / 2; // match without ad sampling
-//     int16_t vq = FOC_GetVMagnitude(&p_motor->Foc) * p_motor->Direction;
+//     int16_t vq = FOC_GetVMagnitude(&p_foc) * p_foc->Direction;
 //     int16_t qReq;
 
 //     if (p_motor->FeedbackMode.Current == 1U)

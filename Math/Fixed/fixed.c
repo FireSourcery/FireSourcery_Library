@@ -110,6 +110,7 @@ uint8_t fixed_bit_width(uint32_t x)
 uint8_t fixed_bit_width_signed(int32_t x)
 {
     return fixed_bit_width(math_abs(x));
+    //  - _leading_sign_bits
 }
 
 /* leading zeros */
@@ -146,7 +147,6 @@ uint8_t fixed_log2(uint32_t x)
 */
 uint8_t fixed_log2_ceiling(uint32_t x)
 {
-    // fixed_log2(x - 1U) + 1U;
     return (x == 0U) ? 0U : fixed_bit_width(x - 1U);
 }
 

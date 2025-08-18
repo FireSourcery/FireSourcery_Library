@@ -31,39 +31,3 @@
 #include "RotorSensor_Table.h"
 
 
-/******************************************************************************/
-/*!
-    Var Id
-*/
-/******************************************************************************/
-// int RotorSensor_VarType_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId)
-// {
-//     switch (typeId)
-//     {
-//         // case ROTOR_SENSOR_ID_HALL:    return Hall_VarId_Get(&p_table->HALL.HALL, varId); break;
-//         case ROTOR_SENSOR_ID_ENCODER: return Encoder_ModeDT_VarId_Get(p_table->ENCODER.ENCODER.P_STATE, varId); break;
-//             // case ROTOR_SENSOR_ID_SIN_COS: return SinCos_VarId_Get(&p_table->SIN_COS.SIN_COS, varId); break;
-//             // case ROTOR_SENSOR_ID_SENSORLESS: return Sensorless_VarId_Get(&p_table->SENSORLESS.SENSORLESS, varId); break;
-//         default: return 0; // or some error value
-//     }
-// }
-
-// int RotorSensor_VarTypeConfig_Get(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId)
-// {
-//     switch (typeId)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:    return _Hall_ConfigId_Get(p_table->HALL.HALL.P_STATE, varId); break;
-//         case ROTOR_SENSOR_ID_ENCODER: return _Encoder_ConfigId_Get(p_table->ENCODER.ENCODER.P_STATE, varId); break;
-//     }
-// }
-
-// void RotorSensor_VarTypeConfig_Set(const RotorSensor_Table_T * p_table, RotorSensor_Id_T typeId, int varId, int varValue)
-// {
-//     switch (typeId)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:      Hall_ConfigId_Set(&p_table->HALL.HALL, varId, varValue);            break;
-//         case ROTOR_SENSOR_ID_ENCODER:   Encoder_ConfigId_Set(&p_table->ENCODER.ENCODER, varId, varValue);   break;
-//         default: break;
-//     }
-//     // if (varId == HALL_CONFIG_RUN_CALIBRATION) { Motor_Hall_Calibrate(&p_table->HALL.HALL); return; }
-// }

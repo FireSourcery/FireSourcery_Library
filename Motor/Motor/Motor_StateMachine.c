@@ -248,9 +248,9 @@ static void Passive_Proc(const Motor_T * p_motor)
 static State_T * Passive_Next(const Motor_T * p_motor)
 {
     // auto return to stop state
-    // return (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
+    // return (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
 
-    // if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) > 0)
+    // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) > 0)
     // {
     //     if (Motor_IsHold(p_motor) == false) { _StateMachine_Transition(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
     //     else                                { }
@@ -269,8 +269,8 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
             break;
         case PHASE_OUTPUT_V0:
             /* Effectively Run cmd V0, without Ramp/Feedback Loop */
-            // if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) < ) { Phase_ActivateOutputV0(&p_motor->PHASE); }
-            // if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U) { Phase_ActivateOutputV0(&p_motor->PHASE); }
+            // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < ) { Phase_ActivateOutputV0(&p_motor->PHASE); }
+            // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { Phase_ActivateOutputV0(&p_motor->PHASE); }
             break;
         case PHASE_OUTPUT_VPWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
@@ -281,7 +281,7 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
                     // Motor_ZeroSensor(p_motor);
                     p_nextState = &MOTOR_STATE_RUN;
                 }
-                else if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
+                else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
                 {
                     p_nextState = &MOTOR_STATE_OPEN_LOOP;
                     /* p_nextState = Motor_Sensor_GetStartUpState(p_motor); */ /* get substate */
@@ -300,7 +300,7 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
 {
     State_T * p_nextState = NULL;
 
-    if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) == 0U) //todo ceck
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) //todo ceck
     {
         /* validate direction */
         switch ((Motor_Direction_T)direction)
@@ -383,7 +383,7 @@ static void Run_Proc(const Motor_T * p_motor)
 // static State_T * Run_Next(const Motor_T * p_motor)
 // {
 //     State_T * p_nextState = NULL;
-//     if (Motor_GetSpeed_Fract16(p_motor->P_MOTOR_STATE) < ) { p_nextState = &MOTOR_STATE_; }
+//     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < ) { p_nextState = &MOTOR_STATE_; }
 //     return p_nextState;
 // }
 

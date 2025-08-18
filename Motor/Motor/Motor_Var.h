@@ -140,13 +140,13 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_ID,
     MOTOR_VAR_FOC_REQ_Q,
     MOTOR_VAR_FOC_REQ_D,
-    // MOTOR_VAR_FOC_IQ_REQ,
-    // MOTOR_VAR_FOC_ID_REQ,
     MOTOR_VAR_FOC_VQ,
     MOTOR_VAR_FOC_VD,
     MOTOR_VAR_FOC_VA,
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
+    // MOTOR_VAR_FOC_IQ_REQ, /* without buffer, use torque ramp for speed output */
+    // MOTOR_VAR_FOC_ID_REQ,
     MOTOR_VAR_FOC_INTEGRAL_Q,
     MOTOR_VAR_FOC_INTEGRAL_D,
 }
@@ -402,10 +402,10 @@ typedef enum Motor_VarType_Control
 {
     MOTOR_VAR_TYPE_USER_OUT, // MOTOR_VAR_TYPE_STATE_USER,
     MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
+    // MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
     MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
     MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
-    // MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
 }
 Motor_VarType_Control_T;
 

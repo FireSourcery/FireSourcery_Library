@@ -81,12 +81,13 @@ void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
+    p_motor->Config.SpeedRated_DegPerCycle = Motor_GetSpeedVSvpwmRef_DegPerCycle(p_motor); /* option select with commutation mode */
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t controlDeg)
 {
-    p_motor->Config.SpeedRated_DegPerCycle = math_max(controlDeg, Motor_GetSpeedVRef_DegPerCycle(p_motor));
+    p_motor->Config.SpeedRated_DegPerCycle = math_max(controlDeg, Motor_GetSpeedVSvpwmRef_DegPerCycle(p_motor));
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 

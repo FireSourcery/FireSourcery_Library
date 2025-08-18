@@ -109,16 +109,6 @@ int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId)
     IO
 */
 /******************************************************************************/
-/* call handle switch logic */
-// void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue)
-// {
-// // case MOTOR_VAR_USER_CMD:        Motor_User_SetActiveCmdValue(p_motor, varValue);  break;
-// // case MOTOR_VAR_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor, varValue);        break;
-// // case MOTOR_VAR_CMD_CURRENT:     Motor_User_SetICmd(p_motor, varValue);            break;
-// // case MOTOR_VAR_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor, varValue);      break;
-// // case MOTOR_VAR_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor, varValue);     break;
-// // case MOTOR_VAR_CMD_OPEN_LOOP:   Motor_User_SetOpenLoopCmd(p_motor, varValue);     break;
-// }
 
 /******************************************************************************/
 /*
@@ -182,6 +172,21 @@ void _Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
         case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
         // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
+    }
+}
+
+/* caller handle switch logic */
+void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue)
+{
+    switch (varId)
+    {
+        // case MOTOR_VAR_USER_CMD:             Motor_User_SetActiveCmdValue(p_motor->P_MOTOR_STATE, varValue);  break;
+        case MOTOR_VAR_USER_CMD_SPEED:       Motor_User_SetSpeedCmd(p_motor->P_MOTOR_STATE, varValue);        break;
+        case MOTOR_VAR_USER_CMD_CURRENT:     Motor_User_SetICmd(p_motor->P_MOTOR_STATE, varValue);            break;
+        case MOTOR_VAR_USER_CMD_VOLTAGE:     Motor_User_SetVoltageCmd(p_motor->P_MOTOR_STATE, varValue);      break;
+            // case MOTOR_VAR_USER_CMD_ANGLE:       Motor_User_SetPositionCmd(p_motor->P_MOTOR_STATE, varValue);     break;
+        // case MOTOR_VAR_USER_CMD_OPEN_LOOP_TORQUE: Motor_User_SetOpenLoopCmd(p_motor->P_MOTOR_STATE, varValue); break;
+        default: break;
     }
 }
 
@@ -445,6 +450,7 @@ int Motor_VarType_Control_Get(const Motor_T * p_motor, Motor_VarType_Control_T t
 
 // access control use on/off flag, or caller handle
 // mapping to statemachine requires multiple substate.
+/* Var Access Control cannot use StateMachine directly */
 void Motor_VarType_Control_Set(const Motor_T * p_motor, Motor_VarType_Control_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) { return; }
@@ -455,8 +461,9 @@ void Motor_VarType_Control_Set(const Motor_T * p_motor, Motor_VarType_Control_T 
         case MOTOR_VAR_TYPE_ROTOR_OUT:           break;
         case MOTOR_VAR_TYPE_FOC_OUT:             break;
         /* Access Control on */
-        case MOTOR_VAR_TYPE_USER_CONTROL:       _Motor_Var_UserControl_Set(p_motor, varId, varValue);    break;
-        case MOTOR_VAR_TYPE_STATE_CMD:          _Motor_Var_StateCmd_Set(p_motor, varId, varValue);       break;
+        case MOTOR_VAR_TYPE_USER_CONTROL:       _Motor_Var_UserControl_Set(p_motor, varId, varValue);     break;
+        // case MOTOR_VAR_TYPE_USER_SETPOINT:      _Motor_Var_UserSetpoint_Set(p_motor, varId, varValue);    break;
+        case MOTOR_VAR_TYPE_STATE_CMD:          _Motor_Var_StateCmd_Set(p_motor, varId, varValue);        break;
     }
 }
 
@@ -476,6 +483,7 @@ int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typ
     return 0;
 }
 
+/* Config Access Control use StateMachine */
 void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) { return; }

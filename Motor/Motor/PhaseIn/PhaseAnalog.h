@@ -25,7 +25,6 @@
 // PhaseIn_T;
 // PhaseAnalog_T;
 
-
 // typedef const struct PhaseAnalog
 // {
 

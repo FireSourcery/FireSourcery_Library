@@ -33,10 +33,7 @@
 
 // #include "../Math/math_speed.h"
 
-static inline RotorSensor_T * Sensor(const Motor_T * p_motor)
-{
-    return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode);
-}
+static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 
 /******************************************************************************/
 /*
@@ -59,8 +56,6 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
     if (p_motor->P_MOTOR_STATE->Config.SensorMode != varId) return;
 
     // RotorSensor_Calibrate(p_motor->P_MOTOR_STATE->p_ActiveSensor, p_motor, varId, varValue);
-
-
     switch (varId)
     {
         case ROTOR_SENSOR_ID_HALL:

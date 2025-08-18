@@ -139,7 +139,7 @@ void Motor_ResetBaseOpenLoopILimit(Motor_State_T * p_motor)
 
 void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
 {
-    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, INT16_MAX);
+    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, INT16_MAX); /* As normalized Mech Speed */
     // Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, p_motor->Config.SpeedRated_DegPerCycle);
     // Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, p_motor->Config.SpeedLimitForward_DegPerCycle);
 }
@@ -206,19 +206,6 @@ static void ApplyILimit(Motor_State_T * p_motor)
 //             Ramp_SetTarget(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)));
 //         }
 //     }
-
-    // alternatively,
-    // if (p_motor->FeedbackMode.Current == 1U)
-    // {
-    //     if (p_motor->FeedbackMode.Speed == 1U)  /* limit is applied on feedback */
-    //     {
-    //         PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
-    //     }
-    //     else /* limit is applied on input */
-    //     {
-    //         Ramp_SetOutput(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)));
-    //     }
-    // }
 }
 
 /******************************************************************************/
@@ -300,6 +287,16 @@ void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16
     p_motor->SpeedLimitReverse_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
     if (Motor_IsDirectionReverse(p_motor) == true) { ApplySpeedLimit(p_motor); }
 }
+
+// void Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// {
+//     // set both, use one side
+//     // math_limit_upper(speed_ufract16, (p_motor->Direction == p_motor->Config.DirectionForward) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16);
+//     // p_motor->SpeedLimitForward_Fract16 = speed_ufract16;
+//     // p_motor->SpeedLimitReverse_Fract16 = speed_ufract16;
+//     p_motor->SpeedLimit_DegPerCycle = speed_ufract16;
+//     ApplySpeedLimit(p_motor);
+// }
 
 /* As scalar of base config */
 void Motor_SetSpeedLimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16)

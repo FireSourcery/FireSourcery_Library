@@ -57,7 +57,7 @@
 
 // static inline accum32_t MotorAnalogRef_V_Fract16(int16_t adcuScale) { return adcuScale * MOTOR_ANALOG_V_FRACT16_ADCU_SCALAR; }
 // static inline accum32_t MotorAnalogRef_I_Fract16(int16_t adcuScale) { return adcuScale * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
-// static inline fract16_t MotorAnalogRef_I_Fract16_Raw(uint16_t zero, uint16_t adcu) { return (adcu - zero) * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
+// static inline fract16_t MotorAnalogRef_I_Fract16(uint16_t zero, uint16_t adcu) { return (adcu - zero) * MOTOR_ANALOG_I_FRACT16_ADCU_SCALAR; }
 
 /******************************************************************************/
 /*

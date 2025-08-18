@@ -38,7 +38,7 @@ typedef enum sign { SIGN_NEGATIVE = -1, SIGN_ZERO = 0, SIGN_POSITIVE = 1 } sign_
 /* +1, 0, -1 */
 static inline sign_t math_sign(int32_t value) { return (value > 0) - (value < 0); }
 static inline bool math_is_sign_diff(int32_t value1, int32_t value2) { return ((value1 ^ value2) < 0); }
-// static inline sign_t math_sign_diff(int32_t value1, int32_t value2) { return math_sign(value1 - value2); }
+// static inline sign_t math_sign_diff(int32_t value1, int32_t value2) { return math_sign(value1) - math_sign(value2); }
 
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
@@ -64,13 +64,6 @@ static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int
 static inline bool math_is_in_range(int32_t value, int32_t lower, int32_t upper) { return (value >= lower) && (value <= upper); }
 static inline bool math_is_out_of_range(int32_t value, int32_t lower, int32_t upper) { return (value < lower) || (value > upper); }
 
-/* alias */
-static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
-static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
-// static inline int32_t limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
-// static inline int32_t limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
-// static inline int32_t limit_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
-
 /* positive as lshift */
 static inline int32_t math_shift_signed(int32_t value, int8_t shift) { return (shift > 0) ? (value << shift) : (value >> (-shift)); }
 
@@ -95,5 +88,36 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
     return result;
 #endif
 }
+
+
+
+/* alias */
+static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
+static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
+// static inline int32_t limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
+// static inline int32_t limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
+// static inline int32_t limit_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
+
+// static inline int16_t fract16_limit_scalar(uint16_t value, uint16_t max)
+// {
+//     return (value > max) ? fract16_div(max, value) : FRACT16_MAX;
+// }
+
+/* proportional on input */
+// static inline int16_t  feedback_scalar(uint16_t feedback, uint16_t limit, int16_t input)
+// static inline int16_t  feedback_scalar(int16_t input, uint16_t limit, uint16_t feedback)
+// {
+//     return (feedback > limit) ? (int32_t)input * limit / feedback : input;
+// }
+
+// // static inline int16_t limit_feedback_signed(int16_t input, int16_t lower, int16_t upper, int16_t feedback)
+// // {
+// //     int16_t result;
+// //     if      (feedback < lower) { result = (int32_t)input * lower / feedback; }
+// //     else if (feedback > upper) { result = (int32_t)input * upper / feedback; }
+// //     else                       { result = input; }
+// //     return result;
+// // }
+
 
 

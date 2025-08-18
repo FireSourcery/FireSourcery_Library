@@ -31,9 +31,9 @@
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
 
-// math_angular, angle_speed
+// math_angular, math_rotor, angle_speed
 
-typedef int32_t angle_accum32_t;
+// typedef int32_t angle_accum32_t;
 
 /*
     [Delta Angle] at [Polling Freq]. Angle Per Poll

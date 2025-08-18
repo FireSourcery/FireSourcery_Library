@@ -150,7 +150,7 @@ angle16_t fract16_atan2(fract16_t y, fract16_t x)
 
 /*
     vector_init
-    Can compiler optimize into single switch?
+    let compiler optimize into single switch
 */
 void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta)
 {

@@ -72,7 +72,7 @@ inline void Motor_User_Release(const Motor_T * p_motor) { StateMachine_ApplyInpu
 
 inline void Motor_User_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
-//validate enum
+// validate enum
 inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 /******************************************************************************/
@@ -201,11 +201,6 @@ void Motor_User_SetVoltageCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fra
     Motor_User_SetVoltageCmd(p_motor, fract16_mul(MotorAnalog_GetVSource_Fract16() / 2, scalar_fract16));
 }
 
-// [v/2 +/- scalar * ]
-// void Motor_User_SetVSpeedScalarCmd(Motor_State_T * p_motor, int16_t scalar_fract16)
-// {
-//     // Motor_User_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 2);
-// }
 
 /* todo */
 void _Motor_User_SetVRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16)
@@ -231,7 +226,7 @@ void Motor_User_SetICmd(Motor_State_T * p_motor, int16_t i_Fract16)
     _Motor_User_SetTorqueCmd(p_motor, math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor)));
 }
 
-/* Scalar of Config.Limit */
+/* Scalar of Config.Limit - consistent through runtime. set by user. */
 void Motor_User_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
     Motor_User_SetICmd(p_motor, fract16_mul(p_motor->Config.ILimitMotoring_Fract16, scalar_fract16));
