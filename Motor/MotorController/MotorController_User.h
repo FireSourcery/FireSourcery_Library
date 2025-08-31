@@ -43,7 +43,7 @@
     Pass 2+ arguments. Host does not retain var value state.
     optionally return a status
 
-    Directly as VarTypeId, MotVarId_Type_SystemCommand
+    Optionally, Directly as VarType
 */
 typedef enum MotorController_User_SystemCmd
 {
@@ -52,14 +52,13 @@ typedef enum MotorController_User_SystemCmd
     /* alterntively as general */
     MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL,  // Force Disable control Non StateMachine checked, also handled via MOT_PACKET_STOP_ALL
     MOT_USER_SYSTEM_CLEAR_FAULT,            // Fault State / Flags
+    MOT_USER_SYSTEM_RX_WATCHDOG,        // on/off
     MOT_USER_SYSTEM_LOCK_STATE_INPUT,       // MotorController_LockId_T as input: Nvm, Calibration
     // MOT_USER_SYSTEM_LOCK_STATE_EXIT,
     MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // MotorController_LockId_T as status
     MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // Async operation status. optionally pass MotorController_LockId_T for selection
     MOT_USER_SYSTEM_MAIN_MODE_INPUT,
-    MOT_USER_SYSTEM_RX_WATCHDOG,        // on/off
-    // MOT_USER_SYSTEM_SERVO, // servo mode
-    // MOT_USER_SYSTEM_BEEP_CMD, /* disable/enable/config */
+    MOT_USER_SYSTEM_STATE_COMMAND,      // State Command
 //     // MOT_VAR_TYPE_COMMAND_METER, move to other services
 //     // MOT_VAR_TYPE_COMMAND_RELAY,
 //     MOT_VAR_TYPE_COMMAND_NVM,
@@ -67,6 +66,7 @@ typedef enum MotorController_User_SystemCmd
     _MOT_USER_SYSTEM_CMD_END = 16U,
 }
 MotorController_User_SystemCmd_T;
+
 
 // typedef enum MotorController_User_GenericStatus
 // {
@@ -76,7 +76,7 @@ MotorController_User_SystemCmd_T;
 // MotorController_User_GenericStatus_T;
 
 
-/* MultiState SubState - Drive State */
+
 // typedef enum MotorController_Direction
 // {
 //     MOTOR_CONTROLLER_DIRECTION_PARK,
@@ -87,6 +87,16 @@ MotorController_User_SystemCmd_T;
 // }
 // MotorController_Direction_T;
 
+// typedef union MotorController_Direction
+// {
+//     struct
+//     {
+//         uint16_t IsPark     : 1U;
+//         uint16_t Direction  : 2U; // 0 => ZERO, 1 => FORWARD, 3 => REVERSE
+//     };
+//     uint16_t Value;
+// }
+// MotorController_Direction_T;
 
 /******************************************************************************/
 /*
@@ -141,12 +151,13 @@ static inline void MotorController_User_SetFeedbackMode_Cast(const MotorControll
 
 /*
     Input Modes Common
+   only 1 value of this var is valid in other modes
 */
-static inline void MotorController_User_SetPark(const MotorController_T * p_context) {
-    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
-    // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
-    MotorController_User_ApplyMotorsCmd(p_context);
-}
+// static inline void MotorController_User_SetPark(const MotorController_T * p_context) {
+//     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
+//     // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
+//     MotorController_User_ApplyMotorsCmd(p_context);
+// }
 
 /******************************************************************************/
 /*

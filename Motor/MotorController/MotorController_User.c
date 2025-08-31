@@ -78,6 +78,10 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
             status = MotorController_User_GetLockOpStatus(p_context);
             break;
 
+        case MOT_USER_SYSTEM_STATE_COMMAND:
+            MotorController_StateMachine_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
+            break;
+
         case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
             MotorController_User_InputMainMode(p_context, (MotorController_MainMode_T)value);
             status = 0;

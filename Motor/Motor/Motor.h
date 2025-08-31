@@ -43,7 +43,6 @@
 #include "Sensor/RotorSensor_Table.h"
 #include "Sensor/RotorSensor.h"
 
-#include "Math/Angle/math_angle_speed.h"
 #include "Math/FOC.h"
 
 #include "Peripheral/Analog/Analog.h"
@@ -53,13 +52,14 @@
 #include "Transducer/Encoder/Encoder_ISR.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 
-// #include "Utility/Var/VarAccess.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Utility/Timer/Timer.h"
 #include "Utility/LimitArray/LimitArray.h"
+// #include "Utility/Var/VarAccess.h"
 
 #include "Math/Fixed/fixed.h"
+#include "Math/Angle/Angle.h"
 #include "Math/Linear/Linear.h"
 #include "Math/Ramp/Ramp.h"
 #include "Math/PID/PID.h"

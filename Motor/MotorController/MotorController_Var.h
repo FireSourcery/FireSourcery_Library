@@ -85,10 +85,9 @@ typedef enum MotorController_Var_Input
     MOT_VAR_USER_GENERAL_DIRECTION,          //
     MOT_VAR_USER_GENERAL_FEEDBACK_MODE,      //
     MOT_VAR_USER_GENERAL_PHASE_OUTPUT,       // includes release/hold/float
-
+    // MOT_VAR_USER_ENTER_PARK,
     MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
-
     MOT_VAR_USER_RELAY_TOGGLE,
     MOT_VAR_USER_METER_TOGGLE,
 }
@@ -240,7 +239,7 @@ typedef enum MotVarId_HandlerType
     MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
+    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /*  */
     _MOT_VAR_ID_HANDLER_TYPE_END,
 }
 MotVarId_HandlerType_T;

@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Peripheral/Analog/AnalogReference.h"
+#include "Peripheral/Analog/Analog_Reference.h"
 #include "Peripheral/Analog/Linear_ADC.h"
 
 #include <stdint.h>

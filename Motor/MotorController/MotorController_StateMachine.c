@@ -125,7 +125,7 @@ static State_T * GetMainState(const MotorController_T * p_context)
     MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_DIRECTION_STOP
     MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_DIRECTION_FORWARD
     MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_DIRECTION_REVERSE
-    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => (Drive Mode Only)
+    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
     MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
 */
 // alternatively map getters
@@ -307,7 +307,7 @@ static State_T * Park_Next(const MotorController_T * p_context)
 
         switch (p_input->Direction)
         {
-            case MOTOR_DIRECTION_STOP:    break; //optionally apply V0 or VFLOAT
+            case MOTOR_DIRECTION_STOP:    break; // optionally apply V0 or VFLOAT
             case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
             case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
             default:  break;
@@ -409,12 +409,22 @@ static void Main_Proc(const MotorController_T * p_context)
 //     // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { return &STATE_PARK; }
 // }
 
+static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
+{
+    switch (cmd)
+    {
+        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputLock(p_context, cmd);
+        default:  break;
+    }
+}
+
 /*
     Transition to Lock to select substate
 */
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
+    [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
+    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Main_InputStateCmd,
     // [MCSM_INPUT_LOCK] = (State_Input_T)Main_InputLock,
 };
 
@@ -434,6 +444,7 @@ const State_T MC_STATE_MAIN =
     Motor States: PASSIVE, RUN, OPEN_LOOP
 
     Call handles enabling disabling output, FeedbackMode
+    optionally move neutral to top state
 */
 /******************************************************************************/
 static void Motors_Entry(const MotorController_T * p_context)
@@ -490,12 +501,12 @@ static State_T * Motors_Next(const MotorController_T * p_context)
 
     if (p_input->IsUpdated == true)
     {
-        if (p_input->Direction == MOTOR_DIRECTION_STOP)
-        {
-            if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-            // else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_STOP); }
-            // Common_InputPark(&p_context->MOTORS);
-        }
+        // if (p_input->Direction == MOTOR_DIRECTION_STOP)
+        // {
+        //     if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
+        //     // else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_STOP); }
+        //     // Common_InputPark(&p_context->MOTORS);
+        // }
 
         MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // applies inputs including MOTOR_DIRECTION_STOP
         p_input->IsUpdated = false;
@@ -561,21 +572,21 @@ void MotDrive_Proc(const MotorController_T * p_context)
 }
 
 
-static State_T * MotDrive_Next(const MotorController_T * p_context) {
+// static State_T * MotDrive_Next(const MotorController_T * p_context) {
 
-    Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput; // common
-    State_T * p_nextState = NULL;
+//     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput; // common
+//     State_T * p_nextState = NULL;
 
-    if (p_input->IsUpdated == true)
-    {
-        if (p_input->Direction == MOTOR_DIRECTION_STOP) /* common for stop, or use separate  */
-        {
-            p_nextState = Common_InputPark(p_context);
-        }
-        p_input->IsUpdated = false;
-    }
-    return p_nextState;
-}
+//     if (p_input->IsUpdated == true)
+//     {
+//         if (p_input->Direction == MOTOR_DIRECTION_STOP) /* common for stop, or use separate  */
+//         {
+//             p_nextState = Common_InputPark(p_context);
+//         }
+//         p_input->IsUpdated = false;
+//     }
+//     return p_nextState;
+// }
 
 
 const State_T MC_STATE_MAIN_MOT_DRIVE =
@@ -626,25 +637,25 @@ static void Lock_Proc(const MotorController_T * p_context)
     // _StateMachine_ProcBranch_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
 
-static State_T * Lock_Next(const MotorController_T * p_context)
-{
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+// static State_T * Lock_Next(const MotorController_T * p_context)
+// {
+//     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    Motor_User_Input_T * p_input = &p_mc->CmdInput;
-    State_T * p_nextState = NULL;
+//     Motor_User_Input_T * p_input = &p_mc->CmdInput;
+//     State_T * p_nextState = NULL;
 
-    // if (p_mc->FaultFlags.Value != 0U) { return &STATE_FAULT; }
-    if (p_input->IsUpdated == true)
-    {
-        if (p_input->Direction == MOTOR_DIRECTION_STOP) /* common for stop, or use separate  */
-        {
-            p_nextState = Common_InputPark(p_context);
-        }
-        p_input->IsUpdated = false;
-    }
-    return p_nextState;
+//     // if (p_mc->FaultFlags.Value != 0U) { return &STATE_FAULT; }
+//     if (p_input->IsUpdated == true)
+//     {
+//         if (p_input->Direction == MOTOR_DIRECTION_STOP) /* common for stop, or use separate  */
+//         {
+//             p_nextState = Common_InputPark(p_context);
+//         }
+//         p_input->IsUpdated = false;
+//     }
+//     return p_nextState;
 
-}
+// }
 
 /* Lock SubState/Cmd by passed value */
 /* alternatively StateMachine_TransitionInput_T replace lockId */
@@ -716,6 +727,15 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
     return p_nextState;
 }
 
+static State_T * Lock_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
+{
+    switch (cmd)
+    {
+        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputLock(p_context, cmd);
+        default:  break;
+    }
+}
+
 /* Transition from lock only */
 /* for run time experimental mode without reboot. alternatively on init only */
 static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
@@ -731,9 +751,10 @@ static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_v
 
 static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]      = (State_Input_T)TransitionFault,
-    [MCSM_INPUT_LOCK]       = (State_Input_T)Lock_InputLockOp_Blocking,
-    [MCSM_INPUT_MAIN_MODE]  = (State_Input_T)Lock_InputMainMode,
+    [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
+    [MCSM_INPUT_LOCK]           = (State_Input_T)Lock_InputLockOp_Blocking,
+    [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Lock_InputMainMode,
+    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Lock_InputStateCmd,
 };
 
 const State_T MC_STATE_LOCK =
@@ -741,7 +762,7 @@ const State_T MC_STATE_LOCK =
     .ID                 = MCSM_STATE_ID_LOCK,
     .ENTRY              = (State_Action_T)Lock_Entry,
     .LOOP               = (State_Action_T)Lock_Proc,
-    .NEXT               = (State_InputVoid_T)Lock_Next,
+    // .NEXT               = (State_InputVoid_T)Lock_Next,
     .P_TRANSITION_TABLE = &LOCK_TRANSITION_TABLE[0U],
 };
 

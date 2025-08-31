@@ -88,12 +88,6 @@ typedef enum MotorController_MainMode
 }
 MotorController_MainMode_T;
 
-// struct MotorController_Direction
-// {
-//     Motor_User_Direction_T motorDirection : 2U;
-//     bool isParkMode : 1U;
-// };
-
 /*
     InputMux
 */
@@ -259,7 +253,6 @@ typedef const struct MotorController
     Blinky_T METER;
     Pin_T RELAY_PIN;
 
-    /* Peripheral */
     Socket_T * P_PROTOCOLS;  /* Sockets */
     uint8_t PROTOCOL_COUNT;
     uint8_t USER_PROTOCOL_INDEX; /* The corresponding Xcvr will not be changed for now */

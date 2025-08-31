@@ -51,39 +51,6 @@
 #endif
 
 /******************************************************************************/
-/*!
-    Feedback On/Off
-    Ouput Float/V0/VPWM
-
-    Run
-    Feedback On / Ouput VPWM
-
-    Passive
-    Feedback Off / Ouput VFloat
-    Feedback Off / Ouput V0 - optionally
-
-    Stop
-    Feedback Off / Ouput VFloat / 0 speed
-    Feedback Off / Ouput V0 / 0 speed
-
-    OpenLoop
-    Torque Loop On/Off + Float/V0/VPWM
-*/
-/******************************************************************************/
-typedef enum Motor_StateId
-{
-    MSM_STATE_ID_INIT,
-    MSM_STATE_ID_STOP,      /* 0 speed. */
-    MSM_STATE_ID_PASSIVE,   /* without feedback */
-    // MSM_STATE_ID_FREEWHEEL,
-    MSM_STATE_ID_RUN,       /* Feedback Loop */
-    MSM_STATE_ID_OPEN_LOOP,
-    MSM_STATE_ID_CALIBRATION,
-    MSM_STATE_ID_FAULT,
-}
-Motor_StateId_T;
-
-/******************************************************************************/
 /*
     Motor State Machine Inputs
 */
@@ -100,7 +67,23 @@ typedef enum Motor_State_Input
 }
 Motor_State_Input_T;
 
-
+/******************************************************************************/
+/*!
+    @brief  Motor State IDs
+*/
+/******************************************************************************/
+typedef enum Motor_StateId
+{
+    MSM_STATE_ID_INIT,
+    MSM_STATE_ID_STOP,      /* 0 speed. */ //  Feedback Off + Ouput VFloat / V0 / 0 speed
+    MSM_STATE_ID_PASSIVE,   /* without feedback */ // Feedback Off + Ouput VFloat / V0 - optionally
+    // MSM_STATE_ID_FREEWHEEL,
+    MSM_STATE_ID_RUN,       /* Feedback Loop */ // Feedback On + Ouput VPWM
+    MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + Float/V0/VPWM */
+    MSM_STATE_ID_CALIBRATION,
+    MSM_STATE_ID_FAULT,
+}
+Motor_StateId_T;
 
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;

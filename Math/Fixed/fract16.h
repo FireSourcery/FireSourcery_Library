@@ -227,12 +227,12 @@ static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
     return ((uint16_t)theta0 < (uint16_t)theta1);
 }
 
-static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
-{
-    return (angle16_cycle_inc(theta0, theta1) == incrementing);
-}
+// static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
+// {
+//     return (angle16_cycle_inc(theta0, theta1) == incrementing);
+// }
 
-static inline bool angle16_cycle_by_direction(angle16_t theta0, angle16_t theta1, int sign)
+static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, int sign)
 {
     return ((sign > 0) == angle16_cycle_inc(theta0, theta1));
 }
