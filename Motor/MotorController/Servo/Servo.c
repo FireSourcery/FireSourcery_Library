@@ -70,12 +70,12 @@ static State_T * Servo_InputCmd(MotorController_T * p_mc, state_value_t cmdValue
 // static State_T * Servo_InputDirection(MotorController_T * p_mc, state_value_t direction)
 // {
 //     State_T * p_nextState = NULL;
-//     switch((MotDrive_Direction_T)direction)
+//     switch((MotorController_Direction_T)direction)
 //     {
-//         case MOT_DRIVE_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
-//         case MOT_DRIVE_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL; break;
-//         case MOT_DRIVE_DIRECTION_FORWARD:    p_nextState = MotorController_SetDirectionForwardAll(p_mc) ? &STATE_DRIVE : NULL; break;
-//         case MOT_DRIVE_DIRECTION_REVERSE:    p_nextState = MotorController_SetDirectionReverseAll(p_mc) ? &STATE_DRIVE : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_PARK:       p_nextState = MotorController_IsEveryMotorStopState(p_mc) ? &STATE_PARK : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:    p_nextState = &STATE_NEUTRAL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_FORWARD:    p_nextState = MotorController_SetDirectionForwardAll(p_mc) ? &STATE_DRIVE : NULL; break;
+//         case MOTOR_CONTROLLER_DIRECTION_REVERSE:    p_nextState = MotorController_SetDirectionReverseAll(p_mc) ? &STATE_DRIVE : NULL; break;
 //         default: break;
 //     }
 //     return p_nextState;

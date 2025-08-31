@@ -149,7 +149,7 @@ StateMachine_T;
 /******************************************************************************/
 static void StateMachine_Init(StateMachine_T * p_stateMachine)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
     p_active->SyncInputMask = 0UL;
     Critical_ReleaseLock(&p_active->InputSignal);
     _StateMachine_Init(p_active, p_stateMachine->P_CONTEXT, p_stateMachine->P_MACHINE->P_STATE_INITIAL);
@@ -180,7 +180,7 @@ static void StateMachine_Reset(StateMachine_T * p_stateMachine)
 */
 static void StateMachine_ApplyInput(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
@@ -194,7 +194,7 @@ static void StateMachine_ApplyInput(StateMachine_T * p_stateMachine, state_input
 */
 static void StateMachine_SetInput(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
     /* Disables [ProcInput] portion of [Sync_ProcState]. When MultiThreaded + non atomic */
     if (_StateMachine_AcquireSyncInput(p_active) == true)
@@ -209,12 +209,12 @@ static void StateMachine_ForceTransition(StateMachine_T * p_stateMachine, State_
 {
     assert(p_state != NULL); /* compile time known state */
 
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    if (_StateMachine_AcquireAsyncTransition(p_active) == true)
     {
         _StateMachine_Transition(p_active, p_stateMachine->P_CONTEXT, p_state);
-        _StateMachine_ReleaseAsyncInput(p_active);
+        _StateMachine_ReleaseAsyncTransition(p_active);
     }
 }
 
@@ -225,15 +225,15 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, State
 {
     assert(p_transition->TRANSITION != NULL);
 
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    if (_StateMachine_AcquireAsyncTransition(p_active) == true)
     {
         if (StateMachine_IsActiveState(p_active, p_transition->P_START) == true)
         {
             _StateMachine_TransitionTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, inputValue));
         }
-        _StateMachine_ReleaseAsyncInput(p_active);
+        _StateMachine_ReleaseAsyncTransition(p_active);
     }
 }
 
@@ -293,7 +293,7 @@ static inline state_value_t StateMachine_Get(StateMachine_T * p_stateMachine, st
 */
 static void StateMachine_ApplyBranchInput(StateMachine_T * p_stateMachine, state_input_t id, state_value_t value)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
@@ -310,16 +310,16 @@ static void StateMachine_ApplyBranchInput(StateMachine_T * p_stateMachine, state
 */
 static void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine, StateMachine_TransitionInput_T * p_transition, state_value_t value)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    if (_StateMachine_AcquireAsyncTransition(p_active) == true)
     {
         if (StateMachine_IsActivePath(p_active, p_transition->P_START) == true)
         {
             assert(State_IsAncestorOrSelf(p_transition->P_START, p_active->p_ActiveState)); /* ensure substate is in sync with top level state */
             _StateMachine_TransitionBranchTo(p_active, p_stateMachine->P_CONTEXT, p_transition->TRANSITION(p_stateMachine->P_CONTEXT, value));
         }
-        _StateMachine_ReleaseAsyncInput(p_active);
+        _StateMachine_ReleaseAsyncTransition(p_active);
     }
 }
 
@@ -329,15 +329,15 @@ static void StateMachine_InvokeBranchTransition(StateMachine_T * p_stateMachine,
 */
 static void StateMachine_InvokeBranchTransitionFrom(StateMachine_T * p_stateMachine, State_T * p_deepest, State_Input_T transition, state_value_t value)
 {
-    StateMachine_Active_T * p_active = p_stateMachine->P_ACTIVE;
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
 
-    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    if (_StateMachine_AcquireAsyncTransition(p_active) == true)
     {
         if (State_IsAncestorOrSelf(p_deepest, StateMachine_GetActiveSubState(p_active)) == true)
         {
             _StateMachine_TransitionBranchTo(p_active, p_stateMachine->P_CONTEXT, transition(p_stateMachine->P_CONTEXT, value));
         }
-        _StateMachine_ReleaseAsyncInput(p_active);
+        _StateMachine_ReleaseAsyncTransition(p_active);
     }
 }
 

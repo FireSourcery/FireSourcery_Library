@@ -32,9 +32,6 @@
 #include "MotDrive.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-// typedef struct MotDrive MotDrive_T;
-// typedef struct MotDrive_State MotDrive_State_T;
-
 /*
     State Machine
 */
@@ -42,14 +39,11 @@ typedef enum MotDrive_StateMachine_Input
 {
     MOT_DRIVE_STATE_INPUT_DIRECTION,    /* Drive Direction */
     MOT_DRIVE_STATE_INPUT_CMD_START,    /* Edge */
-    // MOT_DRIVE_STATE_INPUT_THROTTLE, /* Polling inputs */
-    // MOT_DRIVE_STATE_INPUT_BRAKE,
 }
 MotDrive_State_Input_T;
 
 typedef enum MotDrive_StateId
 {
-    MOT_DRIVE_STATE_ID_PARK,
     MOT_DRIVE_STATE_ID_DRIVE,
     MOT_DRIVE_STATE_ID_NEUTRAL,
 }
@@ -64,36 +58,17 @@ extern const StateMachine_Machine_T MOT_DRIVE_MACHINE;
 /*
     No sync lock. inputs are on the same thread
     handle edge actions
+    Proc synchronous
 */
 static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
 {
     if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_MOT_DRIVE_STATE->Input) == true)
     {
-        switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
-        {
-            case MOT_DRIVE_CMD_BRAKE: _StateMachine_ApplyAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_BRAKE); break;
-            case MOT_DRIVE_CMD_THROTTLE: _StateMachine_ApplyAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_THROTTLE); break;
-            case MOT_DRIVE_CMD_RELEASE: _StateMachine_ApplyAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, MOT_DRIVE_CMD_RELEASE); break;
-            default: break;
-        }
+        _StateMachine_ApplyAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd);
     }
 
     _StateMachine_ProcState(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive);
 }
-
-/*
-    transition from park
-*/
-// static inline bool MotDrive_StateMachine_CheckExit(const MotDrive_T * p_motDrive)
-// {
-//     return StateMachine_IsActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE, MOT_DRIVE_STATE_ID_PARK);
-// }
-
-// static inline MotDrive_Status_T MotDrive_StateMachine_GetStatus(const MotDrive_T * p_handle)
-// {
-//     // StateMachine_GetActiveStateId(&p_handle->STATE_MACHINE);
-//     return (p_handle->STATE_MACHINE.P_MOT_DRIVE_STATE->p_ActiveState == &MOT_DRIVE_STATE_PARK) ? MOT_DRIVE_STATUS_FAULT : MOT_DRIVE_STATUS_OK;
-// }
 
 
 /******************************************************************************/
@@ -101,4 +76,5 @@ static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
 
 */
 /******************************************************************************/
+
 extern MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive);

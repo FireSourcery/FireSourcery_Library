@@ -81,9 +81,9 @@ RotorSensor_Table_T;
 // }
 // Motor_Sensor_CalibrationStatus_T;
 
-// #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) MOTOR_SENSOR_INIT_AS_EMPTY(p_State)
-// #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
-// #define ROTOR_SENSOR_TABLE_INIT_ENCODER(p_State, EncoderStruct) ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State)
+// #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) ROTOR_SENSOR_INIT_AS_EMPTY(p_State)
+// #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)
+// #define ROTOR_SENSOR_TABLE_INIT_ENCODER(p_State, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, p_State)
 
 
 /*

@@ -24,9 +24,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Timer_Static.h
+    @file   Timer_T.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Timer Template
 */
 /******************************************************************************/
 #include "_TimerT.h"
@@ -100,6 +100,6 @@ static inline void TimerT_SetPeriod(TimerT_T * p_timer, uint32_t ticks) { _Timer
 /*  */
 static inline void TimerT_StartPeriodic(TimerT_T * p_timer, uint32_t period) { _TimerT_StartPeriodic(&p_timer->BASE, p_timer->P_STATE, period); }
 static inline void TimerT_StartOneShot(TimerT_T * p_timer, uint32_t period) { _TimerT_StartOneShot(&p_timer->BASE, p_timer->P_STATE, period); }
-static inline void TimerT_StartCounterN(TimerT_T * p_timer, uint32_t period, uint32_t shots) { _TimerT_StartCounterN(&p_timer->BASE, p_timer->P_STATE, period, shots); }
+static inline void TimerT_StartCounterN(TimerT_T * p_timer, uint32_t period, uint32_t shots) { _TimerT_StartCountN(&p_timer->BASE, p_timer->P_STATE, period, shots); }
 static inline void TimerT_RestartOneShot(TimerT_T * p_timer) { _TimerT_RestartOneShot(&p_timer->BASE, p_timer->P_STATE); }
 

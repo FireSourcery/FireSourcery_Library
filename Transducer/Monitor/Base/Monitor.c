@@ -46,11 +46,11 @@ Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t inp
 
         Caller must retain latching fault state after trigger
     */
-    if (_Hysteresis_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
+    if (Hysteresis_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
 
     /* Check fault condition next (highest priority, no hysteresis) */
     else if (_Monitor_CheckFaultAsHigh(p_monitor, input) == true)    { status = MONITOR_STATUS_FAULT; }
-    else if (_Hysteresis_Poll(&p_monitor->Warning, input) == true)   { status = MONITOR_STATUS_WARNING; }
+    else if (Hysteresis_Poll(&p_monitor->Warning, input) == true)   { status = MONITOR_STATUS_WARNING; }
     else                                                             { status = MONITOR_STATUS_NORMAL; }
 
     return status;
@@ -63,9 +63,9 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 {
     Monitor_Status_T status;
 
-    if (_Hysteresis_RegionOf_Inverted(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
+    if (Hysteresis_Inverted_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
     else if (_Monitor_CheckFaultAsLow(p_monitor, input) == true)                            { status = MONITOR_STATUS_FAULT; }
-    else if (_Hysteresis_Poll_Inverted(&p_monitor->Warning, input) == true)                 { status = MONITOR_STATUS_WARNING; }
+    else if (Hysteresis_Inverted_Poll(&p_monitor->Warning, input) == true)                 { status = MONITOR_STATUS_WARNING; }
     else                                                                                    { status = MONITOR_STATUS_NORMAL; }
 
     return status;

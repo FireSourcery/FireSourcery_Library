@@ -50,6 +50,7 @@
 #define ENCODER_TIMER_MAX (0xFFFFU)
 #endif
 
+// #include "Math/Angle/Angle.h"
 #ifndef ENCODER_ANGLE_BITS
 #define ENCODER_ANGLE_BITS      (16U)
 #define ENCODER_ANGLE_SHIFT     (32U - ENCODER_ANGLE_BITS)
@@ -108,7 +109,7 @@ typedef struct Encoder_Config
 }
 Encoder_Config_T;
 
-//todo split math component as PulseEncoder
+//todo split math component
 typedef struct Encoder_State
 {
     Encoder_Config_T Config;
@@ -129,11 +130,11 @@ typedef struct Encoder_State
     uint32_t DeltaTh;       /*!< ModeDT */
     int32_t FreqD;          /*!< ModeDT. EncoderPulse Freq. DeltaD 1 Second [Hz] */
     uint32_t PeriodT;       /*!< ModeDT */
-    uint32_t PollingAngleDelta; /*!< UnitPollingAngle / DeltaT */
 
     /*  */
+    uint32_t PollingAngleDelta; /*!< UnitPollingAngle / DeltaT */
     // uint32_t InterpolateAngleIndex; /*!< ModeT/DT */
-    uint32_t InterpolateAngleSum;
+    uint32_t InterpolateAngleSum; /* Store as shifted */
     uint32_t InterpolateAngleLimit; /* UnitPartitionAngle */
 
     /* Homing */
@@ -145,12 +146,6 @@ typedef struct Encoder_State
     uint32_t AlignOffsetRef;
     uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
-
-    /* Experimental */
-    // int32_t TotalD;          /* Integral Capture */
-    // uint32_t TotalT;         /*!< Timer ticks, persistent through DeltaT captures */
-    // uint32_t SpeedPrev;      /*!< Most recently calculated speed, use for acceleration */
-    // uint32_t DeltaSpeed;     /*!< Save for acceleration calc */
 
     /*
         Unit conversion. derived on init from NvMem Config
@@ -195,7 +190,7 @@ typedef const struct Encoder
     /* Alternatively as macros for common across instances */
     uint32_t POLLING_FREQ;        /*!< Angle Sample Freq. DeltaT Interpolation Freq. */
     // POLLING_TIME
-    uint32_t SAMPLE_FREQ;         /*!< Speed Sample Freq. DeltaD Sample Freq. */
+    uint32_t SAMPLE_FREQ;         /*!< Speed / DeltaD Sample Freq. */
     uint32_t SAMPLE_TIME;         /*!< Compile time TIMER_FREQ/SAMPLE_FREQ */
 
     Encoder_State_T * P_STATE;    /*!< Pointer to Encoder State. */
@@ -241,7 +236,6 @@ Encoder_T;
 /*!
 */
 /******************************************************************************/
-// typedef enum Encoder_StateField
 typedef enum Encoder_VarId
 {
     ENCODER_VAR_FREQ,
@@ -275,15 +269,21 @@ Encoder_ConfigId_T;
 
 */
 /******************************************************************************/
-
 static inline uint32_t _Encoder_CaptureDeltaWrap(uint32_t tcMax, uint32_t tcPrev, uint32_t tcValue)
 {
     return (tcValue < tcPrev) ? (tcMax + 1U + tcValue - tcPrev) : (tcValue - tcPrev);
 }
 
+/*!
+    @brief Pulse CounterD conversions.
+    counter [0:CountsPerRevolution], wrapped counter value
+*/
+static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT); }
+static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, uint16_t angle_UserDegrees) { return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD; }
+
 /******************************************************************************/
 /*!
-    @brief  Function
+    @brief Hal Abstraction
 */
 /******************************************************************************/
 static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p_encoder)
@@ -295,35 +295,9 @@ static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p
 #endif
 }
 
-typedef void (*Encoder_Proc_T)(Encoder_State_T * p_encoder);
-
-static inline void Encoder_CaptureMode_Proc(Encoder_State_T * p_encoder, Encoder_Proc_T quadratureFunction, Encoder_Proc_T singlePhaseFunction)
-{
-#if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-    if (p_encoder->Config.IsQuadratureCaptureEnabled == true) { quadratureFunction(p_encoder); } else { singlePhaseFunction(p_encoder); }
-#else
-    (void)quadratureFunction; singlePhaseFunction(p_encoder);
-#endif
-}
-
-typedef int32_t(*Encoder_Get_T)(const Encoder_State_T * p_encoder);
-
-static inline int32_t Encoder_CaptureMode_Get(const Encoder_State_T * p_encoder, Encoder_Get_T quadratureFunction, Encoder_Get_T singlePhaseFunction)
-{
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
-    return (p_encoder->Config.IsQuadratureCaptureEnabled == true) ? quadratureFunction(p_encoder) : singlePhaseFunction(p_encoder);
-#else
-    (void)quadratureFunction; return singlePhaseFunction(p_encoder);
-#endif
-}
-
-/******************************************************************************/
-/*!
-    @brief Hal Abstraction
-*/
-/******************************************************************************/
 /*
     Does not wrap in HW_EMULATED case
+        = p_encoder->Angle32 / p_encoder->UnitAngleD;
 */
 static inline int32_t Encoder_GetCounterD(const Encoder_State_T * p_encoder)
 {
@@ -331,7 +305,6 @@ static inline int32_t Encoder_GetCounterD(const Encoder_State_T * p_encoder)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
 #elif   defined(CONFIG_ENCODER_HW_EMULATED)
     return p_encoder->CounterD;
-    // return p_encoder->Angle32 / p_encoder->UnitAngleD;
 #endif
 }
 
@@ -353,6 +326,7 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 #endif
 }
 
+static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 // static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
 // {
 // #if     defined(CONFIG_ENCODER_HW_DECODER)
@@ -383,30 +357,26 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 /* Direction set by outer module */
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
-// static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return (p_encoder->IsSinglePhasePositive == true) ? 1 : -1; }
+/* SinglePhase Capture is always positive. assign direction comp */
+static inline void Encoder_SinglePhase_SetDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
 */
 static inline int32_t _Encoder_Quadrature_GetDirection(const Encoder_State_T * p_encoder) { return (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
+/* On Init */
 /* Select using IsQuadratureCaptureEnabled */
 static inline int32_t _Encoder_GetDirectionComp(const Encoder_State_T * p_encoder)
 {
-    return Encoder_CaptureMode_Get(p_encoder, _Encoder_Quadrature_GetDirection, _Encoder_SinglePhase_GetDirection);
+    return (_Encoder_IsQuadratureCaptureEnabled(p_encoder)) ? _Encoder_Quadrature_GetDirection(p_encoder) : _Encoder_SinglePhase_GetDirection(p_encoder);
 }
-// static inline int32_t Encoder_GetUserDirection(const Encoder_State_T * p_encoder) { return  p_encoder->DirectionD * _Encoder_GetDirectionComp(p_encoder->P_STATE); }
 
+/* Query for Comp */
 /* return value assigned at Init */
 static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
-/*
-    Capture Direction on each Count or accumulated during Speed
-*/
-// static inline void Encoder_CaptureDirection(Encoder_State_T * p_encoder, int8_t sign){}
-
-/* SinglePhase assign direction */
-static inline void Encoder_SinglePhase_SetDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
+// static inline int32_t Encoder_GetUserDirection(const Encoder_State_T * p_encoder) { return  p_encoder->DirectionD * Encoder_GetDirectionRef(p_encoder->P_STATE); }
 
 
 /******************************************************************************/
@@ -414,9 +384,6 @@ static inline void Encoder_SinglePhase_SetDirection(Encoder_State_T * p_encoder,
     @brief
 */
 /******************************************************************************/
-static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
-// static inline uint16_t _Encoder_GetPartitionAngle(const Encoder_State_T * p_encoder) { return  *(uint32_t)p_encoder->UnitPartitionAnglePerCount; }
-
 static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * _Encoder_GetAngle(p_encoder); }
 
 static inline uint16_t Encoder_GetPartitionAngle(const Encoder_State_T * p_encoder)
@@ -433,7 +400,7 @@ static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder)
 
 /******************************************************************************/
 /*!
-    @brief
+    todo align state
 */
 /******************************************************************************/
 
@@ -462,22 +429,9 @@ static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t
 static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
 
 
-/******************************************************************************/
-/*!
-    @brief Pulse CounterD conversions.
-*/
-/******************************************************************************/
-/*!
-    Angle
-    input [0:CountsPerRevolution], wrapped counter value
-*/
-/* counter */
-static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks)
-{
-    return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT);
-}
 
-/* delta */
+
+/* [0:INT16_MAX] */
 // static inline uint32_t Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks)
 // {
 //     return (counterD_Ticks < p_encoder->Config.CountsPerRevolution) ?
@@ -487,14 +441,9 @@ static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, 
 //     return ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
 // }
 
-static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, uint16_t angle_UserDegrees)
-{
-    return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD;
-}
-
 /******************************************************************************/
 /*!
-
+    move units to Angle_T
 */
 /******************************************************************************/
 /*!

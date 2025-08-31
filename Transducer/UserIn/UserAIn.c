@@ -46,14 +46,6 @@ static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, u
     return (value + (filteredPrev << filterShift)) >> (filterShift + 1U);
 }
 
-static inline void _UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
-{
-    UserAIn_State_T * p_state = p_context->P_STATE;
-    p_state->RawValue_Adcu = value_adcu;
-    p_state->ValuePrev = p_state->Value;
-    p_state->Value = FilterValue(p_context->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
-}
-
 
 /******************************************************************************/
 /*
@@ -84,6 +76,14 @@ void UserAIn_Init(const UserAIn_T * p_context)
     Main Polling Function
 */
 /******************************************************************************/
+static inline void _UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
+{
+    UserAIn_State_T * p_state = p_context->P_STATE;
+    p_state->RawValue_Adcu = value_adcu;
+    p_state->ValuePrev = p_state->Value;
+    p_state->Value = FilterValue(p_context->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
+}
+
 void UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
 {
     if (p_context->P_EDGE_PIN != NULL) { UserDIn_PollEdge(p_context->P_EDGE_PIN); }
@@ -118,7 +118,6 @@ bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
     UserAIn_CaptureValue(p_context, value_adcu);
     return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context->P_STATE);
 }
-
 
 
 /* capture pin to value */

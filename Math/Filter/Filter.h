@@ -47,14 +47,14 @@ Filter_T;
 
 static inline void Filter_Init(Filter_T * p_filter)
 {
-    p_filter->Accumulator.State = 0;
+    p_filter->Accumulator.Accumulator = 0;
     p_filter->Index = 0U;
 }
 
 static inline int32_t Filter_Avg(Filter_T * p_filter, int32_t in)
 {
-    p_filter->Accumulator.State += in;
+    p_filter->Accumulator.Accumulator += in;
     p_filter->Index++;
-    return p_filter->Accumulator.State / p_filter->Index;
+    return p_filter->Accumulator.Accumulator / p_filter->Index;
 }
 

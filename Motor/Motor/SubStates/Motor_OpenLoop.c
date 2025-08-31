@@ -106,18 +106,20 @@ static void PhaseAlign_Entry(const Motor_T * p_motor)
 
 static void PhaseAlign_Loop(const Motor_T * p_motor)
 {
+    Motor_State_T * const p_values = p_motor->P_MOTOR_STATE;
     Phase_Id_T alignPhase = Phase_ReadAlign(&p_motor->PHASE);
-    Motor_ProcPhaseAlign(p_motor->P_MOTOR_STATE);
-    if (p_motor->P_MOTOR_STATE->FeedbackMode.Current == 1U)
+
+    Motor_ProcPhaseAlign(p_values);
+    if (p_values->FeedbackMode.Current == 1U)
     {
         // if (CaptureIabc)
-        // PID_ProcPI(&p_motor->P_MOTOR_STATE->PidId, Motor_GetIPhase_Fract16(&p_motor, alignPhase), Ramp_GetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp));
-        Phase_Align(&p_motor->PHASE, alignPhase, PID_GetOutput(&p_motor->P_MOTOR_STATE->PidId)); /* Id or Iphase */
+        // PID_ProcPI(&p_motor->P_MOTOR_STATE->PidId, PhaseInput_IAligned_Fract16(&p_motor, alignPhase), Ramp_GetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp));
+        Phase_Align(&p_motor->PHASE, alignPhase, PID_GetOutput(&p_values->PidId)); /* Id or Iphase */
     }
     else
     {
         // Phase_Align(&p_motor->PHASE, alignPhase, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE));
-        Phase_Align(&p_motor->PHASE, alignPhase, Ramp_GetOutput(&p_motor->P_MOTOR_STATE->TorqueRamp));
+        Phase_Align(&p_motor->PHASE, alignPhase, Ramp_GetOutput(&p_values->TorqueRamp));
     }
 }
 

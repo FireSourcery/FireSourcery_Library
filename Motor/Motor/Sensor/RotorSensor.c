@@ -1,5 +1,3 @@
-// sensor interface
-
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -26,7 +24,7 @@
 /*!
     @file   RotorSensor.c
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -37,25 +35,21 @@
     Empty Instance
 */
 /******************************************************************************/
-static void Empty_Init(const RotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_CaptureAngle(const RotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_CaptureSpeed(const RotorSensor_T * p_sensor) { (void)p_sensor; }
-static void Empty_ResetUnits(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
-static bool Empty_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
-static bool Empty_VerifyCalibration(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
-static int Empty_GetDirection(const RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
-static void Empty_SetDirection(const RotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
+static void Empty_InitFrom(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
+static void Empty_Proc(const RotorSensor_T * p_sensor) { (void)p_sensor; }
+static bool Empty_Test(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
+static int Empty_Get(const RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }
+static void Empty_Set(const RotorSensor_T * p_sensor, int value) { (void)p_sensor; (void)value; }
 
 const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
 {
-    .INIT = (RotorSensor_Proc_T)Empty_Init,
-    .CAPTURE_ANGLE = (RotorSensor_Proc_T)Empty_CaptureAngle,
-    .CAPTURE_SPEED = (RotorSensor_Proc_T)Empty_CaptureSpeed,
-    .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Empty_IsFeedbackAvailable,
-    .SET_DIRECTION = (RotorSensor_Set_T)Empty_SetDirection,
-    .GET_DIRECTION = (RotorSensor_Get_T)Empty_GetDirection,
-    // .SET_INITIAL = (RotorSensor_Proc_T)SetInitial,
-    .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Empty_ResetUnits,
-    .VERIFY_CALIBRATION = (RotorSensor_Test_T)Empty_VerifyCalibration,
+    .INIT = (RotorSensor_Proc_T)Empty_Proc,
+    .CAPTURE_ANGLE = (RotorSensor_Proc_T)Empty_Proc,
+    .CAPTURE_SPEED = (RotorSensor_Proc_T)Empty_Proc,
+    .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Empty_Test,
+    .SET_DIRECTION = (RotorSensor_Set_T)Empty_Set,
+    .ZERO_INITIAL = (RotorSensor_Proc_T)Empty_Proc,
+    .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Empty_InitFrom,
+    .VERIFY_CALIBRATION = (RotorSensor_Test_T)Empty_Test,
 };
 

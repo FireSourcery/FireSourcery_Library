@@ -24,10 +24,15 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   math_state.h
+    @file   math_ .h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "math_edge.h"
+static inline uint32_t counter_wrapped(uint32_t max, uint32_t time_prev, uint32_t timer) { return (timer < time_prev) ? (max - time_prev + timer) : (timer - time_prev); }
+static inline bool counter_is_aligned(uint32_t mask, uint32_t counter) { return ((counter & mask) == 0UL); }
 
+static inline uint32_t timer_elapsed_wrapped(uint32_t time_prev, uint32_t time) { return counter_wrapped(UINT32_MAX, time_prev, time); }
+static inline uint32_t timer_elapsed_direct(uint32_t time_prev, uint32_t time) { return (time - time_prev); }
+static inline bool timer_is_elapsed_wrapped(uint32_t period, uint32_t time_prev, uint32_t time) { return (timer_elapsed_wrapped(time_prev, time) >= period); }
+static inline bool timer_is_elapsed_direct(uint32_t period, uint32_t time_prev, uint32_t time) { return (timer_elapsed_direct(time_prev, time) >= period); }

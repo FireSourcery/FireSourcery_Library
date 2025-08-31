@@ -46,7 +46,7 @@ typedef struct PID_Config
 {
     PID_Mode_T Mode;
     uint32_t SampleFreq;
-    int32_t Kp_Fixed32; /* Q17.15 */
+    int32_t Kp_Fixed32; /* Q17.15 Accum32 */
     int32_t Ki_Fixed32;
     int32_t Kd_Fixed32;
 }
@@ -70,7 +70,7 @@ typedef struct PID
     int16_t IntegralGain;
     int8_t IntegralGainShift;
 
-    PID_Config_T Config;
+    PID_Config_T Config; /* hold for runtime storage update */
 }
 PID_T;
 
@@ -85,6 +85,7 @@ static inline bool PID_IsLimited(const PID_T * p_pid) { return (p_pid->Output ==
     Config
 */
 /******************************************************************************/
+/* External storage */
 static inline uint32_t _PID_GetSampleFreq(const PID_Config_T * p_config) { return p_config->SampleFreq; }
 static inline int32_t _PID_GetKp_Fixed32(const PID_Config_T * p_config) { return p_config->Kp_Fixed32; }
 static inline int32_t _PID_GetKi_Fixed32(const PID_Config_T * p_config) { return p_config->Ki_Fixed32; }
@@ -92,7 +93,9 @@ static inline int32_t _PID_GetKd_Fixed32(const PID_Config_T * p_config) { return
 static inline int32_t _PID_GetKp_Fixed16(const PID_Config_T * p_config) { return p_config->Kp_Fixed32 >> 8; }
 static inline int32_t _PID_GetKi_Fixed16(const PID_Config_T * p_config) { return p_config->Ki_Fixed32 >> 8; }
 static inline int32_t _PID_GetKd_Fixed16(const PID_Config_T * p_config) { return p_config->Kd_Fixed32 >> 8; }
-
+static inline void _PID_SetKp_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Kp_Fixed32 = value << 8; }
+static inline void _PID_SetKi_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Ki_Fixed32 = value << 8; }
+static inline void _PID_SetKd_Fixed16(PID_Config_T * p_config, int32_t value) { p_config->Kd_Fixed32 = value << 8; }
 
 /*
 */
@@ -121,12 +124,13 @@ static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return _
 */
 /******************************************************************************/
 extern void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config);
-extern void PID_Init(PID_T * p_pid);
+// extern void PID_Init(PID_T * p_pid);
+extern void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
-extern void PID_SetOutputState(PID_T * p_pid, int32_t state);
+extern void PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
-extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
+// extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);
 extern void PID_SetKp_Fixed32(PID_T * p_pid, int32_t kp_Fixed32);
 extern void PID_SetKi_Fixed32(PID_T * p_pid, int32_t ki_Fixed32);
 extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);

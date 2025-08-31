@@ -1,228 +1,52 @@
 
-
-
-/* either set drive 0 first, Motor set control twice. or motor directly transition */
-// static State_T * Drive_InputThrottle(const MotDrive_T * p_motDrive, state_value_t cmdValue)
+/******************************************************************************/
+/*!
+    @brief Drive Set Common
+    if motor proc transition on call
+*/
+/******************************************************************************/
+/* Motors to PASSIVE, keep direction */
+// static State_T * Common_InputNeutral(const MotDrive_T * p_motDrive)
 // {
-//     // if (cmdValue == 0U) { SetDriveZero(p_this, MOT_DRIVE_CMD_THROTTLE); } else { SetThrottle(p_this, cmdValue); }
-//     // return NULL;
-//     return _Drive_InputDrive(p_this, MOT_DRIVE_CMD_THROTTLE, cmdValue);
+//     return &STATE_NEUTRAL; /* apply v float on entry */
 // }
 
-// static State_T * Drive_InputBrake(const MotDrive_T * p_motDrive, state_value_t cmdValue)
+// // Motor_User_Direction_T Direction == MOTOR_DIRECTION_FORWARD
+// // Phase_Output_T PhaseState = PHASE_OUTPUT_VPWM/PHASE_OUTPUT_FLOAT;
+// static State_T * Common_InputForward(const MotDrive_T * p_motDrive)
 // {
-//     // if (cmdValue == 0U) { SetDriveZero(p_this, MOT_DRIVE_CMD_BRAKE); } else { SetBrake(p_this, cmdValue); }
-//     // return NULL;
-//     return _Drive_InputDrive(p_this, MOT_DRIVE_CMD_BRAKE, cmdValue);
+//     MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, MOTOR_DIRECTION_FORWARD);
+//     return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
+//     return &STATE_DRIVE;
 // }
 
-
-
-
-// static void SetBrake(const MotDrive_T * p_motDrive, uint32_t cmdValue)
+// static State_T * Common_InputReverse(const MotDrive_T * p_motDrive)
 // {
-//     if (p_this->DriveSubState == MOT_DRIVE_CMD_BRAKE)
-//     {
-//         MotDrive_SetBrakeValue(p_this, cmdValue);
-//     }
-//     else /* overwrite throttle */
-//     {
-//         // Brake has been released, and reapplied. Drive case need check for 0 speed for transition to park
-//         if (p_this->DriveSubState == MOT_DRIVE_CMD_ZERO) && (MotDrive_IsEveryMotorStopState(p_this) == true)
-//         {
-//            MotDrive_TryHoldAll(p_this);
-//             // p_this->StateFlags.IsStopped = 1U;
-//         }
-
-//         MotDrive_StartBrakeMode(p_this);
-//         MotDrive_SetBrakeValue(p_this, cmdValue);
-//         p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
-//     }
+//     MotMotors_ApplyUserDirection(&p_motDrive->MOTORS, MOTOR_DIRECTION_REVERSE);
+//     return (MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
+//     return &STATE_DRIVE;
 // }
 
-// static void SetThrottle(const MotDrive_T * p_motDrive, uint32_t cmdValue)
+// if motor proc transition on call
+// static State_T * Common_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 // {
-//     if (p_this->DriveSubState == MOT_DRIVE_CMD_THROTTLE)
-//     {
-//         MotDrive_SetThrottleValue(p_this, cmdValue);
-//     }
-//     else if (p_this->DriveSubState == MOT_DRIVE_CMD_ZERO || p_this->DriveSubState == MOT_DRIVE_CMD_CMD) /* do not overwrite brake */
-//     {
-//         p_this->DriveSubState = MOT_DRIVE_CMD_THROTTLE;
-//         MotDrive_StartThrottleMode(p_this);
-//         MotDrive_SetThrottleValue(p_this, cmdValue);
-//     }
-// }
+//     State_T * p_nextState = NULL;
 
-// if (cmdValue != 0U)
-// {
-//     if (p_this->DriveSubState == MOT_DRIVE_CMD_CMD)
+//     switch ((MotDrive_Direction_T)direction)
 //     {
-//         MotDrive_SetCmdModeValue(p_this, cmdValue);
+//         case MOT_DRIVE_DIRECTION_PARK:    p_nextState = Common_InputPark(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = Common_InputNeutral(p_motDrive); break;
+//         case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
+//         default: break;
 //     }
-//     else if (p_this->DriveSubState == MOT_DRIVE_CMD_RELEASE)
-//     {
-//         MotDrive_StartCmdModeDefault(p_this);
-//         MotDrive_SetCmdModeValue(p_this, cmdValue);
-//         p_this->DriveSubState = MOT_DRIVE_CMD_CMD;
-//     }
-// }
-// else
-// {
-//     p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-// }
 
-// static void SetDriveZero(const MotDrive_T * p_motDrive, MotDrive_Cmd_T driveSubState)
-// {
-//     if (p_this->DriveSubState == MOT_DRIVE_CMD_ZERO)
-//     {
-//         MotDrive_ProcDriveZero(p_this);
-//     }
-//     else if (p_this->DriveSubState == driveSubState) /* Only override is prev input mode matches. Do not overwrite other mode on 0 */
-//     {
-//         p_this->DriveSubState = MOT_DRIVE_CMD_ZERO;
-//         MotDrive_StartDriveZero(p_this);
-//     }
+//     return p_nextState;
 // }
 
 
-
-// /*! @param[in] driveCmd MotDrive_Cmd_T */
-// static State_T * _Drive_InputDrive(const MotDrive_T * p_motDrive, MotDrive_Cmd_T id, uint32_t value)
-// {
-//     // if ((value == 0U) && (id == p_this->DriveSubState)) { id = MOT_DRIVE_CMD_RELEASE; }
-
-//     switch (p_this->DriveSubState) // switch on current state
-//     {
-//         case MOT_DRIVE_CMD_BRAKE:
-//             switch (id)
-//             {
-//                 case MOT_DRIVE_CMD_BRAKE:
-//                     MotDrive_SetBrakeValue(p_this, value);
-//                     if (value == 0U)
-//                     {
-//                         MotDrive_StartDriveZero(p_this);
-//                         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_THROTTLE:
-//                     break;
-//                 case MOT_DRIVE_CMD_RELEASE: /* UI detected release */
-//                     MotDrive_StartDriveZero(p_this);
-//                     p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//                     break;
-//                 case MOT_DRIVE_CMD_CMD: break;
-//             }
-//             break;
-//         case MOT_DRIVE_CMD_THROTTLE:
-//             switch (id)
-//             {
-//                 case MOT_DRIVE_CMD_BRAKE:
-//                     if (value != 0U) /* ignore brake if simultaneous input for 0, async input only */
-//                     {
-//                         MotDrive_StartBrakeMode(p_this);
-//                         // MotDrive_SetBrakeValue(p_this, value); overwritten unless Start Mode is Async ProcInput
-//                         p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
-//                         // MotDrive_StartDriveZero(p_this);
-//                         // p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_THROTTLE:
-//                     MotDrive_SetThrottleValue(p_this, value);
-//                     if (value == 0U)
-//                     {
-//                         MotDrive_StartDriveZero(p_this);
-//                         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_RELEASE:
-//                     MotDrive_StartDriveZero(p_this);
-//                     p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//                     break;
-//                 case MOT_DRIVE_CMD_CMD: break;
-//             }
-//             break;
-//         case MOT_DRIVE_CMD_RELEASE:
-//             switch (id)
-//             {
-//                 case MOT_DRIVE_CMD_BRAKE:
-//                     if (value != 0U)
-//                     {
-//                         // todo 0 speed or passive substate
-//                         if (MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_STOP) == true) { MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Hold); }
-//                         else
-//                         {
-//                             MotDrive_StartBrakeMode(p_this);
-//                             // MotDrive_SetBrakeValue(p_this, value);
-//                             p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
-//                         }
-//                     }
-//                     else
-//                     {
-//                         MotDrive_ProcDriveZero(p_this);
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_THROTTLE:
-//                     if (value != 0U)
-//                     {
-//                         MotDrive_StartThrottleMode(p_this);
-//                         p_this->DriveSubState = MOT_DRIVE_CMD_THROTTLE;
-//                     }
-//                     else
-//                     {
-//                         MotDrive_ProcDriveZero(p_this);
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_RELEASE:
-//                     // MotDrive_ProcDriveZero(p_this);
-//                     // MotDrive_StartcDriveZero(p_this);
-//                     break;
-//                 case MOT_DRIVE_CMD_CMD: break;
-//             }
-//             break;
-//         case MOT_DRIVE_CMD_CMD:
-//             switch (id)
-//             {
-//                 case MOT_DRIVE_CMD_BRAKE:
-//                     if (value != 0U)
-//                     {
-//                         MotDrive_StartBrakeMode(p_this);
-//                         p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
-//                     }
-//                     break;
-//                 case MOT_DRIVE_CMD_RELEASE: break;
-//                 case MOT_DRIVE_CMD_THROTTLE: break;
-//                 case MOT_DRIVE_CMD_CMD: break;
-//             }
-//             break;
-//     }
-//     return NULL;
-// }
-
-// //if config.EnableBrakeInNeutral == true
-// switch (p_this->DriveSubState) // switch on current state
-// {
-//     case MOT_DRIVE_CMD_BRAKE:
-//         MotDrive_SetBrakeValue(p_this, cmdValue);
-//         if (cmdValue == 0U)
-//         {
-//             MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release);
-//             p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//         }
-//         break;
-//     case MOT_DRIVE_CMD_RELEASE:
-//         MotDrive_StartBrakeMode(p_this);
-//         p_this->DriveSubState = MOT_DRIVE_CMD_BRAKE;
-//         break;
-//     default: /* MOT_DRIVE_CMD_THROTTLE */
-//         MotMotors_ForEach(&p_motDrive->MOTORS, Motor_User_Release);
-//         p_this->DriveSubState = MOT_DRIVE_CMD_RELEASE;
-//         break;
-// }
-
-
-
-// with hsm
+// with hsm as orthogonal region
 // static State_T * Drive_SyncTransition(const MotDrive_T * p_motDrive)
 // {
 //     State_T * p_nextState = NULL;

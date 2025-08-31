@@ -28,10 +28,9 @@
 */
 /******************************************************************************/
 #include "Motor_Sensor.h"
-
 #include "../Motor_StateMachine.h"
 
-// #include "../Math/math_speed.h"
+
 
 static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 
@@ -95,65 +94,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 */
 /******************************************************************************/
 
-// void Motor_ResetUnitsSensor(const Motor_T * p_motor)
-// {
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:
-//             // Motor_ResetUnitsHallEncoder_ElSpeed(p_motor);
-//             // Motor_ResetUnitsHallEncoder_MechSpeed(p_motor);
-//             Encoder_SetUnitsHall_MechSpeed(&p_motor->ENCODER, Motor_GetSpeedRatedRef_Rpm(p_motor->P_MOTOR_STATE), p_motor->P_MOTOR_STATE->Config.PolePairs);
-//             break;
-//         case ROTOR_SENSOR_ID_ENCODER:
-//             // Motor_ResetUnitsEncoder(p_motor);
-//             break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SIN_COS:
-//             // Motor_ResetUnitsSinCos(&p_motor->SinCos);
-//             // Motor_ResetUnitsAngleSpeed_Mech(&p_motor);
-//             break;
-//         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:
-//             // Motor_ResetUnitsAngleSpeed_ElecControl(p_motor);
-//             break;
-//         #endif
-//         default:
-//             break;
-//     }
-// }
 
-/* Re init peripheral registers */
-// void Motor_InitSensor(const Motor_T * p_motor)
-// {
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:
-//             Hall_Init(&p_motor->HALL);
-//         #if     defined(CONFIG_MOTOR_HALL_MODE_POLLING) || !defined(CONFIG_MOTOR_HALL_MODE_ISR)
-//             Encoder_ModeDT_Init_Polling(&p_motor->ENCODER);
-//         #elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
-//             Encoder_InitInterrupts_ABC(&p_motor->ENCODER);
-//         #endif
-//             break;
-//         case ROTOR_SENSOR_ID_ENCODER:
-//             Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->ENCODER);
-//             Encoder_EnableQuadratureMode(&p_motor->ENCODER);
-//             break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SIN_COS:
-//             SinCos_Init(&p_motor->SinCos);
-//             break;
-//         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:
-//             break;
-//         #endif
-//         default:
-//             break;
-//     }
-//     Motor_ResetUnitsSensor(p_motor);
-// }
 
 /* Control Freq */
 // angle16_t Motor_PollSensorAngle(const Motor_T * p_motor)
@@ -163,17 +104,8 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
 //     {
 //         case ROTOR_SENSOR_ID_HALL:
-//         #if defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-//             if (Hall_PollCaptureSensors(&p_motor->HALL) == true)
-//             {
-//                 Encoder_SinglePhase_CapturePulse(&p_motor->ENCODER); // Encoder_CaptureCount
-//                 Hall_CaptureAngle(&p_motor->HALL);
-//                 // Hall_CaptureDirection(&p_motor->HALL); /* on  direction diff */
-//             }
-//         #endif
-//             electricalAngle = Hall_GetAngle16(&p_motor->HALL);
-//             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->ENCODER);
-//             /* handle direction reset */
+
+
 //             break;
 
 //         case ROTOR_SENSOR_ID_ENCODER:
@@ -206,28 +138,24 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     return electricalAngle;
 // }
 
-// angle16_t Motor_CaptureAngle(const Motor_T * p_motor)
-// {
-//     p_motor->P_MOTOR_STATE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-//     return p_motor->P_MOTOR_STATE->ElectricalAngle;
-// }
+
 
 // angle16_t Motor_GetMechanicalAngle(const Motor_T * p_motor)
 // {
-//     // angle16_t angle;
-//     // switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     // {
-//     //     case ROTOR_SENSOR_ID_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
-//     //     case ROTOR_SENSOR_ID_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
-//     //     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//     //     case ROTOR_SENSOR_ID_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
-//     //     #endif
-//     //     #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     //     case ROTOR_SENSOR_ID_SENSORLESS: angle = 0; break;
-//     //     #endif
-//     //     default: angle = 0; break;
-//     // }
-//     // return angle;
+    // angle16_t angle;
+    // switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
+    // {
+    //     case ROTOR_SENSOR_ID_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
+    //     case ROTOR_SENSOR_ID_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
+    //     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+    //     case ROTOR_SENSOR_ID_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
+    //     #endif
+    //     #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+    //     case ROTOR_SENSOR_ID_SENSORLESS: angle = 0; break;
+    //     #endif
+    //     default: angle = 0; break;
+    // }
+    // return angle;
 // }
 
 // /*!
@@ -240,12 +168,12 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     {
 //         /* Using assigned direction */
 //         case ROTOR_SENSOR_ID_HALL:
-//             Encoder_ModeDT_CaptureVelocity(&p_motor->ENCODER);
-//             p_motor->P_MOTOR_STATE->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(&p_motor->ENCODER);
+//             Encoder_ModeDT_CaptureFreqD(&p_motor->ENCODER);
+//             p_motor->P_MOTOR_STATE->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingDelta(&p_motor->ENCODER);
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 //         case ROTOR_SENSOR_ID_ENCODER:
-//             Encoder_ModeDT_CaptureVelocity(&p_motor->ENCODER);
+//             Encoder_ModeDT_CaptureFreqD(&p_motor->ENCODER);
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 
@@ -261,55 +189,9 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     // return p_motor->ElectricalSpeed_DegPerCycle;
 // }
 
-// bool Motor_PollCaptureSpeed(const Motor_T * p_motor)
-// {
-//     bool isCaptureSpeed = Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->SpeedTimer);
-//     if (isCaptureSpeed == true) { p_motor->P_MOTOR_STATE->Speed_Fract16 = (Motor_PollSensorSpeed(p_motor) + p_motor->P_MOTOR_STATE->Speed_Fract16) / 2; }
-//     return isCaptureSpeed;
-// }
 
-// void Motor_ZeroSensor(const Motor_T * p_motor)
-// {
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:
-//             Hall_SetInitial(&p_motor->HALL);
-//             Encoder_ModeDT_SetInitial(&p_motor->ENCODER);
-//             break;
-//         case ROTOR_SENSOR_ID_ENCODER:
-//             Encoder_ModeDT_SetInitial(&p_motor->ENCODER);
-//             break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SIN_COS:
-//             break;
-//         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:
-//             Motor_SetPositionFeedback(p_motor, 0U);
-//             break;
-//         #endif
-//         default: break;
-//     }
-// }
 
-// /* From Stop and after Align */
-// bool _Motor_IsSensorAvailable(const Motor_T * p_motor)
-// {
-//     bool isAvailable;
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:    isAvailable = true;         break;
-//         case ROTOR_SENSOR_ID_ENCODER: isAvailable = Encoder_IsAligned(p_motor->ENCODER.P_STATE);    break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SIN_COS:     isAvailable = true;     break;
-//         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:  isAvailable = false;    break;
-//         #endif
-//         default: isAvailable = false; break;
-//     }
-//     return isAvailable;
-// }
+
 
 // static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 // {
@@ -325,73 +207,10 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 // }
 
-// // Motor_Direction_T Motor_GetDirection(const Motor_T * p_motor)
-// // {
-// //     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-// //     {
-// //         case ROTOR_SENSOR_ID_HALL:
-// //             break;
-// //         case ROTOR_SENSOR_ID_ENCODER:
-// //             break;
-// //         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-// //         case ROTOR_SENSOR_ID_SIN_COS:
-// //             break;
-// //         #endif
-// //         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-// //         case ROTOR_SENSOR_ID_SENSORLESS:
-// //             break;
-// //         #endif
-// //         default:
-// //             break;
-// //     }
-// // }
 
 
-// /*
-//     Sensor Direction
-// */
-// void Motor_SetSensorDirection(const Motor_T * p_motor, Motor_Direction_T direction)
-// {
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:
-//             Hall_SetDirection(p_motor->HALL.P_STATE, (Hall_Direction_T)direction);
-//             Encoder_SinglePhase_SetDirection(&p_motor->ENCODER, direction);  /* interpolate as +/- */
-//             break;
-//         case ROTOR_SENSOR_ID_ENCODER:
-//             break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:  break;
-//         #endif
-//         default: break;
-//     }
-// }
 
 
-// bool Motor_VerifySensorCalibration(const Motor_T * p_motor)
-// {
-//     bool isValid = true;
-//     switch (p_motor->P_MOTOR_STATE->Config.SensorMode)
-//     {
-//         case ROTOR_SENSOR_ID_HALL:
-//             // if (Hall_IsStateValid(&p_motor->HALL.P_STATE) == false) { isValid = false; }
-//             if (Hall_IsTableValid(&p_motor->HALL.P_STATE) == false) { isValid = false; }
-//             break;
-//         case ROTOR_SENSOR_ID_ENCODER:
-//             break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//         case ROTOR_SENSOR_ID_SIN_COS:
-//             break;
-//         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
-//         case ROTOR_SENSOR_ID_SENSORLESS:
-//             break;
-//         #endif
-//         default:
-//             break;
-//     }
-//     return isValid;
-// }
 
 
 // #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
@@ -424,7 +243,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //         default:                             speed = 0;     break;
 //     }
 
-//     return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+//     return speed;
 // }
 
 // int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor)
@@ -444,7 +263,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //         default:                             speed = 0;     break;
 //     }
 
-//     return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? speed : 0 - speed;
+//     return speed;
 // }
 
 // void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)

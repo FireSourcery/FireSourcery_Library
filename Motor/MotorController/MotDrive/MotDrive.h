@@ -39,22 +39,19 @@
 
 /*
 */
-typedef enum MotDrive_Status
-{
-    MOT_DRIVE_STATUS_OK,
-    MOT_DRIVE_STATUS_WARNING,
-    MOT_DRIVE_STATUS_FAULT,
-}
-MotDrive_Status_T;
+// typedef enum MotDrive_Status
+// {
+//     MOT_DRIVE_STATUS_OK,
+//     MOT_DRIVE_STATUS_WARNING,
+//     MOT_DRIVE_STATUS_FAULT,
+// }
+// MotDrive_Status_T;
 
-/* MultiState SubState - Drive State */
 typedef enum MotDrive_Direction
 {
-    MOT_DRIVE_DIRECTION_PARK,
-    MOT_DRIVE_DIRECTION_NEUTRAL,
-    MOT_DRIVE_DIRECTION_FORWARD,
-    MOT_DRIVE_DIRECTION_REVERSE,
-    MOT_DRIVE_DIRECTION_ERROR,
+    MOT_DRIVE_DIRECTION_REVERSE = -1,
+    MOT_DRIVE_DIRECTION_NEUTRAL = 0,
+    MOT_DRIVE_DIRECTION_FORWARD = 1,
 }
 MotDrive_Direction_T;
 
@@ -70,11 +67,11 @@ MotDrive_Cmd_T;
 /* altneratively convert to common interface */
 typedef struct MotDrive_Input
 {
-    MotDrive_Direction_T Direction;
+    // MotDrive_Direction_T Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     MotDrive_Cmd_T Cmd;
-    MotDrive_Cmd_T CmdPrev;
+    // MotDrive_Cmd_T CmdPrev;
 }
 MotDrive_Input_T;
 
@@ -118,7 +115,7 @@ typedef struct MotDrive_State
     MotDrive_Config_T Config;
     MotDrive_Input_T Input;
     // MotDrive_Input_T InputPrev;
-    MotDrive_Status_T Status;
+    // MotDrive_Status_T Status;
     StateMachine_Active_T StateMachine;
 }
 MotDrive_State_T;
@@ -133,6 +130,7 @@ typedef const struct MotDrive
     StateMachine_T STATE_MACHINE;
     MotMotors_T MOTORS;
     const Blinky_T * P_BUZZER;
+    // const MotAnalogUser_T * P_ANALOG_USER;
     const MotDrive_Config_T * const P_NVM_CONFIG;
     /*   VarInterface; for MotDrive_VarId_Set */
 }
@@ -154,7 +152,7 @@ static inline MotDrive_Cmd_T MotDrive_Input_PollCmd(MotDrive_Input_T * p_user)
     else if (p_user->ThrottleValue > 0U) { cmd = MOT_DRIVE_CMD_THROTTLE; }
     else { cmd = MOT_DRIVE_CMD_RELEASE; }
 
-    p_user->CmdPrev = p_user->Cmd;
+    // p_user->CmdPrev = p_user->Cmd;
     p_user->Cmd = cmd;
 
     return cmd;
@@ -165,6 +163,51 @@ static inline bool MotDrive_Input_PollCmdEdge(MotDrive_Input_T * p_user)
     return (p_user->Cmd != MotDrive_Input_PollCmd(p_user));
 }
 
+
+// alternatively as input conversion, remove
+
+// MotorController_Direction_T MotorController_DirectionOf(Motor_User_Direction_T dir, Phase_Output_T phase)
+// {
+//     MotorController_Direction_T direction;
+//     switch (dir)
+//     {
+//         case MOTOR_DIRECTION_STOP:      direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
+//         case MOTOR_DIRECTION_REVERSE:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_REVERSE : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
+//         case MOTOR_DIRECTION_FORWARD:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_FORWARD : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
+//         default:                        direction = MOTOR_CONTROLLER_DIRECTION_ERROR;           break;
+//     }
+//     return direction;
+// }
+
+// void MotDrive_Input_ToMotorInput (const MotDrive_Input_T * p_user, Motor_User_Input_T * P_input )
+// {
+//
+// }
+
+// void MotDrive_MotorInput_Of(Motor_User_Input_T * P_input, MotorController_Direction_T dir)
+// {
+//     switch (dir)
+//     {
+//         case MOTOR_CONTROLLER_DIRECTION_PARK:
+//             P_input->Direction = MOTOR_DIRECTION_STOP;
+//             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
+//             break;
+//         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
+//             P_input->Direction = MOTOR_DIRECTION_REVERSE;
+//             P_input->PhaseState = PHASE_OUTPUT_VPWM;
+//             break;
+//         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
+//             P_input->Direction = MOTOR_DIRECTION_FORWARD;
+//             P_input->PhaseState = PHASE_OUTPUT_VPWM;
+//             break;
+//         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
+//             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
+//             break;
+//         default:
+//             break;
+//     }
+// }
+
 extern void MotDrive_Init(const MotDrive_T * p_handle);
 
 
@@ -174,7 +217,4 @@ extern void MotDrive_Init(const MotDrive_T * p_handle);
 // extern void MotDrive_SetBrakeValue(const MotDrive_T * p_motDrive, uint16_t userCmdBrake);
 // extern void MotDrive_StartDriveZero(const MotDrive_T * p_motDrive);
 // extern void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive);
-
-// static inline void MotDrive_User_StartThrottle(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_THROTTLE, userCmd); }
-// static inline void MotDrive_User_StartBrake(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_BRAKE, userCmd); }
 

@@ -47,11 +47,11 @@ static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_M
 static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1 > value2) ? value1 : value2); }
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
-static inline int32_t math_clamp_symmetric(int32_t value, uint32_t bound) { return math_clamp(value, (int32_t)0 - bound, bound); }
 
+/*  */
+static inline int32_t math_clamp_symmetric(int32_t value, uint32_t bound) { return math_clamp(value, (int32_t)0 - bound, bound); }
 /* Clamp between two bounds without specifying order */
 static inline int32_t math_clamp_between(int32_t value, int32_t bound1, int32_t bound2) { return math_clamp(value, math_min(bound1, bound2), math_max(bound1, bound2)); }
-
 /* Branchless version */
 static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int32_t bound2)
 {

@@ -325,8 +325,8 @@ static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
 }
 
 /* Diagnostic functions */
-// static inline uint16_t MotAnalogUser_GetThrottleInput(const MotAnalogUser_T * p_user) { return UserAIn_GetInputValue(&p_user->THROTTLE_AIN); }
-// static inline uint16_t MotAnalogUser_GetBrakeInput(const MotAnalogUser_T * p_user) { return UserAIn_GetInputValue(&p_user->BRAKE_AIN); }
+static inline uint16_t MotAnalogUser_GetThrottleInput(const MotAnalogUser_T * p_user) { return _UserAIn_GetValue(p_user->THROTTLE_AIN.P_STATE); }
+static inline uint16_t MotAnalogUser_GetBrakeInput(const MotAnalogUser_T * p_user) { return _UserAIn_GetValue(p_user->BRAKE_AIN.P_STATE); }
 
 /******************************************************************************/
 /*

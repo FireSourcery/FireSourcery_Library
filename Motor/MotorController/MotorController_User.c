@@ -62,9 +62,6 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
-            // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);
-            // _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOT_DRIVE_DIRECTION_PARK);
-            // MotDrive_SetDirection(&p_mc->MotDrive, MOT_DRIVE_DIRECTION_PARK);
             // checks the park state
             MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);
             if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
@@ -90,7 +87,7 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
 
         // include for convenience
         // case MOT_USER_SYSTEM_STATE:
-        // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOT_DRIVE_DIRECTION_PARK);
+        // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
         // case MOT_USER_SYSTEM_SERVO: MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
         default: break;
     }
@@ -105,11 +102,11 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
     Config
 */
 /******************************************************************************/
-/*! @param[in] volts < MOTOR_ANALOG_REFERENCE.VMAX and Config.VSupplyRef */
+/*! @param[in] volts < PHASE_CALIBRATION.VMAX and Config.VSupplyRef */
 void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    p_mc->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
+    p_mc->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
     MotorController_CaptureVSource(p_context); /* optionally */
 }

@@ -76,6 +76,18 @@ MotorController_User_SystemCmd_T;
 // MotorController_User_GenericStatus_T;
 
 
+/* MultiState SubState - Drive State */
+// typedef enum MotorController_Direction
+// {
+//     MOTOR_CONTROLLER_DIRECTION_PARK,
+//     MOTOR_CONTROLLER_DIRECTION_NEUTRAL,
+//     MOTOR_CONTROLLER_DIRECTION_FORWARD,
+//     MOTOR_CONTROLLER_DIRECTION_REVERSE,
+//     MOTOR_CONTROLLER_DIRECTION_ERROR,
+// }
+// MotorController_Direction_T;
+
+
 /******************************************************************************/
 /*
     User Input Interface; into StateMachine process
@@ -91,7 +103,6 @@ MotorController_User_SystemCmd_T;
 /******************************************************************************/
 static inline void MotorController_User_InputMainMode(const MotorController_T * p_context, MotorController_MainMode_T value)
 {
-    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
     _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
 }
 
@@ -100,6 +111,10 @@ static inline void MotorController_User_InputMainMode(const MotorController_T * 
     passthrough Common
     StateMachine handle push to all or primary motor
     Apply in MCSM_STATE_ID_MOTORS State
+
+    MotorController_User_Set
+    MotDrive_User_Set
+    Motor_User_Set
 */
 /******************************************************************************/
 static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context)
@@ -118,16 +133,20 @@ static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T *
 */
 // id for the input that has been set
 // static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context, Motor_State_Input_T inputId)
-// static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; }
-// static inline void MotorController_User_SetDirection(const MotorController_T * p_context, sign_t direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; }
-// static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.ControlState = controlState; }
-// static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; }
-// static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
-static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.ControlState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
+static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
+
+/*
+    Input Modes Common
+*/
+static inline void MotorController_User_SetPark(const MotorController_T * p_context) {
+    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
+    // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
+    MotorController_User_ApplyMotorsCmd(p_context);
+}
 
 /******************************************************************************/
 /*
@@ -135,20 +154,21 @@ static inline void MotorController_User_SetFeedbackMode_Cast(const MotorControll
 */
 /******************************************************************************/
 /* Non StateMachine checked disable motors. Caller ensure non field weakening state */
+/* Update State to prevent input overwrite */
 static inline void MotorController_User_ForceDisableControl(const MotorController_T * p_context)
 {
     MotMotors_ForceDisableControl(&p_context->MOTORS);
     p_context->P_MC_STATE->CmdInput.CmdValue = 0;
-    p_context->P_MC_STATE->CmdInput.ControlState = PHASE_OUTPUT_FLOAT;
+    p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_FLOAT;
     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
     p_context->P_MC_STATE->CmdInput.IsUpdated = true;
 
+    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, PARK);
+
     /* if drive mode */
-    MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
-    MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_NEUTRAL); // set drive direction to neutral
-
+    // MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
+    // MotDrive_User_ApplyDirection(&p_context->MOT_DRIVE, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); // set drive direction to neutral
 }
-
 
 /******************************************************************************/
 /*

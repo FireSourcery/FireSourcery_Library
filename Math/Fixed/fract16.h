@@ -35,13 +35,16 @@
 #include "Math/math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
-// #include <stdfix.h>
+#include <stdfix.h>
 
 #define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Scalar 32768. Resolution 1/(2^15) == .000030517578125 */
+#define FRACT16_M_BITS (1)
 
-typedef int16_t fract16_t;      /*!< Q1.15 [-1.0, 1) */
+typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
-typedef int32_t accum32_t;      /*!< Q17.15 [2*[FRACT16_MIN:FRACT16_MAX] << FRACT16_N_BITS] */
+typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
+typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) */
+// typedef uint16_t percent16_t;       /*!< Q16 [0, 1) */
 
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
@@ -170,7 +173,8 @@ static inline int16_t fract16_norm_scalar(int16_t value)
     angle16
 */
 /******************************************************************************/
-typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+// typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+typedef int16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
 // #define ANGLE16_SIGNED_MAX (INT16_MAX)
@@ -190,6 +194,11 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
+
+static const fract16_t FRACT16_COS_120 = ((fract16_t)-16384);  /* cos(120°) = -0.5 */
+static const fract16_t FRACT16_SIN_120 = ((fract16_t)28378);   /* sin(120°) = sqrt(3)/2 */
+static const fract16_t FRACT16_COS_240 = ((fract16_t)-16384);  /* cos(240°) = -0.5 */
+static const fract16_t FRACT16_SIN_240 = ((fract16_t)-28378);  /* sin(240°) = -sqrt(3)/2 */
 
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
@@ -242,20 +251,21 @@ static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)
     return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U);
 }
 
+/*  */
 extern fract16_t fract16_sin(angle16_t theta);
 extern fract16_t fract16_cos(angle16_t theta);
 extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 
 /******************************************************************************/
 /*!
-    vector16
+    vector xy
 */
 /******************************************************************************/
 // typedef struct vector32 { fract16_t x; fract16_t y; } vector32_t;
 extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
-extern ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, fract16_t mag_limit);
-extern ufract16_t fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, fract16_t magnitudeMax);
+extern ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, ufract16_t mag_limit);
+extern void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit);
 
 // extern uint16_t fract16_vector_scalar_fast(fract16_t x, fract16_t y, fract16_t mag_limit);
 // extern uint16_t fract16_vector_limit_fast(fract16_t * p_x, fract16_t * p_y, fract16_t limit);

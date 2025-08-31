@@ -105,7 +105,6 @@ static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t
 /* Input interval units */
 static inline int32_t Linear_Q16_InvPercent(const Linear_T * p_linear, uint16_t y_percent16) { return Linear_Q16_InvOf(p_linear, y_percent16); }
 
-
 /******************************************************************************/
 /*!
     Q8.8
@@ -119,10 +118,9 @@ static inline int16_t Linear_Q16_General(const Linear_T * p_linear, int32_t x)
 
 /******************************************************************************/
 /*!
-    Extern
+    Init
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*!
     Q0.16 and Q1.15
@@ -142,12 +140,12 @@ static void Linear_Q16_Init(Linear_T * p_linear, int32_t x0, int32_t xRef)
     Linear_Fixed_Init(p_linear, 16U, x0, xRef);
 }
 
-// void Linear_Fixed_InitAsFract16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// void Linear_Fract16_Init (Linear_T * p_linear, int32_t x0, int32_t xRef)
 // {
 //     Linear_Fixed_Init(p_linear, 15U, x0, xRef);
 // }
 
-// void Linear_Fixed_InitAsPercent16(Linear_T * p_linear, int32_t x0, int32_t xRef)
+// void Linear_Percent16_Init (Linear_T * p_linear, int32_t x0, int32_t xRef)
 // {
 //     Linear_Fixed_Init(p_linear, 16U, x0, xRef);
 // }

@@ -63,7 +63,6 @@
 */
 /******************************************************************************/
 typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Conversion_T */
-// typedef uint32_t analog_mask_t;
 
 typedef const struct Analog_Channel
 {
@@ -74,6 +73,9 @@ typedef const struct Analog_Channel
 Analog_Channel_T;
 
 #define ANALOG_CHANNEL_INIT(Id, PinId) { .ID = Id, .PIN = PinId, }
+
+typedef uint32_t analog_mask_t;
+static inline analog_mask_t Analog_Mask(analog_channel_t channel) { return ((analog_mask_t)1UL << channel); }
 
 /******************************************************************************/
 /*
@@ -124,6 +126,7 @@ Analog_ConversionChannel_T;
 #define ANALOG_CONVERSION_CHANNEL_INIT_FROM(ChannelId, PinId, p_Context, CaptureFn, ...) \
     { .CHANNEL = { .ID = ChannelId, .PIN = PinId }, .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
 
+// static inline analog_mask_t Analog_ADC_MarkerOf(const Analog_ConversionChannel_T * p_channel) { return Analog_Mask(p_channel->CHANNEL.ID); }
 
 /******************************************************************************/
 /*
@@ -180,6 +183,11 @@ Analog_ConversionChannel_T;
 //     // if channels correspond to adc fixed channels, then ADC iterate through all channels without repeat
 //     uint32_t CHANNELS; /* in case of sparse channels */
 //     volatile uint32_t * P_COMPLETE_MARKERS;
+
+//     uint32_t BATCH_MATCH; /* Bitmask of channels to match for completion */
+//     volatile uint32_t * P_BATCH_STATE;
+//     Analog_Callback_T ON_COMPLETE;
+//     void * P_CONTEXT;
 // }
 // Analog_ConversionContext_T;
 
@@ -192,8 +200,6 @@ Analog_ConversionChannel_T;
 /******************************************************************************/
 typedef struct Analog_ADC_State
 {
-    // const adc_channel_t ActiveConversions[ADC_FIFO_LENGTH_MAX];
-
     /*
         Reg/Fifo State
         maintained by software in case of fifo where direct id map is not available.
@@ -220,6 +226,8 @@ typedef struct Analog_ADC_State
     // full context include call back in context
     // const Analog_ConversionContext_T * p_ActiveContext; // channels + marker
 
+// alternative simplified implementation, map by adc_channel_t
+// const adc_channel_t ActiveConversions[ADC_FIFO_LENGTH_MAX];
 #ifndef NDEBUG
     uint32_t ErrorCount;
     uint32_t IncompleteCycles;
@@ -238,17 +246,19 @@ typedef const struct Analog_ADC
 {
     HAL_ADC_T * P_HAL_ADC;              /* ADC register map base address */
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
-    // alternativel similified implementation, map by adc_channel_t
-    // adc_pin_t * P_PIN_MAP;
-    // adc_result_t * P_RESULT_BUFFER;
+
+
 
     // context based implementation, default
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
 
     // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to notify batch status */
 
-    // compile time const
     uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
+
+// alternative simplified implementation, map by adc_channel_t
+// adc_pin_t * P_PIN_MAP;
+// adc_result_t * P_RESULT_BUFFER;
 }
 Analog_ADC_T;
 
@@ -271,14 +281,9 @@ Analog_ADC_T;
 
 */
 /******************************************************************************/
-typedef uint32_t analog_mask_t;
-static inline analog_mask_t Analog_ADC_Marker(analog_channel_t channel) { return (analog_mask_t)(1UL << channel); }
-static inline analog_mask_t Analog_ADC_MarkerOf(const Analog_ConversionChannel_T * p_channel) { return Analog_ADC_Marker(p_channel->CHANNEL.ID); }
-
-
 static inline void Analog_ADC_MarkConversion(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers |= (1U << channel); }
 static inline bool Analog_ADC_IsMarked(const Analog_ADC_T * p_adc, analog_channel_t channel) { return (p_adc->P_ADC_STATE->ChannelMarkers & (1U << channel)) != 0UL; }
-static inline void Analog_ADC_ClearMark(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers &= ~(1U << channel); }
+// static inline void Analog_ADC_ClearMark(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers &= ~(1U << channel); }
 
 static inline Analog_ConversionChannel_T * Analog_ADC_ConversionOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return &p_adc->P_CONVERSION_CHANNELS[channel]; }
 static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return p_adc->P_CONVERSION_CHANNELS[channel].P_CONVERSION_STATE->Result; }

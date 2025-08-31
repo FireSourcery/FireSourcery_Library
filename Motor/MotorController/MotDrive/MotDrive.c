@@ -41,3 +41,6 @@ void MotDrive_Init(const MotDrive_T * p_handle)
     _MotDrive_InitFrom(p_handle->P_MOT_DRIVE_STATE, p_handle->P_NVM_CONFIG);
     StateMachine_Init(&p_handle->STATE_MACHINE);
 }
+
+
+

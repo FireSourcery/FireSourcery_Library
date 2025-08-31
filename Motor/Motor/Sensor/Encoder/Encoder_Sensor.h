@@ -45,9 +45,9 @@ Encoder_RotorSensor_T;
 
 extern const RotorSensor_VTable_T ENCODER_VTABLE;
 
-#define ENCODER_MOTOR_SENSOR_INIT(EncoderStruct, p_State) \
+#define ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, p_State) \
 { \
-    .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), \
+    .MOTOR_SENSOR = ROTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), \
     .ENCODER = EncoderStruct, \
 }
 

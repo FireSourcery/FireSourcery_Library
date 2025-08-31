@@ -81,11 +81,9 @@ HeatMonitor_Status_T;
 */
 typedef const struct HeatMonitor_Context
 {
-    /* HeatMonitor_Base_T */
-    HeatMonitor_T * P_STATE;
+    HeatMonitor_T * P_STATE;    /* HeatMonitor_State_T */
 
     /* Thermistor Context */
-    Analog_Conversion_T ANALOG_CONVERSION; //todo move this to outer
     Thermistor_T THERMISTOR; // alternatively as pointer for flexible write region
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
     // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
@@ -95,6 +93,8 @@ typedef const struct HeatMonitor_Context
     /* Common across instances in a GroupContext */
     Linear_T * P_LIMIT_SCALAR;
     const HeatMonitor_Config_T * P_NVM_CONFIG;
+
+    Analog_Conversion_T ANALOG_CONVERSION; // todo move this to outer
 }
 HeatMonitor_Context_T;
 
@@ -172,7 +172,6 @@ extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
 //     HeatMonitor_Status_T GroupStatus;   /* Overall group status */
 //     uint8_t FaultCount;                 /* Number of sensors in fault */
 //     uint8_t WarningCount;               /* Number of sensors in warning */
-
 // }
 // HeatMonitor_GroupState_T;
 

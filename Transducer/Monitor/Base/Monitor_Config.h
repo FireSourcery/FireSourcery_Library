@@ -260,12 +260,12 @@ static inline RangeMonitor_Config_T RangeMonitor_Config_SymmetricPercent(int32_t
 
 
 
-static inline void RangeMonitor_ConfigZone_InitSymmetric(RangeMonitor_Zone_T * p_zone, int32_t nominal, int32_t offset, uint32_t hysteresis)
-{
-    p_zone->LimitHigh = nominal + offset;
-    p_zone->LimitLow = nominal - offset;
-    p_zone->Hysteresis = hysteresis;
-}
+// static inline void RangeMonitor_ConfigZone_InitSymmetric(RangeMonitor_Zone_T * p_zone, int32_t nominal, int32_t offset, uint32_t hysteresis)
+// {
+//     p_zone->LimitHigh = nominal + offset;
+//     p_zone->LimitLow = nominal - offset;
+//     p_zone->Hysteresis = hysteresis;
+// }
 
 // static inline void RangeMonitor_Config_InitZoneSymmetric(RangeMonitor_Config_T * p_this, Monitor_Status_T level, int32_t nominal, int32_t offset, uint32_t hysteresis)
 // {
@@ -314,4 +314,6 @@ static inline void RangeMonitor_Config_InitSymmetricPercent(RangeMonitor_Config_
     p_this->Nominal = nominal;
     RangeMonitor_Config_InitFaultSymmetricPercent(p_this, nominal, faultPercent);
     RangeMonitor_Config_InitWarningSymmetricPercent(p_this, nominal, warnPercent, hystPercent);
+
+    // *p_this = RangeMonitor_Config_SymmetricPercent(nominal, faultPercent, warnPercent, hystPercent);
 }

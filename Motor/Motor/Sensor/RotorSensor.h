@@ -27,10 +27,10 @@
     @file   RotorSensor.h
     @author FireSourcery
     @brief  Motor Sensor Generic Interface
-
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
+#include "Math/Angle/Angle.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,11 +52,18 @@ typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value)
 typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_Config * p_config);
 
 /* alternatively */
-// typedef void(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor, AngleSpeed_T * p_state);
+// typedef void(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor, Angle_T * p_state);
 // typedef int(*RotorSensor_Capture_T)(const struct RotorSensor * p_sensor);
-
 /* inline vtable */
 // typedef void(*RotorSensor_InstanceProc_T)(void);
+
+// typedef enum RotorSensor_Direction
+// {
+//     MOTOR_DIRECTION_CW = -1,
+//     MOTOR_DIRECTION_NULL = 0,
+//     MOTOR_DIRECTION_CCW = 1,
+// }
+// RotorSensor_Direction_T;
 
 /*
     Interface/Operations
@@ -64,15 +71,15 @@ typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const
 */
 typedef const struct RotorSensor_VTable
 {
-    RotorSensor_Proc_T INIT;
-    RotorSensor_Proc_T CAPTURE_ANGLE;
-    RotorSensor_Proc_T CAPTURE_SPEED;
-    RotorSensor_Test_T IS_FEEDBACK_AVAILABLE;
-    // RotorSensor_Proc_T ZERO;
-    RotorSensor_Get_T GET_DIRECTION;
+    RotorSensor_Proc_T CAPTURE_ANGLE;   /* ~20Khz */
+    RotorSensor_Proc_T CAPTURE_SPEED;   /* ~1Khz */
+    RotorSensor_Test_T IS_FEEDBACK_AVAILABLE; /* From Stop and after Align */
+    RotorSensor_Proc_T ZERO_INITIAL;
+    // RotorSensor_Get_T GET_DIRECTION;
     RotorSensor_Set_T SET_DIRECTION; // SET_CAPTURE_DIRECTION;
 
     /* Config */
+    RotorSensor_Proc_T INIT; /* Re init peripheral registers */
     RotorSensor_InitFrom_T INIT_UNITS_FROM;
     RotorSensor_Test_T VERIFY_CALIBRATION;
 }
@@ -86,30 +93,28 @@ RotorSensor_VTable_T;
 typedef struct RotorSensor_Config
 {
     uint8_t PolePairs;                      /* Motor Pole Pairs. Config Mech/Electrical conversion */
-    uint16_t ElSpeedRated_DegPerCycle;      /* ~Speed at nominal VSource. Config scalar speed.
-                                                as electrical speed in degrees per cycle.
-                                                mech speed ~ VSource*Kv */
+
+    /*
+        ~Speed at nominal VSource. Config scalar speed. Caller derive for simplicity.
+    */
+    uint16_t ElSpeedRated_DegPerCycle;
     uint16_t MechSpeedRated_Rpm;
 }
 RotorSensor_Config_T;
 
 /*
-    [AngleSpeed_T]
+    [Angle_T] Wrap
 */
-/* altneratively move with feedbackstate */
 typedef struct RotorSensor_State
 {
-    // AngleSpeed_T AngleSpeed; /* Angle and Speed State */
-    angle16_t ElectricalAngle;  /* Angle Feedback. Shared E-Cycle edge detect, User output */
-    angle16_t ElectricalSpeed_DegPerCycle;  /* Electrical Speed, ElectricalDeltaAngle. < 32768 by SpeedRated */
-                                            // ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
-
-    int32_t Speed_Fract16;  /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
-    // int32_t SpeedPrev_Fract16; /* common filter */
+    /* Angle and Speed State */
+    /* Electrical Angle Per Control Cycle */
+    /* AngleSpeed.Speed - Angle Displacement of Electrical Angle at CONTROL_FREQ */
+    Angle_T AngleSpeed;
 
     angle16_t MechanicalAngle;
-    int Direction; /* RotorSensor_Direction */
-    // Units
+    int Direction; /* RotorSensor_Direction. Feedback Direction. Alternatively use speed */
+    int DirectionErrorCount;
 }
 RotorSensor_State_T;
 
@@ -121,13 +126,12 @@ RotorSensor_State_T;
 typedef const struct RotorSensor
 {
     const RotorSensor_VTable_T * P_VTABLE;
-    RotorSensor_State_T * P_STATE; // AngleSpeed_T * const P_STATE;
-    // const RotorSensor_VTable_T VTABLE; /* assign by const expr */
+    RotorSensor_State_T * P_STATE;
 }
 RotorSensor_T;
 
-#define MOTOR_SENSOR_INIT(p_VTable, p_State) { .P_VTABLE = p_VTable, .P_STATE = p_State, }
-#define MOTOR_SENSOR_ALLOC(p_VTable) MOTOR_SENSOR_INIT(p_VTable, &(RotorSensor_State_T){0})
+#define ROTOR_SENSOR_INIT(p_VTable, p_State) { .P_VTABLE = p_VTable, .P_STATE = p_State, }
+#define ROTOR_SENSOR_ALLOC(p_VTable) ROTOR_SENSOR_INIT(p_VTable, &(RotorSensor_State_T){0})
 
 /******************************************************************************/
 /*
@@ -137,36 +141,44 @@ RotorSensor_T;
 /******************************************************************************/
 extern const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY;
 
-#define MOTOR_SENSOR_INIT_AS_EMPTY(p_State) MOTOR_SENSOR_INIT(&MOTOR_SENSOR_VTABLE_EMPTY, p_State)
+#define ROTOR_SENSOR_INIT_AS_EMPTY(p_State) ROTOR_SENSOR_INIT(&MOTOR_SENSOR_VTABLE_EMPTY, p_State)
 
 /******************************************************************************/
 /*!
     Private
 */
 /******************************************************************************/
-static inline void _RotorSensor_Reset(RotorSensor_State_T * p_state)
+static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
 {
-    p_state->ElectricalAngle = 0;
-    p_state->ElectricalSpeed_DegPerCycle = 0;
-    p_state->Speed_Fract16 = 0;
-    p_state->MechanicalAngle = 0;
-    p_state->Direction = 0;
+    // p_state->ElectricalAngle = 0;
+    // p_state->ElectricalSpeed_DegPerCycle = 0;
+    // p_state->Speed_Fract16 = 0;
+    // p_state->MechanicalAngle = 0;
+    // p_state->Direction = 0;
+    p_state->AngleSpeed.Angle = 0;
+    p_state->AngleSpeed.Speed = 0;
+    p_state->AngleSpeed.Speed_Fract16 = 0;
+    // p_state->Direction = 0;
 }
+
 /* Getters in case implementation changes */
 /* Position */
-static inline angle16_t _RotorSensor_GetElecticalAngle(const RotorSensor_State_T * p_state) { return p_state->ElectricalAngle; }
+static inline angle16_t _RotorSensor_GetElecticalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
 /* Speed Angle - Displacement of Electrical Angle at CONTROL_FREQ */
-static inline angle16_t _RotorSensor_GetElectricalSpeed(const RotorSensor_State_T * p_state) { return p_state->ElectricalSpeed_DegPerCycle; }
-// static inline int32_t _RotorSensor_GetElectricalSpeed_RadPerS(const RotorSensor_State_T * p_state) { }
-static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->Speed_Fract16; }
+static inline angle16_t _RotorSensor_GetElectricalSpeed(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed; }
+static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Fract16; }
+// static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return speed_fract16_of_angle16(p_state->ElectricalSpeed_DegPerCycle, p_state->Config.ElSpeedRated_DegPerCycle); }
 
+static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
+// static inline int32_t _RotorSensor_GetSensorDirection(const RotorSensor_State_T * p_state) { return math_sign(p_state->ElectricalSpeed_DegPerCycle); }
+
+// static inline int32_t _RotorSensor_GetElectricalSpeed_RadPerS(const RotorSensor_State_T * p_state) { }
 // static inline int32_t _RotorSensor_GetRpm(const RotorSensor_State_T * p_state) {}
 static inline angle16_t _RotorSensor_GetMechanicalAngle(const RotorSensor_State_T * p_state) { return p_state->MechanicalAngle; }
-static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
 
 /******************************************************************************/
 /*!
-    Virtual Functions
+    Public Interface / Virtual Functions
 */
 /******************************************************************************/
 static inline void RotorSensor_Init(const RotorSensor_T * p_sensor)
@@ -179,12 +191,14 @@ static inline void RotorSensor_Init(const RotorSensor_T * p_sensor)
 static inline void RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_ANGLE(p_sensor); }
 /* OnSpeedLoop */
 static inline void RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_SPEED(p_sensor); }
-
 /* OnStart */
-// void RotorSensor_ZeroState(const Motor_T * p_motor);
+static inline void RotorSensor_ZeroInitial(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->ZERO_INITIAL(p_sensor); p_sensor->P_STATE->DirectionErrorCount = 0; }
+
+/* Optionally for sensor without built-in direction detection */
 static inline void RotorSensor_SetDirection(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_VTABLE->SET_DIRECTION(p_sensor, direction); }
-// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->GET_DIRECTION(p_sensor); }
 // static inline void RotorSensor_SetDirection(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_STATE->Direction = direction; }
+
+// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->GET_DIRECTION(p_sensor); }
 
 static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->IS_FEEDBACK_AVAILABLE(p_sensor); }
 
@@ -196,41 +210,84 @@ static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, con
 
 /******************************************************************************/
 /*!
-    Base class helpers
+    Base class
 */
 /******************************************************************************/
+// static inline void _Motor_SetFeedforwardDelta(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
+// {
+//     p_motor->SensorState.ElectricalAngle += elSpeed_degPerCycle;
+//     p_motor->SensorState.ElectricalSpeed_DegPerCycle = elSpeed_degPerCycle;
+//     p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRatedRef_ERpm(p_motor), elSpeed_degPerCycle);
+//     p_motor->SensorState.MechanicalAngle += (elSpeed_degPerCycle / p_motor->Config.PolePairs);
+// }
 
 /******************************************************************************/
 /*!
     Combined
 */
 /******************************************************************************/
-static inline angle16_t RotorSensor_PollAngle(const RotorSensor_T * p_sensor)
-{
-    RotorSensor_CaptureAngle(p_sensor);
-    return _RotorSensor_GetElecticalAngle(p_sensor->P_STATE);
-}
+// static inline angle16_t RotorSensor_PollAngle(const RotorSensor_T * p_sensor)
+// {
+//     RotorSensor_CaptureAngle(p_sensor);
+//     return _RotorSensor_GetElecticalAngle(p_sensor->P_STATE);
+// }
 
-static inline angle16_t RotorSensor_PollSpeed(const RotorSensor_T * p_sensor)
-{
-    RotorSensor_CaptureSpeed(p_sensor);
-    return _RotorSensor_GetElectricalSpeed(p_sensor->P_STATE);
-}
+// static inline angle16_t RotorSensor_PollSpeed(const RotorSensor_T * p_sensor)
+// {
+//     RotorSensor_CaptureSpeed(p_sensor);
+//     return _RotorSensor_GetElectricalSpeed(p_sensor->P_STATE);
+// }
 
 /******************************************************************************/
 /*!
     Query Functions
 */
 /******************************************************************************/
-/*  */
-static inline angle16_t RotorSensor_GetElectricalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->ElectricalAngle; }
-static inline angle16_t RotorSensor_GetElectricalSpeed(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->ElectricalSpeed_DegPerCycle; }
+static inline Angle_T * RotorSensor_GetAngleState(const RotorSensor_T * p_sensor) { return &p_sensor->P_STATE->AngleSpeed; }
 
-static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Speed_Fract16; }
+ /* Angle Feedback. Shared E-Cycle edge detect, User output */
+static inline angle16_t RotorSensor_GetElectricalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->AngleSpeed.Angle; }
+
+// ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
+/* Electrical Speed, ElectricalDeltaAngle. < 32768 by SpeedRated */
+static inline angle16_t RotorSensor_GetElectricalSpeed(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->AngleSpeed.Speed; }
+
+/* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
+static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->AngleSpeed.Speed_Fract16; }
 // static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return speed_fract16_of_angle16(p_sensor->P_STATE->ElectricalSpeed_DegPerCycle, p_sensor->P_STATE->P_STATE->Config.ElSpeedRated_DegPerCycle); }
 
-static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Direction; }
-// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return math_sign(p_sensor->P_STATE->ElectricalSpeed_DegPerCycle); }
+// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return math_sign(RotorSensor_GetElectricalSpeed(p_sensor)); }
 
+static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
+
+
+/******************************************************************************/
+/*!
+    Angle Speed Wrap
+*/
+/******************************************************************************/
+// move to sensor/angle
+// static inline void _Motor_SetFeedforwardDelta(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
+// {
+//     p_motor->SensorState.ElectricalAngle += elSpeed_degPerCycle;
+//     p_motor->SensorState.ElectricalSpeed_DegPerCycle = elSpeed_degPerCycle;
+//     p_motor->SensorState.MechanicalAngle += (elSpeed_degPerCycle / p_motor->Config.PolePairs);
+//     p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRatedRef_ERpm(p_motor), elSpeed_degPerCycle);
+// }
+
+// static inline void Motor_SetElAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
+// {
+//     _Motor_SetFeedforwardDelta(p_motor, angle - p_motor->SensorState.ElectricalAngle);
+// }
+
+// static inline void Motor_SetElSpeedFeedforward(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
+// {
+//     _Motor_SetFeedforwardDelta(p_motor, elSpeed_degPerCycle);
+// }
+
+// static inline void Motor_SetMechAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
+// {
+//     Motor_SetElAngleFeedforward(p_motor, angle * p_motor->Config.PolePairs);
+// }
 

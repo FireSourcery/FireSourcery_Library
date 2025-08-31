@@ -64,6 +64,7 @@
 #define MOTOR_CONTROL_CYCLES(Milliseconds)  CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_CONTROL_TIME_MS(Cycles)       MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
+/* Ramp Time */
 #define MOTOR_TORQUE_CYCLES(Milliseconds)   CYCLES_OF_MS(MOTOR_CONTROL_FREQ, Milliseconds)
 #define MOTOR_TORQUE_TIME_MS(Cycles)        MS_OF_CYCLES(MOTOR_CONTROL_FREQ, Cycles)
 
@@ -74,8 +75,8 @@
 #define MOTOR_SPEED_TIME_MS(Cycles)         MS_OF_CYCLES(MOTOR_SPEED_LOOP_FREQ, Cycles)
 
 /* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
-#ifndef MOTOR_ANALOG_DIVIDER_MASK
-#define MOTOR_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
+#ifndef PHASE_ANALOG_DIVIDER_MASK
+#define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
 #endif
 
 //alternatively
@@ -83,11 +84,12 @@
 // {
 //     const uint32_t MOTOR_CONTROL_FREQ;
 //     const uint32_t MOTOR_CURRENT_LOOP_FREQ;
+//     const uint32_t MOTOR_SPEED_CALIB_MAX; // alternatively as common for all
 // }
 // MotorTimeReference_T;
 // MotorRef_Clock_T;
 
-static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & MOTOR_ANALOG_DIVIDER_MASK) == 0UL); }
+static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
 /*
     Local Conversion Units

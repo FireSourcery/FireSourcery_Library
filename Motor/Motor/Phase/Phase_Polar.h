@@ -27,6 +27,7 @@
     @author FireSourcery
 
     @brief   Part of Phase. 2-Phase Polar implementation
+        Treats each phase as a complementary PWM output.
         2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
         e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
 */
@@ -65,7 +66,7 @@ typedef enum Phase_Polar_Mode
 {
     PHASE_MODE_UNIPOLAR_1,    /*!<   */
     PHASE_MODE_UNIPOLAR_2,    /*!<   */
-    PHASE_MODE_BIPOLAR        /*!<   */
+    PHASE_MODE_BIPOLAR,       /*!<   */
 }
 Phase_Polar_Mode_T;
 

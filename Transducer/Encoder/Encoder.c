@@ -115,7 +115,7 @@ void _Encoder_ResetUnitsScalarSpeed(Encoder_State_T * p_encoder)
 {
     uint32_t unitsFactor = (uint32_t)32768U * 60U;
     uint32_t unitsDivisor = (uint32_t)p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm;
-    p_encoder->UnitScalarSpeedShift = 14U; // todo as shift max of MaxDeltaD
+    p_encoder->UnitScalarSpeedShift = 14U; //todo as shift max of MaxDeltaD
     p_encoder->UnitScalarSpeed = ((uint64_t)unitsFactor << p_encoder->UnitScalarSpeedShift) * p_encoder->UnitTime_Freq / unitsDivisor;
 }
 

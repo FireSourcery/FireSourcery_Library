@@ -40,9 +40,8 @@
 */
 /******************************************************************************/
 /*
-    Capture Pulse Frequency
-    at SAMPLE_FREQ ~1ms
-    Speed => 0 when DeltaT > 1S
+    Capture [FreqD] Pulse Frequency
+    Call at SAMPLE_FREQ ~1ms
 */
 static inline void _Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
 {
@@ -82,7 +81,8 @@ static inline void _Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
     }
 }
 
-static inline void Encoder_ModeDT_CaptureVelocity(const Encoder_T * p_encoder)
+/* Speed => 0 when DeltaT > 1S */
+static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
 {
     /* Speed may reach zero before checking with extended counter takes effect */
     if (Encoder_DeltaT_IsExtendedStop(p_encoder) == false) { _Encoder_ModeDT_CaptureFreqD(p_encoder); }
@@ -90,6 +90,7 @@ static inline void Encoder_ModeDT_CaptureVelocity(const Encoder_T * p_encoder)
 }
 
 /*
+    Call at SAMPLE_FREQ
     Capture Angular Speed in POLLING_FREQ
     Using FreqD to interpolate Angle
 
@@ -100,17 +101,30 @@ static inline void Encoder_ModeDT_CaptureVelocity(const Encoder_T * p_encoder)
 
     returns Degrees / POLLING_FREQ
 
-    call with Encoder_ModeDT_CaptureVelocity
+    Optionally include with Encoder_ModeDT_CaptureFreqD
+    todo move to Angle_T
 */
-static inline uint32_t Encoder_ModeDT_CapturePollingAngle(Encoder_State_T * p_encoder)
+static inline uint32_t Encoder_ModeDT_CapturePollingDelta(Encoder_State_T * p_encoder)
 {
     p_encoder->PollingAngleDelta = p_encoder->FreqD * p_encoder->UnitPollingAngle;
     return p_encoder->PollingAngleDelta >> ENCODER_ANGLE_SHIFT;
 }
 
 /*
+    Handler as SAMPLE_FREQ
+*/
+static inline void Encoder_ModeDT_CaptureVelocity(const Encoder_T * p_encoder)
+{
+    Encoder_ModeDT_CaptureFreqD(p_encoder);
+    Encoder_ModeDT_CapturePollingDelta(p_encoder->P_STATE);
+}
+
+
+/******************************************************************************/
+/*
     At POLLING_FREQ
 */
+/******************************************************************************/
 static inline uint32_t _Encoder_ModeDT_InterpolateAngle(Encoder_State_T * p_encoder)
 {
     p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->PollingAngleDelta, p_encoder->InterpolateAngleLimit);

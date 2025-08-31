@@ -47,8 +47,18 @@ void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
     PID_Reset(p_pid);
 }
 
+/*!
+    dynamic output limits
+    update synchronous with proc
+*/
+void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
+{
+    assert(max > min);
+    p_pid->OutputMin = min;
+    p_pid->OutputMax = max;
+}
 
-static inline int16_t GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 15); }
+static inline int16_t GetIntegral(const PID_T * p_pid) { return (int16_t)(p_pid->IntegralAccum >> 15); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
 
 /*!
@@ -75,9 +85,13 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     // assert(abs(p_pid->IntegralAccum) < INT32_MAX / 2);
     // assert(abs((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
 
+    // integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
+    // integral = math_clamp(integralAccum >> 15, integralMin, integralMax);
+    // p_pid->IntegralAccum = (integral == (integralAccum >> 15)) ? integralAccum : (integral << 15);
+
     integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
-    integral = math_clamp(integralAccum >> 15, integralMin, integralMax);
-    p_pid->IntegralAccum = (integral == (integralAccum >> 15)) ? integralAccum : (integral << 15);
+    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
+    integral = p_pid->IntegralAccum >> 15;
 
     p_pid->ErrorPrev = error;
 
@@ -93,16 +107,10 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
     // error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
+    // assert(math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX));
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }
-
-int16_t PID_ProcPI_WithLimits(PID_T * p_pid, int16_t min, int16_t max, int32_t feedback, int32_t setpoint)
-{
-    // _PID_SetOutputLimits(p_pid, min, max);
-    // return PID_ProcPI(p_pid, feedback, setpoint);
-}
-
 
 // int32_t PID_ProcPID(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 // {
@@ -125,25 +133,17 @@ void PID_Reset(PID_T * p_pid)
     p_pid->Output = 0;
 }
 
-/* allow int32_t input to clamp in 1 step */
-void PID_SetOutputState(PID_T * p_pid, int32_t state)
+static inline void SetOutputState(PID_T * p_pid, int16_t output)
 {
-    SetIntegral(p_pid, math_clamp(state, p_pid->OutputMin, p_pid->OutputMax));
-    p_pid->Output = GetIntegral(p_pid); /* passed value after clamp */
+    SetIntegral(p_pid, output);
+    p_pid->Output = output;
     p_pid->ErrorPrev = 0;
 }
 
-/*!
-    dynamic output limits
-    update synchronous with proc
-*/
-void _PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
+/* allow int32_t input to clamp in 1 step */
+void PID_SetOutputState(PID_T * p_pid, int16_t output)
 {
-    if (max > min)
-    {
-        p_pid->OutputMin = min;
-        p_pid->OutputMax = max;
-    }
+    SetOutputState(p_pid, (int16_t)math_clamp(output, p_pid->OutputMin, p_pid->OutputMax));
 }
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
@@ -152,6 +152,7 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;
+        // SetIntegral(p_pid, math_clamp(GetIntegral(p_pid), p_pid->OutputMin, p_pid->OutputMax));
         PID_SetOutputState(p_pid, GetIntegral(p_pid)); /* Reset integral with limits */
     }
 }

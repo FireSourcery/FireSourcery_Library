@@ -29,7 +29,8 @@
     @brief
 */
 /******************************************************************************/
-// #include "Sensor/Motor_Sensor.h"
+#include "Sensor/Motor_Sensor.h" /* TABLE INIT */
+#include "Analog/Motor_Analog.h" /* For Callbacks */
 #include "Motor_Thread.h"
 #include "Motor_User.h"
 #include "Motor_Config.h"

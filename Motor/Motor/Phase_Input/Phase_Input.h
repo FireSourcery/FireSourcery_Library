@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,17 +24,26 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file   Phase_Analog.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef CONFIG_PHASE_H
-#define CONFIG_PHASE_H
+#include "../Phase/Phase_Types.h"
 
-#ifdef CONFIG_PHASE_PIN_SWITCH
-#endif
+/* Interface for Capture Results */
+typedef struct Phase_Input
+{
+    Phase_Triplet_T Vabc;
+    Phase_Bitmask_T VFlags;
+    Phase_Triplet_T Iabc;
+    Phase_Bitmask_T IFlags;
+}
+Phase_Input_T;
 
-#endif
-
+static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.A; }
+static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.B; }
+static inline int16_t Phase_Input_GetVc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.C; }
+static inline int16_t Phase_Input_GetIa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.A; }
+static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.B; }
+static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.C; }

@@ -1,13 +1,13 @@
 // typedef enum Motor_Analog_Channel
 // {
 // #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
-//     MOTOR_ANALOG_CHANNEL_SIN,
-//     MOTOR_ANALOG_CHANNEL_COS,
+//     PHASE_ANALOG_CHANNEL_SIN,
+//     PHASE_ANALOG_CHANNEL_COS,
 // #endif
 // }
 // Motor_Analog_Channel_T;
 
-// typedef union MotorAnalog_Conversions
+// typedef union Phase_Input_Conversions
 // {
 //     struct
 //     {
@@ -17,7 +17,7 @@
 //     #endif
 //     };
 // }
-// MotorAnalog_Conversions_T;
+// Phase_Input_Conversions_T;
 
 // void Motor_MarkAnalog_Thread(Motor_State_T * p_motor)
 // {

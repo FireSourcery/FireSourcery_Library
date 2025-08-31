@@ -52,9 +52,7 @@
 
 #define HALL_SENSORS_TABLE_LENGTH (8U)
 
-// #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
-// typedef void (*Hall_CommutationPhase_T)(void * p_context);
-// #endif
+#define HALL_ID_BITS (3U)
 
 typedef union Hall_Sensors
 {
@@ -137,6 +135,10 @@ typedef enum Hall_Direction
 }
 Hall_Direction_T;
 
+// #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
+// typedef void (*Hall_CommutationPhase_T)(void * p_context);
+// #endif
+
 typedef struct Hall_Config
 {
     Hall_Id_T SensorsTable[HALL_SENSORS_TABLE_LENGTH];
@@ -209,12 +211,12 @@ static inline uint16_t _Hall_Angle16Of(Hall_Id_T virtualId)
 
 static inline uint16_t _Hall_Angle16BoundaryOf(Hall_Id_T virtualId, Hall_Direction_T direction)
 {
-    static const uint16_t _HALL_ANGLE_BOUNDARY = 5461U; /* Six 60 degree boundaries, +/- 30 degrees */
+    static const uint16_t _HALL_ANGLE_BOUNDARY = 5461U; /* +/- 30 degrees, from six 60 degree boundaries */
 
-    return (_Hall_Angle16Of(virtualId) - ((int16_t)direction * _HALL_ANGLE_BOUNDARY));
+    return (_Hall_Angle16Of(virtualId) - ((int16_t)direction * _HALL_ANGLE_BOUNDARY)); /* minus on CCW. Boundary occurs prior to midpoint */
 }
 
-#define HALL_DIRECTION_STATE(idPrev, idNew) ((idPrev << 3U) | idNew)
+#define HALL_DIRECTION_STATE(idPrev, idNew) ((idPrev << HALL_ID_BITS) | idNew)
 
 static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idNew)
 {
@@ -261,6 +263,7 @@ static inline uint16_t Hall_DirectionOf(const Hall_State_T * p_hall, uint8_t sen
 
 /* Six-step commutation Id */
 /* +180 degrees */
+// #define HALL_SENSOR_MASK (0x07U)
 // static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
 // static inline Hall_Id_T Hall_CommutationIdOf(const Hall_T * p_hall, uint8_t physicalSensors)
 // {
@@ -275,33 +278,28 @@ static inline uint16_t Hall_DirectionOf(const Hall_State_T * p_hall, uint8_t sen
 //     return id;
 // }
 
-// static inline uint16_t _Hall_GetAngle16(const Hall_T * p_hall) { return Hall_Angle16Of(p_hall, p_hall->Sensors.Value, p_hall->Direction); }
-
 /******************************************************************************/
-/* Capture State */
+/*
+    Capture State
+*/
 /******************************************************************************/
-static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
-{
-    p_state->SensorsPrev.Value = p_state->Sensors.Value;
-    p_state->Sensors.Value = sensors.Value;
-}
-
 /*
     Physical Sensors
 */
 static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
 {
-    // Hall_Sensors_T sensors;
-    // sensors.A = Pin_Input_ReadPhysical(&p_hall->PIN_A);
-    // sensors.B = Pin_Input_ReadPhysical(&p_hall->PIN_B);
-    // sensors.C = Pin_Input_ReadPhysical(&p_hall->PIN_C);
-    // return sensors;
     return (Hall_Sensors_T)
     {
         .A = Pin_Input_ReadPhysical(&p_hall->PIN_A),
         .B = Pin_Input_ReadPhysical(&p_hall->PIN_B),
         .C = Pin_Input_ReadPhysical(&p_hall->PIN_C),
     };
+}
+
+static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
+{
+    p_state->SensorsPrev.Value = p_state->Sensors.Value;
+    p_state->Sensors.Value = sensors.Value;
 }
 
 static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
@@ -315,16 +313,14 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
 */
 static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
 {
-    // Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
-    // bool isEdge = (sensors.Value != p_hall->P_STATE->Sensors.Value);
-    // if (isEdge == true) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
-    // return (isEdge);
     Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
-    return ((sensors.Value != p_hall->P_STATE->Sensors.Value)) ? ({ _Hall_CaptureSensors(p_hall->P_STATE, sensors); true; }) : false;
+    bool isEdge = (sensors.Value != p_hall->P_STATE->Sensors.Value);
+    if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
+    return (isEdge);
 }
 
 /*
-    Capture with derived values
+    Supplementry Capture with derived values
 */
 static inline Hall_Direction_T Hall_CaptureDirection(Hall_State_T * p_hall)
 {
@@ -362,29 +358,30 @@ static inline bool Hall_PollCaptureState(const Hall_T * p_hall)
 */
 static inline bool Hall_PollEdgeA(const Hall_T * p_hall) { return ((Hall_ReadSensors(p_hall).A == 1U) && ((p_hall->P_STATE->Sensors.A) == 0U)); }
 
-/******************************************************************************/
-/* Results from Capture */
-/******************************************************************************/
-static inline Hall_Sensors_T Hall_GetSensors(const Hall_State_T * p_hall) { return p_hall->Sensors; }
-static inline Hall_Id_T Hall_GetId(const Hall_State_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
-static inline uint16_t Hall_GetAngle16(const Hall_State_T * p_hall) { return p_hall->Angle; }
-// static inline Hall_Id_T Hall_GetCommutationId(const Hall_State_T * p_hall) { return Hall_CommutationIdOf(p_hall, p_hall->Sensors.Value); }
-
-/* */
-static inline Hall_Direction_T Hall_GetDirection(const Hall_State_T * p_hall) { return (p_hall->Direction); }
-/* Sets direction => commutation, angle degrees16 conversion */
-static inline void Hall_SetDirection(Hall_State_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
 
 /* Next poll is edge */
 // static inline void Hall_ResetCapture(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
 
-static inline void Hall_SetInitial(const Hall_T * p_hall)
+static inline void Hall_ZeroInitial(const Hall_T * p_hall)
 {
     Hall_CaptureSensors_ISR(p_hall);
     p_hall->P_STATE->Angle = Hall_Angle16Of(p_hall->P_STATE, p_hall->P_STATE->Sensors.Value, HALL_DIRECTION_UNKNOWN); /* assume middle */
 }
 
+/* */
+/* Sets direction => commutation, angle degrees16 conversion */
+static inline void Hall_SetDirection(Hall_State_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
 
+/******************************************************************************/
+/*
+    Query Results from Capture
+*/
+/******************************************************************************/
+static inline Hall_Sensors_T Hall_GetSensors(const Hall_State_T * p_hall) { return p_hall->Sensors; }
+static inline Hall_Id_T Hall_GetId(const Hall_State_T * p_hall) { return Hall_IdOf(p_hall, p_hall->Sensors.Value); }
+static inline uint16_t Hall_GetAngle16(const Hall_State_T * p_hall) { return p_hall->Angle; }
+static inline Hall_Direction_T Hall_GetDirection(const Hall_State_T * p_hall) { return (p_hall->Direction); }
+// static inline Hall_Id_T Hall_GetCommutationId(const Hall_State_T * p_hall) { return Hall_CommutationIdOf(p_hall, p_hall->Sensors.Value); }
 
 /******************************************************************************/
 /*

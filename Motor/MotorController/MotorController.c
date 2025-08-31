@@ -53,7 +53,7 @@ void MotorController_Init(const MotorController_T * p_context)
 
     VMonitor_Init(&p_context->V_SOURCE);
     /* Overwrite */
-    VDivider_ToLinear(&(VDivider_T) { .R1 = MOTOR_ANALOG_REFERENCE_BOARD.V_PHASE_R1, .R2 = MOTOR_ANALOG_REFERENCE_BOARD.V_PHASE_R2, }, p_context->V_SOURCE.P_LINEAR);
+    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R1, .R2 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R2, }, p_context->V_SOURCE.P_LINEAR);
 
     VMonitor_Init(&p_context->V_ACCESSORIES);
     VMonitor_Init(&p_context->V_ANALOG);
@@ -61,7 +61,7 @@ void MotorController_Init(const MotorController_T * p_context)
     HeatMonitor_Init(&p_context->HEAT_PCB);
     HeatMonitor_Group_Init(&p_context->HEAT_MOSFETS);
 
-    MotorAnalog_InitVSource_V(p_mc->Config.VSupplyRef);
+    Phase_VBus_InitV(p_mc->Config.VSupplyRef);
     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 
     Blinky_Init(&p_context->BUZZER);
@@ -127,17 +127,25 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 
 */
 /******************************************************************************/
+// fault >57% or vPhaseFract16*vBusInv_Fract32 may overflow
 void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
-    p_context->P_MC_STATE->Config.VSupplyRef = math_min(volts, MotorAnalogRef_GetVRated_V());
+    p_context->P_MC_STATE->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
 }
 
 void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
 {
-    assert(MotorAnalogRef_IsLoaded() == true); /* Must be loaded before */
+    assert(Phase_Calibration_IsLoaded() == true); /* Must be loaded before */
     _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)));
 }
+
+// bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
+// {
+//    RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
+//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef);
+//    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
+// }
 
 
 /******************************************************************************/

@@ -48,8 +48,6 @@
 /******************************************************************************/
 static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return MotorTimeRef_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
 
-/* Alternatively move singleton capture to this module */
-// static inline void Motor_CaptureVSource(uint16_t vBus_adcu) { MotorAnalog_CaptureVSource_Adcu(vBus_adcu); }
 
 /* Optionally mark on Start */
 static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
@@ -61,11 +59,10 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
         // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_context);     break;
-            // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+            // #if  defined(MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
         case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_context);     break;
             // #endif
         case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_context);     break;
-        // case MSM_STATE_ID_CALIBRATION:  Motor_Analog_MarkIabc(p_context);     break;
         case MSM_STATE_ID_CALIBRATION:      break;
         case MSM_STATE_ID_INIT:             break;
         // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_context); Motor_Analog_MarkIabc(p_context); break;
@@ -96,20 +93,19 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 {
     Motor_State_T * p_fields = p_context->P_MOTOR_STATE;
 
-    // Motor_Debug_CaptureRefTime(p_context);
     // p_fields->MicrosRef = SysTime_GetMicros();
 
     Motor_CaptureSensor(p_context);
 
     StateMachine_Synchronous_RootFirst_Thread(&p_context->STATE_MACHINE);
 
-    p_fields->ControlTimerBase++;
     /* Inline Phase Out */
     /* Directly read register state */
     if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
 
-    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
+    timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());
+    p_fields->ControlTimerBase++;
 }
 
 /* Controls StateMachine Proc. Local Critical */

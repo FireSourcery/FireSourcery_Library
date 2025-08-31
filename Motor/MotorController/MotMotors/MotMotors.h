@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include "Motor/Motor/Motor.h"
 #include "Motor/Motor/Motor_User.h"
+#include "Motor/Motor/Analog/Motor_Analog.h"
 #include "Type/Array/void_array.h"
 
 
@@ -80,11 +81,9 @@ static inline bool MotMotors_IsAnyValue(const MotMotors_T * p_ctx, Motor_State_T
 /*
     no void_array functions
 */
-static inline void MotMotors_ApplySpeedLimit(const MotMotors_T * p_ctx, LimitArray_T * p_limit)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
+static inline void MotMotors_ApplySpeedLimit(const MotMotors_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
 
-static inline void MotMotors_ApplyILimit(const MotMotors_T * p_ctx, LimitArray_T * p_limit)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetILimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
+static inline void MotMotors_ApplyILimit(const MotMotors_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetILimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
 
 /*
     Feedback Mode Set first
@@ -92,15 +91,9 @@ static inline void MotMotors_ApplyILimit(const MotMotors_T * p_ctx, LimitArray_T
 typedef void (*Motor_User_SetCmdValue_T)(Motor_State_T * p_motor, int16_t userCmd); /* alternatively as cmd struct */
 
 /* selected mode using function */
-static inline void MotMotors_SetCmdWith(const MotMotors_T * p_ctx, Motor_User_SetCmdValue_T function, int16_t value)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { function(&p_ctx->P_STATES[iMotor], value); } }
+static inline void MotMotors_SetCmdWith(const MotMotors_T * p_ctx, Motor_User_SetCmdValue_T function, int16_t value) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { function(&p_ctx->P_STATES[iMotor], value); } }
 
-/*  */
-// static inline void MotMotors_SetCmdValue(const MotMotors_T * p_ctx, int16_t userCmd)
-//     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetActiveCmdValue_Scalar(&p_ctx->P_STATES[iMotor], userCmd); } }
-
-static inline void MotMotors_ApplyInputs(const MotMotors_T * p_ctx, Motor_User_Input_T * p_input)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
+static void MotMotors_ApplyInputs(const MotMotors_T * p_ctx, Motor_User_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
 
 
 
@@ -109,21 +102,16 @@ static inline void MotMotors_ApplyInputs(const MotMotors_T * p_ctx, Motor_User_I
     On Full Context
 */
 /******************************************************************************/
-static inline void MotMotors_SetFeedbackMode(const MotMotors_T * p_ctx, Motor_FeedbackMode_T mode)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
+static inline void MotMotors_SetFeedbackMode(const MotMotors_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
-static inline void MotMotors_ActivateControlState(const MotMotors_T * p_ctx, Phase_Output_T state)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
+static inline void MotMotors_ActivateControlState(const MotMotors_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
 
-static inline void MotMotors_ApplyUserDirection(const MotMotors_T * p_ctx, int sign)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ApplyDirectionSign(&p_ctx->P_CONTEXTS[iMotor], sign); } }
+static inline void MotMotors_ApplyUserDirection(const MotMotors_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ApplyDirectionSign(&p_ctx->P_CONTEXTS[iMotor], sign); } }
 
 /* Exits Calibration and OpenLoop States */
-static inline void MotMotors_StopAll(const MotMotors_T * p_ctx)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void MotMotors_StopAll(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
 
-static inline void MotMotors_ForceDisableControl(const MotMotors_T * p_ctx)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void MotMotors_ForceDisableControl(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
 
 // static inline bool MotMotors_IsEveryUserDirection(const MotMotors_T * p_ctx, int sign)
 // {
@@ -135,14 +123,20 @@ static inline void MotMotors_ForceDisableControl(const MotMotors_T * p_ctx)
 //     return isEvery;
 // }
 
-// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_value_t value)
-//     { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
+static Motor_User_Direction_T _MotMotors_GetDirectionAll(const MotMotors_T * p_ctx)
+{
+    Motor_User_Direction_T direction;
+    if      (MotMotors_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_FORWARD; }
+    else if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_REVERSE; }
+    else                                                                 { direction = 0; } /* overload stop and Error */
+    return direction;
+}
 
-static inline void MotMotors_EnterCalibration(const MotMotors_T * p_ctx)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_ctx->P_CONTEXTS[iMotor]); } }
+// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
 
-static inline void MotMotors_EnterCalibrateAdc(const MotMotors_T * p_ctx)
-    { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void MotMotors_EnterCalibration(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_ctx->P_CONTEXTS[iMotor]); } }
+
+static inline void MotMotors_EnterCalibrateAdc(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_ctx->P_CONTEXTS[iMotor]); } }
 
 /* IsEveryMachineState */
 static inline bool MotMotors_IsEveryState(const MotMotors_T * p_ctx, Motor_StateId_T stateId)

@@ -59,13 +59,10 @@ UserDIn_Edge_T;
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
-    // bool IsEnabled;
-    // bool IsInverted;                    /* Runtime invert config */
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
     // UserDIn_Mode_T Mode;
-    // uint16_t DebounceTime;
 }
 UserDIn_State_T;
 
@@ -112,7 +109,6 @@ static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_context) { retu
 /******************************************************************************/
 static inline void UserDIn_SetDebounceTime(const UserDIn_T * p_context, uint16_t millis) { Debounce_SetTime(&p_context->P_STATE->Debounce, millis); }
 static inline uint16_t UserDIn_GetDebounceTime(const UserDIn_T * p_context) { return Debounce_GetTime(&p_context->P_STATE->Debounce); }
-
 
 /******************************************************************************/
 /*

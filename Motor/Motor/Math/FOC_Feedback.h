@@ -43,20 +43,25 @@
 // FOC_Feedback_T;
 
 
-// static void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
+// static inline void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
 // {
 //     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, p_foc->ReqD);
 //     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, p_foc->ReqQ);
 // }
 
-// static void ProcIFeedback(FOC_T * p_foc, int16_t idReq, int16_t iqReq)
+// static inline void FOC_Feedback_ProcId(FOC_T * p_foc, PID_T * p_pidId, fract16_t idReq)
+// {
+//     FOC_SetVd(p_foc, PID_ProcPI(p_pidId, p_foc->Id, idReq));
+// }
+
+// static inline void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq, fract16_t idReq, fract16_t iqReq)
 // {
 //     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
 //     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
-//     FOC_ProcVectorLimit(&p_motor->Foc, MotorAnalog_GetVSource_Fract16());
+//     FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
 // }
 
-// void Motor_FOC_MatchFeedbackState(FOC_T * p_foc,)
+// void Motor_FOC_MatchFeedbackState(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
 // {
 //     // int32_t vq = Motor_GetVSpeed_Fract16(p_motor) / 2; // match without ad sampling
 //     int16_t vq = FOC_GetVMagnitude(&p_foc) * p_foc->Direction;

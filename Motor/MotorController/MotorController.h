@@ -88,6 +88,12 @@ typedef enum MotorController_MainMode
 }
 MotorController_MainMode_T;
 
+// struct MotorController_Direction
+// {
+//     Motor_User_Direction_T motorDirection : 2U;
+//     bool isParkMode : 1U;
+// };
+
 /*
     InputMux
 */
@@ -158,12 +164,12 @@ typedef struct MotorController_Config
 {
     /*
         MotorController Voltages
-        MOTOR_ANALOG_REFERENCE.V_MAX -> ADC Saturation
-        MOTOR_ANALOG_REFERENCE.V_RATED -> controller voltage max
+        PHASE_CALIBRATION.V_MAX -> ADC Saturation
+        PHASE_CALIBRATION.V_RATED -> controller voltage max
         Config.VSupplyRef -> user set nominal voltage
         MotorAnalogReference.VSource_V-> live voltage
     */
-    //alternatively split motor static instance
+    // alternatively split motor static instance
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
 
@@ -195,7 +201,7 @@ typedef struct MotorController_State
     uint32_t ControlCounter; /* pwm */
 
     Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
-    Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
+    // Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
 
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
@@ -271,6 +277,7 @@ typedef const struct MotorController
     VMonitor_Context_T V_SOURCE;        /* Controller Supply */
     VMonitor_Context_T V_ACCESSORIES;   /* ~12V */
     VMonitor_Context_T V_ANALOG;        /* V Analog Sensors ~5V */
+    // Analog_Conversion_T V_ASENSE_CONVERSION;
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */
@@ -289,7 +296,7 @@ MotorController_T;
 */
 /******************************************************************************/
 /* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { MotorAnalog_CaptureVSource_Adcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
+static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_VBus_CaptureAdcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
 
 static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
 

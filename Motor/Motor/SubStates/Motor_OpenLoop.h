@@ -47,7 +47,6 @@ static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_
 //     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0U);
 // }
 
-
 /* alternatively use State_CmdInput_T with addition   entry */
 // static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState)
 // {
@@ -67,7 +66,7 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 /*
     Open Loop SubState
 */
-// typedef enum Motor_OpenLoopState
+// typedef enum Motor_OpenLoop_StateId
 // {
 //     MOTOR_OPEN_LOOP_STATE_ENTER,
 //     MOTOR_OPEN_LOOP_STATE_PASSIVE,
@@ -78,7 +77,7 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 //     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
 //     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
 // }
-// Motor_OpenLoopState_T;
+// Motor_OpenLoop_StateId_T;
 
 /*
     Access by Id - directly correpond to VarId

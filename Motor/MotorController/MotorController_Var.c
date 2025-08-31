@@ -44,11 +44,12 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_MC_STATE);               break;
-        case MOT_VAR_MC_SUB_STATE:          value = MotorController_User_GetSubStateId(p_context->P_MC_STATE);               break;
-        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_MC_STATE).Value;      break;
+        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_MC_STATE);             break;
+        case MOT_VAR_MC_SUB_STATE:          value = MotorController_User_GetSubStateId(p_context->P_MC_STATE);          break;
+        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_MC_STATE).Value;    break;
         case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStatusFlags(p_context).Value;               break;
-        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;                            break;
+        case MOT_VAR_MC_DIRECTION:          value = MotorController_StateMachine_GetDirection(p_context);               break;
+        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;                          break;
     }
     return value;
 }
@@ -61,10 +62,10 @@ void MotorController_Var_Input_Set(const MotorController_T * p_context, MotorCon
 
     switch (id)
     {
-        case MOT_VAR_USER_MOTOR_SET_POINT:          MotorController_User_SetCmdValue(p_context, (int16_t)value);                    break;
-        case MOT_VAR_USER_MOTOR_FEEDBACK_MODE:      MotorController_User_SetFeedbackMode_Cast(p_context, value);                    break;
-        case MOT_VAR_USER_MOTOR_DIRECTION:          MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);    break;
-        case MOT_VAR_USER_MOTOR_PHASE_OUTPUT:       MotorController_User_SetControlState(p_context, (Phase_Output_T)value);         break;
+        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_User_SetCmdValue(p_context, (int16_t)value);                    break;
+        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_User_SetFeedbackMode_Cast(p_context, value);                    break;
+        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);    break;
+        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_User_SetControlState(p_context, (Phase_Output_T)value);         break;
 
         case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
         case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
@@ -108,13 +109,15 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
     {
         case MOT_VAR_V_SUPPLY_VOLTS:                value = p_state->Config.VSupplyRef;                        break;
         case MOT_VAR_I_LIMIT_LOW_V:                 value = p_state->Config.VLowILimit_Fract16;                break;
+
         case MOT_VAR_USER_INIT_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_USER_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
-        // case MOT_VAR_BUZZER_FLAGS_ENABLE:           value = p_state->Config.BuzzerFlags;                    break;
+
         case MOT_VAR_OPT_DIN_FUNCTION:              value = p_state->Config.OptDinMode;                        break;
         case MOT_VAR_OPT_SPEED_LIMIT:               value = p_state->Config.OptSpeedLimit_Fract16;             break;
         case MOT_VAR_OPT_I_LIMIT:                   value = p_state->Config.OptILimit_Fract16;                 break;
 
+        // case MOT_VAR_BUZZER_FLAGS_ENABLE:        value = p_state->Config.BuzzerFlags;                       break;
         // case MOT_DRIVE_CONFIG_THROTTLE_MODE:     value = p_state->Config.ThrottleMode;          break;
         // case MOT_DRIVE_CONFIG_BRAKE_MODE:        value = p_state->Config.BrakeMode;             break;
         // case MOT_DRIVE_CONFIG_ZERO_MODE:         value = p_state->Config.ZeroMode;              break;

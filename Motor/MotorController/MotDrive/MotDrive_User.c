@@ -35,27 +35,25 @@ MotDrive_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_motDrive)
     return MotDrive_StateMachine_GetDirection(p_motDrive);
 }
 
+/* Separate Check direction with alarm, so Motor set can use SetSyncInput */
+bool MotDrive_User_CheckDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
+{
+    bool isSuccess = (MotDrive_User_GetDirection(p_motDrive) == direction);
+    if (isSuccess == false) { Blinky_Blink(p_motDrive->P_BUZZER, 500U); }
+    return isSuccess;
+}
+
 /*
-    set to state machine  async
+    set to state machine async
 */
-void MotDrive_User_SetDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
+void MotDrive_User_ApplyDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
 {
     if (MotDrive_User_GetDirection(p_motDrive) != direction)
     {
         _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
-        if (MotDrive_User_GetDirection(p_motDrive) != direction) { Blinky_Blink(p_motDrive->P_BUZZER, 500U); } /* effective on motor async proc only */
+        MotDrive_User_CheckDirection(p_motDrive, direction); /* effective on motor async transition only */
     }
 }
-
-/* Separate Check direction with alarm, so Motor set can use SetSyncInput */
-bool MotDrive_User_CheckDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
-{
-    // bool isSuccess = (MotDrive_User_GetDirection(p_motDrive) == direction);
-    // if (isSuccess == false) { MotDrive_BeepShort(p_motDrive); }
-    // return isSuccess;
-    return (MotDrive_User_GetDirection(p_motDrive) == direction) ? true : ({ Blinky_Blink(p_motDrive->P_BUZZER, 500U); false; });
-}
-
 
 /******************************************************************************/
 /* Var Id */
@@ -64,7 +62,7 @@ void MotDrive_VarId_Set(const MotDrive_T * p_motDrive, MotDrive_VarId_T id, int 
 {
     switch (id)
     {
-        case MOT_DRIVE_VAR_DIRECTION:   MotDrive_User_SetDirection(p_motDrive, (MotDrive_Direction_T)value);            break;
+        case MOT_DRIVE_VAR_DIRECTION:   MotDrive_User_ApplyDirection(p_motDrive, (MotDrive_Direction_T)value);            break;
         case MOT_DRIVE_VAR_THROTTLE:    MotDrive_User_SetThrottle(p_motDrive->P_MOT_DRIVE_STATE, (uint16_t)value);      break;
         case MOT_DRIVE_VAR_BRAKE:       MotDrive_User_SetBrake(p_motDrive->P_MOT_DRIVE_STATE, (uint16_t)value);         break;
     }

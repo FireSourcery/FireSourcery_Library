@@ -31,24 +31,17 @@
 #ifndef MOT_NVM_H
 #define MOT_NVM_H
 
-#include "Motor/Motor/Analog/MotorAnalogRef.h"
+#include "Motor/Motor/Phase_Input/Phase_Analog.h"
+#include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 #include "Utility/BootRef/BootRef.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
-// #if     defined(CONFIG_MOT_NVM_USER_EEPROM)
-// #if     defined(CONFIG_MOT_NVM_USER_FLASH)
-
-/* externally define */
-struct HAL_Nvm_Manufacturer;
-typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
-
-extern uint32_t HAL_Nvm_Manufacturer_GetVMaxVolts(const HAL_Nvm_Manufacturer_T * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetIMaxAmps(const HAL_Nvm_Manufacturer_T * p_this);
-// extern uint32_t HAL_Nvm_Manufacturer_GetVRated(const HAL_Nvm_Manufacturer_T * p_this);
-// extern uint32_t HAL_Nvm_Manufacturer_GetIRatedRms(const HAL_Nvm_Manufacturer_T * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetVRated_Fract16(const HAL_Nvm_Manufacturer_T * p_this);
-extern uint32_t HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(const HAL_Nvm_Manufacturer_T * p_this);
+// #if     defined(MOT_NVM_USER_EEPROM)
+// #elif   defined(MOT_NVM_USER_FLASH)
+// #else
+//     #define MOT_NVM_USER_FLASH
+// #endif
 
 /* Config Mem descriptor table. */
 typedef const struct MotNvm_Entry
@@ -78,7 +71,7 @@ typedef const struct
     uintptr_t MANUFACTURE_ADDRESS;
     uint8_t MANUFACTURE_SIZE;
 
-    // MotorAnalogRef_T * P_MOTOR_ANALOG_REF; /* Motor Analog Reference */
+    // Phase_Calibration_T * P_PHASE_ANALOG_REF; /* Motor Analog Reference */
     const BootRef_T * P_BOOT_REF;
 }
 MotNvm_T;
@@ -92,9 +85,14 @@ extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_mot
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
-// extern NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source);
-// extern NvMemory_Status_T MotNvm_LoadAnalogRef(const MotNvm_T * p_motNvm);
-extern NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm);
+extern NvMemory_Status_T MotNvm_LoadConstRef(const MotNvm_T * p_motNvm);
 
+/* externally define */
+// struct HAL_Nvm_Once_T;
+struct HAL_Nvm_Manufacturer;
+typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
+
+extern NvMemory_Status_T MotNvm_MapPhaseCalibrationRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
+extern NvMemory_Status_T MotNvm_MapPhaseAnalogSensorRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogSensor_T * p_buffer);
 
 #endif

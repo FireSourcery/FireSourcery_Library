@@ -41,15 +41,15 @@ typedef const struct Hall_RotorSensor
 {
     const RotorSensor_T MOTOR_SENSOR; /* _SUPER */
     const Hall_T HALL;
-    const Encoder_T * const P_ENCODER;
+    const Encoder_T * const P_ENCODER; // todo update to encoder math only
 }
 Hall_RotorSensor_T;
 
 extern const RotorSensor_VTable_T HALL_VTABLE;
 
-#define HALL_MOTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) \
-    { .MOTOR_SENSOR = MOTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
+#define HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) \
+    { .MOTOR_SENSOR = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
 
-// #define HALL_MOTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
-//     HALL_MOTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
+// #define HALL_ROTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
+//     HALL_ROTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
 

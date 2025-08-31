@@ -52,9 +52,9 @@ typedef enum MotorController_Var_Output
     MOT_VAR_MC_SUB_STATE,
     MOT_VAR_MC_FAULT_FLAGS,
     MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_DIRECTION,
     MOT_VAR_CONTROL_LOOP_PROFILE,
     MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
-    // MOT_DRIVE_DIRECTION,
 }
 MotorController_Var_Output_T;
 
@@ -81,10 +81,10 @@ MotorController_Var_OutputDebug_T;
 */
 typedef enum MotorController_Var_Input
 {
-    MOT_VAR_USER_MOTOR_SET_POINT,          // [-32768:32767]
-    MOT_VAR_USER_MOTOR_DIRECTION,          //
-    MOT_VAR_USER_MOTOR_FEEDBACK_MODE,      //
-    MOT_VAR_USER_MOTOR_PHASE_OUTPUT,       // includes release/hold/float
+    MOT_VAR_USER_GENERAL_SET_POINT,          // [-32768:32767]
+    MOT_VAR_USER_GENERAL_DIRECTION,          //
+    MOT_VAR_USER_GENERAL_FEEDBACK_MODE,      //
+    MOT_VAR_USER_GENERAL_PHASE_OUTPUT,       // includes release/hold/float
 
     MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
     MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable

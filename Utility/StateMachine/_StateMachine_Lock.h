@@ -111,6 +111,34 @@ static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_act
 #endif
 }
 
+/*
+    This way ISR does not have to check
+*/
+static inline bool _StateMachine_AcquireAsyncTransition(StateMachine_Active_T * p_active)
+{
+// #if defined(STATE_MACHINE_ASYNC_CRITICAL)
+//     (void)p_active;
+    _Critical_DisableIrq();
+    return true;
+// #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
+    // return Critical_AcquireLock(&p_active->InputSignal);
+// #else
+//     (void)p_active; return true;
+// #endif
+}
+
+static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * p_active)
+{
+// #if defined(STATE_MACHINE_ASYNC_CRITICAL)
+//     (void)p_active;
+    _Critical_EnableIrq();
+// #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
+    // Critical_ReleaseLock(&p_active->InputSignal);
+// #else
+//     (void)p_active;
+// #endif
+}
+
 /******************************************************************************/
 /*
 

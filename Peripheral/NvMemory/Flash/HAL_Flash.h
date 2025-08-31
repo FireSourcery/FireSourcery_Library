@@ -37,6 +37,7 @@
 #define FLASH_ATTRIBUTE_RAM_SECTION NV_MEMORY_ATTRIBUTE_RAM_SECTION
 #endif
 
+// typedef struct HAL_Flash_Once HAL_Flash_Once_T; optionally export
 
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Flash.h)

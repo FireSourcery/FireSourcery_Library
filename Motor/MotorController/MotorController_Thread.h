@@ -70,8 +70,8 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     MotAnalogUser_Cmd_T cmd;
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
-    // cmd = MotAnalogUser_PollCmd(&p_context->ANALOG_USER);
 
+    // cmd = MotAnalogUser_PollCmd(&p_context->ANALOG_USER);
     // switch (cmd)
     // {
     //     // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
@@ -80,45 +80,11 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     //     // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdBrake(p_mc, 0U);                                                 break;
     //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdThrottle(p_mc, 0U);                                              break;
     //     // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdDriveZero(p_mc);                                                 break;
-    //     // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_NEUTRAL);                       break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_FORWARD);    //         break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_User_SetDirection(p_mc, MOT_DRIVE_DIRECTION_REVERSE);    //         break;
+    //     // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                       break;
+    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);    //         break;
+    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);    //         break;
     //     case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:  break;
     //     default: break;
-    // }
-
-    // if drive mode
-    // switch on app macchine,
-    // todo move to state machine
-    switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotDrive_User_SetDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_NEUTRAL);   break;
-        default: break;
-    }
-
-    MotDrive_User_SetThrottle(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
-
-    // else
-    /* Cmd Mode */
-    // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(&p_context, 1);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(&p_context, -1);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(&p_context, 0);   break;
-    //     default: break;
-    // }
-
-    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
-    // {
-    //     // MotorController_User_SetCmdValue(p_context, 0U);
-    //     MotorController_User_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
-    // }
-    // else
-    // {
-    //     MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U);
     // }
 
     if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
@@ -244,6 +210,14 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     VSource Monitor Thread
 */
 /******************************************************************************/
+static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T * p_context)
+{
+    // apply disable while transition is enqueued
+    MotMotors_ForceDisableControl(&p_context->MOTORS);
+    p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
+    MotorController_StateMachine_EnterFault(p_context);
+}
+
 static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
@@ -251,12 +225,11 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 // #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
     switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
     {
-
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
         /* if the signal is not acquired, main will check fault flags and enter */
-        // todo transition immediately
-        case VMONITOR_STATUS_FAULT_OVERVOLTAGE: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_context); break;
-        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: p_mc->FaultFlags.VSourceLimit = 1U; MotorController_StateMachine_EnterFault(p_context); break;
+        // todo transition immediately. alternatively disable + enqueue
+        case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_context); break;
+        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
             break;
         case VMONITOR_STATUS_WARNING_LOW:
@@ -320,6 +293,9 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /*
             Med Freq, Low Priority, 1 ms
         */
+        // MotorController_CaptureVSource(p_context); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
+        // feedwatchdog
+
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
         // maybe change this to signal if enter fault is on 1ms thread
@@ -380,19 +356,18 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             _MotorController_VMonitorBoard_Thread(p_context); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_context);
 
-            /* Can use low priority check, as motor is already in fault state */
+            /* Can use low priority check, as motor is already in fault state. */
             if (MotMotors_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
 
-            MotorController_CaptureVSource(p_context); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
+            MotorController_CaptureVSource(p_context); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
 
         #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
-
         #endif
         }
 
-        // feedwatchdog
+
     }
     // todo transient recorder proc
 }
@@ -424,15 +399,14 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 /* Alternatively these can be placed directly user main if the compiler does not optimize */
 static inline void MotorController_PWM_Thread(const MotorController_T * p_context)
 {
+    // p_fields->MicrosRef = SysTime_GetMicros();
+
     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 
     // if (Motor_IsAnalogCycle(&p_context->MOTORS.P_CONTEXTS[0U]) == true) /* todo common timer */
     // {
     //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
     // }
-
-    // p_fields->MicrosRef = SysTime_GetMicros();
-    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 
     if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
     {
@@ -445,6 +419,7 @@ static inline void MotorController_PWM_Thread(const MotorController_T * p_contex
 
     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 
+    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
     // HAL_PWM_ClearInterrupt(p_context->HAL_PWM); /* BOARD_PWM_HAL */
     // Motor_ClearInterrupt(&p_context->MOTORS.P_ARRAY[0U]);
     p_context->P_MC_STATE->ControlCounter++;

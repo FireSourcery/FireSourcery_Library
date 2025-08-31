@@ -38,8 +38,9 @@
 
 typedef uint16_t vmonitor_value_t; /* ADCU */
 
-typedef RangeMonitor_Config_T VMonitor_Config_T; /* Use RangeMonitor_Config_T for all logic */
 typedef RangeMonitor_T VMonitor_T;
+// typedef RangeMonitor_T VMonitor_State_T;
+typedef RangeMonitor_Config_T VMonitor_Config_T; /* Use RangeMonitor_Config_T for all logic */
 
 typedef enum VMonitor_Status
 {
@@ -54,14 +55,14 @@ VMonitor_Status_T;
 typedef const struct VMonitor_Context
 {
     VMonitor_T * P_STATE;
-    // void (*ON_FAULT)(void * p_context); /* Optionally callback table */
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
-    Analog_Conversion_T ANALOG_CONVERSION; // move to upper layer, for interface
-    //
     VDivider_T VDIVIDER;
     // VDivider_T * P_VDIVIDER; // pointer for writable
     Linear_T * P_LINEAR; /* if defined local unit conversion */
+
+    Analog_Conversion_T ANALOG_CONVERSION; // todo move to upper layer, for interface
+    // void (*ON_FAULT)(void * p_context); /* Optionally callback table */
 }
 VMonitor_Context_T;
 
@@ -85,6 +86,12 @@ VMonitor_Context_T;
 /*
 */
 /******************************************************************************/
+// static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context, int32_t input)
+// {
+//     return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, input);
+// }
+
+//todo move
 static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
 {
     return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));

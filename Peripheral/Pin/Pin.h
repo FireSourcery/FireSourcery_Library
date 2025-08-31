@@ -92,19 +92,21 @@ static inline bool Pin_Input_Read(const Pin_T * p_pin) { return (Pin_Input_ReadP
 */
 /******************************************************************************/
 static inline uint32_t Pin_Module_MaskOf(const Pin_T * p_pin, bool isOn) { return (isOn ? p_pin->ID : 0UL); }
-// static inline uint32_t Pin_Module_WriteSyncOnOff(const Pin_T * p_pin, uint32_t states) { return HAL_Pin_Module_WriteOutput(p_pin->P_HAL_PIN, states); }
+// static inline uint32_t Pin_Module_WriteSyncOn(const Pin_T * p_pin, uint32_t states) { return HAL_Pin_Module_WriteOutput(p_pin->P_HAL_PIN, states); }
+// static inline uint32_t Pin_Module_WriteSyncOff(const Pin_T * p_pin, uint32_t states) { return HAL_Pin_Module_WriteOutput(p_pin->P_HAL_PIN, states); }
 
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
+// typedef Pin_T FastPin_T; /* Same Struct */
 // static inline bool FastPin_Input_ReadPhysical(const FastPin_T * p_pin) { return HAL_FastPin_ReadInput(p_pin->P_HAL_PIN, p_pin->ID); }
 
-// #define Pin_Read(p_pin) \
+// #define PinT_Read(p_pin) \
 //     _Generic((p_pin), \
 //         Pin_T *: Pin_Input_Read, \
-//         HAL_Pin_T *: HAL_Pin_ReadInput, \
 //         FastPin_T *: HAL_FastPin_ReadInput, \
+//         HAL_Pin_T *: HAL_Pin_ReadInput, \
 //         default: Pin_Input_ReadPhysical \
 //     )(p_pin)
 

@@ -76,7 +76,7 @@ NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, ui
     {
         /* Load the motor analog reference after writing the manufacture data */
         /* shared check for BoardRef */
-        if (MotorAnalogRef_IsLoaded() == false) { status = MotNvm_LoadRef(p_motNvm); }
+        if (Phase_Calibration_IsLoaded() == false) { status = MotNvm_LoadConstRef(p_motNvm); }
     }
     return status;
 }
@@ -131,39 +131,18 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 
 */
 /******************************************************************************/
-// alternatively extern from here
-// extern NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm);
-
-NvMemory_Status_T MotNvm_LoadAnalogRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
+NvMemory_Status_T MotNvm_LoadPhaseCalibrationRefFrom(const MotNvm_T * p_motNvm, HAL_Nvm_Manufacturer_T * p_source)
 {
-    MotorAnalogRef_T motorRef =
-    {
-        .V_MAX_VOLTS = HAL_Nvm_Manufacturer_GetVMaxVolts(p_source),
-        .I_MAX_AMPS =  HAL_Nvm_Manufacturer_GetIMaxAmps(p_source),
-        .V_RATED_FRACT16 = HAL_Nvm_Manufacturer_GetVRated_Fract16(p_source),
-        .I_RATED_PEAK_FRACT16 = HAL_Nvm_Manufacturer_GetIRatedPeak_Fract16(p_source),
-    };
-
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE, (const void *)&motorRef, sizeof(MotorAnalogRef_T));
+    Phase_Calibration_T buffer = { 0 };
+    MotNvm_MapPhaseCalibrationRef(p_source, &buffer);
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)&buffer, sizeof(Phase_Calibration_T));
 }
 
-// NvMemory_Status_T MotNvm_MapBoardRef(const void * p_manufacture, MotorAnalogRef_Board_T * p_buffer)
-
-NvMemory_Status_T MotNvm_LoadBoardRefFrom(const MotNvm_T * p_motNvm, const struct HAL_Nvm_Manufacturer * p_source)
+NvMemory_Status_T MotNvm_LoadPhaseSensorRefFrom(const MotNvm_T * p_motNvm, HAL_Nvm_Manufacturer_T * p_source)
 {
-    //todo getter wrappers
-    MotorAnalogRef_Board_T boardRef =
-    {
-        .V_RATED = p_source->V_RATED,
-        .I_RATED_RMS = p_source->I_RATED_RMS,
-        .I_PHASE_R_BASE = p_source->I_PHASE_R_BASE,
-        .I_PHASE_R_MOSFETS = p_source->I_PHASE_R_MOSFETS,
-        .I_PHASE_GAIN = p_source->I_PHASE_GAIN,
-        .V_PHASE_R1 = p_source->V_PHASE_R1,
-        .V_PHASE_R2 = p_source->V_PHASE_R2,
-    };
-
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&MOTOR_ANALOG_REFERENCE_BOARD, (const void *)&boardRef, sizeof(MotorAnalogRef_Board_T));
+    Phase_AnalogSensor_T buffer = { 0 };
+    MotNvm_MapPhaseAnalogSensorRef(p_source, &buffer); // callee cast away const
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_SENSOR_REF, (const void *)&buffer, sizeof(Phase_AnalogSensor_T));
 }
 
 /******************************************************************************/
@@ -171,12 +150,12 @@ NvMemory_Status_T MotNvm_LoadBoardRefFrom(const MotNvm_T * p_motNvm, const struc
     with defined parameters
 */
 /******************************************************************************/
-NvMemory_Status_T MotNvm_LoadRef(const MotNvm_T * p_motNvm)
+NvMemory_Status_T MotNvm_LoadConstRef(const MotNvm_T * p_motNvm)
 {
-    struct HAL_Nvm_Manufacturer buffer;
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(struct HAL_Nvm_Manufacturer), &buffer);
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadBoardRefFrom(p_motNvm, &buffer); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadAnalogRefFrom(p_motNvm, &buffer); }
+    HAL_Nvm_Manufacturer_T result;
+    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(HAL_Nvm_Manufacturer_T), (void *)&result);
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseSensorRefFrom(p_motNvm, &result); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseCalibrationRefFrom(p_motNvm, &result); }
     return status;
 }
 

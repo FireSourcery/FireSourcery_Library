@@ -64,12 +64,11 @@ static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encod
 /*!
     Determine Speed and Angle
     @param[in] count { -2, -1, 0, +1, +2 }
+    caller handle Direction comp on get
 */
 static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
 {
-    // count = count * directionCalibration
     p_encoder->CounterD += count;
-    // p_encoder->TotalD += count;
     /* instead of imitating the hw decoder case, capture a separate position */
     p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngleD);
 }
@@ -160,19 +159,19 @@ static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
     if (_Encoder_IsQuadratureCaptureEnabled(p_encoder->P_STATE) == true) { _Encoder_Quadrature_CapturePulse(p_encoder); }
     else { _Encoder_SinglePhase_CapturePulse(p_encoder); }
     // Encoder_CaptureMode_Proc(p_encoder, _Encoder_Quadrature_CapturePulse, _Encoder_SinglePhase_CapturePulse); /* Quadrature On/Off Switch */
-    Encoder_DeltaT_Capture(p_encoder);
-    // Encoder_DeltaT_CaptureExtended(p_encoder);
+    // Encoder_DeltaT_Capture(p_encoder);
+    Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
 /* Signed capture external */
 /* -1, 0, 1 */
-static inline void Encoder_CaptureFrom(const Encoder_T * p_encoder, int sign)
-{
-    _Encoder_CaptureCount(p_encoder->P_STATE, sign);
-    Encoder_DeltaT_CaptureExtended(p_encoder);
-    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
-}
+// static inline void Encoder_CaptureAsSigned(const Encoder_T * p_encoder, int sign)
+// {
+//     _Encoder_CaptureCount(p_encoder->P_STATE, sign);
+//     Encoder_DeltaT_CaptureExtended(p_encoder);
+//     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
+// }
 
 /******************************************************************************/
 /*
@@ -198,7 +197,6 @@ static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
 /*!
     ISRs
 */
-/*! @{ */
 /******************************************************************************/
 /******************************************************************************/
 /*!
@@ -260,6 +258,3 @@ static inline void _Encoder_OnPhaseAB_ISR(const Encoder_T * p_encoder)
     if      (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID) == true) { _Encoder_OnPhaseA_ISR(p_encoder); }
     else if (HAL_Encoder_ReadPinInterrupt(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID) == true) { _Encoder_OnPhaseB_ISR(p_encoder); }
 }
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/

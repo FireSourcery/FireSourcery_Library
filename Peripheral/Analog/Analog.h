@@ -43,18 +43,16 @@
     Application handle
     Feature module holds the pointer. ADC owns the state.
     handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
-
-    swap file contents with Analog.h
 */
 /******************************************************************************/
-/* Analog_VirtualChannel/Analog_Handler */
+/* Analog_VirtualChannel/Analog_ConversionHandler */
 typedef const struct Analog_Conversion
 {
     Analog_ADC_T * P_ADC;
     analog_channel_t CHANNEL;
     Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;
     /* reserve interface for extension */
-    // Options/Config
+    // Analog_Options_T OPTIONS;
 }
 Analog_Conversion_T;
 
@@ -62,14 +60,13 @@ Analog_Conversion_T;
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), }
 // #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
 
-// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
-// static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->Result = 0U; }
+static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
+static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
+
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result; }
 static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
-
-static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
-static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return  Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
-
+// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
+// static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->Result = 0U; }
 
 
 /******************************************************************************/
@@ -138,6 +135,24 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 
 // #define ANALOG_CONVERSION_BATCH_ALLOC(p_Channels, Count, p_Context, Callback) \
 //     ANALOG_CONVERSION_BATCH_INIT(p_Channels, Count, p_Context, Callback, (Analog_ConversionState_T[Count]){})
+
+
+// static void _Analog_MarkBatch(const Analog_Conversion_T * p_conversions, uint32_t markers, Analog_BatchContext_T * p_batch_context)
+// {
+
+//     //  Analog_Conversion_Mark(p_conversion); // mark each
+// //    for (uint32_t i = 0; i < 32; i++)
+// //    {
+// //        if (markers & (1U << i))
+// //        {
+// //            Analog_Conversion_Mark(&p_conversions[i]);
+// //        }
+// //    }
+//     uint32_t BATCH_MATCH; /* Bitmask of channels to match for completion */
+//     volatile uint32_t * P_BATCH_STATE;
+//     Analog_Callback_T ON_COMPLETE;
+//     void * P_CONTEXT;
+// }
 
 
 /* by adc state */

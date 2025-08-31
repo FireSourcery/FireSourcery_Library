@@ -44,14 +44,16 @@ typedef enum MotorController_StateMachine_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_LOCK,
-    MCSM_INPUT_MAIN_MODE,
-    // MCSM_INPUT_MOTORS_CMD,
+    MCSM_INPUT_MAIN_MODE, // update main mode
+    // MCSM_INPUT_PARK,
+    // user for mapping. inputs proc synchronous buffer
 }
 MotorController_State_Input_T;
 
 typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
+    MCSM_STATE_ID_PARK,
     MCSM_STATE_ID_MAIN,
     MCSM_STATE_ID_LOCK,
     MCSM_STATE_ID_FAULT,
@@ -86,13 +88,14 @@ static inline bool MotorController_StateMachine_IsLock(MotorController_T * p_con
 
 static inline bool MotorController_StateMachine_IsConfig(MotorController_T * p_context) { return (MotorController_StateMachine_IsLock(p_context) || MotorController_StateMachine_IsFault(p_context)); }
 
+
+
 /******************************************************************************/
 /*!
     Blocking SubState/Function Id
     LockCmd
 */
 /******************************************************************************/
-/* Lock_InputLockOp_Blocking  */
 typedef enum MotorController_LockId
 {
     MOTOR_CONTROLLER_LOCK_ENTER,
@@ -131,8 +134,13 @@ static inline void MotorController_User_InputLock(const MotorController_T * p_co
     _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
 }
 
+// optionally includ parks
 // static inline bool MotorController_User_EnterLockState(const MotorController_T * p_context)
 // {
+    // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
+    // _StateMachine_ApplyAsyncInput(&p_mc->StateMachine, MOT_DRIVE_STATE_INPUT_DIRECTION, MOTOR_CONTROLLER_DIRECTION_PARK);
+    // MotDrive_SetDirection(&p_mc->MotDrive, MOTOR_CONTROLLER_DIRECTION_PARK);
+
 //     MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER);
 //     return MotorController_StateMachine_IsLock(p_context);
 // }
@@ -140,7 +148,7 @@ static inline void MotorController_User_InputLock(const MotorController_T * p_co
 // static inline bool MotorController_User_ExitLockState(const MotorController_T * p_context)
 // {
 //     MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT);
-//     return !MotorController_StateMachine_IsLock(p_context); /* Park or Servo */
+//     return !MotorController_StateMachine_IsLock(p_context);
 // }
 
 static inline bool MotorController_User_IsEnterLockError(const MotorController_T * p_context, MotorController_LockId_T id)
@@ -180,6 +188,14 @@ static inline bool MotorController_User_IsLockOpComplete(const MotorController_T
 /******************************************************************************/
 static inline MotorController_MainMode_T MotorController_User_GetMainStateId(const MotorController_State_T * p_mcState) { return StateMachine_GetActiveSubStateId(&p_mcState->StateMachine, &MC_STATE_MAIN); }
 
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+// MC_STATE_MAIN_MOTOR_CMD
+
+
 /******************************************************************************/
 /*!
 */
@@ -188,3 +204,5 @@ extern bool MotorController_StateMachine_ExitFault(const MotorController_T * p_c
 extern void MotorController_StateMachine_EnterFault(const MotorController_T * p_context);
 extern void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags);
 extern void MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags);
+
+extern Motor_User_Direction_T MotorController_StateMachine_GetDirection(MotorController_T * p_context);

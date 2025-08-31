@@ -50,15 +50,9 @@ typedef struct
 }
 SinCos_Config_T;
 
-typedef const struct SinCos_Const
-{
-    const SinCos_Config_T * const P_CONFIG;
-}
-SinCos_Const_T;
 
 typedef struct
 {
-    SinCos_Const_T CONST;
     SinCos_Config_T Config;
     Linear_T UnitsAngle;
     angle16_t Angle; /* Sensor Output Angle, Mechanical Angle or proportional */

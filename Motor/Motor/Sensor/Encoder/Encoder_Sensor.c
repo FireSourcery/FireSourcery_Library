@@ -37,13 +37,9 @@ void Encoder_RotorSensor_Init(const Encoder_RotorSensor_T * p_sensor)
 {
 //     Encoder_RotorSensor_T * p_this = (Encoder_RotorSensor_T *)p_sensor; // Safe cast
 
-//     Encoder_Init(&p_this->HALL);
-//     Encoder_ModeDT_Init_Polling(p_this->P_ENCODER);
-// #if     defined(CONFIG_MOTOR_HALL_MODE_ISR)
-//     Encoder_InitInterrupts_ABC(p_this->P_ENCODER);
-// #endif
-//     // Encoder_SetUnitsEncoder_MechSpeed(p_this->P_ENCODER, );
 
+// Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->ENCODER);
+// Encoder_EnableQuadratureMode(&p_motor->ENCODER);
 //     Encoder_ModeDT_SetInitial(p_this->P_ENCODER);
 }
 
@@ -54,17 +50,17 @@ void Encoder_RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor)
     // p_sensor->P_STATE->ElectricalAngle = Encoder_GetAngle16(&p_this->HALL) + Encoder_ModeDT_InterpolateAngularDisplacement(p_this->P_ENCODER);
 }
 
-void Encoder_RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor)
+void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sensor)
 {
-//     Encoder_RotorSensor_T * p_this = (Encoder_RotorSensor_T *)p_sensor;
-//     Encoder_ModeDT_CaptureVelocity(p_this->P_ENCODER);
-//     p_sensor->P_STATE->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingAngle(p_this->P_ENCODER);
-//     p_sensor->P_STATE->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_this->P_ENCODER);
-// }
+    RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
+    Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
+    // p_state->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingDelta(p_sensor->ENCODER.P_STATE);
+    // p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_sensor->ENCODER.P_STATE);
+}
 
 // uint16_t Encoder_RotorSensor_CaptureState(const RotorSensor_T * p_sensor)
 // {
-}
+// }
 
 bool Encoder_RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor)
 {

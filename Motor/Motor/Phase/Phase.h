@@ -26,14 +26,10 @@
 /*!
     @file   Phase.h
     @author FireSourcery
-    @brief  3-Phase PWM functions. Includes 2-Phase Polar implementation
-
-    Treats each phase as a complementary PWM output.
-    2-Phase: PWM positive side MOSFETs, ground side bottom MOSFET stays on.
-    e.g. PhaseAB -> PWM phase A MOSFETs, phase B bottom MOSFET stays on.
+    @brief  3-Phase PWM functions.
 */
 /******************************************************************************/
-#include "Config.h"
+#include "Phase_Types.h"
 
 #include "Peripheral/PWM/PWM.h"
 #include "Peripheral/Pin/Pin.h"
@@ -42,128 +38,12 @@
 #include <assert.h>
 #include <sys/types.h>
 
-/******************************************************************************/
-/*!
-    PhaseId Common
-    alternatively move as interface header
-*/
-/******************************************************************************/
-/* Phase_Channels IdBits */
-typedef union Phase_Bits
-{
-    struct
-    {
-        uint8_t A : 1U;
-        uint8_t B : 1U;
-        uint8_t C : 1U;
-        uint8_t Resv : 5U;
-    };
-    uint8_t Id;
-}
-Phase_Bits_T;
-
-/*
-    3-Phase Active/Align
-*/
-typedef enum Phase_Id
-{
-    PHASE_ID_0      = (0b000U),
-    PHASE_ID_A      = (0b001U),
-    PHASE_ID_INV_C  = (0b011U),
-    PHASE_ID_B      = (0b010U),
-    PHASE_ID_INV_A  = (0b110U),
-    PHASE_ID_C      = (0b100U),
-    PHASE_ID_INV_B  = (0b101U),
-    PHASE_ID_ABC    = (0b111U),
-}
-Phase_Id_T;
-
-// static inline Phase_Id_T Phase_IdOf(Phase_Bits_T bits) { return (Phase_Id_T)bits.Id; }
-static inline Phase_Bits_T Phase_BitsOf(Phase_Id_T id) { return (Phase_Bits_T) { .Id = id }; }
-
-/* Virtual CCW */
-static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
-{
-    static const Phase_Id_T TABLE[] =
-    {
-        [PHASE_ID_A]        = PHASE_ID_INV_C,      /* 0 -> 60 */
-        [PHASE_ID_INV_C]    = PHASE_ID_B,          /* 60 -> 120 */
-        [PHASE_ID_B]        = PHASE_ID_INV_A,      /* 120 -> 180 */
-        [PHASE_ID_INV_A]    = PHASE_ID_C,          /* 180 -> 240 */
-        [PHASE_ID_C]        = PHASE_ID_INV_B,      /* 240 -> 300 */
-        [PHASE_ID_INV_B]    = PHASE_ID_A,          /* 300 -> 360 */
-        [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
-        [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
-        // [PHASE_ID_0]        = PHASE_ID_A,          /* Init as 0 */
-        // [PHASE_ID_ABC]      = PHASE_ID_0,
-    };
-
-    return TABLE[id];
-}
-
-static inline Phase_Id_T Phase_PrevOf(Phase_Id_T id)
-{
-    static const Phase_Id_T TABLE[] =
-    {
-        [PHASE_ID_A]        = PHASE_ID_INV_B,      /* 0 -> 300 */
-        [PHASE_ID_INV_B]    = PHASE_ID_C,          /* 300 -> 240 */
-        [PHASE_ID_C]        = PHASE_ID_INV_A,      /* 240 -> 180 */
-        [PHASE_ID_INV_A]    = PHASE_ID_B,          /* 180 -> 120 */
-        [PHASE_ID_B]        = PHASE_ID_INV_C,      /* 120 -> 60 */
-        [PHASE_ID_INV_C]    = PHASE_ID_A,          /* 60 -> 0 */
-        [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
-        [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
-    };
-
-    return TABLE[id];
-}
-
-// static inline Phase_Id_T Phase_DirectedOf(Phase_Id_T id, int sign)
-// {
-//     if (sign > 0) { return Phase_NextOf(id); }
-//     else if (sign < 0) { return Phase_PrevOf(id); }
-//     else { return id; /* no change */ }
-// }
-
-static inline uint16_t Phase_AngleOf(Phase_Id_T id)
-{
-    static const uint16_t ANGLE_TABLE[] =
-    {
-        [PHASE_ID_A]        = 0U,         /* 0 */
-        [PHASE_ID_INV_C]    = 10922U,     /* 60 */
-        [PHASE_ID_B]        = 21845U,     /* 120 */
-        [PHASE_ID_INV_A]    = 32768U,     /* 180 */
-        [PHASE_ID_C]        = 43690U,     /* 240 */
-        [PHASE_ID_INV_B]    = 54613U,     /* 300 */
-        [PHASE_ID_0]        = 0U,
-        [PHASE_ID_ABC]      = 0U,
-    };
-
-    return ANGLE_TABLE[id];
-}
-
-// Phase_Id_T Phase_IdOfAngle(angle16_t angle)
-// {
-//     Phase_Id_T sectorId;
-//     if (angle < ANGLE16_180)
-//     {
-//         if      (angle < ANGLE16_60)    { sectorId = PHASE_ID_A; }
-//         else if (angle < ANGLE16_120)   { sectorId = PHASE_ID_INV_C; }
-//         else                            { sectorId = PHASE_ID_B; }
-//     }
-//     else
-//     {
-//         if      (angle < ANGLE16_240)   { sectorId = PHASE_ID_INV_A; }
-//         else if (angle < ANGLE16_300)   { sectorId = PHASE_ID_C; }
-//         else                            { sectorId = PHASE_ID_INV_B; }
-//     }
-//     return sectorId;
-// }
 
 /*
     Output State
     As collective ABC ouput or 3-state interpertation of a single-phase.
 */
+// typedef enum Phase_VOut_Mode
 typedef enum Phase_Output
 {
     PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, it is the result of Pin Low/0 */
@@ -172,10 +52,10 @@ typedef enum Phase_Output
 }
 Phase_Output_T;
 
-
 /******************************************************************************/
 /*!
-    Phase Context - V PWM Out
+    Phase Actuator - V PWM Out / Control / Inverter
+    Phase_VOut
 */
 /******************************************************************************/
 typedef const struct Phase
@@ -224,7 +104,6 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
 // #define _PHASE_PWM_ONLY_DEF(code) code
 // #endif
 
-
 /******************************************************************************/
 /*!
     Phase On/Off Output Control
@@ -268,7 +147,7 @@ static inline bool _Phase_ReadOnOffC(const Phase_T * p_phase) { return _Phase_Re
 */
 static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 {
-    const Phase_Bits_T state = Phase_BitsOf(id);
+    const Phase_Bitmask_T state = Phase_Bitmask(id);
 // #ifdef CONFIG_PHASE_INDIVIDUAL_CHANNEL_CONTROL
     return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
 // #else
@@ -278,7 +157,7 @@ static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 
 static inline uint32_t _Phase_PinSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 {
-    const Phase_Bits_T state = Phase_BitsOf(id);
+    const Phase_Bitmask_T state = Phase_Bitmask(id);
     return (Pin_Module_MaskOf(&p_phase->PIN_A, state.A) | Pin_Module_MaskOf(&p_phase->PIN_B, state.B) | Pin_Module_MaskOf(&p_phase->PIN_C, state.C));
 }
 
@@ -325,7 +204,7 @@ static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 #ifdef CONFIG_PHASE_PIN_SYNC
     _Phase_SyncOnOff(p_phase, id);
 #else
-    const Phase_Bits_T state = Phase_BitsOf(id);
+    const Phase_Bitmask_T state = Phase_Bitmask(id);
     _Phase_WriteOnOffA(p_phase, state.A);
     _Phase_WriteOnOffB(p_phase, state.B);
     _Phase_WriteOnOffC(p_phase, state.C);
@@ -333,15 +212,15 @@ static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 }
 
 /* ReadChannelsOutput, ReadChannelSwitches */
-static inline Phase_Bits_T _Phase_ReadState(const Phase_T * p_phase)
+static inline Phase_Bitmask_T _Phase_ReadState(const Phase_T * p_phase)
 {
-    return (Phase_Bits_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
+    return (Phase_Bitmask_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
 }
 
 /* Voltage/Output State */
-static inline Phase_Bits_T _Phase_ReadDutyState(const Phase_T * p_phase)
+static inline Phase_Bitmask_T _Phase_ReadDutyState(const Phase_T * p_phase)
 {
-    return (Phase_Bits_T)
+    return (Phase_Bitmask_T)
     {
         .A = (PWM_ReadDuty_Ticks(&p_phase->PWM_A) != 0U),
         .B = (PWM_ReadDuty_Ticks(&p_phase->PWM_B) != 0U),
@@ -350,9 +229,18 @@ static inline Phase_Bits_T _Phase_ReadDutyState(const Phase_T * p_phase)
 }
 
 /******************************************************************************/
-/*! @} */
+/*  */
 /******************************************************************************/
+/* Using Register State */
+static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+{
+    Phase_Bitmask_T state = _Phase_ReadState(p_phase);
 
+    if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
+    if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
+    if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
+    if (state.Id != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Id); }
+}
 
 /******************************************************************************/
 /*!
@@ -386,17 +274,10 @@ static inline void Phase_WriteDuty_Percent16(const Phase_T * p_phase, uint16_t p
     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
-/* Using Register State */
-static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+static inline void Phase_WriteDuty_Vector(const Phase_T * p_phase, Phase_Triplet_T * p_values)
 {
-    Phase_Bits_T state = _Phase_ReadState(p_phase);
-
-    if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
-    if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
-    if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
-    if (state.Id != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Id); }
+    Phase_WriteDuty_Fract16(p_phase, p_values->A, p_values->B, p_values->C);
 }
-
 
 // static inline void Phase_Deactivate(const Phase_T * p_phase)
 static inline void Phase_Float(const Phase_T * p_phase)
@@ -424,7 +305,7 @@ static inline void Phase_ActivateOutputV0(const Phase_T * p_phase)
     Phase_ActivateOutput(p_phase);
 }
 
-// static inline void Phase_ActivateOutputVz(const Phase_T * p_phase)
+// static inline void Phase_ActivateOutputVMidpoint(const Phase_T * p_phase)
 static inline void Phase_ActivateOutputT0(const Phase_T * p_phase)
 {
     Phase_WriteDuty_Fract16(p_phase, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
@@ -457,8 +338,7 @@ static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
     {
         case PHASE_ID_0: state = PHASE_OUTPUT_FLOAT; break;
         //alternatively check active channels only
-        // case PHASE_ID_ABC:
-        //     break;
+        // case PHASE_ID_ABC:  break;
         /* Including Polar Ouputs */
         default: state = (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM; break;
     }

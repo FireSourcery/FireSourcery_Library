@@ -39,9 +39,8 @@
 typedef struct Accumulator
 {
     /* [2 * [INT16_MIN:INT16_MAX] << 15] */
-    int32_t State; /* Output shifted */ // int32_t Accumulator;
+    int32_t Accumulator; /* Output shifted */
 
-    // int32_t CoefficientRef;
     int32_t Coefficient; /* shifted */
     int8_t Shift;
 
@@ -50,6 +49,8 @@ typedef struct Accumulator
 
     // uint32_t SampleFreq;
     // uint16_t Index;
+    // uint16_t PrevInput;
+    // int32_t CoefficientRef;
 }
 Accumulator_T;
 
@@ -57,24 +58,24 @@ Accumulator_T;
 
 static inline int32_t _Accumulator_Add(Accumulator_T * p_accum, int16_t input)
 {
-    return p_accum->State + ((int32_t)input * p_accum->Coefficient);
+    return p_accum->Accumulator + ((int32_t)input * p_accum->Coefficient);
 }
 
 /* Simple accumulation with coefficient scaling */
 static inline int32_t Accumulator_Add(Accumulator_T * p_accum, int16_t input)
 {
-    p_accum->State += ((int32_t)input * p_accum->Coefficient);
-    return (p_accum->State >> p_accum->Shift);
+    p_accum->Accumulator += ((int32_t)input * p_accum->Coefficient);
+    return (p_accum->Accumulator >> p_accum->Shift);
 }
 
 
 
 /* Accessors */
-static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->State >> p_accum->Shift); }
-static inline void Accumulator_SetOutput(Accumulator_T * p_accum, int32_t value) { p_accum->State = (value << p_accum->Shift); }
+static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->Accumulator >> p_accum->Shift); }
+static inline void Accumulator_SetOutput(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = (value << p_accum->Shift); }
 
-static inline int32_t Accumulator_GetCoefficient(const Accumulator_T * p_accum) { return p_accum->Coefficient; }
-static inline int8_t Accumulator_GetShift(const Accumulator_T * p_accum) { return p_accum->Shift; }
+static inline int32_t Accumulator_GetCoefficient(const Accumulator_T * p_accum) { return p_accum->Coefficient >> p_accum->Shift; }
+// static inline int8_t Accumulator_GetShift(const Accumulator_T * p_accum) { return p_accum->Shift; }
 
 static inline int32_t Accumulator_GetLimitUpper(const Accumulator_T * p_accum) { return p_accum->LimitUpper; }
 static inline int32_t Accumulator_GetLimitLower(const Accumulator_T * p_accum) { return p_accum->LimitLower; }
@@ -87,8 +88,8 @@ static inline bool Accumulator_IsSaturatedHigh(const Accumulator_T * p_accum) { 
 static inline bool Accumulator_IsSaturatedLow(const Accumulator_T * p_accum) { return (Accumulator_GetOutput(p_accum) <= p_accum->LimitLower); }
 static inline bool Accumulator_IsSaturated(const Accumulator_T * p_accum) { return Accumulator_IsSaturatedHigh(p_accum) || Accumulator_IsSaturatedLow(p_accum); }
 
-static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { p_accum->State = value << p_accum->Shift; }
-static inline void Accumulator_Clear(Accumulator_T * p_accum) { p_accum->State = 0; }
+static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = value << p_accum->Shift; }
+static inline void Accumulator_Clear(Accumulator_T * p_accum) { p_accum->Accumulator = 0; }
 
 
 /******************************************************************************/

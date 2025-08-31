@@ -35,11 +35,6 @@
 
 #include <assert.h>
 
-/* Part of Motor */
-/* Include by motor. for streamlined init */
-// typedef const struct Motor Motor_T;
-// typedef struct Motor_State Motor_State_T;
-
 /******************************************************************************/
 /*!
 
@@ -48,26 +43,25 @@
 /*
     [Var_UserOut] Motor_User.h Implementation
     RealTime Read-Only
+    Speed/IPhase/VPhase/Power -> UFract16, may over saturate
 */
-/* Speed/IPhase/VPhase/Power -> UFract16, may over saturate */
 typedef enum Motor_Var_UserOut
 {
-    MOTOR_VAR_SPEED, /* depreciate */
+    MOTOR_VAR_SPEED,    /* User Direction */
     MOTOR_VAR_I_PHASE,
     MOTOR_VAR_V_PHASE,
-    // MOTOR_VAR_ELECTRICAL_ANGLE,
-    // MOTOR_VAR_MECHANICAL_ANGLE,
     MOTOR_VAR_STATE,
     MOTOR_VAR_SUB_STATE,
     MOTOR_VAR_FAULT_FLAGS,
     MOTOR_VAR_STATUS_FLAGS,
-    MOTOR_VAR_HEAT,
-    /* Derived Local */
+    MOTOR_VAR_HEAT, /* included in HEAT_MONITOR_OUT */
     MOTOR_VAR_V_SPEED_EFFECTIVE,
+    /* Derived Local */
     MOTOR_VAR_POWER,
     MOTOR_VAR_I_DC,
-    // MOTOR_VAR_ELECTRICAL_SPEED,
-    // MOTOR_VAR_RAMP_SET_POINT,
+    // MOTOR_VAR_V_BUS,
+    // MOTOR_VAR_SPEED_REQ,  /* with Sign */
+    // MOTOR_VAR_TORQUE_REQ, /*   */
 }
 Motor_Var_UserOut_T;
 
@@ -81,14 +75,12 @@ Motor_Var_UserOut_T;
 */
 typedef enum Motor_Var_UserControl
 {
-    MOTOR_VAR_USER_SET_POINT,           // RampIn/RampOut, Generic mode select using active feedback mode
-    /* depreciate */
-    /* StateMachine Inputs */
+    /* State Control */
     MOTOR_VAR_USER_DIRECTION,           // 1:Forward, -1:Reverse, 0:Stop
-    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop, todo let Rotor Var handle this
+    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop, //todo let Rotor Var handle this
     MOTOR_VAR_USER_FEEDBACK_MODE,
     MOTOR_VAR_USER_PHASE_OUTPUT,        /* Phase Output State: Float/Hold/VPwm. Direction must be set */
-    // Limits do not invoke state machine.
+    /* Limits do not invoke state machine. */
     MOTOR_VAR_USER_SPEED_LIMIT,
     // MOTOR_VAR_USER_I_LIMIT,
     MOTOR_VAR_USER_I_LIMIT_MOTORING,
@@ -97,15 +89,20 @@ typedef enum Motor_Var_UserControl
 }
 Motor_Var_UserControl_T;
 
-// polling, write only
-// Value [-32768:32767]
+/*
+    [UserSetpoint]
+    polling, write only
+    Value [-32768:32767]
+    with User Direction
+    Optionally Abs version for Ccw/Cw
+*/
 typedef enum Motor_Var_UserSetpoint
 {
-    MOTOR_VAR_USER_CMD,              // Active mode value
-    MOTOR_VAR_USER_CMD_SPEED,        // UserCmd as Speed
-    MOTOR_VAR_USER_CMD_CURRENT,
-    MOTOR_VAR_USER_CMD_VOLTAGE,
-    MOTOR_VAR_USER_CMD_ANGLE,
+    MOTOR_VAR_USER_SETPOINT,              // RampIn, Active/Generic mode select using active feedback mode
+    MOTOR_VAR_USER_SETPOINT_SPEED,        // UserCmd as Speed
+    MOTOR_VAR_USER_SETPOINT_CURRENT,
+    MOTOR_VAR_USER_SETPOINT_VOLTAGE,
+    MOTOR_VAR_USER_SETPOINT_ANGLE,
 }
 Motor_Var_UserSetpoint_T;
 
@@ -116,12 +113,12 @@ Motor_Var_UserSetpoint_T;
 typedef enum Motor_Var_Rotor
 {
     MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,
-    MOTOR_VAR_ROTOR_ELECTRICAL_SPEED, /*  */
-    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,
+    MOTOR_VAR_ROTOR_ELECTRICAL_SPEED, /* Absolute Ccw, CW */
     MOTOR_VAR_ROTOR_SPEED_FRACT16,
-    MOTOR_VAR_ROTOR_DIRECTION, //   1:Ccw, -1:Cw, 0:Stop
+    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE, /* if supported */
+    MOTOR_VAR_ROTOR_DIRECTION, //  1:Ccw, -1:Cw, 0:Stop
     MOTOR_VAR_ROTOR_SPEED_REQ, // effectively SpeedRamp
-    // MOTOR_VAR_ROTOR_INTERGRAL, /* I or V Req */
+    // MOTOR_VAR_ROTOR_SPEED_INTEGRAL, /* I or V Req */
     // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
     // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
 }
@@ -136,19 +133,19 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_IA,
     MOTOR_VAR_FOC_IB,
     MOTOR_VAR_FOC_IC,
-    MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_ID,
-    MOTOR_VAR_FOC_REQ_Q,
-    MOTOR_VAR_FOC_REQ_D,
-    MOTOR_VAR_FOC_VQ,
+    MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,
+    MOTOR_VAR_FOC_VQ,
     MOTOR_VAR_FOC_VA,
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
-    // MOTOR_VAR_FOC_IQ_REQ, /* without buffer, use torque ramp for speed output */
-    // MOTOR_VAR_FOC_ID_REQ,
-    MOTOR_VAR_FOC_INTEGRAL_Q,
+    MOTOR_VAR_FOC_REQ_D,
+    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req, TorqueRamp or SpeedPidOut */
+    // MOTOR_VAR_FOC_ID_REQ, /* return I or 0 */
+    // MOTOR_VAR_FOC_IQ_REQ,
     MOTOR_VAR_FOC_INTEGRAL_D,
+    MOTOR_VAR_FOC_INTEGRAL_Q,
 }
 Motor_Var_Foc_T;
 
@@ -160,8 +157,6 @@ typedef enum Motor_Var_StateCmd
 {
     MOTOR_VAR_CLEAR_FAULT,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
-    // MOTOR_VAR_USER_START, // handle by direction for now
-    // MOTOR_VAR_USER_STOP,
 
     MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
     MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
@@ -171,40 +166,20 @@ typedef enum Motor_Var_StateCmd
     MOTOR_VAR_OPEN_LOOP_RUN,
     // MOTOR_VAR_OPEN_LOOP_HOMING,
 
-    // altneratively
+    // alternatively, main enter/exit only
     // MOTOR_VAR_CMD_EXIT_FAULT,
     // MOTOR_VAR_CMD_ENTER_CALIBRATION,
     // MOTOR_VAR_CMD_ENTER_OPEN_LOOP,
+
+    // MOTOR_VAR_USER_START, // handle by direction for now
+    // MOTOR_VAR_USER_STOP,
 }
 Motor_Var_StateCmd_T;
-
-/*
-    [Var_ControlState]
-    Fixed struct member
-    Motor_Var_UserControl out only
-*/
-// typedef enum Motor_Var_Effective
-// {
-//     MOTOR_VAR_ROTARY_DIRECTION,          // Motor_Direction_T - CW/CCW.
-//     MOTOR_VAR_EFFECTIVE_FEEDBACK_MODE,
-//     MOTOR_VAR_EFFECTIVE_PHASE_STATE, // OutputState
-//     MOTOR_VAR_SPEED_SET_POINT,  /* Speed Ramp always */
-//     MOTOR_VAR_TORQUE_SET_POINT, /* Torque Ramp always */
-//     MOTOR_VAR_EFFECTIVE_SPEED_LIMIT_FORWARD,
-//     MOTOR_VAR_EFFECTIVE_SPEED_LIMIT_REVERSE,
-//     MOTOR_VAR_EFFECTIVE_I_LIMIT_MOTORING,
-//     MOTOR_VAR_EFFECTIVE_I_LIMIT_GENERATING,
-//     MOTOR_VAR_EFFECTIVE_SET_POINT,
-//     MOTOR_VAR_EFFECTIVE_SPEED_LIMIT,
-//     MOTOR_VAR_EFFECTIVE_I_LIMIT,
-//     MOTOR_VAR_EFFECTIVE_RAMP_ON_OFF,
-// }
-// Motor_Var_Effective_T;
-
 
 /******************************************************************************/
 /*
     Config Field Id
+    Preferably in dependency order. Simplify propagate write.
 */
 /******************************************************************************/
 typedef enum Motor_Var_ConfigCalibration
@@ -214,7 +189,7 @@ typedef enum Motor_Var_ConfigCalibration
     MOTOR_VAR_DIRECTION_CALIBRATION,  /* Motor_DirectionCalibration_T */
     MOTOR_VAR_POLE_PAIRS,
     MOTOR_VAR_KV,
-    MOTOR_VAR_SPEED_RATED_DEG,
+    MOTOR_VAR_SPEED_RATED,
     MOTOR_VAR_V_SPEED_SCALAR,
     MOTOR_VAR_IA_ZERO_ADCU,
     MOTOR_VAR_IB_ZERO_ADCU,
@@ -229,14 +204,10 @@ typedef enum Motor_Var_ConfigCalibrationAlias
 {
     MOTOR_VAR_SPEED_RATED_RPM,
     MOTOR_VAR_SPEED_V_REF_RPM,
-    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
     MOTOR_VAR_SPEED_V_SVPWM_REF_RPM,
-
-    // MOTOR_VAR_SPEED_RATED_ERPM,
+    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
     MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE,
-    // MOTOR_VAR_SPEED_V_MATCH_REF_DEG_PER_CYCLE,
     MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE,
-
     MOTOR_VAR_V_SPEED_RATED_FRACT16,
     // MOTOR_VAR_V_SPEED_REF_VOLTS,
 }
@@ -323,10 +294,9 @@ typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* cmd as value, without ad
 /*
     Submodule wrap
 */
-/* SensorCapture */
 // static inline int _Motor_Var_ConfigHeatMonitor_Get(const Motor_State_T * p_motor, Monitor_ConfigId_T varId) { return HeatMonitor_ConfigId_Get(&p_motor->HeatMonitorState, varId); }
 // static inline void _Motor_Var_ConfigHeatMonitor_Set(Motor_State_T * p_motor, Monitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->HeatMonitorState, varId, varValue); }
-// void _Motor_Var_SensorCmd_Call(const Motor_T * p_motor, Motor_Var_RotorSensorCmd_T varId, int varValue); // Motor_Sensor_CalibrationCmd_Call
+// static inline void _Motor_Var_SensorCmd_Call(const Motor_T * p_motor, Motor_Var_RotorSensorCmd_T varId, int varValue); // Motor_Sensor_CalibrationCmd_Call
 
 /******************************************************************************/
 /*
@@ -402,7 +372,7 @@ typedef enum Motor_VarType_Control
 {
     MOTOR_VAR_TYPE_USER_OUT, // MOTOR_VAR_TYPE_STATE_USER,
     MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
-    // MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
+    MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
     MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
     MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
@@ -416,7 +386,7 @@ typedef enum Motor_VarType_Config
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
-    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Invoke Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
+    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
 }
 Motor_VarType_Config_T;
 
@@ -466,6 +436,12 @@ extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Roto
     Interface applying the command pattern
 */
 /******************************************************************************/
+
+/* Part of Motor */
+/* Include by motor. for streamlined init */
+// typedef const struct Motor Motor_T;
+// typedef struct Motor_State Motor_State_T;
+
 /* With Access Control */
 // extern void Motor_Var_DisableInput(Motor_State_T * p_motor);
 // extern void Motor_Var_EnableInput(Motor_State_T * p_motor);

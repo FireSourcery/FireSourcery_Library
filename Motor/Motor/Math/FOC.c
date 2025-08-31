@@ -60,15 +60,15 @@ void FOC_ZeroSvpwm(FOC_T * p_foc)
 
 void FOC_ClearCaptureState(FOC_T * p_foc)
 {
-    p_foc->Ia = 0;  /* ADC */
-    p_foc->Ib = 0;
-    p_foc->Ic = 0;
+    // p_foc->Ia = 0;  /* ADC */
+    // p_foc->Ib = 0;
+    // p_foc->Ic = 0;
     p_foc->Id = 0;  /* Feedback */
     p_foc->Iq = 0;
     p_foc->Ialpha = 0; /* User view Phase values */
     p_foc->Ibeta = 0;
-    p_foc->ReqD = 0; /* Req */
-    p_foc->ReqQ = 0;
+    // p_foc->ReqD = 0; /* Req */
+    // p_foc->ReqQ = 0;
     // p_foc->Va = 0;
     // p_foc->Vb = 0;
     // p_foc->Vc = 0;
@@ -80,23 +80,23 @@ void FOC_ClearCaptureState(FOC_T * p_foc)
 }
 
 
-bool FOC_ValidateInputs(const FOC_T * p_foc)
-{
-    /* Check for reasonable current values */
-    if (abs(p_foc->Ia) > FRACT16_MAX * 9 / 10) return false;
-    if (abs(p_foc->Ib) > FRACT16_MAX * 9 / 10) return false;
-    if (abs(p_foc->Ic) > FRACT16_MAX * 9 / 10) return false;
+// bool FOC_ValidateInputs(const FOC_T * p_foc)
+// {
+//     /* Check for reasonable current values */
+//     if (abs(p_foc->Ia) > FRACT16_MAX * 9 / 10) return false;
+//     if (abs(p_foc->Ib) > FRACT16_MAX * 9 / 10) return false;
+//     if (abs(p_foc->Ic) > FRACT16_MAX * 9 / 10) return false;
 
-    /* Validate Kirchhoff's current law: Ia + Ib + Ic ≈ 0 */
-    int32_t currentSum = (int32_t)p_foc->Ia + p_foc->Ib + p_foc->Ic;
-    if (abs(currentSum) > FRACT16_MAX / 20) return false;  /* 5% tolerance */
+//     /* Validate Kirchhoff's current law: Ia + Ib + Ic ≈ 0 */
+//     int32_t currentSum = (int32_t)p_foc->Ia + p_foc->Ib + p_foc->Ic;
+//     if (abs(currentSum) > FRACT16_MAX / 20) return false;  /* 5% tolerance */
 
-    /* Check for reasonable voltage requests */
-    int32_t vMagSq = (int32_t)p_foc->Vd * p_foc->Vd + (int32_t)p_foc->Vq * p_foc->Vq;
-    if (vMagSq > (int32_t)FRACT16_MAX * FRACT16_MAX) return false;
+//     /* Check for reasonable voltage requests */
+//     int32_t vMagSq = (int32_t)p_foc->Vd * p_foc->Vd + (int32_t)p_foc->Vq * p_foc->Vq;
+//     if (vMagSq > (int32_t)FRACT16_MAX * FRACT16_MAX) return false;
 
-    return true;
-}
+//     return true;
+// }
 
 bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
 {
@@ -107,3 +107,5 @@ bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
 
     return abs(magnitudeSquared - expected) < tolerance;
 }
+
+
