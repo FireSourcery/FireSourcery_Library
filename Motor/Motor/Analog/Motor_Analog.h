@@ -33,9 +33,6 @@
 #include "Peripheral/Analog/Analog.h"
 #include "../Motor.h"
 
-/* Part of Motor */
-// typedef const struct Motor Motor_T;
-// typedef struct Motor_State Motor_State_T;
 
 /* Capture with context of IZeroRef */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
@@ -50,5 +47,7 @@ static inline void Motor_Analog_MarkVabc(const Motor_T * p_context) { Phase_Anal
 static inline void Motor_Analog_MarkIabc(const Motor_T * p_context) { Phase_Analog_MarkIabc(&p_context->PHASE_ANALOG); }
 
 
+/*
+*/
 extern void Motor_Analog_Calibrate(const Motor_T * p_context);
 

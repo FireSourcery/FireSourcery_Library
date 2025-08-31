@@ -42,7 +42,7 @@ static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
     int32_t target32 = target << RAMP_SHIFT;
     int32_t output32 = p_ramp->Accumulator.Accumulator;
 
-    // if (target32 == p_ramp->Accumulator.Accumulator)    // {    //     output32 = p_ramp->Accumulator.Accumulator;    // }
+    // if (target32 == p_ramp->Accumulator.Accumulator)   {   output32 = p_ramp->Accumulator.Accumulator;   }
     if (target32 > p_ramp->Accumulator.Accumulator) // incrementing
     {
         output32 = math_limit_upper(p_ramp->Accumulator.Accumulator + p_ramp->Accumulator.Coefficient, target32);
@@ -54,6 +54,11 @@ static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
 
     return output32;
 }
+
+// int32_t ProcNextOf(Ramp_T * p_ramp, int16_t target)
+// {
+//     p_ramp->Accumulator.Accumulator = NextOf(p_ramp, (target << RAMP_SHIFT));
+// }
 
 /* Caller limits target */
 int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)

@@ -26,7 +26,7 @@
 /*!
     @file   Phase.h
     @author FireSourcery
-    @brief  Phase Id Common
+    @brief  Phase Bits Common
 */
 /******************************************************************************/
 #include <stdint.h>
@@ -63,11 +63,11 @@ typedef union Phase_Bitmask
         uint8_t C : 1U;
         uint8_t Resv : 5U;
     };
-    uint8_t Id;
+    uint8_t Bits;
 }
 Phase_Bitmask_T;
 
-static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Id = id }; }
+static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Bits = id }; }
 
 /* Virtual CCW */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)

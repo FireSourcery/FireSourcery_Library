@@ -25,13 +25,10 @@
     @file   .h
     @author FireSourcery
     @brief
-
 */
 /******************************************************************************/
 #include "Motor_Analog.h"
 #include "../Motor_StateMachine.h"
-
-
 
 /******************************************************************************/
 /*!
@@ -55,20 +52,20 @@ static void StartCalibration(const Motor_T * p_motor)
     p_fields->Config.IabcZeroRef_Adcu.B = 0U;
     p_fields->Config.IabcZeroRef_Adcu.C = 0U;
     Motor_Analog_MarkIabc(p_motor);
-    p_fields->PhaseInput.IFlags.Id = PHASE_ID_0;
+    p_fields->PhaseInput.IFlags.Bits = PHASE_ID_0;
 }
 
 static void ProcCalibration(const Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR_STATE;
 
-    if (p_fields->PhaseInput.IFlags.Id == PHASE_ID_ABC)
+    if (p_fields->PhaseInput.IFlags.Bits == PHASE_ID_ABC)
     {
         Filter_Avg(&p_fields->FilterA, Phase_Input_GetIa_Fract16(&p_fields->PhaseInput));
         Filter_Avg(&p_fields->FilterB, Phase_Input_GetIb_Fract16(&p_fields->PhaseInput));
         Filter_Avg(&p_fields->FilterC, Phase_Input_GetIc_Fract16(&p_fields->PhaseInput));
         Motor_Analog_MarkIabc(p_motor);
-        p_fields->PhaseInput.IFlags.Id = PHASE_ID_0;
+        p_fields->PhaseInput.IFlags.Bits = PHASE_ID_0;
     }
 }
 

@@ -41,7 +41,8 @@ typedef struct FOC
     /* Feedback Variable */
     fract16_t Id, Iq;
 
-    /* Control Variable. VOutput. Intermediate Feedforward. */
+    /* Control Variable. VOutput. Feedforward Input. */
+    /* VBemf during Freewheel */
     fract16_t Vd, Vq; /* VdReq, VqReq */
 
     /* Scalar */
@@ -50,14 +51,17 @@ typedef struct FOC
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
 
-    /* Intermediate VOut */
     /* VBemf Inputs during Freewheel - Capture by ADC */
+
+    /* Intermediate VOut */
     fract16_t Va, Vb, Vc;
 
     /* Request in V or I  */
     /* Setpoint Variable - From TorqueRamp, SpeedPid, OpenLoop */
     /* Alternatively caller holds */
-    // fract16_t ReqD, ReqQ; Optionally store 1 point of access to simplify UI access
+    // Async set or
+    // Optionally store 1 point of access to simplify UI access
+    // fract16_t ReqD, ReqQ;
 
     /* Intermediate values */
     fract16_t Ialpha, Ibeta;
@@ -74,14 +78,14 @@ FOC_T;
 /******************************************************************************/
 static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
 
-// static inline void FOC_SetIa(FOC_T * p_foc, fract16_t ia) { p_foc->Ia = ia; }
-// static inline void FOC_SetIb(FOC_T * p_foc, fract16_t ib) { p_foc->Ib = ib; }
-// static inline void FOC_SetIc(FOC_T * p_foc, fract16_t ic) { p_foc->Ic = ic; }
 
-// alternatively, caller handles filter
-// static inline void FOC_CaptureIa(FOC_T * p_foc, fract16_t ia) { p_foc->Ia = (ia + p_foc->Ia) / 2; }
-// static inline void FOC_CaptureIb(FOC_T * p_foc, fract16_t ib) { p_foc->Ib = (ib + p_foc->Ib) / 2; }
-// static inline void FOC_CaptureIc(FOC_T * p_foc, fract16_t ic) { p_foc->Ic = (ic + p_foc->Ic) / 2; }
+/*
+    InputI
+*/
+static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
+{
+    foc_clarke_park(&p_foc->Id, &p_foc->Iq, ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+}
 
 // static inline void FOC_CaptureIabc(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 // {
@@ -90,18 +94,10 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector
 //     FOC_CaptureIc(p_foc, ic);
 // }
 
-/* ProcInputI */
 // static inline void FOC_ProcClarkePark(FOC_T * p_foc)
 // {
-//     // foc_clarke(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib, p_foc->Ic);
-//     // foc_park_vector(&p_foc->Id, &p_foc->Iq, p_foc->Ialpha, p_foc->Ibeta, p_foc->Sine, p_foc->Cosine);
 //     foc_clarke_park(&p_foc->Id, &p_foc->Iq, p_foc->Ia, p_foc->Ib, p_foc->Ic, p_foc->Sine, p_foc->Cosine);
 // }
-
-static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
-{
-    foc_clarke_park(&p_foc->Id, &p_foc->Iq, ia, ib, ic, p_foc->Sine, p_foc->Cosine);
-}
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 // {
@@ -112,33 +108,34 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
 /*
     OutputV
 */
+
 /* Buffer */
 // static inline void FOC_SetReqD(FOC_T * p_foc, fract16_t d) { p_foc->ReqD = d; }
 // static inline void FOC_SetReqQ(FOC_T * p_foc, fract16_t q) { p_foc->ReqQ = q; }
 
-/* Feedback Control */
+/* Feedback/Feedforward Control */
 static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
 // static inline void FOC_SetVdq(FOC_T * p_foc, fract16_t vd, fract16_t vq, fract16_t vBus)
 // {
-//     FOC_SetVd(p_foc, vd);
-//     FOC_SetVq(p_foc, vq);
+//     p_foc->Vd = vd;
+//     p_foc->Vq = vq;
+//     foc_circle_limit_q
 // }
 
 /*  */
 static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, fract16_t vBus)
 {
-    fract16_t vBusLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3); /* optionally * modulation */
-    // return foc_circle_limit(&p_foc->Vd, &p_foc->Vq, vBusLimit, vBusLimit); /* p_foc->ModulationVLimit, p_foc->VdLimit */
-    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vBusLimit);
+    fract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3); /* optionally * modulation */
+    // return foc_circle_limit(&p_foc->Vd, &p_foc->Vq, vPhaseLimit, vPhaseLimit); /* p_foc->ModulationVLimit, p_foc->VdLimit */
+    // assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
+    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vPhaseLimit);
 }
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
-    // foc_inv_park_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-    // foc_inv_clarke(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, p_foc->Valpha, p_foc->Vbeta);
     foc_inv_clarke_park(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
 }
 
@@ -147,9 +144,9 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     VOut
 */
 /******************************************************************************/
-// static inline ufract16_t FOC_GetVNormA(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Va); }
-// static inline ufract16_t FOC_GetVNormB(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vb); }
-// static inline ufract16_t FOC_GetVNormC(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vc); }
+// static inline ufract16_t FOC_VNormA(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Va); }
+// static inline ufract16_t FOC_VNormB(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vb); }
+// static inline ufract16_t FOC_VNormC(const FOC_T * p_foc, uint32_t vBusInv_fract32) { return svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vc); }
 
 /* precomputed vBusInv_fract32 <=> 1.0F/VBus */
 static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
@@ -187,9 +184,9 @@ static inline void FOC_ProcOutputV_VBus(FOC_T * p_foc, ufract16_t vBus_fract16)
 // static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Valpha); }
 // static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
 
-// static inline void _FOC_SetVBemfA_AsDuty(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VDutyOfV_Inv32(vBusInv_fract32, va); }
-// static inline void _FOC_SetVBemfB_AsDuty(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vb); }
-// static inline void _FOC_SetVBemfC_AsDuty(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vc); }
+// static inline void _FOC_SetVBemfA(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VDutyOfV_Inv32(vBusInv_fract32, va); }
+// static inline void _FOC_SetVBemfB(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vb); }
+// static inline void _FOC_SetVBemfC(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vc); }
 #else
 static inline ufract16_t FOC_GetVa(const FOC_T * p_foc) { return p_foc->Va; }
 static inline ufract16_t FOC_GetVb(const FOC_T * p_foc) { return p_foc->Vb; }
@@ -201,6 +198,31 @@ static inline ufract16_t FOC_GetDutyA(const FOC_T * p_foc) { return p_foc->DutyA
 static inline ufract16_t FOC_GetDutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
 static inline ufract16_t FOC_GetDutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
 
+/******************************************************************************/
+/*
+    VBemf
+*/
+/******************************************************************************/
+/* Capture */
+// static inline void FOC_SetVBemfA(FOC_T * p_foc, ufract16_t va) { p_foc->Va = va; }
+// static inline void FOC_SetVBemfB(FOC_T * p_foc, ufract16_t vb) { p_foc->Vb = vb; }
+// static inline void FOC_SetVBemfC(FOC_T * p_foc, ufract16_t vc) { p_foc->Vc = vc; }
+
+// static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
+// {
+//     // foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
+//     // foc_park_vector(&p_foc->Vd, &p_foc->Vq, p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
+//     foc_clarke_park(&p_foc->Vd, &p_foc->Vq, p_foc->Va, p_foc->Vb, p_foc->Vc, p_foc->Sine, p_foc->Cosine);
+// }
+
+static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
+{
+    foc_clarke_park(&p_foc->Vd, &p_foc->Vq, va, vb, vc, p_foc->Sine, p_foc->Cosine);
+}
+
+// static inline ufract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
+// static inline ufract16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
+// static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
 
 /******************************************************************************/
 /*!
@@ -232,55 +254,25 @@ static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagn
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Iq, p_foc->Vq) * 3 / 2; }
 /* Reactive power (magnetizing) */
 static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Id, p_foc->Vd) * 3 / 2; }
-/* Total power (active + reactive) */
-/* [0:49152] <=> [0:1.5*AnalogRefMax] */
+/* Total power (active + reactive) */ /* [0:49152] <=> [0:1.5F] */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Id, p_foc->Vd) + fract16_mul(p_foc->Iq, p_foc->Vq)) * 3 / 2; }
-// static inline accum32_t FOC_GetTotalPower(const FOC_T * p_foc) { return FOC_GetActivePower(p_foc) + FOC_GetReactivePower(p_foc); }
 
 static inline ufract16_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div_sat(FOC_GetActivePower(p_foc), FOC_GetPower(p_foc)); }
-
 // static inline ufract16_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div_sat(FOC_GetPower(p_foc), vBus_fract16); }
 
 static inline fract16_t FOC_GetId(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_GetIq(const FOC_T * p_foc) { return p_foc->Iq; }
 static inline fract16_t FOC_GetVd(const FOC_T * p_foc) { return p_foc->Vd; }
 static inline fract16_t FOC_GetVq(const FOC_T * p_foc) { return p_foc->Vq; }
+
 // static inline fract16_t FOC_GetIa(const FOC_T * p_foc) { return p_foc->Ia; }
 // static inline fract16_t FOC_GetIb(const FOC_T * p_foc) { return p_foc->Ib; }
 // static inline fract16_t FOC_GetIc(const FOC_T * p_foc) { return p_foc->Ic; }
-static inline fract16_t FOC_GetIalpha(const FOC_T * p_foc) { return p_foc->Ialpha; }
-static inline fract16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta; }
-
+// static inline fract16_t FOC_GetIalpha(const FOC_T * p_foc) { return p_foc->Ialpha; }
+// static inline fract16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta; }
 // static inline fract16_t FOC_GetReqD(const FOC_T * p_foc) { return p_foc->ReqD; }
 // static inline fract16_t FOC_GetReqQ(const FOC_T * p_foc) { return p_foc->ReqQ; }
 
-
-/******************************************************************************/
-/*
-    VBemf
-*/
-/******************************************************************************/
-/* Capture */
-// static inline void FOC_SetVBemfA(FOC_T * p_foc, ufract16_t va) { p_foc->Va = va; }
-// static inline void FOC_SetVBemfB(FOC_T * p_foc, ufract16_t vb) { p_foc->Vb = vb; }
-// static inline void FOC_SetVBemfC(FOC_T * p_foc, ufract16_t vc) { p_foc->Vc = vc; }
-
-// // static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, theta)
-// static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc)
-// {
-//     // foc_clarke(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Va, p_foc->Vb, p_foc->Vc);
-//     // foc_park_vector(&p_foc->Vd, &p_foc->Vq, p_foc->Valpha, p_foc->Vbeta, p_foc->Sine, p_foc->Cosine);
-//     foc_clarke_park(&p_foc->Vd, &p_foc->Vq, p_foc->Va, p_foc->Vb, p_foc->Vc, p_foc->Sine, p_foc->Cosine);
-// }
-
-static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
-{
-    foc_clarke_park(&p_foc->Vd, &p_foc->Vq, va, vb, vc, p_foc->Sine, p_foc->Cosine);
-}
-
-// static inline ufract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
-// static inline ufract16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
-// static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
 
 /******************************************************************************/
 /*!

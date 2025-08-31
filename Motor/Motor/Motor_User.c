@@ -219,7 +219,7 @@ void Motor_User_StartIMode(const Motor_T * p_motor) { Motor_User_SetFeedbackMode
 */
 void Motor_User_SetICmd(Motor_State_T * p_motor, int16_t i_Fract16)
 {
-    _Motor_User_SetTorqueCmd(p_motor, math_clamp(i_Fract16, (int32_t)0 - Motor_User_GetILimitGenerating(p_motor), Motor_User_GetILimitMotoring(p_motor)));
+    _Motor_User_SetTorqueCmd(p_motor, math_clamp(i_Fract16, (int32_t)0 - Motor_GetILimitGeneratingActive(p_motor), Motor_GetILimitMotoringActive(p_motor)));
 }
 
 /* Scalar of Config.Limit - consistent through runtime. set by user. */
@@ -375,12 +375,29 @@ void Motor_User_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_degPerCy
     Generic Mode
 */
 /******************************************************************************/
+/* Alternatively store Input Value separately */
+static inline const Ramp_T * _Motor_User_GetInputRamp(const Motor_State_T * p_motor)
+{
+    const Ramp_T * p_active;
+    if (p_motor->FeedbackMode.Speed == 1U) { p_active = &p_motor->SpeedRamp; } else { p_active = &p_motor->TorqueRamp; }
+    return p_active;
+}
+
+static inline int16_t _Motor_User_GetCmd(const Motor_State_T * p_motor)         { return Ramp_GetTarget(_Motor_User_GetInputRamp(p_motor)); }
+static inline int16_t _Motor_User_GetSetpoint(const Motor_State_T * p_motor)    { return Ramp_GetOutput(_Motor_User_GetInputRamp(p_motor)); }
+
+int16_t Motor_User_GetCmd(const Motor_State_T * p_motor)        { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetCmd(p_motor)); }
+int16_t Motor_User_GetSetpoint(const Motor_State_T * p_motor)   { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetpoint(p_motor)); }
+
+bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEnabled(_Motor_User_GetInputRamp(p_motor)); }
+// static inline void Motor_User_SetRampOnOff(Motor_State_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
+
 /*!
     Mixed units
     Untyped scalar to calibration ref, clamp by limit of the active mode
     @param[in] userCmd[-32768:32767] mixed units
 */
-void _Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+inline void _Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     // if (_Motor_StateMachine_IsOpenLoop(p_motor)) { Motor_User_SetOpenLoopCmd(p_motor, userCmd); }
     if      (mode.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmd(p_motor, userCmd); }
@@ -392,25 +409,11 @@ void _Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, Motor_FeedbackMode_T
 
 void Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, int16_t userCmd)
 {
+    // if (p_input->CmdValue != Motor_User_GetCmd(p_motor )
     _Motor_User_SetActiveCmdValue(p_motor, p_motor->FeedbackMode, userCmd);
 }
 
-/* Alternatively store Input Value separately */
-static inline const Ramp_T * _Motor_User_GetActiveRamp(const Motor_State_T * p_motor)
-{
-    const Ramp_T * p_active;
-    if (p_motor->FeedbackMode.Speed == 1U) { p_active = &p_motor->SpeedRamp; } else { p_active = &p_motor->TorqueRamp; }
-    return p_active;
-}
 
-static inline int16_t _Motor_User_GetCmd(const Motor_State_T * p_motor)         { return Ramp_GetTarget(_Motor_User_GetActiveRamp(p_motor)); }
-static inline int16_t _Motor_User_GetSetpoint(const Motor_State_T * p_motor)    { return Ramp_GetOutput(_Motor_User_GetActiveRamp(p_motor)); }
-
-int16_t Motor_User_GetCmd(const Motor_State_T * p_motor)        { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetCmd(p_motor)); }
-int16_t Motor_User_GetSetpoint(const Motor_State_T * p_motor)   { return Motor_DirectionalValueOf(p_motor, _Motor_User_GetSetpoint(p_motor)); }
-
-bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEnabled(_Motor_User_GetActiveRamp(p_motor)); }
-// static inline void Motor_User_SetRampOnOff(Motor_State_T * p_motor, bool enable) { if (enable) { Motor_EnableRamp(p_motor); } else { Motor_DisableRamp(p_motor); } }
 
 /*
     Unitless scalar
@@ -418,19 +421,22 @@ bool Motor_User_IsRampEnabled(const Motor_State_T * p_motor) { return _Ramp_IsEn
 /*
     Scalar to Config value for consistent user handling
 */
+inline void _Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+{
+    if      (mode.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmd_Scalar(p_motor, userCmd); }
+    // else if (mode.Position == 1U)  { Motor_User_SetPositionCmd_Scalar(p_motor, userCmd); }
+    else if (mode.Speed == 1U)     { Motor_User_SetSpeedCmd_Scalar(p_motor, userCmd); }
+    else if (mode.Current == 1U)   { Motor_User_SetICmd_Scalar(p_motor, userCmd); }
+    else                           { Motor_User_SetVoltageCmd_Scalar(p_motor, userCmd); }
+}
+
 void Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd)
 {
-    Motor_FeedbackMode_T flags = p_motor->FeedbackMode;
-
-    if (flags.OpenLoop == 1U) { Motor_User_SetOpenLoopCmd_Scalar(p_motor, userCmd); }
-    // else if (flags.Position == 1U)  { Motor_User_SetPositionCmd(p_motor, userCmd); }
-    else if (flags.Speed == 1U) { Motor_User_SetSpeedCmd_Scalar(p_motor, userCmd); }
-    else if (flags.Current == 1U) { Motor_User_SetICmd_Scalar(p_motor, userCmd); }
-    else { Motor_User_SetVoltageCmd_Scalar(p_motor, userCmd); }
+    _Motor_User_SetActiveCmdValue_Scalar(p_motor, p_motor->FeedbackMode, userCmd);
 }
 
 /*
-    call mode versions when possible.
+    call other mode versions when possible.
 */
 /*! @return [-32767:32767] <=> [-1:1] */
 int16_t _Motor_User_GetSetpoint_Scalar(const Motor_State_T * p_motor)
@@ -541,11 +547,10 @@ void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_in
 /* units as FeedbackMode Set */
 void Motor_User_ProcInputSetpoint(const Motor_T * p_motor, Motor_User_Input_T * p_input)
 {
-    if (p_input->CmdValue != Motor_User_GetCmd(p_motor->P_MOTOR_STATE)) /* compares mixed units values */
+    if (p_input->CmdValue != Motor_User_GetCmd(p_motor->P_MOTOR_STATE)) /* compare applicable to mixed units values */
     {
         Motor_User_SetActiveCmdValue(p_motor->P_MOTOR_STATE, p_input->CmdValue);
     }
-
 }
 
 

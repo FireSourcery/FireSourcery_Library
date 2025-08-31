@@ -143,7 +143,7 @@ static inline bool _Phase_ReadOnOffC(const Phase_T * p_phase) { return _Phase_Re
 */
 /******************************************************************************/
 /*!
-    Id/Mask
+    Bits/Mask
 */
 static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 {
@@ -151,7 +151,7 @@ static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 // #ifdef CONFIG_PHASE_INDIVIDUAL_CHANNEL_CONTROL
     return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
 // #else
-// return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Id);
+// return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Bits);
 // #endif
 }
 
@@ -239,7 +239,7 @@ static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint1
     if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
     if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
     if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
-    if (state.Id != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Id); }
+    if (state.Bits != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Bits); }
 }
 
 /******************************************************************************/
@@ -314,19 +314,19 @@ static inline void Phase_ActivateOutputT0(const Phase_T * p_phase)
 
 static inline bool Phase_IsFloat(const Phase_T * p_phase)
 {
-    return (_Phase_ReadState(p_phase).Id == PHASE_ID_0);
+    return (_Phase_ReadState(p_phase).Bits == PHASE_ID_0);
 }
 
 static inline bool Phase_IsVDuty(const Phase_T * p_phase)
 {
     // return !Phase_IsFloat(p_phase);
-    return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Id != PHASE_ID_0);
+    return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0);
 }
 
 static inline bool Phase_IsV0(const Phase_T * p_phase)
 {
-    // return ((_Phase_ReadState(p_phase).Id == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0)); //alternatively check active channels only
-    return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0));
+    // return ((_Phase_ReadState(p_phase).Bits == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); //alternatively check active channels only
+    return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0));
 }
 
 /* Collective state */
@@ -334,13 +334,13 @@ static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
 
-    switch (_Phase_ReadState(p_phase).Id)
+    switch (_Phase_ReadState(p_phase).Bits)
     {
         case PHASE_ID_0: state = PHASE_OUTPUT_FLOAT; break;
         //alternatively check active channels only
         // case PHASE_ID_ABC:  break;
         /* Including Polar Ouputs */
-        default: state = (_Phase_ReadDutyState(p_phase).Id == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM; break;
+        default: state = (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM; break;
     }
     return state;
 }

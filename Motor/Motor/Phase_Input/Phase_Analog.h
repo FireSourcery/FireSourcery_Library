@@ -178,7 +178,7 @@ static inline void _Phase_CaptureVAdcu(volatile Phase_Triplet_T * p_triplet, vol
 {
     // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);
     p_triplet->Values[channel] = (p_triplet->Values[channel] + Phase_Analog_VFract16Of(adcu)) / 2;
-    p_bits->Id |= (1U << channel);
+    p_bits->Bits |= (1U << channel);
 }
 
 static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_A, adcu); }
@@ -189,7 +189,7 @@ static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, vol
 {
     // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
     p_triplet->Values[channel] = (p_triplet->Values[channel] + Phase_Analog_IFract16Of(p_zeroRefs->Values[channel], adcu)) / 2;
-    p_bits->Id |= (1U << channel);
+    p_bits->Bits |= (1U << channel);
 }
 
 static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_A, adcu); }

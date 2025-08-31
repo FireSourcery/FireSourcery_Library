@@ -36,7 +36,7 @@
 void FOC_Init(FOC_T * p_foc)
 {
     // p_foc->Modulation = FRACT16_MAX;
-    // FOC_CaptureVBus(p_foc, vBus);
+
     /* or handle outside */
     // p_foc->VdLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
     // p_foc->VPhaseLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
@@ -60,23 +60,10 @@ void FOC_ZeroSvpwm(FOC_T * p_foc)
 
 void FOC_ClearCaptureState(FOC_T * p_foc)
 {
-    // p_foc->Ia = 0;  /* ADC */
-    // p_foc->Ib = 0;
-    // p_foc->Ic = 0;
-    p_foc->Id = 0;  /* Feedback */
+    p_foc->Id = 0;
     p_foc->Iq = 0;
     p_foc->Ialpha = 0; /* User view Phase values */
     p_foc->Ibeta = 0;
-    // p_foc->ReqD = 0; /* Req */
-    // p_foc->ReqQ = 0;
-    // p_foc->Va = 0;
-    // p_foc->Vb = 0;
-    // p_foc->Vc = 0;
-//     p_foc->Valpha = 0;
-//     p_foc->Vbeta = 0;
-//     p_foc->Vd = 0;
-//     p_foc->Vq = 0;
-    // FOC_ZeroSvpwm(p_foc);
 }
 
 

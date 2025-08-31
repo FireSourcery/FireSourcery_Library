@@ -33,18 +33,16 @@
 /*
     Include all sensor Calibration
 */
-// #include "Hall/Hall_Sensor.h"
 #include "Hall/Motor_Hall.h"
-
-// #include "Encoder/Encoder_Sensor.h"
 #include "Encoder/Motor_Encoder.h"
 
 #include "RotorSensor_Table.h"
 
-/* Part of Motor */
-/* non inline, include by Motor */
-typedef const struct Motor Motor_T;
-typedef struct Motor_State Motor_State_T;
+#include "../Motor.h"
+// /* Part of Motor */
+// /* non inline, include by Motor */
+// typedef const struct Motor Motor_T;
+// typedef struct Motor_State Motor_State_T;
 
 
 /*
@@ -57,7 +55,7 @@ typedef struct Motor_State Motor_State_T;
 
 /******************************************************************************/
 /*!
-    Id Access
+    Calibration State Access
 */
 /******************************************************************************/
 extern void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);

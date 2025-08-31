@@ -44,7 +44,7 @@
 
 /******************************************************************************/
 /*
-    [StateMachine Input]
+    [StateMachine_TransitionInput]
     Input passed to the StateMachine alternative to mapped to a State.
     effectively defines [State] local [state_input_t]
     Functionally InputCmds that map to a single State

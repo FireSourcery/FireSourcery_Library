@@ -88,7 +88,7 @@ static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accu
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
     Ramp_SetOutput(p_ramp, match);
-    p_ramp->Target = match; /* Set Target to current output */
+    Ramp_SetTarget(p_ramp, match);
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
@@ -98,11 +98,11 @@ static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
 }
 
 /* ProcAsDisabled */
-static inline int32_t Ramp_ApplyEndState(Ramp_T * p_ramp)
-{
-    p_ramp->Accumulator.Accumulator = (p_ramp->Target << RAMP_SHIFT);
-    return Ramp_GetOutput(p_ramp);
-}
+// static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
+// {
+//     Ramp_SetOutput(p_ramp, p_ramp->Target);
+//     return Ramp_GetOutput(p_ramp);
+// }
 
 /* single step proc only */
 static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == (UINT16_MAX << RAMP_SHIFT)); }

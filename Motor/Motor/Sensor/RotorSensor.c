@@ -52,4 +52,3 @@ const RotorSensor_VTable_T MOTOR_SENSOR_VTABLE_EMPTY =
     .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Empty_InitFrom,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Empty_Test,
 };
-

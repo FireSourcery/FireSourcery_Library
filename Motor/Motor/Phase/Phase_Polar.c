@@ -175,7 +175,7 @@ void Phase_Bipolar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_
 /******************************************************************************/
 // layering todo
 // /*
-//     Commutation Phase Id handled by Phase module
+//     Commutation Phase Bits handled by Phase module
 //     switch should be faster than CommutationTable[phaseID][p_phase->PolarMode]();
 // */
 // void Phase_Polar_Activate(Phase_T * p_phase,  Phase_Polar_T phaseId, uint16_t duty)

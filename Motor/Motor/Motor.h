@@ -213,7 +213,7 @@ typedef struct Motor_Config
     uint32_t AlignTime_Cycles;              /* Ramp time and step duration */
 
     /* OpenLoop Run/StartUp Preset */
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
     uint16_t OpenLoopRampSpeedFinal_Fract16;
     uint32_t OpenLoopRampSpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
     uint16_t OpenLoopRampIFinal_Fract16;
@@ -359,7 +359,6 @@ typedef struct Motor_State
 
     /* Alternatively, store as runtime cw/ccw  interface apply to both directions */
     /* Cached directional limits - on feedback */
-    /* alternatively store in torqueramp in current mode */
     /* getters 20kz */
     // int16_t ILimitCcw_Fract16;      /* + */
     // int16_t ILimitCw_Fract16;       /* - */
@@ -535,8 +534,8 @@ static inline fract16_t Motor_SpeedReqLimitOf(const Motor_State_T * p_motor, int
 */
 /* Speed limit in [Direction] selected. Forward relative to the user */
 static inline uint16_t Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
-// static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
-// static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
+static inline uint16_t Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
+static inline uint16_t Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
 
 /*
     OpenLoop
@@ -562,6 +561,7 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 /******************************************************************************/
 /* optionally cache 20khz getters */
 /* optionally move target outside */
+/* alternatively limit on output. ensure state clears on update */
 static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)   { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor)  { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 

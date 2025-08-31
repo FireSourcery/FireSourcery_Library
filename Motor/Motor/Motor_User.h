@@ -190,13 +190,13 @@ typedef struct Motor_User_Input
     Motor_User_Direction_T Direction;
     Motor_FeedbackMode_T FeedbackMode;
     Phase_Output_T PhaseState;
+    /* optionally */
     uint16_t SpeedLimit;
     uint16_t ILimit;
     // uint16_t RampOnOff;
-    bool IsUpdated;
+    bool IsUpdated; //todo move to handle outside
 }
 Motor_User_Input_T;
-// move proc buffered
 
 // typedef struct
 // {
@@ -256,7 +256,6 @@ extern void Motor_User_ActivatePhaseOutput(const Motor_T * p_const, Phase_Output
 
 extern void Motor_User_SetFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 extern void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_const, int modeValue);
-// extern void Motor_User_ActivateControlWith(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 
 extern void Motor_User_Stop(const Motor_T * p_const);
 extern void Motor_User_ApplyRotaryDirection(const Motor_T * p_const, Motor_Direction_T direction);

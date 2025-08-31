@@ -79,6 +79,8 @@
 #define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
 #endif
 
+static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
+
 //alternatively
 // typedef const struct MotorTimeReference
 // {

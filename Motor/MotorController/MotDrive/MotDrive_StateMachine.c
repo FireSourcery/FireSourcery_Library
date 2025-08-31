@@ -149,7 +149,8 @@ static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotD
     State Machine
 */
 /******************************************************************************/
-// alternatively change to substate, and keep module as input filter/mapper
+// alternatively neutral moves to top state. change to substate, and keep module as input filter/mapper
+
 static const State_T STATE_DRIVE;
 static const State_T STATE_NEUTRAL;
 // static const State_T STATE_DISABLED;
@@ -182,7 +183,7 @@ static void Drive_Entry(const MotDrive_T * p_motDrive)
     // MotMotors_SetCmdValue(&p_motDrive->MOTORS, 0);
     // MotDrive_StartControlAll(p_this);
     // p_this->StateFlags.IsStopped = 0U;
-    p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd = MOT_DRIVE_CMD_RELEASE;
+    p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd = MOT_DRIVE_CMD_RELEASE; // next input is edge transition
 
     // if (p_motDrive->P_MOT_DRIVE_STATE->Input.Direction != _MotMotors_GetDirectionAll(p_motDrive))
     // {
@@ -203,8 +204,7 @@ static void Drive_Proc(const MotDrive_T * p_motDrive)
 }
 
 /* handle on edge */
-/* detect on cmd edge */
-/* Externally detect */
+/* Externally detect cmd edge */
 static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_value_t mode)
 {
     /* optionally use prevCmd or substate to handle feedback only or activeOutputWith feedback */

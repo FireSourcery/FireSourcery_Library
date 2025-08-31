@@ -134,30 +134,21 @@ static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T *
 }
 
 /*
-    Pass outer context in case implementation changes
-    push to motor state machine on edge
+    sync write to motor state machine on edge
     Validate by statemachine
 
     set the buffer, let state machine handle depending on mode
     proc is on the same thread
+
+    Pass outer context in case implementation changes
 */
-// id for the input that has been set
-// static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T * p_context, Motor_State_Input_T inputId)
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 
-/*
-    Input Modes Common
-   only 1 value of this var is valid in other modes
-*/
-// static inline void MotorController_User_SetPark(const MotorController_T * p_context) {
-//     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
-//     // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
-//     MotorController_User_ApplyMotorsCmd(p_context);
-// }
+
 
 /******************************************************************************/
 /*
