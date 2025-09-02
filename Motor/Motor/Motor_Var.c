@@ -46,7 +46,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_UFract16(p_motor);              break;
+        case MOTOR_VAR_SPEED:                       value = Motor_User_GetSpeed_Fract16(p_motor);              break;
         case MOTOR_VAR_I_PHASE:                     value = Motor_User_GetIPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_User_GetVPhase_UFract16(p_motor);             break;
         case MOTOR_VAR_STATE:                       value = Motor_User_GetStateId(p_motor);                     break;

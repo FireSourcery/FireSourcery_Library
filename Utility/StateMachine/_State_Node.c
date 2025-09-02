@@ -290,35 +290,32 @@ State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, 
 
 */
 /******************************************************************************/
-// static const uintptr_t State_AcceptInputOfMapper1 = (uintptr_t)State_AcceptInputOfMapper;
-// typedef enum
-// {
-//     id_1,
-//     id_2
-// } NodeOpId;
+// typedef void * (*_StateMachine_OnTraverse_T)(State_T * p_state, void * p_context, state_input_t optional);
 
-// struct NodeOp
-// {
-//     void * (*func)();
-//     NodeOpId id;
-// };
-// struct NodeOp t = { .func = State_AcceptInputOfMapper, .id = id_1 };
-
-//   const void * _State_TraverseApplyGeneric(struct NodeOp op, State_T * p_start, State_T * p_end, void * p_context )
+// State_Input_T __State_TraverseApply(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, _StateMachine_OnTraverse_T onTraverse)
 // {
 //     State_Input_T result = NULL;
-//     for (State_T * p_iterator = p_start; p_iterator != p_end; p_iterator = p_iterator->P_PARENT)
+//     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= stopLevel); p_iterator = p_iterator->P_PARENT)
 //     {
-//         switch (op.id)
-//         {
-//             // case ((uintptr_t)State_AcceptInputOfMapper1): result = State_AcceptInputOfMapper1(p_iterator, p_context, inputId); break;
-//             case id_1: result = op.func(p_iterator, p_context, inputId); break;
-//             default: result = NULL; // unsupported function
-//         }
+//         // assert(p_iterator != NULL);
+//         result = onTraverse(p_iterator, p_context, inputId);
 //         if (result != NULL) { break; }
 //     }
 //     return result;
 // }
+
+// State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue)
+// {
+//     return _State_CallInput(__State_TraverseApply(p_start, p_context, stopLevel, inputId, State_AcceptInput), p_context, inputValue);
+// }
+
+// static inline State_T * _State_TransitionOfOutput(State_T * p_state, void * p_context, state_input_t _void);
+
+// State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel)
+// {
+//     return __State_TraverseApply(p_start, p_context, stopLevel, 0, State_TransitionOfOutput);
+// }
+
 
 
 

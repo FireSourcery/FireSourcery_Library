@@ -46,6 +46,12 @@
     #define STATE_MACHINE_ASYNC_LOCK_FREE
 #endif
 
+// #if defined(STATE_MACHINE_ASYNC_LOCK_FREE)
+// #define STATE_MACHINE_LOCK_CODE(code, ...) code
+// #else
+// #define STATE_MACHINE_LOCK_CODE(code, ...) __VA_ARGS__
+// #endif
+
 /*
     [Async Machine]
     Synchronization of [Input]s and [SyncOutput]

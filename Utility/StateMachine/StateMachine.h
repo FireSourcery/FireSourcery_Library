@@ -67,6 +67,7 @@ typedef const struct StateMachine_TransitionInput
     // const State_Input_T TO_NEXT;
 }
 StateMachine_TransitionInput_T;
+// typedef struct State * (*StateMachine_Transition_T)(struct State *, void * p_context);
 
 /* Convenience for inline call [StateMachine_InvokeTransition] */
 // #define STATE_MACHINE_CMD(p_start, transition) ((StateMachine_TransitionInput_T) { .P_START = p_start, .TRANSITION = transition });
@@ -132,6 +133,7 @@ typedef const struct StateMachine
     // state_value_t * P_SYNC_INPUTS; /* TRANSITION_TABLE_LENGTH */
     // State_T ** pp_ActiveStatesBuffer; alternative to recursive traverse down
     // const void * P_STATE_BUFFERS[STATE_COUNT]; /* a substate buffer for each top state */
+    // uint32_t * P_TIMER;
 }
 StateMachine_T;
 
@@ -185,6 +187,16 @@ static void StateMachine_ApplyInput(StateMachine_T * p_stateMachine, state_input
     if (_StateMachine_AcquireAsyncInput(p_active) == true)
     {
         _StateMachine_ApplyAsyncInput(p_active, p_stateMachine->P_CONTEXT, inputId, inputValue);
+        _StateMachine_ReleaseAsyncInput(p_active);
+    }
+}
+
+static void StateMachine_ApplyInputTransition(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
+{
+    StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
+    if (_StateMachine_AcquireAsyncInput(p_active) == true)
+    {
+        _StateMachine_ProcInput(p_active, p_stateMachine->P_CONTEXT, inputId, inputValue);
         _StateMachine_ReleaseAsyncInput(p_active);
     }
 }

@@ -146,12 +146,16 @@ inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void *
     p_active->SyncInputMask = 0UL;
 }
 
+// inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context, StateMachine_SyncInput_T * p_syncInputs)
+// {
+//     __StateMachine_ProcSyncInput(p_active, p_context, p_syncInputs, TransitionFunctionOfInput);
+// }
+
 /* SyncTransitionOfAsyncInput */
 inline void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_TransitionTo(p_active, p_context, p_active->p_SyncNextState); /* check proc with local variable */
     p_active->p_SyncNextState = NULL;
-
     // alternatively  ignore DEPTH != 0U
 }
 
@@ -187,7 +191,7 @@ inline void _StateMachine_ApplyAsyncInput(StateMachine_Active_T * p_active, void
 /* Continue processing [Output] of the new State */
 void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_ProcPendingTransition(p_active, p_context);
+    _StateMachine_ProcPendingTransition(p_active, p_context); //optionally split to include timer
     _StateMachine_ProcSyncInput(p_active, p_context);
     _StateMachine_ProcSyncOutput(p_active, p_context);
 }

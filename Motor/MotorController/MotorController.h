@@ -114,8 +114,7 @@ MotorController_OptDinMode_T;
 /******************************************************************************/
 /*
     Fault SubState flags
-    Faults flags retain set state until user clears
-        to do buzzer while active
+    Faults flags latch state until user clears
 */
 typedef union MotorController_FaultFlags
 {
@@ -126,10 +125,10 @@ typedef union MotorController_FaultFlags
         uint16_t VSourceLimit       : 1U; /* VSourceMonitor for over/under  */
         uint16_t VAccsLimit         : 1U;
         uint16_t VAnalogLimit       : 1U;
-        // uint16_t ILimit          : 1U;
         uint16_t Motors             : 1U; /* Sensor/StartUp */
         uint16_t RxLost             : 1U;
         uint16_t InitCheck          : 1U;
+        // uint16_t ILimit          : 1U;
         // uint16_t StateError         : 1U;
         // uint16_t DirectionSync      : 1U;
         // uint16_t User               : 1U;

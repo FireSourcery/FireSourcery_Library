@@ -310,7 +310,7 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
         case MOT_VAR_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:       return MotorController_Var_ConfigBootRef_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_GENERAL_USER_IN:       return 0; //return MotorController_Var_Input_Get(p_mc, varId.Base);
-        case MOT_VAR_TYPE_GENERAL_REF:           return MotorController_InstancesRef_Get(p_context, varId.Base);
+        case MOT_VAR_TYPE_GENERAL_STATIC_REF:           return MotorController_InstancesRef_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_GENERAL_DEBUG:         return MotorController_Var_OutputDebug_Get(p_context, varId.Base);
 
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_Get(&p_context->ANALOG_USER, varId.Base);
@@ -347,7 +347,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
     {
         case MOT_VAR_TYPE_GENERAL_USER_OUT:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:      return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_GENERAL_REF:              return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_GENERAL_STATIC_REF:              return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_DEBUG:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_context, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_context, varId.Base, value);                              break;

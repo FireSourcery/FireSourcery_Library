@@ -177,8 +177,7 @@ static packet_size_t VarWrite(const MotorController_T * p_context, MotPacket_Var
 */
 NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
-
+    // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
     if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_ReadManufacture_Blocking(&p_context->MOT_NVM, onceAddress, size, p_destBuffer); }
     return status;
@@ -186,8 +185,7 @@ NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorContr
 
 NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
-
+    // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
     if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_WriteManufacture_Blocking(&p_context->MOT_NVM, onceAddress, p_source, size); }
     return status;
@@ -237,6 +235,8 @@ static packet_size_t WriteMem_Blocking(const MotorController_T * p_context, MotP
     return MotPacket_MemWriteResp_Build(p_txPacket, status);
 }
 
+
+// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
@@ -249,7 +249,6 @@ static Protocol_ReqCode_T ReadData(const MotorController_T * p_context, Protocol
 /******************************************************************************/
 /*! Stateful Write Data */
 /******************************************************************************/
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 static Protocol_ReqCode_T WriteData_Blocking(const MotorController_T * p_context, Protocol_ReqContext_T * p_reqContext)
 {
     return MotProtocol_Flash_WriteData_Blocking(p_context->MOT_NVM.P_FLASH, p_reqContext);

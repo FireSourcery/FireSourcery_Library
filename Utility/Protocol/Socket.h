@@ -111,6 +111,7 @@ typedef const struct Socket
     uint8_t * P_TX_PACKET_BUFFER;
     uint8_t PACKET_BUFFER_LENGTH;           /* Must be greater than Specs RX_LENGTH_MAX */
 
+    /* Protocol_Req_T Context */
     void * P_APP_CONTEXT;                   /* User app context for packet processing */
     void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
 
@@ -121,6 +122,7 @@ typedef const struct Socket
     */
     // alternatively Map overlaping sockets for selection
     // const Protocol_Base_T * P_PROTOCOL_CONTEXT;
+    // const Protocol_Req_T * (*REQ_MAPPER)(packet_id_t req);
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT

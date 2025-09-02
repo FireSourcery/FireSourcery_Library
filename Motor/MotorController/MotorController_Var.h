@@ -162,7 +162,7 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_GENERAL_CONFIG,
     MOT_VAR_TYPE_BOOT_REF_CONFIG,
     MOT_VAR_TYPE_GENERAL_DEBUG,
-    MOT_VAR_TYPE_GENERAL_REF, /* Read-only */
+    MOT_VAR_TYPE_GENERAL_STATIC_REF, /* Read-only */
 
     /* MotDrive Submodule */
     MOT_VAR_TYPE_MOT_DRIVE_CONTROL,

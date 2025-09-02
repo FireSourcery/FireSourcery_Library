@@ -243,6 +243,9 @@ Protocol_ReqState_T;
 //     uint8_t REQ_TABLE_LENGTH;
 //     // REQ_TIMEOUT
 
+//     const volatile uint32_t * P_TIMER;
+
+// #ifdef
 //     const Packet_Class_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
 //     uint8_t PACKET_CLASS_COUNT;
 
@@ -250,8 +253,6 @@ Protocol_ReqState_T;
 //     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
 //     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 //     // alternatively fixed // const Xcvr_T * P_XCVR;
-
-//     const volatile uint32_t * P_TIMER;
 // }
 // Protocol_Context_T;
 

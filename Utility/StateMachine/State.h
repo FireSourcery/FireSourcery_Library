@@ -35,12 +35,15 @@
 #include <stddef.h>
 
 
+/* For Run time Sync buffer only. alternatively, fam or context pointer */
+#ifndef STATE_TRANSITION_TABLE_LENGTH_MAX
+#define STATE_TRANSITION_TABLE_LENGTH_MAX (16U) /* Max number of inputs per state. */
+#endif
+
 /*
 
 */
-struct State;
-typedef uint8_t state_t;    /* State ID. User may overwrite with enum */
-
+typedef uint8_t state_t;            /* State ID. User may overwrite with enum */
 typedef uint8_t state_input_t;      /* Input/Handler Id. Maps to [State_Input_T]. Index into transition table. Implementation may overwrite with enum. */
 typedef intptr_t state_value_t;     /* Optional input parameter. User define platform register size */
 
@@ -54,10 +57,7 @@ typedef intptr_t state_value_t;     /* Optional input parameter. User define pla
 /* A State Action/Output. On Transition. Mapped per State.*/
 typedef void (*State_Action_T)(void * p_context);
 
-/* For Run time Sync buffer only. alternatively, fam or context pointer */
-#ifndef STATE_TRANSITION_TABLE_LENGTH_MAX
-#define STATE_TRANSITION_TABLE_LENGTH_MAX (16U) /* Max number of inputs per state. */
-#endif
+struct State;
 
 /******************************************************************************/
 /*!
@@ -118,7 +118,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
     //  hsm input case must return entry to indicate as handled
     // no meta for null
 */
-typedef struct State * (*State_TransitionFunction_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
+// typedef struct State * (*State_TransitionFunction_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 
 /*!@}*/
 
@@ -161,6 +161,7 @@ typedef const struct State
 
     /* [State Transition of State/Output/Clock] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
     /* Separate from LOOP for separate overwrite transition control */
+    /* Optionally implement module timer */
     State_InputVoid_T NEXT; /* SYNCHRONOUS_TRANSITION */ /* Synchronous Transition Handler. */
 
     /*

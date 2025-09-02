@@ -144,8 +144,6 @@ typedef enum MotorController_LockOpStatus
 }
 MotorController_LockOpStatus_T;
 
-
-
 /******************************************************************************/
 /*
     Lock/Blocking
@@ -158,11 +156,8 @@ static inline void MotorController_User_InputLock(const MotorController_T * p_co
     _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id); /* May transition to substate */
 }
 
-// optionally includ parks
 // static inline bool MotorController_User_EnterLockState(const MotorController_T * p_context)
 // {
-    // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
-
 //     MotorController_User_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER);
 //     return MotorController_StateMachine_IsLock(p_context);
 // }
@@ -178,14 +173,6 @@ static inline bool MotorController_User_IsEnterLockError(const MotorController_T
     return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_StateMachine_IsLock(p_context) == false));
 }
 
-/* return union status */
-// return nvm on nvm
-static inline int MotorController_User_GetLockOpStatus(const MotorController_T * p_context)
-{
-    return p_context->P_MC_STATE->LockOpStatus;
-}
-
-
 /* Save RAM to NVM */
 static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const MotorController_T * p_context)
 {
@@ -194,15 +181,20 @@ static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const M
 }
 
 /* Lock State returns to ENTER */
-/* Alternatively Caller check Top state. then _StateMachine_GetActiveSubStateId, no meta char */
-/* IsComplete SubState = TopState =  MC_STATE_LOCK */
-
+/* Alternatively Caller check Top state. then _StateMachine_GetActiveSubStateId (potential substate id collision) */
 /* IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK */
 /* Processing SubState => id or 0, TopState => MC_STATE_LOCK */
 static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
 // if all calibration function use substate
 static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_context) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+
+/* return union status */
+// return nvm on nvm
+static inline int MotorController_User_GetLockOpStatus(const MotorController_T * p_context)
+{
+    return p_context->P_MC_STATE->LockOpStatus;
+}
 
 /******************************************************************************/
 /*

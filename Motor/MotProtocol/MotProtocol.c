@@ -65,6 +65,7 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_tx
     *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
+// Protocol_RxCode_T MotProtocol_ParseRxMeta(const MotPacket_T * p_rxPacket, Protocol_HeaderMeta_T * p_rxMeta, packet_size_t rxCount)
 Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, const MotPacket_T * p_rxPacket, packet_size_t rxCount)
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
@@ -361,8 +362,10 @@ Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_
     // }
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
-    *p_reqContext->p_SubStateIndex = 1U;
-    reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
+    // *p_reqContext->p_SubStateIndex = 1U;
+    // reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
+    // *p_reqContext->p_SubStateIndex = 1U;
+    reqCode = PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
 
     return reqCode;
 }

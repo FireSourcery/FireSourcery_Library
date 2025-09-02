@@ -52,18 +52,6 @@ typedef enum MotProtocol_StatusCode
 }
 MotProtocol_StatusCode_T;
 
-// HTTP/REST patterns
-// typedef enum MotProtocol_Status
-// {
-//     MOT_STATUS_OK = 200,
-//     MOT_STATUS_BAD_REQUEST = 400,
-//     MOT_STATUS_UNAUTHORIZED = 401,
-//     MOT_STATUS_NOT_FOUND = 404,
-//     MOT_STATUS_TIMEOUT = 408,
-//     MOT_STATUS_INTERNAL_ERROR = 500,
-//     MOT_STATUS_NOT_IMPLEMENTED = 501
-// } MotProtocol_Status_T;
-
 /* expandable to bitfields */
 typedef enum MotProtocol_MemConfig
 {

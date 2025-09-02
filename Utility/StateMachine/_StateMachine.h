@@ -73,12 +73,26 @@ typedef struct StateMachine_Active
 }
 StateMachine_Active_T;
 
+/* Input Buffer */
+typedef struct StateMachine_SyncInput
+{
+    /*
+        Sync machine store result until process
+        proc the last input of each unique id
+        multiple inputs of the same id will overwrite
+        lockless operation when [ProcState] priority is higher than [SetInput]
+    */
+    volatile uint32_t Ids; /* Bit mask of inputs that have been set. */
+    state_value_t Values[]; /* alternatively, context pointer or fam */
+    /* mapper version needs separate buffer */
+}
+StateMachine_SyncInput_T;
+
 /******************************************************************************/
 /*
     Top Level State
 */
 /******************************************************************************/
-
 
 /******************************************************************************/
 /*

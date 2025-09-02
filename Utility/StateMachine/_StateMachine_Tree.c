@@ -104,6 +104,12 @@ void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * 
     p_active->SyncInputMask = 0UL;
 }
 
+// inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context, StateMachine_SyncInput_T * p_syncInputs)
+// {
+//     __StateMachine_ProcSyncInput(p_active, p_context, p_syncInputs, TransitionFunctionOfBranchInput);
+// }
+
+
 /* Buffered from AsyncInput */
 void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active, void * p_context)
 {

@@ -167,8 +167,8 @@ Motor_FaultFlags_T;
 typedef struct Motor_Config
 {
     Motor_CommutationMode_T CommutationMode;
-    Motor_Direction_T DirectionForward;
     RotorSensor_Id_T SensorMode;
+    Motor_Direction_T DirectionForward;
     // Motor_ResumeMode_T ResumeMode; // option Scale to VSpeed or VBemf on resume
 
     /*
@@ -205,6 +205,9 @@ typedef struct Motor_Config
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
 
+    /*
+
+    */
     /* All OpenLoop Modes - UserCmd, Align */
     uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. */
 
@@ -680,7 +683,6 @@ static inline fract16_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
 /* Getter in case Direction moves to RotorSensor */
 /* Same as Sign(Speed) */
 static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
-static inline Motor_Direction_T Motor_DirectionFeedbackValueOf(const Motor_State_T * p_motor, int32_t value) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor) * value; }
 
 /*!
     Convert between a user reference direction or non directional, to CCW/CW direction
@@ -688,14 +690,15 @@ static inline Motor_Direction_T Motor_DirectionFeedbackValueOf(const Motor_State
     @return [-65536:65536],
     @note Over saturated if input is -32768, caller call clamp. cast may resilt in overflow.
 */
-static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+// static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
 
 /* */
 static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
 static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != MOTOR_DIRECTION_NULL); }
 static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != MOTOR_DIRECTION_NULL); }
-static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
+// static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
 
 
 
