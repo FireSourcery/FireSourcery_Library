@@ -128,7 +128,7 @@ static State_T * GetMainState(const MotorController_T * p_context)
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
     MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
 */
-// alternatively map getters
+// alternatively map getter to State
 Motor_User_Direction_T MotorController_StateMachine_GetDirection(MotorController_T * p_context)
 {
     switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))

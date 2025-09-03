@@ -114,7 +114,7 @@ typedef enum Motor_Var_Rotor
 {
     MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,
     MOTOR_VAR_ROTOR_ELECTRICAL_SPEED, /* Absolute Ccw, CW */
-    MOTOR_VAR_ROTOR_SPEED_FRACT16,
+    MOTOR_VAR_ROTOR_SPEED_FEEDBACK,
     MOTOR_VAR_ROTOR_MECHANICAL_ANGLE, /* if supported */
     MOTOR_VAR_ROTOR_DIRECTION, //  1:Ccw, -1:Cw, 0:Stop
     MOTOR_VAR_ROTOR_SPEED_REQ, // effectively SpeedRamp
@@ -141,7 +141,7 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
     MOTOR_VAR_FOC_REQ_D,
-    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req, TorqueRamp or SpeedPidOut */
+    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req */
     // MOTOR_VAR_FOC_ID_REQ, /* return I or 0 */
     // MOTOR_VAR_FOC_IQ_REQ,
     MOTOR_VAR_FOC_INTEGRAL_D,

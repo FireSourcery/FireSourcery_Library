@@ -104,8 +104,8 @@ typedef enum MotorController_Var_Config
     MOT_VAR_I_LIMIT_LOW_V,
     // MOT_VAR_I_LIMIT_DC,
 
-    MOT_VAR_USER_INIT_MODE,                 // MotorController_MainMode_T
-    MOT_VAR_USER_INPUT_MODE,                // MotorController_InputMode_T
+    MOT_VAR_MAIN_MODE,                 // MotorController_MainMode_T
+    MOT_VAR_INPUT_MODE,                // MotorController_InputMode_T
     MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
 
     /* OptDin */

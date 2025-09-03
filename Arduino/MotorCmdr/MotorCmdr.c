@@ -158,7 +158,7 @@ void MotorCmdr_WriteThrottle(MotorCmdr_T * p_motorCmdr, uint16_t throttle)
 
 // void MotorCmdr_WriteToggleAnalogIn(MotorCmdr_T * p_motorCmdr)
 // {
-//     MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_USER_INPUT_MODE, 2U); /* 2 is Toggle */
+//     MotorCmdr_WriteVar(p_motorCmdr, MOT_VAR_INPUT_MODE, 2U); /* 2 is Toggle */
 // }
 /******************************************************************************/
 /*!

@@ -165,13 +165,12 @@ void Motor_User_ForceDisableControl(const Motor_T * p_motor)
 */
 static inline int16_t _Motor_User_GetTorqueCmd(const Motor_State_T * p_motor)           { return Ramp_GetTarget(&p_motor->TorqueRamp); }
 static inline int16_t _Motor_User_GetTorqueSetpoint(const Motor_State_T * p_motor)      { return Ramp_GetOutput(&p_motor->TorqueRamp); }
+static inline int16_t _Motor_User_GetSpeedCmd(const Motor_State_T * p_motor)            { return Ramp_GetTarget(&p_motor->SpeedRamp); }
+static inline int16_t _Motor_User_GetSpeedSetpoint(const Motor_State_T * p_motor)       { return Ramp_GetOutput(&p_motor->SpeedRamp); }
 
 static inline void _Motor_User_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd)   { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_DirectionalValueOf(p_motor, userCmd)); }
 static inline int16_t Motor_User_GetTorqueCmd(const Motor_State_T * p_motor)            { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)); }
 static inline int16_t Motor_User_GetTorqueSetpoint(const Motor_State_T * p_motor)       { return Motor_DirectionalValueOf(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)); }
-
-static inline int16_t _Motor_User_GetSpeedCmd(const Motor_State_T * p_motor)            { return Ramp_GetTarget(&p_motor->SpeedRamp); }
-static inline int16_t _Motor_User_GetSpeedSetpoint(const Motor_State_T * p_motor)       { return Ramp_GetOutput(&p_motor->SpeedRamp); }
 
 static inline void _Motor_User_SetSpeedCmd(Motor_State_T * p_motor, int16_t userCmd)    { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_DirectionalValueOf(p_motor, userCmd)); }
 static inline int16_t Motor_User_GetSpeedCmd(const Motor_State_T * p_motor)             { return Motor_DirectionalValueOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp)); }
@@ -514,33 +513,28 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 /******************************************************************************/
 void Motor_User_ProcSyncInput(const Motor_T * p_motor, Motor_User_Input_T * p_input)
 {
-    // if (p_input->IsUpdated == true) /* Sync to update rate */
+    if (p_input->PhaseState != Motor_User_GetPhaseState(p_motor))
+    {
+        Motor_User_ActivatePhaseOutput(p_motor, p_input->PhaseState);
+    }
+    // Motor_User_ActivatePhaseOutput(p_motor, p_input->PhaseState);
+    Motor_User_SetFeedbackMode(p_motor, p_input->FeedbackMode);
+    Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)p_input->Direction);
+
+    // Flags should update even if State has not transitioned
+    // overwritten by match in case FeedbackMode changed.
+    Motor_User_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+
+    // if (p_input->SpeedLimit != p_prev->SpeedLimit)
     // {
-    //     p_input->IsUpdated = false; /* Reset Update Flag */
+    //     p_prev->SpeedLimit = p_input->SpeedLimit;
+    //     MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+    // }
 
-        if (p_input->PhaseState != Motor_User_GetPhaseState(p_motor))
-        {
-            Motor_User_ActivatePhaseOutput(p_motor, p_input->PhaseState);
-        }
-        // Motor_User_ActivatePhaseOutput(p_motor, p_input->PhaseState);
-        Motor_User_SetFeedbackMode(p_motor, p_input->FeedbackMode);
-        Motor_User_ApplyDirectionSign(p_motor, (Motor_User_Direction_T)p_input->Direction);
-
-        // Flags should update even if State has not transitioned
-        // overwritten by match in case FeedbackMode changed.
-        Motor_User_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
-
-        // if (p_input->SpeedLimit != p_prev->SpeedLimit)
-        // {
-        //     p_prev->SpeedLimit = p_input->SpeedLimit;
-        //     MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
-        // }
-
-        // if (p_input->ILimit != p_prev->ILimit)
-        // {
-        //     p_prev->ILimit = p_input->ILimit;
-        //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
-        // }
+    // if (p_input->ILimit != p_prev->ILimit)
+    // {
+    //     p_prev->ILimit = p_input->ILimit;
+    //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
     // }
 }
 
@@ -553,22 +547,4 @@ void Motor_User_ProcInputSetpoint(const Motor_T * p_motor, Motor_User_Input_T * 
     }
 }
 
-
-
-/*
-    Set [FeedbackMode] and Transition to Run State
-*/
-// merge or deprecate /* input buffer feedback mode or pass with combined cmd */
-// inline void Motor_User_ActivateControlWith(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
-// {
-//     Motor_User_SetFeedbackMode(p_motor, mode);
-//     StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM);
-// }
-
-// /* Generic array functions use */
-// void Motor_User_ActivateControlWith_Cast(const Motor_T * p_motor, int modeValue)
-// {
-//     Motor_User_ActivateControlWith(p_motor, Motor_FeedbackMode_Cast(modeValue));
-// }
-// combine for
 

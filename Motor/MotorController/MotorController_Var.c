@@ -110,8 +110,8 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
         case MOT_VAR_V_SUPPLY_VOLTS:                value = p_state->Config.VSupplyRef;                        break;
         case MOT_VAR_I_LIMIT_LOW_V:                 value = p_state->Config.VLowILimit_Fract16;                break;
 
-        case MOT_VAR_USER_INIT_MODE:                value = p_state->Config.InitMode;                          break;
-        case MOT_VAR_USER_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
+        case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
+        case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
 
         case MOT_VAR_OPT_DIN_FUNCTION:              value = p_state->Config.OptDinMode;                        break;
         case MOT_VAR_OPT_SPEED_LIMIT:               value = p_state->Config.OptSpeedLimit_Fract16;             break;
@@ -133,8 +133,8 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
     {
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_User_SetVSupplyRef(p_context, value);                                   break;
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
-        case MOT_VAR_USER_INIT_MODE:        p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_USER_INPUT_MODE:       MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
+        case MOT_VAR_MAIN_MODE:        p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
+        case MOT_VAR_INPUT_MODE:       MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
         // case MOT_VAR_BUZZER_FLAGS_ENABLE:    p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
