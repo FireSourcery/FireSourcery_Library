@@ -227,8 +227,8 @@ typedef struct MotPacket_StopResp { MotPacket_Header_T Header; MotPacket_StopRes
 /*! Call - Arbitrary Functions */
 /******************************************************************************/
 /* Id/Address */
-typedef struct MotPacket_CallReq_Payload { uint32_t Id; uint32_t Arg; }                                     MotPacket_CallReq_Payload_T;
-typedef struct MotPacket_CallResp_Payload { uint32_t Id; uint16_t Status; }                                 MotPacket_CallResp_Payload_T;
+typedef struct MOT_PACKET_PACKED MotPacket_CallReq_Payload { uint32_t Id; uint32_t Arg; }                                     MotPacket_CallReq_Payload_T;
+typedef struct MOT_PACKET_PACKED MotPacket_CallResp_Payload { uint32_t Id; uint16_t Status; }                                 MotPacket_CallResp_Payload_T;
 
 typedef struct MotPacket_CallReq { MotPacket_Header_T Header; MotPacket_CallReq_Payload_T CallReq; }        MotPacket_CallReq_T;
 typedef struct MotPacket_CallResp { MotPacket_Header_T Header; MotPacket_CallResp_Payload_T CallResp; }     MotPacket_CallResp_T;

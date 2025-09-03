@@ -373,7 +373,16 @@ static int _HandleVMonitor_Get(const MotorController_T * p_context, MotVarId_T v
     {
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE:           return VMonitor_VarId_Get(&p_context->V_SOURCE, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG:          return VMonitor_ConfigId_Get(&p_context->V_SOURCE, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF:    return VMonitor_VDivider_RefId_Get(&p_context->V_SOURCE, varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF:
+            // override this for now
+            // switch (varId.Base)
+            // {
+            //     case VDIVIDER_REF_R1: value = p_voltage->R1 / 10U;       break;
+            //     case VDIVIDER_REF_R2: value = p_voltage->R2 / 10U;       break;
+            //     default: break;
+            // }
+            // return VMonitor_VDivider_RefId_Get(&p_context->V_SOURCE, varId.Base);
+
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            return VMonitor_ConfigId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER_REF:      return VMonitor_VDivider_RefId_Get(&p_context->V_ACCESSORIES, varId.Base);

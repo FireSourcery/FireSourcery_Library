@@ -200,7 +200,7 @@ typedef struct MotorController_State
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
-    MotDrive_State_T MotDrive; /* Optionally contain on init */
+    // MotDrive_State_T MotDrive; /* Optionally contain on init */
 
     /* Generic async return status */
     uint8_t LockOpStatus; /* async status */

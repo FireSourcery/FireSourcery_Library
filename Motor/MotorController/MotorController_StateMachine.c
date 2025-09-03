@@ -616,12 +616,12 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 {
                     MotMotors_StopAll(&p_context->MOTORS);
                     p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = &MC_STATE_MAIN;
+                    p_nextState = &STATE_PARK;
                 }
                 else if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
                 {
                     p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = &MC_STATE_MAIN;
+                    p_nextState = &STATE_PARK;
                 }
                 else
                 {
