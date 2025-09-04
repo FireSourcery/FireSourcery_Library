@@ -49,13 +49,13 @@ typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) */
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
 
-static const fract16_t FRACT16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const fract16_t FRACT16_1_DIV_4 = 0x2000;
+static const fract16_t FRACT16_1_DIV_2 = 0x4000; /*!< 16384 */
 static const fract16_t FRACT16_3_DIV_4 = 0x6000;
 static const fract16_t FRACT16_1_DIV_3 = 0x2AAA;
 static const fract16_t FRACT16_2_DIV_3 = 0x5555;
-static const fract16_t FRACT16_1_DIV_SQRT2 = 0x5A82; /*!< 0.70710678118f */
 static const fract16_t FRACT16_1_DIV_SQRT3 = 0x49E7; /*!< 0.57735026919f */
+static const fract16_t FRACT16_1_DIV_SQRT2 = 0x5A82; /*!< 0.70710678118f */
 static const fract16_t FRACT16_SQRT3_DIV_2 = 0x6EDA;
 static const fract16_t FRACT16_SQRT3_DIV_4 = 0x376D;
 static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
@@ -73,8 +73,7 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 #define FRACT16_FLOAT_MIN (-1.0F)
 #define FRACT16(x) ((fract16_t)(((x) < FRACT16_FLOAT_MAX) ? (((x) >= FRACT16_FLOAT_MIN) ? ((x)*32768.0F) : INT16_MIN) : INT16_MAX))
 
-// #define FRACT16_UNSAT(x) ((accum32_t)((x)*32768.0F))
-#define FRACT16_ACCUM32(x) ((accum32_t)((x)*32768.0F))
+#define ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
 static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
 static inline fract16_t fract16_sat(accum32_t value)            { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
@@ -86,6 +85,7 @@ static inline ufract16_t fract16_sat_positive(accum32_t value)  { return math_cl
     @param[in] factor [-65536:65535] <=> [-2:2]
     @param[in] frac   [-32768:32767] <=> [-1:1]
         input max factor1 * factor2 < INT32_MAX
+
     @return int32_t [-65536:65535] <=> [-2:2)
 */
 static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
@@ -103,7 +103,7 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
     (int16_t)32768 => -32768
     (product == +32768) ? 32767 : product;
 
-    @return int16_t [-32767, 32767] <=> (-1:1)
+    @return int16_t [-32767:32767] <=> (-1:1)
 */
 static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
 {
@@ -119,7 +119,7 @@ static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
         fract16_t
 
     @param[in] dividend [-65536:65535] <=> [-2:2)
-    @return int32_t[-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
+    @return int32_t [-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
 static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor)
 {
@@ -127,7 +127,7 @@ static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor)
 }
 
 /*!
-    @return int16_t[-32767, 32767]
+    @return int16_t [-32767:32767]
 */
 static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor)
 {
@@ -166,18 +166,17 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 // {
 // }
 
-
-
 /******************************************************************************/
 /*!
     angle16
 */
 /******************************************************************************/
-// typedef uint16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
-typedef int16_t angle16_t;     /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
+// typedef uint16_t angle16_t;  /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
 // #define ANGLE16_SIGNED_MAX (INT16_MAX)
+
 // #define ANGLE16_360 (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
@@ -194,6 +193,7 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
+// #define ANGLE16_PER_PI (INT16_MAX)
 
 static const fract16_t FRACT16_COS_120 = ((fract16_t)-16384);  /* cos(120°) = -0.5 */
 static const fract16_t FRACT16_SIN_120 = ((fract16_t)28378);   /* sin(120°) = sqrt(3)/2 */

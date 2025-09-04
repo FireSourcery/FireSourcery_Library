@@ -83,7 +83,6 @@ static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
         [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
         [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
         // [PHASE_ID_0]        = PHASE_ID_A,          /* Init as 0 */
-        // [PHASE_ID_ABC]      = PHASE_ID_0,
     };
 
     return TABLE[id];

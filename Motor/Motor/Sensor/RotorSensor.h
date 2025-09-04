@@ -113,7 +113,7 @@ typedef struct RotorSensor_State
     Angle_T AngleSpeed;
 
     angle16_t MechanicalAngle;
-    int Direction; /* RotorSensor_Direction. Feedback Direction. Alternatively use speed */
+    int Direction; /* RotorSensor_Direction. store the feedback direction if upper layer handling is needed */
     int DirectionErrorCount;
 }
 RotorSensor_State_T;

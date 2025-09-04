@@ -218,6 +218,7 @@ static inline uint16_t _Hall_Angle16BoundaryOf(Hall_Id_T virtualId, Hall_Directi
 
 #define HALL_DIRECTION_STATE(idPrev, idNew) ((idPrev << HALL_ID_BITS) | idNew)
 
+/* Rated Electrical Angle Speed < ANGLE60/2 */
 static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idNew)
 {
     Hall_Direction_T direction;
@@ -335,23 +336,23 @@ static inline uint16_t Hall_CaptureAngle(Hall_State_T * p_hall)
     return p_hall->Angle;
 }
 
-static inline void Hall_CaptureState_ISR(const Hall_T * p_hall)
-{
-    Hall_CaptureSensors_ISR(p_hall);
-    Hall_CaptureAngle(p_hall->P_STATE);
-    Hall_CaptureDirection(p_hall->P_STATE);
-}
+// static inline void Hall_CaptureState_ISR(const Hall_T * p_hall)
+// {
+//     Hall_CaptureSensors_ISR(p_hall);
+//     Hall_CaptureAngle(p_hall->P_STATE);
+//     Hall_CaptureDirection(p_hall->P_STATE);
+// }
 
-static inline bool Hall_PollCaptureState(const Hall_T * p_hall)
-{
-    bool isEdge = Hall_PollCaptureSensors(p_hall);
-    if (isEdge == true)
-    {
-        Hall_CaptureAngle(p_hall->P_STATE);
-        Hall_CaptureDirection(p_hall->P_STATE);
-    }
-    return (isEdge);
-}
+// static inline bool Hall_PollCaptureState(const Hall_T * p_hall)
+// {
+//     bool isEdge = Hall_PollCaptureSensors(p_hall);
+//     if (isEdge == true)
+//     {
+//         Hall_CaptureAngle(p_hall->P_STATE);
+//         Hall_CaptureDirection(p_hall->P_STATE);
+//     }
+//     return (isEdge);
+// }
 
 /*
     return true once per hall cycle
@@ -370,6 +371,7 @@ static inline void Hall_ZeroInitial(const Hall_T * p_hall)
 
 /* */
 /* Sets direction => commutation, angle degrees16 conversion */
+/* Align Capture */
 static inline void Hall_SetDirection(Hall_State_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
 
 /******************************************************************************/

@@ -497,27 +497,31 @@ static inline int32_t _Motor_CcwClampOf(const Motor_State_T * p_motor, int32_t v
 static inline int32_t _Motor_CwClampOf(const Motor_State_T * p_motor, int32_t value) { return math_min(value, 0); }
 
 /*
-    (p_motor->Direction == select) as applied direction. alternatively Speed for sensor direction
+    (p_motor->Direction == select) as applied direction.
 */
 /* Clamp plugging. */
-static inline int32_t _Motor_VClampPluggingOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) ? value : 0; }
-static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampPluggingOf(p_motor, MOTOR_DIRECTION_CCW, value); }
-static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampPluggingOf(p_motor, MOTOR_DIRECTION_CW, value); }
+static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) ? value : 0; }
+static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
+static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
+/* Cw: (value, 0), Ccw: (0, value) */
+static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vCmd) { return math_clamp(vCmd, _Motor_VClampCwOf(p_motor, vCmd), _Motor_VClampCcwOf(p_motor, vCmd)); }
 
-// static inline int32_t Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampPluggingOf(p_motor, MOTOR_DIRECTION_CCW, value) : value; }
-// static inline int32_t Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampPluggingOf(p_motor, MOTOR_DIRECTION_CW, value) : value; }
+// static inline int32_t Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value) : value; }
+// static inline int32_t Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value) : value; }
 
 /* No plugging limit */
-static inline ufract16_t _Motor_VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? Phase_VBus_GetVRef() : 0; }
+static inline ufract16_t _Motor_VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRef()); }
 static inline fract16_t _Motor_GetVLimitCcw(const Motor_State_T * p_motor) { return _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CW)); }
 
 /* Limits of [Iq]. */
+/* assume applied direction is consistent speed direction */
 static inline ufract16_t _Motor_ILimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
 static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_ILimitOf(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitOf(p_motor, MOTOR_DIRECTION_CW)); }
 
 /* Limits of [Speed_Fract16] */
+/* Positive userCmd aligns to configured forward direction, independent of runtime direction. */
 static inline ufract16_t _Motor_SpeedLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16; }
 // alternatively on direction change
 // static inline ufract16_t _Motor_SpeedLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return p_motor->SpeedLimitActive_Fract16; }
@@ -528,6 +532,7 @@ static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { 
     Call ccw/cw using getters.
     clamp with limit. On Req, same units
 */
+
 static inline fract16_t Motor_VReqLimitOf(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor)); }
 static inline fract16_t Motor_IReqLimitOf(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
 static inline fract16_t Motor_SpeedReqLimitOf(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, _Motor_GetSpeedLimitCw(p_motor), _Motor_GetSpeedLimitCcw(p_motor)); }
@@ -602,12 +607,19 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
         p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
+
+    // if caller handles the feedback direction
+    // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
+    // {
+    //     // Runtime reversal detected – update applied direction for control
+    //     Motor_SetDirection(p_motor, Motor_GetRotorDirection(p_motor));
+    // }
 }
 
 /* Feedback Speed interface getter */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) > Motor_GetSpeedLimitActive(p_motor)); }
-static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return Motor_GetSpeedFeedback(p_motor) == 0; }
 
 /*
     Speed Feedback Loop
@@ -685,20 +697,22 @@ static inline fract16_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
 static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
 
 /*!
-    Convert between a user reference direction or non directional, to CCW/CW direction
+    Convert between a user reference direction to virtual CCW/CW direction
     @param[in] userCmd [-65536:65536] fract16 or percent16. positive is forward relative to the user.
     @return [-65536:65536],
-    @note Over saturated if input is -32768, caller call clamp. cast may resilt in overflow.
+    @note caller clamp. Over saturated if input is -32768. cast may result in overflow.
 */
-// static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+// align to direction set at config
 static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
+// align to runtime
+// static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
 /* */
 static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
-static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction == p_motor->Config.DirectionForward) && (p_motor->Direction != MOTOR_DIRECTION_NULL); }
-static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction != p_motor->Config.DirectionForward) && (p_motor->Direction != MOTOR_DIRECTION_NULL); }
-// static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
+static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (p_motor->Direction * p_motor->Config.DirectionForward == 1); }
+static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Direction * p_motor->Config.DirectionForward == -1); }
+static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
 
 
 

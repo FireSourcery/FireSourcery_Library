@@ -86,7 +86,7 @@ static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_F
 // {
 //     const uint32_t MOTOR_CONTROL_FREQ;
 //     const uint32_t MOTOR_CURRENT_LOOP_FREQ;
-//     const uint32_t MOTOR_SPEED_CALIB_MAX; // alternatively as common for all
+//     const uint32_t MOTOR_SPEED_CALIB_MAX;
 // }
 // MotorTimeReference_T;
 // MotorRef_Clock_T;

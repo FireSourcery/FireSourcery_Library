@@ -358,6 +358,8 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 /* SinglePhase Capture is always positive. assign direction comp */
+
+// static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 static inline void Encoder_SinglePhase_SetDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 
 /*
@@ -376,7 +378,6 @@ static inline int32_t _Encoder_GetDirectionComp(const Encoder_State_T * p_encode
 /* return value assigned at Init */
 static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
-// static inline int32_t Encoder_GetUserDirection(const Encoder_State_T * p_encoder) { return  p_encoder->DirectionD * Encoder_GetDirectionRef(p_encoder->P_STATE); }
 
 
 /******************************************************************************/

@@ -310,7 +310,7 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
         case MOT_VAR_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:       return MotorController_Var_ConfigBootRef_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_GENERAL_USER_IN:       return 0; //return MotorController_Var_Input_Get(p_mc, varId.Base);
-        case MOT_VAR_TYPE_GENERAL_STATIC_REF:           return MotorController_InstancesRef_Get(p_context, varId.Base);
+        case MOT_VAR_TYPE_GENERAL_STATIC_REF:    return MotorController_InstancesRef_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_GENERAL_DEBUG:         return MotorController_Var_OutputDebug_Get(p_context, varId.Base);
 
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_Get(&p_context->ANALOG_USER, varId.Base);
@@ -375,14 +375,12 @@ static int _HandleVMonitor_Get(const MotorController_T * p_context, MotVarId_T v
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG:          return VMonitor_ConfigId_Get(&p_context->V_SOURCE, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF:
             // override this for now
-            // switch (varId.Base)
-            // {
-            //     case VDIVIDER_REF_R1: value = p_voltage->R1 / 10U;       break;
-            //     case VDIVIDER_REF_R2: value = p_voltage->R2 / 10U;       break;
-            //     default: break;
-            // }
-            // return VMonitor_VDivider_RefId_Get(&p_context->V_SOURCE, varId.Base);
-
+            switch (varId.Base)
+            {
+                case VDIVIDER_REF_R1: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R1);
+                case VDIVIDER_REF_R2: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R2);
+                default: return 0;
+            }
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            return VMonitor_ConfigId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER_REF:      return VMonitor_VDivider_RefId_Get(&p_context->V_ACCESSORIES, varId.Base);

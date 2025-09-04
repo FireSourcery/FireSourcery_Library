@@ -205,7 +205,6 @@ typedef struct MotorController_State
     /* Generic async return status */
     uint8_t LockOpStatus; /* async status */
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
-    // Calibration_Status_T CalibrationStatus;
 
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */

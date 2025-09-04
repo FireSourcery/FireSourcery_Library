@@ -77,7 +77,7 @@ typedef enum Motor_Var_UserControl
 {
     /* State Control */
     MOTOR_VAR_USER_DIRECTION,           // 1:Forward, -1:Reverse, 0:Stop
-    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop, //todo let Rotor Var handle this
+    MOTOR_VAR_USER_ROTARY_DIRECTION,    // Motor_Direction_T, 1:Ccw, -1:Cw, 0:Stop, //alt let Rotor Var handle this
     MOTOR_VAR_USER_FEEDBACK_MODE,
     MOTOR_VAR_USER_PHASE_OUTPUT,        /* Phase Output State: Float/Hold/VPwm. Direction must be set */
     /* Limits do not invoke state machine. */

@@ -37,38 +37,52 @@
 #include "Peripheral/Analog/Analog.h"
 
 /*
-    Common as preprocessor macros
+    Common Calibration Max as preprocessor macros
 */
 #ifndef PHASE_ANALOG_V_MAX_ADCU
-#define PHASE_ANALOG_V_MAX_ADCU (4096U) /* Calibration Max */
+#define PHASE_ANALOG_V_MAX_ADCU (4096U)
 #define PHASE_ANALOG_V_FRACT16_SHIFT (3U)
+#define PHASE_ANALOG_V_FRACT16_ADCU_SCALAR (1L << 3)
 #endif
 
 #ifndef PHASE_ANALOG_I_MAX_ADCU
-#define PHASE_ANALOG_I_MAX_ADCU (2048U) /* Calibration Max */
+#define PHASE_ANALOG_I_MAX_ADCU (2048U)
 #define PHASE_ANALOG_I_FRACT16_SHIFT (4U)
+#define PHASE_ANALOG_I_FRACT16_ADCU_SCALAR (1L << 4)
 #endif
 
-#ifndef PHASE_ANALOG_I_SENSOR_INVERT
+#ifdef PHASE_ANALOG_I_SENSOR_INVERT
+#if   (PHASE_ANALOG_I_SENSOR_INVERT == false)
+#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
+#elif (PHASE_ANALOG_I_SENSOR_INVERT == true)
+#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (-1)
+#endif
+// #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR ((PHASE_ANALOG_I_SENSOR_INVERT) ? -1 : 1)
+#else
 #define PHASE_ANALOG_I_SENSOR_INVERT (false)
+#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
 #endif
 
-// #ifdef PHASE_ANALOG_I_SENSOR_INVERT
-#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (PHASE_ANALOG_I_SENSOR_INVERT ? -1 : 1)
+// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
+// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
 // #else
-// #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
+// #define PHASE_ANALOG_I_SENSORS_ABC
 // #endif
 
-/* ADCU Factor */
-#define PHASE_ANALOG_V_FRACT16_ADCU_SCALAR (1L << PHASE_ANALOG_V_FRACT16_SHIFT)
-#define PHASE_ANALOG_I_FRACT16_ADCU_SCALAR ((1L << PHASE_ANALOG_I_FRACT16_SHIFT) * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR)
+// #if     defined(PHASE_ANALOG_V_SENSORS_ISOLATED)
+// #elif   defined(PHASE_ANALOG_V_SENSORS_ANALOG)
+// #else
+// #define PHASE_ANALOG_V_SENSORS_ANALOG
+// #endif
 
 static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_ADCU_SCALAR; }
-static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * PHASE_ANALOG_I_FRACT16_ADCU_SCALAR; }
+static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_ADCU_SCALAR * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR); }
 
 /******************************************************************************/
-/* Optionally */
-/* ADC Ref Sensor Calibration */
+/*
+    ADC Ref Sensor Calibration
+    optionally store as base ref
+*/
 /******************************************************************************/
 typedef const struct Phase_AnalogSensor
 {
@@ -137,6 +151,7 @@ Phase_Analog_T;
 /* Global "Static" Const, for all Motor instances */
 // extern Analog_Conversion_T PHASE_ANALOG_VBUS;
 
+
 /*
     alternatively, directly on register state
 */
@@ -174,7 +189,7 @@ static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
 /*
     Capture on [Phase_Input]
 */
-static inline void _Phase_CaptureVAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, uint16_t adcu)
+static inline void _Phase_CaptureVAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);
     p_triplet->Values[channel] = (p_triplet->Values[channel] + Phase_Analog_VFract16Of(adcu)) / 2;
@@ -185,7 +200,7 @@ static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_
 static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_B, adcu); }
 static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_C, adcu); }
 
-static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Triplet_T * p_zeroRefs, Phase_Index_T channel, int16_t adcu)
+static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Triplet_T * p_zeroRefs, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_I_MAX_ADCU);
     p_triplet->Values[channel] = (p_triplet->Values[channel] + Phase_Analog_IFract16Of(p_zeroRefs->Values[channel], adcu)) / 2;
@@ -196,7 +211,10 @@ static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, Phas
 static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_B, adcu); }
 static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_C, adcu); }
 
-// static inline void Phase_VBus_CaptureAdcu(uint16_t vSource_Adcu)
+/*
+
+*/
+// static inline void Phase_Analog_CaptureVBus(uint16_t vSource_Adcu)
 // {
 //     Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(vSource_Adcu));
 // }

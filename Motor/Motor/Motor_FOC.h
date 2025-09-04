@@ -47,11 +47,11 @@
     Iq sign is relative to rotor direction, NOT Vq direction.
 
     CCW +Vq +Iq => Forward Motoring Q1
-    CCW +Vq -Iq => Forward Regen Q4
+    CCW +Vq -Iq => Forward Regen Q4, VBemf > Vq > 0
     CCW -Vq -Iq => Forward Plugging
 
     CW -Vq -Iq => Reverse Motoring Q2
-    CW -Vq +Iq => Reverse Regen Q3
+    CW -Vq +Iq => Reverse Regen Q3, VBemf < Vq < 0
     CW +Vq +Iq => Reverse Plugging
 */
 /******************************************************************************/
@@ -80,6 +80,7 @@ static inline motor_value_t Motor_FOC_GetIPhase_UFract16(const Motor_State_T * p
 static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
+/* vq is expected to be the same sign as p_motor->Direction */
 static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return FOC_IsMotoring(&p_motor->Foc); }
 static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return FOC_IsGenerating(&p_motor->Foc); }
 

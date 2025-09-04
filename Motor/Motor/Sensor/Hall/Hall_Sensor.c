@@ -54,21 +54,22 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
         // Encoder_DeltaT_CaptureExtended(p_encoder);
         // Encoder_ZeroInterpolateAngle(p_encoder->P_STATE)
 
-        Hall_CaptureDirection(p_sensor->HALL.P_STATE);
         Angle_CaptureAngle(p_angle, Hall_CaptureAngle(p_sensor->HALL.P_STATE));  // p_angle->ElectricalAngle = Hall_CaptureAngle(p_sensor->HALL.P_STATE);
 
-        // if ( RotorSensor_GetDirection(p_sensor) != Hall_GetDirection(p_sensor->HALL.P_STATE))
-        if (p_state->Direction != Hall_GetDirection(p_sensor->HALL.P_STATE))
-        {
-            // stop interpolation
-            // Hall_SetDirection(p_sensor->HALL.P_STATE, 0); /* with Hall_CaptureDirection, it will reset the next cycle */
-            p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
-            p_sensor->P_ENCODER->P_STATE->InterpolateAngleSum = 0;
+        //
+        // Hall_CaptureDirection(p_sensor->HALL.P_STATE);
+        // if ( sign(speed) != Hall_GetDirection(p_sensor->HALL.P_STATE))
+        // if (p_state->Direction != Hall_GetDirection(p_sensor->HALL.P_STATE))
+        // {
+        //     // stop interpolation
+        //     // Hall_SetDirection(p_sensor->HALL.P_STATE, 0); /* with Hall_CaptureDirection, it will reset the next cycle */
+        //     p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
+        //     p_sensor->P_ENCODER->P_STATE->InterpolateAngleSum = 0;
 
-            // count towards fault
-            p_state->DirectionErrorCount++;
-            p_state->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE); // p_state->Direction as common feedback direction, alternatively use speed
-        }
+        //     // count towards fault
+        //     p_state->DirectionErrorCount++;
+        //     p_state->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE); // p_state->Direction as common feedback direction, alternatively use speed
+        // }
     }
     else
 // #endif

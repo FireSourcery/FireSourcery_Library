@@ -46,6 +46,7 @@
     @param[in]  a, b, c
  */
  /******************************************************************************/
+// static inline void foc_clarke(accum32_t * p_alpha, accum32_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 {
     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
