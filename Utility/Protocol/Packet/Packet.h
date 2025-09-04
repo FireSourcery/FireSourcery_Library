@@ -96,19 +96,35 @@ typedef struct Protocol_HeaderMeta
 Protocol_HeaderMeta_T;
 
 typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(Protocol_HeaderMeta_T * p_rxMeta, const void * p_rxPacket, packet_size_t rxCount);
+// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const void * p_rxPacket, strcut * p_rxState, Protocol_HeaderMeta_T * p_rxMeta);
 
+// combine passing base and child state
 // const context pass with function
 // typedef struct Packet_Parser
 // {
-    //     const void * const p_rxPacket;
-    //     const packet_size_t rxCount;
+    // const void * const p_rxPacket;
+    // const packet_size_t rxCount;
     // uint16_t Checksum;   /* Running checksum */
 
-//     Protocol_RxCode_T rxStatus; /* Status of the parsing operation */
+    //     Protocol_RxCode_T rxStatus; /* Status of the parsing operation */
+    // const Packet_ParseRxMeta_T parseRxMeta;
 //     Protocol_HeaderMeta_T HeaderMeta;
 // }
 // Packet_Parser_T;
 // typedef void(*Packet_ParseRxMeta_T)(Packet_Parser_T * p_parser);
+// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const Packet_Parser_T * p_parser, Protocol_HeaderMeta_T * rxMeta);
+
+// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(Packet_HeaderParser_T * p_parser);
+// typedef const struct Packet_Parser
+// {
+//     const uint8_t * P_BUFFER;
+//     const void * P_RX_STATE;
+//     // void * P_RX_STATE;
+//     Protocol_HeaderMeta_T * P_META;
+//     Packet_ParseRxMeta_T PARSE_RX_META; // 1 virtual function
+// }
+// Packet_HeaderParser_T;
+
 
 /*
     Tx
@@ -124,7 +140,7 @@ typedef void (* const Packet_BuildTxMeta_T)(void * p_txPacket, const Protocol_He
     Protocol_Transport
 */
 /******************************************************************************/
-typedef const struct PacketClass
+typedef const struct Packet_Class
 {
     const uint8_t RX_LENGTH_MIN;                  /* Rx this many bytes before calling PARSE_RX */
     const uint8_t RX_LENGTH_MAX;
@@ -136,6 +152,7 @@ typedef const struct PacketClass
     const uint32_t RX_START_ID;             /* 0x00 for not applicable */
     // const uint32_t RX_END_ID;
 
+    // move to protocol param
     // defaults over write in protocol Param
     // const uint32_t BAUD_RATE_DEFAULT;
     const uint32_t RX_TIMEOUT;              /* Reset cumulative per packet */

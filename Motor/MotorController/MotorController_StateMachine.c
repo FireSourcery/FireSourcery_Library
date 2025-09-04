@@ -357,7 +357,7 @@ static const State_T STATE_PARK =
     @brief Main App State
 
     Motor States: STOP, PASSIVE, RUN, OPEN_LOOP
-    Top state as Stop/Idle state before transition
+    Top State as Main_Stop/Idle  before transition
 */
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
@@ -406,16 +406,19 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
-        case MOTOR_CONTROLLER_STATE_CMD_MAIN_MODE:
-            // if (StateMachine_GetLeafState(&p_context->STATE_MACHINE) == &MC_STATE_MAIN);
-            if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
-
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+            if (StateMachine_GetLeafState(&p_context->STATE_MACHINE) == &MC_STATE_MAIN) /* At Main Top */
+            {
+                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
+            }
 
         default:  break;
     }
     return NULL;
 }
 
+/* optionally form lock only */
 /* require user input after stop, if selection is needed */
 // static State_T * Main_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
 // {

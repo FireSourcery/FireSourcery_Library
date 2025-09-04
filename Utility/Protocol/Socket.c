@@ -67,7 +67,26 @@ void Socket_Init(Socket_T * p_socket)
 /*
     Receive into P_RX_PACKET_BUFFER and run PARSE_RX_META for RxMeta.Length and ReqCode / Rx completion
     Packet is complete => Req, ReqExt or Sync, or Error
+    Read into a contiguous buffer, which can be cast to Packet format
 */
+// static inline uint8_t NextRxIndex(Protocol_HeaderMeta_T * p_rxMeta, const Packet_Class_T * p_specs, uint8_t rxIndex)
+// {
+//     uint8_t nextRxIndex;
+
+//     if (p_rxMeta->Length > 0U)  /* PacketLength is known. */
+//     {
+//         if (rxIndex < p_rxMeta->Length) { nextRxIndex = p_rxMeta->Length; }
+//         else { nextRxIndex = 0U; } /* (RxIndex == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
+//     }
+//     else  /* PacketLength is unknown */ /* (p_rxMeta->Length == 0) */
+//     {
+//         if (rxIndex < p_specs->RX_LENGTH_MIN) { nextRxIndex = p_specs->RX_LENGTH_MIN; }
+//         else { nextRxIndex = rxIndex + 1U; }
+//     }
+
+//     return nextRxIndex;
+// }
+
 static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_State_T * p_state)
 {
     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
@@ -93,9 +112,6 @@ static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_Stat
         }
         /* PacketLength is unkown */
         else if (p_state->RxIndex < p_state->p_Specs->RX_LENGTH_MIN) { nextRxIndex = p_state->p_Specs->RX_LENGTH_MIN; }
-        /* RX_LENGTH_INDEX > RX_LENGTH_MIN. Check for length determined by another property */
-        // else if(p_state->RxIndex < p_state->p_Specs->RX_REQ_ID_INDEX) { nextRxIndex = p_state->p_Specs->RX_REQ_ID_INDEX + 1U; }
-        // else if(p_state->RxIndex < p_state->p_Specs->RX_LENGTH_INDEX) { nextRxIndex = p_state->p_Specs->RX_LENGTH_INDEX + 1U; }
         else { nextRxIndex = p_state->RxIndex + 1U; }
 
         if (nextRxIndex > p_state->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
@@ -604,39 +620,39 @@ void Socket_Disable(Socket_T * p_socket)
     Var Id interface
 */
 /******************************************************************************/
-int _Socket_ConfigId_Get(const Socket_State_T * p_socket, Protocol_ConfigId_T id)
+int _Socket_ConfigId_Get(const Socket_State_T * p_socket, Socket_ConfigId_T id)
 {
     int value = 0;
     switch (id)
     {
-        case PROTOCOL_CONFIG_XCVR_ID:         value = p_socket->Config.XcvrId;            break;
-        case PROTOCOL_CONFIG_SPECS_ID:        value = p_socket->Config.SpecsId;           break;
-        case PROTOCOL_CONFIG_WATCHDOG_TIME:   value = p_socket->Config.WatchdogTimeout;   break;
-        case PROTOCOL_CONFIG_BAUD_RATE:       value = p_socket->Config.BaudRate;          break;
-        case PROTOCOL_CONFIG_IS_ENABLED:      value = p_socket->Config.IsEnableOnInit;    break;
+        case SOCKET_CONFIG_XCVR_ID:         value = p_socket->Config.XcvrId;            break;
+        case SOCKET_CONFIG_SPECS_ID:        value = p_socket->Config.SpecsId;           break;
+        case SOCKET_CONFIG_WATCHDOG_TIME:   value = p_socket->Config.WatchdogTimeout;   break;
+        case SOCKET_CONFIG_BAUD_RATE:       value = p_socket->Config.BaudRate;          break;
+        case SOCKET_CONFIG_IS_ENABLED:      value = p_socket->Config.IsEnableOnInit;    break;
     }
     return value;
 }
 
 
-void _Socket_ConfigId_Set(Socket_State_T * p_socket, Protocol_ConfigId_T id, int value)
+void _Socket_ConfigId_Set(Socket_State_T * p_socket, Socket_ConfigId_T id, int value)
 {
     switch (id)
     {
-        case PROTOCOL_CONFIG_XCVR_ID:         p_socket->Config.XcvrId = value;            break;
-        case PROTOCOL_CONFIG_SPECS_ID:        p_socket->Config.SpecsId = value;           break;
-        case PROTOCOL_CONFIG_WATCHDOG_TIME:   p_socket->Config.WatchdogTimeout = value;   break;
-        case PROTOCOL_CONFIG_BAUD_RATE:       p_socket->Config.BaudRate = value;          break;
-        case PROTOCOL_CONFIG_IS_ENABLED:      p_socket->Config.IsEnableOnInit = value;    break;
+        case SOCKET_CONFIG_XCVR_ID:         p_socket->Config.XcvrId = value;            break;
+        case SOCKET_CONFIG_SPECS_ID:        p_socket->Config.SpecsId = value;           break;
+        case SOCKET_CONFIG_WATCHDOG_TIME:   p_socket->Config.WatchdogTimeout = value;   break;
+        case SOCKET_CONFIG_BAUD_RATE:       p_socket->Config.BaudRate = value;          break;
+        case SOCKET_CONFIG_IS_ENABLED:      p_socket->Config.IsEnableOnInit = value;    break;
     }
 }
 
-int Socket_ConfigId_Get(const Socket_T * p_socket, Protocol_ConfigId_T id)
+int Socket_ConfigId_Get(const Socket_T * p_socket, Socket_ConfigId_T id)
 {
     return (p_socket != NULL) ? _Socket_ConfigId_Get(p_socket->P_SOCKET_STATE, id) : 0;
 }
 
-void Socket_ConfigId_Set(const Socket_T * p_socket, Protocol_ConfigId_T id, int value)
+void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int value)
 {
     if (p_socket != NULL) { _Socket_ConfigId_Set(p_socket->P_SOCKET_STATE, id, value); }
 }

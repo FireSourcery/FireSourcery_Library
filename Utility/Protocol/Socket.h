@@ -115,14 +115,14 @@ typedef const struct Socket
     void * P_APP_CONTEXT;                   /* User app context for packet processing */
     void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
 
-    const Socket_Config_T * P_NVM_CONFIG;
+    const Socket_Config_T * P_NVM_CONFIG;   /* Initial Config */
 
     /*
         Protocol Context common
     */
     // alternatively Map overlaping sockets for selection
-    // const Protocol_Base_T * P_PROTOCOL_CONTEXT;
-    // const Protocol_Req_T * (*REQ_MAPPER)(packet_id_t req);
+    // const Protocol_Base_T * P_PROTOCOL;
+    // const Protocol_Req_T * (*REQ_MAPPER)(packet_id_t req); /* faster map with switch */
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
@@ -218,15 +218,15 @@ extern bool Socket_Enable(const Socket_T * p_socket);
 extern void Socket_Disable(const Socket_T * p_socket);
 
 
-typedef enum Protocol_ConfigId
+typedef enum Socket_ConfigId
 {
-    PROTOCOL_CONFIG_XCVR_ID,
-    PROTOCOL_CONFIG_SPECS_ID,
-    PROTOCOL_CONFIG_WATCHDOG_TIME,
-    PROTOCOL_CONFIG_BAUD_RATE, // On boot
-    PROTOCOL_CONFIG_IS_ENABLED,
+    SOCKET_CONFIG_XCVR_ID,
+    SOCKET_CONFIG_SPECS_ID,
+    SOCKET_CONFIG_WATCHDOG_TIME,
+    SOCKET_CONFIG_BAUD_RATE, // On boot
+    SOCKET_CONFIG_IS_ENABLED,
 }
-Protocol_ConfigId_T;
+Socket_ConfigId_T;
 
-extern int Socket_ConfigId_Get(const Socket_T * p_socket, Protocol_ConfigId_T id);
-extern void Socket_ConfigId_Set(const Socket_T * p_socket, Protocol_ConfigId_T id, int value);
+extern int Socket_ConfigId_Get(const Socket_T * p_socket, Socket_ConfigId_T id);
+extern void Socket_ConfigId_Set(const Socket_T * p_socket, Socket_ConfigId_T id, int value);

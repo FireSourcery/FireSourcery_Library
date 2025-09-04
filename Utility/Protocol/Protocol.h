@@ -66,7 +66,13 @@
 */
 /******************************************************************************/
 typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPacket, const uint8_t * p_rxPacket);
+// typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPayload, const uint8_t * p_rxPayload);
 
+/******************************************************************************/
+/*
+    Extended/Stateful Request - Support wait, loop, dynamic ack/nack and additional processes
+*/
+/******************************************************************************/
 // alternatively,
 // with payload,   builder header double buffers
 // typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const Protocol_HeaderMeta_T * p_rxMeta);
@@ -75,12 +81,6 @@ typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_
 // typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const uint8_t * p_rxHeader);
 // typedef void(*Protocol_BuildResp_T)(void * p_appContext, uint8_t * p_txPayload, uint8_t * p_txHeader);
 
-
-/******************************************************************************/
-/*
-    Extended/Stateful Request - Support wait, loop, dynamic ack/nack and additional processes
-*/
-/******************************************************************************/
 /* Common Req from child protocol to supported general protocol control, predefined behaviors */
 typedef enum Protocol_ReqCode
 {
@@ -160,6 +160,13 @@ typedef const union Protocol_ReqSync
     uint32_t ID;
 }
 Protocol_ReqSync_T;
+// typedef enum Protocol_SyncMode
+// {
+//     PROTOCOL_SYNC_MODE_NONE,
+//     PROTOCOL_SYNC_MODE_ACK_ONLY,
+//     PROTOCOL_SYNC_MODE_ACK_NACK,
+//     PROTOCOL_SYNC_MODE_EXTENDED
+// } Protocol_SyncMode_T;
 
 #define PROTOCOL_SYNC_DISABLE \
     { .TX_ACK = 0U, .RX_ACK = 0U, .TX_ACK_EXT = 0U, .RX_ACK_EXT = 0U, .NACK_REPEAT = 0U, }
@@ -237,7 +244,7 @@ typedef enum Protocol_ReqState
 Protocol_ReqState_T;
 
 // mux
-// typedef struct Protocol_Context
+// typedef struct Protocol_Mux
 // {
 //     const Protocol_Req_T * P_REQ_TABLE;
 //     uint8_t REQ_TABLE_LENGTH;
@@ -254,18 +261,18 @@ Protocol_ReqState_T;
 //     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 //     // alternatively fixed // const Xcvr_T * P_XCVR;
 // }
-// Protocol_Context_T;
+// Protocol_Mux_T;
 
-// typedef struct Protocol_Base
+// typedef struct Protocol
 // {
 //     const Protocol_Req_T * P_REQ_TABLE;
 //     uint8_t REQ_TABLE_LENGTH;
 //     // REQ_TIMEOUT
-//     const Packet_Class_T *   P_PACKET_CLASS
+//     const Packet_Class_T * P_PACKET_CLASS
 
 //     const volatile uint32_t * P_TIMER;
 // }
-// Protocol_Base_T;
+// Protocol_T;
 
 
 

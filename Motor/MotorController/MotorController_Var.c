@@ -457,7 +457,7 @@ static int _HandleCommunication_Get(const MotorController_T * p_context, MotVarI
 {
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
+        case MOT_VAR_TYPE_SOCKET_CONFIG:       return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:        return 0; //return CanBus_Config_Get(p_mc, varId.Base);
         default: return 0;
     }

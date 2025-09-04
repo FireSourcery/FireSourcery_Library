@@ -97,7 +97,8 @@ typedef enum MotorController_StateCmd
 {
     MOTOR_CONTROLLER_STATE_CMD_PARK,
     MOTOR_CONTROLLER_STATE_CMD_E_STOP,
-    MOTOR_CONTROLLER_STATE_CMD_MAIN_MODE, /* handles default only */
+    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* Enter Idle */
+    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* Enter Configured  */
     // MOTOR_CONTROLLER_MAIN_MODE_DRIVE,
 }
 MotorController_StateCmd_T;
@@ -113,9 +114,13 @@ static inline void MotorController_StateMachine_EnterPark(const MotorController_
     // p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
     // // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
     // MotorController_User_ApplyMotorsCmd(p_context);
-
     MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_PARK);
 }
+
+/* Transition to idle */
+static inline void MotorController_User_EnterStop(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
+static inline void MotorController_User_EnterMain(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
+
 
 /******************************************************************************/
 /*!

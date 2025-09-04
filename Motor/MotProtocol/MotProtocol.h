@@ -85,11 +85,12 @@ typedef struct MotProtocol_DataModeState
     uintptr_t DataModeAddress;
     size_t DataModeSize;
     size_t DataIndex;
-    bool IsDataModeActive;
-    // uint8_t StateIndex;
-    // MotProtocol_DataModeStateId_T DataModeStateId;
+    // MotProtocol_DataModeStateId_T StateId;
+    // uint8_t buffer[256];
 }
 MotProtocol_DataModeState_T;
+
+// typedef enum MotProtocol_DataModeStateId { IDLE, REQUESTING, RECEIVING, COMPLETE, ERROR } MotProtocol_DataModeStateId_T;
 
 // static inline void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState) { p_subState->StateIndex = 0U; }
 // extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);

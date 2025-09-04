@@ -213,7 +213,7 @@ MotorController_VarType_HeatMonitor_T;
 typedef enum MotorController_VarType_Communication
 {
     MOT_VAR_TYPE_PROTOCOL_STATE,
-    MOT_VAR_TYPE_PROTOCOL_CONFIG, /* Instance by Protocol Count */
+    MOT_VAR_TYPE_SOCKET_CONFIG, /* Instance by Protocol Count */
 
     MOT_VAR_TYPE_CAN_BUS_STATE,
     MOT_VAR_TYPE_CAN_BUS_CONFIG,

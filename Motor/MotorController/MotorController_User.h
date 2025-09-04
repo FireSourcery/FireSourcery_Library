@@ -127,7 +127,6 @@ static inline void MotorController_User_SetFeedbackMode(const MotorController_T 
 static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 
 
-
 /******************************************************************************/
 /*
 
@@ -144,7 +143,6 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
     p_context->P_MC_STATE->CmdInput.IsUpdated = true;
 
     MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
-    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, PARK);
 
     /* if drive mode */
     // MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
