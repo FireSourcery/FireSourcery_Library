@@ -357,29 +357,25 @@ static const State_T STATE_PARK =
     @brief Main App State
 
     Motor States: STOP, PASSIVE, RUN, OPEN_LOOP
+    Top state as Stop/Idle state before transition
 */
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
 {
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     // _StateMachine_TransitionBranch(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, GetMainState(p_context));
+    MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+    // MotMotors_StopAll(&p_context->MOTORS);
 }
-
-// static void Main_Exit(const MotorController_T * p_context)
-// {
-//     MotorController_BeepShort(p_context);
-// }
 
 static void Main_Proc(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+    // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     // _StateMachine_ProcBranch_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
 
-// common transition
 // static State_T * Main_Next(const MotorController_T * p_context)
 // {
-//     // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) {  // Optional: set warning or force stop }
 //     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
 //     State_T * p_nextState = NULL;
 
@@ -394,11 +390,6 @@ static void Main_Proc(const MotorController_T * p_context)
 //     //         break;
 //     // }
 
-//     if (p_input->Direction == MOTOR_DIRECTION_STOP)
-//     {
-//         if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-//         else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_STOP); }
-//     }
 //     p_input->IsUpdated = false;
 // }
 
@@ -414,9 +405,22 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     switch (cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_MAIN_MODE:
+            // if (StateMachine_GetLeafState(&p_context->STATE_MACHINE) == &MC_STATE_MAIN);
+            if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
+
+
         default:  break;
     }
+    return NULL;
 }
+
+/* require user input after stop, if selection is needed */
+// static State_T * Main_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
+// {
+//     State_T * p_nextState = NULL;
+// }
 
 /*
     Transition to Lock to select substate
@@ -425,7 +429,7 @@ static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Main_InputStateCmd,
-    // [MCSM_INPUT_LOCK] = (State_Input_T)Main_InputLock,
+    // [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Main_InputMainMode,
 };
 
 const State_T MC_STATE_MAIN =
@@ -464,7 +468,7 @@ static void Motors_Proc(const MotorController_T * p_context)
             {
                 case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
                 case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_STOP;
+                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_STOP;// or return to top main
                 default: break;
             }
 
@@ -669,6 +673,7 @@ static State_T * Lock_InputStateCmd(const MotorController_T * p_context, state_v
     switch (cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         default:  break;
     }
 }
@@ -681,7 +686,8 @@ static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_v
 
     if (!StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { p_nextState = NULL; }
     else if (!MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) { p_nextState = NULL; }
-    else { p_nextState = GetMainState(p_context); }
+    /* Allow temporary mapping to experimental state */
+    else { p_nextState = GetMainState(p_context); } // change to selected state
 
     return p_nextState;
 }

@@ -36,22 +36,6 @@
     Common
 */
 /******************************************************************************/
-// static inline void Motor_FOC_CaptureIa(Motor_State_T * p_motor) { FOC_SetIa(&p_motor->Foc, ((int32_t)Phase_Input_GetIa_Fract16(&p_motor->PhaseInput) + FOC_GetIa(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureIb(Motor_State_T * p_motor) { FOC_SetIb(&p_motor->Foc, ((int32_t)Phase_Input_GetIb_Fract16(&p_motor->PhaseInput) + FOC_GetIb(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureIc(Motor_State_T * p_motor) { FOC_SetIc(&p_motor->Foc, ((int32_t)Phase_Input_GetIc_Fract16(&p_motor->PhaseInput) + FOC_GetIc(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVa(Motor_State_T * p_motor) { FOC_SetVBemfA(&p_motor->Foc, ((int32_t)Phase_Input_GetVa_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfA(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVb(Motor_State_T * p_motor) { FOC_SetVBemfB(&p_motor->Foc, ((int32_t)Phase_Input_GetVb_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfB(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVc(Motor_State_T * p_motor) { FOC_SetVBemfC(&p_motor->Foc, ((int32_t)Phase_Input_GetVc_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfC(&p_motor->Foc)) / 2); }
-
-// static inline void ProcClarkePark(Motor_State_T * p_motor)
-// {
-// #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
-//     FOC_ProcClarkePark_AB(&p_motor->Foc);
-// #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
-//     FOC_ProcClarkePark(&p_motor->Foc);
-// #endif
-// }
-
 /* From Iabc to Idq */
 static bool CaptureIabc(Motor_State_T * p_motor)
 {
@@ -67,7 +51,6 @@ static bool CaptureIabc(Motor_State_T * p_motor)
     }
     return isCaptureI;
 }
-
 
 /******************************************************************************/
 /*!
@@ -265,7 +248,7 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 {
     // Motor_FOC_MatchVoltageState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
     Motor_FOC_MatchVoltageState(p_motor, FOC_GetVd(&p_motor->Foc), FOC_GetVq(&p_motor->Foc)); /* Using Bemf capture */
-    // Motor_FOC_MatchVoltageState(p_motor, FOC_GetVPhase(&p_motor->Foc)); /* Using Bemf capture */
+    // Motor_FOC_MatchVoltageState(p_motor, 0, FOC_GetVPhase(&p_motor->Foc)); /* Using Bemf capture */
 }
 
 
@@ -372,3 +355,18 @@ void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 }
 
 
+// static inline void Motor_FOC_CaptureIa(Motor_State_T * p_motor) { FOC_SetIa(&p_motor->Foc, ((int32_t)Phase_Input_GetIa_Fract16(&p_motor->PhaseInput) + FOC_GetIa(&p_motor->Foc)) / 2); }
+// static inline void Motor_FOC_CaptureIb(Motor_State_T * p_motor) { FOC_SetIb(&p_motor->Foc, ((int32_t)Phase_Input_GetIb_Fract16(&p_motor->PhaseInput) + FOC_GetIb(&p_motor->Foc)) / 2); }
+// static inline void Motor_FOC_CaptureIc(Motor_State_T * p_motor) { FOC_SetIc(&p_motor->Foc, ((int32_t)Phase_Input_GetIc_Fract16(&p_motor->PhaseInput) + FOC_GetIc(&p_motor->Foc)) / 2); }
+// static inline void Motor_FOC_CaptureVa(Motor_State_T * p_motor) { FOC_SetVBemfA(&p_motor->Foc, ((int32_t)Phase_Input_GetVa_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfA(&p_motor->Foc)) / 2); }
+// static inline void Motor_FOC_CaptureVb(Motor_State_T * p_motor) { FOC_SetVBemfB(&p_motor->Foc, ((int32_t)Phase_Input_GetVb_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfB(&p_motor->Foc)) / 2); }
+// static inline void Motor_FOC_CaptureVc(Motor_State_T * p_motor) { FOC_SetVBemfC(&p_motor->Foc, ((int32_t)Phase_Input_GetVc_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfC(&p_motor->Foc)) / 2); }
+
+// static inline void ProcClarkePark(Motor_State_T * p_motor)
+// {
+// #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
+//     FOC_ProcClarkePark_AB(&p_motor->Foc);
+// #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
+//     FOC_ProcClarkePark(&p_motor->Foc);
+// #endif
+// }

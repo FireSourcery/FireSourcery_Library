@@ -137,13 +137,13 @@ void Motor_Config_SetIcZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_mot
 */
 void Motor_Config_SetSpeedLimitForward_Fract16(Motor_State_T * p_motor, uint16_t forward_Fract16)
 {
-    p_motor->Config.SpeedLimitForward_Fract16 = forward_Fract16;
+    p_motor->Config.SpeedLimitForward_Fract16 = math_clamp(forward_Fract16, -INT16_MAX, INT16_MAX);
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
 void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_State_T * p_motor, uint16_t reverse_Fract16)
 {
-    p_motor->Config.SpeedLimitReverse_Fract16 = reverse_Fract16;
+    p_motor->Config.SpeedLimitReverse_Fract16 = math_clamp(reverse_Fract16, -INT16_MAX, INT16_MAX);
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 

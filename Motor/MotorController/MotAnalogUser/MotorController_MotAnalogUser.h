@@ -1,3 +1,35 @@
+#include "MotAnalogUser.h"
+#include "Motor/Motor/Motor_User.h"
+#include "Utility/StateMachine/StateMachine.h"
+#include "Utility/StateMachine/_StateMachine_Tree.h"
+
+/* conver to interface input */
+void MotAnalogUser_MotorInput(MotAnalogUser_T * p_user, Motor_User_Input_T * p_input)
+{
+    switch (MotAnalogUser_GetDirectionEdge(&p_user))
+    {
+        // alternatively set p_input
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: p_input->Direction = MOTOR_DIRECTION_FORWARD;  break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: p_input->Direction = MOTOR_DIRECTION_REVERSE;  break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: p_input->PhaseState = PHASE_OUTPUT_FLOAT;      break; //optionally
+        default: break;
+    }
+
+    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
+    // {
+    //     p_input->CmdValue = 0U;
+    //     p_input->PhaseState = PHASE_OUTPUT_FLOAT;
+    // }
+    // else
+    // {
+    //     p_input->CmdValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U;
+    // }
+
+    p_input->IsUpdated = true; /* Analog mode always update */
+
+}
+
+
 // capture short handl + state
 
 // static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_context)

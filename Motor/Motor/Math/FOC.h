@@ -232,9 +232,11 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
 /*
     Run-time derived
 */
-static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) * math_sign(p_foc->Iq) == 1); }
 /* p_foc->Vq != 0 */
-static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) * math_sign(p_foc->Iq) == -1); }
+// static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (math_sign(p_foc->Vq) == math_sign(p_foc->Iq)); }
+// static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return math_sign(p_foc->Vq) != math_sign(p_foc->Iq); }
+static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
 
 
 /* [0:32767] <=> [0:1]AnalogRefMax */

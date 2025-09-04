@@ -117,6 +117,8 @@ static inline void MotorController_User_ApplyMotorsCmd(const MotorController_T *
     proc is on the same thread
 
     Pass outer context in case implementation changes
+
+    as base motor cmd, or generic interface?
 */
 static inline void MotorController_User_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
@@ -141,6 +143,7 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
     p_context->P_MC_STATE->CmdInput.IsUpdated = true;
 
+    MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, PARK);
 
     /* if drive mode */
