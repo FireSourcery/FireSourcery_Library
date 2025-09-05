@@ -166,6 +166,7 @@ const StateMachine_Machine_T MOT_DRIVE_MACHINE =
 /******************************************************************************/
 static void Drive_Entry(const MotDrive_T * p_motDrive)
 {
+    assert(MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse));
     // MotMotors_SetCmdValue(&p_motDrive->MOTORS, 0);
     // MotDrive_StartControlAll(p_this);
     // p_this->StateFlags.IsStopped = 0U;

@@ -110,12 +110,6 @@ inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeVal
 */
 /******************************************************************************/
 /*
-    Transition to Stop
-    Release stays in ready mode. Stop disables inputs until next Start.
-*/
-void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
-
-/*
     ProcInput use Critical, as States may transition during input
     SetInput use async polling for status
 */
@@ -134,6 +128,11 @@ void Motor_User_ApplyDirectionSign(const Motor_T * p_motor, Motor_User_Direction
 void Motor_User_ApplyDirectionForward(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }
 void Motor_User_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_User_ApplyRotaryDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_MOTOR_STATE)); }
 
+/*
+    Transition to Stop
+    Release stays in ready mode. Stop disables inputs until next Start.
+*/
+void Motor_User_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /******************************************************************************/
 /*

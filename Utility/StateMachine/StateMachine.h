@@ -67,7 +67,7 @@ typedef const struct StateMachine_TransitionInput
     // const State_Input_T TO_NEXT;
 }
 StateMachine_TransitionInput_T;
-// typedef struct State * (*StateMachine_Transition_T)(struct State *, void * p_context);
+typedef State_T * (*StateMachine_Transition_T)(State_T * p_start, void * p_context,  state_value_t inputValue);
 
 /* Convenience for inline call [StateMachine_InvokeTransition] */
 // #define STATE_MACHINE_CMD(p_start, transition) ((StateMachine_TransitionInput_T) { .P_START = p_start, .TRANSITION = transition });
@@ -241,6 +241,7 @@ static void StateMachine_ForceTransition(StateMachine_T * p_stateMachine, State_
 /*
     Invoke a [Transition] or as a Command
 */
+// alternatively //StateMachine_Transition_T, user function evalues based on current active state
 static void StateMachine_InvokeTransition(StateMachine_T * p_stateMachine, StateMachine_TransitionInput_T * p_transition, state_value_t inputValue)
 {
     assert(p_transition->TRANSITION != NULL);
