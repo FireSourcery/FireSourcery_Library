@@ -163,7 +163,7 @@ typedef union Phase_Triplet
         int16_t B;
         int16_t C;
     };
-    uint16_t Values[3U];
+    int16_t Values[3U];
 }
 Phase_Triplet_T;
 

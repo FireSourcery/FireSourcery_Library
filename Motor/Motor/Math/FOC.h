@@ -52,10 +52,12 @@ typedef struct FOC
     // fract16_t Ia, Ib, Ic;
 
     /* VBemf Inputs during Freewheel - Capture by ADC */
-
     /* Intermediate VOut */
     fract16_t Va, Vb, Vc;
 
+    /*
+        Optionally Store
+    */
     /* Request in V or I  */
     /* Setpoint Variable - From TorqueRamp, SpeedPid, OpenLoop */
     /* Alternatively caller holds */
@@ -249,9 +251,10 @@ static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p
 
 
 /* [0:32767] <=> [0:1]AnalogRefMax */
-static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
-static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
-static inline ufract16_t FOC_GetIMagnitude_Idq(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Id, p_foc->Iq); }
+// static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
+// static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
+static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Id, p_foc->Iq); }
+static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Vd, p_foc->Vq); }
 
 /* [-32768:32767] <=> [-1:1]AnalogRefMax */
 static inline fract16_t FOC_GetIPhase(const FOC_T * p_foc) { return FOC_GetIMagnitude(p_foc) * math_sign(p_foc->Iq); }
