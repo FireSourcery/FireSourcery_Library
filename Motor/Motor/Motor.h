@@ -683,7 +683,7 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
     VPhase approximation via Speed
     @return
 */
-static inline fract16_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
+static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
 {
     int32_t result = fract16_mul(Motor_GetSpeedFeedback(p_motor), Phase_VBus_GetVRef()); /* Fract16 of RatedSpeed. SpeedRated ~= SpeedVRef */
     return fract16_mul(result, p_motor->Config.VSpeedScalar_Fract16);

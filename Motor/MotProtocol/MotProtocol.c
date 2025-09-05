@@ -75,12 +75,12 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(Protocol_HeaderMeta_T * p_rxMeta, cons
     {
         rxCode = (MotPacket_ProcChecksum(p_rxPacket, rxCount) == true) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_ERROR_DATA;
     }
-    else if(rxCount > MOT_PACKET_LENGTH_INDEX) /* Length Field is valid */
+    else if(rxCount > (MOT_PACKET_LENGTH_MIN - 1U)) /* Length Field is valid */
     {
         p_rxMeta->Length = MotPacket_ParseTotalLength(p_rxPacket);
-    }
-    else if(rxCount > MOT_PACKET_ID_INDEX)
-    {
+    // }
+    // else if(rxCount > MOT_PACKET_ID_INDEX)
+    // {
         p_rxMeta->Id = p_rxPacket->Header.Id;
         switch(p_rxPacket->Header.Id)
         {

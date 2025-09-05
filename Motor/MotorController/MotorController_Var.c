@@ -347,7 +347,7 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
     {
         case MOT_VAR_TYPE_GENERAL_USER_OUT:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:      return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_GENERAL_STATIC_REF:              return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_GENERAL_STATIC_REF:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_DEBUG:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_context, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_context, varId.Base, value);                              break;
@@ -469,7 +469,7 @@ static MotVarId_Status_T _HandleCommunication_Set(const MotorController_T * p_co
 
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_PROTOCOL_CONFIG:       Socket_ConfigId_Set(SocketAt(p_context, varId.Instance), varId.Base, value);     break;
+        case MOT_VAR_TYPE_SOCKET_CONFIG:         Socket_ConfigId_Set(SocketAt(p_context, varId.Instance), varId.Base, value);     break;
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:        break; // CanBusConfig_Set(p_context, varId.Base, value);
         default: return MOT_VAR_STATUS_ERROR;
     }

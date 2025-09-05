@@ -293,6 +293,13 @@ static State_T * Park_Next(const MotorController_T * p_context)
                 default: break;
             }
             p_input->IsUpdated = true;
+            // switch (p_input->Direction)
+            // {
+            //     case MOTOR_DIRECTION_STOP:    break; // optionally apply V0 or VFLOAT
+            //     case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
+            //     case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
+            //     default:  break;
+            // }
             break;
 
             // case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
@@ -331,11 +338,26 @@ static State_T * Park_InputLock(const MotorController_T * p_context, state_value
     return Common_InputLock(p_context, lockId);  // Reuse for entering LOCK
 }
 
+static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
+{
+    switch (cmd)
+    {
+        // case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
+        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context);
+                break;
+        default:  break;
+    }
+    return NULL;
+}
+
 static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
-    [MCSM_INPUT_LOCK] = (State_Input_T)Park_InputLock,
-    // [MCSM_INPUT_MAIN_MODE] = (State_Input_T) ,
+    [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
+    [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
+    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
 // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
 //     [MOT_DRIVE_INPUT_SERVO]      = (State_Input_T)Park_InputServo,
 // #endif
@@ -408,7 +430,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
-            if (StateMachine_GetLeafState(&p_context->STATE_MACHINE) == &MC_STATE_MAIN) /* At Main Top */
+            if (StateMachine_GetLeafState(p_context->STATE_MACHINE.P_ACTIVE) == &MC_STATE_MAIN) /* At Main Top */
             {
                 if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
             }
