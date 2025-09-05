@@ -42,10 +42,6 @@ static bool CaptureIabc(Motor_State_T * p_motor)
     bool isCaptureI = (p_motor->PhaseInput.IFlags.Bits == PHASE_ID_ABC);
     if (isCaptureI == true)  /* alternatively use batch callback */
     {
-        // Motor_FOC_CaptureIa(p_motor);
-        // Motor_FOC_CaptureIb(p_motor);
-        // Motor_FOC_CaptureIc(p_motor);
-        // ProcClarkePark(p_motor);
         FOC_ProcClarkePark(&p_motor->Foc, p_motor->PhaseInput.Iabc.A, p_motor->PhaseInput.Iabc.B, p_motor->PhaseInput.Iabc.C);
         p_motor->PhaseInput.IFlags.Bits = PHASE_ID_0;
     }
@@ -96,6 +92,8 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
+            FOC_SetVq(&p_motor->Foc, iqReq);
+            FOC_SetVd(&p_motor->Foc, idReq);
             /* Still check CaptureIabc for overcurrent */
             /* todo on decrement */
             // ProcIFeedback(p_motor, 0, Motor_FOC_GetILimit(p_motor) * p_motor->Direction);
@@ -109,11 +107,9 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
                 // FOC_SetVq(&p_motor->Foc, p_motor->Foc.ReqQ);
                 // FOC_SetVd(&p_motor->Foc, p_motor->Foc.ReqD);
             // }
-            FOC_SetVq(&p_motor->Foc, iqReq);
-            FOC_SetVd(&p_motor->Foc, idReq);
         }
     }
-    /* else Vdq no change */
+    /* else update angle only, until next cycle */
 }
 
 /******************************************************************************/
@@ -192,9 +188,6 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 
     if (p_motor->PhaseInput.VFlags.Bits == PHASE_ID_ABC)
     {
-        // Motor_FOC_CaptureVa(p_motor);
-        // Motor_FOC_CaptureVb(p_motor);
-        // Motor_FOC_CaptureVc(p_motor);
         FOC_ProcVBemfClarkePark(&p_motor->Foc, p_motor->PhaseInput.Vabc.A, p_motor->PhaseInput.Vabc.B, p_motor->PhaseInput.Vabc.C);
         p_motor->PhaseInput.VFlags.Bits = PHASE_ID_0;
     }
@@ -294,8 +287,7 @@ void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction
 void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U; /* config alternatively */
-    // Ramp_SetOutput(&p_motor->TorqueRamp, 0); /* reset the i/v to start at 0 */
-    Motor_FOC_ClearFeedbackState(p_motor);
+    Motor_FOC_ClearFeedbackState(p_motor); /* reset TorqueRamp i/v to start at 0 */
     Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
 }
 

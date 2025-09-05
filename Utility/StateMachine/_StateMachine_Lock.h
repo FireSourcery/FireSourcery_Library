@@ -118,7 +118,7 @@ static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_act
 }
 
 /*
-    This way ISR does not have to check
+    split 2 callers, This way ISR does not have to check lock
 */
 static inline bool _StateMachine_AcquireAsyncTransition(StateMachine_Active_T * p_active)
 {

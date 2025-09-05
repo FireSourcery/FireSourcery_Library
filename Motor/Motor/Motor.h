@@ -504,7 +504,7 @@ static inline int32_t _Motor_CwClampOf(const Motor_State_T * p_motor, int32_t va
 static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) ? value : 0; }
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
-static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vCmd) { return math_clamp(vCmd, _Motor_VClampCwOf(p_motor, vCmd), _Motor_VClampCcwOf(p_motor, vCmd)); }
+// static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vCmd) { return math_clamp(vCmd, _Motor_VClampCwOf(p_motor, vCmd), _Motor_VClampCcwOf(p_motor, vCmd)); }
 
 // static inline int32_t Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value) : value; }
 // static inline int32_t Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value) : value; }
@@ -521,9 +521,9 @@ static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { ret
 static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitOf(p_motor, MOTOR_DIRECTION_CW)); }
 
 /* Forward as motoring */
-static inline ufract16_t _Motor_TorqueLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
-static inline fract16_t _Motor_GetTorqueLimitCcw(const Motor_State_T * p_motor) { return _Motor_TorqueLimitOf(p_motor, MOTOR_DIRECTION_CCW); }
-static inline fract16_t _Motor_GetTorqueLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_TorqueLimitOf(p_motor, MOTOR_DIRECTION_CW)); }
+// static inline ufract16_t _Motor_TorqueLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
+// static inline fract16_t _Motor_GetTorqueLimitCcw(const Motor_State_T * p_motor) { return _Motor_TorqueLimitOf(p_motor, MOTOR_DIRECTION_CCW); }
+// static inline fract16_t _Motor_GetTorqueLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_TorqueLimitOf(p_motor, MOTOR_DIRECTION_CW)); }
 
 /* Limits of [Speed_Fract16] */
 /* Positive userCmd aligns to configured forward direction. independent of runtime direction. */

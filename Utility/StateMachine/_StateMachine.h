@@ -140,6 +140,13 @@ static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, 
     p_active->SyncInputMask |= (1UL << id);
 }
 
+/* Handle multiple inputs overwrite */
+static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+{
+    if (p_newState != NULL) { p_active->p_SyncNextState = p_newState; } /* Overwrite with non NULL only */
+    // if (p_active->p_SyncNextState == NULL) { p_active->p_SyncNextState = p_newState; } /* Keep first */
+}
+
 /******************************************************************************/
 /*!
     Accessor - Value without Transition
