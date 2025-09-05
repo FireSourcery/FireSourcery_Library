@@ -175,6 +175,7 @@ Motor_User_Direction_T;
 
 // static inline Motor_User_Direction_T Motor_User_GetDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * RotorSensor_GetDirection(p_motor->RotorSensor); }
 
+// && !STOPSATE
 static inline Motor_User_Direction_T Motor_User_GetDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
 static inline bool Motor_User_IsDirection(const Motor_State_T * p_motor, Motor_User_Direction_T direction) { return (direction == Motor_User_GetDirection(p_motor)); }
 

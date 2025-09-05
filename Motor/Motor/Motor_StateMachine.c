@@ -166,6 +166,7 @@ static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseO
 /*
     Transition to Ready State on Direction only
 */
+/* may need to immediately transition */
 static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t direction)
 {
     State_T * p_nextState = NULL;
@@ -426,6 +427,7 @@ static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
 }
 
 /*
+todo may need immediate transition
     StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
     Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
 */

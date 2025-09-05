@@ -335,7 +335,7 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
                 if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
                 {
-                    MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+                    // MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
                     return GetMainState(p_context);
                 }
                 break;
@@ -550,6 +550,7 @@ const State_T MC_STATE_MAIN_MOTOR_CMD =
 void MotDrive_Entry(const MotorController_T * p_context)
 {
     StateMachine_Reset(&p_context->MOT_DRIVE.STATE_MACHINE); /* Reset StateMachine */
+    //optionally motors exit stop, in case of motor cmds, or set from ui
 }
 
 /* Proc MotDrive Buffer */
