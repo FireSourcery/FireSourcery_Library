@@ -128,20 +128,6 @@ void MotDrive_ProcDriveZero(const MotDrive_T * p_motDrive)
     }
 }
 
-static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
-{
-    // if((p_motDrive->P_MOT_DRIVE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
-    // {
-    //     if(p_this->DriveDirection == MOT_DRIVE_DIRECTION_REVERSE)
-    //     {
-    //         MotDrive_BeepPeriodicType1(p_this);
-    //     }
-    //     else
-    //     {
-    //         Blinky_Stop(&p_this->Buzzer);
-    //     }
-    // }
-}
 
 
 /******************************************************************************/
@@ -223,12 +209,11 @@ static State_T * Drive_InputCmdStart(const MotDrive_T * p_motDrive, state_value_
 static State_T * Drive_InputDirection(const MotDrive_T * p_motDrive, state_value_t direction)
 {
     State_T * p_nextState = NULL;
-    switch((MotDrive_Direction_T)direction)
+    switch((Motor_User_Direction_T)direction)
     {
-        // case MOT_DRIVE_DIRECTION_PARK:      p_nextState = Common_InputPark(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL:   p_nextState = &STATE_NEUTRAL;   break;
-        case MOT_DRIVE_DIRECTION_FORWARD:   p_nextState = NULL;             break;
-        case MOT_DRIVE_DIRECTION_REVERSE:   p_nextState = NULL;             break;
+        case MOTOR_DIRECTION_NONE:      p_nextState = &STATE_NEUTRAL;   break;
+        case MOTOR_DIRECTION_FORWARD:   p_nextState = NULL;             break;
+        case MOTOR_DIRECTION_REVERSE:   p_nextState = NULL;             break;
         default: break;
     }
 
@@ -239,7 +224,6 @@ static State_T * Drive_InputDirection(const MotDrive_T * p_motDrive, state_value
 // {
 //     State_T * p_nextState = NULL;
 //     // Motor_User_Input_T * p_inputs = (Motor_User_Input_T *)inputsPtr;
-
 //     return p_nextState;
 // }
 
@@ -283,7 +267,7 @@ static void Neutral_Proc(const MotDrive_T * p_motDrive)
     switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
     {
         case MOT_DRIVE_CMD_RELEASE:
-            // MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_PASSIVE)
+            // MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_PASSIVE) // check for consistency
             break;
         case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_MOT_DRIVE_STATE->Input.BrakeValue); break;
         case MOT_DRIVE_CMD_THROTTLE: break;
@@ -314,13 +298,11 @@ static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_val
 {
     State_T * p_nextState = NULL;
 
-    switch((MotDrive_Direction_T)direction)
+    switch((Motor_Direction_T)direction)
     {
-        // case MOT_DRIVE_DIRECTION_PARK: p_nextState = Neutral_InputPark(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Neutral_InputForward(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Neutral_InputReverse(p_motDrive); break;
-        case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = NULL; break;
-        // case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
+        case MOTOR_DIRECTION_FORWARD: p_nextState = Neutral_InputForward(p_motDrive); break;
+        case MOTOR_DIRECTION_REVERSE: p_nextState = Neutral_InputReverse(p_motDrive); break;
+        case MOTOR_DIRECTION_NONE: p_nextState = &STATE_NEUTRAL; break;
         default: break;
     }
 
@@ -363,15 +345,3 @@ static const State_T STATE_NEUTRAL =
 /*
     also returns NEUTRAL on error
 */
-MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive)
-{
-    MotDrive_Direction_T direction;
-    switch (StateMachine_GetActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE))
-    {
-        // case MOT_DRIVE_STATE_ID_PARK:       direction = MOT_DRIVE_DIRECTION_PARK;            break;
-        case MOT_DRIVE_STATE_ID_NEUTRAL:    direction = MOT_DRIVE_DIRECTION_NEUTRAL;                        break;
-        case MOT_DRIVE_STATE_ID_DRIVE:      direction = (MotDrive_Direction_T)_MotMotors_GetDirectionAll(&p_motDrive->MOTORS);    break;
-        default:                            direction = 0;           break;
-    }
-    return direction;
-}

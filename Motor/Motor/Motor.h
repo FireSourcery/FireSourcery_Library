@@ -611,7 +611,7 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
 
-    // if caller handles the feedback direction
+    // if caller handles rotor direction mismatch
     // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
     // {
     //     // Runtime reversal detected – update applied direction for control

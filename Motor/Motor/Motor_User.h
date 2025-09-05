@@ -48,7 +48,7 @@
 static inline Phase_Output_T Motor_User_GetPhaseState(const Motor_T * p_const) { return Phase_ReadOutputState(&p_const->PHASE); }
 
 /*! @return [-32767:32767] <=> [-1:1) speed forward as positive. reverse as negative. clamp in case of over saturation */
-static inline accum32_t Motor_User_GetSpeed_Fract16(const Motor_State_T * p_motor) { return math_clamp(p_motor->Config.DirectionForward * Motor_GetSpeedFeedback(p_motor), INT16_MIN, INT16_MAX); }
+static inline accum32_t Motor_User_GetSpeed_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * Motor_GetSpeedFeedback(p_motor); }
 /*! @return [0:65535] <=> [0:2) */
 static inline ufract16_t Motor_User_GetSpeed_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetSpeedFeedback(p_motor)); }
 
@@ -168,7 +168,7 @@ static inline bool Motor_User_IsSpeedLimitSet(const Motor_State_T * p_motor)
 typedef enum Motor_User_Direction
 {
     MOTOR_DIRECTION_REVERSE = -1,
-    MOTOR_DIRECTION_STOP = 0,
+    MOTOR_DIRECTION_NONE = 0,
     MOTOR_DIRECTION_FORWARD = 1,
 }
 Motor_User_Direction_T;

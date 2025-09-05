@@ -52,11 +52,8 @@ static inline void MotDrive_User_SetZero(MotDrive_State_T * p_motDriveState)
     p_motDriveState->Input.BrakeValue = 0U;
 }
 
-
-// void _MotDrive_User_SetDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction) { p_motDrive->P_MOT_DRIVE_STATE->Input.Direction = direction; }
-// or async
-extern MotDrive_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_this);
-extern void MotDrive_User_ApplyDirection(const MotDrive_T * p_this, MotDrive_Direction_T direction);
+// extern Motor_User_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_this);
+// extern void MotDrive_User_ApplyDirection(const MotDrive_T * p_this, Motor_User_Direction_T direction);
 
 // static inline void MotDrive_User_StartThrottle(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_THROTTLE, userCmd); }
 // static inline void MotDrive_User_StartBrake(MotDrive_T * p_this, uint16_t userCmd) { _StateMachine_ApplyAsyncInput(&p_this->StateMachine, MOT_DRIVE_STATE_INPUT_BRAKE, userCmd); }
@@ -69,7 +66,7 @@ extern void MotDrive_User_ApplyDirection(const MotDrive_T * p_this, MotDrive_Dir
 /******************************************************************************/
 typedef enum MotDrive_VarId
 {
-    MOT_DRIVE_VAR_DIRECTION,          // MotDrive_Direction_T,
+    MOT_DRIVE_VAR_DIRECTION,          // Motor_User_Direction_T,
     MOT_DRIVE_VAR_THROTTLE,           // [0:65535]
     MOT_DRIVE_VAR_BRAKE,              // [0:65535]
 }

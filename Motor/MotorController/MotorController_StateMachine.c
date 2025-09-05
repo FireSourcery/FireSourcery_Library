@@ -87,15 +87,15 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-    else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_STOP); }
+    else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_NONE); }
     return p_nextState;
 }
 // input motor user direction with stop
 // switch (p_input->Direction)
 // {
-//     case MOTOR_DIRECTION_STOP:  /* Called from serial only */
+//     case MOTOR_DIRECTION_NONE:  /* Called from serial only */
 //         if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-//         else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_STOP); }
+//         else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_NONE); }
 //         break;
 //     case MOTOR_DIRECTION_FORWARD:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD);   break;
 //     case MOTOR_DIRECTION_REVERSE:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE);   break;
@@ -122,7 +122,7 @@ static State_T * GetMainState(const MotorController_T * p_context)
     General Direction
 */
 /*
-    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_DIRECTION_STOP
+    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_DIRECTION_NONE
     MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_DIRECTION_FORWARD
     MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_DIRECTION_REVERSE
     MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
@@ -133,11 +133,11 @@ Motor_User_Direction_T MotorController_StateMachine_GetDirection(MotorController
 {
     switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
     {
-        case MCSM_STATE_ID_MAIN:       return (Motor_User_Direction_T)_MotMotors_GetDirectionAll(&p_context->MOTORS);
-        case MCSM_STATE_ID_PARK:       return MOTOR_DIRECTION_STOP;
-        case MCSM_STATE_ID_LOCK:       return MOTOR_DIRECTION_STOP;
-        case MCSM_STATE_ID_FAULT:      return MOTOR_DIRECTION_STOP;
-        default:                       return MOTOR_DIRECTION_STOP;
+        case MCSM_STATE_ID_MAIN:       return (Motor_User_Direction_T)_MotMotors_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
+        case MCSM_STATE_ID_PARK:       return MOTOR_DIRECTION_NONE;
+        case MCSM_STATE_ID_LOCK:       return MOTOR_DIRECTION_NONE;
+        case MCSM_STATE_ID_FAULT:      return MOTOR_DIRECTION_NONE;
+        default:                       return MOTOR_DIRECTION_NONE;
     }
 }
 
@@ -245,41 +245,6 @@ static State_T * Park_Next(const MotorController_T * p_context)
     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
     State_T * p_nextState = NULL;
 
-    // switch (p_context->P_MC_STATE->Config.InputMode)
-    // {
-    //     // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-    //         switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    //         {
-    //             // alternatively set p_input
-    //             case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); p_nextState = GetMainState(p_context); break;
-    //             case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); p_nextState = GetMainState(p_context); break;
-    //             case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);    p_nextState = GetMainState(p_context); break; // optionally
-    //             default: break;
-    //         }
-    //         break;
-
-    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-    //     // case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-    //         if (p_input->IsUpdated == true)
-    //         {
-    //             switch (p_input->Direction)
-    //             {
-    //                 case MOTOR_DIRECTION_STOP:      break;
-    //                 case MOTOR_DIRECTION_FORWARD:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); p_nextState = GetMainState(p_context); break;
-    //                 case MOTOR_DIRECTION_REVERSE:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); p_nextState = GetMainState(p_context); break;
-    //                 default:  break;
-    //             }
-
-    //             // MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // apply V0 or VFLOAT
-    //             p_input->IsUpdated = false;
-    //         }
-    //         break;
-
-    //     default:  break;
-    // }
-
-    // alternatively proc from the same buffer
     switch (p_context->P_MC_STATE->Config.InputMode)
     {
         // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
@@ -287,41 +252,62 @@ static State_T * Park_Next(const MotorController_T * p_context)
             switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
             {
                 // alternatively set p_input
-                case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: p_input->Direction = MOTOR_DIRECTION_FORWARD;  break;
-                case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: p_input->Direction = MOTOR_DIRECTION_REVERSE;  break;
-                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: p_input->PhaseState = PHASE_OUTPUT_FLOAT;      break; //optionally
+                case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); p_nextState = GetMainState(p_context); break;
+                case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); p_nextState = GetMainState(p_context); break;
+                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);    p_nextState = GetMainState(p_context); break; // optionally
                 default: break;
             }
-            p_input->IsUpdated = true;
-            // switch (p_input->Direction)
-            // {
-            //     case MOTOR_DIRECTION_STOP:    break; // optionally apply V0 or VFLOAT
-            //     case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
-            //     case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
-            //     default:  break;
-            // }
             break;
 
-            // case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
+        // case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
 
         default:  break;
     }
 
-    if (p_input->IsUpdated == true)
-    {
-        MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
+    // alternatively proc from the same buffer
+    // switch (p_context->P_MC_STATE->Config.InputMode)
+    // {
+    //     // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+    //         switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    //         {
+    //             // alternatively set p_input
+    //             case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: p_input->Direction = MOTOR_DIRECTION_FORWARD;  break;
+    //             case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: p_input->Direction = MOTOR_DIRECTION_REVERSE;  break;
+    //             case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: p_input->PhaseState = PHASE_OUTPUT_FLOAT;      break; //optionally
+    //             default: break;
+    //         }
+    //         p_input->IsUpdated = true;
+    //         switch (p_input->Direction)
+    //         {
+    //             case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
+    //             case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
+    //             case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
+    //             default:  break;
+    //         }
+    //         break;
 
-        switch (p_input->Direction)
-        {
-            case MOTOR_DIRECTION_STOP:    break; // optionally apply V0 or VFLOAT
-            case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
-            case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
-            default:  break;
-        }
+    //         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break;
+    //         // case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
 
-        p_input->IsUpdated = false;
-    }
+    //     default:  break;
+    // }
+
+    // if (p_input->IsUpdated == true)
+    // {
+    //     MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
+
+    //     switch (p_input->Direction)
+    //     {
+    //         case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
+    //         case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
+    //         case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
+    //         default:  break;
+    //     }
+
+    //     p_input->IsUpdated = false;
+    // }
 
     // if (p_nextState == GetMainState(p_context))
     // {
@@ -338,15 +324,20 @@ static State_T * Park_InputLock(const MotorController_T * p_context, state_value
     return Common_InputLock(p_context, lockId);  // Reuse for entering LOCK
 }
 
+/* Consistent Park transition any submachines */
 static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
 {
     switch (cmd)
     {
         // case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
-        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: MotMotors_StopAll(&p_context->MOTORS); break;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
-                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context);
+                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
+                {
+                    MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+                    return GetMainState(p_context);
+                }
                 break;
         default:  break;
     }
@@ -384,44 +375,62 @@ static const State_T STATE_PARK =
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
 {
-    // MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    // _StateMachine_TransitionBranch(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, GetMainState(p_context));
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
     // MotMotors_StopAll(&p_context->MOTORS);
 }
 
 static void Main_Proc(const MotorController_T * p_context)
 {
+    // in case control needs exit
+    // case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+    //     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    //     {
+    //         // alternatively set p_input
+    //         case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); p_nextState = GetMainState(p_context); break;
+    //         case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE: MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); p_nextState = GetMainState(p_context); break;
+    //         case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE: MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);   break; // optionally
+    //         default: break;
+    //     }
+    //     break;
+
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     // _StateMachine_ProcBranch_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
 
-// static State_T * Main_Next(const MotorController_T * p_context)
+
+
+/* Top level overrideable */
+// static State_T * Main_InputForward(const MotorController_T * p_context)
 // {
-//     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionForward) == true) { return GetMainState(p_context); }
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); return GetMainState(p_context); }
+//     return NULL;
+//     // return (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionForward) == true) ? GetMainState(p_context) : NULL;
+// }
+
+// static State_T * Main_InputReverse(const MotorController_T * p_context)
+// {
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionReverse) == true) { return GetMainState(p_context); }
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); return GetMainState(p_context); }
+//     return NULL;
+//     // return (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionReverse) == true) ? GetMainState(p_context) : NULL;
+// }
+
+// /* alternatively pass to submachine */
+// static State_T * Main_InputDirection(const MotorController_T * p_context, state_value_t direction)
+// {
 //     State_T * p_nextState = NULL;
-
-//     // switch (p_context->P_MC_STATE->Config.InputMode)
-//     // {
-//     //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-//     //         // Poll analog inputs (throttle/brake) and route to MotDrive
-//     //         // _MotorController_ProcAnalogUser(p_context);
-//     //         break;
-//     //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-//     //         // Poll serial commands
-//     //         break;
-//     // }
-
-//     p_input->IsUpdated = false;
+//     switch ((Motor_User_Direction_T)direction)
+//     {
+//         case MOTOR_DIRECTION_FORWARD: p_nextState = Main_InputForward(p_context); break;
+//         case MOTOR_DIRECTION_REVERSE: p_nextState = Main_InputReverse(p_context); break;
+//         case MOTOR_DIRECTION_NONE: p_nextState = NULL; break;
+//         default: break;
+//     }
+//     return p_nextState;
 // }
 
-// static State_T * Main_InputLock(const MotorController_T * p_context, state_value_t lockId)
-// {
-//     // return Common_InputLock(p_context, lockId);
-//     // alternatively check speed and call stop
-//     // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { return &STATE_PARK; }
-// }
-
+/* Submachine common transitions */
 static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
 {
     switch (cmd)
@@ -439,13 +448,6 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     }
     return NULL;
 }
-
-/* optionally form lock only */
-/* require user input after stop, if selection is needed */
-// static State_T * Main_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
-// {
-//     State_T * p_nextState = NULL;
-// }
 
 /*
     Transition to Lock to select substate
@@ -481,6 +483,7 @@ static void Motors_Entry(const MotorController_T * p_context)
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_VPWM); /* Set PWM Output */
 }
 
+/* Motor_User_Input_T   Only */
 static void Motors_Proc(const MotorController_T * p_context)
 {
     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
@@ -493,7 +496,7 @@ static void Motors_Proc(const MotorController_T * p_context)
             {
                 case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
                 case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_STOP;// or return to top main
+                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NONE;// or return to top main
                 default: break;
             }
 
@@ -549,18 +552,20 @@ void MotDrive_Entry(const MotorController_T * p_context)
     StateMachine_Reset(&p_context->MOT_DRIVE.STATE_MACHINE); /* Reset StateMachine */
 }
 
+/* Proc MotDrive Buffer */
 /* Proc Per ms */
 void MotDrive_Proc(const MotorController_T * p_context)
 {
+    // move to motDrive use interface
     switch (p_context->P_MC_STATE->Config.InputMode)
     {
         // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
             switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
             {
-                case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotDrive_User_ApplyDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_FORWARD);   break;
-                case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotDrive_User_ApplyDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_REVERSE);   break;
-                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotDrive_User_ApplyDirection(&p_context->MOT_DRIVE, MOT_DRIVE_DIRECTION_NEUTRAL);   break;
+                case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotDrive_StateMachine_ApplyDirection(&p_context->MOT_DRIVE, MOTOR_DIRECTION_FORWARD);   break;
+                case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotDrive_StateMachine_ApplyDirection(&p_context->MOT_DRIVE, MOTOR_DIRECTION_REVERSE);   break;
+                case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotDrive_StateMachine_ApplyDirection(&p_context->MOT_DRIVE, MOTOR_DIRECTION_NONE);   break;
                 default: break;
             }
 
@@ -568,14 +573,15 @@ void MotDrive_Proc(const MotorController_T * p_context)
             MotDrive_User_SetBrake(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
             break;
 
-        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: break; // directly call set
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+            break; // directly call set
 
         case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
         default:  break;
     }
 
     /* MotDrive StateMachine can use a different input table */
-    MotDrive_StatMachine_Proc(&p_context->MOT_DRIVE); /* Apply MotMotors_ApplyInputs with Throttle/Brake, Neutral State */
+    MotDrive_StateMachine_Proc(&p_context->MOT_DRIVE); /* Apply MotMotors_ApplyInputs with Throttle/Brake, Neutral State */
 }
 
 

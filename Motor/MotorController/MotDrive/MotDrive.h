@@ -47,13 +47,13 @@
 // }
 // MotDrive_Status_T;
 
-typedef enum MotDrive_Direction
-{
-    MOT_DRIVE_DIRECTION_REVERSE = -1,
-    MOT_DRIVE_DIRECTION_NEUTRAL = 0,
-    MOT_DRIVE_DIRECTION_FORWARD = 1,
-}
-MotDrive_Direction_T;
+// typedef enum MotDrive_Direction
+// {
+//     MOTOR_DIRECTION_REVERSE = -1,
+//     MOTOR_DIRECTION_NONE = 0,
+//     MOTOR_DIRECTION_FORWARD = 1,
+// }
+// MotDrive_Direction_T;
 
 /* Drive SubState use edge detection - DriveState */
 typedef enum MotDrive_Cmd
@@ -171,7 +171,7 @@ static inline bool MotDrive_Input_PollCmdEdge(MotDrive_Input_T * p_user)
 //     MotorController_Direction_T direction;
 //     switch (dir)
 //     {
-//         case MOTOR_DIRECTION_STOP:      direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
+//         case MOTOR_DIRECTION_NONE:      direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
 //         case MOTOR_DIRECTION_REVERSE:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_REVERSE : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
 //         case MOTOR_DIRECTION_FORWARD:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_FORWARD : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
 //         default:                        direction = MOTOR_CONTROLLER_DIRECTION_ERROR;           break;
@@ -189,7 +189,7 @@ static inline bool MotDrive_Input_PollCmdEdge(MotDrive_Input_T * p_user)
 //     switch (dir)
 //     {
 //         case MOTOR_CONTROLLER_DIRECTION_PARK:
-//             P_input->Direction = MOTOR_DIRECTION_STOP;
+//             P_input->Direction = MOTOR_DIRECTION_NONE;
 //             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
 //             break;
 //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:

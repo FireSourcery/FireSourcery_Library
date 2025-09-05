@@ -67,10 +67,10 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
     // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */
     /* clamp if limited. sqrt operation on clamp only */
-    if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-    {
-        PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
-    }
+    // if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
+    // {
+    //     PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
+    // }
 }
 
 /* apply limit first */
@@ -351,6 +351,7 @@ void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 {
     Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp));
+    // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs);
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcOutput(&p_motor->OpenLoopIRamp));
 }
 

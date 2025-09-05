@@ -60,7 +60,7 @@ extern const StateMachine_Machine_T MOT_DRIVE_MACHINE;
     handle edge actions
     Proc synchronous
 */
-static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
+static inline void MotDrive_StateMachine_Proc(const MotDrive_T * p_motDrive)
 {
     if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_MOT_DRIVE_STATE->Input) == true)
     {
@@ -71,10 +71,57 @@ static inline void MotDrive_StatMachine_Proc(const MotDrive_T * p_motDrive)
 }
 
 
+static Motor_User_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive)
+{
+    Motor_User_Direction_T direction;
+    switch (StateMachine_GetActiveStateId(p_motDrive->STATE_MACHINE.P_ACTIVE))
+    {
+        case MOT_DRIVE_STATE_ID_NEUTRAL:    direction = MOTOR_DIRECTION_NONE; break;
+        case MOT_DRIVE_STATE_ID_DRIVE:      direction = (Motor_User_Direction_T)_MotMotors_GetDirectionAll(&p_motDrive->MOTORS);    break;
+        default:                            direction = 0;           break;
+    }
+    return direction;
+}
+
+
+static inline void MotDrive_StateMachine_ApplyDirection(const MotDrive_T * p_motDrive, Motor_User_Direction_T direction)
+{
+    // if (MotDrive_StateMachine_GetDirection(p_motDrive) != direction)
+    // {
+        _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
+        // MotDrive_User_CheckDirection(p_motDrive, direction); /* effective on motor async transition only */
+        // bool isSuccess = (MotDrive_User_GetDirection(p_motDrive) == direction);
+            // if (isSuccess == false) { Blinky_Blink(p_motDrive->P_BUZZER, 500U); }
+    // }
+}
+
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
+// extern MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive);/* Drive Direction */
+// Motor_User_Direction_T MotDrive_User_GetDirection(const MotDrive_T * p_motDrive)
+// {
+//     return MotDrive_StateMachine_GetDirection(p_motDrive);
+// }
 
-extern MotDrive_Direction_T MotDrive_StateMachine_GetDirection(const MotDrive_T * p_motDrive);
+// /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
+// bool MotDrive_User_CheckDirection(const MotDrive_T * p_motDrive, Motor_User_Direction_T direction)
+// {
+//     bool isSuccess = (MotDrive_User_GetDirection(p_motDrive) == direction);
+//     if (isSuccess == false) { Blinky_Blink(p_motDrive->P_BUZZER, 500U); }
+//     return isSuccess;
+// }
+
+// /*
+//     set to state machine async
+// */
+// void MotDrive_User_ApplyDirection(const MotDrive_T * p_motDrive, Motor_User_Direction_T direction)
+// {
+//     if (MotDrive_User_GetDirection(p_motDrive) != direction)
+//     {
+//         _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_DIRECTION, direction);
+//         MotDrive_User_CheckDirection(p_motDrive, direction); /* effective on motor async transition only */
+//     }
+// }

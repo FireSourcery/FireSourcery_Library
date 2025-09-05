@@ -142,7 +142,6 @@ static inline void Angle_SetFeedforwardDelta(Angle_T * p_angle, angle16_t delta_
     p_angle->Angle += delta_degPerCycle;
     p_angle->Speed = delta_degPerCycle;
     p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->UnitRef.InvSpeedRated_Fract32, delta_degPerCycle);
-    // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs);
 }
 
 static inline void Angle_SetFeedforwardAngle(Angle_T * p_angle, angle16_t angle)
@@ -176,6 +175,7 @@ static void Angle_InitFrom(Angle_T * p_angle, const Angle_Config_T * p_config)
     // p_angle->SpeedRated = el_angle_of_mech_rpm(p_config->PollingFreq, p_config->PollingFreq, p_config->SpeedRated_Rpm);
     p_angle->UnitRef.SpeedRated = p_config->SpeedRated_Digital;
     p_angle->UnitRef.InvSpeedRated_Fract32 = INT32_MAX / p_angle->UnitRef.SpeedRated;
+    /* alternatively INT32_MAX / 2 / p_angle->UnitRef.SpeedRated for 2x ratedSpeed  */
 }
 
 

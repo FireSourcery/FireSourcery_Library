@@ -139,7 +139,7 @@ static inline void MotorController_User_ForceDisableControl(const MotorControlle
     MotMotors_ForceDisableControl(&p_context->MOTORS);
     p_context->P_MC_STATE->CmdInput.CmdValue = 0;
     p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_FLOAT;
-    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
+    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NONE;
     p_context->P_MC_STATE->CmdInput.IsUpdated = true;
 
     MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);

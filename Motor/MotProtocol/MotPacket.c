@@ -54,11 +54,10 @@ static uint16_t Packet_Checksum(const MotPacket_T * p_packet, size_t totalSize)
     static const uint8_t checksumStart = offsetof(MotPacket_Header_T, Checksum);
     static const uint8_t checksumSize = sizeof(checksum_t);
     static const uint8_t checksumEnd = checksumStart + checksumSize;
-    size_t afterChecksumSize = totalSize - checksumEnd;
 
     uint16_t checkSum = 0U;
     checkSum += Sum(&(p_packet->Bytes[0U]), checksumStart);
-    checkSum += Sum(&(p_packet->Bytes[checksumEnd]), afterChecksumSize);
+    checkSum += Sum(&(p_packet->Bytes[checksumEnd]), totalSize - checksumEnd);
     return checkSum;
 }
 

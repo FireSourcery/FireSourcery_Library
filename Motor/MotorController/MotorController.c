@@ -175,3 +175,17 @@ bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILim
 
 
 
+// static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
+// {
+//     // if((p_motDrive->P_MOT_DRIVE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
+//     // {
+//     //     if(p_this->DriveDirection == MOTOR_DIRECTION_REVERSE)
+//     //     {
+//     //         MotDrive_BeepPeriodicType1(p_this);
+//     //     }
+//     //     else
+//     //     {
+//     //         Blinky_Stop(&p_this->Buzzer);
+//     //     }
+//     // }
+// }

@@ -172,7 +172,7 @@ static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t dire
 
     switch ((Motor_Direction_T)direction)
     {
-        case MOTOR_DIRECTION_NULL: break;
+        case MOTOR_DIRECTION_NULL: // break;
         case MOTOR_DIRECTION_CW:  /* Intention fall-through */
         case MOTOR_DIRECTION_CCW:
             Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction);
@@ -250,16 +250,16 @@ static void Passive_Proc(const Motor_T * p_motor)
     // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alternatively move to thread */
 }
 
-static State_T * Passive_Next(const Motor_T * p_motor)
-{
-    // auto return to stop state
-    // return (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
-    // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) > 0)
-    // {
-    //     if (Motor_IsHold(p_motor) == false) { _StateMachine_Transition(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
-    //     else                                { }
-    // }
-}
+// auto return to stop state
+// static State_T * Passive_Next(const Motor_T * p_motor)
+// {
+//     // return (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
+//     // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) > 0)
+//     // {
+//     //     if (Motor_IsHold(p_motor) == false) { _StateMachine_Transition(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
+//     //     else                                { }
+//     // }
+// }
 
 /* alternatively separate state for speed 0 */
 static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
@@ -411,8 +411,17 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 
 static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
 {
+    State_T * p_nextState = NULL;
+    switch ((Motor_Direction_T)direction)
+    {
+        case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case MOTOR_DIRECTION_CW: break;
+        case MOTOR_DIRECTION_CCW: break;
+        default: break; /* Invalid direction */
+    }
+    return p_nextState;
     /* check speed or return to passive */
-    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
     // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
 }
 

@@ -65,7 +65,10 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
     Conventional parallel PID calculation
     @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 
-    integral [-32767:32767]
+    integral [-32768:32767] << 15
+    error [-32768:32767] << 15
+    for (INT32_MAX / 2) + (INT32_MAX / 2) without saturated add
+    cannot be the case both integral and error are -32768
 */
 static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
 {
@@ -102,7 +105,11 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     @param[in] setpoint [-32768:32767] with over saturation
     @param[in] feedback [-32768:32767] with over saturation
 
-    error [-32768:32767]
+    inputs upto 2x over saturation.
+    error must be within [-32768:32767]
+
+    e.g setpoint 32767, feedback 40000 => ok
+        setpoint 32767, feedback -2 => overflow
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {

@@ -2,7 +2,7 @@
 /******************************************************************************/
 /*!
     @brief Drive Set Common
-    if motor proc transition on call
+    if motor proc transition on call, let container state can depend on motor state
 */
 /******************************************************************************/
 /* Motors to PASSIVE, keep direction */
@@ -36,7 +36,7 @@
 //     {
 //         case MOT_DRIVE_DIRECTION_PARK:    p_nextState = Common_InputPark(p_motDrive); break;
 //         case MOT_DRIVE_DIRECTION_FORWARD: p_nextState = Common_InputForward(p_motDrive); break;
-//         case MOT_DRIVE_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
+//         case MOTOR_DIRECTION_REVERSE: p_nextState = Common_InputReverse(p_motDrive); break;
 //         case MOT_DRIVE_DIRECTION_NEUTRAL: p_nextState = Common_InputNeutral(p_motDrive); break;
 //         case MOT_DRIVE_DIRECTION_ERROR: p_nextState = NULL; break;
 //         default: break;

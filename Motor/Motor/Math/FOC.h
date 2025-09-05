@@ -162,6 +162,15 @@ static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
 
 */
 /******************************************************************************/
+// static inline void FOC_FeedOutputV_VBusInv(FOC_T * p_foc, uint32_t vBusInv_fract32, angle16_t theta, fract16_t vd, fract16_t vq)
+// {
+//     FOC_SetTheta(p_foc, theta);
+//     FOC_SetVd(p_foc, vd);
+//     FOC_SetVq(p_foc, vq);
+//     FOC_ProcInvClarkePark(p_foc);
+//     FOC_ProcSvpwm(p_foc, vBusInv_fract32);
+// }
+
 static inline void FOC_ProcOutputV_VBusInv(FOC_T * p_foc, uint32_t vBusInv_fract32)
 {
     FOC_ProcInvClarkePark(p_foc);

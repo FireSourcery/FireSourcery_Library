@@ -111,7 +111,7 @@ static inline void MotorController_StateMachine_InputStateCommand(const MotorCon
 
 static inline void MotorController_StateMachine_EnterPark(const MotorController_T * p_context)
 {
-    // p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_STOP;
+    // p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NONE;
     // // p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
     // MotorController_User_ApplyMotorsCmd(p_context);
     MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_PARK);
