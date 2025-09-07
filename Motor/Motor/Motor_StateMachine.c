@@ -173,8 +173,7 @@ static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t dire
 
     switch ((Motor_Direction_T)direction)
     {
-        case MOTOR_DIRECTION_NULL: // break;
-            assert(StateMachine_IsActiveState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_STOP)); /* Ensure not transition and transition back */
+        case MOTOR_DIRECTION_NULL: p_nextState = NULL; break;
         case MOTOR_DIRECTION_CW:  /* Intentional fall-through */
         case MOTOR_DIRECTION_CCW:
             Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction);

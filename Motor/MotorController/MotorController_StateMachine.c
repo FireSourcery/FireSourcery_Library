@@ -333,12 +333,12 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: MotMotors_StopAll(&p_context->MOTORS); break;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
-                if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
-                {
-                    // MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
-                    return GetMainState(p_context);
-                }
-                break;
+            if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
+            {
+                // MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+                return GetMainState(p_context);
+            }
+            break;
         default:  break;
     }
     return NULL;
@@ -376,7 +376,6 @@ static const State_T STATE_PARK =
 static void Main_Entry(const MotorController_T * p_context)
 {
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
-    // MotMotors_StopAll(&p_context->MOTORS);
 }
 
 static void Main_Proc(const MotorController_T * p_context)
@@ -899,6 +898,7 @@ static State_T * Fault_InputClearFault(const MotorController_T * p_context, stat
     // p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_ExitFault(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
     // return NULL;
+    Blinky_Stop(&p_context->BUZZER); /* Stops until its set again */
     return (p_mc->FaultFlags.Value == 0U) ? &MC_STATE_MAIN : NULL;
 }
 

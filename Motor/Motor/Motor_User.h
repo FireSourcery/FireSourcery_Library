@@ -82,8 +82,8 @@ static inline fract16_t Motor_User_GetVPhase_Fract16(const Motor_State_T * p_mot
     Ideal electrical power physical VA as Q2.14
     [0:49152] <=> [0:1.5]
 */
-static inline ufract16_t Motor_User_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetElectricalPower_UFract16, NULL) / 2; }
-static inline ufract16_t Motor_User_GetIdc_UFract16(const Motor_State_T * p_motor) { return fract16_div(Motor_User_GetElectricalPower_UFract16(p_motor), Phase_VBus_Fract16()) / 2; }
+static inline ufract16_t Motor_User_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetElectricalPower_UFract16, NULL) / 4; }
+static inline ufract16_t Motor_User_GetIdc_UFract16(const Motor_State_T * p_motor) { return fract16_div(Motor_User_GetElectricalPower_UFract16(p_motor), Phase_VBus_Fract16()); }
 
 /*  */
 static inline uint16_t Motor_User_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }

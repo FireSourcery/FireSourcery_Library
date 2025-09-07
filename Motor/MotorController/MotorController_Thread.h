@@ -227,22 +227,23 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     {
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
         /* if the signal is not acquired, main will check fault flags and enter */
+        /* results of higher prioty thread may be overwritten, if interrupting a lower prioty thread in state transition */
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
             break;
-        case VMONITOR_STATUS_WARNING_LOW:
-            if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
-            {
-                MotorController_CaptureVSource(p_context);
-                LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
-            }
-            break;
-        case VMONITOR_STATUS_NORMAL:
-            if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
-            {
-                LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
-            }
+        // case VMONITOR_STATUS_WARNING_LOW:
+        //     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
+        //     {
+        //         MotorController_CaptureVSource(p_context);
+        //         LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+        //     }
+        //     break;
+        // case VMONITOR_STATUS_NORMAL:
+        //     if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
+        //     {
+        //         LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
+        //     }
             break;
         default: break;
     }
