@@ -55,8 +55,8 @@ typedef enum MotorController_User_SystemCmd
     MOT_USER_SYSTEM_RX_WATCHDOG,        // on/off
     MOT_USER_SYSTEM_LOCK_STATE_INPUT,       // MotorController_LockId_T as input: Nvm, Calibration
     // MOT_USER_SYSTEM_LOCK_STATE_EXIT,
-    MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // MotorController_LockId_T as status
-    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // Async operation status. optionally pass MotorController_LockId_T for selection
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // substate id, MotorController_LockId_T as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // operation, Async operation status. optionally pass MotorController_LockId_T for selection
     MOT_USER_SYSTEM_MAIN_MODE_INPUT,
     MOT_USER_SYSTEM_STATE_COMMAND,      // State Command
 //     // MOT_VAR_TYPE_COMMAND_METER, move to other services

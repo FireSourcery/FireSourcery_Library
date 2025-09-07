@@ -268,7 +268,7 @@ static inline fract16_t FOC_GetVPhase(const FOC_T * p_foc) { return FOC_GetVMagn
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Iq, p_foc->Vq) * 3 / 2; }
 /* Reactive power (magnetizing) */
 static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Id, p_foc->Vd) * 3 / 2; }
-/* Total power (active + reactive) */ /* [0:49152] <=> [0:1.5F] */
+/* Total power (active + reactive) */ /* [0:3F] */
 static inline accum32_t FOC_GetPower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Id, p_foc->Vd) + fract16_mul(p_foc->Iq, p_foc->Vq)) * 3 / 2; }
 
 static inline ufract16_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div_sat(FOC_GetActivePower(p_foc), FOC_GetPower(p_foc)); }

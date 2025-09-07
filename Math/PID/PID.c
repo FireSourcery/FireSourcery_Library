@@ -87,11 +87,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     */
     // assert(abs(p_pid->IntegralAccum) < INT32_MAX / 2);
     // assert(abs((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
-
-    // integralAccum = p_pid->IntegralAccum + ((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
-    // integral = math_clamp(integralAccum >> 15, integralMin, integralMax);
-    // p_pid->IntegralAccum = (integral == (integralAccum >> 15)) ? integralAccum : (integral << 15);
-
     integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
     integral = p_pid->IntegralAccum >> 15;
@@ -239,7 +234,7 @@ static void SetKi_Fixed32(PID_T * p_pid, uint32_t ki_Fixed32)
     p_pid->IntegralGainShift = math_limit_lower(15 - fixed_bit_width(ki_Fixed32 / p_pid->Config.SampleFreq), 0); /* left shift only */
     p_pid->IntegralGain = (ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq;
 
-    assert(((ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq) < INT16_MAX);
+    assert((((int64_t)ki_Fixed32 << p_pid->IntegralGainShift) / p_pid->Config.SampleFreq) < INT16_MAX);
 }
 
 

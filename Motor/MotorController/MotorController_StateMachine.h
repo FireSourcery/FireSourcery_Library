@@ -192,6 +192,7 @@ static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const M
 /* Alternatively Caller check Top state. then _StateMachine_GetActiveSubStateId (potential substate id collision) */
 /* IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK */
 /* Processing SubState => id or 0, TopState => MC_STATE_LOCK */
+/* alterntaivel getSubstate */
 static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
 // if all calibration function use substate

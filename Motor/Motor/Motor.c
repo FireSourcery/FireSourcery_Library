@@ -286,10 +286,10 @@ void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16
 
 // void Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 // {
-//     // set both, use one side
-//     // math_limit_upper(speed_ufract16, (p_motor->Direction == p_motor->Config.DirectionForward) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16);
-//     // p_motor->SpeedLimitForward_Fract16 = speed_ufract16;
-//     // p_motor->SpeedLimitReverse_Fract16 = speed_ufract16;
+    // set both, use one side
+    // math_limit_upper(speed_ufract16, (p_motor->Direction == p_motor->Config.DirectionForward) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16);
+    // p_motor->SpeedLimitForward_Fract16 = speed_ufract16;
+    // p_motor->SpeedLimitReverse_Fract16 = speed_ufract16;
 //     p_motor->SpeedLimitActive  = speed_ufract16;
 //     ApplySpeedLimit(p_motor);
 // }

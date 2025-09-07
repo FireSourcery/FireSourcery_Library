@@ -431,6 +431,7 @@ static void Main_Proc(const MotorController_T * p_context)
 // }
 
 /* Submachine common transitions */
+/* handle motor exit stop */
 static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
 {
     switch (cmd)
@@ -442,6 +443,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
             if (StateMachine_GetLeafState(p_context->STATE_MACHINE.P_ACTIVE) == &MC_STATE_MAIN) /* At Main Top */
             {
                 if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
+                //
             }
 
         default:  break;
@@ -940,13 +942,12 @@ static const State_T STATE_FAULT =
 /* todo thread safe without lock */
 void MotorController_StateMachine_EnterFault(const MotorController_T * p_context)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == false) { StateMachine_ApplyInput(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
-    // if (MotorController_StateMachine_IsFault(p_context) == false) { StateMachine_ApplyInputTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
+    if (MotorController_StateMachine_IsFault(p_context) == false) { _StateMachine_ApplyInputTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
 }
 
 bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == true) { StateMachine_ApplyInput(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
+    if (MotorController_StateMachine_IsFault(p_context) == true) { _StateMachine_ApplyInputTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
     return !MotorController_StateMachine_IsFault(p_context);
 }
 
@@ -954,14 +955,14 @@ bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context)
 void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
     // p_context->FaultFlags.Value |= faultFlags;
-    if (MotorController_StateMachine_IsFault(p_context) == false) { StateMachine_ApplyInput(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    if (MotorController_StateMachine_IsFault(p_context) == false) { _StateMachine_ApplyInputTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
 }
 
 // alternatively
 // (MotorController_FaultFlags_T){ .Value = }
 void MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == true) { StateMachine_ApplyInput(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    if (MotorController_StateMachine_IsFault(p_context) == true) { _StateMachine_ApplyInputTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
     // return !MotorController_StateMachine_IsFault(p_context); /* alternatively use cleared diff */
 }
 

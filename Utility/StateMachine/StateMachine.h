@@ -173,7 +173,7 @@ static void StateMachine_Reset(StateMachine_T * p_stateMachine)
     Select
 */
 /******************************************************************************/
-static void _StateMachine_ApplyInputAsyncTransition(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
+static void _StateMachine_ApplyInputTransition(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
     StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
     if (_StateMachine_AcquireAsyncInput(p_active) == true)

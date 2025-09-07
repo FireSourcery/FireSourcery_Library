@@ -158,7 +158,7 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, f
     Feedback Control Loop
     StateMachine calls each PWM, ~20kHz
 
-    Inputs:
+    State:
         Angle,
         FeebackMode,
         ReqQ/PidSpeed/TorqueRampOutput,

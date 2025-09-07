@@ -64,7 +64,7 @@ static inline void MotDrive_StateMachine_Proc(const MotDrive_T * p_motDrive)
 {
     if (MotDrive_Input_PollCmdEdge(&p_motDrive->P_MOT_DRIVE_STATE->Input) == true)
     {
-        _StateMachine_ApplyAsyncInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd);
+        _StateMachine_ProcInput(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive, MOT_DRIVE_STATE_INPUT_CMD_START, p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd);
     }
 
     _StateMachine_ProcState(p_motDrive->STATE_MACHINE.P_ACTIVE, (void *)p_motDrive);
