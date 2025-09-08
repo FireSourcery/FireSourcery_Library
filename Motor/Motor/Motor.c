@@ -102,7 +102,6 @@ void Motor_Reset(Motor_State_T * p_motor)
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
     // Motor_ResetUnitsIabc(p_motor);
-
     p_motor->ControlTimerBase = 0U;
 }
 
@@ -131,7 +130,7 @@ void Motor_ResetUnits(Motor_State_T * p_motor)
 void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, INT16_MAX); /* As normalized Speed */
-    // Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, p_motor->Config.SpeedLimitForward );
+    // Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, p_motor->Config.SpeedLimitForward);
 }
 
 void Motor_ResetTorqueRamp(Motor_State_T * p_motor)
@@ -155,7 +154,6 @@ void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->
 //     PID_InitFrom(&p_motor->PidIq, &p_motor->Config.PidI);
 //     PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
 // }
-
 
 /******************************************************************************/
 /*
@@ -199,9 +197,9 @@ static void ApplyILimit(Motor_State_T * p_motor)
 //             Ramp_SetTarget(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)));
 //         }
 //     }
-// alternatively set cached limits
-// p_motor->ILimitCcw_Fract16 =  _Motor_GetILimitCcw(p_motor);
-// p_motor->ILimitCw_Fract16 =  _Motor_GetILimitCw(p_motor);
+//  alternatively set cached limits
+//  p_motor->ILimitCcw_Fract16 =  _Motor_GetILimitCcw(p_motor);
+//  p_motor->ILimitCw_Fract16 =  _Motor_GetILimitCw(p_motor);
 }
 
 /******************************************************************************/

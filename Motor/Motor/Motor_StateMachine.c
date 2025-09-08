@@ -173,7 +173,7 @@ static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t dire
 
     switch ((Motor_Direction_T)direction)
     {
-        case MOTOR_DIRECTION_NULL: p_nextState = NULL; break;
+        case MOTOR_DIRECTION_NULL: p_nextState = NULL; break; /* remain in stop */
         case MOTOR_DIRECTION_CW:  /* Intentional fall-through */
         case MOTOR_DIRECTION_CCW:
             Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction);
@@ -306,10 +306,10 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
 
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U)
     {
-        /* validate direction, move to caller */
+        /* direction 0 as return to stop */
         switch ((Motor_Direction_T)direction)
         {
-            case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_STOP; break; /* direction 0 as return to stop */
+            case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_STOP;  /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
                 Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);

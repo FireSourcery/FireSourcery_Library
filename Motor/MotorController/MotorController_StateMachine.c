@@ -230,7 +230,7 @@ static const State_T STATE_INIT =
 /******************************************************************************/
 static void Park_Entry(const MotorController_T * p_context)
 {
-    if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_V0); }
+    // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_V0); }
 }
 
 static void Park_Proc(const MotorController_T * p_context)

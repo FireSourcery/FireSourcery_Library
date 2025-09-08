@@ -36,6 +36,8 @@
 #include "Config.h"
 
 
+#define _STATE_INLINE __attribute__((always_inline))
+
 /******************************************************************************/
 /*
 

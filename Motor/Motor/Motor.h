@@ -256,7 +256,7 @@ typedef struct Motor_State
     */
 
     /* StateMachine Controlled */
-    Motor_Direction_T Direction;            /* Applied V direction. */
+    Motor_Direction_T Direction;            /* Applied V direction. Active Limits. Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState */
 
     /*

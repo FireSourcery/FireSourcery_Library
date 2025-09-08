@@ -109,13 +109,15 @@ inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeVal
     Direction/Stop
 */
 /******************************************************************************/
+
 /*
     ProcInput use Critical, as States may transition during input
     SetInput use async polling for status
 */
 void Motor_User_ApplyRotaryDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (p_motor->P_MOTOR_STATE->Direction != direction)
+    // if (p_motor->P_MOTOR_STATE->Direction != direction)
+    if (direction != Motor_User_GetRotaryDirection(p_motor->P_MOTOR_STATE)) // Stop State also syncs on enter
     {
         //validate enum
         StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction);

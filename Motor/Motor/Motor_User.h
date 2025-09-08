@@ -119,7 +119,8 @@ static inline state_t Motor_User_GetSubStateId(const Motor_State_T * p_motor) { 
 //     default: break;
 // }
 
-static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
+static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return (Motor_User_GetStateId(p_motor) == MSM_STATE_ID_STOP) ? MOTOR_DIRECTION_NULL : p_motor->Direction; }
+// static inline Motor_Direction_T Motor_User_GetRotaryDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 static inline Motor_FeedbackMode_T Motor_User_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_User_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
 
