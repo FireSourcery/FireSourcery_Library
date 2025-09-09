@@ -79,7 +79,7 @@ static inline uint16_t Phase_VBus_Volts(void) { return fract16_mul(Phase_VBus.VB
 
 /* Alternatively use Nominal */
 static inline ufract16_t Phase_VBus_GetVRef(void) { return Phase_VBus.VBus_Fract16 / 2; }
-static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_SQRT3); }
+static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phase_VBus.VBus_Fract16, FRACT16_1_DIV_SQRT3); }
 
 
 // typedef const struct

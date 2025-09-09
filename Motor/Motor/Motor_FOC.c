@@ -60,13 +60,13 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
-    FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
+    // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */
     /* clamp if limited. sqrt operation on clamp only */
-    // if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-    // {
-    //     PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
-    // }
+    if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
+    {
+        PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
+    }
 }
 
 /* apply limit first */
@@ -94,6 +94,7 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
         {
             FOC_SetVq(&p_motor->Foc, iqReq);
             FOC_SetVd(&p_motor->Foc, idReq);
+            FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
             /* Still check CaptureIabc for overcurrent */
             /* todo on decrement */
             // ProcIFeedback(p_motor, 0, Motor_FOC_GetILimit(p_motor) * p_motor->Direction);

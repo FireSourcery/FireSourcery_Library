@@ -251,7 +251,7 @@ void Motor_User_SetTorqueVCmd(Motor_State_T * p_motor, int16_t volts_fract16)
 
 void Motor_User_SetTorqueVCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
-    Motor_User_SetTorqueVCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRef()));
+    Motor_User_SetTorqueVCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRefSvpwm()));
 }
 
 /* +/- Aligned to configured forward */

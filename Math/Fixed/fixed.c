@@ -195,7 +195,7 @@ uint32_t fixed_pow2_round(uint32_t x)
 
 //     <https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method>
 // */
-// uint16_t _fixed_sqrt(int32_t x)
+// uint16_t fixed_sqrt(uint32_t x)
 // {
 //     uint32_t yPrev;
 //     uint32_t y;

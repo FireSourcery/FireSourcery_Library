@@ -510,7 +510,7 @@ static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t v
 // static inline int32_t Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value) : value; }
 
 /* No plugging limit */
-static inline ufract16_t _Motor_VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRef()); }
+static inline ufract16_t _Motor_VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRefSvpwm()); }
 static inline fract16_t _Motor_GetVLimitCcw(const Motor_State_T * p_motor) { return _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CW)); }
 
@@ -573,8 +573,15 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 /* optionally cache 20khz getters */
 /* optionally move target outside */
 /* alternatively limit on output. ensure state clears on update */
-static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)   { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor)   { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor)  { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+
+static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
+{
+    return (p_motor->FeedbackMode.Current == 1U) ?
+        Motor_ProcTorqueRampI(p_motor) :
+        Motor_ProcTorqueRampV(p_motor);
+}
 
 /* user input Openloop mode limits */
 static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
