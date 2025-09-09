@@ -57,12 +57,12 @@ void UserDIn_Init(const UserDIn_T * p_context)
     /* Initialize debounce state to current pin reading */
     p_context->P_STATE->Debounce.TimeStart = GetCurrentTime(p_context);
     p_context->P_STATE->Debounce.PinState = ReadPin(p_context);
-    p_context->P_STATE->Debounce.DebouncedState = p_context->P_STATE->Debounce.PinState;
-    p_context->P_STATE->Debounce.DebouncedStatePrev = p_context->P_STATE->Debounce.PinState;
+    p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.PinState;
+    p_context->P_STATE->Debounce.OutputPrev = p_context->P_STATE->Debounce.PinState;
 }
 
 /* returns On/Off state */
-bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Filter(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Poll(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
 
 /* returns true on change */
 bool UserDIn_PollEdge(const UserDIn_T * p_context) { return Debounce_PollEdge(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }

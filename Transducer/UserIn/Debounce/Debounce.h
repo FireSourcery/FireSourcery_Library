@@ -51,9 +51,9 @@ typedef struct Debounce
 {
     uint16_t DebounceTime;      /* Configurable debounce time */
     uint32_t TimeStart;         /* Start time of current state */
-    bool PinState;              /* Current raw pin state */
-    bool DebouncedState;        /* Debounced output state */
-    bool DebouncedStatePrev;    /* Previous debounced state for edge detection */
+    bool PinState;              /* Bounce state. An extra state is need to block the timer check */
+    bool Output;                /* Debounced output state */
+    bool OutputPrev;            /* Previous debounced state for edge detection */
 }
 Debounce_T;
 
@@ -67,16 +67,22 @@ Debounce_T;
 */
 static inline bool Debounce_Filter(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
+    if (pinState == p_debounce->Output) return p_debounce->Output;  /* skip the timer check */
+    return (currentTime - p_debounce->TimeStart > p_debounce->DebounceTime) ? pinState : p_debounce->Output; /* No wrap if Milliseconds */
+}
+
+static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
+{
     if (pinState != p_debounce->PinState) /* Check if state is the same for specified duration */
     {
         p_debounce->TimeStart = currentTime;
         p_debounce->PinState = pinState;
-        return p_debounce->DebouncedState;
     }
     else
     {
-        return (currentTime - p_debounce->TimeStart > p_debounce->DebounceTime) ? pinState : p_debounce->DebouncedState;
+        p_debounce->Output = Debounce_Filter(p_debounce, currentTime, pinState);
     }
+    return p_debounce->Output;
 }
 
 /*
@@ -88,32 +94,25 @@ static inline bool Debounce_Filter(Debounce_T * p_debounce, uint32_t currentTime
 */
 static inline bool Debounce_PollEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    if (Debounce_Filter(p_debounce, currentTime, pinState) != p_debounce->DebouncedState)
-    {
-        p_debounce->DebouncedStatePrev = p_debounce->DebouncedState;
-        p_debounce->DebouncedState = pinState; /* pinState == filtered state past conditional */
-        return true;  /* State changed */
-    }
-    else
-    {
-        return false; /* No change */
-    }
+    p_debounce->OutputPrev = p_debounce->Output;
+    Debounce_Poll(p_debounce, currentTime, pinState);
+    return (p_debounce->Output != p_debounce->OutputPrev);
 }
 
 /* Optional convenience functions */
 static inline bool Debounce_PollRisingEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->DebouncedState == true);
+    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->Output == true);
 }
 
 static inline bool Debounce_PollFallingEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->DebouncedState == false);
+    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->Output == false);
 }
 
 static inline Debounce_Edge_T Debounce_PollEdgeValue(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) ? (Debounce_Edge_T)(p_debounce->DebouncedState - p_debounce->DebouncedStatePrev) : DEBOUNCE_EDGE_NULL;
+    return Debounce_PollEdge(p_debounce, currentTime, pinState) ? (Debounce_Edge_T)(p_debounce->Output - p_debounce->OutputPrev) : DEBOUNCE_EDGE_NULL;
 }
 
 
@@ -122,26 +121,29 @@ static inline Debounce_Edge_T Debounce_PollEdgeValue(Debounce_T * p_debounce, ui
     Inline Accessors
 */
 /******************************************************************************/
-static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->DebouncedState; }
-static inline bool Debounce_IsEdge(const Debounce_T * p_debounce) { return (p_debounce->DebouncedState != p_debounce->DebouncedStatePrev); }
-static inline bool Debounce_IsRisingEdge(const Debounce_T * p_debounce) { return ((p_debounce->DebouncedState == true) && (p_debounce->DebouncedStatePrev == false)); }
-static inline bool Debounce_IsFallingEdge(const Debounce_T * p_debounce) { return ((p_debounce->DebouncedState == false) && (p_debounce->DebouncedStatePrev == true)); }
-static inline Debounce_Edge_T Debounce_GetEdge(const Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->DebouncedState - p_debounce->DebouncedStatePrev); }
+static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->Output; }
+static inline bool Debounce_IsEdge(const Debounce_T * p_debounce) { return (p_debounce->Output != p_debounce->OutputPrev); }
+static inline bool Debounce_IsRisingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == true) && (p_debounce->OutputPrev == false)); }
+static inline bool Debounce_IsFallingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == false) && (p_debounce->OutputPrev == true)); }
+static inline Debounce_Edge_T Debounce_GetEdge(const Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->Output - p_debounce->OutputPrev); }
 
 static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
 static inline uint16_t Debounce_GetTime(const Debounce_T * p_debounce) { return p_debounce->DebounceTime; }
 
-/******************************************************************************/
-/*
-    Public Functions - External pin state and timer inputs
-*/
-/******************************************************************************/
-extern void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime);
+
+static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
+{
+    p_debounce->DebounceTime = debounceTime;
+    p_debounce->Output = false;
+    p_debounce->OutputPrev = p_debounce->Output;
+    p_debounce->PinState = p_debounce->Output;
+}
+
 
 
 /******************************************************************************/
 /* Time-based debounce */
-// static inline bool debounce(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
+// static inline bool debounce_is_stable(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
 // {
 //     if (input_state != prev_state) return false;  /* State changed, not stable */
 //     return (current_time - last_change_time) >= stability_time;
@@ -149,6 +151,7 @@ extern void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime);
 
 // static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
 // {
+//     if (input_state == prev_state) return prev_state;  /* No change in state, return previous state */
 //     return elapsed_time >= stability_time ? input_state : prev_state; /* Return stable state if elapsed time exceeds stability time */
 // }
 
