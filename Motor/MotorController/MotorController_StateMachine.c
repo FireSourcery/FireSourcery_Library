@@ -444,7 +444,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
                 if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) return GetMainState(p_context); /* transition to main top state. stops processing inputs */
                 //
             }
-
+            break;
         default:  break;
     }
     return NULL;
@@ -551,7 +551,7 @@ const State_T MC_STATE_MAIN_MOTOR_CMD =
 void MotDrive_Entry(const MotorController_T * p_context)
 {
     StateMachine_Reset(&p_context->MOT_DRIVE.STATE_MACHINE); /* Reset StateMachine */
-    //optionally motors exit stop, in case of motor cmds, or set from ui
+    // optionally motors exit stop, in case of motor cmds, or set from ui
 }
 
 /* Proc MotDrive Buffer */

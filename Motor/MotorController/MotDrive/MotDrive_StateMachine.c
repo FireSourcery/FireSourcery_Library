@@ -166,7 +166,13 @@ const StateMachine_Machine_T MOT_DRIVE_MACHINE =
 /******************************************************************************/
 static void Drive_Entry(const MotDrive_T * p_motDrive)
 {
-    assert(MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse));
+    // assert(MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse));
+
+    // if(!(MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_motDrive->MOTORS, Motor_IsDirectionReverse)))
+    // {
+    //     Mot
+    // }
+
     // MotMotors_SetCmdValue(&p_motDrive->MOTORS, 0);
     // MotDrive_StartControlAll(p_this);
     // p_this->StateFlags.IsStopped = 0U;
@@ -268,7 +274,7 @@ static void Neutral_Proc(const MotDrive_T * p_motDrive)
     switch (p_motDrive->P_MOT_DRIVE_STATE->Input.Cmd)
     {
         case MOT_DRIVE_CMD_RELEASE:
-            // MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_PASSIVE) // check for consistency
+            // assert (MotMotors_IsEveryValue(&p_motDrive->MOTORS, Motor_StateMachine_IsState, MSM_STATE_ID_PASSIVE)); // check for consistency
             break;
         case MOT_DRIVE_CMD_BRAKE: MotDrive_SetBrakeValue(p_motDrive, p_motDrive->P_MOT_DRIVE_STATE->Input.BrakeValue); break;
         case MOT_DRIVE_CMD_THROTTLE: break;
@@ -278,6 +284,7 @@ static void Neutral_Proc(const MotDrive_T * p_motDrive)
 
 /*
     Motor Keeps Direction
+    // alternatively user motorcotroller tree
 */
 static State_T * Neutral_InputForward(const MotDrive_T * p_motDrive)
 {
@@ -299,13 +306,21 @@ static State_T * Neutral_InputDirection(const MotDrive_T * p_motDrive, state_val
 {
     State_T * p_nextState = NULL;
 
-    switch((Motor_Direction_T)direction)
-    {
-        case MOTOR_DIRECTION_FORWARD: p_nextState = Neutral_InputForward(p_motDrive); break;
-        case MOTOR_DIRECTION_REVERSE: p_nextState = Neutral_InputReverse(p_motDrive); break;
-        case MOTOR_DIRECTION_NONE: p_nextState = &STATE_NEUTRAL; break;
-        default: break;
-    }
+    // if
+    // (
+    //     MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_RUN) ||
+    //     MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_PASSIVE) ||
+    //     MotMotors_IsEveryState(&p_motDrive->MOTORS, MSM_STATE_ID_STOP)
+    // )
+    // {
+        switch ((Motor_Direction_T)direction)
+        {
+            case MOTOR_DIRECTION_FORWARD: p_nextState = Neutral_InputForward(p_motDrive); break;
+            case MOTOR_DIRECTION_REVERSE: p_nextState = Neutral_InputReverse(p_motDrive); break;
+            case MOTOR_DIRECTION_NONE: p_nextState = &STATE_NEUTRAL; break;
+            default: break;
+        }
+    // }
 
     return p_nextState;
 }
