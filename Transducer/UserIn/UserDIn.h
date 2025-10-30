@@ -44,10 +44,10 @@ UserDIn_Edge_T;
 
 // typedef enum UserDIn_Mode
 // {
-//     USER_DIN_MODE_NORMAL = 0,           /* Standard debounced input */
-//     USER_DIN_MODE_TOGGLE = 1,           /* Toggle on each press */
-//     USER_DIN_MODE_MOMENTARY = 2,        /* Active only while pressed */
-//     USER_DIN_MODE_HOLD = 3,             /* Requires hold time */
+//     USER_DIN_MODE_NORMAL,           /* Standard debounced input */
+//     USER_DIN_MODE_TOGGLE,           /* Toggle on each press */
+//     USER_DIN_MODE_MOMENTARY,        /* Active only while pressed */
+//     USER_DIN_MODE_HOLD,             /* Requires hold time */
 // }
 // UserDIn_Mode_T;
 
@@ -77,6 +77,7 @@ typedef const struct UserDIn
     UserDIn_State_T * P_STATE;
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
+    // UserDIn_Mode_T MODE; /* Default mode */
 }
 UserDIn_T;
 

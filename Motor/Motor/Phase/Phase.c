@@ -137,21 +137,13 @@ Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
 }
 
 // call check after update
-// void Phase_JogNext(const Phase_T * p_phase, uint16_t duty)
+// void _Phase_JogNext(const Phase_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_NextOf(Phase_ReadAlign(p_phase)), duty); }
+// void _Phase_JogPrev(const Phase_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_PrevOf(Phase_ReadAlign(p_phase)), duty); }
+// void _Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
 // {
-//     Phase_Align(p_phase, Phase_NextOf(Phase_ReadAlign(p_phase)), duty);
-// }
-
-// void Phase_JogPrev(const Phase_T * p_phase, uint16_t duty)
-// {
-//     Phase_Align(p_phase, Phase_PrevOf(Phase_ReadAlign(p_phase)), duty);
-// }
-
-// void Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
-// {
-//     if      (dutySigned > 0) { Phase_JogNext(p_phase, (uint16_t)dutySigned); }
-//     else if (dutySigned < 0) { Phase_JogPrev(p_phase, (uint16_t)(0 - dutySigned)); }
-//     else                     { /* no change */ }
+//     if (dutySigned > 0) { _Phase_JogNext(p_phase, (uint16_t)dutySigned); }
+//     else if (dutySigned < 0) { _Phase_JogPrev(p_phase, (uint16_t)(0 - dutySigned)); }
+//     else { /* no change */ }
 // }
 
 

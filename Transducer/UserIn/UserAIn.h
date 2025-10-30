@@ -42,13 +42,13 @@
 */
 typedef struct UserAIn_Config
 {
-    /* determine Linear_T Units at runtime */
+    /* Determine Linear_T Units at runtime */
     uint16_t AdcZero;                   /* Minimum ADC value for 0% */
     uint16_t AdcMax;                    /* Maximum ADC value for 100% */
     // bool UseEdgePin;
     // uint16_t Threshold;
     // uint16_t FilterShift;
-    // uint16_t Histeresis;
+    // uint16_t Hysteresis;
 }
 UserAIn_Config_T;
 
@@ -63,9 +63,9 @@ typedef struct UserAIn_State
     uint16_t Value;                     /* Current filtered value. Percent16 by default */
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
+    UserAIn_Config_T Config;            /* Hold for runtime updates */
     // bool IsEnabled;                  /* Software enable/disable */
     // uint16_t Threshold;
-    UserAIn_Config_T Config;            /* Hold for runtime updates */
     // uint16_t FilterShift;
 }
 UserAIn_State_T;
@@ -77,10 +77,9 @@ UserAIn_State_T;
 /******************************************************************************/
 typedef const struct UserAIn
 {
-    // optionally direct pointer
-    // const volatile uint16_t * P_ADC_VALUE; /* Pointer to ADC register/value */
+    // const volatile uint16_t * P_ADC_VALUE; /* optionally Pointer to ADC register/value */
     /* Digital pin acts as enable gate for analog capture, and edge source for edge detection. */
-    const UserDIn_T * P_EDGE_PIN;           /* Optional digital pin for threshold/enable */
+    UserDIn_T * P_EDGE_PIN;                 /* Optional digital pin for threshold/enable */
     UserAIn_State_T * P_STATE;
     uint8_t FILTER_SHIFT;                   /* Filtering Ratio */
     const UserAIn_Config_T * P_NVM_CONFIG;  /* Configuration for ADC to percentage conversion */

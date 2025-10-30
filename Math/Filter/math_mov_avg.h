@@ -59,7 +59,7 @@ static inline int32_t filter_mov_avgn(uint16_t n, int32_t y_prev, int32_t x)
 }
 
 
-int32_t avg(int32_t total, uint32_t count, int32_t in)
+static inline int32_t avg(int32_t total, uint32_t count, int32_t in)
 {
     return (total + in) / (count + 1);
 }

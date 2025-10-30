@@ -79,7 +79,7 @@
 /*!
 */
 /******************************************************************************/
-/* Operation Mode */
+/* Operation Mode. Common as config and StateMachine Input */
 typedef enum MotorController_MainMode
 {
     MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
@@ -89,7 +89,7 @@ typedef enum MotorController_MainMode
 MotorController_MainMode_T;
 
 /*
-    InputMux
+    User InputMux
 */
 typedef enum MotorController_InputMode
 {

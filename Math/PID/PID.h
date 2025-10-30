@@ -137,3 +137,11 @@ extern void PID_SetKd_Fixed32(PID_T * p_pid, int32_t kd_Fixed32);
 extern void PID_SetKp_Fixed16(PID_T * p_pid, uint16_t kp_Fixed16);
 extern void PID_SetKi_Fixed16(PID_T * p_pid, uint16_t ki_Fixed16);
 extern void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16);
+
+
+
+// #if      defined(CONFIG_PID_K_INT)
+// #elif    defined(CONFIG_PID_K_FLOAT)
+// #else
+//     #define CONFIG_PID_K_INT
+// #endif

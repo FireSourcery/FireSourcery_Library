@@ -170,9 +170,10 @@ static void StateMachine_Reset(StateMachine_T * p_stateMachine)
 
 /******************************************************************************/
 /*
-    Select
+    Top Level StateMachine
 */
 /******************************************************************************/
+/* Transition immediately */
 static inline void _StateMachine_ApplyInputTransition(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
     StateMachine_Active_T * const p_active = p_stateMachine->P_ACTIVE;
@@ -183,16 +184,12 @@ static inline void _StateMachine_ApplyInputTransition(StateMachine_T * p_stateMa
     }
 }
 
+/* Transition on next SyncOutput */
 static inline void _StateMachine_ApplyInputSetTransition(StateMachine_T * p_stateMachine, state_input_t inputId, state_value_t inputValue)
 {
     _StateMachine_ApplyAsyncInput(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT, inputId, inputValue);
 }
 
-/******************************************************************************/
-/*
-    Top Level StateMachine
-*/
-/******************************************************************************/
 /*
     Input Functions
     Handles Top level transitions only

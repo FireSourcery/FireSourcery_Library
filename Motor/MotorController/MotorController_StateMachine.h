@@ -44,20 +44,20 @@ typedef enum MotorController_State_Input
 {
     MCSM_INPUT_FAULT,
     MCSM_INPUT_LOCK,
-    MCSM_INPUT_MAIN_MODE, // temporary update main mode
+    MCSM_INPUT_MAIN_MODE, // runtime temporary update main mode
     MCSM_INPUT_STATE_COMMAND, /* System Command with per State Mapping */
     // handle common mapping. inputs proc synchronous buffer
 }
 MotorController_State_Input_T;
 
-/* PARK covers standby, LOCK covers calibration, FAULT covers errors */
+
 typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
-    MCSM_STATE_ID_PARK,
+    MCSM_STATE_ID_PARK, /* includes standby */
     MCSM_STATE_ID_MAIN,
-    MCSM_STATE_ID_LOCK,
-    MCSM_STATE_ID_FAULT,
+    MCSM_STATE_ID_LOCK, /* includes calibration */
+    MCSM_STATE_ID_FAULT, /* includes error handling */
     // MCSM_STATE_ID_EXTERNAL,
 }
 MotorController_StateId_T;

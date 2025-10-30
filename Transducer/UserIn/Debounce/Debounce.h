@@ -51,7 +51,8 @@ typedef struct Debounce
 {
     uint16_t DebounceTime;      /* Configurable debounce time */
     uint32_t TimeStart;         /* Start time of current state */
-    bool PinState;              /* Bounce state. An extra state is need to block the timer check */
+    /* An extra state is used for a hot path without the timer check */
+    bool PinState;              /* Bounce/input state */
     bool Output;                /* Debounced output state */
     bool OutputPrev;            /* Previous debounced state for edge detection */
 }
@@ -65,20 +66,23 @@ Debounce_T;
 /*!
     @return the debounced state
 */
-static inline bool Debounce_Filter(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
+static inline bool Debounce_Filter(const Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    if (pinState == p_debounce->Output) return p_debounce->Output;  /* skip the timer check */
-    return (currentTime - p_debounce->TimeStart > p_debounce->DebounceTime) ? pinState : p_debounce->Output; /* No wrap if Milliseconds */
+    if (pinState == p_debounce->Output) { return p_debounce->Output; }  /* Skip the timer check */
+    return ((currentTime - p_debounce->TimeStart > p_debounce->DebounceTime) ? pinState : p_debounce->Output); /* No wrap if milliseconds, ~49 days */
 }
 
+/*!
+    @return the debounced state
+*/
 static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    if (pinState != p_debounce->PinState) /* Check if state is the same for specified duration */
+    if (pinState != p_debounce->PinState)
     {
         p_debounce->TimeStart = currentTime;
         p_debounce->PinState = pinState;
     }
-    else
+    else /* Check if state is the same for specified duration */
     {
         p_debounce->Output = Debounce_Filter(p_debounce, currentTime, pinState);
     }
@@ -122,6 +126,7 @@ static inline Debounce_Edge_T Debounce_PollEdgeValue(Debounce_T * p_debounce, ui
 */
 /******************************************************************************/
 static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->Output; }
+/* mixin math_edge.h */
 static inline bool Debounce_IsEdge(const Debounce_T * p_debounce) { return (p_debounce->Output != p_debounce->OutputPrev); }
 static inline bool Debounce_IsRisingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == true) && (p_debounce->OutputPrev == false)); }
 static inline bool Debounce_IsFallingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == false) && (p_debounce->OutputPrev == true)); }
@@ -134,9 +139,10 @@ static inline uint16_t Debounce_GetTime(const Debounce_T * p_debounce) { return 
 static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
 {
     p_debounce->DebounceTime = debounceTime;
+    p_debounce->TimeStart = 0UL;
     p_debounce->Output = false;
-    p_debounce->OutputPrev = p_debounce->Output;
-    p_debounce->PinState = p_debounce->Output;
+    p_debounce->OutputPrev = false;
+    p_debounce->PinState = false;
 }
 
 
@@ -155,12 +161,23 @@ static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
 //     return elapsed_time >= stability_time ? input_state : prev_state; /* Return stable state if elapsed time exceeds stability time */
 // }
 
+// static inline bool debounce_is_stable(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
+// {
+//     if (input_state != prev_state) return false;  /* State changed, not stable */
+//     return elapsed_time >= stability_time;
+// }
+
+// static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
+// {
+//     return (debounce_is_stable(stability_time, elapsed_time, prev_state, input_state)) ? input_state : prev_state;
+// }
+
 // /* Counter-based debounce */
-// static inline bool debounce_(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
+// static inline bool debounce_tick(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
 // {
 //     if (input_state == target_state)
 //     {
-//         if (*p_counter < threshold)  {(*p_counter)++;}
+//         if (*p_counter < threshold) { (*p_counter)++; }
 //     }
 //     else
 //     {

@@ -232,14 +232,14 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
             break;
-        // case VMONITOR_STATUS_WARNING_LOW:
+        case VMONITOR_STATUS_WARNING_LOW:
         //     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
         //     {
         //         MotorController_CaptureVSource(p_context);
         //         LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
         //     }
-        //     break;
-        // case VMONITOR_STATUS_NORMAL:
+            break;
+        case VMONITOR_STATUS_NORMAL:
         //     if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
         //     {
         //         LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
@@ -396,30 +396,30 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
     High Freq, High Priority
 */
 /* Alternatively these can be placed directly user main if the compiler does not optimize */
-static inline void MotorController_PWM_Thread(const MotorController_T * p_context)
-{
-    // p_fields->MicrosRef = SysTime_GetMicros();
+// static inline void MotorController_PWM_Thread(const MotorController_T * p_context)
+// {
+//     // p_fields->MicrosRef = SysTime_GetMicros();
 
-    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 
-    // if (Motor_IsAnalogCycle(&p_context->MOTORS.P_CONTEXTS[0U]) == true) /* todo common timer */
-    // {
-    //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
-    // }
+//     // if (Motor_IsAnalogCycle(&p_context->MOTORS.P_CONTEXTS[0U]) == true) /* todo common timer */
+//     // {
+//     //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
+//     // }
 
-    if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
-    {
-        for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
-    }
+//     if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
+//     {
+//         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//     }
 
-    // if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
-    for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
+//     // if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
+//     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 
 
-    for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 
-    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
-    // HAL_PWM_ClearInterrupt(p_context->HAL_PWM); /* BOARD_PWM_HAL */
-    // Motor_ClearInterrupt(&p_context->MOTORS.P_ARRAY[0U]);
-    p_context->P_MC_STATE->ControlCounter++;
-}
+//     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
+//     // HAL_PWM_ClearInterrupt(p_context->HAL_PWM); /* BOARD_PWM_HAL */
+//     // Motor_ClearInterrupt(&p_context->MOTORS.P_ARRAY[0U]);
+//     p_context->P_MC_STATE->ControlCounter++;
+// }

@@ -41,7 +41,7 @@
 */
 /******************************************************************************/
 static inline bool ReadPin(const UserDIn_T * p_context) { return Pin_Input_Read(&p_context->PIN); }
-static inline uint32_t GetCurrentTime(const UserDIn_T * p_context) { return *p_context->P_TIMER; }
+static inline uint32_t GetTime(const UserDIn_T * p_context) { return *p_context->P_TIMER; }
 
 /******************************************************************************/
 /*
@@ -55,23 +55,23 @@ void UserDIn_Init(const UserDIn_T * p_context)
     Debounce_Init(&p_context->P_STATE->Debounce, p_context->DEBOUNCE_TIME);
 
     /* Initialize debounce state to current pin reading */
-    p_context->P_STATE->Debounce.TimeStart = GetCurrentTime(p_context);
+    p_context->P_STATE->Debounce.TimeStart = GetTime(p_context);
     p_context->P_STATE->Debounce.PinState = ReadPin(p_context);
     p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.PinState;
     p_context->P_STATE->Debounce.OutputPrev = p_context->P_STATE->Debounce.PinState;
 }
 
-/* returns On/Off state */
-bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Poll(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+/*! @return On/Off state */
+bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Poll(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
-/* returns true on change */
-bool UserDIn_PollEdge(const UserDIn_T * p_context) { return Debounce_PollEdge(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+/*! @return true on change */
+bool UserDIn_PollEdge(const UserDIn_T * p_context) { return Debounce_PollEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
-bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return Debounce_PollRisingEdge(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return Debounce_PollRisingEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
-bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return Debounce_PollFallingEdge(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return Debounce_PollFallingEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
-UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return (UserDIn_Edge_T)Debounce_PollEdgeValue(&p_context->P_STATE->Debounce, GetCurrentTime(p_context), ReadPin(p_context)); }
+UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return (UserDIn_Edge_T)Debounce_PollEdgeValue(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
 
 // /******************************************************************************/
@@ -101,7 +101,7 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return (User
 // static bool _UserDIn_ProcessHoldMode(const UserDIn_T * p_context)
 // {
 //     bool activeState = _UserDIn_GetActiveState(p_context);
-//     uint16_t currentTime = GetCurrentTime(p_context);
+//     uint16_t currentTime = GetTime(p_context);
 //     Debounce_T * p_debounce = &p_context->P_STATE->Debounce;
 
 //     if (Debounce_IsRisingEdge(p_debounce) && activeState)
