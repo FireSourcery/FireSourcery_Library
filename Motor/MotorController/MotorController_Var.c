@@ -57,15 +57,12 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
 /* Inputs disabled on Analog Mode */
 void MotorController_Var_Input_Set(const MotorController_T * p_context, MotorController_Var_Input_T id, int value)
 {
-    // configurable condition todo
-    if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return; }
-
     switch (id)
     {
-        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_User_SetCmdValue(p_context, (int16_t)value);                    break;
-        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_User_SetFeedbackMode_Cast(p_context, value);                    break;
-        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);    break;
-        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_User_SetControlState(p_context, (Phase_Output_T)value);         break;
+        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_User_SetCmdValue(p_context, (int16_t)value);                                            break;
+        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_User_SetFeedbackMode(p_context, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
+        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);                            break;
+        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_User_SetControlState(p_context, (Phase_Output_T)value);                                 break;
 
         case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
         case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
@@ -103,24 +100,17 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_context, Mot
 int MotorController_Config_Get(const MotorController_T * p_context, MotorController_Var_Config_T id)
 {
     MotorController_State_T * p_state = p_context->P_MC_STATE;
-
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:                value = p_state->Config.VSupplyRef;                        break;
-        case MOT_VAR_I_LIMIT_LOW_V:                 value = p_state->Config.VLowILimit_Fract16;                break;
-
+        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VSupplyRef;                        break;
+        case MOT_VAR_I_LIMIT_LOW_V:            value = p_state->Config.VLowILimit_Fract16;                break;
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
-
-        case MOT_VAR_OPT_DIN_FUNCTION:              value = p_state->Config.OptDinMode;                        break;
-        case MOT_VAR_OPT_SPEED_LIMIT:               value = p_state->Config.OptSpeedLimit_Fract16;             break;
-        case MOT_VAR_OPT_I_LIMIT:                   value = p_state->Config.OptILimit_Fract16;                 break;
-
+        case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
+        case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
+        case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
         // case MOT_VAR_BUZZER_FLAGS_ENABLE:        value = p_state->Config.BuzzerFlags;                       break;
-        // case MOT_DRIVE_CONFIG_THROTTLE_MODE:     value = p_state->Config.ThrottleMode;          break;
-        // case MOT_DRIVE_CONFIG_BRAKE_MODE:        value = p_state->Config.BrakeMode;             break;
-        // case MOT_DRIVE_CONFIG_ZERO_MODE:         value = p_state->Config.ZeroMode;              break;
     }
     return value;
 }
@@ -128,21 +118,16 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
 void MotorController_Config_Set(const MotorController_T * p_context, MotorController_Var_Config_T id, int value)
 {
     MotorController_State_T * p_state = p_context->P_MC_STATE;
-
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_User_SetVSupplyRef(p_context, value);                                   break;
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
-        case MOT_VAR_MAIN_MODE:        p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_INPUT_MODE:       MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
-        // case MOT_VAR_BUZZER_FLAGS_ENABLE:    p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
+        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
+        case MOT_VAR_INPUT_MODE:            MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
-
-        // case MOT_DRIVE_CONFIG_THROTTLE_MODE:                 p_state->Config.ThrottleMode = (MotDrive_ThrottleMode_T)value;       break;
-        // case MOT_DRIVE_CONFIG_BRAKE_MODE:                    p_state->Config.BrakeMode = (MotDrive_BrakeMode_T)value;             break;
-        // case MOT_DRIVE_CONFIG_ZERO_MODE:               p_state->Config.ZeroMode = (MotDrive_ZeroMode_T)value;     break;
+        // case MOT_VAR_BUZZER_FLAGS_ENABLE:    p_state->Config.BuzzerFlags. = (MotorController_BuzzerFlags_T)value;        break;
     }
 }
 
@@ -150,13 +135,12 @@ int MotorController_Var_ConfigBootRef_Get(const MotorController_T * p_context, M
 {
     MotorController_State_T * p_state = p_context->P_MC_STATE;
     int value = 0;
-
     switch (id)
     {
         case MOT_VAR_BOOT_REF_FAST_BOOT:    value = p_state->BootRef.FastBoot;     break;
         case MOT_VAR_BOOT_REF_BEEP:         value = p_state->BootRef.Beep;         break;
         case MOT_VAR_BOOT_REF_BLINK:        value = p_state->BootRef.Blink;        break;
-            // case MOT_VAR_BOOT_REF_PROTOCOL_INDEX:    value = p_state->BootRef.ProtocolIndex;    break;
+        // case MOT_VAR_BOOT_REF_PROTOCOL_INDEX:    value = p_state->BootRef.ProtocolIndex;    break;
     }
     return value;
 }
@@ -212,30 +196,18 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_context, MotorC
     Motor_T Helper
 */
 /******************************************************************************/
-static inline Motor_T * MotorAt(const MotorController_T * p_context, uint8_t motor)
-{
-    return (motor < p_context->MOTORS.LENGTH) ? MotMotors_ContextAt(&p_context->MOTORS, motor) : NULL;
-}
+static inline Motor_T * MotorAt(const MotorController_T * p_context, uint8_t motor) { return (motor < p_context->MOTORS.LENGTH) ? MotMotors_ContextAt(&p_context->MOTORS, motor) : NULL; }
 
 /******************************************************************************/
 /*!
     @brief Handle MOTOR_VAR variables
 */
 /******************************************************************************/
-static int _HandleMotorVar_Get(const MotorController_T * p_context, MotVarId_T varId)
-{
-    return Motor_VarType_Control_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base);
-}
+static int _HandleMotorVar_Get(const MotorController_T * p_context, MotVarId_T varId) { return Motor_VarType_Control_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base); }
 
 static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    // Analog mode does not allow these variables to be set
-    if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED; }
-
-    // outer module handle access control
-    // if (!MotorController_StateMachine_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
-
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
     Motor_VarType_Control_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -245,16 +217,11 @@ static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context
     @brief Handle MOTOR_CONFIG variables
 */
 /******************************************************************************/
-static int _HandleMotorConfig_Get(const MotorController_T * p_context, MotVarId_T varId)
-{
-    return Motor_VarType_Config_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base);
-}
+static int _HandleMotorConfig_Get(const MotorController_T * p_context, MotVarId_T varId) { return Motor_VarType_Config_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base); }
 
 static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
-
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
     Motor_VarType_Config_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -264,16 +231,11 @@ static MotVarId_Status_T _HandleMotorConfig_Set(const MotorController_T * p_cont
     @brief Handle MOTOR_SENSOR variables
 */
 /******************************************************************************/
-static int _HandleRotorSensor_Get(const MotorController_T * p_context, MotVarId_T varId)
-{
-    return Motor_VarType_Sensor_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base);
-}
+static int _HandleRotorSensor_Get(const MotorController_T * p_context, MotVarId_T varId) { return Motor_VarType_Sensor_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base); }
 
 static MotVarId_Status_T _HandleRotorSensor_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
     Motor_VarType_Sensor_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -283,16 +245,11 @@ static MotVarId_Status_T _HandleRotorSensor_Set(const MotorController_T * p_cont
     @brief Handle MOTOR_SUB_MODULE variables
 */
 /******************************************************************************/
-static int _HandleMotorSubModule_Get(const MotorController_T * p_context, MotVarId_T varId)
-{
-    return Motor_VarType_SubModule_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base);
-}
+static int _HandleMotorSubModule_Get(const MotorController_T * p_context, MotVarId_T varId) { return Motor_VarType_SubModule_Get(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base); }
 
 static MotVarId_Status_T _HandleMotorSubModule_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR;
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
     Motor_VarType_SubModule_Set(MotorAt(p_context, varId.Instance), varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -315,10 +272,10 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
 
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_Get(&p_context->ANALOG_USER, varId.Base);
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_context->ANALOG_USER, varId.Base);
-        /* read only for now */
-        // non drive mode return, caller handle
-        case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:     return MotDrive_VarId_Get(&p_context->MOT_DRIVE, varId.Base);
-        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:      return MotDrive_ConfigId_Get(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.Base);
+
+        // move to apps
+        case MOT_VAR_TYPE_VEHICLE_CONTROL:     return Vehicle_VarId_Get(&p_context->VEHICLE, varId.Base);
+        case MOT_VAR_TYPE_VEHICLE_CONFIG:      return Vehicle_ConfigId_Get(p_context->VEHICLE.P_VEHICLE_STATE, varId.Base);
 
         default: return 0;
     }
@@ -326,23 +283,6 @@ static int _HandleGeneralService_Get(const MotorController_T * p_context, MotVar
 
 static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-
-    switch ((MotorController_VarType_General_T)varId.InnerType)
-    {
-        case MOT_VAR_TYPE_GENERAL_CONFIG:
-        case MOT_VAR_TYPE_BOOT_REF_CONFIG:
-        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
-            if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-            break;
-
-        case MOT_VAR_TYPE_GENERAL_USER_IN:
-        case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:
-            if (p_context->P_MC_STATE->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-            break;
-        default: break;
-    }
-
-
     switch ((MotorController_VarType_General_T)varId.InnerType)
     {
         case MOT_VAR_TYPE_GENERAL_USER_OUT:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
@@ -353,8 +293,9 @@ static MotVarId_Status_T _HandleGeneralService_Set(const MotorController_T * p_c
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_context, varId.Base, value);                              break;
         case MOT_VAR_TYPE_BOOT_REF_CONFIG:          MotorController_Var_ConfigBootRef_Set(p_context, varId.Base, value);                   break;
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(&p_context->ANALOG_USER, varId.Base, value);                break;
-        case MOT_VAR_TYPE_MOT_DRIVE_CONTROL:        MotDrive_VarId_Set(&p_context->MOT_DRIVE, varId.Base, value);                       break;
-        case MOT_VAR_TYPE_MOT_DRIVE_CONFIG:         MotDrive_ConfigId_Set(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE, varId.Base, value);   break;
+
+        case MOT_VAR_TYPE_VEHICLE_CONTROL:        Vehicle_VarId_Set(&p_context->VEHICLE, varId.Base, value);                       break;
+        case MOT_VAR_TYPE_VEHICLE_CONFIG:         Vehicle_ConfigId_Set(p_context->VEHICLE.P_VEHICLE_STATE, varId.Base, value);     break;
 
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
@@ -428,8 +369,6 @@ static int _HandleHeatMonitor_Get(const MotorController_T * p_context, MotVarId_
 
 static MotVarId_Status_T _HandleHeatMonitor_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-
     switch ((MotorController_VarType_HeatMonitor_T)varId.InnerType)
     {
         case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:                        return MOT_VAR_STATUS_ERROR_READ_ONLY;
@@ -457,7 +396,7 @@ static int _HandleCommunication_Get(const MotorController_T * p_context, MotVarI
 {
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
-        case MOT_VAR_TYPE_SOCKET_CONFIG:       return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
+        case MOT_VAR_TYPE_SOCKET_CONFIG:         return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:        return 0; //return CanBus_Config_Get(p_mc, varId.Base);
         default: return 0;
     }
@@ -465,8 +404,6 @@ static int _HandleCommunication_Get(const MotorController_T * p_context, MotVarI
 
 static MotVarId_Status_T _HandleCommunication_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-
     switch ((MotorController_VarType_Communication_T)varId.InnerType)
     {
         case MOT_VAR_TYPE_SOCKET_CONFIG:         Socket_ConfigId_Set(SocketAt(p_context, varId.Instance), varId.Base, value);     break;
@@ -482,7 +419,7 @@ static MotVarId_Status_T _HandleCommunication_Set(const MotorController_T * p_co
     System Command Handlers
 */
 /******************************************************************************/
-// static MotVarId_Status_T _HandleSystemCommand_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
+// static MotVarId_Status_T _HandleSystemCommand(const MotorController_T * p_context, MotVarId_T varId, int value)
 // {
 //     switch (varId.InnerType)
 //     {
@@ -522,6 +459,94 @@ int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varI
     }
 }
 
+
+/******************************************************************************/
+/*!
+    @brief Set Helpers
+*/
+/******************************************************************************/
+// Analog mode does not allow these variables to be set
+static inline bool IsInputPolicyProtocolControl(const MotorController_T * p_context)
+{
+    switch (p_context->P_MC_STATE->Config.InputMode)
+    {
+        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
+        case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
+        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
+        default: return false;
+    }
+}
+
+// Check if a variable requires protocol control authority
+// static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
+// {
+//     switch ((MotVarId_HandlerType_T)varId.OuterType)
+//     {
+//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return true;
+//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN || varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+//         case MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+//         default:  return false;  // Config, monitoring, etc. don't need mux check
+//     }
+// }
+
+/*
+    Checks for Input and Config policies before variable access
+*/
+static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, MotVarId_T varId)
+{
+    // Check read/write policies based on var type
+    switch ((MotVarId_HandlerType_T)varId.OuterType)
+    {
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL:
+            if (!IsInputPolicyProtocolControl(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            break;
+
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
+            if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
+        // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SUB_MODULE:
+        //     if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
+        //     break;
+
+        case MOT_VAR_ID_HANDLER_TYPE_GENERAL:
+            switch ((MotorController_VarType_General_T)varId.InnerType)
+            {
+                case MOT_VAR_TYPE_GENERAL_USER_IN:
+                case MOT_VAR_TYPE_VEHICLE_CONTROL:
+                    if (!IsInputPolicyProtocolControl(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+                    break;
+
+                case MOT_VAR_TYPE_GENERAL_CONFIG:
+                case MOT_VAR_TYPE_BOOT_REF_CONFIG:
+                case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
+                    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+            // MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
+            // MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
+            // MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
+            // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /* Resv */
+            // MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND, /*  */
+        default:
+            break;
+    }
+    // Access control check using InnerType pattern
+    // if (MotVarId_IsReadOnly(varId)) { return MOT_VAR_STATUS_ERROR_READ_ONLY; }
+
+    // if (MotVarId_IsConfig(varId) && !MotorController_IsConfigState(p_context))
+    // {
+    //     return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+    // }
+    return MOT_VAR_STATUS_OK;
+}
+
+
 /******************************************************************************/
 /*!
     @brief Set variable value by ID
@@ -529,21 +554,8 @@ int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varI
 /******************************************************************************/
 MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    // Access control check using InnerType pattern
-    // if (MotVarId_IsReadOnly(varId)) { return MOT_VAR_STATUS_ERROR_READ_ONLY; }
-
-    // Check protocol control state for non-command variables
-    // if (!MotorController_IsProtocolControlEnabled(p_context) &&
-    //     varId.OuterType != MOT_VAR_ID_HANDLER_TYPE_USER_INPUT &&
-    //     varId.OuterType != MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND)
-    // {
-    //     return MOT_VAR_STATUS_ERROR_PROTOCOL_CONTROL_DISABLED;
-    // }
-
-    // if (MotVarId_IsConfig(varId) && !MotorController_IsConfigState(p_context))
-    // {
-    //     return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE; // Config variables can only be set in config state
-    // }
+    MotVarId_Status_T accessStatus = CheckInputPolicy(p_context, varId);
+    if (accessStatus != MOT_VAR_STATUS_OK) return accessStatus;
 
     switch ((MotVarId_HandlerType_T)varId.OuterType)
     {
@@ -555,6 +567,26 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
         case MOT_VAR_ID_HANDLER_TYPE_V_MONITOR:             return _HandleVMonitor_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR:          return _HandleHeatMonitor_Set(p_context, varId, value);
         case MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION:         return _HandleCommunication_Set(p_context, varId, value);
-        default:    return MOT_VAR_STATUS_ERROR_INVALID_ID;
+        default:                                            return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
 }
+
+
+
+
+// Get input source requirement for a variable type
+// static inline MotorController_InputMode_T MotVarId_InputPolicyOf(MotVarId_T varId)
+// {
+//     switch ((MotVarId_HandlerType_T)varId.OuterType)
+//     {
+//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return MOTOR_CONTROLLER_INPUT_MODE_SERIAL;
+
+//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL:
+//             if (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN || varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL)
+//             {
+//                 return MOTOR_CONTROLLER_INPUT_MODE_SERIAL;
+//             }
+
+//         default:
+//     }
+// }

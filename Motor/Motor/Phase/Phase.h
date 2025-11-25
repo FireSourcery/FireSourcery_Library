@@ -367,13 +367,6 @@ extern void Phase_Init(const Phase_T * p_phase);
 
 extern void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty);
 
-// extern void Phase_ActivateAlignA(const Phase_T * p_phase, uint16_t duty);
-// extern void Phase_ActivateAlignB(const Phase_T * p_phase, uint16_t duty);
-// extern void Phase_ActivateAlignC(const Phase_T * p_phase, uint16_t duty);
-// extern void Phase_ActivateAlignInvA(const Phase_T * p_phase, uint16_t duty);
-// extern void Phase_ActivateAlignInvB(const Phase_T * p_phase, uint16_t duty);
-// extern void Phase_ActivateAlignInvC(const Phase_T * p_phase, uint16_t duty);
-
 extern Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase);
 extern Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase);
 extern Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase);
@@ -381,7 +374,3 @@ extern Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase);
 extern Phase_Id_T Phase_JogNext(const Phase_T * p_phase, uint16_t duty);
 extern Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty);
 extern Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned);
-
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/

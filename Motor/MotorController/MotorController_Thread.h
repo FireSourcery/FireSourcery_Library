@@ -32,8 +32,8 @@
 #include "MotorController_User.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-#include "MotDrive/MotDrive_StateMachine.h"
-#include "MotDrive/MotDrive_User.h"
+#include "Vehicle/Vehicle_StateMachine.h"
+#include "Vehicle/Vehicle_User.h"
 
 #include "Peripheral/Analog/Analog_ADC_Thread.h"
 
@@ -76,7 +76,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
     // {
     //     // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
     //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));    break;
-    //     //                                                     // MotDrive_SetThrottleValue(&p_mc->MotDrive, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    //     //                                                     // Vehicle_SetThrottleValue(&p_mc->Vehicle, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     //     // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdBrake(p_mc, 0U);                                                 break;
     //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdThrottle(p_mc, 0U);                                              break;
     //     // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdDriveZero(p_mc);                                                 break;
@@ -293,13 +293,12 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /*
             Med Freq, Low Priority, 1 ms
         */
-        // MotorController_CaptureVSource(p_context); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
         // feedwatchdog
 
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        // maybe change this to signal if enter fault is on 1ms thread
-        // _StateMachine_ProcRootFirst(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
+        // maybe interrupted by enterFault on 1ms thread maybe change this to signal
+        // _StateMachine_ProcRootFirst(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* if sync inputs and sync transition  */
         _StateMachine_ProcRootFirstSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
@@ -310,11 +309,11 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
         switch (p_mc->Config.InputMode)
         {
-            // case MOTOR_CONTROLLER_INPUT_MODE_DISABLE: break;
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
                 // if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
                 {
                     _MotorController_ProcAnalogUser(p_context);
+                    MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
                 }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
@@ -378,6 +377,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
     _MotorController_VSourceMonitor_Thread(p_context);
+    // MotorController_CaptureVSource(p_context); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
 
     // BrakeThread(p_mc);
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)

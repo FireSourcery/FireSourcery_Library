@@ -297,18 +297,3 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[] =
 // #endif
 };
 
-// const Packet_Class_T MOTOR_CONTROLLER_MOT_PROTOCOL_SPECS =
-// {
-//     .RX_LENGTH_MIN = MOT_PACKET_LENGTH_MIN,
-//     .RX_LENGTH_MAX = MOT_PACKET_LENGTH_MAX,
-//     .PARSE_RX_META = (Packet_ParseRxMeta_T)MotProtocol_ParseRxMeta,
-//     .BUILD_TX_SYNC = (Packet_BuildTxSync_T)MotProtocol_BuildTxSync,
-//     .RX_START_ID = MOT_PACKET_START_BYTE,
-//     .RX_TIMEOUT = MOT_PROTOCOL_TIMEOUT_RX,
-//     .REQ_TIMEOUT = MOT_PROTOCOL_TIMEOUT_REQ,
-
-//     .P_REQ_TABLE = &REQ_TABLE[0U],
-//     .REQ_TABLE_LENGTH = sizeof(REQ_TABLE) / sizeof(Protocol_Req_T),
-//     // .BAUD_RATE_DEFAULT = MOT_PROTOCOL_BAUD_RATE_DEFAULT,
-// };
-

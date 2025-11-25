@@ -63,7 +63,7 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             // checks the park state
-            MotorController_User_InputLock(p_context, (MotorController_LockId_T)value);
+            MotorController_StateMachine_InputLock(p_context, (MotorController_LockId_T)value);
             if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
 
             status = MotorController_User_GetLockOpStatus(p_context);
@@ -82,10 +82,10 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
             MotorController_StateMachine_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
             break;
 
-        case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
-            MotorController_User_InputMainMode(p_context, (MotorController_MainMode_T)value);
-            status = 0;
-            break;
+        // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
+        //     MotorController_User_InputMainMode(p_context, (MotorController_MainMode_T)value);
+        //     status = 0;
+        //     break;
 
         case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
 

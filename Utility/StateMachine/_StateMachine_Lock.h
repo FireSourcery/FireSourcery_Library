@@ -41,9 +41,9 @@
 */
 /******************************************************************************/
 #if     defined(STATE_MACHINE_ASYNC_CRITICAL) /* Disable all system IRQs for entire duration of processing Input. */
-#elif   defined(STATE_MACHINE_ASYNC_SIGNAL)   /* Disables ProcState only */
+#elif   defined(STATE_MACHINE_ASYNC_SIGNAL)   /* Disables ProcState only. Miss the Input if Lock is not acquired i.e ProcState is running, or spin-wait */
 #else
-    #define STATE_MACHINE_ASYNC_LOCK_FREE
+    #define STATE_MACHINE_ASYNC_LOCK_FREE   /* No locking. user ensure single threaded ProcState and Input. or Apply InputSyncTransition only */
 #endif
 
 // #if defined(STATE_MACHINE_ASYNC_LOCK_FREE)
@@ -52,9 +52,18 @@
 // #define STATE_MACHINE_LOCK_CODE(code, ...) __VA_ARGS__
 // #endif
 
+#if     defined(STATE_MACHINE_ASYNC_CRITICAL)
+    #define STATE_MACHINE_ASYNC_CRITICAL_CODE(code) code
+    #define STATE_MACHINE_ASYNC_SIGNAL_CODE(code)
+    #define STATE_MACHINE_ASYNC_LOCK_FREE_CODE(code)
+#elif   defined(STATE_MACHINE_ASYNC_SIGNAL)
+    #define STATE_MACHINE_ASYNC_SIGNAL_CODE(code) code
+#elif  defined(STATE_MACHINE_ASYNC_LOCK_FREE)
+    #define STATE_MACHINE_ASYNC_LOCK_FREE_CODE(code) code
+#endif
+
 /*
-    [Async Machine]
-    Synchronization of [Input]s and [SyncOutput]
+    Synchronization of Async [Input]s and [SyncOutput]
     Selection between DisableIrq and Signal Lock
     alternatively Inputs spin-wait
 */
@@ -67,9 +76,9 @@ static inline bool _StateMachine_AcquireAsyncIsr(StateMachine_Active_T * p_activ
     /* [Async_ProcInput] disables ISR, runs to completion => same as SynchronousMachine case */
 #if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
-#if STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input prioirty higher than ProcState */
+    #if STATE_MACHINE_INPUT_MULTITHREADED  /* Case of Input priority higher than ProcState */
     _Critical_DisableIrq();
-#endif
+    #endif
     return true;
 #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     return Critical_AcquireLock(&p_active->InputSignal);
@@ -82,9 +91,9 @@ static inline void _StateMachine_ReleaseAsyncIsr(StateMachine_Active_T * p_activ
 {
 #if defined(STATE_MACHINE_ASYNC_CRITICAL)
     (void)p_active;
-#if STATE_MACHINE_INPUT_MULTITHREADED
+    #if STATE_MACHINE_INPUT_MULTITHREADED
     _Critical_EnableIrq();
-#endif
+    #endif
 #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     Critical_ReleaseLock(&p_active->InputSignal);
 #else
@@ -150,6 +159,9 @@ static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * 
 
 */
 /******************************************************************************/
+/*
+    ProcSyncOutput while disabling separate ProcSyncInput only
+*/
 static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_active)
 {
 #if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)

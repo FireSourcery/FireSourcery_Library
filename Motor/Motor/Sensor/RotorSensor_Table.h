@@ -37,7 +37,7 @@
     [RotorSensor_Id]
     TypeId
     Generic access
-    Perserve order for serialization
+    Preserve order for serialization
 */
 typedef enum RotorSensor_Id
 {
@@ -53,25 +53,20 @@ RotorSensor_Id_T;
 
 
 /*
-    [AngleSensor_Mux_T]
-    Mux/Repo
+    [RotorSensor_Mux_T] Mux/Repo
     Holds all selectable sensors. Map common AngleSpeed State
     include all using preprocessor conditions
     There can only be 1 sensor of each type per motor, with fixed corresponding Id
 */
-// typedef const struct Motor_SensorTable
 // alternatively as [Motor_SensorTable_T], part of Motor_T
 // RotorSensor_T ** P_SENSOR_TABLE; may simplify external addition of sensor
 typedef const struct RotorSensor_Table
 {
     const RotorSensor_T EMPTY;
 // #if defined(CONFIG_MOTOR_SENSOR_HALL_ENABLE)
-    const Hall_RotorSensor_T HALL;
+    const Hall_RotorSensor_T HALL;    // const Hall_T HALL;
 // #endif
-    const Encoder_RotorSensor_T ENCODER;
-    // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
-    // const Encoder_T ENCODER;
-    // const Hall_T HALL;
+    const Encoder_RotorSensor_T ENCODER; // const Encoder_T ENCODER;
 }
 RotorSensor_Table_T;
 

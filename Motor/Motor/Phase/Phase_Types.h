@@ -105,7 +105,7 @@ static inline Phase_Id_T Phase_PrevOf(Phase_Id_T id)
     return TABLE[id];
 }
 
-// static inline Phase_Id_T Phase_DirectedOf(Phase_Id_T id, int sign)
+// static inline Phase_Id_T Phase_DirectOf(Phase_Id_T id, int sign)
 // {
 //     if (sign > 0) { return Phase_NextOf(id); }
 //     else if (sign < 0) { return Phase_PrevOf(id); }

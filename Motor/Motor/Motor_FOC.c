@@ -79,21 +79,21 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // }
 
 /* From Iabc to Idq/IdqReq to Vdq */
-static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t idReq, int16_t iqReq)
+static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t dReq, int16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);
 
-    if (CaptureIabc(p_motor) == true)
+    if (CaptureIabc(p_motor) == true)    /* else update angle only, until next cycle */
     {
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
             // ProcIFeedback(p_motor, p_motor->Foc.ReqD, p_motor->Foc.ReqQ);
-            ProcIFeedback(p_motor, idReq, iqReq);
+            ProcIFeedback(p_motor, dReq, qReq);
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
-            FOC_SetVq(&p_motor->Foc, iqReq);
-            FOC_SetVd(&p_motor->Foc, idReq);
+            FOC_SetVq(&p_motor->Foc, qReq);
+            FOC_SetVd(&p_motor->Foc, dReq);
             FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
             /* Still check CaptureIabc for overcurrent */
             /* todo on decrement */
@@ -110,7 +110,6 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
             // }
         }
     }
-    /* else update angle only, until next cycle */
 }
 
 /******************************************************************************/
@@ -174,7 +173,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
     Motor_ExternControl(p_motor);
 #endif
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_ProcTorqueRamp(p_motor));
-    // ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_ProcTorqueRamp(p_motor)); /* 20Khz */
+    // ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_ProcTorqueRamp(p_motor));
     // ProcAngleOutput(p_motor);
 }
 

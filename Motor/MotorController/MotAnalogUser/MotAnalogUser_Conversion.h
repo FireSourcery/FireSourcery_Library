@@ -30,7 +30,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-
 #include "Peripheral/Analog/Analog.h"
 
 typedef const struct MotAnalogUser_Conversion

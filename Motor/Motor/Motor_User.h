@@ -193,6 +193,7 @@ typedef struct Motor_User_Input
     uint16_t ILimit;
     // uint16_t RampOnOff;
     bool IsUpdated;
+    // stateCmd for on edge
 }
 Motor_User_Input_T;
 

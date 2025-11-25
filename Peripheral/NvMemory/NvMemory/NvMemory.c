@@ -39,9 +39,9 @@
 static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address) NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
 static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address)
 {
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE
+#ifdef NV_MEMORY_HW_OP_ADDRESS_RELATIVE
     return (address + p_state->p_OpPartition->OP_ADDRESS_OFFSET);
-#elif defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
+#elif defined(NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
     (void)p_context; (void)p_state; return address;
 #endif
 }

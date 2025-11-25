@@ -56,7 +56,7 @@ Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t inp
     return status;
 }
 
-
+// _Monitor_ActiveLow_CheckFault
 static bool _Monitor_CheckFaultAsLow(const Monitor_Base_T * p_monitor, int32_t input) { return (input <= p_monitor->FaultLimit); }
 
 Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t input)
@@ -147,6 +147,8 @@ Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
             p_monitor->LastInput = input;
             p_monitor->StatusPrev = p_monitor->Status;
             p_monitor->Status = _Monitor_EvaluateAsHigh(&p_monitor->Base, input);
+            break;
+        default:
             break;
     }
 

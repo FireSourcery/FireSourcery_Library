@@ -40,17 +40,17 @@
 
 /******************************************************************************/
 /*
-
+    Protected - For Derived StateMachine Use
 */
 /******************************************************************************/
 typedef struct StateMachine_Active
 {
     State_T * p_ActiveState;     /* HSM - The Active Top Level State. Keep the top level fast. ActiveBranch */
     State_T * p_ActiveSubState;  /* HSM - Leaf State, defines full path. ActiveLeaf */
-    /* Optionally p_ActiveState includes P_ROOT for top level. */
+    /* todo p_ActiveState includes P_ROOT for top level. */
 
     /*
-        Buffered transition. For restricting transition to during proc state only
+        Buffered Sync transition. For restricting transition to during proc state only
         Lock depending on user handler
         In this case user still needs to selectively lock on some inputs, where proc state should not run without input completion
         or set sync buffer
@@ -73,21 +73,6 @@ typedef struct StateMachine_Active
 }
 StateMachine_Active_T;
 
-/* Input Buffer */
-typedef struct StateMachine_SyncInput
-{
-    /*
-        Sync machine store result until process
-        proc the last input of each unique id
-        multiple inputs of the same id will overwrite
-        lockless operation when [ProcState] priority is higher than [SetInput]
-    */
-    volatile uint32_t Ids; /* Bit mask of inputs that have been set. */
-    state_value_t Values[]; /* alternatively, context pointer or fam */
-    /* mapper version needs separate buffer */
-}
-StateMachine_SyncInput_T;
-
 /******************************************************************************/
 /*
     Top Level State
@@ -108,6 +93,7 @@ static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_
 /******************************************************************************/
 /*
     SubState
+    todo remove
 */
 /******************************************************************************/
 static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
@@ -128,12 +114,19 @@ static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T *
     { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
 
 
+/*   p_ActiveState includes P_ROOT for top level. */
+// static inline State_T * StateMachine_GetActiveRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP; }
+// static inline state_t StateMachine_GetActiveRootStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP->ID; }
+// static inline bool StateMachine_IsActiveRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState->P_TOP); }
+// static inline bool StateMachine_IsActiveRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->P_TOP->ID); }
+
 
 /******************************************************************************/
 /*!
-
+    Protected Inline Functions
 */
 /******************************************************************************/
+/* optionally keep context in signature */
 static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value)
 {
     p_active->SyncInputs[id] = value;
@@ -192,25 +185,18 @@ static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_
     Selectively implement critical in calling layer, if not require for all inputs
 */
 /******************************************************************************/
-extern void _StateMachine_Init(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
+// extern void _StateMachine_Init(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
+extern void _StateMachine_Reset(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
 
 extern void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
 extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
 extern void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, void * p_context);
 
 // extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value);
-extern void _StateMachine_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context);
-
-
-/* _StateMachine_SubState */
-extern void _StateMachine_TransitionSubState(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_TransitionSubStateTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_ProcSubStateInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
-
-extern void _StateMachine_ProcSubState_Nested(StateMachine_Active_T * p_active, void * p_context);
 

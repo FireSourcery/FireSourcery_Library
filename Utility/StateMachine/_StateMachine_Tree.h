@@ -50,15 +50,16 @@ static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_act
 
 /******************************************************************************/
 /*!
-
+    Protected
 */
 /******************************************************************************/
-/* _StateMachine_Branch */
+/* _StateMachine_Branch_Action */
 extern void _StateMachine_TransitionBranch(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 extern void _StateMachine_TransitionBranchTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
 extern void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
 extern void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+
 extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active, void * p_context);
 

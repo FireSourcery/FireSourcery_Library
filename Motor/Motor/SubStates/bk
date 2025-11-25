@@ -32,6 +32,10 @@
 //     // [MSM_ACCESSOR_CONFIG_CALIBRATION_ALIAS]     = (State_SetField_T)NULL,
 // };
 
+// const State_SetField_T MOTOR_CONFIG_ACCESS_TABLE[MOTOR_CONFIG_ACCESSOR_TABLE_LENGTH] =
+// {
+//     [MSM_ACCESSOR_CONFIG_CALIBRATION]           = {(State_GetField_T)Motor_Var_ConfigCalibration_Get, (State_SetField_T)Motor_Var_ConfigCalibration_Set, }
+// };
 
 
 

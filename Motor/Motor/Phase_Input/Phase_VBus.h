@@ -49,7 +49,6 @@ typedef struct Phase_VBus
 }
 Phase_VBus_T;
 
-
 /*
     static Global State
 */
@@ -95,3 +94,11 @@ static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phas
 
 // extern PhaseVBus_Context_T PHASE_VBUS_CONTEXT;
 
+
+
+// typedef struct Phase_VBus_Config
+// {
+//     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
+//     uint16_t VLowILimit_Fract16;
+// }
+// Phase_VBus_Config_T;

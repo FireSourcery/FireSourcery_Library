@@ -56,6 +56,7 @@ typedef enum MotAnalogUser_Direction
     MOT_ANALOG_USER_DIRECTION_NEUTRAL,
     MOT_ANALOG_USER_DIRECTION_FORWARD,
     MOT_ANALOG_USER_DIRECTION_REVERSE,
+    // ttodo remove
     MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE,
     MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE,
     MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE,
@@ -130,8 +131,8 @@ typedef const struct MotAnalogUser
 
     /* UserDIn instances */
     UserDIn_T REVERSE_DIN;
-    UserDIn_T FORWARD_DIN; /* altneratively as compile time enable */
-    UserDIn_T NEUTRAL_DIN; /* altneratively as compile time enable */
+    UserDIn_T FORWARD_DIN; /* alternatively as compile time enable */
+    UserDIn_T NEUTRAL_DIN; /* alternatively as compile time enable */
 
     UserDIn_T SWITCH_BRAKE_DIN;
 
@@ -369,7 +370,7 @@ static inline MotAnalogUser_Cmd_T MotAnalogUser_GetCmd(const MotAnalogUser_T * p
 
 /******************************************************************************/
 /*
-    Public Functions
+    Extern Functions
 */
 /******************************************************************************/
 extern void MotAnalogUser_Init(const MotAnalogUser_T * p_user);
@@ -382,6 +383,11 @@ extern void MotAnalogUser_SetThrottleAIn(const MotAnalogUser_T * p_user, uint16_
 extern void MotAnalogUser_SetSwitchBrake(const MotAnalogUser_T * p_user, bool useSwitchBrake, uint16_t bistateBrakeIntensity_Fract16);
 extern void MotAnalogUser_SetDirectionPins(const MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins);
 
+/******************************************************************************/
+/*
+    VarId / ConfigId Access Functions
+*/
+/******************************************************************************/
 /* Configuration access */
 typedef enum MotAnalogUser_VarId
 {

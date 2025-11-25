@@ -25,7 +25,6 @@
     @file   Ring.h
     @author FireSourcery
     @brief  Ring Buffer. Optimized implementation using POW2_MASK
-
 */
 /******************************************************************************/
 #ifndef RING_UTILITY_H

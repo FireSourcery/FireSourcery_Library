@@ -37,17 +37,17 @@
     SubState as a branch
 */
 /******************************************************************************/
-// static inline State_T * TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context)
+// static inline State_T * TransitionFunctionOnBranchState(const StateMachine_Active_T * p_active, void * p_context)
 // {
 //     return _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, 0U);
 // }
 
-static inline State_T * TransitionFunctionOfBranchState(const StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
+static inline State_T * TransitionFunctionOnBranchState(const StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
 {
     return _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, stopLevel);
 }
 
-static inline State_T * TransitionFunctionOfBranchInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+static inline State_T * TransitionFunctionOnBranchInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     return State_TraverseTransitionOfInput(StateMachine_GetLeafState(p_active), p_context, id, value);
 }
@@ -82,14 +82,14 @@ void _StateMachine_TransitionBranchTo(StateMachine_Active_T * p_active, void * p
 /* traversing up for now */
 void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel)
 {
-    _StateMachine_TransitionBranchTo(p_active, p_context, TransitionFunctionOfBranchState(p_active, p_context, stopLevel));
+    _StateMachine_TransitionBranchTo(p_active, p_context, TransitionFunctionOnBranchState(p_active, p_context, stopLevel));
 }
 
 /* Transition immediately */
 /* Optional call with AsyncInput */
 void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_TransitionBranchTo(p_active, p_context, TransitionFunctionOfBranchInput(p_active, p_context, id, value));
+    _StateMachine_TransitionBranchTo(p_active, p_context, TransitionFunctionOnBranchInput(p_active, p_context, id, value));
 }
 
 void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context)
@@ -106,7 +106,7 @@ void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * 
 
 // inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context, StateMachine_SyncInput_T * p_syncInputs)
 // {
-//     __StateMachine_ProcSyncInput(p_active, p_context, p_syncInputs, TransitionFunctionOfBranchInput);
+//     __StateMachine_ProcSyncInput(p_active, p_context, p_syncInputs, TransitionFunctionOnBranchInput);
 // }
 
 
@@ -122,8 +122,7 @@ void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active,
 */
 void _StateMachine_ApplyBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    // p_active->p_SyncNextState = TransitionFunctionOfBranchInput(p_active, p_context, id, value);
-   _StateMachine_SetSyncTransition(p_active, p_context, TransitionFunctionOfBranchInput(p_active, p_context, id, value));
+   _StateMachine_SetSyncTransition(p_active, p_context, TransitionFunctionOnBranchInput(p_active, p_context, id, value));
 }
 
 /******************************************************************************/
@@ -146,7 +145,7 @@ void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context
     States with ProcBranch_Nested need [p_ActiveSubState] to be cleared accordingly
 
     Within _StateMachine_ProcState ->
-    _StateMachine_ProcPendingTransition
+    _StateMachine_ProcSyncNextState
     _StateMachine_ProcSyncInput
     _StateMachine_ProcSyncOutput
         _StateMachine_ProcBranch_Nested
@@ -175,7 +174,7 @@ void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_
 
     ProcInput function may be selected per [state_input_t] call.
         StateMachine_ApplyInput -   ignores substate exit functions.
-        StateMachine_ApplyBranchInput
+        StateMachine_Branch_ApplyInput
         opt StateMachine_ProcRootFirstInput - 0, n to 1, early return on root transition. optional
 
     ProcRootFirstState requires unique implementation,
@@ -232,7 +231,6 @@ void _StateMachine_ProcRootFirstSyncOutput(StateMachine_Active_T * p_active, voi
     if (p_next == NULL) { p_next = _State_TraverseTransitionOfOutput(StateMachine_GetLeafState(p_active), p_context, 1U); } /* Skiped if Root transitions */
     _StateMachine_TransitionRoot(p_active, p_context, p_next);
 }
-
 
 /*
     Root-first input (single event):

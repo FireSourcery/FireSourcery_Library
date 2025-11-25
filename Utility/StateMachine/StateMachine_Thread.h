@@ -34,10 +34,10 @@
 
 /******************************************************************************/
 /*
-    StateMachine Thread
-    inline for compile time expansion
+    StateMachine SyncOutput Thread
     [Combined Semi-Synchronous Machine]
     supports both operation at expense of additional condition check
+    inline for compile time expansion
 */
 /******************************************************************************/
 static inline void _StateMachine_Synchronous_Thread(StateMachine_Active_T * p_active, void * p_context)

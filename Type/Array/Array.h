@@ -45,15 +45,15 @@
 */
 /******************************************************************************/
 
-typedef const union
-{
-    void * P_BUFFER;
-    uint8_t * P_ARRAY8;
-    uint16_t * P_ARRAY16;
-    uint32_t * P_ARRAY32;
-    uint64_t * P_ARRAY64;
-}
-GenericArray_T;
+// typedef const union
+// {
+//     void * P_BUFFER;
+//     uint8_t * P_ARRAY8;
+//     uint16_t * P_ARRAY16;
+//     uint32_t * P_ARRAY32;
+//     uint64_t * P_ARRAY64;
+// }
+// ValueArray_T;
 
 // typedef const struct ArrayContext
 typedef const struct ArrayMeta
@@ -65,7 +65,7 @@ typedef const struct ArrayMeta
 
     // effective add to the unified interface, non value types
     // Array_State_T * const P_STATE;  // Pointer to the p_array buffer, with augments
-    /* or seperate for extensions */
+    /* or separate for extensions */
     // void * const P_BUFFER;
 }
 Array_T;

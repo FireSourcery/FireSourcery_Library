@@ -98,7 +98,7 @@
 // {
 //     int32_t iLimit = ILimitMotoringSentinelOf(p_motor, i_ufract16);
 //     bool isActiveLimit = LimitArray_SetEntry(&p_motor->ILimit, id, iLimit);
-//     if (isActiveLimit == true) { Motor_SetILimit(p_motor, iLimit); } /* alteratively maintain scalar comparison satisfy both sides */
+//     if (isActiveLimit == true) { Motor_SetILimit(p_motor, iLimit); } /* alternatively maintain scalar comparison satisfy both sides */
 //     return isActiveLimit;
 // }
 

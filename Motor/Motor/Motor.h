@@ -111,7 +111,7 @@ typedef union Motor_FeedbackMode
 {
     struct
     {
-        uint8_t OpenLoop   : 1U;   /* 0 -> Angle Sensor feedback, 1 -> OpenLoop */
+        uint8_t OpenLoop   : 1U;   /* 0 -> Angle Sensor feedback, 1 -> OpenLoop */ /* Affective as control flag to set OpenLoop State */
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Position   : 1U;
@@ -147,19 +147,6 @@ typedef union
     uint16_t Value;
 }
 Motor_FaultFlags_T;
-
-/******************************************************************************/
-/*
-    Number formats
-
-    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
-    [UFract16]          [0:2) <=> [0:65535] in Q1.15
-    [Accum32]           [-2:2] <=> [-65536:65536] in Q17.15      Max [INT32_MIN:INT32_MAX]
-    [Percent16/Unit16]  [0:1) <=> [0:65535] in Q0.16
-    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
-    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
-*/
-/******************************************************************************/
 
 /*!
     @brief Motor Config - Runtime variable configuration. Load from non volatile memory.
@@ -247,17 +234,13 @@ typedef struct Motor_State
     */
     StateMachine_Active_T StateMachine;
     uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
-    Motor_FaultFlags_T FaultFlags;              /* Fault SubState */
-    uint8_t CalibrationStateIndex;
-    HeatMonitor_T HeatMonitorState;
-
-    /*
-        Feedback State
-    */
 
     /* StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. Active Limits. Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState */
+    /*  */
+    Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
+    uint8_t CalibrationStateIndex;
 
     /*
         Position Sensor
@@ -279,10 +262,10 @@ typedef struct Motor_State
         effective as sentinel comparison
     */
 
+   // fract16_t UserCmd; /* alternatively, as it is on a separate thread */
     /*
         Speed Feedback
     */
-    // fract16_t UserCmd; /* altneratively, as it is on a seperate thread */
     Ramp_T SpeedRamp;                   /* Output [-32767:32767] Setpoint => SpeedReq */
     // uint16_t SpeedLimit_Fract16;     /* handle update on direction change */
     uint16_t SpeedLimitForward_Fract16;
@@ -308,6 +291,9 @@ typedef struct Motor_State
     Ramp_T OpenLoopIRamp;           /* Preset I Ramp */
     // Ramp_T OpenLoopTorqueRamp;   /* Preset V/I Ramp */
     Angle_T OpenLoopAngle;
+
+    /*  */
+    HeatMonitor_T HeatMonitorState;
 
     /*
         Storable Config
@@ -397,10 +383,11 @@ Motor_T;
 
 // #define MOTOR_CONTROL_TIMER_INIT(p_MotorContext, MotorState) TIMER_T_ALLOC(
 
-
+/******************************************************************************/
 /*
-    Types
+    Types for generic accessor
 */
+/******************************************************************************/
 typedef int motor_value_t;
 // typedef register_t motor_value_t;
 
@@ -419,7 +406,16 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 
 
 /******************************************************************************/
+/*
+    Number formats
 
+    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
+    [UFract16]          [0:2) <=> [0:65535] in Q1.15
+    [Accum32]           [-2:2] <=> [-65536:65536] in Q17.15     Max [INT32_MIN:INT32_MAX]
+    [Percent16/Unit16]  [0:1) <=> [0:65535] in Q0.16
+    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
+    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
+*/
 /******************************************************************************/
 
 /******************************************************************************/
@@ -434,6 +430,8 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 /* alternatively convert kv to electrical domain */
 static inline uint16_t Motor_RpmOfKv(const Motor_State_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
 static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
+
+// static inline uint16_t motor_rpm_of_kv(int kv, int v, uint16_t v_fract16) { return fract16_mul(v_fract16, kv * v); }
 
 // static inline uint16_t Motor_GetKt(const Motor_State_T * p_motor) { 60 / (2 * pi * kV);  }
 
@@ -481,14 +479,14 @@ static inline accum32_t Motor_VPhaseOfSpeed_Fract16(accum32_t speed_fract16) { r
 
 /******************************************************************************/
 /*
-    Proc Outer Feeback State
+    Proc Outer Feedback State
 */
 /******************************************************************************/
 /******************************************************************************/
 /*
-    Run/Feeback State Limits
+    Run/Feedback State Limits
     Signed with CW/CCW direction.
-    getters for abstraction, implementaiton may change
+    getters for abstraction, implementation may change
     Null returns 0 or lower abs value
 */
 /******************************************************************************/
@@ -614,7 +612,7 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */
+        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */ /* alternatively StateMachine Entry for capture speed */
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
 
@@ -705,6 +703,7 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
 /* Getter in case Direction moves to RotorSensor */
 /* Same as Sign(Speed) */
 static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
+// static inline Motor_Direction_T Motor_GetAppliedDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 
 /*!
     Convert between a user reference direction to virtual CCW/CW direction

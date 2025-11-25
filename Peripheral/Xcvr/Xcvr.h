@@ -46,6 +46,10 @@ typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
 typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value); // optionally split init and compare
 // typedef void(*Xcvr_Init_T)        (void * p_xcvr );
 
+/* Alternatively, length first on N */
+// typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, size_t length, const uint8_t * p_src);
+// typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, size_t length, uint8_t * p_dest);
+
 typedef const struct Xcvr_VTable
 {
     Xcvr_TxByte_T       TX_BYTE;
@@ -69,7 +73,6 @@ typedef const struct Xcvr
 {
     void * P_BASE; /* Xcvr data struct */
     const Xcvr_VTable_T * P_VTABLE;
-    // Xcvr_Type_T TYPE; // remove type and use vtable only
 }
 Xcvr_T;
 
@@ -117,137 +120,4 @@ static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 //static inline void Xcvr_DisableRxIsr(const Xcvr_T * p_xcvr){}
 // size_t Xcvr_FlushRxBuffer(const Xcvr_T * p_xcvr)
 
-
-/*
-    Switch impl
-*/
-// typedef enum Xcvr_Type
-// {
-//     XCVR_TYPE_SERIAL,
-//     XCVR_TYPE_I2C,
-//     XCVR_TYPE_SPI,
-//     XCVR_TYPE_VIRTUAL,
-//     XCVR_TYPE_INTERFACE,
-// }
-// Xcvr_Type_T;
-// static inline bool Xcvr_TxByte(const Xcvr_T * p_xcvr, uint8_t txChar)
-// {
-//     return p_xcvr->p_Xcvr->P_VTABLE->TX_BYTE(p_xcvr->p_Xcvr->P_BASE, txChar);
-//     // return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr->P_BASE, txChar);
-//     // return p_xcvr->P_VTABLE->TX_BYTE(p_xcvr, txChar);
-// }
-
-// static inline bool Xcvr_RxByte(const Xcvr_T * p_xcvr, uint8_t * p_rxChar)
-// {
-//     return p_xcvr->p_Xcvr->P_VTABLE->RX_BYTE(p_xcvr->p_Xcvr->P_BASE, p_rxChar);
-// }
-
-// static inline bool Xcvr_TxN(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)
-// {
-//     bool status;
-// #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-//     switch(p_xcvr->p_Xcvr->TYPE)
-//     {
-//         case XCVR_TYPE_SERIAL:      status = Serial_SendN(p_xcvr->p_Xcvr->P_BASE, p_src, length); break;
-//         case XCVR_TYPE_I2C:         status = false;     break;
-//         case XCVR_TYPE_SPI:         status = false;     break;
-//         case XCVR_TYPE_VIRTUAL:     status = false;     break;
-//         default:                    status = false;     break;
-//     }
-// #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     status = p_xcvr->p_Xcvr->P_VTABLE->TX_N(p_xcvr->p_Xcvr->P_BASE, p_src, length);
-// #endif
-//     return status;
-// }
-
-// static inline bool Xcvr_RxN(const Xcvr_T * p_xcvr, uint8_t * p_dest, size_t length)
-// {
-//     return p_xcvr->p_Xcvr->P_VTABLE->RX_N(p_xcvr->p_Xcvr->P_BASE, p_dest, length);
-// }
-
-// static inline size_t Xcvr_TxMax(const Xcvr_T * p_xcvr, const uint8_t * p_srcBuffer, size_t srcSize)
-// {
-//     return p_xcvr->p_Xcvr->P_VTABLE->TX_MAX(p_xcvr->p_Xcvr->P_BASE, p_srcBuffer, srcSize);
-// }
-
-// static inline size_t Xcvr_RxMax(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)
-// {
-//     size_t rxCount;
-// #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-//     switch(p_xcvr->p_Xcvr->TYPE)
-//     {
-//         case XCVR_TYPE_SERIAL:      rxCount = Serial_RecvMax(p_xcvr->p_Xcvr->P_BASE, p_destBuffer, destSize); break;
-//         case XCVR_TYPE_I2C:         rxCount = 0U; break;
-//         case XCVR_TYPE_SPI:         rxCount = 0U; break;
-//         case XCVR_TYPE_VIRTUAL:     rxCount = 0U; break;
-//         default:                    rxCount = 0U; break;
-//     }
-// #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     rxCount = p_xcvr->p_Xcvr->P_VTABLE->RX_MAX(p_xcvr->p_Xcvr->P_BASE, p_destBuffer, destSize);
-// #endif
-//     return rxCount;
-// }
-
-// static inline size_t Xcvr_GetRxFullCount(const Xcvr_T * p_xcvr)
-// {
-//     size_t count;
-// #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-//     switch(p_xcvr->p_Xcvr->TYPE)
-//     {
-//         case XCVR_TYPE_SERIAL:      count = Serial_GetRxFullCount(p_xcvr->p_Xcvr->P_BASE); break;
-//         case XCVR_TYPE_I2C:         count = 0U;    break;
-//         case XCVR_TYPE_SPI:         count = 0U;    break;
-//         case XCVR_TYPE_VIRTUAL:     count = 0U;    break;
-//         default:                    count = 0U; break;
-//     }
-// #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     count = p_xcvr->p_Xcvr->P_VTABLE->GET_RX_FULL_COUNT(p_xcvr->p_Xcvr->P_BASE);
-// #endif
-//     return count;
-// }
-
-// static inline size_t Xcvr_GetTxEmptyCount(const Xcvr_T * p_xcvr)
-// {
-//     size_t count;
-// #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-//     switch(p_xcvr->p_Xcvr->TYPE)
-//     {
-//         case XCVR_TYPE_SERIAL:      count = Serial_GetTxEmptyCount(p_xcvr->p_Xcvr->P_BASE); break;
-//         case XCVR_TYPE_I2C:         count = 0U;    break;
-//         case XCVR_TYPE_SPI:         count = 0U;    break;
-//         case XCVR_TYPE_VIRTUAL:     count = 0U;    break;
-//         default:                    count = 0U; break;
-//     }
-// #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     count = p_xcvr->p_Xcvr->P_VTABLE->GET_TX_EMPTY_COUNT(p_xcvr->p_Xcvr->P_BASE);
-// #endif
-//     return count;
-// }
-
-// static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
-// {
-//     bool isSuccess = true;
-// #if     defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-//     switch (p_xcvr->p_Xcvr->TYPE)
-//     {
-//         case XCVR_TYPE_SERIAL:      isSuccess = Serial_ConfigBaudRate(p_xcvr->p_Xcvr->P_BASE, baudRate);    break;
-//         case XCVR_TYPE_I2C:         break;
-//         case XCVR_TYPE_SPI:         break;
-//         case XCVR_TYPE_VIRTUAL:     break;
-//         default: break;
-//     }
-// #elif     defined(CONFIG_XCVR_INTERFACE_VTABLE_ONLY)
-//     if (p_xcvr->p_Xcvr->P_VTABLE->CONST_BAUD_RATE != 0U) { p_xcvr->p_Xcvr->P_VTABLE->CONST_BAUD_RATE(p_xcvr->p_Xcvr->P_BASE, baudRate); }
-// #endif
-//     return isSuccess;
-// }
-
-// static inline bool Xcvr_Tx(const Xcvr_T * p_xcvr, const uint8_t * p_src, size_t length)         { return Xcvr_TxN(p_xcvr, p_src, length); }
-// static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size_t destSize)    { return Xcvr_RxMax(p_xcvr, p_destBuffer, destSize); }
-
-
-// #if defined(CONFIG_XCVR_INTERFACE_PERIPHERAL)
-// extern uint8_t * Xcvr_AcquireTxBuffer(const Xcvr_T * p_xcvr);
-// extern void Xcvr_ReleaseTxBuffer(const Xcvr_T * p_xcvr, size_t writeSize);
-// #endif
 

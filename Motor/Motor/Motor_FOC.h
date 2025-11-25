@@ -100,8 +100,8 @@ static inline bool Motor_FOC_IsILimitReached(const Motor_State_T * p_motor) { re
 extern void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
-
 extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
+
 extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor);
 
@@ -115,7 +115,6 @@ extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor);
 
 extern void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);
-extern void Motor_FOC_SetDirection_Cast(Motor_State_T * p_motor, int direction);
 extern void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor);
 
 #ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE

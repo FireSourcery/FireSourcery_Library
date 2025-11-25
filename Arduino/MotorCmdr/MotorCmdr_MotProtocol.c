@@ -72,9 +72,9 @@ static void ReadVar_ParseResp(MotorCmdr_T * p_app, uint8_t * p_txPacket, size_t 
 
     // switch(p_app->MotorReadVarId)
     // {
-    //     case MOT_DRIVE_VAR_THROTTLE:        p_app->Throttle break;                    /* Value 16-bit */
-    //     case MOT_DRIVE_VAR_BRAKE:              break;                    /* Value 16-bit */
-    //     case MOT_DRIVE_VAR_DIRECTION:          break;                /* Value 0: Neutral, 1: Reverse, 2: Forward */
+    //     case VEHICLE_VAR_THROTTLE:        p_app->Throttle break;                    /* Value 16-bit */
+    //     case VEHICLE_VAR_BRAKE:              break;                    /* Value 16-bit */
+    //     case VEHICLE_VAR_DIRECTION:          break;                /* Value 0: Neutral, 1: Reverse, 2: Forward */
 
     //     case MOT_VAR_SPEED_RPM:             break;
     //     case MOT_VAR_ERROR_CODE:         break;

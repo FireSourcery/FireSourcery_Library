@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,21 +24,17 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file   Vehicle_StateMachine.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef CONFIG_NV_MEMORY_H
-#define CONFIG_NV_MEMORY_H
+#include "MotorController_App.h"
+#include "MotorController_User.h"
+#include "MotorController_StateMachine.h"
+#include "Vehicle_User.h"
+#include "Vehicle_StateMachine.h"
 
-#if     defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
-#elif   defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
-#else
-    #define CONFIG_NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
-#endif
+extern State_T MC_STATE_MAIN_VEHICLE;
+extern MotorController_App_T MC_APP_VEHICLE;
 
-
-
-#endif

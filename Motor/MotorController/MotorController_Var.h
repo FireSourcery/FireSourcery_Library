@@ -26,9 +26,7 @@
 /*!
     @file   MotorController_Var.h
     @author FireSourcery
-    @brief  Var - Field-like Property Interface Getter/Setter via Id Key
-                Effectively serialize selected set of struct members
-                Store in host cache and periodically poll
+    @brief  Var - Field-like Property Interface, Getter/Setter via Id Key
 */
 /******************************************************************************/
 #include "MotorController_User.h"
@@ -37,6 +35,14 @@
 #include "../Motor/Motor_Var.h"
 #include "../MotProtocol/MotVarId.h"
 #include "System/SysTime/SysTime.h"
+
+/******************************************************************************/
+/*
+    Effectively serialize selected set of struct members
+    Store in host cache, periodically poll
+    Alternatively as Field Id
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*
@@ -147,6 +153,10 @@ MotorController_Var_StaticRef_T;
     Type of Base
         directly corresponds to enum type containing index ids
         Corresponds to the "object type". accounts for type literal and specialized properties.
+        By source module
+
+    Control and UserIn
+    Config Types need to check StateMachine is in Config State
 */
 /******************************************************************************/
 /*
@@ -164,9 +174,9 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_GENERAL_DEBUG,
     MOT_VAR_TYPE_GENERAL_STATIC_REF, /* Read-only */
 
-    /* MotDrive Submodule */
-    MOT_VAR_TYPE_MOT_DRIVE_CONTROL,
-    MOT_VAR_TYPE_MOT_DRIVE_CONFIG,
+    /* Vehicle Submodule */
+    MOT_VAR_TYPE_VEHICLE_CONTROL,
+    MOT_VAR_TYPE_VEHICLE_CONFIG,
 
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
@@ -212,7 +222,7 @@ MotorController_VarType_HeatMonitor_T;
 
 typedef enum MotorController_VarType_Communication
 {
-    MOT_VAR_TYPE_PROTOCOL_STATE,
+    MOT_VAR_TYPE_SOCKET_STATE,
     MOT_VAR_TYPE_SOCKET_CONFIG, /* Instance by Protocol Count */
 
     MOT_VAR_TYPE_CAN_BUS_STATE,
@@ -220,13 +230,29 @@ typedef enum MotorController_VarType_Communication
 }
 MotorController_VarType_Communication_T;
 
+
+/*
+    MotorController
+    Application_User
+    MotorController_Var
+*/
+/* SubModule */
+// typedef enum MotorController_VarType_Application
+// {
+    /* Vehicle Submodule */
+// MOT_VAR_TYPE_VEHICLE_CONTROL,
+// MOT_VAR_TYPE_VEHICLE_CONFIG,
+
+// }
+// MotorController_VarType_Application_T;
+
 /******************************************************************************/
 /*
     [MotorController_VarHandlerType]
     Handler by Source File Module
     Effectively name space for types
     Mutually exclusive attributes when possible
-    partition for contigously expandable ids
+    partition for contiguously expandable ids
 */
 /******************************************************************************/
 typedef enum MotVarId_HandlerType
@@ -239,7 +265,8 @@ typedef enum MotVarId_HandlerType
     MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /*  */
+    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /* Resv */
+    MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND, /*  */
     _MOT_VAR_ID_HANDLER_TYPE_END,
 }
 MotVarId_HandlerType_T;
@@ -254,3 +281,21 @@ extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
 
 
+
+// typedef enum
+// {
+//     ACCESS_POLICY_NONE              = 0,
+//     ACCESS_POLICY_NOT_ANALOG_MODE   = (1U << 0),  // Requires non-analog input mode
+//     ACCESS_POLICY_CONFIG_STATE      = (1U << 1),  // Requires config state
+//     ACCESS_POLICY_PROTOCOL_CONTROL  = (1U << 2),  // Requires protocol control enabled
+//     ACCESS_POLICY_MOTOR_CMD_STATE   = (1U << 3),  // Requires motor command state
+//     ACCESS_POLICY_WRITE_DISABLED    = (1U << 4),  // Read-only
+// } AccessPolicy_T;
+
+// typedef struct
+// {
+//     MotVarId_HandlerType_T HandlerType;
+//     MotorController_VarType_General_T InnerType;  // Use as union for different handler types
+//     AccessPolicy_T ReadPolicy;
+//     AccessPolicy_T WritePolicy;
+// } VarAccessRule_T;

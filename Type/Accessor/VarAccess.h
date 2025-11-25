@@ -33,44 +33,11 @@
 #include "Type/accessor.h"
 
 /*
-    check state - restrict state by interface
+    check state - restrict state by interface - optionally map on state machine
     map to int accessor, or keyed accessor
-    call accessor handle error checking only
-
-    map to int accessor
-    check state - restrict state by accessor/id
-    call accessor handle check state - state restriction per accessor/id
+    call accessor handle value error checking only
 */
 
-/*
-    Struct per Var implementation
-    Each Var must have generically defined getter/setter
-*/
-// typedef struct Accessor_Var
-// typedef struct Accessor_Field
-typedef struct VarAccess_Var
-{
-    int ID;
-    get_t GET;
-    set_t SET;
-    // proc_t ON_SET;
-    // int (*CALL)(void * p_context, voit * p_value); /* return a status */
-}
-VarAccess_Var_T;
-
-/*
-    Grouped Implementation
-    Single layer of wraping with generically typed function pointers
-*/
-// typedef const struct VarAccess_TypeGroup
-typedef const struct VarAccess_VarTable
-{
-    VarAccess_Var_T * P_VARS;
-    size_t COUNT;
-    // proc_t ON_SET;
-    // test_t TEST_SET;
-}
-VarAccess_VarTable_T;
 
 /* compatibility with sub modules using switch() */
 typedef const struct VarAccess_FieldHandler
@@ -80,6 +47,7 @@ typedef const struct VarAccess_FieldHandler
     test_t TEST_SET;
 }
 VarAccess_FieldHandler_T;
+static inline int _VarAccess_Field_GetAt(const VarAccess_T * p_varAccess, int varId) { return p_varAccess->P_VIRTUAL->GET_FIELD(p_varAccess->P_BASE, varId); }
 
 typedef enum VarAccess_Mode
 {
@@ -91,7 +59,7 @@ VarAccess_Mode_T;
 /* Runtime state */
 typedef struct
 {
-    VarAccess_Mode_T Mode; /* Enable/Disable */
+    VarAccess_Mode_T Mode; /* Enable/Disable */ /* alternatively let mux remap */
     // VarAccess_Var_T * p_LastAccess;
     int PrevAccessId;
     int Status;
@@ -105,6 +73,7 @@ typedef const struct
 {
     void * P_BASE; /* context instance */
     const VarAccess_FieldHandler_T * P_VIRTUAL;
+    // const VarAccess_VarTable_T * P_VAR_TABLE;
     VarAccess_State_T * P_STATE;
 }
 VarAccess_T;
@@ -137,3 +106,37 @@ static void VarAccess_SetAt(const VarAccess_T * p_varAccess, int varId, int varV
             { call_set_at(p_varAccess->P_VIRTUAL->SET_FIELD, p_varAccess->P_BASE, varId, varValue); }
     }
 }
+
+/*
+    Struct per Var implementation
+    Each Var must have generically defined getter/setter
+*/
+// typedef struct Accessor_Var
+// typedef struct Accessor_Field
+// typedef struct VarAccess_Var
+// {
+//     int ID;
+//     get_t GET;
+//     set_t SET;
+//     // proc_t ON_SET;
+//     // int (*CALL)(void * p_context, voit * p_value); /* return a status */
+//
+// }
+// VarAccess_Var_T;
+
+// typedef struct FieldMeta { size_t OFFSET; size_t SIZE; } FieldMeta_T;
+
+// /*
+//     Grouped Implementation
+//     Single layer of wraping with generically typed function pointers
+// */
+// // typedef const struct VarAccess_TypeGroup
+// typedef const struct VarAccess_VarTable
+// {
+//     VarAccess_Var_T * P_VARS;
+//     size_t COUNT;
+//     // proc_t ON_SET;
+//     // test_t TEST_SET;
+// }
+// VarAccess_VarTable_T;
+// static inline int _VarAccess_Var_GetAt(const VarAccess_T * p_varAccess, int varId) { return p_varAccess->P_VAR_TABLE->P_VARS[varId].GET(p_varAccess->P_BASE); }

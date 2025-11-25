@@ -75,7 +75,7 @@ void MotorController_Init(const MotorController_T * p_context)
     Shell_Init(&p_mc->Shell);
 #endif
 
-    MotDrive_Init(&p_context->MOT_DRIVE);
+    Vehicle_Init(&p_context->VEHICLE);
 
     /* Alternatively set nominal on init */
     // TimerT_Counter_InitTickOnInit(&p_context->MILLIS_TIMER, 1U);
@@ -175,13 +175,13 @@ bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILim
 
 
 
-// static inline bool _MotDrive_ProcOnDirection(const MotDrive_T * p_motDrive, MotDrive_Direction_T direction)
+// static inline bool _Vehicle_ProcOnDirection(const Vehicle_T * p_vehicle, Vehicle_Direction_T direction)
 // {
-//     // if((p_motDrive->P_MOT_DRIVE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
+//     // if((p_vehicle->P_VEHICLE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
 //     // {
 //     //     if(p_this->DriveDirection == MOTOR_DIRECTION_REVERSE)
 //     //     {
-//     //         MotDrive_BeepPeriodicType1(p_this);
+//     //         Vehicle_BeepPeriodicType1(p_this);
 //     //     }
 //     //     else
 //     //     {

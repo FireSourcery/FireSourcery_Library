@@ -219,7 +219,7 @@ void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode)
     ApplySpeedLimit(p_motor);
 }
 
-void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int modeValue) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(modeValue)); }
+void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
 
 
 /******************************************************************************/

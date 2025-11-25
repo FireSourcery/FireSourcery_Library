@@ -168,7 +168,6 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
         optionally process remaining.
 */
 /******************************************************************************/
-/* _State_TransitionOfTraverseOutput, _State_TraversiveTransitionOfOutput */
 State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel)
 {
     State_T * p_next = NULL;

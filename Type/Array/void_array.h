@@ -18,10 +18,11 @@
     @brief Void Array / Sized Array - Generic by type
     let compiler to optimize away [size_t type]
     alternatively _Generic select on literal type,
-        Macro arguments lose type contraints
+        Macro arguments lose type constraints
 */
 /******************************************************************************/
 /*  */
+// static inline void * void_pointer_at(size_t type, const void * p_buffer, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 static inline void * void_pointer_at(const void * p_buffer, size_t type, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 
 /*!
@@ -110,23 +111,6 @@ static inline void void_array_foreach(void * p_buffer, size_t type, size_t lengt
     for (size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, type, index)); }
 }
 
-/*
-    const and returns early
-*/
-static inline bool void_array_is_every(const void * p_buffer, size_t type, size_t length, test_t unit_test)
-{
-    bool is_every = true;
-    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type, index)) == false) { is_every = false; break; } }
-    return is_every;
-}
-
-static inline bool void_array_is_any(const void * p_buffer, size_t type, size_t length, test_t unit_test)
-{
-    bool is_any = false;
-    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type, index)) == true) { is_any = true; break; } }
-    return is_any;
-}
-
 /*!
     foreach_is_every
     applies to every element
@@ -146,6 +130,23 @@ static inline bool void_array_for_any(void * p_buffer, size_t type, size_t lengt
 {
     bool is_any = false;
     for (size_t index = 0U; index < length; index++) { if (unit_poll(void_pointer_at(p_buffer, type, index)) == true) { is_any = true; } }
+    return is_any;
+}
+
+/*
+    const and returns early
+*/
+static inline bool void_array_is_every(const void * p_buffer, size_t type, size_t length, test_t unit_test)
+{
+    bool is_every = true;
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type, index)) == false) { is_every = false; break; } }
+    return is_every;
+}
+
+static inline bool void_array_is_any(const void * p_buffer, size_t type, size_t length, test_t unit_test)
+{
+    bool is_any = false;
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(p_buffer, type, index)) == true) { is_any = true; break; } }
     return is_any;
 }
 
@@ -174,6 +175,19 @@ static inline bool void_array_for_any_set(void * p_buffer, size_t type, size_t l
     bool is_any = false;
     for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(p_buffer, type, index), value) == true) { is_any = true; } }
     return is_any;
+}
+
+/*
+    same as above but const pointer
+*/
+static inline bool void_array_is_every_value(const void * p_buffer, size_t type, size_t length, test_entry_t unit_try, value_t value)
+{
+    return void_array_for_every_set((void *)p_buffer, type, length, (try_set_t)unit_try, value);
+}
+
+static inline bool void_array_is_any_value(const void * p_buffer, size_t type, size_t length, test_entry_t unit_try, value_t value)
+{
+    return void_array_for_any_set((void *)p_buffer, type, length, (try_set_t)unit_try, value);
 }
 
 /******************************************************************************/

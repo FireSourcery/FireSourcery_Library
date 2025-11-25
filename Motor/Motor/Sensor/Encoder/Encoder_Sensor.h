@@ -39,7 +39,7 @@
 typedef const struct Encoder_RotorSensor
 {
     const RotorSensor_T MOTOR_SENSOR;
-    const Encoder_T ENCODER;
+    const Encoder_T ENCODER;    // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
 }
 Encoder_RotorSensor_T;
 

@@ -53,7 +53,10 @@ Threshold_Setpoint_T;
 /*
     Config formats
 */
-/* Hysteresis band for this level */
+/*
+    Hysteresis band for this level
+    Setpoint +/- Deadband
+*/
 typedef struct Threshold_Level
 {
     int32_t Setpoint;
@@ -62,7 +65,12 @@ typedef struct Threshold_Level
 Threshold_Level_T;
 
 /* simplified Dual direction init using band */
-/* Threshold_Window, OperatingLimits */
+/*
+    Threshold_Window, OperatingLimits
+
+    High => Setpoint + Deadband
+    Low  => Setpoint - Deadband
+*/
 typedef struct Threshold_Range
 {
     int32_t LimitHigh;

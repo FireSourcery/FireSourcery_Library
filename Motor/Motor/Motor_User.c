@@ -27,7 +27,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-/******************************************************************************/
 #include "Motor_User.h"
 
 
@@ -99,14 +98,15 @@ inline void Motor_User_SetFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMo
     if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
-inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeValue)
-{
-    Motor_User_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
-}
+// inline void Motor_User_SetFeedbackMode_Cast(const Motor_T * p_motor, int modeValue)
+// {
+//     Motor_User_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(modeValue));
+// }
 
 /******************************************************************************/
 /*!
     Direction/Stop
+    Applied Voltage Direction
 */
 /******************************************************************************/
 

@@ -111,10 +111,10 @@ typedef const struct Analog_ConversionChannel
     Analog_Channel_T CHANNEL; /* Small enough to copy/store by value */
     Analog_Capture_T CAPTURE; /* Overwrite capture to ADC Buffer */
     void * P_CONTEXT;
-    /* each channal allocates it own buffer. directly use by oncomplete needs HAL only, accounts for results buffer map */
+    /* each channel allocates it own buffer. directly use by oncomplete needs HAL only, accounts for results buffer map */
     volatile Analog_ConversionState_T * P_CONVERSION_STATE;
 
-    // Analog_ADC_T * P_ADC/_STATE; /* include to simplifiy batch */
+    // Analog_ADC_T * P_ADC/_STATE; /* include to simplify batch */
 }
 Analog_ConversionChannel_T;
 
@@ -245,8 +245,6 @@ typedef const struct Analog_ADC
 {
     HAL_ADC_T * P_HAL_ADC;              /* ADC register map base address */
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
-
-
 
     // context based implementation, default
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */

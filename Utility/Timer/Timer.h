@@ -78,7 +78,7 @@ typedef enum Timer_Mode
     TIMER_MODE_STOPPED,     /* OneShot/MultiShot Complete */
     TIMER_MODE_PERIODIC,
     TIMER_MODE_ONE_SHOT,
-    TIMER_MODE_PERIODIC_COUNTER, /* Count up */
+    TIMER_MODE_PERIODIC_COUNTER, /* Count up. Counter */
     TIMER_MODE_ONE_SHOT_COUNTER, /* Count down. N Repeat */
 }
 Timer_Mode_T;
@@ -132,6 +132,17 @@ static inline bool timer_is_elapsed(uint32_t timer, uint32_t time_ref, uint32_t 
     Common Query
 */
 /******************************************************************************/
+// static inline uint32_t _Timer_Elapsed(uint32_t time_prev, uint32_t time)
+// {
+// #ifdef TIMER_OVERFLOW_WRAP /* Not necessary if overflow time is in days. e.g using millis */
+//     return timer_elapsed_wrapped(time_prev, time);
+// #else
+//     return timer_elapsed_direct(time_prev, time);
+// #endif
+// }
+
+// static inline bool _Timer_Is_Elapsed(uint32_t period, uint32_t time_prev, uint32_t time) { return (_Timer_Elapsed(time_prev, time) >= period); }
+
 static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; }
 static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 

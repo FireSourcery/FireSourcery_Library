@@ -37,8 +37,8 @@
 #include "MotAnalogUser/MotAnalogUser_Conversion.h"
 
 #include "MotMotors/MotMotors.h"
-#include "MotDrive/MotDrive.h"
-#include "MotDrive/MotDrive_User.h"
+#include "Vehicle/Vehicle.h"
+#include "Vehicle/Vehicle_User.h"
 #include "MotLimits/MotLimits.h"
 
 #include "Motor/Motor/Motor_Config.h"
@@ -74,19 +74,14 @@
 #include <stdint.h>
 #include <string.h>
 
+/* Part  */
+#include "MotorController_App.h"
 
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
-/* Operation Mode. Common as config and StateMachine Input */
-typedef enum MotorController_MainMode
-{
-    MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
-    MOTOR_CONTROLLER_MAIN_MODE_DRIVE,
-    MOTOR_CONTROLLER_MAIN_MODE_SERVO,
-}
-MotorController_MainMode_T;
+
 
 /*
     User InputMux
@@ -190,17 +185,17 @@ MotorController_Config_T;
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
-    uint32_t StateCounter; /* calibration */
-    uint32_t ControlCounter; /* pwm */
-
-    Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
-    // Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
+    uint32_t StateCounter; /* Calibration */
+    uint32_t ControlCounter; /* PWM */
 
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
-    // MotDrive_State_T MotDrive; /* Optionally contain on init */
+    // Vehicle_State_T Vehicle; /* Optionally contain on init */
+
+    Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
+    // Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
 
     /* Generic async return status */
     uint8_t LockOpStatus; /* async status */
@@ -228,6 +223,8 @@ MotorController_State_T;
 */
 typedef const struct MotorController
 {
+    MotorController_State_T * P_MC_STATE; /* Pointer to the Runtime buffer */
+
     /*
         Peripheral Init
     */
@@ -258,7 +255,7 @@ typedef const struct MotorController
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
-    MotMotors_T MOTORS;
+    MotMotors_T MOTORS; /* Motor Array Context */
     LimitArray_T MOT_SPEED_LIMITS;
     LimitArray_T MOT_I_LIMITS;
 
@@ -273,11 +270,12 @@ typedef const struct MotorController
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
-    MotDrive_T MOT_DRIVE; /* Drive */
-    MotorController_State_T * P_MC_STATE; /* Pointer to the Runtime buffer */
 
-    Version_T MAIN_VERSION;
+    MotorController_AppTable_T APPS;
+    Vehicle_T VEHICLE; /* Drive */ /* todo move to App Table */
+
     const MotorController_Config_T * P_NVM_CONFIG;
+    Version_T MAIN_VERSION;
 }
 MotorController_T;
 
@@ -298,6 +296,14 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_contex
     p_context->P_MC_STATE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_context));
     return p_context->P_MC_STATE->FaultFlags.RxLost;
 }
+
+/* Common Buffered Input */
+static inline Motor_User_Input_T * MotorController_GetMotorInput(const MotorController_T * p_context) { return &p_context->P_MC_STATE->CmdInput; }
+
+// static inline void MotorController_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
+// static inline void MotorController_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
+// static inline void MotorController_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
+// static inline void MotorController_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
 
 
 /******************************************************************************/
@@ -342,3 +348,15 @@ extern bool MotorController_ClearILimitAll(const MotorController_T * p_context, 
 // extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
 
 
+// MotorController_Direction_T MotorController_DirectionOf(Motor_User_Direction_T dir, Phase_Output_T phase)
+// {
+//     MotorController_Direction_T direction;
+//     switch (dir)
+//     {
+//         case MOTOR_DIRECTION_NONE:      direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
+//         case MOTOR_DIRECTION_REVERSE:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_REVERSE : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
+//         case MOTOR_DIRECTION_FORWARD:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_FORWARD : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
+//         default:                        direction = MOTOR_CONTROLLER_DIRECTION_ERROR;           break;
+//     }
+//     return direction;
+// }

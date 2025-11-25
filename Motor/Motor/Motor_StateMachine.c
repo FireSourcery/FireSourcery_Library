@@ -135,17 +135,14 @@ const State_T MOTOR_STATE_INIT =
 static void Stop_Entry(const Motor_T * p_motor)
 {
     Phase_Float(&p_motor->PHASE);
-    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
-    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
-    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
 static void Stop_Proc(const Motor_T * p_motor)
 {
     // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* altneratively move to thread */
-    Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
+    Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
 
 static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
@@ -203,6 +200,7 @@ static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t st
 {
     State_T * p_state = (State_T *)statePtr;
 
+    /* Compile time known */
     assert(p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
 
     return p_state;
@@ -215,8 +213,7 @@ static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
     [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Stop_InputFeedbackMode,
     [MSM_INPUT_DIRECTION]       = (State_Input_T)Stop_InputDirection,
     [MSM_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration,
-    [MSM_INPUT_OPEN_LOOP]       = NULL,
-    // [MSM_INPUT_OPEN_LOOP]    = (State_Input_T)Stop_InputOpenLoop,
+    [MSM_INPUT_OPEN_LOOP]       = NULL, // [MSM_INPUT_OPEN_LOOP]    = (State_Input_T)Stop_InputOpenLoop,
 };
 
 const State_T MOTOR_STATE_STOP =
@@ -237,7 +234,6 @@ static void Passive_Entry(const Motor_T * p_motor)
 {
     assert(p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL); /* Set on exit stop */
     Phase_Float(&p_motor->PHASE);
-    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
@@ -372,7 +368,6 @@ static void Run_Entry(const Motor_T * p_motor)
 {
     // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* including substate of another state */
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
     Phase_ActivateOutputT0(&p_motor->PHASE);
     /* alterntaively Update Vbus on start Angle Control */
@@ -427,7 +422,6 @@ static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
 }
 
 /*
-todo may need immediate transition
     StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
     Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
 */
@@ -472,7 +466,6 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
     Phase_ActivateOutputT0(&p_motor->PHASE);
     // Phase_ActivateOutputV0(&p_motor->PHASE);
     FOC_ClearCaptureState(&p_motor->P_MOTOR_STATE->Foc);
-    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); /* 'unmount' last operation */
     // determine initial substate from stop
     p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop = 1U; /* limits user cmd input */
 }
@@ -498,7 +491,6 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t ph
         /* No resume from OpenLoop, freewheel state check stop */
     }
 
-    // if (p_nextState == &MOTOR_STATE_PASSIVE) { _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE); }
     return p_nextState;
 }
 
@@ -552,7 +544,6 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 static void Calibration_Entry(const Motor_T * p_motor)
 {
     // Phase_ActivateOutputV0(&p_motor->PHASE);
-    // _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_ACTIVE);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }

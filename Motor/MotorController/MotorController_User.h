@@ -57,7 +57,7 @@ typedef enum MotorController_User_SystemCmd
     // MOT_USER_SYSTEM_LOCK_STATE_EXIT,
     MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // substate id, MotorController_LockId_T as status
     MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // operation, Async operation status. optionally pass MotorController_LockId_T for selection
-    MOT_USER_SYSTEM_MAIN_MODE_INPUT,
+    MOT_USER_SYSTEM_MAIN_MODE_INPUT, // remove
     MOT_USER_SYSTEM_STATE_COMMAND,      // State Command
 //     // MOT_VAR_TYPE_COMMAND_METER, move to other services
 //     // MOT_VAR_TYPE_COMMAND_RELAY,
@@ -89,9 +89,53 @@ MotorController_User_SystemCmd_T;
 /******************************************************************************/
 static inline void MotorController_User_InputMainMode(const MotorController_T * p_context, MotorController_MainMode_T value)
 {
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
+    // _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MAIN_MODE, (state_value_t)value);
 }
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+/* Non StateMachine checked disable motors. Caller ensure non field weakening state */
+/* Update State to prevent input overwrite */
+static inline void MotorController_User_ForceDisableControl(const MotorController_T * p_context)
+{
+    MotMotors_ForceDisableControl(&p_context->MOTORS);
+    p_context->P_MC_STATE->CmdInput.CmdValue = 0;
+    p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_FLOAT;
+    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NONE;
+    p_context->P_MC_STATE->CmdInput.IsUpdated = true;
+
+    MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
+
+    /* if drive mode */
+    // Vehicle_User_SetZero(p_context->VEHICLE.P_VEHICLE_STATE); // set drive to zero
+    // Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); // set drive direction to neutral
+}
+
+/******************************************************************************/
+/*
+    Common Park
+*/
+/******************************************************************************/
+// p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NONE;
+// p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
+// MotorController_User_ApplyMotorsCmd(p_context);
+static inline void MotorController_User_EnterPark(const MotorController_T * p_context)
+{
+    MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_PARK);
+}
+
+/******************************************************************************/
+/*
+    Main
+*/
+/******************************************************************************/
+/* Transition to idle */
+static inline void MotorController_User_EnterMainIdle(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
+static inline void MotorController_User_EnterMain(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
 /******************************************************************************/
 /*
     passthrough Common
@@ -99,7 +143,7 @@ static inline void MotorController_User_InputMainMode(const MotorController_T * 
     Apply in MCSM_STATE_ID_MOTORS State
 
     MotorController_User_Set
-    MotDrive_User_Set
+    Vehicle_User_Set
     Motor_User_Set
 */
 /******************************************************************************/
@@ -124,30 +168,53 @@ static inline void MotorController_User_SetCmdValue(const MotorController_T * p_
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
-static inline void MotorController_User_SetFeedbackMode_Cast(const MotorController_T * p_context, int feedbackMode) { MotorController_User_SetFeedbackMode(p_context, Motor_FeedbackMode_Cast(feedbackMode)); }
 
 
 /******************************************************************************/
 /*
-
+    Lock State
 */
 /******************************************************************************/
-/* Non StateMachine checked disable motors. Caller ensure non field weakening state */
-/* Update State to prevent input overwrite */
-static inline void MotorController_User_ForceDisableControl(const MotorController_T * p_context)
+static inline void MotorController_User_EnterLockState(const MotorController_T * p_context) { MotorController_StateMachine_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER); }
+static inline void MotorController_User_ExitLockState(const MotorController_T * p_context) { MotorController_StateMachine_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT); }
+
+static inline bool MotorController_User_IsEnterLockError(const MotorController_T * p_context, MotorController_LockId_T id)
 {
-    MotMotors_ForceDisableControl(&p_context->MOTORS);
-    p_context->P_MC_STATE->CmdInput.CmdValue = 0;
-    p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_FLOAT;
-    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NONE;
-    p_context->P_MC_STATE->CmdInput.IsUpdated = true;
-
-    MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
-
-    /* if drive mode */
-    // MotDrive_User_SetZero(p_context->MOT_DRIVE.P_MOT_DRIVE_STATE); // set drive to zero
-    // MotDrive_User_ApplyDirection(&p_context->MOT_DRIVE, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); // set drive direction to neutral
+    return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_StateMachine_IsLock(p_context) == false));
 }
+
+/* Save RAM to NVM */
+static inline NvMemory_Status_T MotorController_User_SaveConfig_Blocking(const MotorController_T * p_context)
+{
+    MotorController_StateMachine_InputLock(p_context, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
+    return p_context->P_MC_STATE->NvmStatus;
+}
+
+/* Lock State returns to ENTER */
+/* Alternatively Caller check Top state. then _StateMachine_GetActiveSubStateId (potential substate id collision) */
+/*!
+    @retval 0xFF when TopState not in Lock State
+    @retval IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK
+    @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
+*/
+/* alternative getSubstate */
+static inline MotorController_LockId_T MotorController_User_GetLockState(const MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+
+// if all calibration function use substate
+static inline bool MotorController_User_IsLockOpComplete(const MotorController_T * p_context) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+
+/* return union status */
+// return nvm on nvm
+static inline int MotorController_User_GetLockOpStatus(const MotorController_T * p_context) { return p_context->P_MC_STATE->LockOpStatus; }
+
+
+
+
+/******************************************************************************/
+/*
+    Non StateMachine Checked
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*
@@ -189,7 +256,7 @@ static inline void MotorController_User_SetOptILimitOnOff(const MotorController_
 
 /******************************************************************************/
 /*
-    Non StateMachine Checked Direct Inputs
+
 */
 /******************************************************************************/
 /* UserMain, which may use Watchdog  */
@@ -305,7 +372,6 @@ static inline void MotorController_User_SetBlink(MotorController_State_T * p_mcS
 
 // static inline bool MotorController_User_IsB(const MotorController_T * p_mc) { return (p_mc->P_MC_STATE->BootRef.IsValid == p_mc->MOT_NVM.P_BOOT_REF->IsValid); }
 
-
 /******************************************************************************/
 /*
     Extern
@@ -318,6 +384,7 @@ extern int MotorController_User_Call(const MotorController_T * p_context, MotorC
 
 // extern NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 // extern NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
+
 // extern void MotorController_User_SetOptSpeedLimitOnOff(const MotorController_T * p_context, bool isEnable);
 // extern void MotorController_User_SetOptILimitOnOff(const MotorController_T * p_context, bool isEnable);
 #endif

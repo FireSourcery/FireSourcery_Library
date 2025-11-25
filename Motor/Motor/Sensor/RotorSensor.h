@@ -38,7 +38,7 @@
 
 /*
     Rotor Angle Sensor
-    Implement as conventional interface pattern, Signiture as interface type.
+    Implement as conventional interface pattern, Signature as interface type.
 */
 struct RotorSensor;
 struct RotorSensor_Config;
@@ -115,7 +115,7 @@ typedef struct RotorSensor_State
     angle16_t MechanicalAngle;
     int Direction; /* RotorSensor_Direction. store the feedback direction if upper layer handling is needed */
     // int FeedbackDirection; /* derive speed direction if needed. */
-    // int AppliedDirection;  /* for consitency checking */
+    // int AppliedDirection;  /* for consistency checking */
     int DirectionErrorCount;
 }
 RotorSensor_State_T;
@@ -127,7 +127,7 @@ RotorSensor_State_T;
 */
 typedef const struct RotorSensor
 {
-    const RotorSensor_VTable_T * P_VTABLE;
+    RotorSensor_VTable_T * P_VTABLE;
     RotorSensor_State_T * P_STATE;
 }
 RotorSensor_T;

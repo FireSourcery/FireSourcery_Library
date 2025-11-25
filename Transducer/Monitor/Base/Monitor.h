@@ -138,7 +138,7 @@ typedef struct Monitor
     Monitor_Base_T Base;        /* Base configuration for this monitor */
     Monitor_Mode_T Direction;   /* Which direction this monitors */
 
-    /* Cached Output */
+    /* Cached Results */
     Monitor_Status_T Status;            /* Current status for this direction */
     Monitor_Status_T StatusPrev;        /* Previous status for edge detection */
     int32_t LastInput;                  /* Last input value */
@@ -156,11 +156,11 @@ Monitor_T;
 static inline int _Monitor_DirectionOf(Monitor_Setpoint_T * p_setpoint) { return (p_setpoint->Setpoint - p_setpoint->Resetpoint); }
 
 static inline int32_t Monitor_GetValue(const Monitor_T * p_monitor) { return p_monitor->LastInput; }
-/* Direction normalized compare value. Invert if lower value is higher serverity */
+/* Direction normalized compare value. Invert if lower value is higher severity */
 static inline int32_t Monitor_GetLastInputComparable(const Monitor_T * p_monitor) { return p_monitor->LastInput * p_monitor->Direction; }
 static inline bool Monitor_IsEnabled(const Monitor_T * p_monitor) { return p_monitor->Direction != MONITOR_DISABLED; }
 
-/* LastOutput = output state of last status hystersis level. set on status poll, or switch on status */
+/* LastOutput = output state of last status hysteresis level. set on status poll, or switch on status */
 
 /******************************************************************************/
 /*
@@ -174,9 +174,6 @@ static inline Monitor_Status_T Monitor_GetStatus(const Monitor_T * p_monitor) { 
 static inline bool Monitor_IsNormal(const Monitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_NORMAL; }
 static inline bool Monitor_IsAbnormal(const Monitor_T * p_monitor) { return p_monitor->Status != MONITOR_STATUS_NORMAL; }
 
-/*
-
-*/
 // static inline bool Monitor_RequiresOperatorAttention(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_WARNING; }
 // static inline bool Monitor_RequiresImmediateAction(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_ALARM; }
 // static inline bool Monitor_IsInEmergencyState(const Monitor_T * p_monitor) { return (p_monitor->Status == MONITOR_STATUS_CRITICAL) || (p_monitor->Status == MONITOR_STATUS_FAULT); }

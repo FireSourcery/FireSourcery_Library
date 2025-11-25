@@ -30,7 +30,7 @@
 #include "Motor_Sensor.h"
 #include "../Motor_StateMachine.h"
 
-
+/* Motor_SensorTable */
 
 static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 

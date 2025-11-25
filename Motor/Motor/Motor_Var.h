@@ -292,6 +292,37 @@ Motor_Var_StaticRef_T;
 
 typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* cmd as value, without additional parameter */
 
+
+/******************************************************************************/
+/*
+   Base Id Access
+*/
+/******************************************************************************/
+int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T varId);
+int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId);
+int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId);
+
+/* Caller handle access control */
+int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T varId);
+void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
+void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue);
+void _Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
+
+int _Motor_Var_ConfigCalibration_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId);
+void _Motor_Var_ConfigCalibration_Set(Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId, int varValue);
+int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId);
+
+int _Motor_Var_ConfigActuation_Get(const Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId);
+void _Motor_Var_ConfigActuation_Set(Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId, int varValue);
+
+int _Motor_Var_ConfigPid_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
+void _Motor_Var_ConfigPid_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
+
+void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T varId, int varValue);
+
+int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
+void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
+
 /*
     Submodule wrap
 */
@@ -299,69 +330,9 @@ typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* cmd as value, without ad
 // static inline void _Motor_Var_ConfigHeatMonitor_Set(Motor_State_T * p_motor, Monitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->HeatMonitorState, varId, varValue); }
 // static inline void _Motor_Var_SensorCmd_Call(const Motor_T * p_motor, Motor_Var_RotorSensorCmd_T varId, int varValue); // Motor_Sensor_CalibrationCmd_Call
 
-/******************************************************************************/
-/*
-   Base Id Access
-*/
-/******************************************************************************/
-// extern int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T varId);
-// extern int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId);
-// extern int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId);
-
-// extern void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
-// extern int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T varId);
-
-// extern void _Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
-
-// /* Config */
-// extern int _Motor_Var_ConfigCalibration_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId);
-// extern int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId);
-// extern int _Motor_Var_ConfigActuation_Get(const Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId);
-// extern int _Motor_Var_ConfigPid_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
-
-// extern void _Motor_Var_ConfigCalibration_Set(Motor_State_T * p_motor, Motor_Var_ConfigCalibration_T varId, int varValue);
-// extern void _Motor_Var_ConfigActuation_Set(Motor_State_T * p_motor, Motor_Var_ConfigActuation_T varId, int varValue);
-// extern void _Motor_Var_ConfigPid_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
-
-// extern void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T varId, int varValue);
-
-/*  */
-// extern void Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
-// extern int Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId);
-
-// extern int Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId);
-// extern int Motor_Var_Rotor_Get(Motor_T * p_motor, Motor_Var_Rotor_T varId);
-// extern int Motor_Var_Foc_Get(Motor_T * p_motor, Motor_Var_Foc_T varId);
-
-// extern void Motor_Var_UserControl_Set(Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
-// extern int Motor_Var_UserControl_Get(Motor_T * p_motor, Motor_Var_UserControl_T varId);
-
-// extern void Motor_Var_StateCmd_Set(Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
-
-// /* Config */
-// extern int Motor_Var_ConfigCalibration_Get(Motor_T * p_motor, Motor_Var_ConfigCalibration_T varId);
-// extern int Motor_Var_ConfigCalibrationAlias_Get(Motor_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId);
-// extern int Motor_Var_ConfigActuation_Get(Motor_T * p_motor, Motor_Var_ConfigActuation_T varId);
-// extern int Motor_Var_ConfigPid_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId);
-
-// extern void Motor_Var_ConfigCalibration_Set(Motor_T * p_motor, Motor_Var_ConfigCalibration_T varId, int varValue);
-// extern void Motor_Var_ConfigActuation_Set(Motor_T * p_motor, Motor_Var_ConfigActuation_T varId, int varValue);
-// extern void Motor_Var_ConfigPid_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
-
-// extern void Motor_Var_ConfigCmd_Call(Motor_T * p_motor, Motor_Var_ConfigCmd_T varId, int varValue);
-
-// /*  */
-// extern void Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
-// extern int Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId);
-
 /*  */
 extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
 
-/* Caller handle access control */
-/* runtime inputs require on/off */
-// extern void Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
-// extern void Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
-// extern void Motor_Var_PidTuning_Set(const Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
 
 /******************************************************************************/
@@ -401,7 +372,7 @@ typedef enum Motor_VarType_SubModule
 }
 Motor_VarType_SubModule_T;
 
-/* This way it takes only one field to associate properties.
+/* Instead of using SensorTable Ids, This way it takes only one field to associate properties.
 allows types to expand beyond 16 ids without reserving handlers */
 typedef enum Motor_VarType_RotorSensor
 {
@@ -429,78 +400,4 @@ extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Roto
 
 extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId);
 extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId, int varValue);
-
-
-
-/******************************************************************************/
-/*
-    Interface applying the command pattern
-*/
-/******************************************************************************/
-
-/* Part of Motor */
-/* Include by motor. for streamlined init */
-// typedef const struct Motor Motor_T;
-// typedef struct Motor_State Motor_State_T;
-
-/* With Access Control */
-// extern void Motor_Var_DisableInput(Motor_State_T * p_motor);
-// extern void Motor_Var_EnableInput(Motor_State_T * p_motor);
-// /*
-//     Disable/Enable Set in VarAccess
-// */
-// extern const VarAccess_VTable_T MOTOR_VAR_ACCESS_PID_TUNING;
-// extern const VarAccess_VTable_T MOTOR_VAR_ACCESS_USER_CONTROL;
-// extern const VarAccess_VTable_T MOTOR_VAR_ACCESS_STATE_CMD;
-// /* check VarAccessControl user set state */
-// #define MOTOR_VAR_ACCESS_INIT_PID_TUNING(p_Motor)                   VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_ACCESS_PID_TUNING, &((p_Motor)->VarAccessPidTunningState))
-// #define MOTOR_VAR_ACCESS_INIT_USER_CONTROL(p_MotorContext, p_Motor) VAR_ACCESS_INIT(p_MotorContext, &MOTOR_VAR_ACCESS_USER_CONTROL, &((p_Motor)->VarAccessInputState))
-// #define MOTOR_VAR_ACCESS_INIT_STATE_CMD(p_MotorContext, p_Motor)    VAR_ACCESS_INIT(p_MotorContext, &MOTOR_VAR_ACCESS_STATE_CMD, &((p_Motor)->VarAccessInputState))
-
-// typedef struct Motor_VarAccess
-// {
-//     const VarAccess_T ACCESS_PID_TUNING;
-//     const VarAccess_T ACCESS_USER_CONTROL;
-//     const VarAccess_T ACCESS_STATE_CMD;
-// }
-// Motor_VarAccess_T;
-
-// #define MOTOR_VAR_ACCESS_INIT(p_MotorContext, p_Motor) \
-// { \
-//     .ACCESS_PID_TUNING      = MOTOR_VAR_ACCESS_INIT_PID_TUNING(p_Motor), \
-//     .ACCESS_USER_CONTROL    = MOTOR_VAR_ACCESS_INIT_USER_CONTROL(p_MotorContext, p_Motor), \
-//     .ACCESS_STATE_CMD       = MOTOR_VAR_ACCESS_INIT_STATE_CMD(p_MotorContext, p_Motor), \
-// }
-// /* static  instance */
-// // extern VarAccess_State_T VarAccessInputState;
-
-// /******************************************************************************/
-// /*
-//     Optional
-// */
-// /******************************************************************************/
-// extern const VarAccess_VTable_T MOTOR_VAR_OUT_USER;
-// extern const VarAccess_VTable_T MOTOR_VAR_OUT_ROTOR;
-// extern const VarAccess_VTable_T MOTOR_VAR_OUT_FOC;
-// #define MOTOR_VAR_ACCESS_INIT_OUTPUT_USER(p_Motor)              VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_USER, &((p_Motor)->VarAccessOuputState))
-// #define MOTOR_VAR_ACCESS_INIT_OUTPUT_ROTOR(p_Motor)             VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_ROTOR, &((p_Motor)->VarAccessOuputState))
-// #define MOTOR_VAR_ACCESS_INIT_OUTPUT_FOC(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_OUT_FOC, &((p_Motor)->VarAccessOuputState))
-
-// /*
-//     Shared Enable/Disable Set in VarAccess
-//     Set during StopState only
-// */
-// extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION;
-// extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_CALIBRATION_ALIAS;
-// extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_ACTUATION;
-// extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_PID;
-// extern const VarAccess_VTable_T MOTOR_VAR_CONFIG_CMD;
-// // extern const VarAccess_VTable_T MOTOR_VAR_REF;
-
-// /* check StateMachine Config State */
-// #define MOTOR_VAR_ACCESS_INIT_CONFIG_CALIBRATION(p_Motor)       VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_CALIBRATION, &((p_Motor)->VarAccessConfigState))
-// #define MOTOR_VAR_ACCESS_INIT_CONFIG_CALIBRATION_ALIAS(p_Motor) VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_CALIBRATION_ALIAS, &((p_Motor)->VarAccessConfigState))
-// #define MOTOR_VAR_ACCESS_INIT_CONFIG_ACTUATION(p_Motor)         VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_ACTUATION, &((p_Motor)->VarAccessConfigState))
-// #define MOTOR_VAR_ACCESS_INIT_CONFIG_PID(p_Motor)               VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_PID, &((p_Motor)->VarAccessConfigState))
-// #define MOTOR_VAR_ACCESS_INIT_CONFIG_ROUTINE(p_Motor)           VAR_ACCESS_INIT(p_Motor, &MOTOR_VAR_CONFIG_CMD, &((p_Motor)->VarAccessConfigState))
 

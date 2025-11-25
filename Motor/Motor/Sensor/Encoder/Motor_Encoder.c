@@ -204,7 +204,7 @@
 
 // void Motor_Encoder_StartHoming(const Motor_T * p_motor)
 // {
-//     StateMachine_ApplyBranchInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 // }
 
 // /*  */
@@ -407,7 +407,7 @@
 // void Motor_Encoder_StartAlignZero(const Motor_T * p_motor)
 // {
 //     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
-//     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 // static State_T * Cmd_ValidateAlign(const Motor_T * p_motor, state_value_t null)
@@ -418,7 +418,7 @@
 // void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor)
 // {
 //     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
-//     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 
@@ -430,7 +430,7 @@
 // void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor)
 // {
 //     static const StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
-//     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 
@@ -533,7 +533,7 @@
 // void Motor_Encoder_StartUpChain(const Motor_T * p_motor)
 // {
 //     static const StateMachine_TransitionInput_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
-//     StateMachine_InvokeBranchTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
+//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
 // }
 
 

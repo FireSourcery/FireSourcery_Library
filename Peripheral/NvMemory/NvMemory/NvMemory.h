@@ -30,8 +30,6 @@
 #ifndef NV_MEMORY_H
 #define NV_MEMORY_H
 
-#include "Config.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -44,6 +42,17 @@
 // #define NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section(".code_ram")))
 #endif
 
+// #if     defined(NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+// #elif   defined(NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
+// #else
+//     #define NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
+// #endif
+
+#if defined(NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+#define _NV_MEMORY_PARTITION_OFFSET_DEF(code) code
+#else
+#define _NV_MEMORY_PARTITION_OFFSET_DEF(code)
+#endif
 
 /******************************************************************************/
 /*
@@ -122,24 +131,16 @@ typedef const struct NvMemory_Partition
 {
     uintptr_t ADDRESS;
     size_t SIZE;
-#ifdef CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE /* or HAL functions handle offset */
-    ptrdiff_t OP_ADDRESS_OFFSET;
-#endif
+    _NV_MEMORY_PARTITION_OFFSET_DEF(ptrdiff_t OP_ADDRESS_OFFSET;) /* or HAL functions handle offset */
     // uintptr_t RAM_ADDRESS;
 }
 NvMemory_Partition_T;
-
-#if defined(CONFIG_NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
-#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset) .OP_ADDRESS_OFFSET = OpAddressOffset,
-#else
-#define _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)
-#endif
 
 #define NV_MEMORY_INIT_PARTITION(AddressStart, SizeBytes, OpAddressOffset)  \
 {                                                                           \
     .ADDRESS    = AddressStart,                                             \
     .SIZE       = SizeBytes,                                                \
-    _NV_MEMORY_INIT_PARTITION_OFFSET(OpAddressOffset)                       \
+    _NV_MEMORY_PARTITION_OFFSET_DEF(.OP_ADDRESS_OFFSET = OpAddressOffset,)  \
 }
 
 
@@ -181,21 +182,21 @@ NvMemory_State_T;
 typedef const struct NvMemory
 {
     /* Per sub-type VTable, abstract functions provided by concrete child class */
-    void * const P_HAL;
-    const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM for Flash case */
-    const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM for Flash case */
-    const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
+    void * P_HAL;
+    HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM for Flash case */
+    HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM for Flash case */
+    HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
 
     /* Instance. In most cases there will only be one instance per type */
-    NvMemory_State_T * const P_STATE;
+    NvMemory_State_T * P_STATE;
 
     /* Bounds of accessible partitions */
-    const NvMemory_Partition_T * const P_PARTITIONS;
-    const uint8_t PARTITION_COUNT;
+    NvMemory_Partition_T * P_PARTITIONS;
+    uint8_t PARTITION_COUNT;
 
     /* Allocated buffer for internal use */
-    uint8_t * const P_BUFFER;
-    const size_t BUFFER_SIZE;
+    uint8_t * P_BUFFER;
+    size_t BUFFER_SIZE;
 
     /* On Block */
     // void * P_YIELD_CONTEXT;

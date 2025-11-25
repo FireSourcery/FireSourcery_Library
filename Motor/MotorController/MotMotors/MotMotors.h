@@ -113,27 +113,6 @@ static inline void MotMotors_StopAll(const MotMotors_T * p_ctx) { for (uint8_t i
 
 static inline void MotMotors_ForceDisableControl(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
 
-// static inline bool MotMotors_IsEveryUserDirection(const MotMotors_T * p_ctx, int sign)
-// {
-//     bool isEvery = true;
-//     for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++)
-//     {
-//         if (Motor_GetUserDirection(&p_ctx->P_CONTEXTS[iMotor]) != sign) { isEvery = false; break; }
-//     }
-//     return isEvery;
-// }
-
-static Motor_User_Direction_T _MotMotors_GetDirectionAll(const MotMotors_T * p_ctx)
-{
-    Motor_User_Direction_T direction;
-    if      (MotMotors_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_FORWARD; }
-    else if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_REVERSE; }
-    else                                                                 { direction = 0; } /* overload stop and Error */
-    return direction;
-}
-
-// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
-
 static inline void MotMotors_EnterCalibration(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_ctx->P_CONTEXTS[iMotor]); } }
 
 static inline void MotMotors_EnterCalibrateAdc(const MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_ctx->P_CONTEXTS[iMotor]); } }
@@ -153,4 +132,23 @@ static inline bool MotMotors_IsAnyState(const MotMotors_T * p_ctx, Motor_StateId
     return isAny;
 }
 
+static inline bool MotMotors_IsEveryUserDirection(const MotMotors_T * p_ctx, int sign)
+{
+    bool isEvery = true;
+    for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++)
+    {
+        if (Motor_User_GetDirection(p_ctx->P_CONTEXTS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; }
+    }
+    return isEvery;
+}
 
+static Motor_User_Direction_T _MotMotors_GetDirectionAll(const MotMotors_T * p_ctx)
+{
+    Motor_User_Direction_T direction;
+    if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_FORWARD; }
+    else if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_REVERSE; }
+    else { direction = 0; } /* overload stop and Error */
+    return direction;
+}
+
+// static inline void MotMotors_InputStateMachine(const MotMotors_T * p_ctx, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
