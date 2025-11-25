@@ -52,6 +52,14 @@
 //     uint32_t * P_ARRAY32;
 //     uint64_t * P_ARRAY64;
 // }
+// _ValueArray_T;
+
+// typedef const struct
+// {
+    // void * P_BUFFER;
+    // size_t LENGTH;
+    // Analysis * P_AUGMENTS;
+// }
 // ValueArray_T;
 
 // typedef const struct ArrayContext

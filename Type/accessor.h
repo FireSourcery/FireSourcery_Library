@@ -14,7 +14,6 @@ typedef int value_t;
 // typedef register_t value_t;
 // typedef int key_t;
 // typedef size_t key_t;
-
 typedef void(*proc_t)(void * p_context);
 typedef value_t(*get_t)(const void * p_context);
 typedef void (*set_t)(void * p_context, value_t value);
@@ -26,15 +25,17 @@ typedef bool (*test_t)(const void * p_context);
 typedef bool (*test_entry_t)(const void * p_context, value_t value);
 typedef bool (*test_field_t)(const void * p_context, int indexId, value_t value);
 
-typedef value_t * (*get_optional_t)(const void * p_context);
 typedef bool (*try_proc_t)(void * p_context);
 typedef bool (*try_set_t)(void * p_context, value_t value);
+
+typedef value_t * (*get_optional_t)(const void * p_context);
 
 typedef int(*compare_t)(const void * a, const void * b);
 // typedef value_t (*transform_t)(const void * p_context);
 // typedef value_t (*apply_t)(void * p_context, value_t value);
 // typedef int (*poll_t)(void * p_context);
 
+// typedef struct FieldMeta { size_t OFFSET; size_t SIZE; } FieldMeta_T;
 
 /* Shorthand */
 static inline void call_proc(proc_t proc, void * p_context) { if (proc != NULL) { proc(p_context); } }

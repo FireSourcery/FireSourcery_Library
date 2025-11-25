@@ -59,6 +59,32 @@ void MotAnalogUser_SetThrottleZero(const MotAnalogUser_T * p_user, uint16_t zero
     InitThrottleAIn(p_user);
 }
 
+void MotAnalogUser_SetSwitchBrake(const MotAnalogUser_T * p_user, bool useSwitchBrake, uint16_t bistateBrakeIntensity_Fract16)
+{
+    p_user->P_STATE->Config.UseSwitchBrakePin = useSwitchBrake;
+    p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = bistateBrakeIntensity_Fract16;
+}
+
+void MotAnalogUser_SetDirectionPins(const MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)
+{
+    switch (pins)
+    {
+        case MOT_ANALOG_USER_DIRECTION_PINS_FNR:
+            p_user->P_STATE->Config.UseForwardPin = true;
+            p_user->P_STATE->Config.UseNeutralPin = true;
+            break;
+        case MOT_ANALOG_USER_DIRECTION_PINS_FR:
+            p_user->P_STATE->Config.UseForwardPin = true;
+            p_user->P_STATE->Config.UseNeutralPin = false;
+            break;
+        case MOT_ANALOG_USER_DIRECTION_PINS_R:
+            p_user->P_STATE->Config.UseForwardPin = false;
+            p_user->P_STATE->Config.UseNeutralPin = false;
+            break;
+        default: break;
+    }
+}
+
 /*
     optional
 */
@@ -88,32 +114,6 @@ void MotAnalogUser_SetThrottleAIn(const MotAnalogUser_T * p_user, uint16_t zero_
     p_user->P_STATE->Config.UseThrottleEdgePin = useThrottleEdgePin;
 }
 
-void MotAnalogUser_SetSwitchBrake(const MotAnalogUser_T * p_user, bool useSwitchBrake, uint16_t bistateBrakeIntensity_Fract16)
-{
-    p_user->P_STATE->Config.UseSwitchBrakePin = useSwitchBrake;
-    p_user->P_STATE->Config.SwitchBrakeValue_Percent16 = bistateBrakeIntensity_Fract16;
-}
-
-void MotAnalogUser_SetDirectionPins(const MotAnalogUser_T * p_user, MotAnalogUser_DirectionPins_T pins)
-{
-    switch (pins)
-    {
-        case MOT_ANALOG_USER_DIRECTION_PINS_FNR:
-            p_user->P_STATE->Config.UseForwardPin = true;
-            p_user->P_STATE->Config.UseNeutralPin = true;
-            break;
-        case MOT_ANALOG_USER_DIRECTION_PINS_FR:
-            p_user->P_STATE->Config.UseForwardPin = true;
-            p_user->P_STATE->Config.UseNeutralPin = false;
-            break;
-        case MOT_ANALOG_USER_DIRECTION_PINS_R:
-            p_user->P_STATE->Config.UseForwardPin = false;
-            p_user->P_STATE->Config.UseNeutralPin = false;
-            break;
-        default: break;
-    }
-}
-
 /******************************************************************************/
 /*
     Variable Access Functions
@@ -126,8 +126,8 @@ int32_t MotAnalogUser_VarId_Get(const MotAnalogUser_T * p_user, MotAnalogUser_Va
     {
         case MOT_ANALOG_USER_THROTTLE:           value = UserAIn_GetValue(&p_user->THROTTLE_AIN);              break;
         case MOT_ANALOG_USER_BRAKE:              value = UserAIn_GetValue(&p_user->BRAKE_AIN);                 break;
-        case MOT_ANALOG_USER_THROTTLE_DIN:       value = UserDIn_GetState(p_user->THROTTLE_AIN.P_EDGE_PIN);    break;
-        case MOT_ANALOG_USER_BRAKE_DIN:          value = UserDIn_GetState(p_user->BRAKE_AIN.P_EDGE_PIN);       break;
+        case MOT_ANALOG_USER_THROTTLE_DIN:       value = UserAIn_IsOn(&p_user->THROTTLE_AIN);    break;
+        case MOT_ANALOG_USER_BRAKE_DIN:          value = UserAIn_IsOn(&p_user->BRAKE_AIN);       break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = UserDIn_GetState(&p_user->SWITCH_BRAKE_DIN);          break;
         case MOT_ANALOG_USER_FORWARD_DIN:        value = UserDIn_GetState(&p_user->FORWARD_DIN);               break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = UserDIn_GetState(&p_user->REVERSE_DIN);               break;
@@ -137,18 +137,16 @@ int32_t MotAnalogUser_VarId_Get(const MotAnalogUser_T * p_user, MotAnalogUser_Va
     return value;
 }
 
-int32_t MotAnalogUser_VarId_GetAsRead(const MotAnalogUser_T * p_user, MotAnalogUser_VarId_T id)
+int32_t MotAnalogUser_VarId_GetAsInput(const MotAnalogUser_T * p_user, MotAnalogUser_VarId_T id)
 {
-    // MotAnalogUser_CapturePins
-    // MotAnalogUser_CaptureInput
     int32_t value = 0;
     switch (id)
     {
         case MOT_ANALOG_USER_THROTTLE:           value = p_user->THROTTLE_AIN.P_STATE->RawValue_Adcu;                       break;
         case MOT_ANALOG_USER_BRAKE:              value = p_user->BRAKE_AIN.P_STATE->RawValue_Adcu;                          break;
-        case MOT_ANALOG_USER_THROTTLE_DIN:       value = Pin_Input_ReadPhysical(&p_user->THROTTLE_AIN.P_EDGE_PIN->PIN);     break;
-        case MOT_ANALOG_USER_BRAKE_DIN:          value = Pin_Input_ReadPhysical(&p_user->BRAKE_AIN.P_EDGE_PIN->PIN);        break;
-        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = Pin_Input_ReadPhysical(&p_user->SWITCH_BRAKE_DIN.PIN);             break;
+        case MOT_ANALOG_USER_THROTTLE_DIN:       value = _UserAIn_IsEdgePinOn(&p_user->THROTTLE_AIN.P_EDGE_PIN);     break;
+        case MOT_ANALOG_USER_BRAKE_DIN:          value = _UserAIn_IsEdgePinOn(&p_user->BRAKE_AIN.P_EDGE_PIN);        break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = _UserAIn_IsEdgePinOn(&p_user->SWITCH_BRAKE_DIN);            break;
         case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_user->FORWARD_DIN.PIN);                  break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_user->REVERSE_DIN.PIN);                  break;
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_user->NEUTRAL_DIN.PIN);                  break;

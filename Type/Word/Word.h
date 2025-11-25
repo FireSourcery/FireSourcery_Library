@@ -38,12 +38,12 @@ typedef union __attribute__((packed, aligned(4U))) Word32
 {
     char Chars[4U];
     uint8_t Bytes[4U];
-    struct { uint16_t Lower16; uint16_t Upper16; };
     uint32_t Value32;
+    struct { uint16_t Lower16; uint16_t Upper16; };
 }
 Word32_T;
 
-static inline Word32_T Word32_Cast(uint32_t value) { return ((Word32_T) { .Value32 = value }); }
+static inline Word32_T Word32(int value) { return ((Word32_T) { .Value32 = value }); }
 
 typedef union __attribute__((packed, aligned(8U))) Word64
 {

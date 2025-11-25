@@ -34,6 +34,11 @@
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
 
+void MotorController_App_Init(MotorController_T * p_context)
+{
+
+}
+
 State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode)
 {
     switch (mode)

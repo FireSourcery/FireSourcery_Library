@@ -54,6 +54,7 @@ static inline void Vehicle_User_SetZero(Vehicle_State_T * p_vehicleState)
 }
 
 /* Protocol Call sets Inner Machine only */
+/* Will not exit park */
 /* Caller Handle Edge Detection */
 static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Motor_User_Direction_T direction)
 {
@@ -67,13 +68,12 @@ static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Moto
 }
 
 // Call on Park transition. caller handle Park state
-static inline void _Vehicle_User_ApplyPark(const Vehicle_T * p_vehicle)
-{
-    _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DIRECTION, MOTOR_DIRECTION_NONE);
-    // MotorController_User_EnterPark(p_vehicle->P_MC_STATE);
-}
+// static inline void _Vehicle_User_ApplyPark(const Vehicle_T * p_vehicle)
+// {
+//     _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DIRECTION, MOTOR_DIRECTION_NONE);
+//     // MotorController_User_EnterPark(p_vehicle->P_MC_STATE);
+// }
 
-/* Optional */
 /* Caller Handle Edge Detection */
 static inline void Vehicle_User_ApplyStartCmd(const Vehicle_T * p_vehicle, Vehicle_Cmd_T cmd)
 {

@@ -149,30 +149,26 @@ static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
 
 /******************************************************************************/
 /* Time-based debounce */
-// static inline bool debounce_is_stable(uint32_t stability_time, uint32_t last_change_time, uint32_t current_time, bool prev_state, bool input_state)
-// {
-//     if (input_state != prev_state) return false;  /* State changed, not stable */
-//     return (current_time - last_change_time) >= stability_time;
-// }
+static inline bool debounce_is_stable(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
+{
+    // if (input_state != prev_state) return false;  /* State changed, not stable */
+    // return (elapsed_time >= stability_time);
+    return ((input_state == prev_state) && (elapsed_time >= stability_time));
+}
 
-// static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
-// {
-//     if (input_state == prev_state) return prev_state;  /* No change in state, return previous state */
-//     return elapsed_time >= stability_time ? input_state : prev_state; /* Return stable state if elapsed time exceeds stability time */
-// }
-
-// static inline bool debounce_is_stable(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
-// {
-//     if (input_state != prev_state) return false;  /* State changed, not stable */
-//     return elapsed_time >= stability_time;
-// }
-
-// static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
-// {
-//     return (debounce_is_stable(stability_time, elapsed_time, prev_state, input_state)) ? input_state : prev_state;
-// }
+static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
+{
+    // if (input_state == prev_state) return prev_state;  /* No change in state, return previous state */
+    // return (elapsed_time >= stability_time ? input_state : prev_state); /* Return stable state if elapsed time exceeds stability time */
+    return (debounce_is_stable(stability_time, elapsed_time, prev_state, input_state)) ? input_state : prev_state;
+}
 
 // /* Counter-based debounce */
+// static inline bool debounce_tick( uint16_t threshold, uint16_t  counter, bool target_state, bool input_state)
+// {
+
+// }
+
 // static inline bool debounce_tick(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
 // {
 //     if (input_state == target_state)

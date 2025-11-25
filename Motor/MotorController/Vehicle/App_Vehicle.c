@@ -28,6 +28,7 @@
 */
 /******************************************************************************/
 #include "App_Vehicle.h"
+#include "../MotorController_AppTable.h" /* needed for MotorController_MainMode_T */
 
 /******************************************************************************/
 /*!
@@ -41,14 +42,14 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
 {
     const Vehicle_T * const p_vehicle = &p_context->VEHICLE;
 
-    /* Sets motor controller stateMachine. passthrough to inner */
+    /* Sets MotorController_T StateMachine. passthrough to inner */
     /* Direction Procs immediately */
     /* Alternatively check for park state */
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_NONE);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_FORWARD);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_REVERSE);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NONE);      break;
         default: break;
     }
 
@@ -63,39 +64,6 @@ MotorController_App_T MC_APP_VEHICLE =
     .PROC_ANALOG_USER = Vehicle_ProcAnalogUser,
     .P_INITIAL_STATE = &MC_STATE_MAIN_VEHICLE,
 };
-
-// interface for   data common
-// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_User_Input_T * p_user, id, value)
-
-// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_User_Input_T * p_user, MotAnalogUser_T * P_analog)
-// {
-//     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
-
-//     switch (vehicle->P_VEHICLE_STATE->Config.ThrottleMode)
-//     {
-//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
-//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
-//         default: break;
-//     }
-// }
-
-// interface direct call
-// static void UserInput(const MotorController_T * p_context, int id, int value)
-// {
-//     switch (id)
-//     {
-//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_User_Direction_T)value); break;
-//         case MOTOR_USER_INPUT_ID_THROTTLE: p_context->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = (uint16_t)value;
-//             break;
-//         default:
-//             break;
-//     }
-// }
-
-// MotUserInput_VTable_T MOT_ANALOG_USER_INPUT =
-// {
-//     Vehicle_VarId_Set
-// };
 
 
 /******************************************************************************/
@@ -118,7 +86,7 @@ void Vehicle_Proc(const MotorController_T * p_context)
 {
     Vehicle_T * const p_vehicle = &p_context->VEHICLE;
     /* Proc the Sub-StateMachine - with different input table */
-    _StateMachine_ProcState(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle);
+    _StateMachine_ProcState(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle); /* alternatively update to tree states */
 }
 
 // top state can map MotorController inputs, pass to inner state

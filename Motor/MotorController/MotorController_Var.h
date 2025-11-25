@@ -281,6 +281,11 @@ extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId
 extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
 
 
+/*
+    check state - restrict state by interface - optionally map on state machine
+    map to int accessor, or keyed accessor
+    call accessor handle value error checking only
+*/
 
 // typedef enum
 // {

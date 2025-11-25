@@ -38,7 +38,7 @@ struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
 
 /*
-    All apps include independent AnalogUser handlers.
+    All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
     Protocol freely maps,
 */
 /******************************************************************************/

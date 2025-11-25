@@ -69,16 +69,9 @@ const StateMachine_Machine_T VEHICLE_MACHINE =
 /******************************************************************************/
 static void Drive_Entry(const Vehicle_T * p_vehicle)
 {
-    // assert(MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionReverse));
-
-    // if(!(MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionReverse)))
-    // {
-    //     Mot
-    // }
+    assert(MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) || MotMotors_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionReverse));
 
     // MotMotors_SetCmdValue(&p_vehicle->MOTORS, 0);
-    // Vehicle_StartControlAll(p_this);
-    // p_this->StateFlags.IsStopped = 0U;
     p_vehicle->P_VEHICLE_STATE->Input.Cmd = VEHICLE_CMD_RELEASE; // next input is edge transition
 
     // if (p_vehicle->P_VEHICLE_STATE->Input.Direction != _MotMotors_GetDirectionAll(p_vehicle))
@@ -160,6 +153,7 @@ static void Neutral_Entry(const Vehicle_T * p_vehicle)
     //     { MotMotors_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT); }  /* If enter neutral while braking, handle discontinuity */
 
     MotMotors_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);
+    // MotMotors_SetCmdValue(&p_vehicle->MOTORS, 0);
 }
 
 static void Neutral_Proc(const Vehicle_T * p_vehicle)

@@ -314,6 +314,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
                 {
                     _MotorController_ProcAnalogUser(p_context);
                     MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
+                    // MotorController_App_ProcAnalogUser(p_context, p_context.selected);
                 }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
@@ -423,3 +424,32 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 //     // Motor_ClearInterrupt(&p_context->MOTORS.P_ARRAY[0U]);
 //     p_context->P_MC_STATE->ControlCounter++;
 // }
+
+
+static inline void MotorCmd_ProcAnalogUser(const MotorController_T * p_context)
+{
+    const Vehicle_T * const p_vehicle = &p_context->VEHICLE;
+
+    switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    {
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_FORWARD);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_REVERSE);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NONE);      break;
+        default: break;
+    }
+
+    // sm handle remap
+    // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    // {
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_FORWARD);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_REVERSE);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_NONE);     break;
+    //     default: break;
+    // }
+
+    MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
+    // {
+    //     MotorController_User_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
+    // }
+}

@@ -32,6 +32,7 @@
 
 /*
     Command Polling
+    Edge detect handled outside of StateMachine
 */
 void Vehicle_User_PollStartCmd(Vehicle_T * p_vehicle)
 {

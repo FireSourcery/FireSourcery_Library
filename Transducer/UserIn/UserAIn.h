@@ -99,6 +99,7 @@ UserAIn_T;
 */
 /******************************************************************************/
 static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_GetState(p_pin); }
+static inline bool _UserAIn_IsEdgePinOn(const UserDIn_T * p_pin) { return (p_pin != NULL) && UserDIn_GetState(p_pin); } /* for diagnostics */
 
 /*
     Analog value only substate without EdgePin
@@ -116,6 +117,7 @@ static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { retu
     State Query Functions
 */
 /******************************************************************************/
+
 /* Edge as threshold */
 static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) && _UserAIn_IsOn(p_context->P_STATE)); }
 // static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_IsOn(p_context->P_STATE) : false; }

@@ -75,7 +75,7 @@ void MotorController_Init(const MotorController_T * p_context)
     Shell_Init(&p_mc->Shell);
 #endif
 
-    Vehicle_Init(&p_context->VEHICLE);
+    Vehicle_Init(&p_context->VEHICLE); //todo move to interface
 
     /* Alternatively set nominal on init */
     // TimerT_Counter_InitTickOnInit(&p_context->MILLIS_TIMER, 1U);
@@ -189,3 +189,5 @@ bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILim
 //     //     }
 //     // }
 // }
+
+

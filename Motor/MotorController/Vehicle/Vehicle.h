@@ -47,7 +47,10 @@
 
 // typedef Motor_Direction_T Vehicle_Direction_T;
 
-/* Drive SubState use edge detection - DriveState */
+/*
+    [Vehicle_Input_T]
+*/
+/* Cmd SubState use edge detection - DriveState */
 typedef enum Vehicle_Cmd
 {
     VEHICLE_CMD_RELEASE,
@@ -67,7 +70,31 @@ typedef struct Vehicle_Input
 }
 Vehicle_Input_T;
 
-/* Config States */
+static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_user)
+{
+    if      (p_user->BrakeValue > 0U)       { return VEHICLE_CMD_BRAKE; } // check throttle active error
+    else if (p_user->ThrottleValue > 0U)    { return VEHICLE_CMD_THROTTLE; }
+    else                                    { return VEHICLE_CMD_RELEASE; }
+}
+
+/*
+    For cases where Module handles edge detect
+*/
+static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
+{
+    Vehicle_Cmd_T cmd = Vehicle_Input_EvaluateCmd(p_user);
+    p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
+    p_user->Cmd = cmd;
+    return cmd;
+}
+
+static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != Vehicle_Input_PollCmd(p_user)); }
+static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
+
+
+/*
+    Config States
+*/
 typedef enum Vehicle_BrakeMode
 {
     VEHICLE_BRAKE_MODE_PASSIVE,
@@ -130,35 +157,70 @@ Vehicle_T;
 
 // #define VEHICLE_INIT()
 
-/*
-    For cases where Module handles edge detect
-*/
-static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
-{
-    Vehicle_Cmd_T cmd;
 
-    /* Check Brake first */
-    if (p_user->BrakeValue > 0U) { cmd = VEHICLE_CMD_BRAKE; } // check throttle active error
-    else if (p_user->ThrottleValue > 0U) { cmd = VEHICLE_CMD_THROTTLE; }
-    else { cmd = VEHICLE_CMD_RELEASE; }
+extern void Vehicle_Init(const Vehicle_T * p_vehicle);
 
-    p_user->CmdPrev = p_user->Cmd;
-    p_user->Cmd = cmd;
-
-    return cmd;
-}
-
-static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user)
-{
-    return (p_user->Cmd != Vehicle_Input_PollCmd(p_user));
-}
-
-
-static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
-
+extern void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle);
+extern void Vehicle_SetThrottleValue(const Vehicle_T * p_vehicle, uint16_t value);
+extern void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle);
+extern void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t value);
+extern void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle);
+extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 
 
 // alternatively as input conversion,
+
+// interface for   data common
+// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_User_Input_T * p_user, id, value)
+
+// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_User_Input_T * p_user, MotAnalogUser_T * P_analog)
+// {
+//     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
+
+//     switch (vehicle->P_VEHICLE_STATE->Config.ThrottleMode)
+//     {
+//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
+//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
+//         default: break;
+//     }
+// }
+
+// interface direct call
+// static void UserInput(const MotorController_T * p_context, int id, int value)
+// {
+//     switch (id)
+//     {
+//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_User_Direction_T)value); break;
+//         case MOTOR_USER_INPUT_ID_THROTTLE: p_context->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = (uint16_t)value;
+//             break;
+//         default:
+//             break;
+//     }
+
+    // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    // {
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NONE;// or return to top main
+    //     default: break;
+    // }
+    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
+    // {
+    //     p_input->CmdValue = 0U;
+    //     p_input->PhaseState = PHASE_OUTPUT_FLOAT;
+    // }
+    // else
+    // {
+    //     p_input->CmdValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U;
+    // }
+// }
+
+// MotUserInput_VTable_T MOT_ANALOG_USER_INPUT =
+// {
+//     Vehicle_VarId_Set
+// };
+
+
 
 // static inline void Vehicle_Input_FromAnalogUser(Vehicle_Input_T * p_user, MotAnalogUser_T * P_analog)
 // {
@@ -190,14 +252,3 @@ static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p
     //     }
 //
 // }
-
-
-extern void Vehicle_Init(const Vehicle_T * p_vehicle);
-
-extern void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle);
-extern void Vehicle_SetThrottleValue(const Vehicle_T * p_vehicle, uint16_t value);
-extern void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle);
-extern void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t value);
-extern void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle);
-extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
-
