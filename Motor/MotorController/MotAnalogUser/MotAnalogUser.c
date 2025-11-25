@@ -146,10 +146,13 @@ int32_t MotAnalogUser_VarId_GetAsInput(const MotAnalogUser_T * p_user, MotAnalog
         case MOT_ANALOG_USER_BRAKE:              value = p_user->BRAKE_AIN.P_STATE->RawValue_Adcu;                          break;
         case MOT_ANALOG_USER_THROTTLE_DIN:       value = _UserAIn_IsEdgePinOn(p_user->THROTTLE_AIN.P_EDGE_PIN);     break;
         case MOT_ANALOG_USER_BRAKE_DIN:          value = _UserAIn_IsEdgePinOn(p_user->BRAKE_AIN.P_EDGE_PIN);        break;
-        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = _UserAIn_IsEdgePinOn(&p_user->SWITCH_BRAKE_DIN);            break;
-        case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_user->FORWARD_DIN.PIN);                  break;
-        case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_user->REVERSE_DIN.PIN);                  break;
-        case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_user->NEUTRAL_DIN.PIN);                  break;
+        case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:   value = UserDIn_GetState(&p_user->SWITCH_BRAKE_DIN);             break;
+        case MOT_ANALOG_USER_FORWARD_DIN:        value = UserDIn_GetState(&p_user->FORWARD_DIN);                  break;
+        case MOT_ANALOG_USER_REVERSE_DIN:        value = UserDIn_GetState(&p_user->REVERSE_DIN);                  break;
+        case MOT_ANALOG_USER_NEUTRAL_DIN:        value = UserDIn_GetState(&p_user->NEUTRAL_DIN);                  break;
+        // case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_user->FORWARD_DIN.PIN);                  break;
+        // case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_user->REVERSE_DIN.PIN);                  break;
+        // case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_user->NEUTRAL_DIN.PIN);                  break;
         // case MOT_ANALOG_USER_OPT_DIN:            value = Pin_Input_ReadPhysical(&p_user->OptDin.Pin);                          break;
         default: break;
     }
