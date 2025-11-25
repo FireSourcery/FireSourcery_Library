@@ -26,7 +26,7 @@
 /*!
     @file   MuxInput.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Generic Interface Mux
 */
 /******************************************************************************/
 #include <stdint.h>
@@ -36,40 +36,35 @@
 #define MOT_USER_INPUT_MUX_SOURCES_MAX (8U)
 #endif
 
-// static inline void MotorController_User_SetCmdValue(MuxInput_State_T * p_context, int16_t userCmd)
 
-typedef void (*MuxInput_SetDestField_T)(void * p_inputDest, int indexId, uintptr_t value);
-typedef uintptr_t(*MuxInput_GetDestField_T)(void * p_inputDest, int indexId);
+typedef void (*MuxInput_SetDestField_T)(void * p_inputDest, int fieldId, uintptr_t value);
+typedef uintptr_t(*MuxInput_GetDestField_T)(void * p_inputDest, int fieldId);
 
-typedef uintptr_t(*MuxInput_Capture_T)(void * p_inputDest, int indexId);
-
-
+typedef uintptr_t(*MuxInput_Capture_T)(void * p_inputDest, int fieldId);
 // typedef void (*MuxInput_SetInput_T)(void * p_context, uintptr_t value);
 
 /* [InputSource] */
-/* _VTable with fixed context, State*/
+/* _VTable with fixed context, State */
 typedef const struct MuxInput
 {
-    // MuxInput_Proc_T INIT; /* Re init peripheral registers */
     MuxInput_SetDestField_T SET_INPUT_FIELD;
 
+    // MuxInput_Proc_T INIT; /* Re init peripheral registers */
     // void (*CaptureInputs)(const void * p_adapter, void * p_input);
     // bool (*PollEdge)(const void * p_adapter);
     // Motor_User_Direction_T(*GetDirection)(const void * p_adapter);
 
-    /* Select active input source */
-    // void (*SelectSource)(void * p_context, InputMux_SourceId_T sourceId);
-
-    /* Get currently active source */
-    // InputMux_SourceId_T(*GetActiveSource)(const void * p_context);
-
-    /* Check if source is valid/available */
-    // bool (*IsSourceValid)(const void * p_context, InputMux_SourceId_T sourceId);
-
+    // MuxInput_T * P_VTABLE;
     void * P_INPUT_STATE;
-    const void * P_SOURCE;
+    const void * P_SOURCE;  // Points to MotAnalogUser_T, Socket Cmd, etc.
+    const void * P_DEST; //optionally directly copy
 }
 MuxInput_T;
+
+static inline void MuxInput_SetField(const MuxInput_T * p_input, int fieldId, uintptr_t value)
+{
+    p_input->SET_INPUT_FIELD(p_input->P_DEST, fieldId, value);
+}
 
 /*
 
@@ -90,23 +85,14 @@ Mux_State_T;
 */
 typedef const struct Mux
 {
-    // MuxInput_T * P_VTABLE;
-    void * P_STATE;
-    // const void * P_SOURCE;  // Points to MotAnalogUser_T, Socket Cmd, etc.
-    /* Array of input sources */
-    const MuxInput_T ** PP_SOURCES;
+    Mux_State_T * P_STATE;
+    const MuxInput_T ** PP_SOURCES;     /* Array of input sources */
     uint8_t SOURCE_COUNT;
-
-    /* Optional: Priority array for auto-selection */
-    // const uint8_t * P_PRIORITY_MAP;
 }
 Mux_T;
 
+static inline void Mux_SetField(const Mux_T * p_mux, int fieldId, uintptr_t value) { MuxInput_SetField(p_mux->P_STATE->p_selected, fieldId, value); }
 
-// void MuxInput_Init(const MuxInput_T * p_adapter)
-// {
-
-// }
 
 
 /******************************************************************************/

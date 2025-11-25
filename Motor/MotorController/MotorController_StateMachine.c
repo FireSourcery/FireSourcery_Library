@@ -273,7 +273,7 @@ static const State_T STATE_INIT =
 /******************************************************************************/
 static void Park_Entry(const MotorController_T * p_context)
 {
-    // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_V0); }
+    // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { MotMotors_StopAll(&p_context->MOTORS); MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_VFLOAT); }
 }
 
 static void Park_Proc(const MotorController_T * p_context)
@@ -303,7 +303,7 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
         // case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: MotMotors_StopAll(&p_context->MOTORS); break;
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return GetMainState(p_context); /* Protocol ExitPPark */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return GetMainState(p_context); /* Protocol ExitPPark, protocol apply direction */
         default:  break;
     }
     return NULL;
@@ -316,8 +316,8 @@ static State_T * Park_InputDirection(const MotorController_T * p_context, state_
     switch ((Motor_User_Direction_T)direction)
     {
         case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
-        case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
-        case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
+        case MOTOR_DIRECTION_FORWARD: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); p_nextState = GetMainState(p_context); break;
+        case MOTOR_DIRECTION_REVERSE: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); p_nextState = GetMainState(p_context); break;
         default:  break;
     }
     return p_nextState;
@@ -369,15 +369,15 @@ static const State_T STATE_PARK =
 /******************************************************************************/
 /*!
     @name Main App State
-
     Motor States: STOP, PASSIVE, RUN, OPEN_LOOP
-    Top State as Main_Stop/Idle  before transition
+    Base State as Stop/Idle before transition
     @{
 */
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
 {
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+    if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { MotMotors_StopAll(&p_context->MOTORS); }
 }
 
 static void Main_Proc(const MotorController_T * p_context)
@@ -399,6 +399,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
             {
                 // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
                 return GetMainState(p_context); /* transition to main top state. stops processing inputs */
+                // direction must be set
             }
             break;
         default:  break;
@@ -406,6 +407,13 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     return NULL;
 }
 
+/* overriden */
+// AnalogOnly should not enter, lock mode requires protocol
+static State_T * Main_InputDirection(const MotorController_T * p_context, state_value_t direction)
+{
+    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); /* Motor maintain direction state */
+    return NULL;
+}
 
 /*
     Motors Maybe spinning in same direction
@@ -441,14 +449,6 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 //     return p_nextState;
 // }
 
-static State_T * Main_InputDirection(const MotorController_T * p_context, state_value_t direction)
-{
-    // if (MotMotors_IsEveryValue(&p_context->MOTORS, Motor_User_IsDirection, (Motor_User_Direction_T)direction) == true) { return GetMainState(p_context); }
-    if (MotMotors_IsEveryUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction)) { return GetMainState(p_context); }
-    if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero)) { MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); return GetMainState(p_context); }
-    return NULL;
-}
-
 /*
     Transition to Lock to select substate
 */
@@ -478,47 +478,28 @@ const State_T MC_STATE_MAIN =
     Call handles enabling disabling output, FeedbackMode
 
     optionally move neutral to top state
+
+    protocol MotorCmd enable even for analog input only
 */
 /******************************************************************************/
 static void MotorCmd_Entry(const MotorController_T * p_context)
 {
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_VPWM); /* Set PWM Output */
+    MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT); /* Set PWM Output */
 }
 
-/* Motor_User_Input_T   Only */
+/* Motor_User_Input_T Only */
 static void MotorCmd_Proc(const MotorController_T * p_context)
 {
     Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
-
-    /* FeedbackMode must be set by protocol */
-    // tod  handle in app
-//     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: // effectively Motor_Input_OfMotAnalogUser / Motor_Input_OfVehicleInput
-//         switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-//         {
-//             case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-//             case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-//             case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NONE;// or return to top main
-//             default: break;
-//         }
-
-//         if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
-//         {
-//             p_input->CmdValue = 0U;
-//             p_input->PhaseState = PHASE_OUTPUT_FLOAT;
-//         }
-//         else
-//         {
-//             p_input->CmdValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U;
-//         }
-    // MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
-
+    MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
 }
 
 static State_T * MotorCmd_InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
     // if (MotMotors_IsEveryValue(&p_context->MOTORS, Motor_User_IsDirection, (Motor_User_Direction_T)direction) == true) { return GetMainState(p_context); }
-    if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero)) { MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); }
+    // if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero)) { MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); }
+    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); /* Motor maintain direction state */
     return NULL;
 }
 
@@ -549,6 +530,7 @@ static void Lock_Entry(const MotorController_T * p_context)
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     assert(MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP));
+    MotMotors_StopAll(&p_context->MOTORS);
     // _StateMachine_EndSubState(p_context->STATE_MACHINE.P_ACTIVE);
 
     MotMotors_EnterCalibration(&p_context->MOTORS); /* Enter Calibration State for all motors */
@@ -620,6 +602,11 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
             case MOTOR_CONTROLLER_LOCK_REBOOT:
                 HAL_Reboot();  // optionally deinit clock select
                 /* No return */
+                break;
+
+            case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE:
+                p_mc->LockOpStatus = 0;
+                p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* Motor disable on entry */
                 break;
 
             // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_context);       break;

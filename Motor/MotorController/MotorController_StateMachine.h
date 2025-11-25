@@ -59,11 +59,11 @@ typedef enum MotorController_State_Input
 {
     MCSM_INPUT_FAULT,           /* System fault handling */
     MCSM_INPUT_LOCK,            /* Enter locked/calibration operations */
-    // MCSM_INPUT_MAIN_MODE,       /* Switch between Main substates. runtime temporary */
     MCSM_INPUT_STATE_COMMAND,   /* System state commands (Park/Stop/Start) with per State Mapping */
     MCSM_INPUT_DIRECTION,       /* Simplify including common Park State and AnalogUser  */
     MCSM_INPUT_GENERIC,         /* Generic Input */ // handle common mapping. inputs proc synchronous buffer
-    // MCSM_INPUT_ANALOG_USER,
+    // MCSM_INPUT_MAIN_MODE,       /* Switch between Main substates. runtime temporary */
+    // MCSM_INPUT_ANALOG_USER, /* app also virtualizes */
     // MCSM_INPUT_SOCKET_USER,
 }
 MotorController_State_Input_T;
@@ -102,6 +102,8 @@ static inline bool MotorController_StateMachine_IsLock(MotorController_T * p_con
 
 static inline bool MotorController_StateMachine_IsConfig(MotorController_T * p_context) { return (MotorController_StateMachine_IsLock(p_context) || MotorController_StateMachine_IsFault(p_context)); }
 
+/* todo input mode dependent, and state dependent - properties or fn map */
+
 // is exact substate, faster check without traversal
 // static inline bool MotorController_StateMachine_IsExact(MotorController_T * p_context, State_T * p_state) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, p_state); }
 
@@ -110,16 +112,21 @@ static inline bool MotorController_StateMachine_IsConfig(MotorController_T * p_c
 
 /******************************************************************************/
 /*!
-    Input Cmd Values
+    Input Values passed as [state_value_t]
 */
 /******************************************************************************/
-
+/******************************************************************************/
+/*!
+    Input Cmd Values
+    Multi State common commands
+*/
+/******************************************************************************/
 typedef enum MotorController_StateCmd
 {
     MOTOR_CONTROLLER_STATE_CMD_PARK,
     MOTOR_CONTROLLER_STATE_CMD_E_STOP,
     MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* Enter Idle */
-    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* Enter Configured  */
+    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* Enter Configured */
 }
 MotorController_StateCmd_T;
 
@@ -130,7 +137,8 @@ static inline void MotorController_StateMachine_InputStateCommand(const MotorCon
 
 /******************************************************************************/
 /*!
-    Blocking SubState/Function Id
+    Lock SubState/Function Id
+    Safe state actions, maybe blocking
     LockCmd
 */
 /******************************************************************************/
@@ -143,6 +151,7 @@ typedef enum MotorController_LockId
     MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG,
     MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
     MOTOR_CONTROLLER_LOCK_REBOOT,
+    MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE, /* Exit to Motor Default Mode. from lock only */
     // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
     // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
     // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
@@ -158,12 +167,6 @@ typedef enum MotorController_LockOpStatus
 }
 MotorController_LockOpStatus_T;
 
-/******************************************************************************/
-/*
-    Lock/Blocking
-    Safe state actions, maybe blocking
-*/
-/******************************************************************************/
 /* Transition on Call */
 /* May transition to substate */
 static inline void MotorController_StateMachine_InputLock(const MotorController_T * p_context, MotorController_LockId_T id)
@@ -171,15 +174,26 @@ static inline void MotorController_StateMachine_InputLock(const MotorController_
     _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
 }
 
+// static inline MotorController_LockId_T MotorController_StateMachine_GetLockSubState(const MotorController_T * p_context)
+// {
+//     return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
+// }
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-static inline MotorController_MainMode_T MotorController_User_GetMainStateId(const MotorController_State_T * p_mcState)
+static inline MotorController_MainMode_T MotorController_StateMachine_GetMainSubState(MotorController_T * p_context)
 {
-    return StateMachine_GetActiveSubStateId(&p_mcState->StateMachine, &MC_STATE_MAIN);
+    return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
 }
+
+/* check by var set */
+static inline bool MotorController_StateMachine_IsMotorCmd(MotorController_T * p_context)
+{
+    return (MotorController_StateMachine_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
+}
+
 
 /******************************************************************************/
 /*!

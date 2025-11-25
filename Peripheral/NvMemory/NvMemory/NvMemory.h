@@ -140,8 +140,9 @@ NvMemory_Partition_T;
 {                                                                           \
     .ADDRESS    = AddressStart,                                             \
     .SIZE       = SizeBytes,                                                \
-    _NV_MEMORY_PARTITION_OFFSET_DEF(.OP_ADDRESS_OFFSET = OpAddressOffset,)  \
+    _NV_MEMORY_PARTITION_OFFSET_DEF((.OP_ADDRESS_OFFSET = OpAddressOffset,))  \
 }
+
 
 
 /******************************************************************************/

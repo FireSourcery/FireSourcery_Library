@@ -33,59 +33,31 @@
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
-
-/*
-    All apps include independent AnalogUser handlers.
-    Protocol freely maps,
-
-    UserApp -> MotorController_App
-    MotorControllerVar
-
-*/
-
 /* Part of MotorController */
 struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
 
+/*
+    All apps include independent AnalogUser handlers.
+    Protocol freely maps,
+*/
 /******************************************************************************/
 /*!
     Interface
+    Around [MotorController_T] for StateMachine Access
 */
 /******************************************************************************/
 typedef const struct MotorController_App
 {
     // void (*INIT)(const MotorController_T * p_context);
     // void (*PROC)(const MotorController_T * p_context);
-    void (*PROC_ANALOG_USER)(MotorController_T * p_context);
+    void (*PROC_ANALOG_USER)(MotorController_T * p_context); // or additional interface map
+    // void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
     State_T * P_INITIAL_STATE;
-    const void * P_APP_CONTEXT;
+    // const void * P_APP_CONTEXT;
 }
 MotorController_App_T;
 
 
-typedef const struct MotorController_AppTable
-{
-    MotorController_App_T MOTOR_CMD;
-    MotorController_App_T VEHICLE;
-}
-MotorController_AppTable_T;
+static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_context, MotorController_App_T * p_app) { return p_app->PROC_ANALOG_USER(p_context); }
 
-
-/******************************************************************************/
-/*!
-    App Table/Repo
-*/
-/******************************************************************************/
-/* Operation Mode. Common as config and StateMachine Input */
-typedef enum MotorController_MainMode
-{
-    MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
-    MOTOR_CONTROLLER_MAIN_MODE_VEHICLE,
-}
-MotorController_MainMode_T;
-
-extern State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode);
-
-extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
-
-extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_context);

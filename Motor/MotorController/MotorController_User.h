@@ -136,6 +136,7 @@ static inline void MotorController_User_EnterPark(const MotorController_T * p_co
 /* Transition to idle */
 static inline void MotorController_User_EnterMainIdle(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
 static inline void MotorController_User_EnterMain(const MotorController_T * p_context) { MotorController_StateMachine_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
+
 /******************************************************************************/
 /*
     passthrough Common
@@ -168,7 +169,25 @@ static inline void MotorController_User_SetCmdValue(const MotorController_T * p_
 static inline void MotorController_User_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
 static inline void MotorController_User_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
+// tod  handle in app
+//     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: // effectively Motor_Input_OfMotAnalogUser / Motor_Input_OfVehicleInput
+//         switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+//         {
+//             case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+//             case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+//             case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NONE;// or return to top main
+//             default: break;
+//         }
 
+//         if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
+//         {
+//             p_input->CmdValue = 0U;
+//             p_input->PhaseState = PHASE_OUTPUT_FLOAT;
+//         }
+//         else
+//         {
+//             p_input->CmdValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U;
+//         }
 
 /******************************************************************************/
 /*

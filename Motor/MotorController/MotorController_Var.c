@@ -36,7 +36,6 @@
     MotorController Module General
 */
 /******************************************************************************/
-/* UserInput */
 int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorController_Var_Output_T id)
 {
     int value = 0;
@@ -478,16 +477,16 @@ static inline bool IsInputPolicyProtocolControl(const MotorController_T * p_cont
 }
 
 // Check if a variable requires protocol control authority
-// static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
-// {
-//     switch ((MotVarId_HandlerType_T)varId.OuterType)
-//     {
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return true;
-//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN || varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
-//         case MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
-//         default:  return false;  // Config, monitoring, etc. don't need mux check
-//     }
-// }
+static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
+{
+    switch ((MotVarId_HandlerType_T)varId.OuterType)
+    {
+        case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return true;
+        case MOT_VAR_ID_HANDLER_TYPE_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN || varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+        case MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+        default:  return false;  // Config, monitoring, etc. don't need mux check
+    }
+}
 
 /*
     Checks for Input and Config policies before variable access
@@ -499,6 +498,7 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
     {
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL:
             if (!IsInputPolicyProtocolControl(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            // if (!IsInputPolicyProtocolControl(p_context) && !IsMotorCmdMode ) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:

@@ -34,8 +34,6 @@
 
 #include "Transducer/Blinky/Blinky.h"
 
-/* include part */
-// #include "Vehicle_StateMachine.h"
 
 /*
 */
@@ -169,7 +167,6 @@ static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p
 // }
 
 // void Vehicle_Input_ToMotorInput (const Vehicle_Input_T * p_user, Motor_User_Input_T * P_input )
-
 // {
     //     switch (dir)
     //     {
@@ -193,7 +190,6 @@ static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p
     //     }
 //
 // }
-
 
 
 extern void Vehicle_Init(const Vehicle_T * p_vehicle);

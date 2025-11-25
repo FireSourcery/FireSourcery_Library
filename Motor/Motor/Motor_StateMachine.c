@@ -141,7 +141,7 @@ static void Stop_Entry(const Motor_T * p_motor)
 
 static void Stop_Proc(const Motor_T * p_motor)
 {
-    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* altneratively move to thread */
+    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alteratively move to thread */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
 
@@ -366,10 +366,8 @@ const State_T MOTOR_STATE_PASSIVE =
 /******************************************************************************/
 static void Run_Entry(const Motor_T * p_motor)
 {
-    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
-    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
+    Phase_ActivateOutputT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
     /* alterntaively Update Vbus on start Angle Control */
 }
 

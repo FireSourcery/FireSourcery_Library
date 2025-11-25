@@ -75,7 +75,7 @@
 #include <string.h>
 
 /* Part  */
-#include "MotorController_App.h"
+#include "MotorController_AppTable.h"
 
 /******************************************************************************/
 /*!

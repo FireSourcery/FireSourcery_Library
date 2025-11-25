@@ -27,7 +27,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-/******************************************************************************/
 #include "App_Vehicle.h"
 
 /******************************************************************************/
@@ -36,7 +35,7 @@
 */
 /******************************************************************************/
 /*
-    Can change to interface later
+    Can change to interface mapping later
 */
 void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
 {
@@ -53,26 +52,34 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
         default: break;
     }
 
-    /* Set buffer */
-    // p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER);
-    // p_vehicle->P_VEHICLE_STATE->Input.BrakeValue = MotAnalogUser_GetBrake(&p_context->ANALOG_USER);
-
-    /* Inner StateMachine Only */
+    /* Set Inner StateMachine Only */
     Vehicle_User_SetThrottle(p_context->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     Vehicle_User_SetBrake(p_context->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
     Vehicle_User_PollStartCmd(&p_context->VEHICLE);
 }
 
-
-
-// MotorController_App_VTable_T MC_APP_VEHICLE =
 MotorController_App_T MC_APP_VEHICLE =
 {
     .PROC_ANALOG_USER = Vehicle_ProcAnalogUser,
     .P_INITIAL_STATE = &MC_STATE_MAIN_VEHICLE,
-    .P_APP_CONTEXT = NULL,
 };
 
+// interface for   data common
+// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_User_Input_T * p_user, id, value)
+
+// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_User_Input_T * p_user, MotAnalogUser_T * P_analog)
+// {
+//     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
+
+//     switch (vehicle->P_VEHICLE_STATE->Config.ThrottleMode)
+//     {
+//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
+//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
+//         default: break;
+//     }
+// }
+
+// interface direct call
 // static void UserInput(const MotorController_T * p_context, int id, int value)
 // {
 //     switch (id)
@@ -115,7 +122,7 @@ void Vehicle_Proc(const MotorController_T * p_context)
 }
 
 // top state can map MotorController inputs, pass to inner state
-static State_T * Vehicle_InputBuffer(const MotorController_T * p_context, state_value_t inputsPtr)
+static State_T * Vehicle_InputGeneric(const MotorController_T * p_context, state_value_t inputsPtr)
 {
     State_T * p_nextState = NULL;
     // Motor_User_Input_T * p_inputs = (Motor_User_Input_T *)inputsPtr;
@@ -145,12 +152,11 @@ static const State_Input_T VEHICLE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH
     // [MCSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     // [MCSM_INPUT_STATE_COMMAND]   = (State_Input_T)Vehicle_InputStateCmd,
     [MCSM_INPUT_DIRECTION]          = (State_Input_T)Vehicle_InputDirection, /* override outer and pass to nested state machine */
-    // [MCSM_INPUT_MAIN_MODE]       = (State_Input_T)Vehicle_InputMainMode,
-    // [MCSM_INPUT_GENERIC]         = (State_Input_T)Vehicle_InputBuffer,
+    // [MCSM_INPUT_GENERIC]         = (State_Input_T)Vehicle_InputGeneric,
     // [MCSM_INPUT_LOCK]            = (State_Input_T)Vehicle_InputLock,
 };
 
-static const State_T MC_STATE_MAIN_VEHICLE =
+const State_T MC_STATE_MAIN_VEHICLE =
 {
     .ID         = MOTOR_CONTROLLER_MAIN_MODE_VEHICLE,
     .DEPTH      = 1U,

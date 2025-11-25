@@ -38,7 +38,6 @@
 #include <string.h>
 
 
-
 /******************************************************************************/
 /*
     Wrapper around values array, preset functions for int types and operations
@@ -165,7 +164,7 @@ Array_T;
 #define Array_SetAs(T, p_ArrayMeta, index, value) (Array_At(T, p_ArrayMeta, index) = value)
 
 /*
-    Type safe wrapper around common implementation
+    Type safe API wrapper around common implementation
 */
 static inline int8_t Array8_Get(const Array_T * p_array, size_t index) { return ((int8_t *)p_array->P_BUFFER)[index]; }
 static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { ((int8_t *)p_array->P_BUFFER)[index] = value; }
@@ -178,7 +177,6 @@ static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) {
 
 static inline void ArrayStruct_Set(size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(void_pointer_at(p_array->P_BUFFER, type, index), p_value, type); }
 
-//altneratively layer wrapping for enchanced type safety
 // static inline int8_t Array8_Get(const Array_T * p_array, size_t index) { return as_pointer(int8_t, p_array->P_BUFFER)[index]; }
 // static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { as_pointer(int8_t, p_array->P_BUFFER)[index] = value; }
 

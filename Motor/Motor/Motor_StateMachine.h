@@ -64,6 +64,7 @@ typedef enum Motor_State_Input
     MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MSM_INPUT_USER_BUFFER,
+    // MSM_INPUT_CAPTURE_ADC,
 }
 Motor_State_Input_T;
 

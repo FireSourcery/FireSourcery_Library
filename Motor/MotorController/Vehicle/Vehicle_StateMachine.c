@@ -96,13 +96,6 @@ static void Drive_Proc(const Vehicle_T * p_vehicle)
         case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle); break;
         default: break;
     }
-    // switch (p_vehicle->P_VEHICLE_STATE->Input.Cmd)
-    // {
-    //     case VEHICLE_CMD_BRAKE:     Vehicle_SetBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue);         break;
-    //     case VEHICLE_CMD_THROTTLE:  Vehicle_SetThrottleValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue);   break;
-    //     case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle); break;
-    //     default: break;
-    // }
 }
 
 /* Externally detect cmd edge */

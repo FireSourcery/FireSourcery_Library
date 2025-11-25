@@ -30,35 +30,32 @@
 */
 /******************************************************************************/
 #include "MotorController_App.h"
-#include "MotorController_StateMachine.h"
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
 
-State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode)
+
+/******************************************************************************/
+/*!
+    App Table/Repo
+*/
+/******************************************************************************/
+/* Operation Mode. Common as config and StateMachine Input */
+typedef enum MotorController_MainMode
 {
-    switch (mode)
-    {
-        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_STATE_MAIN_MOTOR_CMD;
-        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_STATE_MAIN_VEHICLE;
-        default: return &MC_STATE_MAIN_MOTOR_CMD;
-    }
+    MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
+    MOTOR_CONTROLLER_MAIN_MODE_VEHICLE,
 }
+MotorController_MainMode_T;
 
-State_T * MotorController_App_GetMainState(MotorController_T * p_context)
+typedef const struct MotorController_AppTable
 {
-    return MotorController_App_MainStateOf(p_context->P_MC_STATE->Config.InitMode);
+    MotorController_App_T MOTOR_CMD;
+    MotorController_App_T VEHICLE;
 }
+MotorController_AppTable_T;
 
-MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
-{
-    switch (p_context->P_MC_STATE->Config.InitMode)
-    {
-        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &p_context->APPS.MOTOR_CMD;
-        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &p_context->APPS.VEHICLE;
-        default: return &p_context->APPS.MOTOR_CMD;
-    }
-}
-
-
+extern State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode);
+extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
+extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_context);

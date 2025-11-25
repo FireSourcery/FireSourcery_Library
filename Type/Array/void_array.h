@@ -106,6 +106,7 @@ static inline void void_pointer_assign_as_value(void * p_unit, size_t type, valu
 /*
     length in units
 */
+// static inline void void_array_foreach(size_t type, void * p_buffer, size_t length, proc_t unit_op)
 static inline void void_array_foreach(void * p_buffer, size_t type, size_t length, proc_t unit_op)
 {
     for (size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, type, index)); }

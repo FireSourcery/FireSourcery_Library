@@ -235,7 +235,7 @@ typedef struct Motor_State
     StateMachine_Active_T StateMachine;
     uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
 
-    /* StateMachine Controlled */
+    /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. Active Limits. Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState */
     /*  */
