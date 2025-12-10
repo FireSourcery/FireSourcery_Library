@@ -303,9 +303,9 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
-    #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
-        if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
-    #endif
+    // #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
+    //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
+    // #endif
 
         switch (p_mc->Config.InputMode)
         {
@@ -313,7 +313,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
                 // if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
                 {
                     _MotorController_ProcAnalogUser(p_context);
-                    MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
+                    // MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
                     // MotorController_App_ProcAnalogUser(p_context, p_context.selected);
                 }
                 break;

@@ -436,7 +436,7 @@ void Motor_User_SetActiveCmdValue(Motor_State_T * p_motor, int16_t userCmd)
 /*
     Scalar to Config value for consistent user handling
 */
-inline void _Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_User_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if      (mode.OpenLoop == 1U)  { Motor_User_SetOpenLoopCmd_Scalar(p_motor, userCmd); }
     // else if (mode.Position == 1U)  { Motor_User_SetPositionCmd_Scalar(p_motor, userCmd); }
