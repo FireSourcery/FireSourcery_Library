@@ -80,6 +80,7 @@ Protocol_RxCode_T;
 
 /* Parse with PARSE_RX_META */
 /* FramingMeta ControlMeta */
+/* Effectively common struct from unknown Packet struct */
 typedef struct Protocol_HeaderMeta
 {
     packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
@@ -130,7 +131,7 @@ typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(Protocol_HeaderMeta_T * p_rxMet
     Tx
 */
 typedef void (* const Packet_BuildTxSync_T)(void * p_txPacket, packet_size_t * p_txSize, packet_id_t txId);
-// typedef packet_size_t(* const Packet_BuildTxSync_T)(void * p_txPacket, packet_id_t txId);
+// typedef packet_size_t(* const Packet_BuildTxSignal_T)(void * p_txPacket, packet_id_t txId);
 typedef void (* const Packet_BuildTxMeta_T)(void * p_txPacket, const Protocol_HeaderMeta_T * p_meta);
 // typedef void (* const Packet_BuildTxMeta_T)(Packet_T * p_txPacket);
 

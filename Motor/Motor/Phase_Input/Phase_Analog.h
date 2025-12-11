@@ -57,11 +57,12 @@
 #elif (PHASE_ANALOG_I_SENSOR_INVERT == true)
 #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (-1)
 #endif
-// #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR ((PHASE_ANALOG_I_SENSOR_INVERT) ? -1 : 1)
 #else
 #define PHASE_ANALOG_I_SENSOR_INVERT (false)
 #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
 #endif
+
+// #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR ((PHASE_ANALOG_I_SENSOR_INVERT) ? -1 : 1)
 
 // #if     defined(PHASE_ANALOG_I_SENSORS_AB)
 // #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
@@ -82,6 +83,7 @@ static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { 
 /*
     ADC Ref Sensor Calibration
     optionally store as base ref
+    Phase_Analog_Calibration_T
 */
 /******************************************************************************/
 typedef const struct Phase_AnalogSensor

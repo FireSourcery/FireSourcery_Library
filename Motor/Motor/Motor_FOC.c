@@ -120,7 +120,7 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
 /* From Vdq to Vabc Duty */
 static void ProcAngleOutput(Motor_State_T * p_motor)
 {
-    FOC_ProcOutputV_VBusInv(&p_motor->Foc, Phase_VBusInv_Fract32());  /* Set Vabc, VDuty */
+    FOC_ProcOutputV_VBusInv(&p_motor->Foc, Phase_VBus_Inv_Fract32());  /* Set Vabc, VDuty */
 }
 
 

@@ -54,26 +54,27 @@ Phase_VBus_T;
 */
 extern Phase_VBus_T Phase_VBus;
 
-static void Phase_VBus_InitV(uint16_t vSource_V)
+static void Phase_VBus_InitV(uint16_t volts)
 {
-    Phase_VBus.VBus_Fract16 = fract16(vSource_V, Phase_Calibration_GetVMaxVolts());
-    Phase_VBus.VNominal_Fract16 = fract16(vSource_V, Phase_Calibration_GetVMaxVolts());
+    Phase_VBus.VBus_Fract16 = fract16(volts, Phase_Calibration_GetVMaxVolts());
+    Phase_VBus.VNominal_Fract16 = fract16(volts, Phase_Calibration_GetVMaxVolts());
 }
 
-static inline void Phase_VBus_CaptureFract16(uint16_t vSource_Fract16)
+static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
 {
-    Phase_VBus.VBus_Fract16 = vSource_Fract16;
-    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_VBus.VBus_Fract16; /* shift 16 as fract32 */
+    Phase_VBus.VBus_Fract16 = fract16;
+    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / fract16; /* shift 16 as fract32 */
 }
 
-static inline void Phase_VBus_CaptureAdcu(uint16_t vSource_Adcu)
+static inline void Phase_VBus_CaptureAdcu(uint16_t adcu)
 {
-    Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(vSource_Adcu));
+    Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu));
 }
 
 
 static inline ufract16_t Phase_VBus_Fract16(void) { return Phase_VBus.VBus_Fract16; }
-static inline uint32_t Phase_VBusInv_Fract32(void) { return Phase_VBus.PerV_Fract32; }
+static inline uint32_t Phase_VBus_Inv_Fract32(void) { return Phase_VBus.PerV_Fract32; }
+
 static inline uint16_t Phase_VBus_Volts(void) { return fract16_mul(Phase_VBus.VBus_Fract16, Phase_Calibration_GetVMaxVolts()); }
 
 /* Alternatively use Nominal */

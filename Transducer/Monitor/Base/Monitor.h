@@ -140,7 +140,7 @@ typedef struct Monitor
 
     /* Cached Results */
     Monitor_Status_T Status;            /* Current status for this direction */
-    Monitor_Status_T StatusPrev;        /* Previous status for edge detection */
+    Monitor_Status_T StatusPrev;        /* Previous status for all transitions */
     int32_t LastInput;                  /* Last input value */
 
     Monitor_Config_T Config;            /* Hold for runtime update */
@@ -242,7 +242,7 @@ extern Monitor_Status_T Monitor_Evaluate(Monitor_T * p_monitor, int32_t input);
 extern Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input);
 
 extern void Monitor_Reset(Monitor_T * p_monitor);
-extern bool Monitor_IsValidConfig(const Monitor_Config_T * p_config);
+extern bool Monitor_IsConfigValid(const Monitor_Config_T * p_config);
 extern void Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) ;
 extern void Monitor_SetWarningSetpoint(Monitor_T * p_monitor, int32_t setpoint) ;
 extern void Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint);

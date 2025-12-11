@@ -95,7 +95,7 @@ Timer_State_T;
 // alternatively as a common def
 // typedef struct Timer
 // {
-//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. allocate unused for Static case */
+//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. allocate unused for template case */
     // uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
     // uint32_t TimeRef;
     // uint32_t Counter;   /* Repeat */
@@ -146,7 +146,7 @@ static inline bool timer_is_elapsed(uint32_t timer, uint32_t time_ref, uint32_t 
 static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; }
 static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 
-/* Polling with general mode only */
+/* Polling with modal mode only */
 static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
 static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
 static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }

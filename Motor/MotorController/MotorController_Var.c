@@ -489,6 +489,7 @@ static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
 }
 
 /*
+    Input Guard
     Checks for Input and Config policies before variable access
 */
 static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, MotVarId_T varId)
@@ -499,13 +500,16 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL:
             if (!IsInputPolicyProtocolControl(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             // if (!IsInputPolicyProtocolControl(p_context) && !IsMotorCmdMode ) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            // if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
             break;
 
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
             if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            // if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
             break;
 
         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR:
+            // if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
         // case MOT_VAR_ID_HANDLER_TYPE_MOTOR_SUB_MODULE:
         //     if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
         //     break;

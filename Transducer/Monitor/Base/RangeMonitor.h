@@ -208,8 +208,10 @@ static inline void _RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t 
 extern void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config_T * p_config);
 extern RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, int32_t input);
 extern RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input);
-extern void RangeMonitor_Reset(RangeMonitor_T * p_monitor);
 
+extern bool RangeMonitor_IsConfigValid(const RangeMonitor_T * p_config);
+
+extern void RangeMonitor_Reset(RangeMonitor_T * p_monitor);
 extern void RangeMonitor_SetFaultOverLimit(RangeMonitor_T * p_monitor, int32_t limit);
 extern void RangeMonitor_SetFaultUnderLimit(RangeMonitor_T * p_monitor, int32_t limit);
 extern void RangeMonitor_SetWarningLimitHigh(RangeMonitor_T * p_monitor, int32_t limit);
@@ -230,8 +232,7 @@ typedef enum RangeMonitor_VarId
 }
 RangeMonitor_VarId_T;
 
-int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId);
-int32_t RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId);
+extern int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId);
 
 typedef enum RangeMonitor_ConfigId
 {
@@ -245,8 +246,9 @@ typedef enum RangeMonitor_ConfigId
 }
 RangeMonitor_ConfigId_T;
 
-int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId);
-void _RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId, int32_t value);
+extern int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId);
+extern void _RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId, int32_t value);
 
-int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId);
-void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value);
+extern int RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, int varId);
+extern int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId);
+extern void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value);

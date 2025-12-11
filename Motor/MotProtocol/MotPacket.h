@@ -67,7 +67,7 @@ typedef uint16_t checksum_t;
     May process directly as cmd, or lead extended cmd id
     Effectively the packets "OpCode"
 */
-typedef enum MOT_PACKET_PACKED MotPacket_Id ENUM8_T
+typedef enum MotPacket_Id ENUM8_T
 {
     /*
         2-Byte Id Packets
@@ -124,7 +124,7 @@ MotPacket_Id_T;
     4-Byte Control Char, Short
 */
 // typedef struct MOT_PACKET_PACKED MotPacket_ControlChar
-// typedef struct MOT_PACKET_PACKED MotPacket_HeaderId
+// typedef struct MOT_PACKET_PACKED MotPacket_Fixed
 // typedef struct MOT_PACKET_PACKED MotPacket_Short
 typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
@@ -164,6 +164,7 @@ MotPacket_T;
 // todo remove Packet wrap. keep payload
 // pass payload separately eliminates need for combined packet + payload struct
 // extern uint8_t MotPacket_VersionResp1_Build(MotPacket_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
+// extern uint8_t MotPacket_VersionResp1_Build(MotPacket_T * p_header, MotPacket_VersionResp_T payload);
 
 /******************************************************************************/
 /*!

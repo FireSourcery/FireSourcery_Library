@@ -126,16 +126,19 @@ static inline void Analog_ADC_PollComplete(const Analog_ADC_T * p_adc)
     if (HAL_ADC_ReadConversionCompleteFlag(p_adc->P_HAL_ADC) == true) { Analog_ADC_OnComplete_ISR(p_adc); }
 }
 
+
+/******************************************************************************/
 /*!
     @brief Activate marked channels
     Only a single thread starts the conversions. No Critical is needed.
 */
+/******************************************************************************/
 static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
 {
     /*
         If Adc is still active, remaining channels will continue processing until the next call.
         ISR should not start witin this block, when this function is called by a single thread
-     */
+    */
     if (Analog_ADC_ReadIsActive(p_adc) == false)
     {
         ADC_ProcStart(p_adc, p_adc->P_ADC_STATE);

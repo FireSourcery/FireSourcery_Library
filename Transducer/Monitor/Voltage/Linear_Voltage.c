@@ -58,13 +58,13 @@
 void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits)
 {
 #ifdef CONFIG_LINEAR_DIVIDE_SHIFT
-    p_linear->Slope             = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / r2 / 1000U; /* (ADC_VREF*(R1 + R2) << 15)/(ADC_MAX*R2) */
+    p_linear->Slope             = (((uint64_t)adcVRef_MilliV * (r1 + r2)) << (LINEAR_VOLTAGE_SHIFT - adcBits)) / ((uint64_t)r2 * 1000U); /* (ADC_VREF*(R1 + R2) << 15)/(ADC_MAX*R2) */
     p_linear->SlopeShift        = LINEAR_VOLTAGE_SHIFT;
-    p_linear->InvSlope          = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) * 1000U / adcVRef_MilliV / (r1 + r2); /* (R2 << 15)/(ADC_VREF*(R1 + R2)) */
+    p_linear->InvSlope          = ((uint64_t)r2 << LINEAR_VOLTAGE_SHIFT) * 1000U / ((uint64_t)adcVRef_MilliV * (r1 + r2)); /* (R2 << 15)/(ADC_VREF*(R1 + R2)) */
     p_linear->InvSlopeShift     = LINEAR_VOLTAGE_SHIFT - adcBits;
 #elif defined (CONFIG_LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor       = (uint64_t)adcVRef_MilliV * (r1 + r2) / 1000U; /* (ADC_VREF*(R1+R2)) */
-    p_linear->SlopeDivisor      = (((uint64_t)1U << adcBits) - 1U) * r2;       /* (ADC_MAX*R2) */
+    p_linear->SlopeDivisor      = (((uint64_t)1U << adcBits) - 1U) * r2;        /* (ADC_MAX*R2) */
 #endif
     p_linear->X0                = 0;
     p_linear->Y0                = 0;

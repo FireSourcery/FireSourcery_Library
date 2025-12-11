@@ -42,8 +42,8 @@
 /* Region without previous on/off state */
 typedef enum Hysteresis_Region
 {
-    HYSTERESIS_REGION_OFF = 0,          /* Value in inactive region */
-    HYSTERESIS_REGION_ON = 1,           /* Value in active region */
+    HYSTERESIS_REGION_OFF = 0, /* HYSTERESIS_REGION_INACTIVE */         /* Value in inactive region */
+    HYSTERESIS_REGION_ON = 1, /* HYSTERESIS_REGION_ACTIVE */          /* Value in active region */
     HYSTERESIS_REGION_DEADBAND = -1,    /* Value in deadband - maintains previous state */
                                         /* consistent with boolean state this way */
 }

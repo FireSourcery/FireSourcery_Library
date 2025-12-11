@@ -43,7 +43,7 @@
 {                                                                             \
     .Nominal = (nominal),                                                     \
     .Warning = { .Setpoint = (warnSet), .Resetpoint = (warnReset) },          \
-    .Fault = { .Limit = (faultLimit) }                                        \
+    .Fault = { .Limit = (faultLimit) },                                       \
     .IsEnabled = (enabled),                                                   \
 }
 
@@ -56,6 +56,7 @@ static inline Monitor_Config_T Monitor_Config_Create(int32_t nominal, int32_t wa
         .Fault = { .Limit = faultLimit }
         // .IsEnabled = enabled,
     };
+    // return (Monitor_Config_T)(MONITOR_CONFIG_INIT(nominal, warnSet, warnReset, faultLimit, true));
 }
 
 
@@ -285,35 +286,26 @@ static inline RangeMonitor_Config_T RangeMonitor_Config_SymmetricPercent(int32_t
     - Builds fault limits symmetrically around nominal
     - Hysteresis is applied to both warning limits
 */
-static inline void RangeMonitor_Config_InitWarningSymmetric(RangeMonitor_Config_T * p_this, int32_t nominal, int32_t warnOffset, uint32_t hysteresis)
+static inline void RangeMonitor_Config_InitSymmetric(RangeMonitor_Config_T * p_this, int32_t nominal, int32_t faultOffset, int32_t warnOffset, uint32_t warnHysteresis)
 {
-    p_this->Warning.LimitHigh = nominal + warnOffset;
-    p_this->Warning.LimitLow = nominal - warnOffset;
-    p_this->Warning.Hysteresis = hysteresis;
-}
-
-static inline void RangeMonitor_Config_InitFaultSymmetric(RangeMonitor_Config_T * p_this, int32_t nominal, int32_t faultOffset)
-{
+    p_this->Nominal = nominal;
     p_this->FaultOverLimit.Limit = nominal + faultOffset;
     p_this->FaultUnderLimit.Limit = nominal - faultOffset;
-}
-
-static inline void RangeMonitor_Config_InitWarningSymmetricPercent(RangeMonitor_Config_T * p_this, int32_t nominal, uint8_t warnPercent, uint8_t hystPercent)
-{
-    RangeMonitor_Config_InitWarningSymmetric(p_this, nominal, (nominal * warnPercent) / 100, (nominal * hystPercent) / 100);
-}
-
-static inline void RangeMonitor_Config_InitFaultSymmetricPercent(RangeMonitor_Config_T * p_this, int32_t nominal, uint8_t faultPercent)
-{
-    RangeMonitor_Config_InitFaultSymmetric(p_this, nominal, (nominal * faultPercent) / 100);
+    p_this->Warning.LimitHigh = nominal + warnOffset;
+    p_this->Warning.LimitLow = nominal - warnOffset;
+    p_this->Warning.Hysteresis = warnHysteresis;
 }
 
 /* Init all except enable */
 static inline void RangeMonitor_Config_InitSymmetricPercent(RangeMonitor_Config_T * p_this, int32_t nominal, uint8_t faultPercent, uint8_t warnPercent, uint8_t hystPercent)
 {
-    p_this->Nominal = nominal;
-    RangeMonitor_Config_InitFaultSymmetricPercent(p_this, nominal, faultPercent);
-    RangeMonitor_Config_InitWarningSymmetricPercent(p_this, nominal, warnPercent, hystPercent);
-
+    RangeMonitor_Config_InitSymmetric
+    (
+        p_this,
+        nominal,
+        (nominal * faultPercent) / 100,
+        (nominal * warnPercent) / 100,
+        (nominal * hystPercent) / 100
+    );
     // *p_this = RangeMonitor_Config_SymmetricPercent(nominal, faultPercent, warnPercent, hystPercent);
 }

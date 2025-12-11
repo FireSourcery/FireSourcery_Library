@@ -39,6 +39,7 @@
     Boolean state transitions and edge detection
 */
 /******************************************************************************/
+/* is_edge_rising */
 static inline bool is_rising_edge(bool prev_state, bool state) { return ((prev_state == false) && (state == true)); }
 static inline bool is_falling_edge(bool prev_state, bool state) { return ((prev_state == true) && (state == false)); }
 static inline bool is_edge(bool prev_state, bool state) { return (prev_state != state); }
@@ -59,8 +60,7 @@ static inline uint32_t bits_falling_edges(uint32_t prev_states, uint32_t states)
 */
 /******************************************************************************/
 /* Edge detection based on zero crossing */
-/* is_rising_zero_crossing */
-/* is_rising_edge_zero_crossing */
+/* is_zero_crossing_rising */
 static inline bool is_value_rising_edge(int32_t prev, int32_t new) { return is_rising_edge((prev > 0), (new > 0)); }
 static inline bool is_value_falling_edge(int32_t prev, int32_t new) { return is_falling_edge((prev > 0), (new > 0)); }
 static inline bool is_value_edge(int32_t prev, int32_t new) { return is_edge((prev > 0), (new > 0)); }
@@ -73,7 +73,7 @@ static inline sign_t value_edge_sign(int32_t prev, int32_t new) { return edge_si
     For fault monitoring, limit detection, etc.
 */
 /******************************************************************************/
-/* is_crossing_rising_edge */
+/* is_crossing_rising */
 static inline bool is_rising_crossing(int32_t threshold_on, int32_t prev, int32_t value) { return is_rising_edge((prev >= threshold_on), (value >= threshold_on)); }
 static inline bool is_falling_crossing(int32_t threshold_off, int32_t prev, int32_t value) { return is_falling_edge((prev >= threshold_off), (value >= threshold_off)); }
 static inline bool is_crossing(int32_t threshold, int32_t prev, int32_t value) { return is_edge((prev >= threshold), (value >= threshold)); }
@@ -93,8 +93,6 @@ static inline bool is_falling_schmitt_trigger(int32_t threshold_off, bool prev_s
 //     uint32_t LastValue;
 //     uint32_t StableCount;
 //     uint32_t DebounceThreshold;
-//     bool IsRisingEdge;
-//     bool IsFallingEdge;
 // } Edge_T;
 
 // void Edge_Update(Edge_T * p_detector, uint32_t value);

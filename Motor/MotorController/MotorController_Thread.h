@@ -215,6 +215,7 @@ static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T *
     MotMotors_ForceDisableControl(&p_context->MOTORS);
     p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
     MotorController_StateMachine_EnterFault(p_context);
+    // MotorController_StateMachine_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_FAULT, 0); // transition without lock
 }
 

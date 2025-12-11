@@ -165,7 +165,7 @@ static void _RotorSensor_Reset(RotorSensor_State_T * p_state)
 
 /* Getters in case implementation changes */
 /* Position */
-static inline angle16_t _RotorSensor_GetElecticalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
+static inline angle16_t _RotorSensor_GetElectricalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
 /* Speed Angle - Displacement of Electrical Angle at CONTROL_FREQ */
 static inline angle16_t _RotorSensor_GetElectricalSpeed(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed; }
 static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Fract16; }
@@ -231,7 +231,7 @@ static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, con
 // static inline angle16_t RotorSensor_PollAngle(const RotorSensor_T * p_sensor)
 // {
 //     RotorSensor_CaptureAngle(p_sensor);
-//     return _RotorSensor_GetElecticalAngle(p_sensor->P_STATE);
+//     return _RotorSensor_GetElectricalAngle(p_sensor->P_STATE);
 // }
 
 // static inline angle16_t RotorSensor_PollSpeed(const RotorSensor_T * p_sensor)

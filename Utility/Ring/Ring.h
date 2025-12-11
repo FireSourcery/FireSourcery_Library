@@ -63,6 +63,12 @@
 #define _RING_NON_POW2_DEF(code) code
 #endif
 
+#if defined(RING_LOCAL_CRITICAL_ENABLE)
+#define _RING_LOCAL_CRITICAL_DEF(code, ...) code
+#else
+#define _RING_LOCAL_CRITICAL_DEF(code, ...) __VA_ARGS__
+#endif
+
 /*  */
 typedef const struct Ring_Type
 {
@@ -86,13 +92,8 @@ typedef struct Ring_State
 }
 Ring_State_T;
 
-#define _RING_BUFFER_ALLOC(BytesSize) ((uint8_t[(BytesSize)]){})
-// #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* /sizeof(int) guarantees align and no ascii fill */
-#define _RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + ((UnitSize)*(Length)))))
-
-
 /*
-    Run time contigous implementation.
+    Run time contiguous implementation.
 */
 typedef struct Ring
 {
@@ -113,24 +114,27 @@ typedef struct Ring
 }
 Ring_T;
 
+#define _RING_BUFFER_ALLOC(BytesSize) ((uint8_t[(BytesSize)]){})//((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* /sizeof(int) guarantees align and no ascii fill */
 #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + ((UnitSize)*(Length)))))
 
 /*
     For Generic Handling or Runtime Init
     In the case that Runtime state stores [Ring_Type_T Type], it must be copied at run time.
+    RingT_T
 */
 typedef const struct Ring_Context
 {
     Ring_Type_T TYPE;
-    Ring_T * P_STATE;
-    // Ring_State_T * P_STATE;
+    Ring_T * P_STATE; // Ring_State_T * P_STATE;
 }
 Ring_Context_T;
 
 #define RING_CONTEXT_INIT(UnitSize, Length, p_State) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = p_State, } /* Caller validates State with Length */
 #define RING_CONTEXT_ALLOC(UnitSize, Length) RING_CONTEXT_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
+/*
 
+*/
 #define IS_POW2(x) (((x) & ((x) - 1U)) == 0U)
 #define IS_ALIGNED(x, align) (((x) & ((align) - 1U)) == 0U)
 

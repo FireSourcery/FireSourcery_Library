@@ -38,42 +38,13 @@
 /*  */
 typedef const struct VDivider
 {
-    const uint32_t R1;
-    const uint32_t R2;
-    // const uint16_t VREF_MILLIV; /* If different than global */
+    uint32_t R1;
+    uint32_t R2;
+    // uint16_t VREF_MILLIV; /* If different than global */
 }
 VDivider_T;
 
 #define V_DIVIDER_INIT(RefR1, RefR2) { .R1 = (RefR1), .R2 = (RefR2) }
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-typedef enum VDivider_RefId
-{
-    VDIVIDER_REF_R1,
-    VDIVIDER_REF_R2,
-}
-VDivider_RefId_T;
-
-static inline int32_t _VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T configId)
-{
-    int32_t value = 0;
-    switch (configId)
-    {
-        case VDIVIDER_REF_R1: value = p_voltage->R1 / 10U;       break;
-        case VDIVIDER_REF_R2: value = p_voltage->R2 / 10U;       break;
-        default: break;
-    }
-    return value;
-}
-
-static inline int32_t VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T configId)
-{
-    return (p_voltage != NULL) ? _VDivider_RefId_Get(p_voltage, configId) : 0;
-}
-
 
 /******************************************************************************/
 /*!
@@ -98,3 +69,30 @@ static inline void VDivider_ToLinear(const VDivider_T * p_voltage, Linear_T * p_
 // static inline int32_t Voltage_AdcuOfMilliV(const Voltage_T * p_voltage, uint32_t milliV)              { return Linear_Voltage_AdcuOfMilliV(&p_voltage->Units, milliV); }
 // static inline int32_t Voltage_AdcuOfV(Voltage_T * p_voltage, uint16_t v)                              { return Linear_Voltage_AdcuOfV(&p_voltage->Units, v); }
 
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+typedef enum VDivider_RefId
+{
+    VDIVIDER_REF_R1,
+    VDIVIDER_REF_R2,
+}
+VDivider_RefId_T;
+
+static inline int32_t _VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T id)
+{
+    int32_t value = 0;
+    switch (id)
+    {
+        case VDIVIDER_REF_R1: value = p_voltage->R1 / 10U;       break;
+        case VDIVIDER_REF_R2: value = p_voltage->R2 / 10U;       break;
+        default: break;
+    }
+    return value;
+}
+
+static inline int32_t VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T id)
+{
+    return (p_voltage != NULL) ? _VDivider_RefId_Get(p_voltage, id) : 0;
+}

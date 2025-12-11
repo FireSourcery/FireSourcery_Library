@@ -42,6 +42,7 @@ Accessor_T;
 
 static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
 static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
+// static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
 
 /*
     Struct per Var implementation

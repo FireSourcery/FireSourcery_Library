@@ -113,7 +113,7 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
 
 void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
 {
-    // VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
+    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
 }
 
 void MotorController_ResetBootDefault(MotorController_State_T * p_mc)

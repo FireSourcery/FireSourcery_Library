@@ -33,17 +33,17 @@
 
 #define CONFIG_MOTOR_DEBUG (!NDEBUG)
 
-#if     defined(CONFIG_MOTOR_I_SENSORS_AB)
-#elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
-#else
-    #define CONFIG_MOTOR_I_SENSORS_ABC
-#endif
+// #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
+// #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
+// #else
+//     #define CONFIG_MOTOR_I_SENSORS_ABC
+// #endif
 
-#if     defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
-#elif   defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
-#else
-    #define CONFIG_MOTOR_V_SENSORS_ANALOG
-#endif
+// #if     defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
+// #elif   defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+// #else
+//     #define CONFIG_MOTOR_V_SENSORS_ANALOG
+// #endif
 
 #if     defined(CONFIG_MOTOR_HALL_MODE_POLLING)
 #elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)

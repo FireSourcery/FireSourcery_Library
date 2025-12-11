@@ -29,7 +29,7 @@
     @brief
 */
 /******************************************************************************/
-#include "Analog.h"
+// #include "Analog.h"
 #include "HAL_ADC.h"
 #include "Config.h"
 
@@ -97,7 +97,7 @@ typedef union Analog_ConversionState
     struct
     {
         uint32_t Result : 16U;
-        uint32_t IsMarked : 1U;
+        uint32_t IsMarked : 1U; /* depreciate */
         uint32_t Reserved : 15U;
         // uint32_t IsNewResult : 1U; // new result sync flag
         // volatile bool IsActive; // allow mark while active /* !IsComplete */
@@ -238,7 +238,10 @@ Analog_ADC_State_T;
 
 /******************************************************************************/
 /*
-    ADC Context - Context Per Thread
+    ADC Peripheral Control
+        - Context Per Thread
+        - Wraps HAL_ADC with State, callback context
+    Analog_Converter_T
 */
 /******************************************************************************/
 typedef const struct Analog_ADC
@@ -248,10 +251,9 @@ typedef const struct Analog_ADC
 
     // context based implementation, default
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
+    uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
 
     // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to notify batch status */
-
-    uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
 
 // alternative simplified implementation, map by adc_channel_t
 // adc_pin_t * P_PIN_MAP;

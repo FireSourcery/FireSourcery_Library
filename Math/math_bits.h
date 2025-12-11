@@ -36,12 +36,12 @@
 #include <stdbool.h>
 
 /* pow2 only */
-static inline uintptr_t align_down(uintptr_t bits, size_t align) { return (bits & (-align)); }
-static inline uintptr_t align_up(uintptr_t bits, size_t align) { return (-((-bits) & (-align))); }
-static inline bool is_aligned(uintptr_t bits, size_t align) { return ((bits & (align - 1U)) == (uintptr_t)0U); }
+static inline uintptr_t align_down(uintptr_t value, size_t align) { return (value & (uintptr_t)(-align)); }
+static inline uintptr_t align_up(uintptr_t value, size_t align) { return (-((-value) & (uintptr_t)(-align))); }
+static inline bool is_aligned(uintptr_t value, size_t align) { return ((value & (uintptr_t)(align - 1U)) == (uintptr_t)0U); }
 
 /* is_aligned_mask */
-static inline bool is_masked(uint32_t value, uint32_t mask) { return ((value & mask) == (uint32_t)0U); }
+static inline bool is_masked(uintptr_t value, uintptr_t mask) { return ((value & mask) == (uintptr_t)0U); }
 
 
 #endif

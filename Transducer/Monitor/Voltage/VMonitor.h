@@ -38,8 +38,7 @@
 
 typedef uint16_t vmonitor_value_t; /* ADCU */
 
-typedef RangeMonitor_T VMonitor_T;
-// typedef RangeMonitor_T VMonitor_State_T;
+typedef RangeMonitor_T VMonitor_T; // typedef RangeMonitor_T VMonitor_State_T;
 typedef RangeMonitor_Config_T VMonitor_Config_T; /* Use RangeMonitor_Config_T for all logic */
 
 typedef enum VMonitor_Status
@@ -58,7 +57,7 @@ typedef const struct VMonitor_Context
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
     VDivider_T VDIVIDER;
-    // VDivider_T * P_VDIVIDER; // pointer for writable
+    // VDivider_T * P_VDIVIDER; // pointer for writable/separate region of memory
     Linear_T * P_LINEAR; /* if defined local unit conversion */
 
     Analog_Conversion_T ANALOG_CONVERSION; // todo move to upper layer, for interface
@@ -120,16 +119,6 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
 static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
 static inline VMonitor_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
 
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-static inline int VMonitor_VarId_Get(const VMonitor_Context_T * p_context, RangeMonitor_VarId_T id) { return RangeMonitor_VarId_Get(p_context->P_STATE, id); }
-
-static inline int VMonitor_ConfigId_Get(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id) { return RangeMonitor_ConfigId_Get(p_context->P_STATE, id); }
-static inline void VMonitor_ConfigId_Set(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id, int value) { RangeMonitor_ConfigId_Set(p_context->P_STATE, id, value); }
-
-static inline int VMonitor_VDivider_RefId_Get(const VMonitor_Context_T * p_context, VDivider_RefId_T id) { return VDivider_RefId_Get(&p_context->VDIVIDER, id); }
 
 
 /******************************************************************************/
@@ -140,3 +129,14 @@ extern void VMonitor_InitLimitsDefault(VMonitor_T * p_vMonitor, int32_t nominal,
 
 extern void VMonitor_InitFrom(const VMonitor_Context_T * p_context, const VMonitor_Config_T * p_config);
 extern void VMonitor_Init(const VMonitor_Context_T * p_context);
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static inline int VMonitor_VarId_Get(const VMonitor_Context_T * p_context, RangeMonitor_VarId_T id) { return RangeMonitor_VarId_Get(p_context->P_STATE, id); }
+
+static inline int VMonitor_ConfigId_Get(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id) { return RangeMonitor_ConfigId_Get(p_context->P_STATE, id); }
+static inline void VMonitor_ConfigId_Set(const VMonitor_Context_T * p_context, RangeMonitor_ConfigId_T id, int value) { RangeMonitor_ConfigId_Set(p_context->P_STATE, id, value); }
+
+static inline int VMonitor_VDivider_RefId_Get(const VMonitor_Context_T * p_context, VDivider_RefId_T id) { return VDivider_RefId_Get(&p_context->VDIVIDER, id); }

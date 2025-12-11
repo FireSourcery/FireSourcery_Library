@@ -51,6 +51,9 @@ Phase_Calibration_T;
 /* run-time overwrite or compile time def. */
 extern const Phase_Calibration_T PHASE_CALIBRATION;
 
+// #define PHASE_I_FRACT16(amps)   FRACT16((float)amps / PHASE_CALIBRATION.I_MAX_AMPS)
+// #define PHASE_V_FRACT16(volts)  FRACT16((float)volts / PHASE_CALIBRATION.V_MAX_VOLTS)
+
 /* Getter interface. */
 static inline uint16_t Phase_Calibration_GetIMaxAmps(void) { return PHASE_CALIBRATION.I_MAX_AMPS; }
 static inline uint16_t Phase_Calibration_GetVMaxVolts(void) { return PHASE_CALIBRATION.V_MAX_VOLTS; }

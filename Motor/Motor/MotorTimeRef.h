@@ -24,7 +24,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorTimeRef.h
+    @file   Motor_ControlFreq.h
     @author FireSourcery
     @brief  Time/Clock References
 */
@@ -58,6 +58,7 @@
 #define MOTOR_SPEED_LOOP_FREQ (1000U)
 #endif
 
+/*  */
 #define CYCLES_OF_MS(Freq, Milliseconds)    ((uint32_t)((uint32_t)Milliseconds * Freq / 1000U))
 #define MS_OF_CYCLES(Freq, Cycles)          ((uint32_t)((uint32_t)Cycles * 1000U / Freq))
 

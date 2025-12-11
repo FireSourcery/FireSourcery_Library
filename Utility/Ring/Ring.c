@@ -42,62 +42,23 @@
     Alternatively, Critical can be implement in upper layer.
 */
 /******************************************************************************/
-static inline void EnterCritical(const Ring_T * p_ring)
-{
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    _Critical_DisableIrq();
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
-#endif
-}
-
-static inline void ExitCritical(const Ring_T * p_ring)
-{
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    _Critical_EnableIrq();
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
-#endif
-}
+static inline void EnterCritical(const Ring_T * p_ring) { _RING_LOCAL_CRITICAL_DEF(_Critical_DisableIrq(), (void)p_ring); }
+static inline void ExitCritical(const Ring_T * p_ring) { _RING_LOCAL_CRITICAL_DEF(_Critical_EnableIrq(), (void)p_ring); }
 
 /* Multithreaded may use disable interrupts, if-test, or spin-wait with thread scheduler */
-static inline bool AcquireSignal(Ring_T * p_ring)
+static inline bool _AcquireCritical(void * p_lock)
 {
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireLock(&p_ring->Lock);
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
+    (void)p_lock;
     return true;
-#endif
 }
 
-static inline void ReleaseSignal(Ring_T * p_ring)
+static inline void _ReleaseCritical(void * p_lock)
 {
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    Critical_ReleaseLock(&p_ring->Lock);
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
-#endif
+    (void)p_lock;
 }
 
-static inline bool AcquireCritical(Ring_T * p_ring)
-{
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    return Critical_AcquireEnter(&p_ring->Lock);
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
-    return true;
-#endif
-}
-
-static inline void ReleaseCritical(Ring_T * p_ring)
-{
-#if     defined(RING_LOCAL_CRITICAL_ENABLE)
-    Critical_ReleaseExit(&p_ring->Lock);
-#elif   defined(RING_LOCAL_CRITICAL_DISABLE)
-    (void)p_ring;
-#endif
-}
+static inline bool AcquireCritical(Ring_T * p_ring) { _RING_LOCAL_CRITICAL_DEF(return _AcquireCritical(&p_ring->Lock);, (void)p_ring; return true;) }
+static inline void ReleaseCritical(Ring_T * p_ring) { _RING_LOCAL_CRITICAL_DEF(_ReleaseCritical(&p_ring->Lock);, (void)p_ring;) }
 
 /******************************************************************************/
 /*!

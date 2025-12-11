@@ -226,6 +226,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
         if (Phase_Calibration_IsLoaded() == false) { p_mc->FaultFlags.InitCheck = 1U; }
         /* Enforce VMonitor Enable */ /* Disabled on invalid config */
         if (RangeMonitor_IsEnabled(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VSourceLimit = 1U; }
+        /* Check separately */
         // if (RangeMonitor_ValidateConfig(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.VSourceLimit = 1U; }
 
         // if (BootRef_IsValid() == false) { MotorController_InitVSupplyAutoValue(p_context); } /* optionally auto on first time boot */
@@ -236,8 +237,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
         if (p_mc->FaultFlags.Value == 0U)
         {
             MotorController_BeepShort(p_context);
-            // p_nextState = &MC_STATE_MAIN;
-            p_nextState = &STATE_PARK;
+            p_nextState = &STATE_PARK; /* Common Park State */ // p_nextState = &MC_STATE_MAIN;
         }
         else
         {

@@ -50,7 +50,7 @@ Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t inp
 
     /* Check fault condition next (highest priority, no hysteresis) */
     else if (_Monitor_CheckFaultAsHigh(p_monitor, input) == true)    { status = MONITOR_STATUS_FAULT; }
-    else if (Hysteresis_Poll(&p_monitor->Warning, input) == true)   { status = MONITOR_STATUS_WARNING; }
+    else if (Hysteresis_Poll(&p_monitor->Warning, input) == true)    { status = MONITOR_STATUS_WARNING; }
     else                                                             { status = MONITOR_STATUS_NORMAL; }
 
     return status;
@@ -63,9 +63,9 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 {
     Monitor_Status_T status;
 
-    if (Hysteresis_Inverted_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF) { status = MONITOR_STATUS_NORMAL; }
+    if (Hysteresis_Inverted_RegionOf(&p_monitor->Warning, input) == HYSTERESIS_REGION_OFF)  { status = MONITOR_STATUS_NORMAL; }
     else if (_Monitor_CheckFaultAsLow(p_monitor, input) == true)                            { status = MONITOR_STATUS_FAULT; }
-    else if (Hysteresis_Inverted_Poll(&p_monitor->Warning, input) == true)                 { status = MONITOR_STATUS_WARNING; }
+    else if (Hysteresis_Inverted_Poll(&p_monitor->Warning, input) == true)                  { status = MONITOR_STATUS_WARNING; }
     else                                                                                    { status = MONITOR_STATUS_NORMAL; }
 
     return status;
@@ -113,7 +113,7 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
     _Monitor_InitFrom(&p_monitor->Base, &p_monitor->Config);
 
     /* Disable if invalid */
-    if (Monitor_IsValidConfig(&p_monitor->Config) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_IsConfigValid(&p_monitor->Config) == false) { p_monitor->Config.IsEnabled = false; }
 
     if (p_monitor->Config.IsEnabled == false) { p_monitor->Direction = MONITOR_DISABLED; }
     else
@@ -185,7 +185,7 @@ void Monitor_Reset(Monitor_T * p_monitor)
     Config
 */
 /******************************************************************************/
-bool Monitor_IsValidConfig(const Monitor_Config_T * p_config)
+bool Monitor_IsConfigValid(const Monitor_Config_T * p_config)
 {
     bool isValid = false;
     if (p_config != NULL)

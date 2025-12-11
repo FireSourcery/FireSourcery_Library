@@ -40,11 +40,11 @@
 /*
 
 */
-#define LINEAR_VOLTAGE_OF(r1, r2, adcVRef, adcBits, adcu) ((double)(adcVRef) * (r1 + r2) * (adcu) / (r2) / (double)(1UL << adcBits))
-#define _LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits) (int32_t)(LINEAR_VOLTAGE_OF(r1, r2, adcVRef, adcBits, 1) * (double)(1UL << (LINEAR_VOLTAGE_SHIFT)))
+#define LINEAR_VOLTAGE_OF(r1, r2, adcVRef, adcBits, adcu) ((double)(adcVRef) * (r1 + r2) * (adcu) / (r2) / (1UL << adcBits))
+#define _LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits) (int32_t)((double)LINEAR_VOLTAGE_OF(r1, r2, adcVRef, adcBits, 1) * (1UL << LINEAR_VOLTAGE_SHIFT))
 
-#define LINEAR_ADCU_OF_V(r1, r2, adcVRef_V, adcBits, volts) ((double)(volts) * (r2) / (r1 + r2) / (adcVRef_V) * (double)(1UL << adcBits))
-#define _LINEAR_ADCU_PER_V(r1, r2, adcVRef_V, adcBits) (int32_t)(LINEAR_ADCU_OF_V(r1, r2, adcVRef_V, adcBits, 1) * (double)(1UL << (LINEAR_VOLTAGE_SHIFT - adcBits)))
+#define LINEAR_ADCU_OF_V(r1, r2, adcVRef_V, adcBits, volts) ((double)(volts) * (r2) / (r1 + r2) / (adcVRef_V) * (1UL << adcBits))
+#define _LINEAR_ADCU_PER_V(r1, r2, adcVRef_V, adcBits) (int32_t)((double)LINEAR_ADCU_OF_V(r1, r2, adcVRef_V, adcBits, 1) * (1UL << (LINEAR_VOLTAGE_SHIFT - adcBits)))
 
 #define LINEAR_VOLTAGE_INIT(r1, r2, adcVRef, adcBits)                                                                   \
 {                                                                                                                       \
@@ -54,8 +54,8 @@
     .InvSlopeShift      = LINEAR_VOLTAGE_SHIFT - adcBits,                                                               \
     .Y0                 = 0U,                                                                                           \
     .X0                 = 0U,                                                                                           \
-    .XDelta          = 1UL << adcBits,                                                                               \
-    .YDelta          = (int32_t)(_LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits) * (double)(1UL << adcBits)),           \
+    .XDelta             = 1UL << adcBits,                                                                               \
+    .YDelta             = (int32_t)(_LINEAR_V_PER_ADCU(r1, r2, adcVRef, adcBits) * (1UL << adcBits)),                   \
 }
 
 
@@ -91,10 +91,20 @@ static inline uint16_t Linear_Voltage_AdcuOfMilliV(const Linear_T * p_linear, ui
 // static inline uint16_t Linear_Voltage_AdcuOfScalarV(const Linear_T * p_linear, uint16_t scalarV, uint16_t scalar) { return (uint16_t)Linear_InvOf_Scalar(p_linear, scalarV, scalar); }
 
 /* round up .5 volts */
-static inline uint16_t Linear_Voltage_AdcuInputOfV_Input(const Linear_T * p_linear, uint16_t volts) { return Linear_InvOf_Round(p_linear, volts); }
+static inline uint16_t Linear_Voltage_AdcuOfV_Input(const Linear_T * p_linear, uint16_t volts) { return Linear_InvOf_Round(p_linear, volts); }
 
 static inline uint16_t Linear_Voltage_AdcuOfMilliV_Input(const Linear_T * p_linear, uint32_t milliV) { return Linear_InvOf_Round(p_linear, milliV) / 1000U; }
 
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits);
+
+
+#endif
 // /******************************************************************************/
 // /*!
 //     @brief Fraction as max ADCU value
@@ -121,13 +131,3 @@ static inline uint16_t Linear_Voltage_AdcuOfMilliV_Input(const Linear_T * p_line
 // static inline uint16_t Linear_Voltage_AdcuOfFract16(const Linear_T * p_linear, int16_t fract16) { return (uint16_t)_Linear_InvFract16(p_linear, fract16); }
 // static inline int32_t Linear_Voltage_OfFract16(const Linear_T * p_linear, uint16_t fract16) { return Linear_Of(p_linear, Linear_Voltage_AdcuOfFract16(p_linear, fract16)); }
 
-
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-extern void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits);
-
-
-#endif

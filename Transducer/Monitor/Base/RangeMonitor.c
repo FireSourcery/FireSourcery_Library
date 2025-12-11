@@ -31,6 +31,9 @@
 
 
 /*
+    Intermediate expand RangeMonitor_Config_T to two Monitor_Config_T for high and low sides
+*/
+/*
     For High-Side Monitoring: Nominal < Warning < Fault
     For Low-Side Monitoring: Fault < Warning < Nominal
 */
@@ -75,8 +78,8 @@ void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config
     _Monitor_InitFrom(&p_monitor->MonitorHigh, &high);
     _Monitor_InitFrom(&p_monitor->MonitorLow, &low);
 
-    if (Monitor_IsValidConfig(&high) == false) { p_monitor->Config.IsEnabled = false; }
-    if (Monitor_IsValidConfig(&low) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_IsConfigValid(&high) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_IsConfigValid(&low) == false) { p_monitor->Config.IsEnabled = false; }
     /* always with both sides. single sided operation use Monitor_T */
     if (high.IsEnabled == false || low.IsEnabled == false) { p_monitor->Config.IsEnabled = false; }
 
@@ -130,6 +133,13 @@ RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t inpu
     return RANGE_MONITOR_STATUS_NORMAL;
 }
 
+bool RangeMonitor_IsConfigValid(const RangeMonitor_T * p_config)
+{
+    // remap to two Monitor_Config_T, alternatively implement full check here
+    Monitor_Config_T high = HighConfigOf(p_config);
+    Monitor_Config_T low = LowConfigOf(p_config);
+    return Monitor_IsConfigValid(&high) && Monitor_IsConfigValid(&low);
+}
 
 void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
 {
@@ -164,46 +174,47 @@ int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_V
     }
 }
 
-int32_t RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_VarId_T varId)
-{
-    return (p_monitor != NULL) ? _RangeMonitor_VarId_Get(p_monitor, varId) : 0;
-}
-
+// int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_monitor, RangeMonitor_ConfigId_T configId)
 int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId)
 {
-    switch ((RangeMonitor_ConfigId_T)configId)
+    switch (configId)
     {
-        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:     return RangeMonitor_GetFaultOverLimit(p_monitor);
-        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:    return RangeMonitor_GetFaultUnderLimit(p_monitor);
-        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:   return RangeMonitor_GetWarningLimitHigh(p_monitor);
-        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:    return RangeMonitor_GetWarningLimitLow(p_monitor);
-        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:     return RangeMonitor_GetWarningDeadband(p_monitor);
-        case RANGE_MONITOR_CONFIG_NOMINAL:              return RangeMonitor_GetNominal(p_monitor);
-        case RANGE_MONITOR_CONFIG_IS_ENABLED:           return RangeMonitor_IsEnabled(p_monitor);
+        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         return RangeMonitor_GetFaultOverLimit(p_monitor);
+        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        return RangeMonitor_GetFaultUnderLimit(p_monitor);
+        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:       return RangeMonitor_GetWarningLimitHigh(p_monitor);
+        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:        return RangeMonitor_GetWarningLimitLow(p_monitor);
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  return RangeMonitor_GetWarningDeadband(p_monitor);
+        case RANGE_MONITOR_CONFIG_NOMINAL:                  return RangeMonitor_GetNominal(p_monitor);
+        case RANGE_MONITOR_CONFIG_IS_ENABLED:               return RangeMonitor_IsEnabled(p_monitor);
         default: return 0;
     }
 }
 
 void _RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId, int32_t value)
 {
-    switch ((RangeMonitor_ConfigId_T)configId)
+    switch (configId)
     {
-        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:     RangeMonitor_SetFaultOverLimit(p_monitor, value);      break;
-        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:    RangeMonitor_SetFaultUnderLimit(p_monitor, value);     break;
-        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:   RangeMonitor_SetWarningLimitHigh(p_monitor, value);    break;
-        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:    RangeMonitor_SetWarningLimitLow(p_monitor, value);     break;
-        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:     RangeMonitor_SetWarningDeadband(p_monitor, value);     break;
-        case RANGE_MONITOR_CONFIG_NOMINAL:              RangeMonitor_SetNominal(p_monitor, value);             break;
-        case RANGE_MONITOR_CONFIG_IS_ENABLED:           RangeMonitor_SetEnabled(p_monitor, value != 0);        break;
+        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         RangeMonitor_SetFaultOverLimit(p_monitor, value);      break;
+        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        RangeMonitor_SetFaultUnderLimit(p_monitor, value);     break;
+        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:       RangeMonitor_SetWarningLimitHigh(p_monitor, value);    break;
+        case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:        RangeMonitor_SetWarningLimitLow(p_monitor, value);     break;
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  RangeMonitor_SetWarningDeadband(p_monitor, value);     break;
+        case RANGE_MONITOR_CONFIG_NOMINAL:                  RangeMonitor_SetNominal(p_monitor, value);             break;
+        case RANGE_MONITOR_CONFIG_IS_ENABLED:               RangeMonitor_SetEnabled(p_monitor, value != 0);        break;
         default: break;
     }
 }
 
-int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId)
-{
-    return (p_monitor != NULL) ? _RangeMonitor_ConfigId_Get(p_monitor, configId) : 0;
-}
-void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value)
-{
-    if (p_monitor != NULL) { _RangeMonitor_ConfigId_Set(p_monitor, configId, value); }
-}
+int RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, int varId) { return (p_monitor != NULL) ? _RangeMonitor_VarId_Get(p_monitor, (RangeMonitor_VarId_T)varId) : 0; }
+
+int RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, int configId) { return (p_monitor != NULL) ? _RangeMonitor_ConfigId_Get(p_monitor, (RangeMonitor_ConfigId_T)configId) : 0; }
+void RangeMonitor_ConfigId_Set(RangeMonitor_T * p_monitor, int configId, int value) { if (p_monitor != NULL) { _RangeMonitor_ConfigId_Set(p_monitor, (RangeMonitor_ConfigId_T)configId, value); } }
+
+// void RangeMonitor_ConfigId_SetWithReinit(RangeMonitor_T * p_monitor, int configId, int value)
+// {
+//     if (p_monitor != NULL)
+//     {
+//         _RangeMonitor_ConfigId_Set(p_monitor, (RangeMonitor_ConfigId_T)configId, value);
+//         RangeMonitor_InitFrom(p_monitor, &p_monitor->Config);
+//     }
+// }

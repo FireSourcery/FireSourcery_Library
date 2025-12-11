@@ -57,8 +57,9 @@ typedef enum MotorController_Var_Output
     MOT_VAR_MC_STATE,
     MOT_VAR_MC_SUB_STATE,
     MOT_VAR_MC_FAULT_FLAGS,
-    MOT_VAR_MC_STATUS_FLAGS,
+    MOT_VAR_MC_STATUS_FLAGS, /* Resv */
     MOT_VAR_MC_DIRECTION,
+    // MOT_VAR_V_BUS,
     MOT_VAR_CONTROL_LOOP_PROFILE,
     MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
 }
@@ -66,6 +67,8 @@ MotorController_Var_Output_T;
 
 typedef enum MotorController_Var_OutputDebug
 {
+    // MOT_VAR_CONTROL_LOOP_PROFILE,
+    // MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
     MOT_VAR_DEBUG0,
     MOT_VAR_DEBUG1,
     MOT_VAR_DEBUG2,
@@ -210,7 +213,7 @@ typedef enum MotorController_VarType_HeatMonitor
 {
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
-    MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coeffcients */
+    MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF, /* read-only coefficients */
 
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,
