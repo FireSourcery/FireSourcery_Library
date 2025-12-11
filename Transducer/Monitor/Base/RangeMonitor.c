@@ -65,6 +65,13 @@ static inline Monitor_Config_T LowConfigOf(const RangeMonitor_Config_T * p_confi
     };
 }
 
+bool RangeMonitor_IsConfigValid(const RangeMonitor_Config_T * p_config)
+{
+    // remap to two Monitor_Config_T, alternatively implement full check here
+    Monitor_Config_T high = HighConfigOf(p_config);
+    Monitor_Config_T low = LowConfigOf(p_config);
+    return Monitor_IsConfigValid(&high) && Monitor_IsConfigValid(&low);
+}
 
 /*
     Always init both monitors. Single Direction use case directly use Monitor_T instead.
@@ -131,14 +138,6 @@ RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t inpu
     }
 
     return RANGE_MONITOR_STATUS_NORMAL;
-}
-
-bool RangeMonitor_IsConfigValid(const RangeMonitor_T * p_config)
-{
-    // remap to two Monitor_Config_T, alternatively implement full check here
-    Monitor_Config_T high = HighConfigOf(p_config);
-    Monitor_Config_T low = LowConfigOf(p_config);
-    return Monitor_IsConfigValid(&high) && Monitor_IsConfigValid(&low);
 }
 
 void RangeMonitor_Reset(RangeMonitor_T * p_monitor)

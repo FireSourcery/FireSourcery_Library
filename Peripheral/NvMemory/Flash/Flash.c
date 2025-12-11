@@ -74,6 +74,7 @@ static void FinalizeCmdReadOnce(void * p_hal, uintptr_t address, size_t units, u
         as register meaning might differ depending on Cmd
 */
 /******************************************************************************/
+static Flash_Status_T ParseCmdErrorWrite(void * p_hal) FLASH_ATTRIBUTE_RAM_SECTION;
 static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 {
     Flash_Status_T status;
@@ -277,9 +278,9 @@ void Flash_Init(Flash_T * p_flash)
 Flash_Status_T ProcOp_Blocking(Flash_T * p_flash)
 {
     Flash_Status_T status;
-    _Critical_DisableIrq(); /* Flash Op must not invoke isr table stored in flash */
+    Critical_DisableIrq(); /* Flash Op must not invoke isr table stored in flash */
     status = NvMemory_ProcOp_Blocking(p_flash);
-    _Critical_EnableIrq();
+    Critical_EnableIrq();
     return status;
 }
 

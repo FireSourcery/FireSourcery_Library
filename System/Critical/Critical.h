@@ -44,7 +44,7 @@ typedef uint32_t critical_state_t;
 static inline void _Critical_DisableIrq(void) { __disable_irq(); }
 static inline void _Critical_EnableIrq(void) { __enable_irq(); }
 
-extern uint32_t _Critical_InterruptDisableCount;
+extern volatile uint32_t _Critical_InterruptDisableCount;
 
 static inline void Critical_DisableIrq(void)
 {

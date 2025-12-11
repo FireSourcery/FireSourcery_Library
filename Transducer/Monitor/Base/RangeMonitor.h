@@ -205,11 +205,11 @@ static inline void _RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t 
     Extern
 */
 /******************************************************************************/
+extern bool RangeMonitor_IsConfigValid(const RangeMonitor_Config_T * p_config);
+
 extern void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config_T * p_config);
 extern RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, int32_t input);
 extern RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input);
-
-extern bool RangeMonitor_IsConfigValid(const RangeMonitor_T * p_config);
 
 extern void RangeMonitor_Reset(RangeMonitor_T * p_monitor);
 extern void RangeMonitor_SetFaultOverLimit(RangeMonitor_T * p_monitor, int32_t limit);

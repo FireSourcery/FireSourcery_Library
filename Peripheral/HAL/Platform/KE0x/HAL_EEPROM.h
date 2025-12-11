@@ -54,7 +54,7 @@ static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) { (void)p_hal;
 
 #define HAL_EEPROM_START                0U
 #define HAL_EEPROM_END                  0U
-#define HAL_EEPROM_SIZE                 HAL_FLASH_UNIT_ERASE_SIZE
+#define HAL_EEPROM_SIZE                 512U
 #define HAL_EEPROM_UNIT_WRITE_SIZE      HAL_FLASH_UNIT_WRITE_SIZE
 
 static inline void HAL_EEPROM_ClearErrorFlags(HAL_EEPROM_T * p_hal) { HAL_Flash_ClearErrorFlags(p_hal); }
@@ -66,6 +66,12 @@ static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (voi
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) { (void)p_hal; }
 #endif
 
-
+// #if     defined(KE06Z4_SERIES)
+//     #define KE0x_FLASH_EEPROM_UNIT_ERASE_SIZE   0x00U
+//     #define KE0x_FLASH_EEPROM_UNIT_WRITE_SIZE   0x00U
+// #elif   defined(KE02Z4_SERIES)
+//     #define KE0x_FLASH_EEPROM_UNIT_ERASE_SIZE   0x01U
+//     #define KE0x_FLASH_EEPROM_UNIT_WRITE_SIZE   0x01U
+// #endif
 
 #endif

@@ -56,7 +56,8 @@
 #define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
 #endif
 
-#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+// #define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL))
 
 /*
 
@@ -75,18 +76,11 @@
 
 #define KE0x_FLASH_PROGRAM_ONCE_START               0x0000UL /* Map Index access */
 #define KE0x_FLASH_PROGRAM_ONCE_END                 0x003FUL
-#define KE0x_FLASH_PROGRAM_ONCE_SIZE                0x40U
+#define KE0x_FLASH_PROGRAM_ONCE_SIZE                0x0040U
 
 #define KE0x_FLASH_SECTOR_SIZE                      0x0200U     /* Erase, 512 Bytes */
-#define KE0x_FLASH_PHRASE_SIZE                      0x08U       /* Write, 8 Bytes */
+#define KE0x_FLASH_PHRASE_SIZE                      0x0008U     /* Write, 8 Bytes */
 
-#if     defined(KE06Z4_SERIES)
-    #define KE0x_FLASH_EEPROM_UNIT_ERASE_SIZE   0x00U
-    #define KE0x_FLASH_EEPROM_UNIT_WRITE_SIZE   0x00U
-#elif   defined(KE02Z4_SERIES)
-    #define KE0x_FLASH_EEPROM_UNIT_ERASE_SIZE   0x01U
-    #define KE0x_FLASH_EEPROM_UNIT_WRITE_SIZE   0x01U
-#endif
 
 
 /*!

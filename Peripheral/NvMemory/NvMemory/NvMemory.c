@@ -68,6 +68,8 @@ static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State
 /*
     Store in RAM for case of Flash.
 */
+// static __attribute__((noinline)) void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+// static __attribute__((noinline)) void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 {
@@ -85,22 +87,23 @@ static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context)
 {
     NvMemory_State_T * p_state = p_context->P_STATE;
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    NvMemory_OpControl_T * p_opControl = p_state->p_OpControl;
+    volatile NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
 
     if (p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == true)
     {
         p_context->CLEAR_ERROR_FLAGS(p_context->P_HAL);
-        for (size_t opIndex = 0U; opIndex < p_state->OpSizeAligned; opIndex += p_state->p_OpControl->UNIT_SIZE)
+        for (size_t opIndex = 0U; opIndex < p_state->OpSizeAligned; opIndex += p_opControl->UNIT_SIZE)
         {
             ProcCmd_Blocking(p_context, p_state, opIndex);
             if (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == true)
             {
-                status = (p_state->p_OpControl->PARSE_CMD_ERROR != NULL) ? p_state->p_OpControl->PARSE_CMD_ERROR(p_context->P_HAL) : NV_MEMORY_STATUS_ERROR_CMD;
+                status = (p_opControl->PARSE_CMD_ERROR != NULL) ? p_opControl->PARSE_CMD_ERROR(p_context->P_HAL) : NV_MEMORY_STATUS_ERROR_CMD;
                 break;
             }
-            if (p_state->p_OpControl->FINALIZE_CMD != NULL)
+            if (p_opControl->FINALIZE_CMD != NULL)
             {
-                p_state->p_OpControl->FINALIZE_CMD(p_context->P_HAL, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), 1U, &((uint8_t *)p_state->p_OpData)[opIndex]);
+                p_opControl->FINALIZE_CMD(p_context->P_HAL, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), 1U, &((uint8_t *)p_state->p_OpData)[opIndex]);
             }
         }
     }

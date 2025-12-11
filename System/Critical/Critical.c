@@ -30,4 +30,4 @@
 /******************************************************************************/
 #include "Critical.h"
 
-uint32_t _Critical_InterruptDisableCount = 0U;
+volatile uint32_t _Critical_InterruptDisableCount = 0U;
