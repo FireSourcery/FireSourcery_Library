@@ -33,14 +33,16 @@
 
 #include "KE0x.h"
 
-/*
-    Use FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
-*/
-#include "Peripheral/NvMemory/Flash/Config.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+
+
+/*
+    Use FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
+*/
+#ifndef FLASH_ATTRIBUTE_RAM_SECTION
+#endif
 
 /*
     BUSCLK frequency(MHz) FDIV[5:0]
@@ -56,8 +58,8 @@
 #define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
 #endif
 
-// #define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
-#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL))
+#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+// #define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL))
 
 /*
 
@@ -67,7 +69,7 @@
 #define KE0x_FLASH_RESERVED_CONFIG_START            0x0400UL    /* */
 #define KE0x_FLASH_RESERVED_CONFIG_END              0x040FUL    /* */
 #define KE0x_FLASH_RESERVED_BACKDOOR_KEY_START      0x0400UL    /* 8 bytes */
-#define KE0x_FLASH_RESERVED_BACKDOOR_KEY_END        0x0407UL    /* 8 bytes */
+#define KE0x_FLASH_RESERVED_BACKDOOR_KEY_END        0x0407UL
 
 #define KE0x_FLASH_RESERVED_FOPT                    0x040FUL
 #define KE0x_FLASH_RESERVED_FSEC                    0x040EUL
@@ -80,8 +82,6 @@
 
 #define KE0x_FLASH_SECTOR_SIZE                      0x0200U     /* Erase, 512 Bytes */
 #define KE0x_FLASH_PHRASE_SIZE                      0x0008U     /* Write, 8 Bytes */
-
-
 
 /*!
     @name Flash controller command numbers
@@ -156,7 +156,7 @@
     Map to upper software layer
 */
 #define HAL_FLASH_UNIT_ERASE_SIZE           KE0x_FLASH_SECTOR_SIZE
-#define HAL_FLASH_UNIT_WRITE_SIZE           KE0x_FLASH_PHRASE_SIZE /* 8 byte aligned */
+#define HAL_FLASH_UNIT_WRITE_SIZE           KE0x_FLASH_PHRASE_SIZE
 #define HAL_FLASH_UNIT_VERIFY_ERASE_SIZE    4U
 #define HAL_FLASH_UNIT_VERIFY_WRITE_SIZE    0U
 #define HAL_FLASH_UNIT_WRITE_ONCE_SIZE      KE0x_FLASH_PHRASE_SIZE
@@ -186,7 +186,7 @@ static void _flash_set_command(uint32_t index, uint32_t fValue, uint32_t sValue)
     FTMRx->FCCOBHI = FTMRx_FCCOBHI_CCOB(sValue);
 }
 
-static void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t cmd)
+static void _HAL_Flash_WriteCmdDest(HAL_Flash_T * p_regs, uintptr_t destAddress, uint8_t cmd)
 {
     (void)p_regs;
     /* Write index to specify the command code to be loaded */
@@ -204,15 +204,17 @@ static void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data
     _flash_set_command(5U, p_data[6U], p_data[7U]); /* Write index to specify the word (LSB word) to be programmed */
 }
 
-static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK)) != 0U); }
-
 /* Cmd Functions - when inline only _HAL_Flash_LaunchCmd need to reside in RAM */
 static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT |= FTMRx_FSTAT_CCIF_MASK; }
 
+static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK)) != 0U); }
+
+/******************************************************************************/
 /*
     API Common
 */
+/******************************************************************************/
 static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
 static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U); }
 
@@ -227,10 +229,8 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)      { (void)
     Error Parsing
 */
 static inline bool HAL_Flash_ReadErrorVerifyFlag(const HAL_Flash_T * p_regs)        { (void)p_regs; return _HAL_Flash_ReadErrorFlagShared(p_regs); }
-// static inline bool HAL_Flash_ReadErrorFlagsVerify(const HAL_Flash_T * p_regs)    { (void)p_regs; return _HAL_Flash_ReadErrorFlagShared(p_regs); }
 static inline bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs)    { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_FPVIOL_MASK) != 0U); }
-
-static inline bool HAL_Flash_ReadSecurityFlag(const HAL_Flash_T * p_regs)           { (void)p_regs; return ((FTMRx->FSEC & FTMRx_FSEC_SEC_MASK) >> FTMRE_FSEC_SEC_SHIFT != 0x02U); }
+static inline bool HAL_Flash_ReadErrorAccessFlag(const HAL_Flash_T * p_regs)        { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_ACCERR_MASK) != 0U); }
 
 /*
     Cmds
@@ -285,7 +285,7 @@ static inline void HAL_Flash_StartCmdVerifyEraseUnits(HAL_Flash_T * p_regs, uint
 static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, uintptr_t destAddress, const uint8_t * p_data)
 {
     (void)p_regs;
-    // assert(destAddress < 64U);
+    assert(destAddress < KE0x_FLASH_PROGRAM_ONCE_SIZE);
     uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_PROGRAM_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);
@@ -296,7 +296,7 @@ static inline void HAL_Flash_StartCmdWriteOnce(HAL_Flash_T * p_regs, uintptr_t d
 static inline void HAL_Flash_StartCmdReadOnce(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
     (void)p_regs;
-    // assert(destAddress < 64U);
+    assert(destAddress < KE0x_FLASH_PROGRAM_ONCE_SIZE);
     uint8_t recordIndex = (destAddress - KE0x_FLASH_PROGRAM_ONCE_START) / KE0x_FLASH_PHRASE_SIZE;
     _flash_set_command(0UL, 0UL, FTMRx_READ_ONCE);
     _flash_set_command(1UL, recordIndex, 0U);
@@ -313,6 +313,8 @@ static inline void HAL_Flash_ReadOnceData(HAL_Flash_T * p_regs, uint8_t * p_resu
         p_result[iByte + 1U]    = p_regs->FCCOBHI;
     }
 }
+
+static inline bool HAL_Flash_ReadSecurityFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSEC & FTMRx_FSEC_SEC_MASK) >> FTMRE_FSEC_SEC_SHIFT != 0x02U); }
 
 static inline void HAL_Flash_UnlockSecurity(HAL_Flash_T * p_regs, uint8_t * p_key)
 {
@@ -333,7 +335,8 @@ static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)
 {
     (void)p_regs;
 
-    if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U))
+    /* If FCLKDIV[FDIVLD] is 0, the FCLKDIV register has not been written since the last reset. */
+    if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) /* && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U) */)
     {
         /* FCLKDIV register is not locked.*/
         FTMRx->FCLKDIV = (uint8_t)(FTMRx->FCLKDIV & (~FTMRx_FCLKDIV_FDIV_MASK)) | FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIDER);

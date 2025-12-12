@@ -45,13 +45,13 @@
 /*!
 */
 /******************************************************************************/
-static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
-static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) FLASH_ATTRIBUTE_RAM_SECTION;
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
 
 static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWritePage(p_hal, address, p_data); }
 static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdEraseSector(p_hal, address); }
@@ -69,15 +69,15 @@ static void FinalizeCmdReadOnce(void * p_hal, uintptr_t address, size_t units, u
 
 /******************************************************************************/
 /*!
-    HAL Parse Error
+    HAL Parse Error - Detailed Status Mapping
     Individual HAL interface for parsing error registers
-        as register meaning might differ depending on Cmd
+        register meaning might differ depending on Cmd
 */
 /******************************************************************************/
-static Flash_Status_T ParseCmdErrorWrite(void * p_hal) FLASH_ATTRIBUTE_RAM_SECTION;
+// static Flash_Status_T ParseCmdErrorWrite(void * p_hal) FLASH_ATTRIBUTE_RAM_SECTION;
 static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 {
-    Flash_Status_T status;
+    Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
@@ -85,7 +85,7 @@ static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 
 static Flash_Status_T ParseCmdErrorErase(void * p_hal)
 {
-    Flash_Status_T status;
+    Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
@@ -93,7 +93,7 @@ static Flash_Status_T ParseCmdErrorErase(void * p_hal)
 
 static Flash_Status_T ParseCmdErrorVerify(void * p_hal)
 {
-    Flash_Status_T status;
+    Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorVerifyFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_VERIFY; }
     else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
@@ -178,6 +178,14 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 };
 
 //todo units
+// determine bytes per cmd
+// NvMemory_SetOpCmdSize(NvMemory_T * p_context, size_t unitSize, uint8_t unitsPerCmd)
+// NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_context, size_t opSize)
+// {
+//     //overwrite bytepercmd
+// }
+
+
 // #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return 0U; // overwrite with totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
 // #elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)

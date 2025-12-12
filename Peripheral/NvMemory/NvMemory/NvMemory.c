@@ -46,12 +46,19 @@ static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemor
 #endif
 }
 
-static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
+// static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+// static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
+// {
+//     /* Start command validated by caller. No null pointer check */
+//     p_state->p_OpControl->START_CMD(p_context->P_HAL, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), &((const uint8_t *)p_state->p_OpData)[opIndex], 1U);
+//     return (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == false);
+// }
+
+NV_MEMORY_ATTRIBUTE_RAM_SECTION static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address, const uint8_t * p_data);
+static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address, const uint8_t * p_data)
 {
     /* Start command validated by caller. No null pointer check */
-    p_state->p_OpControl->START_CMD(p_context->P_HAL, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), &((const uint8_t *)p_state->p_OpData)[opIndex], 1U);
-    return (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == false);
+    p_state->p_OpControl->START_CMD(p_context->P_HAL, address, p_data, 1U);
 }
 
 /******************************************************************************/
@@ -68,27 +75,34 @@ static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State
 /*
     Store in RAM for case of Flash.
 */
-// static __attribute__((noinline)) void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-// static __attribute__((noinline)) void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
-static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((noinline)) static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex);
+// static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
 static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 {
-    if (StartOpCmd(p_context, p_state, opIndex) == true)
+    // if (StartOpCmd(p_context, p_state, opIndex) == true)
+    // {
+    //     while (p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == false)
+    //     {
+    //         if (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == true) { break; }
+    //         if (p_state->Yield != NULL) { p_state->Yield(p_state->p_CallbackContext); }
+    //     }
+    // }
+
+    StartOpCmd(p_context, p_state, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), &((const uint8_t *)p_state->p_OpData)[opIndex]);
+
+    while ((p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == false) && (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == false))
     {
-        while (p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == false)
-        {
-            if (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == true) { break; }
-            if (p_state->Yield != NULL) { p_state->Yield(p_state->p_CallbackContext); }
-        }
+        if (p_state->Yield != NULL) { p_state->Yield(p_state->p_CallbackContext); }
     }
 }
 
-// NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION; // potentially remove from RAM
 NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context)
 {
     NvMemory_State_T * p_state = p_context->P_STATE;
     NvMemory_OpControl_T * p_opControl = p_state->p_OpControl;
+
     volatile NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    // size_t alignedSize = p_state->OpSizeAligned;
 
     if (p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == true)
     {
@@ -205,6 +219,7 @@ NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_context, uintptr_t addres
     NvMemory_State_T * p_state = p_context->P_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     p_state->OpAddress = address;
+    // p_state->OpAddress = OpCmdAddress(p_context, p_state, address); //on set // adjust for hw offset if needed
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = (ValidateOpPartition(p_context, address, size) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_BOUNDARY; }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = (nvmemory_is_aligned(address, p_state->p_OpControl->UNIT_SIZE) == true) ? NV_MEMORY_STATUS_SUCCESS : NV_MEMORY_STATUS_ERROR_ALIGNMENT; }
     return status;
@@ -267,33 +282,23 @@ NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_context, const NvMemory_O
     return status;
 }
 
+/* With Data Out */
 NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_context, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data)
 {
-    NvMemory_State_T * p_state = p_context->P_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_context, p_opControl, address, size); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { p_state->p_OpData = p_data; }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { p_context->P_STATE->p_OpData = p_data; }
     return status;
 }
 
-
+/* With Data In */
 NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_context, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size)
 {
-    // NvMemory_State_T * p_state = p_context->P_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpControl(p_context, p_opControl, address, size); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = NvMemory_SetOpData(p_context, p_data, size); }
     return status;
 }
-
-
-
-// determine bytes per cmd
-// NvMemory_SetOpCmdSize(NvMemory_T * p_context, size_t unitSize, uint8_t unitsPerCmd)
-// NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_context, size_t opSize)
-// {
-//     //overwrite bytepercmd
-// }
 
 
 

@@ -79,6 +79,9 @@ extern volatile uint32_t SysTime_Millis;
 */
 static inline void SysTime_CaptureMillis_ISR(void)  { SysTime_Millis++; }
 
+/*
+
+*/
 static inline uint32_t SysTime_GetMillis(void)      { return SysTime_Millis; }
 static inline uint32_t Millis(void)                 { return SysTime_GetMillis(); }
 
@@ -92,7 +95,6 @@ static inline void SysTime_ZeroMillis(void)         { SysTime_Millis = 0U; }
 
 /* us within current ms = ticksElapsed * (1e6 / CPU_FREQ). Wraps every 1000 */
 static inline uint32_t SysTime_GetMicros(void) { return ((SysTime_GetTicks() * MICROS_PER_TICK) >> MICROS_PER_TICK_SHIFT); }
-
 static inline uint32_t Micros(void) { return SysTime_GetMicros(); }
 
 extern void SysTime_Init(void);

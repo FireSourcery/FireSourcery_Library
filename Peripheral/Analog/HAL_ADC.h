@@ -34,11 +34,6 @@
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_ADC.h)
 
-// #ifndef HAL_ADC_REGS_T
-// #define HAL_ADC_REGS_T void
-// typedef HAL_ADC_REGS_T HAL_ADC_T;
-// #endif
-
 extern uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel);
 extern void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel);
 
@@ -61,7 +56,9 @@ extern void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal);
 extern void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal);
 extern void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal);
 extern void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal);
+
 extern void HAL_ADC_Init(HAL_ADC_T * p_hal);
+
 
 /******************************************************************************/
 /*!

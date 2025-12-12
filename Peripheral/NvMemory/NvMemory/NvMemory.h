@@ -89,18 +89,18 @@ NvMemory_Status_T;
     HAL typedefs
 */
 /******************************************************************************/
-typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal);
-typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal);
+typedef bool (* const HAL_NvMemory_ReadFlags_T)(const void * p_hal); /* Test */
+typedef void (* const HAL_NvMemory_ClearFlags_T)(void * p_hal); /* Proc */
 
 /* Generic with all parameters */
 typedef void (*HAL_NvMemory_StartCmd_T)(void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
 typedef void (*HAL_NvMemory_FinalizeCmd_T)(void * p_hal, uintptr_t address, size_t units, uint8_t * p_buffer); /* Capture/OnComplete */
 
 /* implementation mapping each operation type to vtable, instead of using generic [HAL_NvMemory_StartCmd_T] */
-typedef void (*HAL_NvMemory_CmdReadUnit_T)(void * p_hal, uintptr_t address, uint8_t * p_result);
-typedef void (*HAL_NvMemory_CmdWriteUnit_T)(void * p_hal, uintptr_t address, const uint8_t * p_data);
-typedef void (*HAL_NvMemory_CmdEraseUnit_T)(void * p_hal, uintptr_t address);
-typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t units); /* Collective Erase/Verify */
+// typedef void (*HAL_NvMemory_CmdReadUnit_T)(void * p_hal, uintptr_t address, uint8_t * p_result);
+// typedef void (*HAL_NvMemory_CmdWriteUnit_T)(void * p_hal, uintptr_t address, const uint8_t * p_data);
+// typedef void (*HAL_NvMemory_CmdEraseUnit_T)(void * p_hal, uintptr_t address);
+// typedef void (*HAL_NvMemory_CmdUnits_T)(void * p_hal, uintptr_t address, size_t units); /* Collective Erase/Verify */
 
 /* status moves to hal */
 typedef NvMemory_Status_T(*HAL_NvMemory_MapStatus_T)(const void * p_hal);
@@ -119,6 +119,15 @@ typedef const struct NvMemory_OpControl
     // size_t BytesPerCmd;      /* Used by Erase for now */ /* overwrite if not equal unit size. BytesPerCmd = unitsPerCmd * unitSize */
 }
 NvMemory_OpControl_T;
+
+// BaseVTable
+// typedef const struct NvMemory_OpBase
+// {
+//     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
+//     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
+//     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
+// }
+// NvMemory_OpBase_T;
 
 /******************************************************************************/
 /*
@@ -143,21 +152,16 @@ NvMemory_Partition_T;
     _NV_MEMORY_PARTITION_OFFSET_DEF((.OP_ADDRESS_OFFSET = OpAddressOffset,))  \
 }
 
-
-
 /******************************************************************************/
-/*
-*/
-/******************************************************************************/
-/*  */
-typedef void (*NvMemory_Callback_T)(void * p_callbackData);
-
 /*
     NvMemory controller
 */
+/******************************************************************************/
+typedef void (*NvMemory_Callback_T)(void * p_callbackData);
+
 typedef struct NvMemory_State
 {
-    /* User Input Per Operation */
+    /* User Input Per Operation. Persist through HAL Cmds */
     /* Direct */
     const NvMemory_OpControl_T * p_OpControl;
     uintptr_t OpAddress;        /* The NV Memory address. The destination address in most cases */
@@ -179,6 +183,9 @@ typedef struct NvMemory_State
 }
 NvMemory_State_T;
 
+/*
+    Base Abstract Class and HAL
+*/
 /* Flash must store a copy in RAM */
 typedef const struct NvMemory
 {
@@ -205,14 +212,7 @@ typedef const struct NvMemory
 }
 NvMemory_T;
 
-// BaseVTable
-// typedef const struct NvMemory_OpCommon
-// {
-//     const HAL_NvMemory_ReadFlags_T READ_COMPLETE_FLAG;      /* Must reside in RAM, for Flash case */
-//     const HAL_NvMemory_ReadFlags_T READ_ERROR_FLAGS;        /* Must reside in RAM, for Flash case */
-//     const HAL_NvMemory_ClearFlags_T CLEAR_ERROR_FLAGS;
-// }
-// NvMemory_OpCommon_T;
+
 
 /*
 */
@@ -265,6 +265,9 @@ static inline void _NvMemory_SetYield(NvMemory_State_T * p_state, NvMemory_Callb
     p_state->p_CallbackContext = p_callbackData;
 }
 
+/*
+
+*/
 static inline void NvMemory_EnableForceAlign(const NvMemory_T * p_context) { _NvMemory_EnableForceAlign(p_context->P_STATE); }
 static inline void NvMemory_DisableForceAlign(const NvMemory_T * p_context) { _NvMemory_DisableForceAlign(p_context->P_STATE); }
 static inline void NvMemory_SetYield(const NvMemory_T * p_context, NvMemory_Callback_T yield, void * p_callbackData) { _NvMemory_SetYield(p_context->P_STATE, yield, p_callbackData); }

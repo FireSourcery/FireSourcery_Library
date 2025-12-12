@@ -75,6 +75,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 /* Clear Latching */
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
 /* PollMonitorFaults */
+/* InitCheck clears on reset only */
 void MotorController_PollFaultFlags(MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
@@ -221,7 +222,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
     // wait for every motor exit init
     if (SysTime_GetMillis() > MC_STATE_MACHINE_INIT_WAIT)
     {
-        MotorController_PollFaultFlags(p_context); /* Clear fault flags set by sensor polling in Main thread */
+        MotorController_PollFaultFlags(p_context); /* Clear latching fault flags set by sensor polling in Main thread */
 
         if (Phase_Calibration_IsLoaded() == false) { p_mc->FaultFlags.InitCheck = 1U; }
         /* Enforce VMonitor Enable */ /* Disabled on invalid config */

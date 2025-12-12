@@ -127,6 +127,9 @@ RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, int32_t 
     return status;
 }
 
+/*
+    Caller latch fault if needed.
+*/
 RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input)
 {
     if (p_monitor->Config.IsEnabled == true)

@@ -71,6 +71,7 @@ typedef NvMemory_T Flash_T; /* Flash struct must reside in RAM NV_MEMORY_ATTRIBU
 #define FLASH_INIT(p_Hal, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize) \
     NV_MEMORY_INIT(p_Hal, HAL_Flash_ReadCompleteFlag, HAL_Flash_ReadErrorFlags, HAL_Flash_ClearErrorFlags, p_State, p_Partitions, PartitionCount, p_Buffer, BufferSize)
 
+/*  */
 static inline bool Flash_ReadSecurityFlag(Flash_T * p_flash) { return HAL_Flash_ReadSecurityFlag(p_flash->P_HAL); }
 
 /* Yield must point to RAM address for Flash case  */
