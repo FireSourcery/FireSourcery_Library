@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <assert.h>
 
 
 /* For Run time Sync buffer only. alternatively, fam or context pointer */

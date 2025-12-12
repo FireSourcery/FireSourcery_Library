@@ -37,6 +37,7 @@
 #include "Math/Fixed/fixed.h"
 
 #include <stdint.h>
+#include <assert.h>
 
 /******************************************************************************/
 /*!
@@ -94,9 +95,9 @@ static inline int32_t Linear_GetYDelta(const Linear_T * p_linear) { return p_lin
 static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta * ((p_linear->YDelta >= 0) ? 2 : -2); }
 static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDelta * ((p_linear->XDelta >= 0) ? 2 : -2); }
 static inline int32_t Linear_GetXMin(const Linear_T * p_linear) { return math_min(p_linear->X0 - p_linear->XDelta, p_linear->XReference); }  /* X0 + XDelta == XReference  */
-static inline int32_t Linear_GetXMax(const Linear_T * p_linear) { return math_max(p_linear->X0 - p_linear->XDelta, p_linear->XReference); }
+static inline int32_t Linear_GetXMax(const Linear_T * p_linear) { return math_max(p_linear->X0 + p_linear->XDelta, p_linear->XReference); }
 static inline int32_t Linear_GetYMin(const Linear_T * p_linear) { return math_min(p_linear->Y0 - p_linear->YDelta, p_linear->YReference); }
-static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return math_max(p_linear->Y0 - p_linear->YDelta, p_linear->YReference); }
+static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return math_max(p_linear->Y0 + p_linear->YDelta, p_linear->YReference); }
 
 /******************************************************************************/
 /*!

@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 // #include <limits.h>
+#include <assert.h>
 
 /*!
     @brief Initialize the LimitArray_T structure.

@@ -370,7 +370,7 @@ typedef const struct Motor
 
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
-    RotorSensor_Table_T SENSOR_TABLE;
+    RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection */
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
     // Analog_Conversion_T HEAT_MONITOR_ANALOG;
     StateMachine_T STATE_MACHINE;

@@ -255,13 +255,20 @@ Motor_Var_ConfigPid_T;
 
 /*
     Calibration State Cmds
+    Stop/Calibration State enforced
 */
+// typedef enum Motor_Var_CalibrationCmd
 typedef enum Motor_Var_ConfigCmd
 {
     MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION,
     MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
     MOTOR_VAR_CONFIG_ENTER_CALIBRATION, // enforce config in calibration state, rather than stop state
     // MOTOR_VAR_CONFIG_CMD_SENSOR_CALIBRATION, /* Generic call for active type */
+
+    // MOTOR_VAR_CALIBRATION_ENTER, // enforce config in calibration state, rather than stop state
+    // MOTOR_VAR_CALIBRATION_ADC,
+    // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
+    // MOTOR_VAR_CALIBRATION_VIRTUAL_HOME,
 }
 Motor_Var_ConfigCmd_T;
 
@@ -272,6 +279,7 @@ Motor_Var_ConfigCmd_T;
     ConfigConst
 */
 /******************************************************************************/
+// typedef enum Motor_Var_Board
 typedef enum Motor_Var_StaticRef
 {
     MOTOR_VAR_REF_V_RATED,
@@ -292,6 +300,19 @@ Motor_Var_StaticRef_T;
 
 typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* cmd as value, without additional parameter */
 
+typedef enum Motor_Var_PhaseVBus
+{
+    MOTOR_VAR_PHASE_V_BUS,
+    MOTOR_VAR_PHASE_V_BUS_MONITOR,
+}
+Motor_Var_PhaseVBus_T;
+
+// typedef enum Motor_Var_PhaseVBusConfig
+// {
+//     MOTOR_VAR_PHASE_V_BUS_UPPER_FAULT,
+//     MOTOR_VAR_PHASE_V_BUS_MONITOR,
+// }
+// Motor_Var_PhaseVBus_T;
 
 /******************************************************************************/
 /*
@@ -365,6 +386,8 @@ Motor_VarType_Config_T;
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
+    // MOTOR_VAR_TYPE_V_BUS,    /* Not instanced */
+    // MOTOR_VAR_TYPE_V_BUS_MONITOR_CONFIG,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
@@ -372,8 +395,13 @@ typedef enum Motor_VarType_SubModule
 }
 Motor_VarType_SubModule_T;
 
-/* Instead of using SensorTable Ids, This way it takes only one field to associate properties.
-allows types to expand beyond 16 ids without reserving handlers */
+/*
+    Subtype Data
+    Generic access use Motor_Var_Sensor_Get/Set
+
+    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
+    allows types to expand beyond 16 ids without reserving handlers
+*/
 typedef enum Motor_VarType_RotorSensor
 {
     MOTOR_VAR_TYPE_HALL_STATE,

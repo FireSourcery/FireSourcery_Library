@@ -57,11 +57,10 @@ typedef const struct VMonitor_Context
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
     VDivider_T VDIVIDER;
-    // VDivider_T * P_VDIVIDER; // pointer for writable/separate region of memory
+    // VDivider_T * P_VDIVIDER; /* pointer for separate region of memory */
     Linear_T * P_LINEAR; /* if defined local unit conversion */
 
     Analog_Conversion_T ANALOG_CONVERSION; // todo move to upper layer, for interface
-    // void (*ON_FAULT)(void * p_context); /* Optionally callback table */
 }
 VMonitor_Context_T;
 
@@ -77,29 +76,6 @@ VMonitor_Context_T;
 //     .P_LINEAR = (p_Linear), \
 // }
 
-// #define VMONITOR_CONTEXT_ALLOC(p_Nvm, ConversionStruct, VDividerStruct, p_Linear) VMONITOR_CONTEXT_INIT(
-
-// #define VMonitor_ConfigId_Get RangeMonitor_ConfigId_Get
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-// static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context, int32_t input)
-// {
-//     return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, input);
-// }
-
-//todo move
-static inline VMonitor_Status_T VMonitor_PollStatus(const VMonitor_Context_T * p_context)
-{
-    return (VMonitor_Status_T)RangeMonitor_Poll(p_context->P_STATE, Analog_Conversion_GetResult(&p_context->ANALOG_CONVERSION));
-}
-
-static inline void VMonitor_MarkConversion(const VMonitor_Context_T * p_context)
-{
-    Analog_Conversion_Mark(&p_context->ANALOG_CONVERSION);
-}
 
 /******************************************************************************/
 /*
@@ -118,7 +94,6 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
 /******************************************************************************/
 static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
 static inline VMonitor_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
-
 
 
 /******************************************************************************/

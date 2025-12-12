@@ -184,6 +184,6 @@ static inline int16_t Phase_ValueAlignedOf(Phase_Triplet_T * p_input, Phase_Id_T
 // typedef struct Phase_Data_T
 // {
 //     Phase_Triplet_T Values;
-//     uint16_t Status;
+//     Phase_Bitmask_T Flags;
 // }
 // Phase_Data_T;

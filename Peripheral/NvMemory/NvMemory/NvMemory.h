@@ -280,8 +280,8 @@ static inline void NvMemory_SetYield(const NvMemory_T * p_context, NvMemory_Call
 /*
     Blocking
 */
-extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context);
+// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context);
 
 extern void NvMemory_Init(NvMemory_T * p_context);
 
