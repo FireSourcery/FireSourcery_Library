@@ -127,13 +127,14 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 
 */
 /******************************************************************************/
-// fault >57% or vPhaseFract16*vBusInv_Fract32 may overflow
+// fault past 57% or vPhaseFract16*vBusInv_Fract32 may overflow
 void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
     p_context->P_MC_STATE->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
 }
 
+/* auto value using */
 void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
 {
     assert(Phase_Calibration_IsLoaded() == true); /* Must be loaded before */
@@ -144,7 +145,7 @@ bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
 {
    RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
    uint32_t nominal = Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef);
-   math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
+//    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
 }
 
 

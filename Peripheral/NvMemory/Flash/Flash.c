@@ -79,7 +79,7 @@ static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 {
     Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
-    else { status = NV_MEMORY_STATUS_ERROR_CMD; }
+    else if(HAL_Flash_ReadErrorWriteVerify(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_VERIFY; }
     return status;
 }
 
@@ -87,7 +87,6 @@ static Flash_Status_T ParseCmdErrorErase(void * p_hal)
 {
     Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorProtectionFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_PROTECTION; }
-    else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
 }
 
@@ -95,7 +94,6 @@ static Flash_Status_T ParseCmdErrorVerify(void * p_hal)
 {
     Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;
     if (HAL_Flash_ReadErrorVerifyFlag(p_hal) == true) { status = NV_MEMORY_STATUS_ERROR_VERIFY; }
-    else { status = NV_MEMORY_STATUS_ERROR_CMD; }
     return status;
 }
 

@@ -41,7 +41,7 @@ static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemor
 {
 #ifdef NV_MEMORY_HW_OP_ADDRESS_RELATIVE
     return (address + p_state->p_OpPartition->OP_ADDRESS_OFFSET);
-#elif defined(NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
+#else
     (void)p_context; (void)p_state; return address;
 #endif
 }
@@ -140,7 +140,7 @@ void NvMemory_Init(NvMemory_T * p_context)
     NvMemory_State_T * p_state = p_context->P_STATE;
     p_state->IsOpBuffered = (p_context->BUFFER_SIZE > 0U);
     p_state->IsVerifyEnable = true;
-    p_state->IsForceAlignEnable = false;
+    p_state->IsForceAlignEnable = true;
 
     // p_state->Status = NV_MEMORY_STATUS_SUCCESS;
     // p_state->State = NV_MEMORY_STATE_IDLE;

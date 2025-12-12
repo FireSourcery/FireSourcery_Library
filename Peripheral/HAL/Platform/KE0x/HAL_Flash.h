@@ -58,8 +58,8 @@
 #define HAL_FLASH_CLOCK_SOURCE_FREQ (CPU_FREQ / 2UL)
 #endif
 
-#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
-// #define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL))
+// #define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL - 1UL))
+#define KE0x_FLASH_CLK_DIVIDER ((uint8_t)(HAL_FLASH_CLOCK_SOURCE_FREQ / 1000000UL))
 
 /*
 
@@ -206,7 +206,7 @@ static void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data
 
 /* Cmd Functions - when inline only _HAL_Flash_LaunchCmd need to reside in RAM */
 static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
-static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT |= FTMRx_FSTAT_CCIF_MASK; }
+static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT = FTMRx_FSTAT_CCIF_MASK; }
 
 static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK)) != 0U); }
 
@@ -231,6 +231,9 @@ static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)      { (void)
 static inline bool HAL_Flash_ReadErrorVerifyFlag(const HAL_Flash_T * p_regs)        { (void)p_regs; return _HAL_Flash_ReadErrorFlagShared(p_regs); }
 static inline bool HAL_Flash_ReadErrorProtectionFlag(const HAL_Flash_T * p_regs)    { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_FPVIOL_MASK) != 0U); }
 static inline bool HAL_Flash_ReadErrorAccessFlag(const HAL_Flash_T * p_regs)        { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_ACCERR_MASK) != 0U); }
+
+/* On Flash */
+static inline bool HAL_Flash_ReadErrorWriteVerify(const HAL_Flash_T * p_regs) { return _HAL_Flash_ReadErrorFlagShared(p_regs); }
 
 /*
     Cmds
@@ -263,7 +266,7 @@ static inline void HAL_Flash_StartCmdVerifyWriteUnit(HAL_Flash_T * p_regs, uintp
 static inline void HAL_Flash_StartCmdVerifyEraseUnit(HAL_Flash_T * p_regs, uintptr_t destAddress)
 {
     _HAL_Flash_WriteCmdDest(p_regs, destAddress, FTMRx_ERASE_VERIFY_SECTION);
-    _flash_set_command(2UL, 1U, 0U);
+    _flash_set_command(2UL, 1U, 0U); /* units = 1 */
     _HAL_Flash_LaunchCmd(p_regs);
 }
 
@@ -336,7 +339,7 @@ static inline void HAL_Flash_Init(HAL_Flash_T * p_regs)
     (void)p_regs;
 
     /* If FCLKDIV[FDIVLD] is 0, the FCLKDIV register has not been written since the last reset. */
-    if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) /* && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U) */)
+    if (((FTMRx->FCLKDIV & FTMRx_FCLKDIV_FDIVLCK_MASK) == 0U) && ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U))
     {
         /* FCLKDIV register is not locked.*/
         FTMRx->FCLKDIV = (uint8_t)(FTMRx->FCLKDIV & (~FTMRx_FCLKDIV_FDIV_MASK)) | FTMRx_FCLKDIV_FDIV(KE0x_FLASH_CLK_DIVIDER);

@@ -42,11 +42,11 @@
 // #define NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((section(".code_ram")))
 #endif
 
-// #if     defined(NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
-// #elif   defined(NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
-// #else
-//     #define NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
-// #endif
+#if     defined(NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
+#elif   defined(NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE)
+#else
+    #define NV_MEMORY_HW_OP_ADDRESS_ABSOLUTE
+#endif
 
 #if defined(NV_MEMORY_HW_OP_ADDRESS_RELATIVE)
 #define _NV_MEMORY_PARTITION_OFFSET_DEF(code) code
@@ -169,6 +169,7 @@ typedef struct NvMemory_State
     const void * p_OpData;      /* Op data source or read buffer. internal buffer, caller provided address, written only in read case */
     // uint8_t * p_DestBuffer, // alternatively keep separate pointer for buffer
 
+    /* todo cleanup saved state */
     /* Derived */
     // const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check */
     size_t OpSizeAligned;       /* Cached calculation. alternatively use getter */
