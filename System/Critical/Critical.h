@@ -40,12 +40,14 @@
 
 typedef uint32_t critical_state_t;
 
+// #include "External/CMSIS/Core/Include/cmsis_compiler.h"
+#include "cmsis_gcc.h"
+
 #if defined(__GNUC__) || defined(__CMSIS_COMPILER_H)
 static inline void _Critical_DisableIrq(void) { __disable_irq(); }
 static inline void _Critical_EnableIrq(void) { __enable_irq(); }
 #endif
 
-// #include "External/CMSIS/Core/Include/cmsis_compiler.h"
 #ifdef __CMSIS_COMPILER_H
 static inline void _Critical_Enter(critical_state_t * p_state)  { *p_state = __get_PRIMASK(); __disable_irq(); }
 static inline void _Critical_Exit(critical_state_t state)       { __set_PRIMASK(state); }

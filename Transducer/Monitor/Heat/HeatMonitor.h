@@ -84,7 +84,7 @@ typedef const struct HeatMonitor_Context
     HeatMonitor_T * P_STATE;    /* HeatMonitor_State_T */
 
     /* Thermistor Context */
-    Thermistor_T THERMISTOR; // alternatively as pointer for flexible write region
+    Thermistor_T THERMISTOR; // alternatively as pointer for flexible def region
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
     // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
     // Linear_T * P_LINEAR_T_CELCIUS;
@@ -300,20 +300,20 @@ static inline void HeatMonitor_Group_ConfigId_Set(const HeatMonitor_GroupContext
 /******************************************************************************/
 static inline uint8_t HeatMonitor_Group_GetInstanceCount(const HeatMonitor_GroupContext_T * p_group) { return p_group->COUNT; }
 
-static inline HeatMonitor_Context_T * HeatMonitor_Group_GetContext(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+static inline HeatMonitor_Context_T * HeatMonitor_Group_InstanceAt(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
     return (index < p_group->COUNT) ? &p_group->P_CONTEXTS[index] : NULL;
 }
 
 static inline Thermistor_T * HeatMonitor_Group_GetThermistor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
-    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetContext(p_group, index);
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_InstanceAt(p_group, index);
     return (p_context != NULL) ? &p_context->THERMISTOR : NULL;
 }
 
 static inline HeatMonitor_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
-    HeatMonitor_Context_T * p_context = HeatMonitor_Group_GetContext(p_group, index);
+    HeatMonitor_Context_T * p_context = HeatMonitor_Group_InstanceAt(p_group, index);
     return (p_context != NULL) ? p_context->P_STATE : NULL;
 }
 
@@ -339,7 +339,7 @@ static inline void HeatMonitor_GroupInstance_ConfigId_Set(const HeatMonitor_Grou
 static inline int HeatMonitor_GroupInstance_ThermistorConfigId_Get(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id)
 {
     return Thermistor_ConfigId_Get(HeatMonitor_Group_GetThermistor(p_group, instance), id);
-    // return HeatMonitor_Thermistor_ConfigId_Get(HeatMonitor_Group_GetContext(p_group, instance), id);
+    // return HeatMonitor_Thermistor_ConfigId_Get(HeatMonitor_Group_InstanceAt(p_group, instance), id);
 }
 
 static inline void HeatMonitor_GroupInstance_ThermistorConfigId_Set(const HeatMonitor_GroupContext_T * p_group, uint8_t instance, Thermistor_ConfigId_T id, int value)

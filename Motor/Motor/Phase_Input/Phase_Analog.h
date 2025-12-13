@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "Phase_Calibration.h"
-#include "Phase_Input.h"
+#include "Phase_Input.h" /* Analog component for every module */
 // #include "Phase_VBus.h"
 #include "../Phase/Phase_Types.h"
 #include "../Phase/Phase.h"

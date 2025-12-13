@@ -276,6 +276,7 @@ typedef const struct MotorController
     VMonitor_Context_T V_ACCESSORIES;   /* ~12V */
     VMonitor_Context_T V_ANALOG;        /* V Analog Sensors ~5V */
     // Analog_Conversion_T V_ASENSE_CONVERSION;
+    // Analog_Conversion_T V_ACCESSORIES_CONVERSION;
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */

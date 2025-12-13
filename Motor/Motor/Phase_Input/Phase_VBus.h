@@ -96,7 +96,9 @@ static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phas
 
 // extern PhaseVBus_Context_T PHASE_VBUS_CONTEXT;
 
-
+// extern Phase_VBusMonitor_T Phase_VBusMonitor; //monitor state for nominal and limits
+// VMonitor_T * P_STATE;
+// const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
 // typedef struct Phase_VBus_Config
 // {

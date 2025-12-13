@@ -45,21 +45,13 @@
 /*!
 */
 /******************************************************************************/
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units);
-
-static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWritePage(p_hal, address, p_data); }
-static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdEraseSector(p_hal, address); }
-static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdVerifyWriteUnit(p_hal, address, p_data); }
-static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data;                 HAL_Flash_StartCmdVerifyEraseUnits(p_hal, address, units); }
-static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWriteOnce(p_hal, address, p_data); }
-static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdReadOnce(p_hal, address); }
-static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)address; (void)p_data; (void)units;  HAL_Flash_StartCmdEraseAll(p_hal); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWritePage           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWritePage(p_hal, address, p_data); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseSector         (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdEraseSector(p_hal, address); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyWriteUnit     (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdVerifyWriteUnit(p_hal, address, p_data); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdVerifyEraseUnits    (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data;                 HAL_Flash_StartCmdVerifyEraseUnits(p_hal, address, units); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdWriteOnce           (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)units;                  HAL_Flash_StartCmdWriteOnce(p_hal, address, p_data); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdReadOnce            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)p_data; (void)units;    HAL_Flash_StartCmdReadOnce(p_hal, address); }
+FLASH_ATTRIBUTE_RAM_SECTION static void StartCmdEraseAll            (void * p_hal, uintptr_t address, const uint8_t * p_data, size_t units) { (void)address; (void)p_data; (void)units;  HAL_Flash_StartCmdEraseAll(p_hal); }
 
 /******************************************************************************/
 /*!
@@ -74,7 +66,6 @@ static void FinalizeCmdReadOnce(void * p_hal, uintptr_t address, size_t units, u
         register meaning might differ depending on Cmd
 */
 /******************************************************************************/
-// static Flash_Status_T ParseCmdErrorWrite(void * p_hal) FLASH_ATTRIBUTE_RAM_SECTION;
 static Flash_Status_T ParseCmdErrorWrite(void * p_hal)
 {
     Flash_Status_T status = NV_MEMORY_STATUS_ERROR_CMD;

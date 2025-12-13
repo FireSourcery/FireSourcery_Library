@@ -152,10 +152,12 @@ NvMemory_Status_T MotNvm_LoadPhaseSensorRefFrom(const MotNvm_T * p_motNvm, HAL_N
 /******************************************************************************/
 NvMemory_Status_T MotNvm_LoadConstRef(const MotNvm_T * p_motNvm)
 {
-    HAL_Nvm_Manufacturer_T result;
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(HAL_Nvm_Manufacturer_T), (void *)&result);
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseSensorRefFrom(p_motNvm, &result); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseCalibrationRefFrom(p_motNvm, &result); }
+    // HAL_Nvm_Manufacturer_T result;
+    // NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(HAL_Nvm_Manufacturer_T), (void *)&result);
+    uint8_t buffer[64U] = { 0 };
+    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, (void *)&buffer[0U]);
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseSensorRefFrom(p_motNvm, (HAL_Nvm_Manufacturer_T *)&buffer[0U]); }
+    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseCalibrationRefFrom(p_motNvm, (HAL_Nvm_Manufacturer_T *)&buffer[0U]); }
     return status;
 }
 

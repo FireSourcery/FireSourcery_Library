@@ -42,6 +42,7 @@
     Use FLASH_ATTRIBUTE_RAM_SECTION incase functions are not inlined (and stored in ram with calling function)
 */
 #ifndef FLASH_ATTRIBUTE_RAM_SECTION
+#define FLASH_ATTRIBUTE_RAM_SECTION NV_MEMORY_ATTRIBUTE_RAM_SECTION
 #endif
 
 /*
@@ -205,8 +206,7 @@ static void _HAL_Flash_WriteCmdData(HAL_Flash_T * p_regs, const uint8_t * p_data
 }
 
 /* Cmd Functions - when inline only _HAL_Flash_LaunchCmd need to reside in RAM */
-static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
-static void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT = FTMRx_FSTAT_CCIF_MASK; }
+FLASH_ATTRIBUTE_RAM_SECTION static inline void _HAL_Flash_LaunchCmd(HAL_Flash_T * p_regs) { (void)p_regs; FTMRx->FSTAT = FTMRx_FSTAT_CCIF_MASK; }
 
 static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK)) != 0U); }
 
@@ -215,14 +215,12 @@ static inline bool _HAL_Flash_ReadErrorFlagShared(const HAL_Flash_T * p_regs) { 
     API Common
 */
 /******************************************************************************/
-static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U); }
+FLASH_ATTRIBUTE_RAM_SECTION static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & FTMRx_FSTAT_CCIF_MASK) != 0U); }
 
 /*
     Collective Error Flags
 */
-static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) FLASH_ATTRIBUTE_RAM_SECTION;
-static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK | FTMRx_FSTAT_FPVIOL_MASK | FTMRx_FSTAT_ACCERR_MASK)) != 0U); }
+FLASH_ATTRIBUTE_RAM_SECTION static inline bool HAL_Flash_ReadErrorFlags(const HAL_Flash_T * p_regs) { (void)p_regs; return ((FTMRx->FSTAT & (FTMRx_FSTAT_MGSTAT_MASK | FTMRx_FSTAT_FPVIOL_MASK | FTMRx_FSTAT_ACCERR_MASK)) != 0U); }
 static inline void HAL_Flash_ClearErrorFlags(HAL_Flash_T * p_regs)      { (void)p_regs; FTMRx->FSTAT = (uint8_t)(FTMRx_FSTAT_ACCERR_MASK | FTMRx_FSTAT_FPVIOL_MASK); }
 
 /*

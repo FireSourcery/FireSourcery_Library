@@ -36,8 +36,8 @@
     Private
 */
 /******************************************************************************/
-static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address) NV_MEMORY_ATTRIBUTE_RAM_SECTION; /* incase inline disabled by optimization level */
-static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address)
+/* incase inline disabled by optimization level */
+NV_MEMORY_ATTRIBUTE_RAM_SECTION static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address)
 {
 #ifdef NV_MEMORY_HW_OP_ADDRESS_RELATIVE
     return (address + p_state->p_OpPartition->OP_ADDRESS_OFFSET);
@@ -46,16 +46,7 @@ static inline uintptr_t OpCmdAddress(const NvMemory_T * p_context, const NvMemor
 #endif
 }
 
-// static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-// static inline bool StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
-// {
-//     /* Start command validated by caller. No null pointer check */
-//     p_state->p_OpControl->START_CMD(p_context->P_HAL, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), &((const uint8_t *)p_state->p_OpData)[opIndex], 1U);
-//     return (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == false);
-// }
-
-NV_MEMORY_ATTRIBUTE_RAM_SECTION static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address, const uint8_t * p_data);
-static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address, const uint8_t * p_data)
+NV_MEMORY_ATTRIBUTE_RAM_SECTION static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State_T * p_state, uintptr_t address, const uint8_t * p_data)
 {
     /* Start command validated by caller. No null pointer check */
     p_state->p_OpControl->START_CMD(p_context->P_HAL, address, p_data, 1U);
@@ -75,19 +66,8 @@ static inline void StartOpCmd(const NvMemory_T * p_context, const NvMemory_State
 /*
     Store in RAM for case of Flash.
 */
-NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((noinline)) static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex);
-// static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
+NV_MEMORY_ATTRIBUTE_RAM_SECTION __attribute__((noinline)) static void ProcCmd_Blocking(const NvMemory_T * p_context, const NvMemory_State_T * p_state, size_t opIndex)
 {
-    // if (StartOpCmd(p_context, p_state, opIndex) == true)
-    // {
-    //     while (p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == false)
-    //     {
-    //         if (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == true) { break; }
-    //         if (p_state->Yield != NULL) { p_state->Yield(p_state->p_CallbackContext); }
-    //     }
-    // }
-
     StartOpCmd(p_context, p_state, OpCmdAddress(p_context, p_state, p_state->OpAddress + opIndex), &((const uint8_t *)p_state->p_OpData)[opIndex]);
 
     while ((p_context->READ_COMPLETE_FLAG(p_context->P_HAL) == false) && (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == false))
@@ -212,7 +192,7 @@ static inline bool ValidateOpPartition(NvMemory_T * p_context, uintptr_t address
 
 /*
     Checks Boundary and Dest Align
-    p_state->p_OpControl must be set
+    p_state->p_OpControl must be set, or set align
 */
 NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_context, uintptr_t address, size_t size)
 {
