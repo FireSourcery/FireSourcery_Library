@@ -45,13 +45,19 @@
     set to sync buffer. proc in thread
     Direction handle in state machine
 */
-static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_vehicleState, uint16_t userCmd) { p_vehicleState->Input.ThrottleValue = userCmd; }
-static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_vehicleState, uint16_t userCmd) { p_vehicleState->Input.BrakeValue = userCmd; }
-static inline void Vehicle_User_SetZero(Vehicle_State_T * p_vehicleState)
+static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
+static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
+static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
+
+/* Caller Handle Edge Detection */
+static inline void Vehicle_User_ApplyStartCmd(const Vehicle_T * p_vehicle, Vehicle_Cmd_T cmd)
 {
-    p_vehicleState->Input.ThrottleValue = 0U;
-    p_vehicleState->Input.BrakeValue = 0U;
+    _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd);
 }
+
+static inline void Vehicle_User_StartThrottle(const Vehicle_T * p_vehicle)  { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_THROTTLE); }
+static inline void Vehicle_User_StartBrake(const Vehicle_T * p_vehicle)     { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_BRAKE); }
+
 
 /* Protocol Call sets Inner Machine only */
 /* Will not exit park */
@@ -64,7 +70,7 @@ static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Moto
     // Vehicle_User_CheckDirection(p_vehicle, direction); /* effective on motor async transition only */
     // bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
         // if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
-// }
+    // }
 }
 
 // Call on Park transition. caller handle Park state
@@ -73,16 +79,6 @@ static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Moto
 //     _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DIRECTION, MOTOR_DIRECTION_NONE);
 //     // MotorController_User_EnterPark(p_vehicle->P_MC_STATE);
 // }
-
-/* Caller Handle Edge Detection */
-static inline void Vehicle_User_ApplyStartCmd(const Vehicle_T * p_vehicle, Vehicle_Cmd_T cmd)
-{
-    _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd);
-}
-
-static inline void Vehicle_User_StartThrottle(const Vehicle_T * p_vehicle)  { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_THROTTLE); }
-static inline void Vehicle_User_StartBrake(const Vehicle_T * p_vehicle)     { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_BRAKE); }
-
 
 extern void Vehicle_User_PollStartCmd(Vehicle_T * p_vehicle);
 extern void Vehicle_User_ApplyThrottle(Vehicle_T * p_vehicle, uint16_t userCmd);
@@ -114,8 +110,8 @@ Vehicle_ConfigId_T;
 extern int Vehicle_VarId_Get(const Vehicle_T * p_vehicle, Vehicle_VarId_T id);
 extern void Vehicle_VarId_Set(const Vehicle_T * p_vehicle, Vehicle_VarId_T id, int value);
 
-extern int Vehicle_ConfigId_Get(const Vehicle_State_T * p_vehicleState, Vehicle_ConfigId_T id);
-extern void Vehicle_ConfigId_Set(Vehicle_State_T * p_vehicleState, Vehicle_ConfigId_T id, int value);
+extern int Vehicle_ConfigId_Get(const Vehicle_State_T * p_this, Vehicle_ConfigId_T id);
+extern void Vehicle_ConfigId_Set(Vehicle_State_T * p_this, Vehicle_ConfigId_T id, int value);
 
 
 
@@ -125,11 +121,11 @@ extern void Vehicle_ConfigId_Set(Vehicle_State_T * p_vehicleState, Vehicle_Confi
 */
 /******************************************************************************/
 // static inline Vehicle_BrakeMode_T _Vehicle_Config_GetBrakeMode(const Vehicle_Config_T * p_config) { return p_config; }
-// static inline Vehicle_BrakeMode_T Vehicle_Config_GetBrakeMode(const Vehicle_State_T * p_vehicleState) { return p_vehicleState->Config.BrakeMode; }
-// static inline Vehicle_ThrottleMode_T Vehicle_Config_GetThrottleMode(const Vehicle_State_T * p_vehicleState) { return p_vehicleState->Config.ThrottleMode; }
-// static inline Vehicle_ZeroMode_T Vehicle_Config_GetZeroMode(const Vehicle_State_T * p_vehicleState) { return p_vehicleState->Config.ZeroMode; }
+// static inline Vehicle_BrakeMode_T Vehicle_Config_GetBrakeMode(const Vehicle_State_T * p_this) { return p_this->Config.BrakeMode; }
+// static inline Vehicle_ThrottleMode_T Vehicle_Config_GetThrottleMode(const Vehicle_State_T * p_this) { return p_this->Config.ThrottleMode; }
+// static inline Vehicle_ZeroMode_T Vehicle_Config_GetZeroMode(const Vehicle_State_T * p_this) { return p_this->Config.ZeroMode; }
 
-// static inline void Vehicle_Config_SetBrakeMode(Vehicle_State_T * p_vehicleState, Vehicle_BrakeMode_T mode) { p_vehicleState->Config.BrakeMode = mode; }
-// static inline void Vehicle_Config_SetThrottleMode(Vehicle_State_T * p_vehicleState, Vehicle_ThrottleMode_T mode) { p_vehicleState->Config.ThrottleMode = mode; }
-// static inline void Vehicle_Config_SetZeroMode(Vehicle_State_T * p_vehicleState, Vehicle_ZeroMode_T mode) { p_vehicleState->Config.ZeroMode = mode; }
+// static inline void Vehicle_Config_SetBrakeMode(Vehicle_State_T * p_this, Vehicle_BrakeMode_T mode) { p_this->Config.BrakeMode = mode; }
+// static inline void Vehicle_Config_SetThrottleMode(Vehicle_State_T * p_this, Vehicle_ThrottleMode_T mode) { p_this->Config.ThrottleMode = mode; }
+// static inline void Vehicle_Config_SetZeroMode(Vehicle_State_T * p_this, Vehicle_ZeroMode_T mode) { p_this->Config.ZeroMode = mode; }
 

@@ -24,9 +24,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase_Analog.h
+    @file   Phase_Input.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Submodule for Motor VOut.
 */
 /******************************************************************************/
 #include "../Phase/Phase_Types.h"
@@ -40,6 +40,8 @@ typedef struct Phase_Input
     Phase_Bitmask_T IFlags;
 }
 Phase_Input_T;
+
+/* todo compile time selection between capture */
 
 static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.A; }
 static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.B; }

@@ -71,22 +71,6 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
 
-    // cmd = MotAnalogUser_PollCmd(&p_context->ANALOG_USER);
-    // switch (cmd)
-    // {
-    //     // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
-    //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));    break;
-    //     //                                                     // Vehicle_SetThrottleValue(&p_mc->Vehicle, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    //     // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdBrake(p_mc, 0U);                                                 break;
-    //     // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdThrottle(p_mc, 0U);                                              break;
-    //     // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdDriveZero(p_mc);                                                 break;
-    //     // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                       break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);    //         break;
-    //     case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);    //         break;
-    //     case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:  break;
-    //     default: break;
-    // }
-
     if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
         MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS);
@@ -284,6 +268,8 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     High Freq, Low Priority,
 */
 /******************************************************************************/
+extern void Vehicle_ProcAnalogUser(const MotorController_T * p_context); //temp
+
 static inline void MotorController_Main_Thread(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
@@ -314,6 +300,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
                 // if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
                 {
                     _MotorController_ProcAnalogUser(p_context);
+                    Vehicle_ProcAnalogUser(p_context);
                     // MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
                     // MotorController_App_ProcAnalogUser(p_context, p_context.selected);
                 }
@@ -409,12 +396,12 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 //     //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 //     // }
 
-//     if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
+//     if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
 //     {
 //         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 //     }
 
-//     // if (MotorTimeRef_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
+//     // if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
 //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 
 

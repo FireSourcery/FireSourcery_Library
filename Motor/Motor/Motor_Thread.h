@@ -46,7 +46,7 @@
     Motor_MarkAnalog_Thread
 */
 /******************************************************************************/
-static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return MotorTimeRef_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
+static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return _Motor_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
 
 
 /* Optionally mark on Start */

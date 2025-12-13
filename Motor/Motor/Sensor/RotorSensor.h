@@ -26,7 +26,7 @@
 /*!
     @file   RotorSensor.h
     @author FireSourcery
-    @brief  Motor Sensor Generic Interface
+    @brief  Motor Sensor Generic Interface. Submodule for Sensors.
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"

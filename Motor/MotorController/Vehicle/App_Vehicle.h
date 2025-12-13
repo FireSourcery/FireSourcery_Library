@@ -38,3 +38,4 @@
 extern State_T MC_STATE_MAIN_VEHICLE;
 extern MotorController_App_T MC_APP_VEHICLE;
 
+extern void Vehicle_ProcAnalogUser(const MotorController_T * p_context);

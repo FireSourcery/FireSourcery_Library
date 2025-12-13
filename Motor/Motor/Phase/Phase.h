@@ -26,7 +26,7 @@
 /*!
     @file   Phase.h
     @author FireSourcery
-    @brief  3-Phase PWM functions.
+    @brief  3-Phase PWM functions. Submodule for Motor VOut.
 */
 /******************************************************************************/
 #include "Phase_Types.h"

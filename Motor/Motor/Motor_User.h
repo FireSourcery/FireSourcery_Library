@@ -160,7 +160,9 @@ static inline bool Motor_User_IsSpeedLimitSet(const Motor_State_T * p_motor)
 // static inline Motor_CalibrationState_T Motor_User_GetCalibrationState(const Motor_State_T * p_motor)  { return p_motor->CalibrationState; }
 // static inline uint8_t Motor_User_GetCalibrationStateIndex(const Motor_State_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
-
+/*
+Move to SyncControl extension
+*/
 /******************************************************************************/
 /*!
     Interfaces

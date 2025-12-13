@@ -81,8 +81,6 @@
 /*!
 */
 /******************************************************************************/
-
-
 /*
     User InputMux
 */
@@ -200,19 +198,16 @@ MotorController_Config_T;
 /* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
-    uint32_t StateCounter; /* Calibration */
-    uint32_t ControlCounter; /* PWM */
-
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
     MotorController_InitFlags_T InitFlags;
-    // Vehicle_State_T Vehicle; /* Optionally contain on init */
+    uint32_t StateCounter; /* Calibration */
+    uint32_t ControlCounter; /* PWM */
 
     Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
-    // Motor_User_Input_T CmdInputPrev; /* Previous buffered Input for StateMachine */
 
-    /* Generic async return status */
+    /* Generic async return status, alternatively as union */
     uint8_t LockOpStatus; /* async status */
     NvMemory_Status_T NvmStatus; /* Common NvmStatus, e.g. EEPROM/Flash */
 

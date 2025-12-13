@@ -58,7 +58,9 @@
 #define MOTOR_SPEED_LOOP_FREQ (1000U)
 #endif
 
-/*  */
+/*
+    Motor_Config use
+*/
 #define CYCLES_OF_MS(Freq, Milliseconds)    ((uint32_t)((uint32_t)Milliseconds * Freq / 1000U))
 #define MS_OF_CYCLES(Freq, Cycles)          ((uint32_t)((uint32_t)Cycles * 1000U / Freq))
 
@@ -82,17 +84,8 @@
 
 static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
 
-//alternatively
-// typedef const struct MotorTimeReference
-// {
-//     const uint32_t MOTOR_CONTROL_FREQ;
-//     const uint32_t MOTOR_CURRENT_LOOP_FREQ;
-//     const uint32_t MOTOR_SPEED_CALIB_MAX;
-// }
-// MotorTimeReference_T;
-// MotorRef_Clock_T;
-
-static inline bool MotorTimeRef_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
+/*  */
+static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
 /*
     Local Conversion Units

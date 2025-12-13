@@ -35,17 +35,6 @@
 #include "Transducer/Blinky/Blinky.h"
 
 
-/*
-*/
-// typedef enum Vehicle_Status
-// {
-//     VEHICLE_STATUS_OK,
-//     VEHICLE_STATUS_WARNING,
-//     VEHICLE_STATUS_FAULT,
-// }
-// Vehicle_Status_T;
-
-// typedef Motor_Direction_T Vehicle_Direction_T;
 
 /*
     [Vehicle_Input_T]
@@ -251,4 +240,16 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
     //             break;
     //     }
 //
+// }
+
+// static inline void Input_FromThrottle(Motor_User_Input_T * p_user, Vehicle_ThrottleMode_T mode, uint16_t throttle)
+// {
+//     p_user->CmdValue = (int32_t)throttle / 2; // [0:32767]
+
+//     switch (mode)
+//     {
+//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
+//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
+//         default: break;
+//     }
 // }

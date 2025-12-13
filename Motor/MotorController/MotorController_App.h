@@ -45,6 +45,9 @@ typedef const struct MotorController MotorController_T;
 /*!
     Interface
     Around [MotorController_T] for StateMachine Access
+
+    Includes Main substate.
+    Common States including Park must be handled outside
 */
 /******************************************************************************/
 typedef const struct MotorController_App

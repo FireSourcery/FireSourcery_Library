@@ -73,7 +73,6 @@ Vehicle_StateId_T;
 
 extern const StateMachine_Machine_T VEHICLE_MACHINE;
 
-
 #define VEHICLE_STATE_MACHINE_INIT(p_VehicleContext, VehicleStateAlloc) STATE_MACHINE_INIT((p_VehicleContext), &VEHICLE_MACHINE, &((VehicleStateAlloc).StateMachine))
 
 

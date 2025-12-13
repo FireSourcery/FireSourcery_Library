@@ -103,6 +103,9 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorState) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorState).StateMachine))
 
+// static inline bool _Motor_StateMachine_IsState(const StateMachine_T * p_stateMachine, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_stateMachine->P_ACTIVE, stateId)); }
+
+
 /* Wrap for interface */
 /* Does not include substates */
 static inline bool _Motor_StateMachine_IsState(const Motor_State_T * p_fields, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(&p_fields->StateMachine, stateId)); }

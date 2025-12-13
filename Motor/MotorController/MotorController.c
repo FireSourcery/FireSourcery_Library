@@ -78,7 +78,6 @@ void MotorController_Init(const MotorController_T * p_context)
     Vehicle_Init(&p_context->VEHICLE); //todo move to interface
 
     /* Alternatively set nominal on init */
-    // TimerT_Counter_InitTickOnInit(&p_context->MILLIS_TIMER, 1U);
     HeatMonitor_Group_MarkEach(&p_context->HEAT_MOSFETS);
     HeatMonitor_MarkConversion(&p_context->HEAT_PCB);
     Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);

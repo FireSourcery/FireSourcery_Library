@@ -163,7 +163,7 @@ MotPacket_T;
 
 // todo remove Packet wrap. keep payload
 // pass payload separately eliminates need for combined packet + payload struct
-// extern uint8_t MotPacket_VersionResp1_Build(MotPacket_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
+// extern uint8_t MotPacket_VersionResp1_Build(MotData_VersionResp_T * p_payload, MotPacket_T * p_header, uint32_t library, uint32_t firmware, uint32_t board);
 // extern uint8_t MotPacket_VersionResp1_Build(MotPacket_T * p_header, MotPacket_VersionResp_T payload);
 
 /******************************************************************************/

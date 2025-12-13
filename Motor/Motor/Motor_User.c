@@ -99,6 +99,7 @@ inline void Motor_User_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output
 */
 inline void Motor_User_SetFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
+    // if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
     if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 

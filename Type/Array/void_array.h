@@ -100,20 +100,20 @@ static inline void void_pointer_assign_as_value(void * p_unit, size_t type, valu
     struct array
 */
 /******************************************************************************/
+/* todo  static inline void array_foreach(size_t type, void * p_array, size_t length, proc_t func) */
+
 /*
     0 argument accessors
 */
 /*
     length in units
 */
-// static inline void void_array_foreach(size_t type, void * p_buffer, size_t length, proc_t unit_op)
 static inline void void_array_foreach(void * p_buffer, size_t type, size_t length, proc_t unit_op)
 {
     for (size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, type, index)); }
 }
 
 /*!
-    foreach_is_every
     applies to every element
     @return true if all return true
 */
@@ -163,7 +163,6 @@ static inline void void_array_foreach_set(void * p_buffer, size_t type, size_t l
     for (size_t index = 0U; index < length; index++) { unit_setter(void_pointer_at(p_buffer, type, index), value); }
 }
 
-/* void_array_for_every_set */
 static inline bool void_array_for_every_set(void * p_buffer, size_t type, size_t length, try_set_t unit_try, value_t value)
 {
     bool is_every = true;
@@ -178,17 +177,18 @@ static inline bool void_array_for_any_set(void * p_buffer, size_t type, size_t l
     return is_any;
 }
 
-/*
-    same as above but const pointer
-*/
-static inline bool void_array_is_every_value(const void * p_buffer, size_t type, size_t length, test_entry_t unit_try, value_t value)
+static inline bool void_array_is_every_value(const void * p_buffer, size_t type, size_t length, test_value_t test, value_t value)
 {
-    return void_array_for_every_set((void *)p_buffer, type, length, (try_set_t)unit_try, value);
+    bool is_every = true;
+    for (size_t index = 0U; index < length; index++) { if (test(void_pointer_at(p_buffer, type, index), value) == false) { is_every = false; break; } }
+    return is_every;
 }
 
-static inline bool void_array_is_any_value(const void * p_buffer, size_t type, size_t length, test_entry_t unit_try, value_t value)
+static inline bool void_array_is_any_value(const void * p_buffer, size_t type, size_t length, test_value_t test, value_t value)
 {
-    return void_array_for_any_set((void *)p_buffer, type, length, (try_set_t)unit_try, value);
+    bool is_any = false;
+    for (size_t index = 0U; index < length; index++) { if (test(void_pointer_at(p_buffer, type, index), value) == true) { is_any = true; break; } }
+    return is_any;
 }
 
 /******************************************************************************/

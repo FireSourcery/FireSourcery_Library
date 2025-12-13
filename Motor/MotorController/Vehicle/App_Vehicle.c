@@ -42,6 +42,7 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
 {
     const Vehicle_T * const p_vehicle = &p_context->VEHICLE;
 
+    /* outer state machine handles park state */
     /* Sets MotorController_T StateMachine. passthrough to inner */
     /* Direction Procs immediately */
     /* Alternatively check for park state */
@@ -54,6 +55,7 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
     }
 
     /* Set Inner StateMachine Only */
+    /* or set outer input1 */
     Vehicle_User_SetThrottle(p_context->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     Vehicle_User_SetBrake(p_context->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));
     Vehicle_User_PollStartCmd(&p_context->VEHICLE);
@@ -68,13 +70,13 @@ MotorController_App_T MC_APP_VEHICLE =
 
 /******************************************************************************/
 /*!
-    @brief [Vehicle] SubState - Map under MotorController main state
+    @brief [Vehicle] HSM SubState - Map under MotorController main state
     call Vehicle StateMachine can use a different input table
 
     [Throttle] + [Brake] + [Neutral State]
 */
 /******************************************************************************/
-void Vehicle_Entry(const MotorController_T * p_context)
+static void Entry(const MotorController_T * p_context)
 {
     StateMachine_Reset(&p_context->VEHICLE.STATE_MACHINE); /* Reset StateMachine */
     // optionally motors exit stop, in case of motor cmds, or set from ui
@@ -82,7 +84,7 @@ void Vehicle_Entry(const MotorController_T * p_context)
 
 /* Proc Vehicle Buffer */
 /* Proc Per ms */
-void Vehicle_Proc(const MotorController_T * p_context)
+static void Proc(const MotorController_T * p_context)
 {
     Vehicle_T * const p_vehicle = &p_context->VEHICLE;
     /* Proc the Sub-StateMachine - with different input table */
@@ -90,7 +92,7 @@ void Vehicle_Proc(const MotorController_T * p_context)
 }
 
 // top state can map MotorController inputs, pass to inner state
-static State_T * Vehicle_InputGeneric(const MotorController_T * p_context, state_value_t inputsPtr)
+static State_T * InputGeneric(const MotorController_T * p_context, state_value_t inputsPtr)
 {
     State_T * p_nextState = NULL;
     // Motor_User_Input_T * p_inputs = (Motor_User_Input_T *)inputsPtr;
@@ -108,18 +110,18 @@ static State_T * Vehicle_InputGeneric(const MotorController_T * p_context, state
     return NULL;
 }
 
-static State_T * Vehicle_InputDirection(const MotorController_T * p_context, state_value_t direction)
+static State_T * InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
     Vehicle_User_ApplyDirection(&p_context->VEHICLE, direction);
     return NULL;
 }
 
 /* Overriding parent table */
-static const State_Input_T VEHICLE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
+    [MCSM_INPUT_DIRECTION]          = (State_Input_T)InputDirection, /* override outer and pass to nested state machine */
     // [MCSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     // [MCSM_INPUT_STATE_COMMAND]   = (State_Input_T)Vehicle_InputStateCmd,
-    [MCSM_INPUT_DIRECTION]          = (State_Input_T)Vehicle_InputDirection, /* override outer and pass to nested state machine */
     // [MCSM_INPUT_GENERIC]         = (State_Input_T)Vehicle_InputGeneric,
     // [MCSM_INPUT_LOCK]            = (State_Input_T)Vehicle_InputLock,
 };
@@ -130,9 +132,13 @@ const State_T MC_STATE_MAIN_VEHICLE =
     .DEPTH      = 1U,
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,
-    .ENTRY      = (State_Action_T)Vehicle_Entry,
-    .LOOP       = (State_Action_T)Vehicle_Proc,
-    .P_TRANSITION_TABLE = &VEHICLE_TRANSITION_TABLE[0U],
+    .ENTRY      = (State_Action_T)Entry,
+    .LOOP       = (State_Action_T)Proc,
+    .P_TRANSITION_TABLE = &TRANSITION_TABLE[0U],
+    // .P_TRANSITION_TABLE = (State_Input_T[MCSM_TRANSITION_TABLE_LENGTH])
+// {
+//     [MCSM_INPUT_DIRECTION] = (State_Input_T)InputDirection,
+// },
 };
 
 

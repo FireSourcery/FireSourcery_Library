@@ -66,6 +66,7 @@ static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
     Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / fract16; /* shift 16 as fract32 */
 }
 
+//move to analog
 static inline void Phase_VBus_CaptureAdcu(uint16_t adcu)
 {
     Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu));

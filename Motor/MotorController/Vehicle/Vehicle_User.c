@@ -32,7 +32,7 @@
 
 /*
     Command Polling
-    Edge detect handled outside of StateMachine
+    Cmd "state" == input, changes on edge, handle outside of StateMachine
 */
 void Vehicle_User_PollStartCmd(Vehicle_T * p_vehicle)
 {
@@ -41,7 +41,8 @@ void Vehicle_User_PollStartCmd(Vehicle_T * p_vehicle)
 }
 
 /*
-    Apply on protocol input
+    Apply immediately
+    on protocol input per value response, 50ms. alternatively buffer and poll.
 */
 void Vehicle_User_ApplyThrottle(Vehicle_T * p_vehicle, uint16_t userCmd)
 {
@@ -62,8 +63,12 @@ void Vehicle_User_ApplyZero(Vehicle_T * p_vehicle)
     Vehicle_User_PollStartCmd(p_vehicle);
 }
 
+
+/* or move this to app interface layer */
 /******************************************************************************/
-/* Var Id */
+/*
+    Var Id
+*/
 /******************************************************************************/
 void Vehicle_VarId_Set(const Vehicle_T * p_vehicle, Vehicle_VarId_T id, int value)
 {

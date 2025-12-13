@@ -32,8 +32,6 @@
 
 #include "Config.h"
 
-#include "MotorTimeRef.h"
-
 #include "Phase/Phase.h"
 #include "Phase_Input/Phase_Input.h"
 #include "Phase_Input/Phase_VBus.h"
@@ -74,6 +72,7 @@
     Parts - with dependency on Motor_T forward declared
     This way sub modules contain handling details
 */
+#include "Motor_ControlFreq.h"
 // #include "Motor_Var.h"
 // #include "Analog/Motor_Analog.h"
 // #include "Sensor/Motor_Sensor.h"
@@ -261,8 +260,6 @@ typedef struct Motor_State
         no resync on direction change
         effective as sentinel comparison
     */
-
-   // fract16_t UserCmd; /* alternatively, as it is on a separate thread */
     /*
         Speed Feedback
     */
