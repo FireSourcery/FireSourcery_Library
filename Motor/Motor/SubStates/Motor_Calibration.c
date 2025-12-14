@@ -39,7 +39,7 @@
 /*
     with position sensor without position feedback loop
 */
-static void Calibration_HomeEntry(const Motor_T * p_motor)
+static void Homing_Entry(const Motor_T * p_motor)
 {
     // // for now
     // p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
@@ -61,7 +61,7 @@ static void Calibration_HomeEntry(const Motor_T * p_motor)
 
 */
 // todo step speed calc
-static void Calibration_ProcHome(const Motor_T * p_motor)
+static void Homing_Proc(const Motor_T * p_motor)
 {
     // // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
     // /* alternatively use openloop speed */
@@ -80,7 +80,7 @@ static void Calibration_ProcHome(const Motor_T * p_motor)
     // }
 }
 
-static State_T * Calibration_HomeEnd(const Motor_T * p_motor)
+static State_T * Homing_End(const Motor_T * p_motor)
 {
     // State_T * p_nextState = NULL;
     // uint16_t angleDelta = 65536 / 1000;
@@ -104,12 +104,12 @@ static const State_T CALIBRATION_STATE_HOMING =
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
-    .ENTRY      = (State_Action_T)Calibration_HomeEntry,
-    .LOOP       = (State_Action_T)Calibration_ProcHome,
-    .NEXT       = (State_InputVoid_T)Calibration_HomeEnd,
+    .ENTRY      = (State_Action_T)Homing_Entry,
+    .LOOP       = (State_Action_T)Homing_Proc,
+    .NEXT       = (State_InputVoid_T)Homing_End,
 };
 
-static State_T * Calibration_StartHome(const Motor_T * p_motor, state_value_t null)
+static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
 {
     // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
     return &CALIBRATION_STATE_HOMING;
@@ -118,7 +118,7 @@ static State_T * Calibration_StartHome(const Motor_T * p_motor, state_value_t nu
 /* Transition from any Calibration State */
 void Motor_Calibration_StartHome(const Motor_T * p_motor)
 {
-    static const StateMachine_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_StartHome, };
+    static const StateMachine_TransitionInput_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Homing_Start, };
     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 
     // StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
@@ -130,6 +130,8 @@ void Motor_Calibration_StartHome(const Motor_T * p_motor)
     @brief Tuning
 */
 /******************************************************************************/
+extern const State_T CALIBRATION_STATE_TUNNING;
+
 /*
     Same as run
 */
@@ -199,11 +201,18 @@ static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH]
 };
 
 
+// void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
+// {
+//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
+// }
+
+static State_T * Tuning_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE_TUNNING; }
+
 void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
 {
-    StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
+    static StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Tuning_Start };
+    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
-
 
 
 

@@ -76,14 +76,6 @@ StateMachine_TransitionInput_T;
 // }
 // State_TransitionPair_T;
 
-// typedef const struct StateMachine_MultiTransitionInput
-// {
-//     const State_Input_T TRANSITION;
-//     State_T * const * const PP_VALID_LIST;
-//     const uint8_t VALID_COUNT;
-// }
-// StateMachine_MultiTransitionInput_T;
-
 /******************************************************************************/
 /*
     StateMachine_Def / StateMachine_Table
@@ -97,7 +89,7 @@ typedef const struct StateMachine_Machine
     uint8_t TRANSITION_TABLE_LENGTH;  /* state_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
     /* Optional */
     State_T * P_STATE_FAULT; /* Optional. for base fault functions */
-    // const State_T STATES[]; /* auto assign a stateid this way */
+    // const State_T STATES[]; /* Root states. auto assign a stateid this way */
     // alternatively, simplified  implementation
     // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
     // meta select handler mode
@@ -279,14 +271,14 @@ static void StateMachine_Branch_InputAsyncTransition(StateMachine_T * p_this, st
 {
     if (_StateMachine_AcquireAsyncInput(p_this->P_ACTIVE) == true)
     {
-        _StateMachine_ProcBranchInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
+        _StateMachine_Branch_ProcInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
         _StateMachine_ReleaseAsyncInput(p_this->P_ACTIVE);
     }
 }
 
 static void StateMachine_Branch_InputSyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)
 {
-    _StateMachine_ApplyBranchAsyncInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
+    _StateMachine_Branch_ApplyAsyncInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
 }
 
 /*
@@ -312,10 +304,10 @@ static void StateMachine_Branch_InvokeTransition(StateMachine_T * p_this, StateM
 {
     if (_StateMachine_AcquireAsyncTransition(p_this->P_ACTIVE) == true)
     {
-        if (StateMachine_IsActivePath(p_this->P_ACTIVE, p_transition->P_START) == true) //todo move
+        if (StateMachine_IsActivePath(p_this->P_ACTIVE, p_transition->P_START) == true) //todo move to _StateMachine
         {
             assert(State_IsAncestorOrSelf(p_transition->P_START, p_this->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
-            _StateMachine_TransitionBranchTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, value));
+            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
@@ -331,12 +323,25 @@ static void StateMachine_Branch_InvokeTransitionFrom(StateMachine_T * p_this, St
     {
         if (State_IsAncestorOrSelf(p_deepest, StateMachine_GetActiveSubState(p_this->P_ACTIVE)) == true)
         {
-            _StateMachine_TransitionBranchTo(p_this->P_ACTIVE, p_this->P_CONTEXT, transition(p_this->P_CONTEXT, value));
+            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, transition(p_this->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
 }
 
+/* Common enter substate from. Caller ensure correct transition relationship */
+static void _StateMachine_Branch_EnterSubstate(StateMachine_T * p_this, State_T * p_parent, State_T * p_dest)
+{
+    if (_StateMachine_AcquireAsyncTransition(p_this->P_ACTIVE) == true)
+    {
+        if (StateMachine_IsActivePath(p_this->P_ACTIVE, p_parent) == true)
+        {
+            assert(State_IsAncestorOrSelf(p_parent, p_this->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
+            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_dest);
+        }
+        _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
+    }
+}
 
 // static void StateMachine_RootFirst_InputAsyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)
 // static void StateMachine_RootFirst_InputSyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)

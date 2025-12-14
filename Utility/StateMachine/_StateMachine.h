@@ -47,7 +47,7 @@ typedef struct StateMachine_Active
 {
     State_T * p_ActiveState;     /* HSM - The Active Top Level State. Keep the top level fast. ActiveBranch */
     State_T * p_ActiveSubState;  /* HSM - Leaf State, defines full path. ActiveLeaf */
-    /* todo p_ActiveState includes P_ROOT for top level. */
+    /* todo single pointer p_ActiveState includes P_ROOT for top level. */
 
     /*
         Buffered Sync transition. For restricting transition to during proc state only
@@ -93,7 +93,6 @@ static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_
 /******************************************************************************/
 /*
     SubState
-    todo remove
 */
 /******************************************************************************/
 static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
@@ -163,20 +162,20 @@ static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T *
 /*
 
 */
-static inline state_value_t _StateMachine_LeafState_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
-{
-    return State_Access(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
-}
+// static inline state_value_t _StateMachine_LeafState_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// {
+//     return State_Access(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
+// }
 
-static inline void _StateMachine_LeafState_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
-{
-    State_SetValue(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
-}
+// static inline void _StateMachine_LeafState_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// {
+//     State_SetValue(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
+// }
 
-static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
-{
-    return State_GetValue(p_active->p_ActiveSubState, p_context, id, valueK);
-}
+// static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
+// {
+//     return State_GetValue(p_active->p_ActiveSubState, p_context, id, valueK);
+// }
 
 /******************************************************************************/
 /*!

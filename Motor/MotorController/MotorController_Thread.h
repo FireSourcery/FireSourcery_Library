@@ -289,8 +289,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
         // maybe interrupted by enterFault on 1ms thread maybe change this to signal
-        // _StateMachine_ProcRootFirst(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* if sync inputs and sync transition  */
-        _StateMachine_ProcRootFirstSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
+        // _StateMachine_RootFirst_Proc(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* if sync inputs and sync transition  */
+        _StateMachine_RootFirst_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 

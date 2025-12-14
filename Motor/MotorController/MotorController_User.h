@@ -130,7 +130,7 @@ static inline void MotorController_EnterMain(MotorController_T * p_context) { Mo
 /* Simplify AnalogUser implementation */
 static inline void MotorController_ApplyDirectionCmd(MotorController_T * p_context, Motor_UserDirection_T direction)
 {
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_DIRECTION, direction);
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_DIRECTION, direction);
 }
 
 /*

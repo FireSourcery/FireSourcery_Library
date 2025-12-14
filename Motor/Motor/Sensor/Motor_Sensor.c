@@ -45,6 +45,7 @@ static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSens
     @param[in] RotorSensor_Id_T as varId. 1 less layer of nesting. handle in calling module.
 
     // varId as sensorId, varValue as cmdId
+    // enter calibration state before calling
 */
 void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue)
 {

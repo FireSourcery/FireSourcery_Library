@@ -528,7 +528,7 @@ static void Lock_Proc(const MotorController_T * p_context)
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
-    // _StateMachine_ProcBranch_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
+    // _StateMachine_Branch_Proc_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
 
 /* Lock SubState/Cmd by passed value */

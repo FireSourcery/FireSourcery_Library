@@ -53,6 +53,9 @@
     CmdValue (Ramp Target) and CmdMode selectively sync inputs for StateMachine
 */
 /******************************************************************************/
+/*
+    Caller / Var layer validate enum bounds
+*/
 
 /******************************************************************************/
 /*!
@@ -66,7 +69,6 @@ inline void Motor_Release(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_
 
 inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
-// validate enum
 inline void Motor_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 // inline void Motor_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state)
@@ -120,7 +122,6 @@ void Motor_ApplyRotaryDirection(const Motor_T * p_motor, Motor_Direction_T direc
     // if (p_motor->P_MOTOR_STATE->Direction != direction)
     if (direction != Motor_GetRotaryDirection(p_motor->P_MOTOR_STATE)) // Stop State also syncs on enter
     {
-        //validate enum
         StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction);
     }
 }

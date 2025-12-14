@@ -33,6 +33,12 @@
 
 /******************************************************************************/
 /*!
+    Motor_T * context for immediate Phase Output update
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*!
     @brief State Machine
 */
 /******************************************************************************/
@@ -204,6 +210,7 @@ static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t st
     assert(p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
 
     return p_state;
+    // return &MOTOR_STATE_CALIBRATION;
 }
 
 static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -473,7 +480,6 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
 */
 static void OpenLoop_Proc(const Motor_T * p_motor)
 {
-    // _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
 }
 
 /* maintain consistent interface with other states, use substate cmd for phase output without exiting */
@@ -548,7 +554,6 @@ static void Calibration_Entry(const Motor_T * p_motor)
 
 static void Calibration_Proc(const Motor_T * p_motor)
 {
-    // _StateMachine_ProcBranch_Nested(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor);
 }
 
 static State_T * Calibration_Next(const Motor_T * p_motor)
@@ -575,7 +580,7 @@ static State_T * Calibration_InputControl(const Motor_T * p_motor, state_value_t
 static State_T * Calibration_InputStop(const Motor_T * p_motor, state_value_t direction)
 {
     // Phase_Float(&p_motor->PHASE);
-    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
+    return ((Motor_Direction_T)direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
 }
 
 /*
@@ -603,9 +608,9 @@ static const State_Input_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LEN
 const State_T MOTOR_STATE_CALIBRATION =
 {
     .ID                 = MSM_STATE_ID_CALIBRATION,
-    .P_TRANSITION_TABLE = &CALIBRATION_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Calibration_Entry,
     .LOOP               = (State_Action_T)Calibration_Proc,
+    .P_TRANSITION_TABLE = &CALIBRATION_TRANSITION_TABLE[0U],
 };
 
 

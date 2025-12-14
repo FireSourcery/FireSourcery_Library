@@ -87,9 +87,12 @@ static void Calibration_Proc(const Motor_T * p_motor)
 
 static State_T * Calibration_End(const Motor_T * p_motor)
 {
-    bool isComplete = (p_motor->P_MOTOR_STATE->CalibrationStateIndex >= 7U); /* (Phase_ReadAlign(&p_motor->PHASE) == PHASE_ID_0) */
-    if (isComplete == true) { p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !Hall_IsTableValid(GetHall(p_motor)->P_STATE); }
-    return isComplete ? &MOTOR_STATE_CALIBRATION : NULL;
+    if (p_motor->P_MOTOR_STATE->CalibrationStateIndex >= 7U)
+    {
+        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !Hall_IsTableValid(GetHall(p_motor)->P_STATE);
+        return &MOTOR_STATE_CALIBRATION;
+    }
+    return NULL;
 }
 
 static const State_T CALIBRATION_STATE_HALL =
@@ -103,14 +106,18 @@ static const State_T CALIBRATION_STATE_HALL =
     .NEXT       = (State_InputVoid_T)Calibration_End,
 };
 
+
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
+static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE_HALL; }
+
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {
-    StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
-    // StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &(const StateMachine_TransitionInput_T) {.P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = Calibration_Start }, 0);
+    // StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
+    static StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_Start };
+    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 

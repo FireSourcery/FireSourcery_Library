@@ -248,11 +248,10 @@ typedef const struct State
     uint8_t DEPTH;                  /* Depth of state. Depth must be consistent for iteration */
     const struct State * P_TOP;     /* SubStates maintain pointer to top level state. */
 
+    // const void * P_EXT_PROPERTIES; /* Maybe more convenient than inheritance */
 
-    const void * P_EXT_PROPERTIES; /* Maybe more convenient than inheritance */
-
-    /* const sub-TYPE context */
-    const void * P_EXTENSION; /*  */
+    // /* const sub-TYPE context */
+    // const void * P_EXTENSION; /*  */
     // VarAccess_VTable_T optionally include
 
     /* non const sub-STATE context */

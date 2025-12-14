@@ -61,7 +61,7 @@ static inline void _StateMachine_Synchronous_RootFirst_Thread(StateMachine_Activ
 {
     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
     {
-        _StateMachine_ProcRootFirst(p_active, p_context);
+        _StateMachine_RootFirst_Proc(p_active, p_context);
         _StateMachine_ReleaseAsyncIsr(p_active);
     }
 }

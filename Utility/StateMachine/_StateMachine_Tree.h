@@ -54,29 +54,29 @@ static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_act
 */
 /******************************************************************************/
 /* _StateMachine_Branch_Action */
-extern void _StateMachine_TransitionBranch(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_TransitionBranchTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_Branch_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_Branch_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
-extern void _StateMachine_ProcBranchSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
-extern void _StateMachine_ProcBranchInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
+extern void _StateMachine_Branch_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
-extern void _StateMachine_ProcBranchSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcBranchPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_Branch_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_Branch_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
 
-extern void _StateMachine_ApplyBranchAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_Branch_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
-extern void _StateMachine_ProcBranch(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcBranch_Nested(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_Branch_Proc_Nested(StateMachine_Active_T * p_active, void * p_context);
 
 
 /* Root First */
-extern void _StateMachine_TransitionRoot(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_RootFirst_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
-extern void _StateMachine_ProcRootFirstSyncOutput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcRootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
-extern void _StateMachine_ProcRootFirstSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcRootFirstPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_RootFirst_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_RootFirst_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_RootFirst_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_RootFirst_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
 
-extern void _StateMachine_ApplyRootFirstAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_RootFirst_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
-extern void _StateMachine_ProcRootFirst(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_context);

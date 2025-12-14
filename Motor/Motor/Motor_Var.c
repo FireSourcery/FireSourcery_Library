@@ -341,9 +341,11 @@ void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T va
 {
     switch (varId)
     {
+        case MOTOR_VAR_CONFIG_ENTER_CALIBRATION:    Motor_Calibration_Enter(p_motor);       break;
         case MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION:  Motor_Analog_Calibrate(p_motor);        break;
         case MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME:     Motor_Calibration_StartHome(p_motor);   break;
-        case MOTOR_VAR_CONFIG_ENTER_CALIBRATION:    Motor_Calibration_EnterTuning(p_motor); break;
+        case MOTOR_VAR_CALIBRATION_ENTER_TUNING:    Motor_Calibration_EnterTuning(p_motor); break;
+
         // case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME:  Motor_Encoder_StartHoming(p_motor);     break; // move to sensor cmds
     }
 }
@@ -487,6 +489,7 @@ void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T ty
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           _Motor_Var_ConfigActuation_Set(p_motor->P_MOTOR_STATE, varId, varValue);    break;
         case MOTOR_VAR_TYPE_CONFIG_PID:                 _Motor_Var_ConfigPid_Set(p_motor->P_MOTOR_STATE, varId, varValue);          break;
         case MOTOR_VAR_TYPE_CONFIG_CMD:                 _Motor_Var_ConfigCmd_Call(p_motor, varId, varValue);                        break;
+        //move to submodule
         case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:          Motor_Sensor_CalibrationCmd_Call(p_motor, (RotorSensor_Id_T)varId, varValue);                 break;
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   break; // Read only, no set access
     }

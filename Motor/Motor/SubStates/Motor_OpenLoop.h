@@ -38,19 +38,10 @@
 static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
 // static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
 
-// static State_T * _OpenLoop_Enter(const Motor_T * p_motor, state_value_t null) { return &MOTOR_STATE_OPEN_LOOP; }
-
-// void Motor_OpenLoop_Enter(const Motor_T * p_motor)
-// {
-//     static const StateMachine_TransitionInput_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)_OpenLoop_Enter, };
-//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0U);
-// }
-
-/* alternatively use State_CmdInput_T with addition   entry */
-// static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState)
-// {
-//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState);
-// }
+/* Enter Substate From OpenLoop Root State */
+/* Sufficient for Cmds that begin with a substate */
+/* Specialized cmd may call with TransitionInput for init function */
+static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_OPEN_LOOP, p_subState); }
 
 /*
     Extern
@@ -79,7 +70,7 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 // Motor_OpenLoop_StateId_T;
 
 /*
-    Access by Id - directly correpond to VarId
+    Access by Id - directly correspond to VarId
 */
 // typedef enum Motor_OpenLoop_Cmd
 // {
@@ -98,9 +89,3 @@ extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
 //     // MOTOR_VAR_OPEN_LOOP_RUN,
 // }
 // Motor_OpenLoop_Cmd_T;
-
-// static inline void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T cmd)
-// {
-//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, cmd);
-// }
-

@@ -256,24 +256,25 @@ Motor_Var_ConfigPid_T;
 
 /*
     Calibration State Cmds
-    Stop/Calibration State enforced
+    Stop/Calibration/Fault State enforced same with Config
+    Alternatively move type for separate policy handling
 */
 // typedef enum Motor_Var_CalibrationCmd
 typedef enum Motor_Var_ConfigCmd
 {
+    MOTOR_VAR_CONFIG_ENTER_CALIBRATION, /* Enter first before calling Substate */
     MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION,
     MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
-    MOTOR_VAR_CONFIG_ENTER_CALIBRATION, // enforce config in calibration state, rather than stop state
-    // MOTOR_VAR_CONFIG_CMD_SENSOR_CALIBRATION, /* Generic call for active type */
+    MOTOR_VAR_CALIBRATION_ENTER_TUNING,
 
-    // MOTOR_VAR_CALIBRATION_ENTER, // enforce config in calibration state, rather than stop state
+    // MOTOR_VAR_CONFIG_CMD_SENSOR_CALIBRATION, /* Generic call for active type */
     // MOTOR_VAR_CALIBRATION_ADC,
     // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
     // MOTOR_VAR_CALIBRATION_VIRTUAL_HOME,
 }
 Motor_Var_ConfigCmd_T;
 
-
+/*  */
 typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
 
 /******************************************************************************/
@@ -387,7 +388,7 @@ typedef enum Motor_VarType_Config
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
-    /* Alternatively move to sensor */
+    /* Alternatively move to submodule */
     MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
 }
 Motor_VarType_Config_T;
@@ -407,7 +408,8 @@ Motor_VarType_SubModule_T;
 
 /*
     Subtype Data
-    Generic access use Motor_Var_Sensor_Get/Set
+    Handled by RotorSensor_Table
+    Motor_Var_Sensor for Generic access
 
     Instead of using SensorTable Ids, This way it takes only one field to associate properties.
     allows types to expand beyond 16 ids without reserving handlers

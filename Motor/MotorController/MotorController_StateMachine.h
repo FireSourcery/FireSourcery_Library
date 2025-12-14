@@ -129,7 +129,7 @@ MotorController_StateCmd_T;
 
 static inline void MotorController_InputStateCommand(MotorController_T * p_context, MotorController_StateCmd_T cmd)
 {
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_STATE_COMMAND, cmd);
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_STATE_COMMAND, cmd);
 }
 
 /******************************************************************************/
@@ -148,7 +148,7 @@ MotorController_MotorCmd_T;
 
 static inline void MotorController_InputMotorCmd(MotorController_T * p_context, MotorController_MotorCmd_T cmd)
 {
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_GENERIC, cmd);
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_GENERIC, cmd);
 }
 
 /******************************************************************************/
@@ -187,7 +187,7 @@ MotorController_LockOpStatus_T;
 /* May transition to substate */
 static inline void MotorController_InputLock(MotorController_T * p_context, MotorController_LockId_T id)
 {
-    _StateMachine_ProcBranchInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
 }
 
 static inline MotorController_LockId_T MotorController_GetLockSubState(MotorController_T * p_context)
