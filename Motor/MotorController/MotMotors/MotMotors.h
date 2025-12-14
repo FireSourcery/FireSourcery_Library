@@ -80,12 +80,12 @@ static inline bool MotMotors_IsAnyValue(MotMotors_T * p_ctx, Motor_State_TryValu
 /*
     Feedback Mode Set first
 */
-typedef void (*Motor_User_SetCmdValue_T)(Motor_State_T * p_motor, int16_t userCmd); /* alternatively as cmd struct */
+typedef void (*Motor_SetCmdValue_T)(Motor_State_T * p_motor, int16_t userCmd); /* alternatively as cmd struct */
 
 /* selected mode using function */
-static inline void MotMotors_SetCmdWith(MotMotors_T * p_ctx, Motor_User_SetCmdValue_T function, int16_t value) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { function(&p_ctx->P_STATES[iMotor], value); } }
+static inline void MotMotors_SetCmdWith(MotMotors_T * p_ctx, Motor_SetCmdValue_T function, int16_t value) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { function(&p_ctx->P_STATES[iMotor], value); } }
 
-static void MotMotors_ApplyInputs(MotMotors_T * p_ctx, Motor_User_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
+static void MotMotors_ApplyInputs(MotMotors_T * p_ctx, Motor_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
 
 static inline void MotMotors_ApplySpeedLimit(MotMotors_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
 static inline void MotMotors_ApplyILimit(MotMotors_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetILimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
@@ -97,16 +97,16 @@ static inline void MotMotors_ApplyILimit(MotMotors_T * p_ctx, LimitArray_T * p_l
     On Full Context
 */
 /******************************************************************************/
-static inline void MotMotors_SetFeedbackMode(MotMotors_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_SetFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
+static inline void MotMotors_ApplyFeedbackMode(MotMotors_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
-static inline void MotMotors_ActivateControlState(MotMotors_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
+static inline void MotMotors_ActivateControlState(MotMotors_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
 
-static inline void MotMotors_ApplyUserDirection(MotMotors_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ApplyDirectionSign(&p_ctx->P_CONTEXTS[iMotor], sign); } }
+static inline void MotMotors_ApplyUserDirection(MotMotors_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_ctx->P_CONTEXTS[iMotor], sign); } }
 
 /* Exits Calibration and OpenLoop States */
-static inline void MotMotors_StopAll(MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void MotMotors_StopAll(MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
 
-static inline void MotMotors_ForceDisableControl(MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_User_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void MotMotors_ForceDisableControl(MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
 
 static inline void MotMotors_EnterCalibration(MotMotors_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_ctx->P_CONTEXTS[iMotor]); } }
 
@@ -132,16 +132,16 @@ static inline bool MotMotors_IsEveryUserDirection(MotMotors_T * p_ctx, int sign)
     bool isEvery = true;
     for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++)
     {
-        if (Motor_User_GetDirection(p_ctx->P_CONTEXTS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; }
+        if (Motor_GetUserDirection(p_ctx->P_CONTEXTS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; }
     }
     return isEvery;
 }
 
-static Motor_User_Direction_T _MotMotors_GetDirectionAll(MotMotors_T * p_ctx)
+static Motor_UserDirection_T _MotMotors_GetDirectionAll(MotMotors_T * p_ctx)
 {
-    volatile Motor_User_Direction_T direction;
-    if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_FORWARD; }
-    else if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_REVERSE; }
+    volatile Motor_UserDirection_T direction;
+    if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_USER_DIRECTION_FORWARD; }
+    else if (MotMotors_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_USER_DIRECTION_REVERSE; }
     else { direction = 0; } /* overload stop and Error */
     return direction;
 }

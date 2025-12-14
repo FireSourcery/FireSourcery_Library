@@ -237,15 +237,14 @@ MotorController_VarType_Communication_T;
 /*
     MotorController
     Application_User
-    MotorController_Var
+    app table handle compile time define
 */
 /* SubModule */
 // typedef enum MotorController_VarType_Application
 // {
-    /* Vehicle Submodule */
-// MOT_VAR_TYPE_VEHICLE_CONTROL,
-// MOT_VAR_TYPE_VEHICLE_CONFIG,
-
+//     /* Vehicle Submodule */
+//     MOT_VAR_TYPE_VEHICLE_CONTROL,
+//     MOT_VAR_TYPE_VEHICLE_CONFIG,
 // }
 // MotorController_VarType_Application_T;
 

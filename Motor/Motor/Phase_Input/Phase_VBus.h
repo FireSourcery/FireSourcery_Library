@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include "Phase_Calibration.h"
-#include "Phase_Analog.h"
 #include "../Phase/Phase_Types.h"
 
 #include "Math/Fixed/fract16.h"
@@ -65,13 +64,6 @@ static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
     Phase_VBus.VBus_Fract16 = fract16;
     Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / fract16; /* shift 16 as fract32 */
 }
-
-//move to analog
-static inline void Phase_VBus_CaptureAdcu(uint16_t adcu)
-{
-    Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu));
-}
-
 
 static inline ufract16_t Phase_VBus_Fract16(void) { return Phase_VBus.VBus_Fract16; }
 static inline uint32_t Phase_VBus_Inv_Fract32(void) { return Phase_VBus.PerV_Fract32; }

@@ -41,13 +41,17 @@ void Vehicle_User_PollStartCmd(Vehicle_T * p_vehicle)
 }
 
 /*
-    Apply immediately
+    Input ~10-50ms
+    Proc State/Buffer ~1ms
+    Apply state changes immediately
     on protocol input per value response, 50ms. alternatively buffer and poll.
+    alternatively call value update,
 */
 void Vehicle_User_ApplyThrottle(Vehicle_T * p_vehicle, uint16_t userCmd)
 {
     p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue = userCmd;
     Vehicle_User_PollStartCmd(p_vehicle);
+    // Vehicle_User_ApplyCmd(p_vehicle, p_input->Cmd);  /* statemachine handle check edge, + set value */
 }
 
 void Vehicle_User_ApplyBrake(Vehicle_T * p_vehicle, uint16_t userCmd)
@@ -74,7 +78,7 @@ void Vehicle_VarId_Set(const Vehicle_T * p_vehicle, Vehicle_VarId_T id, int valu
 {
     switch (id)
     {
-        case VEHICLE_VAR_DIRECTION:   Vehicle_User_ApplyDirection(p_vehicle, (Motor_User_Direction_T)value);      break;
+        case VEHICLE_VAR_DIRECTION:   Vehicle_User_ApplyDirection(p_vehicle, (Motor_UserDirection_T)value);      break;
         case VEHICLE_VAR_THROTTLE:    Vehicle_User_ApplyThrottle(p_vehicle, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       Vehicle_User_ApplyBrake(p_vehicle, (uint16_t)value);         break;
     }
@@ -118,18 +122,3 @@ void Vehicle_ConfigId_Set(Vehicle_State_T * p_vehicleState, Vehicle_ConfigId_T i
         default: break;
     }
 }
-
-// typedef const struct VarAccess_FieldHandler
-// {
-//     get_field_t GET_FIELD;
-//     set_field_t SET_FIELD;
-//     test_t TEST_SET;
-// }
-// VarAccess_FieldHandler_T;
-
-// VarAccess_FieldHandler_T Vehicle_VarId_Handlers =
-// {
-//     .GET_FIELD = NULL,
-//     .SET_FIELD = NULL,
-//     .TEST_SET = NULL,
-// };

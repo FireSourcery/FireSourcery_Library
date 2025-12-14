@@ -34,7 +34,6 @@
 #define MOTOR_CONFIG_H
 
 #include "Motor.h"
-// #include "Motor_StateMachine.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -58,7 +57,6 @@ static inline uint16_t _Motor_Config_GetOpenLoopVLimit_Fract16(const Motor_State
 /* Rated Limit - applied on set config */
 static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
 static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
-
 
 
 /******************************************************************************/
@@ -129,7 +127,7 @@ static inline uint16_t Motor_Config_GetAlignPowerScalar(const Motor_State_T * p_
 static inline uint32_t Motor_Config_GetAlignTime_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.AlignTime_Cycles; }
 static inline uint16_t Motor_Config_GetAlignTime_Millis(const Motor_State_T * p_motor) { return _Motor_MillisOf(p_motor->Config.AlignTime_Cycles); }
 
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 static inline uint16_t Motor_Config_GetOpenLoopSpeedFinal_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampSpeedFinal_Fract16 ; }
 static inline uint32_t Motor_Config_GetOpenLoopSpeedRamp_Cycles(const Motor_State_T * p_motor) { return p_motor->Config.OpenLoopRampSpeedTime_Cycles; }
 static inline uint16_t Motor_Config_GetOpenLoopSpeedRamp_Millis(const Motor_State_T * p_motor) { return _Motor_MillisOf(p_motor->Config.OpenLoopRampSpeedTime_Cycles); } /*  */

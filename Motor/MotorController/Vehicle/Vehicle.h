@@ -160,9 +160,9 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 // alternatively as input conversion,
 
 // interface for   data common
-// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_User_Input_T * p_user, id, value)
+// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_Input_T * p_user, id, value)
 
-// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_User_Input_T * p_user, MotAnalogUser_T * P_analog)
+// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_Input_T * p_user, MotAnalogUser_T * P_analog)
 // {
 //     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
 
@@ -179,7 +179,7 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 // {
 //     switch (id)
 //     {
-//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_User_Direction_T)value); break;
+//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_UserDirection_T)value); break;
 //         case MOTOR_USER_INPUT_ID_THROTTLE: p_context->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = (uint16_t)value;
 //             break;
 //         default:
@@ -188,9 +188,9 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NONE;// or return to top main
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_USER_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_USER_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_USER_DIRECTION_NONE;// or return to top main
     //     default: break;
     // }
     // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
@@ -217,20 +217,20 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 //     p_user->BrakeValue = MotAnalogUser_GetAInValue(P_analog, MOT_ANALOG_USER_AIN_BRAKE);
 // }
 
-// void Vehicle_Input_ToMotorInput (const Vehicle_Input_T * p_user, Motor_User_Input_T * P_input )
+// void Vehicle_Input_ToMotorInput (const Vehicle_Input_T * p_user, Motor_Input_T * P_input )
 // {
     //     switch (dir)
     //     {
     //         case MOTOR_CONTROLLER_DIRECTION_PARK:
-    //             P_input->Direction = MOTOR_DIRECTION_NONE;
+    //             P_input->Direction = MOTOR_USER_DIRECTION_NONE;
     //             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
-    //             P_input->Direction = MOTOR_DIRECTION_REVERSE;
+    //             P_input->Direction = MOTOR_USER_DIRECTION_REVERSE;
     //             P_input->PhaseState = PHASE_OUTPUT_VPWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
-    //             P_input->Direction = MOTOR_DIRECTION_FORWARD;
+    //             P_input->Direction = MOTOR_USER_DIRECTION_FORWARD;
     //             P_input->PhaseState = PHASE_OUTPUT_VPWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
@@ -242,7 +242,7 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 //
 // }
 
-// static inline void Input_FromThrottle(Motor_User_Input_T * p_user, Vehicle_ThrottleMode_T mode, uint16_t throttle)
+// static inline void Input_FromThrottle(Motor_Input_T * p_user, Vehicle_ThrottleMode_T mode, uint16_t throttle)
 // {
 //     p_user->CmdValue = (int32_t)throttle / 2; // [0:32767]
 

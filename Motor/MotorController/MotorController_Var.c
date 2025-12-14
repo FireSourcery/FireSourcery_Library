@@ -43,11 +43,11 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_MC_STATE:              value = MotorController_User_GetStateId(p_context->P_MC_STATE);             break;
-        case MOT_VAR_MC_SUB_STATE:          value = MotorController_User_GetSubStateId(p_context->P_MC_STATE);          break;
-        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_User_GetFaultFlags(p_context->P_MC_STATE).Value;    break;
-        case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_User_GetStatusFlags(p_context).Value;               break;
-        case MOT_VAR_MC_DIRECTION:          value = MotorController_StateMachine_GetDirection(p_context);               break;
+        case MOT_VAR_MC_STATE:              value = MotorController_GetStateId(p_context->P_MC_STATE);             break;
+        case MOT_VAR_MC_SUB_STATE:          value = _MotorController_GetSubStateId(p_context->P_MC_STATE);          break;
+        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_context->P_MC_STATE).Value;    break;
+        case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_context).Value;               break;
+        case MOT_VAR_MC_DIRECTION:          value = MotorController_GetDirection(p_context);               break;
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;                          break;
     }
     return value;
@@ -58,13 +58,13 @@ void MotorController_Var_Input_Set(const MotorController_T * p_context, MotorCon
 {
     switch (id)
     {
-        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_User_SetCmdValue(p_context, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_User_SetFeedbackMode(p_context, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
-        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_User_SetDirection(p_context, (Motor_User_Direction_T)value);                            break;
-        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_User_SetControlState(p_context, (Phase_Output_T)value);                                 break;
+        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_context, (int16_t)value);                                            break;
+        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_context, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
+        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_context, (Motor_UserDirection_T)value);                            break;
+        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_context, (Phase_Output_T)value);                                 break;
 
-        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_User_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
-        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_User_SetOptILimitOnOff(p_context, (bool)value);            break;
+        case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
+        case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_context, (bool)value);            break;
 
         case MOT_VAR_USER_RELAY_TOGGLE:                 break;
         case MOT_VAR_USER_METER_TOGGLE:                 break;
@@ -119,10 +119,10 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
     MotorController_State_T * p_state = p_context->P_MC_STATE;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_User_SetVSupplyRef(p_context, value);                                   break;
+        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupplyRef(p_context, value);                                   break;
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_INPUT_MODE:            MotorController_User_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
+        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
@@ -149,10 +149,10 @@ void MotorController_Var_ConfigBootRef_Set(const MotorController_T * p_context, 
     MotorController_State_T * p_state = p_context->P_MC_STATE;
     switch (id)
     {
-        case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_User_SetFastBoot(p_state, value);     break;
-        case MOT_VAR_BOOT_REF_BEEP:         MotorController_User_SetBeep(p_state, value);         break;
-        case MOT_VAR_BOOT_REF_BLINK:        MotorController_User_SetBlink(p_state, value);        break;
-            // case MOT_VAR_BOOT_REF_PROTOCOL_INDEX:    MotorController_User_SetProtocolIndex(p_state, value);    break;
+        case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_SetFastBoot(p_state, value);     break;
+        case MOT_VAR_BOOT_REF_BEEP:         MotorController_SetBeep(p_state, value);         break;
+        case MOT_VAR_BOOT_REF_BLINK:        MotorController_SetBlink(p_state, value);        break;
+            // case MOT_VAR_BOOT_REF_PROTOCOL_INDEX:    MotorController_SetProtocolIndex(p_state, value);    break;
     }
 }
 
@@ -162,9 +162,7 @@ void MotorController_Var_ConfigBootRef_Set(const MotorController_T * p_context, 
 /******************************************************************************/
 static inline uint8_t MotorController_Var_GetMotorCount(const MotorController_T * p_context) { return p_context->MOTORS.LENGTH; }
 static inline uint8_t MotorController_Var_GetHeatMosfetCount(const MotorController_T * p_context) { return HeatMonitor_Group_GetInstanceCount(&p_context->HEAT_MOSFETS); }
-static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController_T * p_context)
-    { return (p_context->V_SOURCE.P_STATE != NULL) + (p_context->V_ACCESSORIES.P_STATE != NULL) + (p_context->V_ANALOG.P_STATE != NULL); }
-
+static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController_T * p_context) { return (p_context->V_SOURCE.P_STATE != NULL) + (p_context->V_ACCESSORIES.P_STATE != NULL) + (p_context->V_ANALOG.P_STATE != NULL); }
 static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController_T * p_context) { return p_context->PROTOCOL_COUNT; }
 
 int MotorController_InstancesRef_Get(const MotorController_T * p_context, MotorController_Var_StaticRef_T nameBase)
@@ -333,7 +331,7 @@ static int _HandleVMonitor_Get(const MotorController_T * p_context, MotVarId_T v
 
 static MotVarId_Status_T _HandleVMonitor_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+    if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
 
     switch ((MotorController_VarType_VMonitor_T)varId.InnerType)
     {
@@ -429,7 +427,7 @@ static MotVarId_Status_T _HandleCommunication_Set(const MotorController_T * p_co
 //         default: return MOT_VAR_STATUS_ERROR;
 //     }
 
-//     MotorController_User_Call(p_context, varId.InnerType, varId.Base, value);
+//     MotorController_CallSystemCmd(p_context, varId.InnerType, varId.Base, value);
 // }
 
 /******************************************************************************/
@@ -504,7 +502,7 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
             break;
 
         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:
-            if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             // if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
             break;
 
@@ -525,7 +523,7 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                 case MOT_VAR_TYPE_GENERAL_CONFIG:
                 case MOT_VAR_TYPE_BOOT_REF_CONFIG:
                 case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
-                    if (!MotorController_StateMachine_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+                    if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                     break;
 
                 default:

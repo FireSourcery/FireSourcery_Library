@@ -153,24 +153,24 @@ bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
     Collective Setting Limit
 */
 /******************************************************************************/
-bool MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16)
+bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16)
 {
-    if (LimitArray_SetEntry(&p_context->MOT_SPEED_LIMITS, id, limit_fract16) == true) { MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_context->MOT_SPEED_LIMITS, id, limit_fract16) == true) { MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
 }
 
-bool MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id)
+bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id)
 {
-    if (LimitArray_ClearEntry(&p_context->MOT_SPEED_LIMITS, id) == true) { MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
+    if (LimitArray_TryClearEntry(&p_context->MOT_SPEED_LIMITS, id) == true) { MotMotors_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
 }
 
-bool MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16)
+bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16)
 {
-    if (LimitArray_SetEntry(&p_context->MOT_I_LIMITS, id, limit_fract16) == true) { MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, id, limit_fract16) == true) { MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
 }
 
-bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id)
+bool _MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id)
 {
-    if (LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, id) == true) { MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
+    if (LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, id) == true) { MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
 }
 
 
@@ -179,7 +179,7 @@ bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILim
 // {
 //     // if((p_vehicle->P_VEHICLE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
 //     // {
-//     //     if(p_this->DriveDirection == MOTOR_DIRECTION_REVERSE)
+//     //     if(p_this->DriveDirection == MOTOR_USER_DIRECTION_REVERSE)
 //     //     {
 //     //         Vehicle_BeepPeriodicType1(p_this);
 //     //     }

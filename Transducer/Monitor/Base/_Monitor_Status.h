@@ -1,15 +1,15 @@
-#pragma once
+// #pragma once
 
-/******************************************************************************/
-/*!
-    @file   Monitor.h
-    @author FireSourcery
-    @brief  Generic multi-level monitoring with conventional naming
-*/
-/******************************************************************************/
-#include "Transducer/Math/math_hysteresis.h"
-#include <stdint.h>
-#include <stdbool.h>
+// /******************************************************************************/
+// /*!
+//     @file   Monitor.h
+//     @author FireSourcery
+//     @brief  Generic multi-level monitoring with conventional naming
+// */
+// /******************************************************************************/
+// #include "Transducer/Math/math_hysteresis.h"
+// #include <stdint.h>
+// #include <stdbool.h>
 
 /******************************************************************************/
 /*

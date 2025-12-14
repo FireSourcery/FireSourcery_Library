@@ -99,6 +99,7 @@ Motor_Var_UserControl_T;
 typedef enum Motor_Var_UserSetpoint
 {
     MOTOR_VAR_USER_SETPOINT_SCALAR,       // RampIn, Active/Generic mode select using active feedback mode
+    // MOTOR_VAR_USER_SETPOINT_MIXED,
     MOTOR_VAR_USER_SETPOINT_SPEED,        // UserCmd as Speed
     MOTOR_VAR_USER_SETPOINT_TORQUE,
     MOTOR_VAR_USER_SETPOINT_CURRENT,
@@ -273,6 +274,8 @@ typedef enum Motor_Var_ConfigCmd
 Motor_Var_ConfigCmd_T;
 
 
+typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
+
 /******************************************************************************/
 /*
     Read-Only Ref
@@ -298,7 +301,6 @@ typedef enum Motor_Var_StaticRef
 }
 Motor_Var_StaticRef_T;
 
-typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* cmd as value, without additional parameter */
 
 typedef enum Motor_Var_PhaseVBus
 {
@@ -361,6 +363,9 @@ extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
     Module handled type
 */
 /******************************************************************************/
+/*
+    Polling Except StateCmds
+*/
 typedef enum Motor_VarType_Control
 {
     MOTOR_VAR_TYPE_USER_OUT, // MOTOR_VAR_TYPE_STATE_USER,
@@ -372,6 +377,9 @@ typedef enum Motor_VarType_Control
 }
 Motor_VarType_Control_T;
 
+/*
+    Calibration or Stop State enforced Configs
+*/
 typedef enum Motor_VarType_Config
 {
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
@@ -379,6 +387,7 @@ typedef enum Motor_VarType_Config
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
+    /* Alternatively move to sensor */
     MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
 }
 Motor_VarType_Config_T;
@@ -386,12 +395,13 @@ Motor_VarType_Config_T;
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
-    // MOTOR_VAR_TYPE_V_BUS,    /* Not instanced */
-    // MOTOR_VAR_TYPE_V_BUS_MONITOR_CONFIG,
+    MOTOR_VAR_TYPE_V_BUS,               /* Not instanced */
+    MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
+    // MOTOR_VAR_TYPE_ROTOR_SENSOR_CMD,
 }
 Motor_VarType_SubModule_T;
 

@@ -40,10 +40,11 @@
 
 
 /*
-    Output State
-    As collective ABC ouput or 3-state interpertation of a single-phase.
+    VOutput State
+    As collective ABC ouput or 3-state interpretation of a single-phase.
 */
-// typedef enum Phase_VOut_Mode
+// typedef enum Phase_VOutId
+/* PHASE_VOUT_Z */ /* PHASE_VOUT_0 */ /* PHASE_VOUT_DUTY */
 typedef enum Phase_Output
 {
     PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, it is the result of Pin Low/0 */

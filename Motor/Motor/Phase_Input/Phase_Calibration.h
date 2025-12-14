@@ -42,6 +42,7 @@ typedef const struct Phase_Calibration
     volatile uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
     volatile uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
 
+    /* Optionally include units */
     volatile uint16_t V_RATED_FRACT16;
     volatile uint16_t I_RATED_PEAK_FRACT16;
 }

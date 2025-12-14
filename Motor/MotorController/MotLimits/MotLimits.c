@@ -65,7 +65,7 @@
 // bool Motor_SetSpeedLimitEntry(Motor_State_T * p_motor, uint8_t id, uint16_t speed_ufract16)
 // {
 //     uint16_t speedLimit = SpeedLimitSentinelOf(p_motor, speed_ufract16);
-//     bool isActiveLimit = LimitArray_SetEntry(&p_motor->SpeedLimit, id, speedLimit);
+//     bool isActiveLimit = LimitArray_TrySetEntry(&p_motor->SpeedLimit, id, speedLimit);
 //     if (isActiveLimit == true) { Motor_SetSpeedLimit(p_motor, speedLimit); }
 //     return isActiveLimit;
 // }
@@ -73,14 +73,14 @@
 // // bool Motor_SetSpeedLimitEntry_Scalar(Motor_State_T * p_motor, uint8_t id, uint16_t scalar_ufract16)
 // // {
 // //     // int32_t speed_ufract16 = fract16_mul(Motor_GetSpeedLimitActive(p_motor), scalar_ufract16); // of base
-// //     // bool isActiveLimit = LimitArray_SetEntry(&p_motor->SpeedLimit, id, speed_ufract16);
+// //     // bool isActiveLimit = LimitArray_TrySetEntry(&p_motor->SpeedLimit, id, speed_ufract16);
 // //     // if (isActiveLimit == true) { Motor_SetSpeedLimitArray_Scalar(p_motor, scalar_ufract16); }
 // //     // return isActiveLimit;
 // // }
 
 // bool Motor_ClearSpeedLimitEntry(Motor_State_T * p_motor, uint8_t id)
 // {
-//     bool isActiveLimit = LimitArray_ClearEntry(&p_motor->SpeedLimit, id);
+//     bool isActiveLimit = LimitArray_TryClearEntry(&p_motor->SpeedLimit, id);
 //     if(isActiveLimit == true)
 //     {
 //         if (LimitArray_IsUpperActive(&p_motor->SpeedLimit) == true)
@@ -97,7 +97,7 @@
 // bool Motor_SetILimitMotoringEntry(Motor_State_T * p_motor, uint8_t id, uint16_t i_ufract16)
 // {
 //     int32_t iLimit = ILimitMotoringSentinelOf(p_motor, i_ufract16);
-//     bool isActiveLimit = LimitArray_SetEntry(&p_motor->ILimit, id, iLimit);
+//     bool isActiveLimit = LimitArray_TrySetEntry(&p_motor->ILimit, id, iLimit);
 //     if (isActiveLimit == true) { Motor_SetILimit(p_motor, iLimit); } /* alternatively maintain scalar comparison satisfy both sides */
 //     return isActiveLimit;
 // }
@@ -105,7 +105,7 @@
 // bool Motor_SetILimitMotoringEntry_Scalar(Motor_State_T * p_motor, uint8_t id, uint16_t scalar_ufract16)
 // {
 //     int32_t iLimit = ILimitMotoringSentinelOf_Scalar(p_motor, scalar_ufract16);
-//     bool isActiveLimit = LimitArray_SetEntry(&p_motor->ILimit, id, iLimit);
+//     bool isActiveLimit = LimitArray_TrySetEntry(&p_motor->ILimit, id, iLimit);
 //     if (isActiveLimit == true) { Motor_SetILimitArray_Scalar(p_motor, iLimit); }
 //     return isActiveLimit;
 // }
@@ -117,7 +117,7 @@
 // */
 // bool Motor_ClearILimitMotoringEntry(Motor_State_T * p_motor, uint8_t id)
 // {
-//     bool isActiveLimit = LimitArray_ClearEntry(&p_motor->ILimit, id);
+//     bool isActiveLimit = LimitArray_TryClearEntry(&p_motor->ILimit, id);
 //     if (isActiveLimit == true)
 //     {
 //         if (LimitArray_IsUpperActive(&p_motor->ILimit) == true)
@@ -129,7 +129,7 @@
 // }
 
 
-// static inline bool Motor_User_TrySpeedLimit(Motor_State_T * p_motor, motor_value_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, (uint16_t)speed_fract16); }
-// static inline bool Motor_User_ClearSpeedLimit(Motor_State_T * p_motor)                            { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
-// static inline bool Motor_User_TryILimit(Motor_State_T * p_motor, motor_value_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, (uint16_t)i_fract16); }
-// static inline bool Motor_User_ClearILimit(Motor_State_T * p_motor)                                { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }
+// static inline bool Motor_TrySpeedLimit(Motor_State_T * p_motor, motor_value_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, (uint16_t)speed_fract16); }
+// static inline bool Motor_ClearSpeedLimit(Motor_State_T * p_motor)                            { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
+// static inline bool Motor_TryILimit(Motor_State_T * p_motor, motor_value_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, (uint16_t)i_fract16); }
+// static inline bool Motor_ClearILimit(Motor_State_T * p_motor)                                { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }

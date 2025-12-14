@@ -176,7 +176,6 @@ int32_t _RangeMonitor_VarId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_V
     }
 }
 
-// int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_monitor, RangeMonitor_ConfigId_T configId)
 int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_T * p_monitor, RangeMonitor_ConfigId_T configId)
 {
     switch (configId)

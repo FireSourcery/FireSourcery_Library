@@ -59,3 +59,12 @@ static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->Vabc
 //     Phase_Bitmask_T Flags;
 // }
 // Phase_Data_T;
+
+
+
+
+// #if     defined(PHASE_V_SENSORS_ISOLATED)
+// #elif   defined(PHASE_V_SENSORS_ANALOG)
+// #else
+// #define PHASE_V_SENSORS_ANALOG
+// #endif

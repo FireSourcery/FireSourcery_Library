@@ -1,6 +1,6 @@
 // typedef enum Motor_Analog_Channel
 // {
-// #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+// #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //     PHASE_ANALOG_CHANNEL_SIN,
 //     PHASE_ANALOG_CHANNEL_COS,
 // #endif
@@ -11,7 +11,7 @@
 // {
 //     struct
 //     {
-//     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//     #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         const Analog_Conversion_T CONVERSION_SIN;
 //         const Analog_Conversion_T CONVERSION_COS;
 //     #endif

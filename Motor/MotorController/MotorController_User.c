@@ -40,11 +40,11 @@
     vars not stored in host view cache
 */
 /******************************************************************************/
-int MotorController_User_Call(const MotorController_T * p_context, MotorController_User_SystemCmd_T id, int value)
+int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorController_SystemCmd_T id, int value)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    int status = 0; // MotorController_User_GenericStatus_T
+    int status = 0; // MotorController_GenericStatus_T
     bool isSuccess = true;
 
     switch (id)
@@ -54,45 +54,45 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
         // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, value);                break;
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break; /* Stop active periodic. does not disable */
 
-        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_StateMachine_ClearFault(p_context, value);          break;
-        case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_User_ForceDisableControl(p_context);        break;
-        // case MOT_USER_SYSTEM_DISABLE_CONTROL: MotorController_User_DisableControl(p_context);        break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_ClearFault(p_context, value);                   break;
+        case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_context);         break;
+        // case MOT_USER_SYSTEM_DISABLE_CONTROL: MotorController_DisableControl(p_context);        break;
 
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             // checks the park state
-            MotorController_StateMachine_InputLock(p_context, (MotorController_LockId_T)value);
-            if (MotorController_User_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
+            MotorController_InputLock(p_context, (MotorController_LockId_T)value);
+            if (MotorController_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
 
-            status = MotorController_User_GetLockOpStatus(p_context);
+            status = MotorController_GetLockOpStatus(p_context);
             break;
 
         case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
-            status = MotorController_User_GetLockState(p_context);
+            status = MotorController_GetLockState(p_context);
             break;
 
         case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS: // union status, 0 as success
-            // if (MotorController_User_IsLockOpComplete(p_context) == true)
-            status = MotorController_User_GetLockOpStatus(p_context);
+            // if (MotorController_IsLockOpComplete(p_context) == true)
+            status = MotorController_GetLockOpStatus(p_context);
             break;
 
         case MOT_USER_SYSTEM_STATE_COMMAND:
-            MotorController_StateMachine_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
+            MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
             break;
 
         // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
-        //     MotorController_User_InputMainMode(p_context, (MotorController_MainMode_T)value);
+        //     MotorController_InputMainMode(p_context, (MotorController_MainMode_T)value);
         //     status = 0;
         //     break;
 
-        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_User_SetRxWatchdog(p_context, value);               break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_SetRxWatchdog(p_context, value);               break;
 
         // include for convenience
         // case MOT_USER_SYSTEM_STATE:
-        // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_User_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
-        // case MOT_USER_SYSTEM_SERVO: MotorController_User_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
+        // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
+        // case MOT_USER_SYSTEM_SERVO: MotorController_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
         default: break;
     }
 
@@ -107,19 +107,20 @@ int MotorController_User_Call(const MotorController_T * p_context, MotorControll
 */
 /******************************************************************************/
 /*! @param[in] volts < PHASE_CALIBRATION.VMAX and Config.VSupplyRef */
-void MotorController_User_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
+void MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
     p_mc->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
-    MotorController_CaptureVSource(p_context); /* optionally */
+    MotorController_ResetVSourceMonitorDefaults(p_context);
+    /* todo as bound limits */
+    /* may overwrite fault/warning if called in the same packet */
 }
 
-// void MotorController_User_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
+// void MotorController_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
 // {
 // }
 
-void MotorController_User_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
+void MotorController_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
@@ -128,10 +129,8 @@ void MotorController_User_SetInputMode(const MotorController_T * p_context, Moto
     // switch (p_mc->Config.InputMode)
     // {
     //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-    //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Disable);
     //         break;
     //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-    //         // MotMotors_ForEach(&p_context->MOTORS, Motor_Var_Cmd_Enable);
     //         break;
     //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:
     //         break;

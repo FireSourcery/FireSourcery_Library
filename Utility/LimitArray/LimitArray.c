@@ -76,7 +76,7 @@ bool TestSetLower(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
    @param id The ID associated with the value.
    @return True if the value was a new min or max. The value of the entry is always set.
 */
-bool LimitArray_SetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
+bool LimitArray_TrySetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
     assert(id < p_limit->LENGTH); // Ensure id is within bounds. Compile-time constant
 
@@ -128,7 +128,7 @@ void LimitArray_ProcCompare(const LimitArray_T * p_limit)
     @param id The ID of the value to remove.
     @return True if the value was a active limit. The value of the entry is always cleared.
 */
-bool LimitArray_ClearEntry(const LimitArray_T * p_limit, limit_id_t id)
+bool LimitArray_TryClearEntry(const LimitArray_T * p_limit, limit_id_t id)
 {
     limit_t value = _LimitArray_Values(p_limit)[id];
     bool isLimit = (value == _LimitArray_State(p_limit)->Min) || (value == _LimitArray_State(p_limit)->Max);

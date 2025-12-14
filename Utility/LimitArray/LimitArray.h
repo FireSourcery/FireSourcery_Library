@@ -138,8 +138,8 @@ static inline bool LimitArray_IsActive(const LimitArray_T * p_limit) { return (L
 extern void LimitArray_Init(const LimitArray_T * p_limit);
 extern void LimitArray_ClearAll(const LimitArray_T * p_limit);
 
-extern bool LimitArray_SetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value);
-extern bool LimitArray_ClearEntry(const LimitArray_T * p_limit, limit_id_t id);
+extern bool LimitArray_TrySetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value);
+extern bool LimitArray_TryClearEntry(const LimitArray_T * p_limit, limit_id_t id);
 // extern bool LimitArray_SetEntryUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value);
 
 #endif // LIMIT_ARRAY_H

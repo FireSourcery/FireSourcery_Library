@@ -45,6 +45,7 @@ typedef const struct Analog_Reference
 Analog_Reference_T;
 
 #define ANALOG_REFERENCE_ADC_MAX(AdcBits) ((1U << AdcBits) - 1U)
+#define ANALOG_REFERENCE_INIT(AdcBits, AdcVrefMilliv) { AdcBits, ((1U << AdcBits) - 1U), AdcVrefMilliv }
 
 /* Global Static. Define in Main App */
 extern const Analog_Reference_T ANALOG_REFERENCE;

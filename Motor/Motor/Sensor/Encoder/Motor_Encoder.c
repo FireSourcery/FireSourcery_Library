@@ -102,7 +102,7 @@
 // // //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 // // // }
 
-// // Motor_Direction_T Motor_GetDirection(const Motor_T * p_motor)
+// // Motor_Direction_T Motor_GetUserDirection(const Motor_T * p_motor)
 // // {
 
 // // }

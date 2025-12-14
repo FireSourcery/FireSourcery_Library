@@ -33,6 +33,26 @@
 #include "Encoder/Encoder_Sensor.h"
 #include "RotorSensor.h"
 
+
+
+#if     defined(CONFIG_MOTOR_HALL_MODE_POLLING)
+#elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#else
+#define CONFIG_MOTOR_HALL_MODE_POLLING
+#endif
+
+#if     defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+#elif   defined(MOTOR_SENSOR_SIN_COS_DISABLE)
+#else
+#define MOTOR_SENSOR_SIN_COS_DISABLE
+#endif
+
+#if     defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+#elif   defined(MOTOR_SENSOR_SENSORLESS_DISABLE)
+#else
+#define MOTOR_SENSOR_SENSORLESS_DISABLE
+#endif
+
 /*
     [RotorSensor_Id]
     TypeId
@@ -53,7 +73,7 @@ RotorSensor_Id_T;
 
 
 /*
-    [RotorSensor_Mux_T] Mux/Repo
+    [RotorSensor_Table_T] Repo
     Holds all selectable sensors. Map common AngleSpeed State
     include all using preprocessor conditions
     There can only be 1 sensor of each type per motor, with fixed corresponding Id
@@ -63,7 +83,7 @@ RotorSensor_Id_T;
 typedef const struct RotorSensor_Table
 {
     const RotorSensor_T EMPTY;
-// #if defined(CONFIG_MOTOR_SENSOR_HALL_ENABLE)
+// #if defined(MOTOR_SENSOR_HALL_ENABLE)
     const Hall_RotorSensor_T HALL;    // const Hall_T HALL;
 // #endif
     const Encoder_RotorSensor_T ENCODER; // const Encoder_T ENCODER;

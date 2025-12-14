@@ -48,9 +48,9 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
     /* Alternatively check for park state */
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NONE);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_FORWARD);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_REVERSE);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_NONE);      break;
         default: break;
     }
 
@@ -74,6 +74,8 @@ MotorController_App_T MC_APP_VEHICLE =
     call Vehicle StateMachine can use a different input table
 
     [Throttle] + [Brake] + [Neutral State]
+
+    override MotorController StateMachine Inputs and pass to nested state machine
 */
 /******************************************************************************/
 static void Entry(const MotorController_T * p_context)
@@ -84,30 +86,10 @@ static void Entry(const MotorController_T * p_context)
 
 /* Proc Vehicle Buffer */
 /* Proc Per ms */
+/* Proc the Sub-StateMachine - with different input table */
 static void Proc(const MotorController_T * p_context)
 {
-    Vehicle_T * const p_vehicle = &p_context->VEHICLE;
-    /* Proc the Sub-StateMachine - with different input table */
-    _StateMachine_ProcState(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle); /* alternatively update to tree states */
-}
-
-// top state can map MotorController inputs, pass to inner state
-static State_T * InputGeneric(const MotorController_T * p_context, state_value_t inputsPtr)
-{
-    State_T * p_nextState = NULL;
-    // Motor_User_Input_T * p_inputs = (Motor_User_Input_T *)inputsPtr;
-
-    // MotMotors_ApplyInputs(&p_context->MOTORS, p_input);
-    // Vehicle_User_SetThrottle(p_context->VEHICLE.P_VEHICLE_STATE, p_inputs->ThrottleValue);
-    // switch (p_input->Direction)
-    // {
-    //     case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
-    //     case MOTOR_DIRECTION_FORWARD: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_DIRECTION_FORWARD); break;
-    //     case MOTOR_DIRECTION_REVERSE: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_DIRECTION_FORWARD); break;
-    //     default:  break;
-    // }
-
-    return NULL;
+    _StateMachine_ProcState(p_context->VEHICLE.STATE_MACHINE.P_ACTIVE, (void *)&p_context->VEHICLE); /* nested machine 1 level only */
 }
 
 static State_T * InputDirection(const MotorController_T * p_context, state_value_t direction)
@@ -116,13 +98,44 @@ static State_T * InputDirection(const MotorController_T * p_context, state_value
     return NULL;
 }
 
+// override stop main, and park, clear values
+static State_T * InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
+{
+    switch (cmd)
+    {
+        case MOTOR_CONTROLLER_STATE_CMD_PARK:           break;
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         Vehicle_User_SetZero(p_context->VEHICLE.P_VEHICLE_STATE); break;
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Vehicle_User_SetZero(p_context->VEHICLE.P_VEHICLE_STATE); break;
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     break;
+        default:  break;
+    }
+    return NULL;
+}
+
+// top state can map MotorController inputs, pass to inner state
+static State_T * InputGeneric(const MotorController_T * p_context, state_value_t cmd)
+{
+    State_T * p_nextState = NULL;
+    // Vehicle_User_SetThrottle(p_context->VEHICLE.P_VEHICLE_STATE, p_inputs->ThrottleValue);
+    // switch (cmd)
+    // {
+    //     case MOTOR_USER_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
+    //     case MOTOR_USER_DIRECTION_FORWARD: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_USER_DIRECTION_FORWARD); break;
+    //     case MOTOR_USER_DIRECTION_REVERSE: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_USER_DIRECTION_REVERSE); break;
+    //     default:  break;
+    // }
+    return NULL;
+}
+
 /* Overriding parent table */
+/* Inherit other inputs */
+/* No transition continues proc parent states */
 static const State_Input_T TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_DIRECTION]          = (State_Input_T)InputDirection, /* override outer and pass to nested state machine */
-    // [MCSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MCSM_INPUT_DIRECTION]          = (State_Input_T)InputDirection,
     // [MCSM_INPUT_STATE_COMMAND]   = (State_Input_T)Vehicle_InputStateCmd,
     // [MCSM_INPUT_GENERIC]         = (State_Input_T)Vehicle_InputGeneric,
+    // [MCSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     // [MCSM_INPUT_LOCK]            = (State_Input_T)Vehicle_InputLock,
 };
 
@@ -147,15 +160,15 @@ const State_T MC_STATE_MAIN_VEHICLE =
 //     cmd = MotAnalogUser_PollCmd(&p_context->ANALOG_USER);
 //     switch (cmd)
 //     {
-//         // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_User_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
-//         // case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_User_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));    break;
+//         // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
+//         // case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));    break;
 //         //                                                     // Vehicle_SetThrottleValue(&p_mc->Vehicle, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-//         // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_User_SetCmdBrake(p_mc, 0U);                                                 break;
-//         // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_User_SetCmdThrottle(p_mc, 0U);                                              break;
-//         // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_User_SetCmdDriveZero(p_mc);                                                 break;
-//         // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                       break;
-//         case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);    //         break;
-//         case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_User_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);    //         break;
+//         // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_SetCmdBrake(p_mc, 0U);                                                 break;
+//         // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_SetCmdThrottle(p_mc, 0U);                                              break;
+//         // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_SetCmdDriveZero(p_mc);                                                 break;
+//         // case MOT_ANALOG_USER_CMD_SET_NEUTRAL:               MotorController_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_NEUTRAL);                       break;
+//         case MOT_ANALOG_USER_CMD_SET_DIRECTION_FORWARD:     //         // MotorController_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_FORWARD);    //         break;
+//         case MOT_ANALOG_USER_CMD_SET_DIRECTION_REVERSE:    //         // MotorController_SetDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_REVERSE);    //         break;
 //         case MOT_ANALOG_USER_CMD_PROC_NEUTRAL:  break;
 //         default: break;
 //     }

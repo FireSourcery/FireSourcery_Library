@@ -205,7 +205,7 @@ typedef struct MotorController_State
     uint32_t StateCounter; /* Calibration */
     uint32_t ControlCounter; /* PWM */
 
-    Motor_User_Input_T CmdInput; /* Buffered Input for StateMachine */
+    Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
 
     /* Generic async return status, alternatively as union */
     uint8_t LockOpStatus; /* async status */
@@ -282,6 +282,7 @@ typedef const struct MotorController
     TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
 
+    /*  */
     MotorController_AppTable_T APPS;
     Vehicle_T VEHICLE; /* Drive */ /* todo move to App Table */
 
@@ -296,7 +297,7 @@ MotorController_T;
 */
 /******************************************************************************/
 /* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_VBus_CaptureAdcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
+static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
 
 static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
 
@@ -309,12 +310,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_contex
 }
 
 /* Common Buffered Input */
-static inline Motor_User_Input_T * MotorController_GetMotorInput(const MotorController_T * p_context) { return &p_context->P_MC_STATE->CmdInput; }
-
-// static inline void MotorController_SetCmdValue(const MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_User_ApplyMotorsCmd(p_context); }
-// static inline void MotorController_SetDirection(const MotorController_T * p_context, Motor_User_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_User_ApplyMotorsCmd(p_context); }
-// static inline void MotorController_SetControlState(const MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseState = controlState; MotorController_User_ApplyMotorsCmd(p_context); }
-// static inline void MotorController_SetFeedbackMode(const MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_User_ApplyMotorsCmd(p_context); }
+static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_context) { return &p_context->P_MC_STATE->CmdInput; }
 
 
 /******************************************************************************/
@@ -351,23 +347,10 @@ extern void MotorController_LoadConfigDefault(const MotorController_T * p_contex
 extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
-extern bool MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16);
-extern bool MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id);
-extern bool MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16);
-extern bool MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id);
+extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id);
+extern bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id);
 
 // extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
 
-
-// MotorController_Direction_T MotorController_DirectionOf(Motor_User_Direction_T dir, Phase_Output_T phase)
-// {
-//     MotorController_Direction_T direction;
-//     switch (dir)
-//     {
-//         case MOTOR_DIRECTION_NONE:      direction = MOTOR_CONTROLLER_DIRECTION_PARK;            break;
-//         case MOTOR_DIRECTION_REVERSE:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_REVERSE : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
-//         case MOTOR_DIRECTION_FORWARD:   direction = (phase == PHASE_OUTPUT_VPWM) ? MOTOR_CONTROLLER_DIRECTION_FORWARD : MOTOR_CONTROLLER_DIRECTION_ERROR; break;
-//         default:                        direction = MOTOR_CONTROLLER_DIRECTION_ERROR;           break;
-//     }
-//     return direction;
-// }

@@ -33,6 +33,7 @@
 #include "Peripheral/Analog/Analog.h"
 #include "../Motor.h"
 
+/* move to Motor_PhaseAnalog */
 
 /* Capture with context of IZeroRef */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }

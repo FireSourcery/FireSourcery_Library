@@ -26,12 +26,12 @@
 /*!
     @file   Phase_Analog.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Analog component for every Phase_Input module
 */
 /******************************************************************************/
 #include "Phase_Calibration.h"
-#include "Phase_Input.h" /* Analog component for every module */
-// #include "Phase_VBus.h"
+#include "Phase_Input.h"
+#include "Phase_VBus.h"
 #include "../Phase/Phase_Types.h"
 #include "../Phase/Phase.h"
 #include "Peripheral/Analog/Analog.h"
@@ -42,13 +42,13 @@
 #ifndef PHASE_ANALOG_V_MAX_ADCU
 #define PHASE_ANALOG_V_MAX_ADCU (4096U)
 #define PHASE_ANALOG_V_FRACT16_SHIFT (3U)
-#define PHASE_ANALOG_V_FRACT16_ADCU_SCALAR (1L << 3)
+#define PHASE_ANALOG_V_FRACT16_ADCU_SCALAR (1L << PHASE_ANALOG_V_FRACT16_SHIFT)
 #endif
 
 #ifndef PHASE_ANALOG_I_MAX_ADCU
 #define PHASE_ANALOG_I_MAX_ADCU (2048U)
 #define PHASE_ANALOG_I_FRACT16_SHIFT (4U)
-#define PHASE_ANALOG_I_FRACT16_ADCU_SCALAR (1L << 4)
+#define PHASE_ANALOG_I_FRACT16_ADCU_SCALAR (1L << PHASE_ANALOG_I_FRACT16_SHIFT)
 #endif
 
 #ifdef PHASE_ANALOG_I_SENSOR_INVERT
@@ -61,20 +61,7 @@
 #define PHASE_ANALOG_I_SENSOR_INVERT (false)
 #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
 #endif
-
 // #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR ((PHASE_ANALOG_I_SENSOR_INVERT) ? -1 : 1)
-
-// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
-// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
-// #else
-// #define PHASE_ANALOG_I_SENSORS_ABC
-// #endif
-
-// #if     defined(PHASE_ANALOG_V_SENSORS_ISOLATED)
-// #elif   defined(PHASE_ANALOG_V_SENSORS_ANALOG)
-// #else
-// #define PHASE_ANALOG_V_SENSORS_ANALOG
-// #endif
 
 static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_ADCU_SCALAR; }
 static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_ADCU_SCALAR * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR); }
@@ -84,6 +71,8 @@ static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { 
     ADC Ref Sensor Calibration
     optionally store as base ref
     Phase_Analog_Calibration_T
+    Phase_AnalogRef_T
+    Phase_AnalogBoard_T
 */
 /******************************************************************************/
 typedef const struct Phase_AnalogSensor
@@ -149,9 +138,20 @@ Phase_Analog_T;
     .IC = ANALOG_CONVERSION_INIT_FROM(AdcIc, IndexIc), \
 }
 
+static void Phase_Analog_MarkVabc(Phase_Analog_T * p_context)
+{
+    Analog_Conversion_Mark(&p_context->VA);
+    Analog_Conversion_Mark(&p_context->VB);
+    Analog_Conversion_Mark(&p_context->VC);
+}
 
-/* Global "Static" Const, for all Motor instances */
-// extern Analog_Conversion_T PHASE_ANALOG_VBUS;
+static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
+{
+    Analog_Conversion_Mark(&p_context->IA);
+    Analog_Conversion_Mark(&p_context->IB);
+    Analog_Conversion_Mark(&p_context->IC);
+}
+
 
 
 /*
@@ -165,30 +165,10 @@ Phase_Analog_T;
 //     Analog_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 // }
 
-static void Phase_Analog_MarkVabc(Phase_Analog_T * p_context)
-{
-// #if defined(PHASE_V_SENSORS_ANALOG)
-    Analog_Conversion_Mark(&p_context->VA);
-    Analog_Conversion_Mark(&p_context->VB);
-    Analog_Conversion_Mark(&p_context->VC);
-// #else
-//     (void)p_context;
-// #endif
-}
-
-static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
-{
-    Analog_Conversion_Mark(&p_context->IA);
-    Analog_Conversion_Mark(&p_context->IB);
-// #if defined(PHASE_I_SENSORS_ABC)
-    Analog_Conversion_Mark(&p_context->IC);
-// #endif
-}
-
-
 // static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t newValue) { *p_value = (*p_value + newValue) / 2; }
 
 /*
+    Analog Part for Input
     Capture on [Phase_Input]
 */
 static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, fract16_t newValue)
@@ -220,10 +200,12 @@ static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, cons
 /*
 
 */
-// static inline void Phase_Analog_CaptureVBus(uint16_t vSource_Adcu)
-// {
-//     Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(vSource_Adcu));
-// }
+static inline void Phase_Analog_CaptureVBus(adc_result_t adcu) { Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu)); }
+
+
+/*  */
+/* Global "Static" Const, for all Motor instances */
+// extern Analog_Conversion_T PHASE_ANALOG_VBUS;
 
 
 // /*!
@@ -239,3 +221,9 @@ static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, cons
 //     PHASE_ANALOG_CHANNEL_IC,
 // }
 // Phase_AnalogChannel_T;
+
+// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
+// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
+// #else
+// #define PHASE_ANALOG_I_SENSORS_ABC
+// #endif

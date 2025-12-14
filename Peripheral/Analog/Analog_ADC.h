@@ -63,6 +63,7 @@
 /******************************************************************************/
 typedef uint8_t analog_channel_t; /* Virtual Channel Index. resolve to Analog_Conversion_T */
 
+/* PinChannel */
 typedef const struct Analog_Channel
 {
     analog_channel_t ID;  /* Virtual Channel Index. Index into ADC.P_CHANNELS */
@@ -219,7 +220,7 @@ typedef struct Analog_ADC_State
     // const Analog_BatchContext_T * p_BatchContext;
 
     /* Selectable conversions context */
-    /* Seperate execution from per channel operation */
+    /* Separate execution from per channel operation */
     // let regular calls to mark will mark base markers
 
     // full context include call back in context
@@ -241,7 +242,7 @@ Analog_ADC_State_T;
     ADC Peripheral Control
         - Context Per Thread
         - Wraps HAL_ADC with State, callback context
-    Analog_Converter_T
+    ADConverter_T
 */
 /******************************************************************************/
 typedef const struct Analog_ADC
@@ -272,8 +273,6 @@ Analog_ADC_T;
 
 #define ANALOG_ADC_ALLOC(p_HalAnalog, ChannelCount, p_ConvChannels) \
     ANALOG_ADC_INIT(p_HalAnalog, ChannelCount, p_ConvChannels, &(Analog_ADC_State_T){0})
-
-
 
 /******************************************************************************/
 /*!

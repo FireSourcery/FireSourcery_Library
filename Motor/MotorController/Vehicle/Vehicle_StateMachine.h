@@ -34,6 +34,12 @@
 
 /******************************************************************************/
 /*
+    State Machine
+    caller handle Park state
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
     MotorController (System Level)
         │
         ├─ PARK State ────────────► Motors: STOP, Direction: NULL
@@ -50,13 +56,10 @@
                 │
                 └─ DRIVE ─────────► Motors: RUN, Direction: CW or CCW
                     │               Output: PWM (active control)
-                    ├─ Forward Mode  Direction: CCW
-                    └─ Reverse Mode  Direction: CW
+                    ├─ Forward Mode  Direction: Calibrated CCW/CW
+                    └─ Reverse Mode  Direction: Calibrated CCW/CW
 */
 /******************************************************************************/
-/*
-    State Machine
-*/
 typedef enum Vehicle_State_Input
 {
     VEHICLE_STATE_INPUT_DIRECTION,    /* Drive Direction */
@@ -76,38 +79,6 @@ extern const StateMachine_Machine_T VEHICLE_MACHINE;
 #define VEHICLE_STATE_MACHINE_INIT(p_VehicleContext, VehicleStateAlloc) STATE_MACHINE_INIT((p_VehicleContext), &VEHICLE_MACHINE, &((VehicleStateAlloc).StateMachine))
 
 
-
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-/* also returns NEUTRAL on error */
-/* Alternatively use substates */
-static Motor_User_Direction_T Vehicle_StateMachine_GetDirection(const Vehicle_T * p_vehicle)
-{
-    Motor_User_Direction_T direction;
-    switch (StateMachine_GetActiveStateId(p_vehicle->STATE_MACHINE.P_ACTIVE))
-    {
-        case VEHICLE_STATE_ID_NEUTRAL:    direction = MOTOR_DIRECTION_NONE; break;
-        case VEHICLE_STATE_ID_DRIVE:      direction = _MotMotors_GetDirectionAll(&p_vehicle->MOTORS); break; /* NULL is error */
-        default:                          direction = 0;           break;
-    }
-    return direction;
-}
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-// /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
-// bool Vehicle_User_CheckDirection(const Vehicle_T * p_vehicle, Motor_User_Direction_T direction)
-// {
-//     bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
-//     if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
-//     return isSuccess;
-// }
 
 
 

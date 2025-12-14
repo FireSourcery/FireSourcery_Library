@@ -30,15 +30,15 @@
 #include "Motor_Sensor.h"
 #include "../Motor_StateMachine.h"
 
-/* Motor_SensorTable */
+/*
+    requires [Motor] StateMachine outside of Sensor Interface
+*/
 
 static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 
 /******************************************************************************/
 /*
     Collective Calibration access
-    requires Motor StateMachine Context with substate
-    cannot move to Sensor Interface
 */
 /******************************************************************************/
 /*!
@@ -70,12 +70,12 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
             // }
             // Encoder_Calibrate(&p_motor->SENSOR_TABLE.ENCODER.ENCODER);
             break;
-        #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+        #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
         case ROTOR_SENSOR_ID_SIN_COS:
             // SinCos_Calibrate(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS);
             break;
         #endif
-        #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+        #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
         case ROTOR_SENSOR_ID_SENSORLESS:
             // Sensorless_Calibrate(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS);
             break;
@@ -84,7 +84,11 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
     }
 }
 
-
+/******************************************************************************/
+/*!
+    Optionally include Var
+*/
+/******************************************************************************/
 
 
 
@@ -113,7 +117,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //             electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->ENCODER);
 //             break;
 
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS:
 //             SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
 //             electricalAngle = SinCos_GetElectricalAngle(&p_motor->SinCos);
@@ -122,7 +126,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //             AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
 //             break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS:
 //             //todo observer
 //             electricalAngle = 0;
@@ -147,10 +151,10 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
     // {
     //     case ROTOR_SENSOR_ID_HALL:    angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
     //     case ROTOR_SENSOR_ID_ENCODER: angle = Encoder_GetAngle(&p_motor->ENCODER.P_STATE);    break;
-    //     #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+    //     #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
     //     case ROTOR_SENSOR_ID_SIN_COS: angle = SinCos_GetMechanicalAngle(&p_motor->SinCos);     break;
     //     #endif
-    //     #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+    //     #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
     //     case ROTOR_SENSOR_ID_SENSORLESS: angle = 0; break;
     //     #endif
     //     default: angle = 0; break;
@@ -177,10 +181,10 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //             speed = Encoder_ModeDT_GetScalarVelocity(&p_motor->ENCODER);
 //             break;
 
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS: speed = PollAngleSpeed(p_motor, SinCos_GetMechanicalAngle(&p_motor->SinCos));    break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS: break;
 //         #endif
 //         default: speed = 0; break;
@@ -195,7 +199,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 
 // static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 // {
-//     // #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+//     // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
 //     return (p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop == 1U);
 //     // #else
 //     //     (void)p_motor; return false;
@@ -214,9 +218,9 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 
 
 // #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
-// extern int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor);
-// extern void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
-// extern void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
+// extern int16_t Motor_GetGroundSpeed_Mph(Motor_State_T * p_motor);
+// extern void Motor_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
+// extern void Motor_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
 // #endif
 
 
@@ -226,7 +230,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 // */
 // /******************************************************************************/
 // #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
-// int16_t Motor_User_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
+// int16_t Motor_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
 // {
 //     int16_t speed;
 
@@ -234,10 +238,10 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     {
 //         case ROTOR_SENSOR_ID_HALL:        speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
 //         case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Kmh(&p_motor->Encoder);    break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
 //         #endif
 //         default:                             speed = 0;     break;
@@ -246,7 +250,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     return speed;
 // }
 
-// int16_t Motor_User_GetGroundSpeed_Mph(Motor_State_T * p_motor)
+// int16_t Motor_GetGroundSpeed_Mph(Motor_State_T * p_motor)
 // {
 //     int16_t speed;
 
@@ -254,10 +258,10 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     {
 //         case ROTOR_SENSOR_ID_HALL:         speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
 //         case ROTOR_SENSOR_ID_ENCODER:     speed = Encoder_DeltaD_GetGroundSpeed_Mph(&p_motor->Encoder);    break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS:     speed = Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
 //         #endif
 //         default:                             speed = 0;     break;
@@ -266,32 +270,32 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     return speed;
 // }
 
-// void Motor_User_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+// void Motor_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
 // {
 //     switch (p_motor->Config.SensorMode)
 //     {
 //         case ROTOR_SENSOR_ID_HALL:        Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
 //         case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_Metric(&p_motor->Encoder, wheelDiameter_Mm, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS:     Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
 //         #endif
 //         default:     break;
 //     }
 // }
 
-// void Motor_User_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
+// void Motor_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor)
 // {
 //     switch (p_motor->Config.SensorMode)
 //     {
 //         case ROTOR_SENSOR_ID_HALL:         Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
 //         case ROTOR_SENSOR_ID_ENCODER:     Encoder_SetGroundRatio_US(&p_motor->Encoder, wheelDiameter_Inch10, wheelToMotorRatio_Factor, wheelToMotorRatio_Divisor);    break;
-//         #if defined(CONFIG_MOTOR_SENSOR_SIN_COS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 //         case ROTOR_SENSOR_ID_SIN_COS:      Linear_Speed_CalcGroundSpeed(&p_motor->Units, p_motor->Speed_Fixed32); break;
 //         #endif
-//         #if defined(CONFIG_MOTOR_SENSOR_SENSORLESS_ENABLE)
+//         #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 //         case ROTOR_SENSOR_ID_SENSORLESS:     speed = 0;     break;
 //         #endif
 //         default:                             break;

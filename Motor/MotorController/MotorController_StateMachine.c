@@ -114,7 +114,7 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-    // else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_NONE); }
+    // else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_NONE); }
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
 }
@@ -122,12 +122,12 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 // input motor user direction with stop
 // switch (p_input->Direction)
 // {
-//     case MOTOR_DIRECTION_NONE:  /* Called from serial only */
+//     case MOTOR_USER_DIRECTION_NONE:  /* Called from serial only */
 //         if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
-//         else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_NONE); }
+//         else { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_NONE); }
 //         break;
-//     case MOTOR_DIRECTION_FORWARD:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD);   break;
-//     case MOTOR_DIRECTION_REVERSE:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE);   break;
+//     case MOTOR_USER_DIRECTION_FORWARD:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_FORWARD);   break;
+//     case MOTOR_USER_DIRECTION_REVERSE:   MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_REVERSE);   break;
 //     default:  break;
 // }
 
@@ -151,28 +151,6 @@ static State_T * GetMainState(const MotorController_T * p_context)
 }
 
 
-/*
-    General Direction
-*/
-/*
-    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_DIRECTION_NONE
-    MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_DIRECTION_FORWARD
-    MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_DIRECTION_REVERSE
-    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
-    MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
-*/
-// alternatively map getter to State
-Motor_User_Direction_T MotorController_StateMachine_GetDirection(MotorController_T * p_context)
-{
-    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
-    {
-        case MCSM_STATE_ID_MAIN:       return _MotMotors_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
-        case MCSM_STATE_ID_PARK:       return MOTOR_DIRECTION_NONE;
-        case MCSM_STATE_ID_LOCK:       return MOTOR_DIRECTION_NONE;
-        case MCSM_STATE_ID_FAULT:      return MOTOR_DIRECTION_NONE;
-        default:                       return MOTOR_DIRECTION_NONE;
-    }
-}
 
 /******************************************************************************/
 /*!
@@ -254,7 +232,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
 
 static const State_Input_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]  = NULL, /* MotorController_StateMachine_EnterFault is disabled for INIT_STATE */
+    [MCSM_INPUT_FAULT]  = NULL, /* MotorController_EnterFault is disabled for INIT_STATE */
 };
 
 static const State_T STATE_INIT =
@@ -289,7 +267,7 @@ static void Park_Proc(const MotorController_T * p_context)
 // static State_T * Park_Next(const MotorController_T * p_context)
 // {
 //     // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) {  // Optional: set warning or force stop }
-//     // Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+//     // Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
 //     State_T * p_nextState = NULL;
 //     return p_nextState;
 // }
@@ -317,11 +295,11 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
 static State_T * Park_InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
     State_T * p_nextState = NULL;
-    switch ((Motor_User_Direction_T)direction)
+    switch ((Motor_UserDirection_T)direction)
     {
-        case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
-        case MOTOR_DIRECTION_FORWARD: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); p_nextState = GetMainState(p_context); break;
-        case MOTOR_DIRECTION_REVERSE: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); p_nextState = GetMainState(p_context); break;
+        case MOTOR_USER_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
+        case MOTOR_USER_DIRECTION_FORWARD: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_UserDirection_T)direction); p_nextState = GetMainState(p_context); break;
+        case MOTOR_USER_DIRECTION_REVERSE: MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_UserDirection_T)direction); p_nextState = GetMainState(p_context); break;
         default:  break;
     }
     return p_nextState;
@@ -335,9 +313,9 @@ static State_T * Park_InputDirection(const MotorController_T * p_context, state_
 
 //         switch (p_input->Direction)
 //         {
-//             case MOTOR_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
-//             case MOTOR_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
-//             case MOTOR_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
+//             case MOTOR_USER_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
+//             case MOTOR_USER_DIRECTION_FORWARD: p_nextState = GetMainState(p_context); break;
+//             case MOTOR_USER_DIRECTION_REVERSE: p_nextState = GetMainState(p_context); break;
 //             default:  break;
 //         }
 
@@ -415,7 +393,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 // AnalogOnly should not enter, lock mode requires protocol
 static State_T * Main_InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
-    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); /* Motor maintain direction state */
+    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_UserDirection_T)direction); /* Motor maintain direction state */
     return NULL;
 }
 
@@ -426,7 +404,7 @@ static State_T * Main_InputDirection(const MotorController_T * p_context, state_
 // static State_T * Main_InputForward(const MotorController_T * p_context)
 // {
 //     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionForward) == true) { return GetMainState(p_context); }
-//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_FORWARD); return GetMainState(p_context); }
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_FORWARD); return GetMainState(p_context); }
 //     return NULL;
 //     // return (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionForward) == true) ? GetMainState(p_context) : NULL;
 // }
@@ -434,7 +412,7 @@ static State_T * Main_InputDirection(const MotorController_T * p_context, state_
 // static State_T * Main_InputReverse(const MotorController_T * p_context)
 // {
 //     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionReverse) == true) { return GetMainState(p_context); }
-//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_DIRECTION_REVERSE); return GetMainState(p_context); }
+//     if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { MotMotors_ApplyUserDirection(&p_context->MOTORS, MOTOR_USER_DIRECTION_REVERSE); return GetMainState(p_context); }
 //     return NULL;
 //     // return (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsDirectionReverse) == true) ? GetMainState(p_context) : NULL;
 // }
@@ -443,11 +421,11 @@ static State_T * Main_InputDirection(const MotorController_T * p_context, state_
 // static State_T * Main_InputDirection(const MotorController_T * p_context, state_value_t direction)
 // {
 //     State_T * p_nextState = NULL;
-//     switch ((Motor_User_Direction_T)direction)
+//     switch ((Motor_UserDirection_T)direction)
 //     {
-//         case MOTOR_DIRECTION_FORWARD: p_nextState = Main_InputForward(p_context); break;
-//         case MOTOR_DIRECTION_REVERSE: p_nextState = Main_InputReverse(p_context); break;
-//         case MOTOR_DIRECTION_NONE: p_nextState = NULL; break;
+//         case MOTOR_USER_DIRECTION_FORWARD: p_nextState = Main_InputForward(p_context); break;
+//         case MOTOR_USER_DIRECTION_REVERSE: p_nextState = Main_InputReverse(p_context); break;
+//         case MOTOR_USER_DIRECTION_NONE: p_nextState = NULL; break;
 //         default: break;
 //     }
 //     return p_nextState;
@@ -477,7 +455,7 @@ const State_T MC_STATE_MAIN =
 /*!
     @brief Default Substate Motor Command
     Motors passthrough coordinated default
-    marker for accepting [MotorController_User_Set] interface inputs
+    marker for accepting [MotorController_Set] interface inputs
 
     Call handles enabling disabling output, FeedbackMode
 
@@ -492,18 +470,18 @@ static void MotorCmd_Entry(const MotorController_T * p_context)
     MotMotors_ActivateControlState(&p_context->MOTORS, PHASE_OUTPUT_FLOAT); /* Set PWM Output */
 }
 
-/* Motor_User_Input_T Only */
+/* Motor_Input_T Only */
 static void MotorCmd_Proc(const MotorController_T * p_context)
 {
-    Motor_User_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+    Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
     MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
 }
 
 static State_T * MotorCmd_InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
-    // if (MotMotors_IsEveryValue(&p_context->MOTORS, Motor_User_IsDirection, (Motor_User_Direction_T)direction) == true) { return GetMainState(p_context); }
-    // if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero)) { MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); }
-    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_User_Direction_T)direction); /* Motor maintain direction state */
+    // if (MotMotors_IsEveryValue(&p_context->MOTORS, Motor_IsUserDirection, (Motor_UserDirection_T)direction) == true) { return GetMainState(p_context); }
+    // if (MotMotors_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero)) { MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_UserDirection_T)direction); }
+    MotMotors_ApplyUserDirection(&p_context->MOTORS, (Motor_UserDirection_T)direction); /* Motor maintain direction state */
     return NULL;
 }
 
@@ -867,28 +845,28 @@ static const State_T STATE_FAULT =
 */
 /******************************************************************************/
 /* todo thread safe without lock */
-void MotorController_StateMachine_EnterFault(const MotorController_T * p_context)
+void MotorController_EnterFault(const MotorController_T * p_context)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
 }
 
-bool MotorController_StateMachine_ExitFault(const MotorController_T * p_context)
+bool MotorController_ExitFault(const MotorController_T * p_context)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
-    return !MotorController_StateMachine_IsFault(p_context);
+    if (MotorController_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
+    return !MotorController_IsFault(p_context);
 }
 
 // ((const MotorController_FaultFlags_T) { .VAccsLimit = 1U }).Value
-void MotorController_StateMachine_SetFault(const MotorController_T * p_context, uint16_t faultFlags)
+void MotorController_SetFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
 }
 
 /* ensure repeat inputs without lock do not mismatch */
-void MotorController_StateMachine_ClearFault(const MotorController_T * p_context, uint16_t faultFlags)
+void MotorController_ClearFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_StateMachine_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
-    // return !MotorController_StateMachine_IsFault(p_context); /* alternatively use cleared diff */
+    if (MotorController_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
+    // return !MotorController_IsFault(p_context); /* alternatively use cleared diff */
 }
 
 

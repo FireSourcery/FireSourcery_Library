@@ -53,7 +53,7 @@
 static packet_size_t Ping(const MotorController_T * p_context, MotPacket_PingResp_T * p_txPacket, const MotPacket_PingReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    // MotorController_User_BeepN(p_context, 500U, 500U, 1U);
+    // MotorController_BeepN(p_context, 500U, 500U, 1U);
     MotorController_BeepShort(p_context);
     return MotPacket_PingResp_Build(p_txPacket, MOT_PACKET_SYNC_ACK);
 }
@@ -105,7 +105,7 @@ static packet_size_t Version(const MotorController_T * p_context, MotPacket_Vers
     return MotPacket_VersionResp_Build(p_txPacket, p_context->MAIN_VERSION.Word32.Value32);
 
     // with variable length
-    // return MotPacket_VersionFlexResp_Build(p_txPacket, MotorController_User_GetLibraryVersion(), MotorController_User_GetMainVersion(p_context), 0);
+    // return MotPacket_VersionFlexResp_Build(p_txPacket, MotorController_GetLibraryVersion(), MotorController_GetMainVersion(p_context), 0);
 }
 
 /******************************************************************************/
@@ -114,7 +114,7 @@ static packet_size_t Version(const MotorController_T * p_context, MotPacket_Vers
 static packet_size_t StopAll(const MotorController_T * p_context, MotPacket_StopResp_T * p_txPacket, const MotPacket_StopReq_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    MotorController_User_ForceDisableControl(p_context);
+    MotorController_ForceDisableControl(p_context);
     return MotPacket_StopResp_Build(p_txPacket, MOT_STATUS_SUCCESS);
 }
 
@@ -124,7 +124,7 @@ static packet_size_t StopAll(const MotorController_T * p_context, MotPacket_Stop
 /* Generic status response, type depending on input */
 static packet_size_t Call_Blocking(const MotorController_T * p_context, MotPacket_CallResp_T * p_txPacket, const MotPacket_CallReq_T * p_rxPacket)
 {
-    uint16_t status = MotorController_User_Call(p_context, (MotorController_User_SystemCmd_T)p_rxPacket->CallReq.Id, p_rxPacket->CallReq.Arg);
+    uint16_t status = MotorController_CallSystemCmd(p_context, (MotorController_SystemCmd_T)p_rxPacket->CallReq.Id, p_rxPacket->CallReq.Arg);
     return MotPacket_CallResp_Build(p_txPacket, p_rxPacket->CallReq.Id, status);
 }
 
@@ -175,19 +175,19 @@ static packet_size_t VarWrite(const MotorController_T * p_context, MotPacket_Var
     Multi variable StateMachine call
     Use outer layer StateMachine check, simplifies handling of signature type.
 */
-NvMemory_Status_T MotorController_User_ReadManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
+NvMemory_Status_T MotorController_ReadManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
 {
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_ReadManufacture_Blocking(&p_context->MOT_NVM, onceAddress, size, p_destBuffer); }
+    if (MotorController_IsConfig(p_context) == true) { status = MotNvm_ReadManufacture_Blocking(&p_context->MOT_NVM, onceAddress, size, p_destBuffer); }
     return status;
 }
 
-NvMemory_Status_T MotorController_User_WriteManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
+NvMemory_Status_T MotorController_WriteManufacture_Blocking(const MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_StateMachine_IsConfig(p_context) == true) { status = MotNvm_WriteManufacture_Blocking(&p_context->MOT_NVM, onceAddress, p_source, size); }
+    if (MotorController_IsConfig(p_context) == true) { status = MotNvm_WriteManufacture_Blocking(&p_context->MOT_NVM, onceAddress, p_source, size); }
     return status;
 }
 
@@ -208,7 +208,7 @@ static packet_size_t ReadMem_Blocking(const MotorController_T * p_context, MotPa
     switch ((MotProtocol_MemConfig_T)config)
     {
         case MOT_MEM_CONFIG_RAM: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_ReadManufacture_Blocking(p_context, address, size, p_buffer); break;
+        case MOT_MEM_CONFIG_ONCE: status = MotorController_ReadManufacture_Blocking(p_context, address, size, p_buffer); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
             // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
     }
@@ -226,7 +226,7 @@ static packet_size_t WriteMem_Blocking(const MotorController_T * p_context, MotP
 
     switch ((MotProtocol_MemConfig_T)config)
     {
-        case MOT_MEM_CONFIG_ONCE: status = MotorController_User_WriteManufacture_Blocking(p_context, address, p_data, size); break;
+        case MOT_MEM_CONFIG_ONCE: status = MotorController_WriteManufacture_Blocking(p_context, address, p_data, size); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
         // case MOT_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         // case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
@@ -242,7 +242,7 @@ static packet_size_t WriteMem_Blocking(const MotorController_T * p_context, MotP
 /******************************************************************************/
 static Protocol_ReqCode_T ReadData(const MotorController_T * p_context, Protocol_ReqContext_T * p_reqContext)
 {
-    // if (MotorController_StateMachine_IsLock(p_context) == true)
+    // if (MotorController_IsLock(p_context) == true)
     return MotProtocol_ReadData(NULL, p_reqContext);
 }
 

@@ -96,8 +96,8 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_conte
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch (UserDIn_GetEdge(&p_context->OPT_DIN))
                 {
-                    case USER_DIN_EDGE_RISING:  MotorController_User_SetSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
-                    case USER_DIN_EDGE_FALLING: MotorController_User_ClearSpeedLimitAll(p_context); break;
+                    case USER_DIN_EDGE_RISING:  MotorController_SetSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
+                    case USER_DIN_EDGE_FALLING: MotorController_ClearSpeedLimitAll(p_context); break;
                     default: break;
                 }
                 break;
@@ -105,8 +105,8 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_conte
             // case MOTOR_CONTROLLER_OPT_DIN_SERVO:
             //     switch (Debounce_GetEdge(&p_mc->OptDin))
             //     {
-            //         case DEBOUNCE_EDGE_RISING:  MotorController_User_EnterServoMode(p_mc);  break;
-            //         case DEBOUNCE_EDGE_FALLING: MotorController_User_ExitServoMode(p_mc);   break;
+            //         case DEBOUNCE_EDGE_RISING:  MotorController_EnterServoMode(p_mc);  break;
+            //         case DEBOUNCE_EDGE_FALLING: MotorController_ExitServoMode(p_mc);   break;
             //         default: break;
             //     }
             //     break;
@@ -134,7 +134,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             p_mc->FaultFlags.PcbOverheat = 1U;
-            MotorController_StateMachine_EnterFault(p_context);
+            MotorController_EnterFault(p_context);
             break;
         case HEAT_MONITOR_STATUS_WARNING_HIGH: break;
         case HEAT_MONITOR_STATUS_NORMAL: break;
@@ -146,7 +146,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             p_mc->FaultFlags.MosfetsOverheat = 1U;
-            MotorController_StateMachine_EnterFault(p_context);
+            MotorController_EnterFault(p_context);
             break;
 
         case HEAT_MONITOR_STATUS_WARNING_HIGH:
@@ -156,7 +156,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Thermistor Adcu is roughly linear in Warning region
                 Increasing Limit only, reset on warning clear.
             */
-            LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
+            LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
             MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
             //todo
             // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) {MotorController_BeepMonitorTrigger(p_context); }
@@ -165,7 +165,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsWarningClearing(p_context->HEAT_MOSFETS.P_STATE))
             {
-                LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
+                LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
                 MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
             }
             break;
@@ -198,8 +198,8 @@ static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T *
 {
     MotMotors_ForceDisableControl(&p_context->MOTORS);
     p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
-    MotorController_StateMachine_EnterFault(p_context);
-    // MotorController_StateMachine_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
+    MotorController_EnterFault(p_context);
+    // MotorController_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
     // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_FAULT, 0); // transition without lock
 }
 
@@ -208,7 +208,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     // alternatively
-    // Phase_VBus_CaptureAdcu(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION));
+    // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION));
     // switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Phase_VBus_Fract16()))
 
 // #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
@@ -225,13 +225,13 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
         //     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
         //     {
         //         MotorController_CaptureVSource(p_context);
-        //         LimitArray_SetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+        //         LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
         //     }
             break;
         case VMONITOR_STATUS_NORMAL:
         //     if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
         //     {
-        //         LimitArray_ClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
+        //         LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
         //     }
             break;
         default: break;
@@ -256,10 +256,10 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
     RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
 
-    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
-    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_StateMachine_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_EnterFault(p_context); }
 
-    if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
+    if (p_mc->FaultFlags.Value != 0U) { MotorController_EnterFault(p_context); }
 
     Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
     Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
@@ -311,12 +311,12 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* optionally */
-                // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_User_ForceDisableControl(p_mc); }
+                // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
                 /* Only active when Serial is selected as primary input */
                 // if (MotorController_PollRxLost(p_context) == true)
                 // {
-                //     MotorController_User_ForceDisableControl(p_context);
-                //     MotorController_StateMachine_EnterFault(p_context);
+                //     MotorController_ForceDisableControl(p_context);
+                //     MotorController_EnterFault(p_context);
                 // }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
@@ -350,7 +350,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             /* Can use low priority check, as motor is already in fault state. */
             if (MotMotors_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
 
-            if (p_mc->FaultFlags.Value != 0U) { MotorController_StateMachine_EnterFault(p_context); }
+            if (p_mc->FaultFlags.Value != 0U) { MotorController_EnterFault(p_context); }
 
             MotorController_CaptureVSource(p_context); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
 
@@ -375,7 +375,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
     // BrakeThread(p_mc);
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
-    //     if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_User_ForceDisableControl(p_mc); }
+    //     if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
     // }
 
 #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
@@ -424,24 +424,24 @@ static inline void MotorCmd_ProcAnalogUser(const MotorController_T * p_context)
 
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NONE);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_FORWARD);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_REVERSE);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_NONE);      break;
         default: break;
     }
 
     // sm handle remap
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_FORWARD);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_REVERSE);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_User_SetDirection(p_context, MOTOR_DIRECTION_NONE);     break;
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_FORWARD);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_REVERSE);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_NONE);     break;
     //     default: break;
     // }
 
-    MotorController_User_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    MotorController_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
     // {
-    //     MotorController_User_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
+    //     MotorController_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
     // }
 }
