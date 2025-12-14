@@ -373,7 +373,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context);
+        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Call Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:

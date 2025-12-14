@@ -106,6 +106,20 @@ static inline bool MotorController_IsConfig(MotorController_T * p_context) { ret
 
 // check ancestor for deeper nesting
 // static inline bool MotorController_IsActive(MotorController_T * p_context, State_T * p_state) { return StateMachine_IsActivePathState(p_context->STATE_MACHINE.P_ACTIVE, & ); }
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
+{
+    return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
+}
+
+/* check by var set */
+static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
+{
+    return (MotorController_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
+}
 
 /******************************************************************************/
 /*!
@@ -130,6 +144,41 @@ MotorController_StateCmd_T;
 static inline void MotorController_InputStateCommand(MotorController_T * p_context, MotorController_StateCmd_T cmd)
 {
     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_STATE_COMMAND, cmd);
+}
+
+
+/******************************************************************************/
+/*
+    Direction Handle Separately
+*/
+/******************************************************************************/
+/* Simplify AnalogUser implementation */
+static inline void MotorController_ApplyDirectionCmd(MotorController_T * p_context, Motor_UserDirection_T direction)
+{
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_DIRECTION, direction);
+}
+
+/*
+    General Direction
+*/
+/*
+    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_USER_DIRECTION_NONE
+    MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_USER_DIRECTION_FORWARD
+    MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_USER_DIRECTION_REVERSE
+    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
+    MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
+*/
+// alternatively map getter to State
+static Motor_UserDirection_T MotorController_GetDirection(MotorController_T * p_context)
+{
+    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
+    {
+        case MCSM_STATE_ID_MAIN:       return _MotMotors_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
+        case MCSM_STATE_ID_PARK:       return MOTOR_USER_DIRECTION_NONE;
+        case MCSM_STATE_ID_LOCK:       return MOTOR_USER_DIRECTION_NONE;
+        case MCSM_STATE_ID_FAULT:      return MOTOR_USER_DIRECTION_NONE;
+        default:                       return MOTOR_USER_DIRECTION_NONE;
+    }
 }
 
 /******************************************************************************/
@@ -194,22 +243,6 @@ static inline MotorController_LockId_T MotorController_GetLockSubState(MotorCont
 {
     return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
 }
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
-{
-    return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
-}
-
-/* check by var set */
-static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
-{
-    return (MotorController_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
-}
-
 
 /******************************************************************************/
 /*!

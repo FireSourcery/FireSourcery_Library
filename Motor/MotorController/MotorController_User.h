@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -26,12 +28,8 @@
     @author FireSourcery
     @brief  User Interface wrapper accessor functions (chip external inputs).
                 Includes error checking
-
 */
 /******************************************************************************/
-#ifndef MOTOR_CONTROLLER_USER_H
-#define MOTOR_CONTROLLER_USER_H
-
 #include "MotorController_StateMachine.h"
 #include "../Version.h"
 
@@ -94,23 +92,21 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_con
     p_context->P_MC_STATE->CmdInput.CmdValue = 0;
     p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_FLOAT;
     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_USER_DIRECTION_NONE;
-    // p_context->P_MC_STATE->CmdInput.IsUpdated = true;
 
     MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
-
-    /* if drive mode */
-    // Vehicle_User_SetZero(p_context->VEHICLE.P_VEHICLE_STATE); // set drive to zero
-    // Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_CONTROLLER_DIRECTION_NEUTRAL); // set drive direction to neutral
 }
+
+/*
+todo state/direction/motor direction quick ref
+// p_context->P_MC_STATE->CmdInput.Direction = MOTOR_USER_DIRECTION_NONE;
+// p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
+*/
 
 /******************************************************************************/
 /*
     Common Park
 */
 /******************************************************************************/
-// p_context->P_MC_STATE->CmdInput.Direction = MOTOR_USER_DIRECTION_NONE;
-// p_context->P_MC_STATE->CmdInput.PhaseState = PHASE_OUTPUT_V0;
-// MotorController_ApplyMotorsCmd(p_context);
 static inline void MotorController_EnterPark(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_PARK); }
 
 /******************************************************************************/
@@ -121,40 +117,6 @@ static inline void MotorController_EnterPark(MotorController_T * p_context) { Mo
 /* Transition to idle */
 static inline void MotorController_EnterMainIdle(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
 static inline void MotorController_EnterMain(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
-
-/******************************************************************************/
-/*
-    Direction Handle Separately
-*/
-/******************************************************************************/
-/* Simplify AnalogUser implementation */
-static inline void MotorController_ApplyDirectionCmd(MotorController_T * p_context, Motor_UserDirection_T direction)
-{
-    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_DIRECTION, direction);
-}
-
-/*
-    General Direction
-*/
-/*
-    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_USER_DIRECTION_NONE
-    MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_USER_DIRECTION_FORWARD
-    MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_USER_DIRECTION_REVERSE
-    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
-    MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
-*/
-// alternatively map getter to State
-static Motor_UserDirection_T MotorController_GetDirection(MotorController_T * p_context)
-{
-    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
-    {
-        case MCSM_STATE_ID_MAIN:       return _MotMotors_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
-        case MCSM_STATE_ID_PARK:       return MOTOR_USER_DIRECTION_NONE;
-        case MCSM_STATE_ID_LOCK:       return MOTOR_USER_DIRECTION_NONE;
-        case MCSM_STATE_ID_FAULT:      return MOTOR_USER_DIRECTION_NONE;
-        default:                       return MOTOR_USER_DIRECTION_NONE;
-    }
-}
 
 
 /******************************************************************************/
@@ -220,41 +182,6 @@ static inline state_t _MotorController_GetSubStateId(const MotorController_State
 
 static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_mcState) { return p_mcState->FaultFlags; }
 
-/*
-//move to alternate interface extension
-    Status Flags for User Interface
-
-    Combined boolean outputs for protocol convenience
-*/
-typedef union MotorController_StatusFlags
-{
-    struct
-    {
-        uint16_t HeatWarning        : 1U; // ILimit by Heat
-        uint16_t VSourceLow         : 1U; // ILimit by VSourceLow
-        // uint16_t SpeedLimit         : 1U;
-        // uint16_t ILimit             : 1U;
-        // uint16_t BuzzerEnable       : 1U;
-        // derive from thermistor functions
-        // uint16_t ILimitHeatMosfets  : 1U;
-        // uint16_t ILimitHeatPcb      : 1U;
-        // uint16_t ILimitHeatMotors   : 1U;
-    };
-    uint16_t Value;
-}
-MotorController_StatusFlags_T;
-
-static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_context)
-{
-    return (MotorController_StatusFlags_T)
-    {
-        // .HeatWarning    = Monitor_GetStatus(p_context->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
-        //                   Monitor_GetStatus(p_context->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
-        // .HeatWarning    = p_context->StateFlags.HeatWarning,
-        // .VSourceLow     = p_context->StateFlags.VSourceLow,
-        // .BuzzerEnable   = p_context->StateFlags.BuzzerEnable,
-    };
-}
 
 
 /******************************************************************************/
@@ -327,7 +254,6 @@ extern int MotorController_CallSystemCmd(MotorController_T * p_context, MotorCon
 
 // extern void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_context, bool isEnable);
 // extern void MotorController_SetOptILimitOnOff(MotorController_T * p_context, bool isEnable);
-#endif
 
 /*
     Controller NvM Variables Config
