@@ -55,6 +55,7 @@
 // #endif
 
 #if defined(RING_INDEX_POW2_COUNTER) || defined(RING_INDEX_POW2_WRAP)
+#define RING_INDEX_IS_POW2 TRUE
 #define _RING_POW2_DEF(code, ...) code
 #define _RING_NON_POW2_DEF(code)
 // #define _RING_POW2_DEF_INIT(code) code,
@@ -69,6 +70,8 @@
 #define _RING_LOCAL_CRITICAL_DEF(code, ...) __VA_ARGS__
 #endif
 
+// Usage
+
 /*  */
 typedef const struct Ring_Type
 {
@@ -81,7 +84,7 @@ Ring_Type_T;
 #define RING_TYPE_INIT(UnitSize, Length) { .UNIT_SIZE = UnitSize, .LENGTH = Length, _RING_POW2_DEF(.POW2_MASK = (Length - 1U)) }
 
 /*  */
-typedef struct Ring_State
+typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_State
 {
     volatile uintptr_t Head;    /* FIFO Out/Front. */
     volatile uintptr_t Tail;    /* FIFO In/Back. */
@@ -115,12 +118,12 @@ typedef struct Ring
 Ring_T;
 
 #define _RING_BUFFER_ALLOC(BytesSize) ((uint8_t[(BytesSize)]){})//((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* /sizeof(int) guarantees align and no ascii fill */
-#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + ((UnitSize)*(Length)))))
+#define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + ((UnitSize) * (Length)))))
 
 /*
+    [RingT_T]
     For Generic Handling or Runtime Init
     In the case that Runtime state stores [Ring_Type_T Type], it must be copied at run time.
-    RingT_T
 */
 typedef const struct Ring_Context
 {

@@ -50,6 +50,15 @@
 
 
 
+#define _CAT(a, b) a##b
+#define CAT(a, b) _CAT(a, b)
+
+#define _RING_IF_0(...)
+#define _RING_IF_1(...) __VA_ARGS__
+#define _RING_IF_FALSE(...)
+#define _RING_IF_TRUE(...) __VA_ARGS__
+#define RING_IF(condition) CAT(_RING_IF_, condition)
+
 
 
 

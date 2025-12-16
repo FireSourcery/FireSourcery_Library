@@ -93,7 +93,7 @@ typedef const union
 LimitArray_T;
 
 #define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) { .ARRAY = ARRAY_INIT(p_Buffer, Length, p_Augments) }
-#define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
+#define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_INIT_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
 
 /*  */
 static inline limit_t * _LimitArray_Values(const LimitArray_T * p_limit) { return (limit_t *)p_limit->P_BUFFER; }

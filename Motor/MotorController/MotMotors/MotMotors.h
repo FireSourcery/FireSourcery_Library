@@ -56,6 +56,9 @@ static inline Motor_T * MotMotors_ContextAt(MotMotors_T * p_ctx, uint8_t motorIn
 // static inline void _MotMotors_Context_ForEach(Motor_State_T * p_motors, int count, Motor_Proc_T function) { void_array_foreach(p_motors, sizeof(Motor_State_T), count, (proc_t)function); }
 
 static inline void MotMotors_ForEach(MotMotors_T * p_ctx, Motor_Proc_T function) { void_array_foreach(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (proc_t)function); }
+
+static inline void MotMotors_ForEach1(MotMotors_T * p_ctx, Motor_Proc_T function) { void_array_foreach_call(p_ctx->P_STATES, p_ctx->LENGTH, (proc_t)function); }
+
 static inline void MotMotors_ForEachSet(MotMotors_T * p_ctx, Motor_Set_T function, motor_value_t value) { void_array_foreach_set(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (set_t)function, value); }
 static inline bool MotMotors_ForEvery(MotMotors_T * p_ctx, Motor_State_TryProc_T function) { return void_array_for_every(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (try_proc_t)function); }
 

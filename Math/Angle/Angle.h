@@ -73,7 +73,7 @@ Angle_Config_T;
 typedef struct Angle
 {
     angle16_t Angle;
-    angle16_t Speed; /* DeltaAngle / DigitalSpeed */
+    angle16_t Speed; /* DeltaAngle_DegPerCycle / DigitalSpeed */
 
     accum32_t Speed_Fract16;  /* Store for Feedback. Let sensor select direct capture or convert from DeltaAngle */
 

@@ -54,7 +54,6 @@
 #include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Utility/Timer/Timer.h"
 #include "Utility/LimitArray/LimitArray.h"
-// #include "Utility/Var/VarAccess.h"
 
 #include "Math/Fixed/fixed.h"
 #include "Math/Angle/Angle.h"
@@ -132,7 +131,7 @@ static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (
 
 /******************************************************************************/
 /*
-
+    Fault State Flags
 */
 /******************************************************************************/
 typedef union
@@ -421,6 +420,7 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
     Derived From Config
 */
 /******************************************************************************/
+// static inline uint16_t motor_rpm_of_kv(int kv, int v, uint16_t v_fract16) { return fract16_mul(v_fract16, kv * v); }
 /*
     V of Speed
 */
@@ -428,7 +428,6 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 static inline uint16_t Motor_RpmOfKv(const Motor_State_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
 static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
 
-// static inline uint16_t motor_rpm_of_kv(int kv, int v, uint16_t v_fract16) { return fract16_mul(v_fract16, kv * v); }
 
 // static inline uint16_t Motor_GetKt(const Motor_State_T * p_motor) { 60 / (2 * pi * kV);  }
 

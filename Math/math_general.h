@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 typedef enum sign { SIGN_NEGATIVE = -1, SIGN_ZERO = 0, SIGN_POSITIVE = 1 } sign_t;
 /* +1, 0, -1 */

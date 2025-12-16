@@ -107,7 +107,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
     User define full handler switch
         no meta for null - hsm input case must return entry to indicate as handled - continues traversal when input function called and returns no transition
 */
-// typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
+typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 
 /*!@}*/
 
@@ -147,6 +147,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
 typedef uint8_t state_accessor_t;
 /* super function signature */
 typedef state_value_t(*State_Accessor_T)(void * p_context, state_value_t valueK, state_value_t valueV);
+// typedef value_t (*State_Accessor_T)(void * context, value_t value);
 
 /* Convenient for reusing field ids, and match signature. */
 typedef state_value_t(*State_GetField_T)(const void * p_context, state_value_t valueK);
@@ -156,6 +157,7 @@ typedef const struct State_AccessorEntry { State_GetField_T GET; State_SetField_
 
 // typedef value_t(*State_QueryHandler_T)(const void * context, int query);
 // typedef void (*State_CommandHandler_T)(void * context, int cmd, value_t value);
+
 
 
 /******************************************************************************/

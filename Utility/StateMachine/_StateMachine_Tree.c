@@ -125,6 +125,19 @@ void _StateMachine_Branch_ApplyAsyncInput(StateMachine_Active_T * p_active, void
    _StateMachine_SetSyncTransition(p_active, p_context, TransitionFunctionOnBranchInput(p_active, p_context, id, value));
 }
 
+/*
+    For inputs/transition mapped to specific states, rather than all states
+*/
+void _StateMachine_Branch_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value)
+{
+    if (StateMachine_IsActivePath(p_active, p_start) == true)
+    {
+        assert(State_IsAncestorOrSelf(p_start, p_active->p_ActiveState)); /* ensure substate is in sync with top level state */
+        _StateMachine_Branch_TransitionTo(p_active, p_context, input(p_context, value));
+    }
+}
+
+
 /******************************************************************************/
 /*
     Proc State
@@ -161,6 +174,8 @@ void _StateMachine_Branch_Proc_Nested(StateMachine_Active_T * p_active, void * p
 {
     _StateMachine_Branch_ProcSyncOutput(p_active, p_context, 1U);
 }
+
+
 
 
 /******************************************************************************/

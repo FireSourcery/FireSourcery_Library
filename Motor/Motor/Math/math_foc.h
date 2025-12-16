@@ -27,11 +27,17 @@
     @file   math_foc.h
     @author FireSourcery
     @brief  FOC pure math functions.
-            Aligned in CCW order: a, b, c; alpha, beta; d, q
-            d-axis aligned to 0° / a-phase
 */
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
+
+/******************************************************************************/
+/*!
+    @brief
+    Aligned in CCW order: a, b, c; alpha, beta; d, q
+    d-axis aligned to 0° / a-phase
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!

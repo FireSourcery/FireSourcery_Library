@@ -62,7 +62,6 @@ uint16_t fixed_sqrt(uint32_t x)
     return result;
 }
 
-
 uint8_t _leading_zeros(uint32_t x)
 {
 #if defined(__GNUC__)

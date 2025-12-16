@@ -16,17 +16,23 @@
 /******************************************************************************/
 /*!
     @brief Void Array / Sized Array - Generic by type
-    let compiler to optimize away [size_t type]
-    alternatively _Generic select on literal type,
-        Macro arguments lose type constraints
+        let compiler to optimize away [size_t] [type]
+        alternatively _Generic select on literal type,
+            Macro arguments lose type constraints
 */
 /******************************************************************************/
-/*  */
-// static inline void * void_pointer_at(size_t type, const void * p_buffer, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
+// todo type argument first
+// static inline void * void_pointer_at(const size_t type, const void * p_buffer, size_t index)
+/*!
+    @param TYPE Declare as const. Although this refers to local scope, the `inline` function is intended to unwrap.
+        size_t TYPE = sizeof(element type)
+*/
+
+
 static inline void * void_pointer_at(const void * p_buffer, size_t type, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 
 /*!
-    swtich copy
+    switch copy
     @brief Copy data from source to destination based on the size.
     @param dest Pointer to the destination buffer.
     @param src Pointer to the source buffer.
@@ -46,6 +52,7 @@ static inline void void_copy(void * p_dest, const void * p_src, size_t size)
     }
 }
 
+/* Copy as type */
 static inline void void_pointer_assign(void * p_unit, size_t type, const void * p_value) { void_copy(p_unit, p_value, type); }
 
 /* this should inline with type */
@@ -80,30 +87,22 @@ static inline void void_pointer_assign_as_value(void * p_unit, size_t type, valu
     }
 }
 
-// static inline void void_pointer_assign_as_cast(void * p_unit, size_t type, uintptr_t arg)
-// {
-//     switch (type)
-//     {
-//         case sizeof(uint8_t) : *((uint8_t  *)p_unit) = (uint8_t)arg; break;
-//         case sizeof(uint16_t): *((uint16_t *)p_unit) = (uint16_t)arg; break;
-//         case sizeof(uint32_t): *((uint32_t *)p_unit) = (uint32_t)arg; break;
-// #if (REGISTER_SIZE_64)
-//         case sizeof(uint64_t) : *((uint64_t *)p_unit) = (uint64_t)arg; break;
-// #endif
-//         default: memcpy(p_unit, (const void *)arg, type); break;
-//     }
-// }
+
+/*
+    multiple units by pointer
+*/
+static inline void void_array_copy_to(const size_t TYPE, const void * p_buffer, void * p_to, size_t count) { memcpy(p_to, p_buffer, TYPE * count); }
+static inline void void_array_copy_from(const size_t TYPE, void * p_buffer, const void * p_from, size_t count) { memcpy(p_buffer, p_from, TYPE * count); }
 
 /******************************************************************************/
 /*
     Iteration
-    struct array
 */
 /******************************************************************************/
 /* todo  static inline void array_foreach(size_t type, void * p_array, size_t length, proc_t func) */
 
 /*
-    0 argument accessors
+    accessors with 0 additional arguments
 */
 /*
     length in units
@@ -112,6 +111,8 @@ static inline void void_array_foreach(void * p_buffer, size_t type, size_t lengt
 {
     for (size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(p_buffer, type, index)); }
 }
+
+#define struct_array_foreach(p_buffer, length, op) void_array_foreach((void *)p_buffer, sizeof(*(p_buffer)), length, (proc_t)op)
 
 /*!
     applies to every element
@@ -191,17 +192,20 @@ static inline bool void_array_is_any_value(const void * p_buffer, size_t type, s
     return is_any;
 }
 
-/******************************************************************************/
-/*
-    value arary
-*/
-/******************************************************************************/
-/*
-    multiple units by pointer
-*/
-static inline void void_array_copy_to(const void * p_buffer, size_t type, void * p_to, size_t count) { memcpy(p_to, p_buffer, type * count); }
-static inline void void_array_copy_from(void * p_buffer, size_t type, const void * p_from, size_t count) { memcpy(p_buffer, p_from, type * count); }
+#define void_array_foreach_call(p_buffer, length, function, ...) \
+    _Generic((function), \
+        proc_t:   void_array_foreach,        \
+        set_t:    void_array_foreach_set,    \
+        default:  void_array_foreach         \
+    )(p_buffer, sizeof(*(p_buffer)), length, function __VA_OPT__(,) __VA_ARGS__)
 
+
+
+/******************************************************************************/
+/*
+    Value Array
+*/
+/******************************************************************************/
 /*
     array
     single unit at index by value
@@ -241,15 +245,8 @@ static inline void * void_array_max(const void * p_buffer, size_t type, size_t l
     return (void *)p_max;
 }
 
-static inline value_t void_array_min_value(const void * p_buffer, size_t type, size_t length)
-{
-    return void_pointer_as_value(void_array_min(p_buffer, type, length), type);
-}
-
-static inline value_t void_array_max_value(const void * p_buffer, size_t type, size_t length)
-{
-    return void_pointer_as_value(void_array_max(p_buffer, type, length), type);
-}
+static inline value_t void_array_min_value(const void * p_buffer, size_t type, size_t length) { return void_pointer_as_value(void_array_min(p_buffer, type, length), type); }
+static inline value_t void_array_max_value(const void * p_buffer, size_t type, size_t length) { return void_pointer_as_value(void_array_max(p_buffer, type, length), type); }
 
 static inline int compare_int(const void * a, const void * b) { return (*(int *)a - *(int *)b); }
 

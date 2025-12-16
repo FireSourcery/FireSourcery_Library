@@ -128,12 +128,9 @@ void MotorController_SetInputMode(const MotorController_T * p_context, MotorCont
 
     // switch (p_mc->Config.InputMode)
     // {
-    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-    //         break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-    //         break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    //         break;
+    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:    //         break;
     //     default:  break;
     // }
 }

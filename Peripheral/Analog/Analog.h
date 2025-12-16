@@ -72,7 +72,7 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 
 /******************************************************************************/
 /*
-    Unsynchronized Activation
+    Unsynchronize Activation
 */
 /******************************************************************************/
 // static void Analog_ActivateConversion(const Analog_Conversion_T * p_conversion)
@@ -116,13 +116,6 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
     Synchronized start with 1 callback, seperate state buffer
 */
 /******************************************************************************/
-// typedef const struct Analog_BatchPart
-// {
-//     Analog_ADC_T * P_ADC;
-//     const Analog_ConversionContext_T ADC_CONTEXT;
-// }
-// Analog_BatchPart_T;
-
 // typedef const struct Analog_Batch
 // {
     // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
