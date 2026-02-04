@@ -43,13 +43,13 @@
     VOutput State
     As collective ABC ouput or 3-state interpretation of a single-phase.
 */
-// typedef enum Phase_VOutId
-/* PHASE_VOUT_Z */ /* PHASE_VOUT_0 */ /* PHASE_VOUT_DUTY */
+// typedef enum Phase_VOutMode
+/* PHASE_VOUT_Z */ /* PHASE_VOUT_0 */ /* PHASE_VOUT_PWM */
 typedef enum Phase_Output
 {
-    PHASE_OUTPUT_FLOAT,  /* Disable, 0 as High-Z, it is the result of Pin Low/0 */
-    PHASE_OUTPUT_V0,     /* VDuty 0, Pin High/1 */
-    PHASE_OUTPUT_VPWM,   /* VDuty +, Pin High/1 */
+    PHASE_OUTPUT_FLOAT,  /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
+    PHASE_OUTPUT_V0,     /* VPwm 0, Pin 1 */
+    PHASE_OUTPUT_VPWM,   /* VPwm 1, Pin 1 */
 }
 Phase_Output_T;
 

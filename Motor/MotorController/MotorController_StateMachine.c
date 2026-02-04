@@ -477,6 +477,8 @@ static void MotorCmd_Proc(const MotorController_T * p_context)
     // MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
 }
 
+
+/* DIRECTION_NONE => Stop by default */
 static State_T * MotorCmd_InputDirection(const MotorController_T * p_context, state_value_t direction)
 {
     // if (MotMotors_IsEveryValue(&p_context->MOTORS, Motor_IsUserDirection, (Motor_UserDirection_T)direction) == true) { return GetMainState(p_context); }

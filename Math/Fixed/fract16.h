@@ -271,4 +271,10 @@ extern void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t ma
 // extern uint16_t fract16_vector_limit_fast(fract16_t * p_x, fract16_t * p_y, fract16_t limit);
 // extern int32_t fast_inv_sqrt(int32_t x);
 
+
+
+/* simplify with return by value */// alternatively handle as multiple primitive pointers
+// typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */ /* 32 */
+// typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t; /* 48 */
+
 #endif

@@ -46,17 +46,17 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED:                       value = Motor_GetSpeed_UFract16(p_motor);              break;
-        case MOTOR_VAR_I_PHASE:                     value = Motor_GetIPhase_Fract16(p_motor);             break;
-        case MOTOR_VAR_V_PHASE:                     value = Motor_GetVPhase_Fract16(p_motor);             break;
-        case MOTOR_VAR_STATE:                       value = Motor_GetStateId(p_motor);                     break;
+        case MOTOR_VAR_SPEED:                       value = Motor_GetSpeed_UFract16(p_motor);               break;
+        case MOTOR_VAR_I_PHASE:                     value = Motor_GetIPhase_Fract16(p_motor);               break;
+        case MOTOR_VAR_V_PHASE:                     value = Motor_GetVPhase_Fract16(p_motor);               break;
+        case MOTOR_VAR_STATE:                       value = Motor_GetStateId(p_motor);                      break;
         case MOTOR_VAR_SUB_STATE:                   value = _Motor_GetSubStateId(p_motor);                  break;
-        case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_GetFaultFlags(p_motor).Value;            break;
+        case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_GetFaultFlags(p_motor).Value;             break;
         // case MOTOR_VAR_STATUS_FLAGS:                value = Motor_GetStatusFlags(p_motor).Value;           break;
-        case MOTOR_VAR_HEAT:                        value = Motor_GetHeat_Adcu(p_motor);                   break;
+        case MOTOR_VAR_HEAT:                        value = Motor_GetHeat_Adcu(p_motor);                    break;
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_motor);     break;
-        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);    break;
-        case MOTOR_VAR_I_DC:                        value = Motor_GetIdc_UFract16(p_motor);                break;
+        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);     break;
+        case MOTOR_VAR_I_DC:                        value = Motor_GetIdc_UFract16(p_motor);                 break;
     }
     return value;
 }
@@ -135,10 +135,10 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
     switch (varId)
     {
         /* todo StateMachine validates input */
-        case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_UserDirection_T)varValue);  break;
-        case MOTOR_VAR_USER_ROTARY_DIRECTION:   Motor_ApplyRotaryDirection(p_motor, (Motor_Direction_T)varValue);     break;
+        case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_UserDirection_T)varValue);     break;
+        case MOTOR_VAR_USER_ROTARY_DIRECTION:   Motor_ApplyRotaryDirection(p_motor, (Motor_Direction_T)varValue);       break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
-        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ActivatePhaseOutput(p_motor, (Phase_Output_T)varValue);         break;
+        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ActivatePhaseOutput(p_motor, (Phase_Output_T)varValue);           break;
         /* Set user index */
         // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR_STATE, varValue);                  break;
         // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR_STATE, varValue);                      break;
@@ -412,12 +412,12 @@ int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId)
     return value;
 }
 
-int _Motor_Var_PhaseVBus_Get(const Motor_State_T * p_motor, int varId)
+int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId)
 {
     int value = 0;
     switch (varId)
     {
-        case 0:     value = Phase_VBus_Fract16();    break;
+        case MOTOR_VAR_PHASE_V_BUS: value = Phase_VBus_Fract16();    break;
     }
     return value;
 }
@@ -510,6 +510,7 @@ int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_V_BUS:                      return _Motor_Var_PhaseVBus_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
     }
     return 0;

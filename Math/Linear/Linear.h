@@ -64,7 +64,7 @@ typedef struct Linear
     int32_t X0;
     int32_t Y0;
     /* Zero-to-peak */
-    int32_t XDelta;      /* (XRef - X0), f([X0-XDelta:X0+XDelta]) => [-YRef:YRef] */
+    int32_t XDelta;         /* (XRef - X0), f([X0-XDelta:X0+XDelta]) => [-YRef:YRef] */
     int32_t YDelta;
     /* Optionally store for saturation check */
     int32_t XReference;     /* f([X0:XRef]) <=> fixed32 [0:65536] */

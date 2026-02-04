@@ -162,11 +162,14 @@ static inline void MotorController_ApplyDirectionCmd(MotorController_T * p_conte
     General Direction
 */
 /*
-    MOTOR_CONTROLLER_DIRECTION_PARK => MOTOR_USER_DIRECTION_NONE
-    MOTOR_CONTROLLER_DIRECTION_FORWARD => MOTOR_USER_DIRECTION_FORWARD
-    MOTOR_CONTROLLER_DIRECTION_REVERSE => MOTOR_USER_DIRECTION_REVERSE
-    MOTOR_CONTROLLER_DIRECTION_NEUTRAL => ERROR
-    MOTOR_CONTROLLER_DIRECTION_ERROR => MOTOR_DIRECTION_ERROR
+    PARK => MOTOR_USER_DIRECTION_NONE
+    FORWARD => MOTOR_USER_DIRECTION_FORWARD
+    REVERSE => MOTOR_USER_DIRECTION_REVERSE
+    NEUTRAL => under defined / handle with additional call
+    // ERROR => MOTOR_DIRECTION_ERROR
+
+   NONE + PARK_STATE => PARK
+   NONE + !PARK_STATE => NEUTRAL
 */
 // alternatively map getter to State
 static Motor_UserDirection_T MotorController_GetDirection(MotorController_T * p_context)
@@ -183,7 +186,8 @@ static Motor_UserDirection_T MotorController_GetDirection(MotorController_T * p_
 
 /******************************************************************************/
 /*!
-    Input Cmd Values
+    Input Cmd Trigger
+    Call handle value with struct
 */
 /******************************************************************************/
 typedef enum MotorController_MotorCmd

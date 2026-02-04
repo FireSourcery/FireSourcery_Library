@@ -59,7 +59,6 @@ typedef enum MotorController_Var_Output
     MOT_VAR_MC_FAULT_FLAGS,
     MOT_VAR_MC_STATUS_FLAGS, /* Resv */
     MOT_VAR_MC_DIRECTION,
-    // MOT_VAR_V_BUS,
     MOT_VAR_CONTROL_LOOP_PROFILE,
     MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
 }
@@ -80,27 +79,25 @@ typedef enum MotorController_Var_OutputDebug
 }
 MotorController_Var_OutputDebug_T;
 
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
 /*
     Collective set motors for convenience
     Write only, or io
 */
 typedef enum MotorController_Var_Input
 {
-    MOT_VAR_USER_GENERAL_SET_POINT,          // [-32768:32767]
-    MOT_VAR_USER_GENERAL_DIRECTION,          //
-    MOT_VAR_USER_GENERAL_FEEDBACK_MODE,      //
-    MOT_VAR_USER_GENERAL_PHASE_OUTPUT,       // includes release/hold/float
-    // MOT_VAR_USER_ENTER_PARK,
-    MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,         // 1:Enable, 0:Disable
-    MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,             // 1:Enable, 0:Disable
+    MOT_VAR_USER_GENERAL_SET_POINT,             // [-32768:32767]
+    MOT_VAR_USER_GENERAL_DIRECTION,             // Collective Direction 1:Forward, -1:Reverse, 0:Neutral, different from Motor Stop
+    MOT_VAR_USER_GENERAL_FEEDBACK_MODE,         //
+    MOT_VAR_USER_GENERAL_PHASE_OUTPUT,          // Output mode Float/Hold/VPwm. [Phase_Output_T]
+    MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,        // 1:Enable, 0:Disable
+    MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,            // 1:Enable, 0:Disable
     MOT_VAR_USER_RELAY_TOGGLE,
     MOT_VAR_USER_METER_TOGGLE,
 }
 MotorController_Var_Input_T;
+
+// MOT_VAR_USER_ENTER_PARK,
+// MOT_VAR_USER_STATE_CMD,
 
 /******************************************************************************/
 /*
@@ -113,17 +110,18 @@ typedef enum MotorController_Var_Config
     MOT_VAR_I_LIMIT_LOW_V,
     // MOT_VAR_I_LIMIT_DC,
 
-    MOT_VAR_MAIN_MODE,                 // MotorController_MainMode_T
-    MOT_VAR_INPUT_MODE,                // MotorController_InputMode_T
-    MOT_VAR_BUZZER_FLAGS_ENABLE,            // MotorController_BuzzerFlags_T
+    MOT_VAR_MAIN_MODE,                  // [MotorController_MainMode_T]
+    MOT_VAR_INPUT_MODE,                 // [MotorController_InputMode_T]
+    MOT_VAR_BUZZER_FLAGS_ENABLE,        // [MotorController_BuzzerFlags_T]
 
     /* OptDin */
-    MOT_VAR_OPT_DIN_FUNCTION,               // MotorController_OptDinMode_T
-    MOT_VAR_OPT_SPEED_LIMIT,                // Selectable Speed Limit
+    MOT_VAR_OPT_DIN_FUNCTION,           // [MotorController_OptDinMode_T]
+    MOT_VAR_OPT_SPEED_LIMIT,            //
     MOT_VAR_OPT_I_LIMIT,
 }
 MotorController_Var_Config_T;
 
+/* alternatively merge with  */
 typedef enum MotorController_Var_ConfigBootRef
 {
     MOT_VAR_BOOT_REF_FAST_BOOT,
@@ -154,7 +152,7 @@ MotorController_Var_StaticRef_T;
 /*
     Types
     Type of Base
-        directly corresponds to enum type containing index ids
+        each id directly corresponds to var base literal enum type
         Corresponds to the "object type". accounts for type literal and specialized properties.
         By source module
 
@@ -193,6 +191,11 @@ typedef enum MotorController_VarType_General
 }
 MotorController_VarType_General_T;
 
+/******************************************************************************/
+/*
+    Specialized instances. effectively access as object classes. simplify static value bounds.
+*/
+/******************************************************************************/
 typedef enum MotorController_VarType_VMonitor
 {
     MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE,
@@ -233,8 +236,10 @@ typedef enum MotorController_VarType_Communication
 }
 MotorController_VarType_Communication_T;
 
+// MotorController_SystemCmd_T
 
 /*
+todo move
     MotorController
     Application_User
     app table handle compile time define
@@ -267,7 +272,7 @@ typedef enum MotVarId_HandlerType
     MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /* Resv */
+    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /* Resv */ /* MotorController_SystemCmd_T */
     MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND, /*  */
     _MOT_VAR_ID_HANDLER_TYPE_END,
 }

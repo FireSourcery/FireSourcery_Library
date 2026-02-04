@@ -305,8 +305,8 @@ Motor_Var_StaticRef_T;
 
 typedef enum Motor_Var_PhaseVBus
 {
-    MOTOR_VAR_PHASE_V_BUS,
-    MOTOR_VAR_PHASE_V_BUS_MONITOR,
+    MOTOR_VAR_PHASE_V_BUS,     // in frac16. additionally to vmonitor in adcu
+    // MOTOR_VAR_PHASE_V_BUS_MONITOR_,
 }
 Motor_Var_PhaseVBus_T;
 
@@ -356,6 +356,7 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
 
 /*  */
 extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
+extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 
 
 

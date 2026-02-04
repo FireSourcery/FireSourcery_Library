@@ -32,7 +32,7 @@
 #include "../Phase/Phase_Types.h"
 
 /* Interface for Capture Results */
-/* Phase_Feedback */
+/* Phase_Feedback/Capture/Monitor */
 typedef struct Phase_Input
 {
     Phase_Triplet_T Vabc;
