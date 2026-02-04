@@ -33,7 +33,6 @@
 #define ENCODER_H
 
 #include "HAL_Encoder.h"
-#include "Config.h"
 #include "Peripheral/Pin/Pin.h"
 
 #include "Math/Fixed/fixed.h"
@@ -41,6 +40,38 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/*
+    Compile time define if chip supports decoder/counter.
+*/
+#if     defined(ENCODER_HW_DECODER)
+#elif   defined(ENCODER_HW_EMULATED)
+#else
+// #define ENCODER_HW_DECODER
+#endif
+
+/* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
+#if     defined(ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
+#elif   defined(ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
+#else
+#define ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
+#endif
+
+/* Emulated and Decoder Quadrature Capture. Enables toggle during runtime */
+#if     defined(ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
+#elif   defined(ENCODER_QUADRATURE_MODE_DISABLE)
+#else
+#define ENCODER_QUADRATURE_MODE_ENABLE
+#endif
+
+/* Adjust timer freq at runtime */
+#ifdef ENCODER_DYNAMIC_TIMER
+#else
+#endif
 
 /******************************************************************************/
 /*!
@@ -101,7 +132,7 @@ typedef struct Encoder_Config
     uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
     uint32_t AlignOffsetRef;            /* Align - Index */
 
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+#if defined(ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
     bool IsALeadBPositive;              /* User runtime calibration for encoder install direction. Accounts for LUT calibration */
     /* Optionally combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */
@@ -113,7 +144,7 @@ Encoder_Config_T;
 typedef struct Encoder_State
 {
     Encoder_Config_T Config;
-// #if defined(CONFIG_ENCODER_HW_EMULATED)
+// #if defined(ENCODER_HW_EMULATED)
     Encoder_Phases_T Phases; /* Save Prev State */
     uint32_t CounterD;
     uint32_t Angle32;
@@ -170,9 +201,9 @@ Encoder_State_T;
 
 typedef const struct Encoder
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_Counter_T * P_HAL_ENCODER_COUNTER; /*!< Pulse Counter */
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     /* HAL_Encoder_Pin_T configures settings not included in Pin_T, case of interrupt support */
     HAL_Encoder_Pin_T * P_HAL_PIN_A; uint32_t PIN_A_ID; /* Encoder_Pin_T */
     HAL_Encoder_Pin_T * P_HAL_PIN_B; uint32_t PIN_B_ID;
@@ -204,7 +235,7 @@ Encoder_T;
     0xFFFFFFFF/50[Mhz] = 85.899[ms]
     TIMER_FREQ * 60 < UINT32_MAX for RPM calc
 */
-#if defined(CONFIG_ENCODER_HW_EMULATED)
+#if defined(ENCODER_HW_EMULATED)
     #define _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId)  \
         .P_HAL_PIN_A = p_PhaseAHal, .PIN_A_ID = PhaseAId, .P_HAL_PIN_B = p_PhaseBHal, .PIN_B_ID = PhaseBId, .P_HAL_PIN_Z = p_PhaseZHal, .PIN_Z_ID = PhaseZId,
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId) \
@@ -288,7 +319,7 @@ static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, 
 /******************************************************************************/
 static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+#if     defined(ENCODER_QUADRATURE_MODE_ENABLE)
     return (p_encoder->Config.IsQuadratureCaptureEnabled == true);
 #else
     return false;
@@ -301,27 +332,27 @@ static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p
 */
 static inline int32_t Encoder_GetCounterD(const Encoder_State_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     return p_encoder->CounterD;
 #endif
 }
 
 static inline void _Encoder_SetCounterD(Encoder_State_T * p_encoder, int32_t counterD)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, counterD);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     p_encoder->CounterD = counterD;
 #endif
 }
 
 static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->UnitAngleD;
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     return p_encoder->Angle32;
 #endif
 }
@@ -329,9 +360,9 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 // static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
 // {
-// #if     defined(CONFIG_ENCODER_HW_DECODER)
+// #if     defined(ENCODER_HW_DECODER)
 //     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->UnitAnglePerCount;
-// #elif   defined(CONFIG_ENCODER_HW_EMULATED)
+// #elif   defined(ENCODER_HW_EMULATED)
 //     return p_encoder->Angle32 >> ENCODER_ANGLE_SHIFT;
 // #endif
 // }
@@ -341,11 +372,11 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
     p_encoder->CounterD = 0U;
     p_encoder->CounterPrev = 0U;
     p_encoder->IndexCount = 0U;
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     p_encoder->CounterPrev = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
     HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
 #endif
 }
 
@@ -495,7 +526,7 @@ void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder);
 extern void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder);
 extern void Encoder_CompleteAlignValidate(Encoder_State_T * p_encoder);
 
-#if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+#if defined(ENCODER_QUADRATURE_MODE_ENABLE)
 extern void Encoder_SetQuadratureMode(Encoder_State_T * p_encoder, bool isEnabled);
 extern void Encoder_EnableQuadratureMode(Encoder_State_T * p_encoder);
 extern void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPositive);

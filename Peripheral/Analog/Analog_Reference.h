@@ -31,7 +31,6 @@
 #ifndef ANALOG_REFERENCE_H
 #define ANALOG_REFERENCE_H
 
-#include "Config.h"
 #include <stdint.h>
 #include <stdbool.h>
 

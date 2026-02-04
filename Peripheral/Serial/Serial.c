@@ -38,10 +38,10 @@
 #define SERIAL_EXIT_CRITICAL(p_serial) _Critical_EnableIrq()
 #endif
 
-#if     defined(CONFIG_SERIAL_SINGLE_THREADED)
+#if     defined(SERIAL_SINGLE_THREADED)
     #define _ENTER_CRITICAL(local,...)   local
     #define _EXIT_CRITICAL(local,...)    local
-#elif  defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
+#elif  defined(SERIAL_MULTITHREADED_USE_CRITICAL)
     #define _ENTER_CRITICAL(local,...)   __VA_ARGS__
     #define _EXIT_CRITICAL(local,...)    __VA_ARGS__
 #else
@@ -89,7 +89,7 @@ static inline bool Hal_RecvChar(Serial_T * p_serial, uint8_t * p_rxChar)
 
 static inline uint8_t Hal_GetLoopCount(size_t length)
 {
-#ifdef CONFIG_SERIAL_HW_FIFO_DISABLE
+#ifdef SERIAL_HW_FIFO_DISABLE
     (void)length;
     return 1U;
 #else

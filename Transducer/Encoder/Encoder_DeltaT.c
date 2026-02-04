@@ -62,7 +62,7 @@ void _Encoder_DeltaT_InitTimer(const Encoder_T * p_encoder)
             => 10000RPM error ~1%
             => RPM Min ~= 10RPM
     */
-// #ifdef CONFIG_ENCODER_DYNAMIC_TIMER
+// #ifdef ENCODER_DYNAMIC_TIMER
 //     // uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->P_HAL_ENCODER_TIMER, p_encoder->P_STATE->Config.CountsPerRevolution * 16666U);
 //     uint32_t timerFreq = HAL_Encoder_InitTimerFreq(p_encoder->P_HAL_ENCODER_TIMER, p_encoder->TIMER_FREQ);
 //     p_encoder->ExtendedTimerConversion = timerFreq / p_encoder->EXTENDED_TIMER_FREQ;

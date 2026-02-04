@@ -44,7 +44,6 @@
 // typedef const struct Motor Motor_T;
 // typedef struct Motor_State Motor_State_T;
 
-
 /*
     Init with Motor_State_T
     Init using shared State
@@ -52,6 +51,10 @@
 #define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) ROTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, p_Encoder) HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, &((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
+
+
+// static inline RotorSensor_T * _Motor_GetSensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
+
 
 /******************************************************************************/
 /*!

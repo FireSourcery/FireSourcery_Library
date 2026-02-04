@@ -90,7 +90,7 @@ MotorController_Version_T;
 //     p_payload->VMonitorCount = 3U;
 //     p_payload->ThermistorMosfetsCount = p_context->HEAT_MOSFETS.COUNT;
 //     p_payload->ProtocolSocketCount = p_context->PROTOCOL_COUNT;
-// #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 //     p_payload->CanSocketCount = p_context->CAN_SOCKET_COUNT;
 // #else
 //     p_payload->CanSocketCount = 0U;
@@ -236,7 +236,7 @@ static packet_size_t WriteMem_Blocking(const MotorController_T * p_context, MotP
 }
 
 
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 /******************************************************************************/
 /*! Stateful Read Data */
 /******************************************************************************/
@@ -293,7 +293,7 @@ const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[] =
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ,      0U,     ReadData,               REQ_SYNC_DATA_MODE),
     PROTOCOL_REQ(MOT_PACKET_DATA_MODE_WRITE,     0U,     WriteData_Blocking,     REQ_SYNC_DATA_MODE),
     // PROTOCOL_REQ(MOT_PACKET_DATA_MODE_DATA,      0U,     ReadData,               REQ_SYNC_DATA_MODE),
-// #if defined(CONFIG_MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+// #if defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 // #endif
 };
 

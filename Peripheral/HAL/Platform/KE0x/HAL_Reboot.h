@@ -79,7 +79,7 @@ static inline void HAL_Reboot()
 
     SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
 
-// #ifdef CONFIG_HAL_REBOOT_RESET_CLOCK
+// #ifdef HAL_REBOOT_RESET_CLOCK
     HAL_ResetClock();
 // #endif
 

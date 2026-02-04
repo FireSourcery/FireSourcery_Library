@@ -95,7 +95,7 @@ static inline double inv_steinhart(uint32_t b, uint32_t t0, uint32_t r0, double 
     Direct conversion using steinhart coefficients.
 */
 /******************************************************************************/
-#if defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+#if defined(THERMISTOR_UNITS_FLOAT)
 float Thermistor_KelvinOfR_Steinhart(const Thermistor_T * p_therm, uint32_t r_thermal)
 {
     return (float)((double)1.0F / steinhart(Thermistor_GetB(p_therm), Thermistor_GetT0(p_therm), Thermistor_GetR0(p_therm), r_thermal));
@@ -119,11 +119,11 @@ static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float degC
 // static thermal_t CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu)
 // {
 //     thermal_t degC = 0;
-// #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+// #if     defined(THERMISTOR_UNITS_LINEAR)
 //     // degC = CelsiusOfAdcu_Linear(p_therm, adcu);
-// #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+// #elif   defined(THERMISTOR_UNITS_FLOAT)
 //     degC = CelsiusOfAdcu_Steinhart(p_therm, adcu);
-// #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
+// #elif   defined(THERMISTOR_UNITS_LUT)
 //     degC = CelsiusOfAdcu_Lut(p_therm, adcu);
 // #endif
 //     return degC;
@@ -132,11 +132,11 @@ static uint16_t AdcuOfCelsius_Steinhart(const Thermistor_T * p_therm, float degC
 // static uint16_t AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC)
 // {
 //     uint16_t adcu = 0;
-// #if     defined(CONFIG_THERMISTOR_UNITS_LINEAR)
+// #if     defined(THERMISTOR_UNITS_LINEAR)
 //     // adcu = AdcuOfCelsius_Linear(p_therm, degC);
-// #elif   defined(CONFIG_THERMISTOR_UNITS_FLOAT)
+// #elif   defined(THERMISTOR_UNITS_FLOAT)
 //     adcu = AdcuOfCelsius_Steinhart(p_therm, degC);
-// #elif   defined(CONFIG_THERMISTOR_UNITS_LUT)
+// #elif   defined(THERMISTOR_UNITS_LUT)
 //     adcu = AdcuOfCelsius_Lut(p_therm, degC);
 // #endif
 //     return adcu;

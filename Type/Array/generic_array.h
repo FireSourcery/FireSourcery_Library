@@ -31,8 +31,8 @@
 /******************************************************************************/
 #include "void_array.h"
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#define ARRAY_FOR_EACH(array, index) for (size_t index = 0; (index) < ARRAY_SIZE(array); ++(index))
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
+#define ARRAY_FOR_EACH(array, index) for (size_t index = 0; (index) < ARRAY_LENGTH(array); ++(index))
 
 /******************************************************************************/
 /*!

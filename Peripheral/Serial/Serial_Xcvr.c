@@ -40,7 +40,7 @@ const Xcvr_VTable_T SERIAL_XCVR_VTABLE =
     .RX_N = (Xcvr_RxN_T)Serial_RecvN,
     .GET_TX_EMPTY_COUNT = (Xcvr_GetCount_T)Serial_GetTxEmptyCount,
     .GET_RX_FULL_COUNT = (Xcvr_GetCount_T)Serial_GetRxFullCount,
-    .CONFIG_BAUD_RATE = (Xcvr_SetConfig_T)Serial_ConfigBaudRate,
+    .INIT_BAUD_RATE = (Xcvr_SetConfig_T)Serial_ConfigBaudRate,
 };
 
 

@@ -105,7 +105,7 @@ static inline ufract16_t Motor_GetIdc_UFract16(const Motor_State_T * p_motor) { 
 /*  */
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
-#ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+#ifdef MOTOR_UNIT_CONVERSION_LOCAL
 static inline int16_t Motor_GetSpeed_Rpm(const Motor_State_T * p_motor)             { return _Motor_ConvertSpeed_Fract16ToRpm(p_motor, Motor_GetSpeed_Fract16(p_motor)); }
 static inline int16_t Motor_GetIPhase_Amps(const Motor_State_T * p_motor)           { return _Motor_ConvertI_Fract16ToAmps(Motor_GetIPhase_UFract16(p_motor)); }
 static inline int16_t Motor_GetVPhase_Volts(const Motor_State_T * p_motor)          { return _Motor_ConvertV_Fract16ToVolts(Motor_GetVPhase_UFract16(p_motor)); }
@@ -237,7 +237,7 @@ extern void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fra
 extern void Motor_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 
-#if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+#if defined(MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
 extern void Motor_EnterOpenLoopState(const Motor_T * p_motor);
 
 extern void Motor_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16);

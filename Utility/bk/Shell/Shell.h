@@ -61,9 +61,9 @@ Shell_State_T;
 
 typedef struct __attribute__((aligned(2U)))
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     uint8_t XcvrId;
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_T * p_Serial;
 #endif
     uint32_t BaudRate;
@@ -95,7 +95,7 @@ typedef struct
 }
 Shell_T;
 
-#if defined(CONFIG_SHELL_XCVR_ENABLE)
+#if defined(SHELL_XCVR_ENABLE)
     #define _SHELL_INIT_XCVR(p_XcvrTable, TableLength) .Xcvr = XCVR_INIT(p_XcvrTable, TableLength)
 #else
     #define _SHELL_INIT_XCVR(p_XcvrTable, TableLength)
@@ -125,9 +125,9 @@ static inline void Shell_DisableOnInit(Shell_T * p_shell) { p_shell->Config.IsEn
 
 extern void Shell_Init(Shell_T * p_shell);
 extern Shell_Status_T Shell_Proc(Shell_T * p_shell);
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
 extern bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
 extern void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial);
 #endif
 extern void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate);

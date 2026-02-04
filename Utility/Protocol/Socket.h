@@ -133,7 +133,10 @@ typedef const struct Socket
     /*  */
     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
     uint8_t XCVR_COUNT; /* number of Xcvr in table */
-    // alternatively fixed // const Xcvr_T * P_XCVR;
+
+    // alternatively fixed or default init
+    // const Packet_Class_T * const * P_PACKET_CLASS;
+    // const Xcvr_T * P_XCVR;
 
     const volatile uint32_t * P_TIMER;
 }

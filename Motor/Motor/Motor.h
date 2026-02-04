@@ -66,12 +66,13 @@
 #include <stdbool.h>
 #include <assert.h>
 
+/* Static Def */
+#include "Motor_ControlFreq.h"
 
 /*
     Parts - with dependency on Motor_T forward declared
     This way sub modules contain handling details
 */
-#include "Motor_ControlFreq.h"
 // #include "Motor_Var.h"
 // #include "Analog/Motor_Analog.h"
 // #include "Sensor/Motor_Sensor.h"
@@ -147,13 +148,13 @@ typedef union
 Motor_FaultFlags_T;
 
 /*!
-    @brief Motor Config - Runtime variable configuration. Load from non volatile memory.
+    @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
 */
 typedef struct Motor_Config
 {
     Motor_CommutationMode_T CommutationMode;
     RotorSensor_Id_T SensorMode;
-    Motor_Direction_T DirectionForward;
+    Motor_Direction_T DirectionForward; /* Calibration for UserDirection per Motor */
     // Motor_ResumeMode_T ResumeMode; // option Scale to VSpeed or VBemf on resume
 
     /*
@@ -163,13 +164,15 @@ typedef struct Motor_Config
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
     uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. */
-    uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. [0.7:1.3] typical. ensure resume control at lower speed. */
 
     /*
         Derived Parameters during initialization or from Host
+        alternatively store as control domain units
     */
     // uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
     // uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
+
+    uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. [0.7:1.3] typical. ensure resume control at lower speed. */
 
     Phase_Triplet_T IabcZeroRef_Adcu;
 
@@ -201,7 +204,7 @@ typedef struct Motor_Config
     uint32_t AlignTime_Cycles;              /* Ramp time and step duration */
 
     /* OpenLoop Run/StartUp Preset */
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
+// #if defined(MOTOR_OPEN_LOOP_ENABLE)
     uint16_t OpenLoopRampSpeedFinal_Fract16;
     uint32_t OpenLoopRampSpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
     uint16_t OpenLoopRampIFinal_Fract16;
@@ -209,11 +212,11 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
 
-#if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+#if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
     uint16_t SurfaceDiameter;
     uint16_t GearRatioOutput;
     uint16_t GearRatioInput;
@@ -231,7 +234,7 @@ typedef struct Motor_State
         State and SubStates
     */
     StateMachine_Active_T StateMachine;
-    uint32_t ControlTimerBase;                  /* Control Freq ~ 20kHz, calibration, commutation, angle control. overflow 20Khz: 59 hours*/
+    uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, calibration, commutation, angle control. Overflow 20Khz: 59 hours */ //ControlCounter
 
     /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Applied V direction. Direction Motoring. Active Limits. Sensor Interpolation */
@@ -315,7 +318,7 @@ typedef struct Motor_State
     /*
         Six-Step
     */
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
     // PID_T PidIBus;
     /* MotorSixStep_T */
     BEMF_T Bemf;
@@ -331,7 +334,7 @@ typedef struct Motor_State
     uint32_t OpenLoopCommutationPeriod;
 #endif
 
-#if  defined(CONFIG_MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
+#if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
 #endif
@@ -366,7 +369,7 @@ typedef const struct Motor
 
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
-    RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection */
+    RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
     // Analog_Conversion_T HEAT_MONITOR_ANALOG;
     StateMachine_T STATE_MACHINE;
@@ -397,10 +400,6 @@ typedef bool(*Motor_State_TryProc_T)(Motor_State_T * p_motor);
 typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value);
 typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
 
-
-// static inline RotorSensor_T * _Motor_GetSensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
-
-
 /******************************************************************************/
 /*
     Number formats
@@ -421,10 +420,12 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 */
 /******************************************************************************/
 // static inline uint16_t motor_rpm_of_kv(int kv, int v, uint16_t v_fract16) { return fract16_mul(v_fract16, kv * v); }
+
 /*
     V of Speed
 */
 /* alternatively convert kv to electrical domain */
+/* Rpm of Kv * V */
 static inline uint16_t Motor_RpmOfKv(const Motor_State_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
 static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_motor->Config.Kv * Phase_Calibration_GetVMaxVolts()); }
 

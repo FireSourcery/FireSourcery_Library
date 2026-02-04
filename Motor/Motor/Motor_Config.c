@@ -37,7 +37,7 @@
 /******************************************************************************/
 static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 {
-#ifdef CONFIG_MOTOR_CONFIG_PROPAGATE_SET_ENABLE
+#ifdef MOTOR_CONFIG_PROPAGATE_SET_ENABLE
     reset(p_motor);
 #else
     (void)p_motor;
@@ -98,12 +98,12 @@ void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_State_T * p_motor, uint16_t scalar) { p_motor->Config.VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
 
 
-#ifdef CONFIG_MOTOR_SIX_STEP_ENABLE
+#ifdef MOTOR_SIX_STEP_ENABLE
 static inline void Motor_Config_SetPhaseMode(Motor_State_T * p_motor, Phase_Polar_Mode_T mode) { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->PHASE, mode); }
 #endif
 
 /* Kv * VSource */
-// #if defined(CONFIG_MOTOR_DEBUG_ENABLE)
+// #if defined(MOTOR_DEBUG_ENABLE)
 // void Motor_Config_SetSpeedVRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
 // {
 //     // p_motor->Config.Kv = rpm / Phase_VBus_Volts();
@@ -265,7 +265,7 @@ void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_State_T * p_motor, uint1
 /******************************************************************************/
 /* Local Unit Conversion */
 /******************************************************************************/
-// #ifdef CONFIG_MOTOR_UNIT_CONVERSION_LOCAL
+// #ifdef MOTOR_UNIT_CONVERSION_LOCAL
 // static uint16_t ConvertToSpeedLimitPercent16(Motor_State_T * p_motor, uint16_t speed_rpm)
 // {
 //     int32_t speed_fract16 = _Motor_ConvertSpeed_RpmToPercent16(p_motor, speed_rpm);

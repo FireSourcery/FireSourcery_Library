@@ -28,13 +28,13 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_PROTOCOL_H
-#define CONFIG_PROTOCOL_H
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
 
-// #if     defined(CONFIG_PROTOCOL_XCVR_ENABLE)
-// // #elif     defined(CONFIG_PROTOCOL_XCVR_SERIAL)
+// #if     defined(PROTOCOL_XCVR_ENABLE)
+// // #elif     defined(PROTOCOL_XCVR_SERIAL)
 // #else
-//     // #define CONFIG_PROTOCOL_XCVR_ENABLE
+//     // #define PROTOCOL_XCVR_ENABLE
 // #endif
 
 #endif

@@ -65,7 +65,7 @@ uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterva
 /******************************************************************************/
 void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t yRef)
 {
-#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+#ifdef LINEAR_DIVIDE_SHIFT
     p_linear->X0                = 0;
     p_linear->XReference        = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor + 0 */
     p_linear->XDelta            = p_linear->XReference - p_linear->X0;
@@ -76,7 +76,7 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
     p_linear->YDelta            = yRef - y0;
     p_linear->InvSlopeShift     = _Linear_SlopeShift(divisor, factor, p_linear->YDelta);
     p_linear->InvSlope          = (divisor << p_linear->InvSlopeShift) / factor;
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor = factor;
     p_linear->SlopeDivisor = divisor;
     p_linear->Y0 = y0;
@@ -95,7 +95,7 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 {
     assert(xRef != x0);  /* Must have non-zero x interval */
 
-#ifdef CONFIG_LINEAR_DIVIDE_SHIFT
+#ifdef LINEAR_DIVIDE_SHIFT
     p_linear->X0                = x0;
     p_linear->Y0                = y0;
     p_linear->XReference        = xRef;

@@ -208,8 +208,8 @@
 // //     (void)p_hal;
 // // }
 
-// #define CONFIG_HAL_CAN_BUS_1_IRQ_NUMBER 88U
-// #define CONFIG_HAL_CAN_BUS_0_IRQ_NUMBER 81U
+// #define HAL_CAN_BUS_1_IRQ_NUMBER 88U
+// #define HAL_CAN_BUS_0_IRQ_NUMBER 81U
 
 // static inline void HAL_CanBus_DisableInterrupts(HAL_CanBus_T * p_hal)
 // {

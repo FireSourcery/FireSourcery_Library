@@ -59,7 +59,7 @@ static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
         // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_context);     break;
         case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_context);     break;
-            // #if  defined(MOTOR_OPEN_LOOP_ENABLE)  || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+            // #if  defined(MOTOR_OPEN_LOOP_ENABLE)  || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
         case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_context);     break;
             // #endif
         case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_context);     break;
@@ -152,7 +152,7 @@ static inline void Motor_Heat_Thread(const Motor_T * p_context)
 static inline void Motor_HallEncoderA_ISR(const Motor_T * p_context)
 {
     Encoder_OnPhaseA_ISR(&p_context->SENSOR_TABLE.ENCODER.ENCODER);
-#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if defined(MOTOR_HALL_MODE_ISR)
     if (p_context->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_context->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
@@ -160,7 +160,7 @@ static inline void Motor_HallEncoderA_ISR(const Motor_T * p_context)
 static inline void Motor_HallEncoderB_ISR(const Motor_T * p_context)
 {
     Encoder_OnPhaseB_ISR(&p_context->SENSOR_TABLE.ENCODER.ENCODER);
-#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if defined(MOTOR_HALL_MODE_ISR)
     if (p_context->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_context->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
@@ -168,7 +168,7 @@ static inline void Motor_HallEncoderB_ISR(const Motor_T * p_context)
 static inline void Motor_HallEncoderAB_ISR(const Motor_T * p_context)
 {
     Encoder_OnPhaseAB_ISR(&p_context->SENSOR_TABLE.ENCODER.ENCODER);
-#if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if defined(MOTOR_HALL_MODE_ISR)
     if (p_context->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_context->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
@@ -180,7 +180,7 @@ static inline void Motor_HallEncoderCZ_ISR(const Motor_T * p_context)
         case ROTOR_SENSOR_ID_ENCODER:
             Encoder_OnIndex_ISR(&p_context->SENSOR_TABLE.ENCODER.ENCODER);
             break;
-        #if defined(CONFIG_MOTOR_HALL_MODE_ISR)
+        #if defined(MOTOR_HALL_MODE_ISR)
         case ROTOR_SENSOR_ID_HALL:
             Encoder_OnPhaseC_Hall_ISR(&p_context->SENSOR_TABLE.ENCODER.ENCODER);
             Hall_CaptureAngle_ISR(&p_context->SENSOR_TABLE.HALL.HALL);

@@ -140,8 +140,8 @@ extern void PID_SetKd_Fixed16(PID_T * p_pid, uint16_t kd_Fixed16);
 
 
 
-// #if      defined(CONFIG_PID_K_INT)
-// #elif    defined(CONFIG_PID_K_FLOAT)
+// #if      defined(PID_K_INT)
+// #elif    defined(PID_K_FLOAT)
 // #else
-//     #define CONFIG_PID_K_INT
+//     #define PID_K_INT
 // #endif

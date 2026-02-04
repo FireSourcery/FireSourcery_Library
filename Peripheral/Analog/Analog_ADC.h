@@ -31,10 +31,23 @@
 /******************************************************************************/
 // #include "Analog.h"
 #include "HAL_ADC.h"
-#include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
+
+
+
+// #if     defined(ANALOG_ADC_HW_FIFO_DISABLE)
+// #elif   defined(ANALOG_ADC_HW_FIFO_ENABLE)
+// #else
+//     #define ANALOG_ADC_HW_FIFO_DISABLE
+// #endif
+
+// #if     defined(ANALOG_ADC_HW_CONTINUOUS_CONVERSION_ENABLE)
+// #elif   defined(ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE)
+// #else
+//     #define ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE
+// #endif
 
 
 #ifdef HAL_ADC_FIFO_LENGTH_MAX
@@ -315,3 +328,4 @@ static void Analog_ADC_Init(const Analog_ADC_T * p_adc)
 /******************************************************************************/
 static inline void Analog_ADC_MarkAll(const Analog_ADC_T * p_adc, uint32_t channels) { p_adc->P_ADC_STATE->ChannelMarkers |= channels; }
 static inline void Analog_ADC_MarkOnly(const Analog_ADC_T * p_adc, uint32_t channels) { p_adc->P_ADC_STATE->ChannelMarkers = channels; }
+

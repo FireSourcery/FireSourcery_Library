@@ -55,7 +55,7 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
-// #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 // #include "Peripheral/CanBus/CanBus.h"
 // #endif
 
@@ -63,7 +63,7 @@
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/Protocol/Protocol.h"
 #include "Utility/Protocol/Socket.h"
-#if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
+#if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
 #include "Utility/Shell/Shell.h"
 #endif
 #include "Utility/BootRef/BootRef.h"
@@ -184,7 +184,7 @@ typedef struct MotorController_Config
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
 
-#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     uint8_t CanServicesId;
     bool CanIsEnable;
 #endif
@@ -221,7 +221,7 @@ typedef struct MotorController_State
     uint32_t MicrosRef;
     uint32_t ControlLoopProfile;
 
-#if defined(CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE)
+#if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
     Shell_T Shell;
     uint16_t ShellSubState;
 #endif
@@ -243,7 +243,7 @@ typedef const struct MotorController
 
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
-// #if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 //     CanBus_T * P_CAN_BUS;
 // #endif
 

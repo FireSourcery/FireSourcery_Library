@@ -135,7 +135,7 @@ typedef enum Hall_Direction
 }
 Hall_Direction_T;
 
-// #if defined(CONFIG_HALL_COMMUTATION_TABLE_FUNCTION)
+// #if defined(HALL_COMMUTATION_TABLE_FUNCTION)
 // typedef void (*Hall_CommutationPhase_T)(void * p_context);
 // #endif
 

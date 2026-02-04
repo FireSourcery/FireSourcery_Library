@@ -35,8 +35,10 @@
 #include "Type/Array/void_array.h"
 
 
+//todo move to Motor_Table.h
+
 /* Shorthand Wrappers */
-/* Define with motor runtime state allocated in continous array */
+/* Define with motor runtime state allocated in continuous array */
 typedef const struct MotMotors
 {
     Motor_State_T * const P_STATES;

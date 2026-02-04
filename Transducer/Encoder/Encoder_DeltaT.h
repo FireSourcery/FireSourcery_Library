@@ -35,7 +35,7 @@
 
 static inline uint32_t _Encoder_DeltaT_GetTimerFreq(const Encoder_T * p_encoder)
 {
-#ifdef CONFIG_ENCODER_DYNAMIC_TIMER
+#ifdef ENCODER_DYNAMIC_TIMER
     return p_encoder->P_STATE->UnitTime_Freq;
 #else
     return p_encoder->TIMER_FREQ;
@@ -83,7 +83,7 @@ static inline bool Encoder_DeltaT_IsStop(const Encoder_T * p_encoder)
 static inline uint32_t _Encoder_GetExtendedTimerDelta(const Encoder_T * p_encoder)
 {
     /* Millis overflow 40+ days */
-#ifdef CONFIG_ENCODER_EXTENDED_TIMER_CHECK_OVERFLOW
+#ifdef ENCODER_EXTENDED_TIMER_CHECK_OVERFLOW
     _Encoder_CaptureDeltaWrap(UINT32_MAX, p_encoder->ExtendedTimerPrev, *(p_encoder->P_EXTENDED_TIMER));
 #else
     return *(p_encoder->P_EXTENDED_TIMER) - p_encoder->P_STATE->ExtendedTimerPrev;

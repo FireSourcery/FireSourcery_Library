@@ -35,11 +35,7 @@
 
 
 
-#if     defined(CONFIG_MOTOR_HALL_MODE_POLLING)
-#elif   defined(CONFIG_MOTOR_HALL_MODE_ISR)
-#else
-#define CONFIG_MOTOR_HALL_MODE_POLLING
-#endif
+
 
 #if     defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 #elif   defined(MOTOR_SENSOR_SIN_COS_DISABLE)

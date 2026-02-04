@@ -200,7 +200,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 
 // static inline bool _Motor_IsOpenLoop(const Motor_T * p_motor)
 // {
-//     // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)  || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+//     // #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_OPEN_LOOP_ENABLE)  || defined(MOTOR_DEBUG_ENABLE)
 //     return (p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop == 1U);
 //     // #else
 //     //     (void)p_motor; return false;
@@ -218,7 +218,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 
 
 
-// #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+// #if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
 // extern int16_t Motor_GetGroundSpeed_Mph(Motor_State_T * p_motor);
 // extern void Motor_SetGroundSpeed_Kmh(Motor_State_T * p_motor, uint32_t wheelDiameter_Mm, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
 // extern void Motor_SetGroundSpeed_Mph(Motor_State_T * p_motor, uint32_t wheelDiameter_Inch10, uint32_t wheelToMotorRatio_Factor, uint32_t wheelToMotorRatio_Divisor);
@@ -230,7 +230,7 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 //     Ground Speed
 // */
 // /******************************************************************************/
-// #if defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL) && defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+// #if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
 // int16_t Motor_GetGroundSpeed_Kmh(Motor_State_T * p_motor)
 // {
 //     int16_t speed;

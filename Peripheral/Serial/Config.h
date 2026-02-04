@@ -28,20 +28,20 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_SERIAL_H
-#define CONFIG_SERIAL_H
+#ifndef SERIAL_H
+#define SERIAL_H
 
-#if       defined(CONFIG_SERIAL_MULTITHREADED_USE_MUTEX)
-#elif     defined(CONFIG_SERIAL_MULTITHREADED_USE_CRITICAL)
-#elif     defined(CONFIG_SERIAL_SINGLE_THREADED)
+#if       defined(SERIAL_MULTITHREADED_USE_MUTEX)
+#elif     defined(SERIAL_MULTITHREADED_USE_CRITICAL)
+#elif     defined(SERIAL_SINGLE_THREADED)
 #else
-    #define CONFIG_SERIAL_SINGLE_THREADED
+    #define SERIAL_SINGLE_THREADED
 #endif
 
-#if     defined(CONFIG_SERIAL_HW_FIFO_DISABLE)
-#elif   defined(CONFIG_SERIAL_HW_FIFO_ENABLE)
+#if     defined(SERIAL_HW_FIFO_DISABLE)
+#elif   defined(SERIAL_HW_FIFO_ENABLE)
 #else
-    #define CONFIG_SERIAL_HW_FIFO_DISABLE
+    #define SERIAL_HW_FIFO_DISABLE
 #endif
 
 #endif

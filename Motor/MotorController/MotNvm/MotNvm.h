@@ -56,7 +56,7 @@ MotNvm_Entry_T;
 typedef const struct
 {
     Flash_T * P_FLASH;
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
+#if defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
     EEPROM_T * P_EEPROM;
 #endif
 

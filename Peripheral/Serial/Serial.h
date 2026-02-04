@@ -104,7 +104,7 @@ static inline void Serial_RxData_ISR(Serial_T * p_serial)
 
 /*
     Tx data reg/fifo empty ISR, transmit from software buffer to hw
-    Alternatively, HAL_Serial_ReadTxFullCount < CONFIG_HAL_SERIAL_FIFO_SIZE
+    Alternatively, HAL_Serial_ReadTxFullCount < HAL_SERIAL_FIFO_SIZE
 */
 static inline void Serial_TxData_ISR(Serial_T * p_serial)
 {

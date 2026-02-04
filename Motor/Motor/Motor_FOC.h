@@ -117,7 +117,7 @@ extern void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor);
 extern void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor);
 
-#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+#ifdef MOTOR_EXTERN_CONTROL_ENABLE
 extern void Motor_ExternControl(Motor_State_T * p_motor);
 #endif
 

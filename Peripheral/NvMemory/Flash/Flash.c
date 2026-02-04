@@ -175,16 +175,16 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 // }
 
 
-// #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
+// #ifdef FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return 0U; // overwrite with totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
-// #elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
+// #elif defined(FLASH_HW_VERIFY_ERASE_1_UNIT)
 //     return FLASH_UNIT_VERIFY_ERASE_SIZE;
 // #endif
 // static inline size_t VerifyEraseUnitsPerCmd(size_t totalBytes)
 // {
-// #ifdef CONFIG_FLASH_HW_VERIFY_ERASE_N_UNITS
+// #ifdef FLASH_HW_VERIFY_ERASE_N_UNITS
 //     return totalBytes / FLASH_UNIT_VERIFY_ERASE_SIZE;
-// #elif defined(CONFIG_FLASH_HW_VERIFY_ERASE_1_UNIT)
+// #elif defined(FLASH_HW_VERIFY_ERASE_1_UNIT)
 //     return 1U;
 // #endif
 // }

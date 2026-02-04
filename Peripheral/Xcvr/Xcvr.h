@@ -60,8 +60,7 @@ typedef const struct Xcvr_VTable
     Xcvr_RxN_T          RX_N; /* RxFrame */
     Xcvr_GetCount_T     GET_TX_EMPTY_COUNT;
     Xcvr_GetCount_T     GET_RX_FULL_COUNT;
-    Xcvr_SetConfig_T    CONFIG_BAUD_RATE;
-    // Xcvr_SetConfig_T    INIT_BAUD_RATE;
+    Xcvr_SetConfig_T    INIT_BAUD_RATE;
     // Xcvr_SetConfig_T    COMPARE_BAUD_RATE;
 }
 Xcvr_VTable_T;
@@ -95,7 +94,7 @@ static inline size_t Xcvr_Rx(const Xcvr_T * p_xcvr, uint8_t * p_destBuffer, size
 static inline bool Xcvr_ConfigBaudRate(const Xcvr_T * p_xcvr, uint32_t baudRate)
 {
     bool isSuccess = true;
-    if (p_xcvr->P_VTABLE->CONFIG_BAUD_RATE != NULL) { isSuccess = p_xcvr->P_VTABLE->CONFIG_BAUD_RATE(p_xcvr->P_BASE, baudRate); }
+    if (p_xcvr->P_VTABLE->INIT_BAUD_RATE != NULL) { isSuccess = p_xcvr->P_VTABLE->INIT_BAUD_RATE(p_xcvr->P_BASE, baudRate); }
     return isSuccess;
 }
 

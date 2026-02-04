@@ -36,11 +36,11 @@
 */
 void _Encoder_DeltaD_InitCounter(const Encoder_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_InitCounter(p_encoder->P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounterMax(p_encoder->P_HAL_ENCODER_COUNTER, p_encoder->P_STATE->Config.CountsPerRevolution - 1U);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
-    // #ifdef CONFIG_ENCODER_QUADRATURE_MODE_ENABLE
+#elif   defined(ENCODER_HW_EMULATED)
+    // #ifdef ENCODER_QUADRATURE_MODE_ENABLE
     if(p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled == true)
     {
         Pin_Input_Init(&p_encoder->PIN_A);
@@ -66,11 +66,11 @@ void Encoder_DeltaD_Init(const Encoder_T * p_encoder)
 
 void Encoder_DeltaD_SetInitial(const Encoder_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0U);
     p_encoder->P_STATE->IndexCount = 0U;
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
 #endif
     _Encoder_ZeroPulseCount(p_encoder->P_STATE);
     p_encoder->P_STATE->DeltaD = 0U;

@@ -40,7 +40,7 @@
 /******************************************************************************/
 /*!
     @brief     SW Capture Functions -
-    CONFIG_ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
+    ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
 */
 /******************************************************************************/
 
@@ -180,10 +180,10 @@ static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
 {
-#if defined(CONFIG_ENCODER_HW_DECODER)
+#if defined(ENCODER_HW_DECODER)
     // HAL_Encoder_ClearCounter(p_encoder->P_HAL_ENCODER_COUNTER);
     // sync Angle with count
-#elif defined(CONFIG_ENCODER_HW_EMULATED)
+#elif defined(ENCODER_HW_EMULATED)
     // _Encoder_SetCounterD(p_encoder, 0);
 #endif
     p_encoder->IndexAngleError = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;

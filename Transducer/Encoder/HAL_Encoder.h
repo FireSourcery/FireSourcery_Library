@@ -30,10 +30,10 @@
 */
 /******************************************************************************/
 
-#if defined(CONFIG_HAL_ENCODER_PATH)
+#if defined(HAL_ENCODER_PATH)
     #define XSTR(String) #String
     #define STR(String) XSTR(String)
-    #include STR(CONFIG_HAL_ENCODER_PATH/HAL_Encoder.h)
+    #include STR(HAL_ENCODER_PATH/HAL_Encoder.h)
 #elif defined(HAL_PERIPHERAL_PATH_DIRECTORY) || defined(HAL_PERIPHERAL_PATH_PLATFORM)
     #include "Peripheral/HAL/HAL_Peripheral.h"
     #include HAL_PERIPHERAL_PATH(HAL_Encoder.h)

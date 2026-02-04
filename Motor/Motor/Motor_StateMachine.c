@@ -47,6 +47,15 @@ const StateMachine_Machine_T MSM_MACHINE =
     .P_STATE_INITIAL = &MOTOR_STATE_INIT,
     .P_STATE_FAULT = &MOTOR_STATE_FAULT,
     .TRANSITION_TABLE_LENGTH = MSM_TRANSITION_TABLE_LENGTH,
+    // .P_STATES = [
+    //     &MOTOR_STATE_INIT,
+    //     &MOTOR_STATE_STOP,
+    //     &MOTOR_STATE_READY,
+    //     &MOTOR_STATE_CALIBRATION,
+    //     &MOTOR_STATE_STARTUP,
+    //     &MOTOR_STATE_RUN,
+    //     &MOTOR_STATE_FAULT,
+    // ],
 };
 
 /******************************************************************************/

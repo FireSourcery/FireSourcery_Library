@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "Motor_FOC.h"
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
 #include "Motor_SixStep.h"
 #endif
 #include "Motor.h"
@@ -47,10 +47,10 @@ static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_moto
     const void * fn;
     switch (p_motor->Config.CommutationMode)
     {
-#if defined(CONFIG_MOTOR_FOC_ENABLE)
+#if defined(MOTOR_FOC_ENABLE)
         case MOTOR_COMMUTATION_MODE_FOC: fn = focFunction; break;
 #endif
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
         case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction; break;
 #endif
         // default: assert(false); break;

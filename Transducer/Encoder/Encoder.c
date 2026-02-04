@@ -441,10 +441,10 @@ void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPo
 */
 void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     p_encoder->CounterD = 0;
 #endif
 }
@@ -454,14 +454,14 @@ void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
 */
 void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
 {
-#if     defined(CONFIG_ENCODER_HW_DECODER)
+#if     defined(ENCODER_HW_DECODER)
     uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    // #ifdef CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+    // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
     p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    // #elif defined(CONFIG_ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+    // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
     // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
     // #endif
-#elif   defined(CONFIG_ENCODER_HW_EMULATED)
+#elif   defined(ENCODER_HW_EMULATED)
     p_encoder->Config.IsALeadBPositive = (p_encoder->CounterD > 0);
 #endif
 }
@@ -492,7 +492,7 @@ void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPo
 // uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
 // uint32_t AlignOffsetRef;            /* Align - Index */
 
-// #if defined(CONFIG_ENCODER_QUADRATURE_MODE_ENABLE)
+// #if defined(ENCODER_QUADRATURE_MODE_ENABLE)
 // bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
 // bool IsALeadBPositive;              /* User runtime calibration for encoder install direction. Accounts for LUT calibration */
 // /* Optionally combine with compile time defined QUADRATURE_A_LEAD_B_INCREMENT */

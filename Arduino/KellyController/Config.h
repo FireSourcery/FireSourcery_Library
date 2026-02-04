@@ -28,8 +28,8 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_KELLY_CONTROLLER_H
-#define CONFIG_KELLY_CONTROLLER_H
+#ifndef KELLY_CONTROLLER_H
+#define KELLY_CONTROLLER_H
 
 
 #endif

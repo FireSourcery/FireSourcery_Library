@@ -96,7 +96,7 @@ static inline void Phase_EnableInterrupt(const Phase_T * p_phase)   { PWM_Enable
     Private
 */
 /******************************************************************************/
-// #if defined(CONFIG_PHASE_PIN_SWITCH)
+// #if defined(PHASE_PIN_SWITCH)
 #define _PHASE_PIN_DEF(code, ...) code
 #define _PHASE_PWM_ONLY_DEF(code)
 // #define _PHASE_PIN_DEF_INIT(code) code,
@@ -149,7 +149,7 @@ static inline bool _Phase_ReadOnOffC(const Phase_T * p_phase) { return _Phase_Re
 static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 {
     const Phase_Bitmask_T state = Phase_Bitmask(id);
-// #ifdef CONFIG_PHASE_INDIVIDUAL_CHANNEL_CONTROL
+// #ifdef PHASE_INDIVIDUAL_CHANNEL_CONTROL
     return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
 // #else
 // return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Bits);
@@ -170,7 +170,7 @@ static inline uint32_t _Phase_PinSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 */
 static inline void _Phase_SyncPwmDuty(const Phase_T * p_phase, Phase_Id_T state)
 {
-// #ifdef CONFIG_PHASE_SYNC_DUTY_UPDATE
+// #ifdef PHASE_SYNC_DUTY_UPDATE
     _PWM_Module_WriteSyncDuty(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
 // #endif
 }
@@ -179,17 +179,17 @@ static inline void _Phase_SyncPwmDuty(const Phase_T * p_phase, Phase_Id_T state)
 /* Bit Reg operation need to be in single write for sync update */
 static inline void _Phase_SyncPwmInvert(const Phase_T * p_phase, Phase_Id_T state)
 {
-#ifdef CONFIG_PHASE_SYNC_INVERT_UPDATE
+#ifdef PHASE_SYNC_INVERT_UPDATE
     _PWM_Module_WriteSyncInvert(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
 #endif
 }
 
 static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
 {
-#ifdef CONFIG_PHASE_PIN_SYNC /* caller enable when PINs are of the same module */
+#ifdef PHASE_PIN_SYNC /* caller enable when PINs are of the same module */
     _Pin_WriteSyncOnOff(&p_phase->PIN_A, _Phase_PinSyncOf(p_phase, state));
 #endif
-// #ifndef CONFIG_PHASE_PIN_SWITCH
+// #ifndef PHASE_PIN_SWITCH
 //     _PWM_Module_WriteSyncOnOff(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
 // #endif
 }
@@ -202,7 +202,7 @@ static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
 /* Let the compiler optimize/expand into the 8 derived functions */
 static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 {
-#ifdef CONFIG_PHASE_PIN_SYNC
+#ifdef PHASE_PIN_SYNC
     _Phase_SyncOnOff(p_phase, id);
 #else
     const Phase_Bitmask_T state = Phase_Bitmask(id);
@@ -249,7 +249,7 @@ static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint1
 */
 /******************************************************************************/
 /*
-    Duty 100% == CONFIG_PWM_DUTY_MAX
+    Duty 100% == PWM_DUTY_MAX
 */
 static inline void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {

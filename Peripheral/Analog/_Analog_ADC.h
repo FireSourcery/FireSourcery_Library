@@ -187,7 +187,7 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 //     // xor with previous
 //     if(p_options->FLAGS.HwTriggerConversion == 1U)      { HAL_ADC_EnableHwTrigger(p_adc->CONST.P_HAL_ADC); }
 //     else                                                { HAL_ADC_DisableHwTrigger(p_adc->CONST.P_HAL_ADC); }
-// #ifdef CONFIG_ANALOG_HW_CONTINOUS_CONVERSION_ENABLE
+// #ifdef ANALOG_HW_CONTINOUS_CONVERSION_ENABLE
 //     if(p_options->FLAGS.ContinuousConversion == 1U)     { HAL_ADC_EnableContinuousConversion(p_adc->CONST.P_HAL_ADC): }
 //     else                                                { HAL_ADC_DisableContinuousConversion(p_adc->CONST.P_HAL_ADC); }
 // #endif

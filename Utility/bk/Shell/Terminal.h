@@ -33,9 +33,9 @@
 
 #include "Config.h"
 
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
 #include "Peripheral/Xcvr/Xcvr.h"
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
 #include "Peripheral/Serial/Serial.h"
 #endif
 
@@ -68,9 +68,9 @@ Terminal_Status_T;
 typedef struct
 {
     /* TxRx string functions */
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_T Xcvr;
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_T * p_Serial;
 #endif
     char Cmdline[CMDLINE_CHAR_MAX]; /*!< Cmdline buffer */
@@ -86,9 +86,9 @@ static inline void Terminal_Reset(Terminal_T * p_terminal) { p_terminal->CursorI
 static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 {
     uint8_t rxChar = 0U;
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_Rx(&p_terminal->Xcvr, &rxChar, 1U);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_RecvByte(p_terminal->p_Serial, &rxChar);
 #endif
     return rxChar;
@@ -96,9 +96,9 @@ static inline char Terminal_RecvChar(const Terminal_T * p_terminal)
 
 static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_Tx(&p_terminal->Xcvr, (uint8_t *)(&txChar), 1U);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_SendByte(p_terminal->p_Serial, txChar);
 #endif
 }
@@ -107,9 +107,9 @@ static inline void Terminal_SendChar(const Terminal_T * p_terminal, char txChar)
 /* compiler optimize strlen() of passed string literal? */
 static inline void Terminal_SendString(const Terminal_T * p_terminal, const char * p_str)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, strlen(p_str));
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, strlen(p_str));
 #endif
 }
@@ -117,18 +117,18 @@ static inline void Terminal_SendString(const Terminal_T * p_terminal, const char
 /* Length-Prefixed */
 static inline void Terminal_SendString_Len(const Terminal_T * p_terminal, const char * p_str, uint8_t length)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_Tx(&p_terminal->Xcvr, (const uint8_t *)p_str, length);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_SendN(p_terminal->p_Serial, (const uint8_t *)p_str, length);
 #endif
 }
 
 static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     return ((Xcvr_GetRxFullCount(&p_terminal->Xcvr) == 0U) ? false : true);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     return ((Serial_GetRxFullCount(p_terminal->p_Serial) == 0U) ? false : true);
 #endif
 }
@@ -136,18 +136,18 @@ static inline bool Terminal_GetIsKeyPressed(const Terminal_T * p_terminal)
 /* Experimental */
 static inline uint8_t * Terminal_AcquireTxBuffer(const Terminal_T * p_terminal)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     return Xcvr_AcquireTxBuffer(&p_terminal->Xcvr);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     return Serial_AcquireTxBuffer(p_terminal->p_Serial);
 #endif
 }
 
 static inline void Terminal_ReleaseTxBuffer(const Terminal_T * p_terminal, size_t writeSize)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Xcvr_ReleaseTxBuffer(&p_terminal->Xcvr, writeSize);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Serial_ReleaseTxBuffer(p_terminal->p_Serial, writeSize);
 #endif
 }

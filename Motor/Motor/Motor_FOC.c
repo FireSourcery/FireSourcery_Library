@@ -169,7 +169,7 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, f
 */
 void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 {
-#ifdef CONFIG_MOTOR_EXTERN_CONTROL_ENABLE
+#ifdef MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
     Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_ProcTorqueRamp(p_motor));
@@ -357,9 +357,9 @@ void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 
 // static inline void ProcClarkePark(Motor_State_T * p_motor)
 // {
-// #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
+// #if     defined(MOTOR_I_SENSORS_AB)
 //     FOC_ProcClarkePark_AB(&p_motor->Foc);
-// #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
+// #elif   defined(MOTOR_I_SENSORS_ABC)
 //     FOC_ProcClarkePark(&p_motor->Foc);
 // #endif
 // }

@@ -44,9 +44,9 @@ static inline void ProcThread(Thread_T * p_thread)
 {
     if (p_thread->Function != 0U) // error checking only, no status report
     {
-#ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
+#ifdef THREAD_FUNCTION_CONTEXT_ENABLED
         p_thread->Function(p_thread->p_Context);
-#elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
+#elif defined (THREAD_FUNCTION_CONTEXT_DISABLED)
         p_thread->Function();
 #endif
     }
@@ -65,9 +65,9 @@ static inline void ProcThreadOneShot(Thread_T * p_thread)
 
         if (p_thread->OnComplete != 0U)
         {
-#ifdef CONFIG_THREAD_FUNCTION_CONTEXT_ENABLED
+#ifdef THREAD_FUNCTION_CONTEXT_ENABLED
             p_thread->OnComplete(p_thread->p_Context);
-#elif defined (CONFIG_THREAD_FUNCTION_CONTEXT_DISABLED)
+#elif defined (THREAD_FUNCTION_CONTEXT_DISABLED)
             p_thread->OnComplete();
 #endif
         }

@@ -63,12 +63,14 @@ typedef const struct Blinky
 }
 Blinky_T;
 
-#define BLINKY_ALLOC(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)   \
+#define BLINKY_INIT_FROM(p_PinHal, PinId, p_State, p_TimerBase, TimerBaseFreq)   \
 {                                                                   \
     .PIN = PIN_INIT(p_PinHal, PinId),                               \
     .TIMER = TIMER_T_ALLOC(p_TimerBase, TimerBaseFreq),             \
-    .P_STATE = &(Blinky_State_T){ 0 },                               \
+    .P_STATE = p_State,                                             \
 }
+
+#define BLINKY_INIT_ALLOC_FROM(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)   BLINKY_INIT_FROM(p_PinHal, PinId, &(Blinky_State_T){0}, p_TimerBase, TimerBaseFreq)
 
 
 // static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_DISABLED; }

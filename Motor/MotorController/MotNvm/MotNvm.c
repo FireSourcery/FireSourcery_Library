@@ -35,16 +35,16 @@
 void MotNvm_Init(const MotNvm_T * p_motNvm)
 {
     Flash_Init(p_motNvm->P_FLASH);
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
+#if defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
     EEPROM_Init_Blocking(p_motNvm->P_EEPROM);
 #endif
 }
 
 NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
+#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_rom, p_ram, sizeBytes);
-#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
+#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
     assert(nvmemory_is_aligned((uintptr_t)p_rom, FLASH_UNIT_WRITE_SIZE));
     // assert(nvmemory_is_aligned((uintptr_t)p_ram, FLASH_UNIT_WRITE_SIZE));
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)p_rom, p_ram, sizeBytes);
@@ -53,18 +53,18 @@ NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * 
 
 NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, void * p_destBuffer)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
+#if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
     return Flash_ReadOnce_Blocking(p_motNvm->P_FLASH, onceAddress, size, p_destBuffer);  // if(p_motNvm->MANUFACTURE_ADDRESS != 0) handle offset
-#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
+#elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
     return (size <= p_motNvm->MANUFACTURE_SIZE) ? ({ memcpy(p_destBuffer, onceAddress, size); true; }) : false;
 #endif
 }
 
 NvMemory_Status_T _MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
+#if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
     return Flash_WriteOnce_Blocking(p_motNvm->P_FLASH, onceAddress, p_sourceBuffer, size);
-#elif   defined(CONFIG_MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
+#elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
     return Flash_Write_Blocking(p_motNvm->P_FLASH, onceAddress, p_dataBuffer, size);
 #endif
 }
@@ -90,9 +90,9 @@ NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, ui
 /* eeprom only. Save on first init. */
 NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 {
-#if     defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_EEPROM)
+#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_motNvm->P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
-#elif   defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
+#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif
 }
@@ -111,7 +111,7 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 {
     NvMemory_Status_T status;
 
-#if defined(CONFIG_MOTOR_CONTROLLER_USER_NVM_FLASH)
+#if defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
     /* Flash Erase Full block */
     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, p_motNvm->MAIN_CONFIG_ADDRESS, p_motNvm->MAIN_CONFIG_SIZE);
     if (status != NV_MEMORY_STATUS_SUCCESS) { return status; }

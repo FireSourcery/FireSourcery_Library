@@ -78,7 +78,7 @@ StateMachine_TransitionInput_T;
 
 /******************************************************************************/
 /*
-    StateMachine_Def / StateMachine_Table
+    StateMachine_Def / StateMachine_VTable
     Stateless Machine
     Interface VTable Analogous
 */
@@ -267,6 +267,11 @@ static inline state_value_t StateMachine_Get(StateMachine_T * p_this, state_inpu
     [p_ActiveState][p_ActiveSubState]
 */
 /******************************************************************************/
+/******************************************************************************/
+/*
+    Branch Process - Traversal from Leaf up
+*/
+/******************************************************************************/
 static void StateMachine_Branch_InputAsyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)
 {
     if (_StateMachine_AcquireAsyncInput(p_this->P_ACTIVE) == true)
@@ -281,9 +286,7 @@ static void StateMachine_Branch_InputSyncTransition(StateMachine_T * p_this, sta
     _StateMachine_Branch_ApplyAsyncInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
 }
 
-/*
-    Proc Input with Traversal from Leaf up
-*/
+/* Default select */
 static inline void StateMachine_Branch_ApplyInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
 {
     StateMachine_Branch_InputAsyncTransition(p_this, id, value);

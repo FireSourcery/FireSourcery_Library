@@ -101,7 +101,7 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_conte
                     default: break;
                 }
                 break;
-            // #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+            // #ifdef MOTOR_CONTROLLER_SERVO_ENABLE
             // case MOTOR_CONTROLLER_OPT_DIN_SERVO:
             //     switch (Debounce_GetEdge(&p_mc->OptDin))
             //     {
@@ -211,7 +211,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION));
     // switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Phase_VBus_Fract16()))
 
-// #if defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+// #if defined(MOTOR_V_SENSORS_ANALOG)
     switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
     {
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
@@ -294,7 +294,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
-    // #ifdef CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE
+    // #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
     //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
     // #endif
 
@@ -328,7 +328,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         */
         if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_10) == true)
         {
-        #ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
+        #ifdef MOTOR_CONTROLLER_SHELL_ENABLE
             Shell_Proc(&p_mc->Shell);
         #endif
             Blinky_Proc(&p_context->BUZZER);
@@ -354,7 +354,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
 
             MotorController_CaptureVSource(p_context); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
 
-        #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+        #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
         #endif
         }
 
@@ -378,7 +378,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
     //     if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
     // }
 
-#if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(CONFIG_MOTOR_DEBUG_ENABLE)
+#if defined(MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);
 #endif
 }

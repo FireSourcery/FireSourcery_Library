@@ -332,7 +332,7 @@ static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
     [MCSM_INPUT_DIRECTION]      = (State_Input_T)Park_InputDirection,
 // [MCSM_INPUT_STATE_GENERIC]      = (State_Input_T)Park_InputServo,
-// #ifdef CONFIG_MOTOR_CONTROLLER_SERVO_ENABLE
+// #ifdef MOTOR_CONTROLLER_SERVO_ENABLE
 //     [VEHICLE_INPUT_SERVO]      = (State_Input_T)Park_InputServo,
 // #endif
     // [VEHICLE_INPUT_USER_MODE]  = (State_Input_T)Park_InputUser,
@@ -473,8 +473,8 @@ static void MotorCmd_Entry(const MotorController_T * p_context)
 /* Motor_Input_T Only */
 static void MotorCmd_Proc(const MotorController_T * p_context)
 {
-    Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
-    MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
+    // Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+    // MotMotors_ApplyInputs(&p_context->MOTORS, p_input); // passthrough buffered, or implement var for apply
 }
 
 static State_T * MotorCmd_InputDirection(const MotorController_T * p_context, state_value_t direction)
@@ -493,7 +493,16 @@ const State_T MC_STATE_MAIN_MOTOR_CMD =
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)MotorCmd_Entry,
     .LOOP       = (State_Action_T)MotorCmd_Proc,
-    // .P_TRANSITION_TABLE = &MOTORS_TRANSITION_TABLE[0U],
+    .P_TRANSITION_TABLE = (State_Input_T[MCSM_TRANSITION_TABLE_LENGTH])
+    {
+        // [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
+        // [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Main_InputStateCmd,
+        // [MCSM_INPUT_DIRECTION]      = (State_Input_T)Main_InputDirection,
+        // [MCSM_INPUT_GENERIC]     = (State_Input_T)Main_ ,
+        // [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Main_InputMainMode,
+    },
+
+    .TRANSITION_MAPPER = NULL,
 };
 
 
@@ -765,7 +774,7 @@ static void Fault_Entry(const MotorController_T * p_context)
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     MotMotors_ForceDisableControl(&p_context->MOTORS); /* Force disable control for all motors */
-// #if defined(CONFIG_MOTOR_CONTROLLER_DEBUG_ENABLE)
+// #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
 //     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 // #endif
     MotorController_BeepPeriodic(p_context);

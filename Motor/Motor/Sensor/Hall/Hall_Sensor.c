@@ -34,7 +34,7 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_Init(&p_sensor->HALL);
     Encoder_ModeDT_Init_Polling(p_sensor->P_ENCODER);
-#if     defined(CONFIG_MOTOR_HALL_MODE_ISR)
+#if     defined(MOTOR_HALL_MODE_ISR)
     Encoder_InitInterrupts_ABC(p_sensor->P_ENCODER);
 #endif
     // Encoder_SetUnitsHall_MechSpeed(p_sensor->P_ENCODER, );

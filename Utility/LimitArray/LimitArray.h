@@ -37,7 +37,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifdef CONFIG_LIMIT_ARRAY_SIGNED
+#ifdef LIMIT_ARRAY_SIGNED
 typedef int32_t limit_t;
 #define LIMIT_ARRAY_MIN (-INT32_MAX)
 #define LIMIT_ARRAY_MAX (INT32_MAX)

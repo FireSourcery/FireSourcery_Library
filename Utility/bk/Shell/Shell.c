@@ -38,9 +38,9 @@ void Shell_Init(Shell_T * p_shell)
     }
 
     // Terminal_Init(&p_shell->Terminal);
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     Terminal_SetXcvr(&p_shell->Terminal, p_shell->Config.XcvrId);
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     Terminal_SetSerial(&p_shell->Terminal, p_shell->Config.p_Serial);     /* need xcvr module to validate xcvr pointer */
 #endif
 
@@ -149,14 +149,14 @@ Shell_Status_T Shell_Proc(Shell_T * p_shell)
     return status;
 }
 
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
 bool Shell_SetXcvr(Shell_T * p_shell, uint8_t xcvrId)
 {
     bool isSuccess = Terminal_SetXcvr(&p_shell->Terminal, xcvrId);
     if(isSuccess == true) { p_shell->Config.XcvrId = xcvrId; }
     return isSuccess;
 }
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
 void Shell_SetSerial(Shell_T * p_shell, Serial_T * p_serial)
 {
     p_shell->Config.p_Serial = p_serial;
@@ -172,9 +172,9 @@ void Shell_ConfigBaudRate(Shell_T * p_shell, uint16_t baudRate)
 
 void Shell_ResetBaudRate(Shell_T * p_shell)
 {
-#ifdef CONFIG_SHELL_XCVR_ENABLE
+#ifdef SHELL_XCVR_ENABLE
     if (Xcvr_IsSet(&p_shell->Terminal.Xcvr, p_shell->Config.XcvrId))
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#elif defined(SHELL_XCVR_SERIAL)
     if (p_shell->Config.p_Serial != 0U)
 #endif
     {

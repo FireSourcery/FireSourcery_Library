@@ -43,7 +43,7 @@ void MotorController_Init(const MotorController_T * p_context)
     for (uint8_t iAnalog = 0U; iAnalog < p_context->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_context->P_ANALOG_ADCS[iAnalog]); }
     for (uint8_t iSerial = 0U; iSerial < p_context->SERIAL_COUNT; iSerial++) { Serial_Init(&p_context->P_SERIALS[iSerial]); }
 
-#if defined(CONFIG_MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     // if(p_mc->Config.IsCanEnable == true) { CanBus_Init(p_context->P_CAN_BUS, p_mc->Config.CanServicesId); }
 #endif
 
@@ -71,7 +71,7 @@ void MotorController_Init(const MotorController_T * p_context)
 
     TimerT_Periodic_Init(&p_context->MILLIS_TIMER, 1U);
 
-#ifdef CONFIG_MOTOR_CONTROLLER_SHELL_ENABLE
+#ifdef MOTOR_CONTROLLER_SHELL_ENABLE
     Shell_Init(&p_mc->Shell);
 #endif
 

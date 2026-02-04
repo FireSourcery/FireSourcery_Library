@@ -28,61 +28,61 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_MOTOR_H
-#define CONFIG_MOTOR_H
+#ifndef MOTOR_PREPROCESSOR_H
+#define MOTOR_PREPROCESSOR_H
 
-#define CONFIG_MOTOR_DEBUG (!NDEBUG)
+#define MOTOR_DEBUG (!NDEBUG)
 
-// #if     defined(CONFIG_MOTOR_I_SENSORS_AB)
-// #elif   defined(CONFIG_MOTOR_I_SENSORS_ABC)
+// #if     defined(MOTOR_I_SENSORS_AB)
+// #elif   defined(MOTOR_I_SENSORS_ABC)
 // #else
-//     #define CONFIG_MOTOR_I_SENSORS_ABC
+//     #define MOTOR_I_SENSORS_ABC
 // #endif
 
-// #if     defined(CONFIG_MOTOR_V_SENSORS_ISOLATED)
-// #elif   defined(CONFIG_MOTOR_V_SENSORS_ANALOG)
+// #if     defined(MOTOR_V_SENSORS_ISOLATED)
+// #elif   defined(MOTOR_V_SENSORS_ANALOG)
 // #else
-//     #define CONFIG_MOTOR_V_SENSORS_ANALOG
+//     #define MOTOR_V_SENSORS_ANALOG
 // #endif
 
 
-#if     defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
-#elif   defined(CONFIG_MOTOR_OPEN_LOOP_DISABLE)
+#if     defined(MOTOR_OPEN_LOOP_ENABLE)
+#elif   defined(MOTOR_OPEN_LOOP_DISABLE)
 #else
-    #define CONFIG_MOTOR_OPEN_LOOP_ENABLE
+    #define MOTOR_OPEN_LOOP_ENABLE
 #endif
 
-#if     defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
-#elif   defined(CONFIG_MOTOR_SIX_STEP_DISABLE)
+#if     defined(MOTOR_SIX_STEP_ENABLE)
+#elif   defined(MOTOR_SIX_STEP_DISABLE)
 #else
-    #define CONFIG_MOTOR_SIX_STEP_DISABLE
+    #define MOTOR_SIX_STEP_DISABLE
 #endif
 
-#if     defined(CONFIG_MOTOR_FOC_ENABLE)
-#elif   defined(CONFIG_MOTOR_FOC_DISABLE)
+#if     defined(MOTOR_FOC_ENABLE)
+#elif   defined(MOTOR_FOC_DISABLE)
 #else
-    #define CONFIG_MOTOR_FOC_ENABLE
+    #define MOTOR_FOC_ENABLE
 #endif
 
 /* reboot for params to take effect when disabled */
-#if     defined(CONFIG_MOTOR_CONFIG_PROPAGATE_SET_DISABLE)
-#elif   defined(CONFIG_MOTOR_CONFIG_PROPAGATE_SET_ENABLE)
+#if     defined(MOTOR_CONFIG_PROPAGATE_SET_DISABLE)
+#elif   defined(MOTOR_CONFIG_PROPAGATE_SET_ENABLE)
 #else
-        #define CONFIG_MOTOR_CONFIG_PROPAGATE_SET_ENABLE
+        #define MOTOR_CONFIG_PROPAGATE_SET_ENABLE
 #endif
 
-#if     defined(CONFIG_MOTOR_UNIT_CONVERSION_LOCAL)
-    #if defined(CONFIG_MOTOR_SURFACE_SPEED_ENABLE)
+#if     defined(MOTOR_UNIT_CONVERSION_LOCAL)
+    #if defined(MOTOR_SURFACE_SPEED_ENABLE)
     #endif
-#elif   defined(CONFIG_MOTOR_UNIT_CONVERSION_HOST)
+#elif   defined(MOTOR_UNIT_CONVERSION_HOST)
 #else
-    #define CONFIG_MOTOR_UNIT_CONVERSION_HOST
+    #define MOTOR_UNIT_CONVERSION_HOST
 #endif
 
-#if     defined(CONFIG_MOTOR_EXTERN_CONTROL_ENABLE)
-#elif   defined(CONFIG_MOTOR_EXTERN_CONTROL_DISABLE)
+#if     defined(MOTOR_EXTERN_CONTROL_ENABLE)
+#elif   defined(MOTOR_EXTERN_CONTROL_DISABLE)
 #else
-    #define CONFIG_MOTOR_EXTERN_CONTROL_DISABLE
+    #define MOTOR_EXTERN_CONTROL_DISABLE
 #endif
 
 #endif

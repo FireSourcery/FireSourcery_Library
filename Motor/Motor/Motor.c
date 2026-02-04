@@ -46,7 +46,7 @@ void Motor_Init(const Motor_T * p_context)
     */
     Phase_Init(&p_context->PHASE);
     // Phase_Analog_Init(&p_context->PHASE);
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_ActivateMode(&p_context->PHASE, p_context->P_MOTOR_STATE->Config.PhasePwmMode);
 #endif
 
@@ -83,7 +83,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
     PID_InitFrom(&p_motor->PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
-#if defined(CONFIG_MOTOR_SIX_STEP_ENABLE)
+#if defined(MOTOR_SIX_STEP_ENABLE)
     PID_Init(&p_motor->PidIBus);
 #endif
 
@@ -93,7 +93,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     Motor_ResetSpeedRamp(p_motor);
     Motor_ResetTorqueRamp(p_motor);
 
-// #if defined(CONFIG_MOTOR_OPEN_LOOP_ENABLE)
+// #if defined(MOTOR_OPEN_LOOP_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);

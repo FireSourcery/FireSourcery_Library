@@ -28,13 +28,13 @@
 
 */
 /******************************************************************************/
-#ifndef CONFIG_SHELL_H
-#define CONFIG_SHELL_H
+#ifndef SHELL_H
+#define SHELL_H
 
-#ifdef CONFIG_SHELL_XCVR_ENABLE
-#elif defined(CONFIG_SHELL_XCVR_SERIAL)
+#ifdef SHELL_XCVR_ENABLE
+#elif defined(SHELL_XCVR_SERIAL)
 #else
-    #define CONFIG_SHELL_XCVR_SERIAL
+    #define SHELL_XCVR_SERIAL
 #endif
 
 #endif

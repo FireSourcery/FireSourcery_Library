@@ -25,10 +25,12 @@
 /*!
     @file   Motor_Include.h
     @author FireSourcery
-
-    @brief
+    @brief  Export all Motor Module Includes
 */
 /******************************************************************************/
+/*
+
+*/
 #include "Sensor/Motor_Sensor.h" /* TABLE INIT */
 #include "Analog/Motor_Analog.h" /* For Callbacks */
 #include "Motor_Thread.h"

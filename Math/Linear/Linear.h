@@ -31,13 +31,19 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "Config.h"
 #include "math_linear.h"
 #include "Math/math_general.h"
 #include "Math/Fixed/fixed.h"
 
 #include <stdint.h>
 #include <assert.h>
+
+#if     defined(LINEAR_DIVIDE_SHIFT)
+#elif   defined(LINEAR_DIVIDE_NUMERICAL)
+#else
+    #define LINEAR_DIVIDE_SHIFT
+#endif
+
 
 /******************************************************************************/
 /*!
@@ -46,12 +52,12 @@
 /******************************************************************************/
 typedef struct Linear
 {
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
     int32_t Slope;              /* y = (x - X0) * Slope >> SlopeShift + Y0 */
     uint8_t SlopeShift;
     int32_t InvSlope;           /* x = (y - Y0) * InvSlope >> InvSlopeShift + X0 */
     uint8_t InvSlopeShift;
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     int32_t SlopeFactor;
     int32_t SlopeDivisor;
 #endif
@@ -66,7 +72,7 @@ typedef struct Linear
 }
 Linear_T;
 
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
 #define LINEAR_INIT(factor, divisor, y0, yRef)  \
 {                                               \
     .Slope              = ,                     \
@@ -110,9 +116,9 @@ static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return math_ma
 */
 static inline int32_t Linear_Of(const Linear_T * p_linear, int32_t x)
 {
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
     return linear_shift_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, x);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     return linear_f(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
 }
@@ -122,9 +128,9 @@ static inline int32_t Linear_Of(const Linear_T * p_linear, int32_t x)
 */
 static inline int32_t Linear_InvOf(const Linear_T * p_linear, int32_t y)
 {
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
     return linear_shift_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, y);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     return linear_invf(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
 }
@@ -151,18 +157,18 @@ static inline int32_t Linear_InvOf_Sat(const Linear_T * p_linear, int32_t y)
 /******************************************************************************/
 static inline int32_t Linear_Of_Round(const Linear_T * p_linear, int32_t x)
 {
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
     return linear_shift_f_round(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, x);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     return linear_f_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, x);
 #endif
 }
 
 static inline int32_t Linear_InvOf_Round(const Linear_T * p_linear, int32_t y)
 {
-#if defined(CONFIG_LINEAR_DIVIDE_SHIFT)
+#if defined(LINEAR_DIVIDE_SHIFT)
     return linear_shift_invf_round(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, y);
-#elif defined(CONFIG_LINEAR_DIVIDE_NUMERICAL)
+#elif defined(LINEAR_DIVIDE_NUMERICAL)
     return linear_invf_round(p_linear->SlopeFactor, p_linear->SlopeDivisor, p_linear->X0, p_linear->Y0, y);
 #endif
 }

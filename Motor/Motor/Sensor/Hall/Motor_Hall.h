@@ -30,6 +30,14 @@
 */
 /******************************************************************************/
 
+
+#if     defined(MOTOR_HALL_MODE_POLLING)
+#elif   defined(MOTOR_HALL_MODE_ISR)
+#else
+#define MOTOR_HALL_MODE_POLLING
+#endif
+
+
 /* Part of Motor */
 /* include for Calibration state */
 typedef const struct Motor Motor_T;

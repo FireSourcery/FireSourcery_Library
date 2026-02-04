@@ -57,6 +57,7 @@ typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const
 /* inline vtable */
 // typedef void(*RotorSensor_InstanceProc_T)(void);
 
+/* A -> B as positive/CCW */
 // typedef enum RotorSensor_Direction
 // {
 //     MOTOR_DIRECTION_CW = -1,
@@ -129,6 +130,7 @@ typedef const struct RotorSensor
 {
     RotorSensor_VTable_T * P_VTABLE;
     RotorSensor_State_T * P_STATE;
+    // TimerT_T TIMER;
 }
 RotorSensor_T;
 
