@@ -165,18 +165,11 @@ static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
 //     Analog_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
 // }
 
-// static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t newValue) { *p_value = (*p_value + newValue) / 2; }
 
 /*
     Analog Part for Input
     Capture on [Phase_Input]
 */
-static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, fract16_t newValue)
-{
-    p_triplet->Values[channel] = ((int32_t)p_triplet->Values[channel] + newValue) / 2;
-    p_bits->Bits |= (1U << channel);
-}
-
 static inline void _Phase_CaptureVAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, adc_result_t adcu)
 {
     // assert(adcu <= PHASE_ANALOG_V_MAX_ADCU);

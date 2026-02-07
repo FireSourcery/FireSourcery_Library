@@ -181,16 +181,26 @@ static inline int16_t Phase_ValueAlignedOf(Phase_Triplet_T * p_input, Phase_Id_T
     }
 }
 
-// typedef struct Phase_Data_T
-// {
-//     Phase_Triplet_T Values;
-//     Phase_Bitmask_T Flags;
-// }
-// Phase_Data_T;
+typedef struct Phase_Data_T
+{
+    Phase_Triplet_T Values;
+    Phase_Bitmask_T Flags;
+}
+Phase_Data_T;
 
-// typedef struct Phase_State_T
-// {
-//     Phase_Triplet_T Values;
-//     Phase_Bitmask_T Flags;
-// }
-// Phase_State_T;
+// static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t newValue) { *p_value = ((int32_t)*p_value + newValue) / 2; }
+
+static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, fract16_t newValue)
+{
+    p_triplet->Values[channel] = ((int32_t)p_triplet->Values[channel] + newValue) / 2;
+    p_bits->Bits |= (1U << channel);
+}
+
+static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T channel, fract16_t newValue)
+{
+    _Phase_Capture(&p_data->Values, &p_data->Flags, channel, newValue);
+}
+
+static inline void Phase_CaptureA(volatile Phase_Data_T * p_data, fract16_t value) { Phase_Capture(&p_data, PHASE_INDEX_A, value); }
+static inline void Phase_CaptureB(volatile Phase_Data_T * p_data, fract16_t value) { Phase_Capture(&p_data, PHASE_INDEX_B, value); }
+static inline void Phase_CaptureC(volatile Phase_Data_T * p_data, fract16_t value) { Phase_Capture(&p_data, PHASE_INDEX_C, value); }

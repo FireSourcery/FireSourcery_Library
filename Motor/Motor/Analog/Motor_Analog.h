@@ -33,22 +33,21 @@
 #include "Peripheral/Analog/Analog.h"
 #include "../Motor.h"
 
-/* move to Motor_PhaseAnalog */
 
-/* Capture with context of IZeroRef */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVc(&p_motor->PhaseInput, adcu); }
+/* Motor holds context of IZeroRef */
 static inline void Motor_Analog_CaptureIa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIa(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 static inline void Motor_Analog_CaptureIb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 static inline void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
-static inline void Motor_Analog_MarkVabc(const Motor_T * p_context) { Phase_Analog_MarkVabc(&p_context->PHASE_ANALOG); }
-static inline void Motor_Analog_MarkIabc(const Motor_T * p_context) { Phase_Analog_MarkIabc(&p_context->PHASE_ANALOG); }
+static inline void Motor_Analog_MarkVabc(const Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
+static inline void Motor_Analog_MarkIabc(const Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
 
 /*
 */
-extern void Motor_Analog_Calibrate(const Motor_T * p_context);
+extern void Motor_Analog_Calibrate(const Motor_T * p_motor);
 

@@ -510,7 +510,7 @@ int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_V_BUS:                      return _Motor_Var_PhaseVBus_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_V_BUS:                      return Motor_Var_PhaseVBus_Get(varId);
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
     }
     return 0;
