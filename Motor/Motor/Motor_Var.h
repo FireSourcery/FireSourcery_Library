@@ -114,7 +114,7 @@ Motor_Var_UserSetpoint_T;
 */
 typedef enum Motor_Var_Rotor
 {
-    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,
+    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,   /* in digital degrees */
     MOTOR_VAR_ROTOR_ELECTRICAL_SPEED,   /* Absolute Ccw/Cw */
     MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Absolute Ccw/Cw */
     MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,   /* if supported */

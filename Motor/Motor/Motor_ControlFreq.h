@@ -46,6 +46,23 @@
 // #define MOTOR_CONTROL_PERIOD_SECONDS_FRACT32 (INT32_MAX / MOTOR_CONTROL_FREQ) /* s */
 // #define MOTOR_CONTROL_PERIOD_MINUTES_FRACT32 ((MOTOR_CONTROL_PERIOD_SECONDS_FRACT32) / 60U) /* min */
 
+/*
+    Max representable speed
+
+    [max angle per poll]: 32768 <=> electrical cps < pollingFreq/2 <=> .5 electrical cycles per poll
+
+    [max erpm] = [max angle per poll] * pollingFreq / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
+        => 20 kHz pollingFreq => ~600000 erpm
+
+    mechanical rpm of electrical rpm: ~600000 / polePairs
+        2 pole pairs:  300,003 RPM mechanical
+        4 pole pairs:  150,001 RPM mechanical
+        40 pole pairs:  150,00 RPM mechanical
+*/
+#define MOTOR_ERPM_MAX (MOTOR_CONTROL_FREQ * SECONDS_PER_MINUTE / 2)
+
+
+
 /* INNER_LOOP */
 /* OUTER_LOOP */
 /* INNER_CONTROL_FREQ 20000U */

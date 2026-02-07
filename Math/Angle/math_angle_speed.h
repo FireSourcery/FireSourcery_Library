@@ -26,7 +26,7 @@
 /*!
     @file   angle_speed_math.h
     @author FireSourcery
-    @brief  rotory, rotational angle speed math.
+    @brief  rotary, rotational angle speed math.
 */
 /******************************************************************************/
 #include "../Fixed/fract16.h"
@@ -34,24 +34,13 @@
 
 
 /*
-    [Delta Angle] at [Polling Freq]. Angle Per Poll
-
-    [max angle]: 32768 <=> Electrical Cycles < pollingFreq/2 <=> .5 cycles per poll
-
-    [max rpm] = (max_angle16 * SECONDS_PER_MINUTE * pollingFreq) / ANGLE16_PER_REVOLUTION
-        => 20khz pollingFreq: ~ 600000
-
-    mechanical rpm of electrical rpm: ~ 600000 / polePairs
-        2 pole pairs:  300,003 RPM mechanical
-        4 pole pairs:  150,001 RPM mechanical
-        40 pole pairs:  150,00 RPM mechanical
+    Convert between [angle16 per poll] and standard representations.
+    [angle16] as [Delta Angle] at [Polling Freq].
 */
-#define _POLLING_FREQ_MAX (20000U)
-static_assert(ANGLE16_PER_REVOLUTION * _POLLING_FREQ_MAX < 32768 * ANGLE16_PER_REVOLUTION);
 
 /******************************************************************************/
 /*
-    [Rpm] Convert between [angle16] and RPM representations.
+    Rpm
 */
 /******************************************************************************/
 #define SECONDS_PER_MINUTE (60U)
@@ -67,6 +56,8 @@ static inline int32_t angle_of_rpm_direct(uint32_t pollingFreq, int32_t rpm) { r
 static inline int32_t rpm_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return RPM_OF_ANGLE16(pollingFreq, angle16); }
 
 /*
+    angle16 per poll of rpm
+
     [minutes_fract32] = INT32_MAX / (60 * pollingFreq)
     minutes_fract32 = (ANGLE16_PER_REVOLUTION * 32768) / (60 * pollingFreq)
 
