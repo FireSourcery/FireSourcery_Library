@@ -39,8 +39,9 @@
 /******************************************************************************/
 typedef const struct Phase_Calibration
 {
-    volatile uint16_t V_MAX_VOLTS;         /* Calibration Max. Unit conversion reference. Compile time derived */
-    volatile uint16_t I_MAX_AMPS;          /* Calibration Max. Unit conversion reference. Compile time derived */
+    /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. Optionally allow runtime overwrite */
+    volatile uint16_t V_MAX_VOLTS;
+    volatile uint16_t I_MAX_AMPS;
 
     /* Optionally include units */
     volatile uint16_t V_RATED_FRACT16;
@@ -53,15 +54,22 @@ Phase_Calibration_T;
 /* run-time overwrite or compile time def. */
 extern const Phase_Calibration_T PHASE_CALIBRATION;
 
+// #ifndef V_MAX_VOLTS
+// #define PHASE_CALIBRATION.V_MAX_VOLTS
+// #endif
+// #define PHASE_I_FRACT16(amps)   FRACT16((float)amps / I_MAX_AMPS)
+// #define PHASE_V_FRACT16(volts)  FRACT16((float)volts / V_MAX_VOLTS)
+
+// may require constexpr only
 // #define PHASE_I_FRACT16(amps)   FRACT16((float)amps / PHASE_CALIBRATION.I_MAX_AMPS)
 // #define PHASE_V_FRACT16(volts)  FRACT16((float)volts / PHASE_CALIBRATION.V_MAX_VOLTS)
 
 /* Getter interface. */
 static inline uint16_t Phase_Calibration_GetIMaxAmps(void) { return PHASE_CALIBRATION.I_MAX_AMPS; }
 static inline uint16_t Phase_Calibration_GetVMaxVolts(void) { return PHASE_CALIBRATION.V_MAX_VOLTS; }
+
 static inline uint16_t Phase_Calibration_GetVRated_Fract16(void) { return PHASE_CALIBRATION.V_RATED_FRACT16; }
 static inline uint16_t Phase_Calibration_GetIRatedPeak_Fract16(void) { return PHASE_CALIBRATION.I_RATED_PEAK_FRACT16; }
-
 static inline uint16_t Phase_Calibration_GetVRated_V(void) { return Phase_Calibration_GetVRated_Fract16() * Phase_Calibration_GetVMaxVolts() / 32768; }
 static inline int16_t Phase_Calibration_GetIRatedPeak_Amps(void) { return Phase_Calibration_GetIRatedPeak_Fract16() * Phase_Calibration_GetIMaxAmps() / 32768; }
 
@@ -78,8 +86,13 @@ static bool Phase_Calibration_IsLoaded(void)
     );
 }
 
+/* Rated Limit - applied on set config */
+// static inline uint16_t Phase_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
+// static inline uint16_t Phase_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
+
 /*
     Local unit conversions
+    // fract16(amps, Phase_Calibration_GetIMaxAmps())
 */
 static inline accum32_t Phase_I_Fract16OfAmps(int16_t amps) { return amps * INT16_MAX / Phase_Calibration_GetIMaxAmps(); }
 static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() / 32768; }

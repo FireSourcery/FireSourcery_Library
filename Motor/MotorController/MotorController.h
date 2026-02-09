@@ -36,11 +36,11 @@
 #include "MotAnalogUser/MotAnalogUser.h"
 #include "MotAnalogUser/MotAnalogUser_Conversion.h"
 
-#include "MotMotors/MotMotors.h"
 #include "Vehicle/Vehicle.h"
 #include "Vehicle/Vehicle_User.h"
 #include "MotLimits/MotLimits.h"
 
+#include "Motor/Motor/Motor_Table.h"
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/Motor_StateMachine.h"
@@ -265,7 +265,7 @@ typedef const struct MotorController
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
-    MotMotors_T MOTORS; /* Motor Array Context */
+    Motor_Table_T MOTORS; /* Motor Array Context */
     LimitArray_T MOT_SPEED_LIMITS;
     LimitArray_T MOT_I_LIMITS;
 

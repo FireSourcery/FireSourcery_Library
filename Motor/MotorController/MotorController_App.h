@@ -64,3 +64,7 @@ MotorController_App_T;
 
 static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_context, MotorController_App_T * p_app) { return p_app->PROC_ANALOG_USER(p_context); }
 
+// State_T * MotorController_App_GetMainState(MotorController_T * p_context)
+// {
+//     return p_context->APPS[p_context->P_MC_STATE->Config.InitMode].P_INITIAL_STATE;
+// }

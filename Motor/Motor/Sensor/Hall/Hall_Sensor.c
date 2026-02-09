@@ -33,12 +33,11 @@
 static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_Init(&p_sensor->HALL);
+#if defined(MOTOR_HALL_MODE_ISR)
+    Encoder_ModeDT_Init_InterruptAbc(p_sensor->P_ENCODER);
+#else
     Encoder_ModeDT_Init_Polling(p_sensor->P_ENCODER);
-#if     defined(MOTOR_HALL_MODE_ISR)
-    Encoder_InitInterrupts_ABC(p_sensor->P_ENCODER);
 #endif
-    // Encoder_SetUnitsHall_MechSpeed(p_sensor->P_ENCODER, );
-    Encoder_ModeDT_SetInitial(p_sensor->P_ENCODER);
 }
 
 static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
@@ -49,17 +48,16 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 // #if defined(ROTOR_HALL_MODE_POLLING)
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true)
     {
-        Encoder_SinglePhase_CapturePulse(p_sensor->P_ENCODER);
-        // _Encoder_CaptureCount(p_encoder->P_STATE, 1);
-        // Encoder_DeltaT_CaptureExtended(p_encoder);
-        // Encoder_ZeroInterpolateAngle(p_encoder->P_STATE)
+        Encoder_SinglePhase_CapturePulse(p_sensor->P_ENCODER); // for speed and interpolation todo move to angle
 
-        Angle_CaptureAngle(p_angle, Hall_CaptureAngle(p_sensor->HALL.P_STATE));  // p_angle->ElectricalAngle = Hall_CaptureAngle(p_sensor->HALL.P_STATE);
+        // using cmd direction for now
+        Angle_CaptureAngle(p_angle, Hall_CaptureAngle(p_sensor->HALL.P_STATE));
+        // Angle_CaptureAngle(p_angle, Hall_GetSensorAngle(p_sensor->HALL.P_STATE));
+        // p_angle->Angle = Hall_GetSensorAngle(p_sensor->HALL.P_STATE);
 
         //
-        // Hall_CaptureDirection(p_sensor->HALL.P_STATE);
-        // if ( sign(speed) != Hall_GetDirection(p_sensor->HALL.P_STATE))
-        // if (p_state->Direction != Hall_GetDirection(p_sensor->HALL.P_STATE))
+        // p_state->Direction = Hall_GetSensorDirection(p_sensor->HALL.P_STATE);
+        // if (p_state->Direction != Hall_GetSensorDirection(p_sensor->HALL.P_STATE))
         // {
         //     // stop interpolation
         //     // Hall_SetDirection(p_sensor->HALL.P_STATE, 0); /* with Hall_CaptureDirection, it will reset the next cycle */
@@ -74,41 +72,40 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
     else
 // #endif
     {
-        // todo with Interpolate Angle
+        // todo with   Angle_T
         p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
-        // p_state->ElectricalAngle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
+        // p_state-> Angle = p_angle->Angle  + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
 
-        // if capture mech anagle
+        // if capture mech angle
         p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
     }
 }
 
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
-    RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
+    // RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
     Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->MOTOR_SENSOR);
 
-    // Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
-    // p_state->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
-    // p_angle->Speed_Fract16 = (Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE) + p_state->Speed_Fract16) / 2;
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
-    Angle_CaptureDelta(p_angle, Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE));
+    Angle_CaptureDelta(p_angle, Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE)); /* includes samples over 1ms this way */ /* Angle.Delta Unused for now */
     Angle_CaptureSpeed_Fract16(p_angle, Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE));
 }
 
 
 static bool Hall_RotorSensor_IsFeedbackAvailable(const Hall_RotorSensor_T * p_sensor) { return true; }
 
-// static int Hall_RotorSensor_GetDirection(const Hall_RotorSensor_T * p_sensor) { return Hall_GetDirection(p_sensor->HALL.P_STATE); }
+static int Hall_RotorSensor_GetDirection(const Hall_RotorSensor_T * p_sensor) { return Hall_GetSensorDirection(p_sensor->HALL.P_STATE); }
 
+// set direction comp
+// alternatively change to capture on set and this can be empty
 static void Hall_RotorSensor_SetDirection(const Hall_RotorSensor_T * p_sensor, int direction)
 {
-    p_sensor->MOTOR_SENSOR.P_STATE->Direction = direction;
+    // p_sensor->MOTOR_SENSOR.P_STATE->Direction = direction;
     Hall_SetDirection(p_sensor->HALL.P_STATE, (Hall_Direction_T)direction);
     Encoder_SinglePhase_SetDirection(p_sensor->P_ENCODER->P_STATE, direction);  /* interpolate as +/-, and on get speed */
 }
 
-static void Hall_RotorSensor_SetInitial(const Hall_RotorSensor_T * p_sensor)
+static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_ZeroInitial(&p_sensor->HALL);
     Encoder_ModeDT_SetInitial(p_sensor->P_ENCODER);
@@ -123,6 +120,16 @@ static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sens
     CPR = PolePairs*6   => GetSpeed => mechanical speed
     CPR = 6             => GetSpeed => electrical speed
 */
+void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+{
+    Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
+    p_encoder->Config.IsQuadratureCaptureEnabled = false;
+
+    Encoder_SetCountsPerRevolution(p_encoder, p_config->PolePairs * 6U);
+    Encoder_SetPartitionsPerRevolution(p_encoder, p_config->PolePairs);  /* Set for electrical cycle */
+    Encoder_SetScalarSpeedRef(p_encoder, p_config->SpeedTypeMax_Rpm); /* mech rpm */
+}
+
 void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
     Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
@@ -132,26 +139,7 @@ void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, con
     Encoder_SetPartitionsPerRevolution(p_encoder, 1U);
     // rpm_of_angle(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle) / p_motor->Config.PolePairs
     // Encoder_SetScalarSpeedRef(p_encoder,   ); // ERpm
-
-    // if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_ERpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_ERpm); }
-    // if (p_encoder->Config.CountsPerRevolution != 6U) { Encoder_SetCountsPerRevolution(p_encoder, 6U); }
-    // if (p_encoder->Config.PartitionsPerRevolution != 1U) { Encoder_SetPartitionsPerRevolution(p_encoder, 1U); }
 }
-
-void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
-{
-    Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
-    p_encoder->Config.IsQuadratureCaptureEnabled = false;
-
-    Encoder_SetCountsPerRevolution(p_encoder, p_config->PolePairs * 6U);
-    Encoder_SetPartitionsPerRevolution(p_encoder, p_config->PolePairs);  /* Set for electrical cycle */
-    Encoder_SetScalarSpeedRef(p_encoder, p_config->MechSpeedRated_Rpm); /* mech rpm */
-
-    // if (p_encoder->Config.ScalarSpeedRef_Rpm != speedRef_Rpm) { Encoder_SetScalarSpeedRef(p_encoder, speedRef_Rpm); }
-    // if (p_encoder->Config.CountsPerRevolution != polePairs * 6U) { Encoder_SetCountsPerRevolution(p_encoder, polePairs * 6U); }
-    // if (p_encoder->Config.PartitionsPerRevolution != polePairs) { Encoder_SetPartitionsPerRevolution(p_encoder, polePairs); } /* Set for electrical cycle */
-}
-
 
 /*
     Interface VTable
@@ -166,7 +154,7 @@ const RotorSensor_VTable_T HALL_VTABLE =
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Hall_RotorSensor_IsFeedbackAvailable,
     .SET_DIRECTION = (RotorSensor_Set_T)Hall_RotorSensor_SetDirection,
     // .GET_DIRECTION = (RotorSensor_Get_T)Hall_RotorSensor_GetDirection,
-    .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_SetInitial,
+    .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_ZeroInitial,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Hall_RotorSensor_VerifyCalibration,
 };
 

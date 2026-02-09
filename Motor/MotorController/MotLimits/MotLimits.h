@@ -61,7 +61,7 @@ MotSpeedLimit_Id_T;
 
 // typedef struct
 // {
-//      MotMotors_T MOTORS;
+//      Motor_Table_T MOTORS;
 // }
 // MotLimits_Context_T;
 

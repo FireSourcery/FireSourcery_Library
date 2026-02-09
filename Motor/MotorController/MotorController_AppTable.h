@@ -29,12 +29,13 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Vehicle/Vehicle.h"
+#include "Vehicle/Vehicle_User.h"
+
 #include "MotorController_App.h"
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
-
-
 
 /******************************************************************************/
 /*!

@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../MotMotors/MotMotors.h"
+#include "Motor/Motor/Motor_Table.h"
 #include "Motor/Motor/Motor_Include.h"
 
 #include "Transducer/Blinky/Blinky.h"
@@ -136,7 +136,7 @@ typedef const struct Vehicle
 {
     Vehicle_State_T * P_VEHICLE_STATE;
     StateMachine_T STATE_MACHINE;
-    MotMotors_T MOTORS;
+    Motor_Table_T MOTORS;
     // const Blinky_T * P_BUZZER;
     // const MotAnalogUser_T * P_ANALOG_USER;
     const Vehicle_Config_T * const P_NVM_CONFIG;
@@ -179,7 +179,7 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 // {
 //     switch (id)
 //     {
-//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_UserDirection_T)value); break;
+//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_Direction_T)value); break;
 //         case MOTOR_USER_INPUT_ID_THROTTLE: p_context->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = (uint16_t)value;
 //             break;
 //         default:
@@ -188,15 +188,15 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_USER_DIRECTION_FORWARD; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_USER_DIRECTION_REVERSE; p_input->PhaseState = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseState = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_USER_DIRECTION_NONE;// or return to top main
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_CCW; p_input->PhaseOutput = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_CW; p_input->PhaseOutput = PHASE_OUTPUT_VPWM;  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseOutput = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NULL;// or return to top main
     //     default: break;
     // }
     // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
     // {
     //     p_input->CmdValue = 0U;
-    //     p_input->PhaseState = PHASE_OUTPUT_FLOAT;
+    //     p_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
     // }
     // else
     // {
@@ -222,19 +222,19 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
     //     switch (dir)
     //     {
     //         case MOTOR_CONTROLLER_DIRECTION_PARK:
-    //             P_input->Direction = MOTOR_USER_DIRECTION_NONE;
-    //             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
+    //             P_input->Direction = MOTOR_DIRECTION_NULL;
+    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
-    //             P_input->Direction = MOTOR_USER_DIRECTION_REVERSE;
-    //             P_input->PhaseState = PHASE_OUTPUT_VPWM;
+    //             P_input->Direction = MOTOR_DIRECTION_CW;
+    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
-    //             P_input->Direction = MOTOR_USER_DIRECTION_FORWARD;
-    //             P_input->PhaseState = PHASE_OUTPUT_VPWM;
+    //             P_input->Direction = MOTOR_DIRECTION_CCW;
+    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
-    //             P_input->PhaseState = PHASE_OUTPUT_FLOAT;
+    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
     //             break;
     //         default:
     //             break;

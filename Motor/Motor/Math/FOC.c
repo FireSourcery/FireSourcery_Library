@@ -29,14 +29,14 @@
 /******************************************************************************/
 #include "FOC.h"
 
-
+/* 1.0 as full => VBus/sqrt(3) */
+/* 0.866 => VBus/2 */
 // void FOC_InitModulationFull(FOC_T * p_foc) { p_foc->Modulation = FRACT16_MAX; }
 // void FOC_InitModulationLinear(FOC_T * p_foc) { p_foc->Modulation = FRACT16_SQRT3_DIV_2; }
 
 void FOC_Init(FOC_T * p_foc)
 {
     // p_foc->Modulation = FRACT16_MAX;
-
     /* or handle outside */
     // p_foc->VdLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
     // p_foc->VPhaseLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);

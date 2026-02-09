@@ -82,6 +82,10 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
             MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
             break;
 
+        case MOT_USER_SYSTEM_DIRECTION_COMMAND:
+            MotorController_ApplyDirectionCmd(p_context, (int)value);
+            break;
+
         // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
         //     MotorController_InputMainMode(p_context, (MotorController_MainMode_T)value);
         //     status = 0;

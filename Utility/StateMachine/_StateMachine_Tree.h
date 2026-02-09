@@ -39,6 +39,9 @@
 /******************************************************************************/
 static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
+//refactor to single pointer
+// static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP; }
+// static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
@@ -47,6 +50,21 @@ static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_act
 
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
+
+/*   return 4.4.4.4.4.4.4.4 */
+/* 8 depth max. 16 substates per state max*/
+static inline uint32_t StateMachine_GetBranchSubStateId(const StateMachine_Active_T * p_active)
+{
+    State_T * p_iterator = StateMachine_GetActiveSubState(p_active);
+    uint32_t id = 0;
+    for (uint8_t count = 0; count < 8; count++)
+    {
+        id |= ((uint32_t)p_iterator->ID << (count * 4));
+        p_iterator = p_iterator->P_PARENT;
+        if (p_iterator == NULL) { break; }
+    }
+    return id;
+}
 
 /******************************************************************************/
 /*!

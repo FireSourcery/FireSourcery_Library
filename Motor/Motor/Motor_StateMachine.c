@@ -677,14 +677,14 @@ const State_T MOTOR_STATE_FAULT =
 /******************************************************************************/
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, -1); }
+    if (Motor_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, -1); }
 }
 
 /*! @return true if no fault remains */
 bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0); }
-    return !Motor_StateMachine_IsFault(p_motor);
+    if (Motor_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0); }
+    return !Motor_IsFault(p_motor);
 }
 
 /*
@@ -692,13 +692,13 @@ bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 */
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
+    if (Motor_IsFault(p_motor) == false) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
 }
 
 /* faultFlags unused for now */
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_StateMachine_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, ~faultFlags.Value); }
+    if (Motor_IsFault(p_motor) == true) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, ~faultFlags.Value); }
 }
 
 

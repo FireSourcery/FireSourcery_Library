@@ -105,6 +105,7 @@ static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p
 static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
     { return (p_active->p_ActiveSubState != p_active->p_ActiveState) ? p_active->p_ActiveSubState->ID : STATE_ID_NULL; }
 
+
 /* Id indicator, for when the Active TOP state is known. */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
     { return (StateMachine_GetActiveSubState(p_active)->P_PARENT == p_parent) ? _StateMachine_GetActiveSubStateId(p_active) : STATE_ID_NULL; }

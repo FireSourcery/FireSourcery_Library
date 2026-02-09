@@ -96,8 +96,6 @@ typedef enum MotorController_Var_Input
 }
 MotorController_Var_Input_T;
 
-// MOT_VAR_USER_ENTER_PARK,
-// MOT_VAR_USER_STATE_CMD,
 
 /******************************************************************************/
 /*
@@ -174,17 +172,10 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_BOOT_REF_CONFIG,
     MOT_VAR_TYPE_GENERAL_DEBUG,
     MOT_VAR_TYPE_GENERAL_STATIC_REF, /* Read-only */
-
-    /* Vehicle Submodule */
-    MOT_VAR_TYPE_VEHICLE_CONTROL,
-    MOT_VAR_TYPE_VEHICLE_CONFIG,
-
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
-
     // MOT_VAR_TYPE_BUZZER_CONTROL,
     // MOT_VAR_TYPE_BUZZER_CONFIG,
-
     /*  */
     // MOT_VAR_TYPE_OPT_DIN_CONFIG,
     // MOT_VAR_TYPE_RELAY_CONFIG,
@@ -237,21 +228,20 @@ typedef enum MotorController_VarType_Communication
 MotorController_VarType_Communication_T;
 
 // MotorController_SystemCmd_T
+// MOT_VAR_USER_ENTER_PARK,
+// MOT_VAR_USER_STATE_CMD,
 
 /*
-todo move
-    MotorController
-    Application_User
+    Application_User SubModules
     app table handle compile time define
 */
-/* SubModule */
-// typedef enum MotorController_VarType_Application
-// {
-//     /* Vehicle Submodule */
-//     MOT_VAR_TYPE_VEHICLE_CONTROL,
-//     MOT_VAR_TYPE_VEHICLE_CONFIG,
-// }
-// MotorController_VarType_Application_T;
+typedef enum MotorController_VarType_Application
+{
+    /* Vehicle Submodule */
+    MOT_VAR_TYPE_VEHICLE_CONTROL,
+    MOT_VAR_TYPE_VEHICLE_CONFIG,
+}
+MotorController_VarType_Application_T;
 
 /******************************************************************************/
 /*
@@ -266,14 +256,14 @@ typedef enum MotVarId_HandlerType
 {
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL,
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR, /* Generic */
+    MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR, // effectively namespace for rotor sensor vars
     MOT_VAR_ID_HANDLER_TYPE_MOTOR_SUB_MODULE,
     MOT_VAR_ID_HANDLER_TYPE_GENERAL,
     MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
     MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND, /* Resv */ /* MotorController_SystemCmd_T */
-    MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND, /*  */
+    MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
+    MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND,
     _MOT_VAR_ID_HANDLER_TYPE_END,
 }
 MotVarId_HandlerType_T;

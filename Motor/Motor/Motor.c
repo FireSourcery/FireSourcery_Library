@@ -97,7 +97,8 @@ void Motor_Reset(Motor_State_T * p_motor)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
-// #endif
+    // #endif
+    Angle_InitFrom(&p_motor->OpenLoopAngle, &(Angle_Config_T){.SpeedRef_Angle16 = Motor_GetSpeedTypeMax_DegPerCycle(p_motor)});
 
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
@@ -119,12 +120,15 @@ void Motor_ResetUnits(Motor_State_T * p_motor)
 {
     RotorSensor_Config_T config =
     {
-       .ElSpeedRated_DegPerCycle = Motor_GetSpeedRatedRef_DegPerCycle(p_motor),
-       .MechSpeedRated_Rpm = Motor_GetSpeedRatedRef_Rpm(p_motor),
-       .PolePairs = p_motor->Config.PolePairs,
+        .PolePairs = p_motor->Config.PolePairs,
+        .ElSpeedRated_DegPerCycle = Motor_GetSpeedRated_DegPerCycle(p_motor),
+        .MechSpeedRated_Rpm = Motor_GetSpeedRated_Rpm(p_motor),
+        .SpeedTypeMax_DegPerCycle = Motor_GetSpeedTypeMax_DegPerCycle(p_motor),  /* allow up to 2x the rated speed for unit conversion */
+        .SpeedTypeMax_Rpm = Motor_GetSpeedTypeMax_Rpm(p_motor),
     };
 
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
+    Angle_InitFrom(&p_motor->p_ActiveSensor->P_STATE->AngleSpeed, &(Angle_Config_T){.SpeedRef_Angle16 = Motor_GetSpeedTypeMax_DegPerCycle(p_motor)}); /*  */
 }
 
 void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
@@ -204,7 +208,7 @@ static void ApplyILimit(Motor_State_T * p_motor)
 
 /******************************************************************************/
 /*
-    StateMachine Controlled
+    Inner unconditional set, always overwrite.
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -224,11 +228,9 @@ void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int mode) { Motor_SetFe
 
 /******************************************************************************/
 /*
-    Direction - applied voltage direcction
+    Direction - applied voltage direction
 */
 /******************************************************************************/
-/*
-*/
 void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
 {
     p_motor->Direction = direction;
@@ -244,13 +246,13 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
 */
 void Motor_SetDirectionForward(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor)); }
 void Motor_SetDirectionReverse(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
-// void Motor_SetUserDirection(Motor_State_T * p_motor, int sign) { Motor_SetDirection(p_motor, (Motor_Direction_T)(sign * p_motor->Config.DirectionForward)); }
+// void Motor_SetDirectionSign(Motor_State_T * p_motor, int sign) { Motor_SetDirection(p_motor, (Motor_Direction_T)(sign * p_motor->Config.DirectionForward)); }
 
 
 /******************************************************************************/
 /*!
     Active Limits - Non directional
-    Inner Unconditional Set, always overwrite.
+    Table comparison control
     Derive directional Feedback Limits
     optionally store cw/ccw limits first
 */

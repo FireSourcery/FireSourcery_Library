@@ -32,12 +32,12 @@
 #include "Math/Fixed/fract16.h"
 
 
-/*
+/*!
     VBusNorm
     Normalize V to VBus as 1.0F
     [VBus/sqrt3] => [1/sqrt3]
-    [-1/sqrt3:1/sqrt3]
     Svpwm input as VPhase/VBus
+    @return [-1/sqrt3:1/sqrt3]
 */
 /*!
     @note overflow is not possible, since
@@ -46,6 +46,7 @@
 */
 static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_fract32, fract16_t v_fract16) { return (int32_t)v_fract16 * vBusInv_fract32 / 65536; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
+/*  */
 static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
 
 /*!

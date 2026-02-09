@@ -112,26 +112,32 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /*
 */
 /******************************************************************************/
-// static inline bool _Motor_StateMachine_IsState(const StateMachine_T * p_stateMachine, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_stateMachine->P_ACTIVE, stateId)); }
+static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+/*
+    Caller handle known root state
+*/
+static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return _StateMachine_GetActiveSubStateId(&p_motor->StateMachine); }
 
-// static inline bool _Motor_StateMachine_IsState(const Motor_State_T * p_fields, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(&p_fields->StateMachine, stateId)); }
-// static inline bool _Motor_StateMachine_IsFault(const Motor_State_T * p_fields) { return (_Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_FAULT)); }
-// static inline bool _Motor_StateMachine_IsOpenLoop(const Motor_State_T * p_fields) { return _Motor_StateMachine_IsState(p_fields, MSM_STATE_ID_OPEN_LOOP); }
+/*
+    StateMachine controlled values
+    Set via interface functions
+*/
+static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
+static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
 
-/* Wrap for interface */
+/* Wrap Motor_T for interface */
 /* Does not include substates */
-static inline bool Motor_StateMachine_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
+static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
 
-static inline bool Motor_StateMachine_IsFault(const Motor_T * p_motor) { return Motor_StateMachine_IsState(p_motor, MSM_STATE_ID_FAULT); }
+static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MSM_STATE_ID_FAULT); }
 
 /* Optionally enforce config in calibration state, rather than stop state */
-static inline bool Motor_StateMachine_IsConfig(const Motor_T * p_motor)
+static inline bool Motor_IsConfig(const Motor_T * p_motor)
 {
     return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP) ||
            (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION) ||
            (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_FAULT);
 }
-
 
 
 

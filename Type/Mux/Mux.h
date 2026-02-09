@@ -58,7 +58,7 @@ typedef const struct VTable
     // MuxInput_Proc_T INIT; /* Re init peripheral registers */
     // void (*CaptureInputs)(const void * p_adapter, void * p_input);
     // bool (*PollEdge)(const void * p_adapter);
-    // Motor_UserDirection_T(*GetDirection)(const void * p_adapter);
+    // Motor_Direction_T(*GetDirection)(const void * p_adapter);
     // MuxInput_T * P_VTABLE;
 
     // void * P_INPUT_STATE;

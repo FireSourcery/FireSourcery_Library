@@ -39,21 +39,21 @@ void MotorController_App_Init(MotorController_T * p_context)
 
 }
 
-State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode)
-{
-    switch (mode)
-    {
-        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_STATE_MAIN_MOTOR_CMD;
-        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_STATE_MAIN_VEHICLE;
-        default: return &MC_STATE_MAIN_MOTOR_CMD;
-    }
-}
+// State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode)
+// {
+//     switch (mode)
+//     {
+//         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_STATE_MAIN_MOTOR_CMD;
+//         case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_STATE_MAIN_VEHICLE;
+//         default: return &MC_STATE_MAIN_MOTOR_CMD;
+//     }
+// }
 
 
-State_T * MotorController_App_GetMainState(MotorController_T * p_context)
-{
-    return MotorController_App_MainStateOf(p_context->P_MC_STATE->Config.InitMode);
-}
+// State_T * MotorController_App_GetMainState(MotorController_T * p_context)
+// {
+//     return MotorController_App_MainStateOf(p_context->P_MC_STATE->Config.InitMode);
+// }
 
 MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
 {
@@ -65,6 +65,10 @@ MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
     }
 }
 
+State_T * MotorController_App_GetMainState(MotorController_T * p_context)
+{
+    return MotorController_App_Get(p_context)->P_INITIAL_STATE;
+}
 
 
 // typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);

@@ -70,6 +70,8 @@ static inline uint32_t Phase_VBus_Inv_Fract32(void) { return Phase_VBus.PerV_Fra
 
 static inline uint16_t Phase_VBus_Volts(void) { return fract16_mul(Phase_VBus.VBus_Fract16, Phase_Calibration_GetVMaxVolts()); }
 
+static inline ufract16_t Phase_VBus_GetVNominal(void) { return Phase_VBus.VNominal_Fract16; }
+/* Runtime phase peak */
 /* Alternatively use Nominal */
 static inline ufract16_t Phase_VBus_GetVRef(void) { return Phase_VBus.VBus_Fract16 / 2; }
 static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phase_VBus.VBus_Fract16, FRACT16_1_DIV_SQRT3); }

@@ -57,6 +57,7 @@ void Hall_Init(const Hall_T * p_hall)
 */
 void Hall_StartCalibrate(const Hall_T * p_hall) { p_hall->P_STATE->Sensors.Value = 0U; } /* Next poll is edge */
 
+/* Call for each known phase */
 void Hall_CalibrateState(const Hall_T * p_hall, Hall_Id_T calibratedId)
 {
     p_hall->P_STATE->Config.SensorsTable[Hall_ReadSensors(p_hall).Value] = calibratedId;
@@ -98,13 +99,20 @@ bool Hall_IsTableValid(const Hall_State_T * p_hall)
     return valid;
 }
 
+/******************************************************************************/
 /*
-    Id Interface
-*/
-// void _Hall_VarId_Get(Hall_Config_T * p_hall, Hall_VarId_T varId, int varValue)
-// {
 
-// }
+*/
+/******************************************************************************/
+int _Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
+{
+    switch (varId)
+    {
+        case HALL_VAR_SENSOR_STATE: return Hall_ReadSensors(p_hall).Value;
+        case HALL_VAR_SENSOR_ID:  return _Hall_IdOfSensors(p_hall->P_STATE, Hall_ReadSensors(p_hall).Value);
+        default: break;
+    }
+}
 
 
 void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue)

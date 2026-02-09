@@ -81,11 +81,9 @@ static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_State_T * p
 static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
 
 /* vq is expected to be the same sign as p_motor->Direction */
-static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return FOC_IsMotoring(&p_motor->Foc); }
-static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return FOC_IsGenerating(&p_motor->Foc); }
 
 /* I limit in [Direction] selected */
-static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (Motor_FOC_IsMotoring(p_motor) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (FOC_IsMotoring(&p_motor->Foc) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
 
 static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_GetIq(&p_motor->Foc), _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
 static inline bool Motor_FOC_IsILimitReached(const Motor_State_T * p_motor) { return (FOC_GetIMagnitude(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }

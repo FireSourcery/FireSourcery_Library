@@ -20,7 +20,7 @@
 //     Analog_Conversion_ClearResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
 //     Filter_Init(&p_mc->AvgBuffer0);
 //     Filter_Init(&p_mc->AvgBuffer1);
-//     // MotMotors_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
+//     // Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
 // }
 
 // /* Proc Per ms */
@@ -48,7 +48,7 @@
 
 //     if (p_mc->StateCounter > TIME)
 //     {
-//         // if (MotMotors_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false)
+//         // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false)
 //         MotAnalogUser_SetThrottleZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE)));
 //         MotAnalogUser_SetBrakeZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE)));
 //         p_mc->LockOpStatus = 0; /* success */

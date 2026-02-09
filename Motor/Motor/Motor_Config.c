@@ -46,13 +46,28 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 }
 
 
+/* local limit */
+static inline uint16_t _Motor_Config_GetOpenLoopScalarLimit(const Motor_State_T * p_motor) { return math_min(p_motor->Config.OpenLoopLimitScalar_Fract16, MOTOR_OPEN_LOOP_MAX_SCALAR); }
+static inline uint16_t _Motor_Config_GetOpenLoopILimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), Phase_Calibration_GetIRatedPeak_Fract16()); }
+static inline uint16_t _Motor_Config_GetOpenLoopVLimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), Phase_Calibration_GetVRated_Fract16()); }
+
+/* Rated Limit - applied on set config */
+static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
+static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
+
+/*
+    the setting limit by TypeMax, SpeedRated ~VBusRef
+    In Fract16 INT16_MAX is 2x RatedSpeed
+*/
+static inline uint16_t _Motor_Config_SpeedRatedLimit(const Motor_State_T * p_motor) { return INT16_MAX; }
+static inline uint16_t _Motor_Config_SpeedRatedLimitOf(const Motor_State_T * p_motor, uint16_t speed_fract16) { return math_min(_Motor_Config_SpeedRatedLimit(p_motor), speed_fract16); }
+
 /******************************************************************************/
 /*
     Nvm Reference/Calibration
     Optionally propagate values during set, or wait for reboot
 */
 /******************************************************************************/
-
 /******************************************************************************/
 /*
     Speed Position Calibration
@@ -79,14 +94,16 @@ void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
-    p_motor->Config.SpeedRated_Rpm = Motor_GetSpeedVRefSvpwm_Rpm(p_motor); /* todo option select with commutation mode */
+    p_motor->Config.SpeedRated_Rpm = Motor_GetSpeedVBusRef_Rpm(p_motor);
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
+/* allow independent set */
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
 {
-    p_motor->Config.SpeedRated_Rpm = math_clamp(rpm, Motor_GetSpeedVRefSvpwm_Rpm(p_motor) * 9/10, Motor_GetSpeedVRefSvpwm_Rpm(p_motor) * 11/10);
-    // p_motor->Config.SpeedRated_Rpm = rpm;
+    // p_motor->Config.SpeedRated_Rpm = math_clamp(rpm, 0, Motor_GetSpeedVBusRef_Rpm(p_motor) * 15/10);
+    p_motor->Config.SpeedRated_Rpm = rpm;
+    // p_motor->Config.Kv = rpm / Phase_VBus_Volts();
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
@@ -96,26 +113,15 @@ void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
     Base as UFract16, multiply with SpeedRef*2 without overflow.
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_State_T * p_motor, uint16_t scalar) { p_motor->Config.VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
-
+// void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
+// {
+//     Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
+// }
 
 #ifdef MOTOR_SIX_STEP_ENABLE
 static inline void Motor_Config_SetPhaseMode(Motor_State_T * p_motor, Phase_Polar_Mode_T mode) { p_motor->Config.PhasePwmMode = mode; Phase_Polar_ActivateMode(&p_motor->PHASE, mode); }
 #endif
 
-/* Kv * VSource */
-// #if defined(MOTOR_DEBUG_ENABLE)
-// void Motor_Config_SetSpeedVRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
-// {
-//     // p_motor->Config.Kv = rpm / Phase_VBus_Volts();
-//     // PropagateSet(p_motor, Motor_ResetUnits);
-//     // Motor_Config_SetKv(p_motor, Phase_VBus_Volts());
-// }
-
-// void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
-// {
-//     Motor_Config_SetVSpeedScalar_UFract16(p_motor, ((uint32_t)rpm << 15U) / Motor_GetSpeedVRef_Rpm(p_motor));
-// }
-// #endif
 
 /******************************************************************************/
 /*
@@ -137,13 +143,13 @@ void Motor_Config_SetIcZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_mot
 */
 void Motor_Config_SetSpeedLimitForward_Fract16(Motor_State_T * p_motor, uint16_t forward_Fract16)
 {
-    p_motor->Config.SpeedLimitForward_Fract16 = math_clamp(forward_Fract16, -INT16_MAX, INT16_MAX);
+    p_motor->Config.SpeedLimitForward_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, forward_Fract16); /* 2x the ratedSpeed */
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
 void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_State_T * p_motor, uint16_t reverse_Fract16)
 {
-    p_motor->Config.SpeedLimitReverse_Fract16 = math_clamp(reverse_Fract16, -INT16_MAX, INT16_MAX);
+    p_motor->Config.SpeedLimitReverse_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, reverse_Fract16);
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 

@@ -43,22 +43,20 @@
 */
 #define RAMP_SHIFT 14U
 
-#define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
-
-#define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
-
-#define RAMP_RATE_PER_SECOND(updateFreq_Hz, ratePerS) (((int32_t)ratePerS << RAMP_SHIFT) / updateFreq_Hz)
-
 // typedef struct Ramp_Config_T
 // {
 //     uint16_t Delta;    /*   */
 //     uint32_t Ticks;    /* Time to reach Units */
 // }
 // Ramp_Config_T;
+#define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
+#define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
+#define RAMP_RATE_PER_SECOND(updateFreq_Hz, ratePerS) (((int32_t)ratePerS << RAMP_SHIFT) / updateFreq_Hz)
+
 /******************************************************************************/
 /*
     Implementation by shifted accumulator.
-    This way output state can be set directly.
+        output state can be set directly.
         Index based implementation need inverse function
 */
 /******************************************************************************/
@@ -68,7 +66,6 @@ typedef struct Ramp
     int16_t Target;
 }
 Ramp_T;
-
 
 /******************************************************************************/
 /*
@@ -97,12 +94,6 @@ static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
     p_ramp->Target = 0;
 }
 
-/* ProcAsDisabled */
-// static inline int32_t Ramp_ProcEndState(Ramp_T * p_ramp)
-// {
-//     Ramp_SetOutput(p_ramp, p_ramp->Target);
-//     return Ramp_GetOutput(p_ramp);
-// }
 
 /* single step proc only */
 static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == (UINT16_MAX << RAMP_SHIFT)); }

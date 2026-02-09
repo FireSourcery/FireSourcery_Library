@@ -62,7 +62,7 @@ static inline void Vehicle_User_StartBrake(const Vehicle_T * p_vehicle)     { Ve
 /* Protocol Call sets Inner Machine only */
 /* Will not exit park */
 /* Caller Handle Edge Detection */
-static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Motor_UserDirection_T direction)
+static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Motor_Direction_T direction)
 {
     // if (Vehicle_StateMachine_GetDirection(p_vehicle) != direction)
     // {
@@ -80,13 +80,13 @@ static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, Moto
 /******************************************************************************/
 /* also returns NEUTRAL on error */
 /* Alternatively use substates */
-static Motor_UserDirection_T Vehicle_StateMachine_GetDirection(const Vehicle_T * p_vehicle)
+static Motor_Direction_T Vehicle_StateMachine_GetDirection(const Vehicle_T * p_vehicle)
 {
-    Motor_UserDirection_T direction;
+    Motor_Direction_T direction;
     switch (StateMachine_GetActiveStateId(p_vehicle->STATE_MACHINE.P_ACTIVE))
     {
-        case VEHICLE_STATE_ID_NEUTRAL:    direction = MOTOR_USER_DIRECTION_NONE; break;
-        case VEHICLE_STATE_ID_DRIVE:      direction = _MotMotors_GetDirectionAll(&p_vehicle->MOTORS); break; /* NULL is error */
+        case VEHICLE_STATE_ID_NEUTRAL:    direction = MOTOR_DIRECTION_NULL; break;
+        case VEHICLE_STATE_ID_DRIVE:      direction = _Motor_Table_GetDirectionAll(&p_vehicle->MOTORS); break; /* NULL is error */
         default:                          direction = 0;           break;
     }
     return direction;
@@ -98,7 +98,7 @@ static Motor_UserDirection_T Vehicle_StateMachine_GetDirection(const Vehicle_T *
 */
 /******************************************************************************/
 // /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
-// bool Vehicle_User_CheckDirection(const Vehicle_T * p_vehicle, Motor_UserDirection_T direction)
+// bool Vehicle_User_CheckDirection(const Vehicle_T * p_vehicle, Motor_Direction_T direction)
 // {
 //     bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
 //     if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
@@ -118,7 +118,7 @@ extern void Vehicle_User_ApplyZero(Vehicle_T * p_vehicle);
 /******************************************************************************/
 typedef enum Vehicle_VarId
 {
-    VEHICLE_VAR_DIRECTION,          // Motor_UserDirection_T,
+    VEHICLE_VAR_DIRECTION,          // Motor_Direction_T,
     VEHICLE_VAR_THROTTLE,           // [0:65535]
     VEHICLE_VAR_BRAKE,              // [0:65535]
 }

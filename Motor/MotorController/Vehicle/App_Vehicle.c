@@ -48,9 +48,9 @@ void Vehicle_ProcAnalogUser(const MotorController_T * p_context)
     /* Alternatively check for park state */
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_NONE);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CCW);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CW);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NULL);      break;
         default: break;
     }
 
@@ -119,9 +119,9 @@ static State_T * InputGeneric(const MotorController_T * p_context, state_value_t
     // Vehicle_User_SetThrottle(p_context->VEHICLE.P_VEHICLE_STATE, p_inputs->ThrottleValue);
     // switch (cmd)
     // {
-    //     case MOTOR_USER_DIRECTION_NONE:    break; // optionally apply V0 or VFLOAT
-    //     case MOTOR_USER_DIRECTION_FORWARD: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_USER_DIRECTION_FORWARD); break;
-    //     case MOTOR_USER_DIRECTION_REVERSE: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_USER_DIRECTION_REVERSE); break;
+    //     case MOTOR_DIRECTION_NULL:    break; // optionally apply V0 or VFLOAT
+    //     case MOTOR_DIRECTION_CCW: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_DIRECTION_CCW); break;
+    //     case MOTOR_DIRECTION_CW: Vehicle_User_ApplyDirection(&p_context->VEHICLE, MOTOR_DIRECTION_CW); break;
     //     default:  break;
     // }
     return NULL;

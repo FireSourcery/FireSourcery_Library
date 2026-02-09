@@ -68,8 +68,7 @@ void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Co
     p_encoder->P_STATE->PollingFreq = p_encoder->POLLING_FREQ;
     p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
     _Encoder_ResetUnits(p_encoder->P_STATE);
-    Encoder_DeltaD_SetInitial(p_encoder);
-    Encoder_DeltaT_SetInitial(p_encoder);
+    Encoder_ModeDT_SetInitial(p_encoder);
 }
 
 /*

@@ -157,7 +157,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Increasing Limit only, reset on warning clear.
             */
             LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
-            MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+            Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
             //todo
             // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) {MotorController_BeepMonitorTrigger(p_context); }
             break;
@@ -166,7 +166,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
             if (Monitor_IsWarningClearing(p_context->HEAT_MOSFETS.P_STATE))
             {
                 LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
-                MotMotors_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+                Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
             }
             break;
 
@@ -196,7 +196,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 /******************************************************************************/
 static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T * p_context)
 {
-    MotMotors_ForceDisableControl(&p_context->MOTORS);
+    Motor_Table_ForceDisableControl(&p_context->MOTORS);
     p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
     MotorController_EnterFault(p_context);
     // MotorController_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
@@ -348,7 +348,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             _MotorController_HeatMonitor_Thread(p_context);
 
             /* Can use low priority check, as motor is already in fault state. */
-            if (MotMotors_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
+            if (Motor_Table_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_EnterFault(p_context); }
 
@@ -424,18 +424,18 @@ static inline void MotorCmd_ProcAnalogUser(const MotorController_T * p_context)
 
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_FORWARD);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_REVERSE);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_USER_DIRECTION_NONE);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CCW);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CW);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NULL);      break;
         default: break;
     }
 
     // sm handle remap
     // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_FORWARD);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_REVERSE);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_USER_DIRECTION_NONE);     break;
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CCW);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);  break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_NULL);     break;
     //     default: break;
     // }
 
