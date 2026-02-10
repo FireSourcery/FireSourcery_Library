@@ -71,10 +71,9 @@ static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_
 */
 static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
 {
-    Vehicle_Cmd_T cmd = Vehicle_Input_EvaluateCmd(p_user);
     p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
-    p_user->Cmd = cmd;
-    return cmd;
+    p_user->Cmd = Vehicle_Input_EvaluateCmd(p_user);
+    return p_user->Cmd;
 }
 
 static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != Vehicle_Input_PollCmd(p_user)); }
@@ -140,7 +139,6 @@ typedef const struct Vehicle
     // const Blinky_T * P_BUZZER;
     // const MotAnalogUser_T * P_ANALOG_USER;
     const Vehicle_Config_T * const P_NVM_CONFIG;
-    /*   VarInterface; for Vehicle_VarId_Set */
 }
 Vehicle_T;
 
@@ -173,43 +171,6 @@ extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
 //         default: break;
 //     }
 // }
-
-// interface direct call
-// static void UserInput(const MotorController_T * p_context, int id, int value)
-// {
-//     switch (id)
-//     {
-//         case MOTOR_USER_INPUT_ID_DIRECTION: Vehicle_StateMachine_ApplyInputDirection(&p_context->VEHICLE, (Motor_Direction_T)value); break;
-//         case MOTOR_USER_INPUT_ID_THROTTLE: p_context->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = (uint16_t)value;
-//             break;
-//         default:
-//             break;
-//     }
-
-    // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  p_input->Direction = MOTOR_DIRECTION_CCW; p_input->PhaseOutput = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  p_input->Direction = MOTOR_DIRECTION_CW; p_input->PhaseOutput = PHASE_OUTPUT_VPWM;  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  p_input->PhaseOutput = PHASE_OUTPUT_FLOAT;         break; // p_input->Direction = MOTOR_DIRECTION_NULL;// or return to top main
-    //     default: break;
-    // }
-    // if (MotAnalogUser_IsAnyBrakeOn(&p_context->ANALOG_USER) == true)
-    // {
-    //     p_input->CmdValue = 0U;
-    //     p_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
-    // }
-    // else
-    // {
-    //     p_input->CmdValue = MotAnalogUser_GetThrottle(&p_context->ANALOG_USER) / 2U;
-    // }
-// }
-
-// MotUserInput_VTable_T MOT_ANALOG_USER_INPUT =
-// {
-//     Vehicle_VarId_Set
-// };
-
-
 
 // static inline void Vehicle_Input_FromAnalogUser(Vehicle_Input_T * p_user, MotAnalogUser_T * P_analog)
 // {

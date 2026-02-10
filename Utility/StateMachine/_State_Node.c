@@ -248,6 +248,7 @@ State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context,
 /******************************************************************************/
 /*
     Take the first transition that accepts the input
+    Traversal stops when input is defined, even if no state transition. alternatively
     Inputs using id always include top level
 */
 State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId)
@@ -272,7 +273,6 @@ State_Input_T _State_TraverseAcceptInput(State_T * p_start, void * p_context, ui
     State_Input_T result = NULL;
     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= stopLevel); p_iterator = p_iterator->P_PARENT)
     {
-        // assert(p_iterator != NULL);
         result = State_AcceptInput(p_iterator, p_context, inputId);
         if (result != NULL) { break; }
     }

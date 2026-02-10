@@ -38,4 +38,10 @@
 extern State_T MC_STATE_MAIN_VEHICLE;
 extern MotorController_App_T MC_APP_VEHICLE;
 
+// typedef  struct App_Vehicle
+// {
+//     MotorController_App_T APP_HANDLER;
+//     Vehicle_T VEHICLE;
+// }
+
 extern void Vehicle_ProcAnalogUser(const MotorController_T * p_context);

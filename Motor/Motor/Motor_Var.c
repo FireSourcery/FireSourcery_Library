@@ -46,7 +46,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED:                       value = Motor_GetSpeed_UFract16(p_motor);               break;
+        case MOTOR_VAR_SPEED:                       value = Motor_GetSpeed_Fract16(p_motor);                break;
         case MOTOR_VAR_I_PHASE:                     value = Motor_GetIPhase_Fract16(p_motor);               break;
         case MOTOR_VAR_V_PHASE:                     value = Motor_GetVPhase_Fract16(p_motor);               break;
         case MOTOR_VAR_STATE:                       value = Motor_GetStateId(p_motor);                      break;
@@ -54,11 +54,12 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
         case MOTOR_VAR_FAULT_FLAGS:                 value = Motor_GetFaultFlags(p_motor).Value;             break;
         // case MOTOR_VAR_STATUS_FLAGS:                value = Motor_GetStatusFlags(p_motor).Value;           break;
         case MOTOR_VAR_HEAT:                        value = Motor_GetHeat_Adcu(p_motor);                    break;
+        case MOTOR_VAR_SPEED_REQ:                   value = _Motor_GetSpeedSetpoint(p_motor);               break;
+        case MOTOR_VAR_TORQUE_REQ:                  value = _Motor_GetTorqueSetpoint(p_motor);              break;
+
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);     break;
         case MOTOR_VAR_I_DC:                        value = Motor_GetIdc_UFract16(p_motor);                 break;
-        case MOTOR_VAR_SPEED_REQ:                   value = _Motor_GetSpeedSetpoint(p_motor);               break;
-        case MOTOR_VAR_TORQUE_REQ:                  value = _Motor_GetTorqueSetpoint(p_motor);              break;
     }
     return value;
 }
@@ -147,7 +148,7 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
         case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_Direction_T)varValue);     break;
         // case MOTOR_VAR_USER_CONTROL_RESV:    Motor_ApplyVirtualDirection(p_motor, (Motor_Direction_T)varValue);       break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
-        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ActivatePhaseOutput(p_motor, (Phase_Output_T)varValue);           break;
+        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyPhaseOutput(p_motor, (Phase_Output_T)varValue);           break;
         /* Set user index */
         // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR_STATE, varValue);                  break;
         // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR_STATE, varValue);                      break;
@@ -242,7 +243,7 @@ int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_V
         case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVBusRef_DegPerCycle(p_motor);             break;
         // case MOTOR_VAR_SPEED_V_SVPWM_REF_RPM:           value = Motor_Config_GetSpeedVSvpwmRef_Rpm(p_motor);         break;
         // case MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE: value = Motor_GetSpeedVRefSvpwm_DegPerCycle(p_motor);        break;
-        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_GetVSpeedRated_Fract16(p_motor);               break;
+        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_Config_GetVSpeedRated_Fract16(p_motor);               break;
     }
     return value;
 }

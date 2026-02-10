@@ -87,7 +87,6 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
     {
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
-            // ProcIFeedback(p_motor, p_motor->Foc.ReqD, p_motor->Foc.ReqQ);
             ProcIFeedback(p_motor, dReq, qReq);
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
@@ -239,9 +238,8 @@ void Motor_FOC_MatchVoltageState(Motor_State_T * p_motor, int16_t vd, int16_t vq
 */
 void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 {
-    // Motor_FOC_MatchVoltageState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
     Motor_FOC_MatchVoltageState(p_motor, FOC_GetVd(&p_motor->Foc), FOC_GetVq(&p_motor->Foc)); /* Using Bemf capture */
-    // Motor_FOC_MatchVoltageState(p_motor, 0, FOC_GetVPhase(&p_motor->Foc)); /* Using Bemf capture */
+    // Motor_FOC_MatchVoltageState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
 }
 
 
@@ -348,12 +346,6 @@ void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 }
 
 
-// static inline void Motor_FOC_CaptureIa(Motor_State_T * p_motor) { FOC_SetIa(&p_motor->Foc, ((int32_t)Phase_Input_GetIa_Fract16(&p_motor->PhaseInput) + FOC_GetIa(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureIb(Motor_State_T * p_motor) { FOC_SetIb(&p_motor->Foc, ((int32_t)Phase_Input_GetIb_Fract16(&p_motor->PhaseInput) + FOC_GetIb(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureIc(Motor_State_T * p_motor) { FOC_SetIc(&p_motor->Foc, ((int32_t)Phase_Input_GetIc_Fract16(&p_motor->PhaseInput) + FOC_GetIc(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVa(Motor_State_T * p_motor) { FOC_SetVBemfA(&p_motor->Foc, ((int32_t)Phase_Input_GetVa_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfA(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVb(Motor_State_T * p_motor) { FOC_SetVBemfB(&p_motor->Foc, ((int32_t)Phase_Input_GetVb_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfB(&p_motor->Foc)) / 2); }
-// static inline void Motor_FOC_CaptureVc(Motor_State_T * p_motor) { FOC_SetVBemfC(&p_motor->Foc, ((int32_t)Phase_Input_GetVc_Fract16(&p_motor->PhaseInput) + FOC_GetVBemfC(&p_motor->Foc)) / 2); }
 
 // static inline void ProcClarkePark(Motor_State_T * p_motor)
 // {

@@ -27,57 +27,58 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Vehicle/App_Vehicle.h"
+
 #include "MotorController_App.h"
 #include "MotorController_StateMachine.h"
 #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
-
-void MotorController_App_Init(MotorController_T * p_context)
+/******************************************************************************/
+/*!
+    default App
+*/
+/******************************************************************************/
+static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_context)
 {
+    switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    {
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CCW);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);   break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_NULL);      break;
+        default: break;
+    }
 
+    MotorController_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+    // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
+    // {
+    //     MotorController_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
+    // }
 }
 
-// State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode)
-// {
-//     switch (mode)
-//     {
-//         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_STATE_MAIN_MOTOR_CMD;
-//         case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_STATE_MAIN_VEHICLE;
-//         default: return &MC_STATE_MAIN_MOTOR_CMD;
-//     }
-// }
+MotorController_App_T MC_APP_MOTOR_CMD =
+{
+    .PROC_ANALOG_USER = MotorCmdApp_ProcAnalogUser,
+    .P_INITIAL_STATE = &MC_STATE_MAIN_MOTOR_CMD,
+};
 
 
-// State_T * MotorController_App_GetMainState(MotorController_T * p_context)
-// {
-//     return MotorController_App_MainStateOf(p_context->P_MC_STATE->Config.InitMode);
-// }
-
+/******************************************************************************/
+/*!
+    Singleton App handlers
+*/
+/******************************************************************************/
 MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
 {
     switch (p_context->P_MC_STATE->Config.InitMode)
     {
-        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &p_context->APPS.MOTOR_CMD;
-        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &p_context->APPS.VEHICLE;
-        default: return &p_context->APPS.MOTOR_CMD;
+        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
+        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_APP_VEHICLE;
+        default: return &MC_APP_MOTOR_CMD;
     }
 }
 
-State_T * MotorController_App_GetMainState(MotorController_T * p_context)
-{
-    return MotorController_App_Get(p_context)->P_INITIAL_STATE;
-}
+State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App_Get(p_context)->P_INITIAL_STATE; }
 
-
-// typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
-// MotorController_App_Proc_T MotorController_App_fn(MotorController_MainMode_T mode)
-// {
-//     switch (mode)
-//     {
-//         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return & ;
-//         case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &Vehicle_ProcAnalogUser;
-//         default: return & ;
-//     }
-// }
+MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER; }

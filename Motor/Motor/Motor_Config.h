@@ -38,26 +38,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* settable max */
-// #define _MOTOR_CONFIG_SPEED_MAX_RPM(...) Motor_GetSpeedTypeMax_Rpm(__VA_ARGS__[0])
-// #define _MOTOR_CONFIG_SPEED_MAX_DIG(Kv, VBus, PolePairs) ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, _MOTOR_SPEED_NUM_MAX_RPM(Kv, VBus) * PolePairs)
-// static inline uint16_t Motor_GetSpeedTypeMax_Rpm(const Motor_State_T * p_motor) { return Motor_GetSpeedVBusRef_Rpm(p_motor) * 2; }
-// static inline uint16_t Motor_GetSpeedTypeMax_DegPerCycle(const Motor_State_T * p_motor) { return Motor_GetSpeedVBusRef_DegPerCycle(p_motor) * 2; }
-
-
 #define MOTOR_TICKS_OF_SPEED_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (RampInterval) / (UnitsPerS))
 #define MOTOR_TICKS_OF_TORQUE_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (RampInterval) / (UnitsPerS)) /* V or I */
-
 
 /* scale to rated max */
 #ifndef MOTOR_OPEN_LOOP_MAX_SCALAR
 #define MOTOR_OPEN_LOOP_MAX_SCALAR FRACT16(0.1F)
 #endif
-
-/* const expr angle_of_rpm */
-// #define MOTOR_EL_SPEED_OF_MECH_RPM(PolePairs, MechRpm) ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, MechRpm * PolePairs)
-
-
 
 /******************************************************************************/
 /*
@@ -68,13 +55,11 @@
 static inline Motor_CommutationMode_T Motor_Config_GetCommutationMode(const Motor_State_T * p_motor) { return p_motor->Config.CommutationMode; }
 static inline void Motor_Config_SetCommutationMode(Motor_State_T * p_motor, Motor_CommutationMode_T mode) { p_motor->Config.CommutationMode = mode; }
 
-// static inline Motor_AlignMode_T Motor_Config_GetAlignMode(const Motor_State_T * p_motor, Motor_AlignMode_T mode)    { return p_motor->Config.AlignMode; }
-// static inline void Motor_Config_SetAlignMode( Motor_State_T * p_motor, Motor_AlignMode_T mode)     { p_motor->Config.AlignMode = mode; }
-
-/* The virtual direction that is the positive direction */
+/* The user direction that is the positive direction */
 static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward) { p_motor->Config.DirectionForward = directionForward; }
-// static inline void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, bool isVirtualCcwPositive) { p_motor->Config.DirectionForward =  }
+static inline bool Motor_Config_IsCcwPositive(Motor_State_T * p_motor) { return p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW; }
+static inline void Motor_Config_SetCcwPositive(Motor_State_T * p_motor, bool isCcwPositive) { p_motor->Config.DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
 
 /*
     Set with Propagate
@@ -87,8 +72,8 @@ static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_State_T
 
 /* alias */
 static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(const Motor_State_T * p_motor)                   { return Motor_GetSpeedVBusRef_Rpm(p_motor); }
-// static inline uint16_t Motor_Config_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor)              { return Motor_GetSpeedVRefSvpwm_Rpm(p_motor); }
 static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return (p_motor->Config.VSpeedScalar_Fract16 * Motor_GetSpeedVBusRef_Rpm(p_motor)) >> 15U; }
+// static inline uint16_t Motor_Config_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor)              { return Motor_GetSpeedVRefSvpwm_Rpm(p_motor); }
 static inline uint16_t Motor_Config_GetSpeedRated_Rpm(const Motor_State_T * p_motor)                  { return Motor_GetSpeedRated_Rpm(p_motor); }
 static inline uint16_t Motor_Config_GetVSpeedRated_Fract16(const Motor_State_T * p_motor)             { return Motor_VFract16OfKv(p_motor, Motor_GetSpeedRated_Rpm(p_motor)); }
 
@@ -98,6 +83,8 @@ static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_State_T * p_motor
 static inline uint16_t Motor_Config_GetIcZero_Adcu(const Motor_State_T * p_motor)                     { return p_motor->Config.IabcZeroRef_Adcu.C; }
 // static inline uint16_t Motor_Config_GetIPeakRef_Adcu(const Motor_State_T * p_motor)                   { return Phase_Calibration_GetIRatedPeak_Adcu(); }
 
+// static inline Motor_AlignMode_T Motor_Config_GetAlignMode(const Motor_State_T * p_motor, Motor_AlignMode_T mode)    { return p_motor->Config.AlignMode; }
+// static inline void Motor_Config_SetAlignMode( Motor_State_T * p_motor, Motor_AlignMode_T mode)     { p_motor->Config.AlignMode = mode; }
 
 /******************************************************************************/
 /*
@@ -192,7 +179,7 @@ extern void Motor_Config_SetILimitGenerating_Amp(Motor_State_T * p_motor, uint16
 extern void Motor_Config_SetILimit_Amp(Motor_State_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
 #endif
 
-
+// direct field access without propagate
 // int32_t _Motor_Config_Calibration_Get(const Motor_Config_T * p_config, Motor_ConfigId_Calibration_T varId)
 // {
 //     int32_t value = 0;

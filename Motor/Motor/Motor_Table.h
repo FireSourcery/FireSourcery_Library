@@ -100,7 +100,7 @@ static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_ctx, LimitArray_T *
 /******************************************************************************/
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
-static inline void Motor_Table_ActivateControlState(Motor_Table_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ActivatePhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
+static inline void Motor_Table_ActivateVOutput(Motor_Table_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyPhaseOutput(&p_ctx->P_CONTEXTS[iMotor], state); } }
 
 static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_ctx->P_CONTEXTS[iMotor], sign); } }
 
@@ -138,11 +138,12 @@ static inline bool Motor_Table_IsEveryUserDirection(Motor_Table_T * p_ctx, int s
     return isEvery;
 }
 
-static Motor_Direction_T _Motor_Table_GetDirectionAll(Motor_Table_T * p_ctx)
+/*  */
+static int _Motor_Table_GetDirectionAll(Motor_Table_T * p_ctx)
 {
-    volatile Motor_Direction_T direction;
-    if (Motor_Table_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_CCW; }
-    else if (Motor_Table_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_CW; }
+    volatile int direction;
+    if (Motor_Table_IsEvery(p_ctx, Motor_IsDirectionForward) == true) { direction = 1; }
+    else if (Motor_Table_IsEvery(p_ctx, Motor_IsDirectionReverse) == true) { direction = -1; }
     else { direction = 0; } /* overload stop and Error */
     return direction;
 }

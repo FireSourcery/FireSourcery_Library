@@ -71,6 +71,10 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
 
+    // Vehicle_ProcAnalogUser(p_context);
+    // //todo
+    MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
+
     if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
         MotAnalogUser_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS);
@@ -297,18 +301,10 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
     // #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
     //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
     // #endif
-
+        /* Proc in all State */
         switch (p_mc->Config.InputMode)
         {
-            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-                // if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
-                {
-                    _MotorController_ProcAnalogUser(p_context);
-                    Vehicle_ProcAnalogUser(p_context);
-                    // MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
-                    // MotorController_App_ProcAnalogUser(p_context, p_context.selected);
-                }
-                break;
+            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_context);   break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* optionally */
                 // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
@@ -417,31 +413,3 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 //     p_context->P_MC_STATE->ControlCounter++;
 // }
 
-
-static inline void MotorCmd_ProcAnalogUser(const MotorController_T * p_context)
-{
-    const Vehicle_T * const p_vehicle = &p_context->VEHICLE;
-
-    switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CCW);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_CW);   break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_ApplyDirectionCmd(p_context, MOTOR_DIRECTION_NULL);      break;
-        default: break;
-    }
-
-    // sm handle remap
-    // switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
-    // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CCW);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);  break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_NULL);     break;
-    //     default: break;
-    // }
-
-    MotorController_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
-    // {
-    //     MotorController_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
-    // }
-}

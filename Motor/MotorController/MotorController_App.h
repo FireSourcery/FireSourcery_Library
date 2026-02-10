@@ -31,11 +31,12 @@
 /******************************************************************************/
 // #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine_Tree.h"
 
 /* Part of MotorController */
 struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
+
+typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
 
 /*
     All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
@@ -52,19 +53,10 @@ typedef const struct MotorController MotorController_T;
 /******************************************************************************/
 typedef const struct MotorController_App
 {
-    // void (*INIT)(const MotorController_T * p_context);
-    // void (*PROC)(const MotorController_T * p_context);
-    void (*PROC_ANALOG_USER)(MotorController_T * p_context); // or additional interface map
+    MotorController_App_Proc_T PROC_ANALOG_USER; // or additional interface map
     // void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
     State_T * P_INITIAL_STATE;
     // const void * P_APP_CONTEXT;
 }
 MotorController_App_T;
 
-
-static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_context, MotorController_App_T * p_app) { return p_app->PROC_ANALOG_USER(p_context); }
-
-// State_T * MotorController_App_GetMainState(MotorController_T * p_context)
-// {
-//     return p_context->APPS[p_context->P_MC_STATE->Config.InitMode].P_INITIAL_STATE;
-// }

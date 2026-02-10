@@ -55,13 +55,13 @@ typedef enum Motor_Var_UserOut
     MOTOR_VAR_FAULT_FLAGS,
     MOTOR_VAR_STATUS_FLAGS,
     MOTOR_VAR_HEAT, /* included in HEAT_MONITOR_OUT */
-    MOTOR_VAR_V_SPEED_EFFECTIVE,
-    /* Derived Local */
-    MOTOR_VAR_POWER,
-    MOTOR_VAR_I_DC,
-    // MOTOR_VAR_V_BUS,
+    /*   */
     MOTOR_VAR_SPEED_REQ,  /* Ramp Out with User Sign */
     MOTOR_VAR_TORQUE_REQ, /*   */
+    /* Derived Local */
+    MOTOR_VAR_V_SPEED_EFFECTIVE,
+    MOTOR_VAR_POWER,
+    MOTOR_VAR_I_DC,
 }
 Motor_Var_UserOut_T;
 
@@ -77,7 +77,6 @@ typedef enum Motor_Var_UserControl
 {
     /* StateMachine Input with readable state */
     MOTOR_VAR_USER_DIRECTION,           // Calibrated direction. 1:Ccw, -1:Cw, 0:Stop
-    MOTOR_VAR_USER_CONTROL_RESV,
     MOTOR_VAR_USER_FEEDBACK_MODE,
     MOTOR_VAR_USER_PHASE_OUTPUT,        // Phase Output State: Float/Hold/VPwm. Direction must be set
 
@@ -98,7 +97,7 @@ Motor_Var_UserControl_T;
 typedef enum Motor_Var_UserSetpoint
 {
     MOTOR_VAR_USER_SETPOINT_SCALAR,       // RampIn, Active/Generic mode select using active feedback mode, as scalar of full scale of active feedback mode. User Direction applies.
-    // MOTOR_VAR_USER_SETPOINT_MIXED,    // UserCmd with mixed units, interpret based on state.
+    // MOTOR_VAR_USER_SETPOINT_MIXED,     // UserCmd with mixed units, interpret based on state.
     MOTOR_VAR_USER_SETPOINT_SPEED,        // UserCmd as Speed
     MOTOR_VAR_USER_SETPOINT_TORQUE,
     MOTOR_VAR_USER_SETPOINT_CURRENT,
@@ -115,11 +114,12 @@ typedef enum Motor_Var_Rotor
 {
     MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,   /* in digital degrees */
     MOTOR_VAR_ROTOR_ELECTRICAL_DELTA,   /* Internal Ccw/Cw */
-    MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Absolute Ccw/Cw */
+    MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Internal Ccw/Cw */
     MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,   /* if supported */
     MOTOR_VAR_ROTOR_DIRECTION, // 1:Ccw, -1:Cw, 0:Stop
     // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
     // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
+    // optionally sensor + control loop state
 }
 Motor_Var_Rotor_T;
 
@@ -136,6 +136,7 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,
     MOTOR_VAR_FOC_VQ,
+    // optionally move
     MOTOR_VAR_FOC_VA,
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
@@ -351,7 +352,7 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
 // static inline void _Motor_Var_ConfigHeatMonitor_Set(Motor_State_T * p_motor, Monitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->HeatMonitorState, varId, varValue); }
 // static inline void _Motor_Var_SensorCmd_Call(const Motor_T * p_motor, Motor_Var_RotorSensorCmd_T varId, int varValue); // Motor_Sensor_CalibrationCmd_Call
 
-/*  */
+/* static */
 extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
 extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 
@@ -360,6 +361,7 @@ extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 /******************************************************************************/
 /*
     Module handled type
+    VarType directly cooresponds to base enum type literlal
 */
 /******************************************************************************/
 /*
@@ -382,15 +384,19 @@ Motor_VarType_Control_T;
 typedef enum Motor_VarType_Config
 {
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
-    MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS,
+    MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS, //temp
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
     /* Alternatively move to submodule */
-    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
+    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* (varId:sensorId, varValue:cmdId) Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
 }
 Motor_VarType_Config_T;
 
+/*
+    singletons,
+    externally defined,
+*/
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
@@ -398,7 +404,7 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
-    MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
+    MOTOR_VAR_TYPE_THERMISTOR_CONFIG, // or handle within config
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
     // MOTOR_VAR_TYPE_ROTOR_SENSOR_CMD,
 }
@@ -411,6 +417,7 @@ Motor_VarType_SubModule_T;
 
     Instead of using SensorTable Ids, This way it takes only one field to associate properties.
     allows types to expand beyond 16 ids without reserving handlers
+    optionally move to rotor sensor to handle types listt
 */
 typedef enum Motor_VarType_RotorSensor
 {

@@ -107,7 +107,6 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorState) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorState).StateMachine))
 
-
 /******************************************************************************/
 /*
 */
@@ -134,9 +133,7 @@ static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState
 /* Optionally enforce config in calibration state, rather than stop state */
 static inline bool Motor_IsConfig(const Motor_T * p_motor)
 {
-    return (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_STOP) ||
-           (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_CALIBRATION) ||
-           (StateMachine_GetActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE) == MSM_STATE_ID_FAULT);
+    return (Motor_IsState(p_motor, MSM_STATE_ID_STOP) || Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MSM_STATE_ID_FAULT));
 }
 
 

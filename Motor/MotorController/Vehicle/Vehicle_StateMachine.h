@@ -79,6 +79,42 @@ extern const StateMachine_Machine_T VEHICLE_MACHINE;
 #define VEHICLE_STATE_MACHINE_INIT(p_VehicleContext, VehicleStateAlloc) STATE_MACHINE_INIT((p_VehicleContext), &VEHICLE_MACHINE, &((VehicleStateAlloc).StateMachine))
 
 
+/* Caller Handle Edge Detection */
+static inline void Vehicle_User_ApplyStartCmd(const Vehicle_T * p_vehicle, Vehicle_Cmd_T cmd)
+{
+    _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd);
+}
 
+static inline void Vehicle_User_StartThrottle(const Vehicle_T * p_vehicle) { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_THROTTLE); }
+static inline void Vehicle_User_StartBrake(const Vehicle_T * p_vehicle) { Vehicle_User_ApplyStartCmd(p_vehicle, VEHICLE_CMD_BRAKE); }
+
+
+/* Protocol Call sets Inner Machine only */
+/* Will not exit park */
+/* Caller Handle Edge Detection */
+static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, sign_t direction)
+{
+    _StateMachine_ProcInput(p_vehicle->STATE_MACHINE.P_ACTIVE, (void *)p_vehicle, VEHICLE_STATE_INPUT_DIRECTION, direction);
+}
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+/* override default direction. */
+/* also returns NEUTRAL on motor tables out of syync */
+/* Alternatively use substates */
+static sign_t Vehicle_StateMachine_GetDirection(const Vehicle_T * p_vehicle)
+{
+    sign_t direction;
+    switch (StateMachine_GetActiveStateId(p_vehicle->STATE_MACHINE.P_ACTIVE))
+    {
+        case VEHICLE_STATE_ID_NEUTRAL:    direction = 0; break;
+        case VEHICLE_STATE_ID_DRIVE:      direction = _Motor_Table_GetDirectionAll(&p_vehicle->MOTORS); break; /* NULL is error */
+        default:                          direction = 0;           break;
+    }
+    return direction;
+}
 
 

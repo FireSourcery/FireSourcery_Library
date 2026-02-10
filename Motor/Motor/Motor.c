@@ -177,6 +177,8 @@ static void ApplySpeedLimit(Motor_State_T * p_motor)
     //     Ramp_SetTarget(&p_motor->SpeedRamp, Motor_SpeedReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp))); /* clamp the req until the next input */
     // }
     /* else speed limit is applied on feedback */
+
+    // SpeedLimit_Fract16 = _Motor_GetSpeedLimitActive(p_motor);
 }
 
 /* only speed loop must update */

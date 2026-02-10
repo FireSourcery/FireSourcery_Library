@@ -48,16 +48,20 @@ static inline void PropagateSet(Motor_State_T * p_motor, Motor_Proc_T reset)
 
 /* local limit */
 static inline uint16_t _Motor_Config_GetOpenLoopScalarLimit(const Motor_State_T * p_motor) { return math_min(p_motor->Config.OpenLoopLimitScalar_Fract16, MOTOR_OPEN_LOOP_MAX_SCALAR); }
+
 static inline uint16_t _Motor_Config_GetOpenLoopILimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), Phase_Calibration_GetIRatedPeak_Fract16()); }
 static inline uint16_t _Motor_Config_GetOpenLoopVLimit_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_Config_GetOpenLoopScalarLimit(p_motor), Phase_Calibration_GetVRated_Fract16()); }
+
+static inline uint16_t Motor_Config_OpenLoopILimitOf(const Motor_State_T * p_motor, uint16_t fract16) { return math_min(fract16, _Motor_Config_GetOpenLoopILimit_Fract16(p_motor)); }
 
 /* Rated Limit - applied on set config */
 static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
 static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
 
 /*
+    Config Limit Bounds
     the setting limit by TypeMax, SpeedRated ~VBusRef
-    In Fract16 INT16_MAX is 2x RatedSpeed
+    When SpeedTypeMax is dynamically scaled, INT16_MAX is 2x RatedSpeed
 */
 static inline uint16_t _Motor_Config_SpeedRatedLimit(const Motor_State_T * p_motor) { return INT16_MAX; }
 static inline uint16_t _Motor_Config_SpeedRatedLimitOf(const Motor_State_T * p_motor, uint16_t speed_fract16) { return math_min(_Motor_Config_SpeedRatedLimit(p_motor), speed_fract16); }
@@ -99,18 +103,17 @@ void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 }
 
 /* allow independent set */
+// p_motor->Config.Kv = rpm / Phase_VBus_Volts();
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
 {
-    // p_motor->Config.SpeedRated_Rpm = math_clamp(rpm, 0, Motor_GetSpeedVBusRef_Rpm(p_motor) * 15/10);
-    p_motor->Config.SpeedRated_Rpm = rpm;
-    // p_motor->Config.Kv = rpm / Phase_VBus_Volts();
+    p_motor->Config.SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVBusRef_Rpm(p_motor) * 2);
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
 /*
     V of Speed Ref
     SpeedVRef =< SpeedFeedbackRef to ensure not match to higher speed
-    Base as UFract16, multiply with SpeedRef*2 without overflow.
+    [0:32767] unitless Fract16
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_State_T * p_motor, uint16_t scalar) { p_motor->Config.VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
 // void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_State_T * p_motor, uint16_t rpm)
@@ -143,7 +146,7 @@ void Motor_Config_SetIcZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_mot
 */
 void Motor_Config_SetSpeedLimitForward_Fract16(Motor_State_T * p_motor, uint16_t forward_Fract16)
 {
-    p_motor->Config.SpeedLimitForward_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, forward_Fract16); /* 2x the ratedSpeed */
+    p_motor->Config.SpeedLimitForward_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, forward_Fract16);
     PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
 }
 
@@ -207,8 +210,6 @@ void Motor_ResetBaseOpenLoopILimit(Motor_State_T * p_motor)
     p_motor->Config.OpenLoopRampIFinal_Fract16 = Motor_OpenLoopILimitOf(p_motor, p_motor->Config.OpenLoopRampIFinal_Fract16);
 }
 
-/* call getter each time for config */
-static inline uint16_t Motor_Config_OpenLoopILimitOf(Motor_State_T * p_motor, uint16_t fract16) { return math_min(fract16, _Motor_Config_GetOpenLoopILimit_Fract16(p_motor)); }
 
 
 /*  */

@@ -37,6 +37,8 @@
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
+/* part of MotorController */
+
 /******************************************************************************/
 /*!
     App Table/Repo
@@ -50,13 +52,14 @@ typedef enum MotorController_MainMode
 }
 MotorController_MainMode_T;
 
-typedef const struct MotorController_AppTable
-{
-    MotorController_App_T MOTOR_CMD;
-    MotorController_App_T VEHICLE;
-}
-MotorController_AppTable_T;
+// typedef const struct MotorController_AppTable
+// {
+//     MotorController_App_T MOTOR_CMD;
+//     MotorController_App_T VEHICLE;
+// }
+// MotorController_AppTable_T;
 
-extern State_T * MotorController_App_MainStateOf(MotorController_MainMode_T mode);
-extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
 extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_context);
+
+extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
+extern MotorController_App_Proc_T MotorController_App_GetProcAnalogUser(MotorController_T * p_context);

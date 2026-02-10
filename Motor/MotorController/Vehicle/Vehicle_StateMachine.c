@@ -51,7 +51,7 @@ void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
+    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
 }
 
 /* if handle each value update with statemachine on input */
@@ -83,7 +83,7 @@ void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
+    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
 }
 
 /*!
@@ -118,7 +118,7 @@ void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
 {
     switch (p_vehicle->P_VEHICLE_STATE->Config.ZeroMode)
     {
-        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);        break;
+        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);        break;
         case VEHICLE_ZERO_MODE_CRUISE:    Motor_Table_ApplyFeedbackMode(&p_vehicle->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);    break;
         case VEHICLE_ZERO_MODE_REGEN:       /* Vehicle_SetRegenMotorAll(p_this); */ break;
         default: break;
@@ -212,11 +212,11 @@ static State_T * Drive_InputCmdStart(const Vehicle_T * p_vehicle, state_value_t 
 static State_T * Drive_InputDirection(const Vehicle_T * p_vehicle, state_value_t direction)
 {
     State_T * p_nextState = NULL;
-    switch((Motor_Direction_T)direction)
+    switch((sign_t)direction)
     {
-        case MOTOR_DIRECTION_NULL:      p_nextState = &STATE_NEUTRAL;   break;
-        case MOTOR_DIRECTION_CCW:   p_nextState = NULL;             break;
-        case MOTOR_DIRECTION_CW:   p_nextState = NULL;             break;
+        case 0:      p_nextState = &STATE_NEUTRAL;   break;
+        case 1:   p_nextState = NULL;             break;
+        case -1:   p_nextState = NULL;             break;
         default: break;
     }
 
@@ -251,10 +251,10 @@ static const State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(const Vehicle_T * p_vehicle)
 {
-    Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);
+    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);
     // Motor_Table_SetCmdValue(&p_vehicle->MOTORS, 0);
     // if (p_vehicle->P_VEHICLE_STATE->Input.Cmd != VEHICLE_CMD_BRAKE)
-    //     { Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT); }  /* If enter neutral while braking, handle discontinuity */
+    //     { Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT); }  /* If enter neutral while braking, handle discontinuity */
 }
 
 static void Neutral_Proc(const Vehicle_T * p_vehicle)
@@ -270,6 +270,9 @@ static void Neutral_Proc(const Vehicle_T * p_vehicle)
     }
 }
 
+/*
+    Motor Keeps Direction State
+*/
 static State_T * InputDriveDirection(const Vehicle_T * p_vehicle, state_value_t direction)
 {
     if (Motor_Table_IsEveryUserDirection(&p_vehicle->MOTORS, direction) == true) { return &STATE_DRIVE; }
@@ -280,11 +283,11 @@ static State_T * InputDriveDirection(const Vehicle_T * p_vehicle, state_value_t 
 static State_T * Neutral_InputDirection(const Vehicle_T * p_vehicle, state_value_t direction)
 {
     State_T * p_nextState = NULL;
-    switch ((Motor_Direction_T)direction)
+    switch ((sign_t)direction)
     {
-        case MOTOR_DIRECTION_CCW: p_nextState = InputDriveDirection(p_vehicle, direction); break;
-        case MOTOR_DIRECTION_CW: p_nextState = InputDriveDirection(p_vehicle, direction); break;
-        case MOTOR_DIRECTION_NULL:    p_nextState = &STATE_NEUTRAL; break;
+        case 1:     p_nextState = InputDriveDirection(p_vehicle, direction); break;
+        case -1:    p_nextState = InputDriveDirection(p_vehicle, direction); break;
+        case 0:     p_nextState = &STATE_NEUTRAL; break;
         default: break;
     }
     return p_nextState;
@@ -294,7 +297,7 @@ static State_T * Neutral_InputCmdStart(const Vehicle_T * p_vehicle, state_value_
 {
     switch ((Vehicle_Cmd_T)mode)
     {
-        case VEHICLE_CMD_RELEASE:   Motor_Table_ActivateControlState(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT); break;
+        case VEHICLE_CMD_RELEASE:   Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT); break;
         case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(p_vehicle); break;
         case VEHICLE_CMD_THROTTLE:  break;
         default: break;
@@ -317,29 +320,3 @@ static const State_T STATE_NEUTRAL =
 };
 
 
-
-
-
-/*
-    Motor Keeps Direction
-*/
-// static State_T * Neutral_InputForward(const Vehicle_T * p_vehicle)
-// {
-//     if (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) == true) { return &STATE_DRIVE; }
-//     if (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_vehicle->MOTORS, MOTOR_DIRECTION_CCW); return &STATE_DRIVE; }
-//     return NULL; // return (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
-// }
-
-// static State_T * Neutral_InputReverse(const Vehicle_T * p_vehicle)
-// {
-//     if (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionReverse) == true) { return &STATE_DRIVE; }
-//     if (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_vehicle->MOTORS, MOTOR_DIRECTION_CW); return &STATE_DRIVE; }
-//     return NULL; // return (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionReverse) == true) ? &STATE_DRIVE : NULL;
-// }
-
-// static State_T * Common_InputForward(const Vehicle_T * p_vehicle)
-// {
-//     Motor_Table_ApplyUserDirection(&p_vehicle->MOTORS, MOTOR_DIRECTION_CCW);
-//     return (Motor_Table_IsEvery(&p_vehicle->MOTORS, Motor_IsDirectionForward) == true) ? &STATE_DRIVE : NULL;
-//     return &STATE_DRIVE;
-// }

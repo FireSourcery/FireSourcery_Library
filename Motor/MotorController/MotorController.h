@@ -179,6 +179,8 @@ typedef struct MotorController_Config
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
 
+    // bool isParkStateEnabled;
+
     /* OptDin */
     MotorController_OptDinMode_T OptDinMode;
     uint16_t OptSpeedLimit_Fract16;
@@ -283,8 +285,7 @@ typedef const struct MotorController
     StateMachine_T STATE_MACHINE;
 
     /*  */
-    MotorController_AppTable_T APPS;
-    Vehicle_T VEHICLE; /* Drive */ /* todo move to App Table */
+    Vehicle_T VEHICLE; /* Drive */
 
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;

@@ -50,6 +50,7 @@
 */
 /******************************************************************************/
 // MOTOR_CONTROLLER_VAR,
+/* GeneralState */
 typedef enum MotorController_Var_Output
 {
     MOT_VAR_ZERO,
@@ -59,15 +60,12 @@ typedef enum MotorController_Var_Output
     MOT_VAR_MC_FAULT_FLAGS,
     MOT_VAR_MC_STATUS_FLAGS, /* Resv */
     MOT_VAR_MC_DIRECTION,
-    MOT_VAR_CONTROL_LOOP_PROFILE,
-    MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
 }
 MotorController_Var_Output_T;
 
 typedef enum MotorController_Var_OutputDebug
 {
-    // MOT_VAR_CONTROL_LOOP_PROFILE,
-    // MOT_VAR_CONTROL_LOOP_MOTOR_PROFILE,
+    MOT_VAR_CONTROL_LOOP_PROFILE,
     MOT_VAR_DEBUG0,
     MOT_VAR_DEBUG1,
     MOT_VAR_DEBUG2,
@@ -80,6 +78,8 @@ typedef enum MotorController_Var_OutputDebug
 MotorController_Var_OutputDebug_T;
 
 /*
+    User Control
+    Disabled on Analog Mode
     Collective set motors for convenience
     Write only, or io
 */
@@ -89,13 +89,16 @@ typedef enum MotorController_Var_Input
     MOT_VAR_USER_GENERAL_DIRECTION,             // Collective Direction 1:Forward, -1:Reverse, 0:Neutral, different from Motor Stop
     MOT_VAR_USER_GENERAL_FEEDBACK_MODE,         //
     MOT_VAR_USER_GENERAL_PHASE_OUTPUT,          // Output mode Float/Hold/VPwm. [Phase_Output_T]
-    MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,        // 1:Enable, 0:Disable
-    MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,            // 1:Enable, 0:Disable
-    MOT_VAR_USER_RELAY_TOGGLE,
-    MOT_VAR_USER_METER_TOGGLE,
+
+    // MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,        // 1:Enable, 0:Disable
+    // MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,            // 1:Enable, 0:Disable
+    // MOT_VAR_USER_RELAY_TOGGLE,
+    // MOT_VAR_USER_METER_TOGGLE,
 }
 MotorController_Var_Input_T;
 
+
+/* MotorController_Var_User */
 
 /******************************************************************************/
 /*
@@ -165,9 +168,9 @@ MotorController_Var_StaticRef_T;
 */
 typedef enum MotorController_VarType_General
 {
-    /* General */
     MOT_VAR_TYPE_GENERAL_USER_OUT,
-    MOT_VAR_TYPE_GENERAL_USER_IN, /* Polling inputs */
+    MOT_VAR_TYPE_GENERAL_USER_IN, /* alternatively as IO */
+    // MOT_VAR_TYPE_GENERAL_USER_CONTROL,
     MOT_VAR_TYPE_GENERAL_CONFIG,
     MOT_VAR_TYPE_BOOT_REF_CONFIG,
     MOT_VAR_TYPE_GENERAL_DEBUG,
@@ -230,6 +233,12 @@ MotorController_VarType_Communication_T;
 // MotorController_SystemCmd_T
 // MOT_VAR_USER_ENTER_PARK,
 // MOT_VAR_USER_STATE_CMD,
+
+typedef enum MotorController_VarType_Submodule
+{
+    MOT_VAR_TYPE_
+}
+MotorController_VarType_Submodule_T;
 
 /*
     Application_User SubModules

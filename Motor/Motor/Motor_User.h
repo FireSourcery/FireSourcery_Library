@@ -132,6 +132,16 @@ static inline uint16_t Motor_GetILimitMotoring(const Motor_State_T * p_motor)   
 static inline uint16_t Motor_GetILimitGenerating(const Motor_State_T * p_motor)  { return p_motor->ILimitGenerating_Fract16; }
 static inline uint16_t Motor_GetILimitActive(const Motor_State_T * p_motor)      { return Motor_FOC_GetILimit(p_motor); }
 
+/* User view. getter in case implementation changes */
+static inline uint16_t _Motor_GetILimitMotoringActive(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
+static inline uint16_t _Motor_GetILimitGeneratingActive(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
+
+/* Speed limit in [Direction] selected. Forward relative to the user */
+static inline uint16_t _Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOf(p_motor, p_motor->Direction); }
+// static inline uint16_t _Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return p_motor->SpeedLimit_Fract16; }
+static inline uint16_t Motor_GetSpeedLimitActive(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitActive(p_motor); }
+
+
 /*
 */
 static inline bool Motor_IsILimitSet(const Motor_State_T * p_motor)
@@ -183,7 +193,7 @@ Motor_Input_T;
 extern void Motor_ActivateControl(const Motor_T * p_const);
 extern void Motor_Release(const Motor_T * p_const);
 extern void Motor_Hold(const Motor_T * p_const);
-extern void Motor_ActivatePhaseOutput(const Motor_T * p_const, Phase_Output_T state);
+extern void Motor_ApplyPhaseOutput(const Motor_T * p_const, Phase_Output_T state);
 
 extern void Motor_ApplyFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 

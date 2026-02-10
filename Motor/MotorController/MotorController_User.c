@@ -82,9 +82,9 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
             MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
             break;
 
-        case MOT_USER_SYSTEM_DIRECTION_COMMAND:
-            MotorController_ApplyDirectionCmd(p_context, (int)value);
-            break;
+        // case MOT_USER_SYSTEM_DIRECTION_COMMAND:
+        //     MotorController_ApplyDirectionCmd(p_context, (int)value);
+        //     break;
 
         // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
         //     MotorController_InputMainMode(p_context, (MotorController_MainMode_T)value);
@@ -138,3 +138,32 @@ void MotorController_SetInputMode(const MotorController_T * p_context, MotorCont
     //     default:  break;
     // }
 }
+
+// static inline bool _Vehicle_ProcOnDirection(const Vehicle_T * p_vehicle, Vehicle_Direction_T direction)
+// {
+//     // if((p_vehicle->P_VEHICLE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
+//     // {
+//     //     if(p_this->DriveDirection == MOTOR_DIRECTION_CW)
+//     //     {
+//     //         Vehicle_BeepPeriodicType1(p_this);
+//     //     }
+//     //     else
+//     //     {
+//     //         Blinky_Stop(&p_this->Buzzer);
+//     //     }
+//     // }
+// }
+    // if (Vehicle_StateMachine_GetDirection(p_vehicle) != direction)
+    // {
+    // Vehicle_User_CheckDirection(p_vehicle, direction); /* effective on motor async transition only */
+    // bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
+        // if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
+    // }
+/* optionally host side implement */
+// /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
+// bool Vehicle_User_CheckDirection(const Vehicle_T * p_vehicle, sign_t direction)
+// {
+//     bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
+//     if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
+//     return isSuccess;
+// }

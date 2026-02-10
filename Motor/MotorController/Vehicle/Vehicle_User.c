@@ -78,7 +78,7 @@ void Vehicle_VarId_Set(const Vehicle_T * p_vehicle, Vehicle_VarId_T id, int valu
 {
     switch (id)
     {
-        case VEHICLE_VAR_DIRECTION:   Vehicle_User_ApplyDirection(p_vehicle, (Motor_Direction_T)value);      break;
+        case VEHICLE_VAR_DIRECTION:   Vehicle_User_ApplyDirection(p_vehicle, (sign_t)value);       break;
         case VEHICLE_VAR_THROTTLE:    Vehicle_User_ApplyThrottle(p_vehicle, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       Vehicle_User_ApplyBrake(p_vehicle, (uint16_t)value);         break;
     }

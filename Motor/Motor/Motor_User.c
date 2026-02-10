@@ -75,11 +75,11 @@ inline void Motor_Release(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_
 
 inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
-inline void Motor_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
-// inline void Motor_ActivatePhaseOutput(const Motor_T * p_motor, Phase_Output_T state)
+// inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state)
 // {
-//     if (state != Motor_GetPhaseState(p_motor)) { Motor_ActivatePhaseOutput(p_motor, p_input->PhaseOutput); }
+//     if (state != Motor_GetPhaseState(p_motor)) { Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput); }
 // }
 
 /******************************************************************************/
@@ -140,8 +140,8 @@ void Motor_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_ApplyVirtualDi
     Transition to Stop
     Release stays in ready mode. Stop disables inputs until next Start.
 */
-void Motor_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 /*  MOTOR_DIRECTION_NULL  Transition to Stop or duplicate phase float */
+void Motor_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /******************************************************************************/
 /*
@@ -532,9 +532,9 @@ void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
 {
     if (p_input->PhaseOutput != Motor_GetPhaseState(p_motor))
     {
-        Motor_ActivatePhaseOutput(p_motor, p_input->PhaseOutput);
+        Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput);
     }
-    // Motor_ActivatePhaseOutput(p_motor, p_input->PhaseOutput);
+    // Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput);
     Motor_ApplyFeedbackMode(p_motor, p_input->FeedbackMode);
     Motor_ApplyUserDirection(p_motor, p_input->Direction);
 
