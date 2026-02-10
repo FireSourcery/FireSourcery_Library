@@ -73,27 +73,16 @@ MotorController_SystemCmd_T;
 // }
 // MotorController_GenericStatus_T;
 
-/******************************************************************************/
-/*
-    User Input Interface; into StateMachine process
 
-    _StateMachine_ProcInput Same Thread as Proc
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
 /* Non StateMachine checked disable motors. Caller ensure non field weakening state */
 /* Update State to prevent input overwrite */
 static inline void MotorController_ForceDisableControl(MotorController_T * p_context)
 {
     Motor_Table_ForceDisableControl(&p_context->MOTORS);
+    MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
     p_context->P_MC_STATE->CmdInput.CmdValue = 0;
     p_context->P_MC_STATE->CmdInput.PhaseOutput = PHASE_OUTPUT_FLOAT;
     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NULL;
-    MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
 }
 
 
@@ -150,7 +139,6 @@ static inline void MotorController_SetFastBoot(MotorController_State_T * p_mcSta
 static inline void MotorController_SetBeep(MotorController_State_T * p_mcState, bool isEnable)         { p_mcState->BootRef.Beep = isEnable; }
 static inline void MotorController_SetBlink(MotorController_State_T * p_mcState, bool isEnable)        { p_mcState->BootRef.Blink = isEnable; }
 
-// static inline bool MotorController_IsB(const MotorController_T * p_mc) { return (p_mc->P_MC_STATE->BootRef.IsValid == p_mc->MOT_NVM.P_BOOT_REF->IsValid); }
 
 /******************************************************************************/
 /*

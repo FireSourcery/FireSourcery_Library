@@ -43,12 +43,11 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_MC_STATE:              value = MotorController_GetStateId(p_context->P_MC_STATE);             break;
+        case MOT_VAR_MC_STATE:              value = MotorController_GetStateId(p_context->P_MC_STATE);              break;
         case MOT_VAR_MC_SUB_STATE:          value = _MotorController_GetSubStateId(p_context->P_MC_STATE);          break;
-        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_context->P_MC_STATE).Value;    break;
+        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_context->P_MC_STATE).Value;     break;
         // case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_context).Value;               break;
-        case MOT_VAR_MC_DIRECTION:          value = MotorController_GetDirection(p_context);               break;
-
+        case MOT_VAR_MC_DIRECTION:          value = MotorController_GetDirection(p_context);                        break;
     }
     return value;
 }
@@ -60,7 +59,7 @@ void MotorController_Var_Input_Set(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_context, (int16_t)value);                                            break;
         case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_context, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
-        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_context, (Motor_Direction_T)value);                                  break;
+        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_context, (Motor_Direction_T)value);                                 break;
         case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_context, (Phase_Output_T)value);                                 break;
 
         // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_context, (bool)value);        break;
@@ -78,7 +77,7 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_context, Mot
     Motor_State_T * p_motor = Motor_Table_ContextAt(&p_context->MOTORS, 0)->P_MOTOR_STATE;
     switch (id)
     {
-        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;                          break;
+        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_context->P_MC_STATE->ControlLoopProfile;  break;
         case MOT_VAR_DEBUG0: value = 0;    break;
         case MOT_VAR_DEBUG1: value = 0;    break;
         case MOT_VAR_DEBUG2: value = 0;    break;

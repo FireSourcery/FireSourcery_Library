@@ -61,7 +61,7 @@ typedef enum MotorController_State_Input
     MCSM_INPUT_LOCK,            /* Enter locked/calibration operations */
     MCSM_INPUT_STATE_COMMAND,   /* System state commands (Park/Stop/Start) with per State Mapping */
     MCSM_INPUT_USER,            /* User Input vars or analog */ // handle common mapping. optionally inputs proc synchronous buffer
-    // MCSM_INPUT_DIRECTION,       /* Simplify including common Park State and AnalogUser */
+    // MCSM_INPUT_DIRECTION, /* or separate */
 }
 MotorController_State_Input_T;
 
@@ -133,8 +133,9 @@ static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
 
 
 /******************************************************************************/
-/*!
-    Input Values passed as [state_value_t]
+/*
+    User Input Interface; into StateMachine process
+    _StateMachine_ProcInput Same Thread as Proc
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -145,7 +146,7 @@ static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
 /******************************************************************************/
 typedef enum MotorController_StateCmd
 {
-    MOTOR_CONTROLLER_STATE_CMD_PARK,
+    MOTOR_CONTROLLER_STATE_CMD_PARK, /* Enter Park */
     MOTOR_CONTROLLER_STATE_CMD_E_STOP,
     MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App to Main-Idle */
     MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit park. Enter Configured */
@@ -166,9 +167,10 @@ static inline void MotorController_EnterMainIdle(MotorController_T * p_context) 
 /*!
     Input Cmd Trigger
     Call handle value with struct
+    handled within main state
 */
 /******************************************************************************/
-typedef enum MotorController_UserCmd
+typedef enum MotorController_UserEvent
 {
     MOTOR_CONTROLLER_USER_CMD_SETPOINT,
     MOTOR_CONTROLLER_USER_CMD_PHASE,
@@ -182,6 +184,19 @@ static inline void MotorController_ApplyUserCmd(MotorController_T * p_context, M
 {
     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_USER, cmd);
 }
+
+/******************************************************************************/
+/*
+    StateMachine handle push to all or primary motor
+    Proc on input, optionally proc with sync buffer
+    Input 10ms-50ms, Proc 1ms
+    alternatively handle edge state here
+*/
+/******************************************************************************/
+static inline void MotorController_SetCmdValue(MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
+static inline void MotorController_SetDirection(MotorController_T * p_context, Motor_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
+static inline void MotorController_SetControlState(MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_PHASE); }
+static inline void MotorController_SetFeedbackMode(MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 
 /* Simplify AnalogUser implementation */
 // static inline void MotorController_ApplyDirectionCmd(MotorController_T * p_context, int direction)
@@ -212,19 +227,6 @@ static int MotorController_GetDirection(MotorController_T * p_context)
         default:                       return 0;
     }
 }
-
-/******************************************************************************/
-/*
-    StateMachine handle push to all or primary motor
-    Proc on input, optionally proc with sync buffer
-    Input 10ms-50ms, Proc 1ms
-    alternatively handle edge state here
-*/
-/******************************************************************************/
-static inline void MotorController_SetCmdValue(MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
-static inline void MotorController_SetDirection(MotorController_T * p_context, Motor_Direction_T direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
-static inline void MotorController_SetControlState(MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_PHASE); }
-static inline void MotorController_SetFeedbackMode(MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 
 // /* Combination Iput */
 // typedef union MotorController_UserInput
@@ -312,7 +314,8 @@ static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorControl
 static inline bool MotorController_IsLockOpComplete(MotorController_T * p_context) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
 /* return union status */
-// return nvm on nvm
+// 0 as success
+// if (MotorController_IsLockOpComplete(p_context) == true)
 static inline int MotorController_GetLockOpStatus(MotorController_T * p_context) { return p_context->P_MC_STATE->LockOpStatus; }
 
 

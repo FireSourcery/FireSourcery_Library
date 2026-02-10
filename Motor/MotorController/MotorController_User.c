@@ -49,54 +49,30 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
 
     switch (id)
     {
-        // case MOT_USER_SYSTEM_RESRV:                           break;
-        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                               break;
-        // case MOT_USER_SYSTEM_BEEP:          Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, value);                break;
-        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                                break; /* Stop active periodic. does not disable */
-
-        case MOT_USER_SYSTEM_CLEAR_FAULT:   MotorController_ClearFault(p_context, value);                   break;
+        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                       break; //Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, value);
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                        break; /* Stop active periodic. does not disable */
+        case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_context, value);           break;
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_context);         break;
-        // case MOT_USER_SYSTEM_DISABLE_CONTROL: MotorController_DisableControl(p_context);        break;
-
         /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
+        // checks the park state
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
-            // checks the park state
             MotorController_InputLock(p_context, (MotorController_LockId_T)value);
             if (MotorController_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
-
             status = MotorController_GetLockOpStatus(p_context);
             break;
 
-        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:
-            status = MotorController_GetLockState(p_context);
-            break;
-
-        case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS: // union status, 0 as success
-            // if (MotorController_IsLockOpComplete(p_context) == true)
-            status = MotorController_GetLockOpStatus(p_context);
-            break;
-
-        case MOT_USER_SYSTEM_STATE_COMMAND:
-            MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);
-            break;
-
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_GetLockState(p_context);               break;
+        case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS:     status = MotorController_GetLockOpStatus(p_context);            break;
+        case MOT_USER_SYSTEM_STATE_COMMAND:         MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);            break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_SetRxWatchdog(p_context, value);               break;
         // case MOT_USER_SYSTEM_DIRECTION_COMMAND:
         //     MotorController_ApplyDirectionCmd(p_context, (int)value);
         //     break;
-
         // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
         //     MotorController_InputMainMode(p_context, (MotorController_MainMode_T)value);
-        //     status = 0;
         //     break;
-
-        case MOT_USER_SYSTEM_RX_WATCHDOG:   MotorController_SetRxWatchdog(p_context, value);               break;
-
-        // include for convenience
-        // case MOT_USER_SYSTEM_STATE:
-        // case MOT_USER_SYSTEM_PARK: isSuccess = MotorController_ProcDirection(p_mc, MOTOR_CONTROLLER_DIRECTION_PARK);
-        // case MOT_USER_SYSTEM_SERVO: MotorController_InputServoMode(p_mc, (MotorController_ServoMode_T)value); break;
         default: break;
     }
 
