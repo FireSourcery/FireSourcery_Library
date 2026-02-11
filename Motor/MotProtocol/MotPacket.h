@@ -194,7 +194,7 @@ typedef MotPacket_Sync_T MotPacket_PingResp_T;
 // }
 // MotPacket_Fixed_T;
 
-
+// todo keep payload defs only
 /******************************************************************************/
 /*! Version - Static Response */
 /******************************************************************************/

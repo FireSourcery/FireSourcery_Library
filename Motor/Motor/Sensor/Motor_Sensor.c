@@ -49,8 +49,6 @@ static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSens
 */
 void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue)
 {
-    if (p_motor == NULL) return;
-    if (!Motor_IsConfig(p_motor)) return;
     // If the sensor is not the selected [p_ActiveSensor], do not calibrate.
     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->p_ActiveSensor, varId)) return;
     if (p_motor->P_MOTOR_STATE->Config.SensorMode != varId) return;

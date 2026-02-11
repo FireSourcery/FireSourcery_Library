@@ -175,7 +175,7 @@ static inline void MotorController_EnterMainIdle(MotorController_T * p_context) 
 /******************************************************************************/
 typedef enum MotorController_UserEvent
 {
-    MOTOR_CONTROLLER_USER_CMD_SETPOINT,
+    MOTOR_CONTROLLER_USER_CMD_SETPOINT, /* user calls are less frequent than motor module */
     MOTOR_CONTROLLER_USER_CMD_PHASE,
     MOTOR_CONTROLLER_USER_CMD_FEEDBACK,
     MOTOR_CONTROLLER_USER_CMD_DIRECTION,

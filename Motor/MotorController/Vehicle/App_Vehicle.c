@@ -82,6 +82,7 @@ static void Entry(const MotorController_T * p_context)
 {
     StateMachine_Reset(&p_context->VEHICLE.STATE_MACHINE); /* Reset StateMachine */
     // optionally motors exit stop, in case of motor cmds, or set from ui
+    if (!Motor_Table_IsEveryUserDirection(&p_context->MOTORS, 0)) { Vehicle_User_ApplyDirection(&p_context->VEHICLE, (sign_t)p_context->P_MC_STATE->CmdInput.Direction); }
 }
 
 /* Implementation as wrapping inner machine. specialized inputs */

@@ -119,7 +119,8 @@ typedef enum Motor_Var_Rotor
     MOTOR_VAR_ROTOR_DIRECTION, // 1:Ccw, -1:Cw, 0:Stop
     // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
     // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
-    // optionally sensor + control loop state
+
+    // optionally control loop state
 }
 Motor_Var_Rotor_T;
 
@@ -275,6 +276,7 @@ Motor_Var_ConfigCmd_T;
 /*  */
 typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
 
+
 /******************************************************************************/
 /*
     Read-Only Ref
@@ -361,28 +363,24 @@ extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 /******************************************************************************/
 /*
     Module handled type
-    VarType directly cooresponds to base enum type literlal
+    VarType directly corresponds to base enum type literal
 */
 /******************************************************************************/
 /*
     Polling Except StateCmds
 */
-typedef enum Motor_VarType_Control
+typedef enum Motor_VarType
 {
-    MOTOR_VAR_TYPE_USER_OUT, // MOTOR_VAR_TYPE_STATE_USER,
+    MOTOR_VAR_TYPE_USER_OUT,
     MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
     MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
     MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
     MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
-}
-Motor_VarType_Control_T;
 
-/*
-    Calibration or Stop State enforced Configs
-*/
-typedef enum Motor_VarType_Config
-{
+    /*
+        Calibration or Stop State enforced Configs
+    */
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS, //temp
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
@@ -390,15 +388,11 @@ typedef enum Motor_VarType_Config
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
     /* Alternatively move to submodule */
     MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* (varId:sensorId, varValue:cmdId) Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
-}
-Motor_VarType_Config_T;
 
-/*
-    singletons,
-    externally defined,
-*/
-typedef enum Motor_VarType_SubModule
-{
+    /*
+        singletons,
+        externally defined,
+    */
     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
     MOTOR_VAR_TYPE_V_BUS,               /* Not instanced */
     MOTOR_VAR_TYPE_PHASE,
@@ -407,42 +401,23 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG, // or handle within config
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
     // MOTOR_VAR_TYPE_ROTOR_SENSOR_CMD,
-}
-Motor_VarType_SubModule_T;
 
-/*
-    Subtype Data
-    Handled by RotorSensor_Table
-    Motor_Var_Sensor for Generic access
+    /*
+        Subtype Data
+        Handled by RotorSensor_Table
 
-    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
-    allows types to expand beyond 16 ids without reserving handlers
-    optionally move to rotor sensor to handle types listt
-*/
-typedef enum Motor_VarType_RotorSensor
-{
+        Instead of using SensorTable Ids, This way it takes only one field to associate properties.
+        optionally move to rotor sensor to handle types list
+    */
     MOTOR_VAR_TYPE_HALL_STATE,
     MOTOR_VAR_TYPE_HALL_CONFIG,
     MOTOR_VAR_TYPE_ENCODER_STATE,
     MOTOR_VAR_TYPE_ENCODER_CONFIG,
 }
-Motor_VarType_RotorSensor_T;
+Motor_VarType_T;
 
-extern int Motor_VarType_Control_Get(const Motor_T * p_motor, Motor_VarType_Control_T typeId, int varId);
-extern void Motor_VarType_Control_Set(const Motor_T * p_motor, Motor_VarType_Control_T typeId, int varId, int varValue);
 
-extern int Motor_VarType_Config_Get(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId);
-extern void Motor_VarType_Config_Set(const Motor_T * p_motor, Motor_VarType_Config_T typeId, int varId, int varValue);
-
-extern int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId);
-extern void Motor_VarType_SubModule_Set(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
-
-/*
-    Wrap on RotorSensor_Table
-*/
-extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId);
-extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId, int varValue);
-
-extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId);
-extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_RotorSensor_T typeId, int varId, int varValue);
+extern int Motor_VarType_Get(Motor_T * p_motor, Motor_VarType_T typeId, int varId);
+extern void Motor_VarType_Set(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
+extern bool Motor_VarType_CheckSet(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 

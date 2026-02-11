@@ -311,7 +311,6 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
 }
 
 /* caller handle input validation */
-
 static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t direction)
 {
     State_T * p_nextState = NULL;
@@ -327,6 +326,19 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
                 Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
                 break;
             default: break; /* Invalid direction */
+        }
+    }
+    else
+    {
+        p_nextState = &MOTOR_STATE_FAULT;// test
+        /* direction should no be null but if it is */
+        if (p_motor->P_MOTOR_STATE->Direction == MOTOR_DIRECTION_NULL)
+        {
+            // compare internal domain directions
+            if ((Motor_Direction_T)direction == math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE))) /* direction cmd matches actual speed direction */
+            {
+                Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
+            }
         }
     }
 

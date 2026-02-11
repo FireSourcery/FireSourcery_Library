@@ -47,10 +47,10 @@ typedef union MotVarId
     struct
     {
         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Field Id */
-        uint16_t InnerType      : 4U; /* Accessor. Corresponds with Base enum type, maybe n:1 handlers to enum type literal. Struct Type */
-        uint16_t OuterType      : 4U; /* Handler. InnerType's Type. Namespace */
-        uint16_t Instance       : 2U; /* Instance - Upto 8 Instances for each combination. */
-        uint16_t Resv           : 2U;
+        uint16_t InnerType      : 6U; /* Accessor. Corresponds with Base enum type, maybe n:1 handlers to enum type literal. Struct Type */
+        uint16_t OuterType      : 1U; /* 0-Motor, 1-MotorController */
+        uint16_t Instance       : 2U; /* Instance */
+        uint16_t Resv           : 3U;
     };
     uint16_t Value;
 }

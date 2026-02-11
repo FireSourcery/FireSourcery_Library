@@ -104,7 +104,7 @@ bool Hall_IsTableValid(const Hall_State_T * p_hall)
 
 */
 /******************************************************************************/
-int _Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
+int Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
 {
     switch (varId)
     {

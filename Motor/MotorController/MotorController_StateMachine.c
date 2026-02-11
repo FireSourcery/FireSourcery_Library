@@ -321,8 +321,8 @@ static const State_T STATE_PARK =
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
 {
-    Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
-    if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { Motor_Table_StopAll(&p_context->MOTORS); }
+    // Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+    // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { Motor_Table_StopAll(&p_context->MOTORS); }
 }
 
 static void Main_Proc(const MotorController_T * p_context)
@@ -337,7 +337,10 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Call Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:
+            Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+            Motor_Table_StopAll(&p_context->MOTORS);
+            return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
             if (StateMachine_GetLeafState(p_context->STATE_MACHINE.P_ACTIVE) == &MC_STATE_MAIN) /* At Main Top */
             {

@@ -214,9 +214,9 @@ static State_T * Drive_InputDirection(const Vehicle_T * p_vehicle, state_value_t
     State_T * p_nextState = NULL;
     switch((sign_t)direction)
     {
-        case 0:      p_nextState = &STATE_NEUTRAL;   break;
-        case 1:   p_nextState = NULL;             break;
-        case -1:   p_nextState = NULL;             break;
+        case 0:     p_nextState = &STATE_NEUTRAL;   break;
+        case 1:     p_nextState = NULL;             break;
+        case -1:    p_nextState = NULL;             break;
         default: break;
     }
 
