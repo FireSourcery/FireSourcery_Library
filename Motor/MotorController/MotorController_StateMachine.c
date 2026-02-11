@@ -57,7 +57,7 @@
     └────────────────────────────────────────────────────────────┘
 */
 /*
-
+    Top layer handles Park State
 */
 /******************************************************************************/
 static const State_T STATE_INIT;
@@ -297,7 +297,7 @@ static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
-    [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
+    // [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
 };
 
 static const State_T STATE_PARK =

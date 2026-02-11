@@ -113,6 +113,7 @@ static void Proc(const MotorController_T * p_context)
 // }
 
 // MotorController stateMachine handler pass to inner state
+// transition during park state call outer direction set, or move Vehicle_VarId_Set,
 static State_T * InputUser(const MotorController_T * p_context, state_value_t event)
 {
     State_T * p_nextState = NULL;

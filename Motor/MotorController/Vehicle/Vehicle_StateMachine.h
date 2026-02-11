@@ -105,6 +105,7 @@ static inline void Vehicle_User_ApplyDirection(const Vehicle_T * p_vehicle, sign
 /* override default direction. */
 /* also returns NEUTRAL on motor tables out of syync */
 /* Alternatively use substates */
+/* Motors may keep direction state in Neutral */
 static sign_t Vehicle_StateMachine_GetDirection(const Vehicle_T * p_vehicle)
 {
     sign_t direction;
