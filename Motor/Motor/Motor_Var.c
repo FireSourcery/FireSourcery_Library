@@ -497,7 +497,7 @@ void _Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int var
     }
 }
 
-/* Or handle selective compilation in submodule for single point of compile time selection */
+/* handle selective compilation in submodule for single point of compile time selection */
 /* include as part Requires Sensor_Table */
 int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId)
 {
@@ -527,8 +527,6 @@ void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_T typeId, i
         default: break;
     }
 }
-
-
 
 
 int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId)

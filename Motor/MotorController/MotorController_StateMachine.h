@@ -61,7 +61,8 @@ typedef enum MotorController_State_Input
     MCSM_INPUT_LOCK,            /* Enter locked/calibration operations */
     MCSM_INPUT_STATE_COMMAND,   /* System state commands (Park/Stop/Start) with per State Mapping */
     MCSM_INPUT_USER,            /* User Control vars or analog */
-    // MCSM_INPUT_DIRECTION, /* or separate */
+    MCSM_INPUT_APP_USER,        /* specialized inputs */
+    // MCSM_INPUT_DIRECTION,    /* or separate */
     // MCSM_INPUT_PHASE_VOUT,
 }
 MotorController_State_Input_T;
@@ -103,19 +104,38 @@ static inline bool MotorController_IsConfig(MotorController_T * p_context) { ret
     Motor Controller State Variables
 */
 /******************************************************************************/
-static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_State_T * p_mcState) { return StateMachine_GetActiveStateId(&p_mcState->StateMachine); }
+static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_State_T * p_data) { return StateMachine_GetActiveStateId(&p_data->StateMachine); }
 
 /* Corresponds to known Top State */
-static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_mcState) { return _StateMachine_GetActiveSubStateId(&p_mcState->StateMachine); }
+static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return _StateMachine_GetActiveSubStateId(&p_data->StateMachine); }
+static inline State_BranchId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetBranchId(&p_data->StateMachine); }
 
-static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_mcState) { return p_mcState->FaultFlags; }
+static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_data) { return p_data->FaultFlags; }
 
+/*
+    General Direction
+    App may overwrite.
+    PARK => 0
+    FORWARD => 1
+    REVERSE => -1
+    0 =>  0
+    Caller handle
+    0, PARK_STATE => PARK
+    0, !PARK_STATE => 0
+*/
+// alternatively map getter to State
+static int MotorController_GetDirection(MotorController_T * p_context)
+{
+    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
+    {
+        case MCSM_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
+        case MCSM_STATE_ID_PARK:       return 0;
+        case MCSM_STATE_ID_LOCK:       return 0;
+        case MCSM_STATE_ID_FAULT:      return 0;
+        default:                       return 0;
+    }
+}
 
-/* todo input mode dependent, and state dependent - properties or fn map */
-// is exact substate, faster check without traversal
-// static inline bool MotorController_IsExact(MotorController_T * p_context, State_T * p_state) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, p_state); }
-// check ancestor for deeper nesting
-// static inline bool MotorController_IsActive(MotorController_T * p_context, State_T * p_state) { return StateMachine_IsActivePathState(p_context->STATE_MACHINE.P_ACTIVE, & ); }
 /******************************************************************************/
 /*
 */
@@ -136,7 +156,7 @@ static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
 /******************************************************************************/
 /*
     User Input Interface; into StateMachine process
-    _StateMachine_ProcInput Same Thread as Proc
+    _StateMachine_ProcInput Same Thread as Proc, no guard used
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -207,46 +227,28 @@ static inline void MotorController_SetFeedbackMode(MotorController_T * p_context
 //     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_DIRECTION, direction);
 // }
 
-/*
-    General Direction
-    App may overwrite.
-    PARK => 0
-    FORWARD => 1
-    REVERSE => -1
-    0 =>  0
-    Caller handle
-    0, PARK_STATE => PARK
-    0, !PARK_STATE => 0
-*/
-// alternatively map getter to State
-static int MotorController_GetDirection(MotorController_T * p_context)
+
+/* Combination Input */
+typedef union MotorController_StateInput2
 {
-    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
+    struct
     {
-        case MCSM_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
-        case MCSM_STATE_ID_PARK:       return 0;
-        case MCSM_STATE_ID_LOCK:       return 0;
-        case MCSM_STATE_ID_FAULT:      return 0;
-        default:                       return 0;
-    }
+        uint16_t SubId : 16U;
+        uint16_t Value : 16U;
+    };
+    uint32_t Pair;
+}
+MotorController_StateInput2_T;
+
+static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, uint16_t cmd, uint16_t value)
+{
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
 }
 
-// /* Combination Iput */
-// typedef union MotorController_UserInput
-// {
-//     struct
-//     {
-//         uint16_t MotorCmd : 16U;
-//         uint16_t value : 16U;
-//     };
-//     uint32_t Value;
-// }
-// MotorController_UserInput_T;
-
-// static inline void MotorController_ApplyUserCmd(MotorController_T * p_context, cmd, value)
-// {
-//     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_USER, (MotorController_UserInput_T) { .MotorCmd = cmd, .value = value }.Value);
-// }
+static inline void MotorController_ApplyAppCmd(MotorController_T * p_context, uint16_t cmd, uint16_t value)
+{
+    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_APP_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
+}
 
 /******************************************************************************/
 /*!

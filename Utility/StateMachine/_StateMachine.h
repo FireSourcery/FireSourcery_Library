@@ -106,7 +106,7 @@ static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Activ
     { return (p_active->p_ActiveSubState != p_active->p_ActiveState) ? p_active->p_ActiveSubState->ID : STATE_ID_NULL; }
 
 
-/* Id indicator, for when the Active TOP state is known. */
+/* Id indicator, for when the Active TOP state is known, and all direct substate ids are unique */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
     { return (StateMachine_GetActiveSubState(p_active)->P_PARENT == p_parent) ? _StateMachine_GetActiveSubStateId(p_active) : STATE_ID_NULL; }
 
@@ -114,12 +114,6 @@ static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active
 static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent, state_t substateId)
     { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
 
-
-/*   p_ActiveState includes P_ROOT for top level. */
-// static inline State_T * StateMachine_GetActiveRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP; }
-// static inline state_t StateMachine_GetActiveRootStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP->ID; }
-// static inline bool StateMachine_IsActiveRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState->P_TOP); }
-// static inline bool StateMachine_IsActiveRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->P_TOP->ID); }
 
 
 /******************************************************************************/
@@ -135,7 +129,7 @@ static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, 
 }
 
 /* Handle multiple inputs overwrite */
-static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_active, State_T * p_newState)
 {
     if (p_newState != NULL) { p_active->p_SyncNextState = p_newState; } /* Overwrite with non NULL only */
     // if (p_active->p_SyncNextState == NULL) { p_active->p_SyncNextState = p_newState; } /* Keep first */
@@ -160,24 +154,6 @@ static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T *
 {
     return State_GetValue(p_active->p_ActiveState, p_context, id, valueK);
 }
-
-/*
-
-*/
-// static inline state_value_t _StateMachine_LeafState_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
-// {
-//     return State_Access(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
-// }
-
-// static inline void _StateMachine_LeafState_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
-// {
-//     State_SetValue(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
-// }
-
-// static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
-// {
-//     return State_GetValue(p_active->p_ActiveSubState, p_context, id, valueK);
-// }
 
 /******************************************************************************/
 /*!

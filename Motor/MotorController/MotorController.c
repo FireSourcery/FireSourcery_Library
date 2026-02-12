@@ -140,12 +140,12 @@ void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
     _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)));
 }
 
-bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
-{
-   RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
-   uint32_t nominal = Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef);
-//    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
-}
+// bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
+// {
+//    RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
+//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef);
+// //    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
+// }
 
 
 /******************************************************************************/

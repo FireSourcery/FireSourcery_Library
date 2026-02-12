@@ -39,9 +39,12 @@
 /******************************************************************************/
 static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
-//refactor to single pointer
+// refactor to single pointer
 // static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP; }
 // static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
+// static inline bool StateMachine_IsActiveRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState->P_TOP); }
+// static inline bool StateMachine_IsActiveRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->P_TOP->ID); }
+
 
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
@@ -51,21 +54,69 @@ static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_act
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
-/*   return 4.4.4.4.4.4.4.4 */
-/* 8 depth max. 16 substates per state max*/
-static inline uint32_t StateMachine_GetBranchSubStateId(const StateMachine_Active_T * p_active)
+typedef union State_BranchId
 {
-    State_T * p_iterator = StateMachine_GetActiveSubState(p_active);
-    uint32_t id = 0;
-    for (uint8_t count = 0; count < 8; count++)
+    uint32_t BranchId;
+    struct
     {
-        id |= ((uint32_t)p_iterator->ID << (count * 4));
-        p_iterator = p_iterator->P_PARENT;
-        if (p_iterator == NULL) { break; }
+        uint32_t Depth0 : 4;
+        uint32_t Depth1 : 4;
+        uint32_t Depth2 : 4;
+        uint32_t Depth3 : 4;
+        uint32_t Depth4 : 4;
+        uint32_t Depth5 : 4;
+        uint32_t Depth6 : 4;
+        uint32_t Depth7 : 4;
+    };
+}
+State_BranchId_T;
+
+
+/******************************************************************************/
+/*!
+    @brief  Encodes the entire active substate path into a 32-bit ID.
+
+    Encoding formats (selectable):
+      - 4-bit fields × 8 levels: supports 16 substates per level, 8 depth max
+      - 8-bit fields × 4 levels: supports 256 substates per level, 4 depth max
+
+    Root state -> leaf state maps to LSB -> MSB.
+    Unused (deeper) fields are 0.
+
+    e.g. for path Root(2) -> Sub(3) -> SubSub(1):
+      4-bit: 0x00002310  (reading MSB to LSB: ...0, 2, 3, 1, 0...)
+      8-bit: 0x02030100
+*/
+/******************************************************************************/
+static inline State_BranchId_T StateMachine_GetBranchId(const StateMachine_Active_T * p_active)
+{
+    assert(StateMachine_GetLeafState(p_active)->DEPTH < 8); /* Ensure depth fits within 4-bit fields */
+
+    uint32_t id = 0;
+    for (State_T * p_iterator = StateMachine_GetLeafState(p_active); p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
+    {
+        id |= ((uint32_t)p_iterator->ID << (p_iterator->DEPTH * 4));
     }
-    return id;
+    return (State_BranchId_T){ .BranchId = id };
 }
 
+/*
+
+*/
+// static inline state_value_t _StateMachine_LeafState_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// {
+//     return State_Access(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
+// }
+
+// static inline void _StateMachine_LeafState_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// {
+//     State_SetValue(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
+// }
+
+// static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
+// {
+//     return State_GetValue(p_active->p_ActiveSubState, p_context, id, valueK);
+// }
 /******************************************************************************/
 /*!
     Protected

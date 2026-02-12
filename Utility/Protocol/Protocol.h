@@ -138,6 +138,8 @@ typedef const struct Protocol_ReqContext
 Protocol_ReqContext_T;
 
 typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Protocol_ReqContext_T * p_interface);
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(Protocol_ReqContext_T interface);
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(Protocol_T * p_base);
 
 typedef void (*Protocol_ResetReqState_T)(void * p_subState);
 

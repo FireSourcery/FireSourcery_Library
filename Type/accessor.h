@@ -36,9 +36,6 @@ typedef int(*compare_t)(const void * a, const void * b);
 // typedef value_t (*apply_t)(void * p_context, value_t value);
 
 
-// typedef struct FieldMeta { size_t OFFSET; size_t SIZE; } FieldMeta_T;
-
-
 /* Shorthand */
 static inline void call_proc(proc_t proc, void * p_context) { if (proc != NULL) { proc(p_context); } }
 
@@ -49,8 +46,8 @@ static inline bool call_test(test_t test, void * p_context) { return (test != NU
 static inline bool call_test_set(test_value_t test, void * p_context, int value) { return (test != NULL) ? test(p_context, value) : true; }
 
 
-// #define Call_Accessor(Accessor, ...) \
-//     _Generic(Accessor, \
+// #define Call_Accessor(fn, ...) \
+//     _Generic(fn, \
 //         get_t: call_get_at(__VA_ARGS__), \
 //         set_t: call_set_at, \
 //         get_field_t: call_get_at, \

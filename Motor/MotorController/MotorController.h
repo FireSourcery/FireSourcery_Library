@@ -36,8 +36,6 @@
 #include "MotAnalogUser/MotAnalogUser.h"
 #include "MotAnalogUser/MotAnalogUser_Conversion.h"
 
-#include "Vehicle/Vehicle.h"
-#include "Vehicle/Vehicle_User.h"
 #include "MotLimits/MotLimits.h"
 
 #include "Motor/Motor/Motor_Table.h"

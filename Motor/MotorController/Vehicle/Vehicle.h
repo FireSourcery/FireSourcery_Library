@@ -51,7 +51,7 @@ Vehicle_Cmd_T;
 /* alternatively convert to common interface */
 typedef struct Vehicle_Input
 {
-    // Vehicle_Direction_T Direction;
+    // sign_t Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     Vehicle_Cmd_T Cmd;
@@ -123,7 +123,7 @@ typedef struct Vehicle_State
     Vehicle_Input_T Input;
     // Vehicle_Input_T InputPrev;
     // Vehicle_Status_T Status;
-    StateMachine_Active_T StateMachine;
+    // StateMachine_Active_T StateMachine;
 }
 Vehicle_State_T;
 
@@ -134,7 +134,7 @@ Vehicle_State_T;
 typedef const struct Vehicle
 {
     Vehicle_State_T * P_VEHICLE_STATE;
-    StateMachine_T STATE_MACHINE;
+    // StateMachine_T STATE_MACHINE;
     Motor_Table_T MOTORS;
     // const Blinky_T * P_BUZZER;
     // const MotAnalogUser_T * P_ANALOG_USER;
@@ -144,7 +144,28 @@ Vehicle_T;
 
 // #define VEHICLE_INIT()
 
+/******************************************************************************/
+/*!
+    DriveCmd - Throttle, Brake, Zero
+    "state" changes on edge detection
+    @param[in] driveCmd Throttle, Brake, Zero
+    @param[in] cmdValue [0:65535]
+*/
+/******************************************************************************/
+/*
+    set to sync buffer. proc in thread
+    Direction handle in state machine
+*/
+static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
+static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
+static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
 
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 extern void Vehicle_Init(const Vehicle_T * p_vehicle);
 
 extern void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle);
@@ -153,64 +174,33 @@ extern void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle);
 extern void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t value);
 extern void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle);
 extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
+extern void Vehicle_ProcThrottleValue(const Vehicle_T * p_vehicle);
+extern void Vehicle_ProcBrakeValue(const Vehicle_T * p_vehicle);
 
+/******************************************************************************/
+/*
+    VarId Interface
+*/
+/******************************************************************************/
+typedef enum Vehicle_VarId
+{
+    VEHICLE_VAR_DIRECTION,          // sign_t,
+    VEHICLE_VAR_THROTTLE,           // [0:65535]
+    VEHICLE_VAR_BRAKE,              // [0:65535]
+}
+Vehicle_VarId_T;
 
-// alternatively as input conversion,
+typedef enum Vehicle_ConfigId
+{
+    VEHICLE_CONFIG_THROTTLE_MODE,     /* Vehicle_ThrottleMode_T */
+    VEHICLE_CONFIG_BRAKE_MODE,        /* Vehicle_BrakeMode_T */
+    VEHICLE_CONFIG_ZERO_MODE,         /* Vehicle_ZeroMode_T */
+}
+Vehicle_ConfigId_T;
 
-// interface for   data common
-// static inline void Vehicle_Input_FromProtocol(Vehicle_T * vehicle, Motor_Input_T * p_user, id, value)
+/* IO vars use full context */
+// extern int Vehicle_VarId_Get(const Vehicle_T * p_vehicle, Vehicle_VarId_T id);
+// extern void _Vehicle_VarId_Set(const Vehicle_T * p_vehicle, Vehicle_VarId_T id, int value);
 
-// static inline void Vehicle_Input_FromAnalogUser(Vehicle_T * vehicle, Motor_Input_T * p_user, MotAnalogUser_T * P_analog)
-// {
-//     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
-
-//     switch (vehicle->P_VEHICLE_STATE->Config.ThrottleMode)
-//     {
-//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
-//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
-//         default: break;
-//     }
-// }
-
-// static inline void Vehicle_Input_FromAnalogUser(Vehicle_Input_T * p_user, MotAnalogUser_T * P_analog)
-// {
-//     p_user->ThrottleValue = MotAnalogUser_GetAInValue(P_analog, MOT_ANALOG_USER_AIN_THROTTLE);
-//     p_user->BrakeValue = MotAnalogUser_GetAInValue(P_analog, MOT_ANALOG_USER_AIN_BRAKE);
-// }
-
-// void Vehicle_Input_ToMotorInput (const Vehicle_Input_T * p_user, Motor_Input_T * P_input )
-// {
-    //     switch (dir)
-    //     {
-    //         case MOTOR_CONTROLLER_DIRECTION_PARK:
-    //             P_input->Direction = MOTOR_DIRECTION_NULL;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
-    //             P_input->Direction = MOTOR_DIRECTION_CW;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
-    //             P_input->Direction = MOTOR_DIRECTION_CCW;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
-    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
-    //             break;
-    //         default:
-    //             break;
-    //     }
-//
-// }
-
-// static inline void Input_FromThrottle(Motor_Input_T * p_user, Vehicle_ThrottleMode_T mode, uint16_t throttle)
-// {
-//     p_user->CmdValue = (int32_t)throttle / 2; // [0:32767]
-
-//     switch (mode)
-//     {
-//         case VEHICLE_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
-//         case VEHICLE_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
-//         default: break;
-//     }
-// }
+extern int Vehicle_ConfigId_Get(const Vehicle_State_T * p_this, Vehicle_ConfigId_T id);
+extern void Vehicle_ConfigId_Set(Vehicle_State_T * p_this, Vehicle_ConfigId_T id, int value);

@@ -191,7 +191,7 @@ inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, vo
 */
 inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_SetSyncTransition(p_active, p_context, TransitionFunctionOnInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
+    _StateMachine_SetSyncTransition(p_active, TransitionFunctionOnInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
     assert(p_active->p_SyncNextState == NULL || p_active->p_SyncNextState->DEPTH == 0U);
 }
 

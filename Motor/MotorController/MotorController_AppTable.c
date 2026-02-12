@@ -27,13 +27,12 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Vehicle/App_Vehicle.h"
+#include "MotorController_AppTable.h"
+#include "Vehicle/MotorController_Vehicle.h"
 
 #include "MotorController_App.h"
-#include "MotorController_StateMachine.h"
-#include "MotorController.h"
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine_Tree.h"
+// #include "MotorController_StateMachine.h"
+#include "MotorController_User.h"
 
 /******************************************************************************/
 /*!
@@ -62,6 +61,7 @@ MotorController_App_T MC_APP_MOTOR_CMD =
     .PROC_ANALOG_USER = MotorCmdApp_ProcAnalogUser,
     .P_INITIAL_STATE = &MC_STATE_MAIN_MOTOR_CMD,
 };
+
 
 
 /******************************************************************************/

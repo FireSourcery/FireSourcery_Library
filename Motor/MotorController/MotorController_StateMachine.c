@@ -29,7 +29,6 @@
 /******************************************************************************/
 #include "MotorController_StateMachine.h"
 #include "MotorController_App.h"
-#include "Vehicle/Vehicle_StateMachine.h"
 
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_Reboot.h)
@@ -249,7 +248,7 @@ static void Park_Proc(const MotorController_T * p_context)
 
 static State_T * Park_InputLock(const MotorController_T * p_context, state_value_t lockId)
 {
-    return Common_InputLock(p_context, lockId);  // Reuse for entering LOCK
+    return Common_InputLock(p_context, lockId);
 }
 
 /* Consistent Park transition */
@@ -297,7 +296,7 @@ static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
-    // [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
+    [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
 };
 
 static const State_T STATE_PARK =
@@ -325,27 +324,29 @@ static void Main_Entry(const MotorController_T * p_context)
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { Motor_Table_StopAll(&p_context->MOTORS); }
 }
 
+/* App State common background proc */
 static void Main_Proc(const MotorController_T * p_context)
 {
 }
 
-/* Submachine common transitions */
-/* handle motor exit stop */
+/* App State defaults transitions */
 static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_value_t cmd)
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Call Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_E_STOP: return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP: //return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:
             Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
             Motor_Table_StopAll(&p_context->MOTORS);
             return &MC_STATE_MAIN; /* transition to main top state. stops processing inputs */
+            //alternatively mount app state at root level so it cannot be exited
+
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
             if (StateMachine_GetLeafState(p_context->STATE_MACHINE.P_ACTIVE) == &MC_STATE_MAIN) /* At Main Top */
             {
                 // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
-                return GetMainState(p_context); /* transition to main top state. stops processing inputs */
+                return GetMainState(p_context); /* transition to main sub state. start processing inputs */
                 // direction must be set
             }
             break;

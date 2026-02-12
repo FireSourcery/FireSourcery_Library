@@ -281,10 +281,10 @@ typedef struct Motor_State
     uint16_t ILimitMotoring_Fract16;        /* Maintain both. I direction frequently changes */
     uint16_t ILimitGenerating_Fract16;
     /* Alternatively, store as runtime cw/ccw  interface apply to both directions */
-    /* Cached directional limits - on feedback */
-    /* getters 20kz */
+    /* Cached directional limits - on feedback */ /* getters 20kz */
     // int16_t ILimitCcw_Fract16;      /* + */
     // int16_t ILimitCw_Fract16;       /* - */
+
     volatile Phase_Input_T PhaseInput;
     FOC_T Foc;
     PID_T PidIq;                /* Input (IqReq - IqFeedback), Output Vq. Sign as CCW/CW direction */
@@ -344,12 +344,6 @@ typedef struct Motor_State
     volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
 #endif
-
-    // VarAccess_State_T VarAccessInputState;   /* Input and I/O Input */
-    // VarAccess_State_T VarAccessPidTunningState; /*  */
-    /* Optionally */
-    // VarAccess_State_T VarAccessConfigState;  /* use StateMachine */
-    // VarAccess_State_T VarAccessOuputState;
 }
 Motor_State_T;
 
@@ -399,6 +393,8 @@ typedef bool(*Motor_State_Test_T)(const Motor_State_T * p_motor);
 typedef bool(*Motor_State_TryProc_T)(Motor_State_T * p_motor);
 typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value);
 typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
+
+
 
 /******************************************************************************/
 /*
@@ -597,8 +593,6 @@ static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
 }
 
 
-
-
 /******************************************************************************/
 /*
     Outer Control Feedback State
@@ -614,7 +608,7 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */ /* alternatively StateMachine Entry for capture speed */
+        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */ /* alternatively StateMachine input capture speed */
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
 
@@ -622,7 +616,6 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
     // {
     //     // Runtime reversal detected – update applied direction for control
-    //     Motor_SetDirection(p_motor, Motor_GetRotorDirection(p_motor));
     // }
 }
 

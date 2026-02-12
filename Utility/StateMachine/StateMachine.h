@@ -72,7 +72,7 @@ StateMachine_TransitionInput_T;
 // {
 //     State_T * P_START;
 //     State_T * P_NEXT;
-//      bool (OnTransition)(void * p_context,  state_value_t inputValue);
+//     bool (OnTransition)(void * p_context,  state_value_t inputValue);
 // }
 // State_TransitionPair_T;
 

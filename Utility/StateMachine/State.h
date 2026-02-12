@@ -105,7 +105,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
 
 /*
     User define full handler switch
-        no meta for null - hsm input case must return entry to indicate as handled - continues traversal when input function called and returns no transition
+        no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
 */
 typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 

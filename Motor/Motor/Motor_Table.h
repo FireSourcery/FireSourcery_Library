@@ -34,6 +34,7 @@
 #include "Motor/Motor/Analog/Motor_Analog.h"
 #include "Type/Array/void_array.h"
 
+
 /* Shorthand Wrappers */
 /* Define with motor runtime state allocated in continuous array */
 typedef const struct Motor_Table
@@ -78,6 +79,17 @@ static inline bool Motor_Table_IsAnyValue(Motor_Table_T * p_ctx, Motor_State_Try
     Specialized
 */
 /******************************************************************************/
+// #define Motor_CastSetter(p_motor, setter) \
+//     _Generic((setter), \
+//         Motor_Set_T:            (Motor_Set_T)(setter), \
+//         Motor_SetCmdValue_T:    (Motor_SetCmdValue_T)(setter ),  \
+//         Motor_Proc_T:           (Motor_Proc_T)(setter )   \
+//     )(p_motor, )
+
+// #define Motor_SetWith(p_motor, setter, value, ...) ((Motor_CastSetter(p_motor, focSet))(p_motor, value __VA_OPT__(,) __VA_ARGS__))
+
+
+
 /*
     Feedback Mode Set first
 */

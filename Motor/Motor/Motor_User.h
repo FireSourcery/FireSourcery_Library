@@ -171,7 +171,7 @@ static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
 /* Buffered Sync Input for statemachine */
 typedef struct Motor_Input
 {
-    uint8_t MotorId;
+    // uint8_t MotorId;
     int16_t CmdValue;   /* [-32768:32767] */
     Motor_Direction_T Direction;
     Motor_FeedbackMode_T FeedbackMode;

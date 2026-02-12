@@ -32,8 +32,8 @@
 #include "MotorController_User.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-#include "Vehicle/Vehicle_StateMachine.h"
-#include "Vehicle/Vehicle_User.h"
+// #include "Vehicle/Vehicle_StateMachine.h"
+// #include "Vehicle/Vehicle_User.h"
 
 #include "Peripheral/Analog/Analog_ADC_Thread.h"
 
@@ -71,8 +71,6 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
 
-    // Vehicle_ProcAnalogUser(p_context);
-    // //todo
     MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
 
     if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)

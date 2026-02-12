@@ -145,6 +145,7 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 // }
 
 
+
 /******************************************************************************/
 /*
     State Tree Functions
@@ -166,6 +167,9 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
     SubStates/InnerStates first.
     Take first transition. (RootFirst Proc to account for top level precedence)
         optionally process remaining.
+    Alternatively:
+        Always proc top down
+        full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
 */
 /******************************************************************************/
 State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel)
@@ -174,7 +178,6 @@ State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context,
     /* use (p_iterator != NULL) for now to handle boundary case of stopLevel == 0 */
     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= stopLevel); p_iterator = p_iterator->P_PARENT)
     {
-        // assert(p_iterator != NULL); /* known at compile time. should not exceed depth */
         p_next = State_TransitionOfOutput(p_iterator, p_context);
         if (p_next != NULL) { break; }
     }
@@ -196,50 +199,31 @@ State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context,
 //     return p_next;
 // }
 
-// passing 0 excludes root
-// State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t endLevel)
+// State_T * _State_TraverseTransitionOfOutput_Range(State_T * p_start, void * p_context, uint8_t end)
 // {
-//     State_T * p_next = NULL;
-//     for (State_T * p_iterator = p_start; p_iterator->DEPTH > endLevel; p_iterator = p_iterator->P_PARENT)
+//     State_T * p_iterator = p_start;
+//     for (int8_t count = 0; count < (p_start->DEPTH - end + 1); count++)
 //     {
-//         // assert(p_iterator != NULL); /* known at compile time. should not exceed depth */
-//         p_next = State_TransitionOfOutput(p_iterator, p_context);
-//         if (p_next != NULL) { break; }
+//     p_next = State_TransitionOfOutput(p_iterator, p_context);
+//     if (p_next != NULL) { break; }
+//         p_iterator = p_iterator->P_PARENT;
+//         assert(p_iterator != NULL); /* known at compile time */
 //     }
-//     return p_next;
-// }
-
-
-/*
-    pass end to skip top levels
-*/
-/* end works on NULL and known ActiveState */
-// State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
-// {
-//     State_T * p_next = NULL;
-//     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
-//     {
-//         p_next = State_TransitionOfOutput(p_iterator, p_context);
-//         if (p_next != NULL) { break; } /* substate takes precedence */
-//     }
-//     return p_next;
 // }
 
 /*
-    Optionally
-    Take the Top/Outer most transision. Higher level determines the target State.
+    with built path
 */
 // State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context)
 // {
-//     State_T * p_result = NULL;
 //     State_T * p_dest = NULL;
-//     for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
+//     for (State_T * p_iterator = p_start; (p_iterator != p_end); p_iterator = p_iterator->P_PARENT)
 //     {
 //         p_result = State_TransitionOfOutput(p_iterator, p_context);
-//         if (p_result != NULL) { p_dest = p_result; } /* not break on first. let upper level overwrites. */
 //     }
 //     return p_dest;
 // }
+
 
 /******************************************************************************/
 /*

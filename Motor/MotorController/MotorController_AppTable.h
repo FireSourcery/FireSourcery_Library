@@ -29,15 +29,18 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Vehicle/Vehicle.h"
-#include "Vehicle/Vehicle_User.h"
-
 #include "MotorController_App.h"
-#include "MotorController.h"
+// #include "MotorController.h"
+#include "Vehicle/MotorController_Vehicle.h"
+
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
 /* part of MotorController */
+/* Part of MotorController */
+struct MotorController; // forward declare
+typedef const struct MotorController MotorController_T;
+
 
 /******************************************************************************/
 /*!
