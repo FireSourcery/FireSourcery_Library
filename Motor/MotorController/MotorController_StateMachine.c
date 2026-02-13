@@ -265,38 +265,38 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
     return NULL;
 }
 
-static State_T * Park_InputDirection(const MotorController_T * p_context, state_value_t direction)
-{
-    State_T * p_nextState = NULL;
-    switch ((int)direction)
-    {
-        case 0:    break; // optionally apply V0 or VFLOAT
-        case 1: Motor_Table_ApplyUserDirection(&p_context->MOTORS, (int)direction); p_nextState = GetMainState(p_context); break;
-        case -1: Motor_Table_ApplyUserDirection(&p_context->MOTORS, (int)direction); p_nextState = GetMainState(p_context); break;
-        default:  break;
-    }
-    return p_nextState;
-}
+// static State_T * Park_InputDirection(const MotorController_T * p_context, state_value_t direction)
+// {
+//     State_T * p_nextState = NULL;
+//     switch ((int)direction)
+//     {
+//         case 0:    break; // optionally apply V0 or VFLOAT
+//         case 1: Motor_Table_ApplyUserDirection(&p_context->MOTORS, (int)direction); p_nextState = GetMainState(p_context); break;
+//         case -1: Motor_Table_ApplyUserDirection(&p_context->MOTORS, (int)direction); p_nextState = GetMainState(p_context); break;
+//         default:  break;
+//     }
+//     return p_nextState;
+// }
 
-static State_T * Park_InputUser(const MotorController_T * p_context, state_value_t event)
-{
-    switch ((MotorController_UserEvent_T)event)
-    {
-        case MOTOR_CONTROLLER_USER_CMD_DIRECTION: return Park_InputDirection(p_context, p_context->P_MC_STATE->CmdInput.Direction);
-        // case MOTOR_CONTROLLER_USER_CMD_PHASE: // MotorController_InputPhaseOutput(p_context, (Phase_Output_T)p_context->P_MC_STATE->CmdInput.Phase);
-        // case MOTOR_CONTROLLER_USER_CMD_SETPOINT: // MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)p_context->P_MC_STATE->CmdInput.CmdValue); break;
-        default: break;
-    }
+// static State_T * Park_InputUser(const MotorController_T * p_context, state_value_t event)
+// {
+//     switch ((MotorController_UserEvent_T)event)
+//     {
+//         case MOTOR_CONTROLLER_USER_CMD_DIRECTION: return Park_InputDirection(p_context, p_context->P_MC_STATE->CmdInput.Direction);
+//         // case MOTOR_CONTROLLER_USER_CMD_PHASE: // MotorController_InputPhaseOutput(p_context, (Phase_Output_T)p_context->P_MC_STATE->CmdInput.Phase);
+//         // case MOTOR_CONTROLLER_USER_CMD_SETPOINT: // MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)p_context->P_MC_STATE->CmdInput.CmdValue); break;
+//         default: break;
+//     }
 
-    return NULL;
-}
+//     return NULL;
+// }
 
 static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
-    [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
+    // [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
 };
 
 static const State_T STATE_PARK =

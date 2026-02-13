@@ -100,9 +100,9 @@ extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
 
 /*  */
 extern void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc);
-extern void MotorController_Vehicle_ApplyThrottle(MotorController_T * p_mc, uint16_t userCmd);
-extern void MotorController_Vehicle_ApplyBrake(MotorController_T * p_mc, uint16_t userCmd);
-extern void MotorController_Vehicle_ApplyZero(MotorController_T * p_mc);
+extern void MotorController_Vehicle_PollThrottle(MotorController_T * p_mc, uint16_t userCmd);
+extern void MotorController_Vehicle_PollBrake(MotorController_T * p_mc, uint16_t userCmd);
+extern void MotorController_Vehicle_PollRelease(MotorController_T * p_mc);
 
 extern void MotorController_Vehicle_ProcAnalogUser(MotorController_T * p_mc);
 extern sign_t MotorController_Vehicle_GetDirection(MotorController_T * p_mc);
