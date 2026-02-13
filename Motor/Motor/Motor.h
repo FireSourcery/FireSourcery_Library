@@ -97,6 +97,8 @@ typedef enum Motor_Direction
     MOTOR_DIRECTION_CW = -1,
     MOTOR_DIRECTION_NULL = 0,
     MOTOR_DIRECTION_CCW = 1,
+    MOTOR_DIRECTION_REVERSE = -1,
+    MOTOR_DIRECTION_FORWARD = 1,
 }
 Motor_Direction_T;
 
@@ -278,12 +280,11 @@ typedef struct Motor_State
         FOC
     */
     Ramp_T TorqueRamp;                      /* Output [-32767:32767] Setpoint => IReq/VReq */
-    uint16_t ILimitMotoring_Fract16;        /* Maintain both. I direction frequently changes */
+    uint16_t ILimitMotoring_Fract16;
     uint16_t ILimitGenerating_Fract16;
-    /* Alternatively, store as runtime cw/ccw  interface apply to both directions */
     /* Cached directional limits - on feedback */ /* getters 20kz */
-    // int16_t ILimitCcw_Fract16;      /* + */
-    // int16_t ILimitCw_Fract16;       /* - */
+    int16_t ILimitCcw_Fract16;      /* + */
+    int16_t ILimitCw_Fract16;       /* - */
 
     volatile Phase_Input_T PhaseInput;
     FOC_T Foc;

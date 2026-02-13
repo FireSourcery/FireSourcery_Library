@@ -54,13 +54,6 @@ static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p
 static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->Iabc = (Phase_Triplet_T){ 0 }; p_phase->IFlags.Bits = 0U; }
 static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->Vabc = (Phase_Triplet_T){ 0 }; p_phase->VFlags.Bits = 0U; }
 
-// typedef struct Phase_Data_T
-// {
-//     Phase_Triplet_T Values;
-//     Phase_Bitmask_T Flags;
-// }
-// Phase_Data_T;
-
 
 
 

@@ -38,6 +38,11 @@
     as interface header
 */
 /******************************************************************************/
+/******************************************************************************/
+/*!
+    Phase_Id
+*/
+/******************************************************************************/
 /*
     3-Phase Active/Align
 */
@@ -147,6 +152,11 @@ static inline uint16_t Phase_AngleOf(Phase_Id_T id)
 //     return sectorId;
 // }
 
+/******************************************************************************/
+/*!
+    Phase_Data
+*/
+/******************************************************************************/
 typedef enum Phase_Index
 {
     PHASE_INDEX_A = 0U,
@@ -188,17 +198,17 @@ typedef struct Phase_Data_T
 }
 Phase_Data_T;
 
-// static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t newValue) { *p_value = ((int32_t)*p_value + newValue) / 2; }
+// static inline void _Phase_ApplyAveraging(volatile int16_t * p_value, int16_t value) { *p_value = ((int32_t)*p_value + value) / 2; }
 
-static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, int16_t newValue)
+static inline void _Phase_Capture(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, Phase_Index_T channel, int16_t value)
 {
-    p_triplet->Values[channel] = ((int32_t)p_triplet->Values[channel] + newValue) / 2;
+    p_triplet->Values[channel] = ((int32_t)p_triplet->Values[channel] + value) / 2;
     p_bits->Bits |= (1U << channel);
 }
 
-static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T channel, int16_t newValue)
+static inline void Phase_Capture(volatile Phase_Data_T * p_data, Phase_Index_T channel, int16_t value)
 {
-    _Phase_Capture(&p_data->Values, &p_data->Flags, channel, newValue);
+    _Phase_Capture(&p_data->Values, &p_data->Flags, channel, value);
 }
 
 static inline void Phase_CaptureA(volatile Phase_Data_T * p_data, int16_t value) { Phase_Capture(p_data, PHASE_INDEX_A, value); }

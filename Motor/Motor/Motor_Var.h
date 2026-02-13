@@ -387,7 +387,7 @@ typedef enum Motor_VarType
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
     /* Alternatively move to submodule */
-    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* (varId:sensorId, varValue:cmdId) Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
+    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* RotorSensorCmd (varId:sensorId, varValue:cmdId) Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
 
     /*
         singletons,

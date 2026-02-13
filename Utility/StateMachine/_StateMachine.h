@@ -124,8 +124,9 @@ static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T *
 /* optionally keep context in signature */
 static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value)
 {
-    p_active->SyncInputs[id] = value;
-    p_active->SyncInputMask |= (1UL << id);
+    assert(id < STATE_TRANSITION_TABLE_LENGTH_MAX); /* Ensure input is within range */
+    p_active->SyncInputs[(uint8_t)id] = value;
+    p_active->SyncInputMask |= (1UL << (uint8_t)id);
 }
 
 /* Handle multiple inputs overwrite */

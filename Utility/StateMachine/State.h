@@ -44,13 +44,16 @@
 /*
 
 */
-typedef uint8_t state_t;            /* State Id. User may overwrite with enum */
-typedef uint8_t state_input_t;      /* Input/Handler Id. Maps to [State_Input_T]. Index into transition table. Implementation may overwrite with enum. */
+typedef uint32_t state_t;           /* State Id. User may overwrite with enum. use 32 for substates */
+typedef uint32_t state_input_t;     /* Input/Handler Id. Maps to [State_Input_T]. Index into transition table. Implementation may overwrite with enum. use 32 for mapper */
 typedef intptr_t state_value_t;     /* Optional input parameter. User define platform register size */
 
-#define STATE_ID_NULL               (0xFFU)
-#define STATE_INPUT_ID_NULL         (0xFFU)
-#define STATE_INPUT_VALUE_NULL      (0U)
+#define STATE_ID_NULL               (0xFFFFFFFFU)
+// #define STATE_INPUT_ID_NULL         (0xFFU)
+// #define STATE_INPUT_VALUE_NULL      (0U)
+
+/* first 8 bits reserve for table, extended ids share the same name space.  */
+#define STATE_INPUT_MAPPER_START_ID (0x100U) /* Id above this value will be passed to mapper. */
 
 /*
     A State Action/Output. On Transition - Entry/Exit. Mapped per State.
@@ -108,6 +111,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
         no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
 */
 typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
+
 
 /*!@}*/
 
@@ -267,8 +271,59 @@ typedef const struct State
 }
 State_T;
 
+// #define STATE_INIT_WITH_ASSERT(...) {  }
 
-// #define STATE_INIT_WITH_ASSERT(...) {  } \
+/*
+    Hierarchical State ID encoding.
+    Each depth level occupies a nibble (4 bits).
+    Bits [3:0]   = Root state index
+    Bits [7:4]   = Depth-1 child index
+    Bits [11:8]  = Depth-2 child index
+*/
+// typedef uint32_t state_id_t; /* Supports up to 8 levels of nesting (8 nibbles) */
+
+#define STATE_ID_BITS     (4U)
+#define STATE_ID_MASK     (0xFU)
+#define STATE_ID_MAX      (15U)  /* 0 through 14 valid, 0xF reserved */
+
+/* Base building block: place a value at a given depth */
+#define _STATE_ID(Value, Depth)    ((state_t)(Value) << ((Depth) * STATE_ID_BITS))
+
+/* Construct IDs at each nesting depth */
+#define STATE_ID_0(Root) (_STATE_ID(Root, 0))
+#define STATE_ID_1(Root, D1) (_STATE_ID(Root, 0) | _STATE_ID(D1, 1))
+#define STATE_ID_2(Root, D1, D2) (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2))
+#define STATE_ID_3(Root, D1, D2, D3) (_STATE_ID(Root, 0) | _STATE_ID(D1, 1) | _STATE_ID(D2, 2) | _STATE_ID(D3, 3))
+
+#define _STATE_ID_FOLD(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_1((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_1(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_2((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_2(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_3((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_3(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_4((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_4(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_5((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_5(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_6((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_6(Depth, Head, ...) (_STATE_ID(Head, Depth) __VA_OPT__(| _STATE_ID_FOLD_7((Depth) + 1, __VA_ARGS__)))
+#define _STATE_ID_FOLD_7(Depth, Head, ...) (_STATE_ID(Head, Depth))  /* Max depth 7 (8th level) */
+
+#define STATE_ID(...) (_STATE_ID_FOLD(0, __VA_ARGS__))
+
+
+
+// /* Extract the index at a given depth */
+// #define STATE_ID_LEVEL(Id, Depth)       (((Id) >> ((Depth) * STATE_ID_BITS)) & STATE_ID_MASK)
+
+// /* Extract root ID */
+// #define STATE_ID_ROOT(Id)               STATE_ID_LEVEL(Id, 0)
+
+// /* Mask to isolate a state and all its ancestors (truncate children) */
+// #define STATE_ID_ANCESTOR_MASK(Depth)   ((1UL << (((Depth) + 1U) * STATE_ID_BITS)) - 1U)
+
+// /* Check if two states share a common ancestor up to a given depth */
+// #define STATE_ID_IS_ANCESTOR(Id, AncestorId, AncestorDepth)  (((Id) & STATE_ID_ANCESTOR_MASK(AncestorDepth)) == (AncestorId))
+
+// /* Compile-time depth calculation (count non-zero nibbles - 1) */
+// #define STATE_ID_DEPTH(Id)              \
+//     ((Id) <= 0xF ? 0 : (Id) <= 0xFF ? 1 : (Id) <= 0xFFF ? 2 : (Id) <= 0xFFFF ? 3 : (Id) <= 0xFFFFF ? 4 : (Id) <= 0xFFFFFF ? 5 : (Id) <= 0xFFFFFFF ? 6 : 7)
+
 
 
 

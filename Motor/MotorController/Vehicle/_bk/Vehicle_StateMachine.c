@@ -160,7 +160,7 @@ static void Neutral_Proc(const Vehicle_T * p_vehicle)
         case VEHICLE_CMD_RELEASE:
             // assert (Motor_Table_IsEveryValue(&p_vehicle->MOTORS, Motor_IsState, MSM_STATE_ID_PASSIVE)); // check for consistency
             break;
-        case VEHICLE_CMD_BRAKE: Vehicle_SetBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue); break;
+        case VEHICLE_CMD_BRAKE: Vehicle_ApplyBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue); break;
         case VEHICLE_CMD_THROTTLE: break;
         default: break;
     }

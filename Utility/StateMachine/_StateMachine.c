@@ -50,7 +50,7 @@
     Output/Sync TransitionFunction
     Virtualized calls: [SYNC_OUTPUT] [NEXT]
 */
-static inline State_T * TransitionFunctionOnState(const StateMachine_Active_T * p_active, void * p_context)
+static inline State_T * TransitionFunctionOfState(const StateMachine_Active_T * p_active, void * p_context)
 {
     return State_TransitionOfOutput_AsTop(p_active->p_ActiveState, p_context); /* Top level LOOP always defined */
 }
@@ -59,7 +59,7 @@ static inline State_T * TransitionFunctionOnState(const StateMachine_Active_T * 
     Input TransitionFunction
     Virtualized calls: [P_TRANSITION_TABLE[id]]
 */
-static inline State_T * TransitionFunctionOnInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+static inline State_T * TransitionFunctionOfInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     return State_TransitionOfInput_AsTop(p_active->p_ActiveState, p_context, id, value);
 }
@@ -132,7 +132,7 @@ inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * 
 /* [Input]/ApplyInputProcTransition */
 inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOnInput(p_active, p_context, id, value));
+    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
 }
 
 /*
@@ -140,7 +140,7 @@ inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_c
 */
 inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOnState(p_active, p_context));
+    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
 }
 
 /*
@@ -191,7 +191,7 @@ inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, vo
 */
 inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_SetSyncTransition(p_active, TransitionFunctionOnInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
+    _StateMachine_SetSyncTransition(p_active, TransitionFunctionOfInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
     assert(p_active->p_SyncNextState == NULL || p_active->p_SyncNextState->DEPTH == 0U);
 }
 

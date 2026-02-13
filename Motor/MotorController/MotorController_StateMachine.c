@@ -443,6 +443,10 @@ static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value
         default:  break;
     }
     return NULL;
+
+    // Motor_ApplyUserDirection(Motor_Table_At(&p_context->MOTORS, p_input->MotorId), p_input->Direction);
+    // Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));
+    // Motor_ApplyPhaseOutput(p_motor, (Phase_Output_T)varValue);
 }
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =

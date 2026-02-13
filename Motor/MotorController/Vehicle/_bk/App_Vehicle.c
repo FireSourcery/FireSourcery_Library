@@ -162,7 +162,7 @@ MotorController_App_T MC_APP_VEHICLE =
 //     {
 //         // case MOT_ANALOG_USER_CMD_SET_BRAKE:                 MotorController_SetCmdBrake(p_mc, MotAnalogUser_GetBrake(&p_context->ANALOG_USER));          break;
 //         // case MOT_ANALOG_USER_CMD_SET_THROTTLE:              MotorController_SetCmdThrottle(p_mc, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));    break;
-//         //                                                     // Vehicle_SetThrottleValue(&p_mc->Vehicle, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
+//         //                                                     // Vehicle_ApplyThrottleValue(&p_mc->Vehicle, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
 //         // case MOT_ANALOG_USER_CMD_SET_BRAKE_RELEASE:         MotorController_SetCmdBrake(p_mc, 0U);                                                 break;
 //         // case MOT_ANALOG_USER_CMD_SET_THROTTLE_RELEASE:      MotorController_SetCmdThrottle(p_mc, 0U);                                              break;
 //         // case MOT_ANALOG_USER_CMD_PROC_ZERO:                 MotorController_SetCmdDriveZero(p_mc);                                                 break;

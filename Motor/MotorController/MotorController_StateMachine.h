@@ -202,6 +202,7 @@ typedef enum MotorController_UserEvent
     // MOTOR_CONTROLLER_USER_CMD_PARK,
 }
 MotorController_UserEvent_T;
+// set to mapper
 
 static inline void MotorController_ApplyUserCmd(MotorController_T * p_context, MotorController_UserEvent_T cmd)
 {
@@ -245,10 +246,18 @@ static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_conte
     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
 }
 
-static inline void MotorController_ApplyAppCmd(MotorController_T * p_context, uint16_t cmd, uint16_t value)
-{
-    _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_APP_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
-}
+
+/*
+    if a future app  also needs MCSM_INPUT_APP_USER, the sub-ID namespaces collide.
+        Remote side syncs with state
+        Protocol handler check state, or use vtable
+        name space for state_value_t values
+        additional state_input_t slots
+*/
+// static inline void MotorController_ApplyAppCmd(MotorController_T * p_context, uint16_t cmd, uint16_t value)
+// {
+//     _StateMachine_Branch_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_APP_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
+// }
 
 /******************************************************************************/
 /*!

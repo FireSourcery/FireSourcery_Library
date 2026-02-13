@@ -65,7 +65,7 @@ void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle)
 }
 
 /* if handle each value update with statemachine on input */
-void Vehicle_SetThrottleValue(const Vehicle_T * p_vehicle, uint16_t userCmdThrottle)
+void Vehicle_ApplyThrottleValue(const Vehicle_T * p_vehicle, uint16_t userCmdThrottle)
 {
     int16_t cmdValue = (int32_t)userCmdThrottle / 2;
 
@@ -79,7 +79,7 @@ void Vehicle_SetThrottleValue(const Vehicle_T * p_vehicle, uint16_t userCmdThrot
 
 void Vehicle_ProcThrottleValue(const Vehicle_T * p_vehicle)
 {
-    Vehicle_SetThrottleValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue);
+    Vehicle_ApplyThrottleValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue);
 }
 
 // apply hold on low speed
@@ -106,7 +106,7 @@ void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
 
     @param[in] brake [0:32767]
 */
-void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t userCmdBrake)
+void Vehicle_ApplyBrakeValue(const Vehicle_T * p_vehicle, uint16_t userCmdBrake)
 {
     int16_t cmdValue = 0 - ((int32_t)userCmdBrake / 2); // 32767 max
 
@@ -120,7 +120,7 @@ void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t userCmdBrake)
 
 void Vehicle_ProcBrakeValue(const Vehicle_T * p_vehicle)
 {
-    Vehicle_SetBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue);
+    Vehicle_ApplyBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue);
 }
 
 /* an alternate cmd for float is required */
@@ -134,6 +134,7 @@ void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
         default: break;
     }
 }
+
 
 /*
     Check Stop / Zero Throttle
@@ -150,6 +151,27 @@ void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle)
     }
 }
 
+void Vehicle_ProcInputCmd(const Vehicle_T * p_vehicle)
+{
+    switch (p_vehicle->P_VEHICLE_STATE->Input.Cmd)
+    {
+        case VEHICLE_CMD_BRAKE:     Vehicle_ProcBrakeValue(p_vehicle);      break;
+        case VEHICLE_CMD_THROTTLE:  Vehicle_ProcThrottleValue(p_vehicle);   break;
+        case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle);       break;
+        default: break;
+    }
+}
+
+void Vehicle_StartCmdMode(const Vehicle_T * p_vehicle, Vehicle_Cmd_T mode)
+{
+    switch (mode)
+    {
+        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(p_vehicle);      break;
+        case VEHICLE_CMD_THROTTLE:  Vehicle_StartThrottleMode(p_vehicle);   break;
+        case VEHICLE_CMD_RELEASE:   Vehicle_StartDriveZero(p_vehicle);      break;
+        default: break;
+    }
+}
 
 /******************************************************************************/
 /*

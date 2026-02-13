@@ -143,10 +143,7 @@ static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_ctx, Motor_StateId_T
 static inline bool Motor_Table_IsEveryUserDirection(Motor_Table_T * p_ctx, int sign)
 {
     bool isEvery = true;
-    for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++)
-    {
-        if (Motor_GetUserDirection(p_ctx->P_CONTEXTS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; }
-    }
+    for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { if (Motor_GetUserDirection(p_ctx->P_CONTEXTS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; } }
     return isEvery;
 }
 

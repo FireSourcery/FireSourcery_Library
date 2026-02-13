@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 
+#include "../Motor.h"
 /*
     Include all sensor Calibration
 */
@@ -38,11 +39,7 @@
 
 #include "RotorSensor_Table.h"
 
-#include "../Motor.h"
-// /* Part of Motor */
-// /* non inline, include by Motor */
-// typedef const struct Motor Motor_T;
-// typedef struct Motor_State Motor_State_T;
+/* dependent part of Motor_Var   */
 
 /*
     Init with Motor_State_T

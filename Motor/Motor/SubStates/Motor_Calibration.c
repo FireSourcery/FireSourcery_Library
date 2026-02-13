@@ -100,7 +100,7 @@ static State_T * Homing_End(const Motor_T * p_motor)
 
 static const State_T CALIBRATION_STATE_HOMING =
 {
-    .ID         = 0U,
+    .ID         = STATE_ID(MSM_STATE_ID_CALIBRATION, 0), /* Calibration SubState 0 */
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
@@ -181,7 +181,7 @@ static State_T * Tuning_InputFeedbackMode(const Motor_T * p_motor, state_value_t
 
 const State_T CALIBRATION_STATE_TUNNING =
 {
-    .ID         = 0U,
+    .ID         = STATE_ID(MSM_STATE_ID_CALIBRATION, 1),
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,

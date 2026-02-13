@@ -42,8 +42,8 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 
 static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 {
-    RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
-    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->MOTOR_SENSOR);
+    RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
+    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->BASE);
 
 // #if defined(ROTOR_HALL_MODE_POLLING)
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true)
@@ -83,8 +83,8 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
-    // RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
-    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->MOTOR_SENSOR);
+    // RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
+    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->BASE);
 
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
     Angle_CaptureDelta(p_angle, Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE)); /* includes samples over 1ms this way */ /* Angle.Delta Unused for now */
@@ -100,7 +100,7 @@ static int Hall_RotorSensor_GetDirection(const Hall_RotorSensor_T * p_sensor) { 
 // alternatively change to capture on set and this can be empty
 static void Hall_RotorSensor_SetDirection(const Hall_RotorSensor_T * p_sensor, int direction)
 {
-    // p_sensor->MOTOR_SENSOR.P_STATE->Direction = direction;
+    // p_sensor->BASE.P_STATE->Direction = direction;
     Hall_SetDirection(p_sensor->HALL.P_STATE, (Hall_Direction_T)direction);
     Encoder_SinglePhase_SetDirection(p_sensor->P_ENCODER->P_STATE, direction);  /* interpolate as +/-, and on get speed */
 }
@@ -109,7 +109,7 @@ static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_ZeroInitial(&p_sensor->HALL);
     Encoder_ModeDT_SetInitial(p_sensor->P_ENCODER);
-    // Hall_RotorSensor_SetDirection(p_sensor, p_sensor->MOTOR_SENSOR.P_STATE->Direction);
+    // Hall_RotorSensor_SetDirection(p_sensor, p_sensor->BASE.P_STATE->Direction);
 }
 
 static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sensor) { return Hall_IsTableValid(p_sensor->HALL.P_STATE); }

@@ -52,7 +52,7 @@ void Encoder_RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor)
 
 void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sensor)
 {
-    RotorSensor_State_T * p_state = p_sensor->MOTOR_SENSOR.P_STATE;
+    RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
     Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
     // p_state->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_CapturePollingDelta(p_sensor->ENCODER.P_STATE);
     // p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_sensor->ENCODER.P_STATE);

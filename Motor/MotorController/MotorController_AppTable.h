@@ -30,15 +30,13 @@
 */
 /******************************************************************************/
 #include "MotorController_App.h"
-// #include "MotorController.h"
 #include "Vehicle/MotorController_Vehicle.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
-/* part of MotorController */
-/* Part of MotorController */
-struct MotorController; // forward declare
+/* Dependant part of MotorController */
+struct MotorController;
 typedef const struct MotorController MotorController_T;
 
 
@@ -55,6 +53,8 @@ typedef enum MotorController_MainMode
 }
 MotorController_MainMode_T;
 
+// #define VEHICLE_STATE_INPUT_START (0x1000UL)
+
 // typedef const struct MotorController_AppTable
 // {
 //     MotorController_App_T MOTOR_CMD;
@@ -66,3 +66,4 @@ extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_con
 
 extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
 extern MotorController_App_Proc_T MotorController_App_GetProcAnalogUser(MotorController_T * p_context);
+

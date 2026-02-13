@@ -74,8 +74,6 @@ RotorSensor_Id_T;
     include all using preprocessor conditions
     There can only be 1 sensor of each type per motor, with fixed corresponding Id
 */
-// alternatively as [Motor_SensorTable_T], part of Motor_T
-// RotorSensor_T ** P_SENSOR_TABLE; may simplify external addition of sensor
 typedef const struct RotorSensor_Table
 {
     const RotorSensor_T EMPTY;
@@ -104,8 +102,8 @@ static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table
 {
     switch (id)
     {
-        case ROTOR_SENSOR_ID_HALL: return &p_table->HALL.MOTOR_SENSOR;
-        case ROTOR_SENSOR_ID_ENCODER: return &p_table->ENCODER.MOTOR_SENSOR;
+        case ROTOR_SENSOR_ID_HALL: return &p_table->HALL.BASE;
+        case ROTOR_SENSOR_ID_ENCODER: return &p_table->ENCODER.BASE;
         default: return &p_table->EMPTY;
     }
 }

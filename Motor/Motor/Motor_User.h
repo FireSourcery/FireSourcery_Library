@@ -70,14 +70,11 @@ static inline ufract16_t Motor_GetVSpeedEffective_UFract16(const Motor_State_T *
     @return IPhase Zero to Peak.
 */
 static inline ufract16_t Motor_GetIPhase_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_UFract16, NULL); }
-
-/* DirectionForward × Internal_Iq */
-static inline fract16_t Motor_GetIPhase_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_Fract16, NULL); }
-
-static inline fract16_t Motor_GetIPhaseForward_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_Fract16, NULL); }
 /* iPhase motoring as positive. generating as negative. */
 static inline fract16_t Motor_GetIPhaseMotoring_Fract16(const Motor_State_T * p_motor) { return p_motor->Direction * Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_Fract16, NULL); }
+static inline fract16_t Motor_GetIPhaseForward_Fract16(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_Fract16, NULL); }
 
+static inline fract16_t Motor_GetIPhase_Fract16(const Motor_State_T * p_motor) { return Motor_GetIPhaseMotoring_Fract16(p_motor); }
 
 /*
     Sampled BEMF during freewheel or VOut during active control
@@ -171,7 +168,7 @@ static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
 /* Buffered Sync Input for statemachine */
 typedef struct Motor_Input
 {
-    // uint8_t MotorId;
+    uint8_t MotorId;
     int16_t CmdValue;   /* [-32768:32767] */
     Motor_Direction_T Direction;
     Motor_FeedbackMode_T FeedbackMode;

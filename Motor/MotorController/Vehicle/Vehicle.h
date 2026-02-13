@@ -156,6 +156,7 @@ Vehicle_T;
     set to sync buffer. proc in thread
     Direction handle in state machine
 */
+static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }
 static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
 static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
 static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
@@ -169,11 +170,13 @@ static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Inpu
 extern void Vehicle_Init(const Vehicle_T * p_vehicle);
 
 extern void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle);
-extern void Vehicle_SetThrottleValue(const Vehicle_T * p_vehicle, uint16_t value);
+extern void Vehicle_ApplyThrottleValue(const Vehicle_T * p_vehicle, uint16_t value);
 extern void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle);
-extern void Vehicle_SetBrakeValue(const Vehicle_T * p_vehicle, uint16_t value);
+extern void Vehicle_ApplyBrakeValue(const Vehicle_T * p_vehicle, uint16_t value);
 extern void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle);
 extern void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle);
+extern void Vehicle_ProcInputCmd(const Vehicle_T * p_vehicle);
+extern void Vehicle_StartCmdMode(const Vehicle_T * p_vehicle, Vehicle_Cmd_T mode);
 extern void Vehicle_ProcThrottleValue(const Vehicle_T * p_vehicle);
 extern void Vehicle_ProcBrakeValue(const Vehicle_T * p_vehicle);
 

@@ -63,10 +63,13 @@ static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void *
 /******************************************************************************/
 /* Input */
 /******************************************************************************/
+/* Top State define Transition Table Length allocated for all inputs */
 static inline State_Input_T State_AcceptInputOfTable(State_T * p_state, void * p_context, state_input_t inputId)
 {
     (void)p_context;
-    return p_state->P_TRANSITION_TABLE[inputId];
+    if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; }
+    assert(p_state->P_TRANSITION_TABLE[(uint8_t)inputId] != NULL); /* known at compile time */
+    return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
 }
 
 static inline State_Input_T State_AcceptInputOfMapper(State_T * p_state, void * p_context, state_input_t inputId)
@@ -80,10 +83,15 @@ static inline State_Input_T State_AcceptInputOfMapper(State_T * p_state, void * 
 */
 static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_context, state_input_t inputId)
 {
-    State_Input_T result = NULL;
-    if (p_state->P_TRANSITION_TABLE != NULL) { result = p_state->P_TRANSITION_TABLE[inputId]; }
-    else if (p_state->TRANSITION_MAPPER != NULL) { result = p_state->TRANSITION_MAPPER(p_context, inputId); }
-    return result;
+    if (inputId < STATE_INPUT_MAPPER_START_ID)
+    {
+        if (p_state->P_TRANSITION_TABLE != NULL) { return p_state->P_TRANSITION_TABLE[inputId]; }
+    }
+    else
+    {
+        if (p_state->TRANSITION_MAPPER != NULL) { return p_state->TRANSITION_MAPPER(p_context, inputId); }
+    }
+    return NULL;
 }
 
 /*
@@ -105,7 +113,6 @@ static inline State_T * _State_CallInput(State_Input_T inputFn, void * p_context
     @note the result of State_AcceptInput must be stored in a local variable
     without critical section, a mismatched input function may run, however it should not run NULL
 */
-// State_TransitionOfInputByMapper
 static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
     assert(p_state != NULL);

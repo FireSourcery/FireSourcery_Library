@@ -57,7 +57,7 @@ typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const
 /* inline vtable */
 // typedef void(*RotorSensor_InstanceProc_T)(void);
 
-// optionally move to module
+/* Assign virtual sign convention */
 /* A -> B as positive/CCW */
 // typedef enum RotorSensor_Direction
 // {
@@ -119,8 +119,7 @@ typedef struct RotorSensor_State
     angle16_t MechanicalAngle;
 
     /*
-        Handle sensor detection change. Caller handle commanded direction mismatch
-        todo caller handle direction comp
+    sensor direction for comparison
     */
     int Direction; /* RotorSensor_Direction. store the feedback direction if upper layer handling is needed */
     // int DirectionPrev;
