@@ -181,6 +181,13 @@ typedef struct Motor_Input
 }
 Motor_Input_T;
 
+//proc pre state machine
+// static inline void _Motor_Input_SetDirection(Motor_Input_T * p_input,  )
+// {
+// }
+// static inline void _Motor_Input_SetCmdValueAs(Motor_Input_T * p_input,  )
+// {
+// }
 
 /******************************************************************************/
 /*!

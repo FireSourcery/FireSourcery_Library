@@ -492,10 +492,6 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor
     Null returns 0 or lower abs value
 */
 /******************************************************************************/
-/* Cw [-:0], Ccw [0:+] */
-static inline int32_t _Motor_CcwClampOf(const Motor_State_T * p_motor, int32_t value) { return math_max(value, 0); }
-static inline int32_t _Motor_CwClampOf(const Motor_State_T * p_motor, int32_t value) { return math_min(value, 0); }
-
 /*
     Clamp plugging - One direction clamp
     Cw: [value:0]
@@ -504,6 +500,7 @@ static inline int32_t _Motor_CwClampOf(const Motor_State_T * p_motor, int32_t va
 static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) ? value : 0; }
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
+//(p_motor->Direction+direction)/2
 
 /* clamp using ~1/2 VBus */
 /* No plugging limit */

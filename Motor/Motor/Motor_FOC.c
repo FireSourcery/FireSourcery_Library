@@ -65,7 +65,7 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
     /* clamp if limited. sqrt operation on clamp only */
     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
     {
-        // PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
+        PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
     }
 }
 
