@@ -54,6 +54,9 @@ typedef intptr_t state_value_t;     /* Optional input parameter. User define pla
 
 /* first 8 bits reserve for table, extended ids share the same name space.  */
 #define STATE_INPUT_MAPPER_START_ID (0x100U) /* Id above this value will be passed to mapper. */
+// #define STATE_INPUT_MAPPER_START_ID STATE_TRANSITION_TABLE_LENGTH_MAX
+
+// #define STATE_INPUT_MAPPER_ID_START(BaseId) ((1 << 8U) | (BaseId)) /* base remains valid for direct table look up, while extended input can be passed to mapper. */
 
 /*
     A State Action/Output. On Transition - Entry/Exit. Mapped per State.
@@ -222,9 +225,6 @@ typedef const struct State
         Unused by Top Level State.
     */
     State_TransitionMapper_T TRANSITION_MAPPER;
-
-    // const State_Input_T ** PP_NESTED_TABLE; PP_NESTED_TABLE[rare event][id]
-    // const State_Input_T * P_LOCAL_TABLE; // check for matching state before call, alternatively use TransitionInput_T
 
     /*
         Accessor functions

@@ -44,10 +44,10 @@ int MotorController_Var_Output_Get(const MotorController_T * p_context, MotorCon
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_MC_STATE:              value = MotorController_GetStateId(p_context->P_MC_STATE);              break;
-        case MOT_VAR_MC_SUB_STATE:          value = _MotorController_GetSubStateId(p_context->P_MC_STATE);          break;
-        case MOT_VAR_MC_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_context->P_MC_STATE).Value;     break;
-        // case MOT_VAR_MC_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_context).Value;               break;
+        case MOT_VAR_SYSTEM_STATE:              value = MotorController_GetStateId(p_context->P_MC_STATE);              break;
+        case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_context->P_MC_STATE);          break;
+        case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_context->P_MC_STATE).Value;     break;
+        // case MOT_VAR_SYSTEM_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_context).Value;               break;
         case MOT_VAR_MC_DIRECTION:          value = MotorController_GetDirection(p_context);                        break;
     }
     return value;

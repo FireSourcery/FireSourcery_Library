@@ -232,6 +232,7 @@ State_Input_T Drive_TransitionMapper(MotorController_T * p_context, state_input_
     }
     return p_inputHandler;
 }
+
 static const State_T STATE_DRIVE =
 {
     .ID         = VEHICLE_STATE_ID_DRIVE,
