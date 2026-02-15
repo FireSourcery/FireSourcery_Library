@@ -66,9 +66,9 @@ static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void *
 /* Top State defines Transition Table. allocate empty for no accepted inputs */
 static inline State_Input_T State_AcceptInputOfTable(State_T * p_state, void * p_context, state_input_t inputId)
 {
+    assert(p_state->P_TRANSITION_TABLE != NULL); /* known at compile time */
     (void)p_context;
     if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; } //maybe be skiped if lower 8 bits and id  0 is reserved
-    assert(p_state->P_TRANSITION_TABLE != NULL); /* known at compile time */
     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
 }
 

@@ -233,9 +233,13 @@ typedef const struct State
         mapped input without transition, no critical section
         If the accessor calls a transition. that function will be wrapped in a critical section.
     */
-    const State_Accessor_T * P_ACCESSOR_TABLE;
+    const State_Accessor_T * P_ACCESSOR_TABLE; /* Internal Transition */
     const State_GetField_T * P_GET_FIELD_TABLE; /* Get Field Table */
     const State_SetField_T * P_SET_FIELD_TABLE; /* Set Field Table */
+    // const State_Accessor_T * P_ACCESSOR_TABLE; /* Internal Transition */
+    //call handle merging id
+    // const State_GetField_T * GET_FIELD; /* Get Field Table */
+    // const State_SetField_T * SET_FIELD; /* Set Field Table */
 
 
     /*

@@ -103,28 +103,29 @@ static inline State_BranchId_T StateMachine_GetBranchId(const StateMachine_Activ
 /*
 
 */
-// static inline state_value_t _StateMachine_LeafState_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// static inline state_value_t _StateMachine_Branch_Access(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
 // {
 //     return State_Access(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
 // }
 
-// static inline void _StateMachine_LeafState_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
+// static inline void _StateMachine_Branch_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV)
 // {
 //     State_SetValue(p_active->p_ActiveSubState, p_context, id, valueK, valueV);
 // }
 
-// static inline state_value_t _StateMachine_LeafState_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
+// static inline state_value_t _StateMachine_Branch_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t valueK)
 // {
 //     return State_GetValue(p_active->p_ActiveSubState, p_context, id, valueK);
 // }
+
 /******************************************************************************/
 /*!
     Protected
 */
 /******************************************************************************/
 /* _StateMachine_Branch_Action */
-extern void _StateMachine_Branch_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 extern void _StateMachine_Branch_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_Branch_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
 extern void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
 extern void _StateMachine_Branch_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);

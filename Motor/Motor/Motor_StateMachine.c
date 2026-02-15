@@ -269,7 +269,7 @@ static void Passive_Proc(const Motor_T * p_motor)
 //     // return (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
 //     // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) > 0)
 //     // {
-//     //     if (Motor_IsHold(p_motor) == false) { _StateMachine_Transition(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
+//     //     if (Motor_IsHold(p_motor) == false) { _StateMachine_TransitionTo(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
 //     //     else                                { }
 //     // }
 // }

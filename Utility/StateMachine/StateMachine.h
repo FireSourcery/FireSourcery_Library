@@ -212,7 +212,7 @@ static void StateMachine_ForceTransition(StateMachine_T * p_this, State_T * p_st
 
     if (_StateMachine_AcquireAsyncTransition(p_this->P_ACTIVE) == true)
     {
-        _StateMachine_Transition(p_this->P_ACTIVE, p_this->P_CONTEXT, p_state);
+        _StateMachine_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_state);
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
 }
@@ -229,7 +229,7 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_
     {
         if (StateMachine_IsActiveState(p_this->P_ACTIVE, p_transition->P_START) == true)
         {
-            _StateMachine_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, inputValue));
+            _StateMachine_Transition(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, inputValue));
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
@@ -310,7 +310,7 @@ static void StateMachine_Branch_InvokeTransition(StateMachine_T * p_this, StateM
         if (StateMachine_IsActivePath(p_this->P_ACTIVE, p_transition->P_START) == true) //todo move to _StateMachine
         {
             assert(State_IsAncestorOrSelf(p_transition->P_START, p_this->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
-            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, value));
+            _StateMachine_Branch_Transition(p_this->P_ACTIVE, p_this->P_CONTEXT, p_transition->TRANSITION(p_this->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
@@ -326,7 +326,7 @@ static void StateMachine_Branch_InvokeTransitionFrom(StateMachine_T * p_this, St
     {
         if (State_IsAncestorOrSelf(p_deepest, StateMachine_GetActiveSubState(p_this->P_ACTIVE)) == true)
         {
-            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, transition(p_this->P_CONTEXT, value));
+            _StateMachine_Branch_Transition(p_this->P_ACTIVE, p_this->P_CONTEXT, transition(p_this->P_CONTEXT, value));
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }
@@ -340,7 +340,7 @@ static void _StateMachine_Branch_EnterSubstate(StateMachine_T * p_this, State_T 
         if (StateMachine_IsActivePath(p_this->P_ACTIVE, p_parent) == true)
         {
             assert(State_IsAncestorOrSelf(p_parent, p_this->P_ACTIVE->p_ActiveState)); /* ensure substate is in sync with top level state */
-            _StateMachine_Branch_TransitionTo(p_this->P_ACTIVE, p_this->P_CONTEXT, p_dest);
+            _StateMachine_Branch_Transition(p_this->P_ACTIVE, p_this->P_CONTEXT, p_dest);
         }
         _StateMachine_ReleaseAsyncTransition(p_this->P_ACTIVE);
     }

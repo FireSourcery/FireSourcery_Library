@@ -98,7 +98,7 @@ inline void _StateMachine_Reset(StateMachine_Active_T * p_active, void * p_conte
         [p_newState->ENTRY] will not be overwritten by [p_ActiveState->OUTPUT], correctly
         [p_newState->OUTPUT] may proc before [p_newState->ENTRY], without setup, incorrectly
 */
-inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
 {
     assert(p_newState->DEPTH == 0U); /* Top level state */
 
@@ -117,9 +117,9 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
     // p_active->p_ActiveState = p_newState;
 }
 
-inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
 {
-    if (p_newState != NULL) { _StateMachine_Transition(p_active, p_context, p_newState); }
+    if (p_newState != NULL) { _StateMachine_TransitionTo(p_active, p_context, p_newState); }
 }
 
 /*
@@ -132,7 +132,7 @@ inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * 
 /* [Input]/ApplyInputProcTransition */
 inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
+    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
 }
 
 /*
@@ -140,7 +140,7 @@ inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_c
 */
 inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_TransitionTo(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
+    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
 }
 
 /*
@@ -169,7 +169,7 @@ inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void *
 */
 inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_TransitionTo(p_active, p_context, p_active->p_SyncNextState); /* check proc with local variable */
+    _StateMachine_Transition(p_active, p_context, p_active->p_SyncNextState); /* check proc with local variable */
     p_active->p_SyncNextState = NULL;
     // alternatively ignore DEPTH != 0U
 }

@@ -257,9 +257,10 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
     switch ((MotorController_StateCmd_T)cmd)
     {
         // case MOTOR_CONTROLLER_STATE_CMD_PARK:
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return GetMainState(p_context); /* Protocol ExitPPark, protocol apply direction */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return GetMainState(p_context); /* Enter Main App State passing control. Protocol ExitPPark, protocol apply direction */
+        // case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return &MC_STATE_MAIN; /* Protocol ExitPPark, protocol apply direction */
         default:  break;
     }
     return NULL;
@@ -343,12 +344,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
             //alternatively mount app state at root level so it cannot be exited
 
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
-            if (StateMachine_GetLeafState(p_context->STATE_MACHINE.P_ACTIVE) == &MC_STATE_MAIN) /* At Main Top */
-            {
-                // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP))
-                return GetMainState(p_context); /* transition to main sub state. start processing inputs */
-                // direction must be set
-            }
+            return GetMainState(p_context); /* transition to main sub state. start processing inputs */
             break;
         default:  break;
     }
@@ -356,26 +352,26 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 }
 
 /* Main idle base */
-static State_T * Main_InputDirection(MotorController_T * p_context, state_value_t direction)
-{
-    if (Motor_Table_IsEveryUserDirection(&p_context->MOTORS, direction) == true) { return GetMainState(p_context); }
-    if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_context->MOTORS, direction); return GetMainState(p_context);; }
-    return NULL;
-}
+// static State_T * Main_InputDirection(MotorController_T * p_context, state_value_t direction)
+// {
+//     if (Motor_Table_IsEveryUserDirection(&p_context->MOTORS, direction) == true) { return GetMainState(p_context); }
+//     if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_context->MOTORS, direction); return GetMainState(p_context);; }
+//     return NULL;
+// }
 
-static State_T * Main_InputUser(const MotorController_T * p_context, state_value_t event)
-{
-    Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
-    switch ((MotorController_UserEvent_T)event)
-    {
-        case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
-        case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ActivateVOutput(&p_context->MOTORS, p_input->PhaseOutput); break;
-        // case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
-        // case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
-        default:  break;
-    }
-    return NULL;
-}
+// static State_T * Main_InputUser(const MotorController_T * p_context, state_value_t event)
+// {
+//     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+//     switch ((MotorController_UserEvent_T)event)
+//     {
+//         case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
+//         case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ActivateVOutput(&p_context->MOTORS, p_input->PhaseOutput); break;
+//         // case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
+//         // case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
+//         default:  break;
+//     }
+//     return NULL;
+// }
 
 /*
     Transition to Lock to select substate
@@ -384,7 +380,7 @@ static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Main_InputStateCmd,
-    [MCSM_INPUT_USER]           = (State_Input_T)Main_InputUser,
+    // [MCSM_INPUT_USER]           = (State_Input_T)Main_InputUser,
     // [MCSM_INPUT_DIRECTION]      = (State_Input_T)Main_InputDirection,
     // [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Main_InputMainMode,
 };
@@ -403,12 +399,6 @@ const State_T MC_STATE_MAIN =
 
     Motors passthrough coordinated default
     marker for accepting [Motor_VarId] interface inputs
-
-    Call handles enabling disabling output, FeedbackMode
-
-    optionally move neutral to top state
-
-    protocol MotorCmd enable even for analog input only
 */
 /******************************************************************************/
 static void MotorCmd_Entry(const MotorController_T * p_context)
@@ -431,6 +421,7 @@ static void MotorCmd_Proc(const MotorController_T * p_context)
 //     return NULL;
 // }
 
+//pass through from buffered input. alternatively use id range
 static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value_t cmd)
 {
     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
@@ -444,24 +435,26 @@ static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value
     }
     return NULL;
 
+    // per motor
     // Motor_ApplyUserDirection(Motor_Table_At(&p_context->MOTORS, p_input->MotorId), p_input->Direction);
     // Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));
     // Motor_ApplyPhaseOutput(p_motor, (Phase_Output_T)varValue);
 }
 
+static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+{
+    [MCSM_INPUT_USER] = (State_Input_T)MotorCmd_Input,
+};
+
 const State_T MC_STATE_MAIN_MOTOR_CMD =
 {
-    .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
+    // .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
     .DEPTH      = 1U,
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)MotorCmd_Entry,
     .LOOP       = (State_Action_T)MotorCmd_Proc,
-    .P_TRANSITION_TABLE = (State_Input_T[MCSM_TRANSITION_TABLE_LENGTH])
-    {
-        [MCSM_INPUT_USER]        = (State_Input_T)MotorCmd_Input,
-    },
-    .TRANSITION_MAPPER = NULL,
+    .P_TRANSITION_TABLE = &MOTOR_CMD_TRANSITION_TABLE[0U],
 };
 
 
@@ -748,7 +741,7 @@ static void Fault_Proc(const MotorController_T * p_context)
     if (p_mc->FaultFlags.Value == 0U)
     {
         Blinky_Stop(&p_context->BUZZER);
-        // _StateMachine_Transition(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, &MC_STATE_MAIN);
+        // _StateMachine_TransitionTo(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, &MC_STATE_MAIN);
     }
 }
 

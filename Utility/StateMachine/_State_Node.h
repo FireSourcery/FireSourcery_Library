@@ -37,23 +37,6 @@
     [State] as Node/Tree
 */
 /******************************************************************************/
-
-/*
-    Nth Ancestor
-    No NULL check, as this is a private function for compile time defined values
-*/
-static inline State_T * _State_IterateUp(State_T * p_start, int8_t iterations)
-{
-    State_T * p_iterator = p_start;
-    for (int8_t count = 0; count < iterations; count++)
-    {
-        p_iterator = p_iterator->P_PARENT;
-        assert(p_iterator != NULL); /* known at compile time */
-    }
-    return p_iterator;
-}
-
-
 // #ifndef NDEBUG
 //     assert(_State_IterateUp(p_state, p_state->DEPTH) == p_state->P_TOP);
 // #endif
@@ -97,8 +80,8 @@ extern void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void 
 /*  */
 // extern State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId);
 extern State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue);
-extern State_T * _State_TraverseTransitionOfInput(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue);
+extern State_T * State_TraverseTransitionOfInputRange(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue);
 
 
-extern State_T * _State_TraverseTransitionOfOutput(State_T * p_start, void * p_context, uint8_t stopLevel);
+extern State_T * State_TraverseTransitionOfOutputRange(State_T * p_start, void * p_context, uint8_t stopLevel);
 // extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context);
