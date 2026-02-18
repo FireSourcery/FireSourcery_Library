@@ -320,11 +320,12 @@ void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd
     _StateMachine_Branch_ProcInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd); // command and values pass by buffered
 }
 
-// alternatively from park
+// alternatively include from park
 // void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction)
 // {
 //     static StateMachine_TransitionInput_T CMD = { .P_START = &PARK, .TRANSITION = (State_Input_T) , };
 //     StateMachine_Branch_InvokeTransition(&p_mc->STATE_MACHINE, &CMD, direction);
+//
 // }
 
 // alternatively

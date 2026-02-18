@@ -35,6 +35,10 @@
 #include <stddef.h>
 #include <assert.h>
 
+// per layer
+// #ifndef STATE_COUNT_MAX
+// #define STATE_COUNT_MAX (8U)
+// #endif
 
 /* For Run time Sync buffer only. alternatively, fam or context pointer */
 #ifndef STATE_TRANSITION_TABLE_LENGTH_MAX
@@ -113,7 +117,7 @@ typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t
     User define full handler switch
         no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
 */
-typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
+// typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 
 
 /*!@}*/

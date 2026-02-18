@@ -344,6 +344,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
             //alternatively mount app state at root level so it cannot be exited
 
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+        // if (topstate == &MC_STATE_MAIN)
             return GetMainState(p_context); /* transition to main sub state. start processing inputs */
             break;
         default:  break;

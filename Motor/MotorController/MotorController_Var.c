@@ -179,7 +179,7 @@ static int _HandleMotorVar_Get(const MotorController_T * p_context, MotVarId_T v
 
 static MotVarId_Status_T _HandleMotorVar_Set(const MotorController_T * p_context, MotVarId_T varId, int value)
 {
-    // if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
+    if (MotorAt(p_context, varId.Instance) == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
     if (!Motor_VarType_CheckSet(MotorAt(p_context, varId.Instance), (Motor_VarType_T)varId.InnerType, varId.Base, value)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
     Motor_VarType_Set(MotorAt(p_context, varId.Instance), (Motor_VarType_T)varId.InnerType, varId.Base, value);
     return MOT_VAR_STATUS_OK;
