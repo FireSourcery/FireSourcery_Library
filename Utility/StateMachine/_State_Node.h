@@ -44,10 +44,7 @@
 /* Compile Time define Top State */
 /* A top state may define its own P_TOP as NULL or itself */
 /* alternatively iterate if not defined */
-static inline State_T * _State_GetRoot(State_T * p_start)
-{
-    return (p_start->P_TOP == NULL) ? p_start : p_start->P_TOP;
-}
+static inline State_T * _State_GetRoot(State_T * p_start) { return (p_start->P_TOP == NULL) ? p_start : p_start->P_TOP; }
 
 /******************************************************************************/
 /*
@@ -74,14 +71,11 @@ extern State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2);
     Transition Process
 */
 /******************************************************************************/
+extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, void * p_context);
+extern State_T * State_TraverseTransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context);
+
+extern State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t id, state_value_t value);
+extern State_T * State_TraverseTransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value);
+
 extern void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context);
 extern void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void * p_context);
-
-/*  */
-// extern State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId);
-extern State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue);
-extern State_T * State_TraverseTransitionOfInputRange(State_T * p_start, void * p_context, uint8_t stopLevel, state_input_t inputId, state_value_t inputValue);
-
-
-extern State_T * State_TraverseTransitionOfOutputRange(State_T * p_start, void * p_context, uint8_t stopLevel);
-// extern State_T * State_TraverseTransitionOfOutput(State_T * p_start, State_T * p_end, void * p_context);

@@ -235,9 +235,9 @@ static int _HandleSystem_Get(const MotorController_T * p_context, MotVarId_T var
         case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:     return HeatMonitor_GroupInstance_ThermistorConfigId_Get(&p_context->HEAT_MOSFETS, varId.Instance, varId.Base);
 
         case MOT_VAR_TYPE_SOCKET_STATE:             return 0;
+        case MOT_VAR_TYPE_SOCKET_CONFIG:            return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
         case MOT_VAR_TYPE_CAN_BUS_STATE:            return 0;
-        case MOT_VAR_TYPE_SOCKET_CONFIG:         return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
-        case MOT_VAR_TYPE_CAN_BUS_CONFIG:        return 0; //return CanBus_Config_Get(p_mc, varId.Base);
+        case MOT_VAR_TYPE_CAN_BUS_CONFIG:           return 0; //return CanBus_Config_Get(p_mc, varId.Base);
 
         case MOT_VAR_TYPE_VEHICLE_CONTROL:     return MotorController_Vehicle_VarId_Get(p_context, varId.Base);
         case MOT_VAR_TYPE_VEHICLE_CONFIG:      return Vehicle_ConfigId_Get(p_context->VEHICLE.P_VEHICLE_STATE, varId.Base);
@@ -323,9 +323,9 @@ static inline bool IsProtocolControlMode(const MotorController_T * p_context)
 static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, MotVarId_T varId)
 {
     // Check read/write policies based on var type
-    switch ((MotVarId_HandlerType_T)varId.OuterType)
+    switch ((MotVarId_Handler_T)varId.OuterType)
     {
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR:
+        case MOT_VAR_ID_HANDLER_MOTOR:
             switch ((Motor_VarType_T)varId.InnerType)
             {
                 case MOTOR_VAR_TYPE_USER_CONTROL:
@@ -333,15 +333,20 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     // todo if (!MotorController_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     break;
-                // case MOTOR_VAR_TYPE_CONFIG_CMD:
+                // case MOTOR_VAR_TYPE_CONFIG_CA:
+                // case MOTOR_VAR_TYPE_CONFIG:
                 //     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+
+                // case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:
+                // case MOTOR_VAR_TYPE_CONFIG_CMD:
+                //     if (!MotorController_IsLock(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                 //     break;
                 default:
                     break;
             }
             break;
 
-        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM:
+        case MOT_VAR_ID_HANDLER_SYSTEM:
             switch ((MotorController_VarType_T)varId.InnerType)
             {
                 case MOT_VAR_TYPE_GENERAL_USER_IN:
@@ -369,7 +374,7 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                     break;
             }
             break;
-        // case MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND:
+        // case MOT_VAR_ID_HANDLER_SYSTEM_COMMAND:
         //     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
         default:
             break;
@@ -387,10 +392,10 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
 /******************************************************************************/
 int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId)
 {
-    switch ((MotVarId_HandlerType_T)varId.OuterType)
+    switch ((MotVarId_Handler_T)varId.OuterType)
     {
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR:         return _HandleMotorVar_Get(p_context, varId);
-        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM:        return _HandleSystem_Get(p_context, varId);
+        case MOT_VAR_ID_HANDLER_MOTOR:         return _HandleMotorVar_Get(p_context, varId);
+        case MOT_VAR_ID_HANDLER_SYSTEM:        return _HandleSystem_Get(p_context, varId);
         default: return 0;
     }
 }
@@ -405,10 +410,10 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
     MotVarId_Status_T accessStatus = CheckInputPolicy(p_context, varId);
     if (accessStatus != MOT_VAR_STATUS_OK) return accessStatus;
 
-    switch ((MotVarId_HandlerType_T)varId.OuterType)
+    switch ((MotVarId_Handler_T)varId.OuterType)
     {
-        case MOT_VAR_ID_HANDLER_TYPE_MOTOR:             return _HandleMotorVar_Set(p_context, varId, value);
-        case MOT_VAR_ID_HANDLER_TYPE_SYSTEM:            return _HandleSystem_Set(p_context, varId, value);
+        case MOT_VAR_ID_HANDLER_MOTOR:             return _HandleMotorVar_Set(p_context, varId, value);
+        case MOT_VAR_ID_HANDLER_SYSTEM:            return _HandleSystem_Set(p_context, varId, value);
         default:                                        return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
 }
@@ -417,21 +422,21 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
 // Check if a variable requires protocol control authority
 // static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
 // {
-//     switch ((MotVarId_HandlerType_T)varId.OuterType)
+//     switch ((MotVarId_Handler_T)varId.OuterType)
 //     {
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return true;
-//         case MOT_VAR_ID_HANDLER_TYPE_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN);
-//         case MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+//         case MOT_VAR_ID_HANDLER_MOTOR_CONTROL: return true;
+//         case MOT_VAR_ID_HANDLER_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN);
+//         case MOT_VAR_ID_HANDLER_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
 //         default:  return false;  // Config, monitoring, etc. don't need mux check
 //     }
 // }
 
 // static inline bool MotVarId_IsMotorDirect(MotVarId_T varId)
 // {
-//     switch ((MotVarId_HandlerType_T)varId.OuterType)
+//     switch ((MotVarId_Handler_T)varId.OuterType)
 //     {
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL: return true;
-//         case MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG:  return ((varId.InnerType == MOTOR_VAR_TYPE_CONFIG_CMD) || (varId.InnerType == MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD));
+//         case MOT_VAR_ID_HANDLER_MOTOR_CONTROL: return true;
+//         case MOT_VAR_ID_HANDLER_MOTOR_CONFIG:  return ((varId.InnerType == MOTOR_VAR_TYPE_CONFIG_CMD) || (varId.InnerType == MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD));
 //             /* ConfigCmds are also blocked during non StopState */
 //         default:  return false;
 //     }

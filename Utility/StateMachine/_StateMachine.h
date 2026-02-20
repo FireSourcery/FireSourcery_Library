@@ -45,27 +45,25 @@
 /******************************************************************************/
 typedef struct StateMachine_Active
 {
-    State_T * p_ActiveState;     /* HSM - The Active Top Level State. Keep the top level fast. ActiveBranch */
-    State_T * p_ActiveSubState;  /* HSM - Leaf State, defines full path. ActiveLeaf */
-    // todo single pointer p_ActiveState includes P_ROOT for top level.
+    State_T * p_ActiveState;    /* Flat - The Active Root/Top Level State. */
+                                /* HSM - Leaf State, defines full path. */
 
     /*
-        Buffered Sync transition. For restricting transition to during proc state only
-        Lock depending on user handler
-        In this case user still needs to selectively lock on some inputs, where proc state should not run without input completion
-        or set sync buffer
-    */
-    State_T * volatile p_SyncNextState;
-
-    /*
-        Sync machine store result until process
+        Sync machine store inputs until [ProcState]
         proc the last input of each unique id
         multiple inputs of the same id will overwrite
-        lockless operation when [ProcState] priority is higher than [SetInput]
+        lockless operation when [ProcState] priority is higher than [SetInput] and [SetInput] is single threaded.
     */
     volatile uint32_t SyncInputMask; /* Bit mask of inputs that have been set. */
     state_value_t SyncInputs[STATE_TRANSITION_TABLE_LENGTH_MAX]; /* alternatively, context pointer or fam */
     /* mapper version needs separate buffer */
+
+    /*
+        Async Input handler, Buffered Sync transition. Restrict transition to during proc state only
+        Lock depending on user handler
+        In this case user still needs to selectively lock on some inputs, where proc state should not run without input completion
+    */
+    State_T * volatile p_SyncNextState;
 
     volatile atomic_flag InputSignal; /* SignalLock */
 
@@ -84,36 +82,47 @@ StateMachine_Active_T;
     Public Getters directly on StateMachine_Active_T
 */
 /******************************************************************************/
+/*
+    HSM use tree functions
+*/
 static inline State_T * StateMachine_GetActiveState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 static inline state_t StateMachine_GetActiveStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState); }
 // optionally remove
-static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->ID); }
+// static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->ID); }
 
 /******************************************************************************/
 /*
     SubState
 */
 /******************************************************************************/
-/* split branch and substate functions */
-static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
-// static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState; }
-static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetActiveSubState(p_active)); }
-
-// can only guarantee correct substate id when parent state is known, otherwise may be duplicate ids across different branches. Handle with p_parentState
-// static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState->ID; }
 static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
-    { return (p_active->p_ActiveSubState != p_active->p_ActiveState) ? p_active->p_ActiveSubState->ID : STATE_ID_NULL; }
+{
+    return (p_active->p_ActiveState->DEPTH != 0) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+}
 
-
-/* Id indicator, for when the Active TOP state is known, and all direct substate ids are unique */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
-    { return (StateMachine_GetActiveSubState(p_active)->P_PARENT == p_parent) ? _StateMachine_GetActiveSubStateId(p_active) : STATE_ID_NULL; }
+{
+    return (p_active->p_ActiveState->P_PARENT == p_parent) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+}
+/* split branch and substate functions */
+// static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
+// // static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState; }
+// static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetActiveSubState(p_active)); }
 
-/* Non unique substate id, handle with p_parentState */
-static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent, state_t substateId)
-    { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
+// // can only guarantee correct substate id when parent state is known, otherwise may be duplicate ids across different branches. Handle with p_parentState
+// // static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState->ID; }
+// static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
+//     { return (p_active->p_ActiveSubState != p_active->p_ActiveState) ? p_active->p_ActiveSubState->ID : STATE_ID_NULL; }
 
+
+// /* Id indicator, for when the Active TOP state is known, and all direct substate ids are unique */
+// static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
+//     { return (StateMachine_GetActiveSubState(p_active)->P_PARENT == p_parent) ? _StateMachine_GetActiveSubStateId(p_active) : STATE_ID_NULL; }
+
+// /* Non unique substate id, handle with p_parentState */
+// static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent, state_t substateId)
+//     { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
 
 
 /******************************************************************************/
@@ -121,7 +130,6 @@ static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T *
     Protected Inline Functions
 */
 /******************************************************************************/
-/* optionally keep context in signature */
 static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value)
 {
     assert(id < STATE_TRANSITION_TABLE_LENGTH_MAX); /* Ensure input is within range */
@@ -130,10 +138,10 @@ static inline void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, 
 }
 
 /* Handle multiple inputs overwrite */
-static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_active, State_T * p_newState)
+static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_active, State_T * p_next)
 {
-    if (p_newState != NULL) { p_active->p_SyncNextState = p_newState; } /* Overwrite with non NULL only */
-    // if (p_active->p_SyncNextState == NULL) { p_active->p_SyncNextState = p_newState; } /* Keep first */
+    if (p_next != NULL) { p_active->p_SyncNextState = p_next; } /* Overwrite with non NULL only */
+    // if (p_active->p_SyncNextState == NULL) { p_active->p_SyncNextState = p_next; } /* Keep first */
 }
 
 /******************************************************************************/
@@ -166,15 +174,16 @@ static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T *
 // extern void _StateMachine_Init(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
 extern void _StateMachine_Reset(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
 
-extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
-extern void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState);
+extern void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_next);
+extern void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_next);
 extern void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, void * p_context);
 
-// extern void _StateMachine_SetSyncInput(StateMachine_Active_T * p_active, state_input_t id, state_value_t value);
+extern void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+
+extern void _StateMachine_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value);
 
 extern void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context);
 

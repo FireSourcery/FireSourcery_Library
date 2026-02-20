@@ -144,36 +144,12 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 // }
 // static inline void * _BuildPath(State_T * p_state, void * p_context, State_T *** p_path) { return **p_path = p_state; *p_path += 1; }
 
-typedef void * State_GenericFn_T(State_T * p_state, void * p_context, int opt);
-
-static inline void * _TraverseApply(State_T * p_start, void * p_context, State_GenericFn_T fn, int opt)
-{
-    void * p_result = NULL;
-    for (State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-    {
-        p_result = fn(p_iterator, p_context, opt);
-        if (p_result != NULL) { break; }
-    }
-    return p_result;
-}
-
-// end as last - 1, p_start->DEPTH != 0
-static inline void * _TraverseRangeApply(State_T * p_start, void * p_context, uint8_t end, State_GenericFn_T fn, int opt)
-{
-    void * p_result = NULL;
-    // for (State_T * p_iterator = p_start; p_iterator->DEPTH > end; p_iterator = p_iterator->P_PARENT)
-    for (State_T * p_iterator = p_start; (p_iterator != NULL) && p_iterator->DEPTH >= end; p_iterator = p_iterator->P_PARENT)
-    {
-        p_result = fn(p_iterator, p_context, opt);
-        if (p_result != NULL) { break; }
-    }
-    return p_result;
-}
+typedef void * State_Visitor_T(State_T * p_state, void * p_context, int opt);
 
 /*
-    with built path
+
 */
-static inline void * _TraversePathApply(State_T * p_start, void * p_context, State_T * p_end, State_GenericFn_T fn, int opt)
+static inline void * ApplyUpTo(State_T * p_start, State_T * p_end, void * p_context, State_Visitor_T fn, int opt)
 {
     void * p_result = NULL;
     for (State_T * p_iterator = p_start; p_iterator != p_end; p_iterator = p_iterator->P_PARENT)
@@ -184,27 +160,55 @@ static inline void * _TraversePathApply(State_T * p_start, void * p_context, Sta
     return p_result;
 }
 
+static inline void * ApplyUp(State_T * p_start, void * p_context, State_Visitor_T fn, int opt)
+{
+    return ApplyUpTo(p_start, NULL, p_context, fn, opt);
+}
+
+// end as last - 1, p_start->DEPTH != 0
+// static inline void * _ApplyRange(State_T * p_start, void * p_context, uint8_t end, State_Visitor_T fn, int opt)
+// {
+//     void * p_result = NULL;
+//     for (State_T * p_iterator = p_start; p_iterator->DEPTH > end; p_iterator = p_iterator->P_PARENT)
+//     // for (State_T * p_iterator = p_start; (p_iterator != NULL) && p_iterator->DEPTH >= end; p_iterator = p_iterator->P_PARENT)
+//     {
+//         p_result = fn(p_iterator, p_context, opt);
+//         if (p_result != NULL) { break; }
+//     }
+//     return p_result;
+// }
+
 /*
     Nth Ancestor
     No NULL check, as this is a private function for compile time defined values
 */
-static inline State_T * _IterateApply(State_T * p_start, void * p_context, int8_t iterations, State_GenericFn_T fn, int opt)
-{
-    void * p_result = NULL;
-    State_T * p_iterator = p_start;
-    for (int8_t count = 0; count < iterations; count++)
-    {
-        p_result = fn(p_iterator, p_context, opt);
-        if (p_result != NULL) { break; }
-        p_iterator = p_iterator->P_PARENT;
-        assert(p_iterator != NULL); /* known at compile time */
-    }
-    return p_result;
-}
+// static inline State_T * _ApplyUpN(State_T * p_start, void * p_context, int8_t iterations, State_Visitor_T fn, int opt)
+// {
+//     void * p_result = NULL;
+//     State_T * p_iterator = p_start;
+//     for (int8_t count = 0; count < iterations; count++)
+//     {
+//         p_result = fn(p_iterator, p_context, opt);
+//         if (p_result != NULL) { break; }
+//         p_iterator = p_iterator->P_PARENT;
+//         assert(p_iterator != NULL); /* known at compile time */
+//     }
+//     return p_result;
+// }
+//
+
+// static inline void * _ApplyDown_Recursive(State_T * p_start, State_T * p_end, void * p_context, State_Visitor_T fn, int opt)
+// {
+//     void * p_result = NULL;
+//     if ((p_end != NULL) && (p_end != p_start))
+//     {
+//         if (p_result == NULL) { p_result = _ApplyDown_Recursive(p_start, p_end->P_PARENT, p_context, fn, opt); }
+//         p_result = fn(p_end, p_context, opt);
+//     }
+//     return p_result;
+// }
 
 
-static inline void * _TransitionOfOutput(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
-static inline void * _AcceptInput(State_T * p_state, void * p_context, int inputId) { return (void *)State_AcceptInput(p_state, p_context, inputId); }
 
 
 /******************************************************************************/
@@ -212,15 +216,12 @@ static inline void * _AcceptInput(State_T * p_state, void * p_context, int input
     State Tree Functions
 */
 /******************************************************************************/
-/******************************************************************************/
 /*
-    Traverse Branch States
-    User handlers and map next State
-        LOOP
-        NEXT
-        P_TRANSITION_TABLE
+    Visitor Wrap
 */
-/******************************************************************************/
+static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
+static inline void * AcceptInputVisitor(State_T * p_state, void * p_context, int id) { return (void *)State_AcceptInput(p_state, p_context, id); }
+
 /******************************************************************************/
 /*
     State Branch Sync/Output
@@ -237,22 +238,13 @@ static inline void * _AcceptInput(State_T * p_state, void * p_context, int input
 */
 State_T * State_TraverseTransitionOfOutput(State_T * p_start, void * p_context)
 {
-    return (State_T *)_TraverseApply(p_start, p_context, _TransitionOfOutput, 0);
+    return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
 }
 
-// State_T * p_next = NULL;
-// /* use (p_iterator != NULL) for now to handle boundary case of end == 0 */
-// for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= end); p_iterator = p_iterator->P_PARENT)
-// {
-//     p_next = State_TransitionOfOutput(p_iterator, p_context);
-//     if (p_next != NULL) { break; }
-// }
-// return p_next;
-State_T * State_TraverseTransitionOfOutputRange(State_T * p_start, void * p_context, uint8_t end)
+State_T * State_TraverseTransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
 {
-    return (State_T *)_TraverseRangeApply(p_start, p_context, end, _TransitionOfOutput, 0);
+    return (State_T *)ApplyUpTo(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
 }
-
 
 
 /******************************************************************************/
@@ -265,39 +257,25 @@ State_T * State_TraverseTransitionOfOutputRange(State_T * p_start, void * p_cont
     Traversal stops when input is defined, even if no state transition. alternatively
     Inputs using id always include top level
 */
-// State_Input_T result = NULL;
-// for (State_T * p_iterator = p_start; p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-// {
-//     result = State_AcceptInput(p_iterator, p_context, inputId);
-//     if (result != NULL) { break; }
-// }
-// return result;
-State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t inputId)
+State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t id)
 {
-    return (State_Input_T)_TraverseApply(p_start, p_context, _AcceptInput, inputId);
+    return (State_Input_T)ApplyUp(p_start, p_context, AcceptInputVisitor, id);
 }
 
 /* Transition of Traverse Input */
-State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t inputId, state_value_t inputValue)
+State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_TraverseAcceptInput(p_start, p_context, inputId), p_context, inputValue);
+    return _State_CallInput(State_TraverseAcceptInput(p_start, p_context, id), p_context, value);
 }
 
-// State_Input_T result = NULL;
-// for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator->DEPTH >= end); p_iterator = p_iterator->P_PARENT)
-// {
-//     result = State_AcceptInput(p_iterator, p_context, inputId);
-//     if (result != NULL) { break; }
-// }
-// return result;
-State_Input_T State_TraverseAcceptInputRange(State_T * p_start, void * p_context, uint8_t end, state_input_t inputId)
+State_Input_T State_TraverseAcceptInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id)
 {
-    return (State_Input_T)_TraverseRangeApply(p_start, p_context, end, _AcceptInput, inputId);
+    return (State_Input_T)ApplyUpTo(p_start, p_end, p_context, AcceptInputVisitor, id);
 }
 
-State_T * State_TraverseTransitionOfInputRange(State_T * p_start, void * p_context, uint8_t end, state_input_t inputId, state_value_t inputValue)
+State_T * State_TraverseTransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_TraverseAcceptInputRange(p_start, p_context, end, inputId), p_context, inputValue);
+    return _State_CallInput(State_TraverseAcceptInputUpTo(p_start, p_end, p_context, id), p_context, value);
 }
 
 /******************************************************************************/
@@ -308,17 +286,23 @@ State_T * State_TraverseTransitionOfInputRange(State_T * p_start, void * p_conte
 /******************************************************************************/
 /* State Branch Transition */
 /******************************************************************************/
+static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
+static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
+
+
 /*!
     Call Exit traversing up the tree
     @param[in] p_start == NULL => no effect
 */
-static inline void TraverseExit(State_T * p_start, State_T * p_common, void * p_context)
+static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_context)
 {
 #ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
-    for (State_T * p_iterator = p_start; (p_iterator != NULL) && (p_iterator != p_common); p_iterator = p_iterator->P_PARENT)
-    {
-        if (p_iterator->EXIT != NULL) { p_iterator->EXIT(p_context); }
-    }
+    assert(p_start != NULL); /* if p_common is not NULL, p_start must not be NULL */
+    ApplyUpTo(p_start, p_common, p_context, ExitVisitor, 0);
+#else
+    (void)p_start;
+    (void)p_common;
+    (void)p_context;
 #endif
 }
 
@@ -328,11 +312,11 @@ static inline void TraverseExit(State_T * p_start, State_T * p_common, void * p_
         iterative traverse need capture first
     @param[in] p_common == NULL => repeat ROOT entry.
 */
-static inline void TraverseEntry(State_T * p_common, State_T * p_end, void * p_context)
+static inline void EntryDownTo(State_T * p_common, State_T * p_end, void * p_context)
 {
     if ((p_end != NULL) && (p_end != p_common))
     {
-        TraverseEntry(p_common, p_end->P_PARENT, p_context);
+        EntryDownTo(p_common, p_end->P_PARENT, p_context);
         State_Entry(p_end, p_context);
     }
 }
@@ -345,8 +329,8 @@ static inline void TraverseEntry(State_T * p_common, State_T * p_end, void * p_c
 */
 void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
 {
-    TraverseExit(p_start, p_common, p_context);
-    TraverseEntry(p_common, p_end, p_context);
+    ExitUpTo(p_start, p_common, p_context);
+    EntryDownTo(p_common, p_end, p_context);
 }
 
 

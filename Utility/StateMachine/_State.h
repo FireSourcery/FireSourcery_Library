@@ -53,29 +53,23 @@ static inline State_T * State_TransitionOfOutput(State_T * p_state, void * p_con
     return _State_InputVoid(p_state->NEXT, p_context);
 }
 
-/* Top level State does not need to check null */
-static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
-{
-    p_state->LOOP(p_context);
-    return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
-}
-
 /******************************************************************************/
 /* Input */
 /******************************************************************************/
-/* Top State defines Transition Table. allocate empty for no accepted inputs */
-static inline State_Input_T State_AcceptInputOfTable(State_T * p_state, void * p_context, state_input_t inputId)
-{
-    assert(p_state->P_TRANSITION_TABLE != NULL); /* known at compile time */
-    (void)p_context;
-    if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; } //maybe be skiped if lower 8 bits and id  0 is reserved
-    return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
-}
+/*
+    Resolve on transition action and return new [State]
+*/
+static inline State_T * _State_CallInput(State_Input_T input, void * p_context, state_value_t value) { return (input != NULL) ? input(p_context, value) : NULL; }
 
-static inline State_Input_T State_AcceptInputOfMapper(State_T * p_state, void * p_context, state_input_t inputId)
-{
-    return p_state->TRANSITION_MAPPER(p_context, inputId);
-}
+// static inline State_Input_T State_AcceptInputOfTable(State_T * p_state, void * p_context, state_input_t inputId)
+// {
+//     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
+// }
+
+// static inline State_Input_T State_AcceptInputOfMapper(State_T * p_state, void * p_context, state_input_t inputId)
+// {
+//      return (p_state->TRANSITION_MAPPER != NULL) ? p_state->TRANSITION_MAPPER(p_context, inputId) : NULL;
+// }
 
 /*!
     @return [NULL] indicates not accepted input, transition does not exist, no mapped input function.
@@ -94,17 +88,10 @@ static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_contex
     return NULL;
 }
 
-/*
-    Resolve on transition action and return new [State]
-*/
-static inline State_T * _State_CallInput(State_Input_T inputFn, void * p_context, state_value_t inputValue)
-{
-    return (inputFn != NULL) ? inputFn(p_context, inputValue) : NULL;
-}
 
 /*!
     [Transition Of Input/AsyncInput]
-    Map (inputId, inputValue) -> p_newState
+    Map (inputId, inputValue) -> p_next
     Map inputId to [State_Input_T] and call with inputValue
     @return NULL for internal-only-transition without processing ENTRY.
             self for self-transition processing ENTRY
@@ -119,26 +106,35 @@ static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_cont
     return _State_CallInput(State_AcceptInput(p_state, p_context, inputId), p_context, inputValue);
 }
 
-static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
+
+/******************************************************************************/
+/* AsTop Without Null Check */
+/******************************************************************************/
+/* Top level State does not need to check null */
+static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
 {
-    return _State_CallInput(State_AcceptInputOfTable(p_state, p_context, inputId), p_context, inputValue);
+    p_state->LOOP(p_context);
+    return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
 }
 
-// user handle accept input
-// static inline State_T * State_TransitionOfInput_ByHandler(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
-// {
-//     State_TransitionFunction_T function = p_state->TRANSITION_FUNCTION;
-//     return (function != NULL) ? function(p_context, inputId, inputValue) : NULL;
-// }
+/* Top State defines Transition Table. allocate empty for not accepted inputs */
+static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId)
+{
+    assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
+    (void)p_context;
 
-// typedef struct State * (*State_TransitionFunction_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
-// typedef struct State * (*StateMachine_TransitionFunction_T)(struct State *, void * p_context, state_input_t inputId, state_value_t inputValue);
-// static inline State_T * State_TransitionOfInput_Meta(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
-// {
-//     StateMachine_TransitionFunction_T function = State_TransitionOfInput;
-//     return function(p_state, p_context, inputId, inputValue);
-// }
+    // may be skipped
+    // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
+    // (uint8_t)inputId allocated
+    // defined with namespaceid << 8 | markerId
+    if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; }
+    return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
+}
 
+static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
+{
+    return _State_CallInput(State_AcceptInput_AsTop(p_state, p_context, inputId), p_context, inputValue);
+}
 
 
 /******************************************************************************/

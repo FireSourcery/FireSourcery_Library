@@ -296,8 +296,8 @@ static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
-    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Park_InputStateCmd,
-    // [MCSM_INPUT_USER]           = (State_Input_T)Park_InputUser,
+    [MCSM_INPUT_STATE_CMD]  = (State_Input_T)Park_InputStateCmd,
+    // [MCSM_INPUT_MOTOR_CMD]           = (State_Input_T)Park_InputUser,
 };
 
 static const State_T STATE_PARK =
@@ -380,8 +380,8 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
-    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Main_InputStateCmd,
-    // [MCSM_INPUT_USER]           = (State_Input_T)Main_InputUser,
+    [MCSM_INPUT_STATE_CMD]  = (State_Input_T)Main_InputStateCmd,
+    // [MCSM_INPUT_MOTOR_CMD]           = (State_Input_T)Main_InputUser,
     // [MCSM_INPUT_DIRECTION]      = (State_Input_T)Main_InputDirection,
     // [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Main_InputMainMode,
 };
@@ -428,10 +428,10 @@ static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value
     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
     switch ((MotorController_UserEvent_T)cmd)
     {
-        case MOTOR_CONTROLLER_USER_CMD_SETPOINT:  Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
-        case MOTOR_CONTROLLER_USER_CMD_PHASE:  Motor_Table_ActivateVOutput(&p_context->MOTORS, p_input->PhaseOutput); break;
-        case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:  Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
-        case MOTOR_CONTROLLER_USER_CMD_DIRECTION: Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
+        case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
+        case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ActivateVOutput(&p_context->MOTORS, p_input->PhaseOutput); break;
+        case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
+        case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
         default:  break;
     }
     return NULL;
@@ -444,7 +444,7 @@ static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value
 
 static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_USER] = (State_Input_T)MotorCmd_Input,
+    [MCSM_INPUT_MOTOR_CMD] = (State_Input_T)MotorCmd_Input,
 };
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =
@@ -543,17 +543,19 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
 
                 /* Generic select or call motor function */
             // case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_context);    break;
-                // MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE
+
 
             /* No return */
             case MOTOR_CONTROLLER_LOCK_REBOOT:
                 HAL_Reboot();  // optionally deinit clock select
                 break;
 
-            case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE:
+            case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
                 p_mc->LockOpStatus = 0;
-                p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* Motor disable on entry */
+                p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
                 break;
+
+            // case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE:       break;
 
             // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_context);       break;
             // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_context);         break;
@@ -598,7 +600,7 @@ static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Lock_InputLockOp_Blocking,
-    [MCSM_INPUT_STATE_COMMAND]  = (State_Input_T)Lock_InputStateCmd,
+    [MCSM_INPUT_STATE_CMD]      = (State_Input_T)Lock_InputStateCmd,
 };
 
 const State_T MC_STATE_LOCK =

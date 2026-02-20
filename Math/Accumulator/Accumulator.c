@@ -46,7 +46,7 @@
 //     Accumulator_Reset(p_accum);
 // }
 
-void Accumulator_InitFrom(Accumulator_T * p_accum)
+void Accumulator_Init(Accumulator_T * p_accum)
 {
     p_accum->LimitLower = INT16_MIN;
     p_accum->LimitUpper = INT16_MAX;

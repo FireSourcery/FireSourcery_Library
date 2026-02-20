@@ -84,12 +84,6 @@ typedef enum Hall_Id
     HALL_ANGLE_150_210 = HALL_SENSORS_VIRTUAL_INV_A,
     HALL_ANGLE_210_270 = HALL_SENSORS_VIRTUAL_C,
     HALL_ANGLE_270_330 = HALL_SENSORS_VIRTUAL_INV_B,
-    // HALL_ANGLE_0 = HALL_SENSORS_VIRTUAL_A,
-    // HALL_ANGLE_60 = HALL_SENSORS_VIRTUAL_INV_C,
-    // HALL_ANGLE_120 = HALL_SENSORS_VIRTUAL_B,
-    // HALL_ANGLE_180 = HALL_SENSORS_VIRTUAL_INV_A,
-    // HALL_ANGLE_240 = HALL_SENSORS_VIRTUAL_C,
-    // HALL_ANGLE_300 = HALL_SENSORS_VIRTUAL_INV_B,
     HALL_ANGLE_ERROR_7 = 7U,
 
     /* Rotor Angle Id via boundary from CCW and CW */
@@ -333,9 +327,9 @@ static inline uint16_t Hall_GetSensorAngle(const Hall_State_T * p_hall) { return
 
 /* using caller stored state */
 static inline uint16_t Hall_GetAngleAs(const Hall_State_T * p_hall, Hall_Direction_T direction) { return _Hall_Angle16OfSensors(p_hall, p_hall->Sensors.Value, direction); }
-static inline uint16_t Hall_GetAngleAsCcw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CCW); }
-static inline uint16_t Hall_GetAngleAsCw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CW); }
-static inline uint16_t Hall_GetAngleAsCenter(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_UNKNOWN); }
+// static inline uint16_t Hall_GetAngleAsCcw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CCW); }
+// static inline uint16_t Hall_GetAngleAsCw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CW); }
+// static inline uint16_t Hall_GetAngleAsCenter(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_UNKNOWN); }
 
 
 /* Next poll is edge */

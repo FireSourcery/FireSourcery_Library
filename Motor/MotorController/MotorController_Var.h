@@ -221,27 +221,30 @@ MotorController_VarType_T;
     [MotorController_VarHandlerType]
     Handler by Source File Module
     Effectively name space for types
-    Mutually exclusive attributes when possible
     partition for contiguously expandable ids
 */
 /******************************************************************************/
-typedef enum MotVarId_HandlerType
+typedef enum MotVarId_Handler
 {
-    MOT_VAR_ID_HANDLER_TYPE_MOTOR,
-    MOT_VAR_ID_HANDLER_TYPE_SYSTEM,
-    // MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONTROL,
-    // MOT_VAR_ID_HANDLER_TYPE_MOTOR_CONFIG,
-    // MOT_VAR_ID_HANDLER_TYPE_MOTOR_SENSOR,
-    // MOT_VAR_ID_HANDLER_TYPE_MOTOR_SUB_MODULE,
-    // MOT_VAR_ID_HANDLER_TYPE_GENERAL,
-    // MOT_VAR_ID_HANDLER_TYPE_V_MONITOR,
-    // MOT_VAR_ID_HANDLER_TYPE_HEAT_MONITOR,
-    // MOT_VAR_ID_HANDLER_TYPE_COMMUNICATION,
-    // MOT_VAR_ID_HANDLER_TYPE_SYSTEM_COMMAND,
-    // MOT_VAR_ID_HANDLER_TYPE_APPLICATION_COMMAND,
-    // _MOT_VAR_ID_HANDLER_TYPE_END,
+    MOT_VAR_ID_HANDLER_MOTOR,
+    MOT_VAR_ID_HANDLER_SYSTEM,
+    //alternatively hide compile time selections
+    // MOT_VAR_ID_HANDLER_MOTOR_SENSOR,
+    // MOT_VAR_ID_HANDLER_SYSTEM_APPS,
+
+    // MOT_VAR_ID_HANDLER_MOTOR_CONTROL,
+    // MOT_VAR_ID_HANDLER_MOTOR_CONFIG,
+    // MOT_VAR_ID_HANDLER_MOTOR_SENSOR,
+    // MOT_VAR_ID_HANDLER_MOTOR_SUB_MODULE,
+    // MOT_VAR_ID_HANDLER_GENERAL,
+    // MOT_VAR_ID_HANDLER_V_MONITOR,
+    // MOT_VAR_ID_HANDLER_HEAT_MONITOR,
+    // MOT_VAR_ID_HANDLER_COMMUNICATION,
+    // MOT_VAR_ID_HANDLER_SYSTEM_COMMAND,
+    // MOT_VAR_ID_HANDLER_APPLICATION_COMMAND,
+    // _MOT_VAR_ID_HANDLER_END,
 }
-MotVarId_HandlerType_T;
+MotVarId_Handler_T;
 
 /******************************************************************************/
 /*
@@ -269,7 +272,7 @@ extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_con
 
 // typedef struct
 // {
-//     MotVarId_HandlerType_T HandlerType;
+//     MotVarId_Handler_T HandlerType;
 //     MotorController_VarType_T InnerType;  // Use as union for different handler types
 //     AccessPolicy_T ReadPolicy;
 //     AccessPolicy_T WritePolicy;

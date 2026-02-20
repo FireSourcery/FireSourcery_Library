@@ -64,13 +64,11 @@ static inline State_T * TransitionFunctionOfInput(const StateMachine_Active_T * 
     return State_TransitionOfInput_AsTop(p_active->p_ActiveState, p_context, id, value);
 }
 
-// inline void Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+// inline void Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_next)
 
 /******************************************************************************/
 /*!
     Mutate State
-*/
-/*
     inline within the compile unit
 */
 /******************************************************************************/
@@ -80,46 +78,42 @@ inline void _StateMachine_Reset(StateMachine_Active_T * p_active, void * p_conte
     p_active->SyncInputMask = 0UL;
     State_Entry(p_initialState, p_context);
     p_active->p_ActiveState = p_initialState;
-    p_active->p_ActiveSubState = p_active->p_ActiveState;
 }
 
 /*
-    Unconditional Transition - Updates [p_ActiveState] to [p_newState].
-    p_newState defined as valid at compile time, caller ensure correctness
+    Unconditional Transition - Updates [p_ActiveState] to [p_next].
+    p_next defined as valid at compile time, caller ensure correctness
     call from within [ProcState] high priority thread, or user handle critical
 */
 /*
     Async (non buffered) may selectively implement critical. If unprotected:
     Set p_ActiveState after proc ENTRY.
-        [p_newState->OUTPUT] will not proc until after [p_newState->ENTRY], correctly
-        [p_ActiveState->OUTPUT] (prevState) may proc after [p_newState->ENTRY], overwrite, incorrectly
+        [p_next->OUTPUT] will not proc until after [p_next->ENTRY], correctly
+        [p_ActiveState->OUTPUT] (prevState) may proc after [p_next->ENTRY], overwrite, incorrectly
 
     Set p_ActiveState before ENTRY.
-        [p_newState->ENTRY] will not be overwritten by [p_ActiveState->OUTPUT], correctly
-        [p_newState->OUTPUT] may proc before [p_newState->ENTRY], without setup, incorrectly
+        [p_next->ENTRY] will not be overwritten by [p_ActiveState->OUTPUT], correctly
+        [p_next->OUTPUT] may proc before [p_next->ENTRY], without setup, incorrectly
 */
-inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_next)
 {
-    assert(p_newState->DEPTH == 0U); /* Top level state */
-
+    assert(p_next->DEPTH == 0U); /* Top level state */
     State_Exit(p_active->p_ActiveState, p_context);
-    State_Entry(p_newState, p_context);
-
-    p_active->p_ActiveState = p_newState;
-
-// #ifdef STATE_MACHINE_HSM_ENABLE
-    /* if used in combination with HSM. Clear the SubState on a Top level State Transition */
-    p_active->p_ActiveSubState = p_active->p_ActiveState;
-// #endif
-
-    // alternatively always set as hsm
-    // p_active->p_RootState = p_newState->P_TOP;
-    // p_active->p_ActiveState = p_newState;
+    State_Entry(p_next, p_context);
+    p_active->p_ActiveState = p_next;
 }
 
-inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_newState)
+inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_next)
 {
-    if (p_newState != NULL) { _StateMachine_TransitionTo(p_active, p_context, p_newState); }
+    if (p_next != NULL) { _StateMachine_TransitionTo(p_active, p_context, p_next); }
+}
+
+/*
+    Virtualized calls: [LOOP] [NEXT] [ENTRY] [EXIT]
+*/
+inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
+{
+    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
 }
 
 /*
@@ -129,28 +123,17 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
         Store a local function pointer, re accessing the table by id may return NULL.
         If an async transition does occur, the previously selected function will run.
 */
-/* [Input]/ApplyInputProcTransition */
-inline void _StateMachine_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+inline void _StateMachine_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     _StateMachine_Transition(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
 }
 
-/*
-
-*/
-inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
-{
-    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
-}
 
 /*
     Proc each Transition individually in case of dependencies on transition updates
-
     Proc entirely at [ProcState]/ISR priority
-    [P_TRANSITION_TABLE[id]]
-    [State_Exit]
-    [State_Entry]
-    [LOOP]
+
+    Defined inline _StateMachine_SetSyncInput
 */
 inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context)
 {
@@ -158,7 +141,7 @@ inline void _StateMachine_ProcSyncInput(StateMachine_Active_T * p_active, void *
     {
         state_input_t input = __builtin_ctz(inputMask);
         // assert(input < STATE_TRANSITION_TABLE_LENGTH_MAX); /* Ensure input is within range */
-        _StateMachine_ProcInput(p_active, p_context, input, p_active->SyncInputs[input]);
+        _StateMachine_CallInput(p_active, p_context, input, p_active->SyncInputs[input]);
     }
     p_active->SyncInputMask = 0UL;
 }
@@ -184,18 +167,21 @@ inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, vo
     [P_TRANSITION_TABLE[id]] <- [ProcState] can only interrupt user Input handler
     ...
     Lock
-    [State_Exit] [EXIT]
-    [State_Entry] [ENTRY]
+    [EXIT]
+    [ENTRY]
+    ...
     [LOOP]
     Unlock
 */
 inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     _StateMachine_SetSyncTransition(p_active, TransitionFunctionOfInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
-    assert(p_active->p_SyncNextState == NULL || p_active->p_SyncNextState->DEPTH == 0U);
 }
 
-/* Defined inline _StateMachine_SetSyncInput */
+inline void _StateMachine_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T next, state_value_t value)
+{
+    if (StateMachine_IsActiveState(p_active, p_start) == true) { _StateMachine_Transition(p_active, p_context, next(p_context, value)); }
+}
 
 /******************************************************************************/
 /*
@@ -203,13 +189,13 @@ inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_act
 */
 /******************************************************************************/
 /* check for an async transition first */
-/* if a [Transition] occured.  */
+/* if a [Transition] occurred.  */
 /* Continue processing [Output] of the new State */
 void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_ProcSyncNextState(p_active, p_context); //optionally split to include timer
-    _StateMachine_ProcSyncInput(p_active, p_context);
     _StateMachine_ProcSyncOutput(p_active, p_context);
+    _StateMachine_ProcSyncInput(p_active, p_context);
 }
 
 /* run loop actions first, then transitions. */

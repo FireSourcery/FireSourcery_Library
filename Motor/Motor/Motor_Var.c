@@ -488,6 +488,7 @@ void _Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int var
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   break;
         /* Requires Sensor_Table */
         case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:          Motor_Sensor_CalibrationCmd_Call(p_motor, (RotorSensor_Id_T)varId, varValue);           break;
+
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           break;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue);              break;
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR_CONTEXT, varId, varValue);   break;
@@ -520,6 +521,7 @@ void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_T typeId, i
     {
         case MOTOR_VAR_TYPE_HALL_CONFIG:      Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);            break;
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);   break;
+        // case MOTOR_VAR_TYPE_HALL_CMD:    return Motor_Hall_Cmd_Call(p_motor, varId, varValue); break; // Hall cmd may not require config struct access
         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
         case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
         // case ROTOR_SENSOR_ID_SENSORLESS: Sensorless_ConfigId_Set(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId, varValue); break;

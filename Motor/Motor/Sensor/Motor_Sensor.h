@@ -26,13 +26,13 @@
 /*!
     @file   Motor_Sensor.h
     @author FireSourcery
-    @brief
+    @brief  Sensor and SensorTable Implementation and Interface
 */
 /******************************************************************************/
 
 #include "../Motor.h"
 /*
-    Include all sensor Calibration
+    Include all compile time sensor options
 */
 #include "Hall/Motor_Hall.h"
 #include "Encoder/Motor_Encoder.h"

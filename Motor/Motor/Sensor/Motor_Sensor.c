@@ -47,6 +47,7 @@ static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSens
     // varId as sensorId, varValue as cmdId
     // enter calibration state before calling
 */
+//todo split
 void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue)
 {
     // If the sensor is not the selected [p_ActiveSensor], do not calibrate.
@@ -89,5 +90,35 @@ void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T 
 */
 /******************************************************************************/
 
+// void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
+// {
+//     switch (typeId)
+//     {
+//         case MOTOR_VAR_TYPE_HALL_CONFIG:      Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);            break;
+//         case MOTOR_VAR_TYPE_HALL_CMD:         Motor_Hall_Cmd_Call(p_motor, varId, varValue); break; // Hall cmd may not require config struct access
+
+//         case MOTOR_VAR_TYPE_ENCODER_CONFIG:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);   break;
+//         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
+//         case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
+//             // case ROTOR_SENSOR_ID_SENSORLESS: Sensorless_ConfigId_Set(&p_motor->SENSOR_TABLE.SENSORLESS.SENSORLESS, varId, varValue); break;
+//             // case ROTOR_SENSOR_ID_SIN_COS:    SinCos_ConfigId_Set(&p_motor->SENSOR_TABLE.SIN_COS.SIN_COS, varId, varValue);    break;
+//         default: break;
+//     }
+// }
 
 
+// bool Motor_Sensor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
+// {
+//     if (p_motor == NULL) { return false; }
+
+//     switch (typeId)
+//     {
+//         case MOTOR_VAR_TYPE_HALL_STATE:                 return false;
+//         case MOTOR_VAR_TYPE_HALL_CONFIG:                return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_HALL_CMD:                   return Motor_IsCalibration(p_motor) && RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->p_ActiveSensor, ROTOR_SENSOR_ID_HALL);
+//         case MOTOR_VAR_TYPE_ENCODER_CONFIG:             return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_ENCODER_STATE:              return false;
+//         default: return false;
+//     }
+//     return false;
+// }

@@ -48,7 +48,6 @@ static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSO
 /* Include [Phase] and [P_PARENT] State */
 static void Calibration_Entry(const Motor_T * p_motor)
 {
-    // Timer_StartPeriod(&p_motor->P_MOTOR_STATE->ControlTimer, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     TimerT_Periodic_Set(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     Phase_ActivateOutputV0(&p_motor->PHASE);
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
@@ -74,7 +73,6 @@ static void Calibration_Proc(const Motor_T * p_motor)
             case 5U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_C);       Phase_Align(&p_motor->PHASE, PHASE_ID_INV_B, duty);    p_motor->P_MOTOR_STATE->CalibrationStateIndex = 6U;    break;
             case 6U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_B);   Phase_Float(&p_motor->PHASE);                          p_motor->P_MOTOR_STATE->CalibrationStateIndex = 7U;    break;
             default: break;
-            // case PHASE_ID_A: Hall_CalibrateState(&p_motor->Hall, HALL_SENSORS_VIRTUAL_A); Phase_AlignNext(&p_motor->PHASE, duty); break;
         }
     }
 }
@@ -112,7 +110,7 @@ static const State_T CALIBRATION_STATE_HALL =
 
 */
 /******************************************************************************/
-static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE_HALL; }
+static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_HALL; }
 
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {

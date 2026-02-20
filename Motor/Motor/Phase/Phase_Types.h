@@ -74,7 +74,12 @@ Phase_Bitmask_T;
 
 static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Bits = id }; }
 
+// static inline Phase_Id_T Phase_Of(int index) { return (index ^ (index >> 1U)); }
+// static inline int Phase_IndexOf(Phase_Id_T id) { return (id ^ (id >> 1U) ^ (id >> 2U)); }
+
+
 /* Virtual CCW */
+/* +60 degrees */
 static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
 {
     static const Phase_Id_T TABLE[] =
@@ -109,6 +114,20 @@ static inline Phase_Id_T Phase_PrevOf(Phase_Id_T id)
 
     return TABLE[id];
 }
+
+
+static inline int Phase_SignOf(Phase_Id_T prev, Phase_Id_T new)
+{
+    if (prev == new) { return 0; }
+    else if (Phase_NextOf(prev) == new) { return 1; }
+    else if (Phase_PrevOf(prev) == new) { return -1; }
+    else { return 0; /* invalid */ }
+}
+
+
+/* +180 degrees */
+static inline Phase_Id_T Phase_Inverse(Phase_Id_T id) { return (~id & PHASE_ID_ABC); }
+
 
 // static inline Phase_Id_T Phase_DirectOf(Phase_Id_T id, int sign)
 // {

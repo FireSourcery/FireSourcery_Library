@@ -42,7 +42,7 @@ static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachi
 // static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /* Sufficient for Cmds that begin with a substate */
-static void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }
+// static void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }
 
 
 /* Calibration exits the substate and return to the parent state on complete */

@@ -53,9 +53,9 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                        break; /* Stop active periodic. does not disable */
         case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_context, value);           break;
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_context);         break;
-        /* Non Blocking function, host/caller poll Async return status after. */
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
+        /* Non Blocking function, host/caller poll Async return status after. */
         // checks the park state
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             MotorController_InputLock(p_context, (MotorController_LockId_T)value);

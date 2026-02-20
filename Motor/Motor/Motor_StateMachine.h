@@ -81,7 +81,7 @@ extern const State_T MOTOR_STATE_FAULT;
     Motor State Machine Inputs
 */
 /******************************************************************************/
-typedef enum Motor_State_Input
+typedef enum Motor_StateInput
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
     MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Active/Release/Hold */
@@ -92,7 +92,7 @@ typedef enum Motor_State_Input
     // MSM_INPUT_USER_BUFFER,
     // MSM_INPUT_CAPTURE_ADC,
 }
-Motor_State_Input_T;
+Motor_StateInput_T;
 
 /******************************************************************************/
 /*
@@ -111,11 +111,11 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /*
 */
 /******************************************************************************/
-static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveStateId(&p_motor->StateMachine); }
+static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
 /*
     Caller handle known root state
 */
-static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return _StateMachine_GetActiveSubStateId(&p_motor->StateMachine); }
+static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; } //temp
 
 /*
     StateMachine controlled values
@@ -124,9 +124,13 @@ static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { retu
 static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 /* Wrap Motor_T for interface */
 /* Does not include substates */
-static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsActiveStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
+static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsRootStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
 
 static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MSM_STATE_ID_FAULT); }
 
@@ -147,4 +151,4 @@ extern bool Motor_StateMachine_ExitFault(const Motor_T * p_motor);
 extern void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
 extern void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
 
-// static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_State_Input_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }
+// static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }

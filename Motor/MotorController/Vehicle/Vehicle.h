@@ -61,7 +61,7 @@ Vehicle_Input_T;
 
 static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_user)
 {
-    if      (p_user->BrakeValue > 0U)       { return VEHICLE_CMD_BRAKE; } // check throttle active error
+    if      (p_user->BrakeValue > 0U)       { return VEHICLE_CMD_BRAKE; } // optionally check throttle active error
     else if (p_user->ThrottleValue > 0U)    { return VEHICLE_CMD_THROTTLE; }
     else                                    { return VEHICLE_CMD_RELEASE; }
 }
@@ -119,8 +119,8 @@ Vehicle_Config_T;
 
 typedef struct Vehicle_State
 {
-    Vehicle_Config_T Config;
     Vehicle_Input_T Input;
+    Vehicle_Config_T Config;
     // Vehicle_Input_T InputPrev;
     // Vehicle_Status_T Status;
     // StateMachine_Active_T StateMachine;
@@ -153,7 +153,7 @@ Vehicle_T;
 */
 /******************************************************************************/
 /*
-    set to sync buffer. proc in thread
+    set to sync buffer. proc in state or input
     Direction handle in state machine
 */
 static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }

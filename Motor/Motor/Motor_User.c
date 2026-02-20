@@ -77,10 +77,7 @@ inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_mot
 
 inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
-// inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state)
-// {
-//     if (state != Motor_GetPhaseState(p_motor)) { Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput); }
-// }
+// inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state){     if (state != Motor_GetPhaseState(p_motor)) { Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput); } }
 
 /******************************************************************************/
 /*!

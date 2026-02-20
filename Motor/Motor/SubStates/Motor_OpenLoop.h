@@ -41,7 +41,7 @@ static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_
 /* Enter Substate From OpenLoop Root State */
 /* Sufficient for Cmds that begin with a substate */
 /* Specialized cmd may call with TransitionInput for init function */
-static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_OPEN_LOOP, p_subState); }
+// static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_OPEN_LOOP, p_subState); }
 
 /*
     Extern

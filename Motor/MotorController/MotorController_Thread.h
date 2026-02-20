@@ -202,7 +202,7 @@ static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T *
     p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
     MotorController_EnterFault(p_context);
     // MotorController_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
-    // _StateMachine_ProcInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_FAULT, 0); // transition without lock
+    // _StateMachine_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_FAULT, 0); // transition without lock
 }
 
 static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_context)

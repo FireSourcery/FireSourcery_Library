@@ -37,24 +37,30 @@
     HSM Wrap
 */
 /******************************************************************************/
-static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
-static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
+// static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
+// static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
 // refactor to single pointer
-// static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState->P_TOP; }
-// static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
-// static inline bool StateMachine_IsActiveRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == p_active->p_ActiveState->P_TOP); }
-// static inline bool StateMachine_IsActiveRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == p_active->p_ActiveState->P_TOP->ID); }
+static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return _State_GetRoot(p_active->p_ActiveState); }
+static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 
+static inline state_t StateMachine_GetRootStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetRootState(p_active)->ID; }
+static inline state_t StateMachine_GetLeafStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetLeafState(p_active)->ID; }
+
+static inline bool StateMachine_IsRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetRootState(p_active)); }
+static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == StateMachine_GetRootState(p_active)->ID); }
 
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
+/*
+
+*/
 /* State is within the active branch. */
 static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsAncestorOrSelf(StateMachine_GetLeafState(p_active), p_state); }
 
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
-typedef union State_BranchId
+typedef union State_PathId
 {
     uint32_t BranchId;
     struct
@@ -69,7 +75,7 @@ typedef union State_BranchId
         uint32_t Depth7 : 4;
     };
 }
-State_BranchId_T;
+State_PathId_T;
 
 
 /******************************************************************************/
@@ -88,7 +94,7 @@ State_BranchId_T;
       8-bit: 0x02030100
 */
 /******************************************************************************/
-static inline State_BranchId_T StateMachine_GetBranchId(const StateMachine_Active_T * p_active)
+static inline State_PathId_T StateMachine_GetPathId(const StateMachine_Active_T * p_active)
 {
     assert(StateMachine_GetLeafState(p_active)->DEPTH < 8); /* Ensure depth fits within 4-bit fields */
 
@@ -97,7 +103,7 @@ static inline State_BranchId_T StateMachine_GetBranchId(const StateMachine_Activ
     {
         id |= ((uint32_t)p_iterator->ID << (p_iterator->DEPTH * 4));
     }
-    return (State_BranchId_T){ .BranchId = id };
+    return (State_PathId_T){ .BranchId = id };
 }
 
 /*
@@ -127,13 +133,14 @@ static inline State_BranchId_T StateMachine_GetBranchId(const StateMachine_Activ
 extern void _StateMachine_Branch_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 extern void _StateMachine_Branch_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
-extern void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context, uint8_t stopLevel);
-extern void _StateMachine_Branch_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
-
+extern void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_Branch_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_Branch_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_Branch_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
 
+extern void _StateMachine_Branch_ProcSyncTransition(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_Branch_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+
+extern void _StateMachine_Branch_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value);
 
 extern void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_Branch_Proc_Nested(StateMachine_Active_T * p_active, void * p_context);
@@ -143,9 +150,9 @@ extern void _StateMachine_Branch_Proc_Nested(StateMachine_Active_T * p_active, v
 extern void _StateMachine_RootFirst_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
 extern void _StateMachine_RootFirst_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_RootFirst_ProcInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
+extern void _StateMachine_RootFirst_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 extern void _StateMachine_RootFirst_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context);
-extern void _StateMachine_RootFirst_ProcPendingTransition(StateMachine_Active_T * p_active, void * p_context);
+extern void _StateMachine_RootFirst_ProcSyncTransition(StateMachine_Active_T * p_active, void * p_context);
 
 extern void _StateMachine_RootFirst_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
 
