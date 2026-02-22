@@ -113,27 +113,29 @@ static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_cont
 /* Top level State does not need to check null */
 static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
 {
+    assert(p_state->DEPTH == 0U);
     p_state->LOOP(p_context);
     return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
 }
 
-/* Top State defines Transition Table. allocate empty for not accepted inputs */
-static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId)
-{
-    assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
-    (void)p_context;
+/* Transition Table defined for every state.. allocate empty for not accepted inputs */
+// static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId)
+// {
+//     assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
+//     (void)p_context;
 
-    // may be skipped
-    // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
-    // (uint8_t)inputId allocated
-    // defined with namespaceid << 8 | markerId
-    if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; }
-    return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
-}
+//     // may be skipped
+//     // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
+//     // (uint8_t)inputId allocated
+//     // defined with namespaceid << 8 | markerId
+//     if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; }
+//     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
+// }
 
 static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
-    return _State_CallInput(State_AcceptInput_AsTop(p_state, p_context, inputId), p_context, inputValue);
+    return _State_CallInput(State_AcceptInput(p_state, p_context, inputId), p_context, inputValue);
+    // return _State_CallInput(State_AcceptInput_AsTop(p_state, p_context, inputId), p_context, inputValue);
 }
 
 
