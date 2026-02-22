@@ -285,14 +285,17 @@ typedef enum MotorController_LockOpStatus
     // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING,
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
     MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_ENTER_ERROR, /* invalid enter, e.g. not in park, or motor running */
+    MOTOR_CONTROLLER_LOCK_OP_STATUS_CMD_ERROR, /* invalid cmd, e.g. not support cmd or exit cmd when not in lock */
 }
 MotorController_LockOpStatus_T;
 
 /* Transition on Call */
 /* May transition to substate */
-static inline void MotorController_InputLock(MotorController_T * p_context, MotorController_LockId_T id)
+static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorController_T * p_context, MotorController_LockId_T id)
 {
     _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_LOCK, id);
+    return p_context->P_MC_STATE->LockOpStatus; /* optionally return status, or use getter after */
 }
 
 /* Lock State returns to ENTER */

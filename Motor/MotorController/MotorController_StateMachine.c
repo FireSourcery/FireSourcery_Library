@@ -380,7 +380,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
-    [MCSM_INPUT_STATE_CMD]  = (State_Input_T)Main_InputStateCmd,
+    [MCSM_INPUT_STATE_CMD]      = (State_Input_T)Main_InputStateCmd,
     // [MCSM_INPUT_MOTOR_CMD]           = (State_Input_T)Main_InputUser,
     // [MCSM_INPUT_DIRECTION]      = (State_Input_T)Main_InputDirection,
     // [MCSM_INPUT_MAIN_MODE]      = (State_Input_T)Main_InputMainMode,
@@ -498,6 +498,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
     State_T * p_nextState = NULL;
+    MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
     /* From Top state only. no sub state active. */
     if (StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK))
@@ -505,7 +506,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
         switch ((MotorController_LockId_T)lockId)
         {
             case MOTOR_CONTROLLER_LOCK_ENTER:
-                p_mc->LockOpStatus = 0;
+                opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
@@ -513,24 +514,24 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == true)
                 {
                     Motor_Table_StopAll(&p_context->MOTORS);
-                    p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+                    opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = &STATE_PARK;
                 }
                 else if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
                 {
-                    p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
+                    opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = &STATE_PARK;
                 }
                 else
                 {
-                    p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
+                    opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
                 }
                 break;
 
             /* todo check start from top state only substate == current state */
             case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_context->MOT_NVM); /* NvM function will block + disable interrupts */
-                p_mc->LockOpStatus = 0;
+                opStatus = 0;
                 break;
 
             case MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG:
@@ -551,7 +552,8 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
-                p_mc->LockOpStatus = 0;
+                Motor_Table_StopAll(&p_context->MOTORS); //optionally same as lock exit
+                opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
                 break;
 
@@ -562,11 +564,8 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
 
         }
     }
-    else
-    {
-        p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
-    }
 
+    p_mc->LockOpStatus = opStatus;
     return p_nextState;
 }
 
