@@ -58,6 +58,6 @@
     Calibration State Access
 */
 /******************************************************************************/
-extern void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
+// extern void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
 
 

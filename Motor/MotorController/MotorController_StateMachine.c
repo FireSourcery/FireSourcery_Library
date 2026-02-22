@@ -493,7 +493,7 @@ static void Lock_Proc(const MotorController_T * p_context)
 }
 
 /* Lock SubState/Cmd by passed value */
-/* alternatively StateMachine_TransitionInput_T replace lockId */
+/* alternatively StateMachine_TransitionCmd_T replace lockId */
 static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, state_value_t lockId)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
@@ -802,25 +802,25 @@ static const State_T STATE_FAULT =
 /* todo thread safe without lock */
 void MotorController_EnterFault(const MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
 }
 
 bool MotorController_ExitFault(const MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
+    if (MotorController_IsFault(p_context) == true) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
     return !MotorController_IsFault(p_context);
 }
 
 // ((const MotorController_FaultFlags_T) { .VAccsLimit = 1U }).Value
 void MotorController_SetFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
 }
 
 /* ensure repeat inputs without lock do not mismatch */
 void MotorController_ClearFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
+    if (MotorController_IsFault(p_context) == true) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
     // return !MotorController_IsFault(p_context); /* alternatively use cleared diff */
 }
 

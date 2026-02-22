@@ -35,8 +35,8 @@
 /*
 
 */
-static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
-// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
+static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
 
 /* Enter Substate From OpenLoop Root State */
 /* Sufficient for Cmds that begin with a substate */

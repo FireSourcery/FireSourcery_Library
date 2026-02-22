@@ -37,9 +37,9 @@
 /*
     Use inputId - Maps to multiple state. Substates use TransitionInput_T check for Parent State only
 */
-static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
-// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
-// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
+static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
+// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_STOP); }
+// static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /* Sufficient for Cmds that begin with a substate */
 // static void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }

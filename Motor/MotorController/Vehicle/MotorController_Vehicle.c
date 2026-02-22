@@ -259,7 +259,7 @@ void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd
 // alternatively include from park
 // void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction)
 // {
-//     static StateMachine_TransitionInput_T CMD = { .P_START = &PARK, .TRANSITION = (State_Input_T) , };
+//     static StateMachine_TransitionCmd_T CMD = { .P_START = &PARK, .TRANSITION = (State_Input_T) , };
 //     StateMachine_Branch_InvokeTransition(&p_mc->STATE_MACHINE, &CMD, direction);
 // }
 

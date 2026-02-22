@@ -44,5 +44,6 @@ typedef const struct Motor Motor_T;
 typedef struct Motor_State Motor_State_T;
 
 extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
-// extern void Motor_Hall_Cmd(const Motor_T * p_motor, int cmdId);
+
+extern void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue);
 

@@ -337,8 +337,8 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                 // case MOTOR_VAR_TYPE_CONFIG:
                 //     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
 
-                // case MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD:
-                // case MOTOR_VAR_TYPE_CONFIG_CMD:
+                // case MOTOR_VAR_TYPE_CONFIG_RESV:
+                // case MOTOR_VAR_TYPE_CALIBRATION_CMD:
                 //     if (!MotorController_IsLock(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                 //     break;
                 default:
@@ -436,7 +436,7 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
 //     switch ((MotVarId_Handler_T)varId.OuterType)
 //     {
 //         case MOT_VAR_ID_HANDLER_MOTOR_CONTROL: return true;
-//         case MOT_VAR_ID_HANDLER_MOTOR_CONFIG:  return ((varId.InnerType == MOTOR_VAR_TYPE_CONFIG_CMD) || (varId.InnerType == MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD));
+//         case MOT_VAR_ID_HANDLER_MOTOR_CONFIG:  return ((varId.InnerType == MOTOR_VAR_TYPE_CALIBRATION_CMD) || (varId.InnerType == MOTOR_VAR_TYPE_CONFIG_RESV));
 //             /* ConfigCmds are also blocked during non StopState */
 //         default:  return false;
 //     }

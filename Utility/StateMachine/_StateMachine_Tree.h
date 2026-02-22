@@ -37,9 +37,6 @@
     HSM Wrap
 */
 /******************************************************************************/
-// static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
-// static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
-// refactor to single pointer
 static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return _State_GetRoot(p_active->p_ActiveState); }
 static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 

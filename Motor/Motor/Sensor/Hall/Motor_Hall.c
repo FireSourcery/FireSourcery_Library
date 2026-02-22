@@ -115,7 +115,20 @@ static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value)
 void Motor_Hall_Calibrate(const Motor_T * p_motor)
 {
     // StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
-    static StateMachine_TransitionInput_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_Start };
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_Start };
     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
+
+
+void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
+{
+    if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
+    if (p_motor->P_MOTOR_STATE->Config.SensorMode != ROTOR_SENSOR_ID_HALL) return;
+
+    switch (varId)
+    {
+        case 0:   Motor_Hall_Calibrate(p_motor); break;
+        default:  Motor_Hall_Calibrate(p_motor); break;
+    }
+}

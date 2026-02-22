@@ -60,8 +60,6 @@ static inline State_T * TransitionFunctionOfInput(const StateMachine_Active_T * 
 void _StateMachine_Branch_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
 {
     State_TraverseOnTransition(StateMachine_GetLeafState(p_active), p_state, p_context);
-    // p_active->p_ActiveSubState = p_state;
-    // p_active->p_ActiveState = _State_GetRoot(p_state);
     p_active->p_ActiveState = p_state;
 }
 

@@ -44,7 +44,7 @@
 
 /******************************************************************************/
 /*
-    [StateMachine_TransitionInput]
+    [StateMachine_TransitionCmd]
     Input passed to the StateMachine alternatively to mapped to a State.
     Compile-time defined valid transitions - effectively defines [State] local [state_input_t]
 
@@ -59,14 +59,12 @@
     Directly invoke. defined at compile time as known valid transition
 */
 /******************************************************************************/
-// typedef const struct StateMachine_Transition
-/* Transition_T or State_TransitionCmd_T */
-typedef const struct StateMachine_TransitionInput
+typedef const struct StateMachine_TransitionCmd
 {
     State_T * P_START; /* From/Start. Starting State known to accept this input at compile time. */
     State_Input_T TRANSITION; /* To/Next. Does not return NULL */
 }
-StateMachine_TransitionInput_T;
+StateMachine_TransitionCmd_T;
 
 // typedef const struct State_TransitionPair
 // {
@@ -97,13 +95,6 @@ typedef const struct StateMachine_Machine
 }
 StateMachine_Machine_T;
 
-
-/* Compile warnings */
-// #ifdef STATE_MACHINE_CONTEXT_AS_CONST
-// typedef const void state_machine_context_t;
-// #else
-// typedef void state_machine_context_t;
-// #endif
 
 /*
     [StateMachine_T] - as interface instance for P_CONTEXT as subtype
@@ -156,15 +147,14 @@ static void StateMachine_Reset(StateMachine_T * p_this)
 
 /******************************************************************************/
 /*
-    Top Level StateMachine
+    [StateMachine]
 */
 /******************************************************************************/
 /******************************************************************************/
 /*
     Input Functions
-    Handles Top level transitions only
+    Handles Top level transitions only for flat StateMachine.
         EXIT of current State plus ENTRY of new Top State
-    [State_Input_T] must not return a substate.
 */
 /******************************************************************************/
 /* Transition immediately - Chaining input calls depending on State changes */
@@ -220,7 +210,7 @@ static void StateMachine_ForceTransition(StateMachine_T * p_this, State_T * p_st
 /*
     Invoke a [Transition] or as a Command
 */
-static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionInput_T * p_transition, state_value_t inputValue)
+static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionCmd_T * p_transition, state_value_t inputValue)
 {
     assert(p_transition->TRANSITION != NULL);
 
@@ -232,7 +222,7 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_
 }
 
 /* Convenience for inline call [StateMachine_InvokeTransition] */
-// #define STATE_MACHINE_CMD(p_start, transition) ((StateMachine_TransitionInput_T) { .P_START = p_start, .TRANSITION = transition });
+// #define STATE_MACHINE_CMD(p_start, transition) ((StateMachine_TransitionCmd_T) { .P_START = p_start, .TRANSITION = transition });
 
 
 /******************************************************************************/
@@ -299,7 +289,7 @@ static inline void StateMachine_Branch_SetInput(StateMachine_T * p_this, state_i
     result the input handle is any of P_START is in the active branch
     Transitions to the State of p_transition->TRANSITION, defined to be valid at compile time
 */
-static void StateMachine_Branch_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionInput_T * p_transition, state_value_t value)
+static void StateMachine_Branch_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionCmd_T * p_transition, state_value_t value)
 {
     if (_StateMachine_AcquireAsyncTransition(p_this->P_ACTIVE) == true)
     {
@@ -309,11 +299,10 @@ static void StateMachine_Branch_InvokeTransition(StateMachine_T * p_this, StateM
 }
 
 
-
 // static void StateMachine_RootFirst_InputAsyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)
 // static void StateMachine_RootFirst_InputSyncTransition(StateMachine_T * p_this, state_input_t id, state_value_t value)
 // static void StateMachine_RootFirst_ApplyInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
 // static void StateMachine_RootFirst_SetInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
-// static void StateMachine_RootFirst_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionInput_T * p_transition, state_value_t value)
+// static void StateMachine_RootFirst_InvokeTransition(StateMachine_T * p_this, StateMachine_TransitionCmd_T * p_transition, state_value_t value)
 // static void StateMachine_RootFirst_InvokeTransitionFrom(StateMachine_T * p_this, State_T * p_deepest, State_Input_T transition, state_value_t value)
 

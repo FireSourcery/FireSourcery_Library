@@ -258,23 +258,19 @@ Motor_Var_ConfigPid_T;
     Stop/Calibration/Fault State enforced same with Config
     Alternatively move type for separate policy handling
 */
-// typedef enum Motor_Var_CalibrationCmd
-typedef enum Motor_Var_ConfigCmd
+typedef enum Motor_Var_CalibrationCmd
 {
-    MOTOR_VAR_CONFIG_ENTER_CALIBRATION, /* Enter first before calling Substate */
-    MOTOR_VAR_CONFIG_CMD_ADC_CALIBRATION,
-    MOTOR_VAR_CONFIG_CMD_VIRTUAL_HOME,
+    MOTOR_VAR_CALIBRATION_ENTER, /* Enter first before calling Substate */
+    MOTOR_VAR_CALIBRATION_CMD_ADC,
+    MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
     MOTOR_VAR_CALIBRATION_ENTER_TUNING,
 
-    // MOTOR_VAR_CONFIG_CMD_SENSOR_CALIBRATION, /* Generic call for active type */
-    // MOTOR_VAR_CALIBRATION_ADC,
     // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
-    // MOTOR_VAR_CALIBRATION_VIRTUAL_HOME,
 }
-Motor_Var_ConfigCmd_T;
+Motor_Var_CalibrationCmd_T;
 
 /*  */
-typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
+// typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
 
 
 /******************************************************************************/
@@ -342,7 +338,7 @@ void _Motor_Var_ConfigActuation_Set(Motor_State_T * p_motor, Motor_Var_ConfigAct
 int _Motor_Var_ConfigPid_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_ConfigPid_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
-void _Motor_Var_ConfigCmd_Call(const Motor_T * p_motor, Motor_Var_ConfigCmd_T varId, int varValue);
+void _Motor_Var_CalibrationCmd_Call(const Motor_T * p_motor, Motor_Var_CalibrationCmd_T varId, int varValue);
 
 int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
@@ -385,34 +381,31 @@ typedef enum Motor_VarType
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS, //temp
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
-    MOTOR_VAR_TYPE_CONFIG_CMD,          /* Config State Cmds */
-    /* Alternatively move to submodule */
-    MOTOR_VAR_TYPE_CONFIG_SENSOR_CMD,   /* RotorSensorCmd (varId:sensorId, varValue:cmdId) Handle by Motor_Sensor.h/c. Calibration Sub StateMachine. Using Motor RotorSensor_Id_T as [varId] */
+    MOTOR_VAR_TYPE_CALIBRATION_CMD,
+    MOTOR_VAR_TYPE_CONFIG_RESV,
 
     /*
-        singletons,
-        externally defined,
+        Submodules
     */
     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
     MOTOR_VAR_TYPE_V_BUS,               /* Not instanced */
     MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
-    MOTOR_VAR_TYPE_THERMISTOR_CONFIG, // or handle within config
+    MOTOR_VAR_TYPE_THERMISTOR_CONFIG,   // or handle within config
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
-    // MOTOR_VAR_TYPE_ROTOR_SENSOR_CMD,
+
 
     /*
-        Subtype Data
         Handled by RotorSensor_Table
-
         Instead of using SensorTable Ids, This way it takes only one field to associate properties.
-        optionally move to rotor sensor to handle types list
     */
     MOTOR_VAR_TYPE_HALL_STATE,
     MOTOR_VAR_TYPE_HALL_CONFIG,
+    MOTOR_VAR_TYPE_HALL_CMD,
     MOTOR_VAR_TYPE_ENCODER_STATE,
     MOTOR_VAR_TYPE_ENCODER_CONFIG,
+    MOTOR_VAR_TYPE_ENCODER_CMD,
 }
 Motor_VarType_T;
 
@@ -421,3 +414,16 @@ extern int Motor_VarType_Get(Motor_T * p_motor, Motor_VarType_T typeId, int varI
 extern void Motor_VarType_Set(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 extern bool Motor_VarType_CheckSet(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 
+// typedef enum Motor_Sensor_VarType
+// {
+//     MOTOR_VAR_TYPE_HALL_STATE,
+//     MOTOR_VAR_TYPE_HALL_CONFIG,
+//     MOTOR_VAR_TYPE_HALL_CMD,
+//     MOTOR_VAR_TYPE_ENCODER_STATE,
+//     MOTOR_VAR_TYPE_ENCODER_CONFIG,
+//     MOTOR_VAR_TYPE_ENCODER_CMD,
+// }
+// Motor_Sensor_VarType_T;
+
+int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId);
+void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);

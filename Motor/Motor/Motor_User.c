@@ -40,7 +40,7 @@
 
     Motor State Machine Thread Safety
     State Proc in PWM thread.
-    User Input [StateMachine_ApplyInput] in Main thread.
+    User Input [StateMachine_Branch_ApplyInput] in Main thread.
 
     Sync Mode -
         Inputs do not directly proc transition, set for sync proc
@@ -69,13 +69,13 @@
     Phase Output directly mapping to a Control State: Feedback Run, Freewheel, Hold
 */
 /******************************************************************************/
-inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM); }
+inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM); }
 
-inline void Motor_Release(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT); }
+inline void Motor_Release(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT); }
 
-inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
+inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
 
-inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 // inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state){     if (state != Motor_GetPhaseState(p_motor)) { Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput); } }
 
@@ -105,8 +105,7 @@ inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state
 */
 inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_SetInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
-    // if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); } /* transition immediately */
+    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 /******************************************************************************/
@@ -122,7 +121,7 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 */
 void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (direction != p_motor->P_MOTOR_STATE->Direction) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+    if (direction != p_motor->P_MOTOR_STATE->Direction) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
 }
 
 /* calibrated positive or ccw */
@@ -138,7 +137,7 @@ void Motor_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_ApplyVirtualDi
     Release stays in ready mode. Stop disables inputs until next Start.
 */
 /*  MOTOR_DIRECTION_NULL  Transition to Stop or duplicate phase float */
-void Motor_Stop(const Motor_T * p_motor) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
+void Motor_Stop(const Motor_T * p_motor) { StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /******************************************************************************/
 /*
@@ -320,7 +319,7 @@ void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 */
 void Motor_EnterOpenLoopState(const Motor_T * p_motor)
 {
-    StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
+    StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
 }
 /*!
     Set by State Transition
