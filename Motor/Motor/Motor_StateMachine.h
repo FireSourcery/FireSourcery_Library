@@ -58,10 +58,10 @@
 typedef enum Motor_StateId
 {
     MSM_STATE_ID_INIT,
-    MSM_STATE_ID_STOP,      /* 0 speed. */ //  Feedback Off + Ouput VFloat / V0 / 0 speed
-    MSM_STATE_ID_PASSIVE,   /* without feedback */ // Feedback Off + Ouput VFloat / V0 - optionally
-    MSM_STATE_ID_RUN,       /* Feedback Loop */ // Feedback On + Ouput VPWM
-    MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + Float/V0/VPWM */
+    MSM_STATE_ID_STOP,      /* 0 speed. Feedback Off + Ouput VFloat / V0 */
+    MSM_STATE_ID_PASSIVE,   /* Freewheel or Hold. Feedback Off + Ouput VFloat / V0  */
+    MSM_STATE_ID_RUN,       /* Feedback Loop + Ouput VPWM */
+    MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + VFloat/V0/VPWM */
     MSM_STATE_ID_CALIBRATION,
     MSM_STATE_ID_FAULT,
 }
@@ -112,10 +112,8 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 /******************************************************************************/
 static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
-/*
-    Caller handle known root state
-*/
-static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; } //temp
+
+static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
 
 /*
     StateMachine controlled values

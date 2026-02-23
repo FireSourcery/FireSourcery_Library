@@ -84,42 +84,14 @@ StateMachine_Active_T;
 /******************************************************************************/
 /*
     HSM use tree functions
-    These now return the leaf state. otherwire preprocessor alias to top state for direct input to top level.
+    These now return the leaf state.
+    otherwire preprocessor alias to top state for direct input to top level.
 */
 static inline State_T * StateMachine_GetActiveState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 static inline state_t StateMachine_GetActiveStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetActiveState(p_active)->ID; }
 static inline bool StateMachine_IsActiveState(const StateMachine_Active_T * p_active, State_T * p_state) { return (StateMachine_GetActiveState(p_active) == p_state); }
 static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (StateMachine_GetActiveState(p_active)->ID == stateId); }
 
-// depreciate
-static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
-{
-    return (p_active->p_ActiveState->DEPTH != 0) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
-}
-
-static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
-{
-    return (p_active->p_ActiveState->P_PARENT == p_parent) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
-}
-
-/* split branch and substate functions */
-// static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return (p_active->p_ActiveSubState == NULL) ? p_active->p_ActiveState : p_active->p_ActiveSubState; }
-// // static inline State_T * StateMachine_GetActiveSubState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState; }
-// static inline bool StateMachine_IsActiveSubState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetActiveSubState(p_active)); }
-
-// // can only guarantee correct substate id when parent state is known, otherwise may be duplicate ids across different branches. Handle with p_parentState
-// // static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active) { return p_active->p_ActiveSubState->ID; }
-// static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
-//     { return (p_active->p_ActiveSubState != p_active->p_ActiveState) ? p_active->p_ActiveSubState->ID : STATE_ID_NULL; }
-
-
-// /* Id indicator, for when the Active TOP state is known, and all direct substate ids are unique */
-// static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
-//     { return (StateMachine_GetActiveSubState(p_active)->P_PARENT == p_parent) ? _StateMachine_GetActiveSubStateId(p_active) : STATE_ID_NULL; }
-
-// /* Non unique substate id, handle with p_parentState */
-// static inline bool StateMachine_IsActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent, state_t substateId)
-//     { return (StateMachine_GetActiveSubStateId(p_active, p_parent) == substateId); }
 
 
 /******************************************************************************/

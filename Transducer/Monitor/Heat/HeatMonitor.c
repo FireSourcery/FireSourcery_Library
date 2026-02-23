@@ -73,5 +73,5 @@ void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group)
     }
 }
 
-// static inline int HeatMonitor_Group_ConfigId_Get(const HeatMonitor_T * p_heat, int id) { return Monitor_ConfigId_Get(p_heat, id); }
-// static inline void HeatMonitor_Group_ConfigId_Set(HeatMonitor_T * p_heat, int id, int value) { Monitor_ConfigId_Set(p_heat, id, value); }
+// static inline int HeatMonitor_Group_ConfigId_Get(const HeatMonitor_State_T * p_heat, int id) { return Monitor_ConfigId_Get(p_heat, id); }
+// static inline void HeatMonitor_Group_ConfigId_Set(HeatMonitor_State_T * p_heat, int id, int value) { Monitor_ConfigId_Set(p_heat, id, value); }

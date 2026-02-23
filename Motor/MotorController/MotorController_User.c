@@ -63,7 +63,7 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
             status = MotorController_GetLockOpStatus(p_context);
             break;
 
-        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_GetLockState(p_context);               break;
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_IsLockOpComplete(p_context);               break;
         case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS:     status = MotorController_GetLockOpStatus(p_context);            break;
         case MOT_USER_SYSTEM_STATE_COMMAND:         MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);            break;
         case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_SetRxWatchdog(p_context, value);               break;

@@ -66,14 +66,6 @@ typedef const struct StateMachine_TransitionCmd
 }
 StateMachine_TransitionCmd_T;
 
-// typedef const struct State_TransitionPair
-// {
-//     State_T * P_START;
-//     State_T * P_NEXT;
-//     bool (OnTransition)(void * p_context,  state_value_t inputValue);
-// }
-// State_TransitionPair_T;
-
 /******************************************************************************/
 /*
     StateMachine_Def / StateMachine_VTable

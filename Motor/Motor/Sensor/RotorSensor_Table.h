@@ -62,7 +62,6 @@ typedef enum RotorSensor_Id
     ROTOR_SENSOR_ID_SIN_COS,
     ROTOR_SENSOR_ID_SENSORLESS,
     // ROTOR_SENSOR_ID_EXTERN,
-    // ROTOR_SENSOR_ID_VTABLE,
     ROTOR_SENSOR_ID_COUNT,
 }
 RotorSensor_Id_T;
@@ -84,11 +83,6 @@ typedef const struct RotorSensor_Table
 }
 RotorSensor_Table_T;
 
-// typedef void(*RotorSensor_Calibration_T)(const void * p_motor, const struct RotorSensor * p_sensor, int cmdId);
-// typedef enum Motor_Sensor_CalibrationStatus
-// {
-// }
-// Motor_Sensor_CalibrationStatus_T;
 
 // #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) ROTOR_SENSOR_INIT_AS_EMPTY(p_State)
 // #define ROTOR_SENSOR_TABLE_INIT_HALL(p_State, HallStruct, p_Encoder) HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State)

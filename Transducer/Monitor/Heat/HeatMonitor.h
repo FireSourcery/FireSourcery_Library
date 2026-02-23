@@ -38,11 +38,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* ADCU by default */
-// typedef uint16_t heat_monitor_value_t; /* Use heat_monitor_value_t for all logic */
+// typedef uint16_t heat_monitor_value_t;   /* ADCU by default */
 
-/* Use Monitor module for all logic */
-typedef Monitor_T HeatMonitor_T; /* HeatMonitor_State */
+/* Use Monitor module logic */
+typedef Monitor_T HeatMonitor_State_T;
 
 /*!
     @brief  Monitor configuration for temperature monitoring
@@ -81,7 +80,7 @@ HeatMonitor_Status_T;
 */
 typedef const struct HeatMonitor_Context
 {
-    HeatMonitor_T * P_STATE;    /* HeatMonitor_State_T */
+    HeatMonitor_State_T * P_STATE;    /* HeatMonitor_State_T */
 
     /* Thermistor Context */
     Thermistor_T THERMISTOR; // alternatively as pointer for flexible def region
@@ -100,7 +99,7 @@ HeatMonitor_Context_T;
 
 
 #define HEAT_MONITOR_LINEAR_ALLOC() (&(Linear_T){0})
-#define HEAT_MONITOR_STATE_ALLOC() (&(HeatMonitor_T){0})
+#define HEAT_MONITOR_STATE_ALLOC() (&(HeatMonitor_State_T){0})
 // #define HEAT_MONITOR_CONTEXT_INIT(HeatMonitorState, AnalogConversion, Thermistor, Linear) \
 
 /******************************************************************************/
@@ -109,7 +108,7 @@ HeatMonitor_Context_T;
     Monitor_T extentions
 */
 /******************************************************************************/
-static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_T * p_heat, Linear_T * p_limitScalar)
+static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_State_T * p_heat, Linear_T * p_limitScalar)
 {
     Linear_Q16_Init(p_limitScalar, p_heat->Config.Fault.Limit, p_heat->Config.Warning.Setpoint);
 }
@@ -178,12 +177,12 @@ extern void HeatMonitor_Init(const HeatMonitor_Context_T * p_context);
 typedef const struct HeatMonitor_GroupContext
 {
     /* Array of HeatMonitor_Context_T */
-    /* HeatMonitor_T per sensor, for individual status */
+    /* HeatMonitor_State_T per sensor, for individual status */
     HeatMonitor_Context_T * P_CONTEXTS;
     uint8_t COUNT;
 
     /* Collective State */
-    HeatMonitor_T * P_STATE;
+    HeatMonitor_State_T * P_STATE;
     Linear_T * P_LIMIT_SCALAR;
     const HeatMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 }
@@ -311,7 +310,7 @@ static inline Thermistor_T * HeatMonitor_Group_GetThermistor(const HeatMonitor_G
     return (p_context != NULL) ? &p_context->THERMISTOR : NULL;
 }
 
-static inline HeatMonitor_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
+static inline HeatMonitor_State_T * HeatMonitor_Group_GetMonitor(const HeatMonitor_GroupContext_T * p_group, uint8_t index)
 {
     HeatMonitor_Context_T * p_context = HeatMonitor_Group_InstanceAt(p_group, index);
     return (p_context != NULL) ? p_context->P_STATE : NULL;

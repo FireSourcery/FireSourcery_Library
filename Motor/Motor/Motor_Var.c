@@ -238,13 +238,11 @@ int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_V
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_Config_GetSpeedRated_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_Config_GetSpeedVRef_Rpm(p_motor);              break;
-        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+        case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_GetSpeedRated_Rpm(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVBusRef_Rpm(p_motor);              break;
         case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVBusRef_DegPerCycle(p_motor);             break;
-        // case MOTOR_VAR_SPEED_V_SVPWM_REF_RPM:           value = Motor_Config_GetSpeedVSvpwmRef_Rpm(p_motor);         break;
-        // case MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE: value = Motor_GetSpeedVRefSvpwm_DegPerCycle(p_motor);        break;
-        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_Config_GetVSpeedRated_Fract16(p_motor);               break;
+        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }
     return value;
 }

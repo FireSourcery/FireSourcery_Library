@@ -125,6 +125,11 @@ static inline void Motor_Table_EnterCalibration(Motor_Table_T * p_ctx) { for (ui
 
 static inline void Motor_Table_EnterCalibrateAdc(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_ctx->P_CONTEXTS[iMotor]); } }
 
+static inline bool Motor_Table_IsCalibrationComplete(Motor_Table_T * p_ctx)
+{
+    return void_array_is_every(p_ctx->P_CONTEXTS, sizeof(Motor_T), p_ctx->LENGTH, (test_t)Motor_Calibration_IsComplete);
+}
+
 /* IsEveryMachineState */
 static inline bool Motor_Table_IsEveryState(Motor_Table_T * p_ctx, Motor_StateId_T stateId)
 {

@@ -53,7 +53,7 @@ static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return _Moto
 static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
     // RotorSensor_MarkAnalog(&p_context->Sensor);
-    switch (StateMachine_GetActiveStateId(&p_context->P_MOTOR_STATE->StateMachine))
+    switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
     {
         case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_context);     break;
         // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
@@ -105,7 +105,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE); Motor_FOC_WriteDuty(p_context); } //alternatively and move statemachine to 1ms
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
 
-    timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());
+    // timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());
     p_fields->ControlTimerBase++;
 }
 

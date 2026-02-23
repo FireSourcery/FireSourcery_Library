@@ -97,8 +97,8 @@ typedef enum Motor_Direction
     MOTOR_DIRECTION_CW = -1,
     MOTOR_DIRECTION_NULL = 0,
     MOTOR_DIRECTION_CCW = 1,
-    MOTOR_DIRECTION_REVERSE = -1,
-    MOTOR_DIRECTION_FORWARD = 1,
+    MOTOR_DIRECTION_REVERSE = MOTOR_DIRECTION_CW,
+    MOTOR_DIRECTION_FORWARD = MOTOR_DIRECTION_CCW,
 }
 Motor_Direction_T;
 
@@ -299,7 +299,7 @@ typedef struct Motor_State
     Angle_T OpenLoopAngle;
 
     /*  */
-    HeatMonitor_T HeatMonitorState;
+    HeatMonitor_State_T HeatMonitorState;
 
     /*
         Storable Config
@@ -342,7 +342,7 @@ typedef struct Motor_State
 #endif
 
 #if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
-    volatile uint32_t MicrosRef;
+    // volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
 #endif
 }
@@ -436,7 +436,7 @@ static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_
     Generally [SpeedRated] via Kv * V
     run-time dependent VBus or VNominal
 */
-static inline uint16_t Motor_GetSpeedVBusRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, Phase_VBus_Fract16()); } /* { return (int32_t)p_motor->Config.Kv * Phase_VBus_Volts; } */
+static inline uint16_t Motor_GetSpeedVBusRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, Phase_VBus_Fract16()); }
 static inline uint16_t Motor_GetSpeedVBusRef_DegPerCycle(const Motor_State_T * p_motor) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, Motor_GetSpeedVBusRef_Rpm(p_motor)); }
 
 static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, Phase_VBus_GetVNominal()); }
@@ -449,6 +449,8 @@ static inline uint16_t _Motor_GetSpeedRated_Rpm(const Motor_State_T * p_motor) {
 static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_Rpm; }
 static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_State_T * p_motor) { return (uint32_t)p_motor->Config.SpeedRated_Rpm * p_motor->Config.PolePairs; }
 static inline uint16_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_motor) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, p_motor->Config.SpeedRated_Rpm); }
+/* V of SpeedRated */
+static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_motor) { return Motor_VFract16OfKv(p_motor, Motor_GetSpeedRated_Rpm(p_motor)); }
 
 /* Base in electrical domain */
 // static inline uint32_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }
@@ -479,11 +481,7 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
 /* [SpeedRated_Rpm] = [SpeedTypeMax_Rpm] / 2  */
 static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor) { return INT16_MAX / 2; }
 
-/******************************************************************************/
-/*
-    Proc Outer Feedback State
-*/
-/******************************************************************************/
+
 /******************************************************************************/
 /*
     Run/Feedback State Limits
@@ -496,18 +494,16 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor
     Cw: [value:0]
     Ccw: [0:value]
 */
+// static inline bool _Motor_AntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select); }
 static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) ? value : 0; }
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
-//(p_motor->Direction+direction)/2
 
 /* clamp using ~1/2 VBus */
 /* No plugging limit */
 static inline ufract16_t _Motor_VLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRefSvpwm()); }
 static inline fract16_t _Motor_GetVLimitCcw(const Motor_State_T * p_motor) { return _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_VLimitOf(p_motor, MOTOR_DIRECTION_CW)); }
-// static inline int32_t Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value) : value; }
-// static inline int32_t Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return (p_motor->IsClampPlugging) ? _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value) : value; }
 
 /*
     Call ccw/cw using getters.
@@ -718,21 +714,9 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
     Feedback sign conventions — speed, current, voltage must be consistently signed
 */
 /******************************************************************************/
-// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
-
-/*!
-    Convert between a user reference direction to virtual CCW/CW direction
-    @param[in] userCmd [-65536:65536] fract16 or percent16. positive as the direction set at config
-    @return [-65536:65536]
-    @note caller clamp. Over saturated if input is -32768. cast may result in overflow.
-*/
-// static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
-/* Positive as the active appliedV/motoring direction.   */
-// static inline int32_t Motor_ElectricalDirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
-/*  */
 static inline Motor_Direction_T Motor_GetVirtualDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 
-/* Calibrated direction that is User positive. Interpret as CCW or Positive */
+/* User reference Motoring. Interpret as CCW or Positive */
 static inline Motor_Direction_T Motor_GetUserDirection(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward * p_motor->Direction; }
 /* Same calibration value  */
 static inline int Motor_GetDirectionSign(const Motor_State_T * p_motor) { return (int)Motor_GetUserDirection(p_motor); }
@@ -745,7 +729,18 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
 static inline Motor_Direction_T Motor_GetDirectionForward(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
 static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward * -1); }
 
+// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
 
+/*!
+    Convert between a user reference direction to virtual CCW/CW direction
+    @param[in] userCmd [-65536:65536] fract16 or percent16. positive as the direction set at config
+    @return [-65536:65536]
+    @note caller clamp. Over saturated if input is -32768. cast may result in overflow.
+*/
+// static inline int32_t Motor_DirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
+/* Positive as the active appliedV/motoring direction.   */
+// static inline int32_t Motor_ElectricalDirectionalValueOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+/*  */
 // static inline int Motor_GetDirectionFeedback(const Motor_State_T * p_motor) { return math_sign(Motor_GetSpeedFeedback(p_motor)); }
 
 /******************************************************************************/

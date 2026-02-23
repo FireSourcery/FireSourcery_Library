@@ -36,9 +36,9 @@
 
 #include "Peripheral/Analog/Analog.h"
 
-typedef uint16_t vmonitor_value_t; /* ADCU */
+// typedef uint16_t vmonitor_value_t; /* ADCU */
 
-typedef RangeMonitor_T VMonitor_T; // typedef RangeMonitor_T VMonitor_State_T;
+typedef RangeMonitor_T VMonitor_State_T; // typedef RangeMonitor_T VMonitor_State_T;
 typedef RangeMonitor_Config_T VMonitor_Config_T; /* Use RangeMonitor_Config_T for all logic */
 
 typedef enum VMonitor_Status
@@ -53,7 +53,7 @@ VMonitor_Status_T;
 
 typedef const struct VMonitor_Context
 {
-    VMonitor_T * P_STATE;
+    VMonitor_State_T * P_STATE;
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 
     VDivider_T VDIVIDER;
@@ -65,7 +65,7 @@ typedef const struct VMonitor_Context
 VMonitor_Context_T;
 
 #define VMONITOR_LINEAR_ALLOC() (&(Linear_T){0})
-#define VMONITOR_STATE_ALLOC() (&(VMonitor_T){0})
+#define VMONITOR_STATE_ALLOC() (&(VMonitor_State_T){0})
 
 // #define VMONITOR_CONTEXT_INIT(p_State, p_Nvm, ConversionStruct, VDividerStruct, p_Linear) \
 // { \
@@ -83,7 +83,7 @@ VMonitor_Context_T;
 /******************************************************************************/
 /* Or move to init */
 /* Voltage-specific calculations */
-static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * p_voltage, int32_t input)
+static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_State_T * p_voltage, int32_t input)
 {
     return ((uint32_t)(input - p_voltage->Config.FaultUnderLimit.Limit) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.FaultUnderLimit.Limit);
 }
@@ -93,14 +93,14 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_T * 
 */
 /******************************************************************************/
 static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
-static inline VMonitor_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
+static inline VMonitor_State_T * VMonitor_GetState(const VMonitor_Context_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
 
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-extern void VMonitor_InitLimitsDefault(VMonitor_T * p_vMonitor, int32_t nominal, uint8_t faultPercent, uint8_t warnPercent, uint8_t hystPercent);
+extern void VMonitor_InitLimitsDefault(VMonitor_State_T * p_vMonitor, int32_t nominal, uint8_t faultPercent, uint8_t warnPercent, uint8_t hystPercent);
 
 extern void VMonitor_InitFrom(const VMonitor_Context_T * p_context, const VMonitor_Config_T * p_config);
 extern void VMonitor_Init(const VMonitor_Context_T * p_context);

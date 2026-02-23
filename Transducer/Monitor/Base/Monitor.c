@@ -89,7 +89,7 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 
 
 /* Poll without hysteresis */
-// VMonitor_Status_T VMonitor_Poll_OnInput(VMonitor_T * p_vMonitor, uint16_t adcu)
+// VMonitor_Status_T VMonitor_Poll_OnInput(VMonitor_State_T * p_vMonitor, uint16_t adcu)
 // {
 //     if (p_vMonitor->Config.IsMonitorEnable == true)
 //     {

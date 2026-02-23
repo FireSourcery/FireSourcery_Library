@@ -501,7 +501,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
     MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
     /* From Top state only. no sub state active. */
-    if (StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK))
+    if (StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) /* || */
     {
         switch ((MotorController_LockId_T)lockId)
         {
@@ -538,7 +538,9 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC: /* alternatively split */
-                Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
+            Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
+                // opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING;
+                opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_LOCK_CALIBRATE_ADC; /* Enter Calibration SubState */
                 break;
 
@@ -552,6 +554,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
+                // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
                 Motor_Table_StopAll(&p_context->MOTORS); //optionally same as lock exit
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */

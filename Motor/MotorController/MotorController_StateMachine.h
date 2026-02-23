@@ -99,7 +99,7 @@ static inline MotorController_StateId_T MotorController_GetStateId(const MotorCo
 
 /* Corresponds to known Top State */
 static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
-static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
+// static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
 
 static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_data) { return p_data->FaultFlags; }
 
@@ -131,7 +131,7 @@ static inline bool MotorController_IsConfig(MotorController_T * p_context) { ret
 // alternatively map getter to State
 static int MotorController_GetDirection(MotorController_T * p_context)
 {
-    switch (StateMachine_GetActiveStateId(p_context->STATE_MACHINE.P_ACTIVE))
+    switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
     {
         case MCSM_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
         case MCSM_STATE_ID_PARK:       return 0;
@@ -146,16 +146,16 @@ static int MotorController_GetDirection(MotorController_T * p_context)
 */
 /******************************************************************************/
 /* Active Main  */
-static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
-{
-    return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
-}
+// static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
+// {
+//     return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
+// }
 
-/* check by var set */
-static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
-{
-    return (MotorController_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
-}
+// /* check by var set */
+// static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
+// {
+//     return (MotorController_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
+// }
 
 
 /******************************************************************************/
@@ -282,7 +282,7 @@ MotorController_LockId_T;
 typedef enum MotorController_LockOpStatus
 {
     MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
-    // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING,
+    // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* optionally check state instead */
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
     MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ENTER_ERROR, /* invalid enter, e.g. not in park, or motor running */
@@ -305,10 +305,10 @@ static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorCont
     @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
 */
 /* may return 0xFF. most states passthrough. */
-static inline MotorController_LockId_T MotorController_GetLockState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+// static inline MotorController_LockId_T MotorController_GetLockState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
-static inline void MotorController_EnterLockState(MotorController_T * p_context) { MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER); }
-static inline void MotorController_ExitLockState(MotorController_T * p_context) { MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT); }
+static inline MotorController_LockOpStatus_T MotorController_EnterLockState(MotorController_T * p_context) { return MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER); }
+static inline MotorController_LockOpStatus_T MotorController_ExitLockState(MotorController_T * p_context) { return MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT); }
 
 static inline bool MotorController_IsEnterLockError(MotorController_T * p_context, MotorController_LockId_T id)
 {
@@ -322,9 +322,11 @@ static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorControl
     return p_context->P_MC_STATE->NvmStatus;
 }
 
-
 // if all calibration function use substate
-static inline bool MotorController_IsLockOpComplete(MotorController_T * p_context) { return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+static inline bool MotorController_IsLockOpComplete(MotorController_T * p_context)
+{
+    return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK) && Motor_Table_IsCalibrationComplete(&p_context->MOTORS);
+}
 
 /* return union status */
 // 0 as success

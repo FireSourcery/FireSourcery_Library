@@ -33,11 +33,11 @@
 /*
     requires [Motor] StateMachine outside of Sensor Interface
 */
-// static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
-
 
 /******************************************************************************/
 /*!
 
 */
 /******************************************************************************/
+// static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
+

@@ -59,5 +59,8 @@
 */
 /******************************************************************************/
 // extern void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
-
+// typedef enum Motor_Sensor_CalibrationStatus
+// {
+// }
+// Motor_Sensor_CalibrationStatus_T;
 

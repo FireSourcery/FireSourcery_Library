@@ -62,7 +62,7 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_GetIq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
     // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */
-    /* clamp if limited. sqrt operation on clamp only */
+    /* propagate if limited.  */
     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
     {
         PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_GetVq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_GetVq(&p_motor->Foc)));
@@ -132,7 +132,6 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
     Activate angle with or without current feedback
     for align and openloop
 */
-/* ProcInnerFeedback */
 void Motor_FOC_ProcAngleFeedforward(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
 {
     ProcInnerFeedback(p_motor, angle, dReq, qReq);

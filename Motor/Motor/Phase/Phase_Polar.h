@@ -42,14 +42,6 @@
 */
 typedef enum Phase_Polar
 {
-    // PHASE_ID_POLAR_0 = 0U,
-    // PHASE_ID_1_AC = 1U,
-    // PHASE_ID_2_BC = 2U,
-    // PHASE_ID_3_BA = 3U,
-    // PHASE_ID_4_CA = 4U,
-    // PHASE_ID_5_CB = 5U,
-    // PHASE_ID_6_AB = 6U,
-    // PHASE_ID_POLAR_7 = 7U,
     PHASE_ID_POLAR_0 = 0U,
     PHASE_ID_1_AC = PHASE_ID_INV_B,
     PHASE_ID_2_BC = PHASE_ID_A,

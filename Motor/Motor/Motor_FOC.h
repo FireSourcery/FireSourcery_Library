@@ -41,18 +41,17 @@
 
 /******************************************************************************/
 /*
-    +/- Sign indicates absolute direction, CW/CCW. NOT along/against direction selected.
-    Positive is virtual CCW.
-    B and Beta are virtual CCW of A/Alpha.
-    Iq sign is relative to rotor direction, NOT Vq direction.
+    +/- Sign indicates absolute virtual direction, CW/CCW. NOT along/against direction selected.
+    A->B virtual CCW as Positive.
+    Iq sign is rotation direction, NOT relative to Vq direction.
 
     CCW +Vq +Iq => Forward Motoring Q1
-    CCW +Vq -Iq => Forward Regen Q4, VBemf > Vq > 0
-    CCW -Vq -Iq => Forward Plugging
+    CCW +Vq -Iq => Forward Regen Q2, VBemf > Vq > 0
+    CCW -Vq -Iq => Forward Plugging Q2
 
-    CW -Vq -Iq => Reverse Motoring Q2
-    CW -Vq +Iq => Reverse Regen Q3, VBemf < Vq < 0
-    CW +Vq +Iq => Reverse Plugging
+    CW -Vq -Iq => Reverse Motoring Q3
+    CW -Vq +Iq => Reverse Regen Q4, VBemf < Vq < 0
+    CW +Vq +Iq => Reverse Plugging Q4
 */
 /******************************************************************************/
 

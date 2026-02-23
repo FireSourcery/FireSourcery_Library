@@ -196,7 +196,7 @@ void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_contex
     Hybrid usage
 
     ProcInput function may be selected per [state_input_t] call.
-        StateMachine_ApplyInput -   ignores substate exit functions.
+        StateMachine_ApplyInput -   ignores substate exit functions. need to map GetActiveState to Root
         StateMachine_Branch_ApplyInput
         opt StateMachine_ProcRootFirstInput - 0, n to 1, early return on root transition. optional
 

@@ -224,7 +224,7 @@ void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_Fract16)
 /* Scalar of Config.Limit - maintain same proportion through runtime. set by user. */
 void Motor_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
-    Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? _Motor_GetILimitMotoringActive(p_motor) : _Motor_GetILimitGeneratingActive(p_motor)));
+    Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16));
 }
 
 // void Motor_SetIFollow(Motor_State_T * p_motor)
@@ -283,17 +283,27 @@ void Motor_StartSpeedMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_m
     Only allow forward direction, reverse direction set Direction first
         Hall sensor speed interpolation, Limit Directions
 
-    @param[in] speed [-32768:32767] - "Rpm Fract16". positive as along direction selected by config
+    @param[in] speed [-32768:32767] - Rpm Fract16  positive as along direction selected by config
 */
+// void Motor_SetSpeedCmd_Fract16(Motor_State_T * p_motor, int16_t speed_fract16)
+// {
+//     Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
+// }
+
+// /* p_motor->Config.SpeedLimitForward_Fract16 as consistent ref, including reverse */
+// void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
+// {
+//     Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16));
+// }
+
 void Motor_SetSpeedCmd_Fract16(Motor_State_T * p_motor, int16_t speed_fract16)
 {
-    Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
+    Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * p_motor->Direction * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
 }
 
-/* p_motor->Config.SpeedLimitForward_Fract16 as consistent ref, including reverse */
 void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
-    Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16));
+    Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16));
 }
 
 /******************************************************************************/

@@ -123,7 +123,7 @@ static const State_T STATE_DRIVE =
     .ENTRY      = (State_Action_T)Drive_Entry,
     .LOOP       = (State_Action_T)Drive_Proc,
     // .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
-    .TRANSITION_MAPPER = (State_TransitionMapper_T)Drive_TransitionMapper,
+    .TRANSITION_MAPPER = (State_InputMapper_T)Drive_TransitionMapper,
 };
 
 
@@ -215,7 +215,7 @@ static const State_T STATE_NEUTRAL =
     .ENTRY      = (State_Action_T)Neutral_Entry,
     .LOOP       = (State_Action_T)Neutral_Proc,
     // .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
-    .TRANSITION_MAPPER = (State_TransitionMapper_T)Neutral_TransitionMapper,
+    .TRANSITION_MAPPER = (State_InputMapper_T)Neutral_TransitionMapper,
 };
 
 /******************************************************************************/

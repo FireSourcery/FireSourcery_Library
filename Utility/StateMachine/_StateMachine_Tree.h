@@ -34,7 +34,7 @@
 
 /******************************************************************************/
 /*!
-    HSM Wrap
+    HSM Active State
 */
 /******************************************************************************/
 static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return _State_GetRoot(p_active->p_ActiveState); }
@@ -48,31 +48,29 @@ static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_ac
 
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
-/*
-
-*/
-/* State is within the active branch. */
+/* Match up along the active path */
 static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsAncestorOrSelf(StateMachine_GetLeafState(p_active), p_state); }
 
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
-typedef union State_PathId
+
+// depreciate
+// static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
+// {
+//     return (p_active->p_ActiveState->DEPTH != 0) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+// }
+
+// static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
+// {
+//     return (p_active->p_ActiveState->P_PARENT == p_parent) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+// }
+
+/* return an id only if the state is a descendant of the specified ancestor */
+static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_ancestor)
 {
-    uint32_t BranchId;
-    struct
-    {
-        uint32_t Depth0 : 4;
-        uint32_t Depth1 : 4;
-        uint32_t Depth2 : 4;
-        uint32_t Depth3 : 4;
-        uint32_t Depth4 : 4;
-        uint32_t Depth5 : 4;
-        uint32_t Depth6 : 4;
-        uint32_t Depth7 : 4;
-    };
+    return (StateMachine_IsActivePath(p_active, p_ancestor)) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
 }
-State_PathId_T;
 
 
 /******************************************************************************/
@@ -91,17 +89,34 @@ State_PathId_T;
       8-bit: 0x02030100
 */
 /******************************************************************************/
-static inline State_PathId_T StateMachine_GetPathId(const StateMachine_Active_T * p_active)
-{
-    assert(StateMachine_GetLeafState(p_active)->DEPTH < 8); /* Ensure depth fits within 4-bit fields */
+// typedef union State_PathId
+// {
+//     uint32_t BranchId;
+//     struct
+//     {
+//         uint32_t Depth0 : 4;
+//         uint32_t Depth1 : 4;
+//         uint32_t Depth2 : 4;
+//         uint32_t Depth3 : 4;
+//         uint32_t Depth4 : 4;
+//         uint32_t Depth5 : 4;
+//         uint32_t Depth6 : 4;
+//         uint32_t Depth7 : 4;
+//     };
+// }
+// State_PathId_T;
 
-    uint32_t id = 0;
-    for (State_T * p_iterator = StateMachine_GetLeafState(p_active); p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
-    {
-        id |= ((uint32_t)p_iterator->ID << (p_iterator->DEPTH * 4));
-    }
-    return (State_PathId_T){ .BranchId = id };
-}
+// static inline State_PathId_T StateMachine_GetPathId(const StateMachine_Active_T * p_active)
+// {
+//     assert(StateMachine_GetLeafState(p_active)->DEPTH < 8); /* Ensure depth fits within 4-bit fields */
+
+//     uint32_t id = 0;
+//     for (State_T * p_iterator = StateMachine_GetLeafState(p_active); p_iterator != NULL; p_iterator = p_iterator->P_PARENT)
+//     {
+//         id |= ((uint32_t)p_iterator->ID << (p_iterator->DEPTH * 4));
+//     }
+//     return (State_PathId_T){ .BranchId = id };
+// }
 
 /*
 

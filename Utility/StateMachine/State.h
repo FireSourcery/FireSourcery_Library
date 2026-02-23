@@ -58,9 +58,7 @@ typedef intptr_t state_value_t;     /* Optional input parameter. User define pla
 
 /* first 8 bits reserve for table, extended ids share the same name space.  */
 #define STATE_INPUT_MAPPER_START_ID (0x100U) /* Id above this value will be passed to mapper. */
-// #define STATE_INPUT_MAPPER_START_ID STATE_TRANSITION_TABLE_LENGTH_MAX
-
-// #define STATE_INPUT_MAPPER_ID_START(BaseId) ((1 << 8U) | (BaseId)) /* base remains valid for direct table look up, while extended input can be passed to mapper. */
+// #define STATE_INPUT_MAPPER_ID_START(BaseId) ((1 << 8U) | (BaseId)) /* base remains valid for direct table look up, maybe useful for nullcheck, while extended input can be passed to mapper. */
 
 /*
     A State Action/Output. On Transition - Entry/Exit. Mapped per State.
@@ -74,13 +72,12 @@ struct State;
 /*!
     @name Input/Output and Transition Handler Function Types
 
-    Map each [state_input_t] id to an Output action and new State.
+    [State_Input_T] action and new State mapped to [state_input_t] id
 
-    Forms the Transition Function - defined by user via P_TRANSITION_TABLE
-    [StateMachine_TransitionFunction] <= State_TransitionFunction
+    Forms the Transition Function - defined by user via P_TRANSITION_TABLE/TRANSITION_MAPPER
 
     @return pointer to the next state, if it exists.
-    @retval - [NULL] - no transition / "internal-transition", bypass exit and entry, indicates user defined non transition
+    @retval - [NULL] - no transition / "internal transition", bypass exit and entry, indicates user defined non transition
     @retval - [State *]/[this] - transition or self-transition, proc exit and entry
 
             HSM case - returning SubStates must be called with [ProcBranchInput] or [ProcSubStateInput]
@@ -106,11 +103,10 @@ typedef struct State * (*State_InputVoid_T)(void * p_context);
 typedef struct State * (*State_Input_T)(void * p_context, state_value_t inputExt);
 
 /*
-    implementation handle id look up
+    switch(id) handle id look up
     returns NULL as input not accepted. effectively handles case of return status.
-    InputResolver
 */
-typedef State_Input_T(*State_TransitionMapper_T)(void * p_context, state_input_t inputId);
+typedef State_Input_T(*State_InputMapper_T)(void * p_context, state_input_t inputId);
 
 
 /*
@@ -228,7 +224,7 @@ typedef const struct State
         [NULL] for not accepted input.
         Unused by Top Level State.
     */
-    State_TransitionMapper_T TRANSITION_MAPPER;
+    State_InputMapper_T TRANSITION_MAPPER;
 
     /*
         Accessor functions
@@ -288,7 +284,7 @@ State_T;
     Bits [7:4]   = Depth-1 child index
     Bits [11:8]  = Depth-2 child index
 */
-// typedef uint32_t state_id_t; /* Supports up to 8 levels of nesting (8 nibbles) */
+/* Supports up to 8 levels of nesting (8 nibbles) */
 
 #define STATE_ID_BITS     (4U)
 #define STATE_ID_MASK     (0xFU)
@@ -312,8 +308,7 @@ State_T;
 #define _STATE_ID_FOLD_6(D6, ...) (_STATE_ID(D6, 6) __VA_OPT__(| _STATE_ID_FOLD_7(__VA_ARGS__)))
 #define _STATE_ID_FOLD_7(D7, ...) (_STATE_ID(D7, 7))  /* Max depth 7 (8th level) */
 
-// #define STATE_PATH_ID(...) (_STATE_ID_FOLD(0, __VA_ARGS__))
-#define STATE_PATH_ID(D0,...) (_STATE_ID(D0, 0) __VA_OPT__(| _STATE_ID_FOLD_1(__VA_ARGS__)))
+#define STATE_PATH_ID(D0, ...) (_STATE_ID(D0, 0) __VA_OPT__(| _STATE_ID_FOLD_1(__VA_ARGS__)))
 
 
 // /* Extract the index at a given depth */

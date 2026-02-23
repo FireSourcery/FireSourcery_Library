@@ -96,7 +96,9 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
     State_T * p_iterator1 = p_state1;
     State_T * p_iterator2 = p_state2;
 
-    if (p_iterator1 != NULL && p_iterator2 != NULL)
+    // if (p_iterator1 != NULL && p_iterator2 != NULL)
+    assert(p_iterator1 != NULL);
+    assert(p_iterator2 != NULL);
     {
         // Bring both nodes to the same level
         while (p_iterator1->DEPTH > p_iterator2->DEPTH) { p_iterator1 = p_iterator1->P_PARENT; }
@@ -292,7 +294,7 @@ static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) 
 
 /*!
     Call Exit traversing up the tree
-    @param[in] p_start == NULL => no effect
+    @param[in] p_common == NULL process full path
 */
 static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_context)
 {
@@ -314,7 +316,7 @@ static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_cont
 */
 static inline void EntryDownTo(State_T * p_common, State_T * p_end, void * p_context)
 {
-    if ((p_end != NULL) && (p_end != p_common))
+    if (p_end != NULL)
     {
         EntryDownTo(p_common, p_end->P_PARENT, p_context);
         State_Entry(p_end, p_context);
@@ -339,6 +341,8 @@ void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, St
     @param[in] p_start == NULL => p_common = NULL
 
     optionally build path on CA, for non recursive Entry traverse
+
+    p_start == p_end => self transition, proc entry only
 */
 void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void * p_context)
 {

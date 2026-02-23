@@ -57,7 +57,7 @@ static inline void Motor_Config_SetCommutationMode(Motor_State_T * p_motor, Moto
 
 /* The user direction that is the positive direction */
 static inline Motor_Direction_T Motor_Config_GetDirectionCalibration(const Motor_State_T * p_motor) { return p_motor->Config.DirectionForward; }
-static inline void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward) { p_motor->Config.DirectionForward = directionForward; }
+static inline void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T forward) { if (forward != MOTOR_DIRECTION_NULL) { p_motor->Config.DirectionForward = forward; } }
 static inline bool Motor_Config_IsCcwPositive(Motor_State_T * p_motor) { return p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW; }
 static inline void Motor_Config_SetCcwPositive(Motor_State_T * p_motor, bool isCcwPositive) { p_motor->Config.DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
 
@@ -70,13 +70,7 @@ static inline uint16_t Motor_Config_GetKv(const Motor_State_T * p_motor)        
 static inline uint16_t Motor_Config_GetSpeedRated(const Motor_State_T * p_motor)                      { return p_motor->Config.SpeedRated_Rpm; }
 static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_State_T * p_motor)           { return p_motor->Config.VSpeedScalar_Fract16; }
 
-/* alias */
-static inline uint16_t Motor_Config_GetSpeedVRef_Rpm(const Motor_State_T * p_motor)                   { return Motor_GetSpeedVBusRef_Rpm(p_motor); }
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return (p_motor->Config.VSpeedScalar_Fract16 * Motor_GetSpeedVBusRef_Rpm(p_motor)) >> 15U; }
-// static inline uint16_t Motor_Config_GetSpeedVSvpwmRef_Rpm(const Motor_State_T * p_motor)              { return Motor_GetSpeedVRefSvpwm_Rpm(p_motor); }
-static inline uint16_t Motor_Config_GetSpeedRated_Rpm(const Motor_State_T * p_motor)                  { return Motor_GetSpeedRated_Rpm(p_motor); }
-static inline uint16_t Motor_Config_GetVSpeedRated_Fract16(const Motor_State_T * p_motor)             { return Motor_VFract16OfKv(p_motor, Motor_GetSpeedRated_Rpm(p_motor)); }
-
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return ((uint32_t)p_motor->Config.VSpeedScalar_Fract16 * Motor_GetSpeedVBusRef_Rpm(p_motor)) >> 15U; }
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_State_T * p_motor)                     { return p_motor->Config.IabcZeroRef_Adcu.A; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_State_T * p_motor)                     { return p_motor->Config.IabcZeroRef_Adcu.B; }
@@ -131,7 +125,7 @@ static inline uint16_t Motor_Config_GetOpenLoopIRamp_Millis(const Motor_State_T 
 /******************************************************************************/
 // extern void Motor_Config_SetWith(Motor_State_T * p_motor, State_Set_T setter, int32_t value);
 
-// extern void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T directionForward);
+// extern void Motor_Config_SetDirectionCalibration(Motor_State_T * p_motor, Motor_Direction_T forward);
 extern void Motor_Config_SetSensorMode(Motor_State_T * p_motor, RotorSensor_Id_T mode);
 extern void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs);
 extern void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv);

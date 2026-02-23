@@ -44,13 +44,12 @@ static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachi
 /* Sufficient for Cmds that begin with a substate */
 // static void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }
 
-
 /* Calibration exits the substate and return to the parent state on complete */
 /* IsComplete SubState = TopState = MSM_STATE_ID_CALIBRATION */
 static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
 
-/* return value when parent state is MSM_STATE_ID_CALIBRATION. return 0xff otherwise including state == MSM_STATE_ID_CALIBRATION */
-// static inline state_t Motor_Calibration_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_CALIBRATION); }
+
+/* by substate id, substate defined with STATE_PATH_ID(MSM_STATE_ID_CALIBRATION, 0xff), or all unused  */
 
 
 /*
