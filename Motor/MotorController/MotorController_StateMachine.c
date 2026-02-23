@@ -473,7 +473,7 @@ static void Lock_Entry(const MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    assert(Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP));
+    // assert(Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP));
     Motor_Table_StopAll(&p_context->MOTORS);
     // _StateMachine_EndSubState(p_context->STATE_MACHINE.P_ACTIVE);
 

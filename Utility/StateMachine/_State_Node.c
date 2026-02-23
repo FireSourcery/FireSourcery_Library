@@ -316,7 +316,7 @@ static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_cont
 */
 static inline void EntryDownTo(State_T * p_common, State_T * p_end, void * p_context)
 {
-    if (p_end != NULL)
+    if (p_end != p_common)
     {
         EntryDownTo(p_common, p_end->P_PARENT, p_context);
         State_Entry(p_end, p_context);
