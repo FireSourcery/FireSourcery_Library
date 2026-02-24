@@ -548,8 +548,8 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_CONFIG_PID:                 return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_CALIBRATION_CMD:                 return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_CONFIG_RESV:          return Motor_IsConfig(p_motor); /* Motor_Sensor.h */
+        case MOTOR_VAR_TYPE_CALIBRATION_CMD:            return Motor_IsConfig(p_motor);
+        case MOTOR_VAR_TYPE_CONFIG_RESV:                return Motor_IsConfig(p_motor); /* Motor_Sensor.h */
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
@@ -557,6 +557,7 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION);
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return false;
         case MOTOR_VAR_TYPE_HALL_STATE:                 return false;
+        case MOTOR_VAR_TYPE_HALL_CMD:                   return Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION);
         case MOTOR_VAR_TYPE_HALL_CONFIG:                return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:             return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_ENCODER_STATE:              return false;
@@ -590,8 +591,9 @@ void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:
             _Motor_VarType_Set(p_motor, typeId, varId, varValue);           break;
         case MOTOR_VAR_TYPE_HALL_CONFIG:
-        case MOTOR_VAR_TYPE_ENCODER_CONFIG:
         case MOTOR_VAR_TYPE_HALL_STATE:
+        case MOTOR_VAR_TYPE_HALL_CMD:
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG:
         case MOTOR_VAR_TYPE_ENCODER_STATE:
             Motor_VarType_Sensor_Set(p_motor, typeId, varId, varValue);     break;
         default: break;
