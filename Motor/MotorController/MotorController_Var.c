@@ -158,7 +158,7 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_context, MotorC
         case MOT_VAR_REF_V_MONITOR_COUNT:           return MotorController_Var_GetVMonitorCount(p_context);
         case MOT_VAR_REF_THERMISTOR_MOSFETS_COUNT:  return MotorController_Var_GetHeatMosfetCount(p_context);
         case MOT_VAR_REF_PROTOCOL_SOCKET_COUNT:     return MotorController_Var_GetProtocolCount(p_context);
-        // case MOT_VAR_REF_CAN_MODE_COUNT:            return  ;
+        case MOT_VAR_REF_CAN_SOCKET_COUNT:          return 0; /* not yet implemented */
         default: return 0;
     }
 }

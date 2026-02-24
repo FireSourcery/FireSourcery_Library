@@ -90,6 +90,7 @@ static void Init_Entry(const Motor_T * p_motor)
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward);
 
     // Motor_Sensor_ResetUnits(p_motor->P_MOTOR_STATE );
+    SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
 }
 
 static void Init_Proc(const Motor_T * p_motor)
@@ -303,6 +304,7 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
                     /* p_nextState = Motor_Sensor_GetStartUpState(p_motor); */ /* get substate */
                     // p_nextState = &OPEN_LOOP_STATE_START_UP_ALIGN; /* Motor_GetSensorStartUpState() */
                 }
+                // else no transition
             }
             break;
     }
@@ -330,10 +332,10 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
     }
     else
     {
-        p_nextState = &MOTOR_STATE_FAULT;// test
         /* direction should no be null but if it is */
         if (p_motor->P_MOTOR_STATE->Direction == MOTOR_DIRECTION_NULL)
         {
+            p_nextState = &MOTOR_STATE_FAULT;// test
             // compare internal domain directions
             if ((Motor_Direction_T)direction == math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE))) /* direction cmd matches actual speed direction */
             {

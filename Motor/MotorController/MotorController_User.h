@@ -96,10 +96,10 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_con
     User Setting Speed/I Limit
 */
 /******************************************************************************/
-static inline bool MotorController_SetSpeedLimitAll(MotorController_T * p_context, uint16_t limit_fract16)    { _MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearSpeedLimitAll(MotorController_T * p_context)                          { _MotorController_ClearSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER); }
-static inline bool MotorController_SetILimitAll(MotorController_T * p_context, uint16_t limit_fract16)        { _MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearILimitAll(MotorController_T * p_context)                              { _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_USER); }
+static inline bool MotorController_SetSpeedLimitAll(MotorController_T * p_context, uint16_t limit_fract16)    { return _MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearSpeedLimitAll(MotorController_T * p_context)                          { return _MotorController_ClearSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER); }
+static inline bool MotorController_SetILimitAll(MotorController_T * p_context, uint16_t limit_fract16)        { return _MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearILimitAll(MotorController_T * p_context)                              { return _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_USER); }
 
 /* using user channel */
 static inline void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_context, bool isEnable)
