@@ -40,32 +40,6 @@
     Top Level State [p_ActiveState]
 */
 /******************************************************************************/
-/*
-    Process user defined handlers output
-    and return mapped state.
-
-    Caller handles updating p_ActiveState, Entry/Exit
-*/
-/*
-    Output/Sync TransitionFunction
-    Virtualized calls: [SYNC_OUTPUT] [NEXT]
-*/
-static inline State_T * TransitionFunctionOfState(const StateMachine_Active_T * p_active, void * p_context)
-{
-    return State_TransitionOfOutput_AsTop(p_active->p_ActiveState, p_context); /* Top level LOOP always defined */
-}
-
-/*
-    Input TransitionFunction
-    Virtualized calls: [P_TRANSITION_TABLE[id]]
-*/
-static inline State_T * TransitionFunctionOfInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-{
-    return State_TransitionOfInput_AsTop(p_active->p_ActiveState, p_context, id, value);
-}
-
-// inline void Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_next)
-
 /******************************************************************************/
 /*!
     Mutate State
@@ -109,11 +83,35 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
 }
 
 /*
+    Process user defined handlers output
+    and return mapped state.
+
+    Caller handles updating p_ActiveState, Entry/Exit
+*/
+/*
+    Output/Sync TransitionFunction
+    Virtualized calls: [SYNC_OUTPUT] [NEXT]
+*/
+static inline State_T * OfState(const StateMachine_Active_T * p_active, void * p_context)
+{
+    return State_TransitionOfOutput_AsTop(p_active->p_ActiveState, p_context); /* Top level LOOP always defined */
+}
+
+/*
+    Input TransitionFunction
+    Virtualized calls: [P_TRANSITION_TABLE[id]]
+*/
+static inline State_T * OfInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    return State_TransitionOfInput_AsTop(p_active->p_ActiveState, p_context, id, value);
+}
+
+/*
     Virtualized calls: [LOOP] [NEXT] [ENTRY] [EXIT]
 */
 inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
 {
-    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfState(p_active, p_context));
+    _StateMachine_Transition(p_active, p_context, OfState(p_active, p_context));
 }
 
 /*
@@ -125,7 +123,7 @@ inline void _StateMachine_ProcSyncOutput(StateMachine_Active_T * p_active, void 
 */
 inline void _StateMachine_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_Transition(p_active, p_context, TransitionFunctionOfInput(p_active, p_context, id, value));
+    _StateMachine_Transition(p_active, p_context, OfInput(p_active, p_context, id, value));
 }
 
 
@@ -175,7 +173,7 @@ inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, vo
 */
 inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
-    _StateMachine_SetSyncTransition(p_active, TransitionFunctionOfInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
+    _StateMachine_SetSyncTransition(p_active, OfInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
 }
 
 inline void _StateMachine_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T next, state_value_t value)

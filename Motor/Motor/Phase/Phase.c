@@ -92,7 +92,7 @@ void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
 /* 1 as 1/2 vBus */
 void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar_fract16)
 {
-    Phase_Align(p_phase, id, scalar_fract16 * 3 / 4);
+    Phase_Align(p_phase, id, (uint32_t)scalar_fract16 * 3 / 4);
 }
 
 /*

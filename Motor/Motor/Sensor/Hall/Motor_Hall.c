@@ -65,6 +65,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
     {
         switch (p_motor->P_MOTOR_STATE->CalibrationStateIndex) /* Phase_ReadAlign() */
         {
+            /* alternatively buffer align */
             case 0U: Hall_StartCalibrate(GetHall(p_motor));                               Phase_Align(&p_motor->PHASE, PHASE_ID_A, duty);        p_motor->P_MOTOR_STATE->CalibrationStateIndex = 1U;    break;
             case 1U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_A);       Phase_Align(&p_motor->PHASE, PHASE_ID_INV_C, duty);    p_motor->P_MOTOR_STATE->CalibrationStateIndex = 2U;    break;
             case 2U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_C);   Phase_Align(&p_motor->PHASE, PHASE_ID_B, duty);        p_motor->P_MOTOR_STATE->CalibrationStateIndex = 3U;    break;

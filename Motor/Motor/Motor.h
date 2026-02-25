@@ -237,14 +237,14 @@ typedef struct Motor_State
         State and SubStates
     */
     StateMachine_Active_T StateMachine;
-    uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, calibration, commutation, angle control. Overflow 20Khz: 59 hours */ //ControlCounter
+    volatile uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, calibration, commutation, angle control. Overflow 20Khz: 59 hours */ //ControlCounter
 
     /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Direction of applied/cmd V. Calibration correction applied on get/set access. DirectionMotoring. Applies to: Motoring/Generating Cmd Active Limits, Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     /*  */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
-    uint8_t CalibrationStateIndex;
+    volatile uint8_t CalibrationStateIndex;
 
     /*
         Position Sensor

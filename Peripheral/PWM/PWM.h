@@ -126,12 +126,12 @@ static inline void PWM_EnableInterrupt(const PWM_Module_T * p_pwm) { HAL_PWM_Ena
     individual buffers, if collective configuration is not supported.
 */
 static inline void _PWM_Module_WriteSyncDuty(const PWM_Module_T * p_pwm, uint32_t channelsMask) { HAL_PWM_SyncModuleDuty(p_pwm->P_HAL_PWM_MODULE, channelsMask); }
-static inline void _PWM_Module_WriteSyncInvert(const PWM_Module_T * p_pwm, uint32_t channelsMask) { HAL_PWM_SyncModuleInvert(p_pwm->P_HAL_PWM_MODULE, channelsMask); }
 static inline void _PWM_Module_WriteSyncOnOff(const PWM_Module_T * p_pwm, uint32_t channelsMask) { HAL_PWM_SyncModuleOutputState(p_pwm->P_HAL_PWM_MODULE, channelsMask); }
+static inline void _PWM_Module_WriteSyncInvert(const PWM_Module_T * p_pwm, uint32_t channelsMask) { HAL_PWM_SyncModuleInvert(p_pwm->P_HAL_PWM_MODULE, channelsMask); }
 
 static inline void PWM_Module_WriteSyncDuty(const PWM_Module_T * p_pwm) { _PWM_Module_WriteSyncDuty(p_pwm, p_pwm->SYNC_MASK); }
-static inline void PWM_Module_WriteSyncInvert(const PWM_Module_T * p_pwm) { _PWM_Module_WriteSyncInvert(p_pwm, p_pwm->SYNC_MASK); }
 static inline void PWM_Module_WriteSyncOnOff(const PWM_Module_T * p_pwm) { _PWM_Module_WriteSyncOnOff(p_pwm, p_pwm->SYNC_MASK); }
+static inline void PWM_Module_WriteSyncInvert(const PWM_Module_T * p_pwm) { _PWM_Module_WriteSyncInvert(p_pwm, p_pwm->SYNC_MASK); }
 
 
 /*

@@ -46,6 +46,10 @@
 #define MOTOR_OPEN_LOOP_MAX_SCALAR FRACT16(0.1F)
 #endif
 
+// #ifndef MOTOR_OPEN_LOOP_V_SCALAR_MAX
+// #define MOTOR_OPEN_LOOP_V_SCALAR_MAX FRACT16(0.1F)
+// #endif
+
 /******************************************************************************/
 /*
     Calibration

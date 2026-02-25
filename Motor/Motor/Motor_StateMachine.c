@@ -406,7 +406,7 @@ static void Run_Proc(const Motor_T * p_motor)
     Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
-    // Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 // static State_T * Run_Next(const Motor_T * p_motor)

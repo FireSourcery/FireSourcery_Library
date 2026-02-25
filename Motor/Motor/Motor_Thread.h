@@ -99,10 +99,9 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     StateMachine_Synchronous_RootFirst_Thread(&p_context->STATE_MACHINE);
 
-    /* Inline Phase Out */
+    /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */
-    if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); }
-    // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE); Motor_FOC_WriteDuty(p_context); } //alternatively and move statemachine to 1ms
+    // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); }
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
 
     // timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());

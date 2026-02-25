@@ -238,12 +238,12 @@ static inline void * AcceptInputVisitor(State_T * p_state, void * p_context, int
         Always proc top down
         full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
 */
-State_T * State_TraverseTransitionOfOutput(State_T * p_start, void * p_context)
+State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
 {
     return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
 }
 
-State_T * State_TraverseTransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
+State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
 {
     return (State_T *)ApplyUpTo(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
 }
@@ -259,25 +259,25 @@ State_T * State_TraverseTransitionOfOutputUpTo(State_T * p_start, State_T * p_en
     Traversal stops when input is defined, even if no state transition. alternatively
     Inputs using id always include top level
 */
-State_Input_T State_TraverseAcceptInput(State_T * p_start, void * p_context, state_input_t id)
+State_Input_T State_AcceptInputUp(State_T * p_start, void * p_context, state_input_t id)
 {
     return (State_Input_T)ApplyUp(p_start, p_context, AcceptInputVisitor, id);
 }
 
 /* Transition of Traverse Input */
-State_T * State_TraverseTransitionOfInput(State_T * p_start, void * p_context, state_input_t id, state_value_t value)
+State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_TraverseAcceptInput(p_start, p_context, id), p_context, value);
+    return _State_CallInput(State_AcceptInputUp(p_start, p_context, id), p_context, value);
 }
 
-State_Input_T State_TraverseAcceptInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id)
+State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id)
 {
     return (State_Input_T)ApplyUpTo(p_start, p_end, p_context, AcceptInputVisitor, id);
 }
 
-State_T * State_TraverseTransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
+State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_TraverseAcceptInputUpTo(p_start, p_end, p_context, id), p_context, value);
+    return _State_CallInput(State_AcceptInputUpTo(p_start, p_end, p_context, id), p_context, value);
 }
 
 /******************************************************************************/
@@ -296,14 +296,14 @@ static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) 
     Call Exit traversing up the tree
     @param[in] p_common == NULL process full path
 */
-static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_context)
+static inline void ExitUp(State_T * p_from, State_T * p_to, void * p_context)
 {
 #ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
-    assert(p_start != NULL); /* if p_common is not NULL, p_start must not be NULL */
-    ApplyUpTo(p_start, p_common, p_context, ExitVisitor, 0);
+    assert(p_from != NULL);
+    ApplyUpTo(p_from, p_to, p_context, ExitVisitor, 0);
 #else
-    (void)p_start;
-    (void)p_common;
+    (void)p_from;
+    (void)p_to;
     (void)p_context;
 #endif
 }
@@ -312,14 +312,14 @@ static inline void ExitUpTo(State_T * p_start, State_T * p_common, void * p_cont
     Call Entry traversing down the tree
         recursive climb up the tree for now
         iterative traverse need capture first
-    @param[in] p_common == NULL => repeat ROOT entry.
+    @param[in] p_from == NULL => repeat ROOT entry.
 */
-static inline void EntryDownTo(State_T * p_common, State_T * p_end, void * p_context)
+static inline void EntryDown(State_T * p_from, State_T * p_to, void * p_context)
 {
-    if (p_end != p_common)
+    if (p_to != p_from)
     {
-        EntryDownTo(p_common, p_end->P_PARENT, p_context);
-        State_Entry(p_end, p_context);
+        EntryDown(p_from, p_to->P_PARENT, p_context);
+        State_Entry(p_to, p_context);
     }
 }
 
@@ -329,22 +329,22 @@ static inline void EntryDownTo(State_T * p_common, State_T * p_end, void * p_con
     @param[in] p_start == NULL, start from [p_common]
     @param[in] p_common == NULL, traverse to top, alternatively pass CA depth
 */
-void State_TraverseOnTransitionThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
+void State_TraverseEntryExitThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context)
 {
-    ExitUpTo(p_start, p_common, p_context);
-    EntryDownTo(p_common, p_end, p_context);
+    ExitUp(p_start, p_common, p_context);
+    EntryDown(p_common, p_end, p_context);
 }
 
 
 /*!
-    Traverse_OnTransition
+    Traverse_EntryExit
     @param[in] p_start == NULL => p_common = NULL
 
     optionally build path on CA, for non recursive Entry traverse
 
     p_start == p_end => self transition, proc entry only
 */
-void State_TraverseOnTransition(State_T * p_start, State_T * p_end, void * p_context)
+void State_TraverseEntryExit(State_T * p_start, State_T * p_end, void * p_context)
 {
-    State_TraverseOnTransitionThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
+    State_TraverseEntryExitThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
 }

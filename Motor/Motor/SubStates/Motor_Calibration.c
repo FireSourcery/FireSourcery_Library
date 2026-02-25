@@ -145,7 +145,7 @@ static void Tuning_Proc(const Motor_T * p_motor)
 {
     Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
-    // Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)

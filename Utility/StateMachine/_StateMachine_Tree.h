@@ -142,8 +142,8 @@ static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active
 */
 /******************************************************************************/
 /* _StateMachine_Branch_Action */
-extern void _StateMachine_Branch_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
-extern void _StateMachine_Branch_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_TraverseTransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
+extern void _StateMachine_TraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state);
 
 extern void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context);
 extern void _StateMachine_Branch_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value);
