@@ -156,15 +156,6 @@ static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 // #endif
 }
 
-static inline uint32_t _Phase_PinSyncOf(const Phase_T * p_phase, Phase_Id_T id)
-{
-    const Phase_Bitmask_T state = Phase_Bitmask(id);
-    return (Pin_Module_MaskOf(&p_phase->PIN_A, state.A) | Pin_Module_MaskOf(&p_phase->PIN_B, state.B) | Pin_Module_MaskOf(&p_phase->PIN_C, state.C));
-}
-
-/*!
-
-*/
 /*
     Software Sync when counter up/down reload sync is not configured
 */
@@ -182,6 +173,15 @@ static inline void _Phase_SyncPwmInvert(const Phase_T * p_phase, Phase_Id_T stat
 #ifdef PHASE_SYNC_INVERT_UPDATE
     _PWM_Module_WriteSyncInvert(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
 #endif
+}
+
+/*
+    Pin
+*/
+static inline uint32_t _Phase_PinSyncOf(const Phase_T * p_phase, Phase_Id_T id)
+{
+    const Phase_Bitmask_T state = Phase_Bitmask(id);
+    return (Pin_Module_MaskOf(&p_phase->PIN_A, state.A) | Pin_Module_MaskOf(&p_phase->PIN_B, state.B) | Pin_Module_MaskOf(&p_phase->PIN_C, state.C));
 }
 
 static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
@@ -281,22 +281,10 @@ static inline void Phase_WriteDuty_Vector(const Phase_T * p_phase, Phase_Triplet
 }
 
 // static inline void Phase_Deactivate(const Phase_T * p_phase)
-static inline void Phase_Float(const Phase_T * p_phase)
-{
-    // _Phase_WriteState(p_phase, PHASE_ID_0);
-    _Phase_DisableA(p_phase);
-    _Phase_DisableB(p_phase);
-    _Phase_DisableC(p_phase);
-}
+static inline void Phase_Float(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_0); }
 
 // static inline void _Phase_Activate(const Phase_T * p_phase) active stored
-static inline void Phase_ActivateOutput(const Phase_T * p_phase)
-{
-    // _Phase_WriteState(p_phase, PHASE_ID_ABC);
-    _Phase_EnableA(p_phase);
-    _Phase_EnableB(p_phase);
-    _Phase_EnableC(p_phase);
-}
+static inline void Phase_ActivateOutput(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_ABC); }
 
 /* Enable all at 0 duty. NOT for Bipolar active. */
 static inline void Phase_ActivateOutputV0(const Phase_T * p_phase)
@@ -313,36 +301,17 @@ static inline void Phase_ActivateOutputT0(const Phase_T * p_phase)
     Phase_ActivateOutput(p_phase);
 }
 
-static inline bool Phase_IsFloat(const Phase_T * p_phase)
-{
-    return (_Phase_ReadState(p_phase).Bits == PHASE_ID_0);
-}
-
-static inline bool Phase_IsVDuty(const Phase_T * p_phase)
-{
-    // return !Phase_IsFloat(p_phase);
-    return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0);
-}
-
-static inline bool Phase_IsV0(const Phase_T * p_phase)
-{
-    // return ((_Phase_ReadState(p_phase).Bits == PHASE_ID_ABC) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); //alternatively check active channels only
-    return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0));
-}
+static inline bool Phase_IsFloat(const Phase_T * p_phase) { return (_Phase_ReadState(p_phase).Bits == PHASE_ID_0); }
+static inline bool Phase_IsVDuty(const Phase_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0); }
+static inline bool Phase_IsV0(const Phase_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); }
 
 /* Collective state */
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
-
-    switch (_Phase_ReadState(p_phase).Bits)
-    {
-        case PHASE_ID_0: state = PHASE_OUTPUT_FLOAT; break;
-        //alternatively check active channels only
-        // case PHASE_ID_ABC:  break;
-        /* Including Polar Ouputs */
-        default: state = (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) ? PHASE_OUTPUT_V0 : PHASE_OUTPUT_VPWM; break;
-    }
+    if (_Phase_ReadState(p_phase).Bits == PHASE_ID_0) { state = PHASE_OUTPUT_FLOAT; }
+    else if (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) { state = PHASE_OUTPUT_V0; }
+    else { state = PHASE_OUTPUT_VPWM; }
     return state;
 }
 
@@ -353,7 +322,6 @@ static inline void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Outp
         case PHASE_OUTPUT_FLOAT:    Phase_Float(p_phase);               break;
         case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(p_phase);    break;
         case PHASE_OUTPUT_VPWM:     Phase_ActivateOutputT0(p_phase);    break;
-        // case PHASE_OUTPUT_VPWM:     Phase_ActivateOutput(p_phase);      break; /* restore last active */
         default: break;
     }
 }

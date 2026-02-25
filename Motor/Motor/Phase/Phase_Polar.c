@@ -60,11 +60,6 @@ void Phase_Polar_Ground(const Phase_T * p_phase)
     Phase_ActivateOutputV0(p_phase);
 }
 
-static void _Phase_ActivateOutputNotA(const Phase_T * p_phase) { _Phase_DisableA(p_phase); _Phase_EnableB(p_phase); _Phase_EnableC(p_phase); }
-static void _Phase_ActivateOutputNotB(const Phase_T * p_phase) { _Phase_EnableA(p_phase); _Phase_DisableB(p_phase); _Phase_EnableC(p_phase); }
-static void _Phase_ActivateOutputNotC(const Phase_T * p_phase) { _Phase_EnableA(p_phase); _Phase_EnableB(p_phase); _Phase_DisableC(p_phase); }
-
-
 /*
     For Bipolar Pwm
 */
@@ -86,30 +81,13 @@ static void _Phase_ActivateInvertPolarityC(const Phase_T * p_phase) { PWM_Disabl
 
 void Phase_Unipolar_ActivateOutput(Phase_T * p_phase, Phase_Polar_T phaseId)
 {
-    switch (phaseId)
-    {
-        case PHASE_ID_POLAR_0: break;
-        case PHASE_ID_1_AC: _Phase_ActivateOutputNotB(p_phase); break; /*  _Phase_WriteState(p_phase, PHASE_ID_INV_B); break; */
-        case PHASE_ID_4_CA: _Phase_ActivateOutputNotB(p_phase); break;
-        case PHASE_ID_6_AB: _Phase_ActivateOutputNotC(p_phase); break;
-        case PHASE_ID_3_BA: _Phase_ActivateOutputNotC(p_phase); break;
-        case PHASE_ID_5_CB: _Phase_ActivateOutputNotA(p_phase); break;
-        case PHASE_ID_2_BC: _Phase_ActivateOutputNotA(p_phase); break;
-        case PHASE_ID_POLAR_7: break;
-        default: break;
-    }
+    _Phase_WriteState(p_phase, phaseId);
 }
 
 /*
     Activate Duty Only
 */
 static inline void _Phase_Unipolar1_WriteDuty(const PWM_T * p_vDuty, const PWM_T * p_vGround, uint16_t duty) { PWM_WriteDuty(p_vDuty, duty); PWM_WriteDuty(p_vGround, 0U); }
-// void Phase_Unipolar1_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_A, duty); PWM_WriteDuty(&p_phase->PWM_C, 0U); }
-// void Phase_Unipolar1_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_B, duty); PWM_WriteDuty(&p_phase->PWM_C, 0U); }
-// void Phase_Unipolar1_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_B, duty); PWM_WriteDuty(&p_phase->PWM_A, 0U); }
-// void Phase_Unipolar1_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_C, duty); PWM_WriteDuty(&p_phase->PWM_A, 0U); }
-// void Phase_Unipolar1_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_C, duty); PWM_WriteDuty(&p_phase->PWM_B, 0U); }
-// void Phase_Unipolar1_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDuty(&p_phase->PWM_A, duty); PWM_WriteDuty(&p_phase->PWM_B, 0U); }
 
 void Phase_Unipolar1_WriteDuty(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
 {
@@ -122,12 +100,6 @@ void Phase_Unipolar1_WriteDuty(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_
         case PHASE_ID_4_CA: _Phase_Unipolar1_WriteDuty(&p_phase->PWM_C, &p_phase->PWM_A, duty); break;
         case PHASE_ID_5_CB: _Phase_Unipolar1_WriteDuty(&p_phase->PWM_C, &p_phase->PWM_B, duty); break;
         case PHASE_ID_6_AB: _Phase_Unipolar1_WriteDuty(&p_phase->PWM_A, &p_phase->PWM_B, duty); break;
-        // case PHASE_ID_1_AC: Phase_Unipolar1_ActivateDutyAC(p_phase, duty); break;
-        // case PHASE_ID_2_BC: Phase_Unipolar1_ActivateDutyBC(p_phase, duty); break;
-        // case PHASE_ID_3_BA: Phase_Unipolar1_ActivateDutyBA(p_phase, duty); break;
-        // case PHASE_ID_4_CA: Phase_Unipolar1_ActivateDutyCA(p_phase, duty); break;
-        // case PHASE_ID_5_CB: Phase_Unipolar1_ActivateDutyCB(p_phase, duty); break;
-        // case PHASE_ID_6_AB: Phase_Unipolar1_ActivateDutyAB(p_phase, duty); break;
         case PHASE_ID_POLAR_7: break;
         default: break;
     }
@@ -145,27 +117,27 @@ void Phase_Unipolar2_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty) { PW
 void Phase_Unipolar2_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); PWM_WriteDutyMidMinus(&p_phase->PWM_B, duty); }
 void Phase_Unipolar2_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); PWM_WriteDutyMidMinus(&p_phase->PWM_B, duty); }
 
-/*
+// /*
 
-*/
-// void Phase_Bipolar_ActivateOutputAC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_InvertPolarityC(p_phase, PHASE_ID_C); } _Phase_ActivateOutput(p_phase, PHASE_ID_INV_B); }
-void Phase_Bipolar_ActivateOutputAC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotB(p_phase); }
-void Phase_Bipolar_ActivateOutputBC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotA(p_phase); }
-void Phase_Bipolar_ActivateOutputBA(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityA(p_phase); } _Phase_ActivateOutputNotC(p_phase); }
-void Phase_Bipolar_ActivateOutputCA(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityA(p_phase); } _Phase_ActivateOutputNotB(p_phase); }
-void Phase_Bipolar_ActivateOutputCB(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityB(p_phase); } _Phase_ActivateOutputNotA(p_phase); }
-void Phase_Bipolar_ActivateOutputAB(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityB(p_phase); } _Phase_ActivateOutputNotC(p_phase); }
+// */
+// // void Phase_Bipolar_ActivateOutputAC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_InvertPolarityC(p_phase, PHASE_ID_C); } _Phase_ActivateOutput(p_phase, PHASE_ID_INV_B); }
+// void Phase_Bipolar_ActivateOutputAC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotB(p_phase); }
+// void Phase_Bipolar_ActivateOutputBC(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotA(p_phase); }
+// void Phase_Bipolar_ActivateOutputBA(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityA(p_phase); } _Phase_ActivateOutputNotC(p_phase); }
+// void Phase_Bipolar_ActivateOutputCA(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityA(p_phase); } _Phase_ActivateOutputNotB(p_phase); }
+// void Phase_Bipolar_ActivateOutputCB(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityB(p_phase); } _Phase_ActivateOutputNotA(p_phase); }
+// void Phase_Bipolar_ActivateOutputAB(const Phase_T * p_phase) { { Phase_Float(p_phase); _Phase_ActivateInvertPolarityB(p_phase); } _Phase_ActivateOutputNotC(p_phase); }
 
-/*
-    PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
-    PwmNegative = PwmPeriodTotal/2 + PwmScalar/2, Inverse polarity
-*/
-void Phase_Bipolar_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); }
-void Phase_Bipolar_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); }
-void Phase_Bipolar_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); }
-void Phase_Bipolar_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); }
-void Phase_Bipolar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); }
-void Phase_Bipolar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); }
+// /*
+//     PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
+//     PwmNegative = PwmPeriodTotal/2 + PwmScalar/2, Inverse polarity
+// */
+// void Phase_Bipolar_ActivateDutyAC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); }
+// void Phase_Bipolar_ActivateDutyBC(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); }
+// void Phase_Bipolar_ActivateDutyBA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); }
+// void Phase_Bipolar_ActivateDutyCA(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); }
+// void Phase_Bipolar_ActivateDutyCB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_C, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); }
+// void Phase_Bipolar_ActivateDutyAB(const Phase_T * p_phase, uint16_t duty) { PWM_WriteDutyMidPlus(&p_phase->PWM_A, duty); PWM_WriteDutyMidPlus(&p_phase->PWM_B, duty); }
 
 
 /******************************************************************************/

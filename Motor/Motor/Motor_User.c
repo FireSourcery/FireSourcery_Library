@@ -285,9 +285,22 @@ void Motor_StartSpeedMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_m
 
     @param[in] speed [-32768:32767] - Rpm Fract16  positive as along direction selected by config
 */
+
+/* direction comp on direction set */
+void Motor_SetSpeedCmd_Fract16(Motor_State_T * p_motor, int16_t speed_fract16)
+{
+    Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Direction * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
+}
+
+void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
+{
+    Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16));
+}
+
+// direction comp on value set
 // void Motor_SetSpeedCmd_Fract16(Motor_State_T * p_motor, int16_t speed_fract16)
 // {
-//     Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
+//     Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * p_motor->Direction * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
 // }
 
 // /* p_motor->Config.SpeedLimitForward_Fract16 as consistent ref, including reverse */
@@ -296,15 +309,6 @@ void Motor_StartSpeedMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_m
 //     Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16));
 // }
 
-void Motor_SetSpeedCmd_Fract16(Motor_State_T * p_motor, int16_t speed_fract16)
-{
-    Ramp_SetTarget(&p_motor->SpeedRamp, p_motor->Config.DirectionForward * p_motor->Direction * math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
-}
-
-void Motor_SetSpeedCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
-{
-    Motor_SetSpeedCmd_Fract16(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16));
-}
 
 /******************************************************************************/
 /*!

@@ -50,43 +50,11 @@ void Phase_Init(const Phase_T * p_phase)
 /*
     Duty only
 */
-static void _Align_WriteDuty(const PWM_T * p_vDuty, const PWM_T * p_vGround1, const PWM_T * p_vGround2, uint16_t duty)
-{
-    PWM_WriteDuty(p_vDuty, duty);
-    PWM_WriteDuty(p_vGround1, 0U);
-    PWM_WriteDuty(p_vGround2, 0U);
-}
-
-static void _AlignInv_WriteDuty(const PWM_T * p_vInv, const PWM_T * p_vDuty1, const PWM_T * p_vDuty2, uint16_t duty)
-{
-    PWM_WriteDuty(p_vInv, 0U);
-    PWM_WriteDuty(p_vDuty1, duty / 2U);
-    PWM_WriteDuty(p_vDuty2, duty / 2U);
-}
-
-void _Phase_AlignA(const Phase_T * p_phase, uint16_t duty)     { Phase_WriteDuty(p_phase, duty, 0U, 0U); } /* _Align_WriteDuty(&p_phase->PWM_A, &p_phase->PWM_B, &p_phase->PWM_C, duty);  */
-void _Phase_AlignB(const Phase_T * p_phase, uint16_t duty)     { Phase_WriteDuty(p_phase, 0U, duty, 0U); }
-void _Phase_AlignC(const Phase_T * p_phase, uint16_t duty)     { Phase_WriteDuty(p_phase, 0U, 0U, duty); }
-void _Phase_AlignInvA(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty(p_phase, 0U, duty/2, duty/2); }
-void _Phase_AlignInvB(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty(p_phase, duty/2, 0U, duty/2); }
-void _Phase_AlignInvC(const Phase_T * p_phase, uint16_t duty)  { Phase_WriteDuty(p_phase, duty/2, duty/2, 0U); }
-
-
-/* Duty Only */
 void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
 {
-    switch (id)
-    {
-        case PHASE_ID_A:        _Phase_AlignA(p_phase, duty);           break;
-        case PHASE_ID_INV_C:    _Phase_AlignInvC(p_phase, duty);        break;
-        case PHASE_ID_B:        _Phase_AlignB(p_phase, duty);           break;
-        case PHASE_ID_INV_A:    _Phase_AlignInvA(p_phase, duty);        break;
-        case PHASE_ID_C:        _Phase_AlignC(p_phase, duty);           break;
-        case PHASE_ID_INV_B:    _Phase_AlignInvB(p_phase, duty);        break;
-        case PHASE_ID_0:        Phase_WriteDuty(p_phase, 0U, 0U, 0U);                     break;
-        case PHASE_ID_ABC:      Phase_WriteDuty(p_phase, duty / 2, duty / 2, duty / 2);   break;
-        default: break;
-    }
+    assert(id != PHASE_ID_ABC);
+    const Phase_Bitmask_T state = Phase_Bitmask(id);
+    Phase_WriteDuty(p_phase, duty * state.A, duty * state.B, duty * state.C);
 }
 
 /* 1 as 1/2 vBus */
