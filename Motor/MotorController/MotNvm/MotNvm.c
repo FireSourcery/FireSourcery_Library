@@ -126,6 +126,18 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
     return status;
 }
 
+NvMemory_Status_T MotNvm_LoadConfigAll(const MotNvm_T * p_motNvm)
+{
+    NvMemory_Status_T status;
+
+    for (size_t i = 0U; i < p_motNvm->PARTITION_COUNT; i++)
+    {
+        memcpy(p_motNvm->P_PARTITIONS[i].RAM_ADDRESS, p_motNvm->P_PARTITIONS[i].NVM_ADDRESS, p_motNvm->P_PARTITIONS[i].SIZE);
+    }
+
+    return status;
+}
+
 /******************************************************************************/
 /*!
 

@@ -237,7 +237,7 @@ typedef struct Motor_State
         State and SubStates
     */
     StateMachine_Active_T StateMachine;
-    volatile uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, calibration, commutation, angle control. Overflow 20Khz: 59 hours */ //ControlCounter
+    uint32_t ControlTimerBase;              /* Control Freq ~ 20kHz, state counter. Overflow 20Khz: 59 hours */
 
     /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Direction of applied/cmd V. Calibration correction applied on get/set access. DirectionMotoring. Applies to: Motoring/Generating Cmd Active Limits, Sensor Interpolation */
@@ -565,8 +565,8 @@ static inline fract16_t Motor_IReqLimitOf(const Motor_State_T * p_motor, int16_t
 
 /* optionally cache 20khz getters */
 /* optionally move target outside */
-static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor)   { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
-static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor)  { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 
 
 static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
