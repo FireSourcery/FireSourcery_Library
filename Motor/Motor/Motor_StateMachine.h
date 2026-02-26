@@ -122,6 +122,13 @@ static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { retu
 static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
 
+/* SubStates */
+// static inline uint32_t Motor_GetControlTimer(const Motor_State_T * p_motor)                      { return p_motor->ControlTimerBase; }
+// static inline Motor_OpenLoopState_T Motor_GetOpenLoopState(const Motor_State_T * p_motor)        { return p_motor->OpenLoopState; }
+// static inline Motor_CalibrationState_T Motor_GetCalibrationState(const Motor_State_T * p_motor)  { return p_motor->CalibrationState; }
+// static inline uint8_t Motor_GetCalibrationStateIndex(const Motor_State_T * p_motor)              { return p_motor->CalibrationStateIndex; }
+
+
 /******************************************************************************/
 /*
 */

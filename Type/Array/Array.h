@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include "void_array.h"
-#include "generic_array.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -80,24 +79,8 @@ static inline void _Array_SetEach(const size_t type, Array_T * p_array, set_t op
 
 /*
     Value Array
-    Generic array implementation - using Macros with _Generic selection for type safety
-
     Compile time typed
-    effectively void array expressed with type prior to what compiler may optimize
-    alternative to handling size parameter, may be faster depending on compiler.
 */
-// static inline int8_t * Array8_At(Array_T * p_array, size_t index) { return &(((int8_t *)p_array->P_BUFFER)[index]); }
-// // static inline void Array8_Assign(Array_T * p_array, int8_t * p_values, size_t length) { memcpy(p_array->P_BUFFER, p_values, length * sizeof(int8_t)); }
-
-// static inline int8_t Array8_Get(Array_T * p_array, size_t index) { return ((int8_t *)p_array->P_BUFFER)[index]; }
-// static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { ((int8_t *)p_array->P_BUFFER)[index] = value; }
-
-// static inline int16_t Array16_Get(Array_T * p_array, size_t index) { return ((int16_t *)p_array->P_BUFFER)[index]; }
-// static inline void Array16_Set(Array_T * p_array, size_t index, int16_t value) { ((int16_t *)p_array->P_BUFFER)[index] = value; }
-
-// static inline int32_t Array32_Get(Array_T * p_array, size_t index)  { return ((int32_t *)p_array->P_BUFFER)[index]; }
-// static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) { ((int32_t *)p_array->P_BUFFER)[index] = value; }
-
 static inline int8_t * Array8_At(Array_T * p_array, size_t index) { return &p_array->P_ARRAY8[index]; }
 
 static inline int8_t Array8_Get(Array_T * p_array, size_t index) { return p_array->P_ARRAY8[index]; }

@@ -81,7 +81,6 @@ bool LimitArray_TrySetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t
     assert(id < p_limit->LENGTH); // Ensure id is within bounds. Compile-time constant
 
     _LimitArray_Values(p_limit)[id] = value;
-
     return TestSetUpper(_LimitArray_State(p_limit), id, value) || TestSetLower(_LimitArray_State(p_limit), id, value);
 }
 

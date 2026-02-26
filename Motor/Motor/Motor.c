@@ -172,19 +172,23 @@ void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->
 /* reset input can be removed for on proc */
 static void ApplySpeedLimit(Motor_State_T * p_motor)
 {
+    p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
+    p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);
     // if (p_motor->FeedbackMode.Speed == 1U) /* speed limit is applied on input, and proc */
     // {
-    //     Ramp_SetTarget(&p_motor->SpeedRamp, Motor_SpeedReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp))); /* clamp the req until the next input */
+    //     Ramp_SetTarget(&p_motor->SpeedRamp, Motor_SpeedRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp))); /* clamp the req until the next input */
     // }
     /* else speed limit is applied on feedback */
-
-    // SpeedLimit_Fract16 = _Motor_GetSpeedLimitActive(p_motor);
 }
 
 /* only speed loop must update */
 // alternatively update on proc
 static void ApplyILimit(Motor_State_T * p_motor)
 {
+    //  set cached limits
+    p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
+    p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
+
     if (p_motor->FeedbackMode.Speed == 1U)  /* limit is applied on feedback */
     {
         if (p_motor->FeedbackMode.Current == 1U) /* SpeedPid Output is I */
@@ -200,12 +204,9 @@ static void ApplyILimit(Motor_State_T * p_motor)
 //     {
 //         if (p_motor->FeedbackMode.Current == 1U)
 //         {
-//             Ramp_SetTarget(&p_motor->TorqueRamp, Motor_IReqLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)));
+//             Ramp_SetTarget(&p_motor->TorqueRamp, Motor_IRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)));
 //         }
 //     }
-//  alternatively set cached limits
-//  p_motor->ILimitCcw_Fract16 =  _Motor_GetILimitCcw(p_motor);
-//  p_motor->ILimitCw_Fract16 =  _Motor_GetILimitCw(p_motor);
 }
 
 /******************************************************************************/
@@ -242,14 +243,6 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
     ApplySpeedLimit(p_motor);
 }
 
-/*
-    Forward/Reverse using calibration param
-    alternatively move to user
-*/
-// void Motor_SetDirectionForward(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor)); }
-// void Motor_SetDirectionReverse(Motor_State_T * p_motor) { Motor_SetDirection(p_motor, Motor_GetDirectionReverse(p_motor)); }
-// void Motor_SetDirectionSign(Motor_State_T * p_motor, int sign) { Motor_SetDirection(p_motor, (Motor_Direction_T)(sign * p_motor->Config.DirectionForward)); }
-
 
 /******************************************************************************/
 /*!
@@ -263,12 +256,14 @@ void Motor_ResetSpeedLimitActive(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitForward_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
     p_motor->SpeedLimitReverse_Fract16 = p_motor->Config.SpeedLimitReverse_Fract16;
+    ApplySpeedLimit(p_motor);
 }
 
 void Motor_ResetILimitActive(Motor_State_T * p_motor)
 {
     p_motor->ILimitMotoring_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
     p_motor->ILimitGenerating_Fract16 = p_motor->Config.ILimitGenerating_Fract16;
+    ApplyILimit(p_motor);
 }
 
 /*
@@ -315,15 +310,15 @@ void Motor_ClearSpeedLimit(Motor_State_T * p_motor)
 /*
     ILimit
 */
-void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_Fract16)
+void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+    p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
     ApplyILimit(p_motor);
 }
 
-void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_Fract16)
+void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_Fract16, p_motor->Config.ILimitGenerating_Fract16);
+    p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
     ApplyILimit(p_motor);
 }
 

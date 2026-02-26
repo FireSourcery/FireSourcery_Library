@@ -24,11 +24,9 @@
 // todo type argument first
 // static inline void * void_pointer_at(const size_t type, const void * p_buffer, size_t index)
 /*!
-    @param TYPE Declare as const. Although this refers to local scope, the `inline` function is intended to unwrap.
+    @param TYPE `inline` function is intended to unwrap.
         size_t TYPE = sizeof(element type)
 */
-
-
 static inline void * void_pointer_at(const void * p_buffer, size_t type, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 
 /*!
@@ -200,6 +198,16 @@ static inline bool void_array_is_any_value(const void * p_buffer, size_t type, s
     )(p_buffer, sizeof(*(p_buffer)), length, function __VA_OPT__(,) __VA_ARGS__)
 
 
+typedef int (*visitor2_t)(const void * p_context, value_t opt1, value_t opt2);
+
+// static inline void _array_foreach(size_t type, void * p_buffer, size_t length, visitor2_t visitor, value_t value1, value_t value2)
+// {
+//     for (size_t index = 0U; index < length; index++) { visitor(void_pointer_at(p_buffer, type, index), value1, value2); }
+// }
+// static inline void void_array_foreach(void * p_buffer, size_t type, size_t length, proc_t unit_op)
+// {
+//     _array_foreach(type, p_buffer, length, (visitor2_t)unit_op, 0, 0);
+// }
 
 /******************************************************************************/
 /*

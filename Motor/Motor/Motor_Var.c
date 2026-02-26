@@ -130,9 +130,9 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
         case MOTOR_VAR_USER_FEEDBACK_MODE:      value = Motor_GetFeedbackMode(p_motor->P_MOTOR_STATE).Value;        break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:       value = Motor_GetPhaseState(p_motor);                               break;
 
-        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_GetSpeedLimitActive(p_motor->P_MOTOR_STATE);          break;
-        case MOTOR_VAR_USER_I_LIMIT_MOTORING:   value = Motor_GetILimitMotoring(p_motor->P_MOTOR_STATE);            break;
-        case MOTOR_VAR_USER_I_LIMIT_GENERATING: value = Motor_GetILimitGenerating(p_motor->P_MOTOR_STATE);          break;
+        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_SpeedLimitMotoring(p_motor->P_MOTOR_STATE);           break;
+        case MOTOR_VAR_USER_I_LIMIT_MOTORING:   value = Motor_ILimitMotoring(p_motor->P_MOTOR_STATE);               break;
+        case MOTOR_VAR_USER_I_LIMIT_GENERATING: value = Motor_ILimitGenerating(p_motor->P_MOTOR_STATE);             break;
         /* RAMP_ON_OFF */
     }
     return value;

@@ -98,7 +98,7 @@ void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
-    p_motor->Config.SpeedRated_Rpm = Motor_GetSpeedVBusRef_Rpm(p_motor);
+    p_motor->Config.SpeedRated_Rpm = _Motor_GetSpeedRated_Rpm(p_motor);
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
@@ -106,7 +106,7 @@ void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 // p_motor->Config.Kv = rpm / Phase_VBus_Volts();
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
 {
-    p_motor->Config.SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVBusRef_Rpm(p_motor) * 2);
+    p_motor->Config.SpeedRated_Rpm = math_min(rpm, _Motor_GetSpeedRated_Rpm(p_motor) * 2);
     PropagateSet(p_motor, Motor_ResetUnits);
 }
 
