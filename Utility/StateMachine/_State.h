@@ -38,7 +38,7 @@
 */
 /******************************************************************************/
 static inline void _State_Action(State_Action_T action, void * p_context) { if (action != NULL) { action(p_context); } }
-static inline State_T * _State_InputVoid(State_InputVoid_T input, void * p_context) { return (input != NULL) ? input(p_context) : NULL; }
+static inline State_T * _State_InputVoid(State_Handler_T input, void * p_context) { return (input != NULL) ? input(p_context) : NULL; }
 
 /******************************************************************************/
 /* Sync Output */
@@ -75,7 +75,7 @@ static inline State_T * _State_CallInput(State_Input_T input, void * p_context, 
     @return [NULL] indicates not accepted input, transition does not exist, no mapped input function.
             [State_Input_T] indicates accepted input, state may transition, or self transition (with or without entry and exit function).
 */
-static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_context, state_input_t inputId)
+static inline State_Input_T State_AcceptInput(State_T * p_state, state_input_t inputId)
 {
     if (inputId < STATE_INPUT_MAPPER_START_ID)
     {
@@ -83,7 +83,7 @@ static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_contex
     }
     else
     {
-        if (p_state->TRANSITION_MAPPER != NULL) { return p_state->TRANSITION_MAPPER(p_context, inputId); }
+        if (p_state->TRANSITION_MAPPER != NULL) { return p_state->TRANSITION_MAPPER(inputId); }
     }
     return NULL;
 }
@@ -103,7 +103,7 @@ static inline State_Input_T State_AcceptInput(State_T * p_state, void * p_contex
 static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
     assert(p_state != NULL);
-    return _State_CallInput(State_AcceptInput(p_state, p_context, inputId), p_context, inputValue);
+    return _State_CallInput(State_AcceptInput(p_state, inputId), p_context, inputValue);
 }
 
 
@@ -119,11 +119,10 @@ static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void *
 }
 
 /* Transition Table defined for every state.. allocate empty for not accepted inputs */
-static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId)
+static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, state_input_t inputId)
 {
     assert(p_state->DEPTH == 0U);
     assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
-    (void)p_context;
 
     // may be skipped
     // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
@@ -135,7 +134,7 @@ static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, void * p_
 
 static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * p_context, state_input_t inputId, state_value_t inputValue)
 {
-    return _State_CallInput(State_AcceptInput(p_state, p_context, inputId), p_context, inputValue);
+    return _State_CallInput(State_AcceptInput(p_state, inputId), p_context, inputValue);
 }
 
 
@@ -159,22 +158,19 @@ static inline void State_Exit(State_T * p_state, void * p_context)
 
 static inline void State_OnTransition(State_T * p_state, State_T * p_new, void * p_context)
 {
-    if (p_new != NULL)
-    {
-        State_Exit(p_state, p_context);
-        State_Entry(p_new, p_context);
-    }
+    State_Exit(p_state, p_context);
+    State_Entry(p_new, p_context);
 }
 
 
 /******************************************************************************/
 /* Accessor */
 /******************************************************************************/
-static inline state_value_t _State_Accessor(State_Accessor_T accessor, void * p_context, state_value_t valueK, state_value_t valueV) { return (accessor != NULL) ? accessor(p_context, valueK, valueV) : 0; }
-static inline state_value_t State_Access(State_T * p_state, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV) { return _State_Accessor(p_state->P_ACCESSOR_TABLE[id], p_context, valueK, valueV); }
+static inline state_value_t _State_Cmd(State_Cmd_T cmd, void * p_context, state_cmd_t id, state_value_t value) { return (cmd != NULL) ? cmd(p_context, value) : 0; }
+static inline state_value_t State_Cmd(State_T * p_state, void * p_context, state_cmd_t id, state_value_t value) { return _State_Cmd(p_state->P_CMD_TABLE[id], p_context, id, value); }
 
-static inline state_value_t _State_Getter(State_GetField_T getter, void * p_context, state_value_t valueK) { return (getter != NULL) ? getter(p_context, valueK) : 0; }
-static inline state_value_t State_GetValue(State_T * p_state, void * p_context, state_input_t id, state_value_t valueK) { return _State_Getter(p_state->P_GET_FIELD_TABLE[id], p_context, valueK); }
+static inline state_value_t _State_Getter(State_GetField_T getter, void * p_context, state_value_t field) { return (getter != NULL) ? getter(p_context, field) : 0; }
+static inline state_value_t State_GetValue(State_T * p_state, void * p_context, state_accessor_t id, state_value_t field) { return _State_Getter(p_state->P_ACCESSOR_TABLE[id].GET, p_context, field); }
 
-static inline void _State_Setter(State_SetField_T setter, void * p_context, state_value_t valueK, state_value_t valueV) { if (setter != NULL) setter(p_context, valueK, valueV); }
-static inline void State_SetValue(State_T * p_state, void * p_context, state_input_t id, state_value_t valueK, state_value_t valueV) { _State_Setter(p_state->P_SET_FIELD_TABLE[id], p_context, valueK, valueV); }
+static inline void _State_Setter(State_SetField_T setter, void * p_context, state_value_t field, state_value_t value) { if (setter != NULL) setter(p_context, field, value); }
+static inline void State_SetValue(State_T * p_state, void * p_context, state_accessor_t id, state_value_t field, state_value_t value) { _State_Setter(p_state->P_ACCESSOR_TABLE[id].SET, p_context, field, value); }

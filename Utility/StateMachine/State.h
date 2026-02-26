@@ -67,6 +67,7 @@ typedef intptr_t state_value_t;     /* Optional input parameter. User define pla
 typedef void (*State_Action_T)(void * p_context);
 
 struct State;
+typedef const struct State State_T;
 
 /******************************************************************************/
 /*!
@@ -88,15 +89,14 @@ struct State;
 /******************************************************************************/
 /*!@{*/
 /*
-    Transition on Input with context
+    Transition on Input with context only.
     Context/Clock Input/Output Handler
-    InputTrigger evaluates with values set in internal context prior to call.
-    Next_T/State_Transition
+    Input Trigger evaluates with values set in internal context prior to call.
 */
-typedef struct State * (*State_InputVoid_T)(void * p_context);
+typedef struct State * (*State_Handler_T)(void * p_context);
 
 /*
-    Transition on Input with immediate parameter, value/ptr
+    Transition on Input with immediate parameter for convenience.
     Value Input/Output Handler
     Alternative to passing all parameters by context. Reduce assigning temporary variables
 */
@@ -106,65 +106,45 @@ typedef struct State * (*State_Input_T)(void * p_context, state_value_t inputExt
     switch(id) handle id look up
     returns NULL as input not accepted. effectively handles case of return status.
 */
-typedef State_Input_T(*State_InputMapper_T)(void * p_context, state_input_t inputId);
-
+typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);  /* optionally for clarity */
+/*!@}*/
 
 /*
     User define full handler switch
-        no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
+    no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
 */
 // typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 
-
-/*!@}*/
-
 // alternatively
-// typedef union
-// {
-//     struct State * (*With0)(void * p_context);
-//     struct State * (*WithValue)(void * p_context, state_value_t inputValue);
-// }
-// State_Transition_T;
-// typedef struct State * (*State_Transition_T)(void * p_context);
-// typedef struct State * (*State_TransitionWith_T)(void * p_context, state_value_t inputValue);
-
+// typedef struct State * (*_State_Transition_T)(void * p_context);
+// typedef struct State * (*_State_TransitionWith_T)(void * p_context, state_value_t inputValue);
 // #ifndef STATE_INPUT_T
-// typedef State_TransitionWith_T State_Input_T;
-
-// typedef const struct
-// {
-//     void (*Function)(void * p_context, state_value_t inputExt);
-//     struct State * (*NEXT)(void * p_context);
-// }
-// State_Input_T;
+// typedef _State_Transition_T State_Output_T;
+// typedef _State_TransitionWith_T State_Input_T;
 // #endif
 
 /******************************************************************************/
 /*
    Generic Value Accessors
    Value access without state transition
-   Inputs maping to a single state, can simply check State ID
+   Inputs mapping to a single state, can simply check State ID
 */
 /******************************************************************************/
-/* Property Getter/Setter */
-// typedef state_value_t(*State_ValueAccessor_T)(void * p_context, state_value_t value);
-// typedef state_value_t(*State_Get_T)(const void * p_context);
-// typedef void(*State_Set_T)(void * p_context, state_value_t value);
-/*  */
-typedef uint8_t state_accessor_t;
-/* super function signature */
-typedef state_value_t(*State_Accessor_T)(void * p_context, state_value_t valueK, state_value_t valueV);
-// typedef value_t (*State_Accessor_T)(void * context, value_t value);
+/* Cmd, non transition input */
+typedef uint8_t state_cmd_t;
+typedef state_value_t(*State_Cmd_T)(void * context, state_value_t value);
 
+/* Property Getter/Setter. paired mapping using the same id. */
 /* Convenient for reusing field ids, and match signature. */
 typedef state_value_t(*State_GetField_T)(const void * p_context, state_value_t valueK);
 typedef void(*State_SetField_T)(void * p_context, state_value_t valueK, state_value_t valueV);
-/* Short hand definition inline*/
-typedef const struct State_AccessorEntry { State_GetField_T GET; State_SetField_T SET; } State_AccessorEntry_T;
-
-// typedef value_t(*State_QueryHandler_T)(const void * context, int query);
-// typedef void (*State_CommandHandler_T)(void * context, int cmd, value_t value);
-
+typedef uint8_t state_accessor_t;
+typedef const struct State_Accessor { State_GetField_T GET; State_SetField_T SET; } State_Accessor_T;
+/* super function signature */
+// typedef state_value_t(*State_Accessor_T)(void * p_context, state_value_t valueK, state_value_t valueV);\
+// keyed by table version
+// typedef state_value_t(*State_Get_T)(const void * p_context);
+// typedef void(*State_Set_T)(void * p_context, state_value_t value);
 
 
 /******************************************************************************/
@@ -190,7 +170,7 @@ typedef const struct State
 
     /* [State Transition of State/Output/Clock] - Transition to a new State_T determined by [P_CONTEXT] state. no external input. "clock only" Transition. */
     /* Separate from LOOP for overriding transition control. Child States can inherit LOOP action while overriding NEXT */
-    State_InputVoid_T NEXT; /* SYNC_TRANSITION */ /* Synchronous Transition Handler. */
+    State_Handler_T NEXT; /* SYNC_TRANSITION */ /* Synchronous Transition Handler. */
     /* Optionally implement module timer */
 
     /*
@@ -229,18 +209,11 @@ typedef const struct State
     /*
         Accessor functions
         State controlled value access
-        InputMap as user outer call, or unrelated to transitions
-        mapped input without transition, no critical section
-        If the accessor calls a transition. that function will be wrapped in a critical section.
+        Input mapped per state unrelated to transitions
+        mapped input without state transition, no critical section
     */
-    const State_Accessor_T * P_ACCESSOR_TABLE; /* Internal Transition */
-    const State_GetField_T * P_GET_FIELD_TABLE; /* Get Field Table */
-    const State_SetField_T * P_SET_FIELD_TABLE; /* Set Field Table */
-    // const State_Accessor_T * P_ACCESSOR_TABLE; /* Internal Transition */
-    //call handle merging id
-    // const State_GetField_T * GET_FIELD; /* Get Field Table */
-    // const State_SetField_T * SET_FIELD; /* Set Field Table */
-
+    const State_Cmd_T * P_CMD_TABLE; /* Internal Transition */
+    const State_Accessor_T * P_ACCESSOR_TABLE; /* Virtual getter setter */
 
     /*
         [Hierarchical State Machine]
@@ -258,12 +231,9 @@ typedef const struct State
     uint8_t DEPTH;                  /* Depth of state. Depth must be consistent for iteration */
     const struct State * P_TOP;     /* SubStates maintain pointer to top level state. */
 
-    // const void * P_EXT_PROPERTIES; /* Maybe more convenient than inheritance */
 
     // /* const sub-TYPE context */
-    // const void * P_EXTENSION; /*  */
-    // VarAccess_VTable_T optionally include
-
+    // const void * P_EXTENSION; /* Maybe more convenient than inheritance */
     /* non const sub-STATE context */
     // void * (* const SUBSTATE_CONTEXT)(void * p_context); /* Retrieve mutable State data from p_context. */
 

@@ -74,8 +74,17 @@ extern State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2);
 extern State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context);
 extern State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context);
 
+
+
+extern State_Input_T State_AcceptInputUp(State_T * p_start, state_input_t id);
+extern State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, state_input_t id);
 extern State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_input_t id, state_value_t value);
 extern State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value);
+
+
+State_Input_T State_AcceptInput_RootFirst(State_T * p_start, state_input_t id);
+State_T * State_TransitionOfInput_RootFirst(State_T * p_start, void * p_context, state_input_t id, state_value_t value);
+State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context);
 
 extern void State_TraverseEntryExitThrough(State_T * p_start, State_T * p_common, State_T * p_end, void * p_context);
 extern void State_TraverseEntryExit(State_T * p_start, State_T * p_end, void * p_context);

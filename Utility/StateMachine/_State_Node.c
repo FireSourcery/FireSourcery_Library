@@ -93,33 +93,36 @@ bool State_IsDirectLineage(State_T * p_active, State_T * p_test)
 /* May include itself */
 State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 {
+    assert(p_state1 != NULL);
+    assert(p_state2 != NULL);
     State_T * p_iterator1 = p_state1;
     State_T * p_iterator2 = p_state2;
 
-    // if (p_iterator1 != NULL && p_iterator2 != NULL)
-    assert(p_iterator1 != NULL);
-    assert(p_iterator2 != NULL);
-    {
-        // Bring both nodes to the same level
-        while (p_iterator1->DEPTH > p_iterator2->DEPTH) { p_iterator1 = p_iterator1->P_PARENT; }
-        while (p_iterator2->DEPTH > p_iterator1->DEPTH) { p_iterator2 = p_iterator2->P_PARENT; }
+    // if (p_iterator1->DEPTH == 0) { return p_iterator1; }
+    // if (p_iterator2->DEPTH == 0) { return p_iterator2; }
 
-        // Traverse upwards until both nodes meet
-        while (p_iterator1 != p_iterator2)
-        {
-            p_iterator1 = p_iterator1->P_PARENT;
-            p_iterator2 = p_iterator2->P_PARENT;
-        }
+    // Bring both nodes to the same level
+    while (p_iterator1->DEPTH > p_iterator2->DEPTH) { p_iterator1 = p_iterator1->P_PARENT; }
+    while (p_iterator2->DEPTH > p_iterator1->DEPTH) { p_iterator2 = p_iterator2->P_PARENT; }
+
+    // Traverse upwards until both nodes meet
+    while (p_iterator1 != p_iterator2)
+    {
+        p_iterator1 = p_iterator1->P_PARENT;
+        p_iterator2 = p_iterator2->P_PARENT;
     }
 
     return p_iterator1;
-
-    // if (p_state1 == NULL || p_state2 == NULL) { return NULL; }
-    // if (p_state1 == p_state2) { return p_state1; }
-    // if (p_state1->DEPTH > p_state2->DEPTH) { return State_CommonAncestorOf(p_state1->P_PARENT, p_state2); }
-    // if (p_state1->DEPTH < p_state2->DEPTH) { return State_CommonAncestorOf(p_state1, p_state2->P_PARENT); }
-    // return State_CommonAncestorOf(p_state1->P_PARENT, p_state2->P_PARENT);
 }
+
+// State_T * State_CommonAncestorOf_Recursive(State_T * p_state1, State_T * p_state2)
+// {
+//     if (p_state1 == NULL || p_state2 == NULL) { return NULL; }
+//     if (p_state1 == p_state2) { return p_state1; }
+//     if (p_state1->DEPTH > p_state2->DEPTH) { return State_CommonAncestorOf_Recursive(p_state1->P_PARENT, p_state2); }
+//     if (p_state1->DEPTH < p_state2->DEPTH) { return State_CommonAncestorOf_Recursive(p_state1, p_state2->P_PARENT); }
+//     return State_CommonAncestorOf_Recursive(p_state1->P_PARENT, p_state2->P_PARENT);
+// }
 
 /* Capture on Traverse Up, store for iterative traverse down. */
 /*!
@@ -212,7 +215,6 @@ static inline void * ApplyUp(State_T * p_start, void * p_context, State_Visitor_
 
 
 
-
 /******************************************************************************/
 /*
     State Tree Functions
@@ -222,7 +224,10 @@ static inline void * ApplyUp(State_T * p_start, void * p_context, State_Visitor_
     Visitor Wrap
 */
 static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
-static inline void * AcceptInputVisitor(State_T * p_state, void * p_context, int id) { return (void *)State_AcceptInput(p_state, p_context, id); }
+static inline void * AcceptInputVisitor(State_T * p_state, void * nil, int id) { (void)nil; return (void *)State_AcceptInput(p_state, id); }
+static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
+static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
+
 
 /******************************************************************************/
 /*
@@ -248,6 +253,16 @@ State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void 
     return (State_T *)ApplyUpTo(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
 }
 
+/*
+    Using compile time mapped Root
+*/
+State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context)
+{
+    State_T * p_next = State_TransitionOfOutput_AsTop(_State_GetRoot(p_start), p_context);
+    if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
+    return p_next;
+}
+
 
 /******************************************************************************/
 /*
@@ -259,39 +274,53 @@ State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void 
     Traversal stops when input is defined, even if no state transition. alternatively
     Inputs using id always include top level
 */
-State_Input_T State_AcceptInputUp(State_T * p_start, void * p_context, state_input_t id)
+State_Input_T State_AcceptInputUp(State_T * p_start,  state_input_t id)
 {
-    return (State_Input_T)ApplyUp(p_start, p_context, AcceptInputVisitor, id);
+    return (State_Input_T)ApplyUp(p_start, NULL, AcceptInputVisitor, id);
 }
 
 /* Transition of Traverse Input */
 State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_AcceptInputUp(p_start, p_context, id), p_context, value);
+    return _State_CallInput(State_AcceptInputUp(p_start, id), p_context, value);
 }
 
-State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id)
+State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, state_input_t id)
 {
-    return (State_Input_T)ApplyUpTo(p_start, p_end, p_context, AcceptInputVisitor, id);
+    return (State_Input_T)ApplyUpTo(p_start, p_end, NULL, AcceptInputVisitor, id);
 }
 
 State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_AcceptInputUpTo(p_start, p_end, p_context, id), p_context, value);
+    return _State_CallInput(State_AcceptInputUpTo(p_start, p_end, id), p_context, value);
 }
+
+/*
+
+*/
+// static State_Input_T _AcceptInputRootFirst(State_T * p_start, State_T * p_root, State_Input_T input, state_input_t id)
+// {
+//     return (input != NULL) ? input : State_AcceptInputUpTo(p_start, p_root, id);
+// }
+
+State_Input_T State_AcceptInput_RootFirst(State_T * p_start, state_input_t id)
+{
+    State_Input_T input = State_AcceptInput_AsTop(_State_GetRoot(p_start), id);
+    if (input != NULL) { input = State_AcceptInputUpTo(p_start, _State_GetRoot(p_start), id); } /* 2 extra comparisons, when active state is root state, compared to Flat StateMachine */
+    return input;
+}
+
+State_T * State_TransitionOfInput_RootFirst(State_T * p_start, void * p_context, state_input_t id, state_value_t value)
+{
+    return _State_CallInput(State_AcceptInput_RootFirst(p_start, id), p_context, value);
+}
+
 
 /******************************************************************************/
 /*
-    Traverse OnTransition State_Actions
+    State Traverse OnTransition State_Actions
 */
 /******************************************************************************/
-/******************************************************************************/
-/* State Branch Transition */
-/******************************************************************************/
-static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
-static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
-
-
 /*!
     Call Exit traversing up the tree
     @param[in] p_common == NULL process full path

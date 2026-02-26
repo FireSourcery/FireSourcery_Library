@@ -118,19 +118,19 @@ static inline void _StateMachine_SetSyncTransition(StateMachine_Active_T * p_act
     Accessor - Value without Transition
 */
 /******************************************************************************/
-static inline state_value_t _StateMachine_Access(const StateMachine_Active_T * p_active, void * p_context, int id, state_value_t valueK, state_value_t valueV)
+static inline state_value_t _StateMachine_Cmd(const StateMachine_Active_T * p_active, void * p_context, state_cmd_t id, state_value_t value)
 {
-    return State_Access(StateMachine_GetActiveState(p_active), p_context, id, valueK, valueV);
+    return State_Cmd(StateMachine_GetActiveState(p_active), p_context, id,  value);
 }
 
-static inline void _StateMachine_SetValue(const StateMachine_Active_T * p_active, void * p_context, int id, state_value_t valueK, state_value_t valueV)
+static inline void _StateMachine_SetValue(const StateMachine_Active_T * p_active, void * p_context, state_accessor_t id, state_value_t field, state_value_t value)
 {
-    State_SetValue(StateMachine_GetActiveState(p_active), p_context, id, valueK, valueV);
+    State_SetValue(StateMachine_GetActiveState(p_active), p_context, id, field, value);
 }
 
-static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T * p_active, void * p_context, int id, state_value_t valueK)
+static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T * p_active, void * p_context, state_accessor_t id, state_value_t field)
 {
-    return State_GetValue(StateMachine_GetActiveState(p_active), p_context, id, valueK);
+    return State_GetValue(StateMachine_GetActiveState(p_active), p_context, id, field);
 }
 
 /******************************************************************************/

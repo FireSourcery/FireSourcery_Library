@@ -214,7 +214,7 @@ static const State_T STATE_INIT =
     .ID                 = MCSM_STATE_ID_INIT,
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
-    .NEXT               = (State_InputVoid_T)Init_Next,
+    .NEXT               = (State_Handler_T)Init_Next,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
 };
 
@@ -305,7 +305,7 @@ static const State_T STATE_PARK =
     .ID     = MCSM_STATE_ID_PARK,
     .ENTRY  = (State_Action_T)Park_Entry,
     .LOOP   = (State_Action_T)Park_Proc,
-    // .NEXT   = (State_InputVoid_T)Park_Next,
+    // .NEXT   = (State_Handler_T)Park_Next,
     .P_TRANSITION_TABLE = &PARK_TRANSITION_TABLE[0U],
 };
 
@@ -677,7 +677,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartCalibrateAdc,
     .LOOP = (State_Action_T)ProcCalibrateAdc,
-    .NEXT = (State_InputVoid_T)EndCalibrateAdc,
+    .NEXT = (State_Handler_T)EndCalibrateAdc,
 };
 
 
@@ -710,7 +710,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)0,
 //     .LOOP = (State_Action_T)0,
-//     .NEXT = (State_InputVoid_T)0,
+//     .NEXT = (State_Handler_T)0,
 // };
 
 
@@ -807,25 +807,25 @@ static const State_T STATE_FAULT =
 /* todo thread safe without lock */
 void MotorController_EnterFault(const MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, -1); }
 }
 
 bool MotorController_ExitFault(const MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
+    if (MotorController_IsFault(p_context) == true) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
     return !MotorController_IsFault(p_context);
 }
 
 // ((const MotorController_FaultFlags_T) { .VAccsLimit = 1U }).Value
 void MotorController_SetFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    if (MotorController_IsFault(p_context) == false) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
 }
 
 /* ensure repeat inputs without lock do not mismatch */
 void MotorController_ClearFault(const MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_Branch_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
+    if (MotorController_IsFault(p_context) == true) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, ~faultFlags); }
     // return !MotorController_IsFault(p_context); /* alternatively use cleared diff */
 }
 

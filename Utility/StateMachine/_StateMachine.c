@@ -82,6 +82,11 @@ inline void _StateMachine_Transition(StateMachine_Active_T * p_active, void * p_
     if (p_next != NULL) { _StateMachine_TransitionTo(p_active, p_context, p_next); }
 }
 
+inline void _StateMachine_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T next, state_value_t value)
+{
+    if (StateMachine_IsActiveState(p_active, p_start) == true) { _StateMachine_Transition(p_active, p_context, next(p_context, value)); }
+}
+
 /*
     Process user defined handlers output
     and return mapped state.
@@ -176,10 +181,6 @@ inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_act
     _StateMachine_SetSyncTransition(p_active, OfInput(p_active, p_context, id, value)); /* transition will run before SYNC_OUTPUT */
 }
 
-inline void _StateMachine_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T next, state_value_t value)
-{
-    if (StateMachine_IsActiveState(p_active, p_start) == true) { _StateMachine_Transition(p_active, p_context, next(p_context, value)); }
-}
 
 /******************************************************************************/
 /*

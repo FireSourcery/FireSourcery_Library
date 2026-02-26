@@ -198,13 +198,13 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)StartHoming,
 //     .LOOP       = (State_Action_T)ProcHoming,
-//     .NEXT       = (State_InputVoid_T)HomingTransition,
+//     .NEXT       = (State_Handler_T)HomingTransition,
 // };
 
 
 // void Motor_Encoder_StartHoming(const Motor_T * p_motor)
 // {
-//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 // }
 
 // /*  */
@@ -280,7 +280,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)Motor_FOC_StartStartUpAlign,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcStartUpAlign,
-//     .NEXT       = (State_InputVoid_T)AlignZeroNext,
+//     .NEXT       = (State_Handler_T)AlignZeroNext,
 // };
 
 
@@ -340,7 +340,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)ValidateAlign,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcOpenLoop,
-//     .NEXT       = (State_InputVoid_T)ValidateAlignNext,
+//     .NEXT       = (State_Handler_T)ValidateAlignNext,
 // };
 
 
@@ -391,7 +391,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)NULL,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcAngleControl,
-//     .NEXT       = (State_InputVoid_T)ValidateClosedLoopTransition,
+//     .NEXT       = (State_Handler_T)ValidateClosedLoopTransition,
 //     // .P_TRANSITION_TABLE = NULL,
 // };
 
@@ -406,8 +406,8 @@
 // /* individual state test */
 // void Motor_Encoder_StartAlignZero(const Motor_T * p_motor)
 // {
-//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_Align, };
-//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)Cmd_Align, };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 // static State_T * Cmd_ValidateAlign(const Motor_T * p_motor, state_value_t null)
@@ -417,8 +417,8 @@
 
 // void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor)
 // {
-//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateAlign, };
-//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)Cmd_ValidateAlign, };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 
@@ -429,8 +429,8 @@
 
 // void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor)
 // {
-//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)Cmd_ValidateClosedLoop, };
-//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
+//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)Cmd_ValidateClosedLoop, };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0);
 // }
 
 
@@ -454,7 +454,7 @@
 
 //     // .ENTRY = (State_Action_T) ,
 //     // .LOOP = (State_Action_T) ,
-//     .NEXT = (State_InputVoid_T)StartUpTransition,
+//     .NEXT = (State_Handler_T)StartUpTransition,
 // };
 
 // static const State_T START_UP_ALIGN =
@@ -465,12 +465,12 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)Motor_FOC_StartStartUpAlign,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcStartUpAlign,
-//     .NEXT = (State_InputVoid_T)StartUpAlignTransition,
+//     .NEXT = (State_Handler_T)StartUpAlignTransition,
 
 //     // .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 //     // .P_PARENT = &ALIGN,
 //     // .DEPTH = 2U,
-//     // .NEXT = (State_InputVoid_T)StartUpAlignTransition,
+//     // .NEXT = (State_Handler_T)StartUpAlignTransition,
 // };
 
 // static const State_T START_UP_VALIDATE_ALIGN =
@@ -481,7 +481,7 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)ValidateAlign,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcOpenLoop,
-//     .NEXT = (State_InputVoid_T)StartUpValidateAlignTransition,
+//     .NEXT = (State_Handler_T)StartUpValidateAlignTransition,
 // };
 
 // static const State_T START_UP_VALIDATE_CLOSED_LOOP =
@@ -492,7 +492,7 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)NULL,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcAngleControl,
-//     .NEXT = (State_InputVoid_T)StartUpValidateClosedLoopTransition,
+//     .NEXT = (State_Handler_T)StartUpValidateClosedLoopTransition,
 // };
 
 // static State_T * StartUpTransition(const Motor_T * p_motor)
@@ -532,8 +532,8 @@
 
 // void Motor_Encoder_StartUpChain(const Motor_T * p_motor)
 // {
-//     static const StateMachine_TransitionCmd_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .TRANSITION = (State_Input_T)StartUpChain , };
-//     StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
+//     static const StateMachine_TransitionCmd_T  START_UP_CHAIN = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)StartUpChain , };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &START_UP_CHAIN, 0);
 // }
 
 

@@ -162,15 +162,15 @@ typedef struct Motor_Config
     /*
         Calibration parameters
     */
-    /* Config stored in Electrical Degrees need to sync with pole pairs */
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
-    uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. */
+    uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
 
     /*
         Derived Parameters during initialization or from Host
         alternatively store as control domain units
     */
+    /* Config stored in Electrical Degrees need to sync with pole pairs */
     // uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
     // uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
 
@@ -242,9 +242,8 @@ typedef struct Motor_State
     /* Effectively Substates StateMachine Controlled */
     Motor_Direction_T Direction;            /* Direction of applied/cmd V. Calibration correction applied on get/set access. DirectionMotoring. Applies to: Motoring/Generating Cmd Active Limits, Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
-    /*  */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
-    volatile uint8_t CalibrationStateIndex;
+    uint8_t CalibrationStateIndex;
 
     /*
         Position Sensor
@@ -326,7 +325,6 @@ typedef struct Motor_State
         Six-Step
     */
 #if defined(MOTOR_SIX_STEP_ENABLE)
-    // PID_T PidIBus;
     /* MotorSixStep_T */
     BEMF_T Bemf;
     Phase_Id_T NextPhase;
@@ -343,7 +341,7 @@ typedef struct Motor_State
 
 #if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     // volatile uint32_t MicrosRef;
-    volatile uint32_t DebugCounter;
+    // volatile uint32_t DebugCounter;
 #endif
 }
 Motor_State_T;

@@ -99,14 +99,14 @@ static const State_T CALIBRATION_STATE =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)StartCalibration,
     .LOOP       = (State_Action_T)ProcCalibration,
-    .NEXT       = (State_InputVoid_T)EndCalibration,
+    .NEXT       = (State_Handler_T)EndCalibration,
 };
 
 static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE; }
 
 void Motor_Analog_Calibrate(const Motor_T * p_motor)
 {
-    // StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Calibration_Start };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }

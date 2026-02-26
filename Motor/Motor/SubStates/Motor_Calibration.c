@@ -106,7 +106,7 @@ static const State_T CALIBRATION_STATE_HOMING =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)Homing_Entry,
     .LOOP       = (State_Action_T)Homing_Proc,
-    .NEXT       = (State_InputVoid_T)Homing_End,
+    .NEXT       = (State_Handler_T)Homing_End,
 };
 
 static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
@@ -118,10 +118,10 @@ static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
 /* Transition from any Calibration State */
 void Motor_Calibration_StartHome(const Motor_T * p_motor)
 {
-    static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Homing_Start, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
+    static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Homing_Start, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 
-    // StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
+    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
 }
 
 
@@ -187,7 +187,7 @@ const State_T CALIBRATION_STATE_TUNNING =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)Tuning_Entry,
     .LOOP       = (State_Action_T)Tuning_Proc,
-    // .NEXT       = (State_InputVoid_T)Calibration_TuningEnd,
+    // .NEXT       = (State_Handler_T)Calibration_TuningEnd,
 };
 
 static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -203,15 +203,15 @@ static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH]
 
 // void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
 // {
-//     StateMachine_Branch_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
+//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
 // }
 
 static State_T * Tuning_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE_TUNNING; }
 
 void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
 {
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .TRANSITION = (State_Input_T)Tuning_Start };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Tuning_Start };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
 

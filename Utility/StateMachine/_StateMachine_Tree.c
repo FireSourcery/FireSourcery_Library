@@ -39,7 +39,7 @@
 /******************************************************************************/
 
 /*
-    Branch Transitions
+    Traverse Transition Common
 
     Implementation defined with known valid [p_state]
     Proc p_state->P_TOP->ENTRY if State_CommonAncestorOf is NULL
@@ -60,8 +60,21 @@ void _StateMachine_TraverseTransition(StateMachine_Active_T * p_active, void * p
 }
 
 /*
-    Transition Function Mapping
+    For inputs/transition mapped to specific states, rather than all states
+    check if p_start is included in the active path
 */
+void _StateMachine_InvokeTraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value)
+{
+    if (StateMachine_IsActivePath(p_active, p_start) == true) { _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value)); }
+}
+
+
+/******************************************************************************/
+/*
+    Transition Function Mapping
+    Walk up Leaf -> Root
+*/
+/******************************************************************************/
 static inline State_T * OfState(const StateMachine_Active_T * p_active, void * p_context)
 {
     return State_TransitionOfOutputUp(StateMachine_GetLeafState(p_active), p_context);
@@ -75,14 +88,12 @@ static inline State_T * OfInput(const StateMachine_Active_T * p_active, void * p
 /*
     Proc Branch State
 */
-/* traversing up for now */
 void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_TraverseTransition(p_active, p_context, OfState(p_active, p_context));
 }
 
 /* Transition immediately */
-/* Optional call with AsyncInput */
 void _StateMachine_Branch_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     _StateMachine_TraverseTransition(p_active, p_context, OfInput(p_active, p_context, id, value));
@@ -124,18 +135,6 @@ void _StateMachine_Branch_ApplyAsyncInput(StateMachine_Active_T * p_active, void
    _StateMachine_SetSyncTransition(p_active, OfInput(p_active, p_context, id, value));
 }
 
-/*
-    For inputs/transition mapped to specific states, rather than all states
-    check if p_start is included in the active path
-*/
-void _StateMachine_Branch_InvokeTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value)
-{
-    if (StateMachine_IsActivePath(p_active, p_start) == true)
-    {
-        assert(State_IsAncestorOrSelf(p_start, StateMachine_GetRootState(p_active))); /* ensure substate is in sync with top level state */
-        _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value));
-    }
-}
 
 
 /******************************************************************************/
@@ -150,6 +149,113 @@ void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_contex
     _StateMachine_Branch_ProcSyncInput(p_active, p_context);
     _StateMachine_Branch_ProcSyncOutput(p_active, p_context);
 }
+
+
+/******************************************************************************/
+/*
+    RootFirst once, then Leaf up excluding Root
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
+    Root-first:
+        1. Check root once (preemptive)
+        2. If none, then leaf -> ancestors excluding root
+
+*/
+/******************************************************************************/
+static inline State_T * RootFirstOutput(StateMachine_Active_T * p_active, void * p_context)
+{
+    return State_TransitionOfOutput_RootFirst(StateMachine_GetLeafState(p_active), p_context);
+}
+
+static inline State_T * RootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    return State_TransitionOfInput_RootFirst(StateMachine_GetLeafState(p_active), p_context, id, value);
+}
+
+/*
+    Same as Flat OfState if ActiveState is macro as RootState
+*/
+static inline State_T * RootOutput(StateMachine_Active_T * p_active, void * p_context)
+{
+    return State_TransitionOfOutput_AsTop(StateMachine_GetRootState(p_active), p_context);
+}
+
+static inline State_T * RootInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    return State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
+}
+
+/*
+
+*/
+void _StateMachine_RootFirst_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
+{
+    _StateMachine_TraverseTransition(p_active, p_context, RootFirstOutput(p_active, p_context));
+}
+
+void _StateMachine_RootFirst_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    _StateMachine_TraverseTransition(p_active, p_context, RootFirstInput(p_active, p_context, id, value));
+}
+
+/* Apply the input to Root only. check top state only. traverse on transition compatibility */
+void _StateMachine_RootOnly_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    _StateMachine_TraverseTransition(p_active, p_context, RootInput(p_active, p_context, id, value));
+    // _StateMachine_Transition
+}
+
+void _StateMachine_RootFirst_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context)
+{
+    for (uint32_t inputMask = p_active->SyncInputMask; inputMask != 0UL; inputMask &= (inputMask - 1))
+    {
+        state_input_t input = __builtin_ctz(inputMask);
+        _StateMachine_RootFirst_CallInput(p_active, p_context, input, p_active->SyncInputs[input]);
+    }
+    p_active->SyncInputMask = 0UL;
+}
+
+/*
+    Pending transition (buffered async):
+    Apply root-level or branch target.
+*/
+void _StateMachine_RootFirst_ProcSyncTransition(StateMachine_Active_T * p_active, void * p_context)
+{
+    _StateMachine_TraverseTransition(p_active, p_context, p_active->p_SyncNextState);
+    p_active->p_SyncNextState = NULL;
+}
+
+/*
+    Inputs may be selected per call
+    Optional
+*/
+/*
+    Async input buffering (root-first selection):
+    Store only; application deferred to processing phase.
+    Last input wins
+*/
+void _StateMachine_RootFirst_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    _StateMachine_SetSyncTransition(p_active, RootFirstInput(p_active, p_context, id, value));
+}
+
+/*
+    Full root-first cycle:
+        Apply pending
+        Output transitions (root-first then branch)
+        Sync inputs (root-first per event)
+*/
+void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_context)
+{
+    _StateMachine_RootFirst_ProcSyncTransition(p_active, p_context);
+    _StateMachine_RootFirst_ProcSyncOutput(p_active, p_context); /* LOOP first, tighter constrains. results from sync inputs delayed 1 cycle */
+    _StateMachine_RootFirst_ProcSyncInput(p_active, p_context);
+}
+
+
+
 
 /*
     NestedBranch
@@ -187,149 +293,3 @@ void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_contex
 //      p_next = State_TransitionOfInputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value); }
 // }
 
-
-
-/******************************************************************************/
-/*
-    RootFirst once, then Leaf up excluding Root
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-    Hybrid usage
-
-    ProcInput function may be selected per [state_input_t] call.
-        StateMachine_ApplyInput -   ignores substate exit functions. need to map GetActiveState to Root
-        StateMachine_Branch_ApplyInput
-        opt StateMachine_ProcRootFirstInput - 0, n to 1, early return on root transition. optional
-
-    ProcRootFirstState requires unique implementation,
-        common buffers must be consumed by first proc
-        Early return functions slightly more optimal
-
-        _StateMachine_ProcState(p_active, p_context);
-        _StateMachine_ProcBranchLeafToRoot(p_active, p_context);
-
-    ProcState
-        StateMachine_ProcState
-        StateMachine_ProcBranch - n to 0
-        StateMachine_ProcRootFirst - 0, n to 1
-*/
-/******************************************************************************/
-// static inline State_T * RootFirstOutput(StateMachine_Active_T * p_active, void * p_context)
-// {
-//     State_T * p_next = State_TransitionOfOutput_AsTop(StateMachine_GetRootState(p_active), p_context);
-//     if (p_next == NULL) { p_next = State_TraverseTransitionOfOutputRange(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context); }
-//     return p_next;
-// }
-
-// static inline State_T * RootFirstInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-// {
-//     State_T * p_next = State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
-//     if (p_next == NULL) { p_next = State_TraverseTransitionOfInputRange(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value); }
-//     return p_next;
-// }
-
-/*
-    Assume all top state Entry/Exit handle all cases. alternatively exit only
-*/
-void _StateMachine_RootFirst_Transition(StateMachine_Active_T * p_active, void * p_context, State_T * p_state)
-{
-    if (p_state != NULL)
-    {
-        if (p_state->DEPTH == 0U) { _StateMachine_TransitionTo(p_active, p_context, p_state); } /* Pure top-level transition. */
-        else { _StateMachine_TraverseTransitionTo(p_active, p_context, p_state); }  /* Treat as hierarchical target – traverse from current leaf */
-    }
-}
-
-
-/*
-    Root-first output:
-    1. Check root once (preemptive)
-    2. If none, then leaf -> ancestors excluding root
-*/
-void _StateMachine_RootFirst_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
-{
-    State_T * p_next = State_TransitionOfOutput_AsTop(StateMachine_GetRootState(p_active), p_context);
-    if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context); } /* Skiped if Root transitions */
-    _StateMachine_RootFirst_Transition(p_active, p_context, p_next);
-
-    // if (p_next != NULL) { _StateMachine_TransitionTo(p_active, p_context, p_next); }
-    // else  /* Skiped if Root transitions */
-    // {
-    //     p_next = State_TransitionOfOutputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context);
-    //     _StateMachine_TraverseTransitionTo(p_active, p_context, p_next);
-    // }
-    // alternatively less special logic, may transition twice
-    // _StateMachine_ProcSyncOutput
-    // _StateMachine_Branch_ProcSyncOutputUpTo(p_active, p_context, StateMachine_GetRootState(p_active));
-}
-
-/*
-    Root-first input (single event):
-    1. Root handler first
-    2. If none, traverse leaf -> up (exclude root)
-*/
-void _StateMachine_RootFirst_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-{
-    State_T * p_next = State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value);
-    if (p_next == NULL) { p_next = State_TransitionOfInputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value); }
-    _StateMachine_RootFirst_Transition(p_active, p_context, p_next);
-}
-
-/* check top state only. traverse on transition */
-void _StateMachine_RootOnly_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-{
-    _StateMachine_TraverseTransition(p_active, p_context, State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value));
-}
-
-void _StateMachine_RootFirst_ProcSyncInput(StateMachine_Active_T * p_active, void * p_context)
-{
-    for (uint32_t inputMask = p_active->SyncInputMask; inputMask != 0UL; inputMask &= (inputMask - 1))
-    {
-        state_input_t input = __builtin_ctz(inputMask);
-        _StateMachine_RootFirst_CallInput(p_active, p_context, input, p_active->SyncInputs[input]);
-    }
-    p_active->SyncInputMask = 0UL;
-}
-
-/*
-    Pending transition (buffered async):
-    Apply root-level or branch target.
-*/
-void _StateMachine_RootFirst_ProcSyncTransition(StateMachine_Active_T * p_active, void * p_context)
-{
-    _StateMachine_RootFirst_Transition(p_active, p_context, p_active->p_SyncNextState);
-    p_active->p_SyncNextState = NULL;
-}
-
-/*
-    Inputs may be selected per call
-    Optional
-*/
-/*
-    Async input buffering (root-first selection):
-    Store only; application deferred to processing phase.
-    Last input wins
-*/
-void _StateMachine_RootFirst_ApplyAsyncInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
-{
-    _StateMachine_SetSyncTransition(p_active, State_TransitionOfInput_AsTop(StateMachine_GetRootState(p_active), p_context, id, value));
-    if (p_active->p_SyncNextState == NULL)
-    {
-        p_active->p_SyncNextState = State_TransitionOfInputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value);
-    }
-}
-
-/*
-    Full root-first cycle:
-        Apply pending
-        Output transitions (root-first then branch)
-        Sync inputs (root-first per event)
-*/
-void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_context)
-{
-    _StateMachine_RootFirst_ProcSyncTransition(p_active, p_context);
-    _StateMachine_RootFirst_ProcSyncOutput(p_active, p_context); /* LOOP first, tighter constrains. results from sync inputs delayed 1 cycle */
-    _StateMachine_RootFirst_ProcSyncInput(p_active, p_context);
-}

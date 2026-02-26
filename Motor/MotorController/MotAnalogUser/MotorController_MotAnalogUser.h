@@ -67,5 +67,5 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)StartCalibrateAdc,
 //     .LOOP = (State_Action_T)ProcCalibrateAdc,
-//     .NEXT = (State_InputVoid_T)EndCalibrateAdc,
+//     .NEXT = (State_Handler_T)EndCalibrateAdc,
 // };

@@ -132,7 +132,7 @@ const State_T MOTOR_STATE_INIT =
     .ID                 = MSM_STATE_ID_INIT,
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
-    .NEXT               = (State_InputVoid_T)Init_Next,
+    .NEXT               = (State_Handler_T)Init_Next,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
 };
 
@@ -691,13 +691,13 @@ const State_T MOTOR_STATE_FAULT =
 /******************************************************************************/
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {
-    if (Motor_IsFault(p_motor) == false) { StateMachine_Branch_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, -1); }
+    if (Motor_IsFault(p_motor) == false) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, -1); }
 }
 
 /*! @return true if no fault remains */
 bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 {
-    if (Motor_IsFault(p_motor) == true) { StateMachine_Branch_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0); }
+    if (Motor_IsFault(p_motor) == true) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0); }
     return !Motor_IsFault(p_motor);
 }
 
@@ -706,13 +706,13 @@ bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 */
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_IsFault(p_motor) == false) { StateMachine_Branch_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
+    if (Motor_IsFault(p_motor) == false) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
 }
 
 /* faultFlags unused for now */
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_IsFault(p_motor) == true) { StateMachine_Branch_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, ~faultFlags.Value); }
+    if (Motor_IsFault(p_motor) == true) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, ~faultFlags.Value); }
 }
 
 

@@ -102,7 +102,7 @@ static State_T * Drive_InputCmdStart(const MotorController_T * p_mc, state_value
     return NULL;
 }
 
-State_Input_T Drive_TransitionMapper(MotorController_T * p_context, state_input_t inputId)
+State_Input_T Drive_TransitionMapper(state_input_t inputId)
 {
     State_Input_T p_inputHandler = NULL;
     switch (inputId)
@@ -194,7 +194,7 @@ static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_val
     return NULL;
 }
 
-State_Input_T Neutral_TransitionMapper(MotorController_T * p_context, state_input_t inputId)
+State_Input_T Neutral_TransitionMapper(state_input_t inputId)
 {
     State_Input_T p_inputHandler = NULL;
     switch (inputId)
@@ -259,8 +259,8 @@ void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd
 // alternatively include from park
 // void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction)
 // {
-//     static StateMachine_TransitionCmd_T CMD = { .P_START = &PARK, .TRANSITION = (State_Input_T) , };
-//     StateMachine_Branch_InvokeTransition(&p_mc->STATE_MACHINE, &CMD, direction);
+//     static StateMachine_TransitionCmd_T CMD = { .P_START = &PARK, .NEXT = (State_Input_T) , };
+//     StateMachine_Tree_InvokeTransition(&p_mc->STATE_MACHINE, &CMD, direction);
 // }
 
 // alternatively
@@ -483,6 +483,6 @@ int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T 
 //     .P_PARENT   = &MC_STATE_MAIN,
 //     .ENTRY      = (State_Action_T)Entry,
 //     .LOOP       = (State_Action_T)Proc,
-//     .NEXT       = (State_InputVoid_T)Next,
+//     .NEXT       = (State_Handler_T)Next,
 //     .P_TRANSITION_TABLE = &TRANSITION_TABLE[0U],
 // };

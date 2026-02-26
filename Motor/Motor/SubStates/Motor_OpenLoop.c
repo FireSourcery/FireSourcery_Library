@@ -32,7 +32,7 @@
 /* part of Motor_StateMachine */
 
 
-/* StateMachine_Branch_InvokeTransition from any OpenLoop State */
+/* StateMachine_Tree_InvokeTransition from any OpenLoop State */
 
 /******************************************************************************/
 /*
@@ -52,8 +52,8 @@ static State_T * OpenLoop_PhaseOutput(const Motor_T * p_motor, state_value_t pha
 /* ActivateOutput */
 void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T phase)
 {
-    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_PHASE = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)OpenLoop_PhaseOutput, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_PHASE, phase);
+    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_PHASE = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_PhaseOutput, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_PHASE, phase);
 }
 
 /*
@@ -66,8 +66,8 @@ static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 
 void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction)
 {
-    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_JOG = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)OpenLoop_Jog, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_JOG, direction);
+    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_JOG = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_Jog, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_JOG, direction);
 }
 
 /******************************************************************************/
@@ -141,8 +141,8 @@ static State_T * OpenLoop_PhaseAlign(const Motor_T * p_motor, state_value_t phas
 
 void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T align)
 {
-    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_V_ALIGN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)OpenLoop_PhaseAlign, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_V_ALIGN, align);
+    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_V_ALIGN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_PhaseAlign, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_V_ALIGN, align);
 }
 
 /******************************************************************************/
@@ -186,8 +186,8 @@ static State_T * OpenLoop_AngleAlign(const Motor_T * p_motor, state_value_t angl
 
 void Motor_OpenLoop_SetAngleAlign(const Motor_T * p_motor, angle16_t angle)
 {
-    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)OpenLoop_AngleAlign, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
+    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_ANGLE_ALIGN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_AngleAlign, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_ANGLE_ALIGN, angle);
 }
 
 void Motor_OpenLoop_SetAngleAlign_Phase(const Motor_T * p_motor, Phase_Id_T align)
@@ -257,7 +257,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartUp_Entry,
     .LOOP = (State_Action_T)StartUp_Loop,
-    .NEXT = (State_InputVoid_T)StartUp_Next,
+    .NEXT = (State_Handler_T)StartUp_Next,
 };
 
 // test branch
@@ -267,7 +267,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 //     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
 //     .DEPTH      = 2U,
 //     .ENTRY      = (State_Action_T)OpenLoop_StartUpAlign_EntryTimer,
-//     .NEXT       = (State_InputVoid_T)OpenLoop_StartUpAlign_Transition,
+//     .NEXT       = (State_Handler_T)OpenLoop_StartUpAlign_Transition,
 // };
 
 static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_value_t null)
@@ -279,8 +279,8 @@ static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_value_t null
 
 void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
 {
-    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .TRANSITION = (State_Input_T)OpenLoop_StartUpRun, };
-    StateMachine_Branch_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0);
+    static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_StartUpRun, };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0);
 }
 
 
