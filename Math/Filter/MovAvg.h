@@ -67,4 +67,13 @@ static inline int32_t MovAvgN(MovAvg_T * p_filter, int32_t in)
     return p_filter->Accumulator;
 }
 
+/*  */
+static inline int32_t MovAvg_Avg(MovAvg_T * p_filter, int32_t in)
+{
+    p_filter->Accumulator += in;
+    p_filter->Index++;
+    return p_filter->Accumulator / p_filter->Index;
+}
+
+
 #endif

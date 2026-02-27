@@ -77,7 +77,6 @@ void Motor_Reset(Motor_State_T * p_motor)
        Feedback State
     */
     FOC_Init(&p_motor->Foc);
-    // BEMF_Init(&p_motor->Bemf);
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
     PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
@@ -85,6 +84,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
 #if defined(MOTOR_SIX_STEP_ENABLE)
     PID_Init(&p_motor->PidIBus);
+    // BEMF_Init(&p_motor->Bemf);
 #endif
 
     Motor_ResetSpeedLimitActive(p_motor);
@@ -100,10 +100,10 @@ void Motor_Reset(Motor_State_T * p_motor)
     // #endif
     Angle_InitFrom(&p_motor->OpenLoopAngle, &(Angle_Config_T){.SpeedRef_Angle16 = Motor_GetSpeedTypeMax_DegPerCycle(p_motor)});
 
+    p_motor->ControlTimerBase = 0U;
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
     // Motor_ResetUnitsIabc(p_motor);
-    p_motor->ControlTimerBase = 0U;
 }
 
 
@@ -133,7 +133,7 @@ void Motor_ResetUnits(Motor_State_T * p_motor)
 
 void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
 {
-    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, INT16_MAX); /* As normalized Speed */
+    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(p_motor)); /* As normalized Speed */
     // Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, p_motor->Config.SpeedLimitForward);
 }
 
@@ -169,23 +169,14 @@ void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->
     Ramp limits apply on proc
     Pid hold limits for integral clamp
 */
-/* reset input can be removed for on proc */
 static void ApplySpeedLimit(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
     p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);
-    // if (p_motor->FeedbackMode.Speed == 1U) /* speed limit is applied on input, and proc */
-    // {
-    //     Ramp_SetTarget(&p_motor->SpeedRamp, Motor_SpeedRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp))); /* clamp the req until the next input */
-    // }
-    /* else speed limit is applied on feedback */
 }
 
-/* only speed loop must update */
-// alternatively update on proc
 static void ApplyILimit(Motor_State_T * p_motor)
 {
-    //  set cached limits
     p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
     p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
 
@@ -200,13 +191,6 @@ static void ApplyILimit(Motor_State_T * p_motor)
             PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor));
         }
     }
-//     else /* limit is applied on input */ /* alternatively move to on proc */
-//     {
-//         if (p_motor->FeedbackMode.Current == 1U)
-//         {
-//             Ramp_SetTarget(&p_motor->TorqueRamp, Motor_IRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)));
-//         }
-//     }
 }
 
 /******************************************************************************/

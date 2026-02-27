@@ -50,6 +50,8 @@ void Accumulator_Init(Accumulator_T * p_accum)
 {
     p_accum->LimitLower = INT16_MIN;
     p_accum->LimitUpper = INT16_MAX;
+    p_accum->Accumulator = 0;
+    // p_accum->Index = 0U;
 
 }
 

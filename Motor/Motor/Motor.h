@@ -637,8 +637,6 @@ static inline fract16_t Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        // alternatively pass limits on proc to remove limits sync dependency
-        // PID_CaptureOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
         PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Motor_ProcSpeedRamp(p_motor));
         Ramp_SetTarget(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); /* Set TorqueRamp for unified interface. 20 Ticks */
     }
@@ -668,18 +666,11 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        PID_SetOutputState(&p_motor->PidSpeed, torqueState);
         Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor)); // Ramp_SetTarget
+        PID_SetOutputState(&p_motor->PidSpeed, torqueState);
     }
     Ramp_SetOutputState(&p_motor->TorqueRamp, torqueState);
 }
-
-// ApplySpeedLimit
-// static inline void Motor_MatchSpeedILimits(Motor_State_T * p_motor, int32_t limit)
-// {
-//     // p_motor->ILimitMotoring_Fract16 = limit;
-//     // p_motor->ILimitGenerating_Fract16
-// }
 
 
 /*!

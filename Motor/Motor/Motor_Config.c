@@ -222,7 +222,7 @@ void Motor_Config_SetOpenLoopScalarLimit(Motor_State_T * p_motor, uint16_t scala
 
 
 /* */
-void Motor_Config_SetAlignPowerScalar(Motor_State_T * p_motor, uint16_t scalar16) { p_motor->Config.AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_MAX_SCALAR);; }
+void Motor_Config_SetAlignPowerScalar(Motor_State_T * p_motor, uint16_t scalar16) { p_motor->Config.AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_MAX_SCALAR); }
 
 void Motor_Config_SetAlignTime_Cycles(Motor_State_T * p_motor, uint32_t cycles) { p_motor->Config.AlignTime_Cycles = cycles; }
 void Motor_Config_SetAlignTime_Millis(Motor_State_T * p_motor, uint16_t millis) { p_motor->Config.AlignTime_Cycles = _Motor_ControlCyclesOf(millis); }
