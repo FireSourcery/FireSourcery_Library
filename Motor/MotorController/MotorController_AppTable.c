@@ -55,11 +55,16 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_contex
     //     MotorController_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
     // }
 }
+static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
+{
+    return &MC_STATE_MAIN_MOTOR_CMD;
+}
 
 MotorController_App_T MC_APP_MOTOR_CMD =
 {
     .PROC_ANALOG_USER = MotorCmdApp_ProcAnalogUser,
-    .P_INITIAL_STATE = &MC_STATE_MAIN_MOTOR_CMD,
+    // .P_INITIAL_STATE = &MC_STATE_MAIN_MOTOR_CMD,
+    .ENTER_MAIN = (State_Input_T)EnterMain,
 };
 
 
@@ -79,6 +84,12 @@ MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
     }
 }
 
-State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App_Get(p_context)->P_INITIAL_STATE; }
+// State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App_Get(p_context)->P_INITIAL_STATE; }
 
-MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER; }
+// MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER; }
+
+
+
+State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App_Get(p_context)->ENTER_MAIN(p_context, NULL); }
+
+void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER(p_context); }

@@ -58,7 +58,7 @@ typedef enum Motor_Var_UserOut
     /*   */
     MOTOR_VAR_SPEED_REQ,  /* Ramp Out with User Sign */
     // MOTOR_VAR_VELOCITY_REQ,
-    MOTOR_VAR_TORQUE_REQ, /*   */
+    MOTOR_VAR_TORQUE_IV_REQ, /*   */
     /* Derived Local */
     MOTOR_VAR_V_SPEED_EFFECTIVE,
     MOTOR_VAR_POWER,

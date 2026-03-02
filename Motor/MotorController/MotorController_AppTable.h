@@ -53,7 +53,7 @@ typedef enum MotorController_MainMode
 }
 MotorController_MainMode_T;
 
-// #define VEHICLE_STATE_INPUT_START (0x1000UL)
+// #define Vehicle_StateInput_START (0x1000UL)
 
 // typedef const struct MotorController_AppTable
 // {
@@ -63,6 +63,9 @@ MotorController_MainMode_T;
 // MotorController_AppTable_T;
 
 extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_context);
+
+State_T * MotorController_App_EnterMain(MotorController_T * p_context);
+void MotorController_App_ProcAnalogUser(MotorController_T * p_context);
 
 extern State_T * MotorController_App_GetMainState(MotorController_T * p_context);
 extern MotorController_App_Proc_T MotorController_App_GetProcAnalogUser(MotorController_T * p_context);

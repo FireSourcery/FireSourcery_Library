@@ -55,8 +55,9 @@ typedef const struct MotorController_App
 {
     MotorController_App_Proc_T PROC_ANALOG_USER; // or additional interface map
     // void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
-    State_T * P_INITIAL_STATE;
+    // State_T * P_INITIAL_STATE;
     // const void * P_APP_CONTEXT;
+    State_Input_T ENTER_MAIN;
 }
 MotorController_App_T;
 

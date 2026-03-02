@@ -40,6 +40,7 @@
     [Vehicle_Input_T]
 */
 /* Cmd SubState use edge detection - DriveState */
+// App Cmd
 typedef enum Vehicle_Cmd
 {
     VEHICLE_CMD_RELEASE,
@@ -51,7 +52,7 @@ Vehicle_Cmd_T;
 /* alternatively convert to common interface */
 typedef struct Vehicle_Input
 {
-    // sign_t Direction;
+    sign_t DirectionCmd;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     Vehicle_Cmd_T Cmd;
@@ -79,6 +80,13 @@ static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
 static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != Vehicle_Input_PollCmd(p_user)); }
 static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
 
+static inline bool Vehicle_Input_PollDirectionEdge(Vehicle_Input_T * p_input, sign_t direction)
+{
+    if (direction != p_input->DirectionCmd) { p_input->DirectionCmd = direction; return true; }
+    return false;
+}
+
+static inline sign_t Vehicle_Input_GetDirectionCmd(const Vehicle_Input_T * p_input) { return p_input->DirectionCmd; }
 
 /*
     Config States
@@ -121,8 +129,6 @@ typedef struct Vehicle_State
 {
     Vehicle_Input_T Input;
     Vehicle_Config_T Config;
-    // Vehicle_Input_T InputPrev;
-    // Vehicle_Status_T Status;
     // StateMachine_Active_T StateMachine;
 }
 Vehicle_State_T;
@@ -156,10 +162,10 @@ Vehicle_T;
     set to sync buffer. proc in state or input
     Direction handle in state machine
 */
-static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }
-static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
-static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
-static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
+// static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }
+// static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
+// static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
+// static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
 
 
 /******************************************************************************/

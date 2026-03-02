@@ -126,12 +126,7 @@ void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T dire
 }
 
 /* calibrated positive or ccw */
-/* alternatively apply on */
-void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T sign) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward * sign); }
-
-/* Same as UserCCW */
-void Motor_ApplyDirectionForward(const Motor_T * p_motor) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward); }
-void Motor_ApplyDirectionReverse(const Motor_T * p_motor) { Motor_ApplyVirtualDirection(p_motor, Motor_GetDirectionReverse(p_motor->P_MOTOR_STATE)); }
+void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward * direction); }
 
 
 /*

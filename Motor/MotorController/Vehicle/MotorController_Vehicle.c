@@ -47,11 +47,36 @@
 static const State_T STATE_DRIVE;
 static const State_T STATE_NEUTRAL;
 
+
+/* From Park */
+static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
+{
+    // sign_t direction = _Motor_Table_GetDirectionAll(&p_mc->MOTORS); // Motor keeps direction in STOP or allowed to transition to PASSIVE
+    sign_t direction = p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd; /* Buffered direction cmd from user input, independent of motor state */
+    State_T * p_nextState = NULL;
+    switch (direction)
+    {
+        case MOTOR_DIRECTION_NULL:       p_nextState = &STATE_NEUTRAL;      break;
+        case MOTOR_DIRECTION_FORWARD:    p_nextState = &STATE_DRIVE;        break;
+        case MOTOR_DIRECTION_REVERSE:    p_nextState = &STATE_DRIVE;        break;
+    }
+    Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction);
+    return p_nextState;
+}
 MotorController_App_T MC_APP_VEHICLE =
 {
     .PROC_ANALOG_USER = MotorController_Vehicle_ProcAnalogUser,
-    .P_INITIAL_STATE = &STATE_NEUTRAL,
+    // .P_INITIAL_STATE = &STATE_NEUTRAL,
+    .ENTER_MAIN = (State_Input_T)EnterMain,
 };
+
+static void DirectionCommon(const MotorController_T * p_mc, sign_t direction)
+{
+    if (!Motor_Table_IsEveryUserDirection(&p_mc->MOTORS, direction) && Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero))
+    {
+        Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction);
+    }
+}
 
 
 /******************************************************************************/
@@ -74,23 +99,32 @@ static void Drive_Entry(const MotorController_T * p_mc)
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.Cmd = VEHICLE_CMD_RELEASE; // next input is edge transition
     // Motor_Table_SetCmdValue(&p_mc->MOTORS, 0);
 
-    // if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.Direction != _Motor_Table_GetDirectionAll(p_mc))
+    // if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.Direction != _Motor_Table_GetDirectionAll(p_mc))  Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction);
 }
 
 /* alternatively call on input */
 static void Drive_Proc(const MotorController_T * p_mc)
 {
-    Vehicle_ProcInputCmd(&p_mc->VEHICLE); /* optionally call on input update including non edge */
+    Vehicle_ProcInputCmd(&p_mc->VEHICLE);
+
+    // switch (p_vehicle->P_VEHICLE_STATE->Input.Cmd)
+    // {
+    //     case VEHICLE_CMD_BRAKE:           break;
+    //     case VEHICLE_CMD_THROTTLE:        break;
+    //     case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle);       break;
+    //     default: break;
+    // }
 }
 
 static State_T * Drive_InputDirection(const MotorController_T * p_mc, state_value_t direction)
 {
     State_T * p_nextState = NULL;
-    switch((sign_t)direction)
+    switch(direction)
     {
-        case 0:     p_nextState = &STATE_NEUTRAL;   break;
-        case 1:     p_nextState = NULL;             break;
-        case -1:    p_nextState = NULL;             break;
+        case MOTOR_DIRECTION_NULL:       p_nextState = &STATE_NEUTRAL;   break;
+        case MOTOR_DIRECTION_FORWARD:    p_nextState = NULL;             break;
+        case MOTOR_DIRECTION_REVERSE:    p_nextState = NULL;             break;
+            // DirectionCommon(p_mc, direction); break;
         default: break;
     }
     return p_nextState;
@@ -102,17 +136,49 @@ static State_T * Drive_InputCmdStart(const MotorController_T * p_mc, state_value
     return NULL;
 }
 
-State_Input_T Drive_TransitionMapper(state_input_t inputId)
+// State_Input_T Drive_TransitionMapper(state_input_t inputId)
+// {
+//     State_Input_T inputHandler = NULL;
+//     switch (inputId)
+//     {
+//         case VEHICLE_STATE_INPUT_DIRECTION: inputHandler = (State_Input_T)Drive_InputDirection; break;
+//         case VEHICLE_STATE_INPUT_DRIVE_CMD: inputHandler = (State_Input_T)Drive_InputCmdStart; break;
+//         default: break;
+//     }
+//     return inputHandler;
+// }
+
+/* Intercept motor-generic commands — reads from CmdInput (buffered by MotorController_SetDirection etc.) */
+static State_T * Drive_InputMotorCmd(const MotorController_T * p_mc, state_value_t subId)
 {
-    State_Input_T p_inputHandler = NULL;
-    switch (inputId)
+    switch ((MotorController_MotorCmd_T)subId)
     {
-        case VEHICLE_STATE_INPUT_DIRECTION: p_inputHandler = (State_Input_T)Drive_InputDirection; break;
-        case VEHICLE_STATE_INPUT_DRIVE_CMD: p_inputHandler = (State_Input_T)Drive_InputCmdStart; break;
-        default: break;
+        case MOTOR_CONTROLLER_USER_CMD_DIRECTION:
+            return Drive_InputDirection(p_mc, p_mc->P_MC_STATE->CmdInput.Direction);
+            // case     MOTOR_CONTROLLER_USER_CMD_SETPOINT
+            // case     MOTOR_CONTROLLER_USER_CMD_PHASE:
+            // case     MOTOR_CONTROLLER_USER_CMD_FEEDBACK:
+        default: return NULL; /* Propagate to Main */
     }
-    return p_inputHandler;
 }
+
+/* App-specific commands — reads from Vehicle.Input (buffered by MotorController_Vehicle_ApplyDirection etc.) */
+static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
+{
+    switch (appCmd)
+    {
+        case VEHICLE_STATE_INPUT_DIRECTION: return Drive_InputDirection(p_mc, p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd);
+        case VEHICLE_STATE_INPUT_DRIVE_CMD: return Drive_InputCmdStart(p_mc, p_mc->VEHICLE.P_VEHICLE_STATE->Input.Cmd);
+        default: return NULL;
+    }
+}
+
+static const State_Input_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+{
+    [MCSM_INPUT_MOTOR_CMD] = (State_Input_T)Drive_InputMotorCmd,
+    [MCSM_INPUT_APP_USER] = (State_Input_T)Drive_InputAppUser,
+    [MCSM_INPUT_STATE_CMD] = NULL, /* propagate up */
+};
 
 static const State_T STATE_DRIVE =
 {
@@ -122,8 +188,8 @@ static const State_T STATE_DRIVE =
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)Drive_Entry,
     .LOOP       = (State_Action_T)Drive_Proc,
-    // .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
-    .TRANSITION_MAPPER = (State_InputMapper_T)Drive_TransitionMapper,
+    .P_TRANSITION_TABLE = &DRIVE_TRANSITION_TABLE[0U],
+    // .TRANSITION_MAPPER = (State_InputMapper_T)Drive_TransitionMapper,
 };
 
 
@@ -170,15 +236,13 @@ static State_T * InputDriveDirection(const MotorController_T * p_mc, state_value
 
 static State_T * Neutral_InputDirection(const MotorController_T * p_mc, state_value_t direction)
 {
-    State_T * p_nextState = NULL;
     switch ((sign_t)direction)
     {
-        case 1:     p_nextState = InputDriveDirection(p_mc, direction); break;
-        case -1:    p_nextState = InputDriveDirection(p_mc, direction); break;
-        case 0:     p_nextState = &STATE_NEUTRAL; break;
+        case 1:     return InputDriveDirection(p_mc, direction);
+        case -1:    return InputDriveDirection(p_mc, direction);
+        case 0:     return &STATE_NEUTRAL;
         default: break;
     }
-    return p_nextState;
 }
 
 
@@ -187,24 +251,39 @@ static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_val
     switch ((Vehicle_Cmd_T)mode)
     {
         case VEHICLE_CMD_RELEASE:   Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_OUTPUT_FLOAT); break;
-        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(&p_mc->VEHICLE); break;
+        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(&p_mc->VEHICLE);                         break;
         case VEHICLE_CMD_THROTTLE:  break;
         default: break;
     }
     return NULL;
 }
 
-State_Input_T Neutral_TransitionMapper(state_input_t inputId)
+/* Intercept motor-generic commands — reads from CmdInput (buffered by MotorController_SetDirection etc.) */
+static State_T * Neutral_InputMotorCmd(const MotorController_T * p_mc, state_value_t subId)
 {
-    State_Input_T p_inputHandler = NULL;
-    switch (inputId)
+    switch ((MotorController_MotorCmd_T)subId)
     {
-        case VEHICLE_STATE_INPUT_DIRECTION: p_inputHandler = (State_Input_T)Neutral_InputDirection; break;
-        case VEHICLE_STATE_INPUT_DRIVE_CMD: p_inputHandler = (State_Input_T)Neutral_InputCmdStart; break;
-        default: break;
+        case MOTOR_CONTROLLER_USER_CMD_DIRECTION: return Neutral_InputDirection(p_mc, p_mc->P_MC_STATE->CmdInput.Direction);
+        default: return NULL; /* Propagate to Main */
     }
-    return p_inputHandler;
 }
+
+/* App-specific commands — reads from Vehicle.Input (buffered by MotorController_Vehicle_ApplyDirection etc.) */
+static State_T * Neutral_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
+{
+    switch (appCmd)
+    {
+        case VEHICLE_STATE_INPUT_DIRECTION: return Neutral_InputDirection(p_mc, p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd);
+        case VEHICLE_STATE_INPUT_DRIVE_CMD: return Neutral_InputCmdStart(p_mc, p_mc->VEHICLE.P_VEHICLE_STATE->Input.Cmd);
+        default: return NULL;
+    }
+}
+
+static const State_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+{
+    [MCSM_INPUT_MOTOR_CMD] = (State_Input_T)Neutral_InputMotorCmd,
+    [MCSM_INPUT_APP_USER] = (State_Input_T)Neutral_InputAppUser,
+};
 
 static const State_T STATE_NEUTRAL =
 {
@@ -214,8 +293,7 @@ static const State_T STATE_NEUTRAL =
     .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)Neutral_Entry,
     .LOOP       = (State_Action_T)Neutral_Proc,
-    // .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
-    .TRANSITION_MAPPER = (State_InputMapper_T)Neutral_TransitionMapper,
+    .P_TRANSITION_TABLE = &NEUTRAL_TRANSITION_TABLE[0U],
 };
 
 /******************************************************************************/
@@ -240,50 +318,52 @@ sign_t MotorController_Vehicle_GetDirection(const MotorController_T * p_mc)
     @brief StateMachine Input
 */
 /******************************************************************************/
-/*
-
-*/
-/* Caller Handle Edge Detection */
-/* Outer input map handle exit park */
-void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction)
+void _MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc)
 {
-    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, VEHICLE_STATE_INPUT_DIRECTION, direction);
+    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, VEHICLE_STATE_INPUT_DIRECTION);
 }
 
-/* alternatively include propagate value */
-void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd)
+void _MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc)
 {
-    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd); // command and values pass by buffered
+    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, VEHICLE_STATE_INPUT_DRIVE_CMD);
 }
 
-// alternatively include from park
+// /* Buffer direction then dispatch via MCSM_INPUT_APP_USER. Park sinks, Vehicle sub-states handle. */
 // void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction)
 // {
-//     static StateMachine_TransitionCmd_T CMD = { .P_START = &PARK, .NEXT = (State_Input_T) , };
-//     StateMachine_Tree_InvokeTransition(&p_mc->STATE_MACHINE, &CMD, direction);
+//     // p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd = direction;
+//     _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, VEHICLE_STATE_INPUT_DIRECTION);
 // }
 
-// alternatively
-// void MotorController_Vehicle_ApplyCmdValue(MotorController_T * p_mc, Vehicle_Cmd_T cmd)
+// /* alternatively include propagate value */
+// void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd)
 // {
-//     // _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, VEHICLE_STATE_INPUT_DRIVE_CMD_VALUE); // command and values pass by buffered
+//     // _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD, cmd); // command and values pass by buffered
+//     _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, VEHICLE_STATE_INPUT_DRIVE_CMD);
 // }
 
-/*
-    PollStartCmd for edge detection
-*/
-void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_THROTTLE); }
-void MotorController_Vehicle_StartBrake(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_BRAKE); }
-void MotorController_Vehicle_StartRelease(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_RELEASE); }
+
+
+// /*
+//     PollStartCmd for edge detection
+// */
+// void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_THROTTLE); }
+// void MotorController_Vehicle_StartBrake(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_BRAKE); }
+// void MotorController_Vehicle_StartRelease(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_RELEASE); }
 
 
 
 
 /******************************************************************************/
 /*
-    Vehicle User layer
+    User layer
 */
 /******************************************************************************/
+/*
+    capture user cmd
+    edge detect
+    send to state machine
+*/
 /*
     Command Polling
     Cmd "state" == input, changes on edge, handle outside of StateMachine
@@ -292,7 +372,7 @@ void MotorController_Vehicle_StartRelease(MotorController_T * p_mc) { MotorContr
 void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
 {
     Vehicle_Input_T * p_input = &p_mc->VEHICLE.P_VEHICLE_STATE->Input;
-    if (Vehicle_Input_PollCmdEdge(p_input)) { MotorController_Vehicle_ApplyStartCmd(p_mc, p_input->Cmd); }
+    if (Vehicle_Input_PollCmdEdge(p_input)) { _MotorController_Vehicle_ApplyStartCmd(p_mc); }
 }
 
 /*
@@ -305,6 +385,8 @@ void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
     Apply state changes immediately
     on protocol input per value response, 50ms. alternatively buffer and poll.
     alternatively call value update,
+
+    module handle edge detection
 */
 void MotorController_Vehicle_PollThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
@@ -322,8 +404,29 @@ void MotorController_Vehicle_PollRelease(MotorController_T * p_mc)
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = 0U;
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue = 0U;
-    // Vehicle_User_SetZero(p_mc->VEHICLE.P_VEHICLE_STATE);
     MotorController_Vehicle_PollStartCmd(p_mc);
+}
+
+void MotorController_Vehicle_PollThrottleBrake(MotorController_T * p_mc, uint16_t throttleCmd, uint16_t brakeCmd)
+{
+    p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = throttleCmd;
+    p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue = brakeCmd;
+    MotorController_Vehicle_PollStartCmd(p_mc);
+}
+
+// caller handled edge detection
+void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction)
+{
+    Vehicle_Input_PollDirectionEdge(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, direction);
+    _MotorController_Vehicle_ApplyDirection(p_mc);
+}
+
+void MotorController_Vehicle_PollDirectionCmd(MotorController_T * p_mc, sign_t direction)
+{
+    if (Vehicle_Input_PollDirectionEdge(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, direction))
+    {
+        _MotorController_Vehicle_ApplyDirection(p_mc);
+    }
 }
 
 /******************************************************************************/
@@ -336,28 +439,15 @@ void MotorController_Vehicle_PollRelease(MotorController_T * p_mc)
 */
 void MotorController_Vehicle_ProcAnalogUser(const MotorController_T * p_mc)
 {
-    /* outer state machine handles park state */
-    /* Sets MotorController_T StateMachine. passthrough to inner */
-    /* Calls [InputDirection] */
-    // switch (MotAnalogUser_GetDirectionEdge(&p_mc->ANALOG_USER))
-    // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_mc, MOTOR_DIRECTION_CCW);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_mc, MOTOR_DIRECTION_CW);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_mc, MOTOR_DIRECTION_NULL);      break;
-    //     default: break;
-    // }
     switch (MotAnalogUser_GetDirectionEdge(&p_mc->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_Vehicle_ApplyDirection(p_mc, 1);       break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_Vehicle_ApplyDirection(p_mc, -1);      break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_Vehicle_ApplyDirection(p_mc, 0);       break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_Vehicle_ApplyDirectionCmd(p_mc, 1);       break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_Vehicle_ApplyDirectionCmd(p_mc, -1);      break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_Vehicle_ApplyDirectionCmd(p_mc, 0);       break;
         default: break;
     }
 
-    /* Set Inner StateMachine Only */
-    Vehicle_User_SetThrottle(p_mc->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER));
-    Vehicle_User_SetBrake(p_mc->VEHICLE.P_VEHICLE_STATE, MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
-    MotorController_Vehicle_PollStartCmd(p_mc);
+    MotorController_Vehicle_PollThrottleBrake(p_mc, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER), MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
 }
 
 
@@ -371,7 +461,7 @@ void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T
 {
     switch (id)
     {
-        case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirection(p_mc, (sign_t)value);       break; // call outer passthrough in most cases
+        case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);       break; // call outer passthrough in most cases
         case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
     }
@@ -411,78 +501,3 @@ int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T 
 //     }
 // }
 
-// /******************************************************************************/
-// /*!
-
-// */
-// /******************************************************************************/
-// static void Entry(const MotorController_T * p_mc)
-// {
-//     // optionally motors exit stop, in case of motor cmds, or set from ui
-//     // if (!Motor_Table_IsEveryUserDirection(&p_mc->MOTORS, 0)) { Vehicle_User_ApplyDirection(&p_mc->VEHICLE, (sign_t)p_mc->P_MC_STATE->CmdInput.Direction); }
-// }
-
-// /* Implementation as wrapping inner machine. specialized inputs */
-// /* Proc Per ms */
-// /* Proc the Sub-StateMachine - with different input table */
-// static void Proc(const MotorController_T * p_mc)
-// {
-//     // _StateMachine_ProcState(p_mc->VEHICLE.STATE_MACHINE.P_ACTIVE, (void *)&p_mc->VEHICLE);
-// }
-
-// static State_T * Next(const MotorController_T * p_mc)
-// {
-//     return &STATE_NEUTRAL;
-// }
-
-// // static State_T * InputDirection(const MotorController_T * p_mc, state_value_t direction)
-// // {
-// //     Vehicle_User_ApplyDirection(&p_mc->VEHICLE, direction);
-// //     return NULL;
-// // }
-
-// // override stop main, and park, clear values
-// // static State_T * InputStateCmd(const MotorController_T * p_mc, state_value_t cmd)
-// // {
-// //     switch (cmd)
-// //     {
-// //         case MOTOR_CONTROLLER_STATE_CMD_PARK:           break;
-// //         case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         Vehicle_User_SetZero(p_mc->VEHICLE.p_mc_STATE); break;
-// //         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Vehicle_User_SetZero(p_mc->VEHICLE.p_mc_STATE); break;
-// //         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     break;
-// //         default:  break;
-// //     }
-// //     return NULL;
-// // }
-
-// // static State_T * InputUser(const MotorController_T * p_mc, state_value_t event)
-// // {
-// //     State_T * p_nextState = NULL;
-// //     switch ((MotorController_UserEvent_T)event)
-// //     {
-// //         case MOTOR_CONTROLLER_USER_CMD_DIRECTION: Vehicle_User_ApplyDirection(&p_mc->VEHICLE, (sign_t)p_mc->P_MC_STATE->CmdInput.Direction); break;
-// //         case MOTOR_CONTROLLER_USER_CMD_PHASE: break; // ignore floating and hold cmds, derive form throttle and brake
-// //         case MOTOR_CONTROLLER_USER_CMD_SETPOINT: break; // optionally throttle by default. // Vehicle_User_SetThrottle(p_mc->VEHICLE.p_mc_STATE, p_mc->P_MC_STATE->CmdInput.CmdValue); break;
-// //         case MOTOR_CONTROLLER_USER_CMD_FEEDBACK: break; // ignore
-// //         default:  break;
-// //     }
-// //     return NULL;
-// // }
-
-// /* Inherit other inputs */
-// static const State_Input_T TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
-// {
-//     // [MCSM_INPUT_MOTOR_CMD] = (State_Input_T)InputUser,
-// };
-
-// const State_T MC_STATE_MAIN_VEHICLE =
-// {
-//     .ID         = MOTOR_CONTROLLER_MAIN_MODE_VEHICLE, // alternatively replace main state
-//     .DEPTH      = 1U,
-//     .P_TOP      = &MC_STATE_MAIN,
-//     .P_PARENT   = &MC_STATE_MAIN,
-//     .ENTRY      = (State_Action_T)Entry,
-//     .LOOP       = (State_Action_T)Proc,
-//     .NEXT       = (State_Handler_T)Next,
-//     .P_TRANSITION_TABLE = &TRANSITION_TABLE[0U],
-// };

@@ -71,7 +71,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_c
 
     MotAnalogUser_CaptureInput(&p_context->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_context->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_context->ANALOG_USER_CONVERSIONS));
 
-    MotorController_App_Get(p_context)->PROC_ANALOG_USER((MotorController_T *)p_context);
+    MotorController_App_ProcAnalogUser((MotorController_T *)p_context);
 
     if (TimerT_Counter_IsAligned(&p_context->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
