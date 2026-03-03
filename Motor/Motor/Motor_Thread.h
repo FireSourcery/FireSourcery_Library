@@ -53,24 +53,10 @@ static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return _Moto
 static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
     // RotorSensor_MarkAnalog(&p_context->Sensor);
-    switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
-    {
-        case MSM_STATE_ID_STOP:         Motor_Analog_MarkVabc(p_context);     break;
-        // case MSM_STATE_ID_FREEWHEEL:    Motor_Analog_MarkVabc(p_context);     break;
-        case MSM_STATE_ID_PASSIVE:      Motor_Analog_MarkVabc(p_context);     break;
-        case MSM_STATE_ID_RUN:          Motor_Analog_MarkIabc(p_context);     break;
-            // #if  defined(MOTOR_OPEN_LOOP_ENABLE)  || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
-        case MSM_STATE_ID_OPEN_LOOP:    Motor_Analog_MarkIabc(p_context);     break;
-            // #endif
-        case MSM_STATE_ID_FAULT:        Motor_Analog_MarkVabc(p_context);     break;
-        case MSM_STATE_ID_CALIBRATION:      break;
-        case MSM_STATE_ID_INIT:             break;
-        // case MSM_STATE_ID_FAULT:     Motor_Analog_MarkVabc(p_context); Motor_Analog_MarkIabc(p_context); break;
-        default:            break;
-    }
 
-    /* alternatively read phase state */
-    // Motor_Analog_MarkPhase(p_context);
+    /* foc return on first 1. alternatively handle per phase */
+    if (_Phase_ReadState(&p_context->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_context); }
+    else { Motor_Analog_MarkVabc(p_context); }
 }
 
 
@@ -101,7 +87,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 
     /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */
-    // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); }
+    // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); } /* all substate must write to interface */
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_GetDutyA(&p_fields->Foc), FOC_GetDutyB(&p_fields->Foc), FOC_GetDutyC(&p_fields->Foc));
 
     // timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());

@@ -36,6 +36,32 @@
 /******************************************************************************/
 /*!
     @brief
+
+    Architecture decoupling requirements:
+    Main State Machine does not know about App specific states/inputs
+
+    Behavioral requirements:
+    The user sets the direction selector (forward/reverse) while parked. The controller must accept and remember this selection.
+    When the user subsequently releases the park brake / engages the throttle, the system enters drive in the selected direction.
+
+    Implementation options:
+    Buffer user inputs as 'cmd/input state'
+        Direction selection is not an event that causes a state transition.
+        It is a configuration parameter that the user sets independently of the operating state.
+        Keep Direction buffered.
+
+    Motor handles direction state.
+
+    Inactive orthogonal region
+
+    Multi Input to Multi States
+
+
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*
+
 */
 /*
     ┌────────────────────────────────────────────────────────────┐
@@ -125,21 +151,6 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 
 
 
-/******************************************************************************/
-/*!
-    Multi Input to Multi States
-
-    Input Aggregation -> State Table
-        All State accept aggregated inputs
-
-    All State handle each input type
-        App State handles Each input type
-
-    App layer determines input mapping to aggregated input or each states input index
-    or determine mapping callback to each input module
-
-*/
-/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -227,14 +238,7 @@ static const State_T STATE_INIT =
     May enter from Neutral State or Drive State
 */
 /******************************************************************************/
-/*
-    The user sets the direction selector (forward/reverse) while parked. The controller must accept and remember this selection.
-    When the user subsequently releases the park brake / engages the throttle, the system enters drive in the selected direction.
 
-    Direction selection is not an event that causes a state transition.
-    It is a configuration parameter that the user sets independently of the operating state.
-    Keep Direction buffered.
-*/
 static void Park_Entry(const MotorController_T * p_context)
 {
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { Motor_Table_StopAll(&p_context->MOTORS); Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_VFLOAT); }
@@ -245,14 +249,6 @@ static void Park_Proc(const MotorController_T * p_context)
 
 }
 
-// Background monitoring (e.g., poll for user inputs to exit Park)
-// static State_T * Park_Next(const MotorController_T * p_context)
-// {
-//     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) {  // Optional: set warning or force stop }
-//     // Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
-//     State_T * p_nextState = NULL;
-//     return p_nextState;
-// }
 
 static State_T * Park_InputLock(const MotorController_T * p_context, state_value_t lockId)
 {
@@ -277,12 +273,26 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
     return NULL;
 }
 
+// static State_T * Park_InputMotorCmd(const MotorController_T * p_context, state_value_t cmd)
+// {
+//     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
+//     switch ((MotorController_MotorCmd_T)cmd)
+//     {
+//         case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
+//         // case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ActivateVOutput(&p_context->MOTORS, p_input->PhaseOutput); break;
+//         // case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
+//         case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
+//         default: break;
+//     }
+//     return NULL;
+// }
+
 static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
     [MCSM_INPUT_STATE_CMD]      = (State_Input_T)Park_InputStateCmd,
-    [MCSM_INPUT_MOTOR_CMD]      = NULL, /* Sink: motor-generic commands buffered by caller, not applied in Park */
+    [MCSM_INPUT_MOTOR_CMD]      = NULL,
     [MCSM_INPUT_APP_USER]       = NULL, /* Sink: app-specific commands buffered by caller, not applied in Park */
 };
 

@@ -274,7 +274,6 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     High Freq, Low Priority,
 */
 /******************************************************************************/
-extern void Vehicle_ProcAnalogUser(const MotorController_T * p_context); //temp
 
 static inline void MotorController_Main_Thread(const MotorController_T * p_context)
 {

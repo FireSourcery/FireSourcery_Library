@@ -331,16 +331,6 @@ static inline uint16_t Hall_GetAngleAs(const Hall_State_T * p_hall, Hall_Directi
 // static inline uint16_t Hall_GetAngleAsCw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CW); }
 // static inline uint16_t Hall_GetAngleAsCenter(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_UNKNOWN); }
 
-
-/* Next poll is edge */
-// static inline void Hall_Reset(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
-static inline void Hall_ZeroInitial(const Hall_T * p_hall)
-{
-    Hall_CaptureSensors_ISR(p_hall);
-    p_hall->P_STATE->Angle = _Hall_Angle16OfSensors(p_hall->P_STATE, p_hall->P_STATE->Sensors.Value, HALL_DIRECTION_UNKNOWN); /* assume middle */
-}
-
-
 /*
    Module stores additional state
 */
@@ -360,6 +350,21 @@ static inline uint16_t Hall_CaptureAngle(Hall_State_T * p_hall)
     p_hall->Angle = _Hall_Angle16OfSensors(p_hall, p_hall->Sensors.Value, p_hall->Direction);
     return p_hall->Angle;
 }
+
+// static inline void Hall_CaptureState(const Hall_T * p_hall)
+// {
+//     Hall_CaptureDirection(p_hall->P_STATE);
+//     Hall_CaptureAngle(p_hall->P_STATE);
+// }
+
+/* Next poll is edge */
+// static inline void Hall_Reset(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }
+static inline void Hall_ZeroInitial(const Hall_T * p_hall)
+{
+    Hall_CaptureSensors_ISR(p_hall);
+    p_hall->P_STATE->Angle = _Hall_Angle16OfSensors(p_hall->P_STATE, p_hall->P_STATE->Sensors.Value, HALL_DIRECTION_UNKNOWN); /* assume middle */
+}
+
 
 /*
     SetDirectionComp

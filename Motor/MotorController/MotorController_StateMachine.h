@@ -49,9 +49,6 @@
     state_input_t
     Input Id
 */
-/*
-    Out app state machine handle user cmd and input state
-*/
 typedef enum MotorController_StateInput
 {
     MCSM_INPUT_FAULT,           /* System fault handling */

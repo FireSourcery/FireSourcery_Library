@@ -128,7 +128,6 @@ static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, state_inp
     // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
     // (uint8_t)inputId allocated
     // defined with namespaceid << 8 | markerId
-    if (inputId >= STATE_INPUT_MAPPER_START_ID) { return NULL; }
     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
 }
 

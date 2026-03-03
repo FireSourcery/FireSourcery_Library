@@ -47,6 +47,8 @@ static inline void Motor_Analog_MarkVabc(const Motor_T * p_motor) { Phase_Analog
 static inline void Motor_Analog_MarkIabc(const Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
 
+
+
 /*
 */
 extern void Motor_Analog_Calibrate(const Motor_T * p_motor);

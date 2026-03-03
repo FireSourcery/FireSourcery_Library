@@ -454,7 +454,7 @@ void MotorController_Vehicle_ProcAnalogUser(const MotorController_T * p_mc)
 
 /******************************************************************************/
 /*!
-    @brief
+    Protocol inputs as known edge trigger
 */
 /******************************************************************************/
 void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T id, int value)

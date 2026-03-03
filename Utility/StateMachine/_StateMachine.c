@@ -157,7 +157,6 @@ inline void _StateMachine_ProcSyncNextState(StateMachine_Active_T * p_active, vo
 {
     _StateMachine_Transition(p_active, p_context, p_active->p_SyncNextState); /* check proc with local variable */
     p_active->p_SyncNextState = NULL;
-    // alternatively ignore DEPTH != 0U
 }
 
 /*

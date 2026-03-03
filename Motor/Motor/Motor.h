@@ -492,6 +492,7 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor
 */
 // static inline bool _Motor_AntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select); }
 // static inline bool _Motor_VClampCcw(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW); }
+/* alternatively without direction based clamp. configure speed band */
 static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) * value; }
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
@@ -599,7 +600,7 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        p_state->SpeedUpdateFlag = true; /* Set flag to update speed in outer loop */ /* alternatively StateMachine input capture speed */
+        p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
 

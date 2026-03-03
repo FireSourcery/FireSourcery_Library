@@ -152,9 +152,10 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 typedef void * State_Visitor_T(State_T * p_state, void * p_context, int opt);
 
 /*
-
+    Include start, exclude end. end is NULL for root traversal.
+    [p_start, p_end)
 */
-static inline void * ApplyUpTo(State_T * p_start, State_T * p_end, void * p_context, State_Visitor_T fn, int opt)
+static inline void * ApplyUpUntil(State_T * p_start, State_T * p_end, void * p_context, State_Visitor_T fn, int opt)
 {
     void * p_result = NULL;
     for (State_T * p_iterator = p_start; p_iterator != p_end; p_iterator = p_iterator->P_PARENT)
@@ -167,7 +168,13 @@ static inline void * ApplyUpTo(State_T * p_start, State_T * p_end, void * p_cont
 
 static inline void * ApplyUp(State_T * p_start, void * p_context, State_Visitor_T fn, int opt)
 {
-    return ApplyUpTo(p_start, NULL, p_context, fn, opt);
+    return ApplyUpUntil(p_start, NULL, p_context, fn, opt);
+}
+
+/* Separately handle the root and substate inputs. fits iteration pattern. may allow substate only overwrite for input spaces. */
+static inline void * ApplyUntilRoot(State_T * p_start, void * p_context, State_Visitor_T fn, int opt)
+{
+    return ApplyUpUntil(p_start, _State_GetRoot(p_start), p_context, fn, opt);
 }
 
 // end as last - 1, p_start->DEPTH != 0
@@ -175,7 +182,6 @@ static inline void * ApplyUp(State_T * p_start, void * p_context, State_Visitor_
 // {
 //     void * p_result = NULL;
 //     for (State_T * p_iterator = p_start; p_iterator->DEPTH > end; p_iterator = p_iterator->P_PARENT)
-//     // for (State_T * p_iterator = p_start; (p_iterator != NULL) && p_iterator->DEPTH >= end; p_iterator = p_iterator->P_PARENT)
 //     {
 //         p_result = fn(p_iterator, p_context, opt);
 //         if (p_result != NULL) { break; }
@@ -250,7 +256,7 @@ State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
 
 State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
 {
-    return (State_T *)ApplyUpTo(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
+    return (State_T *)ApplyUpUntil(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
 }
 
 /*
@@ -274,7 +280,7 @@ State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context
     Traversal stops when input is defined, even if no state transition. alternatively
     Inputs using id always include top level
 */
-State_Input_T State_AcceptInputUp(State_T * p_start,  state_input_t id)
+State_Input_T State_AcceptInputUp(State_T * p_start, state_input_t id)
 {
     return (State_Input_T)ApplyUp(p_start, NULL, AcceptInputVisitor, id);
 }
@@ -287,13 +293,16 @@ State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_i
 
 State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, state_input_t id)
 {
-    return (State_Input_T)ApplyUpTo(p_start, p_end, NULL, AcceptInputVisitor, id);
+    return (State_Input_T)ApplyUpUntil(p_start, p_end, NULL, AcceptInputVisitor, id);
 }
 
 State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
 {
     return _State_CallInput(State_AcceptInputUpTo(p_start, p_end, id), p_context, value);
 }
+
+
+// State_Input_T State_AcceptInputUpToRoot(State_T * p_start, state_input_t id)
 
 /*
 
@@ -329,7 +338,7 @@ static inline void ExitUp(State_T * p_from, State_T * p_to, void * p_context)
 {
 #ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
     assert(p_from != NULL);
-    ApplyUpTo(p_from, p_to, p_context, ExitVisitor, 0);
+    ApplyUpUntil(p_from, p_to, p_context, ExitVisitor, 0);
 #else
     (void)p_from;
     (void)p_to;

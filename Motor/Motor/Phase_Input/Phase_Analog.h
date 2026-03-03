@@ -70,8 +70,6 @@ static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { 
 /*
     ADC Ref Sensor Calibration
     optionally store as base ref
-    Phase_Analog_Calibration_T
-    Phase_AnalogRef_T
     Phase_AnalogBoard_T
 */
 /******************************************************************************/

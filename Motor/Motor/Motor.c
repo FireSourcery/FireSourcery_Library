@@ -182,6 +182,7 @@ static void ApplyILimit(Motor_State_T * p_motor)
 
     if (p_motor->FeedbackMode.Speed == 1U)  /* limit is applied on feedback */
     {
+        /* Update Pid to clamp integral. Ramps update during control cycle. */
         if (p_motor->FeedbackMode.Current == 1U) /* SpeedPid Output is I */
         {
             PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
@@ -221,7 +222,7 @@ void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int mode) { Motor_SetFe
 void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
 {
     p_motor->Direction = direction;
-    RotorSensor_SetDirection(p_motor->p_ActiveSensor, direction);
+    // RotorSensor_SetDirection(p_motor->p_ActiveSensor, direction);
     RotorSensor_ZeroInitial(p_motor->p_ActiveSensor);
     ApplyILimit(p_motor);
     ApplySpeedLimit(p_motor);

@@ -65,7 +65,7 @@ const StateMachine_Machine_T MSM_MACHINE =
 /******************************************************************************/
 static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultFlags) { return &MOTOR_STATE_FAULT; }
 
-static void Motor_ClearFaultFlags(const Motor_T * p_motor)
+static void Motor_CaptureFaultFlags(const Motor_T * p_motor)
 {
     // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
     p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
@@ -95,8 +95,6 @@ static void Init_Entry(const Motor_T * p_motor)
 
 static void Init_Proc(const Motor_T * p_motor)
 {
-    // Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);
-    // Motor_Sensor_PollCaptureSpeed(p_motor);
 }
 
 static State_T * Init_Next(const Motor_T * p_motor)
@@ -106,12 +104,10 @@ static State_T * Init_Next(const Motor_T * p_motor)
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
         // (Motor_CheckConfig() == true)    // check params, sync config limits
-        if (Phase_Calibration_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outter module parse */
-        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        if (Phase_Calibration_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         // if (Motor_ValidateIabcZeroRef(p_motor) == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; }
-        // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
-
-        // Motor_ClearFaultFlags(p_motor); /* Clear the fault flags once */
+        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        // Motor_CaptureFaultFlags(p_motor); /* Clear the fault flags once */
 
         if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; }
         else                                                { p_nextState = &MOTOR_STATE_STOP; }
@@ -137,7 +133,6 @@ const State_T MOTOR_STATE_INIT =
 };
 
 
-// static inline const Motor_T * Motor_GetContext(const StateMachine_T * p_StateMachine) { return (const Motor_T *)p_StateMachine->P_CONTEXT; }
 
 
 /******************************************************************************/
@@ -145,58 +140,57 @@ const State_T MOTOR_STATE_INIT =
     @brief Stop State
 
     Safe State with Transition to Calibration
-    Phase OutputFloat or V0
+    Phase V0
 */
 /******************************************************************************/
+/*
+    Map to inverter state. -> handles low layer task. app layer handles user cmd semantics.
+        may need extra state to safeguard transition to calibration, if stop state is not sufficient.
+*/
+/*
+    Let Direction double as sematics for transition be an extension.
+    Direction cannot be used as transition to ready state for app layer to remain in its safe state and also propagate direction set to motor layer.
+    Direction null exits to stop. but setting direction from stop does not transition to ready.
+        exiting a state on loss of any condition, but entering may not be guaranteed by setting a single condition.
+        app layer exit park state may preserve stop state while storing direction in motor state.
+    maintains compatibility with none direction based handling.
+*/
 static void Stop_Entry(const Motor_T * p_motor)
 {
-    Phase_Float(&p_motor->PHASE);
+    Phase_ActivateOutputV0(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
 static void Stop_Proc(const Motor_T * p_motor)
 {
-    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alteratively move to thread */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
 
 static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     State_T * p_nextState = NULL;
-
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);               break;
         case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->PHASE);    break;
-        case PHASE_OUTPUT_VPWM:         break;
+        case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_OUTPUT_VPWM:     p_nextState = &MOTOR_STATE_PASSIVE; break;
         default: break;
     }
-
     return p_nextState;
 }
 
-/*
-    Transition to Ready State on Direction only
-*/
-/* may need to immediately transition */
 static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t direction)
 {
-    State_T * p_nextState = NULL;
-
     switch ((Motor_Direction_T)direction)
     {
-        case MOTOR_DIRECTION_NULL: p_nextState = NULL; break; /* remain in stop */
-        case MOTOR_DIRECTION_CW:  /* Intentional fall-through */
+        case MOTOR_DIRECTION_NULL:
+        case MOTOR_DIRECTION_CW:
         case MOTOR_DIRECTION_CCW:
-            Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction);
-            p_nextState = &MOTOR_STATE_PASSIVE;
-            break;
+            Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction); break;
         default: break; /* Invalid direction */
     }
-
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirection_Cast, Motor_SetDirection_Cast, direction);
-    return p_nextState;
+    return NULL;
 }
 
 static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
@@ -206,21 +200,22 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
 }
 
 /* Transition for user input */
-// static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
-// {
-//     return &MOTOR_STATE_OPEN_LOOP;
-// }
+static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
+{
+    // return &MOTOR_STATE_OPEN_LOOP;
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }
+    else { return NULL; }
+}
 
 /* Calibration go directly to SubState */
 static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t statePtr)
 {
-    State_T * p_state = (State_T *)statePtr;
-
-    /* Compile time known */
-    assert(p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
-
-    return p_state;
+    // State_T * p_state = (State_T *)statePtr;
+    // /* Compile time known */
+    // assert(p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
     // return &MOTOR_STATE_CALIBRATION;
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_CALIBRATION; }
+    else { return NULL; }
 }
 
 static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -229,7 +224,7 @@ static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
     [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Stop_InputControl,
     [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Stop_InputFeedbackMode,
     [MSM_INPUT_DIRECTION]       = (State_Input_T)Stop_InputDirection,
-    [MSM_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration,
+    [MSM_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration, /*  */
     [MSM_INPUT_OPEN_LOOP]       = NULL, // [MSM_INPUT_OPEN_LOOP]    = (State_Input_T)Stop_InputOpenLoop,
 };
 
@@ -247,48 +242,39 @@ const State_T MOTOR_STATE_STOP =
     @brief Passive State - Freewheel or Hold
 */
 /******************************************************************************/
+/*
+    V0 passive and VZ passive require different entries. both "control loop off." they can't share an entry action.
+    for each state to be represented by an invariant entry. the states should be separate for cleaner abstraction or parameterize entry. flag or pass a value on transitions
+    however transition to v0 passive has the same constraints as transition to stop. does app layer need to directly transition to v0 without going through vz first?
+    if not, then the entry action can be shared as vz default. allow remaining in passive for v0
+*/
 static void Passive_Entry(const Motor_T * p_motor)
 {
     assert(p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL); /* Set on exit stop */
     Phase_Float(&p_motor->PHASE);
-    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
+
+    // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { Phase_ActivateOutputV0(&p_motor->PHASE); }
+    // else { Phase_Float(&p_motor->PHASE); }
 }
 
 static void Passive_Proc(const Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
-    Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);
-    // Motor_PollCaptureSensor(p_motor->P_MOTOR_STATE); /* alternatively move to thread */
+    Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
 }
 
-// auto return to stop state
-// static State_T * Passive_Next(const Motor_T * p_motor)
-// {
-//     // return (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) ? &MOTOR_STATE_STOP : NULL;
-//     // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) > 0)
-//     // {
-//     //     if (Motor_IsHold(p_motor) == false) { _StateMachine_TransitionTo(&p_motor->STATE_MACHINE, &MOTOR_STATE_FREEWHEEL); }
-//     //     else                                { }
-//     // }
-// }
-
-/* alternatively separate state for speed 0 */
 static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     State_T * p_nextState = NULL;
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:
-            Phase_Float(&p_motor->PHASE);
-            break;
+        case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);  break;
         case PHASE_OUTPUT_V0:
-            /* Effectively Run cmd V0, without Ramp/Feedback Loop */
-            // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < ) { Phase_ActivateOutputV0(&p_motor->PHASE); }
-            // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { Phase_ActivateOutputV0(&p_motor->PHASE); }
+            // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < V0_SAFE_SPEED_THRESHOLD) { Phase_ActivateOutputV0(&p_motor->PHASE); }
+            if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { Phase_ActivateOutputV0(&p_motor->PHASE); }
             break;
         case PHASE_OUTPUT_VPWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
@@ -312,37 +298,24 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
     return p_nextState;
 }
 
-/* caller handle input validation */
 static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t direction)
 {
     State_T * p_nextState = NULL;
 
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U)
     {
-        /* direction 0 as return to stop */
         switch ((Motor_Direction_T)direction)
         {
-            case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_STOP;  /* Intentional fall-through */
+            case MOTOR_DIRECTION_NULL: /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
-                break;
+                Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction); break;
             default: break; /* Invalid direction */
         }
+        /* Null direction can function as stop while other directions not function as start. */
+        if (direction == MOTOR_DIRECTION_NULL) { p_nextState = &MOTOR_STATE_STOP; }
     }
-    else
-    {
-        /* direction should no be null but if it is */
-        if (p_motor->P_MOTOR_STATE->Direction == MOTOR_DIRECTION_NULL)
-        {
-            p_nextState = &MOTOR_STATE_FAULT;// test
-            // compare internal domain directions
-            if ((Motor_Direction_T)direction == math_sign(Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE))) /* direction cmd matches actual speed direction */
-            {
-                Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, (Motor_Direction_T)direction);
-            }
-        }
-    }
+    // alternatively set let application layer handle permission for cw/ccw, updates plugging limits
 
     return p_nextState;
 }
@@ -376,15 +349,6 @@ const State_T MOTOR_STATE_PASSIVE =
     .P_TRANSITION_TABLE = &PASSIVE_TRANSITION_TABLE[0U],
 };
 
-/* */
-// const State_T MOTOR_STATE_PASSIVE_HOLD =
-// {
-//     .P_PARENT = &MOTOR_STATE_PASSIVE,
-// }
-// const State_T MOTOR_STATE_PASSIVE_FREEWHEEL =
-// {
-//     .P_PARENT = &MOTOR_STATE_PASSIVE,
-// }
 
 /******************************************************************************/
 /*!
@@ -398,23 +362,19 @@ static void Run_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
     Phase_ActivateOutputT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    /* alterntaively Update Vbus on start Angle Control */
+    /* alternatively Update Vbus on start Angle Control */
+
+    // ProcAngleOutput
+    // Motor_FOC_WriteDuty(p_motor);
+    // Phase_ActivateOutput(&p_motor->PHASE);
 }
 
 static void Run_Proc(const Motor_T * p_motor)
 {
     Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
+    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_WriteDuty(p_motor);
 }
-
-// static State_T * Run_Next(const Motor_T * p_motor)
-// {
-//     State_T * p_nextState = NULL;
-//     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < ) { p_nextState = &MOTOR_STATE_; }
-//     return p_nextState;
-// }
 
 static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
@@ -422,10 +382,10 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT: p_nextState = &MOTOR_STATE_PASSIVE; break;
         //   (Motor_CheckSpeed(p_motor) == true) ? &MOTOR_STATE_FREEWHEEL : 0U; // check speed range
             // switch(p_motor->P_MOTOR_STATE->FeedbackMode)
-        case PHASE_OUTPUT_V0:   break;
+        case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_OUTPUT_V0:       p_nextState = &MOTOR_STATE_PASSIVE; break;
         case PHASE_OUTPUT_VPWM: break;
         default: break;
     }
@@ -438,15 +398,12 @@ static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
     State_T * p_nextState = NULL;
     switch ((Motor_Direction_T)direction)
     {
-        case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case MOTOR_DIRECTION_NULL: p_nextState = &MOTOR_STATE_PASSIVE; break; /*   (Motor_CheckSpeed(p_motor) == true) */
         case MOTOR_DIRECTION_CW: break;
         case MOTOR_DIRECTION_CCW: break;
         default: break; /* Invalid direction */
     }
     return p_nextState;
-    /* check speed or return to passive */
-    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
-    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
 }
 
 /*
@@ -455,11 +412,8 @@ static State_T * Run_InputStop(const Motor_T * p_motor, state_value_t direction)
 */
 static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    State_T * p_nextState = NULL;
     Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
-    p_nextState = &MOTOR_STATE_RUN;
-    /* Run_Entry Procs synchronous */ /* Alternatively, transition through Freewheel */
-    return p_nextState;
+    return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
 }
 
 static const State_Input_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
@@ -491,15 +445,15 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void OpenLoop_Entry(const Motor_T * p_motor)
 {
-    Phase_ActivateOutputT0(&p_motor->PHASE);
-    // Phase_ActivateOutputV0(&p_motor->PHASE);
+    // Phase_ActivateOutputT0(&p_motor->PHASE);
+    Phase_ActivateOutputV0(&p_motor->PHASE);
     FOC_ClearCaptureState(&p_motor->P_MOTOR_STATE->Foc);
     // determine initial substate from stop
     p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop = 1U; /* limits user cmd input */
 }
 
 /*
-    Prco SubState Tree
+    Proc SubState Tree
 */
 static void OpenLoop_Proc(const Motor_T * p_motor)
 {
@@ -509,22 +463,22 @@ static void OpenLoop_Proc(const Motor_T * p_motor)
 static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     State_T * p_nextState = NULL;
-
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE;              break;
-        case PHASE_OUTPUT_V0:       /* Phase_ActivateOutputV0(&p_motor->PHASE); */   break;
+        case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE;     break;
+        case PHASE_OUTPUT_V0:       p_nextState = &MOTOR_STATE_PASSIVE;     break;
+        // case PHASE_OUTPUT_V0:       /* Phase_ActivateOutputV0(&p_motor->PHASE); */   break;
         case PHASE_OUTPUT_VPWM:     /* Phase_ActivateOutputT0(&p_motor->PHASE); */   break;
+        default: break;
         /* No resume from OpenLoop, freewheel state check stop */
     }
-
     return p_nextState;
 }
 
 static State_T * Openloop_InputStop(const Motor_T * p_motor, state_value_t direction)
 {
-    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
-    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
+    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+    // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
 }
 
 static State_T * OpenLoop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
@@ -570,7 +524,7 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 /******************************************************************************/
 static void Calibration_Entry(const Motor_T * p_motor)
 {
-    // Phase_ActivateOutputV0(&p_motor->PHASE);
+    Phase_ActivateOutputV0(&p_motor->PHASE); /* Transition from Stop or Substates */
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }
@@ -579,31 +533,35 @@ static void Calibration_Proc(const Motor_T * p_motor)
 {
 }
 
-static State_T * Calibration_Next(const Motor_T * p_motor)
-{
-    return (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
-}
 
 /* Calibration State Exit with Direction == 0 and InputCalibration(STOP) */
 static State_T * Calibration_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
-    State_T * p_nextState = NULL;
+    // State_T * p_nextState = NULL;
 
+    // switch ((Phase_Output_T)phaseOutput)
+    // {
+    //     case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);                break;
+    //     case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->PHASE);     break;
+    //     case PHASE_OUTPUT_VPWM:     break;
+    // }
+
+    // // return p_nextState;
+    // return &MOTOR_STATE_CALIBRATION; /* Stops the SubState */
+    State_T * p_nextState = NULL;
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_OUTPUT_FLOAT:    Phase_Float(&p_motor->PHASE);                break;
-        case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(&p_motor->PHASE);     break;
+        case PHASE_OUTPUT_FLOAT:    p_nextState = &MOTOR_STATE_PASSIVE;     break;
+        case PHASE_OUTPUT_V0:       p_nextState = &MOTOR_STATE_PASSIVE;     break;
         case PHASE_OUTPUT_VPWM:     break;
     }
-
-    // return p_nextState;
-    return &MOTOR_STATE_CALIBRATION; /* Stops the SubState */
+    return p_nextState;
 }
 
 static State_T * Calibration_InputStop(const Motor_T * p_motor, state_value_t direction)
 {
-    // Phase_Float(&p_motor->PHASE);
-    return ((Motor_Direction_T)direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
+    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+    // return ((Motor_Direction_T)direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_STOP : NULL;
 }
 
 /*
@@ -651,7 +609,7 @@ static State_T * Fault_InputClearFault(const Motor_T * p_motor, state_value_t fa
     // p_motor->P_MOTOR_STATE->FaultFlags.Value &= ~faultFlags;
     // p_motor->P_MOTOR_STATE->FaultFlags.Value = 0U;
     // p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); // non polling check
-    Motor_ClearFaultFlags(p_motor);
+    Motor_CaptureFaultFlags(p_motor);
 
     return (p_motor->P_MOTOR_STATE->FaultFlags.Value == 0U) ? &MOTOR_STATE_STOP : NULL;
 }

@@ -93,7 +93,6 @@ static inline bool StateMachine_IsActiveState(const StateMachine_Active_T * p_ac
 static inline bool StateMachine_IsActiveStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (StateMachine_GetActiveState(p_active)->ID == stateId); }
 
 
-
 /******************************************************************************/
 /*!
     Protected Inline Functions

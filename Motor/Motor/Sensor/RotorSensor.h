@@ -119,7 +119,7 @@ typedef struct RotorSensor_State
     angle16_t MechanicalAngle;
 
     /*
-    sensor direction for comparison
+        sensor direction for comparison
     */
     int Direction; /* RotorSensor_Direction. store the feedback direction if upper layer handling is needed */
     // int DirectionPrev;
@@ -192,12 +192,10 @@ static inline void RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor) { p_
 static inline void RotorSensor_ZeroInitial(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->ZERO_INITIAL(p_sensor); /* p_sensor->P_STATE->DirectionErrorCount = 0; */ }
 
 /* set the direction compensation */
-/* Optionally for sensor without built-in direction detection */
+/* Optionally force sensor direction detection */
 static inline void RotorSensor_SetDirection(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_VTABLE->SET_DIRECTION(p_sensor, direction); }
-// static inline void RotorSensor_SetDirection(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_STATE->Direction = direction; }
 
 // static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->GET_DIRECTION(p_sensor); }
-
 static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->IS_FEEDBACK_AVAILABLE(p_sensor); }
 
 /*

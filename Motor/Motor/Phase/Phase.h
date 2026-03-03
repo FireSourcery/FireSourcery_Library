@@ -305,6 +305,11 @@ static inline bool Phase_IsFloat(const Phase_T * p_phase) { return (_Phase_ReadS
 static inline bool Phase_IsVDuty(const Phase_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0); }
 static inline bool Phase_IsV0(const Phase_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); }
 
+
+/*
+
+*/
+
 /* Collective state */
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
