@@ -65,7 +65,7 @@ void _StateMachine_TraverseTransition(StateMachine_Active_T * p_active, void * p
 */
 void _StateMachine_InvokeTraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value)
 {
-    if (StateMachine_IsActivePath(p_active, p_start) == true) { _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value)); }
+    if (StateMachine_IsActiveBranch(p_active, p_start) == true) { _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value)); }
 }
 
 
@@ -80,6 +80,11 @@ static inline State_T * OfState(const StateMachine_Active_T * p_active, void * p
     return State_TransitionOfOutputUp(StateMachine_GetLeafState(p_active), p_context);
 }
 
+// static inline void Output(const StateMachine_Active_T * p_active, void * p_context)
+// {
+//     return State_OutputUp(StateMachine_GetLeafState(p_active), p_context);
+// }
+
 static inline State_T * OfInput(const StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 {
     return State_TransitionOfInputUp(StateMachine_GetLeafState(p_active), p_context, id, value);
@@ -91,6 +96,7 @@ static inline State_T * OfInput(const StateMachine_Active_T * p_active, void * p
 void _StateMachine_Branch_ProcSyncOutput(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_TraverseTransition(p_active, p_context, OfState(p_active, p_context));
+    //  State_OutputUp(StateMachine_GetLeafState(p_active), p_context);
 }
 
 /* Transition immediately */
@@ -264,8 +270,6 @@ void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_con
     States with ProcBranch_Nested need [p_ActiveSubState] to be cleared accordingly
 
     Within _StateMachine_ProcState ->
-    _StateMachine_ProcSyncNextState
-    _StateMachine_ProcSyncInput
     _StateMachine_ProcSyncOutput
         _StateMachine_Branch_Proc_Nested
 
@@ -274,8 +278,8 @@ void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_con
     handles SubState returns from SubStates only
         i.e State DEPTH > 0, are processed with Traverse, and can return SubState
 
-    possibly check pending substate
 */
+// State_OutputUpUntil(State_T * p_start, State_T * p_end, void * p_context)
 // void _StateMachine_NestedBranch_Proc(StateMachine_Active_T * p_active, void * p_context)
 // {
 //     _StateMachine_Branch_ProcSyncOutput(p_active, StateMachine_GetRootState(p_active), p_context);
@@ -290,6 +294,6 @@ void _StateMachine_RootFirst_Proc(StateMachine_Active_T * p_active, void * p_con
 // void _StateMachine_NestedBranch_CallInput(StateMachine_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
 // {
 //     _StateMachine_TraverseTransition(p_active, p_context, OfInput(p_active, p_context, id, value));
-//      p_next = State_TransitionOfInputUpTo(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value); }
+//      p_next = State_TransitionOfInputUntil(StateMachine_GetLeafState(p_active), StateMachine_GetRootState(p_active), p_context, id, value); }
 // }
 

@@ -161,6 +161,13 @@ static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * 
 /******************************************************************************/
 /*
     ProcSyncOutput while disabling separate ProcSyncInput only
+
+    buffered input still need to lock, but this way ProcSyncOutput can run without waiting for input processing
+    p_active->SyncInputs[(uint8_t)id] = ..
+    p_active->SyncInputMask |=  ..
+    p_active->SyncInputs[(uint8_t)id] = ..
+    ... ProcSyncInput
+    p_active->SyncInputMask |=  ..
 */
 static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_active)
 {

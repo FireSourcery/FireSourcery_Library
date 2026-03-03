@@ -46,7 +46,7 @@ static void Homing_Entry(const Motor_T * p_motor)
     // p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
     // p_motor->P_MOTOR_STATE->FeedbackMode.Current = 0U;
 
-    // Phase_ActivateOutputV0(&p_motor->PHASE);
+    // Phase_ActivateV0(&p_motor->PHASE);
     // Timer_StartPeriod_Millis(&p_motor->P_MOTOR_STATE->ControlTimer, 20); // ~1rpm
     // Ramp_Set(&p_motor->P_MOTOR_STATE->OpenLoopIRamp, p_motor->P_MOTOR_STATE->Config.OpenLoopRampITime_Cycles, 0, Motor_DirectionalValueOf(p_motor, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16));
 
@@ -88,7 +88,7 @@ static State_T * Homing_End(const Motor_T * p_motor)
     // /* error on full rev todo */
     // if (angle16_cycle(Motor_GetMechanicalAngle(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta, (p_motor->P_MOTOR_STATE->Direction == MOTOR_DIRECTION_CCW)) == true)
     // {
-    //     Phase_ActivateOutputV0(&p_motor->PHASE);
+    //     Phase_ActivateV0(&p_motor->PHASE);
     //     _StateMachine_EndSubState(p_motor->STATE_MACHINE.P_MOTOR_STATE);
     //     p_nextState = &MOTOR_STATE_CALIBRATION;
     // }
@@ -138,7 +138,7 @@ extern const State_T CALIBRATION_STATE_TUNNING;
 static void Tuning_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
-    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Phase_ActivateT0(&p_motor->PHASE);
 }
 
 static void Tuning_Proc(const Motor_T * p_motor)
@@ -154,10 +154,10 @@ static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phas
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        // case PHASE_OUTPUT_FLOAT: p_nextState = &MOTOR_STATE_PASSIVE; break;
-        case PHASE_OUTPUT_FLOAT: Phase_Float(&p_motor->PHASE); break;
-        case PHASE_OUTPUT_V0: break;
-        case PHASE_OUTPUT_VPWM: Phase_ActivateOutputT0(&p_motor->PHASE); break;
+        // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
+        case PHASE_VOUT_0: break;
+        case PHASE_VOUT_PWM: Phase_ActivateT0(&p_motor->PHASE); break;
         default: break;
     }
 

@@ -163,14 +163,13 @@ typedef const struct State
         [Synchronous Output of State/Clock] - Sync modes only. Periodic processing.
     */
     State_Action_T LOOP; /* SYNC_OUTPUT */ /* Synchronous Action Handler */ /* No null pointer check for TOP level. Implementation supply empty function */
+
+    /* Periodic process transition implement with call StateMachine_TransitionTo or a state input slot. reduce special logic. reuse the same form. */
     State_Handler_T NEXT; /* SYNC_TRANSITION */
-    /* Todo depreciate handle as  */
     /* no external input. "clock only" Transition. */
     /* Separate from LOOP for overriding transition control. Child States can inherit LOOP action while overriding NEXT.  */
     /* Child States transition stop walking up the tree.  */
     /* Optionally implement module timer */
-
-    /* Periodic process transition implement with call StateMachine_TransitionTo or a state input slot. reduce special logic. reuse the same form. */
     /*  */
 
     /*

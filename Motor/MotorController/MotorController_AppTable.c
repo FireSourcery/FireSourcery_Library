@@ -52,7 +52,7 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_contex
     MotorController_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
     // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
     // {
-    //     MotorController_SetControlState(p_context, PHASE_OUTPUT_FLOAT);
+    //     MotorController_SetControlState(p_context, PHASE_VOUT_Z);
     // }
 }
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)

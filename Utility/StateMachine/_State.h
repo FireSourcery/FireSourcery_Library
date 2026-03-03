@@ -44,14 +44,16 @@ static inline State_T * _State_InputVoid(State_Handler_T input, void * p_context
 /* Sync Output */
 /******************************************************************************/
 /*
-    [Transition Of Context/Tick/SyncOutput]
-    Map SyncProc(p_context) => newState
+        [Transition Of Context/Tick/SyncOutput]
+        Map SyncProc(p_context) => newState
 */
-static inline State_T * State_TransitionOfOutput(State_T * p_state, void * p_context)
-{
-    _State_Action(p_state->LOOP, p_context);
-    return _State_InputVoid(p_state->NEXT, p_context);
-}
+    static inline State_T * State_TransitionOfOutput(State_T * p_state, void * p_context)
+    {
+        _State_Action(p_state->LOOP, p_context);
+        return _State_InputVoid(p_state->NEXT, p_context);
+    }
+
+
 
 /******************************************************************************/
 /* Input */
@@ -111,12 +113,12 @@ static inline State_T * State_TransitionOfInput(State_T * p_state, void * p_cont
 /* AsTop Without Null Check */
 /******************************************************************************/
 /* Top level State does not need to check null */
-static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
-{
-    assert(p_state->DEPTH == 0U);
-    p_state->LOOP(p_context);
-    return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
-}
+    static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
+    {
+        assert(p_state->DEPTH == 0U);
+        p_state->LOOP(p_context);
+        return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
+    }
 
 /* Transition Table defined for every state.. allocate empty for not accepted inputs */
 static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, state_input_t inputId)
@@ -124,10 +126,7 @@ static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, state_inp
     assert(p_state->DEPTH == 0U);
     assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
 
-    // may be skipped
-    // (inputId >= STATE_INPUT_MAPPER_START_ID) only map to substate, handled by substates
-    // (uint8_t)inputId allocated
-    // defined with namespaceid << 8 | markerId
+    // mapper ids defined with namespaceid << 8 | baseId
     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
 }
 
@@ -136,6 +135,11 @@ static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * 
     return _State_CallInput(State_AcceptInput(p_state, inputId), p_context, inputValue);
 }
 
+
+
+
+static inline void State_Output(State_T * p_state, void * p_context) { _State_Action(p_state->LOOP, p_context); }
+static inline void State_Output_AsTop(State_T * p_state, void * p_context) { p_state->LOOP(p_context); }
 
 /******************************************************************************/
 /* Transition */

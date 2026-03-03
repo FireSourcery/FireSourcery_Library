@@ -83,7 +83,7 @@ static State_T * EndCalibration(const Motor_T * p_motor)
         p_fields->Config.IabcZeroRef_Adcu.A = Filter_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
         p_fields->Config.IabcZeroRef_Adcu.B = Filter_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
         p_fields->Config.IabcZeroRef_Adcu.C = Filter_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
-        Phase_Float(&p_motor->PHASE);
+        Phase_Deactivate(&p_motor->PHASE);
         p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }
 

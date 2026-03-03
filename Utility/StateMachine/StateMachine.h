@@ -69,6 +69,7 @@ StateMachine_TransitionCmd_T;
 /******************************************************************************/
 /*
     StateMachine_Def / StateMachine_VTable
+    Common def for multiple instances sharing the same transition pattern.
     Stateless Machine
     Interface VTable Analogous
 */
@@ -82,8 +83,6 @@ typedef const struct StateMachine_Machine
     // const State_T STATES[]; /* Root states. auto assign a stateid this way */
     // alternatively, simplified  implementation
     // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]
-    // meta select handler mode
-    // // typedef struct State * (*StateMachine_TransitionFunction_T)(struct State *, void * p_context, state_input_t inputId, state_value_t inputValue);
 }
 StateMachine_Machine_T;
 
@@ -214,9 +213,6 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_
     }
 }
 
-/* Convenience for inline call [StateMachine_InvokeTransition] */
-// #define STATE_MACHINE_CMD(p_start, transition) ((StateMachine_TransitionCmd_T) { .P_START = p_start, .NEXT = transition });
-
 
 /******************************************************************************/
 /*
@@ -260,9 +256,6 @@ static inline void StateMachine_Tree_Input(StateMachine_T * p_this, state_input_
 {
     StateMachine_Tree_InputAsyncTransition(p_this, id, value);
 }
-
-// Root only, no walk up. traverse on transition.
-// static inline void StateMachine_Root_ApplyInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
 
 static inline void StateMachine_Tree_SetInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
 {

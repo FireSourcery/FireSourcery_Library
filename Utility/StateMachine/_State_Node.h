@@ -77,9 +77,9 @@ extern State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end
 
 
 extern State_Input_T State_AcceptInputUp(State_T * p_start, state_input_t id);
-extern State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, state_input_t id);
+extern State_Input_T State_AcceptInputUntil(State_T * p_start, State_T * p_end, state_input_t id);
 extern State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_input_t id, state_value_t value);
-extern State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value);
+extern State_T * State_TransitionOfInputUntil(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value);
 
 
 State_Input_T State_AcceptInput_RootFirst(State_T * p_start, state_input_t id);

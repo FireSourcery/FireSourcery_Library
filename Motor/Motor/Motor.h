@@ -475,7 +475,7 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
 /*
 */
 /* [SpeedRated_Rpm] = [SpeedTypeMax_Rpm] / 2  */
-static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor) { return INT16_MAX / 2; }
+static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor) { (void)p_motor; return INT16_MAX / 2; }
 
 
 /******************************************************************************/
@@ -603,13 +603,17 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
         p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
     }
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
-
-    // if caller handles rotor direction mismatch
-    // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
-    // {
-    //     // Runtime reversal detected – update applied direction for control
-    // }
 }
+
+// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
+// static inline void Motor_ProcDirection(const Motor_T * p_motor)
+// {
+// // if caller handles rotor direction mismatch
+// // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
+// // {
+// //     // Runtime reversal detected – update applied direction for control
+// // }
+// }
 
 /* Feedback Speed interface getter */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
@@ -662,7 +666,6 @@ static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 /*
     Pid State on FeedbackMode/Resume
 */
-// Motor_MatchOuterFeedbackState
 static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
 {
     if (p_motor->FeedbackMode.Speed == 1U)
@@ -721,9 +724,6 @@ static inline Motor_Direction_T Motor_GetDirectionReverse(const Motor_State_T * 
 static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { return (Motor_GetDirectionSign(p_motor) == 1); } /* DirectionForward == Direction, excluding null case */
 static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (Motor_GetDirectionSign(p_motor) == -1); }
 static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
-
-
-// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
 
 /*!
     Convert between a user reference direction to virtual CCW/CW direction

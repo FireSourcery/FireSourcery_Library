@@ -316,7 +316,7 @@ static const State_T STATE_PARK =
 /******************************************************************************/
 static void Main_Entry(const MotorController_T * p_context)
 {
-    // Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+    // Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_VOUT_Z);
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { Motor_Table_StopAll(&p_context->MOTORS); }
 }
 
@@ -333,7 +333,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:
-            Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT);
+            Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_VOUT_Z);
             Motor_Table_StopAll(&p_context->MOTORS);
             return &MC_STATE_MAIN; /* Exit sub-state, return to Main idle */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
@@ -389,7 +389,7 @@ const State_T MC_STATE_MAIN =
 static void MotorCmd_Entry(const MotorController_T * p_context)
 {
     // MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_OUTPUT_FLOAT); /* Set PWM Output */
+    Motor_Table_ActivateVOutput(&p_context->MOTORS, PHASE_VOUT_Z); /* Set PWM Output */
 }
 
 /* Motor_Input_T Only */

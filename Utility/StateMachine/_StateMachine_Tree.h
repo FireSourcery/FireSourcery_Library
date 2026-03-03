@@ -49,28 +49,18 @@ static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_ac
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
 /* Match up along the active path */
-static inline bool StateMachine_IsActivePath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsAncestorOrSelf(StateMachine_GetLeafState(p_active), p_state); }
+static inline bool StateMachine_IsActiveBranch(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsAncestorOrSelf(StateMachine_GetLeafState(p_active), p_state); }
 
 /* Ancestor or Descendant */
-static inline bool StateMachine_IsDirectPath(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
+static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
 
 /* return an id only if the state is a descendant of the specified ancestor */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_ancestor)
 {
-    return (StateMachine_IsActivePath(p_active, p_ancestor)) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+    return (StateMachine_IsActiveBranch(p_active, p_ancestor)) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
 }
 
-// depreciate
-// static inline state_t _StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active)
-// {
-//     return (p_active->p_ActiveState->DEPTH != 0) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
-// }
-
-// static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_parent)
-// {
-//     return (p_active->p_ActiveState->P_PARENT == p_parent) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
-// }
 
 /******************************************************************************/
 /*!

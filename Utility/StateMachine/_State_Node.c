@@ -231,6 +231,7 @@ static inline void * ApplyUntilRoot(State_T * p_start, void * p_context, State_V
 */
 static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
 static inline void * AcceptInputVisitor(State_T * p_state, void * nil, int id) { (void)nil; return (void *)State_AcceptInput(p_state, id); }
+static inline void * OutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Output(p_state, p_context); return NULL; }
 static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
 static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
 
@@ -277,8 +278,7 @@ State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context
 /******************************************************************************/
 /*
     Take the first input
-    Traversal stops when input is defined, even if no state transition. alternatively
-    Inputs using id always include top level
+    Traversal stops when input is defined. even if no state transition.
 */
 State_Input_T State_AcceptInputUp(State_T * p_start, state_input_t id)
 {
@@ -291,31 +291,23 @@ State_T * State_TransitionOfInputUp(State_T * p_start, void * p_context, state_i
     return _State_CallInput(State_AcceptInputUp(p_start, id), p_context, value);
 }
 
-State_Input_T State_AcceptInputUpTo(State_T * p_start, State_T * p_end, state_input_t id)
+/*  */
+State_Input_T State_AcceptInputUntil(State_T * p_start, State_T * p_end, state_input_t id)
 {
     return (State_Input_T)ApplyUpUntil(p_start, p_end, NULL, AcceptInputVisitor, id);
 }
 
-State_T * State_TransitionOfInputUpTo(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
+State_T * State_TransitionOfInputUntil(State_T * p_start, State_T * p_end, void * p_context, state_input_t id, state_value_t value)
 {
-    return _State_CallInput(State_AcceptInputUpTo(p_start, p_end, id), p_context, value);
+    return _State_CallInput(State_AcceptInputUntil(p_start, p_end, id), p_context, value);
 }
 
-
-// State_Input_T State_AcceptInputUpToRoot(State_T * p_start, state_input_t id)
-
-/*
-
-*/
-// static State_Input_T _AcceptInputRootFirst(State_T * p_start, State_T * p_root, State_Input_T input, state_input_t id)
-// {
-//     return (input != NULL) ? input : State_AcceptInputUpTo(p_start, p_root, id);
-// }
-
+/*  */
+/* 2 extra comparisons, when active state is root state, compared to Flat StateMachine */
 State_Input_T State_AcceptInput_RootFirst(State_T * p_start, state_input_t id)
 {
     State_Input_T input = State_AcceptInput_AsTop(_State_GetRoot(p_start), id);
-    if (input != NULL) { input = State_AcceptInputUpTo(p_start, _State_GetRoot(p_start), id); } /* 2 extra comparisons, when active state is root state, compared to Flat StateMachine */
+    if (input != NULL) { input = State_AcceptInputUntil(p_start, _State_GetRoot(p_start), id); }
     return input;
 }
 
@@ -323,6 +315,22 @@ State_T * State_TransitionOfInput_RootFirst(State_T * p_start, void * p_context,
 {
     return _State_CallInput(State_AcceptInput_RootFirst(p_start, id), p_context, value);
 }
+
+
+/******************************************************************************/
+/*
+    State Traverse OnTransition State_Actions
+*/
+/******************************************************************************/
+/* [Branch Output] */
+void State_OutputUp(State_T * p_start, void * p_context) { ApplyUp(p_start, p_context, OutputVisitor, 0); }
+void State_OutputUpUntil(State_T * p_start, State_T * p_end, void * p_context) { ApplyUpUntil(p_start, p_end, p_context, OutputVisitor, 0); }
+
+// void State_Output_RootFirst(State_T * p_start, void * p_context)
+// {
+//     State_Output_AsTop(_State_GetRoot(p_start), p_context);
+//     State_OutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
+// }
 
 
 /******************************************************************************/

@@ -182,7 +182,7 @@
 //     {
 //         // Encoder_CalibrateQuadratureDirection(&p_motor->ENCODER, p_motor->Direction == MOTOR_DIRECTION_CCW);
 //         // /* _StateMachine_EndSubState(&p_motor->STATE_MACHINE); */
-//         // StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT);
+//         // StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z);
 //         p_nextState = &MOTOR_STATE_CALIBRATION;
 //     }
 
@@ -562,7 +562,7 @@
 
 //             case 1U:
 //                 Encoder_CalibrateQuadraturePositive(&p_motor->ENCODER);
-//                 Phase_Float(&p_motor->PHASE);
+//                 Phase_Deactivate(&p_motor->PHASE);
 //                 isComplete = true;
 //                 break;
 //             default: break;

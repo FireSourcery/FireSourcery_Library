@@ -67,9 +67,9 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
     else
 // #endif
     {
-        // todo with   Angle_T
+        // Angle_T todo
         p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
-        // p_state-> Angle = p_angle->Angle  + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER); // may over accumulate
+        // p_state-> Angle = p_angle->Angle  + delta // may over accumulate
         // if capture mech angle
         p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
     }

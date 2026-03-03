@@ -61,7 +61,7 @@ void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
+    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
 }
 
 /* if handle each value update with statemachine on input */
@@ -93,7 +93,7 @@ void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_VPWM);
+    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
 }
 
 /*!
@@ -128,7 +128,7 @@ void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
 {
     switch (p_vehicle->P_VEHICLE_STATE->Config.ZeroMode)
     {
-        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_OUTPUT_FLOAT);        break;
+        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_Z);        break;
         case VEHICLE_ZERO_MODE_CRUISE:    Motor_Table_ApplyFeedbackMode(&p_vehicle->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);    break;
         case VEHICLE_ZERO_MODE_REGEN:       /* Vehicle_SetRegenMotorAll(p_this); */ break;
         default: break;
@@ -243,18 +243,18 @@ void Vehicle_ConfigId_Set(Vehicle_State_T * p_vehicleState, Vehicle_ConfigId_T i
     //     {
     //         case MOTOR_CONTROLLER_DIRECTION_PARK:
     //             P_input->Direction = MOTOR_DIRECTION_NULL;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
+    //             P_input->PhaseOutput = PHASE_VOUT_Z;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
     //             P_input->Direction = MOTOR_DIRECTION_CW;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
+    //             P_input->PhaseOutput = PHASE_VOUT_PWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
     //             P_input->Direction = MOTOR_DIRECTION_CCW;
-    //             P_input->PhaseOutput = PHASE_OUTPUT_VPWM;
+    //             P_input->PhaseOutput = PHASE_VOUT_PWM;
     //             break;
     //         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
-    //             P_input->PhaseOutput = PHASE_OUTPUT_FLOAT;
+    //             P_input->PhaseOutput = PHASE_VOUT_Z;
     //             break;
     //         default:
     //             break;

@@ -100,7 +100,7 @@ void Motor_ProcPhaseAlign(Motor_State_T * p_motor)
 
 static void PhaseAlign_Entry(const Motor_T * p_motor)
 {
-    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Phase_ActivateT0(&p_motor->PHASE);
     Motor_StartAlignCmd(p_motor->P_MOTOR_STATE);
 }
 
@@ -153,7 +153,7 @@ void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T align)
 /******************************************************************************/
 static void AngleAlign_Entry(const Motor_T * p_motor)
 {
-    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Phase_ActivateT0(&p_motor->PHASE);
     Motor_FOC_StartAlignCmd(p_motor->P_MOTOR_STATE); // using commutation mode
 }
 
@@ -273,7 +273,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_value_t null)
 {
     // Motor_FOC_ActivateOutputZero(p_motor); // in case it has been disabled
-    Phase_ActivateOutputT0(&p_motor->PHASE);
+    Phase_ActivateT0(&p_motor->PHASE);
     return &OPEN_LOOP_STATE_START_UP_ALIGN;
 }
 

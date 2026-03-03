@@ -206,9 +206,9 @@ static const State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(const MotorController_T * p_mc)
 {
-    Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_OUTPUT_FLOAT);
+    Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_VOUT_Z);
     // Motor_Table_SetCmdValue(&p_mc->MOTORS, 0);
-    // if (p_mc->p_mc_STATE->Input.Cmd != VEHICLE_CMD_BRAKE) { Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_OUTPUT_FLOAT); }  /* If enter neutral while braking, handle discontinuity */
+    // if (p_mc->p_mc_STATE->Input.Cmd != VEHICLE_CMD_BRAKE) { Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_VOUT_Z); }  /* If enter neutral while braking, handle discontinuity */
 }
 
 static void Neutral_Proc(const MotorController_T * p_mc)
@@ -250,8 +250,8 @@ static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_val
 {
     switch ((Vehicle_Cmd_T)mode)
     {
-        case VEHICLE_CMD_RELEASE:   Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_OUTPUT_FLOAT); break;
-        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(&p_mc->VEHICLE);                         break;
+        case VEHICLE_CMD_RELEASE:   Motor_Table_ActivateVOutput(&p_mc->MOTORS, PHASE_VOUT_Z);   break;
+        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(&p_mc->VEHICLE);                     break;
         case VEHICLE_CMD_THROTTLE:  break;
         default: break;
     }
@@ -365,6 +365,7 @@ void _MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc)
     send to state machine
 */
 /*
+    Unified CmdId detection, inclusive of edge detection.
     Command Polling
     Cmd "state" == input, changes on edge, handle outside of StateMachine
     on complete input
@@ -461,7 +462,7 @@ void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T
 {
     switch (id)
     {
-        case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);       break; // call outer passthrough in most cases
+        case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);   break;
         case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
     }

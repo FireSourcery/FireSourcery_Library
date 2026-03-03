@@ -69,15 +69,13 @@
     Phase Output directly mapping to a Control State: Feedback Run, Freewheel, Hold
 */
 /******************************************************************************/
-inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_VPWM); }
+inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
 
-inline void Motor_Release(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_FLOAT); }
+inline void Motor_ReleaseVZ(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z); }
 
-inline void Motor_Hold(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_OUTPUT_V0); }
+inline void Motor_ReleaseV0(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
 
 inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
-//StateMachine_Tree_InputRootOnly
-// inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state){     if (state != Motor_GetPhaseState(p_motor)) { Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput); } }
 
 
 /******************************************************************************/
@@ -108,6 +106,7 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 {
     if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
 }
+// void Motor_ApplyTorqueZero(Motor_State_T * p_motor) { if (p_motor->FeedbackMode.Current == 1) { Ramp_SetTarget(&p_motor->TorqueRamp, 0); } else { Motor_ReleaseVZ } }
 
 /******************************************************************************/
 /*!
@@ -132,8 +131,8 @@ void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T directi
 /*
     Transition to Stop
     Release stays in ready mode. Stop disables inputs until next Start.
+    MOTOR_DIRECTION_NULL doubles as Stop from Passive
 */
-/*  MOTOR_DIRECTION_NULL  Transition to Stop or duplicate phase float */
 void Motor_Stop(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
 /******************************************************************************/
@@ -143,8 +142,8 @@ void Motor_Stop(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STA
 /******************************************************************************/
 void Motor_ForceDisableControl(const Motor_T * p_motor)
 {
-    Phase_Float(&p_motor->PHASE);
-    Motor_Release(p_motor);
+    Phase_Deactivate(&p_motor->PHASE);
+    Motor_ReleaseVZ(p_motor);
     Motor_Stop(p_motor);
 }
 
@@ -227,10 +226,6 @@ void Motor_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
     Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16));
 }
 
-// void Motor_SetIFollow(Motor_State_T * p_motor)
-// {
-//     Motor_SetICmd(p_motor, 0U);
-// }
 
 /******************************************************************************/
 /*!

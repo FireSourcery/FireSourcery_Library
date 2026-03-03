@@ -44,12 +44,11 @@
     As collective ABC ouput or 3-state interpretation of a single-phase.
 */
 // typedef enum Phase_VOutMode
-/* PHASE_VOUT_Z */ /* PHASE_VOUT_0 */ /* PHASE_VOUT_PWM */
 typedef enum Phase_Output
 {
-    PHASE_OUTPUT_FLOAT,  /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
-    PHASE_OUTPUT_V0,     /* VPwm 0, Pin 1 */
-    PHASE_OUTPUT_VPWM,   /* VPwm 1, Pin 1 */
+    PHASE_VOUT_Z,  /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
+    PHASE_VOUT_0,     /* VPwm 0, Pin 1 */
+    PHASE_VOUT_PWM,   /* VPwm 1, Pin 1 */
 }
 Phase_Output_T;
 
@@ -281,21 +280,20 @@ static inline void Phase_WriteDuty_Vector(const Phase_T * p_phase, Phase_Triplet
 }
 
 // static inline void Phase_Deactivate(const Phase_T * p_phase)
-static inline void Phase_Float(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_0); }
+static inline void Phase_Deactivate(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_0); }
 
 // static inline void _Phase_Activate(const Phase_T * p_phase) active stored
 static inline void Phase_ActivateOutput(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_ABC); }
 
 /* Enable all at 0 duty. NOT for Bipolar active. */
-static inline void Phase_ActivateOutputV0(const Phase_T * p_phase)
+static inline void Phase_ActivateV0(const Phase_T * p_phase)
 {
     // assert(p_phase->PolarMode != PHASE_MODE_BIPOLAR);
     Phase_WriteDuty(p_phase, 0U, 0U, 0U);
     Phase_ActivateOutput(p_phase);
 }
 
-// static inline void Phase_ActivateOutputVMidpoint(const Phase_T * p_phase)
-static inline void Phase_ActivateOutputT0(const Phase_T * p_phase)
+static inline void Phase_ActivateT0(const Phase_T * p_phase)
 {
     Phase_WriteDuty_Fract16(p_phase, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(p_phase);
@@ -305,7 +303,6 @@ static inline bool Phase_IsFloat(const Phase_T * p_phase) { return (_Phase_ReadS
 static inline bool Phase_IsVDuty(const Phase_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0); }
 static inline bool Phase_IsV0(const Phase_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); }
 
-
 /*
 
 */
@@ -314,9 +311,9 @@ static inline bool Phase_IsV0(const Phase_T * p_phase) { return (!Phase_IsFloat(
 static inline Phase_Output_T Phase_ReadOutputState(const Phase_T * p_phase)
 {
     Phase_Output_T state;
-    if (_Phase_ReadState(p_phase).Bits == PHASE_ID_0) { state = PHASE_OUTPUT_FLOAT; }
-    else if (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) { state = PHASE_OUTPUT_V0; }
-    else { state = PHASE_OUTPUT_VPWM; }
+    if (_Phase_ReadState(p_phase).Bits == PHASE_ID_0) { state = PHASE_VOUT_Z; }
+    else if (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) { state = PHASE_VOUT_0; }
+    else { state = PHASE_VOUT_PWM; }
     return state;
 }
 
@@ -324,9 +321,9 @@ static inline void Phase_ActivateOutputState(const Phase_T * p_phase, Phase_Outp
 {
     switch (state)
     {
-        case PHASE_OUTPUT_FLOAT:    Phase_Float(p_phase);               break;
-        case PHASE_OUTPUT_V0:       Phase_ActivateOutputV0(p_phase);    break;
-        case PHASE_OUTPUT_VPWM:     Phase_ActivateOutputT0(p_phase);    break;
+        case PHASE_VOUT_Z:      Phase_Deactivate(p_phase);      break;
+        case PHASE_VOUT_0:      Phase_ActivateV0(p_phase);      break;
+        case PHASE_VOUT_PWM:    Phase_ActivateT0(p_phase);      break;
         default: break;
     }
 }

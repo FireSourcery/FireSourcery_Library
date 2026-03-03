@@ -81,7 +81,7 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_con
     Motor_Table_ForceDisableControl(&p_context->MOTORS);
     MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
     p_context->P_MC_STATE->CmdInput.CmdValue = 0;
-    p_context->P_MC_STATE->CmdInput.PhaseOutput = PHASE_OUTPUT_FLOAT;
+    p_context->P_MC_STATE->CmdInput.PhaseOutput = PHASE_VOUT_Z;
     p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NULL;
 }
 

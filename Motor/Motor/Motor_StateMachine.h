@@ -58,10 +58,10 @@
 typedef enum Motor_StateId
 {
     MSM_STATE_ID_INIT,
-    MSM_STATE_ID_STOP,      /* 0 speed. Feedback Off + Ouput V0 */
-    MSM_STATE_ID_PASSIVE,   /* Freewheel or Hold. Feedback Off + Ouput VFloat */
+    MSM_STATE_ID_STOP,      /* 0 speed. Feedback Off + Ouput V0/VZ */
+    MSM_STATE_ID_PASSIVE,   /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
     MSM_STATE_ID_RUN,       /* Feedback Loop + Ouput VPWM */
-    MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + VFloat/V0/VPWM */
+    MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + VZ/V0/VPWM */
     MSM_STATE_ID_CALIBRATION,
     MSM_STATE_ID_FAULT,
 }
@@ -84,9 +84,9 @@ extern const State_T MOTOR_STATE_FAULT;
 typedef enum Motor_StateInput
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
-    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Active/Release/Hold */
+    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Stop-V0/Stop-VZ */
     MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T] flags */
-    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Start/Stop */
+    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Stop */
     MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MSM_INPUT_USER_BUFFER,
