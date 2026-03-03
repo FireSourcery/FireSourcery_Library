@@ -29,10 +29,9 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-// #include "MotorController.h"
 #include "Utility/StateMachine/StateMachine.h"
 
-/* Part of MotorController */
+// /* Part of MotorController */
 struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
 

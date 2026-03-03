@@ -56,9 +56,10 @@ typedef struct Vehicle_Input
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     Vehicle_Cmd_T Cmd;
-    Vehicle_Cmd_T CmdPrev;
+    // Vehicle_Cmd_T CmdPrev;
 }
 Vehicle_Input_T;
+/* optionally handle park,fnr in 1 id */
 
 static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_user)
 {
@@ -68,17 +69,17 @@ static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_
 }
 
 /*
-    For cases where Module handles edge detect
+    For cases where Module handles cmd edge detect
 */
 static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
 {
-    p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
+    // p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
     p_user->Cmd = Vehicle_Input_EvaluateCmd(p_user);
     return p_user->Cmd;
 }
 
 static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != Vehicle_Input_PollCmd(p_user)); }
-static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
+// static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
 
 static inline bool Vehicle_Input_PollDirectionEdge(Vehicle_Input_T * p_input, sign_t direction)
 {
@@ -144,7 +145,7 @@ typedef const struct Vehicle
     Motor_Table_T MOTORS;
     // const Blinky_T * P_BUZZER;
     // const MotAnalogUser_T * P_ANALOG_USER;
-    const Vehicle_Config_T * const P_NVM_CONFIG;
+    const Vehicle_Config_T * P_NVM_CONFIG;
 }
 Vehicle_T;
 

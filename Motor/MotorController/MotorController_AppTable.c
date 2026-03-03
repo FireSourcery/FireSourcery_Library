@@ -44,7 +44,7 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_contex
     switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
     {
         case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CCW);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);    break;
         case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_NULL);      break;
         default: break;
     }
@@ -68,13 +68,12 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 };
 
 
-
 /******************************************************************************/
 /*!
     Singleton App handlers
 */
 /******************************************************************************/
-MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
+MotorController_App_T * MotorController_App(MotorController_T * p_context)
 {
     switch (p_context->P_MC_STATE->Config.InitMode)
     {
@@ -84,12 +83,11 @@ MotorController_App_T * MotorController_App_Get(MotorController_T * p_context)
     }
 }
 
-// State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App_Get(p_context)->P_INITIAL_STATE; }
+// State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App(p_context)->P_INITIAL_STATE; }
 
-// MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER; }
+// MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER; }
 
 
+State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN(p_context, NULL); }
 
-State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App_Get(p_context)->ENTER_MAIN(p_context, NULL); }
-
-void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App_Get(p_context)->PROC_ANALOG_USER(p_context); }
+void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER(p_context); }

@@ -24,13 +24,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_App.h
+    @file   MotorController_AppTable.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "MotorController_App.h"
 #include "Vehicle/MotorController_Vehicle.h"
+#include "MotorController_App.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
@@ -62,7 +62,7 @@ MotorController_MainMode_T;
 // }
 // MotorController_AppTable_T;
 
-extern MotorController_App_T * MotorController_App_Get(MotorController_T * p_context);
+extern MotorController_App_T * MotorController_App(MotorController_T * p_context);
 
 State_T * MotorController_App_EnterMain(MotorController_T * p_context);
 void MotorController_App_ProcAnalogUser(MotorController_T * p_context);

@@ -368,7 +368,8 @@ void _MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc)
     Unified CmdId detection, inclusive of edge detection.
     Command Polling
     Cmd "state" == input, changes on edge, handle outside of StateMachine
-    on complete input
+    if call sm with value, update value in handler.
+    propagating value needs state constraint. even though edge detect does not
 */
 void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
 {
@@ -393,6 +394,7 @@ void MotorController_Vehicle_PollThrottle(MotorController_T * p_mc, uint16_t use
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = userCmd;
     MotorController_Vehicle_PollStartCmd(p_mc); // alternatively call state apply
+    // MotorController_Vehicle_ApplyThrottleValue(p_mc); // alternatively call state apply
 }
 
 void MotorController_Vehicle_PollBrake(MotorController_T * p_mc, uint16_t userCmd)
