@@ -68,8 +68,8 @@ typedef const struct MotorController MotorController_T;
 /******************************************************************************/
 typedef enum Vehicle_StateInput
 {
-    VEHICLE_STATE_INPUT_DIRECTION /* = STATE_INPUT_MAPPER_START_ID */, // = STATE_INPUT_MAPPER_ID_START(MCSM_INPUT_APP_USER),   /* Drive Direction */
-    VEHICLE_STATE_INPUT_DRIVE_CMD,              /* On Edge, Drive Cmd -Throttle/Brake/Release */
+    VEHICLE_STATE_INPUT_DIRECTION,      /* Drive Direction */
+    VEHICLE_STATE_INPUT_DRIVE_CMD,      /* On Edge, Drive Cmd -Throttle/Brake/Release */
 }
 Vehicle_StateInput_T;
 

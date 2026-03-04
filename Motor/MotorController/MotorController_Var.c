@@ -331,16 +331,19 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                 case MOTOR_VAR_TYPE_USER_CONTROL:
                 case MOTOR_VAR_TYPE_USER_SETPOINT:
                     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    // todo if (!MotorController_IsMotorCmd(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+                    if (!MotorController_IsMotorCmdState(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     break;
-                // case MOTOR_VAR_TYPE_CONFIG_CA:
-                // case MOTOR_VAR_TYPE_CONFIG:
-                //     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-
-                // case MOTOR_VAR_TYPE_CONFIG_RESV:
-                // case MOTOR_VAR_TYPE_CALIBRATION_CMD:
-                //     if (!MotorController_IsLock(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                //     break;
+                case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:
+                case MOTOR_VAR_TYPE_CONFIG_ACTUATION:
+                case MOTOR_VAR_TYPE_CONFIG_PID:
+                    if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+                    break;
+                case MOTOR_VAR_TYPE_CONFIG_RESV:
+                case MOTOR_VAR_TYPE_CALIBRATION_CMD:
+                case MOTOR_VAR_TYPE_HALL_CMD:
+                case MOTOR_VAR_TYPE_ENCODER_CMD:
+                    if (!MotorController_IsLock(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+                    break;
                 default:
                     break;
             }

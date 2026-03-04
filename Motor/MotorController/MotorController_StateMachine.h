@@ -138,7 +138,7 @@ static int MotorController_GetDirection(MotorController_T * p_context)
 */
 /******************************************************************************/
 /* always get the 2nd layer depth 1 state under main */
-// static inline State_PathId_T MotorController_GetMainSubStateId(const MotorController_State_T * p_data) { return StateMachine_Ge
+// static inline State_PathId_T MotorController_GetMainSubStateId(const MotorController_State_T * p_data) {
 
 /* Active Main  */
 // static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
@@ -146,11 +146,6 @@ static int MotorController_GetDirection(MotorController_T * p_context)
 //     return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
 // }
 
-// /* check by var set */
-// static inline bool MotorController_IsMotorCmd(MotorController_T * p_context)
-// {
-//     return (MotorController_GetMainSubState(p_context) == MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD);
-// }
 
 
 /******************************************************************************/
@@ -218,6 +213,11 @@ static inline void MotorController_SetDirection(MotorController_T * p_context, i
 static inline void MotorController_SetControlState(MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_PHASE); }
 static inline void MotorController_SetFeedbackMode(MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 
+/* check by var set */
+static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context)
+{
+    return (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD));
+}
 
 /* Combination Input */
 // typedef union MotorController_StateInput2

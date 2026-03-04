@@ -218,7 +218,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     {
         /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
         /* if the signal is not acquired, main will check fault flags and enter */
-        /* results of higher prioty thread may be overwritten, if interrupting a lower prioty thread in state transition */
+        /* results of higher priory thread may be overwritten, if interrupting a lower priory thread in state transition */
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
@@ -290,7 +290,6 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
         // maybe interrupted by enterFault on 1ms thread maybe change this to signal
-        // _StateMachine_RootFirst_Proc(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* if sync inputs and sync transition  */
         _StateMachine_RootFirst_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }

@@ -127,15 +127,6 @@ static State_T * TransitionFault(MotorController_T * p_context, state_value_t fa
     return &STATE_FAULT;
 }
 
-static State_T * Common_InputPark(MotorController_T * p_context)
-{
-    State_T * p_nextState = NULL;
-    if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
-    else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); }
-    else { MotorController_BeepShort(p_context); }
-    return p_nextState;
-}
-
 
 
 
@@ -245,7 +236,7 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
     switch ((MotorController_StateCmd_T)cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: //break; /* optionally allow re-entry to reset values */
-        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
+        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* App resolves initial sub-state, reads buffered direction */
         default: break;
@@ -290,6 +281,15 @@ static const State_T STATE_PARK =
     @{
 */
 /******************************************************************************/
+static State_T * Common_InputPark(MotorController_T * p_context)
+{
+    State_T * p_nextState = NULL;
+    if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
+    else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); }
+    else { MotorController_BeepShort(p_context); }
+    return p_nextState;
+}
+
 static void Main_Entry(const MotorController_T * p_context)
 {
     Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_Z); /* Start in passive */
@@ -307,7 +307,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     switch (cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_E_STOP: Motor_Table_ForceDisableControl(&p_context->MOTORS); return NULL; /* Motors in Stop first */
+        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: Motor_Table_ForceDisableControl(&p_context->MOTORS); return NULL; /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS);
             // return &MC_STATE_MAIN; /* Exit sub-state, return to Main idle */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* Enter app sub-state from Main idle */
@@ -461,10 +461,8 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                // Motor_Table_StopAll(&p_context->MOTORS);
                 if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == true)
                 {
-                    Motor_Table_StopAll(&p_context->MOTORS);
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = &STATE_PARK;
                 }
@@ -489,7 +487,7 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC: /* alternatively split */
-            Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
+                Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
                 // opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING;
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_LOCK_CALIBRATE_ADC; /* Enter Calibration SubState */
@@ -527,12 +525,9 @@ static State_T * Lock_InputStateCmd(const MotorController_T * p_context, state_v
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:   return Common_InputPark(p_context);
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
             Motor_Table_StopAll(&p_context->MOTORS); /* Force exit calibration sub-state and stop all motors before leaving Lock */
             return &MC_STATE_MAIN;
-        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return NULL;
-        // case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return &MC_STATE_MAIN;
         default:                                return NULL;
     }
 }

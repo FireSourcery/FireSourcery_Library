@@ -253,8 +253,7 @@ const State_T MOTOR_STATE_STOP =
 */
 static void Passive_Entry(const Motor_T * p_motor)
 {
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < Motor_GetSpeedRated_Fract16(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }
-    else { Phase_ActivateV0(&p_motor->PHASE); }
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
 
@@ -264,6 +263,16 @@ static void Passive_Proc(const Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
+    switch (Phase_ReadOutputState(&p_motor->PHASE))
+    {
+        case PHASE_VOUT_0:
+            if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }
+            break;
+        case PHASE_VOUT_Z:
+            if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_ActivateV0(&p_motor->PHASE); }
+            break;
+        default: break;
+    }
 }
 
 static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
@@ -273,7 +282,7 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
     switch ((Phase_Output_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-            if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < Motor_GetSpeedRated_Fract16(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }
+            if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }
             break;
         case PHASE_VOUT_0:
             Phase_ActivateV0(&p_motor->PHASE);
@@ -281,17 +290,13 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
             {
-                if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true)
-                {
-                    // RotorSensor_ZeroInitial(p_motor->P_MOTOR_STATE->p_ActiveSensor); not needed if capture sensor runs in thread
-                    p_nextState = &MOTOR_STATE_RUN;
-                }
-                else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
-                {
-                    p_nextState = &MOTOR_STATE_OPEN_LOOP;
-                    /* p_nextState = Motor_Sensor_GetStartUpState(p_motor); */ /* get substate */
-                    // p_nextState = &OPEN_LOOP_STATE_START_UP_ALIGN; /* Motor_GetSensorStartUpState() */
-                }
+                if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
+                // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
+                // {
+                //     p_nextState = &MOTOR_STATE_OPEN_LOOP;
+                //     /* p_nextState = Motor_Sensor_GetStartUpState(p_motor); */ /* get substate */
+                //     // p_nextState = &OPEN_LOOP_STATE_START_UP_ALIGN; /* Motor_GetSensorStartUpState() */
+                // }
                 // else no transition
             }
             break;
@@ -365,12 +370,14 @@ static void Run_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
+    // RotorSensor_ZeroInitial(p_motor->P_MOTOR_STATE->p_ActiveSensor); not needed if capture sensor runs in thread
     /* alternatively Update Vbus on start Angle Control */
     // if caller handles rotor direction mismatch
     // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
     // {
     //     // Runtime reversal detected – update applied direction for control
     // }
+
 
     // ProcAngleOutput
     // Motor_FOC_WriteDuty(p_motor);
