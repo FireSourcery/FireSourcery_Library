@@ -86,6 +86,6 @@ MotorController_App_T * MotorController_App(MotorController_T * p_context)
 
 
 
-State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN(p_context, NULL); }
+State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN((void *)p_context, 0); }
 
 void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER(p_context); }
