@@ -148,7 +148,7 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
         case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_Direction_T)varValue);     break;
         // case MOTOR_VAR_USER_CONTROL_RESV:    Motor_ApplyVirtualDirection(p_motor, (Motor_Direction_T)varValue);       break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
-        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyPhaseOutput(p_motor, (Phase_Output_T)varValue);           break;
+        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);           break;
         /* Set user index */
         // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR_STATE, varValue);                  break;
         // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR_STATE, varValue);                      break;

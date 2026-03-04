@@ -55,6 +55,7 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_contex
     //     MotorController_SetControlState(p_context, PHASE_VOUT_Z);
     // }
 }
+
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
 {
     return &MC_STATE_MAIN_MOTOR_CMD;
@@ -83,9 +84,6 @@ MotorController_App_T * MotorController_App(MotorController_T * p_context)
     }
 }
 
-// State_T * MotorController_App_GetMainState(MotorController_T * p_context) { return MotorController_App(p_context)->P_INITIAL_STATE; }
-
-// MotorController_App_Proc_T MotorController_App_GetAnalogUserProc(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER; }
 
 
 State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN(p_context, NULL); }

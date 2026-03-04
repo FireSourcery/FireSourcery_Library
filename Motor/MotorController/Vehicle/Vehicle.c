@@ -61,7 +61,7 @@ void Vehicle_StartThrottleMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
+    Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
 }
 
 /* if handle each value update with statemachine on input */
@@ -93,7 +93,7 @@ void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
     }
 
     /* alternatively from Release only */
-    Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
+    Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
 }
 
 /*!
@@ -128,7 +128,7 @@ void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
 {
     switch (p_vehicle->P_VEHICLE_STATE->Config.ZeroMode)
     {
-        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ActivateVOutput(&p_vehicle->MOTORS, PHASE_VOUT_Z);        break;
+        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_Z);        break;
         case VEHICLE_ZERO_MODE_CRUISE:    Motor_Table_ApplyFeedbackMode(&p_vehicle->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);    break;
         case VEHICLE_ZERO_MODE_REGEN:       /* Vehicle_SetRegenMotorAll(p_this); */ break;
         default: break;

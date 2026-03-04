@@ -187,7 +187,7 @@ Motor_Input_T;
 extern void Motor_ActivateControl(const Motor_T * p_const);
 extern void Motor_ReleaseVZ(const Motor_T * p_const);
 extern void Motor_ReleaseV0(const Motor_T * p_const);
-extern void Motor_ApplyPhaseOutput(const Motor_T * p_const, Phase_Output_T state);
+extern void Motor_ApplyControlState(const Motor_T * p_const, Phase_Output_T state);
 
 extern void Motor_ApplyFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 

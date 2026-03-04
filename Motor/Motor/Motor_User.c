@@ -75,7 +75,7 @@ inline void Motor_ReleaseVZ(const Motor_T * p_motor) { StateMachine_Tree_Input(&
 
 inline void Motor_ReleaseV0(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
 
-inline void Motor_ApplyPhaseOutput(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
 
 
 /******************************************************************************/
@@ -521,9 +521,9 @@ void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
 {
     if (p_input->PhaseOutput != Motor_GetPhaseState(p_motor))
     {
-        Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput);
+        Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
     }
-    // Motor_ApplyPhaseOutput(p_motor, p_input->PhaseOutput);
+    // Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
     Motor_ApplyFeedbackMode(p_motor, p_input->FeedbackMode);
     Motor_ApplyUserDirection(p_motor, p_input->Direction);
 

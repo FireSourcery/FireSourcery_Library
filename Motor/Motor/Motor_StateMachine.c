@@ -159,6 +159,7 @@ static void Stop_Entry(const Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
+    Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, MOTOR_DIRECTION_NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
@@ -172,9 +173,9 @@ static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseO
     State_T * p_nextState = NULL;
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_VOUT_0:       Phase_ActivateV0(&p_motor->PHASE);    break;
-        case PHASE_VOUT_Z:    Phase_Deactivate(&p_motor->PHASE);               break;
-        case PHASE_VOUT_PWM:     p_nextState = &MOTOR_STATE_PASSIVE;         break;
+        case PHASE_VOUT_0:      Phase_ActivateV0(&p_motor->PHASE);      break;
+        case PHASE_VOUT_Z:      Phase_Deactivate(&p_motor->PHASE);      break;
+        case PHASE_VOUT_PWM:    p_nextState = &MOTOR_STATE_PASSIVE;     break;
         default: break;
     }
     return p_nextState;
@@ -390,8 +391,8 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_VOUT_Z:    p_nextState = &MOTOR_STATE_PASSIVE; break;
-        case PHASE_VOUT_0:       p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_VOUT_Z:      p_nextState = &MOTOR_STATE_PASSIVE; break;
+        case PHASE_VOUT_0:      p_nextState = &MOTOR_STATE_PASSIVE; break;
         case PHASE_VOUT_PWM:     break;
         default: break;
     }
@@ -452,7 +453,6 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void OpenLoop_Entry(const Motor_T * p_motor)
 {
-    // Phase_ActivateT0(&p_motor->PHASE);
     Phase_ActivateV0(&p_motor->PHASE);
     FOC_ClearCaptureState(&p_motor->P_MOTOR_STATE->Foc);
     // determine initial substate from stop
@@ -472,8 +472,8 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t ph
     State_T * p_nextState = NULL;
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_VOUT_Z:    p_nextState = &MOTOR_STATE_PASSIVE;     break;
-        case PHASE_VOUT_0:       p_nextState = &MOTOR_STATE_PASSIVE;     break;
+        case PHASE_VOUT_Z:      p_nextState = &MOTOR_STATE_PASSIVE;     break;
+        case PHASE_VOUT_0:      p_nextState = &MOTOR_STATE_PASSIVE;     break;
         // case PHASE_VOUT_0:       /* Phase_ActivateV0(&p_motor->PHASE); */   break;
         case PHASE_VOUT_PWM:     /* Phase_ActivateT0(&p_motor->PHASE); */   break;
         default: break;
