@@ -201,20 +201,6 @@ typedef enum Motor_Var_ConfigCalibration
 }
 Motor_Var_ConfigCalibration_T;
 
-/* Debug */
-typedef enum Motor_Var_ConfigCalibrationAlias
-{
-    MOTOR_VAR_SPEED_RATED_RPM,
-    MOTOR_VAR_SPEED_V_REF_RPM,
-    MOTOR_VAR_SPEED_V_SVPWM_REF_RPM,
-    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
-    MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE,
-    MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE,
-    MOTOR_VAR_V_SPEED_RATED_FRACT16,
-    // MOTOR_VAR_V_SPEED_REF_VOLTS,
-}
-Motor_Var_ConfigCalibrationAlias_T;
-
 /*
     Ramp / User Input
 */
@@ -273,6 +259,19 @@ Motor_Var_CalibrationCmd_T;
 /*  */
 // typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
 
+/* Debug */
+typedef enum Motor_Var_ConfigCalibrationAlias
+{
+    MOTOR_VAR_SPEED_RATED_RPM,
+    MOTOR_VAR_SPEED_V_REF_RPM,
+    MOTOR_VAR_SPEED_V_SVPWM_REF_RPM,
+    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
+    MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE,
+    MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE,
+    MOTOR_VAR_V_SPEED_RATED_FRACT16,
+    // MOTOR_VAR_V_SPEED_REF_VOLTS,
+}
+Motor_Var_ConfigCalibrationAlias_T;
 
 /******************************************************************************/
 /*

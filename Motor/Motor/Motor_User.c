@@ -135,6 +135,19 @@ void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T directi
 */
 void Motor_Stop(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
 
+// static State_T * _Motor_InputStop(const Motor_T * p_motor, state_value_t value)
+// {
+//     (void)value;
+//     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
+//     return NULL;
+// }
+
+// void Motor_Stop(const Motor_T * p_motor)
+// {
+//     static StateMachine_TransitionCmd_T CMD = { .P_START = NULL, .NEXT = (State_Input_T)_Motor_InputStop };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+// }
+
 /******************************************************************************/
 /*
    Disable control. non StateMachine checked

@@ -61,11 +61,11 @@ void _StateMachine_TraverseTransition(StateMachine_Active_T * p_active, void * p
 
 /*
     For inputs/transition mapped to specific states, rather than all states
-    check if p_start is included in the active path
+    check if p_test is included in the active path
 */
-void _StateMachine_InvokeTraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_start, State_Input_T input, state_value_t value)
+void _StateMachine_InvokeTraverseTransition(StateMachine_Active_T * p_active, void * p_context, State_T * p_test, State_Input_T input, state_value_t value)
 {
-    if (StateMachine_IsActiveBranch(p_active, p_start) == true) { _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value)); }
+    if (StateMachine_IsActiveBranch(p_active, p_test) == true) { _StateMachine_TraverseTransition(p_active, p_context, input(p_context, value)); }
 }
 
 

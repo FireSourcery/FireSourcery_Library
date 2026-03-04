@@ -452,7 +452,6 @@ static inline uint16_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_m
 /* V of SpeedRated */
 static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_motor) { return Motor_VFract16OfKv(p_motor, Motor_GetSpeedRated_Rpm(p_motor)); }
 
-
 /*
     Num Max
 */
@@ -594,7 +593,6 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 /*
     Capture State
 */
-/* inline for state machine */
 static inline void Motor_CaptureSensor(const Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
