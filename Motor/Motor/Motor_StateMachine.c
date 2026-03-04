@@ -253,7 +253,6 @@ const State_T MOTOR_STATE_STOP =
 */
 static void Passive_Entry(const Motor_T * p_motor)
 {
-    assert(p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL); /* Set on exit stop */
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) < Motor_GetSpeedRated_Fract16(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }
     else { Phase_ActivateV0(&p_motor->PHASE); }
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
