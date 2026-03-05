@@ -169,29 +169,17 @@ void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->
     Ramp limits apply on proc
     Pid hold limits for integral clamp
 */
-static void ApplySpeedLimit(Motor_State_T * p_motor)
+static void UpdateSpeedLimitState(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
     p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);
 }
 
-static void ApplyILimit(Motor_State_T * p_motor)
+static void UpdateILimitState(Motor_State_T * p_motor)
 {
     p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
     p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
-
-    if (p_motor->FeedbackMode.Speed == 1U)  /* limit is applied on feedback */
-    {
-        /* Update Pid to clamp integral. Ramps update during control cycle. */
-        if (p_motor->FeedbackMode.Current == 1U) /* SpeedPid Output is I */
-        {
-            PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
-        }
-        else /* SpeedPid Output is V */
-        {
-            PID_SetOutputLimits(&p_motor->PidSpeed, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor));
-        }
-    }
+    Motor_UpdateSpeedTorqueLimits(p_motor, _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor));
 }
 
 /******************************************************************************/
@@ -207,8 +195,8 @@ static void ApplyILimit(Motor_State_T * p_motor)
 void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode)
 {
     p_motor->FeedbackMode.Value = mode.Value;
-    ApplyILimit(p_motor);
-    ApplySpeedLimit(p_motor);
+    UpdateILimitState(p_motor);
+    UpdateSpeedLimitState(p_motor);
 }
 
 void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
@@ -224,8 +212,8 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
     p_motor->Direction = direction;
     // RotorSensor_SetDirection(p_motor->p_ActiveSensor, direction);
     RotorSensor_ZeroInitial(p_motor->p_ActiveSensor);
-    ApplyILimit(p_motor);
-    ApplySpeedLimit(p_motor);
+    UpdateILimitState(p_motor);
+    UpdateSpeedLimitState(p_motor);
 }
 
 
@@ -241,14 +229,14 @@ void Motor_ResetSpeedLimitActive(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitForward_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
     p_motor->SpeedLimitReverse_Fract16 = p_motor->Config.SpeedLimitReverse_Fract16;
-    ApplySpeedLimit(p_motor);
+    UpdateSpeedLimitState(p_motor);
 }
 
 void Motor_ResetILimitActive(Motor_State_T * p_motor)
 {
     p_motor->ILimitMotoring_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
     p_motor->ILimitGenerating_Fract16 = p_motor->Config.ILimitGenerating_Fract16;
-    ApplyILimit(p_motor);
+    UpdateILimitState(p_motor);
 }
 
 /*
@@ -257,13 +245,13 @@ void Motor_ResetILimitActive(Motor_State_T * p_motor)
 void Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
     p_motor->SpeedLimitForward_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
-    if (Motor_IsDirectionForward(p_motor) == true) { ApplySpeedLimit(p_motor); }
+    if (Motor_IsDirectionForward(p_motor) == true) { UpdateSpeedLimitState(p_motor); }
 }
 
 void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
     p_motor->SpeedLimitReverse_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
-    if (Motor_IsDirectionReverse(p_motor) == true) { ApplySpeedLimit(p_motor); }
+    if (Motor_IsDirectionReverse(p_motor) == true) { UpdateSpeedLimitState(p_motor); }
 }
 
 // void Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
@@ -273,7 +261,7 @@ void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16
     // p_motor->SpeedLimitForward_Fract16 = speed_ufract16;
     // p_motor->SpeedLimitReverse_Fract16 = speed_ufract16;
 //     p_motor->SpeedLimitActive  = speed_ufract16;
-//     ApplySpeedLimit(p_motor);
+//     UpdateSpeedLimitState(p_motor);
 // }
 
 /* As scalar of base config */
@@ -281,14 +269,14 @@ void Motor_SetSpeedLimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract1
 {
     p_motor->SpeedLimitForward_Fract16 = fract16_mul(p_motor->Config.SpeedLimitForward_Fract16, scalar_ufract16);
     p_motor->SpeedLimitReverse_Fract16 = fract16_mul(p_motor->Config.SpeedLimitReverse_Fract16, scalar_ufract16);
-    ApplySpeedLimit(p_motor);
+    UpdateSpeedLimitState(p_motor);
 }
 
 void Motor_ClearSpeedLimit(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitForward_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
     p_motor->SpeedLimitReverse_Fract16 = p_motor->Config.SpeedLimitReverse_Fract16;
-    ApplySpeedLimit(p_motor);
+    UpdateSpeedLimitState(p_motor);
 }
 
 
@@ -298,27 +286,27 @@ void Motor_ClearSpeedLimit(Motor_State_T * p_motor)
 void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
 {
     p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
-    ApplyILimit(p_motor);
+    UpdateILimitState(p_motor);
 }
 
 void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
 {
     p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
-    ApplyILimit(p_motor);
+    UpdateILimitState(p_motor);
 }
 
 void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16)
 {
     p_motor->ILimitMotoring_Fract16 = fract16_mul(p_motor->Config.ILimitMotoring_Fract16, scalar_ufract16);
     p_motor->ILimitGenerating_Fract16 = fract16_mul(p_motor->Config.ILimitGenerating_Fract16, scalar_ufract16);
-    ApplyILimit(p_motor);
+    UpdateILimitState(p_motor);
 }
 
 void Motor_ClearILimit(Motor_State_T * p_motor)
 {
     p_motor->ILimitMotoring_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
     p_motor->ILimitGenerating_Fract16 = p_motor->Config.ILimitGenerating_Fract16;
-    ApplyILimit(p_motor);
+    UpdateILimitState(p_motor);
 }
 
 

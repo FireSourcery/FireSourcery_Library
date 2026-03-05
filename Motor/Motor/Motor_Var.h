@@ -138,7 +138,6 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,
     MOTOR_VAR_FOC_VQ,
-    // optionally move
     MOTOR_VAR_FOC_VA,
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,

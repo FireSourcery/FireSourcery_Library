@@ -89,16 +89,13 @@ RotorSensor_VTable_T;
 
 
 /*
-    [RotorSensor_Config_T]
-    [RotorSensor_Units_T]
+    [RotorSensor_Units_T]/[RotorSensor_Calibration_T]
 */
 typedef struct RotorSensor_Config
 {
     uint8_t PolePairs;                      /* Motor Pole Pairs. Config Mech/Electrical conversion */
 
-    /*
-        ~Speed at nominal VSource. Config scalar speed. Caller derive for simplicity.
-    */
+    /* Config scalar speed. Caller derive  */
     uint16_t ElSpeedRated_DegPerCycle;
     uint16_t MechSpeedRated_Rpm;
     uint16_t SpeedTypeMax_DegPerCycle;
@@ -112,18 +109,11 @@ RotorSensor_Config_T;
 typedef struct RotorSensor_State
 {
     /* Stores Electrical Angle and Speed State */
-    /* Electrical Angle Per Control Cycle */
-    /* AngleSpeed.Delta - Angle Displacement of Electrical Angle at CONTROL_FREQ */
-    Angle_T AngleSpeed;
-
+    Angle_T AngleSpeed;    /* AngleSpeed.Delta - Electrical Angle Per Control Cycle */
+    // angle16_t PhaseAngle; /* prev phase angle */
     angle16_t MechanicalAngle;
-
-    /*
-        sensor direction for comparison
-    */
-    int Direction; /* RotorSensor_Direction. store the feedback direction if upper layer handling is needed */
-    // int DirectionPrev;
-    // int DirectionErrorCount;
+    /* sensor direction for comparison */
+    int Direction; /* Cache pre speed direction. store the feedback direction if upper layer handling is needed */
 }
 RotorSensor_State_T;
 

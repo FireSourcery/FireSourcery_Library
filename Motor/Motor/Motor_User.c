@@ -501,7 +501,7 @@ bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
     bool isLimit = false;
     // if (i_Fract16 < p_motor->ILimitMotoring_Fract16) { p_motor->ILimitMotoring_Fract16 = i_Fract16; isLimit = true; }
     // if (i_Fract16 < p_motor->ILimitGenerating_Fract16) { p_motor->ILimitGenerating_Fract16 = i_Fract16; isLimit = true; }
-    // if (isLimit == true) { ApplyILimit(p_motor); }
+    // if (isLimit == true) { UpdateILimitState(p_motor); }
     return isLimit;
 }
 

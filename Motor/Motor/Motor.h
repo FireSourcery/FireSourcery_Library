@@ -516,6 +516,10 @@ static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { retu
 static inline ufract16_t _Motor_ILimitOfDirection(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
 static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_ILimitOfDirection(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitOfDirection(p_motor, MOTOR_DIRECTION_CW)); }
+// let the compiler optimize
+// struct Limits { fract16_t cw; fract16_t ccw; };
+// static inline struct Limits _Motor_ILimitsMotoringCcw(const Motor_State_T * p_motor) { return ((struct Limits) { .cw = 0 - p_motor->ILimitGenerating_Fract16, .ccw = p_motor->ILimitMotoring_Fract16 }); }
+// static inline struct Limits _Motor_ILimitsMotoringCw(const Motor_State_T * p_motor) { return ((struct Limits) { .cw = 0 - p_motor->ILimitMotoring_Fract16, .ccw = p_motor->ILimitGenerating_Fract16 }); }
 
 /*
     Limits of [Speed_Fract16]
@@ -617,6 +621,7 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
 /* Feedback Speed interface getter */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
+static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
 
 /*  */
 static inline fract16_t Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitCcw(p_motor); }
@@ -624,17 +629,13 @@ static inline fract16_t Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { r
 // static inline fract16_t Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCcw_Fract16; }
 // static inline fract16_t Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
 
-/* alternatively clamp with single active value */
-static inline fract16_t Motor_SpeedRampLimitOf(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
-static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return !math_is_in_range(Motor_GetSpeedFeedback(p_motor), Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
-static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
-
 /* Limits are applied to the target. Ramp smoothing applies on limit update */
+static inline fract16_t Motor_SpeedRampLimitOf(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
 static inline fract16_t Motor_ProcSpeedRamp(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_SpeedRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->SpeedRamp))); }
+// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return !math_is_in_range(Motor_GetSpeedFeedback(p_motor), Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
 
 /*
     Speed Feedback Loop
-
     Ramp input ~100Hz,
     SpeedFeedback update 1000Hz - SpeedRamp, SpeedPid
 */
@@ -652,6 +653,8 @@ static inline fract16_t Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
         // if (Motor_IsSpeedLimitReached(p_motor) == true) { Ramp_SetOutput(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); }
     // }
 }
+
+// static inline fract16_t Motor_SpeedFeedbackView(PID_T * p_pid , Ramp_T * p_ramp, ) {
 
 static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 {
@@ -674,6 +677,17 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
     }
     Ramp_SetOutputState(&p_motor->TorqueRamp, torqueState);
+}
+
+
+/* Update Pid to clamp integral. Ramps update during control cycle. */
+static inline void Motor_UpdateSpeedTorqueLimits(Motor_State_T * p_motor, int16_t cwLimit, int16_t ccwLimit)
+{
+    if (p_motor->FeedbackMode.Speed == 1U)
+    {
+        if (p_motor->FeedbackMode.Current == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, cwLimit, ccwLimit); } /* SpeedPid Output is I */
+        else { PID_SetOutputLimits(&p_motor->PidSpeed, cwLimit, ccwLimit); }/* SpeedPid Output is V */
+    }
 }
 
 

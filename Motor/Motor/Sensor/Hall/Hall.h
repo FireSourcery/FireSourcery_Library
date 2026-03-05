@@ -324,12 +324,10 @@ static inline Hall_Id_T Hall_GetId(const Hall_State_T * p_hall) { return _Hall_I
 */
 static inline Hall_Direction_T Hall_GetSensorDirection(const Hall_State_T * p_hall) { return _Hall_DirectionOfSensors(p_hall, p_hall->SensorsPrev.Value, p_hall->Sensors.Value); }
 static inline uint16_t Hall_GetSensorAngle(const Hall_State_T * p_hall) { return _Hall_Angle16OfSensors(p_hall, p_hall->Sensors.Value, Hall_GetSensorDirection(p_hall)); }
-
-/* using caller stored state */
 static inline uint16_t Hall_GetAngleAs(const Hall_State_T * p_hall, Hall_Direction_T direction) { return _Hall_Angle16OfSensors(p_hall, p_hall->Sensors.Value, direction); }
+// static inline uint16_t Hall_GetAngleAsMid(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_UNKNOWN); }
 // static inline uint16_t Hall_GetAngleAsCcw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CCW); }
 // static inline uint16_t Hall_GetAngleAsCw(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_CW); }
-// static inline uint16_t Hall_GetAngleAsCenter(const Hall_State_T * p_hall) { return Hall_GetAngleAs(p_hall, HALL_DIRECTION_UNKNOWN); }
 
 /*
    Module stores additional state
@@ -371,7 +369,7 @@ static inline void Hall_ZeroInitial(const Hall_T * p_hall)
     set external or capture
     Sets direction => commutation, angle degrees16 conversion
 */
-static inline void Hall_SetDirection(Hall_State_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
+// static inline void Hall_SetDirection(Hall_State_T * p_hall, Hall_Direction_T direction) { p_hall->Direction = direction; }
 
 // static inline void Hall_CaptureState_ISR(const Hall_T * p_hall)
 // {

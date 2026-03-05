@@ -681,3 +681,59 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 
 
 
+// static State_T * Ccw_Input(const Motor_T * p_motor, state_value_t value)
+// {
+
+// }
+
+// static void Ccw_Process(const Motor_T * p_motor, state_value_t value)
+// {
+//     // uint16_t iLimitCcw = p_motor->P_MOTOR_STATE->ILimitMotoring_Fract16;
+//     // uint16_t iLimitCw = p_motor->P_MOTOR_STATE->ILimitGenerating_Fract16;
+// }
+
+// const State_T CCW_STATE =
+// {
+//     // .ENTRY = (State_Action_T)Ccw,
+//     // .LOOP = (State_Action_T)Ccw,
+//     // .P_TRANSITION_TABLE = (State_Input_T[MSM_TRANSITION_TABLE_LENGTH])
+//     // {
+//     //     // [MSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
+//     //     // [MSM_INPUT_PHASE_OUTPUT] = (State_Input_T)Passive_InputControl,
+//     //     // [MSM_INPUT_FEEDBACK_MODE] = (State_Input_T)Passive_InputFeedbackMode,
+//     //     // [MSM_INPUT_DIRECTION] = (State_Input_T)Passive_InputDirection,
+//     //     // [MSM_INPUT_OPEN_LOOP] = (State_Input_T)Passive_InputOpenLoop,
+//     //     // [MSM_INPUT_CALIBRATION] = NULL,
+//     // },
+// .GetPhaseSign = _Forward_GetPhaseSign,     // returns +1
+// .GetCommandSign = _Forward_GetCommandSign,
+
+// };
+
+// static inline fract16_t SpeedFeedbackProc(const Motor_T * p_motor, state_value_t value)
+// {
+//     Motor_State_T * p_fields = p_motor->P_MOTOR_STATE;
+//     PID_ProcPI(&p_fields->PidSpeed, Motor_GetSpeedFeedback(p_fields), Motor_ProcSpeedRamp(p_fields));
+//     Ramp_SetTarget(&p_fields->TorqueRamp, PID_GetOutput(&p_fields->PidSpeed));
+// }
+
+// const State_T SPEED_FEEDBACK_STATE =
+// {
+//     // .ENTRY = (State_Action_T)Ccw,
+//     // .LOOP = (State_Action_T)Ccw,
+//     // .P_TRANSITION_TABLE = (State_Input_T[MSM_TRANSITION_TABLE_LENGTH])
+//     // {
+//     //     // [MSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
+//     //     // [MSM_INPUT_PHASE_OUTPUT] = (State_Input_T)Passive_InputControl,
+//     //     // [MSM_INPUT_FEEDBACK_MODE] = (State_Input_T)Passive_InputFeedbackMode,
+//     //     // [MSM_INPUT_DIRECTION] = (State_Input_T)Passive_InputDirection,
+//     //     // [MSM_INPUT_OPEN_LOOP] = (State_Input_T)Passive_InputOpenLoop,
+//     //     // [MSM_INPUT_CALIBRATION] = NULL,
+//     // },
+// };
+
+/* State X State */
+// static inline fract16_t  FeedbackProc(Motor_T * p_motor, State_T * p_DirectionState, State_T * p_FeedbackState)
+// {
+//     p_FeedbackState->ProcRamp(p_motor, p_DirectionState->CwValue(), p_DirectionState->CcwValue());
+// }

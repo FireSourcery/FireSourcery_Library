@@ -166,6 +166,18 @@ static inline void State_OnTransition(State_T * p_state, State_T * p_new, void *
 }
 
 
+/*
+    Async only functions as **state
+*/
+// void _StateMachine_Input(State_T ** pp_active, void * p_context, state_input_t id, state_value_t value)
+// {
+//     State_T * p_active = *pp_active;
+//     State_T * p_next = State_TransitionOfInput(*pp_active, p_context, id, value);
+//     State_Exit(p_active, p_context);
+//     State_Entry(p_next, p_context);
+//     *pp_active = p_next;
+// }
+
 /******************************************************************************/
 /* Accessor */
 /******************************************************************************/

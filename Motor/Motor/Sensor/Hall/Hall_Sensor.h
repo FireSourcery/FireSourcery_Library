@@ -36,7 +36,6 @@
 #include "Transducer/Encoder/Encoder_ISR.h"
 
 
-/* typedef const struct Hall_Sensor / Hall_SensorInterface */
 typedef const struct Hall_RotorSensor
 {
     const RotorSensor_T BASE; /* _SUPER */

@@ -292,4 +292,9 @@ State_T;
 
 
 
-
+// typedef struct ActiveState
+// {
+//     State_T * p_ActiveState;
+//     volatile atomic_flag InputSignal;
+// }
+// ActiveState_T;

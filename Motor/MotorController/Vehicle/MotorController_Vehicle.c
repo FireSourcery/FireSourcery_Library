@@ -35,13 +35,9 @@
 /******************************************************************************/
 /*!
     @brief [Vehicle] HSM SubState
-    contain Vehicle StateMachine can use a different input table
 
     [Throttle] + [Brake] + [Neutral State]
-
-    override MotorController StateMachine Inputs and pass to nested state machine
-    alternatively wrapping inner state machine
-        can only set buffers on input to maintain consistency with outer state
+    override MotorController StateMachine Inputs
 */
 /******************************************************************************/
 static const State_T STATE_DRIVE;
@@ -52,20 +48,15 @@ static const State_T STATE_NEUTRAL;
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
 {
     // sign_t direction = _Motor_Table_GetDirectionAll(&p_mc->MOTORS); // Motor keeps direction in STOP or allowed to transition to PASSIVE
-    sign_t direction = p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd; /* Buffered direction cmd from user input, independent of motor state */
-    State_T * p_nextState = NULL;
-    switch (direction)
+    switch (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd)
     {
-        case MOTOR_DIRECTION_NULL:       p_nextState = &STATE_NEUTRAL;      break;
-        case MOTOR_DIRECTION_FORWARD:    p_nextState = &STATE_DRIVE;        break;
-        case MOTOR_DIRECTION_REVERSE:    p_nextState = &STATE_DRIVE;        break;
+        case MOTOR_DIRECTION_NULL:       return &STATE_NEUTRAL;
+        case MOTOR_DIRECTION_FORWARD:    return &STATE_DRIVE;
+        case MOTOR_DIRECTION_REVERSE:    return &STATE_DRIVE;
         default: break;
     }
-
-    if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd != 0) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd); }  /* Buffered direction cmd from user input, independent of motor state */
-    else if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd == 0) { Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z); } /* If enter drive with no direction, handle discontinuity */
-
-    return p_nextState;
+    // if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd != 0) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd); }  /* Buffered direction cmd from user input, independent of motor state */
+    // else if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd == 0) { Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z); } /* If enter drive with no direction, handle discontinuity */
 }
 
 MotorController_App_T MC_APP_VEHICLE =
@@ -343,6 +334,7 @@ void _MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc)
     Cmd "state" == input, changes on edge, handle outside of StateMachine
     if call sm with value, update value in handler.
     propagating value needs state constraint. even though edge detect does not
+    require caller to clear brake.
 */
 void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
 {
