@@ -85,11 +85,9 @@ MotorController_App_T MC_APP_VEHICLE =
 /******************************************************************************/
 static void Drive_Entry(const MotorController_T * p_mc)
 {
-    assert(Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsDirectionForward) || Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsDirectionReverse));
-
+    assert(p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd != 0); /* Direction should have been checked on transition.*/
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.Cmd = VEHICLE_CMD_RELEASE; // next input is edge transition
     if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd != 0) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd); }  /* Buffered direction cmd from user input, independent of motor state */
-    else { assert(false); } /* Direction cmd should have been checked on transition, entering drive with no direction is not allowed. */
 }
 
 /* alternatively call on input */
@@ -179,8 +177,8 @@ static const State_T STATE_DRIVE =
 /******************************************************************************/
 static void Neutral_Entry(const MotorController_T * p_mc)
 {
+    assert(p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd == 0); /* Direction should have been checked on transition. */
     if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd == 0) { Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z); }
-    else { assert(false); } /* Direction cmd should have been checked on transition, entering drive with no direction is not allowed. */
     // if (p_mc->p_mc_STATE->Input.Cmd != VEHICLE_CMD_BRAKE) { Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z); }  /* If enter neutral while braking, handle discontinuity */
 }
 
