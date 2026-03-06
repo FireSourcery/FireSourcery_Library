@@ -171,8 +171,8 @@ static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseO
     State_T * p_nextState = NULL;
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_VOUT_0:      Phase_ActivateV0(&p_motor->PHASE);      break;
         case PHASE_VOUT_Z:      Phase_Deactivate(&p_motor->PHASE);      break;
+        case PHASE_VOUT_0:      p_nextState = &MOTOR_STATE_PASSIVE;     break;
         case PHASE_VOUT_PWM:    p_nextState = &MOTOR_STATE_PASSIVE;     break;
         default: break;
     }
@@ -243,11 +243,8 @@ const State_T MOTOR_STATE_STOP =
 */
 /******************************************************************************/
 /*
-    V0 passive and VZ passive require different entries. both "control loop off." they can't share an entry action.
-    for each state to be represented by an invariant entry. the states should be separate for cleaner abstraction or parameterize entry.
+    V0 passive and VZ passive require different entries. both "control loop off."
     optionally substate with entry action.
-    however transition to v0 passive has the same constraints as transition to stop. does app layer need to directly transition to v0 without going through vz first?
-    if not, then the entry action can be shared as vz default. allow remaining in passive for v0
 */
 static void Passive_Entry(const Motor_T * p_motor)
 {

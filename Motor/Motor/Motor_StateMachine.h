@@ -84,9 +84,9 @@ extern const State_T MOTOR_STATE_FAULT;
 typedef enum Motor_StateInput
 {
     MSM_INPUT_FAULT,            /* Toggle Fault */
-    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Stop-V0/Stop-VZ */
-    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T] flags */
-    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] Ccw/Cw Stop */
+    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Release */
+    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T]  */
+    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MSM_INPUT_USER_BUFFER,

@@ -235,9 +235,9 @@ static State_T * Park_InputStateCmd(const MotorController_T * p_context, state_v
 {
     switch ((MotorController_StateCmd_T)cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK: //break; /* optionally allow re-entry to reset values */
+        case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &STATE_PARK;
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &STATE_PARK;
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* App resolves initial sub-state, reads buffered direction */
         default: break;
     }
@@ -285,15 +285,14 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
-    else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); }
+    else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
 }
 
 static void Main_Entry(const MotorController_T * p_context)
 {
-    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_Z); /* Start in passive */
-    // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { Motor_Table_StopAll(&p_context->MOTORS); }
+    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* Start in passive, PHASE_VOUT_0 to exit Stop */
 }
 
 /* App State common background proc */
@@ -309,7 +308,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: Motor_Table_ForceDisableControl(&p_context->MOTORS); return NULL; /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
-            return &MC_STATE_MAIN; /* Exit sub-state, return to Main idle */
+            // return &MC_STATE_MAIN; /* Exit sub-state, return to Main idle */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* Enter app sub-state from Main idle */
         default: break;
     }
@@ -363,7 +362,7 @@ const State_T MC_STATE_MAIN =
 /******************************************************************************/
 static void MotorCmd_Entry(const MotorController_T * p_context)
 {
-    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_Z); /* Set PWM Output */
+    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* Set PWM Output */
 }
 
 /* Motor_Input_T Only */

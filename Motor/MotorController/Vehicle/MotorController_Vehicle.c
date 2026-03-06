@@ -431,6 +431,8 @@ void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T
         case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);   break;
         case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
+        case VEHICLE_VAR_THROTTLE_ONLY:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
+        case VEHICLE_VAR_BRAKE_ONLY:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
     }
 }
 
@@ -442,6 +444,8 @@ int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T 
         case VEHICLE_VAR_DIRECTION:   value = MotorController_Vehicle_GetDirection(p_mc);     break;
         case VEHICLE_VAR_THROTTLE:    value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue;  break;
         case VEHICLE_VAR_BRAKE:       value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue;     break;
+        case VEHICLE_VAR_THROTTLE_ONLY:    value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue;  break;
+        case VEHICLE_VAR_BRAKE_ONLY:       value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue;     break;
     }
     return value;
 }
