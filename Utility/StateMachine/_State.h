@@ -125,7 +125,6 @@ static inline State_Input_T State_AcceptInput_AsTop(State_T * p_state, state_inp
 {
     assert(p_state->DEPTH == 0U);
     assert(p_state->P_TRANSITION_TABLE != NULL); /* Known at compile time */
-
     // mapper ids defined with namespaceid << 8 | baseId
     return p_state->P_TRANSITION_TABLE[(uint8_t)inputId];
 }
@@ -134,8 +133,6 @@ static inline State_T * State_TransitionOfInput_AsTop(State_T * p_state, void * 
 {
     return _State_CallInput(State_AcceptInput(p_state, inputId), p_context, inputValue);
 }
-
-
 
 
 static inline void State_Output(State_T * p_state, void * p_context) { _State_Action(p_state->LOOP, p_context); }
@@ -169,13 +166,20 @@ static inline void State_OnTransition(State_T * p_state, State_T * p_new, void *
 /*
     Async only functions as **state
 */
-// void _StateMachine_Input(State_T ** pp_active, void * p_context, state_input_t id, state_value_t value)
+// void _State_Input(State_T ** pp_active, void * p_context, state_input_t id, state_value_t value)
 // {
 //     State_T * p_active = *pp_active;
 //     State_T * p_next = State_TransitionOfInput(*pp_active, p_context, id, value);
 //     State_Exit(p_active, p_context);
 //     State_Entry(p_next, p_context);
 //     *pp_active = p_next;
+// }
+
+// State_T * State_Input(State_T * p_active, void * p_context, state_input_t id, state_value_t value)
+// {
+//     State_T * p_next = State_TransitionOfInput(p_active, p_context, id, value);
+//     if (p_next != NULL) { State_OnTransition(p_active, p_next, p_context); }
+//     return p_next;
 // }
 
 /******************************************************************************/

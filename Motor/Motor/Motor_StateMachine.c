@@ -693,19 +693,17 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 // {
 //     // .ENTRY = (State_Action_T)Ccw,
 //     // .LOOP = (State_Action_T)Ccw,
-//     // .P_TRANSITION_TABLE = (State_Input_T[MSM_TRANSITION_TABLE_LENGTH])
-//     // {
-//     //     // [MSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
-//     //     // [MSM_INPUT_PHASE_OUTPUT] = (State_Input_T)Passive_InputControl,
-//     //     // [MSM_INPUT_FEEDBACK_MODE] = (State_Input_T)Passive_InputFeedbackMode,
-//     //     // [MSM_INPUT_DIRECTION] = (State_Input_T)Passive_InputDirection,
-//     //     // [MSM_INPUT_OPEN_LOOP] = (State_Input_T)Passive_InputOpenLoop,
-//     //     // [MSM_INPUT_CALIBRATION] = NULL,
-//     // },
 // .GetPhaseSign = _Forward_GetPhaseSign,     // returns +1
 // .GetCommandSign = _Forward_GetCommandSign,
 
 // };
+
+// typedef struct
+// {
+//     // State_T Base;
+//     // State_Handler_T ProcRamp;
+// }
+// FeedbackState_T;
 
 // static inline fract16_t SpeedFeedbackProc(const Motor_T * p_motor, state_value_t value)
 // {
@@ -718,15 +716,6 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 // {
 //     // .ENTRY = (State_Action_T)Ccw,
 //     // .LOOP = (State_Action_T)Ccw,
-//     // .P_TRANSITION_TABLE = (State_Input_T[MSM_TRANSITION_TABLE_LENGTH])
-//     // {
-//     //     // [MSM_INPUT_FAULT] = (State_Input_T)TransitionFault,
-//     //     // [MSM_INPUT_PHASE_OUTPUT] = (State_Input_T)Passive_InputControl,
-//     //     // [MSM_INPUT_FEEDBACK_MODE] = (State_Input_T)Passive_InputFeedbackMode,
-//     //     // [MSM_INPUT_DIRECTION] = (State_Input_T)Passive_InputDirection,
-//     //     // [MSM_INPUT_OPEN_LOOP] = (State_Input_T)Passive_InputOpenLoop,
-//     //     // [MSM_INPUT_CALIBRATION] = NULL,
-//     // },
 // };
 
 /* State X State */

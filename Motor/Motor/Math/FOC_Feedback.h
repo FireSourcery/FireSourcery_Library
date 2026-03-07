@@ -59,13 +59,3 @@
 //     p_foc->Vd = PID_ProcPI(p_pidId, p_foc->Id, idReq);
 // }
 
-// void FOC_MatchFeedbackState(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
-// {
-//     // int32_t vq = GetVSpeed_Fract16(p_motor) / 2; // match without ad sampling
-//     int16_t vq = FOC_GetVMagnitude(&p_foc) * p_foc->Direction;
-//     int16_t qReq;
-
-        // PID_SetOutputState(&p_foc->PidIq, vq);
-        // PID_SetOutputState(&p_foc->PidId, 0);
-        // qReq = FOC_GetIq(&p_foc);
-        // MatchSpeedTorqueState(p_foc, qReq);

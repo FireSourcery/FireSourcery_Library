@@ -60,7 +60,7 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     int32_t vMax = math_max(math_max(vA, vB), vC);
     int32_t vMin = math_min(math_min(vA, vB), vC);
 
-    // Calculate the zero - sequence voltage(midclamp adjustment)
+    // Calculate the zero - sequence voltage (midclamp adjustment)
     int32_t vZero = (vMax + vMin) / 2 - FRACT16_1_DIV_2;
 
     // Adjust the phase voltages to ensure midclamp

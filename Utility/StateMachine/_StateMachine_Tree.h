@@ -56,9 +56,10 @@ static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_a
 
 
 /* return an id  */
+/* ActiveStateOfBranch */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_ancestor)
 {
-    return (State_IsAncestor(StateMachine_GetLeafState(p_active), p_ancestor)) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
+    return State_IsAncestor(StateMachine_GetLeafState(p_active), p_ancestor) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
 }
 
 

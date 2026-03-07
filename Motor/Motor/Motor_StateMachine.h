@@ -58,7 +58,7 @@
 typedef enum Motor_StateId
 {
     MSM_STATE_ID_INIT,
-    MSM_STATE_ID_STOP,      /* 0 speed. Feedback Off + Ouput V0/VZ */
+    MSM_STATE_ID_STOP,      /* 0 speed + Ouput VZ */
     MSM_STATE_ID_PASSIVE,   /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
     MSM_STATE_ID_RUN,       /* Feedback Loop + Ouput VPWM */
     MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + VZ/V0/VPWM */

@@ -50,7 +50,7 @@ static inline uint32_t bits_of(uint32_t bits, uint8_t index, uint8_t width) { re
 
 #if defined(__GNUC__)
 
-static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(void * p_context, uint8_t index), void * p_context)
+static inline void bits_foreach(uint32_t bits, void (*fn)(void * p_context, uint8_t index), void * p_context)
 {
     while (bits != 0)
     {
@@ -59,6 +59,14 @@ static inline void bits_foreach(uint32_t bits, uint8_t width, void (*fn)(void * 
         bits &= (bits - 1);  // Clear rightmost set bit
     }
 }
+
+// static inline void bits_foreach(uint32_t bits, uint32_t * p_values, void (*fn)(void * p_context, uint8_t index), void * p_context)
+// {
+//     for (uint32_t inputMask = bits; inputMask != 0UL; inputMask &= (inputMask - 1))
+//     {
+//         bits_foreach
+//     }
+// }
 
 #else
 static inline void _bits_foreach(uint32_t bits, uint8_t width, void (*fn)(uint8_t index))

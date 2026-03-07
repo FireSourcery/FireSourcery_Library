@@ -80,7 +80,7 @@ typedef enum Vehicle_StateId
 }
 Vehicle_StateId_T;
 
-extern State_T MC_STATE_MAIN_VEHICLE;
+// extern State_T MC_STATE_MAIN_VEHICLE;
 
 extern MotorController_App_T MC_APP_VEHICLE;
 

@@ -63,18 +63,11 @@ Debounce_T;
 
 */
 /******************************************************************************/
-/*!
-    @return the debounced state
-*/
-static inline bool Debounce_Filter(const Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
-{
-    if (pinState == p_debounce->Output) { return p_debounce->Output; }  /* Skip the timer check */
-    return ((currentTime - p_debounce->TimeStart > p_debounce->DebounceTime) ? pinState : p_debounce->Output); /* No wrap if milliseconds, ~49 days */
-}
 
 /*!
     @return the debounced state
 */
+
 static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
     if (pinState != p_debounce->PinState)
@@ -82,9 +75,10 @@ static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, 
         p_debounce->TimeStart = currentTime;
         p_debounce->PinState = pinState;
     }
-    else /* Check if state is the same for specified duration */
+    else if (p_debounce->PinState != p_debounce->Output)
     {
-        p_debounce->Output = Debounce_Filter(p_debounce, currentTime, pinState);
+        if ((uint32_t)(currentTime - p_debounce->TimeStart) >= p_debounce->DebounceTime) { p_debounce->Output = p_debounce->PinState; }
+
     }
     return p_debounce->Output;
 }
@@ -101,6 +95,8 @@ static inline bool Debounce_PollEdge(Debounce_T * p_debounce, uint32_t currentTi
     p_debounce->OutputPrev = p_debounce->Output;
     Debounce_Poll(p_debounce, currentTime, pinState);
     return (p_debounce->Output != p_debounce->OutputPrev);
+    /* alternatively call handle async edge detect */
+    // return (p_debounce->Output != Debounce_Poll(p_debounce, currentTime, pinState));
 }
 
 /* Optional convenience functions */
@@ -145,39 +141,31 @@ static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
     p_debounce->PinState = false;
 }
 
-
-
 /******************************************************************************/
 /* Time-based debounce */
-static inline bool debounce_is_stable(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
-{
-    // if (input_state != prev_state) return false;  /* State changed, not stable */
-    // return (elapsed_time >= stability_time);
-    return ((input_state == prev_state) && (elapsed_time >= stability_time));
-}
-
-static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool prev_state, bool input_state)
-{
-    // if (input_state == prev_state) return prev_state;  /* No change in state, return previous state */
-    // return (elapsed_time >= stability_time ? input_state : prev_state); /* Return stable state if elapsed time exceeds stability time */
-    return (debounce_is_stable(stability_time, elapsed_time, prev_state, input_state)) ? input_state : prev_state;
-}
-
-// /* Counter-based debounce */
-// static inline bool debounce_tick( uint16_t threshold, uint16_t  counter, bool target_state, bool input_state)
+/* status. e.g. raw pin  */
+/* Time held */
+// static inline bool debounce_is_stable(uint32_t stability_time, uint32_t elapsed_time, bool prev_input, bool input)
 // {
-
+//     return ((input == prev_input) && (elapsed_time >= stability_time));
 // }
 
-// static inline bool debounce_tick(uint16_t * p_counter, uint16_t threshold, bool target_state, bool input_state)
+// /* state of input */
+// static inline bool debounce_stable_of(uint32_t stability_time, uint32_t elapsed_time, bool prev_input, bool input)
 // {
-//     if (input_state == target_state)
-//     {
-//         if (*p_counter < threshold) { (*p_counter)++; }
-//     }
-//     else
-//     {
-//         *p_counter = 0;
-//     }
-//     return (*p_counter >= threshold);
+//     // if (input != prev_input) return prev_input;  /* State changed, not stable */
+//     // if (elapsed_time < stability_time) return prev_input;  /* Not enough time has passed, not stable */
+//     // return input;
+//     return (debounce_is_stable(stability_time, elapsed_time, prev_input, input)) ? input : prev_input;
+// }
+
+
+// /* recursive form */
+// /* Time divergent */
+// static inline bool debounce(uint32_t stability_time, uint32_t elapsed_time, bool output, bool bounce)
+// {
+//     // (bounce == input)
+//     if (bounce == output) return output;  /* No change in state, return previous state */
+//     if (elapsed_time < stability_time) return output;
+//     return bounce;
 // }

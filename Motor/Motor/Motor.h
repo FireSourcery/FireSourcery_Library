@@ -112,7 +112,7 @@ typedef union Motor_FeedbackMode
 {
     struct
     {
-        uint8_t OpenLoop   : 1U;   /* 0 -> Angle Sensor feedback, 1 -> OpenLoop */ /* Affective as control flag to set OpenLoop State */
+        uint8_t OpenLoop   : 1U;   // remove. handle with state
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Position   : 1U;

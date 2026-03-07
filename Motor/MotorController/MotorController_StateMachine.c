@@ -307,7 +307,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP: Motor_Table_ForceDisableControl(&p_context->MOTORS); return NULL; /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
+        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: Motor_Table_StopAll(&p_context->MOTORS); break;
             // return &MC_STATE_MAIN; /* Exit sub-state, return to Main idle */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* Enter app sub-state from Main idle */
         default: break;
@@ -398,7 +398,7 @@ static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENG
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =
 {
-    // .ID         = MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD, /* as StateId */
+    .ID         = MCSM_STATE_ID_MOTOR_CMD,
     .DEPTH      = 1U,
     .P_TOP      = &MC_STATE_MAIN,
     .P_PARENT   = &MC_STATE_MAIN,

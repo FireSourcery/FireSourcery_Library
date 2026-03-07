@@ -84,6 +84,13 @@ MotorController_App_T * MotorController_App(MotorController_T * p_context)
     }
 }
 
+// alternatively need subid scheme
+MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_context)
+{
+    if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
+    // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_VEHICLE)) { return MOTOR_CONTROLLER_MAIN_MODE_VEHICLE; }
+    return -1;
+}
 
 
 State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN((void *)p_context, 0); }

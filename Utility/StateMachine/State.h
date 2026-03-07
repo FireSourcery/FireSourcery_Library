@@ -105,12 +105,12 @@ typedef struct State * (*State_Input_T)(void * p_context, state_value_t inputExt
     switch(id) handle id look up
     returns NULL as input not accepted. effectively handles case of return status.
 */
-typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);  /* optionally for clarity */
+typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);
 /*!@}*/
 
 /*
     User define full handler switch
-    no meta for null - hsm input case must return self proc entry to indicate as handled - continues traversal when input function called and returns no transition
+    no meta for null - hsm walks up the whole path
 */
 // typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 

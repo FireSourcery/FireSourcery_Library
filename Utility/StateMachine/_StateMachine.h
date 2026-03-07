@@ -57,10 +57,10 @@ typedef struct StateMachine_Active
     state_value_t SyncInputs[STATE_TRANSITION_TABLE_LENGTH_MAX];  /* mapper version needs separate buffer */
 
     /*
-        Async Input handler, Buffered Sync transition. Restrict transition to during proc state only
-        Lock depending on user handler
-        In this case user still needs to selectively lock on some inputs,
-            where proc state should not run without input completion
+        Buffered input transition. Restrict transition to during proc state only
+        Lockless if [State_Input_T] only map the next state and do not mutate internal state.
+            e.g. Entry/Exit/Loop action can mutate internal state, but the input function only returns the next state.
+            All ProcState 'state' variable dependencies must be implemented as [State_T] substates
     */
     State_T * volatile p_SyncNextState;
 

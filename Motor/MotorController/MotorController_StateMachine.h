@@ -66,7 +66,7 @@ typedef enum MotorController_StateId
     MCSM_STATE_ID_MAIN,
     MCSM_STATE_ID_LOCK,     /* includes calibration */
     MCSM_STATE_ID_FAULT,    /* includes error handling */
-    // MCSM_STATE_ID_EXTERNAL,
+    MCSM_STATE_ID_MOTOR_CMD, /* Substate under main, for motor control command handling. */
 }
 MotorController_StateId_T;
 
@@ -92,6 +92,10 @@ static inline MotorController_StateId_T MotorController_GetStateId(const MotorCo
 
 static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
 // static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
+
+/*  */
+/* return != 0xFF for App active.  */
+// static inline state_t MotorController_GetMainSubState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
 
 
 static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_data) { return p_data->FaultFlags; }

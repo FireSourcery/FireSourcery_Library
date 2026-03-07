@@ -79,7 +79,7 @@ typedef const struct StateMachine_Machine
     State_T * P_STATE_INITIAL;
     uint8_t TRANSITION_TABLE_LENGTH;  /* state_input_t count. Shared table length for all states, i.e. all states allocate for all inputs */
     /* Optional */
-    State_T * P_STATE_FAULT; /* Optional. for base fault functions */
+    // State_T * P_STATE_FAULT; /* Optional. for base fault functions */
     // const State_T STATES[]; /* Root states. auto assign a stateid this way */
     // alternatively, simplified  implementation
     // const State_Input_T * const * const PP_TRANSITION_TABLE; [state_t][state_input_t]

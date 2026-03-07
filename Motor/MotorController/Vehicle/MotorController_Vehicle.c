@@ -93,14 +93,14 @@ static void Drive_Entry(const MotorController_T * p_mc)
 /* alternatively call on input */
 static void Drive_Proc(const MotorController_T * p_mc)
 {
-    Vehicle_ProcInputCmd(&p_mc->VEHICLE);
-    // switch (p_vehicle->P_VEHICLE_STATE->Input.Cmd)
-    // {
-    //     case VEHICLE_CMD_BRAKE:           break;
-    //     case VEHICLE_CMD_THROTTLE:        break;
-    //     case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle);       break;
-    //     default: break;
-    // }
+    // Vehicle_ProcInputCmd(&p_mc->VEHICLE);
+    switch (p_mc->VEHICLE.P_VEHICLE_STATE->Input.Cmd)
+    {
+        case VEHICLE_CMD_BRAKE:     Vehicle_ProcBrakeValue(&p_mc->VEHICLE);      break;
+        case VEHICLE_CMD_THROTTLE:  Vehicle_ProcThrottleValue(&p_mc->VEHICLE);   break;
+        case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(&p_mc->VEHICLE);       break;
+        default: break;
+    }
 }
 
 static State_T * Drive_InputDirection(const MotorController_T * p_mc, state_value_t direction)

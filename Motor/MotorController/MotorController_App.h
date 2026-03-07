@@ -31,6 +31,8 @@
 /******************************************************************************/
 #include "Utility/StateMachine/StateMachine.h"
 
+// #define APP_SUBSTATE_ID(appId, subId) (() | ((appId) << 8U) | (subId))
+
 // /* Part of MotorController */
 struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
@@ -59,4 +61,5 @@ typedef const struct MotorController_App
     State_Input_T ENTER_MAIN;
 }
 MotorController_App_T;
+
 
