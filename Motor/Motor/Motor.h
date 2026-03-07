@@ -417,8 +417,8 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 */
 /******************************************************************************/
 // static inline uint16_t motor_rpm_of_kv(int kv, int v, uint16_t v_fract16) { return fract16_mul(v_fract16, kv * v); }
-static inline int16_t _Motor_RpmOfDeg(const Motor_State_T * p_motor, accum32_t speed_rpm)          { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, speed_rpm); }
-static inline int16_t _Motor_DegOfRpm(const Motor_State_T * p_motor, accum32_t speed_degPerCycle)  { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, speed_degPerCycle); }
+static inline int16_t _Motor_DegOfRpm(const Motor_State_T * p_motor, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, speed_rpm); }
+static inline int16_t _Motor_RpmOfDeg(const Motor_State_T * p_motor, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, speed_degPerCycle); }
 
 /*
     Speed/V relation based on Kv.
@@ -475,7 +475,6 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
 */
 /* [SpeedRated_Rpm] = [SpeedTypeMax_Rpm] / 2  */
 static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor) { (void)p_motor; return INT16_MAX / 2; }
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { (void)p_motor; return fract16_mul((INT16_MAX / 2), FRACT16_2_DIV_SQRT3); }
 
 
 /******************************************************************************/
@@ -618,9 +617,12 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
 // // }
 // }
 
+static inline const Angle_T * Motor_GetAngleSpeedState(const Motor_State_T * p_motor) { return &p_motor->SensorState.AngleSpeed; }
 /* Feedback Speed interface getter */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
+
+static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { (void)p_motor; return fract16_mul(Motor_GetSpeedRated_Fract16(p_motor), FRACT16_2_DIV_SQRT3); }
 static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
 
 /*  */
@@ -679,7 +681,7 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
     Ramp_SetOutputState(&p_motor->TorqueRamp, torqueState);
 }
 
-
+/* Update on Mode change. limits do not change on resume */
 /* Update Pid to clamp integral. Ramps update during control cycle. */
 static inline void Motor_UpdateSpeedTorqueLimits(Motor_State_T * p_motor, int16_t cwLimit, int16_t ccwLimit)
 {
@@ -770,21 +772,19 @@ extern void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T 
 extern void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int modeValue);
 
 extern void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);
-extern void Motor_SetDirectionForward(Motor_State_T * p_motor);
-extern void Motor_SetDirectionReverse(Motor_State_T * p_motor);
 
-extern void Motor_ResetSpeedLimitActive(Motor_State_T * p_motor);
-extern void Motor_ResetILimitActive(Motor_State_T * p_motor);
+extern void Motor_ResetSpeedLimit(Motor_State_T * p_motor);
+extern void Motor_ResetILimit(Motor_State_T * p_motor);
+extern void Motor_SetSpeedLimits(Motor_State_T * p_motor, uint16_t speed_ufract16);
+extern void Motor_SetILimits(Motor_State_T * p_motor, uint16_t i_fract16);
 
 extern void Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16);
 extern void Motor_SetSpeedLimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16);
-extern void Motor_ClearSpeedLimit(Motor_State_T * p_motor);
-
 extern void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_ufract16);
 extern void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_ufract16);
 extern void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufract16);
-extern void Motor_ClearILimit(Motor_State_T * p_motor);
+
 
 #endif
 

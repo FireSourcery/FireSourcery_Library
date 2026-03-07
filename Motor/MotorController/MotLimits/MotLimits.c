@@ -86,7 +86,7 @@
 //         if (LimitArray_IsUpperActive(&p_motor->SpeedLimit) == true)
 //             { Motor_SetSpeedLimit(p_motor, LimitArray_GetUpper(&p_motor->SpeedLimit)); }
 //         else
-//             { Motor_ClearSpeedLimit(p_motor); }
+//             { Motor_ResetSpeedLimit(p_motor); }
 //     }
 //     return isActiveLimit;
 // }
@@ -123,13 +123,13 @@
 //         if (LimitArray_IsUpperActive(&p_motor->ILimit) == true)
 //             { Motor_SetILimit(p_motor, LimitArray_GetUpper(&p_motor->ILimit)); }
 //         else
-//             { Motor_ClearILimit(p_motor); }
+//             { Motor_ResetILimit(p_motor); }
 //     }
 //     return isActiveLimit;
 // }
 
 
 // static inline bool Motor_TrySpeedLimit(Motor_State_T * p_motor, motor_value_t speed_fract16) { return Motor_SetSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER, (uint16_t)speed_fract16); }
-// static inline bool Motor_ClearSpeedLimit(Motor_State_T * p_motor)                            { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
+// static inline bool Motor_ResetSpeedLimit(Motor_State_T * p_motor)                            { return Motor_ClearSpeedLimitEntry(p_motor, MOTOR_SPEED_LIMIT_USER); }
 // static inline bool Motor_TryILimit(Motor_State_T * p_motor, motor_value_t i_fract16)         { return Motor_SetILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER, (uint16_t)i_fract16); }
-// static inline bool Motor_ClearILimit(Motor_State_T * p_motor)                                { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }
+// static inline bool Motor_ResetILimit(Motor_State_T * p_motor)                                { return Motor_ClearILimitMotoringEntry(p_motor, MOTOR_I_LIMIT_USER); }

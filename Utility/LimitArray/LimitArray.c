@@ -93,8 +93,7 @@ bool LimitArray_TestSetUpper(const LimitArray_T * p_limit, limit_id_t id, limit_
 
 
 /*
-    Alternatively, periodically call this function to update the min/max values
-    Entries may set async
+    Compare on remove O(n)
 */
 void LimitArray_ProcCompare(const LimitArray_T * p_limit)
 {
@@ -105,7 +104,7 @@ void LimitArray_ProcCompare(const LimitArray_T * p_limit)
     for (uint8_t index = 0U; index < p_limit->LENGTH; index++)
     {
         bufferValue = _LimitArray_Values(p_limit)[index];
-        if (bufferValue != LIMIT_ARRAY_CLEAR)
+        if (bufferValue != LIMIT_ARRAY_CLEAR) /* Simultaneous no compare for signed limit_t */
         {
             if (bufferValue < bufferMin) { bufferMin = bufferValue; }
             if (bufferValue > bufferMax) { bufferMax = bufferValue; }
@@ -131,6 +130,7 @@ bool LimitArray_TryClearEntry(const LimitArray_T * p_limit, limit_id_t id)
 {
     limit_t value = _LimitArray_Values(p_limit)[id];
     bool isLimit = (value == _LimitArray_State(p_limit)->Min) || (value == _LimitArray_State(p_limit)->Max);
+    // bool isLimit = (id == _LimitArray_State(p_limit)->MinId) || (id == _LimitArray_State(p_limit)->MaxId);
 
     _LimitArray_Values(p_limit)[id] = LIMIT_ARRAY_CLEAR;
 
@@ -138,4 +138,3 @@ bool LimitArray_TryClearEntry(const LimitArray_T * p_limit, limit_id_t id)
 
     return isLimit;
 }
-

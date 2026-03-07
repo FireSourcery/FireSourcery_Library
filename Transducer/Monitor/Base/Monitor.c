@@ -128,8 +128,9 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
 /*
     Monitor returns a status for user handling, function mapping.
     A "status" rather than a "state" with transition barriers.
-    Call handle latching states.
     Effectively a simple state machine, single input, synchronous processing.
+    Caller handle latching states.
+    Status for wraps edge transition for each case. periodic actions.
 */
 /******************************************************************************/
 Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
@@ -155,15 +156,6 @@ Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
     return p_monitor->Status;
 }
 
-/*
-    Alternative to mapping edge statuses
-    // MONITOR_STATUS_NULL = INT32_MIN,
-*/
-// Monitor_Status_T * Monitor_PollEdge(Monitor_T * p_monitor, int32_t input)
-// {
-//     Monitor_Poll(p_monitor, input);
-//     return Monitor_IsStatusEdge(p_monitor) ? &p_monitor->Status : NULL;
-// }
 
 /******************************************************************************/
 /*

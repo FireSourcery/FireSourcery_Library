@@ -153,9 +153,9 @@ void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
     Collective Setting Limit
 */
 /******************************************************************************/
-bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16)
+bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t speed_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_context->MOT_SPEED_LIMITS, id, limit_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_context->MOT_SPEED_LIMITS, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
 }
 
 bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id)
@@ -163,9 +163,9 @@ bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, Mo
     if (LimitArray_TryClearEntry(&p_context->MOT_SPEED_LIMITS, id) == true) { Motor_Table_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
 }
 
-bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16)
+bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t i_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, id, limit_fract16) == true) { Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
 }
 
 bool _MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id)

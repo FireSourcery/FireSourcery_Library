@@ -73,46 +73,28 @@ typedef struct LimitArray_Augments
     */
     size_t MinId;
     size_t MaxId;
-    int Min; /* Min of the array, upper of [Limit] */
-    int Max; /* Max of the array, lower of [Limit] */
+    limit_t Min; /* Min of the array, upper of [Limit] */
+    limit_t Max; /* Max of the array, lower of [Limit] */
 }
 LimitArray_Augments_T;
 
-
-// typedef Array_T LimitArray_T;
-typedef const union
+/* Caller cast for common Array functions */
+typedef const struct LimitArray
 {
-    Array_T ARRAY;
-    struct
-    {
-        limit_t * P_BUFFER;   // Pointer to the p_array buffer
-        size_t LENGTH;        // Length of the p_array
-        LimitArray_Augments_T * P_AUGMENTS; // Pointer to the p_array buffer
-    };
+    limit_t * P_BUFFER;   // Pointer to the p_array buffer
+    size_t LENGTH;        // Length of the p_array
+    LimitArray_Augments_T * P_AUGMENTS; // Pointer to the p_array buffer
 }
 LimitArray_T;
 
-#define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) { .ARRAY = ARRAY_INIT(p_Buffer, Length, p_Augments) }
-#define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_INIT_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
+// #define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) { .ARRAY = ARRAY_INIT(p_Buffer, Length, p_Augments) }
+// #define LIMIT_ARRAY_ALLOC(Length) { .ARRAY = ARRAY_INIT_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0}) }
+#define LIMIT_ARRAY_INIT(p_Buffer, Length, p_Augments) ARRAY_INIT(p_Buffer, Length, p_Augments)
+#define LIMIT_ARRAY_ALLOC(Length) ARRAY_INIT_ALLOC_AS(limit_t, Length, &(LimitArray_Augments_T){0})
 
 /*  */
 static inline limit_t * _LimitArray_Values(const LimitArray_T * p_limit) { return (limit_t *)p_limit->P_BUFFER; }
 static inline LimitArray_Augments_T * _LimitArray_State(const LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }
-
-/*  */
-static inline void _LimitArray_ClearState(LimitArray_Augments_T * p_state)
-{
-    p_state->Min = LIMIT_ARRAY_MAX;
-    p_state->Max = LIMIT_ARRAY_MIN;
-    p_state->MinId = -1;
-    p_state->MaxId = -1;
-}
-
-static inline void _LimitArray_ClearValues(limit_t * p_values, size_t length)
-{
-    for (uint8_t index = 0U; index < length; index++) { p_values[index] = LIMIT_ARRAY_CLEAR; }
-}
-
 
 // static inline int16_t LimitArray_Apply(const LimitArray_T * p_limits, int16_t req) { return math_clamp(req, p_limits->Lower, p_limits->Upper); }
 
@@ -135,6 +117,24 @@ static inline bool LimitArray_IsUpperActive(const LimitArray_T * p_limit) { retu
 static inline bool LimitArray_IsLowerActive(const LimitArray_T * p_limit) { return (_LimitArray_State(p_limit)->Max != LIMIT_ARRAY_MIN); }
 static inline bool LimitArray_IsActive(const LimitArray_T * p_limit) { return (LimitArray_IsUpperActive(p_limit) || LimitArray_IsLowerActive(p_limit)); }
 
+/*  */
+static inline void _LimitArray_ClearState(LimitArray_Augments_T * p_state)
+{
+    p_state->Min = LIMIT_ARRAY_MAX;
+    p_state->Max = LIMIT_ARRAY_MIN;
+    p_state->MinId = -1;
+    p_state->MaxId = -1;
+}
+
+static inline void _LimitArray_ClearValues(limit_t * p_values, size_t length)
+{
+    for (uint8_t index = 0U; index < length; index++) { p_values[index] = LIMIT_ARRAY_CLEAR; }
+}
+
+
+/*
+
+*/
 extern void LimitArray_Init(const LimitArray_T * p_limit);
 extern void LimitArray_ClearAll(const LimitArray_T * p_limit);
 

@@ -147,13 +147,13 @@ void Motor_Config_SetIcZero_Adcu(Motor_State_T * p_motor, uint16_t adcu) { p_mot
 void Motor_Config_SetSpeedLimitForward_Fract16(Motor_State_T * p_motor, uint16_t forward_Fract16)
 {
     p_motor->Config.SpeedLimitForward_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, forward_Fract16);
-    PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
+    PropagateSet(p_motor, Motor_ResetSpeedLimit);
 }
 
 void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_State_T * p_motor, uint16_t reverse_Fract16)
 {
     p_motor->Config.SpeedLimitReverse_Fract16 = _Motor_Config_SpeedRatedLimitOf(p_motor, reverse_Fract16);
-    PropagateSet(p_motor, Motor_ResetSpeedLimitActive);
+    PropagateSet(p_motor, Motor_ResetSpeedLimit);
 }
 
 
@@ -163,13 +163,13 @@ void Motor_Config_SetSpeedLimitReverse_Fract16(Motor_State_T * p_motor, uint16_t
 void Motor_Config_SetILimitMotoring_Fract16(Motor_State_T * p_motor, uint16_t motoring_Fract16)
 {
     p_motor->Config.ILimitMotoring_Fract16 = Motor_IRatedLimitOf(motoring_Fract16);
-    PropagateSet(p_motor, Motor_ResetILimitActive);
+    PropagateSet(p_motor, Motor_ResetILimit);
 }
 
 void Motor_Config_SetILimitGenerating_Fract16(Motor_State_T * p_motor, uint16_t generating_Fract16)
 {
     p_motor->Config.ILimitGenerating_Fract16 = Motor_IRatedLimitOf(generating_Fract16);
-    PropagateSet(p_motor, Motor_ResetILimitActive);
+    PropagateSet(p_motor, Motor_ResetILimit);
 }
 
 /*

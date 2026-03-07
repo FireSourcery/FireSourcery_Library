@@ -226,6 +226,7 @@ void Motor_FOC_MatchVoltageState(Motor_State_T * p_motor, int16_t vd, int16_t vq
     {
         qReq = vq;
     }
+    // Ramp_SetOutputState(&p_motor->TorqueRamp, qReq);
 
     Motor_MatchSpeedTorqueState(p_motor, qReq);
 }

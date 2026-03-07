@@ -98,8 +98,8 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_conte
             case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
                 switch (UserDIn_GetEdge(&p_context->OPT_DIN))
                 {
-                    case USER_DIN_EDGE_RISING:  MotorController_SetSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
-                    case USER_DIN_EDGE_FALLING: MotorController_ClearSpeedLimitAll(p_context); break;
+                    case USER_DIN_EDGE_RISING:  MotorController_SetUserSpeedLimitAll(p_context, p_mc->Config.OptSpeedLimit_Fract16); break;
+                    case USER_DIN_EDGE_FALLING: MotorController_ClearUserSpeedLimitAll(p_context); break;
                     default: break;
                 }
                 break;
@@ -153,22 +153,24 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
         case HEAT_MONITOR_STATUS_WARNING_HIGH:
             /*
-                Apply thermal current limiting based on hottest MOSFET
+                Apply thermal current limiting based on hottest MOSFETs
                 Does not check for edge trigger
                 Thermistor Adcu is roughly linear in Warning region
                 Increasing Limit only, reset on warning clear.
             */
-            LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
-            Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
-            //todo
-            // if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) {MotorController_BeepMonitorTrigger(p_context); }
+           _MotorController_SetILimitAll(p_context, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
+            // LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
+            // Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+
+            if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) { MotorController_BeepMonitorTrigger(p_context); }
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsWarningClearing(p_context->HEAT_MOSFETS.P_STATE))
             {
-                LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
-                Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
+                _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_HEAT_MC);
+                // LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
+                // Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
             }
             break;
 
@@ -224,17 +226,17 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
         case VMONITOR_STATUS_WARNING_HIGH:
             break;
         case VMONITOR_STATUS_WARNING_LOW:
-        //     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
-        //     {
-        //         MotorController_CaptureVSource(p_context);
-        //         LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
-        //     }
+            if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
+            {
+                MotorController_CaptureVSource(p_context);
+                LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+            }
             break;
         case VMONITOR_STATUS_NORMAL:
-        //     if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
-        //     {
-        //         LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
-        //     }
+            if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
+            {
+                LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
+            }
             break;
         default: break;
     }

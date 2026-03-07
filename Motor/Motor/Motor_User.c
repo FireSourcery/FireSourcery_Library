@@ -477,31 +477,35 @@ void Motor_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd)
 
 /******************************************************************************/
 /*
+    Set system "user" layer
 */
 /******************************************************************************/
+/* Handle remaining comparison with Motor heat I limits if its not handled by arbitration array */
 bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
     bool isLimit = false;
-    // switch (Motor_GetUserDirection(p_motor))
-    // {
-    //     case 1:
-    //         if (speed_ufract16 > p_motor->SpeedLimitForward_Fract16) { Motor_SetSpeedLimitForward(p_motor, speed_ufract16); isLimit = true; }
-    //         break;
-    //     case -1:
-    //         if (speed_ufract16 > p_motor->SpeedLimitReverse_Fract16) { Motor_SetSpeedLimitReverse(p_motor, speed_ufract16); isLimit = true; }
-    //         break;
-    //     default: break;
-    // }
+    Motor_SetSpeedLimits(p_motor, speed_ufract16);
+    return isLimit;
+}
 
+bool Motor_TryClearSpeedLimit(Motor_State_T * p_motor)
+{
+    bool isLimit = false;
+    Motor_ResetSpeedLimit(p_motor);
     return isLimit;
 }
 
 bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
 {
     bool isLimit = false;
-    // if (i_Fract16 < p_motor->ILimitMotoring_Fract16) { p_motor->ILimitMotoring_Fract16 = i_Fract16; isLimit = true; }
-    // if (i_Fract16 < p_motor->ILimitGenerating_Fract16) { p_motor->ILimitGenerating_Fract16 = i_Fract16; isLimit = true; }
-    // if (isLimit == true) { UpdateILimitState(p_motor); }
+    Motor_SetILimits(p_motor, i_Fract16);
+    return isLimit;
+}
+
+bool Motor_TryClearILimit(Motor_State_T * p_motor)
+{
+    bool isLimit = false;
+    Motor_ResetILimit(p_motor);
     return isLimit;
 }
 
@@ -512,13 +516,13 @@ bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
 void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 {
     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    // else                                        { Motor_ClearSpeedLimit(p_motor); }
+    else { Motor_TryClearSpeedLimit(p_motor); }
 }
 
 void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 {
     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    // else                                        { Motor_ClearILimit(p_motor); }
+    else { Motor_TryClearILimit(p_motor); }
 }
 
 
@@ -547,13 +551,13 @@ void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
     // if (p_input->SpeedLimit != p_prev->SpeedLimit)
     // {
     //     p_prev->SpeedLimit = p_input->SpeedLimit;
-    //     MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+    //     MotorController_SetUserSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
     // }
 
     // if (p_input->ILimit != p_prev->ILimit)
     // {
     //     p_prev->ILimit = p_input->ILimit;
-    //     MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
+    //     MotorController_SetUserILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
     // }
 }
 

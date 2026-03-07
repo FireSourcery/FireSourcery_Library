@@ -1,20 +1,4 @@
 {
-
-    // "C_Cpp.default.forcedInclude": [
-    //     "${default}",
-    //     "${workspaceFolder:Project}/**/Config_Precompile.h", // define CONFIG_HAL_PERIPHERAL_PLATFORM from workspace root
-    //     "${workspaceFolder:mcux-sdx}/core/CMSIS/Core/Include/cmsis_gcc.h",
-    // ],
-    // "C_Cpp.default.includePath": [
-    //     "${default}",
-    //     // "${workspaceFolder:FireSourcery_Library}",
-    //     // "${workspaceFolder:mcux-sdk}/core",
-    //     // "${workspaceFolder:mcux-sdk}/core/CMSIS/Core/Include",
-    //     // "${workspaceFolder:mcux-sdk}/core/devices",
-    //     // "${workspaceFolder:mcux-sdk}/core/drivers/common",
-    // ],
-    // "C_Cpp.default.compilerPath": "${workspaceFolder:gcc-arm}/bin/arm-none-eabi-gcc.exe",
-
     "C_Cpp.default.defines": [
         "__GNUC__"
     ],
@@ -86,20 +70,10 @@
 
     "files.trimTrailingWhitespace": true,
 
-    // "[c]": {
-    // //     "editor.tabSize": 4,
-    // //     "editor.insertSpaces": true,
-    // //     "editor.formatOnPaste": false,
-    // //     "editor.indentSize": "tabSize",
-    // //     "editor.detectIndentation": false,
-    // //     "editor.defaultFormatter": "ms-vscode.cpptools",
-    // //     "editor.semanticHighlighting.enabled": "configuredByTheme",
-    // },
 
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },
-    "cmake.configureOnOpen": false,
 
     "cSpell.words": [
         "Accs",
