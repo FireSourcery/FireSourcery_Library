@@ -285,7 +285,7 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
-    else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
+    // else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
 }
@@ -308,6 +308,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
+            // if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true)
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* Enter app sub-state from Main idle */
         default: break;
     }
@@ -531,16 +532,11 @@ static State_T * Lock_InputStateCmd(const MotorController_T * p_context, state_v
 }
 
 /* Transition from lock only */
-/* for run time experimental mode without reboot. alternatively on init only */
 // static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
 // {
 //     State_T * p_nextState = NULL;
-
 //     if (!StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { p_nextState = NULL; }
 //     else if (!Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) { p_nextState = NULL; }
-//     /* Allow temporary mapping to experimental state */
-//     else { p_nextState = GetMainState(p_context); } // change to selected state
-
 //     return p_nextState;
 // }
 

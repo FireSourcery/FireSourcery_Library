@@ -243,7 +243,8 @@ const State_T MOTOR_STATE_STOP =
 */
 static void Passive_Entry(const Motor_T * p_motor)
 {
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
+    // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); } else { Phase_ActivateV0(&p_motor->PHASE); }
+    Phase_Deactivate(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U; /* ok to reset timer */
 }
@@ -252,12 +253,12 @@ static void Passive_Proc(const Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
-    switch (Phase_ReadOutputState(&p_motor->PHASE))
-    {
-        case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }    break;
-        case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
-        default: break;
-    }
+    // switch (Phase_ReadOutputState(&p_motor->PHASE))
+    // {
+    //     case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }    break;
+    //     case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
+    //     default: break;
+    // }
 }
 
 static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
