@@ -112,7 +112,7 @@ typedef union Motor_FeedbackMode
 {
     struct
     {
-        uint8_t OpenLoop   : 1U;   // remove. handle with state
+        uint8_t OpenLoop   : 1U;
         uint8_t Current    : 1U;   /* 0 -> Voltage, 1-> Current */
         uint8_t Speed      : 1U;   /* 0 -> Voltage or Current only, 1 -> Speed feedback */
         uint8_t Position   : 1U;
@@ -122,8 +122,9 @@ typedef union Motor_FeedbackMode
 Motor_FeedbackMode_T;
 
 /* Defined as const bit-fields over enum. in line with bit as conditional, not all combination need to be defined */
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
+/* OpenLoop handled with separate State Branch */
+// static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
+// static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, };
 static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
@@ -480,8 +481,6 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor
 /******************************************************************************/
 /*
     Run/Feedback State Limits
-    getters for abstraction, implementation may change
-    Null returns 0 or lower abs value
 */
 /******************************************************************************/
 /*
@@ -506,6 +505,7 @@ static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { retu
     Call ccw/cw using getters.
     clamp with limit. On Req, same units
     Ramp target and user input
+    alternatively map to state struct
 */
 /*
     Limits of [Iq]
@@ -550,7 +550,7 @@ static inline fract16_t Motor_IRampLimitOf(const Motor_State_T * p_motor, int16_
 static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 
-
+/*  */
 static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
 {
     return (p_motor->FeedbackMode.Current == 1U) ? Motor_ProcTorqueRampI(p_motor) : Motor_ProcTorqueRampV(p_motor);
@@ -561,7 +561,7 @@ static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
     OpenLoop
 */
 /* OpenLoop limit is always as aligned to the user */
-static inline uint16_t Motor_OpenLoopILimit(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()); }
+static inline uint16_t Motor_OpenLoopILimit(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.OpenLoopLimitScalar_Fract16, p_motor->Config.ILimitMotoring_Fract16); }
 static inline int16_t Motor_OpenLoopILimitOf(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, (int32_t)0 - Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor)); }
 
 /*  */
@@ -581,7 +581,7 @@ static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
 
 
 /*  */
-static inline uint16_t Motor_GetIAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()); }
+static inline uint16_t Motor_GetIAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, p_motor->Config.ILimitMotoring_Fract16); }
 static inline uint16_t Motor_GetVAlign(const Motor_State_T * p_motor) { return fract16_mul(p_motor->Config.AlignScalar_Fract16, Phase_VBus_GetVRef()); }
 
 /* fract16_div((uint32_t)Motor_GetVAlign(p_motor) * 2 / 3, Phase_VBus_GetVRef()) */

@@ -131,7 +131,7 @@ void Motor_ResetUnits(Motor_State_T * p_motor)
     // Angle_InitFrom(&p_motor->p_ActiveSensor->P_STATE->AngleSpeed, &(Angle_Config_T){.SpeedRef_Angle16 = Motor_GetSpeedTypeMax_DegPerCycle(p_motor)}); /*  */
 }
 
-/* Ramp limits set independent of Config.limits. todo set with frac32 */
+/* Ramp slope set independent of Config.limits. todo set with frac32 */
 void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(p_motor)); /* As normalized Speed */

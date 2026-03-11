@@ -286,7 +286,7 @@ void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U; /* config alternatively */
     Motor_FOC_ClearFeedbackState(p_motor); /* reset TorqueRamp i/v to start at 0 */
-    Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
+    // Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
 }
 
 /* User Input ramp */

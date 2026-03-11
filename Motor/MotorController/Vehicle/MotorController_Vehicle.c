@@ -47,7 +47,7 @@ static const State_T STATE_NEUTRAL;
 /* From Park */
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
 {
-    // sign_t direction = _Motor_Table_GetDirectionAll(&p_mc->MOTORS); // Motor keeps direction in STOP or allowed to transition to PASSIVE
+    if (Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero) == false) { return &STATE_NEUTRAL; }
     switch (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd)
     {
         case MOTOR_DIRECTION_NULL:       return &STATE_NEUTRAL;
@@ -62,7 +62,6 @@ static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPar
 MotorController_App_T MC_APP_VEHICLE =
 {
     .PROC_ANALOG_USER = MotorController_Vehicle_ProcAnalogUser,
-    // .P_INITIAL_STATE = &STATE_NEUTRAL,
     .ENTER_MAIN = (State_Input_T)EnterMain,
 };
 
@@ -353,27 +352,27 @@ void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
 
     module handle edge detection
 */
-void MotorController_Vehicle_PollThrottle(MotorController_T * p_mc, uint16_t userCmd)
+void MotorController_Vehicle_SetThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = userCmd;
     MotorController_Vehicle_PollStartCmd(p_mc); // alternatively call state apply
     // MotorController_Vehicle_ApplyThrottleValue(p_mc); // alternatively call state apply
 }
 
-void MotorController_Vehicle_PollBrake(MotorController_T * p_mc, uint16_t userCmd)
+void MotorController_Vehicle_SetBrake(MotorController_T * p_mc, uint16_t userCmd)
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue = userCmd;
     MotorController_Vehicle_PollStartCmd(p_mc);
 }
 
-void MotorController_Vehicle_PollRelease(MotorController_T * p_mc)
+void MotorController_Vehicle_SetRelease(MotorController_T * p_mc)
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = 0U;
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue = 0U;
     MotorController_Vehicle_PollStartCmd(p_mc);
 }
 
-void MotorController_Vehicle_PollThrottleBrake(MotorController_T * p_mc, uint16_t throttleCmd, uint16_t brakeCmd)
+void MotorController_Vehicle_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttleCmd, uint16_t brakeCmd)
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue = throttleCmd;
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue = brakeCmd;
@@ -383,12 +382,12 @@ void MotorController_Vehicle_PollThrottleBrake(MotorController_T * p_mc, uint16_
 // caller handled edge detection
 void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction)
 {
-    Vehicle_Input_PollDirectionEdge(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, direction);
+    // Vehicle_Input_PollDirectionEdge(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, direction);
+    p_mc->VEHICLE.P_VEHICLE_STATE->Input.DirectionCmd = direction;
     _MotorController_Vehicle_ApplyDirection(p_mc);
-    // set  p_input->DirectionCmd for direction during park.
 }
 
-void MotorController_Vehicle_PollDirectionCmd(MotorController_T * p_mc, sign_t direction)
+void MotorController_Vehicle_SetDirectionCmd(MotorController_T * p_mc, sign_t direction)
 {
     if (Vehicle_Input_PollDirectionEdge(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, direction))
     {
@@ -414,7 +413,7 @@ void MotorController_Vehicle_ProcAnalogUser(const MotorController_T * p_mc)
         default: break;
     }
 
-    MotorController_Vehicle_PollThrottleBrake(p_mc, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER), MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
+    MotorController_Vehicle_SetThrottleBrake(p_mc, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER), MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
 }
 
 
@@ -429,10 +428,10 @@ void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T
     switch (id)
     {
         case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);   break;
-        case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
-        case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
-        case VEHICLE_VAR_THROTTLE_ONLY:    MotorController_Vehicle_PollThrottle(p_mc, (uint16_t)value);      break;
-        case VEHICLE_VAR_BRAKE_ONLY:       MotorController_Vehicle_PollBrake(p_mc, (uint16_t)value);         break;
+        case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_SetThrottle(p_mc, (uint16_t)value);      break;
+        case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_SetBrake(p_mc, (uint16_t)value);         break;
+        case VEHICLE_VAR_THROTTLE_ONLY:    MotorController_Vehicle_SetThrottle(p_mc, (uint16_t)value);      break;
+        case VEHICLE_VAR_BRAKE_ONLY:       MotorController_Vehicle_SetBrake(p_mc, (uint16_t)value);         break;
     }
 }
 

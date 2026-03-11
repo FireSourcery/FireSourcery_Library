@@ -201,18 +201,6 @@ void Motor_SetVoltageCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 //     // Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4);
 // }
 
-/* TorqueV */
-// void Motor_SetTorqueVCmd(Motor_State_T * p_motor, int16_t volts_fract16)
-// {
-//     // assert(p_motor->FeedbackMode.Value == MOTOR_FEEDBACK_MODE_VOLTAGE.Value);
-//     Ramp_SetTarget(&p_motor->TorqueRamp, Motor_VRampLimitOf(p_motor, p_motor->Config.DirectionForward * (int32_t)volts_fract16));
-// }
-
-// void Motor_SetTorqueVCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
-// {
-//     Motor_SetTorqueVCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRefSvpwm()));
-// }
-
 /******************************************************************************/
 /*!
     Current Mode
@@ -327,16 +315,10 @@ void Motor_EnterOpenLoopState(const Motor_T * p_motor)
 {
     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
 }
-/*!
-    Set by State Transition
-*/
-// void _Motor_StartOpenLoopMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR); }
 
-/* Also clamps on Proc */
-/* todo align as positive only, rotation cmd use limits */
+
 /*
-    Open Loop Align
-    always positive. no direction correction, applied to d-axis
+    Open Loop Align - user cmd applied on align only. always positive. no direction correction, applied to d-axis
 */
 void Motor_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16)
 {
@@ -346,13 +328,9 @@ void Motor_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16)
 /* Calibration - set CCW first */
 void Motor_SetOpenLoopI(Motor_State_T * p_motor, int16_t amps_fract16)
 {
-    Ramp_SetTarget(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(p_motor, amps_fract16)); /* setting as directional, altneratively clamp wiht 0 */
+    Ramp_SetTarget(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(p_motor, amps_fract16));
 }
 
-/*!
-
-*/
-/* Motor_SetOpenLoopPower */
 /* Scalar of Saturation Max */
 void Motor_SetOpenLoopCmd(Motor_State_T * p_motor, int16_t ivCmd)
 {
@@ -381,10 +359,10 @@ void Motor_SetOpenLoopCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16
     Open Loop Start Up
     Preset Ramp
 */
-void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_degPerCycle)
+void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed)
 {
-    int32_t limitedCmd = math_clamp(speed_degPerCycle, 0 - p_motor->Config.OpenLoopRampSpeedFinal_Fract16, p_motor->Config.OpenLoopRampSpeedFinal_Fract16);
-    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, p_motor->Config.DirectionForward * limitedCmd);
+    int32_t limitedCmd = math_clamp(speed, 0 - p_motor->Config.OpenLoopRampSpeedFinal_Fract16, p_motor->Config.OpenLoopRampSpeedFinal_Fract16);
+    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, p_motor->Config.DirectionForward * limitedCmd); //aligned to motoring on proc
 }
 
 /******************************************************************************/
@@ -436,12 +414,11 @@ void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_degPerCycle)
 */
 /*
     Scalar to Config value for consistent user handling
+    OpenLoop clamp on Proc TorqueRamp
 */
 void _Motor_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
-    if      (mode.OpenLoop == 1U)  { Motor_SetOpenLoopCmd_Scalar(p_motor, userCmd); }
-    // else if (mode.Position == 1U)  { Motor_SetPositionCmd_Scalar(p_motor, userCmd); }
-    else if (mode.Speed == 1U)     { Motor_SetSpeedCmd_Scalar(p_motor, userCmd); }
+    if (mode.Speed == 1U)           { Motor_SetSpeedCmd_Scalar(p_motor, userCmd); }
     // else if (mode.Current == 1U)   { Motor_SetTorqueCmd_Scalar(p_motor, userCmd); } /* align to direction by default */
     // else                           { Motor_SetTorqueVCmd_Scalar(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetICmd_Scalar(p_motor, userCmd); }
