@@ -61,7 +61,7 @@ void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T phase
 */
 static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 {
-    // p_motor->P_MOTOR_STATE->ElectricalAngle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
+    p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
     // return &MOTOR_STATE_OPEN_LOOP;
     return NULL;
 }
@@ -81,7 +81,7 @@ void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction)
 
 /******************************************************************************/
 /*
-    Angle Align
+    Angle Align Cmd
     With Current Loop only
 */
 /******************************************************************************/
@@ -165,21 +165,32 @@ static const State_T OPEN_LOOP_STATE_RUN =
 /******************************************************************************/
 static void StartUp_Entry(const Motor_T * p_motor)
 {
-    TimerT_Start(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR_STATE);
 }
 
-static void StartUp_Loop(const Motor_T * p_motor)
+static void StartUp_Proc(const Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR_STATE);
     Motor_FOC_WriteDuty(p_motor);
+
+    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+    {
+        switch (_Phase_ReadDutyState(&p_motor->PHASE).Bits)
+        {
+            case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+            case PHASE_ID_INV_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+            case PHASE_ID_B: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN); break;
+            default: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &MOTOR_STATE_FAULT); break;
+
+            // case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+            // case PHASE_ID_INV_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+            // case PHASE_ID_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_B); break;
+            // case PHASE_ID_INV_B: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+        }
+    }
 }
 
-static State_T * StartUp_Next(const Motor_T * p_motor)
-{
-    /* todo  algin b */
-    return (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true) ? &OPEN_LOOP_STATE_RUN : NULL;
-}
 
 /* Align with Aux Ramp */
 static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
@@ -189,8 +200,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartUp_Entry,
-    .LOOP = (State_Action_T)StartUp_Loop,
-    .NEXT = (State_Input0_T)StartUp_Next,
+    .LOOP = (State_Action_T)StartUp_Proc,
 };
 
 // test branch
@@ -199,13 +209,11 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 //     // .ID         = MSM_STATE_ID_OPEN_LOOP,
 //     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
 //     .DEPTH      = 2U,
-//     .ENTRY      = (State_Action_T)OpenLoop_StartUpAlign_EntryTimer,
-//     .NEXT       = (State_Input0_T)OpenLoop_StartUpAlign_Transition,
 // };
 
 static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_value_t null)
 {
-    // Motor_FOC_ActivateOutputZero(p_motor); // in case it has been disabled
+    (void)null;
     Phase_ActivateT0(&p_motor->PHASE);
     return &OPEN_LOOP_STATE_START_UP_ALIGN;
 }

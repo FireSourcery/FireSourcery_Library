@@ -125,14 +125,6 @@ static inline fract16_t _Angle_GetSpeed_Fract16(const Angle_T * p_angle)
     // speed_fract16_of_angle16_rpm(Config.PollingFreq, Config.SpeedMaxRpm, elSpeed_degPerCycle);
 }
 
-/* Directly set the speed if available */
-/* Set Delta for interpolation */
-static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed_fract16)
-{
-    p_angle->Speed_Fract16 = (speed_fract16 + p_angle->Speed_Fract16) / 2;
-    p_angle->Delta = angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16);
-}
-
 /* Capture speed by Delta */
 static inline void Angle_CaptureSpeed_Delta(Angle_T * p_angle, angle16_t delta_degPerCycle)
 {
@@ -140,6 +132,13 @@ static inline void Angle_CaptureSpeed_Delta(Angle_T * p_angle, angle16_t delta_d
     p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, delta_degPerCycle);
 }
 
+/* Directly set the speed if available */
+/* Set Delta for interpolation */
+static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed_fract16)
+{
+    p_angle->Speed_Fract16 = (speed_fract16 + p_angle->Speed_Fract16) / 2;
+    p_angle->Delta = angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16);
+}
 
 /*
     Feedforward
@@ -157,7 +156,9 @@ static inline void Angle_SetFeedforwardAngle(Angle_T * p_angle, angle16_t angle)
 
 static inline void Angle_SetFeedforwardSpeed_Fract16(Angle_T * p_angle, fract16_t speed_fract16)
 {
-    Angle_SetFeedforwardDelta(p_angle, angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16)); /* convert [fract16] of [SpeedRef] into [angle16] */
+    Angle_CaptureSpeed_Fract16(p_angle, speed_fract16);
+    p_angle->Angle += p_angle->Delta;
+    // Angle_SetFeedforwardDelta(p_angle, angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16)); /* convert [fract16] of [SpeedRef] into [angle16] */
 }
 
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)

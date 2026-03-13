@@ -335,32 +335,25 @@ void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 /* User Input ramp */
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
-    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, Motor_ProcTorqueRampOpenLoop(p_motor), 0);
+    int32_t userCmd = Ramp_GetTarget(&p_motor->TorqueRamp); // temp
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, Motor_OpenLoopTorqueRampOf(p_motor, userCmd), 0);
 }
 
-/******************************************************************************/
-/*!
-    Open Loop Run
-    alternatively use seperate angle
-*/
-/******************************************************************************/
+
 /*
-    preset align [OpenLoopIRamp]
     Ramp towards Preset AlignScalar_Fract16 * IRatedPeak
     Caller sets time
 */
 void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 {
-    Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.AlignTime_Cycles, 0, Motor_GetIAlign(p_motor)); /* Ramp d always positive */
     p_motor->FeedbackMode.Current = 1U; /* StartUp always select current feedback */
-
-    Motor_FOC_ClearFeedbackState(p_motor);
-    Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
+    Motor_FOC_ClearFeedbackState(p_motor); /* Resets Ramp */
+    Angle_ZeroCaptureState(&p_motor->OpenLoopAngle); /* always align A */
 }
 
 void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 {
-    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, Ramp_ProcOutput(&p_motor->OpenLoopIRamp), 0);
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(p_motor)), 0); /*  */
 }
 
 /*
@@ -369,13 +362,10 @@ void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 {
-    Ramp_Set(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, 0, (int32_t)p_motor->Config.OpenLoopRampIFinal_Fract16 * p_motor->Direction); /* reset slope set by align */
-    // Ramp_SetTarget(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampIFinal_Fract16 * p_motor->Direction); /* continue from align current */
-
+    // Ramp_SetOutput(&p_motor->OpenLoopIRamp, Motor_GetIAlign(p_motor) * p_motor->Direction);  /* continue from align current */
+    Ramp_SetOutput(&p_motor->OpenLoopIRamp, 0);
     Ramp_SetOutput(&p_motor->OpenLoopSpeedRamp, 0);
-    Ramp_SetTarget(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction);
-
-    Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
+    /* continue from align angle State, in case it is not 0/A */
 }
 
 /*
@@ -383,9 +373,9 @@ void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 {
-    Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcOutput(&p_motor->OpenLoopSpeedRamp));
-    // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs);
-    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcOutput(&p_motor->OpenLoopIRamp));
+    Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcNextOf(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction));
+    Motor_FOC_ProcAngleFeedforward(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcNextOf(&p_motor->OpenLoopIRamp, (int32_t)p_motor->Config.OpenLoopRampIFinal_Fract16 * p_motor->Direction));
+    // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs); sync sensor angle state
 }
 
 

@@ -84,6 +84,7 @@ static inline void __TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p
 /******************************************************************************/
 /* Periodic - no Stop or Disable */
 static inline bool _TimerT_Periodic_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_PollElapsed(p_base, p_state); }
+/* Reset */
 static inline void _TimerT_Periodic_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { __TimerT_Init(p_base, p_state, period); }
 static inline void _TimerT_Periodic_Set(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Period = period; }
 static inline void _TimerT_Periodic_Stop(const Timer_Base_T * p_base, Timer_State_T * p_state ) { p_state->Period = UINT32_MAX; }

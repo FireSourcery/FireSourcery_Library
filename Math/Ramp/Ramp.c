@@ -153,27 +153,6 @@ void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t dura
 
 /******************************************************************************/
 /*
-    Set
-*/
-/******************************************************************************/
-/* config excluding shift */
-/* if initial > final AND acceleration is positive, ramp returns final value */
-void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final)
-{
-    Ramp_SetSlope(p_ramp, duration_Ticks, math_abs(final - initial));
-    Ramp_SetOutput(p_ramp, initial);
-    Ramp_SetTarget(p_ramp, final);
-}
-
-void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final)
-{
-    Ramp_SetSlope_Millis(p_ramp, updateFreq_Hz, duration_Ms, math_abs(final - initial));
-    Ramp_SetOutput(p_ramp, initial);
-    Ramp_SetTarget(p_ramp, final);
-}
-
-/******************************************************************************/
-/*
     Set Slope and initial state for dynamically generated ramp
     Divide input over control period intervals
     Acceleration proportional to change in userCmd
