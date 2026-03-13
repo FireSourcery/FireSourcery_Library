@@ -70,12 +70,14 @@ typedef enum Vehicle_StateInput
 {
     VEHICLE_STATE_INPUT_DIRECTION,      /* Drive Direction */
     VEHICLE_STATE_INPUT_DRIVE_CMD,      /* On Edge, Drive Cmd -Throttle/Brake/Release */
+    VEHICLE_STATE_INPUT_THROTTLE_VALUE,
+    VEHICLE_STATE_INPUT_BRAKE_VALUE,
 }
 Vehicle_StateInput_T;
 
 typedef enum Vehicle_StateId
 {
-    VEHICLE_STATE_ID_DRIVE,
+    VEHICLE_STATE_ID_DRIVE, /* = _MCSM_STATE_ID_END */
     VEHICLE_STATE_ID_NEUTRAL,
 }
 Vehicle_StateId_T;
@@ -92,17 +94,20 @@ extern MotorController_App_T MC_APP_VEHICLE;
 /******************************************************************************/
 
 /* StateMachine Input */
-extern void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction);
-extern void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd);
-extern void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc);
-extern void MotorController_Vehicle_StartBrake(MotorController_T * p_mc);
-extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
+// extern void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction);
+// extern void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd);
+// extern void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc);
+// extern void MotorController_Vehicle_StartBrake(MotorController_T * p_mc);
+// extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
 
 /*  */
 extern void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc);
 extern void MotorController_Vehicle_SetThrottle(MotorController_T * p_mc, uint16_t userCmd);
 extern void MotorController_Vehicle_SetBrake(MotorController_T * p_mc, uint16_t userCmd);
 extern void MotorController_Vehicle_SetRelease(MotorController_T * p_mc);
+
+extern void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
+extern void MotorController_Vehicle_SetDirection(MotorController_T * p_mc, sign_t direction);
 
 extern void MotorController_Vehicle_ProcAnalogUser(MotorController_T * p_mc);
 extern sign_t MotorController_Vehicle_GetDirection(MotorController_T * p_mc);

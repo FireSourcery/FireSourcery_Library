@@ -56,6 +56,7 @@ typedef enum MotorController_StateInput
     MCSM_INPUT_STATE_CMD,       /* System state commands (Park/Stop/Start) with per State Mapping */
     MCSM_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MCSM_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
+    // MCSM_INPUT_APP_USER_1, /* Reserve table space, or use mapper, or buffer */
 }
 MotorController_StateInput_T;
 
@@ -67,6 +68,7 @@ typedef enum MotorController_StateId
     MCSM_STATE_ID_LOCK,     /* includes calibration */
     MCSM_STATE_ID_FAULT,    /* includes error handling */
     MCSM_STATE_ID_MOTOR_CMD, /* Substate under main, for motor control command handling. */
+    _MCSM_STATE_ID_END,
 }
 MotorController_StateId_T;
 
@@ -117,24 +119,18 @@ static inline bool MotorController_IsConfig(MotorController_T * p_context) { ret
 /*
     General Direction
     App may overwrite.
-    PARK => 0
-    FORWARD => 1
-    REVERSE => -1
-    0 =>  0
-    Caller handle
-    0, PARK_STATE => PARK
-    0, !PARK_STATE => 0
 */
 static int MotorController_GetDirection(MotorController_T * p_context)
 {
-    switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
-    {
-        case MCSM_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
-        case MCSM_STATE_ID_PARK:       return 0;
-        case MCSM_STATE_ID_LOCK:       return 0;
-        case MCSM_STATE_ID_FAULT:      return 0;
-        default:                       return 0;
-    }
+    // switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
+    // {
+    //     case MCSM_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
+    //     case MCSM_STATE_ID_PARK:       return 0;
+    //     case MCSM_STATE_ID_LOCK:       return 0;
+    //     case MCSM_STATE_ID_FAULT:      return 0;
+    //     default:                       return 0;
+    // }
+    return _Motor_Table_GetDirectionAll(&p_context->MOTORS);
 }
 
 /******************************************************************************/

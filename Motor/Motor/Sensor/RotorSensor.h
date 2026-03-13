@@ -93,13 +93,12 @@ RotorSensor_VTable_T;
 */
 typedef struct RotorSensor_Config
 {
-    uint8_t PolePairs;                      /* Motor Pole Pairs. Config Mech/Electrical conversion */
+    uint8_t PolePairs;              /* Motor Pole Pairs. Config Mech/Electrical conversion */
+    // uint16_t SpeedRated_Rpm;
 
     /* Config scalar speed. Caller derive  */
-    uint16_t ElSpeedRated_DegPerCycle;
-    uint16_t MechSpeedRated_Rpm;
-    uint16_t SpeedTypeMax_DegPerCycle;
-    uint16_t SpeedTypeMax_Rpm;
+    uint16_t SpeedTypeMax_Rpm; /* mechanical */
+    uint16_t SpeedTypeMax_DegPerCycle; /* electrical */
 }
 RotorSensor_Config_T;
 
@@ -173,7 +172,6 @@ static inline void RotorSensor_Init(const RotorSensor_T * p_sensor)
     _RotorSensor_Reset(p_sensor->P_STATE);
 }
 
-
 /* OnControlLoop */
 static inline void RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->CAPTURE_ANGLE(p_sensor); }
 /* OnSpeedLoop */
@@ -181,11 +179,6 @@ static inline void RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor) { p_
 /* OnStart */
 static inline void RotorSensor_ZeroInitial(const RotorSensor_T * p_sensor) { p_sensor->P_VTABLE->ZERO_INITIAL(p_sensor); /* p_sensor->P_STATE->DirectionErrorCount = 0; */ }
 
-/* set the direction compensation */
-/* Optionally force sensor direction detection */
-static inline void RotorSensor_SetDirection(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_VTABLE->SET_DIRECTION(p_sensor, direction); }
-
-// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->GET_DIRECTION(p_sensor); }
 static inline bool RotorSensor_IsFeedbackAvailable(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->IS_FEEDBACK_AVAILABLE(p_sensor); }
 
 /*
@@ -195,7 +188,7 @@ static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor)
 
 static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
-    Angle_InitFrom(&p_sensor->P_STATE->AngleSpeed, &(Angle_Config_T){.SpeedRef_Angle16 = p_config->SpeedTypeMax_DegPerCycle}); /*  */
+    Angle_InitSpeedRef(&p_sensor->P_STATE->AngleSpeed, p_config->SpeedTypeMax_DegPerCycle); /*  */
     p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config);
 }
 
@@ -216,51 +209,18 @@ static inline angle16_t RotorSensor_GetElectricalDelta(const RotorSensor_T * p_s
 
 /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
 static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->AngleSpeed.Speed_Fract16; }
-// static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return speed_fract16_of_angle16(p_sensor->P_STATE->ElectricalSpeed_DegPerCycle, p_sensor->P_STATE->P_STATE->Config.ElSpeedRated_DegPerCycle); }
 
 // static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Direction; }
 // static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return math_sign(RotorSensor_GetElectricalDelta(p_sensor)); }
-
 static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 
 
-/******************************************************************************/
-/*!
-    Angle Speed Wrap
-*/
-/******************************************************************************/
-// move to sensor/angle
-// static inline void _Motor_SetFeedforwardDelta(const RotorSensor_T * p_sensor, angle16_t elSpeed_degPerCycle)
-// {
-//     RotorSensor_GetAngleState(p_sensor)->Angle  += elSpeed_degPerCycle;
-//     RotorSensor_GetAngleState(p_sensor)->Delta = elSpeed_degPerCycle;
-//     // RotorSensor_GetAngleState(p_sensor)-> Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRated_ERpm(p_motor), elSpeed_degPerCycle);
-//     // p_sensor->P_STATE->MechanicalAngle += (elSpeed_degPerCycle / p_sensor-> P_STATE->Config.PolePairs);
-// }
 
-// static inline void _Motor_SetFeedforwardDelta(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
-// {
-//     p_motor->SensorState.ElectricalAngle += elSpeed_degPerCycle;
-//     p_motor->SensorState.ElectricalSpeed_DegPerCycle = elSpeed_degPerCycle;
-//     p_motor->SensorState.MechanicalAngle += (elSpeed_degPerCycle / p_motor->Config.PolePairs);
-//     p_motor->SensorState.Speed_Fract16 = speed_fract16_of_angle16_rpm(MOTOR_CONTROL_FREQ, Motor_GetSpeedRated_ERpm(p_motor), elSpeed_degPerCycle);
-// }
+/* set the direction compensation */
+/* Optionally force sensor direction detection. handle internal */
+// static inline void RotorSensor_SetDirectionComp(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_VTABLE->SET_DIRECTION(p_sensor, direction); }
 
-// static inline void Motor_SetElAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
-// {
-//     _Motor_SetFeedforwardDelta(p_motor, angle - p_motor->SensorState.ElectricalAngle);
-// }
-
-// static inline void Motor_SetElSpeedFeedforward(Motor_State_T * p_motor, angle16_t elSpeed_degPerCycle)
-// {
-//     _Motor_SetFeedforwardDelta(p_motor, elSpeed_degPerCycle);
-// }
-
-// static inline void Motor_SetMechAngleFeedforward(Motor_State_T * p_motor, angle16_t angle)
-// {
-//     Motor_SetElAngleFeedforward(p_motor, angle * p_motor->Config.PolePairs);
-// }
-
+// static inline int RotorSensor_GetDirection(const RotorSensor_T * p_sensor) { return p_sensor->P_VTABLE->GET_DIRECTION(p_sensor); }
 /******************************************************************************/
 /*!
     Combined

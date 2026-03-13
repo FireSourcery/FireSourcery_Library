@@ -46,22 +46,12 @@
     Motor_MarkAnalog_Thread
 */
 /******************************************************************************/
-static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return _Motor_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
-
-/* Optionally mark on Start */
-static inline void _Motor_MarkAnalog_Thread(const Motor_T * p_context)
-{
-    // RotorSensor_MarkAnalog(&p_context->Sensor);
-    /* foc return on first 1. alternatively handle per phase */
-    if (_Phase_ReadState(&p_context->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_context); }
-    else { Motor_Analog_MarkVabc(p_context); }
-}
 
 
 static inline void Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
     // or caller handle offset
-    if (Motor_IsAnalogCycle(p_context) == true) { _Motor_MarkAnalog_Thread(p_context); }
+    if (Motor_IsAnalogCycle(p_context) == true) { _Motor_Analog_Thread(p_context); }
 }
 
 /******************************************************************************/

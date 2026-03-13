@@ -40,7 +40,6 @@
     [Vehicle_Input_T]
 */
 /* Cmd SubState use edge detection - DriveState */
-// App Cmd
 typedef enum Vehicle_Cmd
 {
     VEHICLE_CMD_RELEASE,
@@ -49,13 +48,13 @@ typedef enum Vehicle_Cmd
 }
 Vehicle_Cmd_T;
 
-/* alternatively convert to common interface */
+/* alternatively convert to MotorInput */
 typedef struct Vehicle_Input
 {
-    sign_t DirectionCmd;
+    sign_t Direction;
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
-    Vehicle_Cmd_T Cmd;
+    Vehicle_Cmd_T DriveCmd;
     // Vehicle_Cmd_T CmdPrev;
 }
 Vehicle_Input_T;
@@ -74,20 +73,28 @@ static inline Vehicle_Cmd_T Vehicle_Input_EvaluateCmd(const Vehicle_Input_T * p_
 static inline Vehicle_Cmd_T Vehicle_Input_PollCmd(Vehicle_Input_T * p_user)
 {
     // p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
-    p_user->Cmd = Vehicle_Input_EvaluateCmd(p_user);
-    return p_user->Cmd;
+    p_user->DriveCmd = Vehicle_Input_EvaluateCmd(p_user);
+    return p_user->DriveCmd;
 }
 
-static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != Vehicle_Input_PollCmd(p_user)); }
+static inline bool Vehicle_Input_PollCmdEdge(Vehicle_Input_T * p_user) { return (p_user->DriveCmd != Vehicle_Input_PollCmd(p_user)); }
 // static inline bool Vehicle_Input_IsCmdEdge(Vehicle_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
+
+/*
+    Individually set inputs
+*/
+static inline bool Vehicle_Input_PollThrottle(Vehicle_Input_T * p_this, uint16_t userCmd)
+{
+    p_this->ThrottleValue = userCmd;
+    return Vehicle_Input_PollCmdEdge(p_this);
+}
 
 static inline bool Vehicle_Input_PollDirectionEdge(Vehicle_Input_T * p_input, sign_t direction)
 {
-    if (direction != p_input->DirectionCmd) { p_input->DirectionCmd = direction; return true; }
-    return false;
+    return (direction != p_input->Direction) ? ({ p_input->Direction = direction; true; }) : false;
 }
 
-static inline sign_t Vehicle_Input_GetDirectionCmd(const Vehicle_Input_T * p_input) { return p_input->DirectionCmd; }
+static inline sign_t Vehicle_Input_GetDirectionCmd(const Vehicle_Input_T * p_input) { return p_input->Direction; }
 
 /*
     Config States
@@ -113,7 +120,7 @@ typedef enum Vehicle_ZeroMode
 {
     VEHICLE_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
     VEHICLE_ZERO_MODE_REGEN,       /* Regen Brake */
-    VEHICLE_ZERO_MODE_CRUISE,      /* Voltage following, Zero current/torque */
+    VEHICLE_ZERO_MODE_IZERO,      /* Zero current/torque */
     VEHICLE_ZERO_MODE_ZERO,        /* Setpoint Zero. No cmd overwrite */
 }
 Vehicle_ZeroMode_T;
@@ -197,8 +204,8 @@ typedef enum Vehicle_VarId
     VEHICLE_VAR_DIRECTION,          // sign_t,
     VEHICLE_VAR_THROTTLE,           // [0:65535]
     VEHICLE_VAR_BRAKE,              // [0:65535]
-    VEHICLE_VAR_THROTTLE_ONLY,           // [0:65535]
-    VEHICLE_VAR_BRAKE_ONLY,              // [0:65535]
+    // VEHICLE_VAR_THROTTLE_ONLY,           // [0:65535]
+    // VEHICLE_VAR_BRAKE_ONLY,              // [0:65535]
 }
 Vehicle_VarId_T;
 

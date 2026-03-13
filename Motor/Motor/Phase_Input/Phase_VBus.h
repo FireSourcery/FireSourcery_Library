@@ -76,6 +76,8 @@ static inline ufract16_t Phase_VBus_GetVNominal(void) { return Phase_VBus.VNomin
 static inline ufract16_t Phase_VBus_GetVRef(void) { return Phase_VBus.VBus_Fract16 / 2; }
 static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phase_VBus.VBus_Fract16, FRACT16_1_DIV_SQRT3); }
 
+static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return (int32_t)phaseV * Phase_VBus.PerV_Fract32 / 65536; }
+
 
 // typedef const struct
 // {

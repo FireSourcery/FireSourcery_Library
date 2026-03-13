@@ -53,9 +53,9 @@
 /*
     Max representable speed
 
-    [max angle per poll]: 32768 <=> [max electrical cps]: pollingFreq/2 <=> .5 electrical cycle
+    [max angle per poll]: 32768 <=> 1/2 electrical cycle <=> pollingFreq/2 electrical cps
 
-    [max erpm] = [max angle per poll] * pollingFreq / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
+    [rpm] = [angle] * pollingFreq / ANGLE16_PER_REVOLUTION * SECONDS_PER_MINUTE
         => 20 kHz pollingFreq => ~600000 erpm
 
     mechanical rpm of electrical rpm: ~600000 / polePairs
@@ -66,11 +66,8 @@
 // #define MOTOR_ERPM_MAX (MOTOR_CONTROL_FREQ * SECONDS_PER_MINUTE / 2)
 
 
-
-/* INNER_LOOP */
-/* OUTER_LOOP */
-/* INNER_CONTROL_FREQ 20000U */
-/* OUTER_CONTROL_FREQ 1000U */
+/* MOTOR_OUTER_LOOP_FREQ 1000U */
+/* MOTOR_INNER_LOOP_FREQ 20000U */
 
 #ifndef MOTOR_I_LOOP_FREQ
 #define MOTOR_I_LOOP_FREQ (10000U) /* CONTROL_FREQ / ANALOG_DIVIDER) */

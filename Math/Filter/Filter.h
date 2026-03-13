@@ -40,8 +40,6 @@ typedef struct Filter
 {
     Accumulator_T Accumulator; /* Accumulator for the filter */
     uint16_t Index;
-    // int32_t Coefficient;
-    // int32_t Accumulator;
 }
 Filter_T;
 

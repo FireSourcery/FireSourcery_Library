@@ -77,11 +77,6 @@ void Vehicle_ApplyThrottleValue(const Vehicle_T * p_vehicle, uint16_t userCmdThr
     }
 }
 
-void Vehicle_ProcThrottleValue(const Vehicle_T * p_vehicle)
-{
-    Vehicle_ApplyThrottleValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.ThrottleValue);
-}
-
 // apply hold on low speed
 void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
 {
@@ -112,66 +107,27 @@ void Vehicle_ApplyBrakeValue(const Vehicle_T * p_vehicle, uint16_t userCmdBrake)
 
     switch (p_vehicle->P_VEHICLE_STATE->Config.BrakeMode)
     {
-        case VEHICLE_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmd_Scalar, cmdValue); break;
+        case VEHICLE_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmd_Scalar, cmdValue); break; /* note: torqueRamp also written in voltage mode */
             // case VEHICLE_BRAKE_MODE_VOLTAGE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetRegenCmd, 0); break;
         default: break;
     }
 }
 
-void Vehicle_ProcBrakeValue(const Vehicle_T * p_vehicle)
-{
-    Vehicle_ApplyBrakeValue(p_vehicle, p_vehicle->P_VEHICLE_STATE->Input.BrakeValue);
-}
 
 /* an alternate cmd for float is required */
 void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
 {
     switch (p_vehicle->P_VEHICLE_STATE->Config.ZeroMode)
     {
-        case VEHICLE_ZERO_MODE_FLOAT:     Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_Z);        break;
-        case VEHICLE_ZERO_MODE_CRUISE:    Motor_Table_ApplyFeedbackMode(&p_vehicle->MOTORS, MOTOR_FEEDBACK_MODE_CURRENT);    break;
+        case VEHICLE_ZERO_MODE_FLOAT:   Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_Z);         break;
+        case VEHICLE_ZERO_MODE_IZERO:   Motor_Table_ForEachApply(&p_vehicle->MOTORS, Motor_ApplyTorque0);   break;
         case VEHICLE_ZERO_MODE_REGEN:       /* Vehicle_SetRegenMotorAll(p_this); */ break;
         default: break;
     }
 }
 
 
-/*
-    Check Stop / Zero Throttle
-    Eventually release for stop transition
-*/
-void Vehicle_ProcDriveZero(const Vehicle_T * p_vehicle)
-{
-    switch (p_vehicle->P_VEHICLE_STATE->Config.ZeroMode)
-    {
-        case VEHICLE_ZERO_MODE_FLOAT: break;
-        case VEHICLE_ZERO_MODE_CRUISE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmd_Scalar, 0); break;
-        case VEHICLE_ZERO_MODE_REGEN: break;
-        default: break;
-    }
-}
 
-void Vehicle_ProcInputCmd(const Vehicle_T * p_vehicle)
-{
-    switch (p_vehicle->P_VEHICLE_STATE->Input.Cmd)
-    {
-        case VEHICLE_CMD_BRAKE:     Vehicle_ProcBrakeValue(p_vehicle);      break;
-        case VEHICLE_CMD_THROTTLE:  Vehicle_ProcThrottleValue(p_vehicle);   break;
-        case VEHICLE_CMD_RELEASE:   Vehicle_ProcDriveZero(p_vehicle);       break;
-        default: break;
-    }
-}
-
-void Vehicle_StartCmdMode(const Vehicle_T * p_vehicle, Vehicle_Cmd_T mode)
-{
-    switch (mode)
-    {
-        case VEHICLE_CMD_BRAKE:     Vehicle_StartBrakeMode(p_vehicle);      break;
-        case VEHICLE_CMD_THROTTLE:  Vehicle_StartThrottleMode(p_vehicle);   break;
-        case VEHICLE_CMD_RELEASE:   Vehicle_StartDriveZero(p_vehicle);      break;
-        default: break;
-    }
-}
 
 /******************************************************************************/
 /*

@@ -104,7 +104,7 @@ static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 // assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
 static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
 {
-    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3); /* modulation index of 1.0 as max */
+    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3); /* modulation index of 1.0 as .57 as max */
     // return foc_circle_limit(&p_foc->Vd, &p_foc->Vq, vPhaseLimit, vPhaseLimit); /* p_foc->ModulationVLimit, p_foc->VdLimit */
     return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vPhaseLimit);
 }
@@ -117,7 +117,7 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 
 /******************************************************************************/
 /*!
-    VOut
+    VDuty Out
 */
 /******************************************************************************/
 /* precomputed vBusInv_fract32 <=> 1.0F/VBus */

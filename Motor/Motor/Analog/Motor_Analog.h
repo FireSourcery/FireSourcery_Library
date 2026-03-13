@@ -28,10 +28,11 @@
     @author FireSourcery
     @brief  ADC Conversions
             - callbacks on Motor_State_T
+            Keep interface on Motor for StateMachine, RotorSensor
 */
 /******************************************************************************/
-#include "Peripheral/Analog/Analog.h"
 #include "../Motor.h"
+#include "Peripheral/Analog/Analog.h"
 
 
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
@@ -47,6 +48,21 @@ static inline void Motor_Analog_MarkVabc(const Motor_T * p_motor) { Phase_Analog
 static inline void Motor_Analog_MarkIabc(const Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
 
+static inline bool Motor_IsAnalogCycle(const Motor_T * p_context) { return _Motor_IsAnalogCycle(p_context->P_MOTOR_STATE->ControlTimerBase); }
+
+/* Optionally mark on Start */
+static inline void _Motor_Analog_Thread(const Motor_T * p_context)
+{
+    // RotorSensor_MarkAnalog(&p_context->Sensor);
+    /* foc return on first 1. alternatively handle per phase */
+    if (_Phase_ReadState(&p_context->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_context); }
+    else { Motor_Analog_MarkVabc(p_context); }
+}
+
+static inline void _Motor_Analog_ByPhase_Thread(const Motor_T * p_context)
+{
+
+}
 
 
 /*

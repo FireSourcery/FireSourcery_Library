@@ -188,13 +188,15 @@ extern void Motor_ReleaseVZ(const Motor_T * p_const);
 extern void Motor_ReleaseV0(const Motor_T * p_const);
 extern void Motor_ApplyControlState(const Motor_T * p_const, Phase_Output_T state);
 
+extern void Motor_Stop(const Motor_T * p_const);
+extern void Motor_Start(const Motor_T * p_motor);
+
 extern void Motor_ApplyFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
 
-extern void Motor_Stop(const Motor_T * p_const);
 extern void Motor_ApplyVirtualDirection(const Motor_T * p_const, Motor_Direction_T direction);
+extern void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T sign);
 extern void Motor_ApplyDirectionForward(const Motor_T * p_const);
 extern void Motor_ApplyDirectionReverse(const Motor_T * p_const);
-extern void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T sign);
 
 extern void Motor_ForceDisableControl(const Motor_T * p_const);
 
@@ -213,6 +215,8 @@ extern void Motor_SetRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
 
 extern void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16);
 extern void Motor_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
+
+extern void Motor_ApplyTorque0(const Motor_T * p_motor);
 
 extern void Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t torque);
 extern void Motor_SetTorqueCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);

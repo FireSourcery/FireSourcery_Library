@@ -102,7 +102,7 @@ static const State_T CALIBRATION_STATE_HALL =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)Calibration_Entry,
     .LOOP       = (State_Action_T)Calibration_Proc,
-    .NEXT       = (State_Handler_T)Calibration_End,
+    .NEXT       = (State_Input0_T)Calibration_End,
 };
 
 

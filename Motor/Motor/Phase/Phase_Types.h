@@ -68,7 +68,7 @@ typedef union Phase_Bitmask
         uint8_t C : 1U;
         uint8_t Resv : 5U;
     };
-    uint8_t Bits;
+    uint8_t Bits; /* Id */
 }
 Phase_Bitmask_T;
 
@@ -127,7 +127,6 @@ static inline int Phase_SignOf(Phase_Id_T prev, Phase_Id_T new)
 
 /* +180 degrees */
 static inline Phase_Id_T Phase_Inverse(Phase_Id_T id) { return (~id & PHASE_ID_ABC); }
-
 
 // static inline Phase_Id_T Phase_DirectOf(Phase_Id_T id, int sign)
 // {
@@ -192,28 +191,29 @@ typedef union Phase_Triplet
         int16_t B;
         int16_t C;
     };
-    int16_t Values[3U];
+    int16_t Values[3U]; /* Indexed */
 }
 Phase_Triplet_T;
 
-static inline int16_t Phase_ValueAlignedOf(Phase_Triplet_T * p_input, Phase_Id_T id)
-{
-    switch (id)
-    {
-        case PHASE_ID_A:        return p_input->A;
-        case PHASE_ID_B:        return p_input->B;
-        case PHASE_ID_C:        return p_input->C;
-        case PHASE_ID_INV_A:    return (0 - p_input->A);
-        case PHASE_ID_INV_B:    return (0 - p_input->B);
-        case PHASE_ID_INV_C:    return (0 - p_input->C);
-        default:                return 0;
-    }
-}
+// static inline int16_t Phase_ValueAlignedOf(Phase_Triplet_T * p_input, Phase_Id_T id)
+// {
+//     switch (id)
+//     {
+//         case PHASE_ID_A:        return p_input->A;
+//         case PHASE_ID_B:        return p_input->B;
+//         case PHASE_ID_C:        return p_input->C;
+//         case PHASE_ID_INV_A:    return (0 - p_input->A);
+//         case PHASE_ID_INV_B:    return (0 - p_input->B);
+//         case PHASE_ID_INV_C:    return (0 - p_input->C);
+//         default:                return 0;
+//     }
+// }
 
-typedef struct Phase_Data_T
+typedef struct Phase_Data
 {
     Phase_Triplet_T Values;
     Phase_Bitmask_T Flags;
+    uint8_t Resv; /* align to 32 bits */
 }
 Phase_Data_T;
 

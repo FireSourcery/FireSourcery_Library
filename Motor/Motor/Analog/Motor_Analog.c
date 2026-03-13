@@ -99,7 +99,7 @@ static const State_T CALIBRATION_STATE =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)StartCalibration,
     .LOOP       = (State_Action_T)ProcCalibration,
-    .NEXT       = (State_Handler_T)EndCalibration,
+    .NEXT       = (State_Input0_T)EndCalibration,
 };
 
 static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE; }

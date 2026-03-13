@@ -211,7 +211,7 @@ static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 #endif
 }
 
-/* ReadChannelsOutput, ReadChannelSwitches */
+/* ReadChannels */
 static inline Phase_Bitmask_T _Phase_ReadState(const Phase_T * p_phase)
 {
     return (Phase_Bitmask_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
@@ -279,12 +279,13 @@ static inline void Phase_WriteDuty_Vector(const Phase_T * p_phase, Phase_Triplet
     Phase_WriteDuty_Fract16(p_phase, p_values->A, p_values->B, p_values->C);
 }
 
-// static inline void Phase_Deactivate(const Phase_T * p_phase)
+/* High-Z */
 static inline void Phase_Deactivate(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_0); }
 
-// static inline void _Phase_Activate(const Phase_T * p_phase) active stored
+/* active stored */
 static inline void Phase_ActivateOutput(const Phase_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_ABC); }
 
+/* V0 */
 /* Enable all at 0 duty. NOT for Bipolar active. */
 static inline void Phase_ActivateV0(const Phase_T * p_phase)
 {
@@ -293,6 +294,7 @@ static inline void Phase_ActivateV0(const Phase_T * p_phase)
     Phase_ActivateOutput(p_phase);
 }
 
+/* SVM0 or Magnitude0 */
 static inline void Phase_ActivateT0(const Phase_T * p_phase)
 {
     Phase_WriteDuty_Fract16(p_phase, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);

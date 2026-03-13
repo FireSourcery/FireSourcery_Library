@@ -106,14 +106,21 @@ static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_ctx, LimitArray_T *
     On Full Context
 */
 /******************************************************************************/
+
+
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
 static inline void Motor_Table_ApplyControl(Motor_Table_T * p_ctx, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyControlState(&p_ctx->P_CONTEXTS[iMotor], state); } }
 
 static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_ctx->P_CONTEXTS[iMotor], sign); } }
 
-/* Exits Calibration and OpenLoop States */
+typedef void(*Motor_ContextProc_T)(Motor_T * p_motor);
 static inline void Motor_Table_StopAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Start(&p_ctx->P_CONTEXTS[iMotor]); } }
+
+static inline void Motor_Table_ForEachApply(Motor_Table_T * p_ctx, Motor_ContextProc_T function) { void_array_foreach((void *)p_ctx->P_CONTEXTS, sizeof(Motor_T), p_ctx->LENGTH, (proc_t)function); }
+// static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { Motor_Table_ForEachApply(p_ctx, (Motor_ContextProc_T)Motor_Start); }
+
 
 static inline void Motor_Table_ForceDisableControl(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
 

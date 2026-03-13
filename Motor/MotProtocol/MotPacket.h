@@ -53,11 +53,11 @@
 
 #define MOT_PACKET_PACKED __attribute__((packed))
 
-#if (__STDC_VERSION__ >= 202311L)
-#define ENUM8_T (: uint8_t)
-#else
+// #if (__STDC_VERSION__ >= 202311L)
+// #define ENUM8_T (: uint8_t)
+// #else
 #define ENUM8_T
-#endif
+// #endif
 
 typedef uint16_t checksum_t;
 

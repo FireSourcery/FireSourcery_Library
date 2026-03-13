@@ -113,8 +113,6 @@ static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
 
 static State_T * OpenLoop_AngleAlign(const Motor_T * p_motor, state_value_t angle)
 {
-    // p_motor->P_MOTOR_STATE->ElectricalAngle = angle;
-    // Motor_SetElAngleFeedforward(p_motor->P_MOTOR_STATE, angle);
     p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = angle;
     return &OPEN_LOOP_STATE_ANGLE_ALIGN;
 }
@@ -192,7 +190,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartUp_Entry,
     .LOOP = (State_Action_T)StartUp_Loop,
-    .NEXT = (State_Handler_T)StartUp_Next,
+    .NEXT = (State_Input0_T)StartUp_Next,
 };
 
 // test branch
@@ -202,7 +200,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 //     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
 //     .DEPTH      = 2U,
 //     .ENTRY      = (State_Action_T)OpenLoop_StartUpAlign_EntryTimer,
-//     .NEXT       = (State_Handler_T)OpenLoop_StartUpAlign_Transition,
+//     .NEXT       = (State_Input0_T)OpenLoop_StartUpAlign_Transition,
 // };
 
 static State_T * OpenLoop_StartUpRun(const Motor_T * p_motor, state_value_t null)

@@ -294,6 +294,7 @@ static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16
     [q] = 2/3 * [-sin(θ)   -sin(θ-2π/3) -sin(θ+2π/3)] [b]
     [0]         [1/2       1/2          1/2         ] [c]
 */
+/* park_dq */
 static inline void foc_abc_dq_transform
 (
     fract16_t * p_d, fract16_t * p_q,

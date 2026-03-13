@@ -75,7 +75,7 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 
 #define ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
-static inline fract16_t fract16(int16_t numerator, int32_t denominator) { return (fract16_t)(((int32_t)numerator << FRACT16_N_BITS) / denominator); }
+static inline fract16_t fract16(int16_t value, int32_t max) { return (fract16_t)(((int32_t)value << FRACT16_N_BITS) / max); }
 static inline fract16_t fract16_sat(accum32_t value)            { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
 static inline ufract16_t fract16_sat_positive(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); }
 

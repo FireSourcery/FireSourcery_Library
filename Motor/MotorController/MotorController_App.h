@@ -38,7 +38,7 @@ struct MotorController; // forward declare
 typedef const struct MotorController MotorController_T;
 
 typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
-
+// void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
 /*
     All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
     Protocol freely maps,
@@ -54,11 +54,10 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
 /******************************************************************************/
 typedef const struct MotorController_App
 {
-    MotorController_App_Proc_T PROC_ANALOG_USER; // or additional interface map
-    // void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
+    MotorController_App_Proc_T PROC_ANALOG_USER;
     // State_T * P_INITIAL_STATE;
-    // const void * P_APP_CONTEXT;
     State_Input_T ENTER_MAIN;
+    // const void * P_APP_CONTEXT; split from vtable
 }
 MotorController_App_T;
 

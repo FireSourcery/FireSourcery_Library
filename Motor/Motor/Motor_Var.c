@@ -29,7 +29,7 @@
 /******************************************************************************/
 #include "Motor_Var.h"
 
-#include "Sensor/Motor_Sensor.h" /* for calibration cmd */
+
 #include "Analog/Motor_Analog.h" /* for calibration cmd */
 #include "Motor_User.h"
 #include "Motor_Config.h"
@@ -233,7 +233,7 @@ void _Motor_Var_ConfigCalibration_Set(Motor_State_T * p_motor, Motor_Var_ConfigC
     }
 }
 
-int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId)
+int _Motor_Var_ConfigDebug_Get(const Motor_State_T * p_motor, Motor_Var_ConfigDebug_T varId)
 {
     int value = 0;
     switch (varId)
@@ -242,7 +242,7 @@ int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_V
         case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVBusRef_Rpm(p_motor);              break;
         case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVBusRef_DegPerCycle(p_motor);             break;
         case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
-        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = Motor_GetVSpeedRated_Fract16(p_motor);               break;
+        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }
     return value;
 }
@@ -356,8 +356,6 @@ void _Motor_Var_CalibrationCmd_Call(const Motor_T * p_motor, Motor_Var_Calibrati
         case MOTOR_VAR_CALIBRATION_CMD_ADC:             Motor_Analog_Calibrate(p_motor);        break;
         case MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME:    Motor_Calibration_StartHome(p_motor);   break;
         case MOTOR_VAR_CALIBRATION_ENTER_TUNING:        Motor_Calibration_EnterTuning(p_motor); break;
-
-        // case MOTOR_VAR_CONFIG_CMD_ENCODER_HOME:  Motor_Encoder_StartHoming(p_motor);     break; // move to sensor cmds
     }
 }
 
@@ -450,11 +448,11 @@ int _Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
         case MOTOR_VAR_TYPE_USER_SETPOINT:      return 0;
 
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         return _Motor_Var_ConfigCalibration_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   return _Motor_Var_ConfigCalibrationAlias_Get(p_motor->P_MOTOR_STATE, varId);
+        case MOTOR_VAR_TYPE_CONFIG_DEBUG:               return _Motor_Var_ConfigDebug_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           return _Motor_Var_ConfigActuation_Get(p_motor->P_MOTOR_STATE, varId);
         case MOTOR_VAR_TYPE_CONFIG_PID:                 return _Motor_Var_ConfigPid_Get(p_motor->P_MOTOR_STATE, varId);
-        case MOTOR_VAR_TYPE_CALIBRATION_CMD:                 return 0; // Write only, no read access
-        case MOTOR_VAR_TYPE_CONFIG_RESV:          return 0; // Write only, no read access
+        case MOTOR_VAR_TYPE_CALIBRATION_CMD:            return 0; // Write only, no read access
+        case MOTOR_VAR_TYPE_CONFIG_RESV:                return 0; // Write only, no read access
 
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR_CONTEXT, varId);
@@ -482,8 +480,8 @@ void _Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int var
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:         _Motor_Var_ConfigCalibration_Set(p_motor->P_MOTOR_STATE, varId, varValue);  break;
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:           _Motor_Var_ConfigActuation_Set(p_motor->P_MOTOR_STATE, varId, varValue);    break;
         case MOTOR_VAR_TYPE_CONFIG_PID:                 _Motor_Var_ConfigPid_Set(p_motor->P_MOTOR_STATE, varId, varValue);          break;
-        case MOTOR_VAR_TYPE_CALIBRATION_CMD:                 _Motor_Var_CalibrationCmd_Call(p_motor, varId, varValue);                        break;
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   break;
+        case MOTOR_VAR_TYPE_CALIBRATION_CMD:            _Motor_Var_CalibrationCmd_Call(p_motor, varId, varValue);                   break;
+        case MOTOR_VAR_TYPE_CONFIG_DEBUG:               break;
         /* Requires Sensor_Table */
         // case MOTOR_VAR_TYPE_CONFIG_RESV:          Motor_Sensor_CalibrationCmd_Call(p_motor, (RotorSensor_Id_T)varId, varValue);           break;
 
@@ -511,7 +509,7 @@ int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId
         case MOTOR_VAR_TYPE_STATE_CMD:
         case MOTOR_VAR_TYPE_USER_SETPOINT:
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:
+        case MOTOR_VAR_TYPE_CONFIG_DEBUG:
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:
         case MOTOR_VAR_TYPE_CONFIG_PID:
         case MOTOR_VAR_TYPE_CALIBRATION_CMD:
@@ -550,7 +548,7 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
         case MOTOR_VAR_TYPE_CONFIG_PID:                 return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_CALIBRATION_CMD:            return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_CONFIG_RESV:                return Motor_IsConfig(p_motor); /* Motor_Sensor.h */
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:   return false;
+        case MOTOR_VAR_TYPE_CONFIG_DEBUG:   return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return Motor_IsConfig(p_motor);
@@ -582,7 +580,7 @@ void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
         case MOTOR_VAR_TYPE_CONFIG_ACTUATION:
         case MOTOR_VAR_TYPE_CONFIG_PID:
         case MOTOR_VAR_TYPE_CALIBRATION_CMD:
-        case MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS:
+        case MOTOR_VAR_TYPE_CONFIG_DEBUG:
         case MOTOR_VAR_TYPE_CONFIG_RESV:
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:
@@ -600,6 +598,8 @@ void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
     }
 }
 
+
+#include "Sensor/Motor_Sensor.h" /* for calibration cmd */
 
 //todo move
 /* handle selective compilation in submodule for single point of compile time selection */

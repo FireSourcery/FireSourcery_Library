@@ -59,6 +59,7 @@ MotorController_MainMode_T;
 // {
 //     MotorController_App_T MOTOR_CMD;
 //     MotorController_App_T VEHICLE;
+//     Vehicle_T VEHICLE_CONTEXT;
 // }
 // MotorController_AppTable_T;
 

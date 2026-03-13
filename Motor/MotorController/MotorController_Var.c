@@ -373,16 +373,16 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                 case MOT_VAR_TYPE_VEHICLE_CONFIG:
                     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                     break;
+                // case MOT_VAR_ID_HANDLER_SYSTEM_COMMAND:
+                //     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                 default:
                     break;
             }
             break;
-        // case MOT_VAR_ID_HANDLER_SYSTEM_COMMAND:
-        //     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
         default:
             break;
     }
-    // Access control check using InnerType pattern
+    // Access control check descriptor
     // if (MotVarId_IsReadOnly(varId)) { return MOT_VAR_STATUS_ERROR_READ_ONLY; }
     // if (MotVarId_IsConfig(varId) && !MotorController_IsConfigState(p_context)) { return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE; }
     return MOT_VAR_STATUS_OK;

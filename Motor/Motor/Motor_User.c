@@ -64,9 +64,42 @@
 */
 
 /******************************************************************************/
+/*
+    Transition to Stop / Runtime inactive
+    Stop disables inputs until next Start.
+*/
+/******************************************************************************/
+static State_T * _Motor_InputStop(const Motor_T * p_motor, state_value_t value)
+{
+    (void)value;
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
+    return NULL;
+}
+
+void Motor_Stop(const Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputStop };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+}
+
+static State_T * _Motor_InputStart(const Motor_T * p_motor, state_value_t value)
+{
+    (void)value;
+    return &MOTOR_STATE_PASSIVE;
+}
+
+void Motor_Start(const Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_STOP, .NEXT = (State_Input_T)_Motor_InputStart };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+    // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_STATE_CMD, MSM_INPUT_STATE_START); }
+}
+
+/******************************************************************************/
 /*!
     Phase Output State
     Phase Output directly mapping to a Control State: Feedback Run, Freewheel, Hold
+    Release stays in ready mode.
 */
 /******************************************************************************/
 inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
@@ -111,9 +144,8 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 /******************************************************************************/
 /*!
     Direction/Stop
-    Applied Voltage Direction
-    Direction change only from stopped/freewheeling state —
-    alternatively handle deceleration to speed and transition through freewheeling state
+    Applied Voltage Direction - sign of cmd, directional limits
+    Handle direction change and stop through StateMachine to ensure safe transition and consistent state.
 */
 /******************************************************************************/
 /*
@@ -128,25 +160,6 @@ void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T dire
 void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward * direction); }
 
 
-/*
-    Transition to Stop
-    Release stays in ready mode. Stop disables inputs until next Start.
-    MOTOR_DIRECTION_NULL doubles as Stop from Passive
-*/
-// void Motor_Stop(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, MOTOR_DIRECTION_NULL); }
-
-static State_T * _Motor_InputStop(const Motor_T * p_motor, state_value_t value)
-{
-    (void)value;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
-    return NULL;
-}
-
-void Motor_Stop(const Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputStop };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-}
 
 /******************************************************************************/
 /*
@@ -157,7 +170,7 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_ReleaseVZ(p_motor);
-    Motor_Stop(p_motor);
+    Motor_Stop(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
 }
 
 /******************************************************************************/
@@ -168,6 +181,7 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
 /******************************************************************************/
 /*
     Cmd Value
+    ~1ms-50ms. Directly set buffer without calling StateMachine.
     Concurrency note:
         Input thread updates Ramp Target.
         StateMachine_Proc thread updates Ramp OutputState
@@ -227,6 +241,12 @@ void Motor_SetICmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16)
     Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16));
 }
 
+/* Call handles 0 cmd values. alternatively intervention state */
+void Motor_ApplyTorque0(const Motor_T * p_motor)
+{
+    Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
+    Ramp_SetTarget(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
+}
 
 /******************************************************************************/
 /*!
@@ -418,11 +438,11 @@ void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed)
 */
 void _Motor_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
-    if (mode.Speed == 1U)           { Motor_SetSpeedCmd_Scalar(p_motor, userCmd); }
-    // else if (mode.Current == 1U)   { Motor_SetTorqueCmd_Scalar(p_motor, userCmd); } /* align to direction by default */
-    // else                           { Motor_SetTorqueVCmd_Scalar(p_motor, userCmd); }
+    if (mode.Speed == 1U)          { Motor_SetSpeedCmd_Scalar(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetICmd_Scalar(p_motor, userCmd); }
     else                           { Motor_SetVoltageCmd_Scalar(p_motor, userCmd); }
+    // else if (mode.Current == 1U)   { Motor_SetTorqueCmd_Scalar(p_motor, userCmd); } /* align to direction by default */
+    // else                           { Motor_SetTorqueVCmd_Scalar(p_motor, userCmd); }
 }
 
 void Motor_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd)
@@ -460,28 +480,28 @@ void Motor_SetActiveCmdValue_Scalar(Motor_State_T * p_motor, int16_t userCmd)
 /* Handle remaining comparison with Motor heat I limits if its not handled by arbitration array */
 bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    bool isLimit = false;
+    bool isLimit = true;
     Motor_SetSpeedLimits(p_motor, speed_ufract16);
     return isLimit;
 }
 
 bool Motor_TryClearSpeedLimit(Motor_State_T * p_motor)
 {
-    bool isLimit = false;
+    bool isLimit = true;
     Motor_ResetSpeedLimit(p_motor);
     return isLimit;
 }
 
 bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
 {
-    bool isLimit = false;
+    bool isLimit = true;
     Motor_SetILimits(p_motor, i_Fract16);
     return isLimit;
 }
 
 bool Motor_TryClearILimit(Motor_State_T * p_motor)
 {
-    bool isLimit = false;
+    bool isLimit = true;
     Motor_ResetILimit(p_motor);
     return isLimit;
 }
@@ -511,40 +531,40 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
     Specialized Sync input
 */
 /******************************************************************************/
-void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
-{
-    if (p_input->PhaseOutput != Motor_GetPhaseState(p_motor))
-    {
-        Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
-    }
-    // Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
-    Motor_ApplyFeedbackMode(p_motor, p_input->FeedbackMode);
-    Motor_ApplyUserDirection(p_motor, p_input->Direction);
+// void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
+// {
+//     if (p_input->PhaseOutput != Motor_GetPhaseState(p_motor))
+//     {
+//         Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
+//     }
+//     // Motor_ApplyControlState(p_motor, p_input->PhaseOutput);
+//     Motor_ApplyFeedbackMode(p_motor, p_input->FeedbackMode);
+//     Motor_ApplyUserDirection(p_motor, p_input->Direction);
 
-    // Flags should update even if State has not transitioned
-    // overwritten by match in case FeedbackMode changed.
-    Motor_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+//     // Flags should update even if State has not transitioned
+//     // overwritten by match in case FeedbackMode changed.
+//     Motor_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
 
-    // if (p_input->SpeedLimit != p_prev->SpeedLimit)
-    // {
-    //     p_prev->SpeedLimit = p_input->SpeedLimit;
-    //     MotorController_SetUserSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
-    // }
+//     // if (p_input->SpeedLimit != p_prev->SpeedLimit)
+//     // {
+//     //     p_prev->SpeedLimit = p_input->SpeedLimit;
+//     //     MotorController_SetUserSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+//     // }
 
-    // if (p_input->ILimit != p_prev->ILimit)
-    // {
-    //     p_prev->ILimit = p_input->ILimit;
-    //     MotorController_SetUserILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
-    // }
-}
+//     // if (p_input->ILimit != p_prev->ILimit)
+//     // {
+//     //     p_prev->ILimit = p_input->ILimit;
+//     //     MotorController_SetUserILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
+//     // }
+// }
 
-/* units as FeedbackMode Set */
-void Motor_ProcInputSetpoint(const Motor_T * p_motor, Motor_Input_T * p_input)
-{
-    if (p_input->CmdValue != Motor_GetCmd(p_motor->P_MOTOR_STATE)) /* compare applicable to mixed units values */
-    {
-        Motor_SetActiveCmdValue(p_motor->P_MOTOR_STATE, p_input->CmdValue);
-    }
-}
+// /* units as FeedbackMode Set */
+// void Motor_ProcInputSetpoint(const Motor_T * p_motor, Motor_Input_T * p_input)
+// {
+//     if (p_input->CmdValue != Motor_GetCmd(p_motor->P_MOTOR_STATE)) /* compare applicable to mixed units values */
+//     {
+//         Motor_SetActiveCmdValue(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+//     }
+// }
 
 

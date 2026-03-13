@@ -29,22 +29,13 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-// #include "Transducer/Math/math_edge.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum Debounce_Edge
-{
-    DEBOUNCE_EDGE_FALLING = -1,
-    DEBOUNCE_EDGE_NULL = 0,
-    DEBOUNCE_EDGE_RISING = 1,
-}
-Debounce_Edge_T;
 
 /******************************************************************************/
 /*
-    Runtime State Only - No Pin or Timer References
+    Runtime State
 */
 /******************************************************************************/
 typedef struct Debounce
@@ -63,11 +54,9 @@ Debounce_T;
 
 */
 /******************************************************************************/
-
 /*!
     @return the debounced state
 */
-
 static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
     if (pinState != p_debounce->PinState)
@@ -83,10 +72,42 @@ static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, 
     return p_debounce->Output;
 }
 
+/******************************************************************************/
 /*
-    Edge detection with debounce
-    alternatively move to UserDin
+    Inline Accessors
 */
+/******************************************************************************/
+static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->Output; }
+
+/*
+    Configuration
+*/
+static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
+static inline uint16_t Debounce_GetTime(const Debounce_T * p_debounce) { return p_debounce->DebounceTime; }
+
+static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
+{
+    p_debounce->DebounceTime = debounceTime;
+    p_debounce->TimeStart = 0UL;
+    p_debounce->Output = false;
+    p_debounce->OutputPrev = false;
+    p_debounce->PinState = false;
+}
+
+
+
+
+/*
+    handle by din
+*/
+typedef enum Debounce_Edge
+{
+    DEBOUNCE_EDGE_FALLING = -1,
+    DEBOUNCE_EDGE_NULL = 0,
+    DEBOUNCE_EDGE_RISING = 1,
+}
+Debounce_Edge_T;
+
 /*!
     @return true if state changed
 */
@@ -98,6 +119,7 @@ static inline bool Debounce_PollEdge(Debounce_T * p_debounce, uint32_t currentTi
     /* alternatively call handle async edge detect */
     // return (p_debounce->Output != Debounce_Poll(p_debounce, currentTime, pinState));
 }
+
 
 /* Optional convenience functions */
 static inline bool Debounce_PollRisingEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
@@ -116,30 +138,13 @@ static inline Debounce_Edge_T Debounce_PollEdgeValue(Debounce_T * p_debounce, ui
 }
 
 
-/******************************************************************************/
-/*
-    Inline Accessors
-*/
-/******************************************************************************/
-static inline bool Debounce_GetState(const Debounce_T * p_debounce) { return p_debounce->Output; }
+
 /* mixin math_edge.h */
 static inline bool Debounce_IsEdge(const Debounce_T * p_debounce) { return (p_debounce->Output != p_debounce->OutputPrev); }
 static inline bool Debounce_IsRisingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == true) && (p_debounce->OutputPrev == false)); }
 static inline bool Debounce_IsFallingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == false) && (p_debounce->OutputPrev == true)); }
 static inline Debounce_Edge_T Debounce_GetEdge(const Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->Output - p_debounce->OutputPrev); }
 
-static inline void Debounce_SetTime(Debounce_T * p_debounce, uint16_t millis) { p_debounce->DebounceTime = millis; }
-static inline uint16_t Debounce_GetTime(const Debounce_T * p_debounce) { return p_debounce->DebounceTime; }
-
-
-static void Debounce_Init(Debounce_T * p_debounce, uint32_t debounceTime)
-{
-    p_debounce->DebounceTime = debounceTime;
-    p_debounce->TimeStart = 0UL;
-    p_debounce->Output = false;
-    p_debounce->OutputPrev = false;
-    p_debounce->PinState = false;
-}
 
 /******************************************************************************/
 /* Time-based debounce */

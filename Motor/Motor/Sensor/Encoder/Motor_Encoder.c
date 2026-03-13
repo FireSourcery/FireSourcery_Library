@@ -198,7 +198,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)StartHoming,
 //     .LOOP       = (State_Action_T)ProcHoming,
-//     .NEXT       = (State_Handler_T)HomingTransition,
+//     .NEXT       = (State_Input0_T)HomingTransition,
 // };
 
 
@@ -280,7 +280,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)Motor_FOC_StartStartUpAlign,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcStartUpAlign,
-//     .NEXT       = (State_Handler_T)AlignZeroNext,
+//     .NEXT       = (State_Input0_T)AlignZeroNext,
 // };
 
 
@@ -340,7 +340,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)ValidateAlign,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcOpenLoop,
-//     .NEXT       = (State_Handler_T)ValidateAlignNext,
+//     .NEXT       = (State_Input0_T)ValidateAlignNext,
 // };
 
 
@@ -391,7 +391,7 @@
 //     .DEPTH      = 1U,
 //     .ENTRY      = (State_Action_T)NULL,
 //     .LOOP       = (State_Action_T)Motor_FOC_ProcAngleControl,
-//     .NEXT       = (State_Handler_T)ValidateClosedLoopTransition,
+//     .NEXT       = (State_Input0_T)ValidateClosedLoopTransition,
 //     // .P_TRANSITION_TABLE = NULL,
 // };
 
@@ -454,7 +454,7 @@
 
 //     // .ENTRY = (State_Action_T) ,
 //     // .LOOP = (State_Action_T) ,
-//     .NEXT = (State_Handler_T)StartUpTransition,
+//     .NEXT = (State_Input0_T)StartUpTransition,
 // };
 
 // static const State_T START_UP_ALIGN =
@@ -465,12 +465,12 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)Motor_FOC_StartStartUpAlign,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcStartUpAlign,
-//     .NEXT = (State_Handler_T)StartUpAlignTransition,
+//     .NEXT = (State_Input0_T)StartUpAlignTransition,
 
 //     // .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 //     // .P_PARENT = &ALIGN,
 //     // .DEPTH = 2U,
-//     // .NEXT = (State_Handler_T)StartUpAlignTransition,
+//     // .NEXT = (State_Input0_T)StartUpAlignTransition,
 // };
 
 // static const State_T START_UP_VALIDATE_ALIGN =
@@ -481,7 +481,7 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)ValidateAlign,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcOpenLoop,
-//     .NEXT = (State_Handler_T)StartUpValidateAlignTransition,
+//     .NEXT = (State_Input0_T)StartUpValidateAlignTransition,
 // };
 
 // static const State_T START_UP_VALIDATE_CLOSED_LOOP =
@@ -492,7 +492,7 @@
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)NULL,
 //     .LOOP = (State_Action_T)Motor_FOC_ProcAngleControl,
-//     .NEXT = (State_Handler_T)StartUpValidateClosedLoopTransition,
+//     .NEXT = (State_Input0_T)StartUpValidateClosedLoopTransition,
 // };
 
 // static State_T * StartUpTransition(const Motor_T * p_motor)

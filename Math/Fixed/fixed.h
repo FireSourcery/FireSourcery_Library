@@ -46,5 +46,7 @@ extern uint8_t fixed_bit_width_signed(int32_t x);
 extern uint8_t fixed_lshift_max_unsigned(uint32_t x);
 extern uint8_t fixed_lshift_max_signed(int32_t x);
 
+
+
 #endif
 

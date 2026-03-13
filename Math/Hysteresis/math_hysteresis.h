@@ -40,7 +40,7 @@
     Following ISA-5.1 and IEC 61131-3 conventions
 */
 /******************************************************************************/
-// static inline bool _is_hysteresis_active(int32_t threshold_off, bool state, int32_t input) { return ((state == true) && (input >= threshold_off)); }
+// static inline bool _is_hysteresis_hold(int32_t threshold_off, bool state, int32_t input) { return ((state == true) && (input >= threshold_off)); }
 // static inline bool _is_hysteresis_output_on(int32_t threshold_on, int32_t threshold_off, bool state, int32_t input) { return (input >= threshold_on) || _is_in_hysteresis( ); }
 
 /*!

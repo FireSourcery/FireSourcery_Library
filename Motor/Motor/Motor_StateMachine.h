@@ -64,6 +64,7 @@ typedef enum Motor_StateId
     MSM_STATE_ID_OPEN_LOOP, /* Torque Loop On/Off + VZ/V0/VPWM */
     MSM_STATE_ID_CALIBRATION,
     MSM_STATE_ID_FAULT,
+    MSM_STATE_ID_INTERVENTION,
 }
 Motor_StateId_T;
 
@@ -75,6 +76,7 @@ extern const State_T MOTOR_STATE_RUN;
 extern const State_T MOTOR_STATE_OPEN_LOOP;
 extern const State_T MOTOR_STATE_CALIBRATION;
 extern const State_T MOTOR_STATE_FAULT;
+extern const State_T MOTOR_STATE_INTERVENTION;
 
 /******************************************************************************/
 /*
@@ -89,10 +91,18 @@ typedef enum Motor_StateInput
     MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
+    // MSM_INPUT_STATE_CMD, /* Transition Cmd, common entry for Stop, Start, Timer, etc */
     // MSM_INPUT_USER_BUFFER,
     // MSM_INPUT_CAPTURE_ADC,
 }
 Motor_StateInput_T;
+
+/*
+    [Phase_Output_T]
+    VZ/V0 -> Release
+    VPWM -> Run
+*/
+
 
 /******************************************************************************/
 /*

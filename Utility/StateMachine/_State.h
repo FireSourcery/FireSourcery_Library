@@ -38,7 +38,7 @@
 */
 /******************************************************************************/
 static inline void _State_Action(State_Action_T action, void * p_context) { if (action != NULL) { action(p_context); } }
-static inline State_T * _State_InputVoid(State_Handler_T input, void * p_context) { return (input != NULL) ? input(p_context) : NULL; }
+static inline State_T * _State_InputVoid(State_Input0_T input, void * p_context) { return (input != NULL) ? input(p_context) : NULL; }
 
 /******************************************************************************/
 /* Sync Output */
@@ -163,24 +163,47 @@ static inline void State_OnTransition(State_T * p_state, State_T * p_new, void *
 }
 
 
-/*
-    Async only functions as **state
-*/
-// void _State_Input(State_T ** pp_active, void * p_context, state_input_t id, state_value_t value)
-// {
-//     State_T * p_active = *pp_active;
-//     State_T * p_next = State_TransitionOfInput(*pp_active, p_context, id, value);
-//     State_Exit(p_active, p_context);
-//     State_Entry(p_next, p_context);
-//     *pp_active = p_next;
-// }
 
-// State_T * State_Input(State_T * p_active, void * p_context, state_input_t id, state_value_t value)
-// {
-//     State_T * p_next = State_TransitionOfInput(p_active, p_context, id, value);
-//     if (p_next != NULL) { State_OnTransition(p_active, p_next, p_context); }
-//     return p_next;
-// }
+/*
+    Minimal handler for orthogonal states
+*/
+typedef struct State_Active { State_T * p_State; } State_Active_T;
+
+static inline void _State_Reset(State_Active_T * p_active, void * p_context, State_T * p_initialState)
+{
+    if (p_initialState != NULL)
+    {
+        State_Entry(p_initialState, p_context);
+        p_active->p_State = p_initialState;
+    }
+    // else
+    // {
+    //     _State_Reset(p_active, p_context, &STATE_EMPTY);
+    // }
+}
+
+
+static inline void _State_TransitionTo(State_Active_T * p_active, void * p_context, State_T * p_next)
+{
+    assert(p_next->DEPTH == 0U); /* Top level state */
+    State_Exit(p_active->p_State, p_context);
+    State_Entry(p_next, p_context);
+    p_active->p_State = p_next;
+}
+
+static inline void _State_Transition(State_Active_T * p_active, void * p_context, State_T * p_next)
+{
+    if (p_next != NULL) { _State_TransitionTo(p_active, p_context, p_next); }
+}
+
+/*
+    Async only
+*/
+static inline void _State_Input(State_Active_T * p_active, void * p_context, state_input_t id, state_value_t value)
+{
+    _State_Transition(p_active, p_context, State_TransitionOfInput(p_active->p_State, p_context, id, value));
+}
+
 
 /******************************************************************************/
 /* Accessor */

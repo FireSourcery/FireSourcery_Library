@@ -36,12 +36,10 @@
 
 */
 static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
-// static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, 0); }
+static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
 
-/* Enter Substate From OpenLoop Root State */
-/* Sufficient for Cmds that begin with a substate */
-/* Specialized cmd may call with TransitionInput for init function */
-// static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_OPEN_LOOP, p_subState); }
+/*   for Cmds that begin with a substate */
+static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
 
 /*
     Extern

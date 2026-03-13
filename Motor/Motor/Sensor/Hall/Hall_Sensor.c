@@ -56,11 +56,11 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 
         // Angle_CaptureAngle(p_angle, Hall_GetSensorAngle(p_sensor->HALL.P_STATE));
 
-        // if (p_state->VDirection != Hall_GetSensorDirection(p_sensor->HALL.P_STATE))
+        // module handle edge. caller handle count error
+        // if (p_state->Direction != Hall_GetSensorDirection(p_sensor->HALL.P_STATE))
         // {
         //     p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
         //     p_sensor->P_ENCODER->P_STATE->InterpolateAngleSum = 0;
-        //     p_state->DirectionErrorCount++;
         //     p_state->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE); // p_state->Direction as common feedback direction, alternatively use speed
         // }
     }
@@ -79,7 +79,8 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
     Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->BASE);
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
-    Angle_CaptureDelta(p_angle, Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE)); /* includes samples over 1ms this way */ /* Angle.Delta Unused for now */
+    Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
+    // p_angle->Delta = Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);  /* interpolate with Angle_T todo. use 1ms sample */
     Angle_CaptureSpeed_Fract16(p_angle, Encoder_ModeDT_GetScalarVelocity(p_sensor->P_ENCODER->P_STATE));
 }
 

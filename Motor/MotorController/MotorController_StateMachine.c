@@ -100,11 +100,6 @@ const StateMachine_Machine_T MCSM_MACHINE =
     @brief Common
 */
 /******************************************************************************/
-/*
-    MotorController AppTable
-*/
-static State_T * EnterMain(MotorController_T * p_context) { return MotorController_App_EnterMain(p_context); }
-static State_T * ParkState(MotorController_T * p_context) { return(p_context->P_MC_STATE->Config.isParkStateEnabled ? &STATE_PARK : &MC_STATE_MAIN); }
 
 /* Clear Latching */
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
@@ -128,6 +123,11 @@ static State_T * TransitionFault(MotorController_T * p_context, state_value_t fa
 }
 
 
+/*
+    MotorController AppTable
+*/
+static State_T * EnterMain(MotorController_T * p_context) { return MotorController_App_EnterMain(p_context); }
+static State_T * ParkState(MotorController_T * p_context) { return(p_context->P_MC_STATE->Config.IsParkStateEnabled ? &STATE_PARK : &MC_STATE_MAIN); }
 
 
 /******************************************************************************/
@@ -144,6 +144,7 @@ static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
 static void Init_Entry(const MotorController_T * p_context)
 {
     (void)p_context;
+    SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
 }
 
 // static void Init_Exit(const MotorController_T * p_context)
@@ -203,7 +204,7 @@ static const State_T STATE_INIT =
     .ID                 = MCSM_STATE_ID_INIT,
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
-    .NEXT               = (State_Handler_T)Init_Next,
+    .NEXT               = (State_Input0_T)Init_Next,
     .P_TRANSITION_TABLE = &INIT_TRANSITION_TABLE[0U],
 };
 
@@ -277,22 +278,26 @@ static const State_T STATE_PARK =
     @name Main App State
     Motor States: STOP, PASSIVE, RUN, OPEN_LOOP
     Base State as Stop/Idle before transition
-    A mounting point for app states
-    @{
+    A mounting point for app states. Main base passthrough only
 */
 /******************************************************************************/
+
+/*
+    Note: Motor_OpenLoop and Motor_Calibration exits on VOut 0/Z
+*/
 static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
-    // else if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
+    else if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
 }
 
 static void Main_Entry(const MotorController_T * p_context)
 {
-    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* Start in passive, PHASE_VOUT_0 to exit Stop */
+    Motor_Table_StartAll(&p_context->MOTORS); /* Start in passive, Start to exit Stop */
+    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* */
 }
 
 /* App State common background proc */
@@ -307,38 +312,21 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
-            // if (Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true)
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_context); /* Enter app sub-state from Main idle */
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: //return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
+            Motor_Table_StopAll(&p_context->MOTORS); break;
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+            // if rootState == MAIN
+            return EnterMain(p_context); /* Enter app sub-state from Main idle */
         default: break;
     }
     return NULL;
 }
 
-/*
-    Default motor-generic command handler.
-    Fallback when Main is the leaf (idle) or when sub-states propagate (NULL slot).
-    Reads from CmdInput buffer — caller has already written the value.
-*/
-// static State_T * Main_InputMotorCmd(const MotorController_T * p_context, state_value_t cmd)
-// {
-//     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
-//     switch ((MotorController_MotorCmd_T)cmd)
-//     {
-//         case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;
-//         case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ApplyControl(&p_context->MOTORS, p_input->PhaseOutput); break;
-//         case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
-//         case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
-//         default: break;
-//     }
-//     return NULL;
-// }
-
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MCSM_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MCSM_INPUT_STATE_CMD]      = (State_Input_T)Main_InputStateCmd,
-    // [MCSM_INPUT_MOTOR_CMD]      = (State_Input_T)Main_InputMotorCmd,  /* Default motor-generic passthrough */
+    [MCSM_INPUT_MOTOR_CMD]      = NULL,
     [MCSM_INPUT_APP_USER]       = NULL, /* App-specific: handled by sub-states only, sink at Main */
 };
 
@@ -365,7 +353,6 @@ static void MotorCmd_Entry(const MotorController_T * p_context)
     Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* Set PWM Output */
 }
 
-/* Motor_Input_T Only */
 static void MotorCmd_Proc(const MotorController_T * p_context)
 {
 
@@ -495,7 +482,6 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 /* Generic select or call motor function */
             // case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_context);    break;
 
-
             /* No return */
             case MOTOR_CONTROLLER_LOCK_REBOOT:
                 HAL_Reboot();  // optionally deinit clock select
@@ -509,7 +495,6 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 break;
 
             // case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE:       break;
-
             // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_context);       break;
             // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_context);         break;
 
@@ -617,7 +602,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartCalibrateAdc,
     .LOOP = (State_Action_T)ProcCalibrateAdc,
-    .NEXT = (State_Handler_T)EndCalibrateAdc,
+    .NEXT = (State_Input0_T)EndCalibrateAdc,
 };
 
 
@@ -650,7 +635,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
 //     .DEPTH = 1U,
 //     .ENTRY = (State_Action_T)0,
 //     .LOOP = (State_Action_T)0,
-//     .NEXT = (State_Handler_T)0,
+//     .NEXT = (State_Input0_T)0,
 // };
 
 

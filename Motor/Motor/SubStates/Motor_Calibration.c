@@ -55,22 +55,22 @@ static void Tuning_Proc(const Motor_T * p_motor)
     Motor_FOC_WriteDuty(p_motor);
 }
 
-static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
-{
-    State_T * p_nextState = NULL;
+// static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
+// {
+//     State_T * p_nextState = NULL;
 
-    switch ((Phase_Output_T)phaseOutput)
-    {
-        // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
-        case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
-        case PHASE_VOUT_0: Phase_ActivateV0(&p_motor->PHASE); break;
-        case PHASE_VOUT_PWM: Phase_ActivateT0(&p_motor->PHASE); break;
-        default: break;
-    }
+//     switch ((Phase_Output_T)phaseOutput)
+//     {
+//         // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
+//         case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
+//         case PHASE_VOUT_0: Phase_ActivateV0(&p_motor->PHASE); break;
+//         case PHASE_VOUT_PWM: Phase_ActivateT0(&p_motor->PHASE); break;
+//         default: break;
+//     }
 
-    return p_nextState;
-    // return &MOTOR_STATE_CALIBRATION;
-}
+//     return p_nextState;
+//     // return &MOTOR_STATE_CALIBRATION;
+// }
 
 /* direction set before entry */
 static State_T * Tuning_InputStop(const Motor_T * p_motor, state_value_t direction)
@@ -94,14 +94,14 @@ const State_T CALIBRATION_STATE_TUNNING =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)Tuning_Entry,
     .LOOP       = (State_Action_T)Tuning_Proc,
-    // .NEXT       = (State_Handler_T)Calibration_TuningEnd,
+    // .NEXT       = (State_Input0_T)Calibration_TuningEnd,
 };
 
 static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
     [MSM_INPUT_FAULT]           = NULL,
     [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Tuning_InputFeedbackMode,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Tuning_InputControl,
+    // [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Tuning_InputControl,
     [MSM_INPUT_DIRECTION]       = (State_Input_T)Tuning_InputStop,
     [MSM_INPUT_CALIBRATION]     = NULL, /* inherit parent */
     [MSM_INPUT_OPEN_LOOP]       = NULL,
@@ -200,7 +200,7 @@ static const State_T CALIBRATION_STATE_HOMING =
     .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)Homing_Entry,
     .LOOP       = (State_Action_T)Homing_Proc,
-    .NEXT       = (State_Handler_T)Homing_End,
+    .NEXT       = (State_Input0_T)Homing_End,
 };
 
 static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)

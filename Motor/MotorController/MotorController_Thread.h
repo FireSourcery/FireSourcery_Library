@@ -32,9 +32,6 @@
 #include "MotorController_User.h"
 #include "Motor/Motor/Motor_Thread.h"
 
-// #include "Vehicle/Vehicle_StateMachine.h"
-// #include "Vehicle/Vehicle_User.h"
-
 #include "Peripheral/Analog/Analog_ADC_Thread.h"
 
 /******************************************************************************/
@@ -396,7 +393,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 
 //     if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
 //     {
-//         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
 //     }
 
 //     // if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */

@@ -31,8 +31,9 @@
 /******************************************************************************/
 #include "../Phase/Phase_Types.h"
 
-/* Interface for Capture Results */
-/* Phase_Feedback/Capture/Monitor */
+/* Interface for Capture Results, compile time selection between capture */
+/* Struct as data interface */
+/* Phase_Feedback/Capture/Measure */
 typedef struct Phase_Input
 {
     Phase_Triplet_T Vabc;
@@ -41,8 +42,6 @@ typedef struct Phase_Input
     Phase_Bitmask_T IFlags;
 }
 Phase_Input_T;
-
-/* todo compile time selection between capture */
 
 static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.A; }
 static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.B; }
@@ -53,7 +52,6 @@ static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p
 
 static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->Iabc = (Phase_Triplet_T){ 0 }; p_phase->IFlags.Bits = 0U; }
 static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->Vabc = (Phase_Triplet_T){ 0 }; p_phase->VFlags.Bits = 0U; }
-
 
 
 

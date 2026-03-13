@@ -77,11 +77,15 @@ typedef const struct State State_T;
 
     Forms the Transition Function - defined by user via P_TRANSITION_TABLE/TRANSITION_MAPPER
 
-    [Internal Transition] - A "transition" internal of [P_CONTEXT]. Mutation of P_CONTEXT
-    [State Transition] - Transition to a new State_T determined by [P_CONTEXT] state.
     @return pointer to the next state, if it exists.
-    @retval - [NULL] - no transition / "internal transition", bypass exit and entry, indicates user defined non transition
-    @retval - [State *]/[this] - transition or self-transition, proc exit and entry
+        [Internal Transition] - A "transition" internal of [P_CONTEXT]. Mutation of P_CONTEXT
+        [State Transition] - Transition to a new State_T determined by [P_CONTEXT] state.
+    @retval - [State *] - transition, proc exit and entry
+    @retval - [State *][this] - self-transition, proc exit and entry
+    @retval - [NULL] - no transition / "internal transition" / self-transition, bypass exit and entry
+
+    Mealy Machine - output without state transition, output determined by input and current state.
+    Moore Machine - output determined by state only. Input handlers return next state only.
 
     effectively, destination state + on transition logic [struct { P_STATE, ON_TRANSITION }]
 */
@@ -92,7 +96,7 @@ typedef const struct State State_T;
     Context/Clock Input/Output Handler
     Input Trigger evaluates with values set in internal context prior to call.
 */
-typedef struct State * (*State_Handler_T)(void * p_context);
+typedef struct State * (*State_Input0_T)(void * p_context);
 
 /*
     Transition on Input with immediate parameter for convenience.
@@ -114,13 +118,6 @@ typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);
 */
 // typedef struct State * (*State_TransitionFn_T)(void * p_context, state_input_t inputId, state_value_t inputValue);
 
-// alternatively
-// typedef struct State * (*_State_Transition0_T)(void * p_context);
-// typedef struct State * (*_State_Transition1_T)(void * p_context, state_value_t inputValue);
-// #ifndef STATE_INPUT_T
-// typedef _State_Transition0_T State_Output_T;
-// typedef _State_Transition1_T State_Input_T;
-// #endif
 
 /******************************************************************************/
 /*
@@ -145,6 +142,15 @@ typedef void(*State_SetField_T)(void * p_context, state_value_t field, state_val
 typedef uint8_t state_accessor_t;
 typedef const struct State_Accessor { State_GetField_T GET; State_SetField_T SET; } State_Accessor_T;
 
+/*  */
+typedef state_value_t(*State_Data_T)(void * context);
+typedef State_Data_T State_DataVector_T[ ];
+// typedef struct State_DataVector_T
+// {
+//     State_Data_T Vector[0];
+// } State_DataVector_T;
+
+
 /******************************************************************************/
 /*!
     @brief State
@@ -165,7 +171,7 @@ typedef const struct State
     State_Action_T LOOP; /* SYNC_OUTPUT */ /* Synchronous Action Handler */ /* No null pointer check for TOP level. Implementation supply empty function */
 
     /* Periodic process transition implement with call StateMachine_TransitionTo or a state input slot. reduce special logic. reuse the same form. */
-    State_Handler_T NEXT; /* SYNC_TRANSITION */
+    State_Input0_T NEXT; /* SYNC_TRANSITION */
     /* no external input. "clock only" Transition. */
     /* Separate from LOOP for overriding transition control. Child States can inherit LOOP action while overriding NEXT.  */
     /* Child States transition stop walking up the tree.  */
@@ -207,6 +213,8 @@ typedef const struct State
     */
     const State_Cmd_T * P_CMD_TABLE; /* Internal Transition */
     const State_Accessor_T * P_ACCESSOR_TABLE; /* Virtual getter setter */
+
+    const State_Data_T * P_DATA_VECTOR; /* Optional data vector. Virtualize access to state data. */ /* user optionally cast struct view */
 
     /*
         [Hierarchical State Machine]

@@ -47,6 +47,7 @@ typedef struct StateMachine_Active
 {
     State_T * p_ActiveState;    /* Flat - The Active Root/Top Level State. */
                                 /* HSM - Leaf State, defines full path. */
+    // State_T ** pp_OrthogonalStates;
 
     /*
         Sync machine store inputs until [ProcState]

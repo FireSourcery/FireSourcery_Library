@@ -174,7 +174,7 @@ typedef struct MotorController_Config
 
     MotorController_MainMode_T InitMode; /* alternatively state_t stand in */
     MotorController_InputMode_T InputMode;
-    bool isParkStateEnabled;
+    bool IsParkStateEnabled;
 
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;

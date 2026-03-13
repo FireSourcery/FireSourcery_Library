@@ -33,7 +33,7 @@
 #include "Phase_Input.h"
 #include "Phase_VBus.h"
 #include "../Phase/Phase_Types.h"
-#include "../Phase/Phase.h"
+// #include "../Phase/Phase.h"
 #include "Peripheral/Analog/Analog.h"
 
 /*
@@ -150,18 +150,15 @@ static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
     Analog_Conversion_Mark(&p_context->IC);
 }
 
-
-
 /*
     alternatively, directly on register state
 */
-// static void Phase_Analog_MarkConversions_Thread(const Phase_T * p_phase, const Phase_Analog_T * p_analog)
-// {
-//     Phase_Bitmask_T state = _Phase_ReadState(p_phase);
-//     Analog_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
-//     Analog_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
-//     Analog_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
-// }
+static void Phase_Analog_Mark(const Phase_Analog_T * p_analog, Phase_Bitmask_T state)
+{
+    Analog_Conversion_Mark((state.A) ? &p_analog->IA : &p_analog->VA);
+    Analog_Conversion_Mark((state.B) ? &p_analog->IB : &p_analog->VB);
+    Analog_Conversion_Mark((state.C) ? &p_analog->IC : &p_analog->VC);
+}
 
 
 /*

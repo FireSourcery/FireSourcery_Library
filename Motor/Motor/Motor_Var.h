@@ -30,7 +30,8 @@
 */
 /******************************************************************************/
 #include "Motor_StateMachine.h"
-#include "Sensor/RotorSensor_Table.h"
+
+// #include "Sensor/RotorSensor_Table.h"
 // #include "Type/Var/VarAccess.h"
 
 #include <assert.h>
@@ -159,6 +160,9 @@ typedef enum Motor_Var_StateCmd
     MOTOR_VAR_CLEAR_FAULT,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
 
+    // MOTOR_VAR_USER_START, // handle by direction for now
+    // MOTOR_VAR_USER_STOP,
+
     MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
     MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
     MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
@@ -171,11 +175,24 @@ typedef enum Motor_Var_StateCmd
     // MOTOR_VAR_CMD_EXIT_FAULT,
     // MOTOR_VAR_CMD_ENTER_CALIBRATION,
     // MOTOR_VAR_CMD_ENTER_OPEN_LOOP,
-
-    // MOTOR_VAR_USER_START, // handle by direction for now
-    // MOTOR_VAR_USER_STOP,
 }
 Motor_Var_StateCmd_T;
+
+/*
+    Calibration State Base Cmds
+    Stop/Calibration/Fault State enforced same with Config
+    Alternatively move type for separate policy handling
+*/
+typedef enum Motor_Var_CalibrationCmd
+{
+    MOTOR_VAR_CALIBRATION_ENTER, /* Enter first before calling Substate */
+    MOTOR_VAR_CALIBRATION_CMD_ADC,
+    MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
+    MOTOR_VAR_CALIBRATION_ENTER_TUNING,
+
+    // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
+}
+Motor_Var_CalibrationCmd_T;
 
 /******************************************************************************/
 /*
@@ -211,7 +228,7 @@ typedef enum Motor_Var_ConfigActuation
     MOTOR_VAR_BASE_I_LIMIT_GENERATING,
     MOTOR_VAR_SPEED_RAMP_TIME,
     MOTOR_VAR_TORQUE_RAMP_TIME,
-    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT, // MOTOR_VAR_POWER_LIMIT_OPEN_LOOP,
+    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT,
     MOTOR_VAR_ALIGN_POWER,
     MOTOR_VAR_ALIGN_TIME,
     MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_FINAL,
@@ -239,27 +256,11 @@ typedef enum Motor_Var_ConfigPid
 }
 Motor_Var_ConfigPid_T;
 
-/*
-    Calibration State Cmds
-    Stop/Calibration/Fault State enforced same with Config
-    Alternatively move type for separate policy handling
-*/
-typedef enum Motor_Var_CalibrationCmd
-{
-    MOTOR_VAR_CALIBRATION_ENTER, /* Enter first before calling Substate */
-    MOTOR_VAR_CALIBRATION_CMD_ADC,
-    MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
-    MOTOR_VAR_CALIBRATION_ENTER_TUNING,
-
-    // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
-}
-Motor_Var_CalibrationCmd_T;
-
 /*  */
 // typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
 
 /* Debug */
-typedef enum Motor_Var_ConfigCalibrationAlias
+typedef enum Motor_Var_ConfigDebug
 {
     MOTOR_VAR_SPEED_RATED_RPM,
     MOTOR_VAR_SPEED_V_REF_RPM,
@@ -270,7 +271,7 @@ typedef enum Motor_Var_ConfigCalibrationAlias
     MOTOR_VAR_V_SPEED_RATED_FRACT16,
     // MOTOR_VAR_V_SPEED_REF_VOLTS,
 }
-Motor_Var_ConfigCalibrationAlias_T;
+Motor_Var_ConfigDebug_T;
 
 /******************************************************************************/
 /*
@@ -341,14 +342,9 @@ void _Motor_Var_CalibrationCmd_Call(const Motor_T * p_motor, Motor_Var_Calibrati
 int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
-int _Motor_Var_ConfigCalibrationAlias_Get(const Motor_State_T * p_motor, Motor_Var_ConfigCalibrationAlias_T varId);
+int _Motor_Var_ConfigDebug_Get(const Motor_State_T * p_motor, Motor_Var_ConfigDebug_T varId);
 
-/*
-    Submodule wrap
-*/
-// static inline int _Motor_Var_ConfigHeatMonitor_Get(const Motor_State_T * p_motor, Monitor_ConfigId_T varId) { return HeatMonitor_ConfigId_Get(&p_motor->HeatMonitorState, varId); }
-// static inline void _Motor_Var_ConfigHeatMonitor_Set(Motor_State_T * p_motor, Monitor_ConfigId_T varId, int varValue) { HeatMonitor_ConfigId_Set(&p_motor->HeatMonitorState, varId, varValue); }
-// static inline void _Motor_Var_SensorCmd_Call(const Motor_T * p_motor, Motor_Var_RotorSensorCmd_T varId, int varValue); // Motor_Sensor_CalibrationCmd_Call
+
 
 /* static */
 extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
@@ -378,10 +374,10 @@ typedef enum Motor_VarType
         Calibration or Stop State enforced Configs
     */
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
-    MOTOR_VAR_TYPE_CONFIG_CALIBRATION_ALIAS, //temp
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
     MOTOR_VAR_TYPE_CALIBRATION_CMD,
+    MOTOR_VAR_TYPE_CONFIG_DEBUG,
     MOTOR_VAR_TYPE_CONFIG_RESV,
 
     /*
