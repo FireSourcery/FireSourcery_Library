@@ -65,9 +65,9 @@ typedef enum MotorController_StateId
     MCSM_STATE_ID_INIT,
     MCSM_STATE_ID_PARK,     /* includes standby */
     MCSM_STATE_ID_MAIN,
+    MCSM_STATE_ID_MOTOR_CMD, /* alternatively as Substate under main, for motor control command handling. */
     MCSM_STATE_ID_LOCK,     /* includes calibration */
     MCSM_STATE_ID_FAULT,    /* includes error handling */
-    MCSM_STATE_ID_MOTOR_CMD, /* Substate under main, for motor control command handling. */
     _MCSM_STATE_ID_END,
 }
 MotorController_StateId_T;

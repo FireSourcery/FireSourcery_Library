@@ -219,6 +219,7 @@ static const State_T STATE_INIT =
 /******************************************************************************/
 static void Park_Entry(const MotorController_T * p_context)
 {
+    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_Z); /* */
     Motor_Table_StopAll(&p_context->MOTORS);
 }
 
@@ -281,6 +282,15 @@ static const State_T STATE_PARK =
     A mounting point for app states. Main base passthrough only
 */
 /******************************************************************************/
+static void Main_Entry(const MotorController_T * p_context)
+{
+    // Motor_Table_StartAll(&p_context->MOTORS); /* Start in passive, Start to exit Stop */
+    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* */
+}
+
+/* Handle Motor cmd arbitration if needed */
+/* App State common background proc */
+static void Main_Proc(const MotorController_T * p_context) {}
 
 /*
     Note: Motor_OpenLoop and Motor_Calibration exits on VOut 0/Z
@@ -289,20 +299,10 @@ static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
     if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
+    /* alternatively caller handle */
     else if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
-}
-
-static void Main_Entry(const MotorController_T * p_context)
-{
-    Motor_Table_StartAll(&p_context->MOTORS); /* Start in passive, Start to exit Stop */
-    Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* */
-}
-
-/* App State common background proc */
-static void Main_Proc(const MotorController_T * p_context)
-{
 }
 
 /* App State defaults transitions — propagated from sub-states via HSM */
@@ -310,16 +310,13 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK: return Common_InputPark(p_context); /* Motors in Stop first */
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN: //return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
-            Motor_Table_StopAll(&p_context->MOTORS); break;
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+        case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_context); /* Motors in Stop first */
+            // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Motor_Table_StopAll(&p_context->MOTORS);    return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     Motor_Table_StartAll(&p_context->MOTORS);   return EnterMain(p_context); /* Enter app sub-state from Main idle */
             // if rootState == MAIN
-            return EnterMain(p_context); /* Enter app sub-state from Main idle */
-        default: break;
+        default:     return NULL;
     }
-    return NULL;
 }
 
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -342,10 +339,11 @@ const State_T MC_STATE_MAIN =
 
 /******************************************************************************/
 /*!
-    @brief Default Substate Motor Command
+    @brief Default Motor Command
 
     Motors passthrough coordinated default
     marker for accepting [Motor_VarId] interface inputs
+    as top state until id scheme is determined.
 */
 /******************************************************************************/
 static void MotorCmd_Entry(const MotorController_T * p_context)
@@ -353,10 +351,7 @@ static void MotorCmd_Entry(const MotorController_T * p_context)
     Motor_Table_ApplyControl(&p_context->MOTORS, PHASE_VOUT_0); /* Set PWM Output */
 }
 
-static void MotorCmd_Proc(const MotorController_T * p_context)
-{
-
-}
+static void MotorCmd_Proc(const MotorController_T * p_context) {}
 
 /* Passthrough from buffered CmdInput — same pattern as Main_InputMotorCmd */
 static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value_t cmd)
@@ -380,15 +375,13 @@ static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value
 
 static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
+    [MCSM_INPUT_STATE_CMD] = (State_Input_T)Main_InputStateCmd,
     [MCSM_INPUT_MOTOR_CMD] = (State_Input_T)MotorCmd_Input,
 };
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =
 {
     .ID         = MCSM_STATE_ID_MOTOR_CMD,
-    .DEPTH      = 1U,
-    .P_TOP      = &MC_STATE_MAIN,
-    .P_PARENT   = &MC_STATE_MAIN,
     .ENTRY      = (State_Action_T)MotorCmd_Entry,
     .LOOP       = (State_Action_T)MotorCmd_Proc,
     .P_TRANSITION_TABLE = &MOTOR_CMD_TRANSITION_TABLE[0U],
@@ -412,8 +405,6 @@ static void Lock_Entry(const MotorController_T * p_context)
 
     // assert(Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP));
     Motor_Table_StopAll(&p_context->MOTORS);
-    // _StateMachine_EndSubState(p_context->STATE_MACHINE.P_ACTIVE);
-
     Motor_Table_EnterCalibration(&p_context->MOTORS); /* Enter Calibration State for all motors */
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
 
@@ -424,9 +415,7 @@ static void Lock_Entry(const MotorController_T * p_context)
 
 static void Lock_Proc(const MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
-    // _StateMachine_Branch_Proc_Nested(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 }
 
 /* Lock SubState/Cmd by passed value */
@@ -509,21 +498,9 @@ static State_T * Lock_InputStateCmd(const MotorController_T * p_context, state_v
 {
     switch (cmd)
     {
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
-        //     Motor_Table_StopAll(&p_context->MOTORS); /* Force exit calibration sub-state and stop all motors before leaving Lock */
-        //     return &MC_STATE_MAIN;
         default:                                return NULL;
     }
 }
-
-/* Transition from lock only */
-// static State_T * Lock_InputMainMode(const MotorController_T * p_context, state_value_t mainMode)
-// {
-//     State_T * p_nextState = NULL;
-//     if (!StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { p_nextState = NULL; }
-//     else if (!Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP)) { p_nextState = NULL; }
-//     return p_nextState;
-// }
 
 static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {

@@ -10,7 +10,7 @@
     // "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 
     "C_Cpp.formatting": "vcFormat",
-    "C_Cpp.vcFormat.wrap.preserveBlocks": "oneLiners",
+    "C_Cpp.vcFormat.wrap.preserveBlocks": "allOneLineScopes",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
     "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "newLine",
