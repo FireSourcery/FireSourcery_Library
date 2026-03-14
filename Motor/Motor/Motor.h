@@ -674,16 +674,6 @@ static inline void Motor_CaptureSensor(const Motor_T * p_motor)
     }
 }
 
-// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
-// static inline void Motor_ProcDirection(const Motor_T * p_motor)
-// {
-// // if caller handles rotor direction mismatch
-// // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
-// // {
-// //     // Runtime reversal detected – update applied direction for control
-// // }
-// }
-
 /* Result of Capture */
 static inline const Angle_T * Motor_GetAngleSpeedState(const Motor_State_T * p_motor) { return &p_motor->SensorState.AngleSpeed; }
 /* Feedback Speed interface getter */
@@ -702,44 +692,26 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
     return fract16_mul(Motor_VPhaseOfSpeed_Fract16(p_motor, Motor_GetSpeedFeedback(p_motor)), p_motor->Config.VSpeedScalar_Fract16);
 }
 
-
 static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
 {
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Motor_SpeedRampOf(p_motor, speedReq));
-    // p_motor->TorqueReq = PID_GetOutput(&p_motor->PidSpeed);  /*  for unified interface. */
 }
 
 
+// static inline Motor_Direction_T Motor_GetRotorDirection(const Motor_State_T * p_motor) { return RotorSensor_GetDirection(p_motor->p_ActiveSensor); }
+// static inline void Motor_ProcDirection(const Motor_T * p_motor)
+// {
+// // if caller handles rotor direction mismatch
+// // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
+// // {
+// //     // Runtime reversal detected – update applied direction for control
+// // }
+// }
 /******************************************************************************/
 /*
    Proc FeedbackMode Flags
 */
 /******************************************************************************/
-/* optionally cache 20khz getters */
-/* optionally move target outside */
-// static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_ILimitSetpoint(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
-// static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VLimitSetpoint(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
-
-// /* optionally ProcTorqueReq centralized handling. through list, or source per sate */
-// /* Intercept using flag */
-// static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
-// {
-//     // if speed proc (pid )
-//     return (p_motor->FeedbackMode.Current == 1U) ? Motor_ProcTorqueRampI(p_motor) : Motor_ProcTorqueRampV(p_motor);
-// }
-
-
-/* user input Openloop mode limits */
-// static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
-// {
-//     // Apply limit on Ramp state
-//     fract16_t req = (p_motor->FeedbackMode.Current == 1U) ?
-//         Motor_OpenLoopILimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)) :
-//         Motor_OpenLoopVLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp));
-
-//     return Ramp_ProcNextOf(&p_motor->TorqueRamp, req);
-// }
-
 
 /*
     Speed Feedback Loop

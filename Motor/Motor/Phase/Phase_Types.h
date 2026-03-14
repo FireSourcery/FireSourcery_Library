@@ -90,9 +90,10 @@ static inline Phase_Id_T Phase_NextOf(Phase_Id_T id)
         [PHASE_ID_INV_A]    = PHASE_ID_C,          /* 180 -> 240 */
         [PHASE_ID_C]        = PHASE_ID_INV_B,      /* 240 -> 300 */
         [PHASE_ID_INV_B]    = PHASE_ID_A,          /* 300 -> 360 */
-        [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
-        [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
-        // [PHASE_ID_0]        = PHASE_ID_A,          /* Init as 0 */
+        // [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
+        // [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
+        [PHASE_ID_0]        = PHASE_ID_A,          /* Init as 0 */
+        [PHASE_ID_ABC]      = PHASE_ID_A,          /* Init as 0 */
     };
 
     return TABLE[id];
@@ -108,8 +109,10 @@ static inline Phase_Id_T Phase_PrevOf(Phase_Id_T id)
         [PHASE_ID_INV_A]    = PHASE_ID_B,          /* 180 -> 120 */
         [PHASE_ID_B]        = PHASE_ID_INV_C,      /* 120 -> 60 */
         [PHASE_ID_INV_C]    = PHASE_ID_A,          /* 60 -> 0 */
-        [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
-        [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
+        // [PHASE_ID_0]        = PHASE_ID_0,          /* 0 -> 0 */
+        // [PHASE_ID_ABC]      = PHASE_ID_ABC,        /* 0 -> 0 */
+        [PHASE_ID_0]        = PHASE_ID_A,
+        [PHASE_ID_ABC]      = PHASE_ID_A,
     };
 
     return TABLE[id];

@@ -89,6 +89,7 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 /*
     Current Feedback Loop
 */
+/* Store Vdq in Foc state */
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), idReq));
@@ -387,8 +388,8 @@ void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 {
-    Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcNextOf(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 /* * p_motor->Direction */));
-    Motor_FOC_AngleControl(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcNextOf(&p_motor->OpenLoopIRamp, (int32_t)p_motor->Config.OpenLoopRampIFinal_Fract16 /* * p_motor->Direction */));
+    Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcNextOf(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction));
+    Motor_FOC_AngleControl(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcNextOf(&p_motor->OpenLoopIRamp, (int32_t)p_motor->Config.OpenLoopRampIFinal_Fract16 * p_motor->Direction));
     // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs); sync sensor angle state
     p_motor->SensorState.AngleSpeed.Angle = p_motor->OpenLoopAngle.Angle;
     p_motor->SensorState.AngleSpeed.Delta = p_motor->OpenLoopAngle.Delta;

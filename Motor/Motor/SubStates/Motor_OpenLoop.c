@@ -62,7 +62,7 @@ void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T phase
 static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 {
     p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
-    if (p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
+    // if (p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
     // return &MOTOR_STATE_OPEN_LOOP;
     return NULL;
 }
