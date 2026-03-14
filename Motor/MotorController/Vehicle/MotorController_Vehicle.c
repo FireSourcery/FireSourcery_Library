@@ -30,6 +30,7 @@
 /******************************************************************************/
 #include "MotorController_Vehicle.h"
 #include "../MotorController_StateMachine.h"
+#include "../MotorController_User.h"
 
 
 /******************************************************************************/
@@ -375,6 +376,7 @@ void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t 
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.Direction = direction;
     _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DIRECTION);
+    MotorController_CheckDirection(p_mc, direction);
 }
 
 void MotorController_Vehicle_SetDirection(MotorController_T * p_mc, sign_t direction)

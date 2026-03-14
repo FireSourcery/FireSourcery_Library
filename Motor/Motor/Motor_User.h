@@ -99,34 +99,16 @@ static inline uint16_t Motor_GetHeat_Adcu(const Motor_State_T * p_motor) { retur
 /*
     Caller maintain feedback state to determine units
 */
-static inline int16_t _Motor_GetIVCmd(const Motor_State_T * p_motor)                 { return Ramp_GetTarget(&p_motor->TorqueRamp) * p_motor->Direction; }
 static inline int16_t _Motor_GetIVSetpoint(const Motor_State_T * p_motor)            { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
-static inline int16_t _Motor_GetSpeedCmd(const Motor_State_T * p_motor)              { return Ramp_GetTarget(&p_motor->SpeedRamp) * p_motor->Direction; } /* User Set */
-static inline int16_t _Motor_GetSpeedSetpoint(const Motor_State_T * p_motor)         { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; } /* Req */
-static inline int16_t _Motor_GetVelocityCmd(const Motor_State_T * p_motor)           { return Ramp_GetTarget(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; } /* User Set */
-static inline int16_t _Motor_GetVelocitySetpoint(const Motor_State_T * p_motor)      { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; } /* Req */
-static inline int16_t _Motor_GetTorqueCmd(const Motor_State_T * p_motor)             { return Ramp_GetTarget(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
 static inline int16_t _Motor_GetTorqueSetpoint(const Motor_State_T * p_motor)        { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
+static inline int16_t _Motor_GetSpeedSetpoint(const Motor_State_T * p_motor)         { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; } /* Req */
+static inline int16_t _Motor_GetVelocitySetpoint(const Motor_State_T * p_motor)      { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; } /* Req */
 
-// static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0U; }
-// static inline fract16_t _Motor_GetTorqueSetpoint(const Motor_State_T * p_motor)
-// static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0U; }
-// static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return p_motor->Foc.Vq; }
+static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
+static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
+static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
-/*
-    User reference direction
-    Effective Limits
-*/
-static inline ufract16_t Motor_SpeedLimitForward(const Motor_State_T * p_motor) { return p_motor->SpeedLimitForward_Fract16; }
-static inline ufract16_t Motor_SpeedLimitReverse(const Motor_State_T * p_motor) { return p_motor->SpeedLimitReverse_Fract16; }
-static inline ufract16_t Motor_SpeedLimitMotoring(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOfDirection(p_motor, p_motor->Direction); }
-static inline ufract16_t Motor_SpeedLimitGenerating(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOfDirection(p_motor, p_motor->Direction * -1); }
-
-static inline ufract16_t Motor_ILimitMotoring(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
-static inline ufract16_t Motor_ILimitGenerating(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
-static inline ufract16_t Motor_ILimitForward(const Motor_State_T * p_motor) { return _Motor_ILimitOfDirection(p_motor, p_motor->Config.DirectionForward); }
-static inline ufract16_t Motor_ILimitReverse(const Motor_State_T * p_motor) { return _Motor_ILimitOfDirection(p_motor, p_motor->Config.DirectionForward * -1); }
 
 /*
 */

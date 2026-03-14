@@ -170,7 +170,8 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_ReleaseVZ(p_motor);
-    Motor_Stop(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
+    // Motor_Stop(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
 }
 
 /******************************************************************************/

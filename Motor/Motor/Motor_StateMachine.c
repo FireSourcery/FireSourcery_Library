@@ -375,9 +375,7 @@ static void Run_Proc(const Motor_T * p_motor)
     // {
     //     // Runtime reversal detected – update applied direction for control
     // }
-
 }
-
 
 static State_T * Run_InputRelease(const Motor_T * p_motor)
 {
@@ -444,22 +442,24 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 /*!
     @brief State Intervention
-
+    Proc Feedback independent from user input
 */
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
-    if (p_motor->P_MOTOR_STATE->FeedbackMode.Current != 1U)
-    {
-        Motor_SetFeedbackMode(p_motor->P_MOTOR_STATE, MOTOR_FEEDBACK_MODE_CURRENT);
-        Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
-    }
-    // Motor_SetILimitMotoring(p_motor->P_MOTOR_STATE, 0);
+    // if (p_motor->P_MOTOR_STATE->FeedbackMode.Current != 1U)
+    // {
+    Motor_FOC_MatchIVState_Bemf(p_motor->P_MOTOR_STATE);
+    Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
+    Ramp_SetTarget(&p_motor->P_MOTOR_STATE->TorqueRamp, 0); // temp/* begin user cmd at 0 */
 }
 
 static void Intervention_Proc(const Motor_T * p_motor)
 {
-    Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR_STATE, 0, 0);
+    int32_t userCmd = Ramp_GetTarget(&p_motor->P_MOTOR_STATE->TorqueRamp); // temp
+    // torque only for now
+    Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR_STATE, 0, _Motor_GeneratingOnly(p_motor->P_MOTOR_STATE, userCmd));
+
     Motor_FOC_WriteDuty(p_motor);
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Transition to passive }
 }
@@ -470,7 +470,6 @@ static State_T * Intervention_InputRelease(const Motor_T * p_motor)
     return NULL;
 }
 
-/* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
 static State_T * Intervention_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_Output_T)phaseOutput)
@@ -483,10 +482,18 @@ static State_T * Intervention_InputControl(const Motor_T * p_motor, state_value_
     }
 }
 
+/* Store only */
+static State_T * Intervention_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
+{
+    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
+    return NULL;
+}
+
 static const State_Input_T INTERVENTION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
     [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl,
+    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Intervention_InputFeedbackMode,
 };
 
 const State_T MOTOR_STATE_INTERVENTION =
@@ -866,6 +873,6 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 // static void ProcTorque0(Motor_State_T * p_motor)
 // {
 //  int a =   MOTOR_STATE_TORQUE_ZERO.DataVector[1](p_motor);
-//     // Motor_FOC_ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_TorqueRampOf(p_motor, 0));
+//     // Motor_FOC_ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_IRampOf(p_motor, 0));
 //     // Motor_FOC_ProcAngleOutput(p_motor);
 // }

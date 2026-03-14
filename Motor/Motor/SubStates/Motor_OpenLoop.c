@@ -62,6 +62,7 @@ void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T phase
 static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 {
     p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
+    if (p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
     // return &MOTOR_STATE_OPEN_LOOP;
     return NULL;
 }
@@ -176,18 +177,19 @@ static void StartUp_Proc(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        switch (_Phase_ReadDutyState(&p_motor->PHASE).Bits)
-        {
-            case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
-            case PHASE_ID_INV_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-            case PHASE_ID_B: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN); break;
-            default: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &MOTOR_STATE_FAULT); break;
+        _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN);
+        // switch (_Phase_ReadDutyState(&p_motor->PHASE).Bits)
+        // {
+        //     case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+        //     case PHASE_ID_INV_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+        //     case PHASE_ID_B: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN); break;
+        //     default: _StateMachine_TransitionTo(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, &MOTOR_STATE_FAULT); break;
 
-            // case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-            // case PHASE_ID_INV_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-            // case PHASE_ID_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_B); break;
-            // case PHASE_ID_INV_B: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
-        }
+        //     // case PHASE_ID_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+        //     // case PHASE_ID_INV_A: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+        //     // case PHASE_ID_C: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_B); break;
+        //     // case PHASE_ID_INV_B: p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+        // }
     }
 }
 

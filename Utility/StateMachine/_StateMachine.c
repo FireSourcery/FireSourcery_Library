@@ -71,7 +71,7 @@ inline void _StateMachine_Reset(StateMachine_Active_T * p_active, void * p_conte
 */
 inline void _StateMachine_TransitionTo(StateMachine_Active_T * p_active, void * p_context, State_T * p_next)
 {
-    assert(p_next->DEPTH == 0U); /* Top level state */
+    // assert(p_next->DEPTH == 0U); /* Top level state */
     State_Exit(p_active->p_ActiveState, p_context);
     State_Entry(p_next, p_context);
     p_active->p_ActiveState = p_next;

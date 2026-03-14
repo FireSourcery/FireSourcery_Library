@@ -80,6 +80,15 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
     return status;
 }
 
+/* optionally host side implement */
+/* Separate Check direction with alarm, so Motor set can use SetSyncInput */
+/* effective on motor async transition only */
+bool MotorController_CheckDirection(MotorController_T * p_context, sign_t direction)
+{
+    if (MotorController_GetDirection(p_context) != direction) { Blinky_Blink(&p_context->BUZZER, 500U); return false; }
+    return true;
+}
+
 
 /******************************************************************************/
 /*
@@ -128,18 +137,4 @@ void MotorController_SetInputMode(const MotorController_T * p_context, MotorCont
 //     //         Blinky_Stop(&p_this->Buzzer);
 //     //     }
 //     // }
-// }
-    // if (Vehicle_StateMachine_GetDirection(p_vehicle) != direction)
-    // {
-    // Vehicle_User_CheckDirection(p_vehicle, direction); /* effective on motor async transition only */
-    // bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
-        // if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
-    // }
-/* optionally host side implement */
-// /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
-// bool Vehicle_User_CheckDirection(const Vehicle_T * p_vehicle, sign_t direction)
-// {
-//     bool isSuccess = (Vehicle_User_GetDirection(p_vehicle) == direction);
-//     if (isSuccess == false) { Blinky_Blink(p_vehicle->P_BUZZER, 500U); }
-//     return isSuccess;
 // }

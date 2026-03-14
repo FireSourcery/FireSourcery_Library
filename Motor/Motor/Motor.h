@@ -543,11 +543,14 @@ static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
 
+static inline int32_t _Motor_MotoringOnly(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction == math_sign(value)) * value; }
+static inline int32_t _Motor_GeneratingOnly(const Motor_State_T * p_motor,  int32_t value) { return (p_motor->Direction != math_sign(value)) * value; }
+
 /* clamp using ~1/2 VBus */
 /* Anti plugging limit */
-static inline ufract16_t _Motor_VLimitOfDirection(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRefSvpwm()); }
-static inline fract16_t _Motor_GetVLimitCcw(const Motor_State_T * p_motor) { return _Motor_VLimitOfDirection(p_motor, MOTOR_DIRECTION_CCW); }
-static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_VLimitOfDirection(p_motor, MOTOR_DIRECTION_CW)); }
+static inline ufract16_t _Motor_VLimitAs(const Motor_State_T * p_motor, Motor_Direction_T select) { return _Motor_VClampLimitOf(p_motor, select, Phase_VBus_GetVRefSvpwm()); }
+static inline fract16_t _Motor_GetVLimitCcw(const Motor_State_T * p_motor) { return _Motor_VLimitAs(p_motor, MOTOR_DIRECTION_CCW); }
+static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_VLimitAs(p_motor, MOTOR_DIRECTION_CW)); }
 
 /*
     Call ccw/cw using getters.
@@ -560,9 +563,9 @@ static inline fract16_t _Motor_GetVLimitCw(const Motor_State_T * p_motor) { retu
     Current limits: keyed by runtime applied [Direction]
     This SWAPS when [Direction] changes
 */
-static inline ufract16_t _Motor_ILimitOfDirection(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
-static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_ILimitOfDirection(p_motor, MOTOR_DIRECTION_CCW); }
-static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitOfDirection(p_motor, MOTOR_DIRECTION_CW)); }
+static inline ufract16_t _Motor_ILimitAs(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
+static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, MOTOR_DIRECTION_CCW); }
+static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitAs(p_motor, MOTOR_DIRECTION_CW)); }
 // let the compiler optimize
 // struct Limits { fract16_t Cw; fract16_t Ccw; };
 // static inline struct Limits _Motor_ILimitsMotoringCcw(const Motor_State_T * p_motor) { return ((struct Limits) { .Cw = 0 - p_motor->ILimitGenerating_Fract16, .Ccw = p_motor->ILimitMotoring_Fract16 }); }
@@ -573,9 +576,26 @@ static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { retu
     Speed limits: keyed by calibration parameter [Config.DirectionForward] (which CW/CCW is "forward")
     This is FIXED — doesn't change when [Direction] changes
 */
-static inline ufract16_t _Motor_SpeedLimitOfDirection(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16; }
-static inline fract16_t _Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_SpeedLimitOfDirection(p_motor, MOTOR_DIRECTION_CCW); }
-static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_SpeedLimitOfDirection(p_motor, MOTOR_DIRECTION_CW)); }
+static inline ufract16_t _Motor_SpeedLimitAs(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16; }
+static inline fract16_t _Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, MOTOR_DIRECTION_CCW); }
+static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_SpeedLimitAs(p_motor, MOTOR_DIRECTION_CW)); }
+
+
+/*
+    User reference direction
+    Effective Limits
+*/
+static inline ufract16_t Motor_SpeedLimitForward(const Motor_State_T * p_motor) { return p_motor->SpeedLimitForward_Fract16; }
+static inline ufract16_t Motor_SpeedLimitReverse(const Motor_State_T * p_motor) { return p_motor->SpeedLimitReverse_Fract16; }
+static inline ufract16_t Motor_SpeedLimitMotoring(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction); }
+static inline ufract16_t Motor_SpeedLimitGenerating(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction * -1); }
+
+static inline ufract16_t Motor_ILimitMotoring(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
+static inline ufract16_t Motor_ILimitGenerating(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
+static inline ufract16_t Motor_ILimitForward(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, p_motor->Config.DirectionForward); }
+static inline ufract16_t Motor_ILimitReverse(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, p_motor->Config.DirectionForward * -1); }
+
+static inline fract16_t Motor_ILimitUserReq(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, (int32_t)0 - Motor_ILimitGenerating(p_motor), Motor_ILimitMotoring(p_motor)); }
 
 
 /******************************************************************************/
@@ -583,29 +603,31 @@ static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { 
     Ramp
 */
 /******************************************************************************/
-/*  */
-/* alternatively directional limits on trigger, direction and control limits */
-static inline fract16_t Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_GetILimitCcw(p_motor); }
-static inline fract16_t Motor_GetILimitCw(const Motor_State_T * p_motor) { return _Motor_GetILimitCw(p_motor); }
-// static inline fract16_t Motor_GetILimitCcw(const Motor_State_T * p_motor) { return p_motor->ILimitCcw_Fract16; }
-// static inline fract16_t Motor_GetILimitCw(const Motor_State_T * p_motor) { return p_motor->ILimitCw_Fract16; }
+/* Ccw/Cw internal reference */
+/* Apply object state */
 
-static inline fract16_t Motor_VRampLimitOf(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor)); }
-static inline fract16_t Motor_IRampLimitOf(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, Motor_GetILimitCw(p_motor), Motor_GetILimitCcw(p_motor)); }
+/* TorqueRamp */ /* Getters cache on update */
+// static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return _Motor_GetILimitCcw(p_motor); }
+// static inline fract16_t Motor_ILimitCw(const Motor_State_T * p_motor) { return _Motor_GetILimitCw(p_motor); }
+static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return p_motor->ILimitCcw_Fract16; }
+static inline fract16_t Motor_ILimitCw(const Motor_State_T * p_motor) { return p_motor->ILimitCw_Fract16; }
 
-/* Call Torque Ramp */
-static inline fract16_t Motor_TorqueRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IRampLimitOf(p_motor, req)); }
-static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VRampLimitOf(p_motor, req)); }
+static inline fract16_t Motor_VLimitSetpoint(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor)); }
+static inline fract16_t Motor_ILimitSetpoint(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 
-/*  */
-static inline fract16_t Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitCcw(p_motor); }
-static inline fract16_t Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitCw(p_motor); }
-// static inline fract16_t Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCcw_Fract16; }
-// static inline fract16_t Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
+static inline fract16_t Motor_IRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_ILimitSetpoint(p_motor, req)); }
+static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VLimitSetpoint(p_motor, req)); }
+
+/* SpeedRamp */
+// static inline fract16_t Motor_SpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitCcw(p_motor); }
+// static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { return _Motor_GetSpeedLimitCw(p_motor); }
+static inline fract16_t Motor_SpeedLimitCcw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCcw_Fract16; }
+static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
 
 /* Limits are applied to the target. Ramp smoothing applies on limit update */
-static inline fract16_t Motor_SpeedRampLimitOf(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
-static inline fract16_t Motor_SpeedRampOf(Motor_State_T * p_motor, int16_t speedReq) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_SpeedRampLimitOf(p_motor, speedReq)); }
+static inline fract16_t Motor_SpeedLimitSetpoint(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
+// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return !math_is_in_range(Motor_GetSpeedFeedback(p_motor), Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
+static inline fract16_t Motor_SpeedRampOf(Motor_State_T * p_motor, int16_t speedReq) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_SpeedLimitSetpoint(p_motor, speedReq)); }
 
 /******************************************************************************/
 /*
@@ -668,9 +690,9 @@ static inline const Angle_T * Motor_GetAngleSpeedState(const Motor_State_T * p_m
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_State_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { (void)p_motor; return fract16_mul(Motor_GetSpeedRated_Fract16(p_motor), FRACT16_2_DIV_SQRT3); }
+// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedRated_Fract16(p_motor), FRACT16_2_DIV_SQRT3); }
+static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { return Motor_GetSpeedRated_Fract16(p_motor); }
 static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
-// static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return !math_is_in_range(Motor_GetSpeedFeedback(p_motor), Motor_GetSpeedLimitCw(p_motor), Motor_GetSpeedLimitCcw(p_motor)); }
 
 /*!
     VPhase approximation via Speed
@@ -695,28 +717,28 @@ static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t sp
 /******************************************************************************/
 /* optionally cache 20khz getters */
 /* optionally move target outside */
-static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_IRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
-static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VRampLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+// static inline fract16_t Motor_ProcTorqueRampI(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_ILimitSetpoint(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
+// static inline fract16_t Motor_ProcTorqueRampV(Motor_State_T * p_motor) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VLimitSetpoint(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp))); }
 
-/* optionally ProcTorqueReq centralized handling. through list, or source per sate */
-/* Intercept using flag */
-static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
-{
-    // if speed proc (pid )
-    return (p_motor->FeedbackMode.Current == 1U) ? Motor_ProcTorqueRampI(p_motor) : Motor_ProcTorqueRampV(p_motor);
-}
+// /* optionally ProcTorqueReq centralized handling. through list, or source per sate */
+// /* Intercept using flag */
+// static inline fract16_t Motor_ProcTorqueRamp(Motor_State_T * p_motor)
+// {
+//     // if speed proc (pid )
+//     return (p_motor->FeedbackMode.Current == 1U) ? Motor_ProcTorqueRampI(p_motor) : Motor_ProcTorqueRampV(p_motor);
+// }
 
 
 /* user input Openloop mode limits */
-static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
-{
-    // Apply limit on Ramp state
-    fract16_t req = (p_motor->FeedbackMode.Current == 1U) ?
-        Motor_OpenLoopILimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)) :
-        Motor_OpenLoopVLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp));
+// static inline fract16_t Motor_ProcTorqueRampOpenLoop(Motor_State_T * p_motor)
+// {
+//     // Apply limit on Ramp state
+//     fract16_t req = (p_motor->FeedbackMode.Current == 1U) ?
+//         Motor_OpenLoopILimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)) :
+//         Motor_OpenLoopVLimitOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp));
 
-    return Ramp_ProcNextOf(&p_motor->TorqueRamp, req);
-}
+//     return Ramp_ProcNextOf(&p_motor->TorqueRamp, req);
+// }
 
 
 /*
@@ -762,10 +784,14 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor)); // Ramp_SetTarget
+        Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
     }
-    Ramp_SetOutputState(&p_motor->TorqueRamp, torqueState);
+    // else /* Clear for resume */
+    // {
+    //     Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
+    //     PID_SetOutputState(&p_motor->PidSpeed, 0);
+    // }
 }
 
 /* Update on Mode change. limits do not change on resume */

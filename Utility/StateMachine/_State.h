@@ -185,7 +185,6 @@ static inline void _State_Reset(State_Active_T * p_active, void * p_context, Sta
 
 static inline void _State_TransitionTo(State_Active_T * p_active, void * p_context, State_T * p_next)
 {
-    assert(p_next->DEPTH == 0U); /* Top level state */
     State_Exit(p_active->p_State, p_context);
     State_Entry(p_next, p_context);
     p_active->p_State = p_next;

@@ -53,6 +53,8 @@ static void Calibration_Entry(const Motor_T * p_motor)
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }
 
+static State_T * Calibration_End(const Motor_T * p_motor);
+
 static void Calibration_Proc(const Motor_T * p_motor)
 {
     static_assert(HALL_SENSORS_VIRTUAL_A == PHASE_ID_A);
@@ -75,6 +77,8 @@ static void Calibration_Proc(const Motor_T * p_motor)
             case 6U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_B);   Phase_Deactivate(&p_motor->PHASE);                          p_motor->P_MOTOR_STATE->CalibrationStateIndex = 7U;    break;
             default: break;
         }
+
+        _StateMachine_Transition(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, Calibration_End(p_motor));
     }
 }
 
@@ -84,6 +88,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
 //     const uint16_t duty = vPhase * Phase_VBus_Inv_Fract32() >> 16;
 // }
 
+// seperate in case move to   input.
 static State_T * Calibration_End(const Motor_T * p_motor)
 {
     if (p_motor->P_MOTOR_STATE->CalibrationStateIndex >= 7U)

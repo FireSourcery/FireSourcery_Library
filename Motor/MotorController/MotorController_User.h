@@ -149,6 +149,7 @@ extern void MotorController_SetVSupplyRef(MotorController_T * p_context, uint16_
 extern void MotorController_SetInputMode(MotorController_T * p_context, MotorController_InputMode_T mode);
 
 extern int MotorController_CallSystemCmd(MotorController_T * p_context, MotorController_SystemCmd_T id, int value);
+extern bool MotorController_CheckDirection(MotorController_T * p_context, sign_t direction);
 
 // extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
 // extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);

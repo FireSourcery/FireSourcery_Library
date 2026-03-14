@@ -85,7 +85,7 @@ static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accu
 static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
 {
     Ramp_SetOutput(p_ramp, match);
-    Ramp_SetTarget(p_ramp, match);
+    // Ramp_SetTarget(p_ramp, match);
 }
 
 static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
