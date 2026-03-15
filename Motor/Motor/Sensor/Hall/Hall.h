@@ -244,25 +244,6 @@ static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idN
     // return sign((int16_t)(_Hall_Angle16Of(idNew) - _Hall_Angle16Of(idPrev)));
 }
 
-/******************************************************************************/
-/*
-    Values with Calibration State only
-*/
-/******************************************************************************/
-/* Virtual Id */
-static inline Hall_Id_T _Hall_IdOfSensors(const Hall_State_T * p_hall, uint8_t physicalSensors) { return p_hall->Config.SensorsTable[physicalSensors]; }
-
-/* Angle Approximation */
-static inline uint16_t _Hall_Angle16OfSensors(const Hall_State_T * p_hall, uint8_t physicalSensors, Hall_Direction_T direction)
-{
-    return _Hall_Angle16BoundaryOf(_Hall_IdOfSensors(p_hall, physicalSensors), direction);
-}
-
-static inline uint16_t _Hall_DirectionOfSensors(const Hall_State_T * p_hall, uint8_t sensorsPrev, uint8_t sensorsNew)
-{
-    return _Hall_DirectionOf(_Hall_IdOfSensors(p_hall, sensorsPrev), _Hall_IdOfSensors(p_hall, sensorsNew));
-}
-
 
 /******************************************************************************/
 /*
@@ -315,6 +296,25 @@ static inline bool Hall_PollEdgeA(const Hall_T * p_hall) { return ((Hall_ReadSen
     Query Results from Capture
 */
 /******************************************************************************/
+/******************************************************************************/
+/*
+    Values with Calibration State only
+*/
+/******************************************************************************/
+/* Virtual Id */
+static inline Hall_Id_T _Hall_IdOfSensors(const Hall_State_T * p_hall, uint8_t physicalSensors) { return p_hall->Config.SensorsTable[physicalSensors]; }
+
+/* Angle Approximation */
+static inline uint16_t _Hall_Angle16OfSensors(const Hall_State_T * p_hall, uint8_t physicalSensors, Hall_Direction_T direction)
+{
+    return _Hall_Angle16BoundaryOf(_Hall_IdOfSensors(p_hall, physicalSensors), direction);
+}
+
+static inline uint16_t _Hall_DirectionOfSensors(const Hall_State_T * p_hall, uint8_t sensorsPrev, uint8_t sensorsNew)
+{
+    return _Hall_DirectionOf(_Hall_IdOfSensors(p_hall, sensorsPrev), _Hall_IdOfSensors(p_hall, sensorsNew));
+}
+
 static inline Hall_Sensors_T Hall_GetSensors(const Hall_State_T * p_hall) { return p_hall->Sensors; }
 static inline Hall_Id_T Hall_GetId(const Hall_State_T * p_hall) { return _Hall_IdOfSensors(p_hall, p_hall->Sensors.Value); }
 

@@ -59,6 +59,7 @@ UserDIn_Edge_T;
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
+    // bool Value;
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */

@@ -64,12 +64,7 @@
     #define MOTOR_FOC_ENABLE
 #endif
 
-/* reboot for params to take effect when disabled */
-#if     defined(MOTOR_CONFIG_PROPAGATE_SET_DISABLE)
-#elif   defined(MOTOR_CONFIG_PROPAGATE_SET_ENABLE)
-#else
-        #define MOTOR_CONFIG_PROPAGATE_SET_ENABLE
-#endif
+
 
 #if     defined(MOTOR_UNIT_CONVERSION_LOCAL)
     #if defined(MOTOR_SURFACE_SPEED_ENABLE)

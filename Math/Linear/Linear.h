@@ -55,7 +55,7 @@ typedef struct Linear
 #if defined(LINEAR_DIVIDE_SHIFT)
     int32_t Slope;              /* y = (x - X0) * Slope >> SlopeShift + Y0 */
     uint8_t SlopeShift;
-    int32_t InvSlope;           /* x = (y - Y0) * InvSlope >> InvSlopeShift + X0 */
+    int32_t InvSlope;           /* x = (y - Y0) * InvSlope >> InvSlopeShift + X0 *///split caller handle
     uint8_t InvSlopeShift;
 #elif defined(LINEAR_DIVIDE_NUMERICAL)
     int32_t SlopeFactor;
@@ -187,107 +187,5 @@ extern void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int3
 // extern int32_t Linear_InvOf_Scalar(const Linear_T * p_linear, int32_t y, uint16_t scalar);
 
 #endif
-
-/******************************************************************************/
-/*!
-    @brief Numerical Divide auxiliary extension to primary configuration
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*!
-    @brief Fixed32 with division
-        aux configuration. Use Linear_Fixed for fixed as primary.
-    Format q16.16
-    f([-XRef:XRef]) => [-65536:65536]
-*/
-/******************************************************************************/
-// /*  */
-// static inline int32_t _Linear_Fixed32(const Linear_T * p_linear, int32_t x)
-// {
-//     return linear_f_x0(65536, p_linear->XDelta, p_linear->X0, x);
-// }
-
-// /*!
-//     y_fixed32 in q16.16 format
-//     @param[in] y_fixed32 overflow limit ~q1.16
-// */
-// static inline int32_t _Linear_InvFixed32(const Linear_T * p_linear, int32_t y_fixed32)
-// {
-//     return linear_invf_x0(65536, p_linear->XDelta, p_linear->X0, y_fixed32);
-// }
-
-// /******************************************************************************/
-// /*!
-//     Saturate to uint16_t, q0.16 [0:65535]
-//     f([-XRef:XRef]) => [0:65536]
-// */
-// /******************************************************************************/
-// /* negative returns zero */
-// static inline uint16_t _Linear_Percent16_Clamp(const Linear_T * p_linear, int32_t x)
-// {
-//     return _Linear_SatUnsigned16(_Linear_Fixed32(p_linear, x));
-// }
-
-// /* negative returns abs */
-// static inline uint16_t _Linear_Percent16_Abs(const Linear_T * p_linear, int32_t x)
-// {
-//     return _Linear_SatUnsigned16_Abs(_Linear_Fixed32(p_linear, x));
-// }
-
-// /* y_fract16 in q0.16 format is handled by q16.16 case */
-// static inline int32_t _Linear_InvPercent16(const Linear_T * p_linear, uint16_t y_percent16)
-// {
-//     return _Linear_InvFixed32(p_linear, y_percent16);
-// }
-
-// /******************************************************************************/
-// /*!
-//     Saturate to int16_t, q1.15 [-32768:32767]
-//     f([-XRef:XRef]) => [-32768:32767]
-// */
-// /******************************************************************************/
-// /* */
-// static inline int16_t _Linear_Fract16(const Linear_T * p_linear, int32_t x)
-// {
-//     return _Linear_SatSigned16(_Linear_Fixed32(p_linear, x) / 2);
-//     // return  linear_f_x0(32768, deltax, x0, x);
-// }
-
-// /* y_fract16 in q1.15 */
-// static inline int32_t _Linear_InvFract16(const Linear_T * p_linear, int16_t y_fract16)
-// {
-//     return _Linear_InvFixed32(p_linear, (int32_t)y_fract16 * 2);
-// }
-
-/******************************************************************************/
-/*!
-    Scalar
-*/
-/******************************************************************************/
-// /* scalar may be compile time constant, can compiler unroll loop to optimize? */
-// static inline int32_t Linear_Of_Scalar(const Linear_T * p_linear, int32_t x, uint16_t scalar)
-// {
-//     int32_t factor = x * p_linear->Slope;
-//     int32_t result = 0;
-
-//     /*
-//         Loop N = Log_[DivisorN](scalar)
-//         scalar 1000
-//             [DivisorN == 10] => 4
-//             [DivisorN == 2]  => 10
-//     */
-//     for (uint16_t iDivisor = 1U; scalar >= iDivisor; iDivisor *= 4U) /* scalar / iDivisor > 0U */
-//     {
-//         if (factor < INT32_MAX / scalar * iDivisor) /* (factor * (scalar / iDivisor) < INT32_MAX) */
-//         {
-//             result = Linear_Of(p_linear, x * scalar / iDivisor) * iDivisor;
-//             break;
-//         }
-//     }
-
-//     if (result == 0) { result = Linear_Of(p_linear, x) * scalar; }
-
-//     return result;
-// }
 
 

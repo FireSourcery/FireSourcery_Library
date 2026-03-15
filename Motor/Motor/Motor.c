@@ -68,7 +68,7 @@ void Motor_Init(const Motor_T * p_context)
 */
 void Motor_Reset(Motor_State_T * p_motor)
 {
-    Motor_ResetUnits(p_motor);
+    Motor_InitUnits(p_motor);
 
     /*
         SW Structs
@@ -91,8 +91,8 @@ void Motor_Reset(Motor_State_T * p_motor)
     Motor_ResetSpeedLimit(p_motor);
     Motor_ResetILimit(p_motor);
 
-    Motor_ResetSpeedRamp(p_motor);
-    Motor_ResetTorqueRamp(p_motor);
+    Motor_InitSpeedRamp(p_motor);
+    Motor_InitTorqueRamp(p_motor);
 
 // #if defined(MOTOR_OPEN_LOOP_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
@@ -116,7 +116,7 @@ void Motor_Reset(Motor_State_T * p_motor)
 /*
     propagate Motor Config to sensor module params
 */
-void Motor_ResetUnits(Motor_State_T * p_motor)
+void Motor_InitUnits(Motor_State_T * p_motor)
 {
     RotorSensor_Config_T config =
     {
@@ -128,19 +128,19 @@ void Motor_ResetUnits(Motor_State_T * p_motor)
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
 
-/* Ramp slope set independent of user Config.limits. By const characteristics.   todo set with frac32 */
-void Motor_ResetSpeedRamp(Motor_State_T * p_motor)
+/* Ramp slope set independent of user Config.limits. By characteristics.   todo set with frac32 */
+void Motor_InitSpeedRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(p_motor));
 }
 
-void Motor_ResetTorqueRamp(Motor_State_T * p_motor)
+void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->TorqueRamp, p_motor->Config.TorqueRampTime_Cycles, Phase_Calibration_GetIRatedPeak_Fract16()); /* Current by default */
 }
 
-void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_ResetSpeedRamp(p_motor); }
-void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_ResetTorqueRamp(p_motor); }
+void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
+void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
 void Motor_DisableSpeedRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
 void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
 
@@ -210,7 +210,6 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
     Active Limits - Non directional
     Table comparison control
     Derive directional Feedback Limits
-    optionally store cw/ccw limits first
 */
 /******************************************************************************/
 void Motor_ResetSpeedLimit(Motor_State_T * p_motor)

@@ -62,7 +62,7 @@
 /******************************************************************************/
 static inline void _Motor_FOC_WriteDuty(const Phase_T * p_phase, const FOC_T * p_foc)
 {
-    Phase_WriteDuty_Fract16(p_phase, FOC_GetDutyA(p_foc), FOC_GetDutyB(p_foc), FOC_GetDutyC(p_foc));
+    Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc));
 }
 
 static inline void Motor_FOC_WriteDuty(const Motor_T * p_motor) { _Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_MOTOR_STATE->Foc); }
@@ -84,9 +84,9 @@ static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_St
 /* I limit in [Direction] selected */
 static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (FOC_IsMotoring(&p_motor->Foc) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
 
-static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_GetIq(&p_motor->Foc), _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
+static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_Iq(&p_motor->Foc), _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
 static inline bool Motor_FOC_IsILimitReached(const Motor_State_T * p_motor) { return (FOC_GetIMagnitude(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }
-// static inline bool _Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return (abs(FOC_GetIq(&p_motor->Foc)) > Motor_FOC_GetILimit(p_motor)); }
+// static inline bool _Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return (abs(FOC_Iq(&p_motor->Foc)) > Motor_FOC_GetILimit(p_motor)); }
 
 
 /******************************************************************************/

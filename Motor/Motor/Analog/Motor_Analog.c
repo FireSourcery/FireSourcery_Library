@@ -45,9 +45,9 @@ static void StartCalibration(const Motor_T * p_motor)
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(&p_motor->PHASE);
 
-    Filter_Init(&p_fields->FilterA);
-    Filter_Init(&p_fields->FilterB);
-    Filter_Init(&p_fields->FilterC);
+    Accumulator_Init(&p_fields->FilterA);
+    Accumulator_Init(&p_fields->FilterB);
+    Accumulator_Init(&p_fields->FilterC);
     p_fields->Config.IabcZeroRef_Adcu.A = 0U;
     p_fields->Config.IabcZeroRef_Adcu.B = 0U;
     p_fields->Config.IabcZeroRef_Adcu.C = 0U;
@@ -55,7 +55,8 @@ static void StartCalibration(const Motor_T * p_motor)
     Motor_Analog_MarkIabc(p_motor);
 }
 
-/* callback can skip storing raw value */
+/* allow adc module callback to skip storing raw value */
+/* Phase_Input_Get Fract16 performed with 0 as zero reference */
 static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_ADCU_SCALAR * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR)); }
 
 static void ProcCalibration(const Motor_T * p_motor)
@@ -64,9 +65,9 @@ static void ProcCalibration(const Motor_T * p_motor)
 
     if (p_fields->PhaseInput.IFlags.Bits == PHASE_ID_ABC)
     {
-        Filter_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
-        Filter_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
-        Filter_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
+        Accumulator_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
+        Accumulator_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
+        Accumulator_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
         p_fields->PhaseInput.IFlags.Bits = PHASE_ID_0;
         Motor_Analog_MarkIabc(p_motor);
     }
@@ -80,9 +81,9 @@ static State_T * EndCalibration(const Motor_T * p_motor)
 
     if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
-        p_fields->Config.IabcZeroRef_Adcu.A = Filter_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
-        p_fields->Config.IabcZeroRef_Adcu.B = Filter_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
-        p_fields->Config.IabcZeroRef_Adcu.C = Filter_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
+        p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
+        p_fields->Config.IabcZeroRef_Adcu.B = Accumulator_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
+        p_fields->Config.IabcZeroRef_Adcu.C = Accumulator_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
         Phase_Deactivate(&p_motor->PHASE);
         p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }

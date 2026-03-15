@@ -36,43 +36,34 @@
 
 typedef struct MovAvg
 {
-    uint16_t Index;
     int32_t Coefficient;
-    int32_t Accumulator;
-    // Accumulator_T Accumulator; //todo store as shifted
+    int32_t Output;
+    // Accumulator_T Output; // optionally accum handles shift
 }
 MovAvg_T;
 
 static inline void MovAvg_Init(MovAvg_T * p_filter, fract16_t lambda, int32_t y0)
 {
-    p_filter->Accumulator = y0;
+    p_filter->Output = y0;
     p_filter->Coefficient = lambda;
 }
 
 static inline int32_t MovAvg(MovAvg_T * p_filter, int32_t in)
 {
-    p_filter->Accumulator = filter_mov_avg(p_filter->Coefficient, p_filter->Accumulator, in);
-    return p_filter->Accumulator;
+    p_filter->Output = mov_avg(p_filter->Coefficient, p_filter->Output, in);
+    return p_filter->Output;
 }
 
 static inline void MovAvgN_Init(MovAvg_T * p_filter, uint16_t n, int32_t y0)
 {
-    p_filter->Accumulator = y0;
+    p_filter->Output = y0;
     p_filter->Coefficient = n;
 }
 
 static inline int32_t MovAvgN(MovAvg_T * p_filter, int32_t in)
 {
-    p_filter->Accumulator = filter_mov_avgn(p_filter->Coefficient, p_filter->Accumulator, in);
-    return p_filter->Accumulator;
-}
-
-/*  */
-static inline int32_t MovAvg_Avg(MovAvg_T * p_filter, int32_t in)
-{
-    p_filter->Accumulator += in;
-    p_filter->Index++;
-    return p_filter->Accumulator / p_filter->Index;
+    p_filter->Output = mov_avgn(p_filter->Coefficient, p_filter->Output, in);
+    return p_filter->Output;
 }
 
 

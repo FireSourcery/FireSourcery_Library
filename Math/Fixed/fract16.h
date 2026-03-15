@@ -61,6 +61,11 @@ static const fract16_t FRACT16_SQRT3_DIV_4 = 0x376D;
 static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
 static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
 
+static const fract16_t FRACT16_COS_120 = ((fract16_t)-16384);  /* cos(120°) = -0.5 */
+static const fract16_t FRACT16_SIN_120 = ((fract16_t)28378);   /* sin(120°) = sqrt(3)/2 */
+static const fract16_t FRACT16_COS_240 = ((fract16_t)-16384);  /* cos(240°) = -0.5 */
+static const fract16_t FRACT16_SIN_240 = ((fract16_t)-28378);  /* sin(240°) = -sqrt(3)/2 */
+
 /* Calculation with over saturation */
 static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /* 32768 */
 static const accum32_t FRACT16_2_DIV_SQRT3    = 0x000093CD; /* 1.15470053838f */
@@ -171,12 +176,11 @@ static inline int16_t fract16_norm_scalar(int16_t value)
     angle16
 */
 /******************************************************************************/
-// typedef uint16_t angle16_t;  /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
+// typedef uint16_t uangle16_t;  /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
 // #define ANGLE16_SIGNED_MAX (INT16_MAX)
-
 // #define ANGLE16_360 (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
@@ -193,12 +197,6 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
-// #define ANGLE16_PER_PI (INT16_MAX)
-
-static const fract16_t FRACT16_COS_120 = ((fract16_t)-16384);  /* cos(120°) = -0.5 */
-static const fract16_t FRACT16_SIN_120 = ((fract16_t)28378);   /* sin(120°) = sqrt(3)/2 */
-static const fract16_t FRACT16_COS_240 = ((fract16_t)-16384);  /* cos(240°) = -0.5 */
-static const fract16_t FRACT16_SIN_240 = ((fract16_t)-28378);  /* sin(240°) = -sqrt(3)/2 */
 
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
@@ -226,11 +224,6 @@ static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
 {
     return ((uint16_t)theta0 < (uint16_t)theta1);
 }
-
-// static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, bool incrementing)
-// {
-//     return (angle16_cycle_inc(theta0, theta1) == incrementing);
-// }
 
 static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, int sign)
 {
@@ -261,20 +254,14 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
     vector xy
 */
 /******************************************************************************/
-// typedef struct vector32 { fract16_t x; fract16_t y; } vector32_t;
 extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
 extern ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, ufract16_t mag_limit);
 extern void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit);
 
+#endif
+
+
 // extern uint16_t fract16_vector_scalar_fast(fract16_t x, fract16_t y, fract16_t mag_limit);
 // extern uint16_t fract16_vector_limit_fast(fract16_t * p_x, fract16_t * p_y, fract16_t limit);
 // extern int32_t fast_inv_sqrt(int32_t x);
-
-
-
-/* simplify with return by value */// alternatively handle as multiple primitive pointers
-// typedef struct pair16 { int16_t x; int16_t y; } pair16_t; /* point, vector, limits */ /* 32 */
-// typedef struct triplet16 { int16_t x; int16_t y; int16_t z; } triplet16_t; /* 48 */
-
-#endif

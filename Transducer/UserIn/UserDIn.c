@@ -55,10 +55,10 @@ void UserDIn_Init(const UserDIn_T * p_context)
     Debounce_Init(&p_context->P_STATE->Debounce, p_context->DEBOUNCE_TIME);
 
     /* Initialize debounce state to current pin reading */
-    p_context->P_STATE->Debounce.TimeStart = GetTime(p_context);
-    p_context->P_STATE->Debounce.PinState = ReadPin(p_context);
-    p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.PinState;
-    p_context->P_STATE->Debounce.OutputPrev = p_context->P_STATE->Debounce.PinState;
+    p_context->P_STATE->Debounce.Time0 = GetTime(p_context);
+    p_context->P_STATE->Debounce.State0 = ReadPin(p_context);
+    p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.State0;
+    p_context->P_STATE->Debounce.OutputPrev = p_context->P_STATE->Debounce.State0;
 }
 
 /*! @return On/Off state */

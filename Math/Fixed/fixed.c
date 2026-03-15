@@ -30,7 +30,9 @@
 /******************************************************************************/
 #include "fixed.h"
 #include "Math/math_general.h"
-
+// #if (__STDC_VERSION__ >= 202311L)
+// #include <stdbit.h>
+// #endif
 
 /*!
     @brief Calculate the square root of a fixed-point number
@@ -89,10 +91,11 @@ uint8_t _leading_sign_bits(int32_t x)
 */
 uint8_t fixed_bit_width(uint32_t x)
 {
-#if (__STDC_VERSION__ >= 202311L)
-    return stdc_bit_width(x);
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
+    assert(x != 0U); /* undefined for 0, but we can define as 0 or 32 */
     return (32U - __builtin_clz(x));
+#elif (__STDC_VERSION__ >= 202311L)
+    return stdc_bit_width(x);
 #else
     uint8_t shift = 0U;
     while ((x >> shift) > 0U) { shift++; }
@@ -109,25 +112,31 @@ uint8_t fixed_bit_width(uint32_t x)
 uint8_t fixed_bit_width_signed(int32_t x)
 {
     return fixed_bit_width(math_abs(x));
-    //  - _leading_sign_bits
 }
+
+/*
+    determine scaling factor
+*/
 
 /* leading zeros */
 /* x != 0 */
-// uint8_t fixed_leading_zeros(uint32_t x)
 uint8_t fixed_lshift_max_unsigned(uint32_t x)
 {
     return (32U - fixed_bit_width(x));
 }
 
 /* leading sign/zero bits - 1 */
-/* fixed32_norm_shift */
 /* x != 0 */
+/* fixed32_norm_shift */
 uint8_t fixed_lshift_max_signed(int32_t x)
 {
     return (31U - fixed_bit_width_signed(x));
 }
 
+
+// input_range(int32_t x0, int32_t xRef)
+// (int32_t factor)
+// (int32_t factor)
 
 /*
     65535 -> 15

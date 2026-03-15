@@ -29,17 +29,9 @@
 /******************************************************************************/
 #include "FOC.h"
 
-/* 1.0 as full => VBus/sqrt(3) */
-/* 0.866 => VBus/2 */
-// void FOC_InitModulationFull(FOC_T * p_foc) { p_foc->Modulation = FRACT16_MAX; }
-// void FOC_InitModulationLinear(FOC_T * p_foc) { p_foc->Modulation = FRACT16_SQRT3_DIV_2; }
-
 void FOC_Init(FOC_T * p_foc)
 {
-    // p_foc->Modulation = FRACT16_MAX;
-    /* or handle outside */
-    // p_foc->VdLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
-    // p_foc->VPhaseLimit = fract16_mul(fract16_mul(vBus, FRACT16_1_DIV_SQRT3), p_foc->Modulation);
+
 }
 
 /* Prep Align using input intensity */
@@ -62,11 +54,14 @@ void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
     p_foc->Iq = 0;
-    p_foc->Ialpha = 0; /* User view Phase values */
-    p_foc->Ibeta = 0;
+    // p_foc->Ialpha = 0; /* User view Phase values */
+    // p_foc->Ibeta = 0;
 }
 
 
+/*
+    Debug
+*/
 // bool FOC_ValidateInputs(const FOC_T * p_foc)
 // {
 //     /* Check for reasonable current values */
@@ -85,14 +80,14 @@ void FOC_ClearCaptureState(FOC_T * p_foc)
 //     return true;
 // }
 
-bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
-{
-    /* Validate unit circle: sin²θ + cos²θ ≈ 1 */
-    int32_t magnitudeSquared = (int32_t)sine * sine + (int32_t)cosine * cosine;
-    int32_t expected = (int32_t)FRACT16_MAX * FRACT16_MAX;
-    int32_t tolerance = expected / 20;  /* 5% tolerance */
+// bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
+// {
+//     /* Validate unit circle: sin²θ + cos²θ ≈ 1 */
+//     int32_t magnitudeSquared = (int32_t)sine * sine + (int32_t)cosine * cosine;
+//     int32_t expected = (int32_t)FRACT16_MAX * FRACT16_MAX;
+//     int32_t tolerance = expected / 20;  /* 5% tolerance */
 
-    return abs(magnitudeSquared - expected) < tolerance;
-}
+//     return abs(magnitudeSquared - expected) < tolerance;
+// }
 
 

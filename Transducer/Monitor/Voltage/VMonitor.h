@@ -38,7 +38,7 @@
 
 // typedef uint16_t vmonitor_value_t; /* ADCU */
 
-typedef RangeMonitor_T VMonitor_State_T; // typedef RangeMonitor_T VMonitor_State_T;
+typedef RangeMonitor_T VMonitor_State_T;
 typedef RangeMonitor_Config_T VMonitor_Config_T; /* Use RangeMonitor_Config_T for all logic */
 
 typedef enum VMonitor_Status
@@ -54,12 +54,10 @@ VMonitor_Status_T;
 typedef const struct VMonitor_Context
 {
     VMonitor_State_T * P_STATE;
-    const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
-
-    VDivider_T VDIVIDER;
-    // VDivider_T * P_VDIVIDER; /* pointer for separate region of memory */
+    VDivider_T VDIVIDER; // VDivider_T * P_VDIVIDER; /* pointer for separate region of memory */
     Linear_T * P_LINEAR; /* if defined local unit conversion */
 
+    const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
     Analog_Conversion_T ANALOG_CONVERSION; // todo move to upper layer, for interface
 }
 VMonitor_Context_T;

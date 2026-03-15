@@ -347,3 +347,22 @@ extern Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase);
 extern Phase_Id_T Phase_JogNext(const Phase_T * p_phase, uint16_t duty);
 extern Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty);
 extern Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned);
+
+
+
+
+
+// static inline void  Phase_WriteSvpwm(const Phase_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
+// {
+//     fract16_t vNormA = svpwm_norm_vbus_inv(vBusInv_fract32, vA);
+//     fract16_t vNormB = svpwm_norm_vbus_inv(vBusInv_fract32, vB);
+//     fract16_t vNormC = svpwm_norm_vbus_inv(vBusInv_fract32, vC);
+//     fract16_t vDutyA;
+//     fract16_t vDutyB;
+//     fract16_t vDutyC;
+//     svpwm_midclamp_vbus(&vDutyA, &vDutyB, &vDutyC, vNormA, vNormB, vNormC);
+
+//     Phase_WriteDuty_Fract16(p_phase, vDutyA, vDutyB, vDutyC);
+// }
+
+

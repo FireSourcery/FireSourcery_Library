@@ -46,6 +46,7 @@ typedef struct UserAIn_Config
     uint16_t AdcZero;                   /* Minimum ADC value for 0% */
     uint16_t AdcMax;                    /* Maximum ADC value for 100% */
     // bool UseEdgePin;
+    // bool IsEnabled;                  /* Software enable/disable */
     // uint16_t Threshold;
     // uint16_t FilterShift;
     // uint16_t Hysteresis;
@@ -63,10 +64,8 @@ typedef struct UserAIn_State
     uint16_t Value;                     /* Current filtered value. Percent16 by default */
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
+
     UserAIn_Config_T Config;            /* Hold for runtime updates */
-    // bool IsEnabled;                  /* Software enable/disable */
-    // uint16_t Threshold;
-    // uint16_t FilterShift;
 }
 UserAIn_State_T;
 
@@ -108,7 +107,7 @@ static inline bool _UserAIn_IsEdgePinOn(const UserDIn_T * p_pin) { return (p_pin
 static inline bool _UserAIn_IsRisingEdge(const UserAIn_State_T * p_state) { return (p_state->ValuePrev <= 0U) && (p_state->Value > 0U); }
 static inline bool _UserAIn_IsFallingEdge(const UserAIn_State_T * p_state) { return (p_state->ValuePrev > 0U) && (p_state->Value <= 0U); }
 static inline bool _UserAIn_IsEdge(const UserAIn_State_T * p_state) { return (_UserAIn_IsRisingEdge(p_state) || _UserAIn_IsFallingEdge(p_state)); }
-// static inline bool _UserAIn_IsEdge(const UserAIn_State_T * p_state) { return is_value_edge(p_state->ValuePrev, p_state->Value); }
+
 static inline bool _UserAIn_IsOn(const UserAIn_State_T * p_state) { return (p_state->Value > 0U); }
 static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { return p_state->Value; }
 
@@ -117,10 +116,8 @@ static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { retu
     State Query Functions
 */
 /******************************************************************************/
-
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) && _UserAIn_IsOn(p_context->P_STATE)); }
-// static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_IsOn(p_context->P_STATE) : false; }
+static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_IsOn(p_context->P_STATE) : false; }
 
 /*! @return Percent16 by default */
 /* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */

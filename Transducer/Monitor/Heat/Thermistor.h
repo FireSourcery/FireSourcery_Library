@@ -114,10 +114,6 @@ typedef const struct Thermistor
     /* Configurable/Detachable */
     Thermistor_Coeffs_T * P_COEFFS; /* NULL for Fixed */
     const Thermistor_Coeffs_T * P_NVM_COEFFS; /* NULL for Fixed */
-
-    /* Service */
-    // Linear_T * P_LINEAR_R_OHMS;  /* R per Adcu */
-    // Linear_T * P_LINEAR_T_CELCIUS;
 }
 Thermistor_T;
 

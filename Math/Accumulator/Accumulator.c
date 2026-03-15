@@ -38,78 +38,63 @@
     Init
 */
 /******************************************************************************/
-// void Accumulator_InitFrom(Accumulator_T * p_accum, const Accumulator_Config_T * p_config)
-// {
-//     if (p_config != NULL) { memcpy(&p_accum->Config, p_config, sizeof(Accumulator_Config_T)); }
-//     ResetGains(p_accum);
-//     Accumulator_SetOutputLimits(p_accum, INT16_MIN, INT16_MAX);
-//     Accumulator_Reset(p_accum);
-// }
-
 void Accumulator_Init(Accumulator_T * p_accum)
 {
     p_accum->LimitLower = INT16_MIN;
     p_accum->LimitUpper = INT16_MAX;
     p_accum->Accumulator = 0;
-    // p_accum->Index = 0U;
+    p_accum->Index = 0;
+    p_accum->Shift = 0;
+    p_accum->Coefficient = 1;
 
 }
 
-/* Initialization */
-// void Accumulator_Init(Accumulator_T * p_accum, int32_t coefficient, int8_t shift, int16_t limit_lower, int16_t limit_upper, int32_t initial_value)
-// {
-//     p_accum->Coefficient = coefficient;
-//     p_accum->Shift = shift;
-//     p_accum->LimitLower = limit_lower;
-//     p_accum->LimitUpper = limit_upper;
-//     p_accum->State = initial_value << shift;
-// }
+void Accumulator_Init_AsFract16(Accumulator_T * p_accum, int16_t coefficient_param)
+{
+    p_accum->Shift = 15U;
+    p_accum->Coefficient = (coefficient_param << p_accum->Shift);
+}
 
+// void Accumulator_Init_AsFract16Output(Accumulator_T * p_accum, int32_t coefficient_param)
+// {
+//     p_accum->Shift = math_max(15 - fixed_bit_width(coefficient_param), 0); /* left shift only */
+//     p_accum->Coefficient = (coefficient_param << p_accum->Shift);
+// }
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-int32_t Accumulator_Feedback(Accumulator_T * p_accum, int16_t prev)
-{
-    int32_t error_shifted = (prev << p_accum->Shift) - p_accum->Accumulator;
 
-    // if (error_shifted != 0) { p_accum->State += (error_shifted * p_accum->Coefficient); }
-    if (error_shifted != 0) { Accumulator_Add(p_accum, (error_shifted * p_accum->Coefficient)); }
+// // int32_t Accumulator_Ramp(Accumulator_T * p_accum, int16_t target)
+// // {
 
-    return (p_accum->Accumulator >> p_accum->Shift);
-}
+// // }
 
-
-// int32_t Accumulator_Ramp(Accumulator_T * p_accum, int16_t target)
+// /*  */
+// int32_t _Accumulator_SatShifted(Accumulator_T * p_accum, int32_t output_shifted)
 // {
+//     int32_t output_unshifted = output_shifted >> p_accum->Shift;
 
+//     if (output_unshifted > p_accum->LimitUpper)
+//     {
+//         p_accum->Accumulator = (int32_t)p_accum->LimitUpper << p_accum->Shift;
+//         return p_accum->LimitUpper;
+//     }
+//     else if (output_unshifted < p_accum->LimitLower)
+//     {
+//         p_accum->Accumulator = (int32_t)p_accum->LimitLower << p_accum->Shift;
+//         return p_accum->LimitLower;
+//     }
+//     else
+//     {
+//         p_accum->Accumulator = output_shifted;
+//         return output_unshifted;
+//     }
 // }
 
-/*  */
-int32_t _Accumulator_SatShifted(Accumulator_T * p_accum, int32_t output_shifted)
-{
-    int32_t output_unshifted = output_shifted >> p_accum->Shift;
-
-    if (output_unshifted > p_accum->LimitUpper)
-    {
-        p_accum->Accumulator = (int32_t)p_accum->LimitUpper << p_accum->Shift;
-        return p_accum->LimitUpper;
-    }
-    else if (output_unshifted < p_accum->LimitLower)
-    {
-        p_accum->Accumulator = (int32_t)p_accum->LimitLower << p_accum->Shift;
-        return p_accum->LimitLower;
-    }
-    else
-    {
-        p_accum->Accumulator = output_shifted;
-        return output_unshifted;
-    }
-}
-
-int32_t Accumulator_Add_Limited(Accumulator_T * p_accum, int16_t input)
-{
-    return _Accumulator_SatShifted(p_accum, _Accumulator_Add(p_accum, input));
-}
+// int32_t Accumulator_Add_Limited(Accumulator_T * p_accum, int16_t input)
+// {
+//     return _Accumulator_SatShifted(p_accum, _Accumulator_Add(p_accum, input));
+// }

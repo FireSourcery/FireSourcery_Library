@@ -34,7 +34,9 @@
 #include <stdbool.h>
 
 /*
-    Accumulator32 Store as shifted
+    Handle Shift coefficient shift by default
+        fract cases.
+        Sample Time
 */
 typedef struct Accumulator
 {
@@ -47,10 +49,13 @@ typedef struct Accumulator
     int16_t LimitUpper;
     int16_t LimitLower;
 
-    // uint32_t SampleFreq;
-    // uint16_t Index;
+    // or caller handle union
+    uint16_t Index;
     // uint16_t PrevInput;
-    // int32_t CoefficientRef;
+
+    // caller store config
+    // uint32_t SampleFreq;
+    // int32_t Coefficient;
 }
 Accumulator_T;
 
@@ -90,6 +95,27 @@ static inline bool Accumulator_IsSaturated(const Accumulator_T * p_accum) { retu
 
 static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = value << p_accum->Shift; }
 static inline void Accumulator_Clear(Accumulator_T * p_accum) { p_accum->Accumulator = 0; }
+
+
+/******************************************************************************/
+/*
+    Extended Functions
+*/
+/******************************************************************************/
+/* external track index */
+static inline int32_t _Accumulator_Avg(Accumulator_T * p_accum, int32_t index, int32_t in)
+{
+    return Accumulator_Add(p_accum, in) / index;
+}
+
+static inline int32_t Accumulator_Avg(Accumulator_T * p_accum, int32_t in)
+{
+    p_accum->Index++;
+    return _Accumulator_Avg(p_accum, p_accum->Index, in);
+}
+
+
+extern void Accumulator_Init(Accumulator_T * p_accum);
 
 
 /******************************************************************************/

@@ -41,7 +41,10 @@ typedef enum sign { SIGN_NEGATIVE = -1, SIGN_ZERO = 0, SIGN_POSITIVE = 1 } sign_
 static inline sign_t math_sign(int32_t value) { return (value > 0) - (value < 0); }
 static inline bool math_is_sign_diff(int32_t value1, int32_t value2) { return ((value1 ^ value2) < 0); }
 
-// static inline sign_t sign_diff(sign_t sign1, sign_t sign2) { return ((sign1 + sign2) / 2); }
+/* +1,+1 -> 1, +1,-1 -> 0, -1,-1 -> -1 */
+// static inline sign_t sign_sum(sign_t sign1, sign_t sign2) { return ((sign1 + sign2) / 2); }
+
+// static inline int32_t math_negative_of(int32_t value1) { return (value1 < 0) * value1; }
 
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
@@ -51,21 +54,21 @@ static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
 
-// static inline int32_t math_clamp_0+(int32_t value, int32_t upper) { return (math_sign(value) - 1) / 2 , upper; }
-// static inline int32_t math_clamp_-0(int32_t value, int32_t lower) { return
+// static inline int32_t math_clamp_0+(int32_t value, int32_t upper)
+// static inline int32_t math_clamp_-0(int32_t value, int32_t lower)
 
 /*  */
-static inline int32_t math_clamp_symmetric(int32_t value, uint32_t bound) { return math_clamp(value, (int32_t)0 - bound, bound); }
-/* Clamp between two bounds without specifying order */
-static inline int32_t math_clamp_between(int32_t value, int32_t bound1, int32_t bound2) { return math_clamp(value, math_min(bound1, bound2), math_max(bound1, bound2)); }
-/* Branchless version */
-static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int32_t bound2)
-{
-    int32_t mask = math_sign_mask(bound2 - bound1);
-    int32_t lower = bound1 ^ ((bound1 ^ bound2) & mask);
-    int32_t upper = bound2 ^ ((bound1 ^ bound2) & mask);
-    return math_clamp(value, lower, upper);
-}
+// static inline int32_t math_clamp_symmetric(int32_t value, uint32_t bound) { return math_clamp(value, (int32_t)0 - bound, bound); }
+// /* Clamp between two bounds without specifying order */
+// static inline int32_t math_clamp_between(int32_t value, int32_t bound1, int32_t bound2) { return math_clamp(value, math_min(bound1, bound2), math_max(bound1, bound2)); }
+// /* Branchless version */
+// static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int32_t bound2)
+// {
+//     int32_t mask = math_sign_mask(bound2 - bound1);
+//     int32_t lower = bound1 ^ ((bound1 ^ bound2) & mask);
+//     int32_t upper = bound2 ^ ((bound1 ^ bound2) & mask);
+//     return math_clamp(value, lower, upper);
+// }
 
 static inline bool math_is_in_range(int32_t value, int32_t lower, int32_t upper) { return (value >= lower) && (value <= upper); }
 static inline bool math_is_out_of_range(int32_t value, int32_t lower, int32_t upper) { return (value < lower) || (value > upper); }

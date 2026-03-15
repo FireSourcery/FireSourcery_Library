@@ -43,12 +43,7 @@
 */
 #define RAMP_SHIFT 14U
 
-// typedef struct Ramp_Config_T
-// {
-//     uint16_t Delta;    /*   */
-//     uint32_t Ticks;    /* Time to reach Units */
-// }
-// Ramp_Config_T;
+
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
 #define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
 #define RAMP_RATE_PER_SECOND(updateFreq_Hz, ratePerS) (((int32_t)ratePerS << RAMP_SHIFT) / updateFreq_Hz)
@@ -63,7 +58,7 @@
 typedef struct Ramp
 {
     Accumulator_T Accumulator;
-    int16_t Target;
+    // int16_t Target;
 }
 Ramp_T;
 
@@ -72,27 +67,10 @@ Ramp_T;
 
 */
 /******************************************************************************/
-static inline void Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = target; }
-/* GetInput */
-static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return p_ramp->Target; }
-
 /*  */
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Accumulator >> RAMP_SHIFT); }
 /* Match Output */
-static inline void Ramp_SetOutput(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = (match << RAMP_SHIFT); }
-
-/* Set both */
-static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
-{
-    Ramp_SetOutput(p_ramp, match);
-    // Ramp_SetTarget(p_ramp, match);
-}
-
-static inline void Ramp_ZeroOutputState(Ramp_T * p_ramp)
-{
-    p_ramp->Accumulator.Accumulator = 0;
-    p_ramp->Target = 0;
-}
+static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = (match << RAMP_SHIFT); }
 
 
 /* single step proc only */

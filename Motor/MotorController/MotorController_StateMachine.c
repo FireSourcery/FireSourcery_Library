@@ -530,8 +530,8 @@ void StartCalibrateAdc(const MotorController_T * p_context)
     Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
     Analog_Conversion_ClearResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE);
     Analog_Conversion_ClearResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
-    Filter_Init(&p_mc->AvgBuffer0);
-    Filter_Init(&p_mc->AvgBuffer1);
+    Accumulator_Init(&p_mc->AvgBuffer0);
+    Accumulator_Init(&p_mc->AvgBuffer1);
     // Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
 }
 
@@ -542,8 +542,8 @@ void ProcCalibrateAdc(const MotorController_T * p_context)
 
     if (p_mc->StateCounter != 0U) /* skip first time */
     {
-        Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE));
-        Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE));
+        Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE));
+        Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE));
         Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE);
         Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
     }
@@ -561,8 +561,8 @@ static State_T * EndCalibrateAdc(const MotorController_T * p_context)
     if (p_mc->StateCounter > TIME)
     {
         // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false)
-        MotAnalogUser_SetThrottleZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE)));
-        MotAnalogUser_SetBrakeZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE)));
+        MotAnalogUser_SetThrottleZero(&p_context->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE)));
+        MotAnalogUser_SetBrakeZero(&p_context->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE)));
         p_mc->LockOpStatus = 0; /* success */
 
         p_nextState = &MC_STATE_LOCK; /* return to lock state */

@@ -256,7 +256,7 @@ void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
 /* ElectricalAngle set by caller */
 // void Motor_StartAlignCmd(Motor_State_T * p_motor)
 // {
-//     Ramp_SetOutput(&p_motor->TorqueRamp, 0);
+//     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
 //     if (p_motor->FeedbackMode.Current == 1U)
 //     {
 //     }

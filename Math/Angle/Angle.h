@@ -104,6 +104,18 @@ typedef struct Angle_SpeedFractCalib
 Angle_SpeedFractCalib_T;
 
 /*
+    Precomputed unit for Angle_T
+*/
+/* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
+static inline int16_t speed_fract16_of_angle_direct(angle16_t angleOfRpmMax, int16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleOfRpmMax; }
+
+/* speedRefInv_fract32 as cycles per degree */
+/* overflow note: angle16 < speedRefInv_fract32 */
+static inline int16_t speed_fract16_of_angle(uint32_t angleOfRpmMaxInv_fract32, int16_t angle16) { return ((int32_t)angle16 * angleOfRpmMaxInv_fract32) >> 16U; }
+/* DegPerCycle */
+static inline int16_t angle_of_speed_fract16(angle16_t angleOfRpmMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleOfRpmMax); }
+
+/*
     Capture On Feedback
 */
 static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16)
@@ -122,7 +134,6 @@ static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16)
 static inline fract16_t _Angle_GetSpeed_Fract16(const Angle_T * p_angle)
 {
     return speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, p_angle->Delta);
-    // speed_fract16_of_angle16_rpm(Config.PollingFreq, Config.SpeedMaxRpm, elSpeed_degPerCycle);
 }
 
 /* Capture speed by Delta */
@@ -182,25 +193,37 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 //     p_angle->Angle += p_angle->Delta;
 // }
 
+
+/*
+
+*/
+
+#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
+#define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
+// static inline Angle_SpeedFractRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
+// static inline Angle_SpeedFractRef_T Angle_SpeedFractRefFromCalib(uint32_t pollingFreq, uint32_t maxRpm) { return Angle_SpeedFractRef(angle_of_rpm(pollingFreq, maxRpm)); }
+
 /*
     Init Runtime
 */
 /* Caller pass Ref ~ 2x for overflow range */
-static void Angle_InitSpeedRef(Angle_T * p_angle, uint32_t speedMax_Angle16)
+static void Angle_InitSpeedRef(Angle_T * p_angle, angle16_t maxAngle16)
 {
-    p_angle->SpeedFractRef.SpeedMax_Angle16 = speedMax_Angle16;
-    p_angle->SpeedFractRef.InvSpeedMax_Fract32 = INT32_MAX / speedMax_Angle16;
+    p_angle->SpeedFractRef = ANGLE_SPEED_FRACT_REF(maxAngle16);
 }
 
-static void Angle_InitSpeedRef_Rpm(Angle_T * p_angle, uint32_t pollingFreq, uint32_t speedRef_Rpm)
+static void Angle_InitSpeedRef_Rpm(Angle_T * p_angle, uint32_t pollingFreq, uint32_t maxRpm)
 {
-    Angle_InitSpeedRef(p_angle, angle_of_rpm(pollingFreq, speedRef_Rpm));
+    p_angle->SpeedFractRef = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm);
 }
 
 // static void Angle_InitFrom(Angle_T * p_angle, const Angle_Config_T * p_config)
 // {
 //     p_angle->SpeedFractRef.InvSpeedMax_Fract32 = INT32_MAX / p_config->SpeedRef_Angle16;
 // }
+
+
+
 
 
 /*

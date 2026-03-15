@@ -201,7 +201,7 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
     return NULL;
 }
 
-/* Transition for user input */
+/* Transition for user req */
 // static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
 // {
 //     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }
@@ -212,9 +212,6 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
 static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t statePtr)
 {
     // State_T * p_state = (State_T *)statePtr;
-    // /* Compile time known */
-    // assert(p_state == &MOTOR_STATE_STOP || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
-    // return &MOTOR_STATE_CALIBRATION;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_CALIBRATION; } else { return NULL; }
 }
 
@@ -451,13 +448,13 @@ static void Intervention_Entry(const Motor_T * p_motor)
     // {
     Motor_FOC_MatchIVState_Bemf(p_motor->P_MOTOR_STATE);
     Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
-    Ramp_SetTarget(&p_motor->P_MOTOR_STATE->TorqueRamp, 0); // temp/* begin user cmd at 0 */
+    p_motor->P_MOTOR_STATE->UserTorqueReq = 0;  /* begin user cmd at 0 */
 }
 
 static void Intervention_Proc(const Motor_T * p_motor)
 {
-    int32_t userCmd = Ramp_GetTarget(&p_motor->P_MOTOR_STATE->TorqueRamp); // temp
-    // torque only for now
+    // torque only for now, substate as needed
+    int32_t userCmd = p_motor->P_MOTOR_STATE->UserTorqueReq;
     Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR_STATE, 0, _Motor_GeneratingOnly(p_motor->P_MOTOR_STATE, userCmd));
 
     Motor_FOC_WriteDuty(p_motor);
@@ -551,7 +548,6 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t ph
 static State_T * OpenLoop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
     Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode); /* a different flag mode will change ramp limits */
-    // return (p_motor->P_MOTOR_STATE->FeedbackMode.OpenLoop == 0U) ? &MOTOR_STATE_PASSIVE : NULL;
     return NULL;
 }
 
@@ -773,13 +769,6 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 //     // State_Input0_T ProcRamp;
 // }
 // FeedbackState_T;
-
-// static inline fract16_t SpeedFeedbackProc(const Motor_T * p_motor, state_value_t value)
-// {
-//     Motor_State_T * p_fields = p_motor->P_MOTOR_STATE;
-//     PID_ProcPI(&p_fields->PidSpeed, Motor_GetSpeedFeedback(p_fields), Motor_ProcSpeedRamp(p_fields));
-//     Ramp_SetTarget(&p_fields->TorqueRamp, PID_GetOutput(&p_fields->PidSpeed));
-// }
 
 // const State_T SPEED_FEEDBACK_STATE =
 // {

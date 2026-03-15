@@ -43,7 +43,7 @@
     0.015625 -> 64 count array
     0.03125  -> 32 count array
 */
-static inline int16_t filter_mov_avg(fract16_t lambda, int32_t y_prev, int32_t x)
+static inline int16_t mov_avg(fract16_t lambda, int32_t y_prev, int32_t x)
 {
     return ((y_prev * (FRACT16_1_OVERSAT - lambda)) + (x * lambda)) >> FRACT16_N_BITS;
 }
@@ -53,7 +53,7 @@ static inline int16_t filter_mov_avg(fract16_t lambda, int32_t y_prev, int32_t x
 
     lambda = 1/N
 */
-static inline int32_t filter_mov_avgn(uint16_t n, int32_t y_prev, int32_t x)
+static inline int32_t mov_avgn(uint16_t n, int32_t y_prev, int32_t x)
 {
     return (y_prev * (n - 1) + x) / n;
 }

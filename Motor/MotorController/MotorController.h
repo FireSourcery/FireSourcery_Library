@@ -30,7 +30,6 @@
 */
 /******************************************************************************/
 #include "Config.h"
-// #include "MotorControllerAnalog.h"
 
 #include "MotNvm/MotNvm.h"
 #include "MotAnalogUser/MotAnalogUser.h"
@@ -68,6 +67,7 @@
 #include "Type/Word/Version.h"
 
 #include "Math/Linear/Linear.h"
+#include "Math/Accumulator/Accumulator.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -215,8 +215,8 @@ typedef struct MotorController_State
     BootRef_T BootRef; /* Buffer */
 
     // there can move to calibration as static
-    Filter_T AvgBuffer0;
-    Filter_T AvgBuffer1;
+    Accumulator_T AvgBuffer0;
+    Accumulator_T AvgBuffer1;
 
     uint32_t MicrosRef;
     uint32_t ControlLoopProfile;

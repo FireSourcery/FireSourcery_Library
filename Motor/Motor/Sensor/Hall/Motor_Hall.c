@@ -84,7 +84,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
 
 // static void Calibration_Proc_IFeedback(const Motor_T * p_motor)
 // {
-//     uint16_t vPhase = PID_ProcPI(&p_motor->PidId, FOC_GetId(&p_motor->Foc), Motor_GetVAlign_Duty( p_motor)); // use phase pid or align to angle
+//     uint16_t vPhase = PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), Motor_GetVAlign_Duty( p_motor)); // use phase pid or align to angle
 //     const uint16_t duty = vPhase * Phase_VBus_Inv_Fract32() >> 16;
 // }
 

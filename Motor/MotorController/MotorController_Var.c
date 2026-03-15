@@ -345,12 +345,13 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                 case MOTOR_VAR_TYPE_ENCODER_CONFIG:
                     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                     break;
-                case MOTOR_VAR_TYPE_CONFIG_RESV:
                 case MOTOR_VAR_TYPE_CALIBRATION_CMD:
                 case MOTOR_VAR_TYPE_HALL_CMD:
                 case MOTOR_VAR_TYPE_ENCODER_CMD:
                     if (!MotorController_IsLock(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                     break;
+                case MOTOR_VAR_TYPE_CONFIG_RESV:
+                case MOTOR_VAR_TYPE_CONFIG_DEBUG:
                 default:
                     break;
             }

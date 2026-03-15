@@ -33,8 +33,8 @@
 
 // #define APP_SUBSTATE_ID(appId, subId) (() | ((appId) << 8U) | (subId))
 
-// /* Part of MotorController */
-struct MotorController; // forward declare
+/* Part of MotorController */
+struct MotorController;
 typedef const struct MotorController MotorController_T;
 
 typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
@@ -55,8 +55,8 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
 typedef const struct MotorController_App
 {
     MotorController_App_Proc_T PROC_ANALOG_USER;
-    // State_T * P_INITIAL_STATE;
     State_Input_T ENTER_MAIN;
+    // State_T * P_INITIAL_STATE;
     // const void * P_APP_CONTEXT; split from vtable
 }
 MotorController_App_T;

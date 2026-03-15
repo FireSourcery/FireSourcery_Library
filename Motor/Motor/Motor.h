@@ -58,9 +58,9 @@
 #include "Math/Fixed/fixed.h"
 #include "Math/Angle/Angle.h"
 #include "Math/Linear/Linear.h"
+#include "Math/Accumulator/Accumulator.h"
 #include "Math/Ramp/Ramp.h"
 #include "Math/PID/PID.h"
-#include "Math/Filter/Filter.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -286,7 +286,10 @@ typedef struct Motor_State
     /*
         Ramp -> Feedback State
     */
-    int16_t UserReq; /* Buffer User input without StateMachine check */
+    // int16_t UserReq; /* Buffer User input without StateMachine check */
+    int16_t UserSpeedReq;
+    int16_t UserTorqueReq;
+
     /*
         Active Limits
         Ramp Setpoint Clamp
@@ -340,9 +343,9 @@ typedef struct Motor_State
     */
     Motor_Config_T Config;
 
-    Filter_T FilterA;           /* Calibration use */
-    Filter_T FilterB;
-    Filter_T FilterC;
+    Accumulator_T FilterA;           /* Calibration use */
+    Accumulator_T FilterB;
+    Accumulator_T FilterC;
 
     /*
         Local Unit Conversion
@@ -473,6 +476,7 @@ static inline uint16_t Motor_VFract16OfKv(const Motor_State_T * p_motor, uint16_
 static inline uint16_t Motor_GetSpeedVBusRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, Phase_VBus_Fract16()); }
 static inline uint16_t Motor_GetSpeedVBusRef_DegPerCycle(const Motor_State_T * p_motor) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, Motor_GetSpeedVBusRef_Rpm(p_motor)); }
 
+/* Caller set static config */
 static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(const Motor_State_T * p_motor) { return Motor_RpmOfKv(p_motor, Phase_VBus_GetVNominal()); }
 static inline uint16_t Motor_GetSpeedVNominalRef_DegPerCycle(const Motor_State_T * p_motor) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
@@ -536,9 +540,6 @@ static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_State_T * p_moto
     Cw: [value:0]
     Ccw: [0:value]
 */
-// static inline bool _Motor_AntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select); }
-// static inline bool _Motor_VClampCcw(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW); }
-/* alternatively without direction based clamp. configure speed band */
 static inline int32_t _Motor_VClampLimitOf(const Motor_State_T * p_motor, Motor_Direction_T select, int32_t value) { return (p_motor->Direction == select) * value; }
 static inline int32_t _Motor_VClampCcwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CCW, value); }
 static inline int32_t _Motor_VClampCwOf(const Motor_State_T * p_motor, int32_t value) { return _Motor_VClampLimitOf(p_motor, MOTOR_DIRECTION_CW, value); }
@@ -710,6 +711,7 @@ static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t sp
 /******************************************************************************/
 /*
    Proc FeedbackMode Flags
+   check onces per execution path
 */
 /******************************************************************************/
 
@@ -721,23 +723,19 @@ static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t sp
 */
 static inline fract16_t Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
 {
-    int32_t userCmd = Ramp_GetTarget(&p_motor->SpeedRamp); // temp
-
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        Motor_SpeedControlOf(p_motor, userCmd);
-        Ramp_SetTarget(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); /* Set TorqueRamp for unified interface. 20 Ticks */
-        // p_motor->TorqueReq = PID_GetOutput(&p_motor->PidSpeed);
+        Motor_SpeedControlOf(p_motor, p_motor->UserSpeedReq);
+        p_motor->UserTorqueReq = PID_GetOutput(&p_motor->PidSpeed);         /* Set TorqueRamp for unified interface. 20 Ticks */
     }
-    // else /* Voltage/Current Mode */
-    // {
-        // p_motor->TorqueReq = p_motor->UserControl;
+    else /* Voltage/Current Mode */
+    {
+        // p_motor->UserTorqueReq = p_motor->UserControl;
         // on sign change
         // PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), (int32_t)Motor_GetSpeedLimitActive(p_motor) * p_motor->Direction);
-        // if (Motor_IsSpeedLimitReached(p_motor) == true) { Ramp_SetOutput(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); }
-    // }
+        // if (Motor_IsSpeedLimitReached(p_motor) == true) { Ramp_SetOutputState(&p_motor->TorqueRamp, PID_GetOutput(&p_motor->PidSpeed)); }
+    }
 }
-
 
 static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 {
@@ -747,7 +745,6 @@ static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
         Motor_ProcSpeedFeedback(p_motor);
     }
 }
-
 
 /*
     Pid State on FeedbackMode/Resume
@@ -776,8 +773,6 @@ static inline void Motor_UpdateSpeedTorqueLimits(Motor_State_T * p_motor, int16_
         // else { PID_SetOutputLimits(&p_motor->PidSpeed, cwLimit, ccwLimit); }/* SpeedPid Output is V */
     }
 }
-
-
 
 
 
@@ -819,8 +814,6 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
 static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
 /* Positive as the active appliedV/motoring direction.   */
 static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
-/*  */
-// static inline int Motor_GetDirectionFeedback(const Motor_State_T * p_motor) { return math_sign(Motor_GetSpeedFeedback(p_motor)); }
 
 
 
@@ -835,10 +828,10 @@ extern void Motor_Init(const Motor_T * p_context);
 extern void Motor_Reset(Motor_State_T * p_motor);
 
 extern void Motor_ReinitSensor(Motor_State_T * p_motor);
-extern void Motor_ResetUnits(Motor_State_T * p_motor);
+extern void Motor_InitUnits(Motor_State_T * p_motor);
 
-extern void Motor_ResetSpeedRamp(Motor_State_T * p_motor);
-extern void Motor_ResetTorqueRamp(Motor_State_T * p_motor);
+extern void Motor_InitSpeedRamp(Motor_State_T * p_motor);
+extern void Motor_InitTorqueRamp(Motor_State_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int modeValue);

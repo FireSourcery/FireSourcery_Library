@@ -29,6 +29,13 @@
 /******************************************************************************/
 #include "Motor_Config.h"
 
+/* reboot for params to take effect when disabled */
+#if     defined(MOTOR_CONFIG_PROPAGATE_SET_DISABLE)
+#elif   defined(MOTOR_CONFIG_PROPAGATE_SET_ENABLE)
+#else
+#define MOTOR_CONFIG_PROPAGATE_SET_ENABLE
+#endif
+
 /******************************************************************************/
 /*
     Nvm Config, check Stop State
@@ -89,7 +96,7 @@ void Motor_Config_SetSensorMode(Motor_State_T * p_motor, RotorSensor_Id_T mode)
 void Motor_Config_SetPolePairs(Motor_State_T * p_motor, uint8_t polePairs)
 {
     p_motor->Config.PolePairs = polePairs;
-    PropagateSet(p_motor, Motor_ResetUnits);
+    PropagateSet(p_motor, Motor_InitUnits);
 }
 
 /* Setting Kv overwrites SpeedRefs. SpeedRefs can be set independently from Kv or lock */
@@ -98,7 +105,7 @@ void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 {
     p_motor->Config.Kv = kv;
     p_motor->Config.SpeedRated_Rpm = _Motor_GetSpeedRated_Rpm(p_motor);
-    PropagateSet(p_motor, Motor_ResetUnits);
+    PropagateSet(p_motor, Motor_InitUnits);
 }
 
 /* allow independent set */
@@ -106,7 +113,7 @@ void Motor_Config_SetKv(Motor_State_T * p_motor, uint16_t kv)
 void Motor_Config_SetSpeedRated(Motor_State_T * p_motor, uint16_t rpm)
 {
     p_motor->Config.SpeedRated_Rpm = math_min(rpm, _Motor_GetSpeedRated_Rpm(p_motor) * 2);
-    PropagateSet(p_motor, Motor_ResetUnits);
+    PropagateSet(p_motor, Motor_InitUnits);
 }
 
 /*
@@ -177,7 +184,7 @@ void Motor_Config_SetILimitGenerating_Fract16(Motor_State_T * p_motor, uint16_t 
 void Motor_Config_SetSpeedRampTime_Cycles(Motor_State_T * p_motor, uint32_t cycles)
 {
     p_motor->Config.SpeedRampTime_Cycles = cycles;
-    PropagateSet(p_motor, Motor_ResetSpeedRamp);
+    PropagateSet(p_motor, Motor_InitSpeedRamp);
 }
 
 void Motor_Config_SetSpeedRampTime_Millis(Motor_State_T * p_motor, uint16_t millis)
@@ -188,7 +195,7 @@ void Motor_Config_SetSpeedRampTime_Millis(Motor_State_T * p_motor, uint16_t mill
 void Motor_Config_SetTorqueRampTime_Cycles(Motor_State_T * p_motor, uint32_t cycles)
 {
     p_motor->Config.TorqueRampTime_Cycles = cycles;
-    PropagateSet(p_motor, Motor_ResetTorqueRamp);
+    PropagateSet(p_motor, Motor_InitTorqueRamp);
 }
 
 void Motor_Config_SetTorqueRampTime_Millis(Motor_State_T * p_motor, uint16_t millis)
