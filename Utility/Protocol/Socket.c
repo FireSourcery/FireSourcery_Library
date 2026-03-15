@@ -533,6 +533,7 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
     return reqStatus;
 }
 
+/* todo mapper function */
 /*! @return pointer to Req */
 const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {

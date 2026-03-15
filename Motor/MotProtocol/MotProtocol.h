@@ -104,5 +104,6 @@ extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext
 extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
 // extern packet_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
 // extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
+extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
 
 #endif

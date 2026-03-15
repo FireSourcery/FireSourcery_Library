@@ -69,8 +69,8 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // {
 //     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-//     if (FOC_qVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()))
-//         { _PID_SetOutputLimits(&p_motor->PidIq, -FOC_Vq(&p_motor->Foc), FOC_Vq(&p_motor->Foc)); }
+//     uint32_t vq = FOC_VqLimit(&p_motor->Foc, Phase_VBus_Fract16());
+//     PID_CaptureOutputLimits(&p_motor->PidIq, -vq, vq);
 //     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
 // }
 

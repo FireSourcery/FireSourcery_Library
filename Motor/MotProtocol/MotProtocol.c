@@ -257,8 +257,8 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     }
 
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_txPacket, flashStatus);
-    reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
     *p_reqContext->p_SubStateIndex = 1U;
+    reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
 
     return reqCode;
 }
@@ -392,6 +392,7 @@ NvMemory_Status_T ReadMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t
 // caller handle address mapping
 packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadResp_T * p_txPacket, const MotPacket_MemReadReq_T * p_rxPacket)
 {
+    // MotPacket_MemReadReq_Payload_T * p_req = (MotPacket_MemReadReq_Payload_T *)&(p_rxPacket->Payload);
     uint32_t address = p_rxPacket->MemReadReq.Address;
     uint8_t size = p_rxPacket->MemReadReq.Size;
     uint16_t config = p_rxPacket->MemReadReq.Config;
@@ -404,10 +405,11 @@ packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_MemReadR
 
 packet_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_MemWriteResp_T * p_txPacket, const MotPacket_MemWriteReq_T * p_rxPacket)
 {
-    uint32_t address = p_rxPacket->MemWriteReq.Address;
-    const uint8_t * p_data = &(p_rxPacket->MemWriteReq.ByteData[0U]);
-    uint8_t size = p_rxPacket->MemWriteReq.Size;
-    uint16_t config = p_rxPacket->MemWriteReq.Config; // alternatively move this to header
+    MotPacket_MemWriteReq_Payload_T * p_req = (MotPacket_MemWriteReq_Payload_T *)&(p_rxPacket->MemWriteReq);
+    uint32_t address = p_req->Address;
+    const uint8_t * p_data = &(p_req->ByteData[0U]);
+    uint8_t size = p_req->Size;
+    uint16_t config = p_req->Config; // alternatively move this to header
     NvMemory_Status_T status;
 
     switch((MotProtocol_MemConfig_T)config)

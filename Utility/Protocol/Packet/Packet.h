@@ -81,6 +81,7 @@ Protocol_RxCode_T;
 /* Parse with PARSE_RX_META */
 /* FramingMeta ControlMeta */
 /* Effectively common struct from unknown Packet struct */
+/* VirtualHeader */
 typedef struct Protocol_HeaderMeta
 {
     packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */

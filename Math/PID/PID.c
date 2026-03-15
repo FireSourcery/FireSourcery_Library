@@ -47,16 +47,7 @@ void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
     PID_Reset(p_pid);
 }
 
-/*!
-    dynamic output limits
-    update synchronous with proc
-*/
-void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
-{
-    assert(max > min);
-    p_pid->OutputMin = min;
-    p_pid->OutputMax = max;
-}
+
 
 static inline int16_t GetIntegral(const PID_T * p_pid) { return (int16_t)(p_pid->IntegralAccum >> 15); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
@@ -95,6 +86,17 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     p_pid->ErrorPrev = error;
 
     return proportional + integral;
+}
+
+/*!
+    dynamic output limits
+    update synchronous with proc
+*/
+void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
+{
+    assert(max > min);
+    p_pid->OutputMin = min;
+    p_pid->OutputMax = max;
 }
 
 /*!
@@ -155,7 +157,6 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;
-        // SetIntegral(p_pid, math_clamp(GetIntegral(p_pid), p_pid->OutputMin, p_pid->OutputMax));
         PID_SetOutputState(p_pid, GetIntegral(p_pid)); /* Reset integral with limits */
     }
 }
