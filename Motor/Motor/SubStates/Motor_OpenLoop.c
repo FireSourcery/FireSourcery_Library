@@ -40,14 +40,13 @@
 */
 /******************************************************************************/
 /*
-    sets the phase state without exiting openloop
+    sets the phase state without exiting openloop.
 */
 static State_T * OpenLoop_PhaseOutput(const Motor_T * p_motor, state_value_t phaseState)
 {
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
     Phase_ActivateOutputState(&p_motor->PHASE, (Phase_Output_T)phaseState); // clear outputState V, or enable last duty
-    // return &MOTOR_STATE_OPEN_LOOP;
-    return NULL;
+    return &MOTOR_STATE_OPEN_LOOP;
 }
 
 /* ActivateOutput */
@@ -58,15 +57,14 @@ void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T phase
 }
 
 /*
-    use substate to retain is active and ensure exit other open loop state
+    alternatively use substate to retain is active and ensure exit other open loop state
 */
 static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 {
-    if (Phase_ReadAlign(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
+    if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
+    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
     p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
-    // if (p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
-    // return &MOTOR_STATE_OPEN_LOOP;
-    return NULL;
+    return &MOTOR_STATE_OPEN_LOOP;
 }
 
 void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction)
