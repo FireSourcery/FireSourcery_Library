@@ -416,6 +416,7 @@ static void Lock_Entry(const MotorController_T * p_context)
 static void Lock_Proc(const MotorController_T * p_context)
 {
     // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
+// if (MotorController_IsAnyMotorFault(p_context) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 1U; }
 }
 
 /* Lock SubState/Cmd by passed value */
@@ -582,38 +583,6 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
     .NEXT = (State_Input0_T)EndCalibrateAdc,
 };
 
-
-
-/******************************************************************************/
-/*!
-    @brief Calibrate Sensor SubState
-*/
-/******************************************************************************/
-// if (MotorController_IsAnyMotorFault(p_context) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 1U; }
-
-// simplify check complete
-// static State_T * EndCalibrateSensor(const MotorController_T * p_context)
-// {
-//     MotorController_State_T * p_mc = p_context->P_MC_STATE;
-//     State_T * p_nextState = NULL;
-
-//     if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false)
-//     {
-//         p_nextState = &MC_STATE_LOCK; /* return to lock state */
-//     }
-
-//     return p_nextState;
-// }
-
-// static const State_T STATE_LOCK_CALIBRATE_MOTOR_SENSOR =
-// {
-//     .P_TOP = &MC_STATE_LOCK,
-//     .P_PARENT = &MC_STATE_LOCK,
-//     .DEPTH = 1U,
-//     .ENTRY = (State_Action_T)0,
-//     .LOOP = (State_Action_T)0,
-//     .NEXT = (State_Input0_T)0,
-// };
 
 
 

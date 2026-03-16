@@ -33,17 +33,6 @@
 
 #define MOTOR_DEBUG (!NDEBUG)
 
-// #if     defined(MOTOR_I_SENSORS_AB)
-// #elif   defined(MOTOR_I_SENSORS_ABC)
-// #else
-//     #define MOTOR_I_SENSORS_ABC
-// #endif
-
-// #if     defined(MOTOR_V_SENSORS_ISOLATED)
-// #elif   defined(MOTOR_V_SENSORS_ANALOG)
-// #else
-//     #define MOTOR_V_SENSORS_ANALOG
-// #endif
 
 
 #if     defined(MOTOR_OPEN_LOOP_ENABLE)
@@ -52,17 +41,6 @@
     #define MOTOR_OPEN_LOOP_ENABLE
 #endif
 
-#if     defined(MOTOR_SIX_STEP_ENABLE)
-#elif   defined(MOTOR_SIX_STEP_DISABLE)
-#else
-    #define MOTOR_SIX_STEP_DISABLE
-#endif
-
-#if     defined(MOTOR_FOC_ENABLE)
-#elif   defined(MOTOR_FOC_DISABLE)
-#else
-    #define MOTOR_FOC_ENABLE
-#endif
 
 
 

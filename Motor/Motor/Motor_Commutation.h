@@ -29,11 +29,25 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Motor.h"
+
+#if     defined(MOTOR_SIX_STEP_ENABLE)
+#elif   defined(MOTOR_SIX_STEP_DISABLE)
+#else
+#define MOTOR_SIX_STEP_DISABLE
+#endif
+
+#if     defined(MOTOR_FOC_ENABLE)
+#elif   defined(MOTOR_FOC_DISABLE)
+#else
+#define MOTOR_FOC_ENABLE
+#endif
+
+
 #include "Motor_FOC.h"
 #if defined(MOTOR_SIX_STEP_ENABLE)
 #include "Motor_SixStep.h"
 #endif
-#include "Motor.h"
 
 /******************************************************************************/
 /*

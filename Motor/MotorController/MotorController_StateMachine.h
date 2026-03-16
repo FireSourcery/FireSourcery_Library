@@ -56,18 +56,18 @@ typedef enum MotorController_StateInput
     MCSM_INPUT_STATE_CMD,       /* System state commands (Park/Stop/Start) with per State Mapping */
     MCSM_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MCSM_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
-    // MCSM_INPUT_APP_USER_1, /* Reserve table space, or use mapper, or buffer */
+    // MCSM_INPUT_APP_USER_1,   /* Reserve table space, or use mapper, or buffer */
 }
 MotorController_StateInput_T;
 
 typedef enum MotorController_StateId
 {
     MCSM_STATE_ID_INIT,
-    MCSM_STATE_ID_PARK,     /* includes standby */
+    MCSM_STATE_ID_PARK,         /* includes standby */
     MCSM_STATE_ID_MAIN,
-    MCSM_STATE_ID_MOTOR_CMD, /* alternatively as Substate under main, for motor control command handling. */
-    MCSM_STATE_ID_LOCK,     /* includes calibration */
-    MCSM_STATE_ID_FAULT,    /* includes error handling */
+    MCSM_STATE_ID_MOTOR_CMD,    /* alternatively as Substate under main, for motor control command handling. */
+    MCSM_STATE_ID_LOCK,         /* includes calibration */
+    MCSM_STATE_ID_FAULT,        /* includes error handling */
     _MCSM_STATE_ID_END,
 }
 MotorController_StateId_T;
@@ -94,10 +94,6 @@ static inline MotorController_StateId_T MotorController_GetStateId(const MotorCo
 
 static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
 // static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
-
-/*  */
-/* return != 0xFF for App active.  */
-// static inline state_t MotorController_GetMainSubState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
 
 
 static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_data) { return p_data->FaultFlags; }
@@ -141,10 +137,8 @@ static int MotorController_GetDirection(MotorController_T * p_context)
 // static inline State_PathId_T MotorController_GetMainSubStateId(const MotorController_State_T * p_data) {
 
 /* Active Main  */
-// static inline MotorController_MainMode_T MotorController_GetMainSubState(MotorController_T * p_context)
-// {
-//     return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
-// }
+/* return != 0xFF for App active.  */
+// static inline state_t MotorController_GetMainSubState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
 
 
 
@@ -220,33 +214,18 @@ static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context
 }
 
 /* Combination Input */
-// typedef union MotorController_StateInput2
-// {
-//     struct
-//     {
-//         uint16_t SubId : 16U;
-//         uint16_t Value : 16U;
-//     };
-//     uint32_t Pair;
-// }
-// MotorController_StateInput2_T;
+typedef struct MotorController_StateInput2
+{
+    uint32_t Cmd    : 16U;
+    uint32_t Value  : 16U;
+}
+MotorController_StateInput2_T;
 
-// static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, uint16_t cmd, uint16_t value)
-// {
-//     _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTOR_CMD, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
-// }
-
-/*
-    if a future app  also needs MCSM_INPUT_APP_USER, the sub-ID namespaces collide.
-        Remote side syncs with state
-        Protocol handler check state, or use vtable
-        name space for state_value_t values
-        additional state_input_t slots
-*/
-// static inline void MotorController_ApplyAppCmd(MotorController_T * p_context, uint16_t cmd, uint16_t value)
-// {
-//     _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_APP_USER, (MotorController_StateInput2_T) { .SubId = cmd, .Value = value }.Pair);
-// }
+static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
+{
+    MotorController_StateInput2_T * p_input = &(MotorController_StateInput2_T) { .Cmd = cmd, .Value = value }; /* pass temporary */
+    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTOR_CMD, (uintptr_t)p_input);
+}
 
 /******************************************************************************/
 /*!
