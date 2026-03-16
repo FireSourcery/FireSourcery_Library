@@ -202,11 +202,11 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
 }
 
 /* Transition for user req */
-// static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
-// {
-//     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }
-//     else { return NULL; }
-// }
+static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
+{
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }
+    else { return NULL; }
+}
 
 /* Calibration go directly to SubState */
 static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t statePtr)
@@ -222,7 +222,7 @@ static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
     [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Stop_InputFeedbackMode,
     [MSM_INPUT_DIRECTION]       = (State_Input_T)Stop_InputDirection,
     [MSM_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration, /*  */
-    [MSM_INPUT_OPEN_LOOP]       = NULL, // [MSM_INPUT_OPEN_LOOP]    = (State_Input_T)Stop_InputOpenLoop,
+    [MSM_INPUT_OPEN_LOOP]       = (State_Input_T)Stop_InputOpenLoop, /* Valid but can be omitted */
 };
 
 const State_T MOTOR_STATE_STOP =
@@ -540,10 +540,21 @@ static State_T * OpenLoop_InputControl(const Motor_T * p_motor, state_value_t ph
     }
 }
 
-// static State_T * Openloop_InputStop(const Motor_T * p_motor, state_value_t direction)
-// {
-//     // return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
-// }
+static State_T * OpenLoop_InputDirection(const Motor_T * p_motor, state_value_t direction)
+{
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U)
+    {
+        switch ((Motor_Direction_T)direction)
+        {
+            case MOTOR_DIRECTION_NULL: /* Intentional fall-through */
+            case MOTOR_DIRECTION_CW:
+            case MOTOR_DIRECTION_CCW:
+                Motor_FOC_SetDirection(p_motor->P_MOTOR_STATE, direction); break;
+            default: break; /* Invalid direction */
+        }
+    }
+    return NULL;
+}
 
 static State_T * OpenLoop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
@@ -572,7 +583,7 @@ static const State_Input_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGT
     [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)OpenLoop_InputControl,
     [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)OpenLoop_InputFeedbackMode,
     [MSM_INPUT_OPEN_LOOP]       = (State_Input_T)OpenLoop_InputOpenLoop,
-    // [MSM_INPUT_DIRECTION]       = (State_Input_T)Openloop_InputStop,
+    [MSM_INPUT_DIRECTION]       = (State_Input_T)OpenLoop_InputDirection,
     [MSM_INPUT_CALIBRATION]     = NULL,
 };
 

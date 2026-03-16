@@ -82,11 +82,71 @@ static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_St
 /* vq is expected to be the same sign as p_motor->Direction */
 
 /* I limit in [Direction] selected */
-static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (FOC_IsMotoring(&p_motor->Foc) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (FOC_IsMotoringCmd(&p_motor->Foc) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
 
 static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_Iq(&p_motor->Foc), _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
 static inline bool Motor_FOC_IsILimitReached(const Motor_State_T * p_motor) { return (FOC_GetIMagnitude(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }
 // static inline bool _Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return (abs(FOC_Iq(&p_motor->Foc)) > Motor_FOC_GetILimit(p_motor)); }
+
+
+static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) > 0); }
+static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
+
+/*
+    Plugging: applied Vq opposes back-EMF direction (speed sign)
+    Speed sign gives true rotor direction regardless of Vq/Iq
+*/
+/* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
+static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
+/*
+    Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
+*/
+/* Generating  AND Vq aligns with speed - true regeneration */
+static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0) && !Motor_FOC_IsPlugging(p_motor); }
+// static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) * FOC_Iq(&p_motor->Foc) < 0) && !Motor_FOC_IsPlugging(p_motor); }
+
+
+// /* Rotor spinning CCW (+speed), but Vq is negative - voltage opposing motion */
+// static inline bool Motor_FOC_IsForwardPlugging(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) > 0) && (FOC_Vq(&p_motor->Foc) < 0); }
+
+// /* Rotor spinning CW (-speed), but Vq is positive - voltage opposing motion */
+// static inline bool Motor_FOC_IsReversePlugging(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) < 0) && (FOC_Vq(&p_motor->Foc) > 0); }
+
+// static inline bool Motor_FOC_IsForwardRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) > 0) && (FOC_Vq(&p_motor->Foc) > 0) && (FOC_Iq(&p_motor->Foc) < 0); }
+// static inline bool Motor_FOC_IsReverseRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) < 0) && (FOC_Vq(&p_motor->Foc) < 0) && (FOC_Iq(&p_motor->Foc) > 0); }
+
+/* mask sign bit, motoring 0b01, plugging 0b01 */
+typedef enum Motor_FOC_OperatingState
+{
+    MOTOR_FOC_OPERATING_REVERSE_PLUGGING = -3,    /* Q4: +Vq, +Iq, -Speed - Vq opposes back-EMF */
+    MOTOR_FOC_OPERATING_REVERSE_REGEN    = -2,    /* Q4: -Vq, +Iq, -Speed - VBemf < Vq < 0 */
+    MOTOR_FOC_OPERATING_REVERSE_MOTORING = -1,    /* Q3: -Vq, -Iq, -Speed */
+    MOTOR_FOC_OPERATING_IDLE             = 0,
+    MOTOR_FOC_OPERATING_FORWARD_MOTORING = 1,    /* Q1: +Vq, +Iq, +Speed */
+    MOTOR_FOC_OPERATING_FORWARD_REGEN    = 2,    /* Q2: +Vq, -Iq, +Speed - VBemf > Vq > 0 */
+    MOTOR_FOC_OPERATING_FORWARD_PLUGGING = 3,    /* Q2: -Vq, -Iq, +Speed - Vq opposes back-EMF */
+}
+Motor_FOC_OperatingState_T;
+
+static inline Motor_FOC_OperatingState_T Motor_FOC_OperatingState(int16_t speed, fract16_t vq, fract16_t iq)
+{
+    if (speed == 0) { return MOTOR_FOC_OPERATING_IDLE; }
+
+    int32_t speed_sign = math_sign(speed);                  /* +1 or -1, direction polarity */
+    int32_t is_generating = ((int32_t)iq * speed < 0);     /* 1 if Iq opposes speed */
+    int32_t is_plugging = ((int32_t)vq * speed < 0);     /* 1 if Vq opposes speed */
+
+    /* state magnitude: 1=Motoring, 2=Regen, 3=Plugging */
+    /* sign encodes direction. bits [0:1] encode torque */
+    return (Motor_FOC_OperatingState_T)(speed_sign * (1 + is_generating + is_plugging));
+}
+
+// static inline bool Motor_FOC_StateIsForward(Motor_FOC_OperatingState_T s) { return (s > MOTOR_FOC_OPERATING_IDLE); }
+// static inline bool Motor_FOC_StateIsReverse(Motor_FOC_OperatingState_T s) { return (s < MOTOR_FOC_OPERATING_IDLE); }
+// static inline bool Motor_FOC_StateIsActive(Motor_FOC_OperatingState_T s) { return (s != MOTOR_FOC_OPERATING_IDLE); }
+// static inline bool Motor_FOC_StateIsMotoring(Motor_FOC_OperatingState_T s)  { return abs(s) == 1; }
+// static inline bool Motor_FOC_StateIsGenerating(Motor_FOC_OperatingState_T s){ return abs(s) >= 2; }
+// static inline bool Motor_FOC_StateIsPlugging(Motor_FOC_OperatingState_T s)  { return abs(s) == 3; }
 
 
 /******************************************************************************/

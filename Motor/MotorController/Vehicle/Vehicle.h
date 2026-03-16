@@ -96,6 +96,19 @@ static inline bool Vehicle_Input_PollDirectionEdge(Vehicle_Input_T * p_input, si
 
 static inline sign_t Vehicle_Input_GetDirectionCmd(const Vehicle_Input_T * p_input) { return p_input->Direction; }
 
+// optionally handle by motor layer
+// static inline int16_t Vehicle_Input_GetSignedCmd(const Vehicle_Input_T * p_input)
+// {
+//     switch (p_input->DriveCmd)
+//     {
+//         case VEHICLE_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue; // as motoring
+//         case VEHICLE_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue * p_input->Direction; // as signed torque
+//         case VEHICLE_CMD_THROTTLE:  return (int16_t)p_input->ThrottleValue * p_input->Direction;
+//         case VEHICLE_CMD_RELEASE:   return 0;
+//         default: return 0;
+//     }
+// }
+
 /*
     Config States
 */

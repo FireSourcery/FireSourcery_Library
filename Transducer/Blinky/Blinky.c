@@ -84,40 +84,6 @@ void Blinky_Proc(const Blinky_T * p_blinky)
     }
 }
 
-// void Blinky_Proc(const Blinky_T * p_blinky)
-// {
-//     Blinky_State_T * p_state = p_blinky->P_STATE;
-//     switch (p_blinky->P_STATE->Mode)
-//     {
-//         case BLINKY_STATE_DISABLED:  break;
-//         case BLINKY_STATE_ENABLED:
-//             if (Timer_Poll(&p_blinky->TIMER) == true)
-//             {
-//                 if (Timer_IsOneShot(&p_blinky->TIMER) == true) /* Timer is in OneShot Mode */
-//                 {
-//                     if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
-//                     {
-//                         Pattern_PeriodicToggle(p_blinky);
-//                         Timer_Restart(&p_blinky->TIMER);
-//                         p_state->Index++;
-//                     }
-//                     else
-//                     {
-//                         // _Blinky_Toggle(p_state);
-//                         Pin_Output_Off(&p_blinky->PIN); /* Turn off */
-//                         Timer_StartPeriodic(&p_blinky->TIMER, p_state->OffTime);  /* Restore Periodic */
-//                     }
-//                 }
-//                 else /* Timer is in Periodic Mode */
-//                 {
-//                     if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
-//                 }
-//             }
-//             break;
-//         default:
-//             break;
-//     }
-// }
 
 void Blinky_On(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = true; Pin_Output_High(&p_blinky->PIN); }
 void Blinky_Off(const Blinky_T * p_blinky) { p_blinky->P_STATE->IsOn = false; Pin_Output_Low(&p_blinky->PIN); }
@@ -155,7 +121,7 @@ void Blinky_Blink(const Blinky_T * p_blinky, uint32_t onTime)
 void Blinky_BlinkN(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
 {
     p_blinky->P_STATE->Index = 0U;
-    p_blinky->P_STATE->End = nRepeat * 2U - 2U;
+    p_blinky->P_STATE->End = nRepeat * 2U - 1U;
     p_blinky->P_STATE->OnTime = onTime;
     p_blinky->P_STATE->OffTime = offTime;
     Blinky_Blink_OnOff(p_blinky, onTime);

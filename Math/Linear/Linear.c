@@ -147,3 +147,8 @@ void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0,
     p_linear->YDelta = (1U << nFractionalBits);  // YRef is always = 2^nFractionalBits
     p_linear->YReference = p_linear->YDelta;  // YRef is always = 2^nFractionalBits
 }
+
+// void Linear_AsCoeffcient(Linear_T * p_linear)
+// {
+//     return { p_linear->Slope, p_linear->SlopeShift };
+// }

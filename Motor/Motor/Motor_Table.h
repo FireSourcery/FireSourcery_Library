@@ -118,6 +118,7 @@ typedef void(*Motor_ContextProc_T)(Motor_T * p_motor);
 static inline void Motor_Table_StopAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
 static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Start(&p_ctx->P_CONTEXTS[iMotor]); } }
 
+/* Motor_Table_ForEachProc */
 static inline void Motor_Table_ForEachApply(Motor_Table_T * p_ctx, Motor_ContextProc_T function) { void_array_foreach((void *)p_ctx->P_CONTEXTS, sizeof(Motor_T), p_ctx->LENGTH, (proc_t)function); }
 // static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { Motor_Table_ForEachApply(p_ctx, (Motor_ContextProc_T)Motor_Start); }
 

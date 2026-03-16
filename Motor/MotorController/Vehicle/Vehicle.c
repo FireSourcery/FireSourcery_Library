@@ -126,6 +126,12 @@ void Vehicle_StartDriveZero(const Vehicle_T * p_vehicle)
     }
 }
 
+// optionally select speed ramp down
+void Vehicle_ProcRelease(const Vehicle_T * p_vehicle)
+{
+    // Motor_Table_ForEachApply(&p_vehicle->MOTORS, Motor_Hypervisor);
+}
+
 
 
 

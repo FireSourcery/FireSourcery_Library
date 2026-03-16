@@ -102,6 +102,7 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 
 
 // define around 2 register return
+// typedef struct   { int32_t x; int32_t y; } operand2_t; /* point, vector, limits */ /* 32 */
 // typedef struct   { int32_t x; int32_t y; } vector2_t; /* point, vector, limits */ /* 32 */
 // typedef struct   { int16_t x; int16_t y; int16_t z; } vector3_t; /* 48 */
 // typedef struct   { int16_t x; int16_t y; int16_t z; int16_t w; } data4_t;

@@ -66,7 +66,7 @@ MotorController_App_T MC_APP_VEHICLE =
 };
 
 /*
-    setting MOTOR_DIRECTION_NULL motor maps STOP
+    setting MOTOR_DIRECTION_NULL
     remap to Neutral State VZ/V0
 */
 /******************************************************************************/
@@ -309,6 +309,8 @@ void _MotorController_Vehicle_ApplyCmd(MotorController_T * p_mc, Vehicle_StateIn
     capture user cmd
     edge detect
     send to state machine
+
+    p_input->DriveCmd updates without statemachine check. handled on input only.
 */
 /*
     Unified CmdId detection, inclusive of edge detection.

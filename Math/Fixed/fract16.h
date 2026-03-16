@@ -43,6 +43,7 @@
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
+/* num32q15_t */
 // typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) */
 // typedef uint16_t percent16_t;       /*!< Q0.16 [0, 1) */
 
@@ -170,6 +171,9 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 // static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
 // {
 // }
+
+
+
 
 /******************************************************************************/
 /*!

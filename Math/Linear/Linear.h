@@ -86,6 +86,15 @@ Linear_T;
 }
 #endif
 
+
+// linear_t Linear_AsCoefficient(const Linear_T * p_linear) { return { p_linear->Slope, p_linear->SlopeShift }; }
+
+// typedef struct
+// {
+//     int32_t Factor;
+//     uint8_t Shift;
+// } Linear_Coefficient_T;
+
 /******************************************************************************/
 /*!
     Protected

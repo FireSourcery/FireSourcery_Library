@@ -119,6 +119,9 @@ void _Ramp_SetSlope(Ramp_T * p_ramp, uint32_t rate_accum32)
     p_ramp->Accumulator.Coefficient = rate_accum32 >> (15U - RAMP_SHIFT); // or RAMP_SHIFT update to 15
 }
 
+
+/* todo handle with config options */
+
 /*
     (duration_Ms * updateFreq_Hz) [0:131,071,000]
 */

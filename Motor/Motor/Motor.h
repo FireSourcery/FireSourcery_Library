@@ -520,8 +520,8 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_State_T * p_motor
     Speed/SpeedRated => V/VBusRef
     @return V_Fract16 - VBusRef of Speed Kv
 */
-static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_State_T * p_motor, accum32_t speed_fract16) { return Phase_VBus_Fract16() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_motor); }
-static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_State_T * p_motor, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(p_motor) / Phase_VBus_Fract16(); }
+static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_State_T * p_motor, accum32_t speed_fract16) { return Phase_VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_motor); }
+static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_State_T * p_motor, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(p_motor) / Phase_VBus_GetVNominal(); }
 
 /*  Phase peak. */
 static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_State_T * p_motor, accum32_t speed_fract16) { return Motor_VBusOfSpeed_Fract16(p_motor, speed_fract16) / 2; }
