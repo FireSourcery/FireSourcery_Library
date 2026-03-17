@@ -45,6 +45,7 @@ typedef struct Phase_VBus
    uint32_t PerV_Fract32;
    /* Config */
    uint16_t VNominal_Fract16; /* VSupply */
+//    uint16_t SpeedRef; handle static instance for units
 }
 Phase_VBus_T;
 

@@ -27,6 +27,7 @@
     @brief  Motor module conventional function definitions.
 */
 /******************************************************************************/
+#include "_Motor_Config.h"
 #include "Motor.h"
 #include <string.h>
 
@@ -36,7 +37,7 @@
 */
 void Motor_Init(const Motor_T * p_context)
 {
-    assert(Phase_VBus_Fract16() != 0U); /* set before init */
+    assert(Phase_VBus_Fract16() != 0U); /* set by caller init */
 
     /* Config including selected angle sensor init */
     if (p_context->P_NVM_CONFIG != NULL) { p_context->P_MOTOR_STATE->Config = *p_context->P_NVM_CONFIG; }
@@ -139,10 +140,10 @@ void Motor_InitTorqueRamp(Motor_State_T * p_motor)
     Ramp_Init(&p_motor->TorqueRamp, p_motor->Config.TorqueRampTime_Cycles, Phase_Calibration_GetIRatedPeak_Fract16()); /* Current by default */
 }
 
-void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
-void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
-void Motor_DisableSpeedRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
-void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
+// void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
+// void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
+// void Motor_DisableSpeedRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
+// void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
 
 // void Motor_ResetSpeedPid(Motor_State_T * p_motor)
 // {

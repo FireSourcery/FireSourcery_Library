@@ -263,7 +263,7 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 */
 void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, int16_t vRef)
 {
-    PID_SetOutputLimits(&p_motor->PidIq, 0 - _Motor_VClampCwOf(p_motor, vRef), _Motor_VClampCcwOf(p_motor, vRef));
+    PID_SetOutputLimits(&p_motor->PidIq, 0 - _Motor_CwOf(vRef), _Motor_CcwOf(vRef));
     PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
 }
 

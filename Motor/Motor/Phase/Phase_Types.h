@@ -194,7 +194,7 @@ typedef union Phase_Triplet
         int16_t B;
         int16_t C;
     };
-    int16_t Values[3U]; /* Indexed */
+    int16_t Values[3U]; /* Indexed/Array */
 }
 Phase_Triplet_T;
 
@@ -214,6 +214,7 @@ Phase_Triplet_T;
 
 typedef struct Phase_Data
 {
+    // union { struct { int16_t A; int16_t B; int16_t C; }; Phase_Triplet_T Vector; }; keep anonymous access for ABC, convinience pass combined values.
     Phase_Triplet_T Values;
     Phase_Bitmask_T Flags;
     uint8_t Resv; /* align to 32 bits */

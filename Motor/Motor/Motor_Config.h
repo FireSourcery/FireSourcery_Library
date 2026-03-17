@@ -33,6 +33,7 @@
 #ifndef MOTOR_CONFIG_H
 #define MOTOR_CONFIG_H
 
+#include "_Motor_Config.h"
 #include "Motor.h"
 
 #include <stdint.h>

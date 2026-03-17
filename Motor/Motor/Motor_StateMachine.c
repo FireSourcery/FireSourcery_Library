@@ -357,6 +357,7 @@ const State_T MOTOR_STATE_PASSIVE =
 static void Run_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
+    // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR_STATE, Motor_ILimitCw(p_motor->P_MOTOR_STATE), Motor_ILimitCcw(p_motor->P_MOTOR_STATE));
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
     // RotorSensor_ZeroInitial(p_motor->P_MOTOR_STATE->p_ActiveSensor); not needed if capture sensor runs in thread
     /* alternatively Update Vbus on start Angle Control */
@@ -747,6 +748,10 @@ void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T f
 }
 
 
+
+// Orthogonal Composition
+// The critical architectural point: State objects naturally compose as orthogonal regions because each provides an independent behavioral filter over shared canonical data.
+///The key is: States don't hold independent data — they provide a behavioral lens over canonical data.
 
 /* Alternatively orthogonal state  */
 // static State_T * Ccw_Input(const Motor_T * p_motor, state_value_t value)

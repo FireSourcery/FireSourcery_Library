@@ -31,8 +31,10 @@
 /******************************************************************************/
 #include "../Phase/Phase_Types.h"
 
-/* Interface for Capture Results, compile time selection between capture */
-/* Struct as data interface */
+/*
+    Transport Data Interface
+    Interface for Capture Results, compile time selection between capture
+*/
 /* Phase_Feedback/Capture/Measure */
 typedef struct Phase_Input
 {
@@ -40,6 +42,8 @@ typedef struct Phase_Input
     Phase_Bitmask_T VFlags;
     Phase_Triplet_T Iabc;
     Phase_Bitmask_T IFlags;
+    // Phase_Data_T V;
+    // Phase_Data_T I;
 }
 Phase_Input_T;
 
