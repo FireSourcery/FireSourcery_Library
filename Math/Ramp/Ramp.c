@@ -36,22 +36,6 @@
     target is updated independently
 */
 /* Coefficient as abs */
-// static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
-// {
-//     int32_t target32 = target << RAMP_SHIFT;
-
-//     if (target32 == p_ramp->Accumulator.Accumulator) { return p_ramp->Accumulator.Accumulator; }
-//     if (target32 > p_ramp->Accumulator.Accumulator) // incrementing
-//     {
-//         return math_limit_upper(p_ramp->Accumulator.Accumulator + p_ramp->Accumulator.Coefficient, target32);
-//     }
-//     if (target32 < p_ramp->Accumulator.Accumulator) // decrementing
-//     {
-//         return math_limit_lower(p_ramp->Accumulator.Accumulator - p_ramp->Accumulator.Coefficient, target32);
-//     }
-//     return p_ramp->Accumulator.Accumulator;
-// }
-
 static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
 {
     int32_t target32 = target << RAMP_SHIFT;

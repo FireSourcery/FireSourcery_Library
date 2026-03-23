@@ -57,6 +57,7 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
 /*
     User functions return status - communicate module handled behaviors
     overload to eliminate need of addtional parser functions
+    include sync ids from framing/header
 */
 typedef enum Protocol_RxCode
 {
@@ -79,15 +80,16 @@ typedef enum Protocol_RxCode
 Protocol_RxCode_T;
 
 /* Parse with PARSE_RX_META */
-/* FramingMeta ControlMeta */
-/* Effectively common struct from unknown Packet struct */
-/* VirtualHeader */
+/* Framing */
+/* Effectively VirtualHeader for unknown Packet struct */
 typedef struct Protocol_HeaderMeta
 {
     packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
     packet_size_t Length;           /* Total packet length */
 
     // uint32_t Sequence;   /* Sequence number (optional) */
+
+    // uint32_t Start;
     // uint32_t Status;
     // uint8_t SourceId;               /* Source node ID (optional) */
     // uint8_t DestId;                 /* Destination node ID (optional) */
@@ -97,44 +99,26 @@ typedef struct Protocol_HeaderMeta
 }
 Protocol_HeaderMeta_T;
 
-typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(Protocol_HeaderMeta_T * p_rxMeta, const void * p_rxPacket, packet_size_t rxCount);
-// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const void * p_rxPacket, strcut * p_rxState, Protocol_HeaderMeta_T * p_rxMeta);
-
-// combine passing base and child state
-// const context pass with function
-// typedef struct Packet_Parser
+// typedef struct Packet_RxState
 // {
-    // const void * const p_rxPacket;
-    // const packet_size_t rxCount;
-    // uint16_t Checksum;   /* Running checksum */
-
-    //     Protocol_RxCode_T rxStatus; /* Status of the parsing operation */
-    // const Packet_ParseRxMeta_T parseRxMeta;
-//     Protocol_HeaderMeta_T HeaderMeta;
+    // Protocol_RxStateId_T StateId;
+//     packet_size_t RxIndex;
+//     Protocol_HeaderMeta_T RxMeta;
+//     Protocol_RxCode_T rxStatus; /* Status of the parsing operation */
+//     uint16_t Checksum;   /* Running checksum */
 // }
-// Packet_Parser_T;
-// typedef void(*Packet_ParseRxMeta_T)(Packet_Parser_T * p_parser);
-// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const Packet_Parser_T * p_parser, Protocol_HeaderMeta_T * rxMeta);
+// Protocol_RxState_T;
 
-// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(Packet_HeaderParser_T * p_parser);
-// typedef const struct Packet_Parser
-// {
-//     const uint8_t * P_BUFFER;
-//     const void * P_RX_STATE;
-//     // void * P_RX_STATE;
-//     Protocol_HeaderMeta_T * P_META;
-//     Packet_ParseRxMeta_T PARSE_RX_META; // 1 virtual function
-// }
-// Packet_HeaderParser_T;
+typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const void * p_rxPacket, packet_size_t rxCount, Protocol_HeaderMeta_T * p_rxMeta);
+// typedef Protocol_RxCode_T(*Packet_ParseRxMeta_T)(const void * p_rxPacket, Protocol_RxState_T * p_rxState, Protocol_HeaderMeta_T * p_rxMeta);
 
 
 /*
     Tx
 */
 typedef void (* const Packet_BuildTxSync_T)(void * p_txPacket, packet_size_t * p_txSize, packet_id_t txId);
-// typedef packet_size_t(* const Packet_BuildTxSignal_T)(void * p_txPacket, packet_id_t txId);
 typedef void (* const Packet_BuildTxMeta_T)(void * p_txPacket, const Protocol_HeaderMeta_T * p_meta);
-// typedef void (* const Packet_BuildTxMeta_T)(Packet_T * p_txPacket);
+
 
 /******************************************************************************/
 /*!
@@ -142,16 +126,18 @@ typedef void (* const Packet_BuildTxMeta_T)(void * p_txPacket, const Protocol_He
     Protocol_Transport
 */
 /******************************************************************************/
-typedef const struct Packet_Class
+typedef const struct Packet_Format
 {
     const uint8_t RX_LENGTH_MIN;                  /* Rx this many bytes before calling PARSE_RX */
     const uint8_t RX_LENGTH_MAX;
+
+    /* Enframe/Deframe */
     const Packet_ParseRxMeta_T PARSE_RX_META;     /* Parse Header for RxReqId and RxRemaining, and check data */
     const Packet_BuildTxSync_T BUILD_TX_SYNC;     /* Build Sync Packets */
-    // const Packet_BuildTxHeader_T BUILD_TX_HEADER;  /* todo */
+    const Packet_BuildTxMeta_T BUILD_TX_META;   /* todo */
 
     /* Optional */
-    const uint32_t RX_START_ID;             /* 0x00 for not applicable */
+    const uint32_t RX_START_ID;             /* 0x00 for Rx Parser handle */
     // const uint32_t RX_END_ID;
 
     // move to protocol param
@@ -164,37 +150,40 @@ typedef const struct Packet_Class
 
     // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 }
-Packet_Class_T;
+Packet_Format_T;
 
 
-// alternative to PARSE_RX_META
-// typedef const struct Packet_HeaderClass
-// {
-//     const uint8_t ID_FIELD_START;                /* Packet ID */
-//     const uint8_t ID_FIELD_SIZE;
-//     const uint8_t LENGTH_FIELD_START;            /* Packet Length */
-//     const uint8_t LENGTH_FIELD_SIZE;
+/******************************************************************************/
+/*!
+    Tx Sync
+    User supply function to build Tx Ack, Nack, etc
+    alternatively combine rx sync with map
+*/
+/******************************************************************************/
+typedef enum Protocol_TxSyncId
+{
+    PROTOCOL_TX_SYNC_ACK_REQ,
+    PROTOCOL_TX_SYNC_NACK_REQ,
+    PROTOCOL_TX_SYNC_ACK_ABORT,
+    PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT,
+    PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT,
+    PROTOCOL_TX_SYNC_NACK_PACKET_META,
+    PROTOCOL_TX_SYNC_NACK_PACKET_DATA,
+    PROTOCOL_TX_SYNC_ACK_REQ_EXT,
+    PROTOCOL_TX_SYNC_NACK_REQ_EXT,
+    // PROTOCOL_TX_RESP, alternatively update and map
+}
+Protocol_TxSyncId_T;
 
-//     // const packet_size_t RX_LENGTH_INDEX;
-//     // const packet_size_t RX_REQ_ID_INDEX;
-//     // const packet_size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
-// } Packet_HeaderClass_T;
+typedef enum Protocol_RxState
+{
+    PROTOCOL_RX_STATE_INACTIVE,
+    PROTOCOL_RX_STATE_WAIT_BYTE_1,
+    PROTOCOL_RX_STATE_WAIT_PACKET,
+    // PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL,
+}
+Protocol_RxState_T;
 
-// optionally compile time define contigous context
-// static inline   Packet_Action(const Packet_Class_T * , uint8_t *, ...)
-// typedef const struct Packet_Context
-// {
-//     const Packet_Class_T * P_SPECS;
-//     uint8_t * P_BUFFER;
-//     //   * P_RX_STATE;
-//     Protocol_HeaderMeta_T * P_META;
-// }
-// Packet_Context_T;
-
-// static inline Protocol_RxCode_T Packet_ParseRxFraming(const Packet_Context_T * p_context)
-// {
-//     p_context->P_SPECS->PARSE_RX_META(p_context->P_META, p_context->P_BUFFER, p_context->LENGTH);
-// }
 
 
 
@@ -209,39 +198,6 @@ Packet_Class_T;
 //     PROTOCOL_TX_TYPE_RESET,             /* Protocol reset */
 // } Protocol_TxType_T;
 
-// typedef struct Protocol_TxRequest
-// {
-//     Protocol_TxType_T Type;             /* Packet type */
-//     packet_id_t PacketId;               /* Packet identifier */
-//     packet_sequence_t Sequence;         /* Sequence number */
-//     const void * p_Payload;             /* Payload data */
-//     packet_size_t PayloadLength;        /* Payload length */
-//     uint8_t Priority;                   /* Transmission priority */
-//     bool AckRequired;                   /* Require acknowledgment */
-//     uint32_t Timeout;                   /* Transmission timeout */
-// } Protocol_TxRequest_T;
-
-// // Enhanced builder function signatures
-// typedef packet_size_t(*Packet_BuildTxData_T)(
-//     void * p_txPacket,
-//     packet_size_t maxTxSize,
-//     const Protocol_TxRequest_T * p_request
-//     );
-
-// typedef packet_size_t(*Packet_BuildTxSync_T)(
-//     void * p_txPacket,
-//     packet_size_t maxTxSize,
-//     Protocol_TxType_T syncType,
-//     packet_id_t packetId
-//     );
-
-// typedef packet_size_t(*Packet_BuildTxFragment_T)(
-//     void * p_txPacket,
-//     packet_size_t maxTxSize,
-//     const Protocol_TxRequest_T * p_request,
-//     packet_size_t fragmentOffset,
-//     packet_size_t fragmentSize
-//     );
 
 
 // typedef enum Protocol_ParseState
@@ -253,30 +209,6 @@ Packet_Class_T;
 //     PROTOCOL_PARSE_STATE_COMPLETE,      /* Packet complete */
 //     PROTOCOL_PARSE_STATE_ERROR          /* Error state */
 // } Protocol_ParseState_T;
-
-// typedef struct Packet_ParserState + const context pass with function
-// typedef struct Protocol_ParseContext
-// {
-//     Protocol_ParseState_T State;        /* Current parser state */
-//     packet_size_t BytesReceived;        /* Total bytes received */
-//     packet_size_t BytesExpected;        /* Expected total bytes */
-//     packet_size_t HeaderBytesReceived;  /* Header bytes received */
-//     Protocol_HeaderMeta_T HeaderMeta;   /* Parsed header information */
-//     uint32_t Checksum;                  /* Running checksum */
-//     uint32_t Timeout;                   /* Timeout counter */
-//     void * p_ProtocolState;             /* Protocol-specific state */
-// } Protocol_ParseContext_T;
-
-// // Enhanced parser function signature
-// typedef Protocol_RxCode_T(*Packet_ParseRx_T)(
-//     Protocol_ParseContext_T * p_context,
-//     const void * p_rxData,
-//     packet_size_t rxCount,
-//     Protocol_HeaderMeta_T * p_rxMeta
-//     );
-
-
-
 
 // typedef enum Protocol_RxCode
 // {
@@ -311,3 +243,66 @@ Packet_Class_T;
 //     PROTOCOL_RX_CODE_ERROR_NOT_READY = 0xF1,  /* System not ready */
 //     PROTOCOL_RX_CODE_ERROR_BUSY = 0xF2,  /* System busy */
 // } Protocol_RxCode_T;
+
+// alternative to PARSE_RX_META
+// typedef const struct Packet_HeaderFormat
+// {
+//     const uint8_t ID_FIELD_START;                /* Packet ID */
+//     const uint8_t ID_FIELD_SIZE;
+//     const uint8_t LENGTH_FIELD_START;            /* Packet Length */
+//     const uint8_t LENGTH_FIELD_SIZE;
+//      Field_T SYNC;
+//      Field_T ID;
+//      Field_T LENGTH;
+//      Field_T CHECKSUM;
+//     // const packet_size_t RX_LENGTH_INDEX;
+//     // const packet_size_t RX_REQ_ID_INDEX;
+//     // const packet_size_t RX_HEADER_LENGTH;     /* fixed header length known to include contain data length value */
+// } Packet_HeaderFormat_T;
+// Rx — generic incremental parser driven by descriptor
+// Protocol_RxCode_T Packet_ParseRx(const Packet_Format_T * p_fmt, Protocol_HeaderMeta_T * p_meta,
+//     const uint8_t * p_buffer, packet_size_t rxCount)
+// {
+//     if (rxCount < p_fmt->HEADER_SIZE)
+//         return PROTOCOL_RX_CODE_AWAIT_PACKET;
+
+//     // Extract length from described position
+//     p_meta->Length = Packet_ReadField(p_buffer, p_fmt->LENGTH_OFFSET, p_fmt->LENGTH_SIZE);
+//     if (!p_fmt->LENGTH_INCLUDES_HEADER)
+//         p_meta->Length += p_fmt->HEADER_SIZE;
+
+//     if (rxCount < p_meta->Length)
+//         return PROTOCOL_RX_CODE_AWAIT_PACKET;
+
+//     // Extract ID from described position
+//     p_meta->Id = Packet_ReadField(p_buffer, p_fmt->ID_OFFSET, p_fmt->ID_SIZE);
+
+//     // Validate integrity using described algorithm
+//     if (!Packet_ValidateChecksum(p_fmt, p_buffer, p_meta->Length))
+//         return PROTOCOL_RX_CODE_ERROR_DATA;
+
+//     return PROTOCOL_RX_CODE_PACKET_COMPLETE;
+// }
+
+// // Tx — generic header builder driven by descriptor
+// packet_size_t Packet_BuildTx(const Packet_Format_T * p_fmt, uint8_t * p_buffer,
+//     packet_id_t id, packet_size_t payloadLength)
+// {
+//     packet_size_t totalLength = p_fmt->HEADER_SIZE + payloadLength;
+
+//     // Start byte
+//     if (p_fmt->START_BYTE != 0)
+//         p_buffer[0] = p_fmt->START_BYTE;
+
+//     // ID at described position
+//     Packet_WriteField(p_buffer, p_fmt->ID_OFFSET, p_fmt->ID_SIZE, id);
+
+//     // Length at described position
+//     packet_size_t lengthValue = p_fmt->LENGTH_INCLUDES_HEADER ? totalLength : payloadLength;
+//     Packet_WriteField(p_buffer, p_fmt->LENGTH_OFFSET, p_fmt->LENGTH_SIZE, lengthValue);
+
+//     // Checksum at described position
+//     Packet_ComputeChecksum(p_fmt, p_buffer, totalLength);
+
+//     return totalLength;
+// }

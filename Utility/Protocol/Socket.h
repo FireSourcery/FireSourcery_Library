@@ -57,7 +57,7 @@ typedef struct Socket_State
         Active Refs
     */
     const Xcvr_T * p_Xcvr;
-    const Packet_Class_T * p_Specs;
+    const Packet_Format_T * p_Specs;
     // Datagram_T Datagram; // configurable broadcast
 
     /*
@@ -127,7 +127,7 @@ typedef const struct Socket
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
 
-    const Packet_Class_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
+    const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
     uint8_t PACKET_CLASS_COUNT;
 
     /*  */
@@ -135,10 +135,13 @@ typedef const struct Socket
     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 
     // alternatively fixed or default init
-    // const Packet_Class_T * const * P_PACKET_CLASS;
+    // const Packet_Format_T * const * P_PACKET_CLASS;
     // const Xcvr_T * P_XCVR;
 
     const volatile uint32_t * P_TIMER;
+
+    // Packet_Context_T * P_RX_PACKET_CONTEXT;
+    // Packet_Context_T * P_TX_PACKET_CONTEXT;
 }
 Socket_T;
 

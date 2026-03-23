@@ -69,41 +69,48 @@ void Socket_Init(Socket_T * p_socket)
     Packet is complete => Req, ReqExt or Sync, or Error
     Read into a contiguous buffer, which can be cast to Packet format
 */
-// static inline uint8_t NextRxIndex(Protocol_HeaderMeta_T * p_rxMeta, const Packet_Class_T * p_specs, uint8_t rxIndex)
+
+
+/*
+    Compute the byte target for the next Xcvr read.
+    Pure function — no virtual calls, no side effects.
+
+    Returns target index, or 0 on error (rxIndex past expected length).
+*/
+/*
+    Set xcvrRxLimit for PARSE_RX_META. Prevent reading bytes from the following packet.
+    RxMeta.Length unknown => Check 1 byte or a known const value, until RxMeta.Length is known
+    RxMeta.Length known => Check Rx remaining
+*/
+// static inline uint8_t NextRxIndex(const Packet_Format_T * p_specs, uint8_t rxIndex, uint8_t rxPacketLength)
 // {
 //     uint8_t nextRxIndex;
 
-//     if (p_rxMeta->Length > 0U)  /* PacketLength is known. */
+//     if (rxPacketLength > 0U)  /* PacketLength is known. */
 //     {
-//         if (rxIndex < p_rxMeta->Length) { nextRxIndex = p_rxMeta->Length; }
-//         else { nextRxIndex = 0U; } /* (RxIndex == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
+//         nextRxIndex = (rxIndex < rxPacketLength) ? rxPacketLength : 0U;
+//         /* (RxIndex == RxMeta.Length) => (xcvrRxLimit == 0), when rxStatus == PROTOCOL_RX_CODE_WAIT_PACKET erroneously i.e. received full packet without completion status */
 //     }
 //     else  /* PacketLength is unknown */ /* (p_rxMeta->Length == 0) */
 //     {
-//         if (rxIndex < p_specs->RX_LENGTH_MIN) { nextRxIndex = p_specs->RX_LENGTH_MIN; }
-//         else { nextRxIndex = rxIndex + 1U; }
+//         nextRxIndex = (rxIndex < p_specs->RX_LENGTH_MIN) ? p_specs->RX_LENGTH_MIN : rxIndex + 1U;
 //     }
 
 //     return nextRxIndex;
+//     // return (nextRxIndex <= p_specs->RX_LENGTH_MAX) ? nextRxIndex : 0U;
 // }
+
 
 static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_State_T * p_state)
 {
     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
     uint8_t nextRxIndex;
-    // uint8_t xcvrRxLimit; /* PARSE_RX_META after this number is received */
-    // uint8_t xcvrRxCount;
 
     /* Loop to empty Xcvr Rx buffer. Check for completetion, per Rx 1 byte, during unknown length, or up to known length */
     while (p_state->RxIndex < p_state->p_Specs->RX_LENGTH_MAX) /* RX_LENGTH_MAX <= CONFIG.PACKET_BUFFER_LENGTH */
     {
         if (rxStatus != PROTOCOL_RX_CODE_AWAIT_PACKET) { break; } /* Packet is complete, break */
 
-        /*
-            Set xcvrRxLimit for PARSE_RX_META. Prevent reading bytes from the following packet.
-            RxMeta.Length unknown => Check 1 byte or a known const value, until RxMeta.Length is known
-            RxMeta.Length known => Check Rx remaining
-        */
         if (p_state->RxMeta.Length > 0U)  /* PacketLength is known. */
         {
             if (p_state->RxIndex < p_state->RxMeta.Length) { nextRxIndex = p_state->RxMeta.Length; }
@@ -115,6 +122,7 @@ static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_Stat
         else { nextRxIndex = p_state->RxIndex + 1U; }
 
         if (nextRxIndex > p_state->p_Specs->RX_LENGTH_MAX) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
+
         /* Copy from Xcvr buffer to Protocol buffer, up to xcvrRxLimit */
         p_state->RxIndex += Xcvr_RxMax(p_state->p_Xcvr, &p_socket->P_RX_PACKET_BUFFER[p_state->RxIndex], nextRxIndex - p_state->RxIndex);
 
@@ -122,7 +130,7 @@ static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_Stat
         {
             /* Implicitly: (xcvrRxCount != 0), (xcvrRxLimit != 0). (RxIndex >= RX_LENGTH_MIN)  */
             /* returns PROTOCOL_RX_CODE_AWAIT_PACKET on successful set of meta data *//* more bytes in Xcvr Buffer, continue while loop */
-            rxStatus = p_state->p_Specs->PARSE_RX_META(&p_state->RxMeta, p_socket->P_RX_PACKET_BUFFER, p_state->RxIndex);
+            rxStatus = p_state->p_Specs->PARSE_RX_META(p_socket->P_RX_PACKET_BUFFER, p_state->RxIndex, &p_state->RxMeta);
         }
         else /* xcvrRxCount < xcvrRxLimit => Xcvr Rx Buffer empty, wait for Xcvr */
         {
@@ -132,6 +140,7 @@ static inline Protocol_RxCode_T CaptureRx(const Socket_T * p_socket, Socket_Stat
 
     return rxStatus;
 }
+
 
 static void TxSync(const Socket_T * p_socket, Socket_State_T * p_state, Protocol_TxSyncId_T txId)
 {
@@ -217,6 +226,14 @@ static inline Protocol_RxCode_T ProcRxState(const Socket_T * p_socket, Socket_St
 
         case PROTOCOL_RX_STATE_WAIT_PACKET: /* nonblocking wait state, timer started */
             rxStatus = CaptureRx(p_socket, p_state);
+            // while (rxStatus == PROTOCOL_RX_CODE_AWAIT_PACKET)
+            // {
+            //     packet_size_t target = Packet_RxTarget(p_state->p_Specs, p_rx);
+            //     if (target == 0U) { rxStatus = PROTOCOL_RX_CODE_ERROR_META; break; }
+            //     p_rx->RxIndex += Xcvr_RxMax(p_state->p_Xcvr, &p_socket->P_RX_PACKET_BUFFER[p_rx->RxIndex], target - p_rx->RxIndex);
+            //     if (p_rx->RxIndex >= target)  rxStatus = Packet_RxParse(p_state->p_Specs, p_socket->P_RX_PACKET_BUFFER, p_rx);
+            //     else   break;  // Xcvr empty
+            // }
             switch (rxStatus)
             {
                 case PROTOCOL_RX_CODE_AWAIT_PACKET:
@@ -327,7 +344,8 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
                         {
                             // p_state->TxLength = 0U; /* in case it is not set by the user function */
                             p_state->TxLength = p_state->p_ReqActive->PROC(p_socket->P_APP_CONTEXT, p_socket->P_TX_PACKET_BUFFER, p_socket->P_RX_PACKET_BUFFER);
-                            // p_state->p_Specs->BUILD_TX_HEADER(p_socket->P_TX_PACKET_BUFFER, &p_state->TxLength, txId, payloadLength);
+                            // p_state->p_Specs->BUILD_TX_META(p_socket->P_TX_PACKET_BUFFER, &p_state->TxLength );
+
                             if ((TxResp(p_socket, p_state) == true) && (p_state->p_ReqActive->SYNC.RX_ACK == true)) /* Tx resp if TxLength > 0 */
                             {
                                 p_state->ReqState = PROTOCOL_REQ_STATE_WAIT_RX_SYNC;
@@ -583,7 +601,7 @@ void Socket_ConfigXcvrBaudRate(Socket_T * p_socket, uint32_t baudRate)
 void Socket_SetSpecs(Socket_T * p_socket, uint8_t p_specsId)
 {
     Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
-    const Packet_Class_T * p_specs = (p_specsId < p_socket->PACKET_CLASS_COUNT) ? p_socket->P_PACKET_CLASS_TABLE[p_specsId] : NULL;
+    const Packet_Format_T * p_specs = (p_specsId < p_socket->PACKET_CLASS_COUNT) ? p_socket->P_PACKET_CLASS_TABLE[p_specsId] : NULL;
 
     if ((p_specs != NULL) && (p_specs->RX_LENGTH_MAX <= p_socket->PACKET_BUFFER_LENGTH))
     {

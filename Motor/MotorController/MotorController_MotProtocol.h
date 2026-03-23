@@ -37,9 +37,7 @@ extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTRO
 
 
 /*
-//move to alternate interface extension
     Status Flags for User Interface
-
     Combined boolean outputs for protocol convenience
 */
 typedef union MotorController_StatusFlags

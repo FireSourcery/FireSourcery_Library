@@ -29,7 +29,6 @@
     @brief  Protocol abstract class equivalent
 */
 /******************************************************************************/
-#include "Config.h"
 //#include "Datagram.h"
 
 #include "Packet/Packet.h"
@@ -66,20 +65,13 @@
 */
 /******************************************************************************/
 typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPacket, const uint8_t * p_rxPacket);
-// typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPayload, const uint8_t * p_rxPayload);
+// typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, void * p_txPayload, const void * p_rxPayload);
 
 /******************************************************************************/
 /*
     Extended/Stateful Request - Support wait, loop, dynamic ack/nack and additional processes
 */
 /******************************************************************************/
-// alternatively,
-// with payload,   builder header double buffers
-// typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const Protocol_HeaderMeta_T * p_rxMeta);
-// typedef void(*Protocol_BuildResp_T)(void * p_appContext, uint8_t * p_txPayload, Protocol_HeaderMeta_T * p_txMeta);
-
-// typedef void(*Protocol_ParseReq_T)(void * p_appContext, const uint8_t * p_rxPayload, const uint8_t * p_rxHeader);
-// typedef void(*Protocol_BuildResp_T)(void * p_appContext, uint8_t * p_txPayload, uint8_t * p_txHeader);
 
 /* Common Req from child protocol to supported general protocol control, predefined behaviors */
 typedef enum Protocol_ReqCode
@@ -120,26 +112,30 @@ Protocol_ReqCode_T;
 
 /*
     Stateful Req function, pass args collectively,
-    alternatively pass by struct and let compiler handle
 */
-/* ReqParameters */
 typedef const struct Protocol_ReqContext
 {
-    void * p_SubState;
-    uint32_t * p_SubStateIndex;
-    const Protocol_HeaderMeta_T * p_RxMeta;
+    // Rx side (filled by framing layer before calling handler)
     const void * p_RxPacket;
     // const void * p_RxPayload;
+    const Protocol_HeaderMeta_T * p_RxMeta;
+
+    // Tx side (filled by handler)
     void * p_TxPacket;
     // void * p_TxPayload;
+    Protocol_HeaderMeta_T * p_TxMeta;  // handler sets Id + Length
     packet_size_t * p_TxSize;
-    // Protocol_HeaderMeta_T * p_TxMeta;
+
+    // State (for multi-step sequences)
+    void * p_SubState;
+    uint32_t * p_SubStateIndex;
+// Optionally as unified handler context
+// optionally compile time define contigous context
 }
 Protocol_ReqContext_T;
 
 typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Protocol_ReqContext_T * p_interface);
-// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(Protocol_ReqContext_T interface);
-// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(Protocol_T * p_base);
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Packet_RxContext_T, Packet_TxConontext_T, );
 
 typedef void (*Protocol_ResetReqState_T)(void * p_subState);
 
@@ -189,6 +185,7 @@ typedef const struct Protocol_Req
     const Protocol_ProcReqExt_T     PROC_EXT;
     const Protocol_ReqSync_T        SYNC;
     const uint32_t                  TIMEOUT; /* overwrite common timeout */
+    // packet_size_t RESP_PAYLOAD_SIZE;  // 0 = variable (handler returns size)
 }
 Protocol_Req_T;
 
@@ -198,27 +195,9 @@ Protocol_Req_T;
 // #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt) \
 //     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
+/* Faster reverse map */
+typedef Protocol_Req_T * (*Protocol_ReqMapper_T)(void * p_app, packet_id_t id);
 
-/******************************************************************************/
-/*!
-    Tx Sync
-    User supply function to build Tx Ack, Nack, etc
-    alternatively combine rx sync with map
-*/
-/******************************************************************************/
-typedef enum Protocol_TxSyncId
-{
-    PROTOCOL_TX_SYNC_ACK_REQ,
-    PROTOCOL_TX_SYNC_NACK_REQ,
-    PROTOCOL_TX_SYNC_ACK_ABORT,
-    PROTOCOL_TX_SYNC_NACK_RX_TIMEOUT,
-    PROTOCOL_TX_SYNC_NACK_REQ_TIMEOUT,
-    PROTOCOL_TX_SYNC_NACK_PACKET_META,
-    PROTOCOL_TX_SYNC_NACK_PACKET_DATA,
-    PROTOCOL_TX_SYNC_ACK_REQ_EXT,
-    PROTOCOL_TX_SYNC_NACK_REQ_EXT,
-}
-Protocol_TxSyncId_T;
 
 
 /******************************************************************************/
@@ -226,15 +205,6 @@ Protocol_TxSyncId_T;
     Private State Ids
 */
 /******************************************************************************/
-typedef enum Protocol_RxState
-{
-    PROTOCOL_RX_STATE_INACTIVE,
-    PROTOCOL_RX_STATE_WAIT_BYTE_1,
-    PROTOCOL_RX_STATE_WAIT_PACKET,
-    // PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL,
-}
-Protocol_RxState_T;
-
 typedef enum Protocol_ReqState
 {
     PROTOCOL_REQ_STATE_INACTIVE,
@@ -244,6 +214,20 @@ typedef enum Protocol_ReqState
     PROTOCOL_REQ_STATE_PROCESS_REQ_EXT,         /* Wait for ReqExt process */
 }
 Protocol_ReqState_T;
+
+
+
+// typedef struct Protocol
+// {
+    // Protocol_ReqMapper_T;
+//     const Protocol_Req_T * P_REQ_TABLE;
+//     uint8_t REQ_TABLE_LENGTH;
+//     // REQ_TIMEOUT
+//     const Packet_Format_T * P_PACKET_CLASS
+//     const volatile uint32_t * P_TIMER;
+// }
+// Protocol_T;
+
 
 // mux
 // typedef struct Protocol_Mux
@@ -255,7 +239,7 @@ Protocol_ReqState_T;
 //     const volatile uint32_t * P_TIMER;
 
 // #ifdef
-//     const Packet_Class_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
+//     const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
 //     uint8_t PACKET_CLASS_COUNT;
 
 //     /*  */
@@ -264,18 +248,6 @@ Protocol_ReqState_T;
 //     // alternatively fixed // const Xcvr_T * P_XCVR;
 // }
 // Protocol_Mux_T;
-
-// typedef struct Protocol
-// {
-//     const Protocol_Req_T * P_REQ_TABLE;
-//     uint8_t REQ_TABLE_LENGTH;
-//     // REQ_TIMEOUT
-//     const Packet_Class_T * P_PACKET_CLASS
-
-//     const volatile uint32_t * P_TIMER;
-// }
-// Protocol_T;
-
 
 
 /******************************************************************************/
@@ -295,6 +267,70 @@ Protocol_ReqState_T;
 
 
 
-//todo datagram request
 // typedef Protocol_ReqCode_T (*Protocol_ReqDatagram_T)    (Datagram_T * p_datagram, uint8_t * p_txPacket,  packet_size_t * p_txSize, const uint8_t * p_rxPacket, packet_size_t rxSize);
 // typedef void (*Protocol_DatagramInit_T) (void * p_app, void * p_datagramOptions, uint8_t * p_txPacket, packet_size_t * p_txSize, const uint8_t * p_rxPacket, packet_size_t rxSize);
+
+/* For Stateful DataMode Read/Write */
+// typedef struct  Protocol_DataModeState
+// {
+//     uintptr_t Address;
+//     size_t Size;
+//     size_t Index;
+//     //  Protocol_StateId_T StateId;
+// }
+// Protocol_DataModeState_T;
+
+
+// Protocol_ReqCode_T CallResp(const void * p_mc, Protocol_HandlerContext_T * p_ctx)
+// {
+//     const MotPacket_CallReq_Payload_T * p_req = p_ctx->p_RxPayload;
+//     MotPacket_CallResp_Payload_T * p_resp = p_ctx->p_TxPayload;
+
+//     p_resp->Id = p_req->Id;
+//     p_resp->Status = MotorController_CallSystemCmd(p_mc, p_req->Id, p_req->Arg);
+//     *p_ctx->p_TxPayloadSize = sizeof(MotPacket_CallResp_Payload_T);
+
+//     return PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+// }
+// Stateful handler — uses phase + sub - state:
+
+
+// Protocol_ReqCode_T DataModeRead(const void * p_mc, Protocol_HandlerContext_T * p_ctx)
+// {
+//     MotProtocol_DataModeState_T * p_xfer = p_ctx->p_SubState;
+
+//     switch (*p_ctx->p_Phase)
+//     {
+//         case 0:
+//             { // Init — parse request, begin transfer
+//                 const MotPacket_DataModeReq_Payload_T * p_req = p_ctx->p_RxPayload;
+//                 p_xfer->DataModeAddress = p_req->AddressStart;
+//                 p_xfer->DataModeSize = p_req->SizeBytes;
+//                 p_xfer->DataIndex = 0;
+
+//                 MotPacket_DataModeResp_Payload_T * p_resp = p_ctx->p_TxPayload;
+//                 p_resp->Status = MOT_STATUS_SUCCESS;
+//                 *p_ctx->p_TxPayloadSize = sizeof(MotPacket_DataModeResp_Payload_T);
+//                 *p_ctx->p_Phase = 1;
+//                 return PROTOCOL_REQ_CODE_TX_CONTINUE;
+//             }
+//         case 1:
+//             { // Data — stream chunks
+//                 uint16_t remaining = p_xfer->DataModeSize - p_xfer->DataIndex;
+//                 uint16_t chunkSize = (remaining > 32) ? 32 : remaining;
+
+//                 memcpy(p_ctx->p_TxPayload, (void *)(p_xfer->DataModeAddress + p_xfer->DataIndex), chunkSize);
+//                 *p_ctx->p_TxPayloadSize = chunkSize;
+//                 p_xfer->DataIndex += chunkSize;
+
+//                 if (p_xfer->DataIndex >= p_xfer->DataModeSize)
+//                     *p_ctx->p_Phase = 2;
+//                 return PROTOCOL_REQ_CODE_TX_CONTINUE;
+//             }
+//         case 2:
+//             { // Complete
+//                 *p_ctx->p_Phase = 0;
+//                 return PROTOCOL_REQ_CODE_PROCESS_COMPLETE;
+//             }
+//     }
+// }

@@ -182,8 +182,7 @@ static State_T * Init_Next(const MotorController_T * p_context)
         if (p_mc->FaultFlags.Value == 0U)
         {
             MotorController_BeepShort(p_context);
-            // p_nextState = (p_mc->Config.IsParkStateEnabled) ? &STATE_PARK : &MC_STATE_MAIN;
-            p_nextState = &STATE_PARK;
+            p_nextState = ParkState(p_context);
         }
         else
         {
@@ -312,7 +311,7 @@ static State_T * Main_InputStateCmd(const MotorController_T * p_context, state_v
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_context); /* Motors in Stop first */
             // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Motor_Table_StopAll(&p_context->MOTORS);    return &MC_STATE_MAIN; /* Exit sub-state, disable inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Motor_Table_StopAll(&p_context->MOTORS);    return NULL; /* Exit sub-state, disable inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     Motor_Table_StartAll(&p_context->MOTORS);   return EnterMain(p_context); /* Enter app sub-state from Main idle */
             // if rootState == MAIN
         default:     return NULL;
@@ -325,6 +324,7 @@ static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
     [MCSM_INPUT_STATE_CMD]      = (State_Input_T)Main_InputStateCmd,
     [MCSM_INPUT_MOTOR_CMD]      = NULL,
     [MCSM_INPUT_APP_USER]       = NULL, /* App-specific: handled by sub-states only, sink at Main */
+    // [MCSM_INPUT_LOCK]           = (State_Input_T)Lock_Input,
 };
 
 const State_T MC_STATE_MAIN =
@@ -352,6 +352,8 @@ static void MotorCmd_Entry(const MotorController_T * p_context)
 }
 
 static void MotorCmd_Proc(const MotorController_T * p_context) {}
+
+//analog mode
 
 /* Passthrough from buffered CmdInput — same pattern as Main_InputMotorCmd */
 static State_T * MotorCmd_Input(const MotorController_T * p_context, state_value_t cmd)
@@ -440,12 +442,12 @@ static State_T * Lock_InputLockOp_Blocking(const MotorController_T * p_context, 
                 if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == true)
                 {
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = &STATE_PARK;
+                    p_nextState = ParkState(p_context);
                 }
                 else if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == true)
                 {
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = &STATE_PARK;
+                    p_nextState = ParkState(p_context);
                 }
                 else
                 {
