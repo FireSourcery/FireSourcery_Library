@@ -373,6 +373,10 @@ void MotorController_Vehicle_SetThrottleBrake(MotorController_T * p_mc, uint16_t
     }
 }
 
+
+/*
+    Direction is write only
+*/
 // caller handled edge detection
 void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction)
 {

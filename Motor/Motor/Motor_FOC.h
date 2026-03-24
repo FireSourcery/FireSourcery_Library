@@ -105,16 +105,6 @@ static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return 
 static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0) && !Motor_FOC_IsPlugging(p_motor); }
 // static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) * FOC_Iq(&p_motor->Foc) < 0) && !Motor_FOC_IsPlugging(p_motor); }
 
-
-// /* Rotor spinning CCW (+speed), but Vq is negative - voltage opposing motion */
-// static inline bool Motor_FOC_IsForwardPlugging(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) > 0) && (FOC_Vq(&p_motor->Foc) < 0); }
-
-// /* Rotor spinning CW (-speed), but Vq is positive - voltage opposing motion */
-// static inline bool Motor_FOC_IsReversePlugging(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) < 0) && (FOC_Vq(&p_motor->Foc) > 0); }
-
-// static inline bool Motor_FOC_IsForwardRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) > 0) && (FOC_Vq(&p_motor->Foc) > 0) && (FOC_Iq(&p_motor->Foc) < 0); }
-// static inline bool Motor_FOC_IsReverseRegen(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) < 0) && (FOC_Vq(&p_motor->Foc) < 0) && (FOC_Iq(&p_motor->Foc) > 0); }
-
 /* mask sign bit, motoring 0b01, plugging 0b01 */
 typedef enum Motor_FOC_OperatingState
 {
@@ -132,13 +122,12 @@ static inline Motor_FOC_OperatingState_T Motor_FOC_OperatingState(int16_t speed,
 {
     if (speed == 0) { return MOTOR_FOC_OPERATING_IDLE; }
 
-    int32_t speed_sign = math_sign(speed);                  /* +1 or -1, direction polarity */
     int32_t is_generating = ((int32_t)iq * speed < 0);     /* 1 if Iq opposes speed */
     int32_t is_plugging = ((int32_t)vq * speed < 0);     /* 1 if Vq opposes speed */
 
     /* state magnitude: 1=Motoring, 2=Regen, 3=Plugging */
     /* sign encodes direction. bits [0:1] encode torque */
-    return (Motor_FOC_OperatingState_T)(speed_sign * (1 + is_generating + is_plugging));
+    return (Motor_FOC_OperatingState_T)(math_sign(speed) * (1 + is_generating + is_plugging));
 }
 
 // static inline bool Motor_FOC_StateIsForward(Motor_FOC_OperatingState_T s) { return (s > MOTOR_FOC_OPERATING_IDLE); }

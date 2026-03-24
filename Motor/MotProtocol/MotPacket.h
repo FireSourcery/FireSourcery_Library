@@ -87,7 +87,7 @@ typedef enum MotPacket_Id ENUM8_T
     /* Fixed Length */
     MOT_PACKET_STOP_ALL = 0x00U,
     MOT_PACKET_VERSION = 0x01U,
-    // MOT_PACKET_REF = 0x02U,
+    // MOT_PACKET_VERSION = 0x02U,
 
     MOT_PACKET_CALL = 0xC0U,
     // MOT_PACKET_CALL_ADDRESS = 0xCAU,
@@ -116,7 +116,6 @@ typedef enum MotPacket_Id ENUM8_T
     MOT_PACKET_DATA_MODE_ABORT = MOT_PACKET_SYNC_ABORT,
 
     _MOT_PACKET_ID_END_255 = 0xFFU,
-    /// Datagram todo
 }
 MotPacket_Id_T;
 
@@ -285,8 +284,6 @@ typedef struct MotPacket_DataModeResp_Payload { uint16_t Status; }              
 typedef struct MotPacket_DataMode_Payload { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; } MotPacket_DataMode_Payload_T;
 
 
-
-
 /******************************************************************************/
 /*! Ctrlr side */
 /******************************************************************************/
@@ -306,11 +303,9 @@ extern uint8_t MotPacket_StopResp_Build(MotPacket_T * p_packet, uint16_t status)
 extern uint8_t MotPacket_CallResp_Build(MotPacket_T * p_packet, uint32_t id, uint16_t status);
 
 extern uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_T * p_packet);
-// extern void MotPacket_VarReadResp_BuildVarValue(MotPacket_T * p_packet, uint8_t index, uint16_t value);
 extern uint8_t MotPacket_VarReadResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount);
 
 extern uint8_t MotPacket_VarWriteReq_ParseVarCount(const MotPacket_T * p_packet);
-// extern void MotPacket_VarWriteResp_BuildVarStatus(MotPacket_T * p_packet, uint8_t index, uint16_t status);
 extern uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount);
 
 extern uint8_t MotPacket_MemWriteResp_Build(MotPacket_T * p_packet, uint16_t status);
@@ -326,12 +321,7 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_T * p_packet);
 
 
 
-// typedef struct MOT_PACKET_PACKED MotPacket_Fixed
-// {
-//     MotPacket_Sync_T Header;
-//     uint32_t Value;
-// }
-// MotPacket_Fixed_T;
+
 /******************************************************************************/
 /*! Common Resp */
 /******************************************************************************/

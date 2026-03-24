@@ -63,19 +63,16 @@ const StateMachine_Machine_T MSM_MACHINE =
     Common
 */
 /******************************************************************************/
-static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultFlags) { (void)p_motor; (void)faultFlags; return &MOTOR_STATE_FAULT; }  // optionally set flags here
-
-static void Motor_CaptureFaultFlags(const Motor_T * p_motor)
+static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultFlags)
 {
-    // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
-    p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+    p_motor->P_MOTOR_STATE->FaultFlags.Value = faultFlags;
+    return(p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
 }
 
-static State_T * InputStop(const Motor_T * p_motor, state_value_t value)
+/* Monitor Flags */
+static void Motor_PollFaultFlags(const Motor_T * p_motor)
 {
-    (void)value;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
-    return NULL;
+    // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
 }
 
 /******************************************************************************/
@@ -110,14 +107,14 @@ static State_T * Init_Next(const Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
-        // (Motor_CheckConfig() == true)    // check params, sync config limits
         if (Phase_Calibration_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         // if (Motor_ValidateIabcZeroRef(p_motor) == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; }
-        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-        // Motor_CaptureFaultFlags(p_motor); /* Clear the fault flags once */
+        // (Motor_CheckConfig() == true)    // check params, sync config limits
 
-        if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; }
-        else                                                { p_nextState = &MOTOR_STATE_STOP; }
+        p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        // Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
+
+        if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; } else { p_nextState = &MOTOR_STATE_STOP; }
     }
 
     return p_nextState;
@@ -204,14 +201,12 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
 /* Transition for user req */
 static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
 {
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }
-    else { return NULL; }
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
 }
 
 /* Calibration go directly to SubState */
 static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t statePtr)
 {
-    // State_T * p_state = (State_T *)statePtr;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_CALIBRATION; } else { return NULL; }
 }
 
@@ -326,6 +321,13 @@ static State_T * Passive_InputOpenLoop(const Motor_T * p_motor, state_value_t st
     (void)state;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }  else { return NULL; }
 }
+
+// static State_T * InputStop(const Motor_T * p_motor, state_value_t value)
+// {
+//     (void)value;
+//     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
+//     return NULL;
+// }
 
 static const State_Input_T PASSIVE_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
@@ -680,10 +682,8 @@ static void Fault_Proc(const Motor_T * p_motor) { Phase_Deactivate(&p_motor->PHA
 
 static State_T * Fault_InputClearFault(const Motor_T * p_motor, state_value_t faultFlags)
 {
-    // p_motor->P_MOTOR_STATE->FaultFlags.Value &= ~faultFlags;
-    // p_motor->P_MOTOR_STATE->FaultFlags.Value = 0U;
-    // p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !Motor_VerifySensorCalibration(p_motor); // non polling check
-    Motor_CaptureFaultFlags(p_motor);
+    p_motor->P_MOTOR_STATE->FaultFlags.Value = faultFlags;
+    Motor_PollFaultFlags(p_motor);
 
     return (p_motor->P_MOTOR_STATE->FaultFlags.Value == 0U) ? &MOTOR_STATE_STOP : NULL;
 }
@@ -692,6 +692,7 @@ static State_T * Fault_InputCalibration(const Motor_T * p_motor, state_value_t s
 {
     State_T * p_nextState = NULL;
 
+    // if (p_motor->P_MOTOR_STATE->FaultFlags.Value & ~POSITIONSENSOR)
     if (p_motor->P_MOTOR_STATE->FaultFlags.Overheat == 0U)
     {
         p_nextState = &MOTOR_STATE_CALIBRATION;
@@ -723,13 +724,13 @@ const State_T MOTOR_STATE_FAULT =
 /******************************************************************************/
 void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
 {
-    if (Motor_IsFault(p_motor) == false) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, -1); }
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value);
 }
 
 /*! @return true if no fault remains */
 bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 {
-    if (Motor_IsFault(p_motor) == true) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0); }
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0);
     return !Motor_IsFault(p_motor);
 }
 
@@ -738,13 +739,13 @@ bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
 */
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_IsFault(p_motor) == false) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, faultFlags.Value); }
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value | faultFlags.Value);
 }
 
 /* faultFlags unused for now */
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    if (Motor_IsFault(p_motor) == true) { StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, ~faultFlags.Value); }
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value & ~faultFlags.Value);
 }
 
 

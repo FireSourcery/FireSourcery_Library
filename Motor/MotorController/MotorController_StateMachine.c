@@ -103,8 +103,6 @@ const StateMachine_Machine_T MCSM_MACHINE =
 
 /* Clear Latching */
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
-/* PollMonitorFaults */
-/* InitCheck clears on reset only */
 void MotorController_PollFaultFlags(MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
@@ -118,8 +116,8 @@ void MotorController_PollFaultFlags(MotorController_T * p_context)
 
 static State_T * TransitionFault(MotorController_T * p_context, state_value_t faultFlags)
 {
-    (void)faultFlags; /* // p_context->FaultFlags.Value |= faultFlags; */
-    return &STATE_FAULT;
+    p_context->P_MC_STATE->FaultFlags.Value = faultFlags;
+    return (p_context->P_MC_STATE->FaultFlags.Value != 0U) ? &STATE_FAULT : NULL;
 }
 
 
@@ -145,6 +143,7 @@ static void Init_Entry(MotorController_T * p_context)
 {
     (void)p_context;
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
+    MotorController_BeepShort(p_context);
 }
 
 // static void Init_Exit(MotorController_T * p_context)
@@ -154,7 +153,7 @@ static void Init_Entry(MotorController_T * p_context)
 
 static void Init_Proc(MotorController_T * p_context)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+
 }
 
 static State_T * Init_Next(MotorController_T * p_context)
@@ -174,20 +173,10 @@ static State_T * Init_Next(MotorController_T * p_context)
         /* Check separately */
         // if (RangeMonitor_ValidateConfig(p_context->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.VSourceLimit = 1U; }
 
-        // if (BootRef_IsValid() == false) { MotorController_InitVSupplyAutoValue(p_context); } /* optionally auto on first time boot */
-
         if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP) == false) { p_mc->FaultFlags.Motors = 1U; }
 
         /* In the case of boot into motor spinning state. Go to fault state disable output */
-        if (p_mc->FaultFlags.Value == 0U)
-        {
-            MotorController_BeepShort(p_context);
-            p_nextState = ParkState(p_context);
-        }
-        else
-        {
-            p_nextState = &STATE_FAULT;
-        }
+        if (p_mc->FaultFlags.Value == 0U) { p_nextState = ParkState(p_context); } else { p_nextState = &STATE_FAULT; }
     }
 
     return p_nextState;
@@ -353,8 +342,6 @@ static void MotorCmd_Entry(MotorController_T * p_context)
 
 static void MotorCmd_Proc(MotorController_T * p_context) {}
 
-//analog mode
-
 /* Passthrough from buffered CmdInput — same pattern as Main_InputMotorCmd */
 static State_T * MotorCmd_Input(MotorController_T * p_context, state_value_t cmd)
 {
@@ -406,10 +393,8 @@ static void Lock_Entry(MotorController_T * p_context)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    // assert(Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_STOP));
     Motor_Table_StopAll(&p_context->MOTORS);
     Motor_Table_EnterCalibration(&p_context->MOTORS); /* Enter Calibration State for all motors */
-    // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
 
     p_mc->LockOpStatus = 0U;
 
@@ -418,8 +403,7 @@ static void Lock_Entry(MotorController_T * p_context)
 
 static void Lock_Proc(MotorController_T * p_context)
 {
-    // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false) { p_mc->FaultFlags.Motors = true; }
-// if (MotorController_IsAnyMotorFault(p_context) == true) { p_mc->LockSubState = MOTOR_CONTROLLER_LOCK_ENTER; p_mc->LockOpStatus = 1U; }
+
 }
 
 /* Lock SubState/Cmd by passed value */
@@ -500,10 +484,6 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_context, state_
 
 static State_T * Lock_InputStateCmd(MotorController_T * p_context, state_value_t cmd)
 {
-    switch (cmd)
-    {
-        default:                                return NULL;
-    }
 }
 
 static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
@@ -564,7 +544,6 @@ static State_T * EndCalibrateAdc(MotorController_T * p_context)
 
     if (p_mc->StateCounter > TIME)
     {
-        // if (Motor_Table_IsEveryState(&p_context->MOTORS, MSM_STATE_ID_CALIBRATION) == false)
         MotAnalogUser_SetThrottleZero(&p_context->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE)));
         MotAnalogUser_SetBrakeZero(&p_context->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE)));
         p_mc->LockOpStatus = 0; /* success */
@@ -619,25 +598,20 @@ static void Fault_Proc(MotorController_T * p_context)
     //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    break;
     // }
 
-    if (p_mc->FaultFlags.Value == 0U)
-    {
-        Blinky_Stop(&p_context->BUZZER);
-        // _StateMachine_TransitionTo(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, &MC_STATE_MAIN);
-    }
+    if (p_mc->FaultFlags.Value == 0U) { Blinky_Stop(&p_context->BUZZER); }
 }
 
 /* Fault State Input Fault Checks Fault */
-/* Sensor faults only clear on user input */
 static State_T * Fault_InputClearFault(MotorController_T * p_context, state_value_t faultFlags)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    // p_mc->FaultFlags.Value &= ~faultFlags; //repeat calls with filled flags do not clear
-    p_mc->FaultFlags.Value = 0U;
+    if (faultFlags < p_mc->FaultFlags.Value)
+    {
+        for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_ExitFault(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+        Blinky_Stop(&p_context->BUZZER); /* Stops until its set again */
+    }
+    p_mc->FaultFlags.Value = faultFlags;
     MotorController_PollFaultFlags(p_context);
-    // p_mc->FaultFlags.Motors = 0U; /* updated by [MotorController_Main_Thread] */
-    for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_ExitFault(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
-    // return NULL;
-    Blinky_Stop(&p_context->BUZZER); /* Stops until its set again */
     return (p_mc->FaultFlags.Value == 0U) ? &MC_STATE_MAIN : NULL;
 }
 
@@ -645,8 +619,6 @@ static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_contex
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    // p_mc->LockSubState = lockId;
-    // p_mc->LockOpStatus = -1;
     switch ((MotorController_LockId_T)lockId)
     {
         case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
@@ -681,27 +653,31 @@ static const State_T STATE_FAULT =
 /* todo thread safe without lock */
 void MotorController_EnterFault(MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value);
 }
 
 bool MotorController_ExitFault(MotorController_T * p_context)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0); }
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0);
     return !MotorController_IsFault(p_context);
 }
 
-// ((const MotorController_FaultFlags_T) { .VAccsLimit = 1U }).Value
 void MotorController_SetFault(MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == false) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value | faultFlags);
 }
 
-/* ensure repeat inputs without lock do not mismatch */
 void MotorController_ClearFault(MotorController_T * p_context, uint16_t faultFlags)
 {
-    if (MotorController_IsFault(p_context) == true) { StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, faultFlags); }
-    // return !MotorController_IsFault(p_context); /* alternatively use cleared diff */
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value & ~faultFlags);
 }
 
+/*
+    Race condition possible if multiple faults are set/cleared at same time.
+    however repeat sets are polling
 
-
+    alternatively
+    width difference as discriminator (value == (state_value_t)(uint16_t)value)
+    Set: pass raw flags (fits in uint16_t, upper 16 bits are 0)
+    Clear: pass ~flags (upper bits set, doesn't fit in uint16_t)
+*/

@@ -110,10 +110,6 @@ void MotorController_LoadConfigDefault(const MotorController_T * p_context)
     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
 }
 
-void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
-{
-    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
-}
 
 void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 {
@@ -140,6 +136,10 @@ void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
     _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)));
 }
 
+void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
+{
+    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
+}
 // bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
 // {
 //    RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
