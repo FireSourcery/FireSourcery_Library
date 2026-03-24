@@ -90,7 +90,6 @@ bool State_IsDirectLineage(State_T * p_active, State_T * p_test)
 // }
 
 
-/* May include itself */
 State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 {
     assert(p_state1 != NULL);
@@ -98,8 +97,8 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
     State_T * p_iterator1 = p_state1;
     State_T * p_iterator2 = p_state2;
 
-    // if (p_iterator1->DEPTH == 0) { return p_iterator1; }
-    // if (p_iterator2->DEPTH == 0) { return p_iterator2; }
+    if (p_iterator1->DEPTH == 0) { return NULL; }
+    if (p_iterator2->DEPTH == 0) { return NULL; }
 
     // Bring both nodes to the same level
     while (p_iterator1->DEPTH > p_iterator2->DEPTH) { p_iterator1 = p_iterator1->P_PARENT; }
@@ -362,11 +361,13 @@ static inline void ExitUp(State_T * p_from, State_T * p_to, void * p_context)
 */
 static inline void EntryDown(State_T * p_from, State_T * p_to, void * p_context)
 {
-    if (p_to != p_from)
+    if (p_to != NULL)
     {
         EntryDown(p_from, p_to->P_PARENT, p_context);
         State_Entry(p_to, p_context);
     }
+    // assert(p_to != NULL);
+    // ApplyUpUntil(p_to, p_from, p_context, EntryVisitor, 0);
 }
 
 /*!

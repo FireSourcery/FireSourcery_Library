@@ -255,9 +255,9 @@ static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 
 static const State_T STATE_PARK =
 {
-    .ID     = MCSM_STATE_ID_PARK,
-    .ENTRY  = (State_Action_T)Park_Entry,
-    .LOOP   = (State_Action_T)Park_Proc,
+    .ID                 = MCSM_STATE_ID_PARK,
+    .ENTRY              = (State_Action_T)Park_Entry,
+    .LOOP               = (State_Action_T)Park_Proc,
     .P_TRANSITION_TABLE = &PARK_TRANSITION_TABLE[0U],
 };
 
