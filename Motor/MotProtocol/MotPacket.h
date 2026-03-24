@@ -128,7 +128,7 @@ typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
     uint8_t Start;      /* MOT_PACKET_START_BYTE */
     uint8_t SyncId;     /* MotPacket_Id_T */
-    uint8_t Control;    /* struct { uint8_t Length; uint8_t Sequence; }; */
+    uint8_t Control;
     uint8_t Checksum;
 }
 MotPacket_Sync_T;
@@ -140,7 +140,7 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
 {
     uint8_t Start;      /* MOT_PACKET_START_BYTE */
     uint8_t Id;         /* MotPacket_Id_T */
-    uint8_t Length;     /* struct { uint8_t Control; uint8_t Checksum; }; */
+    uint8_t Length;
     uint8_t Sequence;
     uint16_t Checksum;
     uint16_t Flags;     /* Source/Dest */

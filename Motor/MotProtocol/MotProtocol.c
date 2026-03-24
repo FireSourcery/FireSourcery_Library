@@ -44,6 +44,7 @@
 */
 /******************************************************************************/
 
+// depreciate
 Protocol_RxCode_T MotProtocol_ParseRxMeta(const MotPacket_T * p_rxPacket, packet_size_t rxCount, Protocol_HeaderMeta_T * p_rxMeta)
 {
     Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
@@ -91,7 +92,51 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(const MotPacket_T * p_rxPacket, packet
     return rxCode;
 }
 
-void MotPacket_BuildTxMeta(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta)
+Protocol_RxCode_T MotProtocol_ParseRxFraming(const MotPacket_T * p_rxPacket, packet_size_t rxCount, Protocol_HeaderMeta_T * p_rxMeta)
+{
+    Protocol_RxCode_T rxCode = PROTOCOL_RX_CODE_AWAIT_PACKET;
+
+    if (rxCount > (MOT_PACKET_LENGTH_MIN - 1U)) /* Length Field is valid */
+    {
+        p_rxMeta->Length = MotPacket_ParseTotalLength(p_rxPacket);
+        p_rxMeta->Id = p_rxPacket->Header.Id;
+
+        switch (p_rxPacket->Header.Id)
+        {
+            /* complete */
+            case MOT_PACKET_SYNC_ACK:   rxCode = PROTOCOL_RX_CODE_ACK;      break;
+            case MOT_PACKET_SYNC_NACK:  rxCode = PROTOCOL_RX_CODE_NACK;     break;
+            case MOT_PACKET_SYNC_ABORT: rxCode = PROTOCOL_RX_CODE_ABORT;    break;
+            case MOT_PACKET_PING:       rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
+            case MOT_PACKET_PING_BOOT:  rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
+            case MOT_PACKET_PING_ALT:   rxCode = PROTOCOL_RX_CODE_PACKET_COMPLETE;  break;
+
+                /* await */
+                // case MOT_PACKET_STOP_ALL:      p_rxMeta->Length = sizeof(MotPacket_StopReq_T);     break;
+                // case MOT_PACKET_VERSION:       p_rxMeta->Length = sizeof(MotPacket_VersionReq_T);  break;
+                // case MOT_PACKET_REBOOT:        p_rxMeta->Length = sizeof(MotPacket_CallReq_T);     break;
+                // case MOT_PACKET_CALL:          p_rxMeta->Length = sizeof(MotPacket_CallReq_T);     break;
+                // case MOT_PACKET_CALL_ADDRESS:  p_rxMeta->Length = sizeof(MotPacket_CallReq_T);     break;
+                // case MOT_PACKET_FIXED_VAR_READ:  p_rxMeta->Length = sizeof( ); break;
+                // case MOT_PACKET_FIXED_VAR_WRITE:  p_rxMeta->Length = sizeof( ); break;
+                // default: rxCode = PROTOCOL_RX_CODE_ERROR_META; break;
+            default: break;
+        }
+    }
+    else /* (rxCount < MOT_PACKET_LENGTH_MIN) ParseMeta should not have been called */
+    {
+        rxCode = PROTOCOL_RX_CODE_ERROR_META;
+    }
+
+    return rxCode;
+}
+Protocol_RxCode_T MotProtocol_ParseRxHeader(const MotPacket_T * p_rxPacket, Protocol_HeaderMeta_T * p_rxMeta)
+{
+    return MotPacket_ProcChecksum(p_rxPacket, p_rxMeta->Length) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_ERROR_DATA;
+    // p_rxMeta.Sequence = p_rxPacket->Header.Sequence; e.g.
+}
+
+void MotPacket_BuildTxHeader1(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta)
 {
     p_packet->Header.Start = MOT_PACKET_START_BYTE;
     p_packet->Header.Id = p_meta->Id;
@@ -101,7 +146,7 @@ void MotPacket_BuildTxMeta(MotPacket_T * p_packet, const Protocol_HeaderMeta_T *
     p_packet->Header.Checksum = Packet_Checksum(p_packet, p_meta->Length);
 }
 
-void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_txSize, Protocol_TxSyncId_T txId)
+packet_size_t MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, Protocol_TxSyncId_T txId)
 {
     MotPacket_Id_T syncChar;
 
@@ -120,23 +165,51 @@ void MotProtocol_BuildTxSync(MotPacket_Sync_T * p_txPacket, packet_size_t * p_tx
         default: syncChar = 0U; break;
     }
 
-    *p_txSize = MotPacket_Sync_Build(p_txPacket, syncChar);
+    return MotPacket_Sync_Build(p_txPacket, syncChar);
 }
 
 const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS =
 {
     .RX_LENGTH_MIN  = MOT_PACKET_LENGTH_MIN,
     .RX_LENGTH_MAX  = MOT_PACKET_LENGTH_MAX,
-    .PARSE_RX_META  = (Packet_ParseRxMeta_T)MotProtocol_ParseRxMeta,
-    .BUILD_TX_META  = (Packet_BuildTxMeta_T)MotPacket_BuildTxMeta,
-    .BUILD_TX_SYNC  = (Packet_BuildTxSync_T)MotProtocol_BuildTxSync,
+    .PARSE_RX_FRAMING   = (Packet_ParseRxFraming_T)MotProtocol_ParseRxMeta,
+    .PARSE_RX_HEADER    = (Packet_ParseRxHeader_T)MotProtocol_ParseRxHeader,
+    .BUILD_TX_HEADER    = (Packet_BuildTxHeader_T)MotPacket_BuildTxHeader1,
+    .BUILD_TX_SYNC      = (Packet_BuildTxSync_T)MotProtocol_BuildTxSync,
     .RX_START_ID    = MOT_PACKET_START_BYTE,
     .RX_TIMEOUT     = MOT_PROTOCOL_TIMEOUT_RX,
+    //
     .REQ_TIMEOUT    = MOT_PROTOCOL_TIMEOUT_REQ,
 };
 
 
+// Phase 1 — framing (what your ParseRxMeta currently does in the else-if branch)
+// Protocol_RxCode_T MotProtocol_ParseRxFraming(const MotPacket_T * p_packet, packet_size_t rxCount, Protocol_HeaderMeta_T * p_meta)
+// {
+//     p_meta->Id = p_packet->Header.Id;
 
+//     switch (p_packet->Header.Id)
+//     {
+//         // Sync packets — complete immediately, no Phase 2
+//         case MOT_PACKET_SYNC_ACK:   return PROTOCOL_RX_CODE_ACK;
+//         case MOT_PACKET_SYNC_NACK:  return PROTOCOL_RX_CODE_NACK;
+//         case MOT_PACKET_SYNC_ABORT: return PROTOCOL_RX_CODE_ABORT;
+//         case MOT_PACKET_PING:       return PROTOCOL_RX_CODE_PACKET_COMPLETE;
+//         case MOT_PACKET_PING_BOOT:  return PROTOCOL_RX_CODE_PACKET_COMPLETE;
+//         case MOT_PACKET_PING_ALT:   return PROTOCOL_RX_CODE_PACKET_COMPLETE;
+
+//             // Data packets — set length, await remaining bytes
+//         default:
+//             p_meta->Length = MotPacket_ParseTotalLength(p_packet);
+//             return PROTOCOL_RX_CODE_AWAIT_PACKET;
+//     }
+// }
+
+// // Phase 2 — validation (what your ParseRxMeta currently does in the rxCount == Length branch)
+// Protocol_RxCode_T MotProtocol_ParseRxValidate(const MotPacket_T * p_packet, Protocol_HeaderMeta_T * p_meta)
+// {
+//     return MotPacket_ProcChecksum(p_packet, p_meta->Length) ? PROTOCOL_RX_CODE_PACKET_COMPLETE : PROTOCOL_RX_CODE_ERROR_DATA;
+// }
 
 /******************************************************************************/
 /*!
@@ -259,6 +332,7 @@ Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flas
     *p_reqContext->p_TxSize = MotPacket_DataModeWriteResp_Build(p_reqContext->p_TxPacket, flashStatus);
     *p_reqContext->p_SubStateIndex = 1U;
     reqCode = PROTOCOL_REQ_CODE_TX_CONTINUE;
+    // reqCode = PROTOCOL_REQ_CODE_TX_AWAIT_RX_CONTINUE; /* Wait for DataPacket, control is transferred to MotProtocol_Flash_DataModeWriteData */
 
     return reqCode;
 }

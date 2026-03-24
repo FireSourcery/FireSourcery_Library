@@ -36,6 +36,7 @@
 - **PascalCase** for types, structs, enums, and function names: `Motor_FOC_ProcAngle()`, `MotorController_Init()`
 - **UPPER_SNAKE_CASE** for macros, enum values, and constants: `MOTOR_STATE_RUN`, `HAL_ADC_CHANNEL_COUNT`
 - **camelCase** for local variables and struct fields
+- Keep short functions on one line
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`

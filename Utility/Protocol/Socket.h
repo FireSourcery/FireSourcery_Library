@@ -70,6 +70,10 @@ typedef struct Socket_State
     uint32_t RxTimeStart;
     Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
 
+    //
+    Packet_RxParserState_T RxParserState;
+    Protocol_HeaderMeta_T TxMeta;
+
     /* Tx */
     packet_size_t TxLength;
 
@@ -79,7 +83,7 @@ typedef struct Socket_State
     Protocol_Req_T * p_ReqActive;    /* */
     uint32_t ReqTimeStart;           /* Set on Req Start and Complete */
     uint32_t ReqSubStateIndex; // track ext req index internally?
-    // Protocol_ReqContext_T ReqContext; // buffer for passing req parameters. Alternatively, pass const block and TxLength separately
+    // Protocol_ReqContext_T ReqContext; // buffer for passing req parameters.
 
     /* Protocol_CommState */
     uint8_t NackCount;
@@ -188,8 +192,7 @@ static inline Protocol_ReqCode_T _Socket_GetReqStatus(const Socket_State_T * p_s
 
 static inline void _Socket_EnableRxWatchdog(Socket_State_T * p_socket) { if (p_socket->ReqState != PROTOCOL_REQ_STATE_INACTIVE) { p_socket->IsRxWatchdogEnable = true; } }
 static inline void _Socket_DisableRxWatchdog(Socket_State_T * p_socket) { p_socket->IsRxWatchdogEnable = false; }
-static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable)
-    { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
+static inline void _Socket_SetRxWatchdogOnOff(Socket_State_T * p_socket, bool isEnable) { if (isEnable == true) { _Socket_EnableRxWatchdog(p_socket); } else { _Socket_DisableRxWatchdog(p_socket); } }
 
 /*
     User must reboot. Does propagate set. Current settings remain active until reboot.
