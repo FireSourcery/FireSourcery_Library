@@ -97,8 +97,7 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
     State_T * p_iterator1 = p_state1;
     State_T * p_iterator2 = p_state2;
 
-    if (p_iterator1->DEPTH == 0) { return NULL; }
-    if (p_iterator2->DEPTH == 0) { return NULL; }
+    if (p_iterator1 == p_iterator2) { return p_iterator1->P_PARENT; } /* handle self-transition */
 
     // Bring both nodes to the same level
     while (p_iterator1->DEPTH > p_iterator2->DEPTH) { p_iterator1 = p_iterator1->P_PARENT; }
@@ -113,6 +112,7 @@ State_T * State_CommonAncestorOf(State_T * p_state1, State_T * p_state2)
 
     return p_iterator1;
 }
+
 
 // State_T * State_CommonAncestorOf_Recursive(State_T * p_state1, State_T * p_state2)
 // {
@@ -219,7 +219,6 @@ static inline void * ApplyUntilRoot(State_T * p_start, void * p_context, State_V
 // }
 
 
-
 /******************************************************************************/
 /*
     State Tree Functions
@@ -228,11 +227,12 @@ static inline void * ApplyUntilRoot(State_T * p_start, void * p_context, State_V
 /*
     Visitor Wrap
 */
-static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
 static inline void * AcceptInputVisitor(State_T * p_state, void * nil, int id) { (void)nil; return (void *)State_AcceptInput(p_state, id); }
 static inline void * OutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Output(p_state, p_context); return NULL; }
 static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
 static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
+
+static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
 
 
 /******************************************************************************/
@@ -240,34 +240,34 @@ static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) 
     State Branch Sync/Output
 */
 /******************************************************************************/
-/*
-    Process outputs until the first state transition.
-    SubStates/InnerStates first.
-    Take first transition. (RootFirst Proc to account for top level precedence)
-        optionally process remaining.
-    Alternatively:
-        Always proc top down
-        full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
-*/
-State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
-{
-    return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
-}
+    /*
+        Process outputs until the first state transition.
+        SubStates/InnerStates first.
+        Take first transition. (RootFirst Proc to account for top level precedence)
+            optionally process remaining.
+        Alternatively:
+            Always proc top down
+            full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
+    */
+    State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
+    {
+        return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
+    }
 
-State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
-{
-    return (State_T *)ApplyUpUntil(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
-}
+    State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
+    {
+        return (State_T *)ApplyUpUntil(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
+    }
 
-/*
-    Using compile time mapped Root
-*/
-State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context)
-{
-    State_T * p_next = State_TransitionOfOutput_AsTop(_State_GetRoot(p_start), p_context);
-    if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
-    return p_next;
-}
+    /*
+        Using compile time mapped Root
+    */
+    State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context)
+    {
+        State_T * p_next = State_TransitionOfOutput_AsTop(_State_GetRoot(p_start), p_context);
+        if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
+        return p_next;
+    }
 
 
 /******************************************************************************/
@@ -306,7 +306,7 @@ State_T * State_TransitionOfInputUntil(State_T * p_start, State_T * p_end, void 
 State_Input_T State_AcceptInput_RootFirst(State_T * p_start, state_input_t id)
 {
     State_Input_T input = State_AcceptInput_AsTop(_State_GetRoot(p_start), id);
-    if (input != NULL) { input = State_AcceptInputUntil(p_start, _State_GetRoot(p_start), id); }
+    if (input == NULL) { input = State_AcceptInputUntil(p_start, _State_GetRoot(p_start), id); }
     return input;
 }
 
@@ -339,7 +339,8 @@ void State_OutputUpUntil(State_T * p_start, State_T * p_end, void * p_context) {
 /******************************************************************************/
 /*!
     Call Exit traversing up the tree
-    @param[in] p_common == NULL process full path
+
+    @param[in] p_to == NULL process full path
 */
 static inline void ExitUp(State_T * p_from, State_T * p_to, void * p_context)
 {
@@ -357,11 +358,12 @@ static inline void ExitUp(State_T * p_from, State_T * p_to, void * p_context)
     Call Entry traversing down the tree
         recursive climb up the tree for now
         iterative traverse need capture first
+
     @param[in] p_from == NULL => repeat ROOT entry.
 */
 static inline void EntryDown(State_T * p_from, State_T * p_to, void * p_context)
 {
-    if (p_to != NULL)
+    if ((p_to != NULL) && (p_to != p_from))
     {
         EntryDown(p_from, p_to->P_PARENT, p_context);
         State_Entry(p_to, p_context);
@@ -391,7 +393,19 @@ void State_TraverseEntryExitThrough(State_T * p_start, State_T * p_common, State
 
     p_start == p_end => self transition, proc entry only
 */
+/*
+    CA(RootX, RootY)    -> NULL      exit RootX, enter RootY
+    CA(RootX, LeafY)    -> NULL      exit RootX, enter [RootY:LeafY]
+    CA(LeafX, LeafY)    -> Node/NULL exit [LeafX:CA), enter (CA:LeafY]
+    CA(RootX, LeafX)    -> RootX     no exit, enter (RootX:LeafX]
+    CA(LeafX, RootX)    -> RootX     exit [LeafX:RootX), no enter, diverges from UML Spec, alternatively set always enter end state
+    CA(RootX, RootX)    -> _         enter RootX
+    CA(LeafX, LeafX)    -> _         enter LeafX
+*/
 void State_TraverseEntryExit(State_T * p_start, State_T * p_end, void * p_context)
 {
+    assert(p_start != NULL);
+    assert(p_end != NULL);
     State_TraverseEntryExitThrough(p_start, State_CommonAncestorOf(p_start, p_end), p_end, p_context);
 }
+

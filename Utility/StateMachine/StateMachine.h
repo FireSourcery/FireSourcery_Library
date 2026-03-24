@@ -103,7 +103,6 @@ typedef const struct StateMachine
     // const volatile uint32_t * P_TIMER;
     // state_value_t * P_SYNC_INPUTS; /* TRANSITION_TABLE_LENGTH */
     // State_T ** pp_ActiveStatesBuffer; alternative to recursive traverse down
-    // const void * P_STATE_BUFFERS[STATE_COUNT]; /* a substate buffer for each top state */
 }
 StateMachine_T;
 

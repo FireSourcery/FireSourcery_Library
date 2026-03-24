@@ -48,6 +48,7 @@ typedef struct StateMachine_Active
     State_T * p_ActiveState;    /* Flat - The Active Root/Top Level State. */
                                 /* HSM - Leaf State, defines full path. */
     // State_T ** pp_OrthogonalStates;
+    // State_Active_T Active; wrap pointer
 
     /*
         Sync machine store inputs until [ProcState]
@@ -136,6 +137,7 @@ static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T *
     Extern Protected Functions
     Caller implement thread synchronization
     Selectively implement critical in calling layer, if not require for all inputs
+    Calls in ISR can omit lock
 */
 /******************************************************************************/
 // extern void _StateMachine_Init(StateMachine_Active_T * p_active, void * p_context, State_T * p_initialState);
