@@ -484,6 +484,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_context, state_
 
 static State_T * Lock_InputStateCmd(MotorController_T * p_context, state_value_t cmd)
 {
+    return NULL;
 }
 
 static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
