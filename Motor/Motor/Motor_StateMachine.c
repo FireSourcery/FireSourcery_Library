@@ -158,6 +158,7 @@ static void Stop_Proc(const Motor_T * p_motor)
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
 
+// can depreciate for Transition command
 static State_T * Stop_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     State_T * p_nextState = NULL;
@@ -447,8 +448,6 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
-    // if (p_motor->P_MOTOR_STATE->FeedbackMode.Current != 1U)
-    // {
     Motor_FOC_MatchIVState_Bemf(p_motor->P_MOTOR_STATE);
     Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
     p_motor->P_MOTOR_STATE->UserTorqueReq = 0;  /* begin user cmd at 0 */
@@ -456,10 +455,11 @@ static void Intervention_Entry(const Motor_T * p_motor)
 
 static void Intervention_Proc(const Motor_T * p_motor)
 {
+    // if (p_motor->P_MOTOR_STATE->FeedbackMode.Speed == true)
+
     // torque only for now, substate as needed
     int32_t userCmd = p_motor->P_MOTOR_STATE->UserTorqueReq;
     Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR_STATE, 0, _Motor_GeneratingOnly(p_motor->P_MOTOR_STATE, userCmd));
-
     Motor_FOC_WriteDuty(p_motor);
     // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Transition to passive }
 }
@@ -508,6 +508,23 @@ const State_T MOTOR_STATE_INTERVENTION =
 // const State_T MOTOR_STATE_TORQUE_ZERO =
 // {
 //     .P_PARENT           = &MOTOR_STATE_INTERVENTION,
+// };
+
+// static void RampDown_Proc(const Motor_T * p_motor)
+// {
+//     if (p_motor->P_MOTOR_STATE->SpeedUpdateFlag == true)
+//     {
+//         p_motor->P_MOTOR_STATE->SpeedUpdateFlag = false;
+//         p_motor->P_MOTOR_STATE->UserTorqueReq = Motor_SpeedControlOf(p_motor, 0);
+//     }
+// }
+
+// const State_T MOTOR_STATE_RAMP_DOWN =
+// {
+//     // .ID                 = MSM_STATE_ID_RAMP_DOWN,
+//     .P_PARENT           = &MOTOR_STATE_INTERVENTION,
+//     .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
+//     .LOOP               = (State_Action_T)RampDown_Proc,
 // };
 
 /******************************************************************************/

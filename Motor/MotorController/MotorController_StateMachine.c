@@ -672,6 +672,13 @@ void MotorController_ClearFault(MotorController_T * p_context, uint16_t faultFla
     StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value & ~faultFlags);
 }
 
+// or split input id
+struct FaultFlagsContainer
+{
+    uint16_t FaultFlags;
+    uint16_t IsClear;
+};
+
 /*
     Race condition possible if multiple faults are set/cleared at same time.
     however repeat sets are polling

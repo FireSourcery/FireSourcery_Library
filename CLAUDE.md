@@ -4,6 +4,32 @@
 
 **FireSourcery_Library** is a modular, layered embedded systems library written in **C** for motor control applications targeting **ARM Cortex-M** microcontrollers (primarily NXP S32K / Kinetis KE0x families). It implements a full motor controller stack including FOC (Field-Oriented Control), sensor feedback, protocol communication, and peripheral abstraction.
 
+## Core Principles
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
+### Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes – don't over-engineer
+- Challenge your own work before presenting it
+- Consider established design patterns to eliminate code duplication
+
+### Self-Improvement Loop
+- After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
+## Task Management
+1. **Plan First**: Write plan to `.claude/tasks/todo.md` with checkable items
+2. **Verify Plan**: Check in before starting implementation
+3. **Track Progress**: Mark items complete as you go
+4. **Explain Changes**: High-level summary at each step
+5. **Document Results**: Add review section to `.claude/tasks/todo.md`
+6. **Capture Lessons**: Update `.claude/tasks/lessons.md` after corrections
+
 ## Build & Toolchain
 
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
@@ -219,29 +245,4 @@ Type/*  — pure type utilities, no dependency
 - **Simulation**: Python scripts in `Motor/Docs/Simulation/` for algorithm validation (SVPWM, atan2) -->
 
 
-## Core Principles
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
-- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
-- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
-
-### Demand Elegance (Balanced)
-- For non-trivial changes: pause and ask "is there a more elegant way?"
-- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
-- Skip this for simple, obvious fixes – don't over-engineer
-- Challenge your own work before presenting it
-- Consider established design patterns to eliminate code duplication
-
-### Self-Improvement Loop
-- After ANY correction from the user: update `.claude/tasks/lessons.md` with the pattern
-- Write rules for yourself that prevent the same mistake
-- Ruthlessly iterate on these lessons until mistake rate drops
-- Review lessons at session start for relevant project
-
-## Task Management
-1. **Plan First**: Write plan to `.claude/tasks/todo.md` with checkable items
-2. **Verify Plan**: Check in before starting implementation
-3. **Track Progress**: Mark items complete as you go
-4. **Explain Changes**: High-level summary at each step
-5. **Document Results**: Add review section to `.claude/tasks/todo.md`
-6. **Capture Lessons**: Update `.claude/tasks/lessons.md` after corrections
 
