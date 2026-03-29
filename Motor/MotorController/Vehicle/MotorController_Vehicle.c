@@ -274,11 +274,8 @@ static const State_T STATE_NEUTRAL =
 /* Motors may keep direction state in Neutral */
 sign_t MotorController_Vehicle_GetDirection(const MotorController_T * p_mc)
 {
-    if (StateMachine_GetLeafState(p_mc->STATE_MACHINE.P_ACTIVE) == &STATE_DRIVE)
-    {
-        return _Motor_Table_GetDirectionAll(&p_mc->MOTORS);
-    }
-    return (sign_t)MOTOR_DIRECTION_NULL;
+    return (StateMachine_GetLeafState(p_mc->STATE_MACHINE.P_ACTIVE) == &STATE_NEUTRAL) ?
+        (sign_t)MOTOR_DIRECTION_NULL : _Motor_Table_GetDirectionAll(&p_mc->MOTORS);
 }
 
 /******************************************************************************/
@@ -382,7 +379,7 @@ void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t 
 {
     p_mc->VEHICLE.P_VEHICLE_STATE->Input.Direction = direction;
     _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DIRECTION);
-    MotorController_CheckDirection(p_mc, direction);
+    if (MotorController_Vehicle_GetDirection(p_mc) != direction) { Blinky_Blink(&p_mc->BUZZER, 500U); }
 }
 
 void MotorController_Vehicle_SetDirection(MotorController_T * p_mc, sign_t direction)
