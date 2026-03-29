@@ -100,3 +100,19 @@ static inline uint16_t Motor_GetSpeedTypeMax_DegPerCycle(const Motor_State_T * p
 static inline accum32_t Motor_Speed_Fract16OfRpm(const Motor_State_T * p_motor, int16_t speed_rpm)      { return speed_rpm * INT16_MAX / Motor_GetSpeedTypeMax_Rpm(p_motor); }
 static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, accum32_t speed_fract16)  { return speed_fract16 * Motor_GetSpeedTypeMax_Rpm(p_motor) / 32768; }
 
+/*
+    Derived Parameters during initialization or from Host
+    alternatively store as control domain units
+*/
+/* Config stored in Electrical Degrees need to sync with pole pairs */
+// uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
+// uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
+// #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
+// #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
+// #define MOTOR_SPEED_MAX_DIGITAL
+// 32767 600000 erpm
+// 16383 300000 erpm
+// 8192 150000 erpm
+// 4096 75000 erpm
+// 2048 37500 erpm
+// 1024 18750 erpm, 8 pole pairs 2344 rpm

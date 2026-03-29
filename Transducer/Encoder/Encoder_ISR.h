@@ -158,20 +158,18 @@ static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
 {
     if (_Encoder_IsQuadratureCaptureEnabled(p_encoder->P_STATE) == true) { _Encoder_Quadrature_CapturePulse(p_encoder); }
     else { _Encoder_SinglePhase_CapturePulse(p_encoder); }
-    // Encoder_CaptureMode_Proc(p_encoder, _Encoder_Quadrature_CapturePulse, _Encoder_SinglePhase_CapturePulse); /* Quadrature On/Off Switch */
-    // Encoder_DeltaT_Capture(p_encoder);
     Encoder_DeltaT_CaptureExtended(p_encoder);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
 /* Signed capture external */
 /* -1, 0, 1 */
-// static inline void Encoder_CaptureAsSigned(const Encoder_T * p_encoder, int sign)
-// {
-//     _Encoder_CaptureCount(p_encoder->P_STATE, sign);
-//     Encoder_DeltaT_CaptureExtended(p_encoder);
-//     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
-// }
+static inline void Encoder_CaptureCount(const Encoder_T * p_encoder, int sign)
+{
+    _Encoder_CaptureCount(p_encoder->P_STATE, sign);
+    Encoder_DeltaT_CaptureExtended(p_encoder);
+    Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
+}
 
 /******************************************************************************/
 /*

@@ -150,10 +150,8 @@ static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_State_T * p_
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_State_T * p_encoder)
 {
-    // p_encoder->InterpolateAngleIndex++; /* todo replace index for sum */
-    // return Encoder_DeltaT_InterpolateAngleIndex(p_encoder, p_encoder->InterpolateAngleIndex);
-    // p_encoder->InterpolateAngleSum += p_encoder->PollingAngleDelta;
-    // return p_encoder->InterpolateAngleSum >> 16;
+    p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->PollingAngleDelta, p_encoder->InterpolateAngleLimit);
+    return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
 }
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_State_T * p_encoder)

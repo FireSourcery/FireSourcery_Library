@@ -177,39 +177,18 @@ todo split math module
 */
 /******************************************************************************/
 static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return p_encoder->FreqD * 60 / p_encoder->Config.CountsPerRevolution; }
-
 static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder); }
 
 static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_State_T * p_encoder) { return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution; }
-
-static inline int32_t Encoder_ModeDT_GetRotationalVelocity(const Encoder_State_T * p_encoder) {}
+static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPS(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPS(p_encoder); }
 
 /* In range for electrical speed only */
 /* Degs/S */
 static inline int32_t Encoder_ModeDT_GetAngularSpeed(const Encoder_State_T * p_encoder) { return p_encoder->FreqD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift; }
-
 static inline int32_t Encoder_ModeDT_GetAngularVelocity(const Encoder_State_T * p_encoder) {}
 
-static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(const Encoder_State_T * p_encoder)
-{
-    return p_encoder->FreqD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
-}
-
-static inline int32_t Encoder_ModeDT_GetSurfaceVelocity(const Encoder_State_T * p_encoder)
-{
-
-}
-
-static inline int32_t Encoder_ModeDT_GetGroundVelocity_Mph(const Encoder_State_T * p_encoder)
-{
-
-}
-
-static inline int32_t Encoder_ModeDT_GetGroundVelocity_Kmh(const Encoder_State_T * p_encoder)
-{
-
-}
-
+static inline int32_t Encoder_ModeDT_GetSurfaceSpeed(const Encoder_State_T * p_encoder) { return p_encoder->FreqD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift; }
+static inline int32_t Encoder_ModeDT_GetSurfaceVelocity(const Encoder_State_T * p_encoder) {}
 
 /******************************************************************************/
 /*

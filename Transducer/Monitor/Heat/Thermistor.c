@@ -182,20 +182,21 @@ void Thermistor_Init(const Thermistor_T * p_therm)
 */
 /******************************************************************************/
 /*
+    Derive linear runtime
+    // T_Adcu/T;
+    // uint16_t LinearT0_Adcu;
+    // uint16_t DeltaT_Adcu;
+    // V/T;
+    // uint16_t LinearV0;
+    // uint32_t DeltaV;
     Linear T0 may select a different T0 than the Coefficients T0.
 */
+
 void Thermistor_ToLinear_ROhmsPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
 {
     uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
     uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
     Linear_Map_Init(p_result, adcu0, adcu1, Thermistor_GetR0(p_therm), Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
-}
-
-void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
-{
-    uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
-    uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
-    Linear_Map_Init(p_result, adcu0, adcu1, Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm));
 }
 
 void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T * p_result)
@@ -207,7 +208,12 @@ void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T 
     Linear_Map_Init(p_result, r0, r1, t0, t1);
 }
 
-
+void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
+{
+    uint32_t adcu0 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm));
+    uint32_t adcu1 = Thermistor_AdcuOfROhm(p_therm, Thermistor_GetR0(p_therm) + Thermistor_GetLinearDeltaR(p_therm));
+    Linear_Map_Init(p_result, adcu0, adcu1, Thermistor_GetT0_Celsius(p_therm), Thermistor_GetT0_Celsius(p_therm) + Thermistor_GetLinearDeltaT(p_therm));
+}
 
 /******************************************************************************/
 /*

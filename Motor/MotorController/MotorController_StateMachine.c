@@ -348,7 +348,7 @@ static State_T * MotorCmd_Input(MotorController_T * p_context, state_value_t cmd
     Motor_Input_T * p_input = &p_context->P_MC_STATE->CmdInput;
     switch ((MotorController_MotorCmd_T)cmd)
     {
-        case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdValue_Scalar, p_input->CmdValue); break;
+        case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_context->MOTORS, Motor_SetActiveCmdScalar, p_input->CmdValue); break;
         case MOTOR_CONTROLLER_USER_CMD_PHASE:       Motor_Table_ApplyControl(&p_context->MOTORS, p_input->PhaseOutput); break;
         case MOTOR_CONTROLLER_USER_CMD_FEEDBACK:    Motor_Table_ApplyFeedbackMode(&p_context->MOTORS, p_input->FeedbackMode); break;
         case MOTOR_CONTROLLER_USER_CMD_DIRECTION:   Motor_Table_ApplyUserDirection(&p_context->MOTORS, p_input->Direction); break;

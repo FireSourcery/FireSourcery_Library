@@ -99,8 +99,6 @@ Motor_Var_UserControl_T;
 typedef enum Motor_Var_UserSetpoint
 {
     MOTOR_VAR_USER_SETPOINT_SCALAR,       // RampIn, I/Speed by default. Active/Generic mode select using active feedback mode, as scalar of full scale of active feedback mode. User Direction applies.
-    // MOTOR_VAR_USER_SETPOINT_MIXED,     // UserCmd with mixed units, interpret based on state.
-    // MOTOR_VAR_USER_SETPOINT_VELOCITY,
     MOTOR_VAR_USER_SETPOINT_SPEED,        // UserCmd as Speed
     MOTOR_VAR_USER_SETPOINT_TORQUE,
     MOTOR_VAR_USER_SETPOINT_CURRENT,
@@ -120,8 +118,6 @@ typedef enum Motor_Var_Rotor
     MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Internal Ccw/Cw */
     MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,   /* if supported */
     MOTOR_VAR_ROTOR_DIRECTION, // 1:Ccw, -1:Cw, 0:Stop
-    // MOTOR_VAR_ROTOR_ELECTRICAL_SPEED_RADS,
-    // MOTOR_VAR_ROTOR_MECHANICAL_SPEED_RPM,
     // optionally control loop state
 }
 Motor_Var_Rotor_T;

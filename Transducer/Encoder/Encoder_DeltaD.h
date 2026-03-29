@@ -67,6 +67,12 @@ static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
     Displacement
 */
 /******************************************************************************/
+/*!
+    Linear Distance
+*/
+static inline uint32_t Encoder_DistanceOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
+static inline uint32_t Encoder_CountOfDistance(const Encoder_State_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
+
 static inline int32_t  Encoder_DeltaD(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD; }
 static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
 static inline uint32_t Encoder_DeltaD_AsDistance(const Encoder_State_T * p_encoder) { return Encoder_DistanceOfCount(p_encoder, p_encoder->DeltaD); }
@@ -134,13 +140,11 @@ static inline uint32_t Encoder_DeltaD_ToLinearSpeed_UnitsPerMinute(const Encoder
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder)
 {
-    // return _Encoder_CalcRotationalSpeed_Shift(p_encoder, p_encoder->DeltaD * 60U, 1U);
     return Encoder_DeltaD_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaD);
 }
 
 static inline uint32_t Encoder_DeltaD_GetAngularSpeed(const Encoder_State_T * p_encoder)
 {
-    // return _Encoder_CalcAngularSpeed(p_encoder, p_encoder->DeltaD, 1U);
     return p_encoder->DeltaD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
 }
 
@@ -164,7 +168,6 @@ static inline uint32_t Encoder_DeltaD_GetScalarSpeed(const Encoder_State_T * p_e
 */
 static inline uint32_t Encoder_DeltaD_GetLinearSpeed(const Encoder_State_T * p_encoder)
 {
-    // return Encoder_CalcLinearSpeed(p_encoder, p_encoder->DeltaD, 1U);
     return p_encoder->DeltaD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
 }
 

@@ -71,8 +71,8 @@ void Vehicle_ApplyThrottleValue(const Vehicle_T * p_vehicle, uint16_t userCmdThr
 
     switch (p_vehicle->P_VEHICLE_STATE->Config.ThrottleMode)
     {
-        case VEHICLE_THROTTLE_MODE_SPEED:  Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetSpeedCmd_Scalar, (int32_t)cmdValue);     break;
-        case VEHICLE_THROTTLE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmd_Scalar, (int32_t)cmdValue);         break;
+        case VEHICLE_THROTTLE_MODE_SPEED:  Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetSpeedMotoringCmdScalar, (int32_t)cmdValue);     break;
+        case VEHICLE_THROTTLE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmdScalar, (int32_t)cmdValue);         break;
         default: break;
     }
 }
@@ -86,9 +86,7 @@ void Vehicle_StartBrakeMode(const Vehicle_T * p_vehicle)
             // case VEHICLE_BRAKE_MODE_VOLTAGE: Motor_Table_ApplyFeedbackMode(&p_vehicle->MOTORS, MOTOR_FEEDBACK_MODE_VOLTAGE);  break;
         default: break;
     }
-
-    /* alternatively from Release only */
-    Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_PWM);
+    Motor_Table_ApplyControl(&p_vehicle->MOTORS, PHASE_VOUT_PWM);     /* alternatively from Release only */
 }
 
 /*!
@@ -107,7 +105,7 @@ void Vehicle_ApplyBrakeValue(const Vehicle_T * p_vehicle, uint16_t userCmdBrake)
 
     switch (p_vehicle->P_VEHICLE_STATE->Config.BrakeMode)
     {
-        case VEHICLE_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmd_Scalar, cmdValue); break; /* note: torqueRamp also written in voltage mode */
+        case VEHICLE_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetICmdScalar, cmdValue); break; /* note: torqueRamp also written in voltage mode */
             // case VEHICLE_BRAKE_MODE_VOLTAGE: Motor_Table_SetCmdWith(&p_vehicle->MOTORS, Motor_SetRegenCmd, 0); break;
         default: break;
     }

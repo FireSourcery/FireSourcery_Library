@@ -43,41 +43,38 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
-    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->BASE);
+    Angle_T * p_angle = &p_state->AngleSpeed;
 
-// #if defined(ROTOR_HALL_MODE_POLLING)
-    if (Hall_PollCaptureSensors(&p_sensor->HALL) == true)
+    if (Hall_PollCaptureSensors(&p_sensor->HALL) == true) /* Electrical Cycle, generally > 1ms */
     {
-        Encoder_SinglePhase_CapturePulse(p_sensor->P_ENCODER); // for speed and interpolation todo move to angle
-
-        p_state->Direction = Hall_CaptureDirection(p_sensor->HALL.P_STATE);
+        Encoder_CaptureCount(p_sensor->P_ENCODER, Hall_CaptureDirection(p_sensor->HALL.P_STATE));
         Angle_CaptureAngle(p_angle, Hall_CaptureAngle(p_sensor->HALL.P_STATE));
-        Encoder_SinglePhase_SetDirection(p_sensor->P_ENCODER->P_STATE, p_state->Direction); /* interpolate as +/-, and on get speed */
 
-        // Angle_CaptureAngle(p_angle, Hall_GetSensorAngle(p_sensor->HALL.P_STATE));
-
-        // module handle edge. caller handle count error
-        // if (p_state->Direction != Hall_GetSensorDirection(p_sensor->HALL.P_STATE))
-        // {
-        //     p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
-        //     p_sensor->P_ENCODER->P_STATE->InterpolateAngleSum = 0;
-        //     p_state->Direction = Hall_GetDirection(p_sensor->HALL.P_STATE); // p_state->Direction as common feedback direction, alternatively use speed
-        // }
+        /*
+            Direction mismatch. or just handle speed reliable?
+            direction mismatch need motor layer to pass direction cmd, awkward.
+        */
+        if (Hall_GetDirection(p_sensor->HALL.P_STATE) != math_sign(RotorSensor_GetSpeed_Fract16(&p_sensor->BASE))) // feedback direction from speed last capture
+        {
+            p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
+            p_sensor->P_ENCODER->P_STATE->InterpolateAngleSum = 0;
+        }
     }
-    else
-// #endif
+    else /* 20Khz */
     {
-        // Angle_T todo
-        p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
-        // p_state-> Angle = p_angle->Angle  + delta // may over accumulate
-        // if capture mech angle
+        // todo with Angle_T
+        // p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngularDisplacement(p_sensor->P_ENCODER);
+        if (RotorSensor_IsSpeedReliable(&p_sensor->BASE) == true) { p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngle(p_sensor->P_ENCODER); }
+        //alternatively motor layer use commanded direction.
+        /* Optionally */
         p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
     }
 }
 
+/* 1ms */
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
-    Angle_T * p_angle = RotorSensor_GetAngleState(&p_sensor->BASE);
+    Angle_T * p_angle = &p_sensor->BASE.P_STATE->AngleSpeed; /* use AngleSpeed for capture, and GetAngle can select angle/speed/other result from AngleSpeed struct */
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
     Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
     // p_angle->Delta = Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);  /* interpolate with Angle_T todo. use 1ms sample */
@@ -87,16 +84,7 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 
 static bool Hall_RotorSensor_IsFeedbackAvailable(const Hall_RotorSensor_T * p_sensor) { return true; }
 
-static int Hall_RotorSensor_GetDirection(const Hall_RotorSensor_T * p_sensor) { return Hall_GetSensorDirection(p_sensor->HALL.P_STATE); }
 
-// set direction comp
-// alternatively change to capture on set and this can be empty
-static void Hall_RotorSensor_SetDirection(const Hall_RotorSensor_T * p_sensor, int direction)
-{
-    // p_sensor->BASE.P_STATE->Direction = direction;
-    // Hall_SetDirection(p_sensor->HALL.P_STATE, (Hall_Direction_T)direction);
-    // Encoder_SinglePhase_SetDirection(p_sensor->P_ENCODER->P_STATE, direction);  /* interpolate as +/-, and on get speed */
-}
 
 static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
 {
@@ -144,7 +132,7 @@ const RotorSensor_VTable_T HALL_VTABLE =
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureAngle,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Hall_RotorSensor_IsFeedbackAvailable,
-    .SET_DIRECTION = (RotorSensor_Set_T)Hall_RotorSensor_SetDirection,
+    // .SET_DIRECTION = (RotorSensor_Set_T)Hall_RotorSensor_SetDirection,
     // .GET_DIRECTION = (RotorSensor_Get_T)Hall_RotorSensor_GetDirection,
     .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_ZeroInitial,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Hall_RotorSensor_VerifyCalibration,

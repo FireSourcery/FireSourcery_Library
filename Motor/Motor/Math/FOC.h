@@ -235,8 +235,6 @@ static inline FOC_Quadrant_T FOC_GetQuadrant(const FOC_T * p_foc)
 static inline bool FOC_IsMotoringCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
 static inline bool FOC_IsGeneratingCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
 
-/* Plugging in either direction */
-// static inline bool FOC_IsPlugging(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0) && (p_foc->Vd * p_foc->Vd + p_foc->Vq * p_foc->Vq > 0); }
 
 /******************************************************************************/
 /*!

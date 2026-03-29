@@ -248,16 +248,19 @@ static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint1
 */
 /******************************************************************************/
 /*
-    Duty 100% == PWM_DUTY_MAX
+    Scale set by PWM_DUTY_MAX
 */
-static inline void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+static inline void Phase_WriteDuty(const Phase_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
 {
-    PWM_WriteDuty(&p_phase->PWM_A, pwmDutyA);
-    PWM_WriteDuty(&p_phase->PWM_B, pwmDutyB);
-    PWM_WriteDuty(&p_phase->PWM_C, pwmDutyC);
+    PWM_WriteDuty(&p_phase->PWM_A, pwmA);
+    PWM_WriteDuty(&p_phase->PWM_B, pwmB);
+    PWM_WriteDuty(&p_phase->PWM_C, pwmC);
     _Phase_SyncPwmDuty(p_phase, PHASE_ID_ABC);
 }
 
+/*
+
+*/
 static inline void Phase_WriteDuty_Fract16(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
 {
     PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA);

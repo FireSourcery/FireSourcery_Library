@@ -311,6 +311,11 @@ static inline uint32_t _Encoder_CaptureDeltaWrap(uint32_t tcMax, uint32_t tcPrev
 */
 static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT); }
 static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, uint16_t angle_UserDegrees) { return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD; }
+/* [0:INT16_MAX] */
+// static inline uint32_t Encoder_AngleOfCount_Direct(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks)
+// {
+//     return ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
+// }
 
 /******************************************************************************/
 /*!
@@ -386,12 +391,11 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 */
 /******************************************************************************/
 /* Direction set by outer module */
+/* SinglePhase Capture is always positive. assign direction comp */
+static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
-/* SinglePhase Capture is always positive. assign direction comp */
 
-// static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
-static inline void Encoder_SinglePhase_SetDirection(Encoder_State_T * p_encoder, int8_t direction) { p_encoder->DirectionComp = direction; }
 
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
@@ -461,34 +465,6 @@ static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t
 static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
 
 
-
-
-/* [0:INT16_MAX] */
-// static inline uint32_t Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks)
-// {
-//     return (counterD_Ticks < p_encoder->Config.CountsPerRevolution) ?
-//         ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT) :
-//         ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
-
-//     return ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
-// }
-
-/******************************************************************************/
-/*!
-    move units to Angle_T
-*/
-/******************************************************************************/
-/*!
-    Linear Distance
-*/
-static inline uint32_t Encoder_DistanceOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
-static inline uint32_t Encoder_CountOfDistance(const Encoder_State_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
-
-
-// static inline uint32_t Encoder_GetAngularSpeed_PerPoll(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-// {
-//     return (deltaD_Ticks * p_encoder->UnitTime_Freq / p_encoder->POLLING_FREQ << ENCODER_ANGLE_BITS) / (p_encoder->Config.CountsPerRevolution * deltaT_Ticks);
-// }
 
 /*
     Only When base units in mm, as set via SetGroundRatio function.

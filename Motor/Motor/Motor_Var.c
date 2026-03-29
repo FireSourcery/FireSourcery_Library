@@ -55,7 +55,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
         // case MOTOR_VAR_STATUS_FLAGS:                value = Motor_GetStatusFlags(p_motor).Value;           break;
         case MOTOR_VAR_HEAT:                        value = Motor_GetHeat_Adcu(p_motor);                    break;
         case MOTOR_VAR_SPEED_REQ:                   value = Motor_GetSpeedSetpoint(p_motor);                break;
-        case MOTOR_VAR_TORQUE_IV_REQ:               value = _Motor_GetIVSetpoint(p_motor);                  break;
+        case MOTOR_VAR_TORQUE_IV_REQ:               value = _Motor_GetTorqueSetpoint(p_motor);              break;
 
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);     break;
@@ -70,9 +70,6 @@ static inline angle16_t _RotorSensor_GetElectricalDelta(const RotorSensor_State_
 static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Fract16; }
 static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
 static inline angle16_t _RotorSensor_GetMechanicalAngle(const RotorSensor_State_T * p_state) { return p_state->MechanicalAngle; }
-// static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return speed_fract16_of_angle16(p_state->ElectricalSpeed_DegPerCycle, p_state->Config.ElSpeedRated_DegPerCycle); }
-// static inline int32_t _RotorSensor_GetElectricalSpeed_RadPerS(const RotorSensor_State_T * p_state) { }
-// static inline int32_t _RotorSensor_GetRpm(const RotorSensor_State_T * p_state) {}
 
 int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId)
 {
@@ -160,9 +157,8 @@ void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint
 {
     switch (varId)
     {
-        case MOTOR_VAR_USER_SETPOINT_SCALAR:      Motor_SetActiveCmdValue_Scalar(p_motor->P_MOTOR_STATE, varValue);     break;
-        // case MOTOR_VAR_USER_SETPOINT_UNITS:    Motor_SetActiveCmdValue(p_motor->P_MOTOR_STATE, varValue);  break; /* mixed units */
-        case MOTOR_VAR_USER_SETPOINT_SPEED:       Motor_SetSpeedCmd_Fract16(p_motor->P_MOTOR_STATE, varValue);          break;
+        case MOTOR_VAR_USER_SETPOINT_SCALAR:      Motor_SetActiveCmdScalar(p_motor->P_MOTOR_STATE, varValue);           break;
+        case MOTOR_VAR_USER_SETPOINT_SPEED:       Motor_SetSpeedCmd(p_motor->P_MOTOR_STATE, varValue);                  break;
         case MOTOR_VAR_USER_SETPOINT_TORQUE:      Motor_SetTorqueCmd(p_motor->P_MOTOR_STATE, varValue);                 break;
         case MOTOR_VAR_USER_SETPOINT_CURRENT:     Motor_SetICmd(p_motor->P_MOTOR_STATE, varValue);                      break;
         case MOTOR_VAR_USER_SETPOINT_VOLTAGE:     Motor_SetVoltageCmd(p_motor->P_MOTOR_STATE, varValue);                break;

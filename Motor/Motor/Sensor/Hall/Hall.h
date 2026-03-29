@@ -122,9 +122,6 @@ typedef enum Hall_Id
 }
 Hall_Id_T;
 
-/* +180 degrees */
-// #define HALL_SENSOR_MASK (0x07U)
-// static inline uint8_t _Hall_Inverse(uint8_t sensors) { return (~sensors & 0x07U); }
 
 typedef enum Hall_Direction
 {
@@ -133,10 +130,6 @@ typedef enum Hall_Direction
     HALL_DIRECTION_CCW = 1,
 }
 Hall_Direction_T;
-
-// #if defined(HALL_COMMUTATION_TABLE_FUNCTION)
-// typedef void (*Hall_CommutationPhase_T)(void * p_context);
-// #endif
 
 typedef struct Hall_Config
 {
@@ -160,6 +153,8 @@ typedef const struct Hall
     Pin_T PIN_A;
     Pin_T PIN_B;
     Pin_T PIN_C;
+    // HAL_Timer_T * P_HAL_TIMER;    /*!< DeltaT Timer. */
+    // uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq. Divisible by SAMPLE_FREQ */
     Hall_State_T * P_STATE;
     const Hall_Config_T * P_NVM_CONFIG;
 }
@@ -274,6 +269,7 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
     _Hall_CaptureSensors(p_hall->P_STATE, Hall_ReadSensors(p_hall));
 }
 
+
 /*!
     Capture sensor on Hall edge, angle boundary
     @return true on every phase edge. i.e 6x per Hall cycle
@@ -281,9 +277,16 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
 static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
 {
     Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
-    bool isEdge = (sensors.Value != p_hall->P_STATE->Sensors.Value);
-    if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
-    return (isEdge);
+    // bool isEdge = (sensors.Value != p_hall->P_STATE->Sensors.Value);
+    // if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
+    // return (isEdge);
+
+    if (p_hall->P_STATE->Sensors.Value != sensors.Value)
+    {
+        _Hall_CaptureSensors(p_hall->P_STATE, sensors);
+        return true;
+    }
+    else { return false; }
 }
 
 /*
@@ -342,18 +345,13 @@ static inline Hall_Direction_T Hall_CaptureDirection(Hall_State_T * p_hall)
     return p_hall->Direction;
 }
 
+/* always capture with the most recent direction. jitter is acounted for */
 /* Store the angle for repeat read on interpolation */
 static inline uint16_t Hall_CaptureAngle(Hall_State_T * p_hall)
 {
     p_hall->Angle = _Hall_Angle16OfSensors(p_hall, p_hall->Sensors.Value, p_hall->Direction);
     return p_hall->Angle;
 }
-
-// static inline void Hall_CaptureState(const Hall_T * p_hall)
-// {
-//     Hall_CaptureDirection(p_hall->P_STATE);
-//     Hall_CaptureAngle(p_hall->P_STATE);
-// }
 
 /* Next poll is edge */
 // static inline void Hall_Reset(Hall_T * p_hall) { p_hall->Sensors.Value = 0U; p_hall->Angle = 0U; }

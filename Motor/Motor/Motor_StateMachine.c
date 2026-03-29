@@ -145,6 +145,9 @@ const State_T MOTOR_STATE_INIT =
     Phase V0/VZ
 */
 /******************************************************************************/
+/*
+    Optionally self transition to Stop on 0 speed. let app layer handle safe state and guard transition to calibration.
+*/
 static void Stop_Entry(const Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
@@ -372,7 +375,7 @@ static void Run_Proc(const Motor_T * p_motor)
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_WriteDuty(p_motor);
     // if caller handles rotor direction mismatch
-    // if (Motor_GetRotorDirection(p_motor) != p_state->Direction)
+    // if (Motor_GetDirectionFeedback(p_motor) != p_state->Direction)
     // {
     //     // Runtime reversal detected – update applied direction for control
     // }

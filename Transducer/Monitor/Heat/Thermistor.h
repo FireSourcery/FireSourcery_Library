@@ -79,17 +79,6 @@ typedef struct Thermistor_Coeffs
     /* Back Up Linear Unit Conversion. */
     int32_t DeltaR;
     int16_t DeltaT;
-
-    // simultaneously available linear conversion
-    // uint32_t LinearR0;
-    // uint16_t LinearT0;
-
-    // T_Adcu/T;
-    // uint16_t LinearT0_Adcu;
-    // uint16_t DeltaT_Adcu;
-    // V/T;
-    // uint16_t LinearV0;
-    // uint32_t DeltaV;
 }
 Thermistor_Coeffs_T;
 
@@ -215,7 +204,7 @@ typedef enum Thermistor_ConfigId
     THERMISTOR_REF_R_PARALLEL, // All instance Read-Only
     THERMISTOR_REF_V_SERIES_MV, // All instance Read-Only
     /* Config CoeffId */
-    THERMISTOR_CONFIG_TYPE,
+    THERMISTOR_CONFIG_TYPE, /* Resv */
     THERMISTOR_CONFIG_B,
     THERMISTOR_CONFIG_R0,
     THERMISTOR_CONFIG_T0,

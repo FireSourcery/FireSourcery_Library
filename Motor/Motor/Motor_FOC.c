@@ -91,18 +91,6 @@ static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t 
             FOC_SetVd(&p_motor->Foc, dReq);
             FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
             /* Still check CaptureIabc for overcurrent */
-            /* todo on decrement */
-            // ProcIFeedback(p_motor, 0, Motor_FOC_GetILimit(p_motor) * p_motor->Direction);
-            // if (Motor_FOC_IsILimitReached(p_motor) == true)
-            // {
-            //     FOC_SetVq(&p_motor->Foc, PID_GetOutput(&p_motor->PidIq));
-            //     FOC_SetVd(&p_motor->Foc, PID_GetOutput(&p_motor->PidId));
-            // }
-            // else
-            // {
-                // FOC_SetVq(&p_motor->Foc, p_motor->Foc.ReqQ);
-                // FOC_SetVd(&p_motor->Foc, p_motor->Foc.ReqD);
-            // }
         }
     }
 }
@@ -174,9 +162,8 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
     Motor_ExternControl(p_motor);
 #endif
 
-    int16_t userCmd = (p_motor->FeedbackMode.Current == 1U) ? Motor_ILimitSetpoint(p_motor, p_motor->UserTorqueReq) : Motor_VLimitSetpoint(p_motor, p_motor->UserTorqueReq);
-
-    Motor_FOC_ProcTorqueReq(p_motor, 0, userCmd);
+    int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VLimitSetpoint(p_motor, p_motor->UserTorqueReq);
+    Motor_FOC_AngleControl(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, qReq);
 }
 
 /*
@@ -214,6 +201,8 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
     Phase_Input_ClearI(&p_motor->PhaseInput);
     Phase_Input_ClearV(&p_motor->PhaseInput);
+    p_motor->UserTorqueReq = 0;
+    p_motor->UserSpeedReq = 0;
 }
 
 void Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
@@ -223,11 +212,10 @@ void Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
     Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Iq(&p_motor->Foc)); /* case transitioning without release into freewheel */
 }
 
-void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor)
-{
-    Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
-}
-
+// void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor)
+// {
+//     Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
+// }
 
 /*!
     Match Feedback State/Ouput to Output Voltage
@@ -240,21 +228,16 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
     {
         Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));  /* Using Bemf capture */
         // Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
+        p_motor->UserTorqueReq = Ramp_GetOutput(&p_motor->TorqueRamp);
     }
     else
     {
-        Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Vq(&p_motor->Foc));
+        p_motor->UserTorqueReq = FOC_Vq(&p_motor->Foc);
     }
 
-    Motor_MatchSpeedTorqueState(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp));
+    Motor_MatchSpeedTorqueState(p_motor, p_motor->UserTorqueReq); // or let state machine handle
 }
 
-
-/******************************************************************************/
-/*!
-    FOC Direction
-*/
-/******************************************************************************/
 /*
     Set on Direction change
     Iq/Id PID always Vq/Vd. Clip opposite user direction range, no plugging.
@@ -286,20 +269,19 @@ void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction
     StateMachine mapping
 */
 /******************************************************************************/
-/* Align using user cmd value */
-/* ElectricalAngle set by caller */
+/*
+    Align using UserTorqueReq
+*/
+/* ElectricalAngle set by caller. Does not Angle_ZeroCaptureState */
 void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U; /* config alternatively */
     Motor_FOC_ClearFeedbackState(p_motor); /* reset TorqueRamp i/v to start at 0 */
-    // Angle_ZeroCaptureState(&p_motor->OpenLoopAngle);
 }
 
-/* User Input ramp */
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
-    int32_t userCmd = p_motor->UserTorqueReq;
-    Motor_FOC_AngleControl(p_motor, p_motor->OpenLoopAngle.Angle, Motor_OpenLoopTorqueRampOf(p_motor, userCmd), 0);
+    Motor_FOC_AngleControl(p_motor, p_motor->OpenLoopAngle.Angle, Motor_OpenLoopTorqueRampOf(p_motor, p_motor->UserTorqueReq), 0);
 }
 
 

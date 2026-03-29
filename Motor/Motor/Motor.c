@@ -95,14 +95,14 @@ void Motor_Reset(Motor_State_T * p_motor)
     Motor_InitSpeedRamp(p_motor);
     Motor_InitTorqueRamp(p_motor);
 
-// #if defined(MOTOR_OPEN_LOOP_ENABLE)
     /* Start at 0 speed in FOC mode for continuous angle displacements */
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
-    // #endif
+
     Angle_InitSpeedRef(&p_motor->OpenLoopAngle, Motor_GetSpeedTypeMax_DegPerCycle(p_motor));
 
     p_motor->ControlTimerBase = 0U;
+
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
     // Motor_ResetUnitsIabc(p_motor);
@@ -141,8 +141,8 @@ void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 }
 
 // void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
-// void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
 // void Motor_DisableSpeedRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
+// void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
 // void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
 
 // void Motor_ResetSpeedPid(Motor_State_T * p_motor)
