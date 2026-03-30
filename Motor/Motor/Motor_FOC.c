@@ -162,7 +162,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
     Motor_ExternControl(p_motor);
 #endif
 
-    int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VLimitSetpoint(p_motor, p_motor->UserTorqueReq);
+    int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VRampOf(p_motor, p_motor->UserTorqueReq);
     Motor_FOC_AngleControl(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, qReq);
 }
 
@@ -246,7 +246,7 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 */
 void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, int16_t vRef)
 {
-    PID_SetOutputLimits(&p_motor->PidIq, 0 - _Motor_CwOf(vRef), _Motor_CcwOf(vRef));
+    PID_SetOutputLimits(&p_motor->PidIq, 0 - _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor));
     PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
 }
 

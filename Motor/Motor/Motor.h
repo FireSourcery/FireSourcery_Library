@@ -494,6 +494,7 @@ static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { 
 static inline fract16_t Motor_VLimitSetpoint(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, _Motor_GetVLimitCw(p_motor), _Motor_GetVLimitCcw(p_motor)); }
 /*  */
 // static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VLimitSetpoint(p_motor, req)); }
+static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_VLimitSetpoint(p_motor, req)); }
 
 /* TorqueRamp */ /* Getters cache on update */
 static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return p_motor->ILimitCcw_Fract16; }
@@ -625,6 +626,7 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
+
         Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
     }

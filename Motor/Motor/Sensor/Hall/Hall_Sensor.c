@@ -58,7 +58,7 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
         if (Hall_GetDirection(p_sensor->HALL.P_STATE) != RotorSensor_GetFeedbackDirection(&p_sensor->BASE))
         {
             p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
-            // p_angle->Interpolation.Delta = 0;
+            p_angle->Interpolation.Delta = 0;
         }
     }
     else /* 20Khz */
@@ -79,7 +79,7 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
     Angle_T * p_angle = &p_sensor->BASE.P_STATE->AngleSpeed; /* use AngleSpeed for capture, and GetAngle can select angle/speed/other result from AngleSpeed struct */
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
-    Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
+    // Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
     Angle_CaptureSpeed_Fract16(p_angle, Encoder_ModeDT_GetScalarSpeed(p_sensor->P_ENCODER->P_STATE)); /* FreqD captured with direction */
     Angle_CaptureInterpolationDelta(p_angle); /* Captures Delta as   */
 
