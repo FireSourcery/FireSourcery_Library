@@ -34,63 +34,78 @@
 
 
 /*
-    Convert between [angle16 per poll] and standard representations.
-    [angle16] as [Delta Angle] at [Polling Freq].
-
-    angle_delta_of_speed_rpm()
+    Convert between [angle16] per poll and standard representations.
+    [angle16] as [DeltaAngle] at [PollingFreq].
 */
+
+/*
+
+*/
+#define ANGLE_SPEED_UNIT(pollingFreq) (((double)ANGLE16_PER_REVOLUTION / (pollingFreq)))
+#define ANGLE_FREQ_UNIT(pollingFreq) (((double)(pollingFreq) / ANGLE16_PER_REVOLUTION))
+
+
+/*
+
+*/
+// #define POLLING_PERIOD_FRACT32(pollingFreq) (INT32_MAX / (pollingFreq))
+
+/* effecticely polling_period_fract32 */
+/* INT32_MAX / (pollingFreq) = (ANGLE16_PER_REVOLUTION * 32768) / (pollingFreq) */
+#define ANGLE_SPEED_UNIT_ACCUM32(pollingFreq) (int32_t)(((uint32_t)ANGLE16_PER_REVOLUTION * (uint32_t)FRACT16_SCALE) / (pollingFreq))
+#define ANGLE_FREQ_UNIT_ACCUM32(pollingFreq) ((int32_t)(pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
+
+#define ANGLE_SPEED_OF(pollingFreq, cycles)  (((int64_t)cycles * ANGLE16_PER_REVOLUTION) / (pollingFreq))  /* angle delta */
+#define ANGLE_FREQ_OF(pollingFreq, angle16)  (((int64_t)angle16 * (pollingFreq)) / ANGLE16_PER_REVOLUTION) /* n cycles */
+
+/* r speed */
+static inline int32_t _angle_of_cycles_direct(uint32_t polling_rate, int32_t cycles_per_poll) { return ANGLE_SPEED_OF(polling_rate, cycles_per_poll); }
+static inline int32_t _cycles_of_angle_direct(uint32_t polling_rate, int32_t angle_per_poll) { return ANGLE_FREQ_OF(polling_rate, angle_per_poll); }
+
+/*
+    Runtime
+    Compiler may optimize when [polling_rate] is const, run time without division
+    assert(polling_rate != 0);
+    32768 == (INT32_MAX + 1) / ANGLE16_PER_REVOLUTION
+*/
+/* cycle per poll [0:polling_rate/2] */
+static inline int32_t _angle_speed_of(uint32_t polling_rate, int32_t cycles_per_poll) { return cycles_per_poll * (int32_t)ANGLE_SPEED_UNIT_ACCUM32(polling_rate) / FRACT16_SCALE; }
+/* (int64_t) for pollig rate in rpm  */
+static inline int32_t _angle_freq_of(uint32_t polling_rate, int32_t angle_per_poll) { return (int64_t)angle_per_poll * ANGLE_FREQ_UNIT_ACCUM32(polling_rate) / FRACT16_SCALE; }
 
 /******************************************************************************/
 /*
     Rpm
 */
 /******************************************************************************/
-#define SECONDS_PER_MINUTE (60U)
-
-#define ANGLE16_PER_RPM(pollingFreq) (((double)ANGLE16_PER_REVOLUTION / (SECONDS_PER_MINUTE * pollingFreq)))
-#define RPM_PER_ANGLE16(pollingFreq) (((double)pollingFreq * SECONDS_PER_MINUTE / ANGLE16_PER_REVOLUTION))
-
-#define ANGLE16_OF_RPM(pollingFreq, rpm)      (((int64_t)rpm * ANGLE16_PER_REVOLUTION) / (SECONDS_PER_MINUTE * pollingFreq))
-#define RPM_OF_ANGLE16(pollingFreq, angle16)  (((int64_t)angle16 * pollingFreq * SECONDS_PER_MINUTE) / ANGLE16_PER_REVOLUTION)
-
-/* Polling Period in Minutes */
-#define MINUTES_PER_POLL_FRACT32(pollingFreq) (INT32_MAX / SECONDS_PER_MINUTE / pollingFreq)
-/* Polling Freq in Minutes */
-#define POLLS_PER_MINUTE(pollingFreq) (pollingFreq * SECONDS_PER_MINUTE)
-
-/* Alternative direct implementations for comparison */
-// static inline int32_t angle_of_rpm_direct(uint32_t pollingFreq, int32_t rpm) { return ANGLE16_OF_RPM(pollingFreq, rpm); }
-// static inline int32_t rpm_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return RPM_OF_ANGLE16(pollingFreq, angle16); }
-
 /*
     angle16 per poll of rpm
 
-    [minutes_fract32] = INT32_MAX / (60 * pollingFreq)
-    minutes_fract32 = (ANGLE16_PER_REVOLUTION * 32768) / (60 * pollingFreq)
-
     Example: pollingFreq = 20000 (20kHz)
-    minutes_fract32 = INT32_MAX / (60 * 20000) = 2147483647 / 1200000 = 1789 (compile-time)
+        minutes_fract32 = INT32_MAX / (60 * 20000) = 1789 (compile-time)
 
     angle16:
-        = rpm * (1/60) * ANGLE16_PER_REVOLUTION / pollingFreq
         = rpm * ANGLE16_PER_REVOLUTION / (60 * pollingFreq)
         = rpm * minutes_fract32 / (INT32_MAX / ANGLE16_PER_REVOLUTION)
 */
-/* Call at run time without division */
-static inline int32_t _angle_of_speed_rpm(uint32_t minute_div_polling_fract32, int32_t rpm) { return ((int64_t)rpm * minute_div_polling_fract32) / (32768); }
-static inline int32_t _speed_rpm_of_angle(uint32_t minute_polling, int32_t angle16) { return ((int64_t)angle16 * minute_polling) / ANGLE16_PER_REVOLUTION; }
 
-/*
-    pollingFreq as const
-    pollingFreq != 0
-*/
-static inline int32_t angle_of_rpm(uint32_t pollingFreq, int32_t rpm) { return _angle_of_speed_rpm((INT32_MAX / SECONDS_PER_MINUTE / pollingFreq), rpm); }
-static inline int32_t rpm_of_angle(uint32_t pollingFreq, int16_t angle16) { return _speed_rpm_of_angle((pollingFreq * SECONDS_PER_MINUTE), angle16); }
+#define SECONDS_PER_MINUTE (60U)
 
-/* call private helper with [int32_t rpm] */
+#define ANGLE16_OF_RPM(pollingFreq, rpm)      ANGLE_SPEED_OF((int64_t)pollingFreq * SECONDS_PER_MINUTE, rpm)
+#define RPM_OF_ANGLE16(pollingFreq, angle16)  ANGLE_FREQ_OF((int64_t)pollingFreq * SECONDS_PER_MINUTE, angle16)
+
+
+/* Alternative direct implementations for comparison */
+static inline int32_t angle_of_rpm_direct(uint32_t pollingFreq, int32_t rpm) { return _angle_of_cycles_direct(pollingFreq * SECONDS_PER_MINUTE, rpm); }
+
+static inline int32_t angle_of_rpm(uint32_t pollingFreq, int32_t rpm) { return _angle_speed_of(pollingFreq * SECONDS_PER_MINUTE, rpm); }
+static inline int32_t rpm_of_angle(uint32_t pollingFreq, int16_t angle16) { return _cycles_of_angle_direct(pollingFreq * SECONDS_PER_MINUTE, angle16); }
+
+
+
 /* ANGLE16_OF_RPM() * PolePairs */
-static inline int32_t el_angle_of_mech_rpm(uint32_t pollingFreq, uint8_t polePairs, int16_t rpm) { return _angle_of_speed_rpm((INT32_MAX / SECONDS_PER_MINUTE / pollingFreq), (int32_t)rpm * polePairs); }
-static inline int32_t mech_rpm_of_el_angle(uint32_t pollingFreq, uint8_t polePairs, int16_t angle16) { return _speed_rpm_of_angle((pollingFreq * SECONDS_PER_MINUTE), angle16) / polePairs; }
+static inline int32_t el_angle_of_mech_rpm(uint32_t pollingFreq, uint8_t polePairs, int16_t rpm) { return angle_of_rpm(pollingFreq, (int32_t)rpm * polePairs); }
+static inline int32_t mech_rpm_of_el_angle(uint32_t pollingFreq, uint8_t polePairs, int16_t angle16) { return rpm_of_angle(pollingFreq, angle16) / polePairs; }
 
 
 /******************************************************************************/
@@ -98,12 +113,12 @@ static inline int32_t mech_rpm_of_el_angle(uint32_t pollingFreq, uint8_t polePai
     Cycles Per Second
 */
 /******************************************************************************/
+/*   */
 static inline int32_t angle_of_cps_direct(uint32_t pollingFreq, int32_t cps) { return ((int32_t)cps * ANGLE16_PER_REVOLUTION) / pollingFreq; }
-static inline int32_t cps_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return ((int64_t)angle16 * pollingFreq) / ANGLE16_PER_REVOLUTION; }
 
 /* cps [0:POLLING_FREQ/2] */
-static inline int32_t angle_of_cps(uint32_t pollingFreq, int16_t cps) { return (INT32_MAX / pollingFreq) * cps / (ANGLE16_PER_REVOLUTION / 2); }
-static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return cps_of_angle_direct(pollingFreq, angle16); }
+static inline int32_t angle_of_cps(uint32_t pollingFreq, int16_t cps) { return _angle_speed_of(pollingFreq, cps); }
+static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return _cycles_of_angle_direct(pollingFreq, angle16); }
 
 
 /******************************************************************************/
@@ -116,6 +131,7 @@ static inline int32_t angle_of_rads_direct(uint32_t pollingFreq, int32_t rads) {
 static inline int32_t rads_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return (angle16 * pollingFreq) / ANGLE16_PER_RADIAN; }
 
 
+
 /******************************************************************************/
 /*
     fract16
@@ -124,14 +140,14 @@ static inline int32_t rads_of_angle_direct(uint32_t pollingFreq, int16_t angle16
 /*
     RPM Ref
 */
-static inline int16_t angle_of_speed_fract16_rpm(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t speed_fract16)
+static inline int16_t angle_of_rpm_fract16(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t rpm_fract16)
 {
-    return ((int32_t)speed_fract16 * speedRef_Rpm) / ((SECONDS_PER_MINUTE / 2) * pollingFreq);
-    // return angle_of_rpm(pollingFreq, fract16_mul(speedRef_Rpm, speed_fract16));
+    return ((int32_t)rpm_fract16 * speedRef_Rpm) / ((SECONDS_PER_MINUTE / 2) * pollingFreq);
+    // return angle_of_rpm(pollingFreq, fract16_mul(speedRef_Rpm, rpm_fract16));
 }
 
-static inline int16_t speed_fract16_of_angle16_rpm(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t angle16)
+static inline int16_t rpm_fract16_of_angle(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t angle16)
 {
-    return ((int32_t)angle16 * (SECONDS_PER_MINUTE / 2) * pollingFreq) / speedRef_Rpm;
+    return ((int64_t)angle16 * ((SECONDS_PER_MINUTE / 2) * pollingFreq)) / speedRef_Rpm;
 }
 

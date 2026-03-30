@@ -108,15 +108,16 @@ typedef struct RotorSensor_State
 {
     /* Stores Electrical Angle and Speed State */
     Angle_T AngleSpeed;    /* AngleSpeed.Delta - Electrical Angle Per Control Cycle */
-    // angle16_t PhaseAngle; /* prev phase angle */
     angle16_t MechanicalAngle;
-    /* sensor direction for comparison */
-    // can depreciate for speed sign
-    int Direction; /* same as speed sign */
 
-    // uint16_t DirectionErrorCount;
+    // RotorSensor_Config_T Config;
 }
 RotorSensor_State_T;
+// static inline angle16_t _RotorSensor_GetElectricalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
+// static inline angle16_t _RotorSensor_GetElectricalDelta(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Delta; }
+// static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Fract16; }
+// static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
+// static inline angle16_t _RotorSensor_GetMechanicalAngle(const RotorSensor_State_T * p_state) { return p_state->MechanicalAngle; }
 
 /*
     [RotorSensor_T]

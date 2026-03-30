@@ -121,6 +121,7 @@ Encoder_Align_T;
 typedef struct Encoder_Config
 {
     uint16_t CountsPerRevolution;        /* Derive Angular Units. */
+
     uint32_t ScalarSpeedRef_Rpm;         /* Derive Fract16 Units. */
     uint16_t SurfaceDiameter;            /* Derive Linear Units. */
     uint16_t GearRatioInput;             /* Derivce Surface Units. DistancePerRevolution_Divider */
@@ -177,6 +178,8 @@ typedef struct Encoder_State
     uint32_t AlignOffsetRef;
     uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
+
+// Angle_Counter_T Angle;
 
     /*
         Unit conversion. derived on init from NvMem Config
@@ -311,11 +314,7 @@ static inline uint32_t _Encoder_CaptureDeltaWrap(uint32_t tcMax, uint32_t tcPrev
 */
 static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT); }
 static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, uint16_t angle_UserDegrees) { return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD; }
-/* [0:INT16_MAX] */
-// static inline uint32_t Encoder_AngleOfCount_Direct(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks)
-// {
-//     return ((counterD_Ticks << ENCODER_ANGLE_BITS) / p_encoder->Config.CountsPerRevolution);
-// }
+
 
 /******************************************************************************/
 /*!

@@ -90,16 +90,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
 }
 
 /*
-    Call at SAMPLE_FREQ
-    Capture Angular Speed in POLLING_FREQ
-    Using FreqD to interpolate Angle
 
-    FreqD * [ENCODER_ANGLE_DEGREES * PartitionsPerRevolution / CountsPerRevolution / POLLING_FREQ]
-
-    Capture with derived values
-    Capture as shifted
-
-    returns Degrees / POLLING_FREQ
 
     Optionally include with Encoder_ModeDT_CaptureFreqD
     todo move to Angle_T

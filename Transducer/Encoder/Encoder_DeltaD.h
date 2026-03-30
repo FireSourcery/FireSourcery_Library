@@ -57,6 +57,9 @@ static inline void _Encoder_DeltaD_Capture(const Encoder_T * p_encoder, Encoder_
     p_state->CounterPrev = p_state->CounterD;
 }
 
+
+
+
 static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 {
     _Encoder_DeltaD_Capture(p_encoder, p_encoder->P_STATE);
@@ -195,3 +198,27 @@ extern void Encoder_DeltaD_SetInitial(const Encoder_T * p_encoder);
 /******************************************************************************/
 
 #endif
+
+// static inline void _Encoder_DeltaD_Capture_Quadrature(Encoder_T * p_encoder, Encoder_State_T * p_state)
+// {
+//     uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+
+//     /*
+//         Unsigned DeltaD capture
+//     */
+//     if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER) == true)
+//     {
+//         if (HAL_Encoder_ReadDecoderCounterOverflowIncrement(p_encoder->P_HAL_ENCODER_COUNTER) == true)
+//         {
+//         }
+//         else if (HAL_Encoder_ReadDecoderCounterOverflowDecrement(p_encoder->P_HAL_ENCODER_COUNTER) == true)
+//         {
+//         }
+
+//         HAL_Encoder_ClearTimerCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
+//     }
+//     else
+//     {
+//         p_state->DeltaD = counterValue - p_state->CounterPrev;
+//     }
+// }

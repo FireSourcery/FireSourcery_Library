@@ -65,21 +65,15 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
 }
 
 /* change to RotorSensor full context */
-static inline angle16_t _RotorSensor_GetElectricalAngle(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Angle; }
-static inline angle16_t _RotorSensor_GetElectricalDelta(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Delta; }
-static inline int32_t _RotorSensor_GetSpeed_Fract16(const RotorSensor_State_T * p_state) { return p_state->AngleSpeed.Speed_Fract16; }
-static inline int32_t _RotorSensor_GetDirection(const RotorSensor_State_T * p_state) { return p_state->Direction; }
-static inline angle16_t _RotorSensor_GetMechanicalAngle(const RotorSensor_State_T * p_state) { return p_state->MechanicalAngle; }
-
 int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId)
 {
     switch (varId)
     {
-        case MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE:   return _RotorSensor_GetElectricalAngle(&p_motor->SensorState);
-        case MOTOR_VAR_ROTOR_ELECTRICAL_DELTA:   return _RotorSensor_GetElectricalDelta(&p_motor->SensorState);
-        case MOTOR_VAR_ROTOR_SPEED_FEEDBACK:     return _RotorSensor_GetSpeed_Fract16(&p_motor->SensorState);
-        case MOTOR_VAR_ROTOR_MECHANICAL_ANGLE:   return _RotorSensor_GetMechanicalAngle(&p_motor->SensorState);
-        case MOTOR_VAR_ROTOR_DIRECTION:          return _RotorSensor_GetDirection(&p_motor->SensorState);
+        case MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE:   return RotorSensor_GetElectricalAngle(p_motor->p_ActiveSensor);
+        case MOTOR_VAR_ROTOR_ELECTRICAL_DELTA:   return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
+        case MOTOR_VAR_ROTOR_SPEED_FEEDBACK:     return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor);
+        case MOTOR_VAR_ROTOR_MECHANICAL_ANGLE:   return RotorSensor_GetMechanicalAngle(p_motor->p_ActiveSensor);
+        case MOTOR_VAR_ROTOR_DIRECTION:          return RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor);
         default: return 0;
     }
 }

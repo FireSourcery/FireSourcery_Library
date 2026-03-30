@@ -104,14 +104,16 @@ bool Hall_IsTableValid(const Hall_State_T * p_hall)
 
 */
 /******************************************************************************/
-int Hall_VarId_Get(Hall_T * p_hall, Hall_VarId_T varId)
+int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId)
 {
+    int value = 0;
     switch (varId)
     {
-        case HALL_VAR_SENSOR_STATE: return Hall_ReadSensors(p_hall).Value;
-        case HALL_VAR_SENSOR_ID:  return _Hall_IdOfSensors(p_hall->P_STATE, Hall_ReadSensors(p_hall).Value);
+        case HALL_VAR_SENSOR_STATE: value = Hall_ReadSensors(p_hall).Value; break;
+        case HALL_VAR_SENSOR_ID:    value = p_hall->P_STATE->Id; break;
         default: break;
     }
+    return value;
 }
 
 

@@ -212,10 +212,10 @@ void Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
     Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Iq(&p_motor->Foc)); /* case transitioning without release into freewheel */
 }
 
-// void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor)
-// {
-//     Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
-// }
+void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor)
+{
+    Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
+}
 
 /*!
     Match Feedback State/Ouput to Output Voltage
@@ -318,7 +318,7 @@ void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 {
-    Angle_SetFeedforwardSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcNextOf(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction));
+    Angle_IntegrateSpeed_Fract16(&p_motor->OpenLoopAngle, Ramp_ProcNextOf(&p_motor->OpenLoopSpeedRamp, (int32_t)p_motor->Config.OpenLoopRampSpeedFinal_Fract16 * p_motor->Direction));
     Motor_FOC_AngleControl(p_motor, p_motor->OpenLoopAngle.Angle, 0, Ramp_ProcNextOf(&p_motor->OpenLoopIRamp, (int32_t)p_motor->Config.OpenLoopRampIFinal_Fract16 * p_motor->Direction));
     // p_angle->MechanicalAngle += (delta_degPerCycle / p_angle->Config.PolePairs); sync sensor angle state
 }

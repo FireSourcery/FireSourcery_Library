@@ -37,8 +37,11 @@
 #include <stdbool.h>
 #include <stdfix.h>
 
-#define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Scalar 32768. Resolution 1/(2^15) == .000030517578125 */
+#define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. 32768. Resolution 1/(2^15) == .000030517578125 */
 #define FRACT16_M_BITS (1)
+
+#define FRACT16_SCALE (32768) /* 2^15 */
+#define FRACT32_SCALE (2147483648)
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
