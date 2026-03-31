@@ -124,16 +124,11 @@ static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16)
 }
 
 /* Capture speed by Delta */
-static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
-{
-    p_angle->Delta = delta_degPerCycle;
-    p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, delta_degPerCycle);
-}
-
-static inline fract16_t _Angle_GetSpeed_Fract16(const Angle_T * p_angle)
-{
-    return speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, p_angle->Delta);
-}
+// static inline void _Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
+// {
+//     p_angle->Delta = delta_degPerCycle;
+//     p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, delta_degPerCycle);
+// }
 
 /* Directly set the speed if available */
 /* Set Delta for interpolation */
@@ -143,6 +138,12 @@ static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed
     p_angle->Delta = angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16);
 }
 
+static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle)
+{
+    p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, p_angle->Delta);
+    // p_angle->Speed_Fract16 = speed_fract16_of_angle_direct(p_angle->SpeedFractRef.SpeedMax_Angle16, p_angle->Delta);
+    return p_angle->Speed_Fract16;
+}
 
 /******************************************************************************/
 /*
@@ -152,15 +153,14 @@ static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed
 static inline void Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
 {
     p_angle->Angle += delta_degPerCycle;
-    Angle_CaptureDelta(p_angle, delta_degPerCycle);
+    p_angle->Delta = delta_degPerCycle;
+    Angle_ResolveSpeed_Fract16(p_angle);
 }
-
 
 static inline void Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, fract16_t speed_fract16)
 {
     Angle_CaptureSpeed_Fract16(p_angle, speed_fract16);
     p_angle->Angle += p_angle->Delta;
-    // Angle_IntegrateDelta(p_angle, angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16)); /* convert [fract16] of [SpeedRef] into [angle16] */
 }
 
 static inline void Angle_IntegrateAngle(Angle_T * p_angle, angle16_t angle)
@@ -180,14 +180,20 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
     Interpolation - Estimate angle between sensor edges
 */
 /******************************************************************************/
-/* Set interpolation step from externally computed polling angle delta (shifted) */
-
 /*
+    Set interpolation step
     Call at SAMPLE_FREQ
 */
-static inline void Angle_CaptureInterpolationDelta(Angle_T * p_angle)
+static inline void Angle_ResolveInterpolationDelta(Angle_T * p_angle)
 {
-    p_angle->Interpolation.Delta = p_angle->Delta << ANGLE_ACCUM_SHIFT; /* shift up for accumulation */
+    p_angle->Interpolation.Delta = p_angle->Delta << ANGLE_EXT_SHIFT; /* shift up for accumulation */
+    // return p_angle->Delta;
+}
+
+/* Disable until next edge */
+static inline void Angle_ClearInterpolation(Angle_T * p_angle)
+{
+    p_angle->Interpolation.Delta = 0;
 }
 
 /*
@@ -199,14 +205,14 @@ static inline void Angle_CaptureInterpolationDelta(Angle_T * p_angle)
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
     p_angle->Interpolation.Sum = math_limit_upper(p_angle->Interpolation.Sum + p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
-    return p_angle->Interpolation.Sum >> ANGLE_ACCUM_SHIFT;
+    return p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT;
 }
 
-// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
-// {
-//     // return (math_abs(p_encoder->P_STATE->FreqD) < p_encoder->POLLING_FREQ / 2U) ? _Encoder_ModeDT_InterpolateAngle(p_encoder->P_STATE) : 0U;
-
-// }
+static inline angle16_t Angle_InterpolateIndex(Angle_T * p_angle, size_t index)
+{
+    p_angle->Interpolation.Sum = math_limit_upper(index * p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
+    return p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT;
+}
 
 /* Reset interpolation on sensor edge or direction change */
 static inline void Angle_ZeroInterpolation(Angle_T * p_angle)
@@ -214,11 +220,7 @@ static inline void Angle_ZeroInterpolation(Angle_T * p_angle)
     p_angle->Interpolation.Sum = 0;
 }
 
-/* Disable until next edge */
-static inline void Angle_ClearInterpolation(Angle_T * p_angle)
-{
-    p_angle->Interpolation.Delta = 0;
-}
+
 
 /*
     Init interpolation limit from sector angle.
@@ -227,7 +229,7 @@ static inline void Angle_ClearInterpolation(Angle_T * p_angle)
 */
 static inline void Angle_InitInterpolation(Angle_T * p_angle, uint32_t limit_angle16)
 {
-    p_angle->Interpolation.Limit = limit_angle16 << ANGLE_ACCUM_SHIFT; /* shift up for accumulation */
+    p_angle->Interpolation.Limit = limit_angle16 << ANGLE_EXT_SHIFT; /* shift up for accumulation */
     p_angle->Interpolation.Sum = 0;
     p_angle->Interpolation.Delta = 0;
 }
@@ -237,7 +239,6 @@ static inline void Angle_InitInterpolation(Angle_T * p_angle, uint32_t limit_ang
     Init Runtime
 */
 /******************************************************************************/
-
 #define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
 #define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
 // static inline Angle_SpeedFractRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
@@ -254,9 +255,16 @@ static void Angle_InitSpeedRef_Rpm(Angle_T * p_angle, uint32_t pollingFreq, uint
     p_angle->SpeedFractRef = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm);
 }
 
+
+// typedef struct Angle_Config_T
+// {
+//     Angle_SpeedFractRef_T SpeedFractRef;
+// }
+// Angle_Config_T;
+
 // static void Angle_InitFrom(Angle_T * p_angle, const Angle_Config_T * p_config)
 // {
-//     p_angle->SpeedFractRef.InvSpeedMax_Fract32 = INT32_MAX / p_config->SpeedRef_Angle16;
+//     p_angle->SpeedFractRef
 // }
 
 

@@ -303,7 +303,7 @@ int _Motor_Var_ConfigPid_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_
     return value;
 }
 
-
+/*  */
 /* Coefficients in 9.7 */
 void _Motor_Var_ConfigPid_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
@@ -366,6 +366,8 @@ int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_
     return value;
 }
 
+/* Include individual reset or Caller callse load all from flash */
+/* Sets runtime */
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
     switch (varId)

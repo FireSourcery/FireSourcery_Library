@@ -35,13 +35,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/*
-    Accumulator Max INT32_MAX/2
-        Accumulator + Input_Shifted < INT32_MAX/2
-        Shift 14 for value range of [-UINT16_MAX:UINT16_MAX]
-        Shift 15 for value range of [-INT16_MAX:INT16_MAX]
-*/
-#define RAMP_SHIFT 14U
+
+#define RAMP_SHIFT 14
 
 
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
@@ -86,9 +81,13 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coeffici
 extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
 extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 
+int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
+
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
-extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
+extern void Ramp_SetOutputLimit(Ramp_T * p_ramp, int16_t lower, int16_t upper);
+
+extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 extern void Ramp_SetSlope_Fract16(Ramp_T * p_ramp, uint16_t rate);
 extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 

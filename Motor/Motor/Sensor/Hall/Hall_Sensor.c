@@ -81,7 +81,7 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
     Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
     // Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
     Angle_CaptureSpeed_Fract16(p_angle, Encoder_ModeDT_GetScalarSpeed(p_sensor->P_ENCODER->P_STATE)); /* FreqD captured with direction */
-    Angle_CaptureInterpolationDelta(p_angle); /* Captures Delta as   */
+    Angle_ResolveInterpolationDelta(p_angle); /* Captures Delta as   */
 
 }
 

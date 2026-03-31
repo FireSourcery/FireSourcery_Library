@@ -40,14 +40,18 @@
 */
 typedef struct Accumulator
 {
-    /* [2 * [INT16_MIN:INT16_MAX] << 15] */
+    /* Accumulator Max [INT32_MAX/2] => Accumulator + Input_Shifted < INT32_MAX */
+    /*
+        value range [-UINT16_MAX:UINT16_MAX] => 2 * range << 14
+        value range [-INT16_MAX:INT16_MAX]  => 2 * range << 15
+    */
     int32_t Accumulator; /* Output shifted */
 
     int32_t Coefficient; /* shifted */
     int8_t Shift;
 
-    int16_t LimitUpper;
-    int16_t LimitLower;
+    int32_t LimitUpper;
+    int32_t LimitLower;
 
     // or caller handle union
     uint16_t Index;
@@ -86,11 +90,16 @@ static inline int32_t Accumulator_GetLimitUpper(const Accumulator_T * p_accum) {
 static inline int32_t Accumulator_GetLimitLower(const Accumulator_T * p_accum) { return p_accum->LimitLower; }
 
 static inline void Accumulator_SetCoefficient(Accumulator_T * p_accum, int32_t coefficient) { p_accum->Coefficient = coefficient; }
-static inline void Accumulator_SetLimits(Accumulator_T * p_accum, int16_t lower, int16_t upper) { p_accum->LimitLower = lower; p_accum->LimitUpper = upper; }
+
+static inline void Accumulator_SetLimits(Accumulator_T * p_accum, int16_t lower, int16_t upper)
+{
+    p_accum->LimitLower = ((int32_t)lower << p_accum->Shift);
+    p_accum->LimitUpper = ((int32_t)upper << p_accum->Shift);
+}
 
 /* Status Functions */
-static inline bool Accumulator_IsSaturatedHigh(const Accumulator_T * p_accum) { return (Accumulator_GetOutput(p_accum) >= p_accum->LimitUpper); }
-static inline bool Accumulator_IsSaturatedLow(const Accumulator_T * p_accum) { return (Accumulator_GetOutput(p_accum) <= p_accum->LimitLower); }
+static inline bool Accumulator_IsSaturatedHigh(const Accumulator_T * p_accum) { return (p_accum->Accumulator >= p_accum->LimitUpper); }
+static inline bool Accumulator_IsSaturatedLow(const Accumulator_T * p_accum) { return (p_accum->Accumulator <= p_accum->LimitLower); }
 static inline bool Accumulator_IsSaturated(const Accumulator_T * p_accum) { return Accumulator_IsSaturatedHigh(p_accum) || Accumulator_IsSaturatedLow(p_accum); }
 
 static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = value << p_accum->Shift; }
