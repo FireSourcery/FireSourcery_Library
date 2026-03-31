@@ -50,6 +50,7 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
     {
         Encoder_CaptureCount(p_sensor->P_ENCODER, Hall_ResolveDirection(p_sensor->HALL.P_STATE)); /* captured signed count */
         Angle_CaptureAngle(p_angle, Hall_ResolveAngle(p_sensor->HALL.P_STATE));
+        // Angle_CaptureAngle(p_angle, Hall_GetAngleAs(p_sensor->HALL.P_STATE, 0));
         Angle_ZeroInterpolation(p_angle); /* Reset interpolation on every edge */
 
         /*

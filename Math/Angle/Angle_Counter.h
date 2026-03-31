@@ -126,6 +126,7 @@ Angle_CounterConfig_T;
 static inline void Angle_Counter_CaptureCount(Angle_Counter_T * p_counter, int sign)
 {
     p_counter->CounterD += sign;
+    p_counter->Angle32 += sign * p_counter->Ref.Angle32PerCount;
 }
 
 /* DeltaD capture - call at SampleFreq */

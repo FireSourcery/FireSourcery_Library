@@ -234,9 +234,14 @@ static inline Hall_Direction_T _Hall_DirectionOf_Lut(Hall_Id_T idPrev, Hall_Id_T
 }
 
 /* Rated Electrical Angle Speed < ANGLE60/2 */
-static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idNew)
+static inline Hall_Direction_T _Hall_DirectionOf_Sign(Hall_Id_T idPrev, Hall_Id_T idNew)
 {
     return (Hall_Direction_T)math_sign((int16_t)(_Hall_Angle16Of(idNew) - _Hall_Angle16Of(idPrev))); /* subtraction wraps.  0 - 54613 wraps to 10923 */
+}
+
+static inline Hall_Direction_T _Hall_DirectionOf(Hall_Id_T idPrev, Hall_Id_T idNew)
+{
+    return _Hall_DirectionOf_Lut(idPrev, idNew);
 }
 
 

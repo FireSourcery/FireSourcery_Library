@@ -48,13 +48,6 @@
 /*
 
 */
-// #define POLLING_PERIOD_FRACT32(pollingFreq) (INT32_MAX / (pollingFreq))
-
-/* effecticely polling_period_fract32 */
-/* INT32_MAX / (pollingFreq) = (ANGLE16_PER_REVOLUTION * 32768) / (pollingFreq) */
-#define ANGLE_SPEED_UNIT_ACCUM32(pollingFreq) (int32_t)(((uint32_t)ANGLE16_PER_REVOLUTION * (uint32_t)FRACT16_SCALE) / (pollingFreq))
-#define ANGLE_FREQ_UNIT_ACCUM32(pollingFreq) ((int32_t)(pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
-
 #define ANGLE_SPEED_OF(pollingFreq, cycles)  (((int64_t)cycles * ANGLE16_PER_REVOLUTION) / (pollingFreq))  /* angle delta */
 #define ANGLE_FREQ_OF(pollingFreq, angle16)  (((int64_t)angle16 * (pollingFreq)) / ANGLE16_PER_REVOLUTION) /* n cycles */
 
@@ -62,6 +55,12 @@
 static inline int32_t _angle_of_cycles_direct(uint32_t polling_rate, int32_t cycles_per_poll) { return ANGLE_SPEED_OF(polling_rate, cycles_per_poll); }
 static inline int32_t _cycles_of_angle_direct(uint32_t polling_rate, int32_t angle_per_poll) { return ANGLE_FREQ_OF(polling_rate, angle_per_poll); }
 
+// #define POLLING_PERIOD_FRACT32(pollingFreq) (INT32_MAX / (pollingFreq))
+
+/* effecticely polling_period_fract32 */
+/* INT32_MAX / (pollingFreq) = (ANGLE16_PER_REVOLUTION * 32768) / (pollingFreq) */
+#define ANGLE_SPEED_UNIT_ACCUM32(pollingFreq) (int32_t)(((uint32_t)ANGLE16_PER_REVOLUTION * (uint32_t)FRACT16_SCALE) / (pollingFreq))
+#define ANGLE_FREQ_UNIT_ACCUM32(pollingFreq) ((int32_t)(pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
 /*
     Runtime
     Compiler may optimize when [polling_rate] is const, run time without division
@@ -70,8 +69,11 @@ static inline int32_t _cycles_of_angle_direct(uint32_t polling_rate, int32_t ang
 */
 /* cycle per poll [0:polling_rate/2] */
 static inline int32_t _angle_speed_of(uint32_t polling_rate, int32_t cycles_per_poll) { return cycles_per_poll * (int32_t)ANGLE_SPEED_UNIT_ACCUM32(polling_rate) / FRACT16_SCALE; }
-/* (int64_t) for pollig rate in rpm  */
-static inline int32_t _angle_freq_of(uint32_t polling_rate, int32_t angle_per_poll) { return (int64_t)angle_per_poll * ANGLE_FREQ_UNIT_ACCUM32(polling_rate) / FRACT16_SCALE; }
+static inline int32_t _angle_freq_of(uint32_t polling_rate, int32_t angle_per_poll) { return angle_per_poll * ANGLE_FREQ_UNIT_ACCUM32(polling_rate) / FRACT16_SCALE; }
+
+static inline int32_t angle_speed_of(uint32_t polling_rate, int32_t cycles_per_poll) { return _angle_speed_of(polling_rate, cycles_per_poll); }
+/* (int64_t) for scaled polling rate. e.g rpm */
+static inline int32_t angle_freq_of(uint32_t polling_rate, int32_t angle_per_poll) { return _cycles_of_angle_direct(polling_rate, angle_per_poll); }
 
 /******************************************************************************/
 /*

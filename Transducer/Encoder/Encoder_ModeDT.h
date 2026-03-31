@@ -152,7 +152,7 @@ static inline int32_t Encoder_ModeDT_InterpolateAngularDisplacement(const Encode
 */
 static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder)
 {
-    return p_encoder->FreqD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
+    return p_encoder->FreqD * (int32_t)p_encoder->UnitScalarSpeed >> (int32_t)p_encoder->UnitScalarSpeedShift;
 }
 
 /*
