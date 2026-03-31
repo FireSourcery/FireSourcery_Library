@@ -32,6 +32,7 @@
 #define ENCODER_DELTA_D_H
 
 #include "Encoder.h"
+#include "Math/Angle/math_angle_counter.h"
 
 /******************************************************************************/
 /*!
@@ -58,8 +59,6 @@ static inline void _Encoder_DeltaD_Capture(const Encoder_T * p_encoder, Encoder_
 }
 
 
-
-
 static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 {
     _Encoder_DeltaD_Capture(p_encoder, p_encoder->P_STATE);
@@ -67,7 +66,25 @@ static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 
 /******************************************************************************/
 /*!
+    Compose Angle_Coutner for conversions.
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*!
     Displacement
+*/
+/******************************************************************************/
+static inline int32_t  Encoder_DeltaD(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD; }
+static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
+
+static inline uint32_t Encoder_DeltaD_GetAngularSpeed(const Encoder_State_T * p_encoder) { /* angle_speed_of_count( , p_encoder->Config.CountsPerRevolution, p_encoder->DeltaD); */ }
+static inline uint32_t Encoder_DeltaD_GetFractSpeed(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift; }
+
+
+/******************************************************************************/
+/*!
+    Extended
 */
 /******************************************************************************/
 /*!
@@ -75,91 +92,15 @@ static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DistanceOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return counterD_Ticks * p_encoder->UnitLinearD; }
 static inline uint32_t Encoder_CountOfDistance(const Encoder_State_T * p_encoder, uint32_t distance_Units) { return distance_Units / p_encoder->UnitLinearD; }
-
-static inline int32_t  Encoder_DeltaD(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD; }
-static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
 static inline uint32_t Encoder_DeltaD_AsDistance(const Encoder_State_T * p_encoder) { return Encoder_DistanceOfCount(p_encoder, p_encoder->DeltaD); }
-
-
-/******************************************************************************/
-/*!
-    todo split DeltaD conversion math
-*/
-/******************************************************************************/
-static inline uint32_t  delta_d_of_rpm(uint32_t cpr, uint32_t sampleFreq, uint32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
-static inline uint32_t  delta_d_to_rpm(uint32_t cpr, uint32_t sampleFreq, uint32_t deltaD_Ticks) { return (deltaD_Ticks * sampleFreq * 60U) / cpr; }
-
-/*
-    Speed to DeltaD conversion
-    1 Division for inverse conversion.
-*/
-static inline uint32_t Encoder_DeltaD_OfRotationalSpeed_RPM(const Encoder_State_T * p_encoder, uint32_t rpm)
-{
-    // return (rpm * p_encoder->Config.CountsPerRevolution) / (p_encoder->SAMPLE_FREQ * 60U);
-}
-
-static inline uint32_t Encoder_DeltaD_ToRotationalSpeed_RPM(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks)
-{
-    // return (deltaD_Ticks * p_encoder->SAMPLE_FREQ * 60U) / p_encoder->Config.CountsPerRevolution;
-}
-
-/*!
-    @return DeltaD in counter ticks.
-*/
-static inline uint32_t Encoder_DeltaD_OfAngularSpeed(const Encoder_State_T * p_encoder, uint32_t angularSpeed_degreesPerSecond)
-{
-    // return angularSpeed_UserDegreesPerSecond / p_encoder->UnitAngularSpeed;
-}
-
-static inline uint32_t Encoder_DeltaD_ToAngularSpeed(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks)
-{
-    // return _Encoder_CalcAngularSpeed(p_encoder, deltaD_Ticks, 1U);
-}
-
-static inline uint32_t Encoder_DeltaD_OfLinearSpeed(const Encoder_State_T * p_encoder, uint32_t speed_UnitsPerSecond)
-{
-    // return speed_UnitsPerSecond / p_encoder->UnitSurfaceSpeed;
-}
-
-static inline uint32_t Encoder_DeltaD_OfLinearSpeed_UnitsPerMinute(const Encoder_State_T * p_encoder, uint32_t speed_UnitsPerMinute)
-{
-    // return speed_UnitsPerMinute * 60U / p_encoder->UnitSurfaceSpeed;
-}
-
-static inline uint32_t Encoder_DeltaD_ToLinearSpeed(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks)
-{
-    // return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks, 1U);
-}
-
-static inline uint32_t Encoder_DeltaD_ToLinearSpeed_UnitsPerMinute(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks)
-{
-    // return Encoder_CalcLinearSpeed(p_encoder, deltaD_Ticks * 60U, 1U);
-}
 
 /******************************************************************************/
 /*!
     Angular
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder)
-{
-    return Encoder_DeltaD_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaD);
-}
-
-static inline uint32_t Encoder_DeltaD_GetAngularSpeed(const Encoder_State_T * p_encoder)
-{
-    return p_encoder->DeltaD * p_encoder->UnitAngularSpeed >> p_encoder->UnitAngularSpeedShift;
-}
-
-/******************************************************************************/
-/*!
-    Scalar
-*/
-/******************************************************************************/
-static inline uint32_t Encoder_DeltaD_GetScalarSpeed(const Encoder_State_T * p_encoder)
-{
-    return p_encoder->DeltaD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift;
-}
+static inline uint32_t Encoder_DeltaD_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count(1000, p_encoder->Config.CountsPerRevolution, p_encoder->DeltaD); }
+static inline uint32_t Encoder_DeltaD_GetAngularSpeed_Rads(const Encoder_State_T * p_encoder){}
 
 /******************************************************************************/
 /*!
@@ -169,20 +110,9 @@ static inline uint32_t Encoder_DeltaD_GetScalarSpeed(const Encoder_State_T * p_e
 /*!
     Overflow caution: Max DeltaD = UINT32_MAX / UnitSurfaceSpeed
 */
-static inline uint32_t Encoder_DeltaD_GetLinearSpeed(const Encoder_State_T * p_encoder)
-{
-    return p_encoder->DeltaD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;
-}
-
-static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(const Encoder_State_T * p_encoder)
-{
-    return Encoder_GroundSpeedOf_Mph(p_encoder, p_encoder->DeltaD, 1U);
-}
-
-static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(const Encoder_State_T * p_encoder)
-{
-    return Encoder_GroundSpeedOf_Kmh(p_encoder, p_encoder->DeltaD, 1U);
-}
+static inline uint32_t Encoder_DeltaD_GetLinearSpeed(const Encoder_State_T * p_encoder){    return p_encoder->DeltaD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;}
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(const Encoder_State_T * p_encoder){    return Encoder_GroundSpeedOf_Mph(p_encoder, p_encoder->DeltaD, 1U);}
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(const Encoder_State_T * p_encoder){    return Encoder_GroundSpeedOf_Kmh(p_encoder, p_encoder->DeltaD, 1U);}
 
 /******************************************************************************/
 /*!

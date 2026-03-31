@@ -453,7 +453,8 @@ static inline fract16_t Motor_VLimitCw(const Motor_State_T * p_motor) { return M
 static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); }
 
 /* speed ramps to INT16/2  */
-static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_VClamp(p_motor, req)); }
+// static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_VClamp(p_motor, req)); }
+static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VClamp(p_motor, req)); }
 
 /*
     Call ccw/cw using getters.

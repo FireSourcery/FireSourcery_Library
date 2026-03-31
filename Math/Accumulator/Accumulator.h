@@ -30,6 +30,7 @@
     @note   Stores internal state as shifted for precision, provides unshifted interface
 */
 /******************************************************************************/
+#include "../math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -64,10 +65,14 @@ typedef struct Accumulator
 Accumulator_T;
 
 
-
-static inline int32_t _Accumulator_Add(Accumulator_T * p_accum, int16_t input)
+static inline int32_t accumulator(int32_t rate, int32_t min, int32_t max, int32_t state, int32_t input)
 {
-    return p_accum->Accumulator + ((int32_t)input * p_accum->Coefficient);
+    return math_clamp(state + (rate * input), min, max);
+}
+
+static inline int32_t accumulator_target(int32_t rate, int32_t min, int32_t max, int32_t state, int32_t target32)
+{
+    return accumulator(rate, min, max, state, math_sign(target32 - state));
 }
 
 /* Simple accumulation with coefficient scaling */
@@ -77,7 +82,16 @@ static inline int32_t Accumulator_Add(Accumulator_T * p_accum, int16_t input)
     return (p_accum->Accumulator >> p_accum->Shift);
 }
 
+// static inline int32_t Accumulator_Add_Sat(Accumulator_T * p_accum, int16_t input)
+// {
+//     p_accum->Accumulator = accumulator(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, input);
+//     return (p_accum->Accumulator >> p_accum->Shift);
+// }
 
+// static inline int32_t Accumulator_Ramp(Accumulator_T * p_accum, int16_t target)
+// {
+//     return Accumulator_Add_Sat(p_accum, math_sign(target << p_accum->Shift - p_accum->Accumulator));
+// }
 
 /* Accessors */
 static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->Accumulator >> p_accum->Shift); }

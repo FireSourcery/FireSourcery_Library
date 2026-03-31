@@ -147,7 +147,7 @@ typedef struct Encoder_State
     Encoder_Config_T Config;
 // #if defined(ENCODER_HW_EMULATED)
     Encoder_Phases_T Phases; /* Save Prev State */
-    uint32_t CounterD;
+    int32_t CounterD;
     uint32_t Angle32;
     uint32_t ErrorCount;
 // #endif

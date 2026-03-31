@@ -33,9 +33,8 @@
 
 
 /*
-    target is updated independently
+    Bounds at target
 */
-/* Coefficient as abs */
 // static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
 // {
 // //1
@@ -46,9 +45,12 @@
 //     return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + step);
 // }
 
+/*
+    Boundary chatter mostly shifts away.
+*/
 static int32_t NextOf(const Ramp_T * p_ramp, int32_t cw32, int32_t ccw32, int32_t target32)
 {
-    int32_t output32 = p_ramp->Accumulator.Accumulator + (math_sign(target32 - p_ramp->Accumulator.Accumulator) * (int32_t)p_ramp->Accumulator.Coefficient);
+    int32_t output32 = p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient;
     return math_clamp(output32, cw32, ccw32);
 }
 
@@ -79,8 +81,8 @@ void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
     p_ramp->Accumulator.Shift = RAMP_SHIFT;
     Ramp_SetSlope(p_ramp, duration_Ticks, range);
     Ramp_SetOutputState(p_ramp, 0);
-    p_ramp->Accumulator.LimitLower = (int32_t)INT16_MIN << RAMP_SHIFT;
-    p_ramp->Accumulator.LimitUpper = (int32_t)INT16_MAX << RAMP_SHIFT;
+    p_ramp->Accumulator.LimitLower = (int32_t)INT16_MIN * (1 << RAMP_SHIFT);
+    p_ramp->Accumulator.LimitUpper = (int32_t)INT16_MAX * (1 << RAMP_SHIFT);
 }
 
 void _Ramp_Init(Ramp_T * p_ramp, uint32_t coeff)
@@ -88,8 +90,8 @@ void _Ramp_Init(Ramp_T * p_ramp, uint32_t coeff)
     p_ramp->Accumulator.Shift = RAMP_SHIFT;
     p_ramp->Accumulator.Coefficient = coeff;
     Ramp_SetOutputState(p_ramp, 0);
-    p_ramp->Accumulator.LimitLower = (int32_t)INT16_MIN << RAMP_SHIFT;
-    p_ramp->Accumulator.LimitUpper = (int32_t)INT16_MAX << RAMP_SHIFT;
+    p_ramp->Accumulator.LimitLower = (int32_t)INT16_MIN * (1 << RAMP_SHIFT);
+    p_ramp->Accumulator.LimitUpper = (int32_t)INT16_MAX * (1 << RAMP_SHIFT);
 }
 
 

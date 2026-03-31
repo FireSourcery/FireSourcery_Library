@@ -53,13 +53,13 @@ Angle_SpeedFractRef_T;
 /*
     Interpolation between sensor edges.
     Internally shifted (32-bit) for sub-degree precision.
-    ANGLE_ACCUM_SHIFT fractional bits.
+    ANGLE_EXT_SHIFT fractional bits.
 */
 typedef struct Angle_InterpolationState
 {
-    uint32_t Sum;       /* Accumulated interpolation angle, shifted */
-    uint32_t Delta;     /* Angle increment per poll cycle, shifted. From speed estimate */
-    uint32_t Limit;     /* Sector boundary clamp, shifted. e.g. 60 degrees for Hall */
+    uint32_t Sum;        /* Accumulated interpolation angle, shifted. */
+    uint32_t Delta;      /* Angle increment per poll cycle, shifted. */
+    uint32_t Limit;      /* Sector boundary clamp magnitude, shifted. e.g. 60 degrees for Hall */
 }
 Angle_InterpolationState_T;
 
@@ -141,7 +141,6 @@ static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed
 static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle)
 {
     p_angle->Speed_Fract16 = speed_fract16_of_angle(p_angle->SpeedFractRef.InvSpeedMax_Fract32, p_angle->Delta);
-    // p_angle->Speed_Fract16 = speed_fract16_of_angle_direct(p_angle->SpeedFractRef.SpeedMax_Angle16, p_angle->Delta);
     return p_angle->Speed_Fract16;
 }
 
@@ -163,10 +162,10 @@ static inline void Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, fract16_t spe
     p_angle->Angle += p_angle->Delta;
 }
 
-static inline void Angle_IntegrateAngle(Angle_T * p_angle, angle16_t angle)
-{
-    Angle_IntegrateDelta(p_angle, angle - p_angle->Angle);
-}
+// static inline void Angle_IntegrateAngle(Angle_T * p_angle, angle16_t angle)
+// {
+//     Angle_IntegrateDelta(p_angle, angle - p_angle->Angle);
+// }
 
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 {
@@ -186,8 +185,8 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 */
 static inline void Angle_ResolveInterpolationDelta(Angle_T * p_angle)
 {
-    p_angle->Interpolation.Delta = p_angle->Delta << ANGLE_EXT_SHIFT; /* shift up for accumulation */
-    // return p_angle->Delta;
+    assert(math_abs(p_angle->Delta) < (int32_t)ANGLE16_PER_REVOLUTION / 2); /* sanity check speed is within range for interpolation */
+    p_angle->Interpolation.Delta = math_abs(p_angle->Delta) << ANGLE_EXT_SHIFT; /* shift up for accumulation, preserves sign */
 }
 
 /* Disable until next edge */
@@ -205,13 +204,13 @@ static inline void Angle_ClearInterpolation(Angle_T * p_angle)
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
     p_angle->Interpolation.Sum = math_limit_upper(p_angle->Interpolation.Sum + p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
-    return p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT;
+    return math_sign(p_angle->Delta) * (int32_t)(p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT);
 }
 
 static inline angle16_t Angle_InterpolateIndex(Angle_T * p_angle, size_t index)
 {
     p_angle->Interpolation.Sum = math_limit_upper(index * p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
-    return p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT;
+    return math_sign(p_angle->Delta) * (p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT);
 }
 
 /* Reset interpolation on sensor edge or direction change */
@@ -227,9 +226,9 @@ static inline void Angle_ZeroInterpolation(Angle_T * p_angle)
     sectorAngle_shifted: angle per sector in shifted representation.
     e.g. for Hall with PolePairs: UnitAngleD * PolePairs
 */
-static inline void Angle_InitInterpolation(Angle_T * p_angle, uint32_t limit_angle16)
+static inline void Angle_InitInterpolation(Angle_T * p_angle, angle16_t limit_angle16)
 {
-    p_angle->Interpolation.Limit = limit_angle16 << ANGLE_EXT_SHIFT; /* shift up for accumulation */
+    p_angle->Interpolation.Limit = (int32_t)limit_angle16 << ANGLE_EXT_SHIFT; /* shift up for accumulation, positive magnitude */
     p_angle->Interpolation.Sum = 0;
     p_angle->Interpolation.Delta = 0;
 }

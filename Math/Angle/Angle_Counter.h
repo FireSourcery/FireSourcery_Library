@@ -159,10 +159,9 @@ static inline void Angle_Counter_CapturePeriodT(Angle_Counter_T * p_counter, uin
 /******************************************************************************/
 static inline void Angle_Counter_CaptureFreqD(Angle_Counter_T * p_counter, uint32_t deltaD, uint32_t deltaTh)
 {
-    const uint32_t timerFreq = ;
-    const uint32_t samplePeriod; /* in Timer ticks */ /* periodTs = 1 / SAMPLE_FREQ */
+    const uint32_t timerFreq = p_counter->Ref.TimerFreq;
+    const uint32_t samplePeriod = p_counter->Ref.SamplePeriod; /* in Timer ticks */ /* periodTs = 1 / SAMPLE_FREQ */
 
-    uint32_t deltaTh;
     uint32_t periodTk;
 
     // Encoder_DeltaD_Capture(p_counter);
@@ -175,7 +174,6 @@ static inline void Angle_Counter_CaptureFreqD(Angle_Counter_T * p_counter, uint3
     else
     {
         /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
-        p_counter->DeltaTh = deltaTh;
         periodTk = samplePeriod + (p_counter->DeltaTh - deltaTh);
         if (periodTk > samplePeriod / 2)
         {
@@ -208,25 +206,19 @@ static inline int32_t _speed_fract16_of_counter_freq(uint32_t unitScalarSpeed, i
 static inline uint32_t _angle_speed_of_counter_freq(uint32_t unitPollingAngle, int32_t freqD) { return freqD * unitPollingAngle >> ANGLE_EXT_SHIFT; }
 
 /*
-    For interpolation: angle increment per poll cycle
+    Angle Delta: angle increment per poll cycle
 */
-static inline uint32_t Angle_Counter_ResolveInterpolationDelta(Angle_Counter_T * p_counter)
-{
-    return p_counter->Base.Delta = _angle_speed_of_counter_freq(p_counter->Ref.Angle32PerCount, p_counter->FreqD);
-    Angle_ResolveInterpolationDelta(&p_counter->Base);
-    return p_counter->Base.Delta;
-}
-
-static inline uint32_t _Angle_Counter_ResolveSpeed(Angle_Counter_T * p_counter)
-{
-    p_counter->Base.Speed_Fract16 = _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD);
-    return p_counter->Base.Speed_Fract16;
-}
+static inline uint32_t Angle_Counter_GetDelta(Angle_Counter_T * p_counter) { return  _angle_speed_of_counter_freq(p_counter->Ref.Angle32PerCount, p_counter->FreqD); }
+static inline uint32_t Angle_Counter_GetSpeed(Angle_Counter_T * p_counter) { return _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD); }
 
 static inline uint32_t Angle_Counter_ResolveSpeed(Angle_Counter_T * p_counter)
 {
-    Angle_ResolveInterpolationDelta(&p_counter->Base);
-    return _Angle_Counter_ResolveSpeed(p_counter);
+    p_counter->Base.Delta = _angle_speed_of_counter_freq(p_counter->Ref.Angle32PerCount, p_counter->FreqD);
+    p_counter->Base.Speed_Fract16 = _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD);
+    return p_counter->Base.Speed_Fract16;
+
+    // alternatively, AngleDelta derived from Fract16
+    // Angle_CaptureSpeed_Fract16(&p_counter->Base, _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD));
 }
 
 /******************************************************************************/
@@ -235,6 +227,7 @@ static inline uint32_t Angle_Counter_ResolveSpeed(Angle_Counter_T * p_counter)
 */
 /******************************************************************************/
 static inline int32_t Angle_Counter_GetFreqD(const Angle_Counter_T * p_counter) { return p_counter->FreqD; }
+/* Counter Delta */
 static inline int32_t Angle_Counter_GetDeltaD(const Angle_Counter_T * p_counter) { return p_counter->DeltaD; }
 
 /******************************************************************************/

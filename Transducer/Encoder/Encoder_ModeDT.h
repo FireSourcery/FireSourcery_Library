@@ -89,12 +89,14 @@ static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
     else { p_encoder->P_STATE->FreqD = 0; }
 }
 
+
+
+
 /*
-
-
-    Optionally include with Encoder_ModeDT_CaptureFreqD
     todo move to Angle_T
 */
+
+
 static inline uint32_t Encoder_ModeDT_CapturePollingDelta(Encoder_State_T * p_encoder)
 {
     p_encoder->PollingAngleDelta = p_encoder->FreqD * p_encoder->UnitPollingAngle;
