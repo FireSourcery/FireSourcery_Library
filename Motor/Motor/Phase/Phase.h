@@ -232,13 +232,13 @@ static inline Phase_Bitmask_T _Phase_ReadDutyState(const Phase_T * p_phase)
 /*  */
 /******************************************************************************/
 /* Using Register State */
-static inline void Phase_WriteDuty_Fract16_Thread(const Phase_T * p_phase, uint16_t pwmDutyA, uint16_t pwmDutyB, uint16_t pwmDutyC)
+static inline void Phase_WriteDuty_Thread(const Phase_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
 {
     Phase_Bitmask_T state = _Phase_ReadState(p_phase);
 
-    if (state.A == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_A, pwmDutyA); }
-    if (state.B == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_B, pwmDutyB); }
-    if (state.C == 1U) { PWM_WriteDuty_Fract16(&p_phase->PWM_C, pwmDutyC); }
+    if (state.A == 1U) { PWM_WriteDuty(&p_phase->PWM_A, pwmA); }
+    if (state.B == 1U) { PWM_WriteDuty(&p_phase->PWM_B, pwmB); }
+    if (state.C == 1U) { PWM_WriteDuty(&p_phase->PWM_C, pwmC); }
     if (state.Bits != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Bits); }
 }
 
@@ -352,20 +352,5 @@ extern Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty);
 extern Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned);
 
 
-
-
-
-// static inline void  Phase_WriteSvpwm(const Phase_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
-// {
-//     fract16_t vNormA = svpwm_norm_vbus_inv(vBusInv_fract32, vA);
-//     fract16_t vNormB = svpwm_norm_vbus_inv(vBusInv_fract32, vB);
-//     fract16_t vNormC = svpwm_norm_vbus_inv(vBusInv_fract32, vC);
-//     fract16_t vDutyA;
-//     fract16_t vDutyB;
-//     fract16_t vDutyC;
-//     svpwm_midclamp_vbus(&vDutyA, &vDutyB, &vDutyC, vNormA, vNormB, vNormC);
-
-//     Phase_WriteDuty_Fract16(p_phase, vDutyA, vDutyB, vDutyC);
-// }
 
 

@@ -307,7 +307,8 @@ typedef struct Motor_State
     PID_T PidIq;                /* Input (IqReq - IqFeedback), Output Vq. Sign as CCW/CW direction */
     PID_T PidId;
     // PID_T PidIPhase;         /* Align, or use getter */
-    // alternatively replace direction with VReq
+
+    Ramp_T VRamp;
     /* OpenLoop Preset, StartUp. No boundary checking */
     Ramp_T OpenLoopSpeedRamp;       /* Preset Speed Ramp */
     Ramp_T OpenLoopIRamp;           /* Preset I Ramp */
@@ -450,14 +451,15 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
     Ccw Motoring (0, V)
     Cw Motoring (-V, 0)
 */
-static inline ufract16_t Motor_VAntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return  (p_motor->Direction == select) * select * Phase_VBus_GetVRefSvpwm(); }
+static inline ufract16_t Motor_VAntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) * select * Phase_VBus_GetVRefSvpwm(); }
 static inline fract16_t Motor_VLimitCcw(const Motor_State_T * p_motor) { return Motor_VAntiPlugging(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t Motor_VLimitCw(const Motor_State_T * p_motor) { return Motor_VAntiPlugging(p_motor, MOTOR_DIRECTION_CW); }
 static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); }
 
-/* speed ramps to INT16/2  */
-// static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, Motor_VClamp(p_motor, req)); }
-static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_VClamp(p_motor, req)); }
+
+/* Current limit with shrink voltage range disproportionally, okay if voltage mode is for testing only */
+static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, Motor_VClamp(p_motor, req)); }
+// static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOnInputOf(&p_motor->VRamp, Motor_VClamp(p_motor, req)); }
 
 /*
     Call ccw/cw using getters.

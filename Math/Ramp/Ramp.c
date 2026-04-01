@@ -33,19 +33,6 @@
 
 
 /*
-    Bounds at target
-*/
-// static int32_t NextOf(const Ramp_T * p_ramp, int32_t target)
-// {
-// //1
-//     int32_t target32 = target << RAMP_SHIFT;
-//     int32_t diff = target32 - p_ramp->Accumulator.Accumulator;
-//     int32_t step = math_sign(diff) * (int32_t)p_ramp->Accumulator.Coefficient;
-//     /* clamp: if step overshoots, saturate at target */
-//     return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + step);
-// }
-
-/*
     Boundary chatter mostly shifts away.
 */
 static int32_t NextOf(const Ramp_T * p_ramp, int32_t cw32, int32_t ccw32, int32_t target32)
@@ -67,6 +54,37 @@ int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t
 }
 
 
+/*
+    Bounds at target
+*/
+/* clamp: if step overshoots, saturate at target */
+static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
+{
+    int32_t diff = target32 - p_ramp->Accumulator.Accumulator;
+    int32_t step = math_sign(diff) * (int32_t)p_ramp->Accumulator.Coefficient;
+    return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + step);
+
+    // fraction handles overshoot
+    // return p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient;
+}
+
+// int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
+// {
+//     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));
+//     return Ramp_GetOutput(p_ramp);
+// }
+
+int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
+{
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, target << RAMP_SHIFT);
+    return Ramp_GetOutput(p_ramp);
+}
+
+int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target)
+{
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target, lower, upper) << RAMP_SHIFT);
+    return Ramp_GetOutput(p_ramp);
+}
 
 /******************************************************************************/
 /*

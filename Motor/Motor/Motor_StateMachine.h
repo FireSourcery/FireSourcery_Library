@@ -123,6 +123,7 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 /******************************************************************************/
 static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
 
+/* handle with unique handler per type */
 static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
 
 /*

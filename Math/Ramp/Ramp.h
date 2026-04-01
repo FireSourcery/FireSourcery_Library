@@ -78,10 +78,11 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coeffici
     Extern
 */
 /******************************************************************************/
-extern int32_t Ramp_ProcOutput(Ramp_T * p_ramp);
 extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
-int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
+extern int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);

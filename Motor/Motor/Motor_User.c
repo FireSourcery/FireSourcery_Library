@@ -197,12 +197,10 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
         StateMachine_Proc thread updates Ramp OutputState
 */
 /******************************************************************************/
-// static inline void _Motor_SetTorqueVirtual(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_IClamp(p_motor, userCmd); }
-static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = p_motor->Direction * userCmd; }
 static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = p_motor->Config.DirectionForward * userCmd; }
-/* limit on feedback */
-static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = p_motor->Direction * speed_fract16; }
 static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = p_motor->Config.DirectionForward * speed_fract16; }
+static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = p_motor->Direction * userCmd; }
+static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = p_motor->Direction * speed_fract16; }
 
 
 /******************************************************************************/

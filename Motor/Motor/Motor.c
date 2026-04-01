@@ -142,6 +142,7 @@ void Motor_InitSpeedRamp(Motor_State_T * p_motor)
 void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->TorqueRamp, p_motor->Config.TorqueRampTime_Cycles, Phase_Calibration_GetIRatedPeak_Fract16()); /* Current by default */
+    Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VBus_GetVNominal());
     Motor_ResolveILimits(p_motor);
 }
 

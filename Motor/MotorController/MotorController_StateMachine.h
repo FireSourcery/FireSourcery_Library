@@ -133,8 +133,6 @@ static int MotorController_GetDirection(MotorController_T * p_context)
 /*
 */
 /******************************************************************************/
-/* always get the 2nd layer depth 1 state under main */
-// static inline State_PathId_T MotorController_GetMainSubStateId(const MotorController_State_T * p_data) {
 
 /* Active Main  */
 /* return != 0xFF for App active.  */
@@ -175,11 +173,7 @@ static inline void MotorController_EnterMainIdle(MotorController_T * p_context) 
 
 /******************************************************************************/
 /*!
-    Input Cmd Trigger
-    Call handle value with struct
-    handled within main state
-    // handle common mapping. optionally inputs proc synchronous buffer?
-    split from stateCmd for refined override handling
+    Motor Cmd Generalized Input
 */
 /******************************************************************************/
 typedef enum MotorController_MotorCmd
@@ -214,17 +208,21 @@ static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context
 }
 
 /* Combination Input */
-typedef struct MotorController_StateInput2
+typedef union MotorController_MotorCmdValue
 {
-    uint32_t Cmd    : 16U;
-    uint32_t Value  : 16U;
+    struct
+    {
+        uint16_t CmdValue;
+        uint16_t CmdId;
+    };
+    uint32_t Value;
 }
-MotorController_StateInput2_T;
+MotorController_MotorCmdValue_T;
 
 static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
 {
-    MotorController_StateInput2_T * p_input = &(MotorController_StateInput2_T) { .Cmd = cmd, .Value = value }; /* pass temporary */
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTOR_CMD, (uintptr_t)p_input);
+    MotorController_MotorCmdValue_T  input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
+    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_MOTOR_CMD, input.Value);
 }
 
 /******************************************************************************/
@@ -250,6 +248,12 @@ typedef enum MotorController_LockId
     // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,
 }
 MotorController_LockId_T;
+
+/* specialized var handlers */
+static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorController_T * p_context)
+{
+    return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
+}
 
 typedef enum MotorController_LockOpStatus
 {

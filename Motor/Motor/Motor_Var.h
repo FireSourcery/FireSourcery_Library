@@ -64,8 +64,16 @@ typedef enum Motor_Var_UserOut
     MOTOR_VAR_V_SPEED_EFFECTIVE,
     MOTOR_VAR_POWER,
     MOTOR_VAR_I_DC,
+
 }
 Motor_Var_UserOut_T;
+
+// typedef enum Motor_Var_SubstateId
+// {
+// MOTOR_VAR_OPEN_LOOP_SUBSTATE,
+// MOTOR_VAR_CALIBRATION_SUBSTATE,
+// }
+// Motor_Var_SubstateId_T;
 
 /*
     [Var_UserControl] Motor_User.h Implementation
