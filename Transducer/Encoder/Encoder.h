@@ -152,6 +152,8 @@ typedef struct Encoder_State
     uint32_t ErrorCount;
 // #endif
 
+    // Angle_Counter_T AngleCounter;
+
     int32_t DirectionComp;
     uint32_t CounterPrev; /* for DeltaD */
     uint32_t ExtendedTimerPrev; /* for DeltaT */
@@ -179,7 +181,6 @@ typedef struct Encoder_State
     uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
 
-// Angle_Counter_T Angle;
 
     /*
         Unit conversion. derived on init from NvMem Config
@@ -214,6 +215,9 @@ typedef const struct Encoder
     Pin_T PIN_A;
     Pin_T PIN_B;
 #endif
+    // Pulse_T PULSE; /* Pulse providse Timer */
+
+
     /*  Timers used to represent time. */
     HAL_Encoder_Timer_T * P_HAL_ENCODER_TIMER;    /*!< DeltaT Timer. */
     uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq. Divisible by SAMPLE_FREQ */
@@ -298,23 +302,6 @@ typedef enum Encoder_ConfigId
 }
 Encoder_ConfigId_T;
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-static inline uint32_t _Encoder_CaptureDeltaWrap(uint32_t tcMax, uint32_t tcPrev, uint32_t tcValue)
-{
-    return (tcValue < tcPrev) ? (tcMax + 1U + tcValue - tcPrev) : (tcValue - tcPrev);
-}
-
-/*!
-    @brief Pulse CounterD conversions.
-    counter [0:CountsPerRevolution], wrapped counter value
-*/
-static inline uint32_t _Encoder_AngleOfCount(const Encoder_State_T * p_encoder, uint32_t counterD_Ticks) { return ((counterD_Ticks * p_encoder->UnitAngleD) >> ENCODER_ANGLE_SHIFT); }
-static inline uint32_t _Encoder_CountOfAngle(const Encoder_State_T * p_encoder, uint16_t angle_UserDegrees) { return (angle_UserDegrees << ENCODER_ANGLE_SHIFT) / p_encoder->UnitAngleD; }
-
 
 /******************************************************************************/
 /*!
@@ -362,6 +349,8 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 }
 
 static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+
+// keep different factor
 // static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
 // {
 // #if     defined(ENCODER_HW_DECODER)
@@ -395,7 +384,6 @@ static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_enco
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
-
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
 */
@@ -419,19 +407,18 @@ static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder)
     @brief
 */
 /******************************************************************************/
-static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * _Encoder_GetAngle(p_encoder); }
+static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { p_encoder->InterpolateAngleSum = 0U; }
 
-static inline uint16_t Encoder_GetPartitionAngle(const Encoder_State_T * p_encoder)
-{
-    return Encoder_GetDirectionRef(p_encoder) * (((_Encoder_GetAngle32(p_encoder) >> 8U) * p_encoder->Config.PartitionsPerRevolution) >> 8U);
-}
 
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder)
-{
-    // p_encoder->InterpolateAngleIndex = 0U;
-    p_encoder->InterpolateAngleSum = 0U;
-}
 
+
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*!
@@ -463,20 +450,12 @@ static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t
 /* Clears the value to config index to set as 0 */
 static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
 
+/******************************************************************************/
+/*!
 
-
-/*
-    Only When base units in mm, as set via SetGroundRatio function.
 */
-static inline uint32_t Encoder_GroundSpeedOf_Mph(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-{
-    return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1609344U);
-}
+/******************************************************************************/
 
-static inline uint32_t Encoder_GroundSpeedOf_Kmh(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
-{
-    return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
-}
 
 
 

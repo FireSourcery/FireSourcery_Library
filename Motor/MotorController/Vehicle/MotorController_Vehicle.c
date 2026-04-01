@@ -425,6 +425,8 @@ void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T
         case VEHICLE_VAR_DIRECTION:   MotorController_Vehicle_ApplyDirectionCmd(p_mc, (sign_t)value);   break;
         case VEHICLE_VAR_THROTTLE:    MotorController_Vehicle_SetThrottle(p_mc, (uint16_t)value);      break;
         case VEHICLE_VAR_BRAKE:       MotorController_Vehicle_SetBrake(p_mc, (uint16_t)value);         break;
+        case VEHICLE_VAR_RELEASE:     MotorController_Vehicle_SetRelease(p_mc);                          break;
+        default: break;
         // case VEHICLE_VAR_THROTTLE_ONLY:    MotorController_Vehicle_SetThrottle(p_mc, (uint16_t)value);      break;
         // case VEHICLE_VAR_BRAKE_ONLY:       MotorController_Vehicle_SetBrake(p_mc, (uint16_t)value);         break;
     }
@@ -440,6 +442,7 @@ int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T 
         case VEHICLE_VAR_BRAKE:       value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue;     break;
         // case VEHICLE_VAR_THROTTLE_ONLY:    value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.ThrottleValue;  break;
         // case VEHICLE_VAR_BRAKE_ONLY:       value = p_mc->VEHICLE.P_VEHICLE_STATE->Input.BrakeValue;     break;
+        default: break;
     }
     return value;
 }

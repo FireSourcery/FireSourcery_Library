@@ -310,7 +310,18 @@ static inline int MotorController_GetLockOpStatus(MotorController_T * p_context)
 /*!
 */
 /******************************************************************************/
-extern bool MotorController_ExitFault(MotorController_T * p_context);
-extern void MotorController_EnterFault(MotorController_T * p_context);
-extern void MotorController_SetFault(MotorController_T * p_context, uint16_t faultFlags);
-extern void MotorController_ClearFault(MotorController_T * p_context, uint16_t faultFlags);
+/*
+    FaultCmd - Encodes set and clear delta flags into a single state_value_t.
+    Handlers apply both unconditionally: OR FaultSet, AND-NOT FaultClear.
+    Eliminates read-modify-pass race on FaultFlags.Value.
+*/
+typedef union MotorController_FaultCmd
+{
+    struct { uint16_t FaultSet; uint16_t FaultClear; };
+    uint32_t Value;
+}
+MotorController_FaultCmd_T;
+
+extern void MotorController_SetFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags);
+extern void MotorController_ClearFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags);
+extern bool MotorController_TryClearFaultAll(MotorController_T * p_context);

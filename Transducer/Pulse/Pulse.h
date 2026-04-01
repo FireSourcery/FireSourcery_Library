@@ -36,6 +36,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+/*
+    Encoder_Base / TimerCounter / Sqaure wave counter
+*/
 /******************************************************************************/
 /*
     State - Timer-specific only
@@ -57,13 +61,7 @@ typedef struct Pulse_State
     /* Stop detection threshold */
     uint16_t ExtendedDeltaTStop;        /* Extended timer ticks to determine stopped */
 
-    /* Counter/FreqD state moved to Angle_Counter_T */
-    // int32_t CounterD;
-    // int32_t CounterPrev;
-    // int32_t DeltaD;
-    // uint32_t DeltaTh;
-    // int32_t FreqD;
-    // uint32_t PeriodT;
+    Angle_Counter_T Counter; /* Embedded math state for count accumulation and speed estimation */
 }
 Pulse_State_T;
 
@@ -84,7 +82,6 @@ typedef const struct Pulse
     uint32_t SAMPLE_TIME;       /* TIMER_FREQ / SAMPLE_FREQ */
 
     Pulse_State_T * P_STATE;
-    Angle_Counter_T * P_COUNTER;    /* Counter/FreqD math state */
 }
 Pulse_T;
 

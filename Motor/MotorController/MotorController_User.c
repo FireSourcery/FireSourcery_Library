@@ -51,7 +51,7 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
     {
         case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                       break; //Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, value);
         case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                        break; /* Stop active periodic. does not disable */
-        case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_context, value);           break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_context, (MotorController_FaultFlags_T){ .Value = -1 });    break; /* clear all for now */
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_context);         break;
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */

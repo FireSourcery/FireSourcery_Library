@@ -129,19 +129,14 @@ typedef union MotorController_FaultFlags
 MotorController_FaultFlags_T;
 
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT = { .MosfetsOverheat = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT     = { .PcbOverheat     = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VSOURCE_LIMIT    = { .VSourceLimit    = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VACCS_LIMIT      = { .VAccsLimit      = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT    = { .VAnalogLimit    = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_MOTORS           = { .Motors          = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_RX_LOST          = { .RxLost          = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_INIT_CHECK       = { .InitCheck       = 1U };
 
-// typedef enum MotorController_Fault
-// {
-//     // MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT    = (1U << 0U),
-//     // MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT        = (1U << 1U),
-//     // MOTOR_CONTROLLER_FAULT_VSOURCE_LIMIT       = (1U << 2U),
-//     // MOTOR_CONTROLLER_FAULT_VACCS_LIMIT         = (1U << 3U),
-//     // MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT       = (1U << 4U),
-//     // MOTOR_CONTROLLER_FAULT_MOTORS              = (1U << 5U),
-//     // MOTOR_CONTROLLER_FAULT_RX_LOST             = (1U << 6U),
-//     // MOTOR_CONTROLLER_FAULT_INIT_CHECK          = (1U << 7U),
-// }
-// MotorController_Fault_T;
 
 /*
     Init SubState

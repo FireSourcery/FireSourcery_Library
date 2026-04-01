@@ -132,10 +132,11 @@ static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16)
 
 /* Directly set the speed if available */
 /* Set Delta for interpolation */
-static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed_fract16)
+static inline fract16_t Angle_CaptureSpeed_Fract16(Angle_T * p_angle, accum32_t speed_fract16)
 {
     p_angle->Speed_Fract16 = (speed_fract16 + p_angle->Speed_Fract16) / 2;
     p_angle->Delta = angle_of_speed_fract16(p_angle->SpeedFractRef.SpeedMax_Angle16, speed_fract16);
+    return p_angle->Speed_Fract16;
 }
 
 static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle)
@@ -190,7 +191,7 @@ static inline void Angle_ResolveInterpolationDelta(Angle_T * p_angle)
 }
 
 /* Disable until next edge */
-static inline void Angle_ClearInterpolation(Angle_T * p_angle)
+static inline void Angle_ClearInterpolationDelta(Angle_T * p_angle)
 {
     p_angle->Interpolation.Delta = 0;
 }

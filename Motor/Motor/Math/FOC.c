@@ -58,6 +58,12 @@ void FOC_ClearCaptureState(FOC_T * p_foc)
     // p_foc->Ibeta = 0;
 }
 
+void FOC_ClearOutputState(FOC_T * p_foc)
+{
+    p_foc->Vd = 0;
+    p_foc->Vq = 0;
+}
+
 
 /*
     Debug

@@ -41,16 +41,11 @@ struct Blinky;
 
 typedef struct Blinky_State
 {
-    // Timer_T Timer;
-    // Blinky_Mode_T Mode;
+    Timer_State_T TimerState;
     bool IsOn;
-    uint32_t Index;
-    uint32_t End;
     uint32_t OnTime;
     uint32_t OffTime;
-    // uint32_t OffTimeDefault; unchanged between activation types
     void (*PatternFunction)(const struct Blinky * p_this);
-    // uint8_t ActiveSourceId;
 }
 Blinky_State_T;
 
@@ -59,22 +54,16 @@ typedef const struct Blinky
     Pin_T PIN;
     Blinky_State_T * P_STATE; /* Pointer to runtime state */
     TimerT_T TIMER;
-    // const volatile uint32_t * P_TIMER;
 }
 Blinky_T;
 
-#define BLINKY_INIT_FROM(p_PinHal, PinId, p_State, p_TimerBase, TimerBaseFreq)   \
-{                                                                   \
-    .PIN = PIN_INIT(p_PinHal, PinId),                               \
-    .TIMER = TIMER_T_ALLOC(p_TimerBase, TimerBaseFreq),             \
-    .P_STATE = p_State,                                             \
-}
+#define BLINKY_INIT(Pin, p_State, Timer) (Blinky_T){ .PIN = Pin, .P_STATE = p_State, .TIMER = Timer, }
 
-#define BLINKY_INIT_ALLOC_FROM(p_PinHal, PinId, p_TimerBase, TimerBaseFreq)   BLINKY_INIT_FROM(p_PinHal, PinId, &(Blinky_State_T){0}, p_TimerBase, TimerBaseFreq)
+#define BLINKY_INIT_FROM(p_PinHal, PinId, p_State, p_TimerBase, TimerBaseFreq) BLINKY_INIT(PIN_INIT(p_PinHal, PinId), p_State, TIMER_T_INIT(p_TimerBase, TimerBaseFreq, &((p_State)->TimerState)))
+
+#define BLINKY_INIT_ALLOC_FROM(p_PinHal, PinId, p_TimerBase, TimerBaseFreq) BLINKY_INIT_FROM(p_PinHal, PinId, &(Blinky_State_T){0}, p_TimerBase, TimerBaseFreq)
 
 
-// static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_DISABLED; }
-// static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->P_STATE->Mode = BLINKY_STATE_ENABLED; }
 static inline void Blinky_Disable(const Blinky_T * p_blinky) { p_blinky->TIMER.P_STATE->Mode = TIMER_MODE_DISABLED; }
 static inline void Blinky_Enable(const Blinky_T * p_blinky) { p_blinky->TIMER.P_STATE->Mode = TIMER_MODE_STOPPED; }
 

@@ -63,10 +63,12 @@ const StateMachine_Machine_T MSM_MACHINE =
     Common
 */
 /******************************************************************************/
-static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultFlags)
+/* Non-Fault states: apply set/clear, transition to Fault if any flags remain */
+static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultCmd)
 {
-    p_motor->P_MOTOR_STATE->FaultFlags.Value = faultFlags;
-    return(p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
+    Motor_FaultCmd_T cmd = { .Value = faultCmd };
+    p_motor->P_MOTOR_STATE->FaultFlags.Value |= cmd.FaultSet;
+    return (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) ? &MOTOR_STATE_FAULT : NULL;
 }
 
 /* Monitor Flags */
@@ -700,11 +702,16 @@ static void Fault_Entry(const Motor_T * p_motor) { Phase_Deactivate(&p_motor->PH
 
 static void Fault_Proc(const Motor_T * p_motor) { Phase_Deactivate(&p_motor->PHASE); }
 
-static State_T * Fault_InputClearFault(const Motor_T * p_motor, state_value_t faultFlags)
+/* Fault State: Set accumulates (latches), Clear removes flags and re-verifies */
+static State_T * Fault_InputFault(const Motor_T * p_motor, state_value_t faultCmd)
 {
-    p_motor->P_MOTOR_STATE->FaultFlags.Value = faultFlags;
-    Motor_PollFaultFlags(p_motor);
-
+    Motor_FaultCmd_T cmd = { .Value = faultCmd };
+    p_motor->P_MOTOR_STATE->FaultFlags.Value |= cmd.FaultSet;
+    if (cmd.FaultClear != 0U)
+    {
+        p_motor->P_MOTOR_STATE->FaultFlags.Value &= ~cmd.FaultClear;
+        Motor_PollFaultFlags(p_motor); /* Re-verify conditions resolved before allowing exit */
+    }
     return (p_motor->P_MOTOR_STATE->FaultFlags.Value == 0U) ? &MOTOR_STATE_STOP : NULL;
 }
 
@@ -723,7 +730,7 @@ static State_T * Fault_InputCalibration(const Motor_T * p_motor, state_value_t s
 
 static const State_Input_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]       = (State_Input_T)Fault_InputClearFault,
+    [MSM_INPUT_FAULT]       = (State_Input_T)Fault_InputFault,
     [MSM_INPUT_CALIBRATION] = (State_Input_T)Fault_InputCalibration,
     [MSM_INPUT_DIRECTION]   = NULL,
 };
@@ -742,30 +749,21 @@ const State_T MOTOR_STATE_FAULT =
     Fault interface functions
 */
 /******************************************************************************/
-void Motor_StateMachine_EnterFault(const Motor_T * p_motor)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value);
-}
-
-/*! @return true if no fault remains */
-bool Motor_StateMachine_ExitFault(const Motor_T * p_motor)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, 0);
-    return !Motor_IsFault(p_motor);
-}
-
-/*
-    individual flag access todo
-*/
+/* Pass only delta flags — handler applies OR FaultSet / AND-NOT FaultClear atomically */
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value | faultFlags.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = faultFlags.Value }.Value);
 }
 
-/* faultFlags unused for now */
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, p_motor->P_MOTOR_STATE->FaultFlags.Value & ~faultFlags.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultClear = faultFlags.Value }.Value);
+}
+
+bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor)
+{
+    Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T){ .Value = UINT16_MAX });
+    return !Motor_IsFault(p_motor);
 }
 
 

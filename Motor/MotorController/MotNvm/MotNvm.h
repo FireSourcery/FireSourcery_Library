@@ -43,6 +43,25 @@
 //     #define MOT_NVM_USER_FLASH
 // #endif
 
+#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
+#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
+#else
+#define MOTOR_CONTROLLER_USER_NVM_FLASH
+#endif
+
+#if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
+#elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
+#else
+#define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
+#endif
+
+/* For Protocol Flash Only */
+#if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
+#elif   defined(MOTOR_CONTROLLER_FLASH_LOADER_DISABLE)
+#else
+#define MOTOR_CONTROLLER_FLASH_LOADER_DISABLE
+#endif
+
 /* Config Mem descriptor table. */
 typedef const struct MotNvm_Entry
 {

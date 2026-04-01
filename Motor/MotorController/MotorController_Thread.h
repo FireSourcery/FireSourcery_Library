@@ -132,8 +132,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     switch (HeatMonitor_Poll(&p_context->HEAT_PCB))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            p_mc->FaultFlags.PcbOverheat = 1U;
-            MotorController_EnterFault(p_context);
+            MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT);
             break;
         case HEAT_MONITOR_STATUS_WARNING_HIGH: break;
         case HEAT_MONITOR_STATUS_NORMAL: break;
@@ -144,8 +143,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     switch (HeatMonitor_Group_PollAll(&p_context->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            p_mc->FaultFlags.MosfetsOverheat = 1U;
-            MotorController_EnterFault(p_context);
+            MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);
             break;
 
         case HEAT_MONITOR_STATUS_WARNING_HIGH:
@@ -198,10 +196,12 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T * p_context)
 {
     Motor_Table_ForceDisableControl(&p_context->MOTORS);
-    p_context->P_MC_STATE->FaultFlags.VSourceLimit = 1U;
-    MotorController_EnterFault(p_context);
-    // MotorController_EnterFault(p_context, (MotorController_FaultFlags_T){ .VSourceLimit = 1U });
-    // _StateMachine_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MCSM_INPUT_FAULT, 0); // transition without lock
+    /*
+        if this interrupts a lower priority transition, that transition may overwrite the fault transition, causing exit from fault.
+        if overwritten, main will check fault flags and enter, or on next poll.
+        input handlers store a local copy of the function pointer before performing null check. so it should not crash the program.
+    */
+    MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_VSOURCE_LIMIT);
 }
 
 static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_context)
@@ -215,9 +215,6 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 // #if defined(MOTOR_V_SENSORS_ANALOG)
     switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
     {
-        /* No sync protection, if overwritten, main will check fault flags and enter, or on next poll */
-        /* if the signal is not acquired, main will check fault flags and enter */
-        /* results of higher priory thread may be overwritten, if interrupting a lower priory thread in state transition */
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_WARNING_HIGH:
@@ -257,10 +254,10 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
     RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
 
-    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { p_mc->FaultFlags.VAccsLimit = 1U; MotorController_EnterFault(p_context); }
-    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { p_mc->FaultFlags.VAnalogLimit = 1U; MotorController_EnterFault(p_context); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_VACCS_LIMIT); }
+    if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT); }
 
-    if (p_mc->FaultFlags.Value != 0U) { MotorController_EnterFault(p_context); }
+    if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_context, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
 
     Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
     Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
@@ -306,6 +303,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
                 /* Only active when Serial is selected as primary input */
                 // if (MotorController_PollRxLost(p_context) == true)
                 // {
+                // Motor_Table_ForEachApply(&p_context->MOTORS, Motor_ReleaseVZ);
                 //     MotorController_ForceDisableControl(p_context);
                 //     MotorController_EnterFault(p_context);
                 // }
@@ -339,9 +337,9 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             _MotorController_HeatMonitor_Thread(p_context);
 
             /* Can use low priority check, as motor is already in fault state. */
-            if (Motor_Table_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { p_mc->FaultFlags.Motors = 1U; }
+            if (Motor_Table_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_MOTORS); }
 
-            if (p_mc->FaultFlags.Value != 0U) { MotorController_EnterFault(p_context); }
+            if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_context, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
 
             MotorController_CaptureVSource(p_context); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
 

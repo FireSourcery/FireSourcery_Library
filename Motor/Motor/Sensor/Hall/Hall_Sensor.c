@@ -50,27 +50,13 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
     {
         Encoder_CaptureCount(p_sensor->P_ENCODER, Hall_ResolveDirection(p_sensor->HALL.P_STATE)); /* captured signed count */
         Angle_CaptureAngle(p_angle, Hall_ResolveAngle(p_sensor->HALL.P_STATE));
-        // Angle_CaptureAngle(p_angle, Hall_GetAngleAs(p_sensor->HALL.P_STATE, 0));
         Angle_ZeroInterpolation(p_angle); /* Reset interpolation on every edge */
-
-        /*
-            Direction mismatch: sensor direction != feedback direction from speed last capture.
-            Speed capture should filter this out. Zero interpolation to prevent extrapolation in wrong direction.
-        */
-        if (Hall_GetDirection(p_sensor->HALL.P_STATE) != RotorSensor_GetFeedbackDirection(&p_sensor->BASE))
-        {
-            p_sensor->P_ENCODER->P_STATE->PollingAngleDelta = 0;
-            p_angle->Interpolation.Delta = 0;
-        }
     }
-    else /* 20kHz */
+    else /* 20kHz, Interpolate angle between Hall edges */
     {
-        /* Interpolate angle between Hall edges */
         p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Angle_Interpolate(p_angle);
         /* Optionally accumulate mechanical angle */
         p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
-
-        // p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Encoder_ModeDT_InterpolateAngle(p_sensor->P_ENCODER);
         // p_state->MechanicalAngle += p_angle->Delta * p_sensor->BASE.P_STATE->Config.PolePairs; /* accumulate mech angle from electrical angle delta */
     }
 }
@@ -79,11 +65,9 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
     Angle_T * p_angle = &p_sensor->BASE.P_STATE->AngleSpeed; /* use AngleSpeed for capture, and GetAngle can select angle/speed/other result from AngleSpeed struct */
-    Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER);
-    // Encoder_ModeDT_CapturePollingDelta(p_sensor->P_ENCODER->P_STATE);
+    Encoder_ModeDT_CaptureFreqD(p_sensor->P_ENCODER); /* IsExtendedStop sets speed = 0, disables interpolation */
     Angle_CaptureSpeed_Fract16(p_angle, Encoder_ModeDT_GetScalarSpeed(p_sensor->P_ENCODER->P_STATE)); /* FreqD captured with direction */
     Angle_ResolveInterpolationDelta(p_angle); /* Captures Delta as   */
-
 }
 
 
@@ -110,6 +94,7 @@ void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, c
     p_encoder->Config.IsQuadratureCaptureEnabled = false;
 
     Encoder_SetCountsPerRevolution(p_encoder, p_config->PolePairs * 6U);
+    // depreciate
     Encoder_SetPartitionsPerRevolution(p_encoder, p_config->PolePairs);  /* Set for electrical cycle */
     Encoder_SetScalarSpeedRef(p_encoder, p_config->SpeedTypeMax_Rpm); /* mech rpm */
 

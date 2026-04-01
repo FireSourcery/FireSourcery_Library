@@ -114,9 +114,10 @@ void MotorController_PollFaultFlags(MotorController_T * p_context)
     p_mc->FaultFlags.MosfetsOverheat = (HeatMonitor_Group_GetStatus(&p_context->HEAT_MOSFETS) == MONITOR_STATUS_FAULT);
 }
 
-static State_T * TransitionFault(MotorController_T * p_context, state_value_t faultFlags)
+/* Non-Fault states: apply set/clear, transition to Fault if any flags remain */
+static State_T * TransitionFault(MotorController_T * p_context, state_value_t faultCmd)
 {
-    p_context->P_MC_STATE->FaultFlags.Value = faultFlags;
+    p_context->P_MC_STATE->FaultFlags.Value |= (MotorController_FaultCmd_T) { .Value = faultCmd }.FaultSet;
     return (p_context->P_MC_STATE->FaultFlags.Value != 0U) ? &STATE_FAULT : NULL;
 }
 
@@ -602,18 +603,21 @@ static void Fault_Proc(MotorController_T * p_context)
     if (p_mc->FaultFlags.Value == 0U) { Blinky_Stop(&p_context->BUZZER); }
 }
 
-/* Fault State Input Fault Checks Fault */
-static State_T * Fault_InputClearFault(MotorController_T * p_context, state_value_t faultFlags)
+/* Fault State: Set accumulates (latches), Clear side-effects then removes flags */
+static State_T * Fault_InputFault(MotorController_T * p_context, state_value_t faultCmd)
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
-    if (faultFlags < p_mc->FaultFlags.Value)
+    MotorController_FaultCmd_T cmd = { .Value = faultCmd };
+
+    if (cmd.FaultClear != 0U)
     {
-        for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_ExitFault(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
-        Blinky_Stop(&p_context->BUZZER); /* Stops until its set again */
+        p_mc->FaultFlags.Value &= ~cmd.FaultClear;
+        for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_TryClearFaultAll(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+        Blinky_Stop(&p_context->BUZZER);
+        MotorController_PollFaultFlags(p_context); /* Re-verify conditions resolved before allowing exit */
     }
-    p_mc->FaultFlags.Value = faultFlags;
-    MotorController_PollFaultFlags(p_context);
-    return (p_mc->FaultFlags.Value == 0U) ? &MC_STATE_MAIN : NULL;
+
+    return (p_mc->FaultFlags.Value == 0U) ? ParkState(p_context) : NULL;
 }
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_context, state_value_t lockId)
@@ -634,7 +638,7 @@ static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_contex
 
 static const State_Input_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_FAULT]  = (State_Input_T)Fault_InputClearFault,
+    [MCSM_INPUT_FAULT]  = (State_Input_T)Fault_InputFault,
     [MCSM_INPUT_LOCK]   = (State_Input_T)Fault_InputLockSaveConfig_Blocking,
 };
 
@@ -651,41 +655,21 @@ static const State_T STATE_FAULT =
     Fault Interface Functions
 */
 /******************************************************************************/
-/* todo thread safe without lock */
-void MotorController_EnterFault(MotorController_T * p_context)
+/* Pass only delta flags — handler applies OR FaultSet / AND-NOT FaultClear atomically */
+void MotorController_SetFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
 }
 
-bool MotorController_ExitFault(MotorController_T * p_context)
+void MotorController_ClearFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, 0);
+    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultClear = faultFlags.Value }.Value);
+}
+
+bool MotorController_TryClearFaultAll(MotorController_T * p_context)
+{
+    MotorController_ClearFault(p_context, (MotorController_FaultFlags_T){ .Value = UINT16_MAX });
     return !MotorController_IsFault(p_context);
 }
 
-void MotorController_SetFault(MotorController_T * p_context, uint16_t faultFlags)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value | faultFlags);
-}
 
-void MotorController_ClearFault(MotorController_T * p_context, uint16_t faultFlags)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_context->STATE_MACHINE, MCSM_INPUT_FAULT, p_context->P_MC_STATE->FaultFlags.Value & ~faultFlags);
-}
-
-// or split input id
-struct FaultFlagsContainer
-{
-    uint16_t FaultFlags;
-    uint16_t IsClear;
-};
-
-/*
-    Race condition possible if multiple faults are set/cleared at same time.
-    however repeat sets are polling
-
-    alternatively
-    width difference as discriminator (value == (state_value_t)(uint16_t)value)
-    Set: pass raw flags (fits in uint16_t, upper 16 bits are 0)
-    Clear: pass ~flags (upper bits set, doesn't fit in uint16_t)
-*/

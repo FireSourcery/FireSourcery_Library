@@ -41,6 +41,7 @@ typedef const struct Hall_RotorSensor
     const RotorSensor_T BASE; /* _SUPER */
     const Hall_T HALL;
     const Encoder_T * const P_ENCODER; // todo update to encoder math only
+    // const Pulse_T PULSE;
 }
 Hall_RotorSensor_T;
 

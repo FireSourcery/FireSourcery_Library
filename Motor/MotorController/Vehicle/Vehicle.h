@@ -217,6 +217,7 @@ typedef enum Vehicle_VarId
     VEHICLE_VAR_DIRECTION,          // sign_t,
     VEHICLE_VAR_THROTTLE,           // [0:65535]
     VEHICLE_VAR_BRAKE,              // [0:65535]
+    VEHICLE_VAR_RELEASE,
     // VEHICLE_VAR_THROTTLE_ONLY,           // [0:65535]
     // VEHICLE_VAR_BRAKE_ONLY,              // [0:65535]
 }

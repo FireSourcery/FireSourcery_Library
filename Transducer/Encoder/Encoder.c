@@ -68,27 +68,22 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
     void _Encoder_ResetUnitsAngle(Encoder_State_T * p_encoder)
     {
         p_encoder->UnitAngleD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
+        // p_encoder->AngleCounter
     }
 
     /*
         Speed
     */
 
-    static uint32_t MaxDeltaD(Encoder_State_T * p_encoder)
-        { return p_encoder->Config.ScalarSpeedRef_Rpm * 2U * p_encoder->Config.CountsPerRevolution / (60U * p_encoder->UnitTime_Freq); }
-
-
     void _Encoder_ResetUnitsScalarSpeed(Encoder_State_T * p_encoder)
     {
         uint32_t unitsFactor = (uint32_t)32768U * 60U;
         uint32_t unitsDivisor = (uint32_t)p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm;
-        p_encoder->UnitScalarSpeedShift = 14U; //todo as shift max of MaxDeltaD
         p_encoder->UnitScalarSpeed = ((uint64_t)unitsFactor << p_encoder->UnitScalarSpeedShift) * p_encoder->UnitTime_Freq / unitsDivisor;
     }
 
     void _Encoder_ResetUnitsAngularSpeed(Encoder_State_T * p_encoder)
     {
-        // p_encoder->UnitAngularSpeed = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES, p_encoder->UnitTime_Freq, p_encoder->Config.CountsPerRevolution);
         p_encoder->UnitAngularSpeed = (uint64_t)ENCODER_ANGLE_DEGREES * p_encoder->UnitTime_Freq / p_encoder->Config.CountsPerRevolution;
         // p_encoder->UnitAngularSpeedShift = 0U;
     }
@@ -101,7 +96,6 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
 
             p_encoder->UnitPollingAngle = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution / p_encoder->PollingFreq;
             p_encoder->InterpolateAngleLimit = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution;
-
     }
 
     /*
@@ -144,11 +138,9 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
     {
         p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
         _Encoder_ResetUnitsScalarSpeed(p_encoder);
-        // if dependent on MaxDeltaD
         // _Encoder_ResetUnitsAngularSpeed(p_encoder);
         // _Encoder_ResetUnitsLinearSpeed(p_encoder);
     }
-
 
     /*
         gearRatio as Surface/Encoder
@@ -285,10 +277,7 @@ uint16_t Encoder_GetAngleAligned(Encoder_State_T * p_encoder)
     return (p_encoder->Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
 }
 
-// uint16_t Encoder_GetElectricalAngleOffset(Encoder_State_T * p_encoder)
-// {
-//     return % p_encoder->Config.PartitionsPerRevolution;
-// }
+
 
 bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
 {

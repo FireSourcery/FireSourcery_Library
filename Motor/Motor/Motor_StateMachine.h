@@ -161,9 +161,19 @@ static inline bool Motor_IsConfig(const Motor_T * p_motor)
 /*
 */
 /******************************************************************************/
-extern void Motor_StateMachine_EnterFault(const Motor_T * p_motor);
-extern bool Motor_StateMachine_ExitFault(const Motor_T * p_motor);
+/*
+    FaultCmd - Encodes set and clear delta flags into a single state_value_t.
+    Handlers apply both unconditionally: OR FaultSet, AND-NOT FaultClear.
+*/
+typedef union Motor_FaultCmd
+{
+    struct { uint16_t FaultSet; uint16_t FaultClear; };
+    uint32_t Value;
+}
+Motor_FaultCmd_T;
+
 extern void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
 extern void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
+extern bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor);
 
 // static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }

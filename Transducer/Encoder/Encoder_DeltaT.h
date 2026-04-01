@@ -258,12 +258,12 @@ static inline uint32_t Encoder_DeltaT_GetLinearSpeed(const Encoder_State_T * p_e
 
 static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Mph(const Encoder_State_T * p_encoder)
 {
-    return Encoder_GroundSpeedOf_Mph(p_encoder, 1U, p_encoder->DeltaT);
+   /*  return Encoder_GroundSpeedOf_Mph(p_encoder, 1U, p_encoder->DeltaT); */
 }
 
 static inline uint32_t Encoder_DeltaT_GetGroundSpeed_Kmh(const Encoder_State_T * p_encoder)
 {
-    return Encoder_GroundSpeedOf_Kmh(p_encoder, 1U, p_encoder->DeltaT);
+   /*  return Encoder_GroundSpeedOf_Kmh(p_encoder, 1U, p_encoder->DeltaT); */
 }
 
 /******************************************************************************/

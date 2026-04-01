@@ -57,8 +57,9 @@ typedef const struct MotorController_App
     MotorController_App_Proc_T PROC_ANALOG_USER;
     State_Input_T ENTER_MAIN;
     // State_T * P_INITIAL_STATE;
-    // const void * P_APP_CONTEXT; split from vtable
+    const void * P_APP_CONTEXT;
 }
 MotorController_App_T;
 
 
+MotorController_App_T * MotorController_App(MotorController_T * p_context);

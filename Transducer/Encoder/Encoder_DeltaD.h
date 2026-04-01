@@ -76,7 +76,7 @@ static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 */
 /******************************************************************************/
 static inline int32_t  Encoder_DeltaD(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD; }
-static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { return _Encoder_AngleOfCount(p_encoder, p_encoder->DeltaD); }
+static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { /* return Angle_Counter_GetAngle(p_encoder, p_encoder->DeltaD);  */}
 
 static inline uint32_t Encoder_DeltaD_GetAngularSpeed(const Encoder_State_T * p_encoder) { /* angle_speed_of_count( , p_encoder->Config.CountsPerRevolution, p_encoder->DeltaD); */ }
 static inline uint32_t Encoder_DeltaD_GetFractSpeed(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift; }
@@ -111,8 +111,8 @@ static inline uint32_t Encoder_DeltaD_GetAngularSpeed_Rads(const Encoder_State_T
     Overflow caution: Max DeltaD = UINT32_MAX / UnitSurfaceSpeed
 */
 static inline uint32_t Encoder_DeltaD_GetLinearSpeed(const Encoder_State_T * p_encoder){    return p_encoder->DeltaD * p_encoder->UnitSurfaceSpeed >> p_encoder->UnitSurfaceSpeedShift;}
-static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(const Encoder_State_T * p_encoder){    return Encoder_GroundSpeedOf_Mph(p_encoder, p_encoder->DeltaD, 1U);}
-static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(const Encoder_State_T * p_encoder){    return Encoder_GroundSpeedOf_Kmh(p_encoder, p_encoder->DeltaD, 1U);}
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Mph(const Encoder_State_T * p_encoder){    /* return Encoder_GroundSpeedOf_Mph(p_encoder, p_encoder->DeltaD, 1U); */}
+static inline uint32_t Encoder_DeltaD_GetGroundSpeed_Kmh(const Encoder_State_T * p_encoder){    /* return Encoder_GroundSpeedOf_Kmh(p_encoder, p_encoder->DeltaD, 1U); */}
 
 /******************************************************************************/
 /*!

@@ -59,27 +59,21 @@ void Blinky_Proc(const Blinky_T * p_blinky)
     {
         switch (p_blinky->TIMER.P_STATE->Mode)
         {
-            case TIMER_MODE_DISABLED:  break;
-            case TIMER_MODE_STOPPED: // todo with counter mode
-                if (p_state->Index < p_state->End) /* OneShot repeat Pattern */
-                {
-                    Pattern_PeriodicToggle(p_blinky);
-                    TimerT_RestartOneShot(&p_blinky->TIMER);
-                    p_state->Index++;
-                }
-                else
-                {
-                    Pin_Output_Off(&p_blinky->PIN); /* Turn off */
-                    TimerT_StartPeriodic(&p_blinky->TIMER, p_state->OffTime);  /* Restore Periodic */
-                }
+            case TIMER_MODE_STOPPED: /* OneShot/CounterN completed */
+                Pin_Output_Off(&p_blinky->PIN);
+                TimerT_StartPeriodic(&p_blinky->TIMER, p_state->OffTime); /* Restore Periodic */
                 break;
-            case TIMER_MODE_ONE_SHOT:
+            case TIMER_MODE_ONE_SHOT_COUNTER: /* BlinkN in progress, Timer Counter handles repeat */
+                Pattern_PeriodicToggle(p_blinky);
                 break;
             case TIMER_MODE_PERIODIC:
                 if (p_state->PatternFunction != NULL) { p_state->PatternFunction(p_blinky); }
                 break;
-            default:
-                break;
+
+            case TIMER_MODE_DISABLED: break;
+            case TIMER_MODE_ONE_SHOT: break; /* Timer sets mode to stop */
+            case TIMER_MODE_PERIODIC_COUNTER: break;/* Not used */
+            default: break;
         }
     }
 }
@@ -113,18 +107,15 @@ void Blinky_Blink_Toggle(const Blinky_T * p_blinky, uint32_t duration)
 
 void Blinky_Blink(const Blinky_T * p_blinky, uint32_t onTime)
 {
-    p_blinky->P_STATE->Index = 0U;
-    p_blinky->P_STATE->End = 0U;
     Blinky_Blink_OnOff(p_blinky, onTime);
 }
 
 void Blinky_BlinkN(const Blinky_T * p_blinky, uint32_t onTime, uint32_t offTime, uint8_t nRepeat)
 {
-    p_blinky->P_STATE->Index = 0U;
-    p_blinky->P_STATE->End = nRepeat * 2U - 1U;
     p_blinky->P_STATE->OnTime = onTime;
     p_blinky->P_STATE->OffTime = offTime;
-    Blinky_Blink_OnOff(p_blinky, onTime);
+    Blinky_On(p_blinky);
+    TimerT_StartCounterN(&p_blinky->TIMER, onTime, nRepeat * 2U - 1U);
 }
 
 

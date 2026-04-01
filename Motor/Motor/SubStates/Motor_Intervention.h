@@ -4,7 +4,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,18 +24,11 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   counter_fn.h
+    @file   Motor_Intervention.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include <stdint.h>
 
+#include "../Motor_StateMachine.h"
 
-/* max != UINT_MAX */
-static inline uint32_t counter_wrapped(uint32_t max, uint32_t prev, uint32_t count) { return (count < prev) ? (max + 1U + count - prev) : (count - prev); }
-static inline bool counter_is_aligned(uint32_t mask, uint32_t count) { return ((count & mask) == 0UL); }
-
-static inline uint32_t timer_elapsed_wrapped(uint32_t period, uint32_t time_prev, uint32_t time) { return (time < time_prev) ? (period + time - time_prev) : (time - time_prev); }
-static inline uint32_t timer_elapsed(uint32_t time_prev, uint32_t time) { return (time - time_prev); }
-static inline bool timer_is_elapsed(uint32_t period, uint32_t time_prev, uint32_t time) { return (timer_elapsed(time_prev, time) >= period); }

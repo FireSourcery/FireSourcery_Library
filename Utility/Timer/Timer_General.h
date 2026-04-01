@@ -57,9 +57,9 @@ static inline void Timer_InitFrom(Timer_T * p_timer, const Timer_Base_T * p_base
     /* Cast away const. It is the RAM copy */
     memcpy((void *)&p_timer->Base, p_base, sizeof(Timer_Base_T));
     p_timer->State.Mode = TIMER_MODE_STOPPED;
-    // p_timer->Period = 0U;
-    // p_timer->Counter = 0U;
-    // p_timer->TimeRef = 0U;
+    p_timer->State.Period = 0U;
+    p_timer->State.Counter = 0U;
+    p_timer->State.TimeRef = 0U;
 }
 
 
@@ -97,3 +97,20 @@ static inline bool Timer_Modal_Poll(Timer_T * p_timer) { return _TimerT_Modal_Po
 static inline void Timer_Start(Timer_T * p_timer, uint32_t period) { _TimerT_Start(&p_timer->Base, &p_timer->State, period); }
 static inline void Timer_Stop(Timer_T * p_timer) { _TimerT_Stop(&p_timer->State); }
 
+// /*
+//     Unit Conversions
+// */
+// static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer)  { return Timer_GetElapsed(p_timer) / p_timer->BaseFreq; }
+// /* overflow at 1 hour for millis, 3 min for 20khz */
+// static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer)   { return Timer_GetElapsed(p_timer) * 1000U / p_timer->BaseFreq; }
+
+// static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
+// {
+//     uint32_t ticks = Timer_GetElapsed(p_timer);
+//     return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->BaseFreq * 1000000U) : (ticks * 1000000U / p_timer->BaseFreq);
+// }
+
+// /* freq != 0U, freq < BaseFreq */
+// static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq)              { p_timer->Period = p_timer->BaseFreq / freq; }
+// static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis)   { p_timer->Period = p_timer->BaseFreq * millis / 1000U; }
+// static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) { Timer_SetPeriod_Millis(p_timer, millis); Timer_Restart(p_timer); }

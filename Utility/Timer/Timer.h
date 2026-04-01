@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include <stdbool.h>
 #include <stdint.h>
+#include "math_counter.h"
 
 /******************************************************************************/
 /*!
@@ -105,48 +106,18 @@ Timer_State_T;
 
 /******************************************************************************/
 /*
-    Stateless
-*/
-/******************************************************************************/
-// or swap param order
-/* or move as counter math */
-static inline uint32_t timer_counter_wrapped(uint32_t wrap, uint32_t time_ref, uint32_t timer) { return (timer < time_ref) ? (wrap - time_ref + timer) : (timer - time_ref); }
-static inline bool timer_counter_is_aligned(uint32_t counter, uint32_t mask) { return ((counter & mask) == 0UL); }
-static inline uint32_t timer_elapsed_wrapped(uint32_t timer, uint32_t time_ref) { return timer_counter_wrapped(UINT32_MAX, time_ref, timer); }
-static inline uint32_t timer_elapsed_direct(uint32_t timer, uint32_t time_ref) { return (timer - time_ref); }
-
-static inline uint32_t timer_elapsed(uint32_t timer, uint32_t time_ref)
-{
-#ifdef TIMER_OVERFLOW_WRAP /* Not necessary if overflow time is in days. e.g using millis */
-    return timer_elapsed_wrapped(timer, time_ref);
-#else
-    return timer_elapsed_direct(timer, time_ref);
-#endif
-}
-
-static inline bool timer_is_elapsed(uint32_t timer, uint32_t time_ref, uint32_t period) { return (timer_elapsed(timer, time_ref) >= period); }
-
-
-/******************************************************************************/
-/*
     Common Query
 */
 /******************************************************************************/
-// static inline uint32_t _Timer_Elapsed(uint32_t time_prev, uint32_t time)
-// {
-// #ifdef TIMER_OVERFLOW_WRAP /* Not necessary if overflow time is in days. e.g using millis */
-//     return timer_elapsed_wrapped(time_prev, time);
-// #else
-//     return timer_elapsed_direct(time_prev, time);
-// #endif
-// }
-
-// static inline bool _Timer_Is_Elapsed(uint32_t period, uint32_t time_prev, uint32_t time) { return (_Timer_Elapsed(time_prev, time) >= period); }
+static inline uint32_t _Timer_Elapsed(uint32_t time_prev, uint32_t time) { return (time - time_prev); }
+static inline bool _Timer_IsElapsed(uint32_t period, uint32_t time_prev, uint32_t time) { return (_Timer_Elapsed(time_prev, time) >= period); }
 
 static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; }
-static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 
-/* Polling with modal mode only */
+/*
+    Polling with modal mode only
+*/
+static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
 static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
 static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }

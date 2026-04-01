@@ -32,54 +32,24 @@
 #define MOTOR_CONTROLLER_H
 
 
-#if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
-#elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
-#else
-    #define MOTOR_CONTROLLER_USER_NVM_FLASH
-#endif
-
-#if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
-#elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
-#else
-    #define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
-#endif
-
-/* For Protocol Flash Only */
-#if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
-#elif   defined(MOTOR_CONTROLLER_FLASH_LOADER_DISABLE)
-#else
-    #define MOTOR_CONTROLLER_FLASH_LOADER_DISABLE
-#endif
-
-#if     defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-#elif   defined(MOTOR_CONTROLLER_CAN_BUS_DISABLE)
-#else
-    #define MOTOR_CONTROLLER_CAN_BUS_ENABLE
-#endif
+// #if     defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+// #elif   defined(MOTOR_CONTROLLER_CAN_BUS_DISABLE)
+// #else
+//     #define MOTOR_CONTROLLER_CAN_BUS_ENABLE
+// #endif
 
 
-#if     defined(MOTOR_CONTROLLER_SERVO_ENABLE)
-    #if     defined(MOTOR_CONTROLLER_SERVO_EXTERN_ENABLE)
-    #elif   defined(MOTOR_CONTROLLER_SERVO_EXTERN_DISABLE)
-    #else
-        #define MOTOR_CONTROLLER_SERVO_EXTERN_DISABLE
-    #endif
-#elif   defined(MOTOR_CONTROLLER_SERVO_DISABLE)
-#else
-    #define MOTOR_CONTROLLER_SERVO_ENABLE
-#endif
+// #if     defined(MOTOR_CONTROLLER_SHELL_ENABLE)
+// #elif   defined(MOTOR_CONTROLLER_SHELL_DISABLE)
+// #else
+//     #define MOTOR_CONTROLLER_SHELL_DISABLE
+// #endif
 
-#if     defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-#elif   defined(MOTOR_CONTROLLER_SHELL_DISABLE)
-#else
-    #define MOTOR_CONTROLLER_SHELL_DISABLE
-#endif
-
-#if     defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
-#elif   defined(MOTOR_CONTROLLER_DEBUG_DISABLE)
-#else
-    #define MOTOR_CONTROLLER_DEBUG_DISABLE
-#endif
+// #if     defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
+// #elif   defined(MOTOR_CONTROLLER_DEBUG_DISABLE)
+// #else
+//     #define MOTOR_CONTROLLER_DEBUG_DISABLE
+// #endif
 
 #endif
 

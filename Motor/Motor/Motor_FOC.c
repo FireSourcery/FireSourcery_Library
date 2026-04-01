@@ -194,6 +194,7 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
 {
     FOC_ClearCaptureState(&p_motor->Foc); /* Clear for view, updated again on enter control */
+    FOC_ClearOutputState(&p_motor->Foc); /* Emergency stop, capture bemf subsitute */
     PID_Reset(&p_motor->PidIq);
     PID_Reset(&p_motor->PidId);
     PID_Reset(&p_motor->PidSpeed);

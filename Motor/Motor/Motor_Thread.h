@@ -107,8 +107,7 @@ static inline void Motor_Heat_Thread(const Motor_T * p_context)
             // Motor_SetILimitMotoringEntry_Scalar(p_context, MOTOR_I_LIMIT_HEAT_THIS, HeatMonitor_GetScalarLimit_Percent16(&p_context->Thermistor));
             break;
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            p_context->P_MOTOR_STATE->FaultFlags.Overheat = 1U;
-            Motor_StateMachine_EnterFault(p_context); // Motor_StateMachine_SetFault(p_context, MOTOR_FAULT_FLAG_OVERHEAT);
+            Motor_StateMachine_SetFault(p_context, MOTOR_FAULT_OVERHEAT);
             break;
         default: break;
     }

@@ -162,6 +162,9 @@ typedef union
 }
 Motor_FaultFlags_T;
 
+static const Motor_FaultFlags_T MOTOR_FAULT_OVERHEAT        = { .Overheat       = 1U };
+static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor = 1U };
+static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
 
 /*!

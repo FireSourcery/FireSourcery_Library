@@ -64,46 +64,39 @@ static inline uint32_t angle32_per_count(uint32_t counts_per_revolution) { retur
 /* lossless for counts is pow2 */
 static inline uint32_t angle_per_count(uint32_t counts_per_revolution) { return ANGLE16_PER_REVOLUTION / counts_per_revolution; }
 
+/* counter [0:CountsPerRevolution], wrapped counter value */
+static inline uint32_t angle_counter_wrapped(uint32_t max, uint32_t prev, uint32_t count) { return (count < prev) ? (max + 1U + count - prev) : (count - prev); }
 
 /*
     Speed
 */
 /*
-    Speed Fract16 = Speed_Rpm * FRACT16_MAX / ScalarSpeedRef_Rpm
-    Speed Fract16 => DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)] / DeltaT
-    Speed Fract16 => [DeltaD / DeltaT] * [UnitTime_Freq] * [FRACT16_MAX * 60 / (CountsPerRevolution * ScalarSpeedRef_Rpm)]
+    Speed Fract16 = Speed_Rpm * FRACT16_MAX / max_rpm
+    Speed Fract16 => DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)] / DeltaT
+    Speed Fract16 => [DeltaD / DeltaT] * [UnitTime_Freq] * [FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)]
 
     e.g.
     Shift = 1:
     UnitTime_Freq = 625000, CountsPerRevolution = 60,
-        ScalarSpeedRef_Rpm = 2500 => 16,384,000
-        ScalarSpeedRef_Rpm = 10000 => 4,095,937.5
+        max_rpm = 2500 => 16,384,000
+        max_rpm = 10000 => 4,095,937.5
     UnitTime_Freq = 1000, CountsPerRevolution = 8192,
-        ScalarSpeedRef_Rpm = 5000 => 96
-    CountsPerRevolution = 24, ScalarSpeedRef_Rpm = 4000 =>
+        max_rpm = 5000 => 96
+    CountsPerRevolution = 24, max_rpm = 4000 =>
            671,088 <=> 40 << Shift
 
     FreqD = Speed_Rpm * CountsPerRevolution / 60
 
- CPR*ScalarSpeedRef_Rpm < 32768*60 << shift *UnitTime_Freq /INT32_MAX
+    CPR*max_rpm < 32768*60 << shift *UnitTime_Freq /INT32_MAX
 
- shift14:
- DeltaD, freqt==1000: CPR * Rpm < 15,000
+    shift14:
+    DeltaD, freqt==1000: CPR * Rpm < 15,000
 */
-static inline uint32_t _rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint32_t rpmMax)
-{
-    return ((uint64_t)FRACT16_SCALE * 60U * freq_t) / (cpr * rpmMax);
-}
+static inline uint32_t fract16_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT16_SCALE * freq_t) / cpr; }
+static inline uint32_t rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract16_per_count(freq_t * 60U, cpr * max_rpm); }
 
-static inline uint32_t rpm_fract16_per_count(uint32_t UnitTime_Freq, uint32_t CountsPerRevolution, uint32_t rpmMax)
-{
-    return (((uint64_t)32768U * 60U * UnitTime_Freq) << 15U) / (CountsPerRevolution * rpmMax);
-}
-
-// static inline uint32_t speed_fract16_per_count(uint32_t angle32_speed_per_count, uint32_t rpmMax)
-// {
-// }
-
+static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
+static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }
 
 
 /*
@@ -123,17 +116,17 @@ static uint32_t angle32_speed_per_count_cpr(uint32_t polling_freq, uint32_t cpr)
 
 static uint32_t angle32_speed_per_count(uint32_t polling_freq, uint32_t angle32_per_count) { return angle32_per_count / polling_freq; }
 
+/*
+    AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
+*/
+static uint32_t angle_speed_per_count_index(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr) { return (uint64_t)ANGLE16_PER_REVOLUTION * timer_freq / (cpr * polling_freq); }
 
-// /*
-//         AngleIndex * [DEGREES * TIMER_FREQ / CountsPerRevolution / POLLING_FREQ] / DeltaT
-// */
-// static uint32_t angle_per_poll_time_index(uint32_t angle_unit_factor,  uint32_t polling_freq)
-// {
-    //     /* altneratively TIMER_FREQ / POLLING_FREQ << Shift */
-    //     p_encoder->UnitPollingAngle = math_muldiv64_unsigned(ENCODER_ANGLE_DEGREES * p_encoder->Config.PartitionsPerRevolution, p_const->TIMER_FREQ, p_const->POLLING_FREQ * p_encoder->Config.CountsPerRevolution);
-    //     p_encoder->InterpolateAngleLimit = ENCODER_ANGLE_DEGREES * p_encoder->Config.PartitionsPerRevolution / p_encoder->Config.CountsPerRevolution;
-// }
 
+/*
+
+*/
+static inline uint32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * 60U) / cpr; }
+static inline uint32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, uint32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
 
 
 /******************************************************************************/
@@ -143,16 +136,6 @@ static uint32_t angle32_speed_per_count(uint32_t polling_freq, uint32_t angle32_
     Parallel to math_angle_speed.h angle16/rpm conversions.
 */
 /******************************************************************************/
-/*
-    FreqD [counts/sec] <=> RPM
-    FreqD = RPM * CPR / 60
-    RPM = FreqD * 60 / CPR
-*/
-static inline uint32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * 60U) / cpr; }
-static inline uint32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, uint32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
-
-static inline int32_t rpm_of_count_freq(uint16_t cpr, int32_t freqD) { return rpm_of_count(1U, cpr, freqD); }
-static inline int32_t count_freq_of_rpm(uint16_t cpr, int32_t rpm) { return count_of_rpm(1U, cpr, rpm); }
 
 /*
     FreqD [counts/sec] <=> angle16 per poll cycle
@@ -162,35 +145,41 @@ static inline int32_t angle_speed_of_count_freq(uint32_t pollingFreq, uint16_t c
 static inline int32_t count_freq_of_angle_speed(uint32_t pollingFreq, uint16_t cpr, int32_t angle16_per_poll) { return (int64_t)angle16_per_poll * cpr * pollingFreq / ANGLE16_PER_REVOLUTION; }
 
 
+// static inline int32_t angle_speed_of_count(uint32_t sampleFreq, uint16_t cpr, int32_t deltaD) { return (deltaD * ANGLE16_PER_REVOLUTION) / (cpr * sampleFreq); }
+// static inline int32_t count_of_angle_speed(uint32_t sampleFreq, uint16_t cpr, int32_t angle) { return (sampleFreq * cpr * angle) / ANGLE16_PER_REVOLUTION; }
+
 /*
     per timer mode
-    Max = 2 * ScalarSpeedRef_Rpm * CountsPerRevolution / (60 * UnitTime_Freq)
 */
-// const uint32_t SAFETY_FACTOR = 2U;
 static uint32_t _max_delta_d(uint16_t cpr, uint16_t max_rpm, uint32_t delta_t_freq) { return count_of_rpm(delta_t_freq, cpr, max_rpm * 2U); }
 
-/* CPR × RPM < 30 */
-/* base time freq == 1, accept runtime division (timerFreq / periodTk)  */
-static inline uint32_t rpm_fract16_per_count_freq(uint32_t cpr, uint32_t rpmMax)
-{
-    // uint8_t shift = _max_delta_d()
-    return _rpm_fract16_per_count(1 << 15, cpr, rpmMax);
-}
+/*
+    Count Freq: CPR × RPM < 30
+    Fixed shift 16
+    base time freq == 1, accept runtime division (timerFreq / periodTk)
+*/
+static inline uint32_t rpm_fract16_per_count_freq(uint32_t cpr, uint32_t max_rpm) { return rpm_fract32_per_count(1, cpr, max_rpm); }
 
 
 /*
     Counts in per second (~1000x of SamplePeriod)
     Core ModeDT formula: FreqD = DeltaD * TimerFreq / PeriodT
 */
-static inline int32_t counter_freq(int32_t deltaD, uint32_t timerFreq, uint32_t periodT) { return deltaD * (timerFreq / periodT); }
+// static inline int32_t counter_freq(uint32_t timerFreq, uint32_t periodT, int32_t deltaD) { return deltaD * (timerFreq / periodT); }
+static inline uint32_t counter_freq(uint32_t timerFreq, uint32_t samplePeriod, uint32_t deltaThPrev, uint32_t deltaTh, uint32_t deltaD)
+{
+    uint32_t periodTk = samplePeriod + (deltaThPrev - deltaTh);
+    if (periodTk > samplePeriod / 2) { return deltaD * (timerFreq / periodTk); }
+}
 
-// static inline uint32_t counter_freq(uint32_t timerFreq, uint32_t samplePeriod, uint32_t deltaThPrev, uint32_t deltaTh, uint32_t deltaD)
-// {
-//     uint32_t periodTk = samplePeriod + (deltaThPrev - deltaTh);
-//     if (periodTk > samplePeriod / 2) { return deltaD * (timerFreq / periodTk); }
-// }
 
-
+/*
+    FreqD [counts/sec] <=> RPM
+    FreqD = RPM * CPR / 60
+    RPM = FreqD * 60 / CPR
+*/
+static inline int32_t rpm_of_count_freq(uint16_t cpr, int32_t freqD) { return rpm_of_count(1U, cpr, freqD); }
+static inline int32_t count_freq_of_rpm(uint16_t cpr, int32_t rpm) { return count_of_rpm(1U, cpr, rpm); }
 
 
 /******************************************************************************/
@@ -198,6 +187,7 @@ static inline int32_t counter_freq(int32_t deltaD, uint32_t timerFreq, uint32_t 
     Addtional per second conversion
 */
 /******************************************************************************/
+
 // /*
 //     Angle/S - Direct to per second.
 //         same as RPS normalized to [0:65536]
@@ -262,3 +252,17 @@ static inline int32_t counter_freq(int32_t deltaD, uint32_t timerFreq, uint32_t 
 // static inline uint32_t linear_speed_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD_Ticks)
 // {
 // }
+
+/*
+    Only When base units in mm, as set via SetGroundRatio function.
+*/
+// static inline uint32_t Encoder_GroundSpeedOf_Mph(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+// {
+//     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1609344U);
+// }
+
+// static inline uint32_t Encoder_GroundSpeedOf_Kmh(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+// {
+//     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
+// }
+

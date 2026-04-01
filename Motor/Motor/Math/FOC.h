@@ -245,6 +245,7 @@ extern void FOC_Init(FOC_T * p_foc);
 extern void FOC_SetAlign(FOC_T * p_foc, fract16_t vd);
 extern void FOC_ZeroSvpwm(FOC_T * p_foc);
 extern void FOC_ClearCaptureState(FOC_T * p_foc);
+extern void FOC_ClearOutputState(FOC_T * p_foc);
 // extern void FOC_SetVectorMax(FOC_T * p_foc, fract16_t dMax);
 
 

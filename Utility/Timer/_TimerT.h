@@ -45,8 +45,8 @@ static inline uint32_t _TimerT_Ticks(const Timer_Base_T * p_base) { return *p_ba
 static inline void _TimerT_ZeroBase(const Timer_Base_T * p_base) { *((volatile uint32_t *)p_base->P_TIME) = 0UL; }
 
 /* Polling */
-static inline uint32_t _TimerT_Elapsed(const Timer_Base_T * p_base, const Timer_State_T * p_state) { return timer_elapsed(*p_base->P_TIME, p_state->TimeRef); }
-static inline bool _TimerT_IsElapsed(const Timer_Base_T * p_base, const Timer_State_T * p_state) { return timer_is_elapsed(*p_base->P_TIME, p_state->TimeRef, p_state->Period); }
+static inline uint32_t _TimerT_Elapsed(const Timer_Base_T * p_base, const Timer_State_T * p_state) { return _Timer_Elapsed(p_state->TimeRef, *p_base->P_TIME); }
+static inline bool _TimerT_IsElapsed(const Timer_Base_T * p_base, const Timer_State_T * p_state) { return _Timer_IsElapsed(p_state->Period, p_state->TimeRef, *p_base->P_TIME); }
 static inline void _TimerT_Restart(const Timer_Base_T * p_base, Timer_State_T * p_state) { p_state->TimeRef = *p_base->P_TIME; }
 
 /******************************************************************************/
@@ -57,7 +57,7 @@ static inline void _TimerT_Restart(const Timer_Base_T * p_base, Timer_State_T * 
 static inline bool _TimerT_PollElapsed(const Timer_Base_T * p_base, Timer_State_T * p_state)
 {
     uint32_t time = *p_base->P_TIME;
-    if (timer_is_elapsed(time, p_state->TimeRef, p_state->Period)) { p_state->TimeRef = time; return true; }
+    if (_Timer_IsElapsed(p_state->Period, p_state->TimeRef, time)) { p_state->TimeRef = time; return true; }
     else { return false; }
 }
 
@@ -71,7 +71,6 @@ static inline bool _TimerT_PollElapsedCount(const Timer_Base_T * p_base, Timer_S
 */
 static inline void __TimerT_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; p_state->Counter = 0U; _TimerT_Restart(p_base, p_state); }
 static inline void __TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t ticks) { p_state->Period = ticks; _TimerT_Restart(p_base, p_state); }
-// static inline void __TimerT_Stop(const Timer_Base_T * p_base, Timer_State_T * p_state) {
 
 
 /******************************************************************************/
@@ -87,7 +86,8 @@ static inline bool _TimerT_Periodic_Poll(const Timer_Base_T * p_base, Timer_Stat
 /* Reset */
 static inline void _TimerT_Periodic_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { __TimerT_Init(p_base, p_state, period); }
 static inline void _TimerT_Periodic_Set(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Period = period; }
-static inline void _TimerT_Periodic_Stop(const Timer_Base_T * p_base, Timer_State_T * p_state ) { p_state->Period = UINT32_MAX; }
+static inline void _TimerT_Periodic_Stop(const Timer_Base_T * p_base, Timer_State_T * p_state) { p_state->Period = UINT32_MAX; }
+static inline void _TimerT_Periodic_Reset(const Timer_Base_T * p_base, Timer_State_T * p_state) { _TimerT_Restart(p_base, p_state); }
 
 
 /*
@@ -96,15 +96,10 @@ static inline void _TimerT_Periodic_Stop(const Timer_Base_T * p_base, Timer_Stat
 */
 static inline bool _TimerT_Counter_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_PollElapsedCount(p_base, p_state); }
 static inline void _TimerT_Counter_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { __TimerT_Init(p_base, p_state, period); }
-// static inline void _TimerT_Counter_Init(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Counter = (uint32_t)-1; }
 static inline void _TimerT_Counter_Set(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Period = period; }
-static inline bool _TimerT_Counter_IsAligned(const Timer_State_T * p_state, uint32_t mask) { return timer_counter_is_aligned(p_state->Counter, mask); }
+static inline void _TimerT_Counter_Reset(const Timer_Base_T * p_base, Timer_State_T * p_state) { p_state->Counter = 0U; _TimerT_Restart(p_base, p_state); }
+static inline bool _TimerT_Counter_IsAligned(const Timer_State_T * p_state, uint32_t mask) { return ((p_state->Counter & mask) == 0UL); }
 
-// static inline bool _TimerT_Counter_Tick(const Timer_Base_T * p_base, Timer_State_T * p_state)
-// {
-//     p_state->Counter++;
-//  if DIVIDER
-// }
 
 /*
     Counter with N repeat / Count Down
@@ -173,27 +168,12 @@ static inline bool _TimerT_Poll(const Timer_Base_T * p_base, Timer_State_T * p_s
     return false;
 }
 
-// static inline bool _TimerT_Modal_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state)
-// {
-//     bool isElapsed;
-//     switch (p_state->Mode)
-//     {
-//         case TIMER_MODE_DISABLED:
-//         case TIMER_MODE_STOPPED:
-//             isElapsed = false;
-//             break;
-//         case TIMER_MODE_PERIODIC:
-//         case TIMER_MODE_ONE_SHOT:
-//         case TIMER_MODE_ONE_SHOT_COUNTER:
-//             isElapsed = _TimerT_Poll(p_base, p_state);
-//             if (p_state->Period == 0U) { p_state->Mode = TIMER_MODE_STOPPED; };
-//             break;
-//         default: isElapsed = false; break;
-//     }
-// }
 
-/* todo add count up mode */
-/* Common implementation for Specialized modes checking for Disabled State */
+
+/*
+    Modal mode with enum state id. Common implementation for specialized modes
+    Adds Disabled State.
+*/
 static inline bool _TimerT_Modal_Poll(const Timer_Base_T * p_base, Timer_State_T * p_state)
 {
     bool isElapsed;
@@ -259,14 +239,6 @@ static inline void _TimerT_InitOneShot(const Timer_Base_T * p_base, Timer_State_
 static inline void _TimerT_InitCounter(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Mode = TIMER_MODE_PERIODIC_COUNTER; _TimerT_Counter_Init(p_base, p_state, period); }
 static inline void _TimerT_InitCountN(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { p_state->Mode = TIMER_MODE_ONE_SHOT_COUNTER; _TimerT_CountN_Init(p_base, p_state, period); }
 
-static inline void _TimerT_StartMode(const Timer_Base_T * p_base, Timer_State_T * p_state, Timer_Mode_T mode, uint32_t period)
-{
-    if (p_state->Mode != TIMER_MODE_DISABLED)
-    {
-        p_state->Mode = mode;
-        __TimerT_Start(p_base, p_state, period);
-    }
-}
 
 static inline void _TimerT_Start(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { if (p_state->Mode != TIMER_MODE_DISABLED) { __TimerT_Start(p_base, p_state, period); } }
 static inline void _TimerT_Stop(Timer_State_T * p_state) { if (p_state->Mode != TIMER_MODE_DISABLED) { p_state->Mode = TIMER_MODE_STOPPED; p_state->Period = 0U; } }
@@ -280,6 +252,16 @@ static inline void _TimerT_Enable(Timer_State_T * p_state) { p_state->Mode = TIM
 
 /* Start/Stop operations */
 /* check for disabled state  */
+
+static inline void _TimerT_StartMode(const Timer_Base_T * p_base, Timer_State_T * p_state, Timer_Mode_T mode, uint32_t period)
+{
+    if (p_state->Mode != TIMER_MODE_DISABLED)
+    {
+        p_state->Mode = mode;
+        __TimerT_Start(p_base, p_state, period);
+    }
+}
+
 static inline void _TimerT_StartPeriodic(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period)
 {
     _TimerT_StartMode(p_base, p_state, TIMER_MODE_PERIODIC, period);
@@ -308,64 +290,22 @@ static inline void _TimerT_StartCountN(const Timer_Base_T * p_base, Timer_State_
 /*
     Unit Conversions
 */
-// static inline uint32_t TimerT_GetElapsed_Seconds(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_Elapsed(p_base, p_timer) / p_base->FREQ; }
-// /* overflow at 1 hour for millis, 3 min for 20khz */
-// static inline uint32_t TimerT_GetElapsed_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_Elapsed(p_base, p_timer) * 1000U / p_base->FREQ; }
+static inline uint32_t _TimerT_GetElapsed_Seconds(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_Elapsed(p_base, p_state) / p_base->FREQ; }
+/* overflow at 1 hour for millis, 3 min for 20khz */
+static inline uint32_t _TimerT_GetElapsed_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state) { return _TimerT_Elapsed(p_base, p_state) * 1000U / p_base->FREQ; }
 
-// static inline uint32_t TimerT_GetElapsed_Micros(const Timer_Base_T * p_base, Timer_State_T * p_state)
-// {
-//     uint32_t ticks = TimerT_GetElapsed(p_timer);
-//     return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->BaseFreq * 1000000U) : (ticks * 1000000U / p_timer->BaseFreq);
-// }
+static inline uint32_t _TimerT_GetElapsed_Micros(const Timer_Base_T * p_base, Timer_State_T * p_state)
+{
+    uint32_t ticks = _TimerT_Elapsed(p_base, p_state);
+    return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_base->FREQ * 1000000U) : (ticks * 1000000U / p_base->FREQ);
+}
 
-// /* freq != 0U, freq < BaseFreq */
-// static inline void Timer_SetFreq(const Timer_Base_T * p_base, Timer_State_T * p_state, uint16_t freq)              { p_timer->Period = p_base->FREQ / freq; }
-// static inline void Timer_SetPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis)   { p_timer->Period = p_base->FREQ * millis / 1000U; }
-// static inline void Timer_StartPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis) { Timer_SetPeriod_Millis(p_base, p_timer, millis); Timer_Restart(p_base, p_timer); }
+/* freq != 0U, freq < BaseFreq */
+static inline void _Timer_SetFreq(const Timer_Base_T * p_base, Timer_State_T * p_state, uint16_t freq)              { p_state->Period = p_base->FREQ / freq; }
+static inline void _Timer_SetPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis)   { p_state->Period = p_base->FREQ * millis / 1000U; }
+static inline void _Timer_StartPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis) { _Timer_SetPeriod_Millis(p_base, p_state, millis); _TimerT_Restart(p_base, p_state); }
 
 
 
-// /* Context unit conversions (compile-time optimized) */
-// static inline uint32_t TimerT_GetElapsed_Millis(const TimerT_T * p_timer)
-// {
-//     return (TimerT_GetElapsed(p_timer) * 1000U) / p_timer->BASE.FREQ;
-// }
-
-// static inline uint32_t TimerT_GetElapsed_Micros(const TimerT_T * p_timer)
-// {
-//     uint32_t elapsed = TimerT_GetElapsed(p_timer);
-//     return (elapsed > UINT32_MAX / 1000000U) ?
-//         (elapsed / p_timer->BASE.FREQ * 1000000U) :
-//         (elapsed * 1000000U / p_timer->BASE.FREQ);
-// }
-
-// static inline void TimerT_SetPeriod_Millis(const TimerT_T * p_timer, uint32_t millis)
-// {
-//     p_timer->P_STATE->Period = (p_timer->BASE.FREQ * millis) / 1000U;
-// }
-
-// static inline void TimerT_StartPeriod_Millis(const TimerT_T * p_timer, uint32_t millis)
-// {
-//     TimerT_SetPeriod_Millis(p_timer, millis);
-//     TimerT_Restart(p_timer);
-// }
-
-// /*
-//     Unit Conversions
-// */
-// static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer)  { return Timer_GetElapsed(p_timer) / p_timer->BaseFreq; }
-// /* overflow at 1 hour for millis, 3 min for 20khz */
-// static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer)   { return Timer_GetElapsed(p_timer) * 1000U / p_timer->BaseFreq; }
-
-// static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
-// {
-//     uint32_t ticks = Timer_GetElapsed(p_timer);
-//     return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->BaseFreq * 1000000U) : (ticks * 1000000U / p_timer->BaseFreq);
-// }
-
-// /* freq != 0U, freq < BaseFreq */
-// static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq)              { p_timer->Period = p_timer->BaseFreq / freq; }
-// static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis)   { p_timer->Period = p_timer->BaseFreq * millis / 1000U; }
-// static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) { Timer_SetPeriod_Millis(p_timer, millis); Timer_Restart(p_timer); }
 
 
