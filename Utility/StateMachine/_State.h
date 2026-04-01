@@ -43,30 +43,29 @@ static inline State_T * _State_InputVoid(State_Input0_T input, void * p_context)
 /******************************************************************************/
 /* Sync Output */
 /******************************************************************************/
- // depreciate, handle with input slot
+// static inline void State_Output(State_T * p_state, void * p_context) { _State_Action(p_state->LOOP, p_context); }
+// static inline void State_Output_AsTop(State_T * p_state, void * p_context) { p_state->LOOP(p_context); }
+
+/******************************************************************************/
+/* Sync Output with Transition */
+/******************************************************************************/
 /*
-        [Transition Of Context/Tick/SyncOutput]
-        Map SyncProc(p_context) => newState
+    [Transition Of Context/Tick/SyncOutput]
+    Map SyncProc(p_context) => newState
 */
-    static inline State_T * State_TransitionOfOutput(State_T * p_state, void * p_context)
-    {
-        _State_Action(p_state->LOOP, p_context);
-        return _State_InputVoid(p_state->NEXT, p_context);
-    }
+static inline State_T * State_TransitionOfOutput(State_T * p_state, void * p_context)
+{
+    _State_Action(p_state->LOOP, p_context);
+    return _State_InputVoid(p_state->NEXT, p_context);
+}
+
 /* Top level State does not need to check null */
-    static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
-    {
-        assert(p_state->DEPTH == 0U);
-        p_state->LOOP(p_context);
-        return _State_InputVoid(p_state->NEXT, p_context); // optionally remove, let top state call Transition
-    }
-
-/******************************************************************************/
-/* Sync Output */
-/******************************************************************************/
-static inline void State_Output(State_T * p_state, void * p_context) { _State_Action(p_state->LOOP, p_context); }
-static inline void State_Output_AsTop(State_T * p_state, void * p_context) { p_state->LOOP(p_context); }
-
+static inline State_T * State_TransitionOfOutput_AsTop(State_T * p_state, void * p_context)
+{
+    assert(p_state->DEPTH == 0U);
+    p_state->LOOP(p_context);
+    return _State_InputVoid(p_state->NEXT, p_context);
+}
 
 
 /******************************************************************************/

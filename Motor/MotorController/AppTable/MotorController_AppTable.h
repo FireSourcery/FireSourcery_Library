@@ -29,8 +29,8 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Vehicle/MotorController_Vehicle.h"
-#include "MotorController_App.h"
+#include "../Vehicle/MotorController_Vehicle.h"
+#include "../MotorController_App.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"

@@ -29,6 +29,7 @@
 /******************************************************************************/
 /******************************************************************************/
 #include "Motor_StateMachine.h"
+#include "SubStates/Motor_Intervention.h"
 
 
 /******************************************************************************/
@@ -385,8 +386,7 @@ static void Run_Proc(const Motor_T * p_motor)
 
 static State_T * Run_InputRelease(const Motor_T * p_motor)
 {
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { return &MOTOR_STATE_PASSIVE; } else { return &MOTOR_STATE_INTERVENTION; }
-    // return &MOTOR_STATE_ZERO_TORQUE;  /* SubState */
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { return &MOTOR_STATE_PASSIVE; } else { return &INTERVENTION_STATE_TORQUE_ZERO; }
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -447,27 +447,23 @@ const State_T MOTOR_STATE_RUN =
 
 /******************************************************************************/
 /*!
-    @brief State Intervention
-    Proc Feedback independent from user input
+    @brief State Intervention - Motor-level safety supervisor
+    Proc Feedback independent from user input.
+    Owns the controlled shutdown path.
+
+    SubStates (in SubStates/Motor_Intervention.c):
+      TORQUE_ZERO (SS0) - Coast with zero torque, user may resume
+      RAMP_SAFE   (SS1) - Active deceleration to zero, no resume
 */
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchIVState_Bemf(p_motor->P_MOTOR_STATE);
     Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
-    p_motor->P_MOTOR_STATE->UserTorqueReq = 0;  /* begin user cmd at 0 */
+    p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
 }
 
-static void Intervention_Proc(const Motor_T * p_motor)
-{
-    // if (p_motor->P_MOTOR_STATE->FeedbackMode.Speed == true)
-
-    // torque only for now, substate as needed
-    int32_t userCmd = p_motor->P_MOTOR_STATE->UserTorqueReq;
-    Motor_FOC_ProcTorqueReq(p_motor->P_MOTOR_STATE, 0, _Motor_GeneratingOnly(p_motor->P_MOTOR_STATE, userCmd));
-    Motor_FOC_WriteDuty(p_motor);
-    // if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Transition to passive }
-}
+static void Intervention_Proc(const Motor_T * p_motor){}
 
 static State_T * Intervention_InputRelease(const Motor_T * p_motor)
 {
@@ -475,15 +471,30 @@ static State_T * Intervention_InputRelease(const Motor_T * p_motor)
     return NULL;
 }
 
+static State_T * Intervention_InputResume(const Motor_T * p_motor)
+{
+    if (StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_TORQUE_ZERO)
+        && RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true)
+    {
+        return &MOTOR_STATE_RUN;
+    }
+    return NULL;
+}
+
+/*
+    Resume to Run only from TorqueZero substate.
+    RampSafe substate rejects resume — committed to safe stop.
+*/
 static State_T * Intervention_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_Output_T)phaseOutput)
     {
-        case PHASE_VOUT_Z:      return Intervention_InputRelease(p_motor);
-        case PHASE_VOUT_0:      return Intervention_InputRelease(p_motor);
+        case PHASE_VOUT_Z:
+        case PHASE_VOUT_0:
+            return Intervention_InputRelease(p_motor);
         case PHASE_VOUT_PWM:
-            if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true) { return &MOTOR_STATE_RUN; } else { return NULL; }
-        default:                return NULL;
+            return Intervention_InputResume(p_motor);
+        default: return NULL;
     }
 }
 
@@ -509,29 +520,6 @@ const State_T MOTOR_STATE_INTERVENTION =
     .LOOP               = (State_Action_T)Intervention_Proc,
 };
 
-//   substate as needed
-// const State_T MOTOR_STATE_TORQUE_ZERO =
-// {
-//     .P_PARENT           = &MOTOR_STATE_INTERVENTION,
-// };
-
-// static void RampDown_Proc(const Motor_T * p_motor)
-// {
-//     if (p_motor->P_MOTOR_STATE->SpeedUpdateFlag == true)
-//     {
-//         p_motor->P_MOTOR_STATE->SpeedUpdateFlag = false;
-//         p_motor->P_MOTOR_STATE->UserTorqueReq = Motor_SpeedControlOf(p_motor, 0);
-//     }
-// }
-
-// const State_T MOTOR_STATE_RAMP_DOWN =
-// {
-//     // .ID                 = MSM_STATE_ID_RAMP_DOWN,
-//     .P_PARENT           = &MOTOR_STATE_INTERVENTION,
-//     .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
-//     .LOOP               = (State_Action_T)RampDown_Proc,
-// };
-
 /******************************************************************************/
 /*!
     @brief State OpenLoop - OpenLoop, Align, and Start Up, Feedback Acquisition
@@ -548,9 +536,7 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
 /*
     Proc SubState Tree
 */
-static void OpenLoop_Proc(const Motor_T * p_motor)
-{
-}
+static void OpenLoop_Proc(const Motor_T * p_motor) {}
 
 /* maintain consistent interface with Run, use substate cmd for phase output without exiting */
 /* No resume from OpenLoop, freewheel state check stop */

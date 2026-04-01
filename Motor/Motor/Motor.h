@@ -150,7 +150,7 @@ static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (
     Fault State Flags
 */
 /******************************************************************************/
-typedef union
+typedef union Motor_FaultFlags
 {
     struct
     {
@@ -162,7 +162,7 @@ typedef union
 }
 Motor_FaultFlags_T;
 
-static const Motor_FaultFlags_T MOTOR_FAULT_OVERHEAT        = { .Overheat       = 1U };
+static const Motor_FaultFlags_T MOTOR_FAULT_OVERHEAT         = { .Overheat       = 1U };
 static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor = 1U };
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
@@ -478,6 +478,7 @@ static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { retu
 /* Getters cache on update */
 static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return p_motor->ILimitCcw_Fract16; }
 static inline fract16_t Motor_ILimitCw(const Motor_State_T * p_motor) { return p_motor->ILimitCw_Fract16; }
+static inline fract16_t Motor_IClamp(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 
 static inline void Motor_ResolveILimits(Motor_State_T * p_motor)
 {
@@ -491,7 +492,6 @@ static inline void Motor_ResolveILimits(Motor_State_T * p_motor)
     }
 }
 
-static inline fract16_t Motor_IClamp(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 static inline fract16_t Motor_IRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, req); }
 
 
@@ -506,6 +506,7 @@ static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { 
 
 static inline fract16_t Motor_SpeedLimitCcw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCcw_Fract16; }
 static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
+static inline fract16_t Motor_SpeedClamp(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
 
 static inline void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
 {
@@ -514,7 +515,6 @@ static inline void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
     Ramp_SetOutputLimit(&p_motor->SpeedRamp, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor));
 }
 
-static inline fract16_t Motor_SpeedClamp(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
 /* Internal limits */
 static inline fract16_t Motor_SpeedRampOf(Motor_State_T * p_motor, int16_t speedReq) { return Ramp_ProcNextOf(&p_motor->SpeedRamp, speedReq); }
 // static inline bool Motor_IsSpeedLimitReached(const Motor_State_T * p_motor) { return !math_is_in_range(Motor_GetSpeedFeedback(p_motor), Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
@@ -618,8 +618,7 @@ static inline fract16_t Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
 {
     if (p_motor->FeedbackMode.Speed == 1U)
     {
-        Motor_SpeedControlOf(p_motor, p_motor->UserSpeedReq);
-        p_motor->UserTorqueReq = PID_GetOutput(&p_motor->PidSpeed);         /* Set TorqueRamp for unified interface. 20 Ticks */
+        p_motor->UserTorqueReq = Motor_SpeedControlOf(p_motor, p_motor->UserSpeedReq);   /* Set TorqueRamp for unified interface. 20 Ticks */
     }
     return p_motor->UserTorqueReq;
 }

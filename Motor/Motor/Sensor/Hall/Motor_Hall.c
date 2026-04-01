@@ -78,7 +78,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
             default: break;
         }
 
-        _StateMachine_Transition(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, Calibration_End(p_motor));
+        // _StateMachine_Transition(&p_motor->P_MOTOR_STATE->StateMachine, (void *)p_motor, Calibration_End(p_motor));
     }
 }
 

@@ -170,13 +170,11 @@ typedef const struct State
     */
     State_Action_T LOOP; /* SYNC_OUTPUT */ /* Synchronous Action Handler */ /* No null pointer check for TOP level. Implementation supply empty function */
 
-    /* Periodic process transition implement with call StateMachine_TransitionTo or a state input slot. reduce special logic. reuse the same form. */
-    State_Input0_T NEXT; /* SYNC_TRANSITION */
     /* no external input. "clock only" Transition. */
     /* Separate from LOOP for overriding transition control. Child States can inherit LOOP action while overriding NEXT.  */
     /* Child States transition stop walking up the tree.  */
-    /* Optionally implement module timer */
-    /*  */
+    State_Input0_T NEXT; /* SYNC_TRANSITION */
+
 
     /*
         [State Transition of Input] - Sync/Async -
@@ -280,23 +278,6 @@ State_T;
 #define _STATE_ID_FOLD_7(D7, ...) (_STATE_ID(D7, 7))  /* Max depth 7 (8th level) */
 
 #define STATE_PATH_ID(D0, ...) (_STATE_ID(D0, 0) __VA_OPT__(| _STATE_ID_FOLD_1(__VA_ARGS__)))
-
-
-// /* Extract the index at a given depth */
-// #define STATE_ID_LEVEL(Id, Depth)       (((Id) >> ((Depth) * STATE_ID_BITS)) & STATE_ID_MASK)
-
-// /* Extract root ID */
-// #define STATE_ID_ROOT(Id)               STATE_ID_LEVEL(Id, 0)
-
-// /* Mask to isolate a state and all its ancestors (truncate children) */
-// #define STATE_ID_ANCESTOR_MASK(Depth)   ((1UL << (((Depth) + 1U) * STATE_ID_BITS)) - 1U)
-
-// /* Check if two states share a common ancestor up to a given depth */
-// #define STATE_ID_IS_ANCESTOR(Id, AncestorId, AncestorDepth)  (((Id) & STATE_ID_ANCESTOR_MASK(AncestorDepth)) == (AncestorId))
-
-// /* Compile-time depth calculation (count non-zero nibbles - 1) */
-// #define STATE_ID_DEPTH(Id)              \
-//     ((Id) <= 0xF ? 0 : (Id) <= 0xFF ? 1 : (Id) <= 0xFFF ? 2 : (Id) <= 0xFFFF ? 3 : (Id) <= 0xFFFFF ? 4 : (Id) <= 0xFFFFFF ? 5 : (Id) <= 0xFFFFFFF ? 6 : 7)
 
 
 

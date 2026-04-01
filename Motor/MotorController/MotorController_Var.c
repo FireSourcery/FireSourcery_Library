@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "MotorController_Var.h"
-#include "MotorController_AppTable.h"
+#include "AppTable/MotorController_AppTable.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
 
 

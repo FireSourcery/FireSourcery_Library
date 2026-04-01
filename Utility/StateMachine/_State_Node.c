@@ -228,11 +228,10 @@ static inline void * ApplyUntilRoot(State_T * p_start, void * p_context, State_V
     Visitor Wrap
 */
 static inline void * AcceptInputVisitor(State_T * p_state, void * nil, int id) { (void)nil; return (void *)State_AcceptInput(p_state, id); }
-static inline void * OutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Output(p_state, p_context); return NULL; }
+// static inline void * OutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Output(p_state, p_context); return NULL; }
+static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
 static inline void * ExitVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Exit(p_state, p_context); return NULL; }
 static inline void * EntryVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; State_Entry(p_state, p_context); return NULL; }
-
-static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_context, int nil) { (void)nil; return (void *)State_TransitionOfOutput(p_state, p_context); }
 
 
 /******************************************************************************/
@@ -240,34 +239,35 @@ static inline void * TransitionOfOutputVisitor(State_T * p_state, void * p_conte
     State Branch Sync/Output
 */
 /******************************************************************************/
-    /*
-        Process outputs until the first state transition.
-        SubStates/InnerStates first.
-        Take first transition. (RootFirst Proc to account for top level precedence)
-            optionally process remaining.
-        Alternatively:
-            Always proc top down
-            full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
-    */
-    State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
-    {
-        return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
-    }
 
-    State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
-    {
-        return (State_T *)ApplyUpUntil(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
-    }
+/*
+    Process outputs until the first state transition.
+    SubStates/InnerStates first.
+    Take first transition. (RootFirst Proc to account for top level precedence)
+        optionally process remaining.
+    Alternatively:
+        Always proc top down
+        full path bottom up, take the Top/Outer most transition. Higher level determines the target State.
+*/
+State_T * State_TransitionOfOutputUp(State_T * p_start, void * p_context)
+{
+    return (State_T *)ApplyUp(p_start, p_context, TransitionOfOutputVisitor, 0);
+}
 
-    /*
-        Using compile time mapped Root
-    */
-    State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context)
-    {
-        State_T * p_next = State_TransitionOfOutput_AsTop(_State_GetRoot(p_start), p_context);
-        if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
-        return p_next;
-    }
+State_T * State_TransitionOfOutputUpTo(State_T * p_start, State_T * p_end, void * p_context)
+{
+    return (State_T *)ApplyUpUntil(p_start, p_end, p_context, TransitionOfOutputVisitor, 0);
+}
+
+/*
+    Using compile time mapped Root
+*/
+State_T * State_TransitionOfOutput_RootFirst(State_T * p_start, void * p_context)
+{
+    State_T * p_next = State_TransitionOfOutput_AsTop(_State_GetRoot(p_start), p_context);
+    if (p_next == NULL) { p_next = State_TransitionOfOutputUpTo(p_start, _State_GetRoot(p_start), p_context); }
+    return p_next;
+}
 
 
 /******************************************************************************/
@@ -322,8 +322,8 @@ State_T * State_TransitionOfInput_RootFirst(State_T * p_start, void * p_context,
 */
 /******************************************************************************/
 /* [Branch Output] */
-void State_OutputUp(State_T * p_start, void * p_context) { ApplyUp(p_start, p_context, OutputVisitor, 0); }
-void State_OutputUpUntil(State_T * p_start, State_T * p_end, void * p_context) { ApplyUpUntil(p_start, p_end, p_context, OutputVisitor, 0); }
+// void State_OutputUp(State_T * p_start, void * p_context) { ApplyUp(p_start, p_context, OutputVisitor, 0); }
+// void State_OutputUpUntil(State_T * p_start, State_T * p_end, void * p_context) { ApplyUpUntil(p_start, p_end, p_context, OutputVisitor, 0); }
 
 // void State_Output_RootFirst(State_T * p_start, void * p_context)
 // {

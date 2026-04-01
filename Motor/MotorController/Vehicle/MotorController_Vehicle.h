@@ -32,6 +32,7 @@
 #include "Vehicle.h"
 
 #include "../MotorController_App.h"
+// #include "../MotorController_StateMachine.h"
 #include "Utility/StateMachine/StateMachine.h"
 
 /* Part of MotorController */
@@ -77,7 +78,7 @@ Vehicle_StateInput_T;
 
 typedef enum Vehicle_StateId
 {
-    VEHICLE_STATE_ID_DRIVE, /* = _MCSM_STATE_ID_END */
+    VEHICLE_STATE_ID_DRIVE /* = _MCSM_STATE_ID_END */,
     VEHICLE_STATE_ID_NEUTRAL,
 }
 Vehicle_StateId_T;

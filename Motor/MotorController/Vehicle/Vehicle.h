@@ -89,6 +89,12 @@ static inline bool Vehicle_Input_PollThrottle(Vehicle_Input_T * p_this, uint16_t
     return Vehicle_Input_PollCmdEdge(p_this);
 }
 
+static inline bool Vehicle_Input_PollBrake(Vehicle_Input_T * p_this, uint16_t userCmd)
+{
+    p_this->BrakeValue = userCmd;
+    return Vehicle_Input_PollCmdEdge(p_this);
+}
+
 static inline bool Vehicle_Input_PollDirectionEdge(Vehicle_Input_T * p_input, sign_t direction)
 {
     return (direction != p_input->Direction) ? ({ p_input->Direction = direction; true; }) : false;
