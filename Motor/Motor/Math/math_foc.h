@@ -240,19 +240,7 @@ static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t
     return is_limited;
 }
 
-/* optionally caller handle d */
-// static inline bool foc_circle_limit_d(fract16_t * p_d, ufract16_t d_limit)
-// {
-//     bool is_limited = false;
 
-//     if (abs(*p_d) > d_limit)
-//     {
-//         *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit;
-//         is_limited = true;
-//     }
-
-//     return is_limited;
-// }
 
 /*  */
 static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)

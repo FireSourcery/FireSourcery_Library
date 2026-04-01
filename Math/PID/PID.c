@@ -142,7 +142,6 @@ static inline void SetOutputState(PID_T * p_pid, int16_t output)
 {
     SetIntegral(p_pid, output);
     p_pid->Output = output;
-    p_pid->ErrorPrev = 0;
 }
 
 /* allow int32_t input to clamp in 1 step */
@@ -157,7 +156,7 @@ void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;
-        PID_SetOutputState(p_pid, GetIntegral(p_pid)); /* Reset integral with limits */
+        p_pid->IntegralAccum = math_clamp(p_pid->IntegralAccum, (int32_t)min << 15, (int32_t)max << 15);
     }
 }
 

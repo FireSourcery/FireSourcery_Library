@@ -51,28 +51,28 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 /*
     Current Feedback Loop
 */
-/* Store Vdq in Foc state */
+/* Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc */
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
-    // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
-    /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
-    if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-    {
-        // PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_Vq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_Vq(&p_motor->Foc)));
-        PID_SetOutputLimits(&p_motor->PidIq, (FOC_Vq(&p_motor->Foc) < 0) * FOC_Vq(&p_motor->Foc), (FOC_Vq(&p_motor->Foc) > 0) * FOC_Vq(&p_motor->Foc));
-    }
+    int16_t vqLimit = FOC_GetVqLimit(&p_motor->Foc, Phase_VBus_Fract16());
+    PID_CaptureOutputLimits(&p_motor->PidIq, math_max(Motor_VLimitCw(p_motor), -vqLimit), math_min(Motor_VLimitCcw(p_motor), vqLimit));
+    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
 }
 
-/* apply limit first */
 // static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // {
 //     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-//     uint32_t vq = FOC_VqLimit(&p_motor->Foc, Phase_VBus_Fract16());
-//     PID_CaptureOutputLimits(&p_motor->PidIq, -vq, vq);
 //     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
+//     // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
+//     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
+//     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
+//     {
+//         // PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_Vq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_Vq(&p_motor->Foc)));
+//         PID_SetOutputLimits(&p_motor->PidIq, (FOC_Vq(&p_motor->Foc) < 0) * FOC_Vq(&p_motor->Foc), (FOC_Vq(&p_motor->Foc) > 0) * FOC_Vq(&p_motor->Foc));
+//     }
 // }
+
 
 /* Set Vdq */
 static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t dReq, int16_t qReq)

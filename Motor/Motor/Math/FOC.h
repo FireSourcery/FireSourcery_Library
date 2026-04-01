@@ -108,6 +108,15 @@ static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
     return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vPhaseLimit);
 }
 
+/* Available Vq budget after Vd within voltage circle */
+static inline ufract16_t FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus)
+{
+    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3);
+    uint32_t magLimitSq = (uint32_t)vPhaseLimit * vPhaseLimit;
+    uint32_t vdSq = (int32_t)p_foc->Vd * p_foc->Vd;
+    return (vdSq < magLimitSq) ? fixed_sqrt(magLimitSq - vdSq) : 0;
+}
+
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {

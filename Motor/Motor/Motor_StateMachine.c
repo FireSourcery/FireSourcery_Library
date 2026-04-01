@@ -261,7 +261,7 @@ static void Passive_Proc(const Motor_T * p_motor)
     switch (Phase_ReadOutputState(&p_motor->PHASE))
     {
         case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_Deactivate(&p_motor->PHASE); }    break;
-        // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
+            // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR_STATE)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
         default: break;
     }
 }
@@ -281,6 +281,7 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
             {
+                if (p_motor->P_MOTOR_STATE->PhaseInput.VFlags.Bits == PHASE_ID_0) { return &MOTOR_STATE_FAULT; } //testif one bemf capture
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
                 // {
@@ -366,10 +367,14 @@ const State_T MOTOR_STATE_PASSIVE =
 static void Run_Entry(const Motor_T * p_motor)
 {
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR_STATE, Motor_FOC_MatchFeedbackState, NULL);
-    // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR_STATE, Motor_ILimitCw(p_motor->P_MOTOR_STATE), Motor_ILimitCcw(p_motor->P_MOTOR_STATE));
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
+
+    // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR_STATE, Motor_ILimitCw(p_motor->P_MOTOR_STATE), Motor_ILimitCcw(p_motor->P_MOTOR_STATE));
     // RotorSensor_ZeroInitial(p_motor->P_MOTOR_STATE->p_ActiveSensor); not needed if capture sensor runs in thread
-    /* alternatively Update Vbus on start Angle Control */
+
+    // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
+    // Motor_FOC_WriteDuty(p_motor);
+    // Phase_ActivateOutput(p_motor->P_MOTOR_STATE);
 }
 
 static void Run_Proc(const Motor_T * p_motor)
@@ -377,11 +382,6 @@ static void Run_Proc(const Motor_T * p_motor)
     Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
     Motor_FOC_WriteDuty(p_motor);
-    // if caller handles rotor direction mismatch
-    // if (Motor_GetDirectionFeedback(p_motor) != p_state->Direction)
-    // {
-    //     // Runtime reversal detected – update applied direction for control
-    // }
 }
 
 static State_T * Run_InputRelease(const Motor_T * p_motor)
@@ -417,13 +417,15 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 // }
 
 /*
-    StateMachine in Sync mode, [ProcInput] in the same thread as [Run_Proc]/[ProcAngleControl]
     Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
+    Match inline without self-transition to avoid Phase_ActivateT0 zero-voltage glitch in Run_Entry
 */
+// return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
 static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
     Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
-    return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
+    return NULL;
 }
 
 static const State_Input_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
