@@ -281,7 +281,6 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
             {
-                if (p_motor->P_MOTOR_STATE->PhaseInput.VFlags.Bits == PHASE_ID_0) { return &MOTOR_STATE_FAULT; } //testif one bemf capture
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
                 // {
