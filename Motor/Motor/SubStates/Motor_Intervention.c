@@ -45,7 +45,6 @@ static void TorqueZero_Entry(const Motor_T * p_motor)
 {
     p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
     Motor_SetFeedbackMode(p_motor->P_MOTOR_STATE, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
 }
 
 static void TorqueZero_Proc(const Motor_T * p_motor)

@@ -51,7 +51,10 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 /*
     Current Feedback Loop
 */
-/* Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc */
+/*
+    Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc
+        PI integral near sat => VBus ripple value clamps intergral without restoring
+*/
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
@@ -63,12 +66,11 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 // {
 //     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq)); /* PidIq configured with VLimits */
+//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
 //     // FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
 //     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
 //     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
 //     {
-//         // PID_SetOutputLimits(&p_motor->PidIq, _Motor_VClampCwOf(p_motor, FOC_Vq(&p_motor->Foc)), _Motor_VClampCcwOf(p_motor, FOC_Vq(&p_motor->Foc)));
 //         PID_SetOutputLimits(&p_motor->PidIq, (FOC_Vq(&p_motor->Foc) < 0) * FOC_Vq(&p_motor->Foc), (FOC_Vq(&p_motor->Foc) > 0) * FOC_Vq(&p_motor->Foc));
 //     }
 // }
@@ -206,16 +208,17 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
     p_motor->UserSpeedReq = 0;
 }
 
-void Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
+void _Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
 {
     PID_SetOutputState(&p_motor->PidId, vd);
     PID_SetOutputState(&p_motor->PidIq, vq);
     Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Iq(&p_motor->Foc)); /* case transitioning without release into freewheel */
 }
 
-void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor)
+/* torque only states */
+void Motor_FOC_MatchIVState(Motor_State_T * p_motor)
 {
-    Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
+    _Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
 }
 
 /*!
@@ -227,12 +230,13 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 {
     if (p_motor->FeedbackMode.Current == 1U)
     {
-        Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));  /* Using Bemf capture */
-        // Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
+        _Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));  /* Using Bemf capture */
+        // _Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); /* match without ad sampling */
         p_motor->UserTorqueReq = Ramp_GetOutput(&p_motor->TorqueRamp);
     }
     else
     {
+        Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Vq(&p_motor->Foc)); //different units for now
         p_motor->UserTorqueReq = FOC_Vq(&p_motor->Foc);
     }
 

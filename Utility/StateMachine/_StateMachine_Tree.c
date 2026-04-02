@@ -152,8 +152,8 @@ void _StateMachine_Branch_ApplyAsyncInput(StateMachine_Active_T * p_active, void
 void _StateMachine_Branch_Proc(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_Branch_ProcSyncTransition(p_active, p_context); /* check for an buffered transition first */
-    _StateMachine_Branch_ProcSyncInput(p_active, p_context);
     _StateMachine_Branch_ProcSyncOutput(p_active, p_context);
+    _StateMachine_Branch_ProcSyncInput(p_active, p_context);
 }
 
 

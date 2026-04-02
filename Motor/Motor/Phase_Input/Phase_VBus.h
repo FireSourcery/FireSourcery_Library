@@ -62,8 +62,8 @@ static void Phase_VBus_InitV(uint16_t volts)
 
 static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
 {
-    Phase_VBus.VBus_Fract16 = fract16;
-    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / fract16; /* shift 16 as fract32 */
+    Phase_VBus.VBus_Fract16 = (fract16 + Phase_VBus.VBus_Fract16) / 2; /* simple low pass filter */
+    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_VBus.VBus_Fract16; /* shift 16 as fract32 */
 }
 
 static inline ufract16_t Phase_VBus_Fract16(void) { return Phase_VBus.VBus_Fract16; }

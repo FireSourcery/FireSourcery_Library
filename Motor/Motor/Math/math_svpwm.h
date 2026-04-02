@@ -40,8 +40,7 @@
     @return [-1/sqrt3:1/sqrt3]
 */
 /*!
-    @note overflow is not possible, since
-    v_fract16 < vBus_fract16
+    @note overflow vPhase_fract16 < vBus_fract16, assuming consistent VBus
     vBusInv_fract32 * vBus_fract16 = INT32_MAX
 */
 /* phase_norm_of_v */

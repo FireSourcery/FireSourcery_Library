@@ -46,8 +46,6 @@
     Motor_MarkAnalog_Thread
 */
 /******************************************************************************/
-
-
 static inline void Motor_MarkAnalog_Thread(const Motor_T * p_context)
 {
     // or caller handle offset
@@ -59,6 +57,9 @@ static inline void Motor_MarkAnalog_Thread(const Motor_T * p_context)
     Motor_PWM_Thread
 */
 /******************************************************************************/
+
+
+
 /*
     Default 50us
     Calling function clears interrupt flag
@@ -78,8 +79,7 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
     // if (!Phase_IsFloat(&p_context->PHASE)) { Motor_FOC_WriteDuty(p_context); } /* all substate must write to interface */
     // Phase_WriteDuty_Fract16_Thread(&p_context->PHASE, FOC_DutyA(&p_fields->Foc), FOC_DutyB(&p_fields->Foc), FOC_DutyC(&p_fields->Foc));
 
-    // timer_counter_wrapped(999U, p_fields->MicrosRef, SysTime_GetMicros());
-    p_fields->ControlTimerBase++;
+     p_fields->ControlTimerBase++;
 }
 
 /* Controls StateMachine Proc. Local Critical */

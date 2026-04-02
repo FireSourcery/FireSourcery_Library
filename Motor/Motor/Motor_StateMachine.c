@@ -281,6 +281,7 @@ static State_T * Passive_InputControl(const Motor_T * p_motor, state_value_t pha
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR_STATE->Direction != MOTOR_DIRECTION_NULL)
             {
+                if (p_motor->P_MOTOR_STATE->Foc.Vq == 0) { Debug_Beep(); }
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR_STATE->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) /* OpenLoop start at 0 speed */
                 // {
@@ -459,7 +460,7 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
-    Motor_FOC_MatchIVState_Bemf(p_motor->P_MOTOR_STATE);
+    Motor_FOC_MatchIVState(p_motor->P_MOTOR_STATE);
     Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
     p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
 }

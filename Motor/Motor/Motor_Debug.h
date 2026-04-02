@@ -64,11 +64,11 @@
 // #endif
 // }
 
-// #ifndef NDEBUG
-// extern void Debug_LED(void);
-// extern void Debug_LedOn(void);
-// extern void Debug_LedOff(void);
-// extern void Debug_Beep(void);
-// #endif
+#ifndef NDEBUG
+extern void Debug_LED(void);
+extern void Debug_LedOn(void);
+extern void Debug_LedOff(void);
+extern void Debug_Beep(void);
+#endif
 
 #endif

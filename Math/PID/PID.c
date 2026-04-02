@@ -66,10 +66,10 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
     /* Dynamic Clamp */
-    int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
-    // integralMin = p_pid->OutputMin;
-    // integralMax = p_pid->OutputMax;
+    // int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    // int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
+    int32_t integralMin = p_pid->OutputMin;
+    int32_t integralMax = p_pid->OutputMax;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
@@ -86,6 +86,10 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     p_pid->ErrorPrev = error;
 
     return proportional + integral;
+
+    // int32_t unclamped = proportional + integral;
+    // int32_t clamped = math_clamp(unclamped, OutputMin, OutputMax);
+    // IntegralAccum += ki_contribution + Kb * (clamped - unclamped);
 }
 
 /*!

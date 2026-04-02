@@ -151,7 +151,7 @@ extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t a
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq);
 
 extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
-extern void Motor_FOC_MatchIVState_Bemf(Motor_State_T * p_motor);
+extern void Motor_FOC_MatchIVState(Motor_State_T * p_motor);
 extern void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor);
 
 extern void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor);
