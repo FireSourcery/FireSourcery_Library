@@ -342,10 +342,7 @@ void MotorController_Vehicle_SetThrottle(MotorController_T * p_mc, uint16_t user
 
 void MotorController_Vehicle_SetBrake(MotorController_T * p_mc, uint16_t userCmd)
 {
-    if (Vehicle_Input_PollBrake(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, userCmd)) {
-        // if (p_mc->VEHICLE.P_VEHICLE_STATE->Input.DriveCmd == VEHICLE_CMD_RELEASE) { Blinky_Blink(&p_mc->BUZZER, 500U); }
-
-        _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD); }
+    if (Vehicle_Input_PollBrake(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, userCmd)) { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD); }
     else { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_BRAKE_VALUE); }
 }
 
@@ -418,6 +415,12 @@ void MotorController_Vehicle_ProcAnalogUser(const MotorController_T * p_mc)
     Protocol inputs as known edge trigger
 */
 /******************************************************************************/
+/*
+    throttle=0 and brake=X writes in the same packet —
+    SetThrottle(0) evaluates RELEASE, Motor transitions to Passive.
+    SetBrake(X) evaluates BRAKE, Motor transitions to Run.
+    Passive_Proc never runs, BEMF is never captured. FOC_Vq must match to speed
+*/
 void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T id, int value)
 {
     switch (id)

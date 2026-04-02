@@ -128,6 +128,7 @@ extern void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config);
 extern void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
+extern void _PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
 // extern void PID_SetFreq(PID_T * p_pid, uint16_t sampleFreq);

@@ -142,8 +142,9 @@ void PID_Reset(PID_T * p_pid)
     p_pid->Output = 0;
 }
 
-static inline void SetOutputState(PID_T * p_pid, int16_t output)
-{
+ void _PID_SetOutputState(PID_T * p_pid, int16_t output)
+ {
+    assert(output >= p_pid->OutputMin && output <= p_pid->OutputMax);
     SetIntegral(p_pid, output);
     p_pid->Output = output;
 }
@@ -151,7 +152,7 @@ static inline void SetOutputState(PID_T * p_pid, int16_t output)
 /* allow int32_t input to clamp in 1 step */
 void PID_SetOutputState(PID_T * p_pid, int16_t output)
 {
-    SetOutputState(p_pid, (int16_t)math_clamp(output, p_pid->OutputMin, p_pid->OutputMax));
+    _PID_SetOutputState(p_pid, (int16_t)math_clamp(output, p_pid->OutputMin, p_pid->OutputMax));
 }
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
