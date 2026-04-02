@@ -223,13 +223,13 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
             if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true)
             {
                 MotorController_CaptureVSource(p_context);
-                LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+                // LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
             }
             break;
         case VMONITOR_STATUS_NORMAL:
             if (RangeMonitor_IsClearingEdge(p_context->V_SOURCE.P_STATE) == true)
             {
-                LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
+                // LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
             }
             break;
         default: break;
