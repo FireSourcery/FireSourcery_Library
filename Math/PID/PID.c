@@ -66,10 +66,10 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
     /* Dynamic Clamp */
-    // int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    // int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
-    int32_t integralMin = p_pid->OutputMin;
-    int32_t integralMax = p_pid->OutputMax;
+    int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
+    int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
+    // int32_t integralMin = p_pid->OutputMin;
+    // int32_t integralMax = p_pid->OutputMax;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
@@ -115,8 +115,8 @@ void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    // error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
-    // assert(math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX));
+    // int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
+    assert(math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX));
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }

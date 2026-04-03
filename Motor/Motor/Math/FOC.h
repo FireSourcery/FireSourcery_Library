@@ -101,20 +101,31 @@ static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 //     foc_circle_limit_q
 // }
 
+
+/* modulation [0:1/sqrt3] */
+static inline bool _FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation)
+{
+    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, fract16_mul(vBus, modulation));
+}
+
 // assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
 static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
 {
-    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3); /* modulation index of 1.0 as .57 as max */
-    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vPhaseLimit);
+    return _FOC_ProcVectorLimit(p_foc, vBus, FRACT16_1_DIV_SQRT3);
 }
 
 /* Available Vq budget after Vd within voltage circle */
-static inline ufract16_t FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus)
+static inline ufract16_t _FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation)
 {
-    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3);
+    ufract16_t vPhaseLimit = fract16_mul(vBus, modulation);
     uint32_t magLimitSq = (uint32_t)vPhaseLimit * vPhaseLimit;
     uint32_t vdSq = (int32_t)p_foc->Vd * p_foc->Vd;
     return (vdSq < magLimitSq) ? fixed_sqrt(magLimitSq - vdSq) : 0;
+}
+
+static inline ufract16_t FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus)
+{
+    return _FOC_GetVqLimit(p_foc, vBus, FRACT16_1_DIV_SQRT3);
 }
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)

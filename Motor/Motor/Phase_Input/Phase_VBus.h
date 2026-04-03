@@ -54,16 +54,21 @@ Phase_VBus_T;
 */
 extern Phase_VBus_T Phase_VBus;
 
+static inline void _Phase_VBus_CaptureFract16(uint16_t fract16)
+{
+    Phase_VBus.VBus_Fract16 = fract16;
+    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_VBus.VBus_Fract16; /* shift 16 as fract32 */
+}
+
 static void Phase_VBus_InitV(uint16_t volts)
 {
-    Phase_VBus.VBus_Fract16 = fract16(volts, Phase_Calibration_GetVMaxVolts());
     Phase_VBus.VNominal_Fract16 = fract16(volts, Phase_Calibration_GetVMaxVolts());
+    _Phase_VBus_CaptureFract16(Phase_VBus.VNominal_Fract16); /* init to nominal for startup */
 }
 
 static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
 {
-    Phase_VBus.VBus_Fract16 = (fract16 + Phase_VBus.VBus_Fract16) / 2; /* simple low pass filter */
-    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_VBus.VBus_Fract16; /* shift 16 as fract32 */
+    _Phase_VBus_CaptureFract16((fract16 + Phase_VBus.VBus_Fract16) / 2);
 }
 
 static inline ufract16_t Phase_VBus_Fract16(void) { return Phase_VBus.VBus_Fract16; }
