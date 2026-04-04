@@ -210,16 +210,16 @@ static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return fr
 
 static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vq, p_foc->Id) - fract16_mul(p_foc->Vd, p_foc->Iq)) * 3 / 2; }
 
-static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq)); }
+static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return math_abs(fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq)); }
 
 /* [0:98301] */
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return _FOC_GetActivePower(p_foc) * 3 / 2; }
 
 
 static inline accum32_t FOC_GetApparentPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc)) * 3 / 2; }
-static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div_sat(FOC_GetActivePower(p_foc), FOC_GetApparentPower(p_foc)); }
+static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div(FOC_GetActivePower(p_foc), FOC_GetApparentPower(p_foc)); }
 
-static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div_sat(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
+static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return (int32_t)fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
 
 static inline fract16_t FOC_Id(const FOC_T * p_foc) { return p_foc->Id; }
 static inline fract16_t FOC_Iq(const FOC_T * p_foc) { return p_foc->Iq; }
