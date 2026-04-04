@@ -211,34 +211,59 @@ static inline void foc_inv_clarke_park(fract16_t * p_a, fract16_t * p_b, fract16
 */
 /* vector_limit_clamp */
 /* applies vd limit on magnitude over limit only */
-static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit, ufract16_t d_limit)
-{
-    uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-    uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
-    uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-    uint32_t d_limit_squared;
-    uint16_t q_limit;
-    bool is_limited = false;
+// static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit, ufract16_t d_limit)
+// {
+//     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+//     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
+//     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
+//     uint32_t d_limit_squared;
+//     uint16_t q_limit;
+//     bool is_limited = false;
 
-    if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
-    {
-        /* Apply d limit */
-        d_limit_squared = (uint32_t)d_limit * d_limit;
-        /* abs(d) > d_limit */
-        if (d_squared > d_limit_squared)
-        {
-            *p_d = math_sign(*p_d) * d_limit;
-            d_squared = d_limit_squared;
-        }
+//     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
+//     {
+//         /* Apply d limit */
+//         d_limit_squared = (uint32_t)d_limit * d_limit;
+//         /* abs(d) > d_limit */
+//         if (d_squared > d_limit_squared)
+//         {
+//             *p_d = math_sign(*p_d) * d_limit;
+//             d_squared = d_limit_squared;
+//         }
 
-        /* Apply q limit */
-        q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-        *p_q = math_sign(*p_q) * q_limit;
-        is_limited = true;
-    }
+//         /* Apply q limit */
+//         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
+//         *p_q = math_sign(*p_q) * q_limit;
+//         is_limited = true;
+//     }
 
-    return is_limited;
-}
+//     return is_limited;
+// }
+// static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
+// {
+//     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+//     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
+//     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
+//     uint16_t q_limit;
+//     bool is_limited = false;
+
+//     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
+//     {
+//         /* abs(d) > d_limit */
+//         if (d_squared > mag_limit_squared)
+//         {
+//             *p_d = math_sign(*p_d) * magnitude_limit;
+//             d_squared = mag_limit_squared;
+//         }
+
+//         /* Apply q limit */
+//         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
+//         *p_q = math_sign(*p_q) * q_limit;
+//         is_limited = true;
+//     }
+
+//     return is_limited;
+// }
 
 
 
@@ -260,6 +285,12 @@ static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16
 
     return is_limited; /* or (d_squared + q_squared - mag_limit_squared)  */
 }
+
+
+// static inline fract16_t foc_circle_limit_q(fract16_t d, ufract16_t magnitude_limit)
+// {
+//     return fract16_vector_component(d, magnitude_limit);
+// }
 
 /******************************************************************************/
 /*!

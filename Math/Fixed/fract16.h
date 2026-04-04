@@ -263,7 +263,8 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 /******************************************************************************/
 extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
-extern ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, ufract16_t mag_limit);
+extern ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit);
+extern ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit);
 extern void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit);
 
 #endif

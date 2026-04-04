@@ -37,38 +37,38 @@
 
 
 /* From Iabc to Idq */
-static inline bool _FOC_CaptureIabc(FOC_T * p_foc, Phase_Data_T * p_phaseData)
-{
-    if (p_phaseData->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
-    {
-        FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
-        p_phaseData->Flags.Bits = PHASE_ID_0; /* Clear capture flag after processing */
-        return true;
-    }
-    else
-    {
-        return false; /* No new data captured */
-    }
-}
-/* FeedbackState */
-static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
-{
-    FOC_SetTheta(p_foc, angle);
-    FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
-}
+// static inline bool _FOC_CaptureIabc(FOC_T * p_foc, Phase_Data_T * p_phaseData)
+// {
+//     if (p_phaseData->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
+//     {
+//         FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
+//         p_phaseData->Flags.Bits = PHASE_ID_0; /* Clear capture flag after processing */
+//         return true;
+//     }
+//     else
+//     {
+//         return false; /* No new data captured */
+//     }
+// }
+// /* FeedbackState */
+// static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
+// {
+//     FOC_SetTheta(p_foc, angle);
+//     FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
+// }
 
-/* Angle and Phase data set */
-/* limit req or Torque Ramp hold output limtis */
-static inline void  _FOC_TorqueControl(FOC_T * p_foc, PID_T * p_pidId, PID_T * p_pidIq, uint32_t vbus, Ramp_T * p_torqueRamp, fract16_t torqueReq)
-{
-    FOC_SetVd(p_foc, PID_ProcPI(p_pidId, FOC_Id(p_foc), 0));
-    FOC_SetVq(p_foc, PID_ProcPI(p_pidIq, FOC_Iq(p_foc), Ramp_ProcNextOf(p_torqueRamp, torqueReq)));
-    /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
-    if (FOC_ProcVectorLimit(p_foc, vbus) == true)
-    {
-        PID_SetOutputLimits(p_pidIq, (FOC_Vq(p_foc) < 0) * FOC_Vq(p_foc),  (FOC_Vq(p_foc) > 0) * FOC_Vq(p_foc));
-    }
-}
+// /* Angle and Phase data set */
+// /* limit req or Torque Ramp hold output limtis */
+// static inline void  _FOC_TorqueControl(FOC_T * p_foc, PID_T * p_pidId, PID_T * p_pidIq, uint32_t vbus, Ramp_T * p_torqueRamp, fract16_t torqueReq)
+// {
+//     FOC_SetVd(p_foc, PID_ProcPI(p_pidId, FOC_Id(p_foc), 0));
+//     FOC_SetVq(p_foc, PID_ProcPI(p_pidIq, FOC_Iq(p_foc), Ramp_ProcNextOf(p_torqueRamp, torqueReq)));
+//     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
+//     if (FOC_ProcVectorLimit(p_foc, vbus) == true)
+//     {
+//         PID_SetOutputLimits(p_pidIq, (FOC_Vq(p_foc) < 0) * FOC_Vq(p_foc),  (FOC_Vq(p_foc) > 0) * FOC_Vq(p_foc));
+//     }
+// }
 
 // typedef struct FOC_Feedback
 // {

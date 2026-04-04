@@ -157,7 +157,7 @@ ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
     Pythagorean Complement
     caller handler sign
 */
-ufract16_t fract16_vector_component_limit(fract16_t x, ufract16_t mag_limit)
+ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit)
 {
     assert(x < mag_limit);
     return fixed_sqrt((int32_t)mag_limit * mag_limit - (int32_t)x * x);
@@ -167,7 +167,7 @@ ufract16_t fract16_vector_component_limit(fract16_t x, ufract16_t mag_limit)
     Component normalization scalar
     @return max/|Vxy|, < 1.0F
 */
-ufract16_t fract16_vector_scalar(fract16_t x, fract16_t y, ufract16_t mag_limit)
+ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
 {
     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
     int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
@@ -201,7 +201,7 @@ void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t scalar)
 */
 void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
 {
-    fract16_vector_scale(p_x, p_y, fract16_vector_scalar(*p_x, *p_y, mag_limit));
+    fract16_vector_scale(p_x, p_y, fract16_vector_norm(*p_x, *p_y, mag_limit));
 }
 
 void fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)

@@ -195,7 +195,7 @@ typedef struct Motor_Config
         User view as unsigned. Physical frame.
         Use same units as Req/Feedback
     */
-    uint16_t SpeedLimitForward_Fract16;     /* [0:32767] = [0:100%] of SpeedRated */
+    uint16_t SpeedLimitForward_Fract16;     /* [0:32767] = [0:100%] of SpeedTypeMax */
     uint16_t SpeedLimitReverse_Fract16;
     uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_CALIB_AMPS. */
     uint16_t ILimitGenerating_Fract16;

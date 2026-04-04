@@ -31,8 +31,12 @@
 
 void FOC_Init(FOC_T * p_foc)
 {
-
 }
+
+// void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)
+// {
+//     p_foc->VModulation = fract16_mul(modulation, FRACT16_1_DIV_SQRT3);
+// }
 
 /* Prep Align using input intensity */
 void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
