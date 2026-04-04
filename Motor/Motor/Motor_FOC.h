@@ -77,7 +77,7 @@ static inline motor_value_t Motor_FOC_GetIPhase_Fract16(const Motor_State_T * p_
 static inline motor_value_t Motor_FOC_GetVPhase_Fract16(const Motor_State_T * p_motor)             { return FOC_GetVPhase(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetIPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetPower(&p_motor->Foc); }
+static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetActivePower(&p_motor->Foc); }
 
 /* vq is expected to be the same sign as p_motor->Direction */
 
