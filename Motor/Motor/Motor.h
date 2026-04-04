@@ -724,6 +724,19 @@ static inline int32_t _Motor_CwOf(int32_t value) { return (value < 0) * value; }
 static inline int32_t _Motor_MotoringOnly(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction == math_sign(value)) * value; }
 static inline int32_t _Motor_GeneratingOnly(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction != math_sign(value)) * value; }
 
+static inline fract16_t Motor_VAntiPlugCcw(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) * value; }
+static inline fract16_t Motor_VAntiPlugCw(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction == MOTOR_DIRECTION_CW) * value; }
+/*!
+    Convert between a user reference direction to virtual CCW/CW direction
+    @param[in] userCmd [-65536:65536] fract16 or percent16. positive as the direction set at config
+    @return [-65536:65536]
+    @note caller clamp. Over saturated if input is -32768. cast may result in overflow.
+*/
+static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
+/* Positive as the active appliedV/motoring direction.   */
+static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+
+
 /* getter for internal motoring direction */
 static inline Motor_Direction_T Motor_GetCmdDirection(const Motor_State_T * p_motor) { return p_motor->Direction; }
 
@@ -740,15 +753,6 @@ static inline bool Motor_IsDirectionForward(const Motor_State_T * p_motor) { ret
 static inline bool Motor_IsDirectionReverse(const Motor_State_T * p_motor) { return (Motor_GetDirectionSign(p_motor) == -1); }
 static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_NULL); }
 
-/*!
-    Convert between a user reference direction to virtual CCW/CW direction
-    @param[in] userCmd [-65536:65536] fract16 or percent16. positive as the direction set at config
-    @return [-65536:65536]
-    @note caller clamp. Over saturated if input is -32768. cast may result in overflow.
-*/
-static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
-/* Positive as the active appliedV/motoring direction.   */
-static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
 
 

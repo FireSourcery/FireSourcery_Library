@@ -59,7 +59,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
 
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);     break;
-        case MOTOR_VAR_I_DC:                        value = Motor_GetIdc_UFract16(p_motor);                 break;
+        case MOTOR_VAR_I_DC:                        value = Motor_GetIBus_UFract16(p_motor);                 break;
     }
     return value;
 }

@@ -114,6 +114,15 @@ static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
     return _FOC_ProcVectorLimit(p_foc, vBus, FRACT16_1_DIV_SQRT3);
 }
 
+// static inline ufract16_t _FOC_VCircleLimit(FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation, fract16_t vd)
+// {
+//     p_foc->Vd = vd;
+//     ufract16_t vPhaseLimit = fract16_mul(vBus, modulation);
+//     uint32_t magLimitSq = (uint32_t)vPhaseLimit * vPhaseLimit;
+//     uint32_t vdSq = (int32_t)vd * vd;
+//     return (vdSq < magLimitSq) ? fixed_sqrt(magLimitSq - vdSq) : 0;
+// }
+
 /* Available Vq budget after Vd within voltage circle */
 static inline ufract16_t _FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation)
 {

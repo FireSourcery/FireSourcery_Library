@@ -227,13 +227,13 @@ static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t
         /* abs(d) > d_limit */
         if (d_squared > d_limit_squared)
         {
-            *p_d = (*p_d < 0) ? (0 - d_limit) : d_limit;
+            *p_d = math_sign(*p_d) * d_limit;
             d_squared = d_limit_squared;
         }
 
         /* Apply q limit */
         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-        *p_q = (*p_q < 0) ? (0 - q_limit) : q_limit;
+        *p_q = math_sign(*p_q) * q_limit;
         is_limited = true;
     }
 
@@ -254,11 +254,11 @@ static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16
     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
     {
         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-        *p_q = (*p_q < 0) ? (0 - q_limit) : q_limit;
+        *p_q = math_sign(*p_q) * q_limit;
         is_limited = true;
     }
 
-    return is_limited;
+    return is_limited; /* or (d_squared + q_squared - mag_limit_squared)  */
 }
 
 /******************************************************************************/

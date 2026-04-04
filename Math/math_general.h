@@ -44,8 +44,6 @@ static inline bool math_is_sign_diff(int32_t value1, int32_t value2) { return ((
 /* +1,+1 -> 1, +1,-1 -> 0, -1,-1 -> -1 */
 // static inline sign_t sign_sum(sign_t sign1, sign_t sign2) { return ((sign1 + sign2) / 2); }
 
-// static inline int32_t math_negative_of(int32_t value1) { return (value1 < 0) * value1; }
-
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
@@ -54,13 +52,11 @@ static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
 
-// static inline int32_t math_clamp_0+(int32_t value, int32_t upper)
-// static inline int32_t math_clamp_-0(int32_t value, int32_t lower)
+/* branchless one sided */
+static inline int32_t math_clamp_0_up(int32_t value, int32_t upper)  { return (value > 0) * value; }
+static inline int32_t math_clamp_0_down(int32_t value, int32_t lower)  { return (value < 0) * value; }
 
-/*  */
-// static inline int32_t math_clamp_symmetric(int32_t value, uint32_t bound) { return math_clamp(value, (int32_t)0 - bound, bound); }
 // /* Clamp between two bounds without specifying order */
-// static inline int32_t math_clamp_between(int32_t value, int32_t bound1, int32_t bound2) { return math_clamp(value, math_min(bound1, bound2), math_max(bound1, bound2)); }
 // /* Branchless version */
 // static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int32_t bound2)
 // {
@@ -112,30 +108,3 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 /* alias */
 static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
 static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
-// static inline int32_t limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
-// static inline int32_t limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
-// static inline int32_t limit_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
-
-// static inline int16_t fract16_limit_scalar(uint16_t value, uint16_t max)
-// {
-//     return (value > max) ? fract16_div(max, value) : FRACT16_MAX;
-// }
-
-/* proportional on input */
-// static inline int16_t  feedback_scalar(uint16_t feedback, uint16_t limit, int16_t input)
-// static inline int16_t  feedback_scalar(int16_t input, uint16_t limit, uint16_t feedback)
-// {
-//     return (feedback > limit) ? (int32_t)input * limit / feedback : input;
-// }
-
-// // static inline int16_t limit_feedback_signed(int16_t input, int16_t lower, int16_t upper, int16_t feedback)
-// // {
-// //     int16_t result;
-// //     if      (feedback < lower) { result = (int32_t)input * lower / feedback; }
-// //     else if (feedback > upper) { result = (int32_t)input * upper / feedback; }
-// //     else                       { result = input; }
-// //     return result;
-// // }
-
-
-
