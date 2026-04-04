@@ -98,11 +98,10 @@ static inline ufract16_t Motor_GetVPhase_UFract16(const Motor_State_T * p_motor)
 static inline fract16_t Motor_GetVPhase_Fract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetVPhase_Fract16, NULL) * p_motor->Direction; ; }
 
 /*
-    Ideal electrical power physical VA as Q2.14
-    [0:49152] <=> [0:1.5]
+    Ideal electrical power physical VA
 */
-static inline ufract16_t Motor_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetElectricalPower_UFract16, NULL) / 4; }
-static inline ufract16_t Motor_GetIdc_UFract16(const Motor_State_T * p_motor) { return fract16_div(Motor_GetElectricalPower_UFract16(p_motor), Phase_VBus_Fract16()); }
+static inline uint32_t Motor_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetElectricalPower_UFract16, NULL) / 8; }
+static inline ufract16_t Motor_GetIdc_UFract16(const Motor_State_T * p_motor) { return FOC_GetIBus(&p_motor->Foc, Phase_VBus_Fract16()) / 2; }
 
 /*  */
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
