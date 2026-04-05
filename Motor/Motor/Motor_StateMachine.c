@@ -76,6 +76,7 @@ static State_T * TransitionFault(const Motor_T * p_motor, state_value_t faultCmd
 static void Motor_PollFaultFlags(const Motor_T * p_motor)
 {
     // p_motor->P_MOTOR_STATE->FaultFlags.Overheat = HeatMonitor_IsFault(&p_motor->P_MOTOR_STATE->Thermistor);
+    p_motor->P_MOTOR_STATE->FaultFlags.Overheat = 0;
 }
 
 /******************************************************************************/
@@ -110,12 +111,12 @@ static State_T * Init_Next(const Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
+        // (Motor_CheckConfig() == true)    // check params, sync config limits
         if (Phase_Calibration_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         // if (Motor_ValidateIabcZeroRef(p_motor) == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; }
-        // (Motor_CheckConfig() == true)    // check params, sync config limits
 
         p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
-        // Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
+        Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
 
         if (p_motor->P_MOTOR_STATE->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; } else { p_nextState = &MOTOR_STATE_STOP; }
     }

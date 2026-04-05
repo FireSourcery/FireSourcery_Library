@@ -82,8 +82,7 @@ typedef const struct
     /* Flash params start. */
     uintptr_t MAIN_CONFIG_ADDRESS;
     uint16_t MAIN_CONFIG_SIZE;
-
-    MotNvm_Entry_T * P_PARTITIONS; /* NVM Partitions */
+    MotNvm_Entry_T * P_PARTITIONS; /* Config Partition decriptors */
     size_t PARTITION_COUNT;        /* Number of NVM Partitions */
 
     // alternatively use  P_FLASH->P_PARTITIONS[id]
@@ -114,4 +113,5 @@ typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
 extern NvMemory_Status_T MotNvm_MapPhaseCalibrationRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
 extern NvMemory_Status_T MotNvm_MapPhaseAnalogSensorRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogSensor_T * p_buffer);
 
+extern NvMemory_Status_T HAL_Nvm_MapPhaseCalibration(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
 #endif

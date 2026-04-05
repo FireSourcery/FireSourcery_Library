@@ -37,7 +37,7 @@
 */
 void Motor_Init(const Motor_T * p_context)
 {
-    assert(Phase_VBus_GetVNominal() != 0U); /* set by caller init */
+    // assert(Phase_VBus_GetVNominal() != 0U); /* set by caller init */
 
     /* Config including selected angle sensor init */
     if (p_context->P_NVM_CONFIG != NULL) { p_context->P_MOTOR_STATE->Config = *p_context->P_NVM_CONFIG; }

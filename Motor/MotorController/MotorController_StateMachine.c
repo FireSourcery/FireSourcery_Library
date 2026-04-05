@@ -612,9 +612,14 @@ static State_T * Fault_InputFault(MotorController_T * p_context, state_value_t f
     if (cmd.FaultClear != 0U)
     {
         p_mc->FaultFlags.Value &= ~cmd.FaultClear;
+        if (Phase_Calibration_IsLoaded() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* or remove from clear */
         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_TryClearFaultAll(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
-        Blinky_Stop(&p_context->BUZZER);
         MotorController_PollFaultFlags(p_context); /* Re-verify conditions resolved before allowing exit */
+        Blinky_Stop(&p_context->BUZZER);
+    }
+    if (cmd.FaultSet != 0U)
+    {
+        p_mc->FaultFlags.Value |= cmd.FaultSet;
     }
 
     return (p_mc->FaultFlags.Value == 0U) ? ParkState(p_context) : NULL;

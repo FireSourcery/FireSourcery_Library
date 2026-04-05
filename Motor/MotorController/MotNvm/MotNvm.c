@@ -65,19 +65,40 @@ NvMemory_Status_T _MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, u
 #if     defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE)
     return Flash_WriteOnce_Blocking(p_motNvm->P_FLASH, onceAddress, p_sourceBuffer, size);
 #elif   defined(MOTOR_CONTROLLER_MANUFACTURE_NVM_FLASH)
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, onceAddress, p_dataBuffer, size);
+    return Flash_Write_Blocking(p_motNvm->P_FLASH, onceAddress, p_sourceBuffer, size);
 #endif
 }
 
+static bool MotNvm_IsManufactureWritten(uint8_t * p_buffer, const uint8_t * p_sourceBuffer, uint8_t size)
+{
+    for (uint8_t i = 0U; i < size; i++)
+    {
+        if (p_buffer[i] != FLASH_UNIT_ERASE_PATTERN && p_buffer[i] != p_sourceBuffer[i]) { return true; }
+    }
+    return false;
+}
+
+
 NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size)
 {
-    NvMemory_Status_T status = _MotNvm_WriteManufacture_Blocking(p_motNvm, onceAddress, p_sourceBuffer, size);
-    if (status == NV_MEMORY_STATUS_SUCCESS)
-    {
-        /* Load the motor analog reference after writing the manufacture data */
-        /* shared check for BoardRef */
-        if (Phase_Calibration_IsLoaded() == false) { status = MotNvm_LoadConstRef(p_motNvm); }
-    }
+    uint8_t manufacture[64U] = { 0 };
+    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, onceAddress, size, (void *)&manufacture[0U]);
+
+    // if (!MotNvm_IsManufactureWritten(values, (const uint8_t *)p_sourceBuffer, size))
+    // {
+    //     status = _MotNvm_WriteManufacture_Blocking(p_motNvm, onceAddress, p_sourceBuffer, size);
+    // }
+
+    /* Load the motor analog reference after writing the manufacture data */
+    if (Phase_Calibration_IsLoaded() == false) { status = MotNvm_LoadConstRef(p_motNvm); }
+
+
+    // NvMemory_Status_T status = _MotNvm_WriteManufacture_Blocking(p_motNvm, onceAddress, p_sourceBuffer, size);
+    // if (status == NV_MEMORY_STATUS_SUCCESS)
+    // {
+    //     /* Load the motor analog reference after writing the manufacture data */
+    //     if (Phase_Calibration_IsLoaded() == false) { status = MotNvm_LoadConstRef(p_motNvm); }
+    // }
     return status;
 }
 
@@ -163,7 +184,11 @@ NvMemory_Status_T MotNvm_LoadConstRef(const MotNvm_T * p_motNvm)
     // HAL_Nvm_Manufacturer_T result;
     // NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, (uintptr_t)0U, sizeof(HAL_Nvm_Manufacturer_T), (void *)&result);
     uint8_t buffer[64U] = { 0 };
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, (void *)&buffer[0U]);
+    // NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, (void *)&buffer[0U]);
+
+    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+    status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t )& PHASE_CALIBRATION, 512);
+
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseSensorRefFrom(p_motNvm, (HAL_Nvm_Manufacturer_T *)&buffer[0U]); }
     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_LoadPhaseCalibrationRefFrom(p_motNvm, (HAL_Nvm_Manufacturer_T *)&buffer[0U]); }
     return status;
