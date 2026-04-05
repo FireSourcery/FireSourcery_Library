@@ -117,7 +117,8 @@ typedef struct Ring
 }
 Ring_T;
 
-#define _RING_BUFFER_ALLOC(BytesSize) ((uint8_t[(BytesSize)]){})//((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* /sizeof(int) guarantees align and no ascii fill */
+// #define _RING_BUFFER_ALLOC(BytesSize) ((uint8_t[(BytesSize)]){})
+#define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
 #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_T) + ((UnitSize) * (Length)))))
 
 /*
