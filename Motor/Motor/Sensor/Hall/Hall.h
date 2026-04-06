@@ -165,11 +165,11 @@ Hall_T;
 #define HALL_STATE_ALLOC() (&(Hall_State_T){0})
 
 /*  */
-#define HALL_INIT(PinA, PinB, PinC, p_State, p_Config) \
+#define HALL_INIT(PinA, PinB, PinC, p_State, p_Config) (Hall_T) \
     { .PIN_A = PinA, .PIN_B = PinB, .PIN_C = PinC, .P_NVM_CONFIG = (p_Config), .P_STATE = (p_State), }
 
 /* Init from primitive */
-#define HALL_INIT_FROM(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_State, p_Config) \
+#define HALL_INIT_FROM(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_State, p_Config) (Hall_T) \
 {                                                                \
     .PIN_A = PIN_INIT(p_PinAHal, PinAId),                        \
     .PIN_B = PIN_INIT(p_PinBHal, PinBId),                        \

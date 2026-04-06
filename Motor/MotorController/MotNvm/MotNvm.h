@@ -55,6 +55,10 @@
 #define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
 #endif
 
+#ifndef MOT_NVM_MANUFACTURE_SIZE
+#define MOT_NVM_MANUFACTURE_SIZE (64U)
+#endif
+
 /* For Protocol Flash Only */
 #if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
 #elif   defined(MOTOR_CONTROLLER_FLASH_LOADER_DISABLE)
@@ -97,21 +101,23 @@ MotNvm_T;
 /*
 */
 extern void MotNvm_Init(const MotNvm_T * p_motNvm);
-extern NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t sizeBytes);
-extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, uint8_t size, void * p_destBuffer);
-extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t onceAddress, const void * p_sourceBuffer, uint8_t size);
+extern NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, const void * p_ram, size_t size);
+extern NvMemory_Status_T MotNvm_ReadManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, uint8_t size, void * p_dest);
+extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, const void * p_source, uint8_t size);
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
-extern NvMemory_Status_T MotNvm_LoadConstRef(const MotNvm_T * p_motNvm);
+
+extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);
 
 /* externally define */
 // struct HAL_Nvm_Once_T;
 struct HAL_Nvm_Manufacturer;
 typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
 
-extern NvMemory_Status_T MotNvm_MapPhaseCalibrationRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
-extern NvMemory_Status_T MotNvm_MapPhaseAnalogSensorRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogSensor_T * p_buffer);
+extern void HAL_Nvm_MapPhaseCalibration(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
+extern void HAL_Nvm_MapPhaseAnalogSensorRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogSensor_T * p_buffer);
 
-extern NvMemory_Status_T HAL_Nvm_MapPhaseCalibration(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
+NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, HAL_Nvm_Manufacturer_T * p_source);
+
 #endif

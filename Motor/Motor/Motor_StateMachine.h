@@ -57,14 +57,14 @@
 /******************************************************************************/
 typedef enum Motor_StateId
 {
-    MSM_STATE_ID_INIT,
-    MSM_STATE_ID_STOP,          /* 0 speed + Ouput VZ */
-    MSM_STATE_ID_PASSIVE,       /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
-    MSM_STATE_ID_RUN,           /* Feedback Loop + Ouput VPWM */
-    MSM_STATE_ID_INTERVENTION,
-    MSM_STATE_ID_OPEN_LOOP,     /* Torque Loop On/Off + VZ/V0/VPWM */
-    MSM_STATE_ID_CALIBRATION,
-    MSM_STATE_ID_FAULT,
+    MOTOR_STATE_ID_INIT,
+    MOTOR_STATE_ID_STOP,          /* 0 speed + Ouput VZ */
+    MOTOR_STATE_ID_PASSIVE,       /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
+    MOTOR_STATE_ID_RUN,           /* Feedback Loop + Ouput VPWM */
+    MOTOR_STATE_ID_INTERVENTION,
+    MOTOR_STATE_ID_OPEN_LOOP,     /* Torque Loop On/Off + VZ/V0/VPWM */
+    MOTOR_STATE_ID_CALIBRATION,
+    MOTOR_STATE_ID_FAULT,
 }
 Motor_StateId_T;
 
@@ -85,15 +85,15 @@ extern const State_T MOTOR_STATE_INTERVENTION;
 /******************************************************************************/
 typedef enum Motor_StateInput
 {
-    MSM_INPUT_FAULT,            /* Toggle Fault */
-    MSM_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Release */
-    MSM_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T]  */
-    MSM_INPUT_DIRECTION,        /* [Motor_Direction_T] */
-    MSM_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
-    MSM_INPUT_CALIBRATION,      /* Calibration Cmd */
-    // MSM_INPUT_STATE_CMD, /* Transition Cmd, common entry for Stop, Start, Timer, etc */
-    // MSM_INPUT_USER_BUFFER,
-    // MSM_INPUT_CAPTURE_ADC,
+    MOTOR_STATE_INPUT_FAULT,            /* Toggle Fault */
+    MOTOR_STATE_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Release */
+    MOTOR_STATE_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T]  */
+    MOTOR_STATE_INPUT_DIRECTION,        /* [Motor_Direction_T] */
+    MOTOR_STATE_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
+    MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
+    // MOTOR_STATE_INPUT_STATE_CMD, /* Transition Cmd, common entry for Stop, Start, Timer, etc */
+    // MOTOR_STATE_INPUT_USER_BUFFER,
+    // MOTOR_STATE_INPUT_CAPTURE_ADC,
 }
 Motor_StateInput_T;
 
@@ -164,12 +164,12 @@ static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_mot
 /* Does not include substates */
 static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsRootStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
 
-static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MSM_STATE_ID_FAULT); }
+static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT); }
 
 /* Optionally enforce config in calibration state, rather than stop state */
 static inline bool Motor_IsConfig(const Motor_T * p_motor)
 {
-    return (Motor_IsState(p_motor, MSM_STATE_ID_STOP) || Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MSM_STATE_ID_FAULT));
+    return (Motor_IsState(p_motor, MOTOR_STATE_ID_STOP) || Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT));
 }
 
 

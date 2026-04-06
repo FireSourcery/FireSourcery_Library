@@ -33,7 +33,6 @@
 #include "_StateMachine_Lock.h"
 #include "_StateMachine_Tree.h"
 #include "State.h"
-#include "Config.h"
 
 #include <stdint.h>
 #include <stdbool.h>

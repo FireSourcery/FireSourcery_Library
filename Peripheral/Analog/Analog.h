@@ -45,7 +45,7 @@
     handle requires at least one dereference, either P_ADC or P_CONVERSION_STATE
 */
 /******************************************************************************/
-/* Analog_VirtualChannel/Analog_ConversionHandler */
+/* Analog_VirtualChannel */
 typedef const struct Analog_Conversion
 {
     Analog_ADC_T * P_ADC;
@@ -58,17 +58,16 @@ Analog_Conversion_T;
 
 #define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), }
-// #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_CONVERSION_STATE = &((AdcStruct).P_CONVERSION_STATES[ChannelIndex]), }
-// #define ANALOG_CONVERSION_INIT_FROM(p_AdcStruct, ChannelIndex, p_ConversionChannels) ANALOG_CONVERSION_INIT(&(p_AdcStruct), &((p_ConversionChannels)[ChannelIndex]))
 
 static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
 
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result; }
 static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
-// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_STATE->Result; }
-// static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_STATE->Result = 0U; }
 
+/* From a centralized channels, map to each adc, and application handl */
+// #define ANALOG_ADC_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex].P_CONVERSION_CHANNEL
+// #define ANALOG_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex]
 
 /******************************************************************************/
 /*
@@ -116,67 +115,38 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
     Synchronized start with 1 callback, seperate state buffer
 */
 /******************************************************************************/
+
 // typedef const struct Analog_Batch
 // {
-    // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
-    // uint8_t COUNT;                                // Number of conversions in the batch
-    // Collective mask or
-//     Analog_BatchPart_T * P_BATCH_PARTS;  // per map channel per  adc
-//     uint8_t ADC_COUNT;
-//
+//     Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
+//     uint8_t COUNT;                                // Number of conversions in the batch
 // }
 // Analog_Batch_T;
 
-// #define ANALOG_CONVERSION_BATCH_ALLOC(p_Channels, Count, p_Context, Callback) \
-//     ANALOG_CONVERSION_BATCH_INIT(p_Channels, Count, p_Context, Callback, (Analog_ConversionState_T[Count]){})
+// #define ANALOG_BATCH_INIT(p_First, Count) { .P_CONVERSIONS = (p_First), .COUNT = (Count), }
 
-
-// static void _Analog_MarkBatch(const Analog_Conversion_T * p_conversions, uint32_t markers, Analog_BatchContext_T * p_batch_context)
+// static inline void _Analog_BatchConversion_Mark(const Analog_Conversion_T * p_conv)
 // {
-
-//     //  Analog_Conversion_Mark(p_conversion); // mark each
-// //    for (uint32_t i = 0; i < 32; i++)
-// //    {
-// //        if (markers & (1U << i))
-// //        {
-// //            Analog_Conversion_Mark(&p_conversions[i]);
-// //        }
-// //    }
-//     uint32_t BATCH_MATCH; /* Bitmask of channels to match for completion */
-//     volatile uint32_t * P_BATCH_STATE;
-//     Analog_Callback_T ON_COMPLETE;
-//     void * P_CONTEXT;
+//     p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked = 1U;
+//     Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL);
 // }
 
-
-/* by adc state */
-// static inline adc_result_t _Analog_Batch_Result_ADC(const Analog_Batch_T * p_batch, uint8_t batchIndex) { return _Analog_Channel_GetResult(&p_batch->P_CHANNELS[batchIndex]); }
-
-// static inline bool _Analog_Batch_IsComplete_ADC(const Analog_Batch_T * p_batch)
-// void _Analog_Batch_IsComplete(uint32_t * p_completed, uint8_t count)
+// static inline void Analog_Batch_Mark(const Analog_Batch_T * p_batch)
 // {
-//     for (uint8_t index = 0U; index < count; index++)
+//     for (uint8_t i = 0; i < p_batch->COUNT; i++)
 //     {
-//         if ((p_completed[index] & 0xFFFFFFFFUL/* or batchMMask */) != 0UL) { return false; } // check if any channel is marked
+//         _Analog_BatchConversion_Mark(&p_batch->P_CONVERSIONS[i]);
 //     }
-//     return true;
 // }
 
 // static inline bool Analog_Batch_IsComplete(const Analog_Batch_T * p_batch)
 // {
-//
+//     for (uint8_t i = 0; i < p_batch->COUNT; i++)
+//     {
+//         if (p_batch->P_CONVERSIONS[i].P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked != 0U) return false;
+//     }
+//     return true;
 // }
-
-// static   void AddActiveConversion(Analog_ADC_State_T * p_state, const Analog_ConversionChannel_T * p_handle)
-// {
-
-// }
-
-// void _Analog_Batch_ActivateConversions(const Analog_Batch_T * p_batch)
-// {
-
-// }
-
 
 // typedef struct Analog_Options
 // {

@@ -333,6 +333,7 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
                     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     if (!MotorController_IsMotorCmdState(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     break;
+                case MOTOR_VAR_TYPE_STATE_CMD:
                 case MOTOR_VAR_TYPE_PID_TUNING_IO:
                     if (!MotorController_IsMotorCmdState(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     break;

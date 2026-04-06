@@ -482,7 +482,7 @@ static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return 
 static inline fract16_t Motor_ILimitCw(const Motor_State_T * p_motor) { return p_motor->ILimitCw_Fract16; }
 static inline fract16_t Motor_IClamp(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 
-static inline void Motor_ResolveILimits(Motor_State_T * p_motor)
+static void Motor_ResolveILimits(Motor_State_T * p_motor)
 {
     p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
     p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
@@ -510,7 +510,7 @@ static inline fract16_t Motor_SpeedLimitCcw(const Motor_State_T * p_motor) { ret
 static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
 static inline fract16_t Motor_SpeedClamp(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor)); }
 
-static inline void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
+static void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
 {
     p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
     p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);

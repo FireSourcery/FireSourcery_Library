@@ -543,10 +543,10 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION);
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return false;
         case MOTOR_VAR_TYPE_HALL_STATE:                 return false;
-        case MOTOR_VAR_TYPE_HALL_CMD:                   return Motor_IsState(p_motor, MSM_STATE_ID_CALIBRATION);
+        case MOTOR_VAR_TYPE_HALL_CMD:                   return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
         case MOTOR_VAR_TYPE_HALL_CONFIG:                return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:             return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_ENCODER_STATE:              return false;

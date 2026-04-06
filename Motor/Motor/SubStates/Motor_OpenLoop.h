@@ -35,11 +35,11 @@
 /*
 
 */
-static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
-static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
+static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
 
 /*   for Cmds that begin with a substate */
-static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
+static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
 
 /*
     Extern

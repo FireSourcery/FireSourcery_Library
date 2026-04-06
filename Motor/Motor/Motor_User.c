@@ -92,7 +92,7 @@ void Motor_Start(const Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_STOP, .NEXT = (State_Input_T)_Motor_InputStart };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-    // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_STATE_CMD, MSM_INPUT_STATE_START); }
+    // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
 }
 
 /******************************************************************************/
@@ -102,13 +102,13 @@ void Motor_Start(const Motor_T * p_motor)
     Release stays in ready mode.
 */
 /******************************************************************************/
-inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
+inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
 
-inline void Motor_ReleaseVZ(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z); }
+inline void Motor_ReleaseVZ(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z); }
 
-inline void Motor_ReleaseV0(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
+inline void Motor_ReleaseV0(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
 
-inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, state); }
 
 
 /******************************************************************************/
@@ -137,7 +137,7 @@ inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T stat
 */
 inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_FEEDBACK_MODE, mode.Value); }
+    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 /******************************************************************************/
@@ -152,7 +152,7 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 */
 void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (direction != p_motor->P_MOTOR_STATE->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_DIRECTION, direction); }
+    if (direction != p_motor->P_MOTOR_STATE->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
 }
 
 /* calibrated positive or ccw */
@@ -356,7 +356,7 @@ void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd)
 */
 void Motor_EnterOpenLoopState(const Motor_T * p_motor)
 {
-    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
+    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
 }
 
 /*

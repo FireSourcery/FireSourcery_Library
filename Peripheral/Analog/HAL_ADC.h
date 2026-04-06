@@ -31,13 +31,14 @@
 #ifndef HAL_ADC_H
 #define HAL_ADC_H
 
+
 #include "Peripheral/HAL/HAL_Peripheral.h"
 #include HAL_PERIPHERAL_PATH(HAL_ADC.h)
 
 extern uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel);
 extern void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel);
 
-// extern uint32_t HAL_ADC_ReadFifoResult(const HAL_ADC_T * p_hal, uint32_t pinChannel);
+// extern uint32_t HAL_ADC_ReadFifoResult(const HAL_ADC_T * p_hal);
 extern void HAL_ADC_WriteFifoCount(HAL_ADC_T * p_hal, uint32_t count);
 extern uint8_t HAL_ADC_ReadFifoCount(const HAL_ADC_T * p_hal);
 extern void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel);

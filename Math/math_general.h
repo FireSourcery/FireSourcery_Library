@@ -53,8 +53,8 @@ static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
 
 /* branchless one sided */
-static inline int32_t math_clamp_0_up(int32_t value, int32_t upper)  { return (value > 0) * value; }
-static inline int32_t math_clamp_0_down(int32_t value, int32_t lower)  { return (value < 0) * value; }
+// static inline int32_t math_clamp_0_up(int32_t value )  { return (value > 0) * value; }
+// static inline int32_t math_clamp_0_down(int32_t value )  { return (value < 0) * value; }
 
 // /* Clamp between two bounds without specifying order */
 // /* Branchless version */

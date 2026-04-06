@@ -132,7 +132,7 @@ void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_
 /* auto value using */
 void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
 {
-    assert(Phase_Calibration_IsLoaded() == true); /* Must be loaded before */
+    assert(Phase_Calibration_IsValid() == true); /* Must be loaded before */
     _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)));
 }
 

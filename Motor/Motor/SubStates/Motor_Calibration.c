@@ -87,7 +87,7 @@ static State_T * Tuning_InputFeedbackMode(const Motor_T * p_motor, state_value_t
 
 const State_T CALIBRATION_STATE_TUNNING =
 {
-    .ID         = STATE_PATH_ID(MSM_STATE_ID_CALIBRATION, 1),
+    .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, 1),
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
@@ -98,18 +98,18 @@ const State_T CALIBRATION_STATE_TUNNING =
 
 static const State_Input_T TUNNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = NULL,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Tuning_InputFeedbackMode,
-    // [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Tuning_InputControl,
-    // [MSM_INPUT_DIRECTION]       = (State_Input_T)Tuning_InputStop,
-    [MSM_INPUT_CALIBRATION]     = NULL, /* inherit parent */
-    [MSM_INPUT_OPEN_LOOP]       = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = NULL,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Tuning_InputFeedbackMode,
+    // [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Tuning_InputControl,
+    // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Tuning_InputStop,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = NULL, /* inherit parent */
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
 
 // void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
 // {
-//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
+//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNNING);
 // }
 
 static State_T * Tuning_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE_TUNNING; }
@@ -185,7 +185,7 @@ static void Homing_Proc(const Motor_T * p_motor)
 
 static const State_T CALIBRATION_STATE_HOMING =
 {
-    .ID         = STATE_PATH_ID(MSM_STATE_ID_CALIBRATION, 0), /* Calibration SubState 0 */
+    .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, 0), /* Calibration SubState 0 */
     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
     .P_TOP      = &MOTOR_STATE_CALIBRATION,
     .DEPTH      = 1U,
@@ -205,6 +205,6 @@ void Motor_Calibration_StartHome(const Motor_T * p_motor)
     static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Homing_Start, };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 
-    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
+    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
 }
 

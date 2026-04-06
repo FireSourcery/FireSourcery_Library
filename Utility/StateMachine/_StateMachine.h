@@ -34,7 +34,6 @@
 #include "_State.h"
 #include "_State_Node.h"
 #include "State.h"
-#include "Config.h"
 
 #include <stdatomic.h>
 

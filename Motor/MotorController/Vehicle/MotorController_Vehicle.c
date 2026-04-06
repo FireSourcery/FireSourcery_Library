@@ -157,8 +157,8 @@ static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_
 
 static const State_Input_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_APP_USER] = (State_Input_T)Drive_InputAppUser,
-    [MCSM_INPUT_STATE_CMD] = NULL, /* propagate up */
+    [MC_STATE_INPUT_APP_USER] = (State_Input_T)Drive_InputAppUser,
+    [MC_STATE_INPUT_STATE_CMD] = NULL, /* propagate up */
 };
 
 static const State_T STATE_DRIVE =
@@ -251,7 +251,7 @@ static State_T * Neutral_InputAppUser(const MotorController_T * p_mc, state_valu
 
 static const State_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MCSM_INPUT_APP_USER] = (State_Input_T)Neutral_InputAppUser,
+    [MC_STATE_INPUT_APP_USER] = (State_Input_T)Neutral_InputAppUser,
 };
 
 static const State_T STATE_NEUTRAL =
@@ -286,7 +286,7 @@ sign_t MotorController_Vehicle_GetDirection(const MotorController_T * p_mc)
 /* Alternatively MotorController   allocate reserved input ids */
 void _MotorController_Vehicle_ApplyCmd(MotorController_T * p_mc, Vehicle_StateInput_T cmd)
 {
-    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MCSM_INPUT_APP_USER, cmd);
+    _StateMachine_Branch_CallInput(p_mc->STATE_MACHINE.P_ACTIVE, (void *)p_mc, MC_STATE_INPUT_APP_USER, cmd);
 }
 
 // void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc) { MotorController_Vehicle_ApplyStartCmd(p_mc, VEHICLE_CMD_THROTTLE); }

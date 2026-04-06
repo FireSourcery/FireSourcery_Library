@@ -112,7 +112,7 @@ static State_T * Init_Next(const Motor_T * p_motor)
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
         // (Motor_CheckConfig() == true)    // check params, sync config limits
-        if (Phase_Calibration_IsLoaded() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
+        if (Phase_Calibration_IsValid() == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
         // if (Motor_ValidateIabcZeroRef(p_motor) == false) { p_motor->P_MOTOR_STATE->FaultFlags.InitCheck = 1U; }
 
         p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR_STATE->p_ActiveSensor);
@@ -126,14 +126,14 @@ static State_T * Init_Next(const Motor_T * p_motor)
 
 static const State_Input_T INIT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = NULL,
-    [MSM_INPUT_DIRECTION]       = NULL,
-    [MSM_INPUT_CALIBRATION]     = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = NULL,
+    [MOTOR_STATE_INPUT_DIRECTION]       = NULL,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
 };
 
 const State_T MOTOR_STATE_INIT =
 {
-    .ID                 = MSM_STATE_ID_INIT,
+    .ID                 = MOTOR_STATE_ID_INIT,
     .ENTRY              = (State_Action_T)Init_Entry,
     .LOOP               = (State_Action_T)Init_Proc,
     .NEXT               = (State_Input0_T)Init_Next,
@@ -220,17 +220,17 @@ static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t st
 
 static const State_Input_T STOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Stop_InputControl,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Stop_InputFeedbackMode,
-    [MSM_INPUT_DIRECTION]       = (State_Input_T)Stop_InputDirection,
-    [MSM_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration, /*  */
-    [MSM_INPUT_OPEN_LOOP]       = (State_Input_T)Stop_InputOpenLoop, /* Valid but can be omitted */
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Stop_InputControl,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Stop_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Stop_InputDirection,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = (State_Input_T)Stop_InputCalibration, /*  */
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = (State_Input_T)Stop_InputOpenLoop, /* Valid but can be omitted */
 };
 
 const State_T MOTOR_STATE_STOP =
 {
-    .ID                 = MSM_STATE_ID_STOP,
+    .ID                 = MOTOR_STATE_ID_STOP,
     .ENTRY              = (State_Action_T)Stop_Entry,
     .LOOP               = (State_Action_T)Stop_Proc,
     .P_TRANSITION_TABLE = &STOP_TRANSITION_TABLE[0U],
@@ -340,17 +340,17 @@ static State_T * Passive_InputOpenLoop(const Motor_T * p_motor, state_value_t st
 
 static const State_Input_T PASSIVE_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Passive_InputControl,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Passive_InputFeedbackMode,
-    [MSM_INPUT_DIRECTION]       = (State_Input_T)Passive_InputDirection,
-    [MSM_INPUT_OPEN_LOOP]       = (State_Input_T)Passive_InputOpenLoop,
-    [MSM_INPUT_CALIBRATION]     = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Passive_InputControl,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Passive_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Passive_InputDirection,
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = (State_Input_T)Passive_InputOpenLoop,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
 };
 
 const State_T MOTOR_STATE_PASSIVE =
 {
-    .ID                 = MSM_STATE_ID_PASSIVE,
+    .ID                 = MOTOR_STATE_ID_PASSIVE,
     .ENTRY              = (State_Action_T)Passive_Entry,
     .LOOP               = (State_Action_T)Passive_Proc,
     .P_TRANSITION_TABLE = &PASSIVE_TRANSITION_TABLE[0U],
@@ -431,17 +431,17 @@ static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t fe
 
 static const State_Input_T RUN_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Run_InputFeedbackMode,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
-    // [MSM_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
-    [MSM_INPUT_CALIBRATION]     = NULL,
-    [MSM_INPUT_OPEN_LOOP]       = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Run_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Run_InputControl,
+    // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
 const State_T MOTOR_STATE_RUN =
 {
-    .ID                 = MSM_STATE_ID_RUN,
+    .ID                 = MOTOR_STATE_ID_RUN,
     .P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Run_Entry,
     .LOOP               = (State_Action_T)Run_Proc,
@@ -510,14 +510,14 @@ static State_T * Intervention_InputFeedbackMode(const Motor_T * p_motor, state_v
 
 static const State_Input_T INTERVENTION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)Intervention_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Intervention_InputFeedbackMode,
 };
 
 const State_T MOTOR_STATE_INTERVENTION =
 {
-    .ID                 = MSM_STATE_ID_INTERVENTION,
+    .ID                 = MOTOR_STATE_ID_INTERVENTION,
     .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Intervention_Entry,
     .LOOP               = (State_Action_T)Intervention_Proc,
@@ -593,17 +593,17 @@ static State_T * OpenLoop_InputOpenLoop(const Motor_T * p_motor, state_value_t s
 
 static const State_Input_T OPEN_LOOP_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)OpenLoop_InputControl,
-    [MSM_INPUT_FEEDBACK_MODE]   = (State_Input_T)OpenLoop_InputFeedbackMode,
-    [MSM_INPUT_OPEN_LOOP]       = (State_Input_T)OpenLoop_InputOpenLoop,
-    [MSM_INPUT_DIRECTION]       = (State_Input_T)OpenLoop_InputDirection,
-    [MSM_INPUT_CALIBRATION]     = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)OpenLoop_InputControl,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)OpenLoop_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = (State_Input_T)OpenLoop_InputOpenLoop,
+    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)OpenLoop_InputDirection,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
 };
 
 const State_T MOTOR_STATE_OPEN_LOOP =
 {
-    .ID                 = MSM_STATE_ID_OPEN_LOOP,
+    .ID                 = MOTOR_STATE_ID_OPEN_LOOP,
     .ENTRY              = (State_Action_T)OpenLoop_Entry,
     .LOOP               = (State_Action_T)OpenLoop_Proc,
     .P_TRANSITION_TABLE = &OPEN_LOOP_TRANSITION_TABLE[0U],
@@ -665,17 +665,17 @@ static State_T * Calibration_InputCalibration(const Motor_T * p_motor, state_val
 
 static const State_Input_T CALIBRATION_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MSM_INPUT_PHASE_OUTPUT]    = (State_Input_T)Calibration_InputControl,
-    [MSM_INPUT_CALIBRATION]     = (State_Input_T)Calibration_InputCalibration,
-    // [MSM_INPUT_DIRECTION]       = (State_Input_T)Calibration_InputStop,
-    [MSM_INPUT_FEEDBACK_MODE]   = NULL,
-    [MSM_INPUT_OPEN_LOOP]       = NULL,
+    [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Calibration_InputControl,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = (State_Input_T)Calibration_InputCalibration,
+    // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Calibration_InputStop,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = NULL,
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
 const State_T MOTOR_STATE_CALIBRATION =
 {
-    .ID                 = MSM_STATE_ID_CALIBRATION,
+    .ID                 = MOTOR_STATE_ID_CALIBRATION,
     .ENTRY              = (State_Action_T)Calibration_Entry,
     .LOOP               = (State_Action_T)Calibration_Proc,
     .P_TRANSITION_TABLE = &CALIBRATION_TRANSITION_TABLE[0U],
@@ -719,14 +719,14 @@ static State_T * Fault_InputCalibration(const Motor_T * p_motor, state_value_t s
 
 static const State_Input_T FAULT_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
 {
-    [MSM_INPUT_FAULT]       = (State_Input_T)Fault_InputFault,
-    [MSM_INPUT_CALIBRATION] = (State_Input_T)Fault_InputCalibration,
-    [MSM_INPUT_DIRECTION]   = NULL,
+    [MOTOR_STATE_INPUT_FAULT]       = (State_Input_T)Fault_InputFault,
+    [MOTOR_STATE_INPUT_CALIBRATION] = (State_Input_T)Fault_InputCalibration,
+    [MOTOR_STATE_INPUT_DIRECTION]   = NULL,
 };
 
 const State_T MOTOR_STATE_FAULT =
 {
-    .ID                 = MSM_STATE_ID_FAULT,
+    .ID                 = MOTOR_STATE_ID_FAULT,
     .P_TRANSITION_TABLE = &FAULT_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Fault_Entry,
     .LOOP               = (State_Action_T)Fault_Proc,
@@ -741,12 +741,12 @@ const State_T MOTOR_STATE_FAULT =
 /* Pass only delta flags — handler applies OR FaultSet / AND-NOT FaultClear atomically */
 void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = faultFlags.Value }.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = faultFlags.Value }.Value);
 }
 
 void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MSM_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultClear = faultFlags.Value }.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultClear = faultFlags.Value }.Value);
 }
 
 bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor)

@@ -149,10 +149,9 @@ typedef const struct Socket
 }
 Socket_T;
 
-/* Ensure 4-byte alignment for packet buffers */
-#define PACKET_BUFFER_ALLOC(BufferLength) ((uint8_t *)(uint32_t[BufferLength/4]){0})
 
-#define SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer) \
+
+#define SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer) (Socket_T) \
 { \
     .P_SOCKET_STATE         = p_State,                      \
     .P_RX_PACKET_BUFFER     = p_RxBuffer,                   \

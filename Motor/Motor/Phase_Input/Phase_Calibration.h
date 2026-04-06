@@ -72,16 +72,16 @@ static inline uint16_t Phase_Calibration_GetIRatedPeak_Fract16(void) { return PH
 static inline uint16_t Phase_Calibration_GetVRated_V(void) { return Phase_Calibration_GetVRated_Fract16() * Phase_Calibration_GetVMaxVolts() / 32768; }
 static inline int16_t Phase_Calibration_GetIRatedPeak_Amps(void) { return Phase_Calibration_GetIRatedPeak_Fract16() * Phase_Calibration_GetIMaxAmps() / 32768; }
 
-static inline bool _Phase_Calibration_IsLoaded(uint16_t value) { return ((value != 0U) && (value != 0xFFFFU)); }
+static inline bool _Phase_Calibration_IsValid(uint16_t value) { return ((value != 0U) && (value != 0xFFFFU)); }
 
-static bool Phase_Calibration_IsLoaded(void)
+static bool Phase_Calibration_IsValid(void)
 {
     return
     (
-        _Phase_Calibration_IsLoaded(Phase_Calibration_GetVMaxVolts()) &&
-        _Phase_Calibration_IsLoaded(Phase_Calibration_GetIMaxAmps()) &&
-        _Phase_Calibration_IsLoaded(Phase_Calibration_GetVRated_Fract16()) &&
-        _Phase_Calibration_IsLoaded(Phase_Calibration_GetIRatedPeak_Fract16())
+        _Phase_Calibration_IsValid(Phase_Calibration_GetVMaxVolts()) &&
+        _Phase_Calibration_IsValid(Phase_Calibration_GetIMaxAmps()) &&
+        _Phase_Calibration_IsValid(Phase_Calibration_GetVRated_Fract16()) &&
+        _Phase_Calibration_IsValid(Phase_Calibration_GetIRatedPeak_Fract16())
     );
 }
 

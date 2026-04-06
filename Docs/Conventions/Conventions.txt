@@ -61,15 +61,13 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] */
 
 // typedef struct
 // {
-//     angle16_t Angle; /* Position Angle */
-//     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
-//     accum32_t Speed_Fract16;  /* Store for Feedback. Let sensor select direct capture or convert from DeltaAngle */
+//     angle16_t Angle;
+//     angle16_t Delta;
 // }
-// angle_t;
+// angle_speed_t;
 
 // typedef struct   { int32_t x; int32_t y; } operand2_t; /* point, vector, limits */ /* 32 */
 // typedef struct   { int32_t x; int32_t y; } vector2_t; /* point, vector, limits */ /* 32 */
-typedef struct linear { int32_t Factor; uint8_t Shift; } linear_t;
 
 /*
     snake_case_t: Value types, ≤ 64 bits (ARM r0+r1), no behavioral functions.
@@ -88,3 +86,29 @@ typedef struct linear { int32_t Factor; uint8_t Shift; } linear_t;
         with no pointer-based API and no associated state management.
         Size alone does not decide naming; semantics do.
 */
+
+
+Subtypes (child depends on parent, child IS-A parent)
+Components (parent depends on child, child is part-of parent)
+Parts (Related group, outer or inner)
+Extensions (optional, guarded by #ifdef)
+
+Subtypes as the unmarked case.
+SomeModule/
+├── SomeModule.h            # Module public API
+├── [_Internal]/          # _ = private component, dependency OF this module
+├── [Variant]/                # plain = specialization/subtype OF this module
+└── Extension/              # opt-in features, #ifdef guarded
+├── SomeModule_Part          # Part, dependent or independt of SomeModule core
+
+alternatively Components as the unmarked case.
+├── SomeModule.h            # Module public API
+├── [Component]/            # private component, dependency OF this module
+└── Extension/              # opt-in features, #ifdef guarded
+├── SomeModule_Part         # Part, dependent or independt of SomeModule core
+
+Subtyped use Base
+SomeModule/
+├── Base/
+├── [Variant]/            # plain = specialization/subtype OF this module
+└── Extension/            # opt-in features, #ifdef guarded

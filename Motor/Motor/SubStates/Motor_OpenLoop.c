@@ -103,7 +103,7 @@ static void AngleAlign_Loop(const Motor_T * p_motor)
 */
 static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
 {
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
@@ -150,7 +150,7 @@ static void Run_Loop(const Motor_T * p_motor)
 */
 static const State_T OPEN_LOOP_STATE_RUN =
 {
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
@@ -197,7 +197,7 @@ static void StartUp_Proc(const Motor_T * p_motor)
 /* Align with Aux Ramp */
 static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 {
-    // .ID         = MSM_STATE_ID_OPEN_LOOP,
+    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
@@ -208,7 +208,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 // test branch
 // static const State_T OPEN_LOOP_STATE_RUN_START_UP =
 // {
-//     // .ID         = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
 //     .DEPTH      = 2U,
 // };
@@ -299,7 +299,7 @@ void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
 
 // static const State_T OPEN_LOOP_STATE_PHASE_ALIGN =
 // {
-//     // .ID = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH = 1U,

@@ -182,7 +182,7 @@
 //     {
 //         // Encoder_CalibrateQuadratureDirection(&p_motor->ENCODER, p_motor->Direction == MOTOR_DIRECTION_CCW);
 //         // /* _StateMachine_EndSubState(&p_motor->STATE_MACHINE); */
-//         // StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MSM_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z);
+//         // StateMachine_ApplyInput(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z);
 //         p_nextState = &MOTOR_STATE_CALIBRATION;
 //     }
 
@@ -192,7 +192,7 @@
 // //todo add align
 // static const State_T STATE_ENCODER_HOMING =
 // {
-//     // .ID         = MSM_STATE_ID_CALIBRATION,
+//     // .ID         = MOTOR_STATE_ID_CALIBRATION,
 //     .P_TOP      = &MOTOR_STATE_CALIBRATION,
 //     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
 //     .DEPTH      = 1U,
@@ -204,7 +204,7 @@
 
 // void Motor_Encoder_StartHoming(const Motor_T * p_motor)
 // {
-//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MSM_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
+//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&STATE_ENCODER_HOMING);
 // }
 
 // /*  */
@@ -274,7 +274,7 @@
 
 // static const State_T ALIGN =
 // {
-//     // .ID         = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH      = 1U,
@@ -334,7 +334,7 @@
 
 // static const State_T VALIDATE_ALIGN =
 // {
-//     // .ID         = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH      = 1U,
@@ -385,7 +385,7 @@
 
 // static const State_T VALIDATE_CLOSED_LOOP =
 // {
-//     // .ID         = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP      = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT   = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH      = 1U,
@@ -446,7 +446,7 @@
 
 // static const State_T START_UP =
 // {
-//     // .ID = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 
 //     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
@@ -459,7 +459,7 @@
 
 // static const State_T START_UP_ALIGN =
 // {
-//     // .ID = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH = 1U,
@@ -475,7 +475,7 @@
 
 // static const State_T START_UP_VALIDATE_ALIGN =
 // {
-//     // .ID = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH = 1U,
@@ -486,7 +486,7 @@
 
 // static const State_T START_UP_VALIDATE_CLOSED_LOOP =
 // {
-//     // .ID = MSM_STATE_ID_OPEN_LOOP,
+//     // .ID = MOTOR_STATE_ID_OPEN_LOOP,
 //     .P_TOP  = &MOTOR_STATE_OPEN_LOOP,
 //     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
 //     .DEPTH = 1U,

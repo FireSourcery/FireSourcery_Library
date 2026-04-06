@@ -337,7 +337,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
             _MotorController_HeatMonitor_Thread(p_context);
 
             /* Can use low priority check, as motor is already in fault state. */
-            if (Motor_Table_IsAnyState(&p_context->MOTORS, MSM_STATE_ID_FAULT) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_MOTORS); }
+            if (Motor_Table_IsAnyState(&p_context->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_MOTORS); }
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_context, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
 
