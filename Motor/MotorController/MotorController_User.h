@@ -167,3 +167,10 @@ extern bool MotorController_CheckDirection(MotorController_T * p_context, sign_t
 // static inline void MotorController_User_DisableOptDin(MotorController_State_T * p_mcState)                                    { p_mcState->Config.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
 // static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_State_T * p_mcState, uint16_t i_Fract16)          { p_mcState->Config.OptSpeedLimit_Fract16 = i_Fract16; }
 
+// typedef enum MotorController_InputMode
+// {
+//     MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
+//     MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
+//     MOTOR_CONTROLLER_INPUT_MODE_CAN,
+// }
+// MotorController_InputModeId_T;

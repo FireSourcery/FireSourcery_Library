@@ -105,7 +105,7 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
         case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VSupplyRef;                        break;
         case MOT_VAR_I_LIMIT_LOW_V:            value = p_state->Config.VLowILimit_Fract16;                break;
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
-        case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
+        case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode.Value;                   break;
         case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
         case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
         case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
@@ -127,7 +127,7 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupplyRef(p_context, value);                                   break;
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_context, (MotorController_InputMode_T)value);       break;
+        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_context, (MotorController_InputMode_T){ .Value = value });       break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
@@ -307,13 +307,8 @@ static MotVarId_Status_T _HandleSystem_Set(const MotorController_T * p_context, 
 // Analog mode does not allow these variables to be set
 static inline bool IsProtocolControlMode(const MotorController_T * p_context)
 {
-    switch (p_context->P_MC_STATE->Config.InputMode)
-    {
-        case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
-        case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
-        case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
-        default: return false;
-    }
+    MotorController_InputMode_T mode = p_context->P_MC_STATE->Config.InputMode;
+    return (mode.Serial == 1U) || (mode.Can == 1U);
 }
 
 /*

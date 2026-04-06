@@ -50,8 +50,8 @@ static void Tuning_Entry(const Motor_T * p_motor)
     /* reload from */
     p_motor->P_MOTOR_STATE->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
     p_motor->P_MOTOR_STATE->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
-    Motor_ResetSpeedPid(p_motor);
-    Motor_ResetCurrentPid(p_motor);
+    Motor_ResetSpeedPid(p_motor->P_MOTOR_STATE);
+    Motor_ResetCurrentPid(p_motor->P_MOTOR_STATE);
 }
 
 static void Tuning_Proc(const Motor_T * p_motor)
@@ -63,8 +63,6 @@ static void Tuning_Proc(const Motor_T * p_motor)
 
 static void Tuning_Exit(const Motor_T * p_motor)
 {
-/*     Motor_ResetSpeedPid(p_motor);
-    Motor_ResetCurrentPid(p_motor); */
 }
 
 // static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)

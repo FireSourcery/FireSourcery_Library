@@ -64,6 +64,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
     return value;
 }
 
+
 /* change to RotorSensor full context */
 int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId)
 {
@@ -456,6 +457,7 @@ int _Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varI
     }
     return 0;
 }
+
 /* caller handle Access Control */
 void _Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
 {
@@ -486,7 +488,15 @@ void _Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int var
     }
 }
 
+// Accessor_T MOTOR_VAR_USER_OUT = {
+//     .Get = (VarGet_T)_Motor_Var_UserOut_Get,
+//     .Set = NULL,
+// };
 
+// void _Motor_VarAccess_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
+// {
+//     // StateMachine_Input(p_motor, typeId, MOTOR_VAR_USER_OUT);
+// }
 
 int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId)
 {
@@ -556,6 +566,9 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
     }
     return false;
 }
+
+
+
 
 void Motor_VarType_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
 {

@@ -149,7 +149,6 @@ Analog_ConversionChannel_T;
 */
 /******************************************************************************/
 // Per ADC batch part
-
 /*
     Batch Part + subsitute fixed channels
     per adc

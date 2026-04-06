@@ -117,19 +117,18 @@ VField_Table_T;
 
 // static inline int _VarAccess_GetAt(VField_Table_T * p_varAccess, void * p_context, int varId) { return p_varAccess->P_VARS[varId].GET(p_context); }
 
-// /* IO Map */
-// /*
-//     compatibility with sub modules using switch()
-//     includes/circumvents handling function pointers with different signatures
-// */
-// typedef const struct Accessor
-// {
-//     get_field_t GET_FIELD;
-//     set_field_t SET_FIELD;
-// }
-// Accessor_T;
+/*
+    compatibility with sub modules using switch()
+    includes/circumvents handling function pointers with different signatures
+*/
+typedef const struct Accessor
+{
+    get_field_t GET_FIELD;
+    set_field_t SET_FIELD;
+}
+Accessor_T;
 
-// static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
-// static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
-// // static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
+static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
+static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
+// static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
 

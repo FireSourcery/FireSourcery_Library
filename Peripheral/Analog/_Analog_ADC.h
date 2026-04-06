@@ -131,11 +131,23 @@ static inline uint32_t ADC_SetStateFrom(Analog_ADC_State_T * p_state, Analog_Con
     return markers ^ sourceMarkers; /* return processed markers */
 }
 
+// static inline uint32_t ADC_SetStateFrom1(Analog_ADC_State_T * p_state, Analog_ConversionChannel_T * p_source, uint32_t sourceMarkers)
+// {
+//     for (uint32_t markers = sourceMarkers; (markers != 0UL); markers &= (markers - 1))
+//     {
+//         if (p_state->ActiveConversionCount >= ADC_FIFO_LENGTH_MAX) { break; }
+//         p_state->ActiveConversions[p_state->ActiveConversionCount] = &p_source[__builtin_ctz(markers)];
+//         p_state->ActiveConversionCount++;
+//     }
+
+//     return markers ^ sourceMarkers; /* return processed markers */
+// }
+
 
 static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
     ADC_SetStateFrom(p_adc->P_ADC_STATE, p_conversions, markers);
-    // p_state->ChannelMarkers =
+    // p_state->ChannelMarkers &= ~processed;
     ADC_Activate(p_adc, p_adc->P_ADC_STATE);
 }
 

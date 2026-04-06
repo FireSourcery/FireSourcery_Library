@@ -65,6 +65,10 @@ static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result; }
 static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
 
+/* resolve at runtime */
+static inline Analog_ConversionChannel_T * Analog_Conversion_ChannelOf(const Analog_Conversion_T * p_conv) { return Analog_ADC_ConversionOf(p_conv->P_ADC, p_conv->CHANNEL); }
+// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return Analog_ADC_ResultOf(p_conv->P_ADC, p_conv->CHANNEL); }
+
 /* From a centralized channels, map to each adc, and application handl */
 // typedef Analog_Conversion_T Analog_ConversionTable_T[];
 // #define ANALOG_ADC_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex].P_CONVERSION_CHANNEL
@@ -77,26 +81,26 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 /******************************************************************************/
 // static void Analog_ActivateConversion(const Analog_Conversion_T * p_conversion)
 // {
-//     // if (Analog_ADC_ReadIsActive(p_conversion->P_ADC) == false)
-//     // {
-//         _Analog_ADC_StartConversions(p_conversion->P_ADC, p_conversion->P_CONVERSION_CHANNEL, 1U);
-//     // }
-//     // else
-//     // {
-//     //     Analog_Conversion_Mark(p_conversion); // mask as adc fixed
-//     // }
+    // if (Analog_ADC_ReadIsActive(p_conversion->P_ADC) == false)
+    // {
+        // _Analog_ADC_StartConversions(p_conversion->P_ADC, p_conversion->P_CONVERSION_CHANNEL, 1U);
+    // }
+    // else
+    // {
+    //     Analog_Conversion_Mark(p_conversion); // mask as adc fixed
+    // }
 // }
 
 // static void Analog_ActivateConversions(const Analog_Conversion_T * p_conversions, uint32_t markers)
 // {
 //     // if (Analog_ADC_ReadIsActive(p_conversion->P_ADC) == false)
-//     // {
-//     //     Analog_ADC_StartConversions(p_conversion->P_ADC, p_conversion->P_CONVERSION_CHANNEL, markers);
-//     // }
-//     // else
-//     // {
-//     //     Analog_Conversion_Mark(p_conversion); // mark each
-//     // }
+    // {
+    //     Analog_ADC_StartConversions(p_conversion->P_ADC, p_conversion->P_CONVERSION_CHANNEL, markers);
+    // }
+    // else
+    // {
+    //     Analog_Conversion_Mark(p_conversion); // mark each
+    // }
 // }
 
 

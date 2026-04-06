@@ -93,11 +93,6 @@ static void Motor_PollFaultFlags(const Motor_T * p_motor)
 /******************************************************************************/
 static void Init_Entry(const Motor_T * p_motor)
 {
-    /* alternatively null until a direction is set */
-    /* Sets Speed/I Limits using direction */
-    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_SetDirectionForward, Motor_SetDirectionForward);
-
-    // Motor_Sensor_ResetUnits(p_motor->P_MOTOR_STATE );
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
 }
 

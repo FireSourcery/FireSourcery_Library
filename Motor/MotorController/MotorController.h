@@ -82,11 +82,15 @@
 /*
     User InputMux
 */
-typedef enum MotorController_InputMode
+typedef union MotorController_InputMode
 {
-    MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
-    MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
-    MOTOR_CONTROLLER_INPUT_MODE_CAN,
+    struct
+    {
+        uint8_t Serial : 1;
+        uint8_t Analog : 1;
+        uint8_t Can    : 1;
+    };
+    uint8_t Value;
 }
 MotorController_InputMode_T;
 

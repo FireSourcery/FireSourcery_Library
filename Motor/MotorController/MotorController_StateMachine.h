@@ -208,22 +208,22 @@ static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context
 }
 
 /* Combination Input */
-typedef union MotorController_MotorCmdValue
-{
-    struct
-    {
-        uint16_t CmdValue;
-        uint16_t CmdId;
-    };
-    uint32_t Value;
-}
-MotorController_MotorCmdValue_T;
+// typedef union MotorController_MotorCmdValue
+// {
+//     struct
+//     {
+//         uint16_t CmdValue;
+//         uint16_t CmdId;
+//     };
+//     uint32_t Value;
+// }
+// MotorController_MotorCmdValue_T;
 
-static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
-{
-    MotorController_MotorCmdValue_T  input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, input.Value);
-}
+// static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
+// {
+//     MotorController_MotorCmdValue_T  input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
+//     _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, input.Value);
+// }
 
 /******************************************************************************/
 /*!

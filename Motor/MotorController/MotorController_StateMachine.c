@@ -287,9 +287,9 @@ static void Main_Proc(MotorController_T * p_context) {}
 static State_T * Common_InputPark(MotorController_T * p_context)
 {
     State_T * p_nextState = NULL;
-    if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_STOP) == true) { p_nextState = ParkState(p_context); }
+    if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
     /* alternatively caller handle */
-    else if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = ParkState(p_context); } /* Applies stop on enter */
+    else if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_context->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = &STATE_PARK; } /* Applies stop on enter */
     else { MotorController_BeepShort(p_context); }
     return p_nextState;
 }
@@ -425,15 +425,10 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_context, state_
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_CALIBRATION) == true)
+                if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_CALIBRATION) || (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_STOP)))
                 {
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = ParkState(p_context);
-                }
-                else if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_STOP) == true)
-                {
-                    opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = ParkState(p_context);
+                    p_nextState = &STATE_PARK;
                 }
                 else
                 {

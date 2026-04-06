@@ -281,12 +281,10 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
         /*
             Med Freq, Low Priority, 1 ms
         */
-        // feedwatchdog
-
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        // maybe interrupted by enterFault on 1ms thread maybe change this to signal
-        _StateMachine_RootFirst_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context); /* Optionally, if other inputs process entirely async  */
+        // maybe interrupted by enterFault on 1ms thread
+        _StateMachine_RootFirst_ProcSyncOutput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_context->P_PROTOCOLS[iProtocol]); }
 
@@ -294,23 +292,20 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
     //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
     // #endif
         /* Proc in all State */
-        switch (p_mc->Config.InputMode)
+        if (p_mc->Config.InputMode.Analog == 1U) { _MotorController_ProcAnalogUser(p_context); }
+        if (p_mc->Config.InputMode.Serial == 1U)
         {
-            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG: _MotorController_ProcAnalogUser(p_context);   break;
-            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-                /* optionally */
-                // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
-                /* Only active when Serial is selected as primary input */
-                // if (MotorController_PollRxLost(p_context) == true)
-                // {
-                // Motor_Table_ForEachApply(&p_context->MOTORS, Motor_ReleaseVZ);
-                //     MotorController_ForceDisableControl(p_context);
-                //     MotorController_EnterFault(p_context);
-                // }
-                break;
-            case MOTOR_CONTROLLER_INPUT_MODE_CAN: break;
-            default:  break;
+            /* optionally */
+            // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
+            /* Only active when Serial is selected as primary input */
+            // if (MotorController_PollRxLost(p_context) == true)
+            // {
+            // Motor_Table_ForEachApply(&p_context->MOTORS, Motor_ReleaseVZ);
+            //     MotorController_ForceDisableControl(p_context);
+            //     MotorController_EnterFault(p_context);
+            // }
         }
+        if (p_mc->Config.InputMode.Can == 1U) { /* CAN handling */ }
 
         /*
             Low Freq, Low Priority, ~10ms ~16ms, 100Hz
