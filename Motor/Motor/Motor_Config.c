@@ -276,6 +276,40 @@ void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_State_T * p_motor, uint1
 
 
 /******************************************************************************/
+/* */
+/******************************************************************************/
+void _Motor_Config_SetIKp(Motor_State_T * p_motor, uint32_t value)
+{
+    _PID_SetKp_Fixed16(&p_motor->Config.PidI, value);
+    PID_SetKp_Fixed16(&p_motor->PidIq, value);
+    PID_SetKp_Fixed16(&p_motor->PidId, value);
+}
+
+void _Motor_Config_SetIKi(Motor_State_T * p_motor, uint32_t value)
+{
+    _PID_SetKi_Fixed16(&p_motor->Config.PidI, value);
+    PID_SetKi_Fixed16(&p_motor->PidIq, value);
+    PID_SetKi_Fixed16(&p_motor->PidId, value);
+    //optionally switch on commutation mode
+}
+
+void _Motor_Config_SetSpeedKp(Motor_State_T * p_motor, uint32_t value)
+{
+    _PID_SetKp_Fixed16(&p_motor->Config.PidSpeed, value);
+    PID_SetKp_Fixed16(&p_motor->PidSpeed, value); /* optionally set run time */
+}
+
+void _Motor_Config_SetSpeedKi(Motor_State_T * p_motor, uint32_t value)
+{
+    _PID_SetKi_Fixed16(&p_motor->Config.PidSpeed, value);
+    PID_SetKi_Fixed16(&p_motor->PidSpeed, value);
+}
+
+
+
+
+
+/******************************************************************************/
 /* Local Unit Conversion */
 /******************************************************************************/
 // #ifdef MOTOR_UNIT_CONVERSION_LOCAL

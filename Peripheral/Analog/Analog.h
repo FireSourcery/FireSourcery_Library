@@ -66,6 +66,7 @@ static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T
 static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
 
 /* From a centralized channels, map to each adc, and application handl */
+// typedef Analog_Conversion_T Analog_ConversionTable_T[];
 // #define ANALOG_ADC_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex].P_CONVERSION_CHANNEL
 // #define ANALOG_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex]
 
@@ -120,6 +121,7 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 // {
 //     Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
 //     uint8_t COUNT;                                // Number of conversions in the batch
+// outer batch state use P_ConversionChannel.flag or out p_BatchState
 // }
 // Analog_Batch_T;
 

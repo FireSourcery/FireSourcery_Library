@@ -466,7 +466,7 @@ static void Intervention_Entry(const Motor_T * p_motor)
     p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
 }
 
-static void Intervention_Proc(const Motor_T * p_motor){}
+static void Intervention_Proc(const Motor_T * p_motor) {}
 
 static State_T * Intervention_InputRelease(const Motor_T * p_motor)
 {
@@ -623,9 +623,7 @@ static void Calibration_Entry(const Motor_T * p_motor)
     p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
 }
 
-static void Calibration_Proc(const Motor_T * p_motor)
-{
-}
+static void Calibration_Proc(const Motor_T * p_motor) {}
 
 
 /* Calibration State Exit with Direction == 0 and InputCalibration(STOP) */

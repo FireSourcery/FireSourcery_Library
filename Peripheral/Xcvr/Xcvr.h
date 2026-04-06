@@ -43,12 +43,7 @@ typedef size_t  (*Xcvr_RxMax_T)     (void * p_xcvr, uint8_t * p_destBuffer, size
 typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, const uint8_t * p_src, size_t length);
 typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, uint8_t * p_dest, size_t length);
 typedef size_t  (*Xcvr_GetCount_T)  (void * p_xcvr);
-typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value); // optionally split init and compare
-// typedef void(*Xcvr_Init_T)        (void * p_xcvr );
-
-/* Alternatively, length first on N */
-// typedef bool    (*Xcvr_TxN_T)       (void * p_xcvr, size_t length, const uint8_t * p_src);
-// typedef bool    (*Xcvr_RxN_T)       (void * p_xcvr, size_t length, uint8_t * p_dest);
+typedef bool    (*Xcvr_SetConfig_T) (void * p_xcvr, uint32_t value);
 
 typedef const struct Xcvr_VTable
 {

@@ -303,6 +303,17 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_contex
     return p_context->P_MC_STATE->FaultFlags.RxLost;
 }
 
+// static inline bool IsProtocolControlMode(const MotorController_T * p_context)
+// {
+//     switch (p_context->P_MC_STATE->Config.InputMode)
+//     {
+//         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
+//         default: return false;
+//     }
+// }
+
 /* Common Buffered Input */
 static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_context) { return &p_context->P_MC_STATE->CmdInput; }
 

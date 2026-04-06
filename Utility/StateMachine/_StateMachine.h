@@ -59,7 +59,7 @@ typedef struct StateMachine_Active
 
     /*
         Buffered input transition. Restrict transition to during proc state only
-        Lockless if [State_Input_T] only map the next state and do not mutate internal state.
+        Lockless if [State_Input_T] only returns the next state and does not mutate internal state.
             e.g. Entry/Exit/Loop action can mutate internal state, but the input function only returns the next state.
             All ProcState 'state' variable dependencies must be implemented as [State_T] substates
     */

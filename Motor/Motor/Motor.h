@@ -488,7 +488,7 @@ static void Motor_ResolveILimits(Motor_State_T * p_motor)
     p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
     Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor));
 
-    if (p_motor->FeedbackMode.Speed && p_motor->FeedbackMode.Current)  /* SpeedPid Output is I */
+    if ((p_motor->FeedbackMode.Speed == 1) && (p_motor->FeedbackMode.Current == 1))  /* SpeedPid Output is I */
     {
         PID_SetOutputLimits(&p_motor->PidSpeed, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor));
     }
@@ -771,6 +771,9 @@ extern void Motor_InitUnits(Motor_State_T * p_motor);
 
 extern void Motor_InitSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_InitTorqueRamp(Motor_State_T * p_motor);
+
+extern void Motor_ResetSpeedPid(Motor_State_T * p_motor);
+extern void Motor_ResetCurrentPid(Motor_State_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, int modeValue);

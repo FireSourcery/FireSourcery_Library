@@ -138,6 +138,14 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, f
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq)
 {
     Motor_FOC_AngleControl(p_motor, p_motor->SensorState.AngleSpeed.Angle, dReq, Ramp_ProcNextOf(&p_motor->TorqueRamp, qReq));
+
+    // as i loop only
+    // FOC_SetTheta(&p_motor->Foc, theta);
+
+    // if (CaptureIabc(p_motor) == true)
+    // {
+    //     ProcIFeedback(p_motor, dReq, qReq);
+    // }
 }
 
 

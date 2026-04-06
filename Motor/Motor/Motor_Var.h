@@ -193,7 +193,7 @@ typedef enum Motor_Var_CalibrationCmd
     MOTOR_VAR_CALIBRATION_CMD_ADC,
     MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
     MOTOR_VAR_CALIBRATION_ENTER_TUNING,
-
+    // MOTOR_VAR_CALIBRATION_RESET_TUNING,
     // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
 }
 Motor_Var_CalibrationCmd_T;

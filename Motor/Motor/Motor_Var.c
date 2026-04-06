@@ -370,15 +370,16 @@ int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_
 /* Sets runtime */
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue); PID_SetKp_Fixed16(&p_motor->PidId, varValue); break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue); PID_SetKi_Fixed16(&p_motor->PidId, varValue); break;
-    }
+    _Motor_Var_ConfigPid_Set(p_motor, varId, varValue);
+    // switch (varId)
+    // {
+    //     case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
+    //     case MOTOR_VAR_PID_SPEED_KP_FIXED16:  PID_SetKp_Fixed16(&p_motor->PidSpeed, varValue);    break;
+    //     case MOTOR_VAR_PID_SPEED_KI_FIXED16:  PID_SetKi_Fixed16(&p_motor->PidSpeed, varValue);    break;
+    //     case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
+    //     case MOTOR_VAR_PID_CURRENT_KP_FIXED16: PID_SetKp_Fixed16(&p_motor->PidIq, varValue); PID_SetKp_Fixed16(&p_motor->PidId, varValue); break;
+    //     case MOTOR_VAR_PID_CURRENT_KI_FIXED16: PID_SetKi_Fixed16(&p_motor->PidIq, varValue); PID_SetKi_Fixed16(&p_motor->PidId, varValue); break;
+    // }
 }
 
 /*
@@ -522,6 +523,7 @@ int Motor_VarType_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId
     return 0;
 }
 
+/* alternatively State.DataVector.GetInputPolicy */
 bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue)
 {
     if (p_motor == NULL) { return false; }
@@ -543,7 +545,7 @@ bool Motor_VarType_CheckSet(const Motor_T * p_motor, Motor_VarType_T typeId, int
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return false;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION); //Motor_Calibration_IsTuning(p_motor);
         case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return false;
         case MOTOR_VAR_TYPE_HALL_STATE:                 return false;
         case MOTOR_VAR_TYPE_HALL_CMD:                   return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
