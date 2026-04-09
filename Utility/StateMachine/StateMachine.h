@@ -215,7 +215,6 @@ static void StateMachine_InvokeTransition(StateMachine_T * p_this, StateMachine_
 /******************************************************************************/
 /*
     Value Accessor Interface
-    Top level state only
 */
 /******************************************************************************/
 static inline state_value_t StateMachine_Cmd(StateMachine_T * p_this, state_cmd_t id, state_value_t value) { return _StateMachine_Cmd(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value); }

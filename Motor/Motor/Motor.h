@@ -381,7 +381,7 @@ typedef const struct Motor
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
-    HeatMonitor_Context_T HEAT_MONITOR_CONTEXT;
+    HeatMonitor_Context_T HEAT_MONITOR;
     // Analog_Conversion_T HEAT_MONITOR_ANALOG;
     StateMachine_T STATE_MACHINE;
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */

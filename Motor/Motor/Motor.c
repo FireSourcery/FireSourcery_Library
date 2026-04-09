@@ -55,7 +55,7 @@ void Motor_Init(const Motor_T * p_context)
     p_context->P_MOTOR_STATE->p_ActiveSensor = RotorSensor_Of(&p_context->SENSOR_TABLE, p_context->P_MOTOR_STATE->Config.SensorMode);
     RotorSensor_Init(p_context->P_MOTOR_STATE->p_ActiveSensor);
 
-    // HeatMonitor_Init(&p_context->HEAT_MONITOR_CONTEXT);
+    // HeatMonitor_Init(&p_context->HEAT_MONITOR);
 
     TimerT_Periodic_Init(&p_context->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_context->SPEED_TIMER, 1U);

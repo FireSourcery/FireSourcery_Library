@@ -753,6 +753,8 @@ bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor)
 // Orthogonal Composition
 // The critical architectural point: State objects naturally compose as orthogonal regions because each provides an independent behavioral filter over shared canonical data.
 ///The key is: States don't hold independent data — they provide a behavioral lens over canonical data.
+// typedef state_value_t(*State_Data_T)(void * context);
+// typedef State_Data_T State_DataVector_T[];
 
 /* Alternatively orthogonal state  */
 // static State_T * Ccw_Input(const Motor_T * p_motor, state_value_t value)

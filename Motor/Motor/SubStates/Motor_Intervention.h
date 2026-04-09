@@ -30,6 +30,7 @@
 
     Hypervisor-layer safe stop functions at the Motor level.
     Intervention State removes user command from the control loop.
+    Motor States are divided by control logic, this can be implemented here.
 
     SubState structure:
     ┌──────────────────────────────────────────────────┐

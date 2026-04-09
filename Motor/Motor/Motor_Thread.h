@@ -95,10 +95,10 @@ static inline void Motor_PWM_Thread(const Motor_T * p_context)
 /* Caller handle I Limit HeatMonitor_GetScalarLimit_Percent16(&p_motor->Thermistor) */
 static inline void Motor_Heat_Thread(const Motor_T * p_context)
 {
-    switch (HeatMonitor_Poll(&p_context->HEAT_MONITOR_CONTEXT))
+    switch (HeatMonitor_Poll(&p_context->HEAT_MONITOR))
     {
         case HEAT_MONITOR_STATUS_NORMAL:
-            if (Monitor_IsStatusClearing(p_context->HEAT_MONITOR_CONTEXT.P_STATE) == true)
+            if (Monitor_IsStatusClearing(p_context->HEAT_MONITOR.P_STATE) == true)
             {
                 // Motor_ClearILimitMotoringEntry(p_context, MOTOR_I_LIMIT_HEAT_THIS);
             }
@@ -112,7 +112,7 @@ static inline void Motor_Heat_Thread(const Motor_T * p_context)
         default: break;
     }
 
-    if (Monitor_IsEnabled(p_context->HEAT_MONITOR_CONTEXT.P_STATE) == true) { HeatMonitor_MarkConversion(&p_context->HEAT_MONITOR_CONTEXT); }
+    if (Monitor_IsEnabled(p_context->HEAT_MONITOR.P_STATE) == true) { HeatMonitor_MarkConversion(&p_context->HEAT_MONITOR); }
 }
 
 /******************************************************************************/

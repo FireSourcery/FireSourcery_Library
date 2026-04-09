@@ -33,7 +33,6 @@
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
 
-// #include "MotorController_Analog.h"
 #include "System/SysTime/SysTime.h"
 
 #include <string.h>
@@ -110,34 +109,18 @@ static inline bool MotorController_IsFault(MotorController_T * p_context)  { ret
 static inline bool MotorController_IsLock(MotorController_T * p_context)   { return MotorController_IsState(p_context, MC_STATE_ID_LOCK); }
 
 static inline bool MotorController_IsConfig(MotorController_T * p_context) { return (MotorController_IsLock(p_context) || MotorController_IsFault(p_context)); }
+/* check by var set */
+static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context) { return StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD); }
 
 
-/*
-    General Direction
-    App may overwrite.
-*/
-static int MotorController_GetDirection(MotorController_T * p_context)
-{
-    // switch (StateMachine_GetRootStateId(p_context->STATE_MACHINE.P_ACTIVE))
-    // {
-    //     case MC_STATE_ID_MAIN:       return _Motor_Table_GetDirectionAll(&p_context->MOTORS); /* None is error in this case */
-    //     case MC_STATE_ID_PARK:       return 0;
-    //     case MC_STATE_ID_LOCK:       return 0;
-    //     case MC_STATE_ID_FAULT:      return 0;
-    //     default:                       return 0;
-    // }
-    return _Motor_Table_GetDirectionAll(&p_context->MOTORS);
-}
 
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-
 /* Active Main  */
 /* return != 0xFF for App active.  */
 // static inline state_t MotorController_GetMainSubState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
-
 
 
 /******************************************************************************/
@@ -200,30 +183,29 @@ static inline void MotorController_SetCmdValue(MotorController_T * p_context, in
 static inline void MotorController_SetDirection(MotorController_T * p_context, int direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
 static inline void MotorController_SetControlState(MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_PHASE); }
 static inline void MotorController_SetFeedbackMode(MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
-
-/* check by var set */
-static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context)
+/*
+    General Direction
+    App may overwrite.
+*/
+static int MotorController_GetDirection(MotorController_T * p_context)
 {
-    return (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD));
+    return _Motor_Table_GetDirectionAll(&p_context->MOTORS);
 }
 
-/* Combination Input */
-// typedef union MotorController_MotorCmdValue
-// {
-//     struct
-//     {
-//         uint16_t CmdValue;
-//         uint16_t CmdId;
-//     };
-//     uint32_t Value;
-// }
-// MotorController_MotorCmdValue_T;
 
-// static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
-// {
-//     MotorController_MotorCmdValue_T  input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
-//     _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, input.Value);
-// }
+/* Combination Input */
+typedef union MotorController_MotorCmdValue
+{
+    struct { uint16_t CmdValue; uint16_t CmdId; };
+    uint32_t Value;
+}
+MotorController_MotorCmdValue_T;
+
+static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
+{
+    MotorController_MotorCmdValue_T input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
+    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, input.Value);
+}
 
 /******************************************************************************/
 /*!

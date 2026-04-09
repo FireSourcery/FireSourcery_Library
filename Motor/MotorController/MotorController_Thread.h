@@ -154,19 +154,12 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Increasing Limit only, reset on warning clear.
             */
            _MotorController_SetILimitAll(p_context, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
-            // LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetScalarLimit_Percent16(&p_context->HEAT_MOSFETS) / 2U);
-            // Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
 
             if (Monitor_IsWarningTriggering(p_context->HEAT_MOSFETS.P_STATE)) { MotorController_BeepMonitorTrigger(p_context); }
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:
-            if (Monitor_IsWarningClearing(p_context->HEAT_MOSFETS.P_STATE))
-            {
-                _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_HEAT_MC);
-                // LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, MOT_I_LIMIT_HEAT_MC);
-                // Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS);
-            }
+            if (Monitor_IsWarningClearing(p_context->HEAT_MOSFETS.P_STATE)) { _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_HEAT_MC); }
             break;
 
         default:

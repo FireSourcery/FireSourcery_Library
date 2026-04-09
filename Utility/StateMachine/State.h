@@ -129,6 +129,14 @@ typedef State_Input_T(*State_InputMapper_T)(state_input_t inputId);
 /* Cmd, non transition input + return value */
 typedef uint8_t state_cmd_t;
 typedef state_value_t(*State_Cmd_T)(void * context, state_value_t value);
+/*  */
+typedef state_value_t(*State_Data_T)(void * context);
+typedef State_Data_T State_DataVector_T[];
+// typedef struct State_DataVector_T
+// {
+//     State_Data_T Vector[0];
+// } State_DataVector_T;
+
 
 /*
     Property Getter/Setter. paired mapping using the same id.
@@ -142,13 +150,7 @@ typedef void(*State_SetField_T)(void * p_context, state_value_t field, state_val
 typedef uint8_t state_accessor_t;
 typedef const struct State_Accessor { State_GetField_T GET; State_SetField_T SET; } State_Accessor_T;
 
-/*  */
-typedef state_value_t(*State_Data_T)(void * context);
-typedef State_Data_T State_DataVector_T[ ];
-// typedef struct State_DataVector_T
-// {
-//     State_Data_T Vector[0];
-// } State_DataVector_T;
+
 
 
 /******************************************************************************/
@@ -203,6 +205,7 @@ typedef const struct State
     */
     State_InputMapper_T TRANSITION_MAPPER;
 
+    //todo
     /*
         Accessor functions
         State controlled value access
@@ -225,22 +228,18 @@ typedef const struct State
         [ROOT] States only use [P_TRANSITION_TABLE]
     */
     const struct State * P_PARENT; /* NULL for top level state */
-
     /* SubStates define P_TOP and DEPTH for runtime optimization */
-    uint8_t DEPTH;                  /* Depth of state. Depth must be consistent for iteration */
     const struct State * P_TOP;     /* SubStates maintain pointer to top level state. */
+    uint8_t DEPTH;                  /* Depth of state. Depth must be consistent for iteration */
 
-
-    // /* const sub-TYPE context */
-    // const void * P_EXTENSION; /* Maybe more convenient than inheritance */
-    /* non const sub-STATE context */
-    // void * (* const SUBSTATE_CONTEXT)(void * p_context); /* Retrieve mutable State data from p_context. */
 
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
 #ifdef STATE_MACHINE_LINKED_STATES_ENABLE
     struct State * P_LINK_NEXT;
     struct State * P_LINK_PREV;
 #endif
+    // /* const sub-TYPE context */
+    // const void * P_EXTENSION; /* Maybe more convenient than inheritance */
 }
 State_T;
 

@@ -35,9 +35,11 @@
 /******************************************************************************/
 /*
     StateMachine SyncOutput Thread
-    [Combined Semi-Synchronous Machine]
-    supports both operation at expense of additional condition check
-    inline for compile time expansion
+
+    caller may custom compose with
+        _StateMachine_*_ProcSyncTransition
+        _StateMachine_*_ProcSyncOutput
+        _StateMachine_*_ProcSyncInput
 */
 /******************************************************************************/
 static inline void _StateMachine_Synchronous_Thread(StateMachine_Active_T * p_active, void * p_context)
@@ -57,7 +59,7 @@ static inline void StateMachine_Synchronous_Thread(StateMachine_T * p_stateMachi
 /*
     HSM
 */
-static inline void _StateMachine_Synchronous_RootFirst_Thread(StateMachine_Active_T * p_active, void * p_context)
+static inline void _StateMachine_Synchronous_RootFirst(StateMachine_Active_T * p_active, void * p_context)
 {
     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
     {
@@ -68,5 +70,19 @@ static inline void _StateMachine_Synchronous_RootFirst_Thread(StateMachine_Activ
 
 static inline void StateMachine_Synchronous_RootFirst_Thread(StateMachine_T * p_stateMachine)
 {
-    _StateMachine_Synchronous_RootFirst_Thread(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
+    _StateMachine_Synchronous_RootFirst(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
+}
+
+
+/*
+    HSM
+*/
+static inline void StateMachine_Hsm_Thread(StateMachine_T * p_stateMachine)
+{
+    if (_StateMachine_AcquireAsyncIsr(p_stateMachine->P_ACTIVE) == true)
+    {
+        // _StateMachine_Branch_Proc(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
+        _StateMachine_Branch_ProcSyncOutput(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT); // async inptus only
+        _StateMachine_ReleaseAsyncIsr(p_stateMachine->P_ACTIVE);
+    }
 }

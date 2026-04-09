@@ -42,7 +42,7 @@ typedef union MotVarId
     struct
     {
         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Field Id */
-        uint16_t InnerType      : 6U; /* Accessor. Corresponds with Base enum type, maybe n:1 handlers to enum type literal. Struct Type */
+        uint16_t InnerType      : 6U; /* Accessor. Corresponds with Base enum type, may be n:1 handlers to enum type literal. Struct Type */
         uint16_t OuterType      : 1U; /* 0-Motor, 1-MotorController */
         uint16_t Instance       : 2U; /* Instance */
         uint16_t Resv           : 3U;
@@ -51,6 +51,44 @@ typedef union MotVarId
 }
 MotVarId_T;
 
+// typedef union MotVarId
+// {
+//     struct
+//     {
+//         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Struct member */
+//         uint16_t Type           : 4U; /* enum type literal / struct type. Corresponds with Base enum type, may be n:1, as TypeObject */
+                                            /* includes the access type */
+                                            // Acess:2
+                                            //extended:2
+//         uint16_t Prefix      : 4U; /* Namespace, zero offset */ /* includes the source module */
+//         uint16_t Instance       : 2U; /* Instance. instance > 4 can use ParitionId or Resv */
+//         uint16_t Resv           : 2U;
+//     };
+//     uint16_t Value;
+// }
+// MotVarId_T;
+
+#define MOT_VAR_ID_TYPE_ID(Partition, Type) ((uint16_t)(((Partition) << 4U) | (Type)))
+/* Partitions Type to start as 0 index */
+// typedef enum MotVarId_Partition
+// {
+//     MOT_VAR_ID_PARITION_MOTOR,
+//     MOT_VAR_ID_PARITION_MOTOR_SUB_MODULE,
+//     MOT_VAR_ID_PARITION_MOTOR_SENSOR,
+//     MOT_VAR_ID_PARITION_GENERAL,
+//     MOT_VAR_ID_PARITION_V_MONITOR,
+//     MOT_VAR_ID_PARITION_HEAT_MONITOR,
+
+//     MOT_VAR_ID_PARITION_V_MONITOR_SOURCE,,
+//     MOT_VAR_ID_PARITION_V_MONITOR_AUX,
+//     MOT_VAR_ID_PARITION_HEAT_MONITOR_PCB,
+//     MOT_VAR_ID_PARITION_HEAT_MONITOR_MOSFETS,
+//     MOT_VAR_ID_PARITION_COMMUNICATION,
+//     MOT_VAR_ID_PARITION_SYSTEM_COMMAND,
+//     MOT_VAR_ID_PARITION_APP,
+//     _MOT_VAR_ID_PARITION_END,
+// }
+// MotVarId_Partition_T;
 
 /*
     Status Response for Read/Write

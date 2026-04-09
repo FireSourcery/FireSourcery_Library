@@ -203,3 +203,6 @@ static inline state_value_t State_GetValue(State_T * p_state, void * p_context, 
 
 static inline void _State_Setter(State_SetField_T setter, void * p_context, state_value_t field, state_value_t value) { if (setter != NULL) setter(p_context, field, value); }
 static inline void State_SetValue(State_T * p_state, void * p_context, state_accessor_t id, state_value_t field, state_value_t value) { _State_Setter(p_state->P_ACCESSOR_TABLE[id].SET, p_context, field, value); }
+
+
+static inline state_value_t State_Data(State_T * p_state, void * p_context, size_t id) { return p_state->P_DATA_VECTOR[id](p_context); }

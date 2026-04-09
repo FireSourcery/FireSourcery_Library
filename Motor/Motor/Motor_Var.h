@@ -348,12 +348,9 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
 
 int _Motor_Var_ConfigDebug_Get(const Motor_State_T * p_motor, Motor_Var_ConfigDebug_T varId);
 
-
-
 /* static */
 extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
 extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
-
 
 
 /******************************************************************************/
@@ -414,7 +411,37 @@ extern int Motor_VarType_Get(Motor_T * p_motor, Motor_VarType_T typeId, int varI
 extern void Motor_VarType_Set(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 extern bool Motor_VarType_CheckSet(Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);
 
-// typedef enum Motor_Sensor_VarType
+
+// typedef enum Motor_VarType
+// {
+//     MOTOR_VAR_TYPE_USER_OUT,
+//     MOTOR_VAR_TYPE_USER_CONTROL, /* Polling IO. Setpoint/StateMachine. */
+//     MOTOR_VAR_TYPE_USER_SETPOINT, /* Setpoint Input only */
+//     MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
+//     MOTOR_VAR_TYPE_FOC_OUT,
+//     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
+//     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
+//     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
+//     MOTOR_VAR_TYPE_CONFIG_PID,
+//     MOTOR_VAR_TYPE_CALIBRATION_CMD,
+//     MOTOR_VAR_TYPE_CONFIG_DEBUG,
+//     MOTOR_VAR_TYPE_CONFIG_RESV,
+// }
+// Motor_VarType_T;
+
+// typedef enum Motor_VarType_SubModule
+// {
+//     MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
+//     MOTOR_VAR_TYPE_V_BUS,               /* Not instanced */
+//     MOTOR_VAR_TYPE_PHASE,
+//     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
+//     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
+//     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
+//     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
+// }
+// Motor_VarType_SubModule_T;
+
+// typedef enum Motor_VarType_Sensor
 // {
 //     MOTOR_VAR_TYPE_HALL_STATE,
 //     MOTOR_VAR_TYPE_HALL_CONFIG,
@@ -423,7 +450,7 @@ extern bool Motor_VarType_CheckSet(Motor_T * p_motor, Motor_VarType_T typeId, in
 //     MOTOR_VAR_TYPE_ENCODER_CONFIG,
 //     MOTOR_VAR_TYPE_ENCODER_CMD,
 // }
-// Motor_Sensor_VarType_T;
+// Motor_VarType_Sensor_T;
 
 int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_T typeId, int varId);
 void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_T typeId, int varId, int varValue);

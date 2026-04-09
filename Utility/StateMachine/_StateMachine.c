@@ -189,6 +189,10 @@ inline void _StateMachine_ApplyInputSyncTransition(StateMachine_Active_T * p_act
 /* check for an async transition first */
 /* if a [Transition] occurred.  */
 /* Continue processing [Output] of the new State */
+/*
+    supports sync and async inputs at expense of additional condition check
+    inline for compile time expansion
+*/
 void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
 {
     _StateMachine_ProcSyncNextState(p_active, p_context); //optionally split to include timer
@@ -196,12 +200,10 @@ void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
     _StateMachine_ProcSyncInput(p_active, p_context);
 }
 
-/* run loop actions first, then transitions. */
+/* Async inputs only */
 // void _StateMachine_ProcState(StateMachine_Active_T * p_active, void * p_context)
 // {
 //     _StateMachine_ProcSyncOutput(p_active, p_context);
-//     _StateMachine_ProcSyncNextState(p_active, p_context);
-//     _StateMachine_ProcSyncInput(p_active, p_context);
 // }
 
 
