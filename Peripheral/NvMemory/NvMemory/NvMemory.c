@@ -93,6 +93,7 @@ NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context)
             if (p_context->READ_ERROR_FLAGS(p_context->P_HAL) == true)
             {
                 status = (p_opControl->PARSE_CMD_ERROR != NULL) ? p_opControl->PARSE_CMD_ERROR(p_context->P_HAL) : NV_MEMORY_STATUS_ERROR_CMD;
+                // if (status == error)break; child function remap continue
                 break;
             }
             if (p_opControl->FINALIZE_CMD != NULL)

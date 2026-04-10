@@ -91,6 +91,7 @@ static Flash_Status_T ParseCmdErrorVerify(void * p_hal)
 static Flash_Status_T ParseCmdErrorWriteOnce(void * p_hal)
 {
     (void)p_hal;
+    // if (HAL_Flash_ReadErrorVerifyFlag(p_hal) == true) { status = NV_MEMORY_STATUS_SUCCESS; }
     return NV_MEMORY_STATUS_ERROR_CMD;
 }
 
@@ -371,6 +372,8 @@ Flash_Status_T Flash_VerifyErase_Blocking(Flash_T * p_flash, uintptr_t flashAddr
 
 /* Caller ensure align. Alternatively write remainder filling with erase pattern which can be overwritten */
 // if(status == NV_MEMORY_STATUS_SUCCESS) { if(p_flash->OpSizeRemainder != 0U) { status = WriteRemainder(p_flash, FLASH_UNIT_WRITE_ONCE_SIZE); } }
+// breaks on first error.
+// extension, over write erase pattern, copy non writable form
 Flash_Status_T Flash_WriteOnce_Blocking(Flash_T * p_flash, uintptr_t flashAddress, const void * p_data, size_t size)
 {
     return ProcAfterSet(p_flash, SetWriteOnce(p_flash, flashAddress, p_data, size));

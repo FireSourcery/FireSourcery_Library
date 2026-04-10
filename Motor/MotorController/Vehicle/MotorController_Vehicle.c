@@ -337,13 +337,16 @@ void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc)
 void MotorController_Vehicle_SetThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
     if (Vehicle_Input_PollThrottle(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, userCmd)) { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD); }
-    else { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_THROTTLE_VALUE); }
+    // else { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_THROTTLE_VALUE); }
+     _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_THROTTLE_VALUE);
 }
 
 void MotorController_Vehicle_SetBrake(MotorController_T * p_mc, uint16_t userCmd)
 {
+    // if (Vehicle_Input_PollBrake(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, userCmd)) { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD); }
+    // else { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_BRAKE_VALUE); }
     if (Vehicle_Input_PollBrake(&p_mc->VEHICLE.P_VEHICLE_STATE->Input, userCmd)) { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_DRIVE_CMD); }
-    else { _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_BRAKE_VALUE); }
+   _MotorController_Vehicle_ApplyCmd(p_mc, VEHICLE_STATE_INPUT_BRAKE_VALUE);
 }
 
 void MotorController_Vehicle_SetRelease(MotorController_T * p_mc)

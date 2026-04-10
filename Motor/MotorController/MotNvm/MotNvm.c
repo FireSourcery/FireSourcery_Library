@@ -81,13 +81,21 @@ static bool IsManufactureWritable(uint8_t * p_image, const uint8_t * p_source, u
     return true;
 }
 
+static bool IsSkip(const uint8_t * p_source, uint8_t size)
+{
+    for (uint8_t i = 0U; i < size; i++) { if (p_source[i] != FLASH_UNIT_ERASE_PATTERN && p_source[i] != 0U) { return false; } }
+    return true;
+}
+
 NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, const void * p_source, uint8_t size)
 {
     uint8_t read[64U] = { 0 };
     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, address, size, &read[0U]);
 
     if (memcmp(&read[0U], p_source, size) == 0U) { status = NV_MEMORY_STATUS_SUCCESS; } /* Already matches. */
-    else if (IsManufactureWritable(read, (const uint8_t *)p_source, size))
+    else if (IsSkip((const uint8_t *)p_source, size)) { status = NV_MEMORY_STATUS_SUCCESS; }  /* p_source  == 0xff, skip */
+    // else if (IsManufactureWritable(read, (const uint8_t *)p_source, size))
+    else
     {
         status = _MotNvm_WriteManufacture_Blocking(p_motNvm, address, p_source, size);
     }
