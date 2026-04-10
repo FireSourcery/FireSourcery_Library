@@ -73,7 +73,7 @@
 #include <string.h>
 
 /* Part  */
-#include "AppTable/MotorController_AppTable.h"
+#include "MotorController_App.h"
 
 /******************************************************************************/
 /*!
@@ -82,18 +82,6 @@
 /*
     User InputMux
 */
-// typedef union MotorController_InputMode
-// {
-//     struct
-//     {
-//         uint8_t Serial : 1;
-//         uint8_t Analog : 1;
-//         uint8_t Can    : 1;
-//     };
-//     uint8_t Value;
-// }
-// MotorController_InputMode_T;
-
 // DriveCmdSource
 typedef enum MotorController_InputMode
 {
@@ -180,7 +168,8 @@ typedef struct MotorController_Config
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
 
-    MotorController_MainMode_T InitMode; /* alternatively state_t stand in */
+    // MotorController_MainMode_T InitMode; /* alternatively state_t stand in */
+    int InitMode; /* alternatively state_t stand in */
     MotorController_InputMode_T InputMode;
     bool IsParkStateEnabled;
 
@@ -298,13 +287,25 @@ typedef const struct MotorController
     TimerT_T MILLIS_TIMER; /* Timer Context */
     StateMachine_T STATE_MACHINE;
 
-    /*  */
-    Vehicle_T VEHICLE; /* Drive */
+    MotorController_App_T * P_APP; /* Single compile time selection for now */
+    const void * P_APP_CONTEXT;
 
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
 }
 MotorController_T;
+
+/******************************************************************************/
+/*!
+    App Dispatch - delegates to embedded APP vtable in MotorController_T
+*/
+/******************************************************************************/
+/* in case implementation changes */
+static inline MotorController_App_T * MotorController_App(MotorController_T * p_mc) { return p_mc->P_APP; }
+static inline State_T * MotorController_App_EnterMain(MotorController_T * p_mc) { return p_mc->P_APP->ENTER_MAIN((void *)p_mc, 0); }
+static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_mc) { p_mc->P_APP->PROC_ANALOG_USER(p_mc); }
+static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc->P_APP->INIT != NULL) { p_mc->P_APP->INIT(p_mc); } }
+
 
 /******************************************************************************/
 /*

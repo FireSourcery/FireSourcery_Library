@@ -177,23 +177,6 @@ Vehicle_T;
 
 // #define VEHICLE_INIT()
 
-/******************************************************************************/
-/*!
-    DriveCmd - Throttle, Brake, Zero
-    "state" changes on edge detection
-    @param[in] driveCmd Throttle, Brake, Zero
-    @param[in] cmdValue [0:65535]
-*/
-/******************************************************************************/
-/*
-    set to sync buffer. proc in state or input
-    Direction handle in state machine
-*/
-// static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }
-// static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
-// static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
-// static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
-
 
 /******************************************************************************/
 /*!
@@ -243,3 +226,22 @@ Vehicle_ConfigId_T;
 
 extern int Vehicle_ConfigId_Get(const Vehicle_State_T * p_this, Vehicle_ConfigId_T id);
 extern void Vehicle_ConfigId_Set(Vehicle_State_T * p_this, Vehicle_ConfigId_T id, int value);
+
+
+/******************************************************************************/
+/*!
+    DriveCmd - Throttle, Brake, Zero
+    "state" changes on edge detection
+    @param[in] driveCmd Throttle, Brake, Zero
+    @param[in] cmdValue [0:65535]
+*/
+/******************************************************************************/
+/*
+    set to sync buffer. proc in state or input
+    Direction handle in state machine
+*/
+// static inline bool Vehicle_User_PollCmdEdge(Vehicle_State_T * p_this) { return Vehicle_Input_PollCmdEdge(&p_this->Input); }
+// static inline void Vehicle_User_SetThrottle(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
+// static inline void Vehicle_User_SetBrake(Vehicle_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
+// static inline void Vehicle_User_SetZero(Vehicle_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
+

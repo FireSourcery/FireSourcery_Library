@@ -37,8 +37,8 @@
 struct MotorController;
 typedef const struct MotorController MotorController_T;
 
-typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
-// void (*PROC_ANALOG_USER)(void * p_appContext, MotAnalogUser_T * p_analogUser);
+typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
+
 /*
     All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
     Protocol freely maps,
@@ -55,11 +55,13 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_context);
 typedef const struct MotorController_App
 {
     MotorController_App_Proc_T PROC_ANALOG_USER;
+    MotorController_App_Proc_T INIT;
     State_Input_T ENTER_MAIN;
-    // State_T * P_INITIAL_STATE;
-    const void * P_APP_CONTEXT;
+    // const void * P_APP_CONTEXT;
+    // void * P_RUNTIME;
+    // const void * P_NVM_CONFIG;
+    // Motor_Table_T MOTORS;
 }
 MotorController_App_T;
 
 
-MotorController_App_T * MotorController_App(MotorController_T * p_context);

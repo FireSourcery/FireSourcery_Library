@@ -50,29 +50,33 @@ typedef const struct Analog_Conversion
 {
     Analog_ADC_T * P_ADC;
     analog_channel_t CHANNEL;
-    Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;
+    // Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;
     /* reserve interface for extension */
     // Analog_Options_T OPTIONS;
 }
 Analog_Conversion_T;
 
-#define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
-#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), }
+#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex)  (Analog_Conversion_T) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, /* .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), */ }
+
+#define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
 
 static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
 
-static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result; }
-static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
-
-/* resolve at runtime */
 static inline Analog_ConversionChannel_T * Analog_Conversion_ChannelOf(const Analog_Conversion_T * p_conv) { return Analog_ADC_ConversionOf(p_conv->P_ADC, p_conv->CHANNEL); }
-// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return Analog_ADC_ResultOf(p_conv->P_ADC, p_conv->CHANNEL); }
+/* resolve at runtime */
+static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return Analog_Conversion_ChannelOf(p_conv)->P_CONVERSION_STATE->Result; }
+static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { Analog_Conversion_ChannelOf(p_conv)->P_CONVERSION_STATE->Result = 0U; }
+
+
+// static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result; }
+// static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->Result = 0U; }
 
 /* From a centralized channels, map to each adc, and application handl */
 // typedef Analog_Conversion_T Analog_ConversionTable_T[];
 // #define ANALOG_ADC_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex].P_CONVERSION_CHANNEL
 // #define ANALOG_CONVERSION_(Conversions, ChannelIndex) Conversions[ChannelIndex]
+// #define ANALOG_CONVERSION_DEF(p_AdcStruct, Channel, ConversionChannel)  (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (Channel), .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
 
 /******************************************************************************/
 /*

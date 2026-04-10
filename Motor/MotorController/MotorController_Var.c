@@ -28,8 +28,10 @@
 */
 /******************************************************************************/
 #include "MotorController_Var.h"
-#include "AppTable/MotorController_AppTable.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
+
+/* only point of coupling to AppTable */
+#include "AppTable/MotorController_AppTable.h"
 
 
 /******************************************************************************/
@@ -240,7 +242,7 @@ static int _HandleSystem_Get(const MotorController_T * p_context, MotVarId_T var
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:           return 0; //return CanBus_Config_Get(p_mc, varId.Base);
 
         case MOT_VAR_TYPE_VEHICLE_CONTROL:     return MotorController_Vehicle_VarId_Get(p_context, varId.Base);
-        case MOT_VAR_TYPE_VEHICLE_CONFIG:      return Vehicle_ConfigId_Get(p_context->VEHICLE.P_VEHICLE_STATE, varId.Base);
+        case MOT_VAR_TYPE_VEHICLE_CONFIG:      return MotorController_Vehicle_ConfigId_Get(p_context, varId.Base);
         default: return 0;
     }
 }
@@ -281,7 +283,7 @@ static MotVarId_Status_T _HandleSystem_Set(const MotorController_T * p_context, 
         case MOT_VAR_TYPE_CAN_BUS_CONFIG:           break; // CanBusConfig_Set(p_context, varId.Base, value);
 
         case MOT_VAR_TYPE_VEHICLE_CONTROL:        MotorController_Vehicle_VarId_Set(p_context, varId.Base, value);                       break;
-        case MOT_VAR_TYPE_VEHICLE_CONFIG:         Vehicle_ConfigId_Set(p_context->VEHICLE.P_VEHICLE_STATE, varId.Base, value);     break;
+        case MOT_VAR_TYPE_VEHICLE_CONFIG:         MotorController_Vehicle_ConfigId_Set(p_context, varId.Base, value);     break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
         // case MOT_VAR_TYPE_COMMAND_NVM:           return _HandleSystemCommand_Nvm_Set(p_context, varId.Base, value);
         // case MOT_VAR_TYPE_COMMAND_CALIBRATION:   return _HandleSystemCommand_Calibration_Set(p_context, varId.Base, value);

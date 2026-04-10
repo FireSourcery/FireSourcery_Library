@@ -74,25 +74,31 @@ MotorController_App_T MC_APP_MOTOR_CMD =
     Singleton App handlers
 */
 /******************************************************************************/
-MotorController_App_T * MotorController_App(MotorController_T * p_context)
-{
-    switch (p_context->P_MC_STATE->Config.InitMode)
-    {
-        case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
-        case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_APP_VEHICLE;
-        default: return &MC_APP_MOTOR_CMD;
-    }
-}
+// MotorController_App_T * MotorController_App(MotorController_T * p_context)
+// {
+//     switch (p_context->P_MC_STATE->Config.InitMode)
+//     {
+//         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
+//         case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_APP_VEHICLE;
+//         default: return &MC_APP_MOTOR_CMD;
+//     }
+// }
 
-// alternatively need subid scheme
-MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_context)
-{
-    if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
-    // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_VEHICLE)) { return MOTOR_CONTROLLER_MAIN_MODE_VEHICLE; }
-    return -1;
-}
+// // alternatively need subid scheme
+// MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_context)
+// {
+//     if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
+//     // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_VEHICLE)) { return MOTOR_CONTROLLER_MAIN_MODE_VEHICLE; }
+//     return -1;
+// }
 
 
-State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN((void *)p_context, 0); }
+// State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN((void *)p_context, 0); }
 
-void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER(p_context); }
+// void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER(p_context); }
+
+
+// void MotorController_AppTableVar(MotorController_T * p_context) {
+//    case MOT_VAR_TYPE_VEHICLE_CONTROL:     return MotorController_Vehicle_VarId_Get(p_context, varId.Base);
+//         case MOT_VAR_TYPE_VEHICLE_CONFIG:      return MotorController_Vehicle_ConfigId_Get(p_context, varId.Base);
+//      }

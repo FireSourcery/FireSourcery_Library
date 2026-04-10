@@ -75,7 +75,7 @@ void MotorController_Init(const MotorController_T * p_context)
     Shell_Init(&p_mc->Shell);
 #endif
 
-    Vehicle_Init(&p_context->VEHICLE); //todo move to interface
+    MotorController_App_Init(p_context);
 
     /* Alternatively set nominal on init */
     for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_context->P_HEAT_MOSFET_CONVERSIONS[i]); }

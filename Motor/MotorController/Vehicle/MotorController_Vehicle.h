@@ -85,7 +85,7 @@ Vehicle_StateId_T;
 
 // extern State_T MC_STATE_MAIN_VEHICLE;
 
-extern MotorController_App_T MC_APP_VEHICLE;
+extern const MotorController_App_T MC_APP_VEHICLE;
 
 
 /******************************************************************************/
@@ -94,12 +94,6 @@ extern MotorController_App_T MC_APP_VEHICLE;
 */
 /******************************************************************************/
 
-/* StateMachine Input */
-// extern void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction);
-// extern void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd);
-// extern void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc);
-// extern void MotorController_Vehicle_StartBrake(MotorController_T * p_mc);
-// extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
 
 /*  */
 extern void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc);
@@ -116,5 +110,15 @@ extern sign_t MotorController_Vehicle_GetDirection(MotorController_T * p_mc);
 extern void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T id, int value);
 extern int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T id);
 
+int MotorController_Vehicle_ConfigId_Get(const MotorController_T * p_mc, Vehicle_ConfigId_T id);
+void MotorController_Vehicle_ConfigId_Set(MotorController_T * p_mc, Vehicle_ConfigId_T id, int value);
 
 
+
+
+/* StateMachine Input */
+// extern void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction);
+// extern void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd);
+// extern void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc);
+// extern void MotorController_Vehicle_StartBrake(MotorController_T * p_mc);
+// extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
