@@ -42,12 +42,10 @@ typedef struct Socket_Config
     uint8_t SpecsId;
     uint32_t BaudRate;
     uint32_t WatchdogTimeout;
-    //uint32_t RxTimeoutPacket
-    //uint32_t RxTimeoutByte
-    //uint32_t ReqExtTimeout
+    //uint32_t RxTimeout
+    //uint32_t ReqTimeout
     //uint8_t NackLimit
     bool IsEnableOnInit;     /* enable on start up */
-    // bool IsWatchdogOnInit;
 }
 Socket_Config_T;
 
@@ -70,7 +68,7 @@ typedef struct Socket_State
     uint32_t RxTimeStart;
     Protocol_HeaderMeta_T RxMeta;   /* Rx Parse Packet Meta */
 
-    //
+    // todo
     Packet_RxParserState_T RxParserState;
     Protocol_HeaderMeta_T TxMeta;
 
@@ -149,6 +147,7 @@ typedef const struct Socket
 }
 Socket_T;
 
+// #define _SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClass,p_Xcvr, p_Timer) (Socket_T)
 
 
 #define SOCKET_INIT(p_State, p_RxBuffer, p_TxBuffer, BufferLength, p_AppContext, p_SubstateBuffer, p_Config, p_ReqTable, ReqCount, p_PacketClassTable, PacketClassCount, p_XcvrTable, XcvrCount, p_Timer) (Socket_T) \
@@ -213,6 +212,12 @@ static inline bool Socket_IsRxLost(const Socket_T * p_socket)
     const Socket_State_T * p_state = p_socket->P_SOCKET_STATE;
     return ((p_state->IsRxWatchdogEnable == true) && (*p_socket->P_TIMER - p_state->ReqTimeStart > p_state->Config.WatchdogTimeout));
 }
+
+/* optionally  */
+// static inline bool Socket_IsRxLost(const Socket_T * p_socket)
+// {
+//     return (*p_socket->P_TIMER - p_socket->P_SOCKET_STATE->ReqTimeStart > p_socket->P_SOCKET_STATE->Config.WatchdogTimeout);
+// }
 
 /*
     Extern

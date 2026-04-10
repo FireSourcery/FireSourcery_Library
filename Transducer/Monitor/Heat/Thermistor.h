@@ -200,9 +200,9 @@ extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t
 typedef enum Thermistor_ConfigId
 {
     /* Board RefId */
-    THERMISTOR_REF_R_SERIES, // All instance Read-Only
-    THERMISTOR_REF_R_PARALLEL, // All instance Read-Only
-    THERMISTOR_REF_V_SERIES_MV, // All instance Read-Only
+    THERMISTOR_BOARD_R_SERIES, // All instance Read-Only
+    THERMISTOR_BOARD_R_PARALLEL, // All instance Read-Only
+    THERMISTOR_BOARD_V_SERIES_MV, // All instance Read-Only
     /* Config CoeffId */
     THERMISTOR_CONFIG_TYPE, /* Resv */
     THERMISTOR_CONFIG_B,

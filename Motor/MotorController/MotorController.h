@@ -82,15 +82,24 @@
 /*
     User InputMux
 */
-typedef union MotorController_InputMode
+// typedef union MotorController_InputMode
+// {
+//     struct
+//     {
+//         uint8_t Serial : 1;
+//         uint8_t Analog : 1;
+//         uint8_t Can    : 1;
+//     };
+//     uint8_t Value;
+// }
+// MotorController_InputMode_T;
+
+// DriveCmdSource
+typedef enum MotorController_InputMode
 {
-    struct
-    {
-        uint8_t Serial : 1;
-        uint8_t Analog : 1;
-        uint8_t Can    : 1;
-    };
-    uint8_t Value;
+    MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
+    MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
+    MOTOR_CONTROLLER_INPUT_MODE_CAN,
 }
 MotorController_InputMode_T;
 
@@ -204,6 +213,7 @@ typedef struct MotorController_State
     uint32_t StateCounter; /* Calibration */
     uint32_t ControlCounter; /* PWM */
 
+    // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
 
     /* Generic async return status, alternatively as union */
@@ -269,13 +279,20 @@ typedef const struct MotorController
     LimitArray_T MOT_I_LIMITS;
 
     /* Monitor - Detection + response with full context */
-    HeatMonitor_Context_T HEAT_PCB;
-    HeatMonitor_GroupContext_T HEAT_MOSFETS;
-    VMonitor_Context_T V_SOURCE;        /* Controller Supply */ /* Linear units used for initial config and optional local unit conversion only */
-    VMonitor_Context_T V_ACCESSORIES;   /* ~12V */
-    VMonitor_Context_T V_ANALOG;        /* V Analog Sensors ~5V */
-    // Analog_Conversion_T V_ASENSE_CONVERSION;
-    // Analog_Conversion_T V_ACCESSORIES_CONVERSION;
+    HeatMonitor_T HEAT_PCB;
+    Analog_Conversion_T HEAT_PCB_CONVERSION;
+
+    HeatMonitor_Group_T HEAT_MOSFETS;
+    Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
+
+    VMonitor_T V_SOURCE;        /* Controller Supply */ /* Linear units used for initial config and optional local unit conversion only */
+    Analog_Conversion_T V_SOURCE_CONVERSION;
+
+    VMonitor_T V_ACCESSORIES;   /* ~12V */
+    Analog_Conversion_T V_ACCESSORIES_CONVERSION;
+
+    VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V */
+    Analog_Conversion_T V_ANALOG_CONVERSION;
 
     /* State */
     TimerT_T MILLIS_TIMER; /* Timer Context */
@@ -295,7 +312,7 @@ MotorController_T;
 */
 /******************************************************************************/
 /* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)); }
+static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION)); }
 
 static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
 

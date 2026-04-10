@@ -32,7 +32,7 @@
             Parallel to Angle.h (which wraps math_angle_speed.h).
 */
 /******************************************************************************/
-#include "math_angle_counter.h"
+#include "angle_counter_fn.h"
 #include "Angle.h"
 
 /******************************************************************************/

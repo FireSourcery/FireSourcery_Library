@@ -120,8 +120,8 @@ static inline void Timer_SetPeriod(Timer_State_T * p_state, uint32_t ticks) { p_
 static inline Timer_Mode_T Timer_GetMode(const Timer_State_T * p_state) { return p_state->Mode; }
 static inline bool Timer_IsActive(const Timer_State_T * p_timer) { return (p_timer->Mode > TIMER_MODE_STOPPED) && (p_timer->Period > 0U); }
 static inline bool Timer_IsStopped(const Timer_State_T * p_state) { return (p_state->Period == 0UL) || (p_state->Mode == TIMER_MODE_STOPPED); }
-static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }
-static inline bool Timer_IsOneShot(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_ONE_SHOT); }
+// static inline bool Timer_IsPeriodic(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_PERIODIC); }
+// static inline bool Timer_IsOneShot(const Timer_State_T * p_timer) { return (p_timer->Mode == TIMER_MODE_ONE_SHOT); }
 
 
 /******************************************************************************/

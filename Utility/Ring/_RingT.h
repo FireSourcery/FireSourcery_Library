@@ -177,7 +177,7 @@ static inline void _RingT_PeekAt(Ring_Type_T type, const Ring_T * p_ring, size_t
 static inline void _RingT_PlaceAt(Ring_Type_T type, Ring_T * p_ring, size_t index, const void * p_unit) { _RingT_Copy(type, _RingT_At(type, p_ring, index), p_unit); }
 
 /* Value access */
-// static inline int _RingT_ValueOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return void_pointer_as_value(_RingT_PtrOf(type, p_ring, ringIndex), type.UNIT_SIZE); }
+// static inline int _RingT_ValueOf(Ring_Type_T type, const Ring_T * p_ring, size_t ringIndex) { return void_pointer_as_value(type.UNIT_SIZE, _RingT_PtrOf(type, p_ring, ringIndex)); }
 // static inline int _RingT_GetValueAt(Ring_Type_T type, const Ring_T * p_ring, size_t index) { _RingT_ValueOf(type, p_ring, _RingT_IndexIncOf(type, p_ring->Head, index)); }
 // static inline void _RingT_SetValueAt(Ring_Type_T type, Ring_T * p_ring, size_t index, int value)
 
@@ -197,7 +197,7 @@ static inline void _RingT_PlaceAt(Ring_Type_T type, Ring_T * p_ring, size_t inde
 // {
 //     size_t split = ContiguousEnd(p_ring);
 //     memcpy(p_results, Front(p_ring), split);
-//     memcpy(void_pointer_at(p_results, p_ring->CONST.UNIT_SIZE, split), p_ring->CONST.P_BUFFER, unitCount - split);
+//     memcpy(void_pointer_at(p_ring->CONST.UNIT_SIZE, p_results, split), p_ring->CONST.P_BUFFER, unitCount - split);
 // }
 
 

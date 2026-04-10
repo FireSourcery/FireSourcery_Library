@@ -190,7 +190,7 @@ typedef const struct Protocol_Req
 }
 Protocol_Req_T;
 
-#define PROTOCOL_REQ(Id, ProcReqResp, ProcExt, ReqSync, ...) \
+#define PROTOCOL_REQ(Id, ProcReqResp, ProcExt, ReqSync, ...) (Protocol_Req_T) \
     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSync, __VA_ARGS__ }
 
 // #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt) \
@@ -671,14 +671,14 @@ Handler-Driven Ack (DataModeWrite) — handler validates before acking
 //     {
 //         case 0:
 //             { // Init — parse request, begin transfer
-//                 const MotPacket_DataModeReq_Payload_T * p_req = p_ctx->p_RxPayload;
+//                 const MotPacket_DataModeReq_T * p_req = p_ctx->p_RxPayload;
 //                 p_xfer->DataModeAddress = p_req->AddressStart;
 //                 p_xfer->DataModeSize = p_req->SizeBytes;
 //                 p_xfer->DataIndex = 0;
 
-//                 MotPacket_DataModeResp_Payload_T * p_resp = p_ctx->p_TxPayload;
+//                 MotPacket_DataModeResp_T * p_resp = p_ctx->p_TxPayload;
 //                 p_resp->Status = MOT_STATUS_SUCCESS;
-//                 *p_ctx->p_TxPayloadSize = sizeof(MotPacket_DataModeResp_Payload_T);
+//                 *p_ctx->p_TxPayloadSize = sizeof(MotPacket_DataModeResp_T);
 //                 *p_ctx->p_Phase = 1;
 //                 return PROTOCOL_REQ_CODE_TX_CONTINUE;
 //             }
@@ -712,15 +712,15 @@ Handler-Driven Ack (DataModeWrite) — handler validates before acking
 //     MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 // {
 //     // Parse and validate the data mode request
-//     const MotPacket_DataModeReq_Payload_T * p_req =
-//         (const MotPacket_DataModeReq_Payload_T *)p_rxPacket->Payload;
+//     const MotPacket_DataModeReq_T * p_req =
+//         (const MotPacket_DataModeReq_T *)p_rxPacket->Payload;
 
 //     // Validate address range, permissions, etc.
 //     // Initialize state will happen via PROC_EXT first call
 
 //     // Build initial ack response (DataModeResp with status)
-//     MotPacket_DataModeResp_Payload_T * p_resp =
-//         (MotPacket_DataModeResp_Payload_T *)p_txPacket->Payload;
+//     MotPacket_DataModeResp_T * p_resp =
+//         (MotPacket_DataModeResp_T *)p_txPacket->Payload;
 //     p_resp->Status = MOT_STATUS_SUCCESS;
 
 //     return MotPacket_DataModeReadResp_Build(p_txPacket, MOT_STATUS_SUCCESS);

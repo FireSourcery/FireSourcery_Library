@@ -59,7 +59,7 @@ int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T va
 
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_motor);     break;
-        case MOTOR_VAR_I_DC:                        value = Motor_GetIBus_UFract16(p_motor);                 break;
+        case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_UFract16(p_motor);                 break;
     }
     return value;
 }
@@ -372,6 +372,7 @@ int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_
 void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
     _Motor_Var_ConfigPid_Set(p_motor, varId, varValue);
+    // set runtime only, restore without load from flash
     // switch (varId)
     // {
     //     case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;

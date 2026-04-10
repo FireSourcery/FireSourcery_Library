@@ -129,7 +129,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     HeatMonitor_Status_T status;
 
     /* Poll PCB Temperature Monitor */
-    switch (HeatMonitor_Poll(&p_context->HEAT_PCB))
+    switch (HeatMonitor_Poll(&p_context->HEAT_PCB, Analog_Conversion_GetResult(&p_context->HEAT_PCB_CONVERSION)))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT);
@@ -139,8 +139,14 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
         default: break;
     }
 
-    /* Poll MOSFET Temperature Monitors Group */
-    switch (HeatMonitor_Group_PollAll(&p_context->HEAT_MOSFETS))
+    /* Poll each MOSFET sensor individually */
+    for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++)
+    {
+        HeatMonitor_Poll(&p_context->HEAT_MOSFETS.P_MONITORS[i], Analog_Conversion_GetResult(&p_context->P_HEAT_MOSFET_CONVERSIONS[i]));
+    }
+
+    /* Poll MOSFET Temperature Monitors Group Collective */
+    switch (HeatMonitor_Group_PollCollective(&p_context->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);
@@ -174,8 +180,8 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
 
     /* Mark analog conversions for next cycle */
-    HeatMonitor_Group_MarkEach(&p_context->HEAT_MOSFETS);
-    HeatMonitor_MarkConversion(&p_context->HEAT_PCB);
+    for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_context->P_HEAT_MOSFET_CONVERSIONS[i]); }
+    Analog_Conversion_Mark(&p_context->HEAT_PCB_CONVERSION);
 
     // /* Process individual motor heat monitoring */
     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_context->P_MOTOR_CONSTS[iMotor]); }
@@ -202,11 +208,11 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
     // alternatively
-    // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION));
+    // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION));
     // switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Phase_VBus_Fract16()))
 
 // #if defined(MOTOR_V_SENSORS_ANALOG)
-    switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)))
+    switch (RangeMonitor_Poll(p_context->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION)))
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_context); break;
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_context); break;
@@ -230,7 +236,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 
     if (RangeMonitor_IsTriggeringEdge(p_context->V_SOURCE.P_STATE) == true) { MotorController_BeepMonitorTrigger(p_context); }
 
-    Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_SOURCE_CONVERSION);
 
 // #endif
 }
@@ -244,16 +250,16 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
 {
     MotorController_State_T * p_mc = p_context->P_MC_STATE;
 
-    RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES.ANALOG_CONVERSION));
-    RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG.ANALOG_CONVERSION));
+    RangeMonitor_Poll(p_context->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_context->V_ACCESSORIES_CONVERSION));
+    RangeMonitor_Poll(p_context->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_context->V_ANALOG_CONVERSION));
 
     if (RangeMonitor_IsAnyFault(p_context->V_ACCESSORIES.P_STATE) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_VACCS_LIMIT); }
     if (RangeMonitor_IsAnyFault(p_context->V_ANALOG.P_STATE) == true) { MotorController_SetFault(p_context, MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT); }
 
     if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_context, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
 
-    Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ACCESSORIES_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ANALOG_CONVERSION);
 }
 
 
@@ -285,20 +291,25 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_conte
     //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_context->P_CAN_BUS); }
     // #endif
         /* Proc in all State */
-        if (p_mc->Config.InputMode.Analog == 1U) { _MotorController_ProcAnalogUser(p_context); }
-        if (p_mc->Config.InputMode.Serial == 1U)
+        switch (p_mc->Config.InputMode)
         {
-            /* optionally */
-            // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
-            /* Only active when Serial is selected as primary input */
-            // if (MotorController_PollRxLost(p_context) == true)
-            // {
-            // Motor_Table_ForEachApply(&p_context->MOTORS, Motor_ReleaseVZ);
-            //     MotorController_ForceDisableControl(p_context);
-            //     MotorController_EnterFault(p_context);
-            // }
+            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
+                _MotorController_ProcAnalogUser(p_context);
+                break;
+            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
+                /* optionally */
+                // if (MotAnalogUser_PollBrakePins(&p_context->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
+                /* Only active when Serial is selected as primary input */
+                // if (MotorController_PollRxLost(p_context) == true)
+                // {
+                // Motor_Table_ForEachApply(&p_context->MOTORS, Motor_ReleaseVZ);
+                //     MotorController_ForceDisableControl(p_context);
+                //     MotorController_EnterFault(p_context);
+                // }
+                break;
+            case MOTOR_CONTROLLER_INPUT_MODE_CAN:
+                break;
         }
-        if (p_mc->Config.InputMode.Can == 1U) { /* CAN handling */ }
 
         /*
             Low Freq, Low Priority, ~10ms ~16ms, 100Hz
@@ -370,23 +381,23 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_c
 // {
 //     // p_fields->MicrosRef = SysTime_GetMicros();
 
-//     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//     // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_context->MOTORS.P_MONITORS[iMotor]); }
 
-//     // if (Motor_IsAnalogCycle(&p_context->MOTORS.P_CONTEXTS[0U]) == true) /* todo common timer */
+//     // if (Motor_IsAnalogCycle(&p_context->MOTORS.P_MONITORS[0U]) == true) /* todo common timer */
 //     // {
 //     //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 //     // }
 
 //     if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true)
 //     {
-//         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//         for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_context->MOTORS.P_MONITORS[iMotor]); }
 //     }
 
 //     // if (_Motor_IsAnalogCycle(p_context->P_MC_STATE->ControlCounter) == true) /* removable */
 //     for (uint8_t iAdc = 0U; iAdc < p_context->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_context->P_ANALOG_ADCS[iAdc]); }
 
 
-//     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+//     for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_context->MOTORS.P_MONITORS[iMotor]); }
 
 //     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 //     // HAL_PWM_ClearInterrupt(p_context->HAL_PWM); /* BOARD_PWM_HAL */

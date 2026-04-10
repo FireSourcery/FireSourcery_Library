@@ -75,7 +75,7 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
 }
 
 // @param[in] vInRef - Scalar Fract16 reference
-// void Linear_Voltage_InitAsScalar(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t VInRef)
+// void Linear_Voltage_Init (Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t adcVRef_MilliV, uint8_t adcBits, uint16_t VInRef)
 // {
 
 // }

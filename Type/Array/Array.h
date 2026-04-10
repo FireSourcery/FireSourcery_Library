@@ -54,7 +54,7 @@ typedef const struct ArrayMeta
         uint64_t * P_ARRAY64;
     };
     size_t LENGTH;    // Length of the p_array
-    void * P_AUGMENTS; // P_HEADER/P_STATE
+    // void * P_AUGMENTS; // P_HEADER/P_STATE
 }
 Array_T;
 
@@ -73,9 +73,9 @@ Array_T;
     Void * or Struct
     rely on compiler optimization to inline type size
 */
-static inline void _Array_Set(const size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(void_pointer_at(p_array->P_BUFFER, type, index), p_value, type); }
-static inline void _Array_ForEach(const size_t type, Array_T * p_array, proc_t op) { void_array_foreach(p_array->P_BUFFER, type, p_array->LENGTH, op); }
-static inline void _Array_SetEach(const size_t type, Array_T * p_array, set_t op, value_t value) { void_array_foreach_set(p_array->P_BUFFER, type, p_array->LENGTH, op, value); }
+static inline void _Array_Set(const size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(void_pointer_at(type, p_array->P_BUFFER, index), p_value, type); }
+static inline void _Array_ForEach(const size_t type, Array_T * p_array, proc_t op) { void_array_foreach(type, p_array->P_BUFFER, p_array->LENGTH, op); }
+static inline void _Array_SetEach(const size_t type, Array_T * p_array, set_t op, value_t value) { void_array_foreach_set(type, p_array->P_BUFFER, p_array->LENGTH, op, value); }
 
 /*
     Value Array

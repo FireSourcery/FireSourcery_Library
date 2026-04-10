@@ -29,7 +29,7 @@
     @brief  Reusable hysteresis behavior for threshold monitoring
 */
 /******************************************************************************/
-#include "math_hysteresis.h"
+#include "hysteresis_fn.h"
 
 #include <stdint.h>
 #include <stdbool.h>

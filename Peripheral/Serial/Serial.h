@@ -39,36 +39,36 @@
 typedef const struct Serial
 {
     HAL_Serial_T * P_HAL_SERIAL;
-    Ring_Context_T RX_RING;
-    Ring_Context_T TX_RING;
+    RingT_T RX_RING;
+    RingT_T TX_RING;
 }
 Serial_T;
 
 #define SERIAL_INIT(p_Hal, p_TxRingState, TxBufferSize, p_RxRingState, RxBufferSize)  \
 {                                                                               \
     .P_HAL_SERIAL = p_Hal,                                                      \
-    .TX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
-    .RX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
+    .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
+    .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
 }
 
 // #define SERIAL_ALLOC_FROM(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
 // {                                                                               \
 //     .P_HAL_SERIAL = p_Hal,                                                      \
-//     .TX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), TxBufferSize, RING_STATE_ALLOC()),         \
-//     .RX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), RxBufferSize, RING_STATE_ALLOC()),         \
+//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, RING_STATE_ALLOC()),         \
+//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, RING_STATE_ALLOC()),         \
 // }
 // #define SERIAL_INIT(p_Hal, p_TxBuffer, TxBufferSize, p_RxBuffer, RxBufferSize)  \
 // {                                                                               \
 //     .P_HAL_SERIAL = p_Hal,                                                      \
-//     .TX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
-//     .RX_RING = RING_CONTEXT_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
+//     .TX_RING = RING_T_INIT(sizeof(uint8_t), TxBufferSize, p_TxRingState),         \
+//     .RX_RING = RING_T_INIT(sizeof(uint8_t), RxBufferSize, p_RxRingState),         \
 // }
 
 #define SERIAL_ALLOC(p_Hal, TxBufferSize, RxBufferSize)    \
 {                                                          \
     .P_HAL_SERIAL = p_Hal,                                            \
-    .TX_RING = RING_CONTEXT_ALLOC(sizeof(uint8_t), TxBufferSize),     \
-    .RX_RING = RING_CONTEXT_ALLOC(sizeof(uint8_t), RxBufferSize),     \
+    .TX_RING = RING_T_ALLOC(sizeof(uint8_t), TxBufferSize),     \
+    .RX_RING = RING_T_ALLOC(sizeof(uint8_t), RxBufferSize),     \
 }
 
 //todo with RingT/Context

@@ -290,7 +290,7 @@ void _Motor_Config_SetIKi(Motor_State_T * p_motor, uint32_t value)
     _PID_SetKi_Fixed16(&p_motor->Config.PidI, value);
     PID_SetKi_Fixed16(&p_motor->PidIq, value);
     PID_SetKi_Fixed16(&p_motor->PidId, value);
-    //optionally switch on commutation mode
+    // optionally switch on commutation mode
 }
 
 void _Motor_Config_SetSpeedKp(Motor_State_T * p_motor, uint32_t value)

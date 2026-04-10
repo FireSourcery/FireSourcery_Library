@@ -57,9 +57,9 @@
 
 //     for (uint8_t i = 0U; i < p_group->COUNT; i++)
 //     {
-//         Monitor_Poll(&p_group->P_CONTEXTS[i]);
+//         Monitor_Poll(&p_group->P_MONITORS[i]);
 //         // todo handle normalizing each capture value, if coeffecients are different
-//         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+//         compare = Monitor_GetLastInputComparable(p_group->P_MONITORS[i].P_STATE);
 //         if (compare > max) { max = compare; index = i; }
 
 //         /* optionally mark on same loop */
@@ -76,12 +76,12 @@
 
 // //     for (uint8_t i = 0U; i < p_group->COUNT; i++)
 // //     {
-// //         Monitor_Poll(&p_group->P_CONTEXTS[i]);
-// //         compare = Monitor_GetLastInputComparable(p_group->P_CONTEXTS[i].P_STATE);
+// //         Monitor_Poll(&p_group->P_MONITORS[i]);
+// //         compare = Monitor_GetLastInputComparable(p_group->P_MONITORS[i].P_STATE);
 // //         if (compare > max)
 // //         {
 // //             max = compare;
-// //             p_element = &p_group->P_CONTEXTS[i];
+// //             p_element = &p_group->P_MONITORS[i];
 // //         }
 // //     }
 
@@ -98,7 +98,7 @@
 
 // //     for (uint8_t i = 0U; i < p_group->COUNT; i++)
 // //     {
-// //         status = Monitor_Poll(&p_group->P_CONTEXTS[i]);
+// //         status = Monitor_Poll(&p_group->P_MONITORS[i]);
 // //         /* Track worst status */
 // //         if (status > worstStatus) { worstStatus = status; }
 
@@ -117,7 +117,7 @@
 
 // //     /* Poll next sensor in sequence */
 // //     uint8_t sensorIndex = p_group->ActiveSensorIndex;
-// //     Monitor_Context_T * p_context = &p_group->P_CONTEXTS[sensorIndex];
+// //     Monitor_Context_T * p_context = &p_group->P_MONITORS[sensorIndex];
 
 // //     Monitor_Status_T status = Monitor_Context_PollSensor(p_context);
 

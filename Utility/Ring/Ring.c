@@ -75,7 +75,7 @@ static inline void ReleaseCritical(Ring_T * p_ring) { _RING_LOCAL_CRITICAL_DEF(_
 static inline void * PtrOf(const Ring_T * p_ring, size_t arrayIndex) { return ((uint8_t *)p_ring->Buffer + (p_ring->Type.UNIT_SIZE * arrayIndex)); }
 static inline void Copy(const Ring_T * p_ring, void * p_dest, const void * p_src) { void_copy(p_dest, p_src, p_ring->Type.UNIT_SIZE); }
 /* value array only */
-// static inline intptr_t ValueOf(const Ring_T * p_ring, size_t arrayIndex) { return void_array_get(p_ring->P_BUFFER, p_ring->Type.UNIT_SIZE, arrayIndex); }
+// static inline intptr_t ValueOf(const Ring_T * p_ring, size_t arrayIndex) { return void_array_get(p_ring->Type.UNIT_SIZE, p_ring->P_BUFFER, arrayIndex); }
 
 /* Effective array index of virtual index */
 static inline size_t IndexOf(const Ring_T * p_ring, size_t ringIndex)
@@ -164,7 +164,7 @@ inline void * _Ring_Seek(Ring_T * p_ring, size_t index)  { return (index < Ring_
     Public
 */
 /******************************************************************************/
-void Ring_Init(const Ring_Context_T * p_ring)
+void Ring_Init(const RingT_T * p_ring)
 {
     Ring_InitFrom(p_ring->P_STATE, &p_ring->TYPE);
 }
@@ -259,7 +259,7 @@ bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t unitCount)
     {
         if (unitCount <= Ring_GetEmptyCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->Type.UNIT_SIZE, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -276,7 +276,7 @@ bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount)
     {
         if (unitCount <= Ring_GetFullCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->Type.UNIT_SIZE, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -296,7 +296,7 @@ size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unitCount)
     {
         count = Ring_GetEmptyCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_pointer_at(p_units, p_ring->Type.UNIT_SIZE, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -314,7 +314,7 @@ size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount)
     {
         count = Ring_GetFullCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_pointer_at(p_result, p_ring->Type.UNIT_SIZE, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;

@@ -78,11 +78,11 @@ void MotorController_Init(const MotorController_T * p_context)
     Vehicle_Init(&p_context->VEHICLE); //todo move to interface
 
     /* Alternatively set nominal on init */
-    HeatMonitor_Group_MarkEach(&p_context->HEAT_MOSFETS);
-    HeatMonitor_MarkConversion(&p_context->HEAT_PCB);
-    Analog_Conversion_Mark(&p_context->V_SOURCE.ANALOG_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_ACCESSORIES.ANALOG_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_ANALOG.ANALOG_CONVERSION);
+    for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_context->P_HEAT_MOSFET_CONVERSIONS[i]); }
+    Analog_Conversion_Mark(&p_context->HEAT_PCB_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_SOURCE_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ACCESSORIES_CONVERSION);
+    Analog_Conversion_Mark(&p_context->V_ANALOG_CONVERSION);
 
     StateMachine_Init(&p_context->STATE_MACHINE);
 }
@@ -133,7 +133,7 @@ void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_
 void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
 {
     assert(Phase_Calibration_IsValid() == true); /* Must be loaded before */
-    _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE.ANALOG_CONVERSION)));
+    _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION)));
 }
 
 void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)

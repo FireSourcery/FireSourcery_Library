@@ -57,6 +57,7 @@ static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { retu
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
+// static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : ; }
 
 /******************************************************************************/
 /*!

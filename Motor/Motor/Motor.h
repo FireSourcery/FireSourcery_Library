@@ -53,7 +53,7 @@
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Utility/Timer/Timer.h"
-#include "Utility/LimitArray/LimitArray.h"
+#include "Type/Array/LimitArray/LimitArray.h"
 
 #include "Math/Fixed/fixed.h"
 #include "Math/Angle/Angle.h"
@@ -132,15 +132,13 @@ typedef union Motor_FeedbackMode
 }
 Motor_FeedbackMode_T;
 
-/* Defined as const bit-fields over enum. in line with bit as conditional, not all combination need to be defined */
+/* Defined as const bit-fields rather than enum. in line with bit as conditional, not all combination need to be defined */
 /* OpenLoop handled with separate State Branch */
 /* Run state may change to substate handling - Current/Speed same branch */
-// static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_SCALAR     = { .OpenLoop = 1U, .Speed = 0U, .Current = 0U, };
-// static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_OPEN_LOOP_CURRENT    = { .OpenLoop = 1U, .Speed = 0U, .Current = 1U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .OpenLoop = 0U, .Speed = 0U, .Current = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .OpenLoop = 0U, .Speed = 0U, .Current = 1U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .OpenLoop = 0U, .Speed = 1U, .Current = 0U, };
-static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .OpenLoop = 0U, .Speed = 1U, .Current = 1U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_VOLTAGE              = { .Speed = 0U, .Current = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_CURRENT              = { .Speed = 0U, .Current = 1U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_VOLTAGE        = { .Speed = 1U, .Current = 0U, };
+static const Motor_FeedbackMode_T MOTOR_FEEDBACK_MODE_SPEED_CURRENT        = { .Speed = 1U, .Current = 1U, };
 
 static inline Motor_FeedbackMode_T Motor_FeedbackMode_Cast(int value) { return (Motor_FeedbackMode_T) { .Value = value }; }
 
@@ -183,7 +181,6 @@ typedef struct Motor_Config
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
     uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
-
 
     uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
 
@@ -381,8 +378,8 @@ typedef const struct Motor
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
-    HeatMonitor_Context_T HEAT_MONITOR;
-    // Analog_Conversion_T HEAT_MONITOR_ANALOG;
+    HeatMonitor_T HEAT_MONITOR;
+    Analog_Conversion_T HEAT_MONITOR_CONVERSION;
     StateMachine_T STATE_MACHINE;
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */

@@ -63,7 +63,7 @@ typedef enum Motor_Var_UserOut
     /* Derived Local */
     MOTOR_VAR_V_SPEED_EFFECTIVE,
     MOTOR_VAR_POWER,
-    MOTOR_VAR_I_DC,
+    MOTOR_VAR_I_BUS,
 
 }
 Motor_Var_UserOut_T;

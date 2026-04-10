@@ -58,20 +58,31 @@ void UserDIn_Init(const UserDIn_T * p_context)
     p_context->P_STATE->Debounce.Time0 = GetTime(p_context);
     p_context->P_STATE->Debounce.State0 = ReadPin(p_context);
     p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.State0;
-    p_context->P_STATE->Debounce.OutputPrev = p_context->P_STATE->Debounce.State0;
+    p_context->P_STATE->OutputPrev = p_context->P_STATE->Debounce.State0;
 }
 
+/*
+    Polling Functions
+*/
 /*! @return On/Off state */
 bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Poll(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
 
 /*! @return true on change */
-bool UserDIn_PollEdge(const UserDIn_T * p_context) { return Debounce_PollEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollEdge(const UserDIn_T * p_context)
+{
+    p_context->P_STATE->OutputPrev = Debounce_GetState(&p_context->P_STATE->Debounce);
+    Debounce_Poll(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context));
+    return is_edge(p_context->P_STATE->OutputPrev, Debounce_GetState(&p_context->P_STATE->Debounce));
+}
 
-bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return Debounce_PollRisingEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return UserDIn_PollEdge(p_context) && (UserDIn_GetState(p_context) == true); }
 
-bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return Debounce_PollFallingEdge(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return UserDIn_PollEdge(p_context) && (UserDIn_GetState(p_context) == false); }
 
-UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context) { return (UserDIn_Edge_T)Debounce_PollEdgeValue(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
+UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context)
+{
+    return UserDIn_PollEdge(p_context) * (UserDIn_Edge_T)(p_context->P_STATE->Debounce.Output - p_context->P_STATE->OutputPrev);
+}
 
 
 // /******************************************************************************/

@@ -51,44 +51,46 @@ typedef union MotVarId
 }
 MotVarId_T;
 
+/*
+    Type: includes the access type
+    Prefix: Namespace, zero offset. includes the source module
+*/
 // typedef union MotVarId
 // {
 //     struct
 //     {
 //         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Struct member */
-//         uint16_t Type           : 4U; /* enum type literal / struct type. Corresponds with Base enum type, may be n:1, as TypeObject */
-                                            /* includes the access type */
-                                            // Acess:2
-                                            //extended:2
-//         uint16_t Prefix      : 4U; /* Namespace, zero offset */ /* includes the source module */
-//         uint16_t Instance       : 2U; /* Instance. instance > 4 can use ParitionId or Resv */
+//         uint16_t Type           : 4U; /* enum type literal / struct type. some cases n:1, as TypeObject */
+//         uint16_t Prefix         : 4U; /*  */
+//         uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
 //         uint16_t Resv           : 2U;
 //     };
 //     uint16_t Value;
 // }
 // MotVarId_T;
 
-#define MOT_VAR_ID_TYPE_ID(Partition, Type) ((uint16_t)(((Partition) << 4U) | (Type)))
-/* Partitions Type to start as 0 index */
-// typedef enum MotVarId_Partition
+#define MOT_VAR_ID_TYPE_ID(Prefix, Type) ((uint16_t)(((Prefix) << 4U) | (Type)))
+/* Prefixs Type to start as 0 index */
+// typedef enum MotVarId_Prefix
 // {
-//     MOT_VAR_ID_PARITION_MOTOR,
-//     MOT_VAR_ID_PARITION_MOTOR_SUB_MODULE,
-//     MOT_VAR_ID_PARITION_MOTOR_SENSOR,
-//     MOT_VAR_ID_PARITION_GENERAL,
-//     MOT_VAR_ID_PARITION_V_MONITOR,
-//     MOT_VAR_ID_PARITION_HEAT_MONITOR,
+//     MOT_VAR_ID_PREFIX_MOTOR,
+//     MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE,
+//     MOT_VAR_ID_PREFIX_MOTOR_SENSOR,
+//     MOT_VAR_ID_PREFIX_MOTOR_RESV,
+//     MOT_VAR_ID_PREFIX_GENERAL,
+//     MOT_VAR_ID_PREFIX_V_MONITOR,
+//     MOT_VAR_ID_PREFIX_HEAT_MONITOR,
 
-//     MOT_VAR_ID_PARITION_V_MONITOR_SOURCE,,
-//     MOT_VAR_ID_PARITION_V_MONITOR_AUX,
-//     MOT_VAR_ID_PARITION_HEAT_MONITOR_PCB,
-//     MOT_VAR_ID_PARITION_HEAT_MONITOR_MOSFETS,
-//     MOT_VAR_ID_PARITION_COMMUNICATION,
-//     MOT_VAR_ID_PARITION_SYSTEM_COMMAND,
-//     MOT_VAR_ID_PARITION_APP,
-//     _MOT_VAR_ID_PARITION_END,
+//     MOT_VAR_ID_PREFIX_V_MONITOR_SOURCE,
+//     MOT_VAR_ID_PREFIX_V_MONITOR_AUX,
+//     MOT_VAR_ID_PREFIX_HEAT_MONITOR_PCB,
+//     MOT_VAR_ID_PREFIX_HEAT_MONITOR_MOSFETS,
+//     MOT_VAR_ID_PREFIX_COMMUNICATION,
+//     MOT_VAR_ID_PREFIX_SYSTEM_COMMAND,
+//     MOT_VAR_ID_PREFIX_APP,
+//     _MOT_VAR_ID_PREFIX_END,
 // }
-// MotVarId_Partition_T;
+// MotVarId_Prefix_T;
 
 /*
     Status Response for Read/Write

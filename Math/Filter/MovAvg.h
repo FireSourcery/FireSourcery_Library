@@ -31,7 +31,7 @@
 #ifndef FILTER_MOV_AVG_H
 #define FILTER_MOV_AVG_H
 
-#include "math_mov_avg.h"
+#include "mov_avg_fn.h"
 #include <stdint.h>
 
 typedef struct MovAvg

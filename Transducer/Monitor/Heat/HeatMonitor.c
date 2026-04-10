@@ -35,7 +35,7 @@
     Context
 */
 /******************************************************************************/
-void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMonitor_Config_T * p_config)
+void HeatMonitor_InitFrom(const HeatMonitor_T * p_context, const HeatMonitor_Config_T * p_config)
 {
     assert(p_context->P_STATE != NULL); /* Ensure state is provided */
 
@@ -46,7 +46,7 @@ void HeatMonitor_InitFrom(const HeatMonitor_Context_T * p_context, const HeatMon
     if (p_context->P_LINEAR != NULL) { Thermistor_ToLinear_CelsiusPerAdcu(&p_context->THERMISTOR, p_context->P_LINEAR); }
 }
 
-void HeatMonitor_Init(const HeatMonitor_Context_T * p_context)
+void HeatMonitor_Init(const HeatMonitor_T * p_context)
 {
     HeatMonitor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 }
@@ -58,7 +58,7 @@ void HeatMonitor_Init(const HeatMonitor_Context_T * p_context)
 */
 /******************************************************************************/
 /* Initialize group with shared resources */
-void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group)
+void HeatMonitor_Group_Init(const HeatMonitor_Group_T * p_group)
 {
     /* Initialize shared state with group configuration */
     Monitor_InitFrom(p_group->P_STATE, p_group->P_NVM_CONFIG);
@@ -68,8 +68,8 @@ void HeatMonitor_Group_Init(const HeatMonitor_GroupContext_T * p_group)
     /* Pass the same detection parameters to each */
     for (uint8_t i = 0; i < p_group->COUNT; i++)
     {
-        if (p_group->P_CONTEXTS[i].P_NVM_CONFIG != NULL) { HeatMonitor_Init(&p_group->P_CONTEXTS[i]); }
-        else { HeatMonitor_InitFrom(&p_group->P_CONTEXTS[i], p_group->P_NVM_CONFIG); }
+        if (p_group->P_MONITORS[i].P_NVM_CONFIG != NULL) { HeatMonitor_Init(&p_group->P_MONITORS[i]); }
+        else { HeatMonitor_InitFrom(&p_group->P_MONITORS[i], p_group->P_NVM_CONFIG); }
     }
 }
 

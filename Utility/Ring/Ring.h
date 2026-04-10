@@ -126,15 +126,15 @@ Ring_T;
     For Generic Handling or Runtime Init
     In the case that Runtime state stores [Ring_Type_T Type], it must be copied at run time.
 */
-typedef const struct Ring_Context
+typedef const struct RingT
 {
     Ring_Type_T TYPE;
     Ring_T * P_STATE; // Ring_State_T * P_STATE;
 }
-Ring_Context_T;
+RingT_T;
 
-#define RING_CONTEXT_INIT(UnitSize, Length, p_State) { .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = p_State, } /* Caller validates State with Length */
-#define RING_CONTEXT_ALLOC(UnitSize, Length) RING_CONTEXT_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
+#define RING_T_INIT(UnitSize, Length, p_State) (RingT_T){ .TYPE = RING_TYPE_INIT(UnitSize, Length), .P_STATE = p_State, } /* Caller validates State with Length */
+#define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
 /*
 
@@ -255,13 +255,7 @@ static inline bool Ring_IsFull(const Ring_T * p_ring)
 // //todo as wrap around RingT
 // static inline size_t Ring_GetFullCount(const Ring_T * p_ring)
 // {
-//     return RingT_GetFullCount(p_ring->Type, p_ring);
-// }
-
-// // todo with context call ringT
-// static inline size_t Ring_Context_GetFullCount(const Ring_Context_T * p_ring)
-// {
-//     return RingT_GetFullCount(p_ring->TYPE, p_ring->P_STATE);
+//     return _RingT_GetFullCount(p_ring->Type, p_ring);
 // }
 
 /******************************************************************************/
@@ -285,7 +279,7 @@ extern void * _Ring_Seek(Ring_T * p_ring, size_t index);
 /*
 
 */
-extern void Ring_Init(const Ring_Context_T * p_ring);
+extern void Ring_Init(const RingT_T * p_ring);
 
 extern void Ring_InitFrom(Ring_T * p_ring, const Ring_Type_T * p_type);
 extern void Ring_Clear(Ring_T * p_ring);

@@ -49,13 +49,13 @@ void VMonitor_InitLimitsDefault(VMonitor_State_T * p_vMonitor, int32_t nominal, 
 
 */
 /******************************************************************************/
-void VMonitor_InitFrom(const VMonitor_Context_T * p_context, const VMonitor_Config_T * p_config)
+void VMonitor_InitFrom(const VMonitor_T * p_context, const VMonitor_Config_T * p_config)
 {
     RangeMonitor_InitFrom(p_context->P_STATE, p_config);
     if (p_context->P_LINEAR != NULL) { VDivider_ToLinear(&p_context->VDIVIDER, p_context->P_LINEAR); }
 }
 
-void VMonitor_Init(const VMonitor_Context_T * p_context)
+void VMonitor_Init(const VMonitor_T * p_context)
 {
     VMonitor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 }

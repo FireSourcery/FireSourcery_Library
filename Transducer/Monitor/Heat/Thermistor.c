@@ -225,9 +225,9 @@ int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_Config
     int32_t value = 0;
     switch (id)
     {
-        case THERMISTOR_REF_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
-        case THERMISTOR_REF_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
-        case THERMISTOR_REF_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
+        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
+        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
+        case THERMISTOR_BOARD_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
         // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
         case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
         case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm) / 10U;            break;
@@ -245,9 +245,9 @@ void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_
     {
         switch (id)
         {
-            case THERMISTOR_REF_R_SERIES:        break;
-            case THERMISTOR_REF_R_PARALLEL:      break;
-            case THERMISTOR_REF_V_SERIES_MV:     break;
+            case THERMISTOR_BOARD_R_SERIES:        break;
+            case THERMISTOR_BOARD_R_PARALLEL:      break;
+            case THERMISTOR_BOARD_V_SERIES_MV:     break;
             // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
             case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
             case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value * 10U);            break;

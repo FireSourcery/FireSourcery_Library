@@ -30,7 +30,7 @@
 #ifndef MOT_LIMITS_H
 #define MOT_LIMITS_H
 
-#include "Utility/LimitArray/LimitArray.h"
+#include "Type/Array/LimitArray/LimitArray.h"
 
 #define SPEED_LIMIT_ID_COUNT (2U)
 #define I_LIMIT_ID_COUNT (4U)

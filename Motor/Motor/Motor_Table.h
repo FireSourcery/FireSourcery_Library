@@ -48,26 +48,22 @@ Motor_Table_T;
 static inline Motor_State_T * Motor_Table_StateAt(Motor_Table_T * p_ctx, uint8_t motorIndex) { return &(p_ctx->P_STATES[motorIndex]); }
 static inline Motor_T * Motor_Table_ContextAt(Motor_Table_T * p_ctx, uint8_t motorIndex) { return &(p_ctx->P_CONTEXTS[motorIndex]); }
 
-// typedef void (*Motor_ContextAction_T)(const Motor_T * p_context, Motor_State_T * p_state);
-// static inline void _Motor_Table_Context_ForEach(Motor_State_T * p_motors, int count, Motor_Proc_T function) { void_array_foreach(p_motors, sizeof(Motor_State_T), count, (proc_t)function); }
 
-static inline void Motor_Table_ForEach(Motor_Table_T * p_ctx, Motor_Proc_T function) { void_array_foreach(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (proc_t)function); }
+static inline void Motor_Table_ForEach(Motor_Table_T * p_ctx, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (proc_t)function); }
 
-// static inline void Motor_Table_ForEach(Motor_Table_T * p_ctx, Motor_Proc_T function) { void_array_foreach_call(p_ctx->P_STATES, p_ctx->LENGTH, (proc_t)function); }
+static inline void Motor_Table_ForEachSet(Motor_Table_T * p_ctx, Motor_Set_T function, motor_value_t value) { void_array_foreach_set(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (set_t)function, value); }
+static inline bool Motor_Table_ForEvery(Motor_Table_T * p_ctx, Motor_State_TryProc_T function) { return void_array_for_every(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (try_proc_t)function); }
 
-static inline void Motor_Table_ForEachSet(Motor_Table_T * p_ctx, Motor_Set_T function, motor_value_t value) { void_array_foreach_set(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (set_t)function, value); }
-static inline bool Motor_Table_ForEvery(Motor_Table_T * p_ctx, Motor_State_TryProc_T function) { return void_array_for_every(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (try_proc_t)function); }
-
-static inline bool Motor_Table_IsEverySet(Motor_Table_T * p_ctx, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_every_set(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (try_set_t)test, value); }
-static inline bool Motor_Table_IsAnySet(Motor_Table_T * p_ctx, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_any_set(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (try_set_t)test, value); }
+static inline bool Motor_Table_IsEverySet(Motor_Table_T * p_ctx, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_every_set(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (try_set_t)test, value); }
+static inline bool Motor_Table_IsAnySet(Motor_Table_T * p_ctx, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_any_set(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (try_set_t)test, value); }
 
 /* Const State  */
-static inline bool Motor_Table_IsEvery(Motor_Table_T * p_ctx, Motor_State_Test_T test) { return void_array_is_every(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (test_t)test); }
-static inline bool Motor_Table_IsAny(Motor_Table_T * p_ctx, Motor_State_Test_T test) { return void_array_is_any(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (test_t)test); }
+static inline bool Motor_Table_IsEvery(Motor_Table_T * p_ctx, Motor_State_Test_T test) { return void_array_is_every(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (test_t)test); }
+static inline bool Motor_Table_IsAny(Motor_Table_T * p_ctx, Motor_State_Test_T test) { return void_array_is_any(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (test_t)test); }
 
 /* Test value only, cast function pointer for now */
-static inline bool Motor_Table_IsEveryValue(Motor_Table_T * p_ctx, Motor_State_TryValue_T test, motor_value_t value) { return void_array_is_every_value(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (test_value_t)test, value); }
-static inline bool Motor_Table_IsAnyValue(Motor_Table_T * p_ctx, Motor_State_TryValue_T test, motor_value_t value) { return void_array_is_any_value(p_ctx->P_STATES, sizeof(Motor_State_T), p_ctx->LENGTH, (test_value_t)test, value); }
+static inline bool Motor_Table_IsEveryValue(Motor_Table_T * p_ctx, Motor_State_TryValue_T test, motor_value_t value) { return void_array_is_every_value(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (test_value_t)test, value); }
+static inline bool Motor_Table_IsAnyValue(Motor_Table_T * p_ctx, Motor_State_TryValue_T test, motor_value_t value) { return void_array_is_any_value(sizeof(Motor_State_T), p_ctx->P_STATES, p_ctx->LENGTH, (test_value_t)test, value); }
 
 
 /******************************************************************************/
@@ -85,7 +81,6 @@ static inline bool Motor_Table_IsAnyValue(Motor_Table_T * p_ctx, Motor_State_Try
 // #define Motor_SetWith(p_motor, setter, value, ...) ((Motor_CastSetter(p_motor, focSet))(p_motor, value __VA_OPT__(,) __VA_ARGS__))
 
 
-
 /*
     Feedback Mode Set first
 */
@@ -94,7 +89,7 @@ typedef void (*Motor_SetCmdValue_T)(Motor_State_T * p_motor, int16_t userCmd); /
 /* selected mode using function */
 static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_ctx, Motor_SetCmdValue_T function, int16_t value) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { function(&p_ctx->P_STATES[iMotor], value); } }
 
-static void Motor_Table_ApplyInputs(Motor_Table_T * p_ctx, Motor_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ProcSyncInput(&p_ctx->P_CONTEXTS[iMotor], p_input); } }
+// static inline void Motor_Table_ApplyInputs(Motor_Table_T * p_ctx, Motor_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ProcSyncInput(&p_ctx->P_MONITORS[iMotor], p_input); } }
 
 static inline void Motor_Table_ApplySpeedLimit(Motor_Table_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
 static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_ctx, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_SetILimitWith(&p_ctx->P_STATES[iMotor], p_limit); } }
@@ -106,7 +101,8 @@ static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_ctx, LimitArray_T *
     On Full Context
 */
 /******************************************************************************/
-
+// typedef void (*Motor_ContextAction_T)(const Motor_T * p_context, Motor_State_T * p_state);
+// static inline void _Motor_Table_Context_ForEach(Motor_State_T * p_motors, int count, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_State_T), p_motors, count, (proc_t)function); }
 
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_ctx, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_ctx->P_CONTEXTS[iMotor], mode); } }
 
@@ -115,24 +111,17 @@ static inline void Motor_Table_ApplyControl(Motor_Table_T * p_ctx, Phase_Output_
 static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_ctx, int sign) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_ctx->P_CONTEXTS[iMotor], sign); } }
 
 typedef void(*Motor_ContextProc_T)(Motor_T * p_motor);
-static inline void Motor_Table_StopAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
-static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Start(&p_ctx->P_CONTEXTS[iMotor]); } }
-
 /* Motor_Table_ForEachProc */
-static inline void Motor_Table_ForEachApply(Motor_Table_T * p_ctx, Motor_ContextProc_T function) { void_array_foreach((void *)p_ctx->P_CONTEXTS, sizeof(Motor_T), p_ctx->LENGTH, (proc_t)function); }
+static inline void Motor_Table_ForEachApply(Motor_Table_T * p_ctx, Motor_ContextProc_T function) { void_array_foreach(sizeof(Motor_T), (void *)p_ctx->P_CONTEXTS, p_ctx->LENGTH, (proc_t)function); }
 // static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { Motor_Table_ForEachApply(p_ctx, (Motor_ContextProc_T)Motor_Start); }
 
-
+static inline void Motor_Table_StopAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Stop(&p_ctx->P_CONTEXTS[iMotor]); } }
+static inline void Motor_Table_StartAll(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Start(&p_ctx->P_CONTEXTS[iMotor]); } }
 static inline void Motor_Table_ForceDisableControl(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_ForceDisableControl(&p_ctx->P_CONTEXTS[iMotor]); } }
-
 static inline void Motor_Table_EnterCalibration(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_ctx->P_CONTEXTS[iMotor]); } }
-
 static inline void Motor_Table_EnterCalibrateAdc(Motor_Table_T * p_ctx) { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_ctx->P_CONTEXTS[iMotor]); } }
 
-static inline bool Motor_Table_IsCalibrationComplete(Motor_Table_T * p_ctx)
-{
-    return void_array_is_every(p_ctx->P_CONTEXTS, sizeof(Motor_T), p_ctx->LENGTH, (test_t)Motor_Calibration_IsComplete);
-}
+static inline bool Motor_Table_IsCalibrationComplete(Motor_Table_T * p_ctx) { return void_array_is_every(sizeof(Motor_T), p_ctx->P_CONTEXTS, p_ctx->LENGTH, (test_t)Motor_Calibration_IsComplete); }
 
 /* IsEveryMachineState */
 static inline bool Motor_Table_IsEveryState(Motor_Table_T * p_ctx, Motor_StateId_T stateId)
@@ -166,4 +155,4 @@ static int _Motor_Table_GetDirectionAll(Motor_Table_T * p_ctx)
     return direction;
 }
 
-// static inline void Motor_Table_InputStateMachine(Motor_Table_T * p_ctx, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_CONTEXTS[iMotor], input, value); } }
+// static inline void Motor_Table_InputStateMachine(Motor_Table_T * p_ctx, Motor_State_Input_T input, state_value_t value)  { for (uint8_t iMotor = 0U; iMotor < p_ctx->LENGTH; iMotor++) { Motor_StateMachine_Input(&p_ctx->P_MONITORS[iMotor], input, value); } }

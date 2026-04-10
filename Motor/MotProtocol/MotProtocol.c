@@ -199,7 +199,7 @@ const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS =
 Protocol_ReqCode_T MotProtocol_DataModeReadInit(void * p_app, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
-    const MotPacket_DataModeReq_Payload_T * p_req = (const MotPacket_DataModeReq_Payload_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+    const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
     Protocol_ReqCode_T reqCode;
 
     p_subState->DataModeAddress = p_req->AddressStart;
@@ -278,7 +278,7 @@ Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_
 Protocol_ReqCode_T MotProtocol_Flash_DataModeWriteInit_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
-    const MotPacket_DataModeReq_Payload_T * p_req = (const MotPacket_DataModeReq_Payload_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+    const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
     Protocol_ReqCode_T reqCode;
     Flash_Status_T flashStatus = NV_MEMORY_STATUS_SUCCESS;
 
@@ -390,7 +390,7 @@ Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * p_flash, Proto
 Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext)
 {
     MotProtocol_DataModeState_T * p_subState = p_reqContext->p_SubState;
-    const MotPacket_DataModeReq_Payload_T * p_req = (const MotPacket_DataModeReq_Payload_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
+    const MotPacket_DataModeReq_T * p_req = (const MotPacket_DataModeReq_T *)((const MotPacket_T *)p_reqContext->p_RxPacket)->Payload;
     Protocol_ReqCode_T reqCode;
     Flash_Status_T flashStatus;
 
@@ -430,7 +430,7 @@ NvMemory_Status_T ReadMem_Blocking(Flash_T * p_flash, uintptr_t address, uint8_t
 // caller handle address mapping
 packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    const MotPacket_MemReadReq_Payload_T * p_req = (const MotPacket_MemReadReq_Payload_T *)p_rxPacket->Payload;
+    const MotPacket_MemReadReq_T * p_req = (const MotPacket_MemReadReq_T *)p_rxPacket->Payload;
     uint32_t address = p_req->Address;
     uint8_t size     = p_req->Size;
     uint16_t config  = p_req->Config;
@@ -442,7 +442,7 @@ packet_size_t MotProtocol_ReadMem_Blocking(Flash_T * p_flash, MotPacket_T * p_tx
 
 packet_size_t MotProtocol_WriteMem_Blocking(Flash_T * p_flash, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    const MotPacket_MemWriteReq_Payload_T * p_req = (const MotPacket_MemWriteReq_Payload_T *)p_rxPacket->Payload;
+    const MotPacket_MemWriteReq_T * p_req = (const MotPacket_MemWriteReq_T *)p_rxPacket->Payload;
     uint32_t address        = p_req->Address;
     const uint8_t * p_data  = p_req->ByteData;
     uint8_t size            = p_req->Size;

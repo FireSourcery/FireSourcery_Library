@@ -94,7 +94,7 @@ static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return (int32_t)p
 // PhaseVBus_Context_T;
 
 /* Singleton Const */
-// extern VMonitor_Context_T PHASE_VBUS_MONITOR;
+// extern VMonitor_T PHASE_VBUS_MONITOR;
 
 // extern PhaseVBus_Context_T PHASE_VBUS_CONTEXT;
 

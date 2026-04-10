@@ -44,7 +44,6 @@ typedef struct Debounce
     uint32_t Time0;             /* Start time of current state */
     bool State0;                /* Bounce/input state */ /* An extra state for a hot path without the timer check */
     bool Output;                /* Debounced output state */
-    bool OutputPrev;            /* Previous debounced state for edge detection */
 }
 Debounce_T;
 
@@ -78,18 +77,10 @@ static inline bool Debounce_Poll(Debounce_T * p_debounce, uint32_t currentTime, 
     return p_debounce->Output;
 }
 
-/*!
-    @return true if state changed
-*/
 static inline bool Debounce_PollEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
 {
-    p_debounce->OutputPrev = p_debounce->Output;
-    Debounce_Poll(p_debounce, currentTime, pinState);
-    return (p_debounce->Output != p_debounce->OutputPrev);
-    /* alternatively call handle async edge detect */
-    // return (p_debounce->Output != Debounce_Poll(p_debounce, currentTime, pinState));
+    return (p_debounce->Output != Debounce_Poll(p_debounce, currentTime, pinState));
 }
-
 
 /******************************************************************************/
 /*
@@ -110,44 +101,9 @@ static void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
     p_debounce->Time0 = 0UL;
     p_debounce->State0 = false;
     p_debounce->Output = false;
-    p_debounce->OutputPrev = false;
 }
 
 
-/*
-    handle by din
-*/
-typedef enum Debounce_Edge
-{
-    DEBOUNCE_EDGE_FALLING = -1,
-    DEBOUNCE_EDGE_NULL = 0,
-    DEBOUNCE_EDGE_RISING = 1,
-}
-Debounce_Edge_T;
-
-
-
-/* Optional convenience functions */
-static inline bool Debounce_PollRisingEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
-{
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->Output == true);
-}
-
-static inline bool Debounce_PollFallingEdge(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
-{
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) && (p_debounce->Output == false);
-}
-
-static inline Debounce_Edge_T Debounce_PollEdgeValue(Debounce_T * p_debounce, uint32_t currentTime, bool pinState)
-{
-    return Debounce_PollEdge(p_debounce, currentTime, pinState) ? (Debounce_Edge_T)(p_debounce->Output - p_debounce->OutputPrev) : DEBOUNCE_EDGE_NULL;
-}
-
-
-static inline bool Debounce_IsEdge(const Debounce_T * p_debounce) { return (p_debounce->Output != p_debounce->OutputPrev); }
-static inline bool Debounce_IsRisingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == true) && (p_debounce->OutputPrev == false)); }
-static inline bool Debounce_IsFallingEdge(const Debounce_T * p_debounce) { return ((p_debounce->Output == false) && (p_debounce->OutputPrev == true)); }
-static inline Debounce_Edge_T Debounce_GetEdge(const Debounce_T * p_debounce) { return (Debounce_Edge_T)(p_debounce->Output - p_debounce->OutputPrev); }
 
 
 

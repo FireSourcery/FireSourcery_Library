@@ -29,6 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Math/edge_fn.h"
 #include "Debounce/Debounce.h"
 #include "Peripheral/Pin/Pin.h"
 #include <stdint.h>
@@ -59,7 +60,7 @@ UserDIn_Edge_T;
 typedef struct UserDIn_State
 {
     Debounce_T Debounce;
-    // bool Value;
+    bool OutputPrev;
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
@@ -84,11 +85,8 @@ UserDIn_T;
 
 #define USER_DIN_STATE_ALLOC() (&(UserDIn_State_T){0})
 
-#define USER_DIN_INIT(Pin, p_State, p_Timer, DebounceTime) \
+#define USER_DIN_INIT(Pin, p_State, p_Timer, DebounceTime) (UserDIn_T) \
     { .PIN = Pin, .P_STATE = (p_State), .P_TIMER = (p_Timer), .DEBOUNCE_TIME = (DebounceTime), }
-
-#define USER_DIN_ALLOC(Pin, p_Timer, DebounceTime) \
-    USER_DIN_INIT(Pin, USER_DIN_STATE_ALLOC(), p_Timer, DebounceTime)
 
 #define USER_DIN_INIT_FROM(p_PinHal, PinId, PinIsInvert, p_State, p_Timer, DebounceTime) \
     USER_DIN_INIT(PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert), p_State, p_Timer, DebounceTime)
@@ -99,22 +97,14 @@ UserDIn_T;
 */
 /******************************************************************************/
 static inline bool UserDIn_GetState(const UserDIn_T * p_context) { return Debounce_GetState(&p_context->P_STATE->Debounce); }
-static inline bool UserDIn_IsEdge(const UserDIn_T * p_context) { return Debounce_IsEdge(&p_context->P_STATE->Debounce); }
-static inline bool UserDIn_IsRisingEdge(const UserDIn_T * p_context) { return Debounce_IsRisingEdge(&p_context->P_STATE->Debounce); }
-static inline bool UserDIn_IsFallingEdge(const UserDIn_T * p_context) { return Debounce_IsFallingEdge(&p_context->P_STATE->Debounce); }
-static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_context) { return (UserDIn_Edge_T)Debounce_GetEdge(&p_context->P_STATE->Debounce); }
+static inline bool UserDIn_IsEdge(const UserDIn_T * p_context) { return is_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
+static inline bool UserDIn_IsRisingEdge(const UserDIn_T * p_context) { return is_rising_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
+static inline bool UserDIn_IsFallingEdge(const UserDIn_T * p_context) { return is_falling_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
+static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_context) { return (UserDIn_Edge_T)edge_sign(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
 
 /******************************************************************************/
 /*
-    Configuration Functions
-*/
-/******************************************************************************/
-static inline void UserDIn_SetDebounceTime(const UserDIn_T * p_context, uint16_t millis) { Debounce_SetTime(&p_context->P_STATE->Debounce, millis); }
-static inline uint16_t UserDIn_GetDebounceTime(const UserDIn_T * p_context) { return Debounce_GetTime(&p_context->P_STATE->Debounce); }
 
-/******************************************************************************/
-/*
-    Configuration Functions
 */
 /******************************************************************************/
 extern void UserDIn_Init(const UserDIn_T * p_context);

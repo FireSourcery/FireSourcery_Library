@@ -105,7 +105,7 @@ int MotorController_Config_Get(const MotorController_T * p_context, MotorControl
         case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VSupplyRef;                        break;
         case MOT_VAR_I_LIMIT_LOW_V:            value = p_state->Config.VLowILimit_Fract16;                break;
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
-        case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode.Value;                   break;
+        case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
         case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
         case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
         case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
@@ -127,7 +127,7 @@ void MotorController_Config_Set(const MotorController_T * p_context, MotorContro
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupplyRef(p_context, value);                                   break;
         case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_context, (MotorController_InputMode_T){ .Value = value });       break;
+        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_context, (MotorController_InputMode_T)value);                     break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
@@ -212,27 +212,27 @@ static int _HandleSystem_Get(const MotorController_T * p_context, MotVarId_T var
 
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE:           return VMonitor_VarId_Get(&p_context->V_SOURCE, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG:          return VMonitor_ConfigId_Get(&p_context->V_SOURCE, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF: // override this for now
+        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER: // override this for now
             switch (varId.Base)
             {
-                case VDIVIDER_REF_R1: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R1);
-                case VDIVIDER_REF_R2: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R2);
+                case VDIVIDER_BOARD_R1: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R1);
+                case VDIVIDER_BOARD_R2: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R2);
                 default: return 0;
             }
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            return VMonitor_ConfigId_Get(&p_context->V_ACCESSORIES, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER_REF:      return VMonitor_VDivider_RefId_Get(&p_context->V_ACCESSORIES, varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER:          return VMonitor_VDivider_ConfigId_Get(&p_context->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ANALOG_STATE:           return VMonitor_VarId_Get(&p_context->V_ANALOG, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG:          return VMonitor_ConfigId_Get(&p_context->V_ANALOG, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER_REF:    return VMonitor_VDivider_RefId_Get(&p_context->V_ANALOG, varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER:        return VMonitor_VDivider_ConfigId_Get(&p_context->V_ANALOG, varId.Base);
 
         case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:                           return HeatMonitor_VarId_Get(&p_context->HEAT_PCB, varId.Base);
         case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:                          return HeatMonitor_ConfigId_Get(&p_context->HEAT_PCB, varId.Base);
-        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR_REF:                  return HeatMonitor_Thermistor_ConfigId_Get(&p_context->HEAT_PCB, varId.Base);
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR:                      return HeatMonitor_Thermistor_ConfigId_Get(&p_context->HEAT_PCB, varId.Base);
         case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE:                       return HeatMonitor_Group_VarId_Get(&p_context->HEAT_MOSFETS, varId.Base);
         case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:                      return HeatMonitor_Group_ConfigId_Get(&p_context->HEAT_MOSFETS, varId.Base);
         case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:              return HeatMonitor_GroupInstance_VarId_Get(&p_context->HEAT_MOSFETS, varId.Instance, varId.Base);
-        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:     return HeatMonitor_GroupInstance_ThermistorConfigId_Get(&p_context->HEAT_MOSFETS, varId.Instance, varId.Base);
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR:         return HeatMonitor_GroupInstance_ThermistorConfigId_Get(&p_context->HEAT_MOSFETS, varId.Instance, varId.Base);
 
         case MOT_VAR_TYPE_SOCKET_STATE:             return 0;
         case MOT_VAR_TYPE_SOCKET_CONFIG:            return Socket_ConfigId_Get(SocketAt(p_context, varId.Instance), varId.Base);
@@ -259,19 +259,19 @@ static MotVarId_Status_T _HandleSystem_Set(const MotorController_T * p_context, 
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(&p_context->ANALOG_USER, varId.Base, value);                break;
 
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER_REF:    return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER:        return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER_REF:      return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ANALOG_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER_REF:    return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER:        return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG:          VMonitor_ConfigId_Set(&p_context->V_SOURCE, varId.Base, value); break;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            VMonitor_ConfigId_Set(&p_context->V_ACCESSORIES, varId.Base, value); break;
         case MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG:          VMonitor_ConfigId_Set(&p_context->V_ANALOG, varId.Base, value); break;
 
-        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:                        return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE:                    return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR_REF:  return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE:                       return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE:                   return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR:     return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:                          HeatMonitor_ConfigId_Set(&p_context->HEAT_PCB, varId.Base, value);                 break;
         case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:                      HeatMonitor_Group_ConfigId_Set(&p_context->HEAT_MOSFETS, varId.Base, value);       break;
 
@@ -308,7 +308,7 @@ static MotVarId_Status_T _HandleSystem_Set(const MotorController_T * p_context, 
 static inline bool IsProtocolControlMode(const MotorController_T * p_context)
 {
     MotorController_InputMode_T mode = p_context->P_MC_STATE->Config.InputMode;
-    return (mode.Serial == 1U) || (mode.Can == 1U);
+    return (mode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) || (mode == MOTOR_CONTROLLER_INPUT_MODE_CAN);
 }
 
 /*

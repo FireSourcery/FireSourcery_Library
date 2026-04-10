@@ -32,7 +32,7 @@
 #define ENCODER_DELTA_D_H
 
 #include "Encoder.h"
-#include "Math/Angle/math_angle_counter.h"
+#include "Math/Angle/Angle_Counter.h"
 
 /******************************************************************************/
 /*!

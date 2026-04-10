@@ -29,8 +29,7 @@
     @brief  Common Interface for Angle and Speed state
 */
 /******************************************************************************/
-#include "math_angle_speed.h"
-#include "math_angle_counter.h"
+#include "angle_speed_fn.h"
 #include "../Fixed/fract16.h"
 
 #include <stdint.h>
@@ -50,10 +49,12 @@ typedef struct Angle_SpeedFractRef
 }
 Angle_SpeedFractRef_T;
 
+#define ANGLE32_SHIFT (16U)
+
 /*
     Interpolation between sensor edges.
     Internally shifted (32-bit) for sub-degree precision.
-    ANGLE_EXT_SHIFT fractional bits.
+    ANGLE32_SHIFT fractional bits.
 */
 typedef struct Angle_InterpolationState
 {
@@ -64,6 +65,7 @@ typedef struct Angle_InterpolationState
 Angle_InterpolationState_T;
 
 /* as data interface */
+// typedef struct angle_speed { angle16_t Angle; angle16_t Delta; } angle_speed_t;
 // typedef struct Angle_Data
 // {
 //     angle16_t Angle; /* Position Angle */
@@ -187,7 +189,7 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 static inline void Angle_ResolveInterpolationDelta(Angle_T * p_angle)
 {
     assert(math_abs(p_angle->Delta) < (int32_t)ANGLE16_PER_REVOLUTION / 2); /* sanity check speed is within range for interpolation */
-    p_angle->Interpolation.Delta = math_abs(p_angle->Delta) << ANGLE_EXT_SHIFT; /* shift up for accumulation, preserves sign */
+    p_angle->Interpolation.Delta = math_abs(p_angle->Delta) << ANGLE32_SHIFT; /* shift up for accumulation, preserves sign */
 }
 
 /* Disable until next edge */
@@ -205,13 +207,13 @@ static inline void Angle_ClearInterpolationDelta(Angle_T * p_angle)
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
     p_angle->Interpolation.Sum = math_limit_upper(p_angle->Interpolation.Sum + p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
-    return math_sign(p_angle->Delta) * (int32_t)(p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT);
+    return math_sign(p_angle->Delta) * (int32_t)(p_angle->Interpolation.Sum >> ANGLE32_SHIFT);
 }
 
 static inline angle16_t Angle_InterpolateIndex(Angle_T * p_angle, size_t index)
 {
     p_angle->Interpolation.Sum = math_limit_upper(index * p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
-    return math_sign(p_angle->Delta) * (p_angle->Interpolation.Sum >> ANGLE_EXT_SHIFT);
+    return math_sign(p_angle->Delta) * (p_angle->Interpolation.Sum >> ANGLE32_SHIFT);
 }
 
 /* Reset interpolation on sensor edge or direction change */
@@ -221,7 +223,6 @@ static inline void Angle_ZeroInterpolation(Angle_T * p_angle)
 }
 
 
-
 /*
     Init interpolation limit from sector angle.
     sectorAngle_shifted: angle per sector in shifted representation.
@@ -229,7 +230,7 @@ static inline void Angle_ZeroInterpolation(Angle_T * p_angle)
 */
 static inline void Angle_InitInterpolation(Angle_T * p_angle, angle16_t limit_angle16)
 {
-    p_angle->Interpolation.Limit = (int32_t)limit_angle16 << ANGLE_EXT_SHIFT; /* shift up for accumulation, positive magnitude */
+    p_angle->Interpolation.Limit = (int32_t)limit_angle16 << ANGLE32_SHIFT; /* shift up for accumulation, positive magnitude */
     p_angle->Interpolation.Sum = 0;
     p_angle->Interpolation.Delta = 0;
 }

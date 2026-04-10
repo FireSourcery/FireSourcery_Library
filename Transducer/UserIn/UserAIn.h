@@ -80,17 +80,16 @@ typedef const struct UserAIn
     /* Digital pin acts as enable gate for analog capture, and edge source for edge detection. */
     UserDIn_T * P_EDGE_PIN;                 /* Optional digital pin for threshold/enable */
     UserAIn_State_T * P_STATE;
-    uint8_t FILTER_SHIFT;                   /* Filtering Ratio */
     const UserAIn_Config_T * P_NVM_CONFIG;  /* Configuration for ADC to percentage conversion */
+    uint8_t FILTER_SHIFT;                   /* Filtering Ratio */
 }
 UserAIn_T;
 
 #define USER_AIN_STATE_ALLOC() (&(UserAIn_State_T){0})
 
-#define USER_AIN_INIT(p_EdgePin, p_State, Filter, p_Config) \
+#define USER_AIN_INIT(p_EdgePin, p_State, p_Config, Filter) (UserAIn_T) \
     { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
 
-#define USER_AIN_ALLOC(p_EdgePin, Filter, p_Config) USER_AIN_INIT(p_EdgePin, USER_AIN_STATE_ALLOC(), Filter, p_Config)
 
 /******************************************************************************/
 /*
@@ -117,11 +116,11 @@ static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { retu
 */
 /******************************************************************************/
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_IsOn(p_context->P_STATE) : false; }
+static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) * _UserAIn_IsOn(p_context->P_STATE); }
 
 /*! @return Percent16 by default */
 /* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */
-static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) ? _UserAIn_GetValue(p_context->P_STATE) : 0U; }
+static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) * _UserAIn_GetValue(p_context->P_STATE); }
 
 /*!
     Edge detection - considers EdgePin status

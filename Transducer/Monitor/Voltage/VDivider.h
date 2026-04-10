@@ -44,7 +44,7 @@ typedef const struct VDivider
 }
 VDivider_T;
 
-#define V_DIVIDER_INIT(RefR1, RefR2) { .R1 = (RefR1), .R2 = (RefR2) }
+#define V_DIVIDER_INIT(RefR1, RefR2) (VDivider_T) { .R1 = (RefR1), .R2 = (RefR2) }
 
 /******************************************************************************/
 /*!
@@ -54,11 +54,6 @@ static inline void VDivider_ToLinear(const VDivider_T * p_voltage, Linear_T * p_
 {
     Linear_Voltage_Init(p_linear, p_voltage->R1, p_voltage->R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
 }
-
-// static inline void VDivider_ToLinearAsChargeLevel(const VDivider_T * p_voltage, int32_t vZero_milliV, int32_t vRef_milliV, Linear_T * p_linear)
-// {
-
-// }
 
 /******************************************************************************/
 /*!
@@ -73,26 +68,26 @@ static inline void VDivider_ToLinear(const VDivider_T * p_voltage, Linear_T * p_
 /*!
 */
 /******************************************************************************/
-typedef enum VDivider_RefId
+typedef enum VDivider_ConfigId
 {
-    VDIVIDER_REF_R1,
-    VDIVIDER_REF_R2,
+    VDIVIDER_BOARD_R1,
+    VDIVIDER_BOARD_R2,
 }
-VDivider_RefId_T;
+VDivider_ConfigId_T;
 
-static inline int32_t _VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T id)
+static inline int32_t _VDivider_ConfigId_Get(const VDivider_T * p_voltage, VDivider_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
     {
-        case VDIVIDER_REF_R1: value = p_voltage->R1 / 10U;       break;
-        case VDIVIDER_REF_R2: value = p_voltage->R2 / 10U;       break;
+        case VDIVIDER_BOARD_R1: value = p_voltage->R1 / 10U;       break;
+        case VDIVIDER_BOARD_R2: value = p_voltage->R2 / 10U;       break;
         default: break;
     }
     return value;
 }
 
-static inline int32_t VDivider_RefId_Get(const VDivider_T * p_voltage, VDivider_RefId_T id)
+static inline int32_t VDivider_ConfigId_Get(const VDivider_T * p_voltage, VDivider_ConfigId_T id)
 {
-    return (p_voltage != NULL) ? _VDivider_RefId_Get(p_voltage, id) : 0;
+    return (p_voltage != NULL) ? _VDivider_ConfigId_Get(p_voltage, id) : 0;
 }
