@@ -37,60 +37,48 @@
 /*!
 */
 /******************************************************************************/
+/*
+    Type: includes the access type
+    Prefix: Namespace, zero offset. includes the source module
+*/
 typedef union MotVarId
 {
     struct
     {
-        uint16_t Base           : 4U; /* Name - corresponds with enum index value. Field Id */
-        uint16_t InnerType      : 6U; /* Accessor. Corresponds with Base enum type, may be n:1 handlers to enum type literal. Struct Type */
-        uint16_t OuterType      : 1U; /* 0-Motor, 1-MotorController */
-        uint16_t Instance       : 2U; /* Instance */
-        uint16_t Resv           : 3U;
+        uint16_t Base           : 4U; /* Name - corresponds with enum index value. Struct member */
+        uint16_t Type           : 4U; /* enum type literal / struct type. some cases n:1, as TypeObject */
+        uint16_t Prefix         : 4U; /*  */
+        uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
+        uint16_t Resv           : 2U;
     };
     uint16_t Value;
 }
 MotVarId_T;
 
-/*
-    Type: includes the access type
-    Prefix: Namespace, zero offset. includes the source module
-*/
-// typedef union MotVarId
-// {
-//     struct
-//     {
-//         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Struct member */
-//         uint16_t Type           : 4U; /* enum type literal / struct type. some cases n:1, as TypeObject */
-//         uint16_t Prefix         : 4U; /*  */
-//         uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
-//         uint16_t Resv           : 2U;
-//     };
-//     uint16_t Value;
-// }
-// MotVarId_T;
-
 #define MOT_VAR_ID_TYPE_ID(Prefix, Type) ((uint16_t)(((Prefix) << 4U) | (Type)))
-/* Prefixs Type to start as 0 index */
-// typedef enum MotVarId_Prefix
-// {
-//     MOT_VAR_ID_PREFIX_MOTOR,
-//     MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE,
-//     MOT_VAR_ID_PREFIX_MOTOR_SENSOR,
-//     MOT_VAR_ID_PREFIX_MOTOR_RESV,
-//     MOT_VAR_ID_PREFIX_GENERAL,
-//     MOT_VAR_ID_PREFIX_V_MONITOR,
-//     MOT_VAR_ID_PREFIX_HEAT_MONITOR,
 
-//     MOT_VAR_ID_PREFIX_V_MONITOR_SOURCE,
-//     MOT_VAR_ID_PREFIX_V_MONITOR_AUX,
-//     MOT_VAR_ID_PREFIX_HEAT_MONITOR_PCB,
-//     MOT_VAR_ID_PREFIX_HEAT_MONITOR_MOSFETS,
-//     MOT_VAR_ID_PREFIX_COMMUNICATION,
-//     MOT_VAR_ID_PREFIX_SYSTEM_COMMAND,
-//     MOT_VAR_ID_PREFIX_APP,
-//     _MOT_VAR_ID_PREFIX_END,
-// }
-// MotVarId_Prefix_T;
+/* Prefixs Type to start as 0 index */
+typedef enum MotVarId_Prefix
+{
+    MOT_VAR_ID_PREFIX_MOTOR,
+    MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE,
+    MOT_VAR_ID_PREFIX_MOTOR_SENSOR,
+    MOT_VAR_ID_PREFIX_MOTOR_RESV,
+    MOT_VAR_ID_PREFIX_GENERAL,
+    MOT_VAR_ID_PREFIX_V_MONITOR,
+    MOT_VAR_ID_PREFIX_HEAT_MONITOR,
+    // MOT_VAR_ID_PREFIX_V_MONITOR_SOURCE,
+    // MOT_VAR_ID_PREFIX_V_MONITOR_AUX,
+    // MOT_VAR_ID_PREFIX_HEAT_MONITOR_PCB,
+    // MOT_VAR_ID_PREFIX_HEAT_MONITOR_MOSFETS,
+    MOT_VAR_ID_PREFIX_COMMUNICATION,
+    MOT_VAR_ID_PREFIX_SYSTEM_COMMAND,
+    MOT_VAR_ID_PREFIX_APP_USER,
+    _MOT_VAR_ID_PREFIX_END,
+}
+MotVarId_Prefix_T;
+
+
 
 /*
     Status Response for Read/Write

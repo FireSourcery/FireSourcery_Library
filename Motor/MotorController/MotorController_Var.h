@@ -133,6 +133,7 @@ MotorController_Var_Config_T;
     Read-only Reference
 */
 /******************************************************************************/
+/* Board */
 typedef enum MotorController_Var_StaticRef
 {
     MOT_VAR_REF_MOTOR_COUNT,
@@ -146,36 +147,33 @@ MotorController_Var_StaticRef_T;
 
 /******************************************************************************/
 /*
+    [MotorController_VarType]
     Types
     Type of Base
         each id directly corresponds to var base literal enum type
         Corresponds to the "object type". accounts for type literal and specialized properties.
-        By source module
-
-    Control and UserIn
-    Config Types need to check StateMachine is in Config State
+    partition by Prefix. Each sub-enum indexes within its Prefix group.
 */
 /******************************************************************************/
-/*
-    [MotorController_VarType]
-    General Service Types
-    Single Instance
-*/
-typedef enum MotorController_VarType
+typedef enum MotorController_VarType_General
 {
     MOT_VAR_TYPE_GENERAL_USER_OUT,
-    MOT_VAR_TYPE_GENERAL_USER_IN, /* alternatively as IO */
+    MOT_VAR_TYPE_GENERAL_USER_IN,
     // MOT_VAR_TYPE_GENERAL_USER_CONTROL,
     MOT_VAR_TYPE_GENERAL_CONFIG,
     MOT_VAR_TYPE_GENERAL_DEBUG,
-    MOT_VAR_TYPE_GENERAL_STATIC_REF, /* Read-only */
+    MOT_VAR_TYPE_GENERAL_STATIC_REF,
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
     // MOT_VAR_TYPE_BUZZER_CONTROL,
     // MOT_VAR_TYPE_BUZZER_CONFIG,
     // MOT_VAR_TYPE_OPT_DIN_CONFIG,
     // MOT_VAR_TYPE_RELAY_CONFIG,
+}
+MotorController_VarType_General_T;
 
+typedef enum MotorController_VarType_VMonitor
+{
     /*
         Specialized instances. effectively access as object classes. simplify static value bounds.
     */
@@ -190,7 +188,11 @@ typedef enum MotorController_VarType
     MOT_VAR_TYPE_V_MONITOR_ANALOG_STATE,
     MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG,
     MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER,
+}
+MotorController_VarType_VMonitor_T;
 
+typedef enum MotorController_VarType_HeatMonitor
+{
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
     MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR, /* read-only coefficients */
@@ -200,128 +202,32 @@ typedef enum MotorController_VarType
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE, /* 0-3 */
     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR, /* 0-3 */
     // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
+}
+MotorController_VarType_HeatMonitor_T;
+
+typedef enum MotorController_VarType_Communication
+{
     /* Communication */
     MOT_VAR_TYPE_SOCKET_STATE,
     MOT_VAR_TYPE_SOCKET_CONFIG, /* Instance by Protocol Count */
     MOT_VAR_TYPE_CAN_BUS_STATE,
     MOT_VAR_TYPE_CAN_BUS_CONFIG,
-    // MotorController_SystemCmd_T in call for now
-    /*
-        Application_User SubModules
-        app table handle compile time define
-    */
-    /* Vehicle Submodule */
+}
+MotorController_VarType_Communication_T;
+
+/*
+    Application_User SubModules
+    app table handle compile time define
+*/
+typedef enum MotorController_VarType_AppUser
+{
     MOT_VAR_TYPE_VEHICLE_CONTROL,
     MOT_VAR_TYPE_VEHICLE_CONFIG,
 }
-MotorController_VarType_T;
+MotorController_VarType_AppUser_T;
 
 
-/******************************************************************************/
-/*
-    [MotorController_VarHandlerType]
-    Handler by Source File Module
-    Effectively name space for types
-    partition for contiguously expandable ids
-*/
-/******************************************************************************/
-typedef enum MotVarId_Handler
-{
-    MOT_VAR_ID_HANDLER_MOTOR,
-    MOT_VAR_ID_HANDLER_SYSTEM,
-    //alternatively hide compile time selections
-    // MOT_VAR_ID_HANDLER_MOTOR_SENSOR,
-    // MOT_VAR_ID_HANDLER_SYSTEM_APPS,
-
-    // MOT_VAR_ID_HANDLER_MOTOR_CONTROL,
-    // MOT_VAR_ID_HANDLER_MOTOR_CONFIG,
-    // MOT_VAR_ID_HANDLER_MOTOR_SENSOR,
-    // MOT_VAR_ID_HANDLER_MOTOR_SUB_MODULE,
-    // MOT_VAR_ID_HANDLER_GENERAL,
-    // MOT_VAR_ID_HANDLER_V_MONITOR,
-    // MOT_VAR_ID_HANDLER_HEAT_MONITOR,
-    // MOT_VAR_ID_HANDLER_COMMUNICATION,
-    // MOT_VAR_ID_HANDLER_SYSTEM_COMMAND,
-    // MOT_VAR_ID_HANDLER_APPLICATION_COMMAND,
-    // _MOT_VAR_ID_HANDLER_END,
-}
-MotVarId_Handler_T;
-
-
-
-
-// typedef enum MotorController_VarType
-// {
-//     MOT_VAR_TYPE_GENERAL_USER_OUT,
-//     MOT_VAR_TYPE_GENERAL_USER_IN, /* alternatively as IO */
-//     // MOT_VAR_TYPE_GENERAL_USER_CONTROL,
-//     MOT_VAR_TYPE_GENERAL_CONFIG,
-//     MOT_VAR_TYPE_GENERAL_DEBUG,
-//     MOT_VAR_TYPE_GENERAL_STATIC_REF, /* Read-only */
-//     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
-//     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
-//     // MOT_VAR_TYPE_BUZZER_CONTROL,
-//     // MOT_VAR_TYPE_BUZZER_CONFIG,
-//     // MOT_VAR_TYPE_OPT_DIN_CONFIG,
-//     // MOT_VAR_TYPE_RELAY_CONFIG,
-// }
-// MotorController_VarType_T;
-
-// typedef enum MotorController_VarType
-// {
-//     /*
-//         Specialized instances. effectively access as object classes. simplify static value bounds.
-//     */
-//     MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE,
-//     MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG,
-//     MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER,
-
-//     MOT_VAR_TYPE_V_MONITOR_ACCS_STATE,
-//     MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG,
-//     MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER,
-
-//     MOT_VAR_TYPE_V_MONITOR_ANALOG_STATE,
-//     MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG,
-//     MOT_VAR_TYPE_V_MONITOR_ANALOG_VDIVIDER,
-// }
-// MotorController_VarType_T;
-
-
-// typedef enum MotorController_VarType
-// {
-//     MOT_VAR_TYPE_HEAT_MONITOR_PCB_STATE,
-//     MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG,
-//     MOT_VAR_TYPE_HEAT_MONITOR_PCB_THERMISTOR, /* read-only coefficients */
-
-//     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_STATE,
-//     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG,
-//     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_STATE, /* 0-3 */
-//     MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_THERMISTOR, /* 0-3 */
-//     // MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_INSTANCE_CONFIG, /* reserved */
-// }
-// MotorController_VarType_T;
-
-// typedef enum MotorController_VarType
-// {
-//     /* Communication */
-//     MOT_VAR_TYPE_SOCKET_STATE,
-//     MOT_VAR_TYPE_SOCKET_CONFIG, /* Instance by Protocol Count */
-//     MOT_VAR_TYPE_CAN_BUS_STATE,
-//     MOT_VAR_TYPE_CAN_BUS_CONFIG,
-// }
-// MotorController_VarType_T;
-
-// /*
-//     Application_User SubModules
-//     app table handle compile time define
-// */
-// typedef enum MotorController_VarType
-// {
-//     MOT_VAR_TYPE_VEHICLE_CONTROL,
-//     MOT_VAR_TYPE_VEHICLE_CONFIG,
-// }
-// MotorController_VarType_T;
-// // MotorController_SystemCmd_T in call for now
+// MotorController_SystemCmd_T in call for now
 
 /******************************************************************************/
 /*
