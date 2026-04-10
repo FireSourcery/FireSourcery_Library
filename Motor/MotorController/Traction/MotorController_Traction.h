@@ -24,21 +24,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_Vehicle.h
+    @file   MotorController_Traction.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Vehicle.h"
+#include "Traction.h"
 
 #include "../MotorController_App.h"
-// #include "../MotorController_StateMachine.h"
-#include "Utility/StateMachine/StateMachine.h"
+#include "../MotorController_StateMachine.h"
 
-/* Part of MotorController */
-/* Let AppTable include so Var can include without explicitly listing all app headers*/
-struct MotorController;
-typedef const struct MotorController MotorController_T;
 
 /******************************************************************************/
 /*
@@ -55,7 +50,7 @@ typedef const struct MotorController MotorController_T;
         │
         └─ MAIN State
             │
-            └─ VEHICLE Substate (Vehicle Level)
+            └─ TRACTION Substate (Traction Level)
                 │
                 ├─ NEUTRAL ───────► Motors: PASSIVE, Direction: CW/CCW (retained)
                 │                   Output: Float (or brake if commanded)
@@ -67,25 +62,25 @@ typedef const struct MotorController MotorController_T;
                     └─ Reverse Mode  Direction: Calibrated CCW/CW
 */
 /******************************************************************************/
-typedef enum Vehicle_StateInput
+typedef enum Traction_StateInput
 {
-    VEHICLE_STATE_INPUT_DIRECTION,      /* Drive Direction */
-    VEHICLE_STATE_INPUT_DRIVE_CMD,      /* On Edge, Drive Cmd -Throttle/Brake/Release */
-    VEHICLE_STATE_INPUT_THROTTLE_VALUE,
-    VEHICLE_STATE_INPUT_BRAKE_VALUE,
+    TRACTION_STATE_INPUT_DIRECTION,      /* Drive Direction */
+    TRACTION_STATE_INPUT_DRIVE_CMD,      /* On Edge, Drive Cmd -Throttle/Brake/Release */
+    TRACTION_STATE_INPUT_THROTTLE_VALUE,
+    TRACTION_STATE_INPUT_BRAKE_VALUE,
 }
-Vehicle_StateInput_T;
+Traction_StateInput_T;
 
-typedef enum Vehicle_StateId
+typedef enum Traction_StateId
 {
-    VEHICLE_STATE_ID_DRIVE /* = _MC_STATE_ID_END */,
-    VEHICLE_STATE_ID_NEUTRAL,
+    TRACTION_STATE_ID_DRIVE /* = _MC_STATE_ID_END */,
+    TRACTION_STATE_ID_NEUTRAL,
 }
-Vehicle_StateId_T;
+Traction_StateId_T;
 
-// extern State_T MC_STATE_MAIN_VEHICLE;
+// extern State_T MC_STATE_MAIN_TRACTION;
 
-extern const MotorController_App_T MC_APP_VEHICLE;
+extern const MotorController_App_T MC_APP_TRACTION;
 
 
 /******************************************************************************/
@@ -96,29 +91,29 @@ extern const MotorController_App_T MC_APP_VEHICLE;
 
 
 /*  */
-extern void MotorController_Vehicle_PollStartCmd(MotorController_T * p_mc);
-extern void MotorController_Vehicle_SetThrottle(MotorController_T * p_mc, uint16_t userCmd);
-extern void MotorController_Vehicle_SetBrake(MotorController_T * p_mc, uint16_t userCmd);
-extern void MotorController_Vehicle_SetRelease(MotorController_T * p_mc);
+extern void MotorController_Traction_PollStartCmd(MotorController_T * p_mc);
+extern void MotorController_Traction_SetThrottle(MotorController_T * p_mc, uint16_t userCmd);
+extern void MotorController_Traction_SetBrake(MotorController_T * p_mc, uint16_t userCmd);
+extern void MotorController_Traction_SetRelease(MotorController_T * p_mc);
 
-extern void MotorController_Vehicle_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
-extern void MotorController_Vehicle_SetDirection(MotorController_T * p_mc, sign_t direction);
+extern void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
+extern void MotorController_Traction_SetDirection(MotorController_T * p_mc, sign_t direction);
 
-extern void MotorController_Vehicle_ProcAnalogUser(MotorController_T * p_mc);
-extern sign_t MotorController_Vehicle_GetDirection(MotorController_T * p_mc);
+extern void MotorController_Traction_ProcAnalogUser(MotorController_T * p_mc);
+extern sign_t MotorController_Traction_GetDirection(MotorController_T * p_mc);
 
-extern void MotorController_Vehicle_VarId_Set(MotorController_T * p_mc, Vehicle_VarId_T id, int value);
-extern int MotorController_Vehicle_VarId_Get(MotorController_T * p_mc, Vehicle_VarId_T id);
+extern void MotorController_Traction_VarId_Set(MotorController_T * p_mc, Traction_VarId_T id, int value);
+extern int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_T id);
 
-int MotorController_Vehicle_ConfigId_Get(const MotorController_T * p_mc, Vehicle_ConfigId_T id);
-void MotorController_Vehicle_ConfigId_Set(MotorController_T * p_mc, Vehicle_ConfigId_T id, int value);
+int MotorController_Traction_ConfigId_Get(const MotorController_T * p_mc, Traction_ConfigId_T id);
+void MotorController_Traction_ConfigId_Set(MotorController_T * p_mc, Traction_ConfigId_T id, int value);
 
 
 
 
 /* StateMachine Input */
-// extern void MotorController_Vehicle_ApplyDirection(MotorController_T * p_mc, sign_t direction);
-// extern void MotorController_Vehicle_ApplyStartCmd(MotorController_T * p_mc, Vehicle_Cmd_T cmd);
-// extern void MotorController_Vehicle_StartThrottle(MotorController_T * p_mc);
-// extern void MotorController_Vehicle_StartBrake(MotorController_T * p_mc);
-// extern void MotorController_Vehicle_StartRelease(MotorController_T * p_mc);
+// extern void MotorController_Traction_ApplyDirection(MotorController_T * p_mc, sign_t direction);
+// extern void MotorController_Traction_ApplyStartCmd(MotorController_T * p_mc, Traction_Cmd_T cmd);
+// extern void MotorController_Traction_StartThrottle(MotorController_T * p_mc);
+// extern void MotorController_Traction_StartBrake(MotorController_T * p_mc);
+// extern void MotorController_Traction_StartRelease(MotorController_T * p_mc);

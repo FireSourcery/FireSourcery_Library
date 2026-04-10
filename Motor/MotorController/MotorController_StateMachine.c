@@ -219,7 +219,7 @@ static void Park_Proc(MotorController_T * p_context)
 
 /*
     Park accepts state commands only. Motor-generic and app-specific inputs are
-    buffered by the caller (via CmdInput / Vehicle.Input) and sink here (NULL table slots).
+    buffered by the caller (via CmdInput / Traction.Input) and sink here (NULL table slots).
     Buffered values persist and are consumed when Main/sub-state is entered.
 */
 static State_T * Park_InputStateCmd(MotorController_T * p_context, state_value_t cmd)

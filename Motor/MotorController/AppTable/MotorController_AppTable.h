@@ -29,15 +29,11 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../Vehicle/MotorController_Vehicle.h"
+#include "../Traction/MotorController_Traction.h"
 #include "../MotorController_App.h"
 
 #include "Utility/StateMachine/StateMachine.h"
 #include "Utility/StateMachine/_StateMachine_Tree.h"
-
-/* Dependant part of MotorController */
-struct MotorController;
-typedef const struct MotorController MotorController_T;
 
 
 /******************************************************************************/
@@ -49,17 +45,17 @@ typedef const struct MotorController MotorController_T;
 typedef enum MotorController_MainMode
 {
     MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD,
-    MOTOR_CONTROLLER_MAIN_MODE_VEHICLE,
+    MOTOR_CONTROLLER_MAIN_MODE_TRACTION,
 }
 MotorController_MainMode_T;
 
-// #define Vehicle_StateInput_START (0x1000UL)
+// #define Traction_StateInput_START (0x1000UL)
 
 // typedef const struct MotorController_AppTable
 // {
 //     MotorController_App_T MOTOR_CMD;
-//     MotorController_App_T VEHICLE;
-//     Vehicle_T VEHICLE_CONTEXT;
+//     MotorController_App_T TRACTION;
+//     Traction_T TRACTION_CONTEXT;
 // }
 // MotorController_AppTable_T;
 

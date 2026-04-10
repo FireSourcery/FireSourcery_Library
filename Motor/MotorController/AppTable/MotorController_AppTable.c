@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "MotorController_AppTable.h"
-// #include "Vehicle/MotorController_Vehicle.h"
+// #include "Traction/MotorController_Traction.h"
 
 #include "../MotorController_App.h"
 // #include "MotorController_StateMachine.h"
@@ -79,7 +79,7 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 //     switch (p_context->P_MC_STATE->Config.InitMode)
 //     {
 //         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
-//         case MOTOR_CONTROLLER_MAIN_MODE_VEHICLE:    return &MC_APP_VEHICLE;
+//         case MOTOR_CONTROLLER_MAIN_MODE_TRACTION:    return &MC_APP_TRACTION;
 //         default: return &MC_APP_MOTOR_CMD;
 //     }
 // }
@@ -88,7 +88,7 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 // MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_context)
 // {
 //     if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
-//     // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_VEHICLE)) { return MOTOR_CONTROLLER_MAIN_MODE_VEHICLE; }
+//     // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TRACTION)) { return MOTOR_CONTROLLER_MAIN_MODE_TRACTION; }
 //     return -1;
 // }
 
@@ -99,6 +99,6 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 
 
 // void MotorController_AppTableVar(MotorController_T * p_context) {
-//    case MOT_VAR_TYPE_VEHICLE_CONTROL:     return MotorController_Vehicle_VarId_Get(p_context, varId.Base);
-//         case MOT_VAR_TYPE_VEHICLE_CONFIG:      return MotorController_Vehicle_ConfigId_Get(p_context, varId.Base);
+//    case MOT_VAR_TYPE_TRACTION_CONTROL:     return MotorController_Traction_VarId_Get(p_context, varId.Base);
+//         case MOT_VAR_TYPE_TRACTION_CONFIG:      return MotorController_Traction_ConfigId_Get(p_context, varId.Base);
 //      }

@@ -221,8 +221,8 @@ MotorController_VarType_Communication_T;
 */
 typedef enum MotorController_VarType_AppUser
 {
-    MOT_VAR_TYPE_VEHICLE_CONTROL,
-    MOT_VAR_TYPE_VEHICLE_CONFIG,
+    MOT_VAR_TYPE_TRACTION_CONTROL,
+    MOT_VAR_TYPE_TRACTION_CONFIG,
 }
 MotorController_VarType_AppUser_T;
 

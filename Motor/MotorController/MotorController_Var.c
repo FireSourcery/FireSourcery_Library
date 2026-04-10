@@ -352,8 +352,8 @@ static int _HandleAppUser_Get(const MotorController_T * p_context, MotVarId_T va
 {
     switch ((MotorController_VarType_AppUser_T)varId.Type)
     {
-        case MOT_VAR_TYPE_VEHICLE_CONTROL:     return MotorController_Vehicle_VarId_Get(p_context, varId.Base);
-        case MOT_VAR_TYPE_VEHICLE_CONFIG:      return MotorController_Vehicle_ConfigId_Get(p_context, varId.Base);
+        case MOT_VAR_TYPE_TRACTION_CONTROL:     return MotorController_Traction_VarId_Get(p_context, varId.Base);
+        case MOT_VAR_TYPE_TRACTION_CONFIG:      return MotorController_Traction_ConfigId_Get(p_context, varId.Base);
         default: return 0;
     }
 }
@@ -362,8 +362,8 @@ static MotVarId_Status_T _HandleAppUser_Set(const MotorController_T * p_context,
 {
     switch ((MotorController_VarType_AppUser_T)varId.Type)
     {
-        case MOT_VAR_TYPE_VEHICLE_CONTROL:        MotorController_Vehicle_VarId_Set(p_context, varId.Base, value);                       break;
-        case MOT_VAR_TYPE_VEHICLE_CONFIG:         MotorController_Vehicle_ConfigId_Set(p_context, varId.Base, value);     break;
+        case MOT_VAR_TYPE_TRACTION_CONTROL:        MotorController_Traction_VarId_Set(p_context, varId.Base, value);                       break;
+        case MOT_VAR_TYPE_TRACTION_CONFIG:         MotorController_Traction_ConfigId_Set(p_context, varId.Base, value);     break;
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
     return MOT_VAR_STATUS_OK;
@@ -505,10 +505,10 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_context, M
         case MOT_VAR_ID_PREFIX_APP_USER:
             switch ((MotorController_VarType_AppUser_T)varId.Type)
             {
-                case MOT_VAR_TYPE_VEHICLE_CONTROL:
+                case MOT_VAR_TYPE_TRACTION_CONTROL:
                     if (!IsProtocolControlMode(p_context)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
                     break;
-                case MOT_VAR_TYPE_VEHICLE_CONFIG:
+                case MOT_VAR_TYPE_TRACTION_CONFIG:
                     if (!MotorController_IsConfig(p_context)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
                     break;
                 default:
@@ -573,7 +573,7 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, M
 //     {
 //         case MOT_VAR_ID_HANDLER_MOTOR_CONTROL: return true;
 //         case MOT_VAR_ID_HANDLER_GENERAL: return (varId.InnerType == MOT_VAR_TYPE_GENERAL_USER_IN);
-//         case MOT_VAR_ID_HANDLER_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_VEHICLE_CONTROL);
+//         case MOT_VAR_ID_HANDLER_APPLICATION_COMMAND: return (varId.InnerType == MOT_VAR_TYPE_TRACTION_CONTROL);
 //         default:  return false;  // Config, monitoring, etc. don't need mux check
 //     }
 // }

@@ -125,13 +125,13 @@ void MotorController_SetInputMode(const MotorController_T * p_context, MotorCont
     // }
 }
 
-// static inline bool _Vehicle_ProcOnDirection(const Vehicle_T * p_vehicle, Vehicle_Direction_T direction)
+// static inline bool _Traction_ProcOnDirection(const Traction_T * p_vehicle, Traction_Direction_T direction)
 // {
-//     // if((p_vehicle->P_VEHICLE_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
+//     // if((p_vehicle->P_TRACTION_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
 //     // {
 //     //     if(p_this->DriveDirection == MOTOR_DIRECTION_CW)
 //     //     {
-//     //         Vehicle_BeepPeriodicType1(p_this);
+//     //         Traction_BeepPeriodicType1(p_this);
 //     //     }
 //     //     else
 //     //     {

@@ -128,7 +128,7 @@ FireSourcery_Library/
 │   │   ├── MotBuzzer/           #     Buzzer / audio feedback
 │   │   ├── MotLimits/           #     Current/voltage/temperature limiting
 │   │   ├── MotNvm/              #     Non-volatile memory management
-│   │   └── Vehicle/             #     Traction controller specialized logic (speed, direction, gear)
+│   │   └── Traction/             #     Traction controller specialized logic (speed, direction, gear)
 │   │
 │   └── MotProtocol/             #   Motor-specific protocol layer
 │       ├── MotPacket.c/h        #     Packet format for motor variable read/write
