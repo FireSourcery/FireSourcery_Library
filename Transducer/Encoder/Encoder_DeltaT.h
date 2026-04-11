@@ -108,6 +108,21 @@ static inline bool Encoder_DeltaT_IsExtendedStop(const Encoder_T * p_encoder)
     return (_Encoder_GetExtendedTimerDelta(p_encoder) > p_encoder->P_STATE->Config.ExtendedDeltaTStop);
 }
 
+// static inline void Encoder_DeltaT_CaptureExtended(const Encoder_T * p_encoder)
+// {
+//     uint32_t periodT = (p_encoder->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
+//     HAL_Encoder_WriteTimer(p_encoder->P_HAL_ENCODER_TIMER, 0U);
+//     HAL_Encoder_ClearTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER);
+//     p_encoder->P_STATE->OverflowCount = 0U;
+//     p_encoder->P_STATE->AngleCounter.PeriodT = periodT;
+// }
+
+// // Stop detection — single threshold in base timer ticks
+// static inline bool Encoder_DeltaT_IsExtendedStop(const Encoder_T * p_encoder)
+// {
+//     uint32_t elapsed = (p_encoder->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
+//     return (elapsed > p_encoder->P_STATE->Config.DeltaTStop);
+// }
 /******************************************************************************/
 /*
     Capture Period < 1S

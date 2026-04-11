@@ -64,31 +64,20 @@ typedef struct Angle_InterpolationState
 }
 Angle_InterpolationState_T;
 
-/* as data interface */
-// typedef struct angle_speed { angle16_t Angle; angle16_t Delta; } angle_speed_t;
-// typedef struct Angle_Data
-// {
-//     angle16_t Angle; /* Position Angle */
-//     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
-//     accum32_t Speed_Fract16;  /* Store for Feedback. Let sensor select direct capture or convert from DeltaAngle */
-// }
-// Angle_Data_T;
-
 /*
     [Angle_T] State Interface
 */
 typedef struct Angle
 {
-    angle16_t Angle; /* Position Angle */
-    angle16_t Delta; /* DegPerCycle, DigitalSpeed */
-    accum32_t Speed_Fract16;  /* Store for Feedback. Let sensor select direct capture or convert from DeltaAngle */
+    angle16_t Angle; /* Position Angle. Retain state for integration */
+    angle16_t Delta; /* DegPerTimeCycle */
+    accum32_t Speed_Fract16;  /* Store for Feedback. Sensor select direct capture or convert from DeltaAngle */
 
     /* Interpolation Capture State */
     Angle_InterpolationState_T Interpolation;
 
     /* results from config */
     Angle_SpeedFractRef_T SpeedFractRef; /* Params */
-
 }
 Angle_T;
 
@@ -152,17 +141,19 @@ static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle)
     Integrate from commanded input
 */
 /******************************************************************************/
-static inline void Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
+static inline angle16_t Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
 {
     p_angle->Angle += delta_degPerCycle;
     p_angle->Delta = delta_degPerCycle;
     Angle_ResolveSpeed_Fract16(p_angle);
+    return p_angle->Angle;
 }
 
-static inline void Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, fract16_t speed_fract16)
+static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, fract16_t speed_fract16)
 {
     Angle_CaptureSpeed_Fract16(p_angle, speed_fract16);
     p_angle->Angle += p_angle->Delta;
+    return p_angle->Angle;
 }
 
 // static inline void Angle_IntegrateAngle(Angle_T * p_angle, angle16_t angle)
@@ -276,3 +267,11 @@ static inline fract16_t Angle_GetSpeed_Digital(const Angle_T * p_angle) { return
 static inline fract16_t Angle_GetSpeed_Fract16(const Angle_T * p_angle) { return p_angle->Speed_Fract16; }
 
 
+/* as data interface */
+// typedef struct angle_speed { angle16_t Angle; angle16_t Delta; } angle_speed_t;
+// typedef struct Angle_Data
+// {
+//     angle16_t Angle; /* Position Angle */
+//     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
+// }
+// Angle_Data_T;

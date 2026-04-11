@@ -50,6 +50,9 @@ typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] extended int
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
 typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */
 
+/*  */
+typedef int32_t factor32_t; /*!< Q2.30 */
+
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
 
@@ -184,7 +187,11 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 */
 /******************************************************************************/
 typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
-// typedef uint16_t uangle16_t;  /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
+
+typedef int32_t angle32_t; /* fract32 */
+typedef int32_t nangle32_t; /* 16.16 */
+// typedef int32_t turn32_t; /* 16.16 */
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
 // #define ANGLE16_SIGNED_MAX (INT16_MAX)

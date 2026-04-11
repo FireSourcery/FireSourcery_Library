@@ -38,10 +38,8 @@ void _Encoder_DeltaT_InitTimer(const Encoder_T * p_encoder)
 {
     HAL_Encoder_InitTimer(p_encoder->P_HAL_ENCODER_TIMER);
     /*
-        RPM * CPR / 60[Seconds] = CPS
-        CPS = T_FREQ [Hz] / deltaT_ticks [timerticks/Count]
-        RPM * CPR / 60[Seconds] = T_FREQ [Hz] / deltaT_ticks
-        Error ~ 1, deltaT_ticks = 100
+        RPM * CPR / 60 = CPS = T_FREQ [Hz] / deltaT_ticks
+        Error < 1% -> deltaT_ticks >= 100
         => T_FREQ/CPS >= 100, (CPS/T_FREQ <= .01)
             T_FREQ /(RPM * CPR / 60) >= 100
         eg. RPM = 10000

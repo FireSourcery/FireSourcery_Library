@@ -144,7 +144,7 @@ static inline int32_t Encoder_ModeDT_GetScalarSpeed(Encoder_State_T * p_encoder)
 
 */
 /******************************************************************************/
-static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->AngleCounter.FreqD, p_encoder->Config.CountsPerRevolution); }
+static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder) { return rpm_of_count_freq(p_encoder->Config.CountsPerRevolution, p_encoder->AngleCounter.FreqD); }
 // static inline int32_t Encoder_ModeDT_GetRotationalVelocity_RPM(const Encoder_State_T * p_encoder) { return Encoder_GetDirectionRef(p_encoder) * Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder); }
 
 // static inline int32_t Encoder_ModeDT_GetRotationalSpeed_RPS(const Encoder_State_T * p_encoder) { return p_encoder->FreqD / p_encoder->Config.CountsPerRevolution; }

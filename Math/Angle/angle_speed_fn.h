@@ -36,6 +36,8 @@
 /*
     Convert between [angle16] per poll and standard representations.
     [angle16] as [DeltaAngle] at [PollingFreq].
+    composition along compile time optimizable path
+    provides both a of_x conversion function, as well as a per_x conversion factor
 */
 
 /*
@@ -48,6 +50,7 @@
 /*
 
 */
+
 #define ANGLE_SPEED_OF(pollingFreq, cycles)  (((int64_t)cycles * ANGLE16_PER_REVOLUTION) / (pollingFreq))  /* angle delta */
 #define ANGLE_FREQ_OF(pollingFreq, angle16)  (((int64_t)angle16 * (pollingFreq)) / ANGLE16_PER_REVOLUTION) /* n cycles */
 
@@ -76,6 +79,22 @@ static inline int32_t _angle_freq_of(uint32_t polling_rate, int32_t angle_per_po
 static inline int32_t angle_speed_of(uint32_t polling_rate, int32_t cycles_per_poll) { return _angle_speed_of(polling_rate, cycles_per_poll); }
 /* (int64_t) for scaled polling rate. e.g rpm */
 static inline int32_t angle_freq_of(uint32_t polling_rate, int32_t angle_per_poll) { return _cycles_of_angle_direct(polling_rate, angle_per_poll); }
+
+// /* Layer 0: Factor (division here — const-folded or precomputed) */
+// #define ANGLE_PER_CYCLE(pollingFreq) ((int32_t)((uint32_t)ANGLE16_PER_REVOLUTION * (uint32_t)FRACT16_SCALE / (pollingFreq)))
+// #define CYCLES_PER_ANGLE(pollingFreq)   ((int32_t)(pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
+
+// /* Constant expression path (for #define composition, initializers) */
+// #define ANGLE_SPEED_OF(pollingFreq, cycles) (((int64_t)(cycles) * ANGLE16_PER_REVOLUTION) / (pollingFreq))
+
+// /* Layer 1: Apply (hot path — multiply+shift only) */
+// static inline int32_t angle_of_cycles_factor(int32_t per_cycle, int32_t cycles) { return cycles * per_cycle / FRACT16_SCALE; }
+// static inline int32_t cycles_of_angle_factor(int32_t per_angle, int32_t angle16) { return angle16 * per_angle / FRACT16_SCALE; }
+
+// /* Layer 2: Composed (compile-time optimizable) */
+// static inline int32_t angle_of_cycles(uint32_t pollingFreq, int32_t cycles) { return angle_of_cycles_factor(ANGLE_PER_CYCLE(pollingFreq), cycles); }
+// static inline int32_t cycles_of_angle(uint32_t pollingFreq, int32_t angle16) { return cycles_of_angle_factor(CYCLES_PER_ANGLE(pollingFreq), angle16); }
+
 
 /******************************************************************************/
 /*

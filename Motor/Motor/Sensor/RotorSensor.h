@@ -215,10 +215,6 @@ static inline sign_t RotorSensor_GetFeedbackDirection(const RotorSensor_T * p_se
 static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 
 
-// static inline void RotorSensor_SetDirectionCmd(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_STATE->DirectionCmd = direction; }
-
-
-
 #ifndef ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16
 #define ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16 (((int32_t)INT16_MAX * 2) / 64) /* ~2% */
 #endif

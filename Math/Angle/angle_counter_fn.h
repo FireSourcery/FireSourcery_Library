@@ -32,8 +32,8 @@
 #include "../Fixed/fract16.h"
 
 typedef uint32_t angle32_t;
-#define ANGLE_EXT_SHIFT (16U)
-#define ANGLE_SPEED_SHIFT (15U)
+#define ANGLE_EXT_SHIFT (16)
+// #define ANGLE_SPEED_SHIFT (15)
 
 /******************************************************************************/
 /*!
@@ -67,9 +67,15 @@ static inline uint32_t angle_per_count(uint32_t counts_per_revolution) { return 
 /* counter [0:CountsPerRevolution], wrapped counter value */
 static inline uint32_t angle_counter_wrapped(uint32_t max, uint32_t prev, uint32_t count) { return (count < prev) ? (max + 1U + count - prev) : (count - prev); }
 
+
+/******************************************************************************/
 /*
-    Speed
+    Speed in Digital Units: Fract, AngleDelta
+    Speed in physical units
+    Capture Mode:
 */
+/******************************************************************************/
+
 /*
     Speed Fract16 = Speed_Rpm * FRACT16_MAX / max_rpm
     Speed Fract16 => DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)] / DeltaT
@@ -98,6 +104,7 @@ static inline uint32_t rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint
 static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
 static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }
 
+/* [0:speedmax] => [0:~INT32_MAX/2] */
 static inline uint32_t accum32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)(FRACT16_SCALE << 15) * freq_t) / cpr; }
 static inline uint32_t rpm_accum32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return accum32_per_count(freq_t * 60U, cpr * max_rpm); }
 
@@ -128,10 +135,10 @@ static uint32_t angle_speed_per_count_index(uint32_t polling_freq, uint32_t time
 /*
 
 */
-static inline uint32_t cps_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq) / cpr; }
+static inline int32_t cps_of_count(uint32_t sampleFreq, uint32_t cpr, int32_t deltaD) { return (deltaD * sampleFreq) / cpr; }
 
-static inline uint32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * 60U) / cpr; }
-static inline uint32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, uint32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
+static inline int32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, int32_t deltaD) { return (deltaD * sampleFreq * 60U) / cpr; }
+static inline int32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, int32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
 
 
 /******************************************************************************/
@@ -156,7 +163,8 @@ static inline int32_t count_freq_of_angle_speed(uint32_t pollingFreq, uint16_t c
 /*
     per timer mode
 */
-static uint32_t _max_delta_d(uint16_t cpr, uint16_t max_rpm, uint32_t delta_t_freq) { return count_of_rpm(delta_t_freq, cpr, max_rpm * 2U); }
+// MaxRpm * CPR / 60
+// static uint32_t _max_delta_d(uint16_t cpr, uint16_t max_rpm, uint32_t delta_t_freq) { return count_of_rpm(delta_t_freq, cpr, max_rpm * 2U); }
 
 /*
     Count Freq: CPR × RPM < 30
@@ -171,11 +179,11 @@ static uint32_t _max_delta_d(uint16_t cpr, uint16_t max_rpm, uint32_t delta_t_fr
     Core ModeDT formula: FreqD = DeltaD * TimerFreq / PeriodT
 */
 // static inline int32_t counter_freq(uint32_t timerFreq, uint32_t periodT, int32_t deltaD) { return deltaD * (timerFreq / periodT); }
-static inline uint32_t counter_freq(uint32_t timerFreq, uint32_t samplePeriod, uint32_t deltaThPrev, uint32_t deltaTh, uint32_t deltaD)
-{
-    uint32_t periodTk = samplePeriod + (deltaThPrev - deltaTh);
-    if (periodTk > samplePeriod / 2) { return deltaD * (timerFreq / periodTk); }
-}
+// static inline uint32_t counter_freq(uint32_t timerFreq, uint32_t samplePeriod, uint32_t deltaThPrev, uint32_t deltaTh, uint32_t deltaD)
+// {
+//     uint32_t periodTk = samplePeriod + (deltaThPrev - deltaTh);
+//     if (periodTk > samplePeriod / 2) { return deltaD * (timerFreq / periodTk); }
+// }
 
 
 /*

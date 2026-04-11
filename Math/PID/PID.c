@@ -98,7 +98,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
 */
 void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
-    assert(max > min);
+    // assert(max > min);
+    if (min >= max) { return; }
     p_pid->OutputMin = min;
     p_pid->OutputMax = max;
 }
@@ -115,9 +116,9 @@ void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 */
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
-    // int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
-    assert(math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX));
-    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
+    // assert(math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX));
+    p_pid->Output = math_clamp(CalcPI(p_pid, error), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }
 

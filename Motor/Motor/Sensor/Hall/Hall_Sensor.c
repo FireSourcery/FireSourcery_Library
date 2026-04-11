@@ -94,6 +94,8 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
         .CountsPerRevolution = 6U * p_config->PolePairs, /* Set for mechanical cycle */
         .ScalarSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm, /* mech rpm */
         .IsQuadratureCaptureEnabled = false,
+        .ExtendedDeltaTStop = 1000U,
+        .IsALeadBPositive = true,
     };
 
     Encoder_ModeDT_InitValuesFrom(p_sensor->P_ENCODER, &config); // for capture speed only
