@@ -75,14 +75,14 @@ void _Encoder_DeltaT_InitTimer(const Encoder_T * p_encoder)
 */
 void Encoder_DeltaT_Init(const Encoder_T * p_encoder)
 {
-    if (p_encoder->P_NVM_CONFIG != NULL) { memcpy(&p_encoder->P_STATE->Config, p_encoder->P_NVM_CONFIG, sizeof(Encoder_Config_T)); }
-    _Encoder_DeltaT_InitTimer(p_encoder);
-    p_encoder->P_STATE->UnitTime_Freq = p_encoder->TIMER_FREQ;
-    p_encoder->P_STATE->PollingFreq = p_encoder->POLLING_FREQ;
-    _Encoder_ResetUnits(p_encoder->P_STATE);
-    p_encoder->P_STATE->DeltaD = 1U; /* Effective for shared functions only */
-    p_encoder->P_STATE->DirectionComp = 1;
-    Encoder_DeltaT_SetInitial(p_encoder);
+    // if (p_encoder->P_NVM_CONFIG != NULL) { memcpy(&p_encoder->P_STATE->Config, p_encoder->P_NVM_CONFIG, sizeof(Encoder_Config_T)); }
+    // _Encoder_DeltaT_InitTimer(p_encoder);
+    // p_encoder->P_STATE->UnitTime_Freq = p_encoder->TIMER_FREQ;
+    // p_encoder->P_STATE->PollingFreq = p_encoder->POLLING_FREQ;
+    // _Encoder_ResetUnits(p_encoder->P_STATE);
+    // p_encoder->P_STATE->DeltaD = 1U; /* Effective for shared functions only */
+    // p_encoder->P_STATE->DirectionComp = 1;
+    // Encoder_DeltaT_SetInitial(p_encoder);
 }
 
 /*
@@ -93,7 +93,7 @@ void Encoder_DeltaT_SetInitial(const Encoder_T * p_encoder)
     HAL_Encoder_ClearTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER);
     HAL_Encoder_WriteTimer(p_encoder->P_HAL_ENCODER_TIMER, 0U);
 
-    p_encoder->P_STATE->DeltaT = p_encoder->TIMER_FREQ; /* Set as 1s 60/Cpr RPM, alternatively multiply for 1rpm */
+    p_encoder->P_STATE->AngleCounter.PeriodT = p_encoder->TIMER_FREQ; /* Set as 1s 60/Cpr RPM, alternatively multiply for 1rpm */
     p_encoder->P_STATE->ExtendedTimerPrev = *p_encoder->P_EXTENDED_TIMER;
     // p_encoder->P_STATE->InterpolateAngleIndex = 0U;
     // _Encoder_ZeroPulseCount(p_encoder);

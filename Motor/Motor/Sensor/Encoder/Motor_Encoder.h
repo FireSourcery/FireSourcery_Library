@@ -31,6 +31,7 @@
 /******************************************************************************/
 
 #include "Transducer/Encoder/Encoder_ModeDT.h"
+#include "Utility/StateMachine/State.h"
 
 /* Include with Motor_Sensor */
 typedef const struct Motor Motor_T;
@@ -42,12 +43,12 @@ typedef struct Motor_State Motor_State_T;
 /******************************************************************************/
 void Motor_Encoder_StartHoming(const Motor_T * p_motor);
 void Motor_Encoder_CalibrateHomeOffset(const Motor_T * p_motor);
+void Motor_Encoder_StartVirtualHome(const Motor_T * p_motor);
+
+void Motor_Encoder_StartAlignZero(const Motor_T * p_motor);
+void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor);
+void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor);
 
 void Motor_Encoder_StartUpChain(const Motor_T * p_motor);
+// State_T * Motor_Encoder_GetStartUpState(const Motor_T * p_motor);
 
-/*  */
-// extern int32_t _Motor_Var_ConfigEncoder_Get(const Motor_State_T * p_motor, Encoder_ConfigId_T varId);
-// extern void _Motor_Var_ConfigEncoder_Set(Motor_State_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);
-
-// extern int32_t Motor_Encoder_Config_Get(const Motor_T * p_motor, Encoder_ConfigId_T varId);
-// extern void Motor_Encoder_Config_Set(const Motor_T * p_motor, Encoder_ConfigId_T varId, int32_t varValue);

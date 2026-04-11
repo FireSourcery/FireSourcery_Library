@@ -47,7 +47,7 @@ Hall_RotorSensor_T;
 
 extern const RotorSensor_VTable_T HALL_VTABLE;
 
-#define HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) \
+#define HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) (Hall_RotorSensor_T) \
     { .BASE = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
 
 // #define HALL_ROTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \

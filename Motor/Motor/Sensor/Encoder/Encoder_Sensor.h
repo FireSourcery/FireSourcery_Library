@@ -39,19 +39,10 @@
 typedef const struct Encoder_RotorSensor
 {
     const RotorSensor_T BASE;
-    const Encoder_T ENCODER;    // RotorSensor_Calibration_T ENCODER_CALIBRATION; /* Calibration Function Pointer */
+    const Encoder_T ENCODER;
 }
 Encoder_RotorSensor_T;
 
 extern const RotorSensor_VTable_T ENCODER_VTABLE;
 
-#define ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, p_State) \
-{ \
-    .BASE = ROTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), \
-    .ENCODER = EncoderStruct, \
-}
-
-
-// void Encoder_RotorSensor_Init(const RotorSensor_T * p_sensor);
-// void Encoder_RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor);
-// void Encoder_RotorSensor_CaptureSpeed(const RotorSensor_T * p_sensor);
+#define ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, p_State) (Encoder_RotorSensor_T){ .BASE = ROTOR_SENSOR_INIT(&ENCODER_VTABLE, p_State), .ENCODER = EncoderStruct, }

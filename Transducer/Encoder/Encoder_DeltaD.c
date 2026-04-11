@@ -55,12 +55,12 @@ void _Encoder_DeltaD_InitCounter(const Encoder_T * p_encoder)
 */
 void Encoder_DeltaD_Init(const Encoder_T * p_encoder)
 {
-    if(p_encoder->P_NVM_CONFIG != NULL) { memcpy(&p_encoder->P_STATE->Config, p_encoder->P_NVM_CONFIG, sizeof(Encoder_Config_T)); }
-    _Encoder_DeltaD_InitCounter(p_encoder);
-    p_encoder->P_STATE->UnitTime_Freq = p_encoder->SAMPLE_FREQ;
-    _Encoder_ResetUnits(p_encoder->P_STATE);
-    p_encoder->P_STATE->DeltaT = 1U;
-    Encoder_DeltaD_SetInitial(p_encoder);
+    // if(p_encoder->P_NVM_CONFIG != NULL) { memcpy(&p_encoder->P_STATE->Config, p_encoder->P_NVM_CONFIG, sizeof(Encoder_Config_T)); }
+    // _Encoder_DeltaD_InitCounter(p_encoder);
+    // p_encoder->P_STATE->UnitTime_Freq = p_encoder->SAMPLE_FREQ;
+    // _Encoder_ResetUnits(p_encoder->P_STATE);
+    // p_encoder->P_STATE->DeltaT = 1U;
+    // Encoder_DeltaD_SetInitial(p_encoder);
 }
 
 
@@ -73,7 +73,8 @@ void Encoder_DeltaD_SetInitial(const Encoder_T * p_encoder)
 #elif   defined(ENCODER_HW_EMULATED)
 #endif
     _Encoder_ZeroPulseCount(p_encoder->P_STATE);
-    p_encoder->P_STATE->DeltaD = 0U;
+    // p_encoder->P_STATE->DeltaD = 0U;
+    p_encoder->P_STATE->AngleCounter.DeltaD = 0U;
 }
 
 

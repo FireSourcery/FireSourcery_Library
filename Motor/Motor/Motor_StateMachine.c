@@ -749,6 +749,10 @@ bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor)
 }
 
 
+// // inline bool Motor_IsClosedLoop(const const Motor_T * p_motor)
+// // {
+// //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
+// // }
 
 // Orthogonal Composition
 // The critical architectural point: State objects naturally compose as orthogonal regions because each provides an independent behavioral filter over shared canonical data.

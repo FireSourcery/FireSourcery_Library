@@ -98,6 +98,9 @@ static inline uint32_t rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint
 static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
 static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }
 
+static inline uint32_t accum32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)(FRACT16_SCALE << 15) * freq_t) / cpr; }
+static inline uint32_t rpm_accum32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return accum32_per_count(freq_t * 60U, cpr * max_rpm); }
+
 
 /*
     Polling Angle Unit
@@ -125,6 +128,8 @@ static uint32_t angle_speed_per_count_index(uint32_t polling_freq, uint32_t time
 /*
 
 */
+static inline uint32_t cps_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq) / cpr; }
+
 static inline uint32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * 60U) / cpr; }
 static inline uint32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, uint32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
 
@@ -158,7 +163,7 @@ static uint32_t _max_delta_d(uint16_t cpr, uint16_t max_rpm, uint32_t delta_t_fr
     Fixed shift 16
     base time freq == 1, accept runtime division (timerFreq / periodTk)
 */
-static inline uint32_t rpm_fract16_per_count_freq(uint32_t cpr, uint32_t max_rpm) { return rpm_fract32_per_count(1, cpr, max_rpm); }
+// static inline uint32_t rpm_fract16_per_count_freq(uint32_t cpr, uint32_t max_rpm) { return rpm_fract32_per_count(1, cpr, max_rpm); }
 
 
 /*
@@ -179,6 +184,7 @@ static inline uint32_t counter_freq(uint32_t timerFreq, uint32_t samplePeriod, u
     RPM = FreqD * 60 / CPR
 */
 static inline int32_t rpm_of_count_freq(uint16_t cpr, int32_t freqD) { return rpm_of_count(1U, cpr, freqD); }
+static inline int32_t cps_of_count_freq(uint16_t cpr, int32_t freqD) { return cps_of_count(1U, cpr, freqD); }
 static inline int32_t count_freq_of_rpm(uint16_t cpr, int32_t rpm) { return count_of_rpm(1U, cpr, rpm); }
 
 

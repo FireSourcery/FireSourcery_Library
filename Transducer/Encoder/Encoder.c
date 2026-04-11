@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #include "Encoder.h"
+#include "Math/Angle/Angle_Counter.h"
 
 
 /******************************************************************************/
@@ -61,107 +62,112 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
 /******************************************************************************/
 /*!
     Config Units
-    todo split module
-    Units
 */
 /******************************************************************************/
-    void _Encoder_ResetUnitsAngle(Encoder_State_T * p_encoder)
-    {
-        p_encoder->UnitAngleD = UINT32_MAX / p_encoder->Config.CountsPerRevolution + 1U;
-        // p_encoder->AngleCounter
-    }
+// void _Encoder_ResetUnitsAngle(Encoder_State_T * p_encoder)
+// {
+// }
 
-    /*
-        Speed
-    */
+// /*
+//     Speed
+// */
 
-    void _Encoder_ResetUnitsScalarSpeed(Encoder_State_T * p_encoder)
-    {
-        uint32_t unitsFactor = (uint32_t)32768U * 60U;
-        uint32_t unitsDivisor = (uint32_t)p_encoder->Config.CountsPerRevolution * p_encoder->Config.ScalarSpeedRef_Rpm;
-        p_encoder->UnitScalarSpeed = ((uint64_t)unitsFactor << p_encoder->UnitScalarSpeedShift) * p_encoder->UnitTime_Freq / unitsDivisor;
-    }
+// void _Encoder_ResetUnitsScalarSpeed(Encoder_State_T * p_encoder)
+// {
 
-    void _Encoder_ResetUnitsAngularSpeed(Encoder_State_T * p_encoder)
-    {
-        p_encoder->UnitAngularSpeed = (uint64_t)ENCODER_ANGLE_DEGREES * p_encoder->UnitTime_Freq / p_encoder->Config.CountsPerRevolution;
-        // p_encoder->UnitAngularSpeedShift = 0U;
-    }
+// }
 
-    /*
+// void _Encoder_ResetUnitsAngularSpeed(Encoder_State_T * p_encoder)
+// {
 
-    */
-    void _Encoder_ResetUnitsPollingAngle(Encoder_State_T * p_encoder)
-    {
+// }
 
-            p_encoder->UnitPollingAngle = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution / p_encoder->PollingFreq;
-            p_encoder->InterpolateAngleLimit = p_encoder->UnitAngleD * p_encoder->Config.PartitionsPerRevolution;
-    }
+// /*
 
-    /*
-        Surface/Encoder Ratio <=> gearRatioOutput/gearRatioInput
+// */
+// void _Encoder_ResetUnitsPollingAngle(Encoder_State_T * p_encoder)
+// {
+// }
 
-    */
-    void _Encoder_ResetUnitsLinearSpeed(Encoder_State_T * p_encoder)
-    {
-    }
+// /*
+//     Surface/Encoder Ratio <=> gearRatioOutput/gearRatioInput
+// */
+// void _Encoder_ResetUnitsLinearSpeed(Encoder_State_T * p_encoder)
+// {
+
+// }
+
+// void _Encoder_ResetUnitsAngleFreq(Encoder_State_T * p_encoder)
+// {
+
+// }
 
 
 
-    /*
+/*
 
-    */
-    // void _Encoder_ResetUnits(const Encoder_T * p_encoder) using const def
-    void _Encoder_ResetUnits(Encoder_State_T * p_encoder)
-    {
-        // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
-        _Encoder_ResetUnitsAngle(p_encoder);
-        _Encoder_ResetUnitsPollingAngle(p_encoder);
-        _Encoder_ResetUnitsScalarSpeed(p_encoder);
-        _Encoder_ResetUnitsAngularSpeed(p_encoder);
-        _Encoder_ResetUnitsLinearSpeed(p_encoder);
-    }
+*/
+// void _Encoder_ResetUnits(const Encoder_T * p_encoder) using const def
+void _Encoder_ResetUnits(Encoder_State_T * p_encoder)
+{
+    // Angle_CounterConfig_T angleCounterConfig = {
+    //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
+    //     .TimerFreq = p_encoder->
+    //     .SampleFreq = p_encoder->
+    //     .PollingFreq = p_encoder->
+    //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
+    // };
 
-    void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution)
-    {
-        p_encoder->Config.CountsPerRevolution = countsPerRevolution;
-        _Encoder_ResetUnits(p_encoder);
-    }
+    // Angle_Counter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
 
-    void Encoder_SetPartitionsPerRevolution(Encoder_State_T * p_encoder, uint16_t count)
-    {
-        p_encoder->Config.PartitionsPerRevolution = count;
-        _Encoder_ResetUnitsPollingAngle(p_encoder);
-    }
+    // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+//     _Encoder_ResetUnitsAngle(p_encoder);
+//     _Encoder_ResetUnitsPollingAngle(p_encoder);
+//     _Encoder_ResetUnitsScalarSpeed(p_encoder);
+//     _Encoder_ResetUnitsAngularSpeed(p_encoder);
+//     _Encoder_ResetUnitsLinearSpeed(p_encoder);
+}
 
-    void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
-    {
-        p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
-        _Encoder_ResetUnitsScalarSpeed(p_encoder);
-        // _Encoder_ResetUnitsAngularSpeed(p_encoder);
-        // _Encoder_ResetUnitsLinearSpeed(p_encoder);
-    }
+void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution)
+{
+    p_encoder->Config.CountsPerRevolution = countsPerRevolution;
+    // _Encoder_ResetUnits(p_encoder);
+}
 
-    /*
-        gearRatio as Surface/Encoder
-    */
-    void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
-    {
-        p_encoder->Config.SurfaceDiameter = surfaceDiameter;
-        p_encoder->Config.GearRatioOutput = gearRatioSurface;
-        p_encoder->Config.GearRatioInput = gearRatioDrive;
-        _Encoder_ResetUnitsLinearSpeed(p_encoder);
-    }
+// void Encoder_SetPartitionsPerRevolution(Encoder_State_T * p_encoder, uint16_t count)
+// {
+//     p_encoder->Config.PartitionsPerRevolution = count;
+//     _Encoder_ResetUnitsPollingAngle(p_encoder);
+// }
 
-    void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
-    {
-        Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
-    }
+void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
+{
+    p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
+    // _Encoder_ResetUnitsScalarSpeed(p_encoder);
 
-    void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
-    {
-        Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
-    }
+    // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
+}
+
+/*
+    gearRatio as Surface/Encoder
+*/
+void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
+{
+    p_encoder->Config.SurfaceDiameter = surfaceDiameter;
+    p_encoder->Config.GearRatioOutput = gearRatioSurface;
+    p_encoder->Config.GearRatioInput = gearRatioDrive;
+    // _Encoder_ResetUnitsLinearSpeed(p_encoder);
+}
+
+void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
+{
+    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
+}
+
+void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
+{
+    Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
+}
 
 
 
@@ -173,8 +179,11 @@ void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
 void Encoder_StartHoming(Encoder_State_T * p_encoder)
 {
     p_encoder->IndexCount = 0U;
-    p_encoder->CounterD = 0U;
-    // p_encoder->IndexAngleRef = 0U;
+    p_encoder->IndexAngleError = 0U;
+    p_encoder->IsHomed = false;
+    p_encoder->AngleCounter.CounterD = 0U;
+    p_encoder->CounterPrev = 0U;
+    p_encoder->AngleCounter.Angle32 = 0U;
 }
 
 uint16_t Encoder_GetHomingAngle(const Encoder_State_T * p_encoder)
@@ -190,7 +199,7 @@ bool Encoder_IsHomingIndexFound(const Encoder_State_T * p_encoder)
 
 bool Encoder_IsHomingIndexError(const Encoder_State_T * p_encoder)
 {
-    /* DirectionComp */ p_encoder->CounterD > p_encoder->Config.CountsPerRevolution;
+    return (math_abs(p_encoder->AngleCounter.CounterD) > (int32_t)p_encoder->Config.CountsPerRevolution);
 }
 
 //enum Encoder_HomingStatus { Encoder_HomingStatus_None, Encoder_HomingStatus_Found, Encoder_HomingStatus_Error };
@@ -201,14 +210,14 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
     if (Encoder_IsHomingIndexFound(p_encoder) == true)
     {
         // p_encoder->IndexCount = 0U;
-        // p_encoder->CounterD = 0U;
+        // p_encoder->AngleCounter.CounterD = 0U;
         p_encoder->IsHomed = true;
         isComplete = true;
     }
     else if (Encoder_IsHomingIndexError(p_encoder) == true)
     {
         // p_encoder->IndexCount = 0U;
-        // p_encoder->CounterD = 0U;
+        // p_encoder->AngleCounter.CounterD = 0U;
         p_encoder->IsHomed = false;
         isComplete = true;
     }
@@ -222,19 +231,25 @@ bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder)
 //     // bool isVirtualIndex = p_encoder->Angle32 > p_encoder->Config.IndexAngleRef;
 // }
 
+/*
+    Calibrate IndexAngleRef from the last homing result.
+    IndexAngleError = Angle32(before ISR) - Config.IndexAngleRef(old)
+    Accumulate correction so future ISR snaps to the true index angle.
+    Call after homing completes and motor alignment is known.
+*/
 void Encoder_CalibrateIndexZeroRef(Encoder_State_T * p_encoder)
 {
     if (p_encoder->IsHomed == true)
     {
-        // Encoder_SetIndexZeroRef(p_encoder, p_encoder->Angle32);
-
-        // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
-        // p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
-        p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
-        p_encoder->Angle32 = 0U;
+        p_encoder->Config.IndexAngleRef += p_encoder->IndexAngleError;
+        p_encoder->IndexAngleError = 0U;
     }
 }
-
+// // Encoder_SetIndexZeroRef(p_encoder, p_encoder->Angle32);
+// // p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->IndexAngleRef;
+// // p_encoder->IndexAngleRef = p_encoder->Config.IndexAngleRef;
+// p_encoder->Config.IndexAngleRef = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
+// p_encoder->Angle32 = 0U;
 
 
 
@@ -243,12 +258,17 @@ void Encoder_CalibrateIndexZeroRef(Encoder_State_T * p_encoder)
     Align to phase without homing
 */
 /******************************************************************************/
+/*
+    Load saved AlignOffsetRef from NvMem Config on init.
+    If homed with a stored offset, restore it so aligned angle is usable immediately.
+*/
 void Encoder_CheckAlignRef(Encoder_State_T * p_encoder)
 {
-    // if (Encoder_IsPositionRefSet(p_encoder) == false)
-    // {
-    // }
-    //     p_encoder->AlignOffsetRef = p_encoder->Config.AlignOffsetRef;
+    if (p_encoder->IsHomed == true)
+    {
+        p_encoder->AlignOffsetRef = p_encoder->Config.AlignOffsetRef;
+        p_encoder->Align = ENCODER_ALIGN_PHASE;
+    }
 }
 
 //
@@ -260,28 +280,38 @@ void Encoder_CheckAlignRef(Encoder_State_T * p_encoder)
 //     _Encoder_ZeroPulseCount(p_encoder);
 // }
 
+/*
+    Capture the current Angle32 as the phase-A zero reference offset.
+    Call after energizing phase A and waiting for the shaft to settle.
+    If homed, save to NvMem Config for persistent calibration.
+*/
 void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder)
 {
-    p_encoder->AlignOffsetRef = p_encoder->Angle32;
-    p_encoder->AlignOffsetRef = p_encoder->Angle32 /* - p_encoder->Config.IndexAngleRef */;
+    p_encoder->AlignOffsetRef = p_encoder->AngleCounter.Angle32;
+    p_encoder->AlignAngle = p_encoder->AngleCounter.Angle32;
     if (p_encoder->IsHomed == true)
     {
         p_encoder->Config.AlignOffsetRef = p_encoder->AlignOffsetRef;
-        _Encoder_ZeroPulseCount(p_encoder);
     }
 }
 
 /* this way angle starts from a known pole */
-uint16_t Encoder_GetAngleAligned(Encoder_State_T * p_encoder)
+uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder)
 {
-    return (p_encoder->Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
+    return (p_encoder->AngleCounter.Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
 }
 
 
 
+/*
+    Validate alignment by checking if the angle drifted from the captured AlignAngle.
+    Call after open-loop settle following alignment.
+    Returns true if angle is within one encoder step of alignment reference.
+*/
 bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
 {
-
+    uint32_t angleDiff = (p_encoder->AngleCounter.Angle32 > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Angle32 - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Angle32);
+    return (angleDiff <= p_encoder->AngleCounter.Ref.Angle32PerCount);
 }
 
 void Encoder_CompleteAlignValidate(Encoder_State_T * p_encoder)
@@ -311,37 +341,37 @@ void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPo
 /*
     Run on calibration routine start
 */
-void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
-{
-#if     defined(ENCODER_HW_DECODER)
-    p_encoder->CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
-#elif   defined(ENCODER_HW_EMULATED)
-    p_encoder->CounterD = 0;
-#endif
-}
+// void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
+// {
+// #if     defined(ENCODER_HW_DECODER)
+//     p_encoder->AngleCounter.CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+//     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
+// #elif   defined(ENCODER_HW_EMULATED)
+//     p_encoder->AngleCounter.CounterD = 0;
+// #endif
+// }
 
-/*
-    Call after having moved in the positive direction
-*/
-void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
-{
-#if     defined(ENCODER_HW_DECODER)
-    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-    p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->CounterD);
-    // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->CounterD);
-    // #endif
-#elif   defined(ENCODER_HW_EMULATED)
-    p_encoder->Config.IsALeadBPositive = (p_encoder->CounterD > 0);
-#endif
-}
+// /*
+//     Call after having moved in the positive direction
+// */
+// void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
+// {
+// #if     defined(ENCODER_HW_DECODER)
+//     uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+//     // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+//     p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->AngleCounter.CounterD);
+//     // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+//     // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->AngleCounter.CounterD);
+//     // #endif
+// #elif   defined(ENCODER_HW_EMULATED)
+//     p_encoder->Config.IsALeadBPositive = (p_encoder->AngleCounter.CounterD > 0);
+// #endif
+// }
 
-void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPositive)
-{
-    p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
-}
+// void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPositive)
+// {
+//     p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
+// }
 
 
 /******************************************************************************/

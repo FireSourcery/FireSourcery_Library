@@ -47,7 +47,7 @@ static inline uint32_t _Encoder_DeltaT_GetTimerFreq(const Encoder_T * p_encoder)
 static inline bool _Encoder_DeltaT_Capture(const Encoder_T * p_encoder)
 {
     bool isValid = !HAL_Encoder_ReadTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER);
-    if (isValid == true) { p_encoder->P_STATE->DeltaT = HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER); }
+    if (isValid == true) { p_encoder->P_STATE->AngleCounter.PeriodT = HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER); }
     else { HAL_Encoder_ClearTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER); }
     HAL_Encoder_WriteTimer(p_encoder->P_HAL_ENCODER_TIMER, 0U);
     return isValid;
@@ -62,12 +62,12 @@ static inline bool _Encoder_DeltaT_Capture(const Encoder_T * p_encoder)
 /******************************************************************************/
 static inline void Encoder_DeltaT_Capture(const Encoder_T * p_encoder)
 {
-    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->P_STATE->DeltaT = ENCODER_TIMER_MAX; }
+    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->P_STATE->AngleCounter.PeriodT = ENCODER_TIMER_MAX; }
 }
 
 static inline bool Encoder_DeltaT_IsStop(const Encoder_T * p_encoder)
 {
-    return (p_encoder->P_STATE->DeltaT >= ENCODER_TIMER_MAX);
+    return (p_encoder->P_STATE->AngleCounter.PeriodT >= ENCODER_TIMER_MAX);
 }
 
 /******************************************************************************/
@@ -96,7 +96,7 @@ static inline uint32_t _Encoder_GetExtendedTimerDelta(const Encoder_T * p_encode
 */
 static inline void Encoder_DeltaT_CaptureExtended(const Encoder_T * p_encoder)
 {
-    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->P_STATE->DeltaT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->P_STATE->ExtendedTimerConversion; }
+    if (_Encoder_DeltaT_Capture(p_encoder) == false) { p_encoder->P_STATE->AngleCounter.PeriodT = _Encoder_GetExtendedTimerDelta(p_encoder) * p_encoder->P_STATE->ExtendedTimerConversion; }
     p_encoder->P_STATE->ExtendedTimerPrev = *(p_encoder->P_EXTENDED_TIMER);
 }
 
@@ -114,8 +114,8 @@ static inline bool Encoder_DeltaT_IsExtendedStop(const Encoder_T * p_encoder)
     DeltaT / TimerFreq = DeltaT [Seconds]
 */
 /******************************************************************************/
-static inline uint32_t Encoder_DeltaT_AsFreq(const Encoder_T * p_encoder) { return p_encoder->TIMER_FREQ / p_encoder->P_STATE->DeltaT; }
-static inline uint32_t Encoder_DeltaT_AsTime_Ms(const Encoder_T * p_encoder) { return p_encoder->P_STATE->DeltaT * 1000U / p_encoder->TIMER_FREQ; }
+static inline uint32_t Encoder_DeltaT_AsFreq(const Encoder_T * p_encoder) { return p_encoder->TIMER_FREQ / p_encoder->P_STATE->AngleCounter.PeriodT; }
+// static inline uint32_t Encoder_DeltaT_AsTime_Ms(const Encoder_T * p_encoder) { return p_encoder->P_STATE->AngleCounter.PeriodT * 1000U / p_encoder->TIMER_FREQ; }
 
 /******************************************************************************/
 /*!
@@ -145,19 +145,15 @@ static uint32_t Encoder_DeltaT_CapturePollingDelta(const Encoder_T * p_encoder)
 */
 static inline uint32_t Encoder_DeltaT_InterpolateAngleIndex(Encoder_State_T * p_encoder, uint32_t pollingIndex)
 {
-    math_limit_upper(pollingIndex * p_encoder->UnitPollingAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
+    // math_limit_upper(pollingIndex * p_encoder->UnitPollingAngle / p_encoder->DeltaT, p_encoder->InterpolateAngleLimit);
 }
 
 static inline uint32_t Encoder_DeltaT_ProcInterpolateAngle(Encoder_State_T * p_encoder)
 {
-    p_encoder->InterpolateAngleSum = math_limit_upper(p_encoder->InterpolateAngleSum + p_encoder->PollingAngleDelta, p_encoder->InterpolateAngleLimit);
-    return p_encoder->InterpolateAngleSum >> ENCODER_ANGLE_SHIFT;
 }
 
 static inline void Encoder_DeltaT_ZeroInterpolateAngle(Encoder_State_T * p_encoder)
 {
-    // p_encoder->InterpolateAngleIndex = 0U;
-    p_encoder->InterpolateAngleSum = 0U;
 }
 
 /*
@@ -191,7 +187,7 @@ static inline uint32_t Encoder_DeltaT_OfRotationalSpeed_RPM(const Encoder_State_
 {
     // check (p_encoder->UnitAngularSpeed == 0U) || *60 > INTMAX
     // return (rpm == 0U) ? 0U : p_encoder->TIMER_FREQ * 60U / (p_encoder->Config.CountsPerRevolution * rpm);
-    return (rpm == 0U) ? 0U : p_encoder->UnitTime_Freq * 60U / (p_encoder->Config.CountsPerRevolution * rpm);
+    // return (rpm == 0U) ? 0U : p_encoder->UnitTime_Freq * 60U / (p_encoder->Config.CountsPerRevolution * rpm);
 }
 
 static inline uint32_t Encoder_DeltaT_ToRotationalSpeed_RPM(const Encoder_State_T * p_encoder, uint32_t deltaT_ticks)
@@ -202,7 +198,7 @@ static inline uint32_t Encoder_DeltaT_ToRotationalSpeed_RPM(const Encoder_State_
 
 static inline uint32_t Encoder_DeltaT_OfLinearSpeed(const Encoder_State_T * p_encoder, uint32_t speed_UnitsPerSecond)
 {
-    return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitSurfaceSpeed / speed_UnitsPerSecond;
+    // return (speed_UnitsPerSecond == 0U) ? 0U : p_encoder->UnitSurfaceSpeed / speed_UnitsPerSecond;
 }
 
 static inline uint32_t Encoder_DeltaT_ToLinearSpeed(const Encoder_State_T * p_encoder, uint32_t deltaT_ticks)
@@ -219,7 +215,9 @@ static inline uint32_t Encoder_DeltaT_ToLinearSpeed(const Encoder_State_T * p_en
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(const Encoder_State_T * p_encoder)
 {
-    return Encoder_DeltaT_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaT);
+    // return Encoder_DeltaT_ToRotationalSpeed_RPM(p_encoder, p_encoder->DeltaT);
+    // p_encoder->UnitTime_Freq * 60U / (p_encoder->Config.CountsPerRevolution * rpm);
+    // rpm_of_count(p_encoder->TIMER_FREQ , p_encoder->Config.CountsPerRevolution * p_encoder ->AngleCounter.PeriodT, 1);
 }
 
 // static inline uint32_t Encoder_DeltaT_GetAngularSpeed(const Encoder_State_T * p_encoder)
@@ -242,7 +240,7 @@ static inline uint32_t Encoder_DeltaT_GetRotationalSpeed_RPM(const Encoder_State
 /******************************************************************************/
 static inline uint32_t Encoder_DeltaT_GetScalarSpeed(const Encoder_State_T * p_encoder)
 {
-    return p_encoder->UnitScalarSpeed / p_encoder->DeltaT;
+    // return p_encoder->UnitScalarSpeed / p_encoder->DeltaT;
 }
 
 /******************************************************************************/

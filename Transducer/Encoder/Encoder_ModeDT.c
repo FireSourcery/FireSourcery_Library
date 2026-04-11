@@ -64,10 +64,20 @@ void _Encoder_ModeDT_InitInterruptAbc(const Encoder_T * p_encoder)
 void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config)
 {
     if (p_config != NULL) { memcpy(&p_encoder->P_STATE->Config, p_config, sizeof(Encoder_Config_T)); }
-    p_encoder->P_STATE->UnitTime_Freq = 1U;
-    p_encoder->P_STATE->PollingFreq = p_encoder->POLLING_FREQ;
+
+    Angle_CounterConfig_T angleCounterConfig = {
+        .CountsPerRevolution = p_config->CountsPerRevolution,
+        .TimerFreq = p_encoder->TIMER_FREQ,
+        .SampleFreq = p_encoder->SAMPLE_FREQ,
+        .PollingFreq = p_encoder->POLLING_FREQ,
+        .FractSpeedRef_Rpm = p_config->ScalarSpeedRef_Rpm
+        // p_encoder->P_STATE->UnitTime_Freq = 1U;
+    };
+
+    Angle_Counter_InitFrom(&p_encoder->P_STATE->AngleCounter, &angleCounterConfig);
+
     p_encoder->P_STATE->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
-    _Encoder_ResetUnits(p_encoder->P_STATE);
+    // _Encoder_ResetUnits(p_encoder->P_STATE);
     Encoder_ModeDT_SetInitial(p_encoder);
 }
 
@@ -100,10 +110,8 @@ void Encoder_ModeDT_SetInitial(const Encoder_T * p_encoder)
 {
     Encoder_DeltaD_SetInitial(p_encoder);
     Encoder_DeltaT_SetInitial(p_encoder);
-    p_encoder->P_STATE->DeltaTh = p_encoder->TIMER_FREQ;
-    p_encoder->P_STATE->FreqD = 0;
-    // p_encoder->DirectionD = 0;
-    // p_encoder->TotalD = 0;
+    p_encoder->P_STATE->AngleCounter.DeltaTh = p_encoder->TIMER_FREQ;
+    p_encoder->P_STATE->AngleCounter.FreqD = 0;
 }
 
 
@@ -118,11 +126,11 @@ int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarI
     int32_t value = 0;
     switch (varId)
     {
-        case ENCODER_VAR_FREQ:            value = p_encoder->FreqD;     break;
-        case ENCODER_VAR_COUNTER_D:       value = p_encoder->CounterD;  break;
+        case ENCODER_VAR_FREQ:            value = p_encoder->AngleCounter.FreqD;     break;
+        case ENCODER_VAR_COUNTER_D:       value = p_encoder->AngleCounter.CounterD;  break;
         case ENCODER_VAR_RPM:             value = Encoder_ModeDT_GetRotationalSpeed_RPM(p_encoder);     break;
-        case ENCODER_VAR_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(p_encoder);     break;
-        case ENCODER_VAR_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(p_encoder);     break;
+        // case ENCODER_VAR_DELTA_T_SPEED:   value = Encoder_DeltaT_GetRotationalSpeed_RPM(p_encoder);     break;
+        // case ENCODER_VAR_DELTA_D_SPEED:   value = Encoder_DeltaD_GetRotationalSpeed_RPM(p_encoder);     break;
     }
     return value;
 }

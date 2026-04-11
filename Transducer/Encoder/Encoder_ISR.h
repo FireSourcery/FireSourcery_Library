@@ -68,9 +68,8 @@ static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encod
 */
 static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
 {
-    p_encoder->CounterD += count;
-    /* instead of imitating the hw decoder case, capture a separate position */
-    p_encoder->Angle32 += ((int32_t)count * p_encoder->UnitAngleD);
+    // /* instead of imitating the hw decoder case, capture a separate Angle32 */
+    Angle_Counter_CaptureCount(&p_encoder->AngleCounter, count);
 }
 
 /*
@@ -184,10 +183,9 @@ static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
 #elif defined(ENCODER_HW_EMULATED)
     // _Encoder_SetCounterD(p_encoder, 0);
 #endif
-    p_encoder->IndexAngleError = p_encoder->Angle32 - p_encoder->Config.IndexAngleRef;
-    p_encoder->Angle32 = p_encoder->Config.IndexAngleRef;
+    p_encoder->IndexAngleError = p_encoder->AngleCounter.Angle32 - p_encoder->Config.IndexAngleRef;
+    p_encoder->AngleCounter.Angle32 = p_encoder->Config.IndexAngleRef;
     // p_encoder->Angle32 = p_encoder->IndexAngleRef;
-    // p_encoder->CounterOnIndex = p_encoder->CounterD;
     p_encoder->IndexCount++;
 }
 

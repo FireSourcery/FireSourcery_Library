@@ -69,8 +69,6 @@ typedef const struct RotorSensor_VTable
     RotorSensor_Proc_T CAPTURE_SPEED;   /* ~1Khz */
     RotorSensor_Test_T IS_FEEDBACK_AVAILABLE; /* From Stop and after Align */
     RotorSensor_Proc_T ZERO_INITIAL;
-    // RotorSensor_Get_T GET_DIRECTION; /* as sensor captured direction for comparison  */
-    RotorSensor_Set_T SET_DIRECTION; // SET_DIRECTION_COMPENSATION;
 
     /* Config */
     RotorSensor_Proc_T INIT; /* Re init peripheral registers */

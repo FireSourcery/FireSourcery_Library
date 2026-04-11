@@ -56,7 +56,6 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
     {
         p_angle->Angle = Hall_GetAngle16(p_sensor->HALL.P_STATE) + Angle_Interpolate(p_angle);
         /* Optionally accumulate mechanical angle */
-        p_state->MechanicalAngle += p_sensor->P_ENCODER->P_STATE->PollingAngleDelta * p_sensor->P_ENCODER->P_STATE->Config.PartitionsPerRevolution;
         // p_state->MechanicalAngle += p_angle->Delta * p_sensor->BASE.P_STATE->Config.PolePairs; /* accumulate mech angle from electrical angle delta */
     }
 }
@@ -88,21 +87,23 @@ static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sens
     CPR = PolePairs*6   => GetSpeed => mechanical speed
     CPR = 6             => GetSpeed => electrical speed
 */
-void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
-    Encoder_State_T * p_encoder = p_sensor->P_ENCODER->P_STATE;
-    p_encoder->Config.IsQuadratureCaptureEnabled = false;
+    Encoder_Config_T config =
+    {
+        .CountsPerRevolution = 6U * p_config->PolePairs, /* Set for mechanical cycle */
+        .ScalarSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm, /* mech rpm */
+        .IsQuadratureCaptureEnabled = false,
+    };
 
-    Encoder_SetCountsPerRevolution(p_encoder, p_config->PolePairs * 6U);
-    // depreciate
-    Encoder_SetPartitionsPerRevolution(p_encoder, p_config->PolePairs);  /* Set for electrical cycle */
-    Encoder_SetScalarSpeedRef(p_encoder, p_config->SpeedTypeMax_Rpm); /* mech rpm */
-
-    /* RotorSensor calls Angle_InitSpeedRef */
+    Encoder_ModeDT_InitValuesFrom(p_sensor->P_ENCODER, &config); // for capture speed only
 
     /* Init interpolation limit from sector angle */
     Angle_InitInterpolation(&p_sensor->BASE.P_STATE->AngleSpeed, ANGLE16_PER_REVOLUTION / 6);
 
+
+    /* RotorSensor calls Angle_InitSpeedRef */
+    // if replacing Encoder dependency
     // Angle_CounterConfig_T calib =
     // {
     //     .CountsPerRevolution = 6U,
@@ -132,12 +133,9 @@ const RotorSensor_VTable_T HALL_VTABLE =
 {
     .INIT = (RotorSensor_Proc_T)Hall_RotorSensor_Init,
     .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Hall_RotorSensor_InitUnits_MechSpeed,
-    // .INIT_UNITS_FROM = (RotorSensor_InitFrom_T)Hall_RotorSensor_InitUnits_ElSpeed,
     .CAPTURE_ANGLE = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureAngle,
     .CAPTURE_SPEED = (RotorSensor_Proc_T)Hall_RotorSensor_CaptureSpeed,
     .IS_FEEDBACK_AVAILABLE = (RotorSensor_Test_T)Hall_RotorSensor_IsFeedbackAvailable,
-    // .SET_DIRECTION = (RotorSensor_Set_T)Hall_RotorSensor_SetDirection,
-    // .GET_DIRECTION = (RotorSensor_Get_T)Hall_RotorSensor_GetDirection,
     .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_ZeroInitial,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Hall_RotorSensor_VerifyCalibration,
 };
