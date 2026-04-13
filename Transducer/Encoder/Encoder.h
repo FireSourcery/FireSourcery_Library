@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,15 +24,13 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder.h
-    @author  FireSourcery
-    @brief     Encoder Speed, Position
-            Encoder common file contains unit conversions.
-
+    @file   Encoder.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef ENCODER_H
-#define ENCODER_H
+
+// Your code here
 
 #include "HAL_Encoder.h"
 #include "Peripheral/Pin/Pin.h"
@@ -57,32 +57,17 @@
 // #define ENCODER_HW_DECODER
 #endif
 
-/* Compile time define for all encoder instances if A Lead B is increment, additional configure available at runtime */
-#if     defined(ENCODER_HW_DECODER_A_LEAD_B_INCREMENT)
-#elif   defined(ENCODER_HW_DECODER_A_LEAD_B_DECREMENT)
-#else
-#define ENCODER_HW_DECODER_A_LEAD_B_INCREMENT
-#endif
-
-/* Emulated and Decoder Quadrature Capture. Enables toggle during runtime */
 #if     defined(ENCODER_QUADRATURE_MODE_ENABLE) /* Emulated and Decoder */
 #elif   defined(ENCODER_QUADRATURE_MODE_DISABLE)
 #else
 #define ENCODER_QUADRATURE_MODE_ENABLE
 #endif
 
-/* Adjust timer freq at runtime */
-#ifdef ENCODER_DYNAMIC_TIMER
-#else
-#endif
 
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
-#ifndef ENCODER_TIMER_MAX
-#define ENCODER_TIMER_MAX (0xFFFFU)
-#endif
 
 #ifndef ENCODER_ANGLE_BITS
 #define ENCODER_ANGLE_BITS      (16U)
@@ -218,9 +203,6 @@ Encoder_T;
     .P_NVM_CONFIG           = p_Config,                                     \
 }
 
-// #define ENCODER_ALLOC(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_Config)    \
-//     ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, &(Encoder_State_T){0}, p_Config)
-
 
 
 /******************************************************************************/
@@ -293,6 +275,29 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 #endif
 }
 
+
+
+static inline void _Encoder_CaptureDeltaD(const Encoder_T * p_encoder, Encoder_State_T * p_state)
+{
+#if defined(ENCODER_HW_DECODER)
+    /* For common interface functions. Emulated Capture in ISR */
+    uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+    p_state->DeltaD = _Encoder_CaptureDeltaWrap(p_encoder->Config.CountsPerRevolution - 1U, p_state->CounterPrev, counterD);
+    // quadrature check overflow flag
+    /* Do not clear the counter as it is also the angle in this case */
+#else
+//    AngleCounter_CaptureDeltaD(&p_state->AngleCounter);
+#endif
+}
+
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { Angle_ZeroAngle(&p_encoder->AngleCounter.Base); }
+
 /******************************************************************************/
 /*!
     @brief Direction
@@ -321,16 +326,6 @@ static inline int32_t _Encoder_GetDirectionComp(const Encoder_State_T * p_encode
 static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
 
-
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { Angle_ZeroAngle(&p_encoder->AngleCounter.Base); }
-
-
-
 /******************************************************************************/
 /*!
     todo align state
@@ -351,8 +346,6 @@ static inline bool Encoder_IsPositionRefSet(Encoder_State_T * p_encoder) { retur
 /******************************************************************************/
 static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_State_T * p_encoder) { return p_encoder->Config.IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
 static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t angle) { p_encoder->Config.IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
-
-/* Clears the value to config index to set as 0 */
 static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
 
 /******************************************************************************/
@@ -366,7 +359,6 @@ static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_en
 /*!
     @brief Extern Declarations
 */
-/*! @{ */
 /******************************************************************************/
 extern void Encoder_InitInterrupts_Quadrature(const Encoder_T * p_encoder);
 extern void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder);
@@ -401,9 +393,6 @@ extern void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t spee
 // extern void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio);
 // extern void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio);
 
-/******************************************************************************/
-/*! @} */
-/******************************************************************************/
 /******************************************************************************/
 /*!
 */
@@ -441,5 +430,3 @@ extern void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_
 
 extern void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue);
 
-
-#endif

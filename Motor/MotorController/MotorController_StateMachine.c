@@ -126,7 +126,7 @@ static State_T * TransitionFault(MotorController_T * p_context, state_value_t fa
     MotorController AppTable
 */
 static State_T * EnterMain(MotorController_T * p_context) { return MotorController_App_EnterMain(p_context); }
-static State_T * ParkState(MotorController_T * p_context) { return(p_context->P_MC_STATE->Config.IsParkStateEnabled ? &STATE_PARK : &MC_STATE_MAIN); }
+static State_T * ParkState(MotorController_T * p_context) { return(p_context->P_MC_STATE->Config.IsParkStateEnabled ? &STATE_PARK : EnterMain(p_context)); }
 
 
 /******************************************************************************/

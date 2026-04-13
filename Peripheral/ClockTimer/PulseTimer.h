@@ -181,8 +181,6 @@ static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
         // p_state->SampleT = p_timer->SAMPLE_TIME + p_state->SampleTh - _PulseTimer_CaptureSampleTh(p_timer);
     }
 
-    // p_timer->SampleT = (periodTk + p_timer->SampleT) / 2;
-
     /* updates SampleTh and returns 0 on overflow */
     // return p_timer->SAMPLE_TIME + p_state->SampleTh - PulseTimer_CaptureSampleTh(p_timer);
 }
@@ -190,7 +188,7 @@ static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
 static inline uint32_t PulseTimer_CaptureSampleTk_Freq(const PulseTimer_T * p_timer)
 {
     uint32_t sampleTk = PulseTimer_CaptureSampleTk(p_timer);
-    return (sampleTk > 0) ? (p_timer->TIMER_FREQ / sampleTk) : 0;
+    return (sampleTk > p_timer->SAMPLE_TIME / 2) ? (p_timer->TIMER_FREQ / sampleTk) : 0;
 }
 
 static inline bool PulseTimer_IsStop(const PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }

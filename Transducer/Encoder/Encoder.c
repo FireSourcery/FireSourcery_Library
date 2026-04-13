@@ -59,67 +59,30 @@ void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
 
 // static inline void Encoder_Quadrature_InitDirection(Encoder_State_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
-/******************************************************************************/
-/*!
-    Config Units
-*/
-/******************************************************************************/
-
-void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution)
+void Encoder_InitCounter(const Encoder_T * p_encoder)
 {
-    p_encoder->Config.CountsPerRevolution = countsPerRevolution;
-    // _Encoder_ResetUnits(p_encoder);
+#if     defined(ENCODER_HW_DECODER)
+    HAL_Encoder_InitCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounterMax(p_encoder->P_HAL_ENCODER_COUNTER, p_encoder->P_STATE->Config.CountsPerRevolution - 1U);
+#elif   defined(ENCODER_HW_EMULATED)
+    if (p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled == true)
+    {
+        Pin_Input_Init(&p_encoder->PIN_A);
+        Pin_Input_Init(&p_encoder->PIN_B);
+    }
+#endif
 }
 
-void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
+void Encoder_SetCounterInitial(const Encoder_T * p_encoder)
 {
-    p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
-    // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
+#if     defined(ENCODER_HW_DECODER)
+    HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0U);
+    p_encoder->P_STATE->IndexCount = 0U;
+#elif   defined(ENCODER_HW_EMULATED)
+#endif
+    _Encoder_ZeroPulseCount(p_encoder->P_STATE);
 }
-
-/*
-    gearRatio as Surface/Encoder
-*/
-// void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
-// {
-//     p_encoder->Config.SurfaceDiameter = surfaceDiameter;
-//     p_encoder->Config.GearRatioOutput = gearRatioSurface;
-//     p_encoder->Config.GearRatioInput = gearRatioDrive;
-//     // _Encoder_ResetUnitsLinearSpeed(p_encoder);
-// }
-
-// void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
-// {
-//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
-// }
-
-// void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
-// {
-//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
-// }
-
-/*
-
-*/
-// void _Encoder_ResetUnits(const Encoder_T * p_encoder)
-// {
-//     // AngleCounterConfig_T angleCounterConfig = {
-//     //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
-//     //     .TimerFreq = p_encoder->
-//     //     .SampleFreq = p_encoder->
-//     //     .PollingFreq = p_encoder->
-//     //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
-//     // };
-
-//     // AngleCounter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
-
-//     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
-// //     _Encoder_ResetUnitsAngle(p_encoder);
-// //     _Encoder_ResetUnitsPollingAngle(p_encoder);
-// //     _Encoder_ResetUnitsScalarSpeed(p_encoder);
-// //     _Encoder_ResetUnitsAngularSpeed(p_encoder);
-// //     _Encoder_ResetUnitsLinearSpeed(p_encoder);
-// }
 
 
 /******************************************************************************/
@@ -322,6 +285,67 @@ void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPo
 //     p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
 // }
 
+/******************************************************************************/
+/*!
+    Config Units
+*/
+/******************************************************************************/
+
+void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution)
+{
+    p_encoder->Config.CountsPerRevolution = countsPerRevolution;
+    // _Encoder_ResetUnits(p_encoder);
+}
+
+void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
+{
+    p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
+    // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
+}
+
+/*
+    gearRatio as Surface/Encoder
+*/
+// void Encoder_SetSurfaceRatio(Encoder_State_T * p_encoder, uint32_t surfaceDiameter, uint32_t gearRatioSurface, uint32_t gearRatioDrive)
+// {
+//     p_encoder->Config.SurfaceDiameter = surfaceDiameter;
+//     p_encoder->Config.GearRatioOutput = gearRatioSurface;
+//     p_encoder->Config.GearRatioInput = gearRatioDrive;
+//     // _Encoder_ResetUnitsLinearSpeed(p_encoder);
+// }
+
+// void Encoder_SetGroundRatio_US(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Inch10, uint32_t wheelRatio, uint32_t motorRatio)
+// {
+//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Inch10 * 254 / 100, wheelRatio, motorRatio);
+// }
+
+// void Encoder_SetGroundRatio_Metric(Encoder_State_T * p_encoder, uint32_t wheelDiameter_Mm, uint32_t wheelRatio, uint32_t motorRatio)
+// {
+//     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
+// }
+
+/*
+
+*/
+// void _Encoder_ResetUnits(const Encoder_T * p_encoder)
+// {
+//     // AngleCounterConfig_T angleCounterConfig = {
+//     //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
+//     //     .TimerFreq = p_encoder->
+//     //     .SampleFreq = p_encoder->
+//     //     .PollingFreq = p_encoder->
+//     //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
+//     // };
+
+//     // AngleCounter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
+
+//     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+// //     _Encoder_ResetUnitsAngle(p_encoder);
+// //     _Encoder_ResetUnitsPollingAngle(p_encoder);
+// //     _Encoder_ResetUnitsScalarSpeed(p_encoder);
+// //     _Encoder_ResetUnitsAngularSpeed(p_encoder);
+// //     _Encoder_ResetUnitsLinearSpeed(p_encoder);
+// }
 
 /******************************************************************************/
 /*!

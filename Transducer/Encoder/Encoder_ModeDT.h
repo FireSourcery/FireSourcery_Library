@@ -125,3 +125,45 @@ extern void Encoder_ModeDT_SetInitial(const Encoder_T *);
 extern int32_t Encoder_ModeDT_VarId_Get(const Encoder_State_T * p_encoder, Encoder_VarId_T varId);
 
 #endif
+/*
+    Capture [FreqD] Pulse Frequency
+    Call at SAMPLE_FREQ ~1ms
+*/
+// static inline void _Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
+// {
+//     // const uint32_t sampleFreq = p_encoder->SAMPLE_FREQ; /* periodTs = 1 / SAMPLE_FREQ */
+//     const uint32_t timerFreq = p_encoder->TIMER_FREQ;
+//     const uint32_t samplePeriod = p_encoder->SAMPLE_TIME; /* in Timer ticks */
+
+//     // Encoder_State_T * p_state = p_encoder->P_STATE;
+//     AngleCounter_T * p_state = &p_encoder->P_STATE->AngleCounter;
+
+//     uint32_t deltaTh;
+//     uint32_t periodTk;
+
+//     Encoder_DeltaD_Capture(p_encoder);
+
+//     if (p_state->DeltaD == 0)
+//     {
+//         /* Same FreqD/speed until next pulse */
+//         /* Accumulate DeltaTh on overflow */
+//         p_state->DeltaTh = HAL_Encoder_ReadTimerOverflow(p_encoder->P_HAL_ENCODER_TIMER) ?
+//             (p_state->DeltaTh + samplePeriod) : HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
+//     }
+//     else
+//     {
+//         /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
+//         deltaTh = HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
+
+//         periodTk = samplePeriod + (p_state->DeltaTh - deltaTh);
+//         if (periodTk > samplePeriod / 2)
+//         {
+//             p_state->PeriodT = periodTk;
+//             p_state->FreqD = p_state->DeltaD * (timerFreq / periodTk);
+//             // p_encoder->PeriodT = (periodTk + p_encoder->PeriodT) / 2;
+//             // p_encoder->FreqD = p_state->DeltaD * (timerFreq / p_encoder->PeriodT);
+//         }
+
+//         p_state->DeltaTh = deltaTh;
+//     }
+// }

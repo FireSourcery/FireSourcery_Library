@@ -102,7 +102,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     // Ramp_SetOutputLimit(&p_motor->OpenLoopSpeedRamp, -Motor_GetSpeedRated_Fract16(p_motor), Motor_GetSpeedRated_Fract16(p_motor));
     // Ramp_SetOutputLimit(&p_motor->OpenLoopIRamp, -Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor));
 
-    Angle_InitSpeedRef(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_DegPerCycle(p_motor));
+    Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_DegPerCycle(p_motor));
 
     p_motor->ControlTimerBase = 0U;
 

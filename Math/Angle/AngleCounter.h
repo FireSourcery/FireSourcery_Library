@@ -144,11 +144,7 @@ static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_freq, uint32_t p
     int32_t deltaD = p_freq->CounterD;
     p_freq->CounterD = 0;
 
-    /* Same FreqD/speed until next pulse. or clear */
-    // if (deltaD == 0) { p_freq->FreqD = 0;  /* assert(periodTk == 0) */ }
     /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
-    // else if (periodTk > samplePeriod / 2) { p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
-
     if ((deltaD != 0) && (periodTk > samplePeriod / 2)){ p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
 }
 
@@ -159,7 +155,6 @@ static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_freq, uint32_t p
 /******************************************************************************/
 /*
     Propagate FreqD into Base.Delta as shifted Q16.16 angle increment per poll cycle.
-    _angle_speed_of_counter_freq produces a value in ANGLE_EXT_SHIFT domain,
     which lands directly in the tracker's shifted Delta.
 */
 static inline angle16_t AngleCounter_ResolveInterpolationDelta(AngleCounter_T * p_counter)
@@ -225,7 +220,6 @@ static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCo
 {
     AngleCounter_Ref_Init(&p_angle->Ref, p_config);
     AngleCounter_Zero(p_angle);
-    // Angle_InitSpeedRef_Rpm(&p_angle->Base, p_config->PollingFreq, p_config->FractSpeedRef_Rpm);
 }
 
 /******************************************************************************/

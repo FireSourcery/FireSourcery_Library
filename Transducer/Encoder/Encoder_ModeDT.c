@@ -31,15 +31,13 @@
 /******************************************************************************/
 #include "Encoder_ModeDT.h"
 
-#include <string.h>
-
 
 /*
     Capture Mode Init
 */
 void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Config_T * p_config)
 {
-    if (p_config != NULL) { memcpy(&p_encoder->P_STATE->Config, p_config, sizeof(Encoder_Config_T)); }
+    if (p_config != NULL) { p_encoder->P_STATE->Config = *p_config; }
 
     AngleCounter_Config_T angleCounterConfig =
     {
@@ -69,9 +67,15 @@ void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
 {
     PulseTimer_Init(&p_encoder->TIMER);
     Encoder_InitInterrupts_Quadrature(p_encoder);
+    // Encoder_InitCounter(p_encoder);
     Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
     p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled = true;
 }
+
+// void Encoder_ModeDT_Init(const Encoder_T * p_encoder)
+// {
+
+// }
 
 /* For hall sensor */
 // static void _Encoder_ModeDT_InitInterruptAbc(const Encoder_T * p_encoder)
