@@ -157,8 +157,6 @@ static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_freq, uint32_t p
     Bridge From Counter to Angle — FreqD drives Base.Delta for interpolation
 */
 /******************************************************************************/
-static inline int32_t _AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _angle_speed_of_counter_freq(p_counter->Ref.AngleSpeed32PerCount, p_counter->FreqD); }
-
 /*
     Propagate FreqD into Base.Delta as shifted Q16.16 angle increment per poll cycle.
     _angle_speed_of_counter_freq produces a value in ANGLE_EXT_SHIFT domain,
@@ -166,7 +164,7 @@ static inline int32_t _AngleCounter_GetDelta(AngleCounter_T * p_counter) { retur
 */
 static inline angle16_t AngleCounter_ResolveInterpolationDelta(AngleCounter_T * p_counter)
 {
-    p_counter->Base.Delta = _AngleCounter_GetDelta(p_counter);
+    p_counter->Base.Delta = p_counter->Ref.AngleSpeed32PerCount * p_counter->FreqD;
     return p_counter->Base.Delta >> ANGLE_EXT_SHIFT;
 }
 
@@ -180,7 +178,7 @@ static inline void AngleCounter_InitLimit(AngleCounter_T * p_counter, angle16_t 
 /*
     Query — FreqD conversions
 */
-static inline angle16_t AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _AngleCounter_GetDelta(p_counter) >> ANGLE_EXT_SHIFT; }
+static inline angle16_t AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _angle_speed_of_counter_freq(p_counter->Ref.AngleSpeed32PerCount, p_counter->FreqD); }
 static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) { return _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD); }
 
 /******************************************************************************/
