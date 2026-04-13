@@ -39,20 +39,20 @@
     default App
 */
 /******************************************************************************/
-static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_context)
+static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    switch (MotAnalogUser_GetDirectionEdge(&p_context->ANALOG_USER))
+    switch (MotAnalogUser_GetDirectionEdge(&p_dev->ANALOG_USER))
     {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CCW);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_CW);    break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_context, MOTOR_DIRECTION_NULL);      break;
+        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CCW);   break;
+        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CW);    break;
+        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_NULL);      break;
         default: break;
     }
 
-    MotorController_SetCmdValue(p_context, MotAnalogUser_GetThrottle(&p_context->ANALOG_USER));
-    // if (p_context->P_MC_STATE->CmdInput.CmdValue == 0U)
+    MotorController_SetCmdValue(p_dev, MotAnalogUser_GetThrottle(&p_dev->ANALOG_USER));
+    // if (p_dev->P_MC_STATE->CmdInput.CmdValue == 0U)
     // {
-    //     MotorController_SetControlState(p_context, PHASE_VOUT_Z);
+    //     MotorController_SetControlState(p_dev, PHASE_VOUT_Z);
     // }
 }
 
@@ -74,9 +74,9 @@ MotorController_App_T MC_APP_MOTOR_CMD =
     Singleton App handlers
 */
 /******************************************************************************/
-// MotorController_App_T * MotorController_App(MotorController_T * p_context)
+// MotorController_App_T * MotorController_App(MotorController_T * p_dev)
 // {
-//     switch (p_context->P_MC_STATE->Config.InitMode)
+//     switch (p_dev->P_MC_STATE->Config.InitMode)
 //     {
 //         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
 //         case MOTOR_CONTROLLER_MAIN_MODE_TRACTION:    return &MC_APP_TRACTION;
@@ -85,20 +85,20 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 // }
 
 // // alternatively need subid scheme
-// MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_context)
+// MotorController_MainMode_T MotorController_App_GetActiveMode(MotorController_T * p_dev)
 // {
-//     if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
-//     // else if (StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TRACTION)) { return MOTOR_CONTROLLER_MAIN_MODE_TRACTION; }
+//     if (StateMachine_IsActiveBranch(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD; }
+//     // else if (StateMachine_IsActiveBranch(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TRACTION)) { return MOTOR_CONTROLLER_MAIN_MODE_TRACTION; }
 //     return -1;
 // }
 
 
-// State_T * MotorController_App_EnterMain(MotorController_T * p_context) { return MotorController_App(p_context)->ENTER_MAIN((void *)p_context, 0); }
+// State_T * MotorController_App_EnterMain(MotorController_T * p_dev) { return MotorController_App(p_dev)->ENTER_MAIN((void *)p_dev, 0); }
 
-// void MotorController_App_ProcAnalogUser(MotorController_T * p_context) { return MotorController_App(p_context)->PROC_ANALOG_USER(p_context); }
+// void MotorController_App_ProcAnalogUser(MotorController_T * p_dev) { return MotorController_App(p_dev)->PROC_ANALOG_USER(p_dev); }
 
 
-// void MotorController_AppTableVar(MotorController_T * p_context) {
-//    case MOT_VAR_TYPE_TRACTION_CONTROL:     return MotorController_Traction_VarId_Get(p_context, varId.Base);
-//         case MOT_VAR_TYPE_TRACTION_CONFIG:      return MotorController_Traction_ConfigId_Get(p_context, varId.Base);
+// void MotorController_AppTableVar(MotorController_T * p_dev) {
+//    case MOT_VAR_TYPE_TRACTION_CONTROL:     return MotorController_Traction_VarId_Get(p_dev, varId.Base);
+//         case MOT_VAR_TYPE_TRACTION_CONFIG:      return MotorController_Traction_ConfigId_Get(p_dev, varId.Base);
 //      }

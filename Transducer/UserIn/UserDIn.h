@@ -96,19 +96,19 @@ UserDIn_T;
     State Query Functions
 */
 /******************************************************************************/
-static inline bool UserDIn_GetState(const UserDIn_T * p_context) { return Debounce_GetState(&p_context->P_STATE->Debounce); }
-static inline bool UserDIn_IsEdge(const UserDIn_T * p_context) { return is_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
-static inline bool UserDIn_IsRisingEdge(const UserDIn_T * p_context) { return is_rising_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
-static inline bool UserDIn_IsFallingEdge(const UserDIn_T * p_context) { return is_falling_edge(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
-static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_context) { return (UserDIn_Edge_T)edge_sign(p_context->P_STATE->OutputPrev, UserDIn_GetState(p_context)); }
+static inline bool UserDIn_GetState(const UserDIn_T * p_dev) { return Debounce_GetState(&p_dev->P_STATE->Debounce); }
+static inline bool UserDIn_IsEdge(const UserDIn_T * p_dev) { return is_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline bool UserDIn_IsRisingEdge(const UserDIn_T * p_dev) { return is_rising_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline bool UserDIn_IsFallingEdge(const UserDIn_T * p_dev) { return is_falling_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-extern void UserDIn_Init(const UserDIn_T * p_context);
-extern bool UserDIn_PollEdge(const UserDIn_T * p_context);
-extern bool UserDIn_PollRisingEdge(const UserDIn_T * p_context);
-extern bool UserDIn_PollFallingEdge(const UserDIn_T * p_context);
-extern UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context);
+extern void UserDIn_Init(const UserDIn_T * p_dev);
+extern bool UserDIn_PollEdge(const UserDIn_T * p_dev);
+extern bool UserDIn_PollRisingEdge(const UserDIn_T * p_dev);
+extern bool UserDIn_PollFallingEdge(const UserDIn_T * p_dev);
+extern UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev);

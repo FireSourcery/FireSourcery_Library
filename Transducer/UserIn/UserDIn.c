@@ -40,48 +40,48 @@
     Private Helper Functions
 */
 /******************************************************************************/
-static inline bool ReadPin(const UserDIn_T * p_context) { return Pin_Input_Read(&p_context->PIN); }
-static inline uint32_t GetTime(const UserDIn_T * p_context) { return *p_context->P_TIMER; }
+static inline bool ReadPin(const UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
+static inline uint32_t GetTime(const UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 
 /******************************************************************************/
 /*
     Public Functions
 */
 /******************************************************************************/
-void UserDIn_Init(const UserDIn_T * p_context)
+void UserDIn_Init(const UserDIn_T * p_dev)
 {
-    Pin_Input_Init(&p_context->PIN);
+    Pin_Input_Init(&p_dev->PIN);
 
-    Debounce_Init(&p_context->P_STATE->Debounce, p_context->DEBOUNCE_TIME);
+    Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
 
     /* Initialize debounce state to current pin reading */
-    p_context->P_STATE->Debounce.Time0 = GetTime(p_context);
-    p_context->P_STATE->Debounce.State0 = ReadPin(p_context);
-    p_context->P_STATE->Debounce.Output = p_context->P_STATE->Debounce.State0;
-    p_context->P_STATE->OutputPrev = p_context->P_STATE->Debounce.State0;
+    p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
+    p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
+    p_dev->P_STATE->Debounce.Output = p_dev->P_STATE->Debounce.State0;
+    p_dev->P_STATE->OutputPrev = p_dev->P_STATE->Debounce.State0;
 }
 
 /*
     Polling Functions
 */
 /*! @return On/Off state */
-bool UserDIn_PollState(const UserDIn_T * p_context) { return Debounce_Poll(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context)); }
+bool UserDIn_PollState(const UserDIn_T * p_dev) { return Debounce_Poll(&p_dev->P_STATE->Debounce, GetTime(p_dev), ReadPin(p_dev)); }
 
 /*! @return true on change */
-bool UserDIn_PollEdge(const UserDIn_T * p_context)
+bool UserDIn_PollEdge(const UserDIn_T * p_dev)
 {
-    p_context->P_STATE->OutputPrev = Debounce_GetState(&p_context->P_STATE->Debounce);
-    Debounce_Poll(&p_context->P_STATE->Debounce, GetTime(p_context), ReadPin(p_context));
-    return is_edge(p_context->P_STATE->OutputPrev, Debounce_GetState(&p_context->P_STATE->Debounce));
+    p_dev->P_STATE->OutputPrev = Debounce_GetState(&p_dev->P_STATE->Debounce);
+    Debounce_Poll(&p_dev->P_STATE->Debounce, GetTime(p_dev), ReadPin(p_dev));
+    return is_edge(p_dev->P_STATE->OutputPrev, Debounce_GetState(&p_dev->P_STATE->Debounce));
 }
 
-bool UserDIn_PollRisingEdge(const UserDIn_T * p_context) { return UserDIn_PollEdge(p_context) && (UserDIn_GetState(p_context) == true); }
+bool UserDIn_PollRisingEdge(const UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == true); }
 
-bool UserDIn_PollFallingEdge(const UserDIn_T * p_context) { return UserDIn_PollEdge(p_context) && (UserDIn_GetState(p_context) == false); }
+bool UserDIn_PollFallingEdge(const UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == false); }
 
-UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context)
+UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev)
 {
-    return UserDIn_PollEdge(p_context) * (UserDIn_Edge_T)(p_context->P_STATE->Debounce.Output - p_context->P_STATE->OutputPrev);
+    return UserDIn_PollEdge(p_dev) * (UserDIn_Edge_T)(p_dev->P_STATE->Debounce.Output - p_dev->P_STATE->OutputPrev);
 }
 
 
@@ -90,11 +90,11 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context)
 //     Mode Extensions - Toggle Mode
 // */
 // /******************************************************************************/
-// static bool _UserDIn_ProcessToggleMode(const UserDIn_T * p_context)
+// static bool _UserDIn_ProcessToggleMode(const UserDIn_T * p_dev)
 // {
-//     if (Debounce_IsRisingEdge(&p_context->P_STATE->Debounce) && _UserDIn_GetActiveState(p_context))
-//         p_context->P_STATE->ToggleState = !p_context->P_STATE->ToggleState;
-//     return p_context->P_STATE->ToggleState;
+//     if (Debounce_IsRisingEdge(&p_dev->P_STATE->Debounce) && _UserDIn_GetActiveState(p_dev))
+//         p_dev->P_STATE->ToggleState = !p_dev->P_STATE->ToggleState;
+//     return p_dev->P_STATE->ToggleState;
 // }
 
 // /******************************************************************************/
@@ -102,33 +102,33 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_context)
 //     Mode Extensions - Momentary Mode
 // */
 // /******************************************************************************/
-// bool _UserDIn_ProcessMomentaryMode(const UserDIn_T * p_context) { return _UserDIn_GetActiveState(p_context); }
+// bool _UserDIn_ProcessMomentaryMode(const UserDIn_T * p_dev) { return _UserDIn_GetActiveState(p_dev); }
 
 // /******************************************************************************/
 // /*
 //     Mode Extensions - Hold Mode
 // */
 // /******************************************************************************/
-// static bool _UserDIn_ProcessHoldMode(const UserDIn_T * p_context)
+// static bool _UserDIn_ProcessHoldMode(const UserDIn_T * p_dev)
 // {
-//     bool activeState = _UserDIn_GetActiveState(p_context);
-//     uint16_t currentTime = GetTime(p_context);
-//     Debounce_T * p_debounce = &p_context->P_STATE->Debounce;
+//     bool activeState = _UserDIn_GetActiveState(p_dev);
+//     uint16_t currentTime = GetTime(p_dev);
+//     Debounce_T * p_debounce = &p_dev->P_STATE->Debounce;
 
 //     if (Debounce_IsRisingEdge(p_debounce) && activeState)
 //     {
-//         p_context->P_STATE->HoldStartTime = currentTime;
-//         p_context->P_STATE->HoldState = false;
+//         p_dev->P_STATE->HoldStartTime = currentTime;
+//         p_dev->P_STATE->HoldState = false;
 //     }
 //     else if (Debounce_IsFallingEdge(p_debounce) && !activeState)
 //     {
-//         p_context->P_STATE->HoldState = false;
+//         p_dev->P_STATE->HoldState = false;
 //     }
-//     else if (activeState && !p_context->P_STATE->HoldState)
+//     else if (activeState && !p_dev->P_STATE->HoldState)
 //     {
-//         if (currentTime - p_context->P_STATE->HoldStartTime >= p_context->HOLD_TIME)
-//             p_context->P_STATE->HoldState = true;
+//         if (currentTime - p_dev->P_STATE->HoldStartTime >= p_dev->HOLD_TIME)
+//             p_dev->P_STATE->HoldState = true;
 //     }
 
-//     return p_context->P_STATE->HoldState;
+//     return p_dev->P_STATE->HoldState;
 // }

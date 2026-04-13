@@ -76,13 +76,13 @@ MotorController_SystemCmd_T;
 
 /* Non StateMachine checked disable motors. Caller ensure non field weakening state */
 /* Update State to prevent input overwrite */
-static inline void MotorController_ForceDisableControl(MotorController_T * p_context)
+static inline void MotorController_ForceDisableControl(MotorController_T * p_dev)
 {
-    Motor_Table_ForceDisableControl(&p_context->MOTORS);
-    MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
-    p_context->P_MC_STATE->CmdInput.CmdValue = 0;
-    p_context->P_MC_STATE->CmdInput.PhaseOutput = PHASE_VOUT_Z;
-    p_context->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NULL;
+    Motor_Table_ForceDisableControl(&p_dev->MOTORS);
+    MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
+    p_dev->P_MC_STATE->CmdInput.CmdValue = 0;
+    p_dev->P_MC_STATE->CmdInput.PhaseOutput = PHASE_VOUT_Z;
+    p_dev->P_MC_STATE->CmdInput.Direction = MOTOR_DIRECTION_NULL;
 }
 
 
@@ -96,22 +96,22 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_con
     User Setting Speed/I Limit
 */
 /******************************************************************************/
-static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_context, uint16_t limit_fract16)    { return _MotorController_SetSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_context)                          { return _MotorController_ClearSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER); }
-static inline bool MotorController_SetUserILimitAll(MotorController_T * p_context, uint16_t limit_fract16)        { return _MotorController_SetILimitAll(p_context, MOT_I_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_context)                              { return _MotorController_ClearILimitAll(p_context, MOT_I_LIMIT_USER); }
+static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t limit_fract16)    { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev)                          { return _MotorController_ClearSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER); }
+static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t limit_fract16)        { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_dev)                              { return _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_USER); }
 
 /* using user channel */
-static inline void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_context, bool isEnable)
+static inline void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_dev, bool isEnable)
 {
-    if (isEnable == true) { MotorController_SetUserSpeedLimitAll(p_context, p_context->P_MC_STATE->Config.OptSpeedLimit_Fract16); }
-    else { MotorController_ClearUserSpeedLimitAll(p_context); }
+    if (isEnable == true) { MotorController_SetUserSpeedLimitAll(p_dev, p_dev->P_MC_STATE->Config.OptSpeedLimit_Fract16); }
+    else { MotorController_ClearUserSpeedLimitAll(p_dev); }
 }
 
-static inline void MotorController_SetOptILimitOnOff(MotorController_T * p_context, bool isEnable)
+static inline void MotorController_SetOptILimitOnOff(MotorController_T * p_dev, bool isEnable)
 {
-    if (isEnable == true) { MotorController_SetUserILimitAll(p_context, p_context->P_MC_STATE->Config.OptILimit_Fract16); }
-    else { MotorController_ClearUserILimitAll(p_context); }
+    if (isEnable == true) { MotorController_SetUserILimitAll(p_dev, p_dev->P_MC_STATE->Config.OptILimit_Fract16); }
+    else { MotorController_ClearUserILimitAll(p_dev); }
 }
 
 /******************************************************************************/
@@ -120,9 +120,9 @@ static inline void MotorController_SetOptILimitOnOff(MotorController_T * p_conte
 */
 /******************************************************************************/
 /* UserMain, which may use Watchdog  */
-static inline void MotorController_EnableRxWatchdog(MotorController_T * p_context) { _Socket_EnableRxWatchdog(MotorController_GetMainSocket(p_context)->P_SOCKET_STATE); }
-static inline void MotorController_DisableRxWatchdog(MotorController_T * p_context) { _Socket_DisableRxWatchdog(MotorController_GetMainSocket(p_context)->P_SOCKET_STATE); }
-static inline void MotorController_SetRxWatchdog(MotorController_T * p_context, bool isEnable) { _Socket_SetRxWatchdogOnOff(MotorController_GetMainSocket(p_context)->P_SOCKET_STATE, isEnable); }
+static inline void MotorController_EnableRxWatchdog(MotorController_T * p_dev) { _Socket_EnableRxWatchdog(MotorController_GetMainSocket(p_dev)->P_SOCKET_STATE); }
+static inline void MotorController_DisableRxWatchdog(MotorController_T * p_dev) { _Socket_DisableRxWatchdog(MotorController_GetMainSocket(p_dev)->P_SOCKET_STATE); }
+static inline void MotorController_SetRxWatchdog(MotorController_T * p_dev, bool isEnable) { _Socket_SetRxWatchdogOnOff(MotorController_GetMainSocket(p_dev)->P_SOCKET_STATE, isEnable); }
 
 
 /******************************************************************************/
@@ -145,17 +145,17 @@ static inline void MotorController_SetBlink(MotorController_State_T * p_mcState,
     Extern
 */
 /******************************************************************************/
-extern void MotorController_SetVSupplyRef(MotorController_T * p_context, uint16_t volts);
-extern void MotorController_SetInputMode(MotorController_T * p_context, MotorController_InputMode_T mode);
+extern void MotorController_SetVSupplyRef(MotorController_T * p_dev, uint16_t volts);
+extern void MotorController_SetInputMode(MotorController_T * p_dev, MotorController_InputMode_T mode);
 
-extern int MotorController_CallSystemCmd(MotorController_T * p_context, MotorController_SystemCmd_T id, int value);
-extern bool MotorController_CheckDirection(MotorController_T * p_context, sign_t direction);
+extern int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value);
+extern bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction);
 
-// extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_context, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
-// extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_context, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
+// extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
+// extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
 
-// extern void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_context, bool isEnable);
-// extern void MotorController_SetOptILimitOnOff(MotorController_T * p_context, bool isEnable);
+// extern void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_dev, bool isEnable);
+// extern void MotorController_SetOptILimitOnOff(MotorController_T * p_dev, bool isEnable);
 
 /*
     Controller NvM Variables Config

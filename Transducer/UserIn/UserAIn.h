@@ -116,20 +116,20 @@ static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { retu
 */
 /******************************************************************************/
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) * _UserAIn_IsOn(p_context->P_STATE); }
+static inline bool UserAIn_IsOn(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) * _UserAIn_IsOn(p_dev->P_STATE); }
 
 /*! @return Percent16 by default */
 /* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */
-static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_context) { return _UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) * _UserAIn_GetValue(p_context->P_STATE); }
+static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) * _UserAIn_GetValue(p_dev->P_STATE); }
 
 /*!
     Edge detection - considers EdgePin status
     @brief Check for edge without polling (query current state only)
     @note Uses digital pin edge if present, otherwise analog threshold edge
 */
-static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context->P_STATE); }
-static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context->P_STATE); }
-static inline bool UserAIn_IsEdge(const UserAIn_T * p_context) { return (p_context->P_EDGE_PIN != NULL) ? UserDIn_IsEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context->P_STATE); }
+static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
 
 
 /******************************************************************************/
@@ -137,13 +137,13 @@ static inline bool UserAIn_IsEdge(const UserAIn_T * p_context) { return (p_conte
     Public Functions
 */
 /******************************************************************************/
-extern void UserAIn_InitFrom(const UserAIn_T * p_context, const UserAIn_Config_T * p_config);
-extern void UserAIn_Init(const UserAIn_T * p_context);
+extern void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config);
+extern void UserAIn_Init(const UserAIn_T * p_dev);
 
 /* Polling functions */
-extern void UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu);
-extern bool UserAIn_Poll(const UserAIn_T * p_context, uint16_t value_adcu);
-extern bool UserAIn_PollRisingEdge(const UserAIn_T * p_context, uint16_t value_adcu);
-extern bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu);
-extern bool UserAIn_PollEdge(const UserAIn_T * p_context, uint16_t value_adcu);
+extern void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_Poll(const UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
+extern bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
 

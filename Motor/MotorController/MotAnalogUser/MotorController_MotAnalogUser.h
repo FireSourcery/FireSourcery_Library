@@ -10,47 +10,47 @@
     @brief CalibrateAdc SubState
 */
 /******************************************************************************/
-// void StartCalibrateAdc(const MotorController_T * p_context)
+// void StartCalibrateAdc(const MotorController_T * p_dev)
 // {
-//     MotorController_State_T * p_mc = p_context->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 //     p_mc->StateCounter = 0U;
-//     Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE);
-//     Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
-//     Analog_Conversion_ClearResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE);
-//     Analog_Conversion_ClearResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
+//     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
+//     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
+//     Analog_Conversion_ClearResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
+//     Analog_Conversion_ClearResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
 //     Filter_Init(&p_mc->AvgBuffer0);
 //     Filter_Init(&p_mc->AvgBuffer1);
-//     // Motor_Table_EnterCalibrateAdc(&p_context->MOTORS); /* Motor handles it own state */
+//     // Motor_Table_EnterCalibrateAdc(&p_dev->MOTORS); /* Motor handles it own state */
 // }
 
 // /* Proc Per ms */
-// void ProcCalibrateAdc(const MotorController_T * p_context)
+// void ProcCalibrateAdc(const MotorController_T * p_dev)
 // {
-//     MotorController_State_T * p_mc = p_context->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 
 //     if (p_mc->StateCounter != 0U) /* skip first time */
 //     {
-//         Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE));
-//         Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE));
-//         Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE);
-//         Analog_Conversion_Mark(&p_context->ANALOG_USER_CONVERSIONS.BRAKE);
+//         Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE));
+//         Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE));
+//         Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
+//         Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
 //     }
 
 //     p_mc->StateCounter++;
 // }
 
-// static State_T * EndCalibrateAdc(const MotorController_T * p_context)
+// static State_T * EndCalibrateAdc(const MotorController_T * p_dev)
 // {
 //     const uint32_t TIME = 2000U; /* > Motor calibrate adc time */
 
-//     MotorController_State_T * p_mc = p_context->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 //     State_T * p_nextState = NULL;
 
 //     if (p_mc->StateCounter > TIME)
 //     {
-//         // if (Motor_Table_IsEveryState(&p_context->MOTORS, MOTOR_STATE_ID_CALIBRATION) == false)
-//         MotAnalogUser_SetThrottleZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.THROTTLE)));
-//         MotAnalogUser_SetBrakeZero(&p_context->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_context->ANALOG_USER_CONVERSIONS.BRAKE)));
+//         // if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_CALIBRATION) == false)
+//         MotAnalogUser_SetThrottleZero(&p_dev->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE)));
+//         MotAnalogUser_SetBrakeZero(&p_dev->ANALOG_USER, Filter_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE)));
 //         p_mc->LockOpStatus = 0; /* success */
 
 //         p_nextState = &MC_STATE_LOCK; /* return to lock state */

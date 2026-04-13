@@ -234,8 +234,8 @@ MotorController_VarType_AppUser_T;
     [MotVarId]
 */
 /******************************************************************************/
-extern int MotorController_Var_Get(const MotorController_T * p_context, MotVarId_T varId);
-extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_context, MotVarId_T varId, int varValue);
+extern int MotorController_Var_Get(const MotorController_T * p_dev, MotVarId_T varId);
+extern MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVarId_T varId, int varValue);
 
 
 /*

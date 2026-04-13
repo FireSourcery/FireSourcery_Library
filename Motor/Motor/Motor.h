@@ -30,8 +30,6 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "Config.h"
-
 #include "Phase/Phase.h"
 #include "Phase_Input/Phase_Input.h"
 #include "Phase_Input/Phase_VBus.h"
@@ -77,6 +75,26 @@
 // #include "Analog/Motor_Analog.h"
 // #include "Sensor/Motor_Sensor.h"
 // #include "Motor_Config.h"
+
+#if     defined(MOTOR_OPEN_LOOP_ENABLE)
+#elif   defined(MOTOR_OPEN_LOOP_DISABLE)
+#else
+#define MOTOR_OPEN_LOOP_ENABLE
+#endif
+
+#if     defined(MOTOR_UNIT_CONVERSION_LOCAL)
+#if defined(MOTOR_SURFACE_SPEED_ENABLE)
+#endif
+#elif   defined(MOTOR_UNIT_CONVERSION_HOST)
+#else
+#define MOTOR_UNIT_CONVERSION_HOST
+#endif
+
+#if     defined(MOTOR_EXTERN_CONTROL_ENABLE)
+#elif   defined(MOTOR_EXTERN_CONTROL_DISABLE)
+#else
+#define MOTOR_EXTERN_CONTROL_DISABLE
+#endif
 
 /******************************************************************************/
 /*
@@ -170,19 +188,17 @@ static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck     
 */
 typedef struct Motor_Config
 {
-    Motor_CommutationMode_T CommutationMode;
-    RotorSensor_Id_T SensorMode;
-    Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
-    // Motor_ResumeMode_T ResumeMode; // option Scale to VSpeed or VBemf on resume
-
     /*
         Calibration parameters
     */
+    RotorSensor_Id_T SensorMode;
+    Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
     uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
 
     uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
+    // Motor_ResumeMode_T ResumeMode;   // option Scale to VSpeed or VBemf on resume
 
     Phase_Triplet_T IabcZeroRef_Adcu;
 
@@ -223,6 +239,7 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
+    Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
@@ -760,8 +777,8 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
     Extern
 */
 /******************************************************************************/
-// extern void Motor_InitFrom(const Motor_T * p_context, const Motor_Config_T * p_config);
-extern void Motor_Init(const Motor_T * p_context);
+// extern void Motor_InitFrom(const Motor_T * p_dev, const Motor_Config_T * p_config);
+extern void Motor_Init(const Motor_T * p_dev);
 extern void Motor_Reset(Motor_State_T * p_motor);
 
 extern void Motor_ReinitSensor(Motor_State_T * p_motor);
@@ -792,10 +809,6 @@ extern void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufra
 
 #endif
 
-/* Base in electrical domain */
-// static inline uint32_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_State_T * p_motor) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle); }
-// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_State_T * p_motor) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, p_motor->Config.SpeedRated_DegPerCycle); }
 
 /******************************************************************************/
 /*!

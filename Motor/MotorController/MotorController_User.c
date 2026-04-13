@@ -40,39 +40,39 @@
     vars not stored in host view cache
 */
 /******************************************************************************/
-int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorController_SystemCmd_T id, int value)
+int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 
     int status = 0; // MotorController_GenericStatus_T
     bool isSuccess = true;
 
     switch (id)
     {
-        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_context);                       break;
+        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_dev);                       break;
         /* Stop active periodic. does not disable */
-        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_context);                        break;
-        case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_context, (MotorController_FaultFlags_T) { .Value = value });    break;
-        case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_context);         break;
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_dev);                        break;
+        case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_dev, (MotorController_FaultFlags_T) { .Value = value });    break;
+        case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_dev);         break;
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         /* Non Blocking function, host/caller poll Async return status after. */
         // checks the park state
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
-            MotorController_InputLock(p_context, (MotorController_LockId_T)value);
-            if (MotorController_IsEnterLockError(p_context, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_context); }
-            status = MotorController_GetLockOpStatus(p_context);
+            MotorController_InputLock(p_dev, (MotorController_LockId_T)value);
+            if (MotorController_IsEnterLockError(p_dev, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_dev); }
+            status = MotorController_GetLockOpStatus(p_dev);
             break;
 
-        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_IsLockOpComplete(p_context);               break;
-        case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS:     status = MotorController_GetLockOpStatus(p_context);            break;
-        case MOT_USER_SYSTEM_STATE_COMMAND:         MotorController_InputStateCommand(p_context, (MotorController_StateCmd_T)value);            break;
-        case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_SetRxWatchdog(p_context, value);               break;
+        case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_IsLockOpComplete(p_dev);               break;
+        case MOT_USER_SYSTEM_LOCK_ASYNC_STATUS:     status = MotorController_GetLockOpStatus(p_dev);            break;
+        case MOT_USER_SYSTEM_STATE_COMMAND:         MotorController_InputStateCommand(p_dev, (MotorController_StateCmd_T)value);            break;
+        case MOT_USER_SYSTEM_RX_WATCHDOG:           MotorController_SetRxWatchdog(p_dev, value);               break;
         // case MOT_USER_SYSTEM_DIRECTION_COMMAND:
-        //     MotorController_ApplyDirectionCmd(p_context, (int)value);
+        //     MotorController_ApplyDirectionCmd(p_dev, (int)value);
         //     break;
         // case MOT_USER_SYSTEM_MAIN_MODE_INPUT:
-        //     MotorController_InputMainMode(p_context, (MotorController_MainMode_T)value);
+        //     MotorController_InputMainMode(p_dev, (MotorController_MainMode_T)value);
         //     break;
         default: break;
     }
@@ -84,9 +84,9 @@ int MotorController_CallSystemCmd(const MotorController_T * p_context, MotorCont
 /* optionally host side implement */
 /* Separate Check direction with alarm, so Motor set can use SetSyncInput */
 /* effective on motor async transition only */
-bool MotorController_CheckDirection(MotorController_T * p_context, sign_t direction)
+bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
 {
-    if (MotorController_GetDirection(p_context) != direction) { Blinky_Blink(&p_context->BUZZER, 500U); return false; }
+    if (MotorController_GetDirection(p_dev) != direction) { Blinky_Blink(&p_dev->BUZZER, 500U); return false; }
     return true;
 }
 
@@ -97,22 +97,22 @@ bool MotorController_CheckDirection(MotorController_T * p_context, sign_t direct
 */
 /******************************************************************************/
 /*! @param[in] volts < PHASE_CALIBRATION.VMAX and Config.VSupplyRef */
-void MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
+void MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
     p_mc->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_context);
+    MotorController_ResetVSourceMonitorDefaults(p_dev);
     /* todo as bound limits */
     /* may overwrite fault/warning if called in the same packet */
 }
 
-// void MotorController_SetILimit_DC(const MotorController_T * p_context, uint16_t dc)
+// void MotorController_SetILimit_DC(const MotorController_T * p_dev, uint16_t dc)
 // {
 // }
 
-void MotorController_SetInputMode(const MotorController_T * p_context, MotorController_InputMode_T mode)
+void MotorController_SetInputMode(const MotorController_T * p_dev, MotorController_InputMode_T mode)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 
     p_mc->Config.InputMode = mode;
 

@@ -136,18 +136,18 @@ Phase_Analog_T;
     .IC = ANALOG_CONVERSION_INIT_FROM(AdcIc, IndexIc), \
 }
 
-static void Phase_Analog_MarkVabc(Phase_Analog_T * p_context)
+static void Phase_Analog_MarkVabc(Phase_Analog_T * p_analog)
 {
-    Analog_Conversion_Mark(&p_context->VA);
-    Analog_Conversion_Mark(&p_context->VB);
-    Analog_Conversion_Mark(&p_context->VC);
+    Analog_Conversion_Mark(&p_analog->VA);
+    Analog_Conversion_Mark(&p_analog->VB);
+    Analog_Conversion_Mark(&p_analog->VC);
 }
 
-static void Phase_Analog_MarkIabc(Phase_Analog_T * p_context)
+static void Phase_Analog_MarkIabc(Phase_Analog_T * p_analog)
 {
-    Analog_Conversion_Mark(&p_context->IA);
-    Analog_Conversion_Mark(&p_context->IB);
-    Analog_Conversion_Mark(&p_context->IC);
+    Analog_Conversion_Mark(&p_analog->IA);
+    Analog_Conversion_Mark(&p_analog->IB);
+    Analog_Conversion_Mark(&p_analog->IC);
 }
 
 /*

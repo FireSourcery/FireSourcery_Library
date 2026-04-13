@@ -46,23 +46,23 @@ static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, u
     Public Functions
 */
 /******************************************************************************/
-void UserAIn_InitFrom(const UserAIn_T * p_context, const UserAIn_Config_T * p_config)
+void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 {
-    if (p_context->P_NVM_CONFIG != NULL) { p_context->P_STATE->Config = *p_config; }
-    if (p_context->P_EDGE_PIN != NULL) { UserDIn_Init(p_context->P_EDGE_PIN); }
+    if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_STATE->Config = *p_config; }
+    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
 
     /* Initialize linear conversion */
-    Linear_Q16_Init(&p_context->P_STATE->Units, p_context->P_STATE->Config.AdcZero, p_context->P_STATE->Config.AdcMax);
+    Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
 
     /* Initialize state */
-    p_context->P_STATE->RawValue_Adcu = p_context->P_STATE->Config.AdcZero;
-    p_context->P_STATE->Value = Linear_Q16_Percent(&p_context->P_STATE->Units, p_context->P_STATE->Config.AdcZero);
-    p_context->P_STATE->ValuePrev = p_context->P_STATE->Value;
+    p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
+    p_dev->P_STATE->Value = Linear_Q16_Percent(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero);
+    p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
 }
 
-void UserAIn_Init(const UserAIn_T * p_context)
+void UserAIn_Init(const UserAIn_T * p_dev)
 {
-    UserAIn_InitFrom(p_context, p_context->P_NVM_CONFIG);
+    UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG);
 }
 
 /******************************************************************************/
@@ -70,23 +70,23 @@ void UserAIn_Init(const UserAIn_T * p_context)
     Main Polling Function
 */
 /******************************************************************************/
-static inline void _UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
+static inline void _UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    UserAIn_State_T * p_state = p_context->P_STATE;
+    UserAIn_State_T * p_state = p_dev->P_STATE;
     p_state->RawValue_Adcu = value_adcu;
     p_state->ValuePrev = p_state->Value;
-    p_state->Value = FilterValue(p_context->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
+    p_state->Value = FilterValue(p_dev->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
 }
 
-void UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
+void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    if (p_context->P_EDGE_PIN != NULL) { UserDIn_PollEdge(p_context->P_EDGE_PIN); }
+    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_PollEdge(p_dev->P_EDGE_PIN); }
 
     /* Analog capture stops when pin gate selects disable. filerted value persists... */
     /* Note: When edge pin blocks, analog value persists (not cleared to 0) */
     /* This preserves the last valid reading for when pin is re-enabled */
     /* Gating is handled in the getter functions instead */
-    if (_UserAIn_IsEdgePinPassthrough(p_context->P_EDGE_PIN) == true) { _UserAIn_CaptureValue(p_context, value_adcu); }
+    if (_UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) == true) { _UserAIn_CaptureValue(p_dev, value_adcu); }
 }
 
 /******************************************************************************/
@@ -94,23 +94,23 @@ void UserAIn_CaptureValue(const UserAIn_T * p_context, uint16_t value_adcu)
 
 */
 /******************************************************************************/
-bool UserAIn_PollEdge(const UserAIn_T * p_context, uint16_t value_adcu)
+bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollEdge(p_context->P_EDGE_PIN) : _UserAIn_IsEdge(p_context->P_STATE);
+    UserAIn_CaptureValue(p_dev, value_adcu);
+    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE);
 }
 
-bool UserAIn_PollRisingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
+bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_context->P_STATE);
+    UserAIn_CaptureValue(p_dev, value_adcu);
+    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE);
 }
 
 /* get value needs to check pin on getter */
-bool UserAIn_PollFallingEdge(const UserAIn_T * p_context, uint16_t value_adcu)
+bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    UserAIn_CaptureValue(p_context, value_adcu);
-    return (p_context->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_context->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_context->P_STATE);
+    UserAIn_CaptureValue(p_dev, value_adcu);
+    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE);
 }
 
 

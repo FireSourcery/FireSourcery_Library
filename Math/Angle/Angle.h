@@ -124,8 +124,6 @@ static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerC
     p_angle->Delta = (int32_t)delta_degPerCycle << ANGLE32_SHIFT;
 }
 
-
-
 /******************************************************************************/
 /*
     Integrate from commanded input
@@ -233,7 +231,7 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 /*
     Query
 */
-// static inline fract16_t Angle_GetSpeed_Digital(const Angle_T * p_angle) { return p_angle->Delta; }
+// static inline fract16_t Angle_GetSpeed_Angle16(const Angle_T * p_angle) { return p_angle->Delta; }
 // static inline fract16_t Angle_GetSpeed_Fract16(const Angle_T * p_angle) { return p_angle->Speed_Fract16; }
 
 

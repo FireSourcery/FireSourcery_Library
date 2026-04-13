@@ -112,17 +112,17 @@ Motor_StateInput_T;
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 /*!
-    @param p_MotorContext [const Motor_T *]
-    @param MotorActive [Motor_State_T]
+    @param p_MotorDev [const Motor_T *]
+    @param MotorRuntime [Motor_State_T]
 */
-#define MOTOR_STATE_MACHINE_INIT(p_MotorContext, MotorState) STATE_MACHINE_INIT((p_MotorContext), &MSM_MACHINE, &((MotorState).StateMachine))
+#define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
 
-// static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_context)
+// static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_dev)
 // {
 //     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
 //     {
-//         _StateMachine_Branch_ProcSyncOutput(p_active, p_context);
+//         _StateMachine_Branch_ProcSyncOutput(p_active, p_dev);
 //         _StateMachine_ReleaseAsyncIsr(p_active);
 //     }
 // }

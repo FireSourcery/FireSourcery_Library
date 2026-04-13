@@ -35,6 +35,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// #ifndef ROTOR_SENSOR_POLLING_FREQ
+// #define ROTOR_SENSOR_POLLING_FREQ (20000U)
+// #endif
 
 /*
     Rotor Angle Sensor

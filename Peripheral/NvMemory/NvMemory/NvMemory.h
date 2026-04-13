@@ -269,9 +269,9 @@ static inline void _NvMemory_SetYield(NvMemory_State_T * p_state, NvMemory_Callb
 /*
 
 */
-static inline void NvMemory_EnableForceAlign(const NvMemory_T * p_context) { _NvMemory_EnableForceAlign(p_context->P_STATE); }
-static inline void NvMemory_DisableForceAlign(const NvMemory_T * p_context) { _NvMemory_DisableForceAlign(p_context->P_STATE); }
-static inline void NvMemory_SetYield(const NvMemory_T * p_context, NvMemory_Callback_T yield, void * p_callbackData) { _NvMemory_SetYield(p_context->P_STATE, yield, p_callbackData); }
+static inline void NvMemory_EnableForceAlign(const NvMemory_T * p_dev) { _NvMemory_EnableForceAlign(p_dev->P_STATE); }
+static inline void NvMemory_DisableForceAlign(const NvMemory_T * p_dev) { _NvMemory_DisableForceAlign(p_dev->P_STATE); }
+static inline void NvMemory_SetYield(const NvMemory_T * p_dev, NvMemory_Callback_T yield, void * p_callbackData) { _NvMemory_SetYield(p_dev->P_STATE, yield, p_callbackData); }
 
 
 /*
@@ -280,22 +280,22 @@ static inline void NvMemory_SetYield(const NvMemory_T * p_context, NvMemory_Call
 /*
     Blocking
 */
-// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
-extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_context);
+// extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_dev) NV_MEMORY_ATTRIBUTE_RAM_SECTION;
+extern NvMemory_Status_T NvMemory_ProcOp_Blocking(NvMemory_T * p_dev);
 
-extern void NvMemory_Init(NvMemory_T * p_context);
+extern void NvMemory_Init(NvMemory_T * p_dev);
 
 extern NvMemory_Status_T NvMemory_MemCompare(const void * p_dest, const void * p_source, size_t size);
-// extern NvMemory_Status_T NvMemory_VerifyByMemCompare(NvMemory_T * p_context);
-// extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_context, const void * p_source, size_t size);
+// extern NvMemory_Status_T NvMemory_VerifyByMemCompare(NvMemory_T * p_dev);
+// extern bool NvMemory_CheckOpChecksum(const NvMemory_T * p_dev, const void * p_source, size_t size);
 
 /* Destination is not intended to be dereference, pass as uintptr_t type */
-extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_context, uintptr_t address, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_context, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_context, const void * p_data, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_context, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
-extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_context, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data);
-extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_context, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpAddress(NvMemory_T * p_dev, uintptr_t address, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpSize(NvMemory_T * p_dev, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpData(NvMemory_T * p_dev, const void * p_data, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size);
+extern NvMemory_Status_T NvMemory_SetOpControl_Read(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, size_t size, void * p_data);
+extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_dev, const NvMemory_OpControl_T * p_opControl, uintptr_t address, const void * p_data, size_t size);
 
 /*
     Non Blocking
@@ -316,9 +316,9 @@ extern NvMemory_Status_T NvMemory_SetOpControl_Write(NvMemory_T * p_context, con
 // size_t OpIndex;     /* in bytes */
 // NvMemory_Callback_T OnComplete;     /*!< OnComplete */
 
-extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_context);
-extern bool NvMemory_ProcOp(NvMemory_T * p_context);
-extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_context);
+extern size_t NvMemory_GetOpBytesRemaining(NvMemory_T * p_dev);
+extern bool NvMemory_ProcOp(NvMemory_T * p_dev);
+extern NvMemory_Status_T NvMemory_StartOp(NvMemory_T * p_dev);
 
 #endif /* NV_MEMORY_H */
 

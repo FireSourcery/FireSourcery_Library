@@ -116,3 +116,7 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
 // 4096 75000 erpm
 // 2048 37500 erpm
 // 1024 18750 erpm, 8 pole pairs 2344 rpm
+/* Base in electrical domain */
+// static inline uint32_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_State_T * p_motor) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle); }
+// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_State_T * p_motor) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, p_motor->Config.SpeedRated_DegPerCycle); }

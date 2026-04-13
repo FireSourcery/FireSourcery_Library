@@ -224,7 +224,19 @@ void _Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
 /* torque only states */
 void Motor_FOC_MatchIVState(Motor_State_T * p_motor)
 {
-    _Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
+// if (FOC_Vq(&p_motor->Foc) == 0) { FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor)); }
+// _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc));
+
+    if (FOC_Vq(&p_motor->Foc) == 0)
+    {
+        _Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor));
+    }
+    else
+    {
+        _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc));
+    }
+
+    p_motor->UserTorqueReq = Ramp_GetOutput(&p_motor->TorqueRamp);
 }
 
 /*!
@@ -236,9 +248,7 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 {
     if (p_motor->FeedbackMode.Current == 1U)
     {
-        if (FOC_Vq(&p_motor->Foc) == 0) { FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor)); }
-        _Motor_FOC_MatchIVState(p_motor, FOC_Vd(&p_motor->Foc), FOC_Vq(&p_motor->Foc));
-        p_motor->UserTorqueReq = Ramp_GetOutput(&p_motor->TorqueRamp);
+        Motor_FOC_MatchIVState(p_motor);
     }
     else
     {

@@ -46,17 +46,19 @@
 /******************************************************************************/
 static void TorqueZero_Entry(const Motor_T * p_motor)
 {
-    p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
-    Motor_SetFeedbackMode(p_motor->P_MOTOR_STATE, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
+    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    p_state->ControlTimerBase = 0U;
+    Motor_SetFeedbackMode(p_state, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
+    Motor_FOC_MatchIVState(p_state);
+    Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
+    // p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
+    /* cases where current sampling  */
+    p_motor->P_MOTOR_STATE->UserTorqueReq = -1 * p_state->Direction * fract16_mul(p_state->ILimitGenerating_Fract16, 32768/20);
 }
 
 static void TorqueZero_Proc(const Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
-    // if (p_state->FeedbackMode.Current == 1U)
-    // {
-    //     p_state->UserTorqueReq = _Motor_GeneratingOnly(p_state, 0);
-    // }
     Motor_FOC_ProcTorqueReq(p_state, 0, _Motor_GeneratingOnly(p_state, p_state->UserTorqueReq));
     Motor_FOC_WriteDuty(p_motor);
 }

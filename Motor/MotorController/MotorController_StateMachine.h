@@ -102,15 +102,15 @@ static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const M
 */
 /******************************************************************************/
 /* Top State only */
-static inline bool MotorController_IsState(MotorController_T * p_context, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_context->STATE_MACHINE.P_ACTIVE, stateId); }
+static inline bool MotorController_IsState(MotorController_T * p_dev, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_dev->STATE_MACHINE.P_ACTIVE, stateId); }
 
-static inline bool MotorController_IsPark(MotorController_T * p_context)   { return MotorController_IsState(p_context, MC_STATE_ID_PARK); }
-static inline bool MotorController_IsFault(MotorController_T * p_context)  { return MotorController_IsState(p_context, MC_STATE_ID_FAULT); }
-static inline bool MotorController_IsLock(MotorController_T * p_context)   { return MotorController_IsState(p_context, MC_STATE_ID_LOCK); }
+static inline bool MotorController_IsPark(MotorController_T * p_dev)   { return MotorController_IsState(p_dev, MC_STATE_ID_PARK); }
+static inline bool MotorController_IsFault(MotorController_T * p_dev)  { return MotorController_IsState(p_dev, MC_STATE_ID_FAULT); }
+static inline bool MotorController_IsLock(MotorController_T * p_dev)   { return MotorController_IsState(p_dev, MC_STATE_ID_LOCK); }
 
-static inline bool MotorController_IsConfig(MotorController_T * p_context) { return (MotorController_IsLock(p_context) || MotorController_IsFault(p_context)); }
+static inline bool MotorController_IsConfig(MotorController_T * p_dev) { return (MotorController_IsLock(p_dev) || MotorController_IsFault(p_dev)); }
 /* check by var set */
-static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context) { return StateMachine_IsActiveBranch(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD); }
+static inline bool MotorController_IsMotorCmdState(MotorController_T * p_dev) { return StateMachine_IsActiveBranch(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD); }
 
 
 
@@ -120,7 +120,7 @@ static inline bool MotorController_IsMotorCmdState(MotorController_T * p_context
 /******************************************************************************/
 /* Active Main  */
 /* return != 0xFF for App active.  */
-// static inline state_t MotorController_GetMainSubState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
+// static inline state_t MotorController_GetMainSubState(MotorController_T * p_dev) { return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
 
 
 /******************************************************************************/
@@ -144,15 +144,15 @@ typedef enum MotorController_StateCmd
 }
 MotorController_StateCmd_T;
 
-static inline void MotorController_InputStateCommand(MotorController_T * p_context, MotorController_StateCmd_T cmd)
+static inline void MotorController_InputStateCommand(MotorController_T * p_dev, MotorController_StateCmd_T cmd)
 {
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_STATE_CMD, cmd);
+    _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_STATE_CMD, cmd);
 }
 
-static inline void MotorController_EnterPark(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_PARK); }
-static inline void MotorController_EnterMain(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
+static inline void MotorController_EnterPark(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_PARK); }
+static inline void MotorController_EnterMain(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
 /* Transition to idle */
-static inline void MotorController_EnterMainIdle(MotorController_T * p_context) { MotorController_InputStateCommand(p_context, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
+static inline void MotorController_EnterMainIdle(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
 
 /******************************************************************************/
 /*!
@@ -169,9 +169,9 @@ typedef enum MotorController_MotorCmd
 MotorController_MotorCmd_T;
 
 
-static inline void MotorController_ApplyUserCmd(MotorController_T * p_context, MotorController_MotorCmd_T cmd)
+static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd)
 {
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, cmd);
+    _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, cmd);
 }
 
 /*
@@ -179,17 +179,17 @@ static inline void MotorController_ApplyUserCmd(MotorController_T * p_context, M
     Proc on input, optionally proc with sync buffer
     Input 10ms-50ms, Proc 1ms
 */
-static inline void MotorController_SetCmdValue(MotorController_T * p_context, int16_t userCmd) { p_context->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
-static inline void MotorController_SetDirection(MotorController_T * p_context, int direction) { p_context->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
-static inline void MotorController_SetControlState(MotorController_T * p_context, Phase_Output_T controlState) { p_context->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_PHASE); }
-static inline void MotorController_SetFeedbackMode(MotorController_T * p_context, Motor_FeedbackMode_T feedbackMode) { p_context->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_context, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
+static inline void MotorController_SetCmdValue(MotorController_T * p_dev, int16_t userCmd) { p_dev->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
+static inline void MotorController_SetDirection(MotorController_T * p_dev, int direction) { p_dev->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
+static inline void MotorController_SetControlState(MotorController_T * p_dev, Phase_Output_T controlState) { p_dev->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_PHASE); }
+static inline void MotorController_SetFeedbackMode(MotorController_T * p_dev, Motor_FeedbackMode_T feedbackMode) { p_dev->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 /*
     General Direction
     App may overwrite.
 */
-static int MotorController_GetDirection(MotorController_T * p_context)
+static int MotorController_GetDirection(MotorController_T * p_dev)
 {
-    return _Motor_Table_GetDirectionAll(&p_context->MOTORS);
+    return _Motor_Table_GetDirectionAll(&p_dev->MOTORS);
 }
 
 
@@ -201,10 +201,10 @@ typedef union MotorController_MotorCmdValue
 }
 MotorController_MotorCmdValue_T;
 
-static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_context, MotorController_MotorCmd_T cmd, int16_t value)
+static inline void MotorController_ApplyUserCmdValue(MotorController_T * p_dev, MotorController_MotorCmd_T cmd, int16_t value)
 {
     MotorController_MotorCmdValue_T input = (MotorController_MotorCmdValue_T) { .CmdId = cmd, .CmdValue = value };
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_MOTOR_CMD, input.Value);
+    _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_MOTOR_CMD, input.Value);
 }
 
 /******************************************************************************/
@@ -232,9 +232,9 @@ typedef enum MotorController_LockId
 MotorController_LockId_T;
 
 /* specialized var handlers */
-static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorController_T * p_context)
+static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorController_T * p_dev)
 {
-    return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
+    return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
 }
 
 typedef enum MotorController_LockOpStatus
@@ -250,10 +250,10 @@ MotorController_LockOpStatus_T;
 
 /* Transition on Call */
 /* May transition to substate */
-static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorController_T * p_context, MotorController_LockId_T id)
+static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorController_T * p_dev, MotorController_LockId_T id)
 {
-    _StateMachine_Branch_CallInput(p_context->STATE_MACHINE.P_ACTIVE, (void *)p_context, MC_STATE_INPUT_LOCK, id);
-    return p_context->P_MC_STATE->LockOpStatus; /* optionally return status, or use getter after */
+    _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_LOCK, id);
+    return p_dev->P_MC_STATE->LockOpStatus; /* optionally return status, or use getter after */
 }
 
 /* Lock State returns to ENTER */
@@ -263,33 +263,33 @@ static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorCont
     @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
 */
 /* may return 0xFF. most states passthrough. */
-// static inline MotorController_LockId_T MotorController_GetLockState(MotorController_T * p_context) { return StateMachine_GetActiveSubStateId(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
+// static inline MotorController_LockId_T MotorController_GetLockState(MotorController_T * p_dev) { return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
-static inline MotorController_LockOpStatus_T MotorController_EnterLockState(MotorController_T * p_context) { return MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_ENTER); }
-static inline MotorController_LockOpStatus_T MotorController_ExitLockState(MotorController_T * p_context) { return MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_EXIT); }
+static inline MotorController_LockOpStatus_T MotorController_EnterLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_ENTER); }
+static inline MotorController_LockOpStatus_T MotorController_ExitLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_EXIT); }
 
-static inline bool MotorController_IsEnterLockError(MotorController_T * p_context, MotorController_LockId_T id)
+static inline bool MotorController_IsEnterLockError(MotorController_T * p_dev, MotorController_LockId_T id)
 {
-    return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_IsLock(p_context) == false));
+    return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_IsLock(p_dev) == false));
 }
 
 /* Save RAM to NVM */
-static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_context)
+static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_dev)
 {
-    MotorController_InputLock(p_context, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
-    return p_context->P_MC_STATE->NvmStatus;
+    MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
+    return p_dev->P_MC_STATE->NvmStatus;
 }
 
 // if all calibration function use substate
-static inline bool MotorController_IsLockOpComplete(MotorController_T * p_context)
+static inline bool MotorController_IsLockOpComplete(MotorController_T * p_dev)
 {
-    return StateMachine_IsLeafState(p_context->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK) && Motor_Table_IsCalibrationComplete(&p_context->MOTORS);
+    return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK) && Motor_Table_IsCalibrationComplete(&p_dev->MOTORS);
 }
 
 /* return union status */
 // 0 as success
-// if (MotorController_IsLockOpComplete(p_context) == true)
-static inline int MotorController_GetLockOpStatus(MotorController_T * p_context) { return p_context->P_MC_STATE->LockOpStatus; }
+// if (MotorController_IsLockOpComplete(p_dev) == true)
+static inline int MotorController_GetLockOpStatus(MotorController_T * p_dev) { return p_dev->P_MC_STATE->LockOpStatus; }
 
 
 /******************************************************************************/
@@ -308,6 +308,6 @@ typedef union MotorController_FaultCmd
 }
 MotorController_FaultCmd_T;
 
-extern void MotorController_SetFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags);
-extern void MotorController_ClearFault(MotorController_T * p_context, MotorController_FaultFlags_T faultFlags);
-extern bool MotorController_TryClearFaultAll(MotorController_T * p_context);
+extern void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
+extern void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
+extern bool MotorController_TryClearFaultAll(MotorController_T * p_dev);

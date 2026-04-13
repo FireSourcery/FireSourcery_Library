@@ -313,21 +313,21 @@ static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc
 */
 /******************************************************************************/
 /* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSource(const MotorController_T * p_context) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION)); }
+static inline void MotorController_CaptureVSource(const MotorController_T * p_dev) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION)); }
 
-static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_context) { return &(p_context->P_PROTOCOLS[p_context->USER_PROTOCOL_INDEX]); }
+static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_dev) { return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
-static inline bool MotorController_PollRxLost(const MotorController_T * p_context)
+static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 {
-    assert(p_context->USER_PROTOCOL_INDEX < p_context->PROTOCOL_COUNT);
-    p_context->P_MC_STATE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_context));
-    return p_context->P_MC_STATE->FaultFlags.RxLost;
+    assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT);
+    p_dev->P_MC_STATE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_dev));
+    return p_dev->P_MC_STATE->FaultFlags.RxLost;
 }
 
-// static inline bool IsProtocolControlMode(const MotorController_T * p_context)
+// static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
 // {
-//     switch (p_context->P_MC_STATE->Config.InputMode)
+//     switch (p_dev->P_MC_STATE->Config.InputMode)
 //     {
 //         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
 //         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
@@ -337,7 +337,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_contex
 // }
 
 /* Common Buffered Input */
-static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_context) { return &p_context->P_MC_STATE->CmdInput; }
+static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC_STATE->CmdInput; }
 
 
 /******************************************************************************/
@@ -345,13 +345,13 @@ static inline Motor_Input_T * MotorController_GetMotorInput(const MotorControlle
     split MotBuzzer
 */
 /******************************************************************************/
-static inline void MotorController_BeepShort(const MotorController_T * p_context)            { Blinky_Blink(&p_context->BUZZER, 500U); }
-static inline void MotorController_BeepPeriodicType1(const MotorController_T * p_context)    { Blinky_StartPeriodic(&p_context->BUZZER, 500U, 500U); }
-static inline void MotorController_BeepPeriodic(const MotorController_T * p_context)         { Blinky_StartPeriodic(&p_context->BUZZER, 500U, 500U); }
-static inline void MotorController_BeepDouble(const MotorController_T * p_context)           { Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 2U); }
-static inline void MotorController_BeepMonitorTrigger(const MotorController_T * p_context)   { Blinky_BlinkN(&p_context->BUZZER, 250U, 250U, 1U); }
-static inline void MotorController_BeepStop(const MotorController_T * p_context)             { Blinky_Stop(&p_context->BUZZER); }
-static inline void MotorController_DisableBuzzer(const MotorController_T * p_context)        { Blinky_Disable(&p_context->BUZZER); }
+static inline void MotorController_BeepShort(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
+static inline void MotorController_BeepPeriodicType1(const MotorController_T * p_dev)    { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
+static inline void MotorController_BeepPeriodic(const MotorController_T * p_dev)         { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
+static inline void MotorController_BeepDouble(const MotorController_T * p_dev)           { Blinky_BlinkN(&p_dev->BUZZER, 250U, 250U, 2U); }
+static inline void MotorController_BeepMonitorTrigger(const MotorController_T * p_dev)   { Blinky_BlinkN(&p_dev->BUZZER, 250U, 250U, 1U); }
+static inline void MotorController_BeepStop(const MotorController_T * p_dev)             { Blinky_Stop(&p_dev->BUZZER); }
+static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev)        { Blinky_Disable(&p_dev->BUZZER); }
 
 // buzzer state
 // on Init poll
@@ -368,16 +368,16 @@ static inline void MotorController_DisableBuzzer(const MotorController_T * p_con
     Extern
 */
 /******************************************************************************/
-extern void MotorController_Init(const MotorController_T * p_context);
+extern void MotorController_Init(const MotorController_T * p_dev);
 
-extern void MotorController_LoadConfigDefault(const MotorController_T * p_context);
-extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context);
+extern void MotorController_LoadConfigDefault(const MotorController_T * p_dev);
+extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
-extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id);
-extern bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id);
+extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id);
+extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id);
 
-// extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_context);
+// extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_dev);
 

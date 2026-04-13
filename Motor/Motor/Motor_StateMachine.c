@@ -456,9 +456,9 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
-    Motor_FOC_MatchIVState(p_motor->P_MOTOR_STATE);
-    Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
-    p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
+    // Motor_FOC_MatchIVState(p_motor->P_MOTOR_STATE);
+    // Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
+    // p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
 }
 
 static void Intervention_Proc(const Motor_T * p_motor) {}

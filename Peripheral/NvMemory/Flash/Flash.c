@@ -169,8 +169,8 @@ static const NvMemory_OpControl_T FLASH_OP_VERIFY_ERASE =
 
 //todo units
 // determine bytes per cmd
-// NvMemory_SetOpCmdSize(NvMemory_T * p_context, size_t unitSize, uint8_t unitsPerCmd)
-// NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_context, size_t opSize)
+// NvMemory_SetOpCmdSize(NvMemory_T * p_dev, size_t unitSize, uint8_t unitsPerCmd)
+// NvMemory_Status_T NvMemory_SetOpSizeUnitsPerCmd(NvMemory_T * p_dev, size_t opSize)
 // {
 //     //overwrite bytepercmd
 // }

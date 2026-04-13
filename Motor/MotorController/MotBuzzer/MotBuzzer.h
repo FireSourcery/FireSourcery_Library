@@ -22,7 +22,7 @@ MotBuzzer_OptionFlags_T;
     move to buzzer
 */
 /******************************************************************************/
-// static inline void MotorController_BeepN(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_context->BUZZER, onTime, offTime, n); }
-// static inline void MotorController_BeepStart(const MotorController_T * p_context, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_context->BUZZER, onTime, offTime); }
-// static inline void MotorController_BeepStop(const MotorController_T * p_context) { Blinky_Stop(&p_context->BUZZER); }
-// static inline void MotorController_DisableBuzzer(const MotorController_T * p_context) { Blinky_Disable(&p_context->BUZZER); }
+// static inline void MotorController_BeepN(const MotorController_T * p_dev, uint32_t onTime, uint32_t offTime, uint8_t n) { Blinky_BlinkN(&p_dev->BUZZER, onTime, offTime, n); }
+// static inline void MotorController_BeepStart(const MotorController_T * p_dev, uint32_t onTime, uint32_t offTime) { Blinky_StartPeriodic(&p_dev->BUZZER, onTime, offTime); }
+// static inline void MotorController_BeepStop(const MotorController_T * p_dev) { Blinky_Stop(&p_dev->BUZZER); }
+// static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev) { Blinky_Disable(&p_dev->BUZZER); }

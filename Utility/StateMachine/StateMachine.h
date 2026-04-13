@@ -107,7 +107,7 @@ StateMachine_T;
 
 #define STATE_MACHINE_ACTIVE_ALLOC() (&(StateMachine_Active_T){0})
 
-#define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) { .P_CONTEXT = (void *)(p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
+#define STATE_MACHINE_INIT(p_Context, p_Machine, p_Active) (StateMachine_T){ .P_CONTEXT = (void *)(p_Context), .P_MACHINE = (p_Machine), .P_ACTIVE = (p_Active) }
 #define STATE_MACHINE_INIT_ALLOC(p_Context, p_Machine) STATE_MACHINE_INIT(p_Context, p_Machine, STATE_MACHINE_ACTIVE_ALLOC())
 
 

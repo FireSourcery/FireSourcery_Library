@@ -453,13 +453,13 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 //     // if (p_input->SpeedLimit != p_prev->SpeedLimit)
 //     // {
 //     //     p_prev->SpeedLimit = p_input->SpeedLimit;
-//     //     MotorController_SetUserSpeedLimitAll(p_context, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
+//     //     MotorController_SetUserSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, p_input->SpeedLimit);
 //     // }
 
 //     // if (p_input->ILimit != p_prev->ILimit)
 //     // {
 //     //     p_prev->ILimit = p_input->ILimit;
-//     //     MotorController_SetUserILimitAll(p_context, MOT_I_LIMIT_USER, p_input->ILimit);
+//     //     MotorController_SetUserILimitAll(p_dev, MOT_I_LIMIT_USER, p_input->ILimit);
 //     // }
 // }
 

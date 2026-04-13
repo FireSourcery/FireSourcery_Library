@@ -31,60 +31,60 @@
 #include "MotorController.h"
 #include <string.h>
 
-void MotorController_Init(const MotorController_T * p_context)
+void MotorController_Init(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_context->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
 
-    MotNvm_Init(&p_context->MOT_NVM);
+    MotNvm_Init(&p_dev->MOT_NVM);
 
-    if (p_context->P_NVM_CONFIG != NULL) { p_mc->Config = *p_context->P_NVM_CONFIG; }
-    if (p_context->MOT_NVM.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_context->MOT_NVM.P_BOOT_REF->Word; }
+    if (p_dev->P_NVM_CONFIG != NULL) { p_mc->Config = *p_dev->P_NVM_CONFIG; }
+    if (p_dev->MOT_NVM.P_BOOT_REF != NULL) { p_mc->BootRef.Word = p_dev->MOT_NVM.P_BOOT_REF->Word; }
 
-    for (uint8_t iAnalog = 0U; iAnalog < p_context->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_context->P_ANALOG_ADCS[iAnalog]); }
-    for (uint8_t iSerial = 0U; iSerial < p_context->SERIAL_COUNT; iSerial++) { Serial_Init(&p_context->P_SERIALS[iSerial]); }
+    for (uint8_t iAnalog = 0U; iAnalog < p_dev->ADC_COUNT; iAnalog++) { Analog_ADC_Init(&p_dev->P_ANALOG_ADCS[iAnalog]); }
+    for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
 
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    // if(p_mc->Config.IsCanEnable == true) { CanBus_Init(p_context->P_CAN_BUS, p_mc->Config.CanServicesId); }
+    // if(p_mc->Config.IsCanEnable == true) { CanBus_Init(p_dev->P_CAN_BUS, p_mc->Config.CanServicesId); }
 #endif
 
-    for (uint8_t iProtocol = 0U; iProtocol < p_context->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_context->P_PROTOCOLS[iProtocol]); }
+    for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-    MotAnalogUser_Init(&p_context->ANALOG_USER);
+    MotAnalogUser_Init(&p_dev->ANALOG_USER);
 
-    VMonitor_Init(&p_context->V_SOURCE);
+    VMonitor_Init(&p_dev->V_SOURCE);
     /* Overwrite */
-    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R1, .R2 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R2, }, p_context->V_SOURCE.P_LINEAR);
+    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R1, .R2 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R2, }, p_dev->V_SOURCE.P_LINEAR);
 
-    VMonitor_Init(&p_context->V_ACCESSORIES);
-    VMonitor_Init(&p_context->V_ANALOG);
+    VMonitor_Init(&p_dev->V_ACCESSORIES);
+    VMonitor_Init(&p_dev->V_ANALOG);
 
-    HeatMonitor_Init(&p_context->HEAT_PCB);
-    HeatMonitor_Group_Init(&p_context->HEAT_MOSFETS);
+    HeatMonitor_Init(&p_dev->HEAT_PCB);
+    HeatMonitor_Group_Init(&p_dev->HEAT_MOSFETS);
 
     Phase_VBus_InitV(p_mc->Config.VSupplyRef);
-    for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_context->MOTORS.P_CONTEXTS[iMotor]); }
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
-    Blinky_Init(&p_context->BUZZER);
-    Blinky_Init(&p_context->METER);
-    Pin_Output_Init(&p_context->RELAY_PIN);
-    UserDIn_Init(&p_context->OPT_DIN); /* 5-10ms by default */
+    Blinky_Init(&p_dev->BUZZER);
+    Blinky_Init(&p_dev->METER);
+    Pin_Output_Init(&p_dev->RELAY_PIN);
+    UserDIn_Init(&p_dev->OPT_DIN); /* 5-10ms by default */
 
-    TimerT_Periodic_Init(&p_context->MILLIS_TIMER, 1U);
+    TimerT_Periodic_Init(&p_dev->MILLIS_TIMER, 1U);
 
 #ifdef MOTOR_CONTROLLER_SHELL_ENABLE
     Shell_Init(&p_mc->Shell);
 #endif
 
-    MotorController_App_Init(p_context);
+    MotorController_App_Init(p_dev);
 
     /* Alternatively set nominal on init */
-    for (uint8_t i = 0U; i < p_context->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_context->P_HEAT_MOSFET_CONVERSIONS[i]); }
-    Analog_Conversion_Mark(&p_context->HEAT_PCB_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_SOURCE_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_ACCESSORIES_CONVERSION);
-    Analog_Conversion_Mark(&p_context->V_ANALOG_CONVERSION);
+    for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
+    Analog_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
+    Analog_Conversion_Mark(&p_dev->V_SOURCE_CONVERSION);
+    Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
+    Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
-    StateMachine_Init(&p_context->STATE_MACHINE);
+    StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
 /******************************************************************************/
@@ -100,14 +100,14 @@ void MotorController_Init(const MotorController_T * p_context)
 
     when if (BootRef_IsValid() == false)
 */
-void MotorController_LoadConfigDefault(const MotorController_T * p_context)
+void MotorController_LoadConfigDefault(const MotorController_T * p_dev)
 {
-    RangeMonitor_Enable(p_context->V_SOURCE.P_STATE);
-    MotorController_ResetVSourceMonitorDefaults(p_context);
+    RangeMonitor_Enable(p_dev->V_SOURCE.P_STATE);
+    MotorController_ResetVSourceMonitorDefaults(p_dev);
 
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
     // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);
-    // for (uint8_t iMotor = 0U; iMotor < p_context->MOTORS.LENGTH; iMotor++)
+    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
 }
 
 
@@ -123,27 +123,27 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 */
 /******************************************************************************/
 // fault past 57% or vPhaseFract16*vBusInv_Fract32 may overflow
-void _MotorController_SetVSupplyRef(const MotorController_T * p_context, uint16_t volts)
+void _MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
 {
-    p_context->P_MC_STATE->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_context); /* may overwrite fault/warning if called in the same packet */
+    p_dev->P_MC_STATE->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
+    MotorController_ResetVSourceMonitorDefaults(p_dev); /* may overwrite fault/warning if called in the same packet */
 }
 
 /* auto value using */
-void MotorController_InitVSupplyAutoValue(const MotorController_T * p_context)
+void MotorController_InitVSupplyAutoValue(const MotorController_T * p_dev)
 {
     assert(Phase_Calibration_IsValid() == true); /* Must be loaded before */
-    _MotorController_SetVSupplyRef(p_context, Linear_Voltage_Of(p_context->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_context->V_SOURCE_CONVERSION)));
+    _MotorController_SetVSupplyRef(p_dev, Linear_Voltage_Of(p_dev->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION)));
 }
 
-void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_context)
+void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev)
 {
-    VMonitor_InitLimitsDefault(p_context->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
+    VMonitor_InitLimitsDefault(p_dev->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
 }
-// bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_context)
+// bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_dev)
 // {
-//    RangeMonitor_Config_T * p_config = &p_context->V_SOURCE.P_STATE->Config;
-//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_context->V_SOURCE.P_LINEAR, p_context->P_MC_STATE->Config.VSupplyRef);
+//    RangeMonitor_Config_T * p_config = &p_dev->V_SOURCE.P_STATE->Config;
+//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC_STATE->Config.VSupplyRef);
 // //    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
 // }
 
@@ -153,24 +153,24 @@ void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_con
     Collective Setting Limit
 */
 /******************************************************************************/
-bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id, limit_t speed_fract16)
+bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id, limit_t speed_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_context->MOT_SPEED_LIMITS, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_dev->MOT_SPEED_LIMITS, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->MOT_SPEED_LIMITS); }
 }
 
-bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_context, MotSpeedLimit_Id_T id)
+bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id)
 {
-    if (LimitArray_TryClearEntry(&p_context->MOT_SPEED_LIMITS, id) == true) { Motor_Table_ApplySpeedLimit(&p_context->MOTORS, &p_context->MOT_SPEED_LIMITS); }
+    if (LimitArray_TryClearEntry(&p_dev->MOT_SPEED_LIMITS, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->MOT_SPEED_LIMITS); }
 }
 
-bool _MotorController_SetILimitAll(const MotorController_T * p_context, MotILimit_Id_T id, limit_t i_fract16)
+bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id, limit_t i_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_context->MOT_I_LIMITS, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
+    if (LimitArray_TrySetEntry(&p_dev->MOT_I_LIMITS, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->MOT_I_LIMITS); }
 }
 
-bool _MotorController_ClearILimitAll(const MotorController_T * p_context, MotILimit_Id_T id)
+bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id)
 {
-    if (LimitArray_TryClearEntry(&p_context->MOT_I_LIMITS, id) == true) { Motor_Table_ApplyILimit(&p_context->MOTORS, &p_context->MOT_I_LIMITS); }
+    if (LimitArray_TryClearEntry(&p_dev->MOT_I_LIMITS, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->MOT_I_LIMITS); }
 }
 
 

@@ -58,14 +58,14 @@ typedef union MotorController_StatusFlags
 }
 MotorController_StatusFlags_T;
 
-static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_context)
+static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
 {
     return (MotorController_StatusFlags_T)
     {
-        // .HeatWarning    = Monitor_GetStatus(p_context->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
-        //                   Monitor_GetStatus(p_context->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
-        // .HeatWarning    = p_context->StateFlags.HeatWarning,
-        // .VSourceLow     = p_context->StateFlags.VSourceLow,
-        // .BuzzerEnable   = p_context->StateFlags.BuzzerEnable,
+        // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
+        //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
+        // .HeatWarning    = p_dev->StateFlags.HeatWarning,
+        // .VSourceLow     = p_dev->StateFlags.VSourceLow,
+        // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
     };
 }
