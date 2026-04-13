@@ -193,23 +193,7 @@ static inline uint32_t PulseTimer_CaptureSampleTk_Freq(const PulseTimer_T * p_ti
     return (sampleTk > 0) ? (p_timer->TIMER_FREQ / sampleTk) : 0;
 }
 
-/* Alias for Hall edge capture — captures DeltaT and resets timer */
-static inline uint32_t PulseTimer_CaptureEdge(const PulseTimer_T * p_timer) { return PulseTimer_CaptureDeltaT(p_timer); }
-
-
 static inline bool PulseTimer_IsStop(const PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }
-
-/******************************************************************************/
-/*
-    Capture Period < 1S
-    DeltaT / TimerFreq = DeltaT [Seconds]
-*/
-/******************************************************************************/
-static inline uint32_t PulseTimer_DeltaT_Freq(const PulseTimer_T * p_timer) { return p_timer->TIMER_FREQ / p_timer->P_STATE->DeltaT; }
-static inline uint32_t PulseTimer_DeltaT_Ms(const PulseTimer_T * p_timer) { return p_timer->P_STATE->DeltaT * 1000U / p_timer->TIMER_FREQ; }
-
-
-
 
 /******************************************************************************/
 /*!
@@ -228,10 +212,11 @@ static inline uint32_t _PulseTimer_GetExtendedDelta(const PulseTimer_T * p_timer
     Capture as overwrite
     32 bit DeltaT overflow should be caught by CheckExtendedStop, which is a shorter period
 */
-static inline void PulseTimer_CaptureExtendedDeltaT(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureExtendedDeltaT(const PulseTimer_T * p_timer)
 {
     if (PulseTimer_CaptureDeltaT(p_timer) == PULSE_TIMER_MAX) { p_timer->P_STATE->DeltaT = _PulseTimer_GetExtendedDelta(p_timer) * p_timer->P_STATE->ExtendedTimerConversion; }
     p_timer->P_STATE->ExtendedTimer = *(p_timer->P_EXTENDED_TIMER);
+    return p_timer->P_STATE->DeltaT;
 }
 
 /*
@@ -247,6 +232,23 @@ static inline void PulseTimer_SetExtendedWatchStop_Millis(const PulseTimer_T * p
 {
     p_timer->P_STATE->ExtendedTimerStop = (uint16_t)(p_timer->EXTENDED_TIMER_FREQ * millis / 1000U);
 }
+
+
+
+/* Alias for Hall edge capture — captures DeltaT and resets timer */
+static inline uint32_t PulseTimer_CaptureEdge(const PulseTimer_T * p_timer) { return PulseTimer_CaptureExtendedDeltaT(p_timer); }
+
+
+/******************************************************************************/
+/*
+    Capture Period < 1S
+    DeltaT / TimerFreq = DeltaT [Seconds]
+*/
+/******************************************************************************/
+static inline uint32_t PulseTimer_DeltaT_Freq(const PulseTimer_T * p_timer) { return p_timer->TIMER_FREQ / p_timer->P_STATE->DeltaT; }
+static inline uint32_t PulseTimer_DeltaT_Ms(const PulseTimer_T * p_timer) { return p_timer->P_STATE->DeltaT * 1000U / p_timer->TIMER_FREQ; }
+
+
 
 /******************************************************************************/
 /*!

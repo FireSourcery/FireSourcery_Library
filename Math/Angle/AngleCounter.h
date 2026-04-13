@@ -145,11 +145,11 @@ static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_freq, uint32_t p
     p_freq->CounterD = 0;
 
     /* Same FreqD/speed until next pulse. or clear */
-    if (deltaD == 0) { p_freq->FreqD = 0;  /* assert(periodTk == 0) */ }
+    // if (deltaD == 0) { p_freq->FreqD = 0;  /* assert(periodTk == 0) */ }
     /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
-    else if (periodTk > samplePeriod / 2) { p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
+    // else if (periodTk > samplePeriod / 2) { p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
 
-    // if ((deltaD != 0) && (periodTk > samplePeriod / 2)){ p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
+    if ((deltaD != 0) && (periodTk > samplePeriod / 2)){ p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
 }
 
 /******************************************************************************/
