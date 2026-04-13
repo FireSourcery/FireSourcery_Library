@@ -30,18 +30,13 @@
 */
 /******************************************************************************/
 
+#include "../../Motor.h"
 
 #if     defined(MOTOR_HALL_MODE_POLLING)
 #elif   defined(MOTOR_HALL_MODE_ISR)
 #else
 #define MOTOR_HALL_MODE_POLLING
 #endif
-
-
-/* Part of Motor */
-/* include for Calibration state */
-typedef const struct Motor Motor_T;
-typedef struct Motor_State Motor_State_T;
 
 extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
 

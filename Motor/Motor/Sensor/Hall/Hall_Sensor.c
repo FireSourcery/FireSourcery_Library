@@ -51,9 +51,12 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true) /* 1/6 Electrical Cycle, typically > 1ms */
     {
-        AngleCounter_CaptureCount(p_counter, Hall_ResolveDirection(p_sensor->HALL.P_STATE)); /* without ticking Angle32 state */
-        Hall_ResolveAngle(p_sensor->HALL.P_STATE); /* for Hall_GetAngle16 */
         PulseTimer_CaptureEdge(&p_sensor->TIMER);
+        AngleCounter_CaptureCount(p_counter, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
+        // AngleCounter_SetAngle(p_counter, Hall_ResolveAngle(p_sensor->HALL.P_STATE));
+        // AngleCounter_InitLimit(p_sensor->P_COUNTER, Hall_ResolveAngle(p_sensor->HALL.P_STATE) + ANGLE16_PER_REVOLUTION / 6);
+
+        Hall_ResolveAngle(p_sensor->HALL.P_STATE); /* for Hall_GetAngle16 */
         AngleCounter_ZeroAngle(p_counter); /* Reset interpolation on edge */
     }
     else /* 20kHz, Interpolate angle between Hall edges */
@@ -61,9 +64,12 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
         AngleCounter_Interpolate(p_counter);
     }
 
+
     /* Write final angle to output interface: sector angle + interpolation offset */
-    /* altnernatively use p_counter->Base.Angle accumated state */
     p_state->AngleSpeed.Angle = ((int32_t)Hall_GetAngle16(p_sensor->HALL.P_STATE) << ANGLE32_SHIFT) + p_counter->Base.Angle;
+
+    /* altnernatively use p_counter->Base.Angle accumated state */
+    // p_state->AngleSpeed.Angle = p_counter->Base.Angle;
 }
 
 /*
@@ -76,8 +82,10 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 
     if (PulseTimer_IsExtendedStop(&p_sensor->TIMER) == false) { AngleCounter_CaptureFreqD(p_counter, PulseTimer_CaptureSampleTk(&p_sensor->TIMER)); }
     else { p_counter->FreqD = 0; }
+    // if (PulseTimer_IsExtendedStop(&p_sensor->TIMER) == false) { AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(&p_sensor->TIMER)); }
+    // else { p_counter->FreqD = 0; }
 
-    /* Propagate FreqD → Base.Delta for interpolation */
+    /* Propagate FreqD for interpolation */
     AngleCounter_ResolveInterpolationDelta(p_counter);
 
     /* Write speed to output interface */

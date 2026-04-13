@@ -29,13 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-
-#include "Transducer/Encoder/Encoder_ModeDT.h"
-#include "Utility/StateMachine/State.h"
-
-/* Include with Motor_Sensor */
-typedef const struct Motor Motor_T;
-typedef struct Motor_State Motor_State_T;
+#include "../../Motor.h"
 
 /******************************************************************************/
 /*!

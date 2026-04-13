@@ -31,6 +31,7 @@
 /******************************************************************************/
 
 #include "../Motor.h"
+
 /*
     Include all compile time sensor options
 */
@@ -50,8 +51,6 @@
     HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, p_Counter, PollingFreq, &((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
-
-// static inline RotorSensor_T * _Motor_GetSensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR_STATE->Config.SensorMode); }
 
 
 /******************************************************************************/

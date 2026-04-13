@@ -252,15 +252,15 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 #endif
 }
 
-static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
+static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
 // keep different factor
-// static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
+// static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder)
 // {
 // #if     defined(ENCODER_HW_DECODER)
 //     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->AngleCounter.Ref.AnglePerCount;
 // #elif   defined(ENCODER_HW_EMULATED)
-//     return p_encoder->Angle32 >> ENCODER_ANGLE_SHIFT;
+//     return Angle_GetAngle16(&p_encoder->AngleCounter);
 // #endif
 // }
 

@@ -55,13 +55,7 @@ typedef struct AngleCounter_Ref
     uint32_t TimerFreq;             /* Timer frequency [Hz] */
     uint16_t CountsPerRevolution;   /* Counter counts per mechanical revolution */
 
-    /*
-        Unit conversion. derived on init from NvMem Config
-    */
     // physical units handle with /cpr
-    // uint32_t UnitLinearD;                   /*!< Linear D unit conversion factor. Units per TimerCounter tick, using Capture DeltaD (DeltaT = 1). Units per DeltaT capture, using Capture DeltaT (DeltaD = 1).*/
-    // uint32_t UnitAngularSpeed;              /*!< [(1 << DEGREES_BITS) * UnitTime_Freq / CountsPerRevolution] => AngularSpeed = DeltaD * UnitAngularSpeed / DeltaT */
-    // uint32_t UnitSurfaceSpeed;              /*!< [UnitD * UnitTime_Freq] => Speed = DeltaD * UnitSpeed / DeltaT */
 }
 AngleCounter_Ref_T;
 
@@ -78,7 +72,6 @@ typedef struct AngleCounter
     Angle_T Base;
 
     int32_t CounterD;       /* Signed pulse counter. Accumulated +1/-1 from edges */
-    // int32_t CounterPrev; /* Previous counter value, if counter must be preserved */
     // int32_t DeltaD;
     int32_t FreqD;          /* Pulse frequency [Hz]. DeltaD over 1 second */
 
@@ -121,12 +114,12 @@ static inline void AngleCounter_CaptureCountWrap(AngleCounter_T * p_counter, int
 }
 
 /* Optional seperate capture */
-// static inline int32_t AngleCounter_ResolveDeltaD(AngleCounter_T * p_counter)
-// {
-//     p_counter->DeltaD = p_counter->CounterD;
-//     p_counter->CounterD = 0;
-//     return p_counter->DeltaD;
-// }
+static inline int32_t AngleCounter_ResolveDeltaD(AngleCounter_T * p_counter)
+{
+    int32_t deltaD = p_counter->CounterD;
+    p_counter->CounterD = 0;
+    return deltaD;
+}
 
 /******************************************************************************/
 /*
@@ -136,17 +129,30 @@ static inline void AngleCounter_CaptureCountWrap(AngleCounter_T * p_counter, int
     @param[in] periodTk  Timer reading from PulseTimer
 */
 /******************************************************************************/
-static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_freq, uint32_t periodTk)
+static inline void AngleCounter_CaptureFreqD(AngleCounter_T * p_counter, uint32_t periodTk)
 {
-    const uint32_t samplePeriod = p_freq->Ref.SamplePeriod;
-    const uint32_t timerFreq = p_freq->Ref.TimerFreq;
+    const uint32_t samplePeriod = p_counter->Ref.SamplePeriod;
+    const uint32_t timerFreq = p_counter->Ref.TimerFreq;
 
-    int32_t deltaD = p_freq->CounterD;
-    p_freq->CounterD = 0;
+    int32_t deltaD = p_counter->CounterD;
+    p_counter->CounterD = 0;
 
     /* Overflow is > samplePeriod. DeltaD == 0 occurs prior. */
-    if ((deltaD != 0) && (periodTk > samplePeriod / 2)){ p_freq->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
+    if ((deltaD != 0) && (periodTk > samplePeriod / 2)){ p_counter->FreqD = deltaD * (int32_t)(timerFreq / periodTk); }
+
+    // if ((deltaD != 0) && (sampleFreqk != 0)) { p_counter->FreqD = deltaD * (int32_t)(sampleTFreqk); }
 }
+
+static inline void AngleCounter_CaptureFreq(AngleCounter_T * p_counter, uint32_t sampleTkFreq)
+{
+    int32_t deltaD = p_counter->CounterD;
+    p_counter->CounterD = 0;
+
+    if ((deltaD != 0) && (sampleTkFreq != 0)) { p_counter->FreqD = deltaD * (int32_t)(sampleTkFreq); }
+}
+
+static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
+static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t angle) { Angle_CaptureAngle(&p_counter->Base, angle); }
 
 /******************************************************************************/
 /*
@@ -167,7 +173,6 @@ static inline angle16_t AngleCounter_ResolveInterpolationDelta(AngleCounter_T * 
     Angle_T Base forwarding — interpolation interface
 */
 static inline angle16_t AngleCounter_Interpolate(AngleCounter_T * p_counter) { return Angle_Interpolate(&p_counter->Base); }
-static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
 static inline void AngleCounter_InitLimit(AngleCounter_T * p_counter, angle16_t limit_angle16) { Angle_InitLimit(&p_counter->Base, limit_angle16); }
 
 /*
@@ -194,10 +199,7 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
     Init / Reset
 */
 /******************************************************************************/
-static inline void AngleCounter_Zero(AngleCounter_T * p_counter)
-{
-    p_counter->CounterD = 0;
-}
+static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->CounterD = 0; }
 
 /******************************************************************************/
 /*
@@ -212,6 +214,7 @@ static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const Angle
     p_ref->SamplePeriod = p_config->TimerFreq / p_config->SampleFreq;
     p_ref->TimerFreq = p_config->TimerFreq;
     p_ref->CountsPerRevolution = p_config->CountsPerRevolution;
+    /* base time freq == 1, runtime (timerFreq / periodTk) */
     p_ref->SpeedFractPerCount = rpm_accum32_per_count(1, p_config->CountsPerRevolution, p_config->FractSpeedRef_Rpm); /* For FreqD for now, or split */
 }
 
@@ -221,9 +224,4 @@ static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCo
     AngleCounter_Ref_Init(&p_angle->Ref, p_config);
     AngleCounter_Zero(p_angle);
 }
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
 

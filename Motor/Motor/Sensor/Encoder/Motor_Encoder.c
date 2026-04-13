@@ -28,6 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_Encoder.h"
+#include "Encoder_Sensor.h"
 
 #include "../../Motor_StateMachine.h"
 #include "../../Motor.h"
@@ -38,6 +39,8 @@
 
 static inline Encoder_T * GetEncoder(const Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.ENCODER.ENCODER; }
 static inline Encoder_State_T * GetEncoderState(const Motor_T * p_motor) { return GetEncoder(p_motor)->P_STATE; }
+
+//todo test
 
 /******************************************************************************/
 /*
@@ -172,7 +175,7 @@ static void ValidateAlign(const Motor_T * p_motor)
     FOC_SetVd(&p_state->Foc, 0);
     Motor_FOC_MatchFeedbackState(p_state);
     Motor_FOC_StartOpenLoop(p_state);
-    p_state->SensorState.MechanicalAngle = _Encoder_GetAngle(GetEncoderState(p_motor));
+    p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoderState(p_motor));
 }
 
 static void ProcOpenLoop(const Motor_T * p_motor)
@@ -187,7 +190,7 @@ static State_T * ValidateAlignNext(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (_Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
         {
             p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
@@ -377,7 +380,7 @@ static State_T * StartUpValidateAlignTransition(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (_Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
         {
             p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;

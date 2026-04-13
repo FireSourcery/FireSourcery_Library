@@ -69,7 +69,8 @@ static inline angle16_t Encoder_ModeDT_ResolveInterpolation(const Encoder_T * p_
 /* |DeltaD| <= 1 */
 static inline angle16_t Encoder_ModeDT_InterpolateAngle(const Encoder_T * p_encoder)
 {
-    return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ? AngleCounter_Interpolate(&p_encoder->P_STATE->AngleCounter) : 0;
+    // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ? AngleCounter_Interpolate(&p_encoder->P_STATE->AngleCounter) : 0;
+    // return (math_abs(p_encoder->P_STATE->AngleCounter.FreqD) < p_encoder->POLLING_FREQ / 2U) ? AngleCounter_Interpolate(&p_encoder->P_STATE->AngleCounter) : Angl.Angle;
 }
 
 

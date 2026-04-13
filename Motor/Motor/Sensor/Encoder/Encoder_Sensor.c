@@ -31,41 +31,32 @@
 #include "Encoder_Sensor.h"
 
 
-// const Encoder_RotorSensor_T * OfContext(const RotorSensor_T * p_sensor) { return (Encoder_RotorSensor_T *)p_sensor; }
-
 static void Encoder_RotorSensor_Init(const Encoder_RotorSensor_T * p_sensor)
 {
-//     Encoder_RotorSensor_T * p_this = (Encoder_RotorSensor_T *)p_sensor; // Safe cast
-// Encoder_ModeDT_Init_InterruptQuadrature(&p_motor->ENCODER);
-// Encoder_EnableQuadratureMode(&p_motor->ENCODER);
-//     Encoder_ModeDT_SetInitial(p_this->P_ENCODER);
-//     Encoder_ModeDT_Init_InterruptQuadrature(p_encoder);
-//     Encoder_EnableQuadratureMode(p_encoder);
-//     // Motor_ResetUnitsSensor(p_motor);
+    Encoder_ModeDT_Init_InterruptQuadrature(&p_sensor->ENCODER);
+    Encoder_EnableQuadratureMode( p_sensor->ENCODER .P_STATE);
 }
 
 
-static void Encoder_RotorSensor_CaptureAngle(const RotorSensor_T * p_sensor)
+static void Encoder_RotorSensor_CaptureAngle(const Encoder_RotorSensor_T * p_sensor)
 {
-    // Encoder_RotorSensor_T * p_this = (Encoder_RotorSensor_T *)p_sensor;
-    // p_sensor->P_STATE->ElectricalAngle = Encoder_GetAngle16(&p_this->HALL) + Encoder_ModeDT_InterpolateAngularDisplacement(p_this->P_ENCODER);
-    // Encoder_GetAngle_Scalar(&p_motor->ENCODER, p_motor->Config.PolePairs); /* ElectricalAngle => MechanicalAngle * PolePairs */
-    // electricalAngle += Encoder_ModeDT_InterpolateAngularDisplacement(&p_motor->ENCODER);
+    RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
+    // p_state->AngleSpeed.Angle = Encoder_GetAngle(&p_sensor->ENCODER) + Encoder_ModeDT_InterpolateAngle(p_sensor);
+    // p_state->AngleSpeed.Angle = Encoder_ModeDT_InterpolateAngle(p_sensor); to electrical
+
 }
 
 static void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sensor)
 {
     RotorSensor_State_T * p_state = p_sensor->BASE.P_STATE;
     Encoder_ModeDT_CaptureFreqD(&p_sensor->ENCODER);
-    // p_state->ElectricalSpeed_DegPerCycle = Encoder_ModeDT_ResolveInterpolation(p_sensor->ENCODER.P_STATE);
-    // p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarVelocity(p_sensor->ENCODER.P_STATE);
-    // Encoder_ModeDT_CaptureScalarVelocity(&p_motor->ENCODER) / 2;
+    Encoder_ModeDT_ResolveInterpolation(&p_sensor->ENCODER);
+    p_state->Speed_Fract16 = Encoder_ModeDT_GetScalarSpeed(p_sensor->ENCODER.P_STATE);
 }
 
 
 static bool Encoder_RotorSensor_VerifyCalibration(const Encoder_RotorSensor_T * p_sensor)
 {
-    // Encoder_RotorSensor_T * p_this = (Encoder_RotorSensor_T *)p_sensor;
     // return Encoder_IsTableValid(p_this->HALL.P_STATE);
 }
 

@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "../RotorSensor.h"
-#include "Transducer/Encoder/Encoder.h" /* alternatively, split encoder math */
+#include "Transducer/Encoder/Encoder.h"
 #include "Transducer/Encoder/Encoder_ModeDT.h"
 #include "Transducer/Encoder/Encoder_ISR.h"
 
