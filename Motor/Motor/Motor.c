@@ -40,7 +40,7 @@ void Motor_Init(const Motor_T * p_dev)
     // assert(Phase_VBus_GetVNominal() != 0U); /* set by caller init */
 
     /* Config including selected angle sensor init */
-    if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_MOTOR_STATE->Config = *p_dev->P_NVM_CONFIG; }
+    if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_MOTOR->Config = *p_dev->P_NVM_CONFIG; }
 
     /*
         HW Modules Init
@@ -48,19 +48,19 @@ void Motor_Init(const Motor_T * p_dev)
     Phase_Init(&p_dev->PHASE);
     // Phase_Analog_Init(&p_dev->PHASE);
 #if defined(MOTOR_SIX_STEP_ENABLE)
-    Phase_Polar_ActivateMode(&p_dev->PHASE, p_dev->P_MOTOR_STATE->Config.PhasePwmMode);
+    Phase_Polar_ActivateMode(&p_dev->PHASE, p_dev->P_MOTOR->Config.PhasePwmMode);
 #endif
 
     /* Using Config Id */
-    p_dev->P_MOTOR_STATE->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR_STATE->Config.SensorMode);
-    RotorSensor_Init(p_dev->P_MOTOR_STATE->p_ActiveSensor);
+    p_dev->P_MOTOR->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR->Config.SensorMode);
+    RotorSensor_Init(p_dev->P_MOTOR->p_ActiveSensor);
 
     // HeatMonitor_Init(&p_dev->HEAT_MONITOR);
 
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
-    Motor_Reset(p_dev->P_MOTOR_STATE); // alternatively move to state machine
+    Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 

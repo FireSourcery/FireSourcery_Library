@@ -231,7 +231,7 @@ MotorController_State_T;
 */
 typedef const struct MotorController
 {
-    MotorController_State_T * P_MC_STATE; /* Pointer to the Runtime buffer */
+    MotorController_State_T * P_MC; /* Pointer to the Runtime buffer */
 
     /*
         Peripheral Init
@@ -241,9 +241,9 @@ typedef const struct MotorController
 
     Serial_T * P_SERIALS;
     uint8_t SERIAL_COUNT;
-// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-//     CanBus_T * P_CAN_BUS;
-// #endif
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+    CanBus_T * P_CAN_BUS;
+#endif
 
     /*
         Peripheral Services Context
@@ -289,6 +289,9 @@ typedef const struct MotorController
 
     MotorController_App_T * P_APP; /* Single compile time selection for now */
     const void * P_APP_CONTEXT;
+    // directly map components. this would be most similar to implementing in MotorController_T, minus the type coupling.
+    // void * P_RUNTIME;
+    // const void * P_NVM_CONFIG;
 
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
@@ -321,13 +324,13 @@ static inline Socket_T * MotorController_GetMainSocket(const MotorController_T *
 static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 {
     assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT);
-    p_dev->P_MC_STATE->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_dev));
-    return p_dev->P_MC_STATE->FaultFlags.RxLost;
+    p_dev->P_MC->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_dev));
+    return p_dev->P_MC->FaultFlags.RxLost;
 }
 
 // static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
 // {
-//     switch (p_dev->P_MC_STATE->Config.InputMode)
+//     switch (p_dev->P_MC->Config.InputMode)
 //     {
 //         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
 //         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
@@ -337,7 +340,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 // }
 
 /* Common Buffered Input */
-static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC_STATE->CmdInput; }
+static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
 
 
 /******************************************************************************/

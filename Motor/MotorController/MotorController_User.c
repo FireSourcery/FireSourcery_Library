@@ -42,7 +42,7 @@
 /******************************************************************************/
 int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     int status = 0; // MotorController_GenericStatus_T
     bool isSuccess = true;
@@ -99,7 +99,7 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
 /*! @param[in] volts < PHASE_CALIBRATION.VMAX and Config.VSupplyRef */
 void MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     p_mc->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_dev);
     /* todo as bound limits */
@@ -112,7 +112,7 @@ void MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t vol
 
 void MotorController_SetInputMode(const MotorController_T * p_dev, MotorController_InputMode_T mode)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     p_mc->Config.InputMode = mode;
 

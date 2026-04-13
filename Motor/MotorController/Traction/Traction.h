@@ -35,7 +35,6 @@
 #include "Transducer/Blinky/Blinky.h"
 
 
-
 /*
     [Traction_Input_T]
 */
@@ -55,44 +54,41 @@ typedef struct Traction_Input
     uint16_t ThrottleValue;
     uint16_t BrakeValue;
     Traction_Cmd_T DriveCmd;
-    // Traction_Cmd_T CmdPrev;
 }
 Traction_Input_T;
 /* optionally handle park,fnr in 1 id */
 
-static inline Traction_Cmd_T Traction_Input_EvaluateCmd(const Traction_Input_T * p_user)
+static inline Traction_Cmd_T Traction_Input_EvaluateCmd(const Traction_Input_T * p_input)
 {
-    if      (p_user->BrakeValue > 0U)       { return TRACTION_CMD_BRAKE; } // optionally check throttle active error
-    else if (p_user->ThrottleValue > 0U)    { return TRACTION_CMD_THROTTLE; }
-    else                                    { return TRACTION_CMD_RELEASE; }
+    if      (p_input->BrakeValue > 0U)       { return TRACTION_CMD_BRAKE; } // optionally check throttle active error
+    else if (p_input->ThrottleValue > 0U)    { return TRACTION_CMD_THROTTLE; }
+    else                                     { return TRACTION_CMD_RELEASE; }
 }
 
 /*
     For cases where Module handles cmd edge detect
 */
-static inline Traction_Cmd_T Traction_Input_PollCmd(Traction_Input_T * p_user)
+static inline Traction_Cmd_T Traction_Input_PollCmd(Traction_Input_T * p_input)
 {
-    // p_user->CmdPrev = p_user->Cmd; /* Save for Async Edge Check */
-    p_user->DriveCmd = Traction_Input_EvaluateCmd(p_user);
-    return p_user->DriveCmd;
+    p_input->DriveCmd = Traction_Input_EvaluateCmd(p_input);
+    return p_input->DriveCmd;
 }
 
-static inline bool Traction_Input_PollCmdEdge(Traction_Input_T * p_user) { return (p_user->DriveCmd != Traction_Input_PollCmd(p_user)); }
-// static inline bool Traction_Input_IsCmdEdge(Traction_Input_T * p_user) { return (p_user->Cmd != p_user->CmdPrev); }
+static inline bool Traction_Input_PollCmdEdge(Traction_Input_T * p_input) { return (p_input->DriveCmd != Traction_Input_PollCmd(p_input)); }
 
 /*
     Individually set inputs
 */
-static inline bool Traction_Input_PollThrottle(Traction_Input_T * p_this, uint16_t userCmd)
+static inline bool Traction_Input_PollThrottle(Traction_Input_T * p_input, uint16_t userCmd)
 {
-    p_this->ThrottleValue = userCmd;
-    return Traction_Input_PollCmdEdge(p_this);
+    p_input->ThrottleValue = userCmd;
+    return Traction_Input_PollCmdEdge(p_input);
 }
 
-static inline bool Traction_Input_PollBrake(Traction_Input_T * p_this, uint16_t userCmd)
+static inline bool Traction_Input_PollBrake(Traction_Input_T * p_input, uint16_t userCmd)
 {
-    p_this->BrakeValue = userCmd;
-    return Traction_Input_PollCmdEdge(p_this);
+    p_input->BrakeValue = userCmd;
+    return Traction_Input_PollCmdEdge(p_input);
 }
 
 static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, sign_t direction)
@@ -102,18 +98,6 @@ static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, 
 
 static inline sign_t Traction_Input_GetDirectionCmd(const Traction_Input_T * p_input) { return p_input->Direction; }
 
-// optionally handle by motor layer
-// static inline int16_t Traction_Input_GetSignedCmd(const Traction_Input_T * p_input)
-// {
-//     switch (p_input->DriveCmd)
-//     {
-//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue; // as motoring
-//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue * p_input->Direction; // as signed torque
-//         case TRACTION_CMD_THROTTLE:  return (int16_t)p_input->ThrottleValue * p_input->Direction;
-//         case TRACTION_CMD_RELEASE:   return 0;
-//         default: return 0;
-//     }
-// }
 
 /*
     Config States
@@ -167,10 +151,7 @@ Traction_State_T;
 typedef const struct Traction
 {
     Traction_State_T * P_TRACTION_STATE;
-    // StateMachine_T STATE_MACHINE;
     Motor_Table_T MOTORS;
-    // const Blinky_T * P_BUZZER;
-    // const MotAnalogUser_T * P_ANALOG_USER;
     const Traction_Config_T * P_NVM_CONFIG;
 }
 Traction_T;

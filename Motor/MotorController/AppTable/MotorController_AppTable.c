@@ -50,7 +50,7 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
     }
 
     MotorController_SetCmdValue(p_dev, MotAnalogUser_GetThrottle(&p_dev->ANALOG_USER));
-    // if (p_dev->P_MC_STATE->CmdInput.CmdValue == 0U)
+    // if (p_dev->P_MC->CmdInput.CmdValue == 0U)
     // {
     //     MotorController_SetControlState(p_dev, PHASE_VOUT_Z);
     // }
@@ -76,7 +76,7 @@ MotorController_App_T MC_APP_MOTOR_CMD =
 /******************************************************************************/
 // MotorController_App_T * MotorController_App(MotorController_T * p_dev)
 // {
-//     switch (p_dev->P_MC_STATE->Config.InitMode)
+//     switch (p_dev->P_MC->Config.InitMode)
 //     {
 //         case MOTOR_CONTROLLER_MAIN_MODE_MOTOR_CMD:  return &MC_APP_MOTOR_CMD;
 //         case MOTOR_CONTROLLER_MAIN_MODE_TRACTION:    return &MC_APP_TRACTION;

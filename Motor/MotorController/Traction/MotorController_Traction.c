@@ -44,7 +44,8 @@
 static const State_T STATE_DRIVE;
 static const State_T STATE_NEUTRAL;
 
-static inline Traction_T * TractionApp(MotorController_T * p_mc) { return (Traction_T *)(p_mc-> P_APP_CONTEXT); }
+static inline Traction_T * TractionApp(MotorController_T * p_mc) { return (Traction_T *)(p_mc->P_APP_CONTEXT); }
+// static inline Traction_State_T * _TractionApp(MotorController_T * p_mc) { return ((Traction_T *)(p_mc->P_APP_CONTEXT))->P_TRACTION_STATE; }
 
 /* From Park */
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
@@ -72,11 +73,6 @@ MotorController_App_T MC_APP_TRACTION =
     .INIT = Init,
 };
 
-// typedef struct Traction_App
-// {
-//     MotorController_App_T P_APP;
-//     Traction_T TRACTION_CONTEXT;
-// }
 
 /*
     setting MOTOR_DIRECTION_NULL
@@ -293,9 +289,20 @@ sign_t MotorController_Traction_GetDirection(const MotorController_T * p_mc)
 /******************************************************************************/
 /*!
     @brief StateMachine Input
+
+    Input ~10-50ms
+    Proc State/Buffer ~1ms
+    Apply state changes on input
+
+    alternatively implement as nested state machine.
+        seperate set input alphabet. inputs must be buffer only to prvent proc when outer state is not active.
+
+    edge detection prior to state machine call.
+        alternatively, handle within input handler. State machine virtualizes input entirely.
+        MotorController sm layer as input mapper. cmd value can always call input handler, unlike motor sm setpoint value which buffers.
 */
 /******************************************************************************/
-/* Apply buffered input */
+
 /* Alternatively MotorController   allocate reserved input ids */
 void _MotorController_Traction_ApplyCmd(MotorController_T * p_mc, Traction_StateInput_T cmd)
 {
@@ -305,7 +312,6 @@ void _MotorController_Traction_ApplyCmd(MotorController_T * p_mc, Traction_State
 // void MotorController_Traction_StartThrottle(MotorController_T * p_mc) { MotorController_Traction_ApplyStartCmd(p_mc, TRACTION_CMD_THROTTLE); }
 // void MotorController_Traction_StartBrake(MotorController_T * p_mc) { MotorController_Traction_ApplyStartCmd(p_mc, TRACTION_CMD_BRAKE); }
 // void MotorController_Traction_StartRelease(MotorController_T * p_mc) { MotorController_Traction_ApplyStartCmd(p_mc, TRACTION_CMD_RELEASE); }
-
 
 
 
@@ -319,34 +325,18 @@ void _MotorController_Traction_ApplyCmd(MotorController_T * p_mc, Traction_State
     edge detect
     send to state machine
 
-    p_input->DriveCmd updates without statemachine check. handled on input only.
+    p_input->DriveCmd proc through input handler only.
 */
 /*
     Unified CmdId detection, inclusive of edge detection.
-    Command Polling
     Cmd "state" == input, changes on edge, handle outside of StateMachine
-    if call sm with value, update value in handler.
     propagating value needs state constraint. even though edge detect does not
-    require caller to clear brake.
 */
 void MotorController_Traction_PollStartCmd(MotorController_T * p_mc)
 {
     if (Traction_Input_PollCmdEdge(&TractionApp(p_mc)->P_TRACTION_STATE->Input)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
 }
 
-/*
-    Poll start at time of input
-    on each input
-*/
-/*
-    Input ~10-50ms
-    Proc State/Buffer ~1ms
-    Apply state changes immediately
-    on protocol input per value response, 50ms. alternatively buffer and poll.
-    alternatively call value update,
-
-    module handle edge detection
-*/
 void MotorController_Traction_SetThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
     if (Traction_Input_PollThrottle(&TractionApp(p_mc)->P_TRACTION_STATE->Input, userCmd)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }

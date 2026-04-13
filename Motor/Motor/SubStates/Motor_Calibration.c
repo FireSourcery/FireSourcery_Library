@@ -48,16 +48,16 @@ static void Tuning_Entry(const Motor_T * p_motor)
     Phase_ActivateT0(&p_motor->PHASE);
 
     /* reload from */
-    p_motor->P_MOTOR_STATE->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
-    p_motor->P_MOTOR_STATE->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
-    Motor_ResetSpeedPid(p_motor->P_MOTOR_STATE);
-    Motor_ResetCurrentPid(p_motor->P_MOTOR_STATE);
+    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
+    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
+    Motor_ResetSpeedPid(p_motor->P_MOTOR);
+    Motor_ResetCurrentPid(p_motor->P_MOTOR);
 }
 
 static void Tuning_Proc(const Motor_T * p_motor)
 {
-    Motor_ProcOuterFeedback(p_motor->P_MOTOR_STATE);
-    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
+    Motor_ProcOuterFeedback(p_motor->P_MOTOR);
+    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
     Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -82,8 +82,8 @@ static void Tuning_Exit(const Motor_T * p_motor)
 
 static State_T * Tuning_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR_STATE, feedbackMode);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
+    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
     return NULL;
 }
 
@@ -133,17 +133,17 @@ bool Motor_Calibration_IsTuning(const Motor_T * p_motor) { return (StateMachine_
 static void Homing_Entry(const Motor_T * p_motor)
 {
     // for now
-    p_motor->P_MOTOR_STATE->ControlTimerBase = 0U;
-    p_motor->P_MOTOR_STATE->CalibrationStateIndex = 0U;
-    p_motor->P_MOTOR_STATE->FeedbackMode.Current = 0U;
+    p_motor->P_MOTOR->ControlTimerBase = 0U;
+    p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+    p_motor->P_MOTOR->FeedbackMode.Current = 0U;
 
     // Phase_ActivateV0(&p_motor->PHASE);
-    // Timer_StartPeriod_Millis(&p_motor->P_MOTOR_STATE->ControlTimer, 20); // ~1rpm
+    // Timer_StartPeriod_Millis(&p_motor->P_MOTOR->ControlTimer, 20); // ~1rpm
 
-    // p_motor->P_MOTOR_STATE->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // p_motor->P_MOTOR_STATE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    // p_motor->P_MOTOR->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+    // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
-    Motor_FOC_StartOpenLoop(p_motor->P_MOTOR_STATE);
+    Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
 }
 
 /*
@@ -157,22 +157,22 @@ static void Homing_Proc(const Motor_T * p_motor)
 
     // RotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
 
-    // if (Timer_Periodic_Poll(&p_motor->P_MOTOR_STATE->ControlTimer) == true)
+    // if (Timer_Periodic_Poll(&p_motor->P_MOTOR->ControlTimer) == true)
     // {
     //     Motor_PollSensorAngle(p_motor); /*  */
-        // RotorSensor_CaptureAngle(p_motor->P_MOTOR_STATE->p_ActiveSensor);
+        // RotorSensor_CaptureAngle(p_motor->P_MOTOR->p_ActiveSensor);
 
-        // p_motor->P_MOTOR_STATE->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR_STATE->Config.PolePairs;
-        // p_motor->P_MOTOR_STATE->ElectricalAngle += (angleDelta * p_motor->P_MOTOR_STATE->Config.PolePairs);
-        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR_STATE->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
-        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR_STATE->ElectricalAngle, p_motor->P_MOTOR_STATE->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
-        // Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR_STATE);
+        // p_motor->P_MOTOR->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR->Config.PolePairs;
+        // p_motor->P_MOTOR->ElectricalAngle += (angleDelta * p_motor->P_MOTOR->Config.PolePairs);
+        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, p_motor->P_MOTOR->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
+        // Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
     // }
 
     // /* error on full rev todo */
     // if ( Home(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta,
 
-    // p_motor->P_MOTOR_STATE->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+    // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
 }
 

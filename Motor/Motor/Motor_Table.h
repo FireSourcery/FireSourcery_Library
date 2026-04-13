@@ -141,7 +141,7 @@ static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_table, Motor_StateId
 static inline bool Motor_Table_IsEveryUserDirection(Motor_Table_T * p_table, int sign)
 {
     bool isEvery = true;
-    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_GetUserDirection(p_table->P_DEVS[iMotor].P_MOTOR_STATE) != sign) { isEvery = false; break; } }
+    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_GetUserDirection(p_table->P_DEVS[iMotor].P_MOTOR) != sign) { isEvery = false; break; } }
     return isEvery;
 }
 

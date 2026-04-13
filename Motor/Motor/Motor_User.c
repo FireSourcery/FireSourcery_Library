@@ -72,7 +72,7 @@
 static State_T * _Motor_InputStop(const Motor_T * p_motor, state_value_t value)
 {
     (void)value;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0U) { return &MOTOR_STATE_STOP; }
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_STOP; }
     return NULL;
 }
 
@@ -137,7 +137,7 @@ inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T stat
 */
 inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
-    if (mode.Value != p_motor->P_MOTOR_STATE->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
+    if (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
 
 /******************************************************************************/
@@ -152,11 +152,11 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 */
 void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T direction)
 {
-    if (direction != p_motor->P_MOTOR_STATE->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
+    if (direction != p_motor->P_MOTOR->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
 }
 
 /* calibrated positive or ccw */
-void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR_STATE->Config.DirectionForward * direction); }
+void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR->Config.DirectionForward * direction); }
 
 
 
@@ -169,9 +169,9 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_ReleaseVZ(p_motor);
-    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR_STATE);
-    p_motor->P_MOTOR_STATE->UserSpeedReq = 0;
-    p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
+    p_motor->P_MOTOR->UserSpeedReq = 0;
+    p_motor->P_MOTOR->UserTorqueReq = 0;
     // Motor_Stop(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
 }
 
@@ -247,7 +247,7 @@ void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Moto
 void Motor_ApplyTorque0(const Motor_T * p_motor)
 {
     Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
-    _Motor_SetTorqueMotoringCmd(p_motor->P_MOTOR_STATE, 0);
+    _Motor_SetTorqueMotoringCmd(p_motor->P_MOTOR, 0);
 }
 
 /*
@@ -448,7 +448,7 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 
 //     // Flags should update even if State has not transitioned
 //     // overwritten by match in case FeedbackMode changed.
-//     Motor_SetActiveCmdScalar(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+//     Motor_SetActiveCmdScalar(p_motor->P_MOTOR, p_input->CmdValue);
 
 //     // if (p_input->SpeedLimit != p_prev->SpeedLimit)
 //     // {
@@ -466,9 +466,9 @@ void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 // /* units as FeedbackMode Set */
 // void Motor_ProcInputSetpoint(const Motor_T * p_motor, Motor_Input_T * p_input)
 // {
-//     if (p_input->CmdValue != Motor_GetCmd(p_motor->P_MOTOR_STATE)) /* compare applicable to mixed units values */
+//     if (p_input->CmdValue != Motor_GetCmd(p_motor->P_MOTOR)) /* compare applicable to mixed units values */
 //     {
-//         Motor_SetActiveCmdValue(p_motor->P_MOTOR_STATE, p_input->CmdValue);
+//         Motor_SetActiveCmdValue(p_motor->P_MOTOR, p_input->CmdValue);
 //     }
 // }
 

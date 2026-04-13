@@ -105,7 +105,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
 void MotorController_PollFaultFlags(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     p_mc->FaultFlags.VSourceLimit = RangeMonitor_IsAnyFault(p_dev->V_SOURCE.P_STATE);
     p_mc->FaultFlags.VAccsLimit = RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE);
@@ -117,8 +117,8 @@ void MotorController_PollFaultFlags(MotorController_T * p_dev)
 /* Non-Fault states: apply set/clear, transition to Fault if any flags remain */
 static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultCmd)
 {
-    p_dev->P_MC_STATE->FaultFlags.Value |= (MotorController_FaultCmd_T) { .Value = faultCmd }.FaultSet;
-    return (p_dev->P_MC_STATE->FaultFlags.Value != 0U) ? &STATE_FAULT : NULL;
+    p_dev->P_MC->FaultFlags.Value |= (MotorController_FaultCmd_T) { .Value = faultCmd }.FaultSet;
+    return (p_dev->P_MC->FaultFlags.Value != 0U) ? &STATE_FAULT : NULL;
 }
 
 
@@ -126,7 +126,7 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
     MotorController AppTable
 */
 static State_T * EnterMain(MotorController_T * p_dev) { return MotorController_App_EnterMain(p_dev); }
-static State_T * ParkState(MotorController_T * p_dev) { return(p_dev->P_MC_STATE->Config.IsParkStateEnabled ? &STATE_PARK : EnterMain(p_dev)); }
+static State_T * ParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &STATE_PARK : EnterMain(p_dev)); }
 
 
 /******************************************************************************/
@@ -160,7 +160,7 @@ static void Init_Proc(MotorController_T * p_dev)
 static State_T * Init_Next(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     /* Wait for initial ADC readings */
     // wait for every motor exit init
@@ -308,11 +308,12 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     }
 }
 
+
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Main_InputStateCmd,
-    [MC_STATE_INPUT_MOTOR_CMD]      = NULL,
+    [MC_STATE_INPUT_MOTOR_CMD]      = NULL, /* potentially app wraps calls. */
     [MC_STATE_INPUT_APP_USER]       = NULL, /* App-specific: handled by sub-states only, sink at Main */
     // [MC_STATE_INPUT_LOCK]           = (State_Input_T)Lock_Input,
 };
@@ -346,7 +347,7 @@ static void MotorCmd_Proc(MotorController_T * p_dev) {}
 /* Passthrough from buffered CmdInput — same pattern as Main_InputMotorCmd */
 static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
 {
-    // Motor_Input_T * p_input = &p_dev->P_MC_STATE->CmdInput;
+    // Motor_Input_T * p_input = &p_dev->P_MC->CmdInput;
     // switch ((MotorController_MotorCmd_T)cmd)
     // {
     //     case MOTOR_CONTROLLER_USER_CMD_SETPOINT:    Motor_Table_SetCmdWith(&p_dev->MOTORS, Motor_SetActiveCmdScalar, p_input->CmdValue); break;
@@ -392,7 +393,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC;
 
 static void Lock_Entry(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     Motor_Table_StopAll(&p_dev->MOTORS);
     Motor_Table_EnterCalibration(&p_dev->MOTORS); /* Enter Calibration State for all motors */
@@ -411,7 +412,7 @@ static void Lock_Proc(MotorController_T * p_dev)
 /* alternatively StateMachine_TransitionCmd_T replace lockId */
 static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_value_t lockId)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     State_T * p_nextState = NULL;
     MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
@@ -428,7 +429,8 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP)))
                 {
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = &STATE_PARK;
+                    // p_nextState = &STATE_PARK;
+                    p_nextState = ParkState(p_dev); /* Check ParkState enable, optionally enter Park or Main */
                 }
                 else
                 {
@@ -505,7 +507,7 @@ const State_T MC_STATE_LOCK =
 /******************************************************************************/
 void StartCalibrateAdc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     p_mc->StateCounter = 0U;
     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
@@ -519,7 +521,7 @@ void StartCalibrateAdc(MotorController_T * p_dev)
 /* Proc Per ms */
 void ProcCalibrateAdc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     if (p_mc->StateCounter != 0U) /* skip first time */
     {
@@ -536,7 +538,7 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 {
     const uint32_t TIME = 2000U; /* > Motor calibrate adc time */
 
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     State_T * p_nextState = NULL;
 
     if (p_mc->StateCounter > TIME)
@@ -572,7 +574,7 @@ static const State_T MC_STATE_LOCK_CALIBRATE_ADC =
 /******************************************************************************/
 static void Fault_Entry(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
@@ -583,7 +585,7 @@ static void Fault_Entry(MotorController_T * p_dev)
 
 static void Fault_Proc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
 
@@ -601,7 +603,7 @@ static void Fault_Proc(MotorController_T * p_dev)
 /* Fault State: Set accumulates (latches), Clear side-effects then removes flags */
 static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t faultCmd)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     MotorController_FaultCmd_T cmd = { .Value = faultCmd };
 
     if (cmd.FaultClear != 0U)
@@ -622,7 +624,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, state_value_t lockId)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     switch ((MotorController_LockId_T)lockId)
     {

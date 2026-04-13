@@ -46,26 +46,26 @@
 /******************************************************************************/
 static void TorqueZero_Entry(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
     p_state->ControlTimerBase = 0U;
     Motor_SetFeedbackMode(p_state, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
     Motor_FOC_MatchIVState(p_state);
-    Ramp_SetOutputState(&p_motor->P_MOTOR_STATE->TorqueRamp, 0);
-    // p_motor->P_MOTOR_STATE->UserTorqueReq = 0;
+    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    // p_motor->P_MOTOR->UserTorqueReq = 0;
     /* cases where current sampling  */
-    p_motor->P_MOTOR_STATE->UserTorqueReq = -1 * p_state->Direction * fract16_mul(p_state->ILimitGenerating_Fract16, 32768/20);
+    p_motor->P_MOTOR->UserTorqueReq = -1 * p_state->Direction * fract16_mul(p_state->ILimitGenerating_Fract16, 32768/20);
 }
 
 static void TorqueZero_Proc(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
     Motor_FOC_ProcTorqueReq(p_state, 0, _Motor_GeneratingOnly(p_state, p_state->UserTorqueReq));
     Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * TorqueZero_Next(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
     if (p_state->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
@@ -94,7 +94,7 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
 /******************************************************************************/
 static void RampSafe_Entry(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     /* Match speed ramp to current speed for bumpless transfer */
     Ramp_SetOutputState(&p_state->SpeedRamp, Motor_GetSpeedFeedback(p_state));
@@ -105,7 +105,7 @@ static void RampSafe_Entry(const Motor_T * p_motor)
 
 static void RampSafe_Proc(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     if (p_state->SpeedUpdateFlag == true)
     {
@@ -119,7 +119,7 @@ static void RampSafe_Proc(const Motor_T * p_motor)
 
 static State_T * RampSafe_Next(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
     /* Watchdog: if speed not decreasing after timeout, escalate to fault */

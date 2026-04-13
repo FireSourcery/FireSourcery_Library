@@ -12,7 +12,7 @@
 /******************************************************************************/
 // void StartCalibrateAdc(const MotorController_T * p_dev)
 // {
-//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC;
 //     p_mc->StateCounter = 0U;
 //     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
 //     Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
@@ -26,7 +26,7 @@
 // /* Proc Per ms */
 // void ProcCalibrateAdc(const MotorController_T * p_dev)
 // {
-//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC;
 
 //     if (p_mc->StateCounter != 0U) /* skip first time */
 //     {
@@ -43,7 +43,7 @@
 // {
 //     const uint32_t TIME = 2000U; /* > Motor calibrate adc time */
 
-//     MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+//     MotorController_State_T * p_mc = p_dev->P_MC;
 //     State_T * p_nextState = NULL;
 
 //     if (p_mc->StateCounter > TIME)

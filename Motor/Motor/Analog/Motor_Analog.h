@@ -48,7 +48,7 @@ static inline void Motor_Analog_MarkVabc(const Motor_T * p_motor) { Phase_Analog
 static inline void Motor_Analog_MarkIabc(const Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
 
-static inline bool Motor_IsAnalogCycle(const Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR_STATE->ControlTimerBase); }
+static inline bool Motor_IsAnalogCycle(const Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
 
 /* Optionally mark on Start */
 static inline void _Motor_Analog_Thread(const Motor_T * p_dev)

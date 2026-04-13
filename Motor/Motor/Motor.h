@@ -256,6 +256,7 @@ Motor_Config_T;
 /*
     Motor State - Runtime variable state.
 */
+/* Motor_Runtime_T */
 typedef struct Motor_State
 {
     /*
@@ -391,8 +392,7 @@ Motor_State_T;
 */
 typedef const struct Motor
 {
-    Motor_State_T * P_MOTOR_STATE;
-
+    Motor_State_T * P_MOTOR;
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
@@ -576,7 +576,7 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_State_T * p_motor) { ret
 */
 static inline void Motor_CaptureSensor(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)

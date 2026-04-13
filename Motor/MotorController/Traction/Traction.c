@@ -162,7 +162,6 @@ void Traction_ConfigId_Set(Traction_State_T * p_vehicleState, Traction_ConfigId_
 }
 
 
-
 // void Traction_VarId_Set(const Traction_T * p_vehicle, Traction_VarId_T id, int value)
 // {
 //     switch (id)
@@ -186,6 +185,18 @@ void Traction_ConfigId_Set(Traction_State_T * p_vehicleState, Traction_ConfigId_
 // }
 
 
+// optionally handle by motor layer
+// static inline int16_t Traction_Input_GetMotorCmd(const Traction_Input_T * p_input)
+// {
+//     switch (p_input->DriveCmd)
+//     {
+//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue; // as motoring
+//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue * p_input->Direction; // as signed torque
+//         case TRACTION_CMD_THROTTLE:  return (int16_t)p_input->ThrottleValue * p_input->Direction;
+//         case TRACTION_CMD_RELEASE:   return 0;
+//         default: return 0;
+//     }
+// }
 
 // alternatively as input conversion,
 

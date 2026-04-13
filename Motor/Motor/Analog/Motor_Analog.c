@@ -37,7 +37,7 @@
 /******************************************************************************/
 static void StartCalibration(const Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR_STATE;
+    Motor_State_T * const p_fields = p_motor->P_MOTOR;
 
     // Timer_StartPeriod_Millis(&p_fields->ControlTimer, 2000U); /* 2 Seconds */
     TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, 40000U); /* 2 Seconds */
@@ -61,7 +61,7 @@ static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_
 
 static void ProcCalibration(const Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR_STATE;
+    Motor_State_T * const p_fields = p_motor->P_MOTOR;
 
     if (p_fields->PhaseInput.IFlags.Bits == PHASE_ID_ABC)
     {
@@ -75,7 +75,7 @@ static void ProcCalibration(const Motor_T * p_motor)
 
 static State_T * EndCalibration(const Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR_STATE;
+    Motor_State_T * const p_fields = p_motor->P_MOTOR;
 
     State_T * p_nextState = NULL;
 

@@ -55,7 +55,15 @@ typedef enum MotorController_StateInput
     MC_STATE_INPUT_STATE_CMD,       /* System state commands (Park/Stop/Start) with per State Mapping */
     MC_STATE_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MC_STATE_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
+
+
+    /* App extends the input alphabet. keep as one list.  */
     // MC_STATE_INPUT_APP_USER_1,   /* Reserve table space, or use mapper, or buffer */
+    // App wraps motor generic
+    // MC_STATE_INPUT_SETPOINT,
+    // MC_STATE_INPUT_PHASE,
+    // MC_STATE_INPUT_FEEDBACK,
+    // MC_STATE_INPUT_DIRECTION,
 }
 MotorController_StateInput_T;
 
@@ -179,10 +187,10 @@ static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, Motor
     Proc on input, optionally proc with sync buffer
     Input 10ms-50ms, Proc 1ms
 */
-static inline void MotorController_SetCmdValue(MotorController_T * p_dev, int16_t userCmd) { p_dev->P_MC_STATE->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
-static inline void MotorController_SetDirection(MotorController_T * p_dev, int direction) { p_dev->P_MC_STATE->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
-static inline void MotorController_SetControlState(MotorController_T * p_dev, Phase_Output_T controlState) { p_dev->P_MC_STATE->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_PHASE); }
-static inline void MotorController_SetFeedbackMode(MotorController_T * p_dev, Motor_FeedbackMode_T feedbackMode) { p_dev->P_MC_STATE->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
+static inline void MotorController_SetCmdValue(MotorController_T * p_dev, int16_t userCmd) { p_dev->P_MC->CmdInput.CmdValue = userCmd; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_SETPOINT); }
+static inline void MotorController_SetDirection(MotorController_T * p_dev, int direction) { p_dev->P_MC->CmdInput.Direction = direction; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_DIRECTION); }
+static inline void MotorController_SetControlState(MotorController_T * p_dev, Phase_Output_T controlState) { p_dev->P_MC->CmdInput.PhaseOutput = controlState; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_PHASE); }
+static inline void MotorController_SetFeedbackMode(MotorController_T * p_dev, Motor_FeedbackMode_T feedbackMode) { p_dev->P_MC->CmdInput.FeedbackMode = feedbackMode; MotorController_ApplyUserCmd(p_dev, MOTOR_CONTROLLER_USER_CMD_FEEDBACK); }
 /*
     General Direction
     App may overwrite.
@@ -253,7 +261,7 @@ MotorController_LockOpStatus_T;
 static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorController_T * p_dev, MotorController_LockId_T id)
 {
     _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_LOCK, id);
-    return p_dev->P_MC_STATE->LockOpStatus; /* optionally return status, or use getter after */
+    return p_dev->P_MC->LockOpStatus; /* optionally return status, or use getter after */
 }
 
 /* Lock State returns to ENTER */
@@ -277,7 +285,7 @@ static inline bool MotorController_IsEnterLockError(MotorController_T * p_dev, M
 static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_dev)
 {
     MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG);
-    return p_dev->P_MC_STATE->NvmStatus;
+    return p_dev->P_MC->NvmStatus;
 }
 
 // if all calibration function use substate
@@ -289,7 +297,7 @@ static inline bool MotorController_IsLockOpComplete(MotorController_T * p_dev)
 /* return union status */
 // 0 as success
 // if (MotorController_IsLockOpComplete(p_dev) == true)
-static inline int MotorController_GetLockOpStatus(MotorController_T * p_dev) { return p_dev->P_MC_STATE->LockOpStatus; }
+static inline int MotorController_GetLockOpStatus(MotorController_T * p_dev) { return p_dev->P_MC->LockOpStatus; }
 
 
 /******************************************************************************/

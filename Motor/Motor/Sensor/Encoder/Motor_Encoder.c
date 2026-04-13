@@ -49,15 +49,15 @@ static inline Encoder_State_T * GetEncoderState(const Motor_T * p_motor) { retur
 /******************************************************************************/
 static void StartHoming(const Motor_T * p_motor)
 {
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateT0(&p_motor->PHASE);
     Encoder_StartHoming(GetEncoderState(p_motor));
-    Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
+    Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
 }
 
 static void ProcHoming(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     /* alternatively openloop speed/angle ramp */
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
@@ -121,13 +121,13 @@ static const State_T VALIDATE_CLOSED_LOOP;
 
 static void AlignEntry(const Motor_T * p_motor)
 {
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
-    Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR_STATE);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR);
 }
 
 static void AlignLoop(const Motor_T * p_motor)
 {
-    Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR_STATE);
+    Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
     Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -137,7 +137,7 @@ static State_T * AlignZeroNext(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
+        Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &VALIDATE_ALIGN;
     }
@@ -146,7 +146,7 @@ static State_T * AlignZeroNext(const Motor_T * p_motor)
         /* Reset the timer until speed is 0 */
         if (Encoder_ModeDT_GetScalarSpeed(GetEncoderState(p_motor)) != 0)
         {
-            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
         }
     }
 
@@ -169,7 +169,7 @@ static const State_T ALIGN =
 */
 static void ValidateAlign(const Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_state->Config.AlignTime_Cycles * 2U);
     Encoder_ModeDT_SetInitial(GetEncoder(p_motor));
     FOC_SetVd(&p_state->Foc, 0);
@@ -180,7 +180,7 @@ static void ValidateAlign(const Motor_T * p_motor)
 
 static void ProcOpenLoop(const Motor_T * p_motor)
 {
-    Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR_STATE);
+    Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
     Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -190,9 +190,9 @@ static State_T * ValidateAlignNext(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
         {
-            p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = 1U;
+            p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
         }
         else
@@ -220,20 +220,20 @@ static const State_T VALIDATE_ALIGN =
 */
 static void ValidateClosedLoopEntry(const Motor_T * p_motor)
 {
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles * 2U);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR_STATE);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles * 2U);
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
 }
 
 static void ProcAngleControl(const Motor_T * p_motor)
 {
-    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR_STATE);
+    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
     Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * ValidateClosedLoopTransition(const Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
@@ -359,7 +359,7 @@ static State_T * StartUpAlignTransition(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
+        Angle_ZeroCaptureState(&p_motor->P_MOTOR->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &START_UP_VALIDATE_ALIGN;
     }
@@ -367,7 +367,7 @@ static State_T * StartUpAlignTransition(const Motor_T * p_motor)
     {
         if (Encoder_ModeDT_GetScalarSpeed(GetEncoderState(p_motor)) != 0)
         {
-            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
+            TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
         }
     }
 
@@ -380,9 +380,9 @@ static State_T * StartUpValidateAlignTransition(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR_STATE->SensorState.MechanicalAngle)
+        if (Encoder_GetAngle(GetEncoderState(p_motor)) != p_motor->P_MOTOR->SensorState.MechanicalAngle)
         {
-            p_motor->P_MOTOR_STATE->FaultFlags.PositionSensor = 1U;
+            p_motor->P_MOTOR->FaultFlags.PositionSensor = 1U;
             p_nextState = &MOTOR_STATE_FAULT;
         }
         else
@@ -397,7 +397,7 @@ static State_T * StartUpValidateAlignTransition(const Motor_T * p_motor)
 static State_T * StartUpValidateClosedLoopTransition(const Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
-    Motor_State_T * p_state = p_motor->P_MOTOR_STATE;
+    Motor_State_T * p_state = p_motor->P_MOTOR;
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
@@ -424,7 +424,7 @@ State_T * Motor_Encoder_GetStartUpState(const Motor_T * p_motor)
 
 static State_T * StartUpChain(const Motor_T * p_motor, state_value_t null)
 {
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR_STATE) == 0) return &START_UP;
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0) return &START_UP;
     else return NULL;
 }
 
@@ -442,8 +442,8 @@ void Motor_Encoder_StartUpChain(const Motor_T * p_motor)
 /******************************************************************************/
 static inline void StartDirection(const Motor_T * p_motor)
 {
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
-    Phase_WriteDuty_Fract16(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE), 0U, 0U);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Phase_WriteDuty_Fract16(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR), 0U, 0U);
 }
 
 static inline bool ProcDirection(const Motor_T * p_motor)
@@ -452,12 +452,12 @@ static inline bool ProcDirection(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        switch (p_motor->P_MOTOR_STATE->CalibrationStateIndex)
+        switch (p_motor->P_MOTOR->CalibrationStateIndex)
         {
             case 0U:
                 Encoder_CaptureQuadratureReference(GetEncoderState(p_motor));
-                Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE), 0U);
-                p_motor->P_MOTOR_STATE->CalibrationStateIndex = 1U;
+                Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, Motor_GetVAlign_Duty(p_motor->P_MOTOR), 0U);
+                p_motor->P_MOTOR->CalibrationStateIndex = 1U;
                 break;
 
             case 1U:

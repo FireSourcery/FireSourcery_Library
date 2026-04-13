@@ -66,7 +66,7 @@ static inline void Motor_MarkAnalog_Thread(const Motor_T * p_dev)
 */
 static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 {
-    Motor_State_T * p_fields = p_dev->P_MOTOR_STATE;
+    Motor_State_T * p_fields = p_dev->P_MOTOR;
 
     // p_fields->MicrosRef = SysTime_GetMicros();
 
@@ -125,7 +125,7 @@ static inline void Motor_HallEncoderA_ISR(const Motor_T * p_dev)
 {
     Encoder_OnPhaseA_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #if defined(MOTOR_HALL_MODE_ISR)
-    if (p_dev->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
 
@@ -133,7 +133,7 @@ static inline void Motor_HallEncoderB_ISR(const Motor_T * p_dev)
 {
     Encoder_OnPhaseB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #if defined(MOTOR_HALL_MODE_ISR)
-    if (p_dev->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
 
@@ -141,13 +141,13 @@ static inline void Motor_HallEncoderAB_ISR(const Motor_T * p_dev)
 {
     Encoder_OnPhaseAB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
 #if defined(MOTOR_HALL_MODE_ISR)
-    if (p_dev->P_MOTOR_STATE->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
 #endif
 }
 
 static inline void Motor_HallEncoderCZ_ISR(const Motor_T * p_dev)
 {
-    switch (p_dev->P_MOTOR_STATE->Config.SensorMode)
+    switch (p_dev->P_MOTOR->Config.SensorMode)
     {
         case ROTOR_SENSOR_ID_ENCODER:
             Encoder_OnIndex_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);

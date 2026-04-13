@@ -57,10 +57,6 @@ typedef const struct MotorController_App
     MotorController_App_Proc_T PROC_ANALOG_USER;
     MotorController_App_Proc_T INIT;
     State_Input_T ENTER_MAIN;
-    // const void * P_APP_CONTEXT;
-    // void * P_RUNTIME;
-    // const void * P_NVM_CONFIG;
-    // Motor_Table_T MOTORS;
 }
 MotorController_App_T;
 

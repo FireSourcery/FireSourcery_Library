@@ -33,7 +33,7 @@
 
 void MotorController_Init(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     MotNvm_Init(&p_dev->MOT_NVM);
 
@@ -125,7 +125,7 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 // fault past 57% or vPhaseFract16*vBusInv_Fract32 may overflow
 void _MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
 {
-    p_dev->P_MC_STATE->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
+    p_dev->P_MC->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
     MotorController_ResetVSourceMonitorDefaults(p_dev); /* may overwrite fault/warning if called in the same packet */
 }
 
@@ -138,12 +138,12 @@ void MotorController_InitVSupplyAutoValue(const MotorController_T * p_dev)
 
 void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev)
 {
-    VMonitor_InitLimitsDefault(p_dev->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC_STATE->Config.VSupplyRef), 25, 15, 5);
+    VMonitor_InitLimitsDefault(p_dev->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC->Config.VSupplyRef), 25, 15, 5);
 }
 // bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_dev)
 // {
 //    RangeMonitor_Config_T * p_config = &p_dev->V_SOURCE.P_STATE->Config;
-//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC_STATE->Config.VSupplyRef);
+//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC->Config.VSupplyRef);
 // //    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
 // }
 

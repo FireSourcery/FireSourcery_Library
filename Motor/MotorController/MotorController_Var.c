@@ -46,9 +46,9 @@ int MotorController_Var_Output_Get(const MotorController_T * p_dev, MotorControl
     {
         case MOT_VAR_ZERO:                  value = 0;                                                                  break;
         case MOT_VAR_MILLIS:                value = Millis();                                                           break;
-        case MOT_VAR_SYSTEM_STATE:              value = MotorController_GetStateId(p_dev->P_MC_STATE);              break;
-        case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_dev->P_MC_STATE);          break;
-        case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_dev->P_MC_STATE).Value;     break;
+        case MOT_VAR_SYSTEM_STATE:              value = MotorController_GetStateId(p_dev->P_MC);              break;
+        case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_dev->P_MC);          break;
+        case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_dev->P_MC).Value;     break;
         // case MOT_VAR_SYSTEM_STATUS_FLAGS:       value = MotorController_GetStatusFlags(p_dev).Value;               break;
         case MOT_VAR_SYSTEM_DIRECTION:          value = MotorController_GetDirection(p_dev);                        break;
     }
@@ -76,10 +76,10 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_dev, MotorCo
 {
     int value = 0;
     // #ifndef NDEBUG
-    Motor_State_T * p_motor = Motor_Table_ContextAt(&p_dev->MOTORS, 0)->P_MOTOR_STATE;
+    Motor_State_T * p_motor = Motor_Table_ContextAt(&p_dev->MOTORS, 0)->P_MOTOR;
     switch (id)
     {
-        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC_STATE->ControlLoopProfile;  break;
+        case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;  break;
         case MOT_VAR_DEBUG0: value = 0;    break;
         case MOT_VAR_DEBUG1: value = 0;    break;
         case MOT_VAR_DEBUG2: value = 0;    break;
@@ -100,7 +100,7 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_dev, MotorCo
 /******************************************************************************/
 int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_Var_Config_T id)
 {
-    MotorController_State_T * p_state = p_dev->P_MC_STATE;
+    MotorController_State_T * p_state = p_dev->P_MC;
     int value = 0;
     switch (id)
     {
@@ -123,7 +123,7 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
 
 void MotorController_Config_Set(const MotorController_T * p_dev, MotorController_Var_Config_T id, int value)
 {
-    MotorController_State_T * p_state = p_dev->P_MC_STATE;
+    MotorController_State_T * p_state = p_dev->P_MC;
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupplyRef(p_dev, value);                                   break;
@@ -383,7 +383,7 @@ static MotVarId_Status_T _HandleAppUser_Set(const MotorController_T * p_dev, Mot
 // Analog mode does not allow these variables to be set
 static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
 {
-    MotorController_InputMode_T mode = p_dev->P_MC_STATE->Config.InputMode;
+    MotorController_InputMode_T mode = p_dev->P_MC->Config.InputMode;
     return (mode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) || (mode == MOTOR_CONTROLLER_INPUT_MODE_CAN);
 }
 

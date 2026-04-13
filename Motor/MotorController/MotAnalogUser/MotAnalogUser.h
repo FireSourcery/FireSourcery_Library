@@ -227,11 +227,6 @@ static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirection(const MotAnal
     return direction;
 }
 
-// static inline MotAnalogUser_Direction_T MotAnalogUser_PollDirection(const MotAnalogUser_T * p_user)
-// {
-// MotAnalogUser_Direction_T direction = MotAnalogUser_GetDirection(p_user);
-//     return direction;
-// }
 
 static inline MotAnalogUser_Direction_T MotAnalogUser_GetDirectionEdge(const MotAnalogUser_T * p_user)
 {

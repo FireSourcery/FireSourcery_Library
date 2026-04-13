@@ -63,7 +63,7 @@
 /******************************************************************************/
 static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     MotAnalogUser_Cmd_T cmd;
 
     MotAnalogUser_CaptureInput(&p_dev->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_dev->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_dev->ANALOG_USER_CONVERSIONS));
@@ -82,7 +82,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_d
 */
 static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     uint8_t dinStatus = 0U;
 
     if (p_mc->Config.OptDinMode != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
@@ -125,7 +125,7 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
 /******************************************************************************/
 static inline void _MotorController_HeatMonitor_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     HeatMonitor_Status_T status;
 
     /* Poll PCB Temperature Monitor */
@@ -205,7 +205,7 @@ static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T *
 
 static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     // alternatively
     // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION));
@@ -248,7 +248,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
 /******************************************************************************/
 static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     RangeMonitor_Poll(p_dev->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ACCESSORIES_CONVERSION));
     RangeMonitor_Poll(p_dev->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ANALOG_CONVERSION));
@@ -272,7 +272,7 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
 
 static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
 
     /* High Freq, Low Priority */
     if (TimerT_Counter_Poll(&p_dev->MILLIS_TIMER) == true)
@@ -355,7 +355,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 */
 static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC_STATE;
+    MotorController_State_T * p_mc = p_dev->P_MC;
     _MotorController_VSourceMonitor_Thread(p_dev);
     // MotorController_CaptureVSource(p_dev); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
 
@@ -387,12 +387,12 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
 //     //     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
 //     // }
 
-//     if (_Motor_IsAnalogCycle(p_dev->P_MC_STATE->ControlCounter) == true)
+//     if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
 //     {
 //         for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_MONITORS[iMotor]); }
 //     }
 
-//     // if (_Motor_IsAnalogCycle(p_dev->P_MC_STATE->ControlCounter) == true) /* removable */
+//     // if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true) /* removable */
 //     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
 
 
@@ -401,6 +401,6 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
 //     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
 //     // HAL_PWM_ClearInterrupt(p_dev->HAL_PWM); /* BOARD_PWM_HAL */
 //     // Motor_ClearInterrupt(&p_dev->MOTORS.P_ARRAY[0U]);
-//     p_dev->P_MC_STATE->ControlCounter++;
+//     p_dev->P_MC->ControlCounter++;
 // }
 
