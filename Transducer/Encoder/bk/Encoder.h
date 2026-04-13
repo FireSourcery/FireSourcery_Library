@@ -39,8 +39,6 @@
 #include "Math/Fixed/fixed.h"
 #include "Math/math_general.h"
 
-#include "Peripheral/ClockTimer/PulseTimer.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -125,15 +123,14 @@ typedef struct Encoder_Config
 {
     uint16_t CountsPerRevolution;        /* Derive Angular Units. */
     uint32_t ScalarSpeedRef_Rpm;         /* Derive Fract16 Units. */
+    uint16_t ExtendedDeltaTStop;         /* ExtendedTimer time read as deltaT stopped, default as 1s */
 
     uint32_t IndexAngleRef;             /* Virtual Index - Index, VirtualIndexOffset */
     uint32_t AlignOffsetRef;            /* Align - Index */
 
-    uint16_t ExtendedDeltaTStop;         /* ExtendedTimer time read as deltaT stopped, default as 1s */
-    // move to extension
-    // uint16_t SurfaceDiameter;            /* Derive Linear Units. */
-    // uint16_t GearRatioInput;             /* Derivce Surface Units. DistancePerRevolution_Divider */
-    // uint16_t GearRatioOutput;            /* DistancePerRevolution_Factor */
+    uint16_t SurfaceDiameter;            /* Derive Linear Units. */
+    uint16_t GearRatioInput;             /* Derivce Surface Units. DistancePerRevolution_Divider */
+    uint16_t GearRatioOutput;            /* DistancePerRevolution_Factor */
 
 #if defined(ENCODER_QUADRATURE_MODE_ENABLE)
     bool IsQuadratureCaptureEnabled;    /* Quadrature Mode - enable hardware/emulated quadrature speed capture */
@@ -147,13 +144,14 @@ typedef struct Encoder_State
 {
     Encoder_Config_T Config;
 // #if defined(ENCODER_HW_EMULATED)
-    Encoder_Phases_T Phases; /* Prev State */
+    Encoder_Phases_T Phases; /* Save Prev State */
     uint32_t ErrorCount;
 // #endif
 
     AngleCounter_T AngleCounter;
-    PulseTimer_State_T TimerState;
-
+    // uint32_t CounterPrev; /* for DeltaD */
+    // uint32_t ExtendedTimerPrev; /* for DeltaT */
+    // uint32_t ExtendedTimerConversion; /* Extended Timer to Short Timer */
     int32_t DirectionComp;
 
     /* Homing */
@@ -165,6 +163,14 @@ typedef struct Encoder_State
     uint32_t AlignAngle; /* angle at last align */
     // int32_t AbsoluteOffset;
     bool IsHomed;
+
+    // int32_t CounterD;
+    // uint32_t Angle32;
+    // int32_t DeltaD;         /*!< Counter counts (of distance) between 2 samples. Units in raw counter ticks */
+    // uint32_t DeltaT;        /*!< Timer counts between 2 pulse counts. Units in raw timer ticks */
+    // uint32_t DeltaTh;       /*!< ModeDT */
+    // int32_t FreqD;          /*!< ModeDT. EncoderPulse Freq. DeltaD 1 Second [Hz] */
+    // uint32_t PeriodT;       /*!< ModeDT */
 }
 Encoder_State_T;
 
@@ -183,9 +189,16 @@ typedef const struct Encoder
     Pin_T PIN_B;
 #endif
 
-    PulseTimer_T TIMER;
-
+    // PulseTimer_T TIMER;
+    /*  Timers used to represent time. */
+    HAL_Encoder_Timer_T * P_HAL_ENCODER_TIMER;    /*!< DeltaT Timer. */
+    uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq. Divisible by SAMPLE_FREQ */
+    const volatile uint32_t * P_EXTENDED_TIMER;   /* 32-bit extension + WatchStop */
+    uint32_t EXTENDED_TIMER_FREQ;
+    /* Alternatively as macros for common across instances */
     uint32_t POLLING_FREQ;        /*!< Angle Sample Freq. DeltaT Interpolation Freq. */
+    uint32_t SAMPLE_FREQ;         /*!< Speed / DeltaD Sample Freq. */
+    uint32_t SAMPLE_TIME;         /*!< Compile time TIMER_FREQ/SAMPLE_FREQ */
 
     Encoder_State_T * P_STATE;    /*!< Pointer to Encoder State. */
     const Encoder_Config_T * P_NVM_CONFIG;
@@ -208,12 +221,17 @@ Encoder_T;
     #define _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)
 #endif
 
+#define _ENCODER_INIT_TIMER(p_TimerHal, TimerFreq, p_ExtendedTimer, ExtendedTimerFreq) \
+    .P_HAL_ENCODER_TIMER = p_TimerHal, .TIMER_FREQ = TimerFreq, .P_EXTENDED_TIMER = p_ExtendedTimer, .EXTENDED_TIMER_FREQ = ExtendedTimerFreq,
+
 #define ENCODER_INIT(p_CounterHal, p_PhaseAHal, PhaseAId, p_PinAHal, PinAId, p_PhaseBHal, PhaseBId, p_PinBHal, PinBId, p_PhaseZHal, PhaseZId, p_TimerHal, TimerFreq, PollingFreq, SpeedSampleFreq, p_ExtendedTimer, ExtendedTimerFreq, p_State, p_Config)    \
 {                                                                                                               \
     _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId) \
     _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                 \
-    .TIMER = PULSE_TIMER_INIT_EXTENDED(p_TimerHal, TimerFreq, p_ExtendedTimer, ExtendedTimerFreq, SpeedSampleFreq, &(p_State->TimerState)), \
+    _ENCODER_INIT_TIMER(p_TimerHal, TimerFreq, p_ExtendedTimer, ExtendedTimerFreq)                              \
     .POLLING_FREQ           = PollingFreq,                                  \
+    .SAMPLE_FREQ            = SpeedSampleFreq,                              \
+    .SAMPLE_TIME            = TimerFreq/SpeedSampleFreq,                    \
     .P_STATE                = p_State,                                      \
     .P_NVM_CONFIG           = p_Config,                                     \
 }
@@ -266,7 +284,8 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 #if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->AngleCounter.Ref.Angle32PerCount;
 #elif   defined(ENCODER_HW_EMULATED)
-    return p_encoder->AngleCounter.Base.Angle;
+    // return p_encoder->Angle32;
+    return p_encoder->AngleCounter.Angle32;
 #endif
 }
 
@@ -284,12 +303,15 @@ static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder) { re
 
 static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 {
-    AngleCounter_Zero(&p_encoder->AngleCounter);
-    Angle_ZeroCaptureState(&p_encoder->AngleCounter.Base);
+    // p_encoder->CounterD = 0U;
+    p_encoder->AngleCounter.CounterD = 0U;
+    p_encoder->CounterPrev = 0U;
     p_encoder->IndexCount = 0U;
 #if     defined(ENCODER_HW_DECODER)
+    p_encoder->CounterPrev = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
     HAL_Encoder_ClearCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
+#elif   defined(ENCODER_HW_EMULATED)
 #endif
 }
 

@@ -22,9 +22,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file    Encoder_DeltaT.h
-    @author FireSourcery
-    @brief     Capture DeltaT per pulse count: variable DeltaT, DeltaD is fixed, 1.
+    @file       Encoder_DeltaT.h
+    @author     FireSourcery
+    @brief      Capture DeltaT per pulse count
 
 */
 /******************************************************************************/
@@ -57,7 +57,6 @@ static inline bool _Encoder_DeltaT_Capture(const Encoder_T * p_encoder)
 /*!
     @brief  Capture DeltaT - Pulse Edge Polling/ISR
             Interval cannot be greater than 0xFFFF [ticks] => (0xFFFF / TIMER_FREQ) [seconds]
-            Low EncoderPulseFreq, < POLLING_FREQ, use interpolation.
 */
 /******************************************************************************/
 static inline void Encoder_DeltaT_Capture(const Encoder_T * p_encoder)
@@ -108,6 +107,12 @@ static inline bool Encoder_DeltaT_IsExtendedStop(const Encoder_T * p_encoder)
     return (_Encoder_GetExtendedTimerDelta(p_encoder) > p_encoder->P_STATE->Config.ExtendedDeltaTStop);
 }
 
+
+/******************************************************************************/
+/*
+    alt
+*/
+/******************************************************************************/
 // static inline void Encoder_DeltaT_CaptureExtended(const Encoder_T * p_encoder)
 // {
 //     uint32_t periodT = (p_encoder->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
@@ -123,6 +128,9 @@ static inline bool Encoder_DeltaT_IsExtendedStop(const Encoder_T * p_encoder)
 //     uint32_t elapsed = (p_encoder->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_encoder->P_HAL_ENCODER_TIMER);
 //     return (elapsed > p_encoder->P_STATE->Config.DeltaTStop);
 // }
+
+
+
 /******************************************************************************/
 /*
     Capture Period < 1S
@@ -142,10 +150,7 @@ static inline uint32_t Encoder_DeltaT_AsFreq(const Encoder_T * p_encoder) { retu
     e.g. High res break even point
         8192 CountsPerRevolution, 20Khz POLLING_FREQ => 146 RPM
 */
-/******************************************************************************/
-/*
-    optionally shift instead of index
-*/
+
 static uint32_t Encoder_DeltaT_CapturePollingDelta(const Encoder_T * p_encoder)
 {
     // p_encoder->PollingAngleDelta = p_encoder->UnitAngleD / p_encoder->DeltaT * (p_encoder->TIMER_FREQ / p_encoder->POLLING_FREQ);

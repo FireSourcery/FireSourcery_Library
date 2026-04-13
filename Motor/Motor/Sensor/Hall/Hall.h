@@ -266,6 +266,7 @@ static inline Hall_Sensors_T Hall_ReadSensors(const Hall_T * p_hall)
     };
 }
 
+/* Capture path resolve mapped Id */
 static inline void _Hall_CaptureSensors(Hall_State_T * p_state, Hall_Sensors_T sensors)
 {
     // p_state->SensorsPrev.Value = p_state->Sensors.Value;
@@ -286,24 +287,21 @@ static inline void Hall_CaptureSensors_ISR(const Hall_T * p_hall)
 static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
 {
     Hall_Sensors_T sensors = Hall_ReadSensors(p_hall);
-    if (p_hall->P_STATE->Sensors.Value != sensors.Value)
-    {
-        _Hall_CaptureSensors(p_hall->P_STATE, sensors);
-        return true;
-    }
-    else { return false; }
+    bool isEdge = (p_hall->P_STATE->Sensors.Value != sensors.Value);
+    if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
+    return isEdge;
 }
 
-static inline Hall_Direction_T _Hall_CaptureEdge(Hall_State_T * p_state, Hall_Sensors_T sensors)
-{
-    if (p_state->Sensors.Value != sensors.Value) { _Hall_CaptureSensors(p_state, sensors); }
-    return _Hall_DirectionOf(p_state->IdPrev, p_state->Id);
-}
+// static inline Hall_Direction_T _Hall_CaptureEdge(Hall_State_T * p_state, Hall_Sensors_T sensors)
+// {
+//     if (p_state->Sensors.Value != sensors.Value) { _Hall_CaptureSensors(p_state, sensors); }
+//     return _Hall_DirectionOf(p_state->IdPrev, p_state->Id);
+// }
 
-static inline Hall_Direction_T Hall_PollEdge(const Hall_T * p_hall)
-{
-    return _Hall_CaptureEdge(p_hall->P_STATE, Hall_ReadSensors(p_hall));
-}
+// static inline Hall_Direction_T Hall_PollEdge(const Hall_T * p_hall)
+// {
+//     return _Hall_CaptureEdge(p_hall->P_STATE, Hall_ReadSensors(p_hall));
+// }
 
 /*
     return true once per electrical cycle
@@ -317,8 +315,8 @@ static inline Hall_Direction_T Hall_PollEdge(const Hall_T * p_hall)
 /******************************************************************************/
 static inline Hall_Id_T Hall_GetId(const Hall_State_T * p_hall) { return p_hall->Id; }
 static inline Hall_Direction_T Hall_GetSensorDirection(const Hall_State_T * p_hall) { return _Hall_DirectionOf(p_hall->IdPrev, p_hall->Id); }
-static inline uint16_t Hall_GetAngleAs(const Hall_State_T * p_hall, Hall_Direction_T direction) { return _Hall_Angle16BoundaryOf(p_hall->Id, direction); }
 static inline uint16_t Hall_GetSensorAngle(const Hall_State_T * p_hall) { return _Hall_Angle16BoundaryOf(p_hall->Id, Hall_GetSensorDirection(p_hall)); }
+static inline uint16_t Hall_GetAngleAs(const Hall_State_T * p_hall, Hall_Direction_T direction) { return _Hall_Angle16BoundaryOf(p_hall->Id, direction); }
 
 /*
    Module stores additional state

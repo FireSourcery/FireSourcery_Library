@@ -27,29 +27,33 @@
     @file   Hall_RotorSensor.h
     @author FireSourcery
     @brief  Implement the RotorSensor interface for Hall sensors.
+            Composes: AngleCounter_T (counter + frequency + interpolation via Angle_T Base),
+            PulseTimer (Timer HAL wrap), Hall_T (sensor decode).
 */
 /******************************************************************************/
 #include "../RotorSensor.h"
 #include "Hall.h"
-#include "Transducer/Encoder/Encoder.h" /* alternatively, split encoder math */
-#include "Transducer/Encoder/Encoder_ModeDT.h"
-#include "Transducer/Encoder/Encoder_ISR.h"
+#include "Peripheral/ClockTimer/PulseTimer.h"
+#include "Math/Angle/AngleCounter.h"
 
 
 typedef const struct Hall_RotorSensor
 {
-    const RotorSensor_T BASE; /* _SUPER */
+    const RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
     const Hall_T HALL;
-    const Encoder_T * const P_ENCODER; // todo update to encoder math only
-    // const Pulse_T PULSE;
+    const PulseTimer_T TIMER;       /* Timer HAL wrap */
+    AngleCounter_T * P_COUNTER;     /* Counter + frequency + interpolation state */
+    uint32_t POLLING_FREQ;          /* Control loop frequency [Hz] for angle delta conversion */
 }
 Hall_RotorSensor_T;
 
 extern const RotorSensor_VTable_T HALL_VTABLE;
 
-#define HALL_ROTOR_SENSOR_INIT(HallStruct, p_Encoder, p_State) (Hall_RotorSensor_T) \
-    { .BASE = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_State), .HALL = (HallStruct), .P_ENCODER = (p_Encoder), }
-
-// #define HALL_ROTOR_SENSOR_INIT_FROM(PinA, PinB, PinC, p_HallConfig, p_Encoder, p_InterfaceState) \
-//     HALL_ROTOR_SENSOR_INIT(HALL_INIT_CONSTEXPR(PinA, PinB, PinC, HALL_STATE_ALLOC(), p_HallConfig), (p_Encoder), p_InterfaceState)
-
+#define HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, p_Counter, PollingFreq, p_State) (Hall_RotorSensor_T) \
+{                                                                                               \
+    .BASE           = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_State),                                 \
+    .HALL           = (HallStruct),                                                             \
+    .TIMER          = (TimerStruct),                                                            \
+    .P_COUNTER      = (p_Counter),                                                              \
+    .POLLING_FREQ   = (PollingFreq),                                                            \
+}

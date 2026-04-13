@@ -49,7 +49,7 @@ static void StartHoming(const Motor_T * p_motor)
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR_STATE->Config.AlignTime_Cycles);
     Phase_ActivateT0(&p_motor->PHASE);
     Encoder_StartHoming(GetEncoderState(p_motor));
-    p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = 0U;
+    Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
 }
 
 static void ProcHoming(const Motor_T * p_motor)
@@ -60,8 +60,8 @@ static void ProcHoming(const Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
         angle16_t angle = Encoder_GetHomingAngle(GetEncoderState(p_motor)) * p_state->Config.PolePairs;
-        p_state->OpenLoopAngle.Angle += angle;
-        Motor_FOC_ProcAngleFeedforwardV(p_state, p_state->OpenLoopAngle.Angle, Motor_GetVAlign_Duty(p_state), 0);
+        Angle_IntegrateDelta(&p_state->OpenLoopAngle, angle);
+        Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_GetAngle16(&p_state->OpenLoopAngle), Motor_GetVAlign_Duty(p_state), 0);
         Motor_FOC_WriteDuty(p_motor);
     }
 }
@@ -134,7 +134,7 @@ static State_T * AlignZeroNext(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = 0U;
+        Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &VALIDATE_ALIGN;
     }
@@ -356,7 +356,7 @@ static State_T * StartUpAlignTransition(const Motor_T * p_motor)
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = 0U;
+        Angle_ZeroCaptureState(&p_motor->P_MOTOR_STATE->OpenLoopAngle);
         Encoder_CaptureAlignZero(GetEncoderState(p_motor));
         p_nextState = &START_UP_VALIDATE_ALIGN;
     }

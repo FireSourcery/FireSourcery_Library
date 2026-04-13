@@ -33,8 +33,6 @@
 // Your code here
 
 #include "Encoder.h"
-#include "Encoder_DeltaD.h"
-#include "Encoder_DeltaT.h"
 #include "Encoder_ModeDT.h"
 
 /******************************************************************************/
@@ -68,8 +66,8 @@ static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encod
 */
 static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
 {
-    // /* instead of imitating the hw decoder case, capture a separate Angle32 */
-    Angle_Counter_CaptureCount(&p_encoder->AngleCounter, count);
+    /* instead of imitating the hw decoder case, capture a separate Angle32 */
+    AngleCounter_CaptureCountWrap(&p_encoder->AngleCounter, count);
 }
 
 /*
@@ -138,15 +136,14 @@ static inline void _Encoder_SinglePhase_CapturePulse(const Encoder_T * p_encoder
 static inline void Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
 {
     _Encoder_Quadrature_CapturePulse(p_encoder);
-    Encoder_DeltaT_Capture(p_encoder);
-    // Encoder_DeltaT_CaptureExtended(p_encoder);
+    PulseTimer_CaptureEdge(&p_encoder->TIMER);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
 static inline void Encoder_SinglePhase_CapturePulse(const Encoder_T * p_encoder)
 {
     _Encoder_SinglePhase_CapturePulse(p_encoder);
-    Encoder_DeltaT_CaptureExtended(p_encoder);
+    PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
@@ -157,7 +154,7 @@ static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
 {
     if (_Encoder_IsQuadratureCaptureEnabled(p_encoder->P_STATE) == true) { _Encoder_Quadrature_CapturePulse(p_encoder); }
     else { _Encoder_SinglePhase_CapturePulse(p_encoder); }
-    Encoder_DeltaT_CaptureExtended(p_encoder);
+    PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
@@ -166,7 +163,7 @@ static inline void Encoder_CapturePulse(const Encoder_T * p_encoder)
 static inline void Encoder_CaptureCount(const Encoder_T * p_encoder, int sign)
 {
     _Encoder_CaptureCount(p_encoder->P_STATE, sign);
-    Encoder_DeltaT_CaptureExtended(p_encoder);
+    PulseTimer_CaptureExtendedDeltaT(&p_encoder->TIMER);
     Encoder_ZeroInterpolateAngle(p_encoder->P_STATE);
 }
 
@@ -183,9 +180,8 @@ static inline void Encoder_CaptureIndex(Encoder_State_T * p_encoder)
 #elif defined(ENCODER_HW_EMULATED)
     // _Encoder_SetCounterD(p_encoder, 0);
 #endif
-    p_encoder->IndexAngleError = p_encoder->AngleCounter.Angle32 - p_encoder->Config.IndexAngleRef;
-    p_encoder->AngleCounter.Angle32 = p_encoder->Config.IndexAngleRef;
-    // p_encoder->Angle32 = p_encoder->IndexAngleRef;
+    p_encoder->IndexAngleError = p_encoder->AngleCounter.Base.Angle - p_encoder->Config.IndexAngleRef;
+    p_encoder->AngleCounter.Base.Angle = p_encoder->Config.IndexAngleRef;
     p_encoder->IndexCount++;
 }
 

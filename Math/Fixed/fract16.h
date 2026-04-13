@@ -189,9 +189,9 @@ static inline int16_t fract16_norm_scalar(int16_t value)
 typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
 typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
-typedef int32_t angle32_t; /* fract32 */
-typedef int32_t nangle32_t; /* 16.16 */
-// typedef int32_t turn32_t; /* 16.16 */
+typedef uint32_t angle32_t; /* fract32 */
+typedef int32_t nangle32_t; /* rev.angle */
+// typedef int32_t turn32_t;
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
 // #define ANGLE16_SIGNED_MAX (INT16_MAX)

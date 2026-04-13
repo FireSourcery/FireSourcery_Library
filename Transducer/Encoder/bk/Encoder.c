@@ -49,13 +49,13 @@ void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
 }
 
-
-// void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
-// }
+/* as Hall  */
+void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
+{
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
+    HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
+}
 
 // static inline void Encoder_Quadrature_InitDirection(Encoder_State_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
@@ -64,6 +64,28 @@ void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
     Config Units
 */
 /******************************************************************************/
+/*
+
+*/
+// void _Encoder_ResetUnits(const Encoder_T * p_encoder) using const def
+// {
+//     // AngleCounterConfig_T angleCounterConfig = {
+//     //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
+//     //     .TimerFreq = p_encoder->
+//     //     .SampleFreq = p_encoder->
+//     //     .PollingFreq = p_encoder->
+//     //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
+//     // };
+
+//     // AngleCounter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
+
+//     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
+// //     _Encoder_ResetUnitsAngle(p_encoder);
+// //     _Encoder_ResetUnitsPollingAngle(p_encoder);
+// //     _Encoder_ResetUnitsScalarSpeed(p_encoder);
+// //     _Encoder_ResetUnitsAngularSpeed(p_encoder);
+// //     _Encoder_ResetUnitsLinearSpeed(p_encoder);
+// }
 
 void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t countsPerRevolution)
 {
@@ -71,9 +93,17 @@ void Encoder_SetCountsPerRevolution(Encoder_State_T * p_encoder, uint16_t counts
     // _Encoder_ResetUnits(p_encoder);
 }
 
+// void Encoder_SetPartitionsPerRevolution(Encoder_State_T * p_encoder, uint16_t count)
+// {
+//     p_encoder->Config.PartitionsPerRevolution = count;
+//     _Encoder_ResetUnitsPollingAngle(p_encoder);
+// }
+
 void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
 {
     p_encoder->Config.ScalarSpeedRef_Rpm = speedRef;
+    // _Encoder_ResetUnitsScalarSpeed(p_encoder);
+
     // Angle_SetSpeedRef_Rpm(&p_encoder->Base, speedRef);
 }
 
@@ -98,28 +128,6 @@ void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
 //     Encoder_SetSurfaceRatio(p_encoder, wheelDiameter_Mm, wheelRatio, motorRatio);
 // }
 
-/*
-
-*/
-// void _Encoder_ResetUnits(const Encoder_T * p_encoder)
-// {
-//     // AngleCounterConfig_T angleCounterConfig = {
-//     //     .CountsPerRevolution = p_encoder->Config.CountsPerRevolution,
-//     //     .TimerFreq = p_encoder->
-//     //     .SampleFreq = p_encoder->
-//     //     .PollingFreq = p_encoder->
-//     //     .FractSpeedRef_Rpm = p_encoder->Config.ScalarSpeedRef_Rpm
-//     // };
-
-//     // AngleCounter_InitFrom(&p_encoder->AngleCounter, &angleCounterConfig);
-
-//     // p_encoder->DirectionComp = _Encoder_GetDirectionComp(p_encoder->P_STATE);
-// //     _Encoder_ResetUnitsAngle(p_encoder);
-// //     _Encoder_ResetUnitsPollingAngle(p_encoder);
-// //     _Encoder_ResetUnitsScalarSpeed(p_encoder);
-// //     _Encoder_ResetUnitsAngularSpeed(p_encoder);
-// //     _Encoder_ResetUnitsLinearSpeed(p_encoder);
-// }
 
 
 /******************************************************************************/
@@ -132,8 +140,9 @@ void Encoder_StartHoming(Encoder_State_T * p_encoder)
     p_encoder->IndexCount = 0U;
     p_encoder->IndexAngleError = 0U;
     p_encoder->IsHomed = false;
-    AngleCounter_Zero(&p_encoder->AngleCounter);
-    Angle_ZeroCaptureState(&p_encoder->AngleCounter.Base);
+    p_encoder->AngleCounter.CounterD = 0U;
+    p_encoder->CounterPrev = 0U;
+    p_encoder->AngleCounter.Angle32 = 0U;
 }
 
 uint16_t Encoder_GetHomingAngle(const Encoder_State_T * p_encoder)
@@ -237,8 +246,8 @@ void Encoder_CheckAlignRef(Encoder_State_T * p_encoder)
 */
 void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder)
 {
-    p_encoder->AlignOffsetRef = p_encoder->AngleCounter.Base.Angle;
-    p_encoder->AlignAngle = p_encoder->AngleCounter.Base.Angle;
+    p_encoder->AlignOffsetRef = p_encoder->AngleCounter.Angle32;
+    p_encoder->AlignAngle = p_encoder->AngleCounter.Angle32;
     if (p_encoder->IsHomed == true)
     {
         p_encoder->Config.AlignOffsetRef = p_encoder->AlignOffsetRef;
@@ -248,8 +257,9 @@ void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder)
 /* this way angle starts from a known pole */
 uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder)
 {
-    return (p_encoder->AngleCounter.Base.Angle - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
+    return (p_encoder->AngleCounter.Angle32 - p_encoder->AlignOffsetRef) >> ENCODER_ANGLE_SHIFT;
 }
+
 
 
 /*
@@ -259,7 +269,7 @@ uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder)
 */
 bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
 {
-    uint32_t angleDiff = (p_encoder->AngleCounter.Base.Angle > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Base.Angle - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Base.Angle);
+    uint32_t angleDiff = (p_encoder->AngleCounter.Angle32 > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Angle32 - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Angle32);
     return (angleDiff <= p_encoder->AngleCounter.Ref.Angle32PerCount);
 }
 

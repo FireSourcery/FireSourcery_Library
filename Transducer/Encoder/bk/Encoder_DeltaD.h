@@ -32,7 +32,7 @@
 #define ENCODER_DELTA_D_H
 
 #include "Encoder.h"
-#include "Math/Angle/Angle_Counter.h"
+#include "Math/Angle/AngleCounter.h"
 
 /******************************************************************************/
 /*!
@@ -76,7 +76,7 @@ static inline void Encoder_DeltaD_Capture(const Encoder_T * p_encoder)
 */
 /******************************************************************************/
 // static inline int32_t  Encoder_DeltaD(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD; }
-// static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { /* return Angle_Counter_GetAngle(p_encoder, p_encoder->DeltaD);  */}
+// static inline uint32_t Encoder_DeltaD_AsAngle(const Encoder_State_T * p_encoder) { /* return AngleCounter_GetAngle(p_encoder, p_encoder->DeltaD);  */}
 
 // static inline uint32_t Encoder_DeltaD_GetAngularSpeed(const Encoder_State_T * p_encoder) { /* angle_speed_of_count( , p_encoder->Config.CountsPerRevolution, p_encoder->DeltaD); */ }
 // static inline uint32_t Encoder_DeltaD_GetFractSpeed(const Encoder_State_T * p_encoder) { return p_encoder->DeltaD * p_encoder->UnitScalarSpeed >> p_encoder->UnitScalarSpeedShift; }
@@ -129,26 +129,3 @@ extern void Encoder_DeltaD_SetInitial(const Encoder_T * p_encoder);
 
 #endif
 
-// static inline void _Encoder_DeltaD_Capture_Quadrature(Encoder_T * p_encoder, Encoder_State_T * p_state)
-// {
-//     uint32_t counterValue = HAL_Encoder_ReadTimerCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-
-//     /*
-//         Unsigned DeltaD capture
-//     */
-//     if (HAL_Encoder_ReadTimerCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER) == true)
-//     {
-//         if (HAL_Encoder_ReadDecoderCounterOverflowIncrement(p_encoder->P_HAL_ENCODER_COUNTER) == true)
-//         {
-//         }
-//         else if (HAL_Encoder_ReadDecoderCounterOverflowDecrement(p_encoder->P_HAL_ENCODER_COUNTER) == true)
-//         {
-//         }
-
-//         HAL_Encoder_ClearTimerCounterOverflow(p_encoder->P_HAL_ENCODER_COUNTER);
-//     }
-//     else
-//     {
-//         p_state->DeltaD = counterValue - p_state->CounterPrev;
-//     }
-// }

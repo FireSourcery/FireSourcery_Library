@@ -311,6 +311,7 @@ typedef struct Motor_State
     Ramp_T OpenLoopIRamp;           /* Preset I Ramp */
     // Ramp_T OpenLoopTorqueRamp;   /* Preset V/I Ramp */
     Angle_T OpenLoopAngle;
+    Angle_SpeedFractRef_T OpenLoopSpeedRef;
 
     /*  */
     HeatMonitor_State_T HeatMonitorState;

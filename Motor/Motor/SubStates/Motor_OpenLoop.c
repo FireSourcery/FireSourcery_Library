@@ -63,7 +63,7 @@ static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
 {
     if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
     if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)); }
-    p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE)));
+    Angle_CaptureAngle(&p_motor->P_MOTOR_STATE->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(p_motor->P_MOTOR_STATE))));
     return &MOTOR_STATE_OPEN_LOOP;
 }
 
@@ -114,7 +114,7 @@ static const State_T OPEN_LOOP_STATE_ANGLE_ALIGN =
 
 static State_T * OpenLoop_AngleAlign(const Motor_T * p_motor, state_value_t angle)
 {
-    p_motor->P_MOTOR_STATE->OpenLoopAngle.Angle = angle;
+    Angle_CaptureAngle(&p_motor->P_MOTOR_STATE->OpenLoopAngle, angle);
     return &OPEN_LOOP_STATE_ANGLE_ALIGN;
 }
 
