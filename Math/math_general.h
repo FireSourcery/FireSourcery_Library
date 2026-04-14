@@ -52,19 +52,15 @@ static inline int32_t math_max(int32_t value1, int32_t value2) { return ((value1
 static inline int32_t math_min(int32_t value1, int32_t value2) { return ((value1 < value2) ? value1 : value2); }
 static inline int32_t math_clamp(int32_t value, int32_t lower, int32_t upper) { return math_min(math_max(value, lower), upper); }
 
+static inline int32_t math_clamp_abs(int32_t x, int32_t limit)
+{
+    int32_t abs = math_abs(limit);
+    return math_clamp(x, -abs, abs);
+}
+
 /* branchless one sided */
 // static inline int32_t math_clamp_0_up(int32_t value )  { return (value > 0) * value; }
 // static inline int32_t math_clamp_0_down(int32_t value )  { return (value < 0) * value; }
-
-// /* Clamp between two bounds without specifying order */
-// /* Branchless version */
-// static inline int32_t math_clamp_between_fast(int32_t value, int32_t bound1, int32_t bound2)
-// {
-//     int32_t mask = math_sign_mask(bound2 - bound1);
-//     int32_t lower = bound1 ^ ((bound1 ^ bound2) & mask);
-//     int32_t upper = bound2 ^ ((bound1 ^ bound2) & mask);
-//     return math_clamp(value, lower, upper);
-// }
 
 static inline bool math_is_in_range(int32_t value, int32_t lower, int32_t upper) { return (value >= lower) && (value <= upper); }
 static inline bool math_is_out_of_range(int32_t value, int32_t lower, int32_t upper) { return (value < lower) || (value > upper); }

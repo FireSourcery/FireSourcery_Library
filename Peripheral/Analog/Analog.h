@@ -58,7 +58,8 @@ Analog_Conversion_T;
 
 #define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex)  (Analog_Conversion_T) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, /* .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), */ }
 
-#define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
+// #define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
+#define ANALOG_CONVERSION_INIT(p_AdcStruct, ChannelIndex) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (ChannelIndex)  }
 
 static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }

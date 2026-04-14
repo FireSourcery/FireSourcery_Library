@@ -60,10 +60,6 @@ typedef struct Hysteresis
 
     int32_t Output;     /* Conditioned value as state */
     bool OutputState;   /* Current logical state. true as past the setpoint, low or high */    // alternatively derive with getter
-
-    // alternatively caller handle edge detection
-    // int32_t OutputPrev;
-    // bool OutputStatePrev;
 }
 Hysteresis_T;
 
@@ -114,9 +110,13 @@ static inline bool Hysteresis_PollOutput(Hysteresis_T * p_hyst, int32_t input)
 static inline bool Hysteresis_Poll(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = Hysteresis_OutputOf(p_hyst, input);
-    // p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
     p_hyst->OutputState = (Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
+}
+
+static inline bool Hysteresis_PollEdge(Hysteresis_T * p_hyst, int32_t input)
+{
+    return (p_hyst->OutputState != Hysteresis_Poll(p_hyst, input));
 }
 
 /* Getters for output state */
@@ -163,7 +163,6 @@ static inline bool Hysteresis_Inverted_PollOutput(Hysteresis_T * p_hyst, int32_t
 static inline bool Hysteresis_Inverted_Poll(Hysteresis_T * p_hyst, int32_t input)
 {
     p_hyst->Output = Hysteresis_Inverted_OutputOf(p_hyst, input);
-    // p_hyst->OutputStatePrev = p_hyst->OutputState; /* Save previous state for edge detection */
     p_hyst->OutputState = (Hysteresis_Inverted_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
 }

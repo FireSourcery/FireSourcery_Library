@@ -95,13 +95,13 @@ Angle_SpeedFractCalib_T;
     Precomputed unit for Angle_T
 */
 /* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
-static inline int16_t speed_fract16_of_angle_direct(angle16_t angleOfRpmMax, int16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleOfRpmMax; }
+static inline int16_t speed_fract16_of_angle_direct(angle16_t angle_speed_max, int16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angle_speed_max; }
 
 /* speedRefInv_fract32 as cycles per degree */
 /* overflow note: angle16 < speedRefInv_fract32 */
-static inline int16_t speed_fract16_of_angle(uint32_t angleOfRpmMaxInv_fract32, int16_t angle16) { return ((int32_t)angle16 * angleOfRpmMaxInv_fract32) >> 16U; }
+static inline int16_t speed_fract16_of_angle(uint32_t angle_speed_max_inv_fract32, int16_t angle16) { return ((int32_t)angle16 * angle_speed_max_inv_fract32) >> 16U; }
 /* DegPerCycle */
-static inline int16_t angle_of_speed_fract16(angle16_t angleOfRpmMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleOfRpmMax); }
+static inline int16_t angle_of_speed_fract16(angle16_t angle_speed_max, int16_t speed_fract16) { return fract16_mul(speed_fract16, angle_speed_max); }
 
 
 /******************************************************************************/

@@ -57,7 +57,7 @@ static void StartCalibration(const Motor_T * p_motor)
 
 /* allow adc module callback to skip storing raw value */
 /* Phase_Input_Get Fract16 performed with 0 as zero reference */
-static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_ADCU_SCALAR * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR)); }
+static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY)); }
 
 static void ProcCalibration(const Motor_T * p_motor)
 {

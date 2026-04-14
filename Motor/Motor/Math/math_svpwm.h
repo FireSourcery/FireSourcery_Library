@@ -49,12 +49,15 @@ static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t v_fra
 /*  */
 static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
 
+
+struct svpwm_abc { ufract16_t a, b, c; };
+
 /*!
     @param[in] vA, vB, vC - scalars normalized to VBus as 1.0F. range [-1/sqrt3:1/sqrt3].
                             vA = 1/sqrt3 <=> Phase A voltage output VBus/sqrt3
     @param[out] p_dutyA, p_dutyB, p_dutyC - [0:32767]
 */
-static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t vA, fract16_t vB, fract16_t vC)
+static inline struct svpwm_abc svpwm_midclamp(fract16_t vA, fract16_t vB, fract16_t vC)
 {
     // Find the maximum and minimum of the three phase voltages
     int32_t vMax = math_max(math_max(vA, vB), vC);
@@ -69,23 +72,16 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     int32_t dutyC = vC - vZero;
 
     // Saturate the duty cycles to ensure they are within the range of 0 to 1
-    *p_dutyA = fract16_sat_positive(dutyA);
-    *p_dutyB = fract16_sat_positive(dutyB);
-    *p_dutyC = fract16_sat_positive(dutyC);
+    return (struct svpwm_abc) { .a = fract16_sat_positive(dutyA), .b = fract16_sat_positive(dutyB), .c = fract16_sat_positive(dutyC) };
 }
 
-/*!
-    @param[in] a, b, c - duty scalars normalized range [-1.0F:1.0F].
-                            such that a = 1 <=> Phase A voltage output VBus/sqrt3
-*/
-// static inline void svpwm_midclamp_scalar(ufract16_t * p_dutyA, ufract16_t * p_dutyB, ufract16_t * p_dutyC, fract16_t a, fract16_t b, fract16_t c)
-// {
-//     int32_t vA = fract16_mul(a, FRACT16_1_DIV_SQRT3);
-//     int32_t vB = fract16_mul(b, FRACT16_1_DIV_SQRT3);
-//     int32_t vC = fract16_mul(c, FRACT16_1_DIV_SQRT3);
 
-//     svpwm_midclamp_vbus(p_dutyA, p_dutyB, p_dutyC, vA, vB, vC);
-// }
+static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_fract32, fract16_t vA, fract16_t vB, fract16_t vC)
+{
+    return svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_fract32, vA), svpwm_norm_vbus_inv(vBusInv_fract32, vB), svpwm_norm_vbus_inv(vBusInv_fract32, vC));
+}
+
+
 
 /*
     Transform V with midclamp 3rd harmonic adjustment
@@ -112,8 +108,6 @@ static inline void svpwm_midclamp_vbus(ufract16_t * p_dutyA, ufract16_t * p_duty
     Mid clamp, determining sector first. SVPWM determined by shifting magnitudes such that the midpoint is 50% PWM
 
     @param[in] alpha scaled to VBus
-
-    Prescaled Normalized by a factor of sqrt3/2, such that alpha 1.15 => a = 1.0
 */
 // static inline void svpwm_midclamp(fract16_t * p_dutyA, fract16_t * p_dutyB, fract16_t * p_dutyC, fract16_t alpha, fract16_t beta)
 // {

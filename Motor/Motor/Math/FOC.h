@@ -68,7 +68,12 @@ FOC_T;
     Capture Inputs
 */
 /******************************************************************************/
-static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector(&p_foc->Cosine, &p_foc->Sine, theta); }
+static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
+{
+    struct fract16_xy vec = fract16_vector(theta);
+    p_foc->Cosine = vec.x;
+    p_foc->Sine = vec.y;
+}
 
 
 /*
@@ -76,7 +81,9 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta) { fract16_vector
 */
 static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 {
-    foc_clarke_park(&p_foc->Id, &p_foc->Iq, ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+    struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+    p_foc->Id = i.d;
+    p_foc->Iq = i.q;
 }
 
 
@@ -96,42 +103,42 @@ static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
 
 /* modulation [0:1/sqrt3] */
-static inline bool _FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation)
+static inline bool _FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vPhaseLimit)
 {
-    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, fract16_mul(vBus, modulation));
+    return foc_circle_limit_q(&p_foc->Vd, &p_foc->Vq, vPhaseLimit);
 }
 
 // assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
 static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
 {
-    return _FOC_ProcVectorLimit(p_foc, vBus, FRACT16_1_DIV_SQRT3);
+    return _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
 
-// static inline ufract16_t _FOC_VqCircleLimit(FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation, fract16_t vd)
-// {
-//     p_foc->Vd = vd;
-//     ufract16_t vPhaseLimit = fract16_mul(vBus, modulation);
-//     return fixed_sqrt((uint32_t)vPhaseLimit * vPhaseLimit - (int32_t)vd * vd);
-// }
-
-/* Available Vq budget after Vd within voltage circle */
-static inline ufract16_t _FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus, ufract16_t modulation)
+static inline ufract16_t _FOC_CircleLimit(FOC_T * p_foc, ufract16_t vPhaseLimit, fract16_t vd)
 {
-    ufract16_t vPhaseLimit = fract16_mul(vBus, modulation);
-    uint32_t magLimitSq = (uint32_t)vPhaseLimit * vPhaseLimit;
-    uint32_t vdSq = (int32_t)p_foc->Vd * p_foc->Vd;
-    return (vdSq < magLimitSq) ? fixed_sqrt(magLimitSq - vdSq) : 0;
+    assert(abs(vd) <= vPhaseLimit); /* set by feedback output */
+    p_foc->Vd = vd;
+    return fixed_sqrt((uint32_t)vPhaseLimit * vPhaseLimit - (int32_t)p_foc->Vd * p_foc->Vd);
 }
 
-static inline ufract16_t FOC_GetVqLimit(const FOC_T * p_foc, ufract16_t vBus)
+static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vPhaseLimit)
 {
-    return _FOC_GetVqLimit(p_foc, vBus, FRACT16_1_DIV_SQRT3);
+    assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
+    return fixed_sqrt((uint32_t)vPhaseLimit * vPhaseLimit - (int32_t)p_foc->Vd * p_foc->Vd);
+}
+
+static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
+{
+    return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
-    foc_inv_clarke_park(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    p_foc->Va = v.a;
+    p_foc->Vb = v.b;
+    p_foc->Vc = v.c;
 }
 
 /******************************************************************************/
@@ -142,10 +149,10 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 /* precomputed vBusInv_fract32 <=> 1.0F/VBus */
 static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
 {
-    fract16_t vNormA = svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Va);
-    fract16_t vNormB = svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vb);
-    fract16_t vNormC = svpwm_norm_vbus_inv(vBusInv_fract32, p_foc->Vc);
-    svpwm_midclamp_vbus(&p_foc->DutyA, &p_foc->DutyB, &p_foc->DutyC, vNormA, vNormB, vNormC);
+    struct svpwm_abc duty = svpwm_midclamp_vbus(vBusInv_fract32, p_foc->Va, p_foc->Vb, p_foc->Vc);
+    p_foc->DutyA = duty.a;
+    p_foc->DutyB = duty.b;
+    p_foc->DutyC = duty.c;
 }
 
 
@@ -166,7 +173,9 @@ static inline ufract16_t FOC_DutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
 /******************************************************************************/
 static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
 {
-    foc_clarke_park(&p_foc->Vd, &p_foc->Vq, va, vb, vc, p_foc->Sine, p_foc->Cosine);
+    struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
+    p_foc->Vd = v.d;
+    p_foc->Vq = v.q;
 }
 
 // static inline ufract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
@@ -200,13 +209,11 @@ static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return fr
 
 static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vq, p_foc->Id) - fract16_mul(p_foc->Vd, p_foc->Iq)) * 3 / 2; }
 
-
 /* [0:32767] */
 static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return math_abs(fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq)); }
 
 /* [0:49150] */
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return _FOC_GetActivePower(p_foc) * 3 / 2; }
-
 
 static inline accum32_t FOC_GetApparentPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc)) * 3 / 2; }
 

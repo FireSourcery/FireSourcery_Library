@@ -39,6 +39,7 @@ typedef struct MovAvg
     int32_t Coefficient;
     int32_t Output;
     // Accumulator_T Output; // optionally accum handles shift
+    uint16_t Index;
 }
 MovAvg_T;
 
@@ -67,4 +68,16 @@ static inline int32_t MovAvgN(MovAvg_T * p_filter, int32_t in)
 }
 
 
+
 #endif
+
+// static inline int32_t _MovAvg_Avg(MovAvg_T * p_filter, int32_t index, int32_t in)
+// {
+// avg(p_filter->Output, index, in);
+// }
+
+// static inline int32_t MovAvg_Avg(MovAvg_T * p_filter, int32_t in)
+// {
+//     p_filter->Index++;
+//     return _MovAvg_Avg(p_filter, p_filter->Index, in);
+// }

@@ -81,16 +81,11 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coeffici
 extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
-extern int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetOutputLimit(Ramp_T * p_ramp, int16_t lower, int16_t upper);
-
-extern void Ramp_Init_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
-extern void Ramp_SetSlope_Fract16(Ramp_T * p_ramp, uint16_t rate);
 extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 
-extern void Ramp_Set(Ramp_T * p_ramp, uint32_t duration_Ticks, int32_t initial, int32_t final);
-extern void Ramp_Set_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, int32_t initial, int32_t final);

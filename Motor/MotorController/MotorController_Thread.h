@@ -160,8 +160,6 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Increasing Limit only, reset on warning clear.
             */
            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_dev->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
-
-            if (Monitor_IsWarningTriggering(p_dev->HEAT_MOSFETS.P_STATE)) { MotorController_BeepMonitorTrigger(p_dev); }
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:
@@ -342,10 +340,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 
             MotorController_CaptureVSource(p_dev); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
 
-
         }
-
-
     }
     // todo transient recorder proc
 }
@@ -357,9 +352,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     _MotorController_VSourceMonitor_Thread(p_dev);
-    // MotorController_CaptureVSource(p_dev); /* update vout ratios */  /* Set Motors VSupplyRef using ADC reading */
 
-    // BrakeThread(p_mc);
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
     //     if (MotAnalogUser_PollBrakePins(&p_dev->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }

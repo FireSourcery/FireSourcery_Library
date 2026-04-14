@@ -45,7 +45,7 @@
 
     Three integration modes share one struct:
         - wrap     : Angle_IntegrateDelta      (position tracker, free wrap)
-        - clamp    : Angle_Interpolate         (interpolator / bounded ramp, uses Limit)
+        - clamp    : Angle_Interpolate         (bounded step; Limit is signed remaining-allowance)
         - none     : Angle_CaptureAngle        (direct sensor snapshot)
 */
 /******************************************************************************/
@@ -59,7 +59,8 @@ typedef struct Angle
 {
     int32_t Angle;  /* Shifted Q16.16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
     int32_t Delta;  /* Shifted Q16.16 DegPerCycle */
-    int32_t Limit;  /* Symmetric bound for Angle_Interpolate, shifted. Unused in wrap mode. */
+    int32_t LimitUpper;
+    int32_t LimitLower;
 }
 Angle_T;
 
@@ -118,11 +119,8 @@ static inline angle16_t Angle_GetDelta16(const Angle_T * p_angle) { return (angl
 static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16) { p_angle->Angle = (int32_t)angle16 << ANGLE32_SHIFT; }
 
 /* Capture per-cycle delta from angle16 source */
-static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
-{
-    assert(math_abs(delta_degPerCycle) < ANGLE16_PER_REVOLUTION / 2);
-    p_angle->Delta = (int32_t)delta_degPerCycle << ANGLE32_SHIFT;
-}
+/*  assert(math_abs(delta_degPerCycle) < ANGLE16_PER_REVOLUTION / 2); */
+static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerCycle) { p_angle->Delta = (int32_t)delta_degPerCycle << ANGLE32_SHIFT; }
 
 /******************************************************************************/
 /*
@@ -140,6 +138,16 @@ static inline angle16_t Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_
     return Angle_GetAngle16(p_angle);
 }
 
+/*
+    Wrap-mode step using the already-resolved shifted Delta.
+    For sensor paths that set Delta out-of-band (e.g. AngleCounter_ResolveInterpolationDelta).
+*/
+static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
+{
+    p_angle->Angle += p_angle->Delta;
+    return Angle_GetAngle16(p_angle);
+}
+
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 {
     p_angle->Angle = 0;
@@ -151,20 +159,51 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
     Interpolation / bounded integration — estimate angle between sensor edges
     or drive a clamped ramp.
 
-    The interpolator reuses Angle_T: its Angle field is the bounded accumulator,
-    Delta is the shifted step (signed), Limit is the symmetric bound.
+    Angle_Interpolate clamps Angle + Delta to [LimitLower, LimitUpper].
+    Bounds are independent: direction-agnostic, re-targetable per edge.
 */
 /******************************************************************************/
-/* Init symmetric bound from an angle16 magnitude (e.g. 60° sector for Hall) */
-static inline void Angle_InitLimit(Angle_T * p_angle, angle16_t limit_angle16)
+/* Set absolute bounds (shifted). For runtime retarget per sector edge. */
+static inline void _Angle_SetLimits(Angle_T * p_angle, int32_t lower_shifted, int32_t upper_shifted)
 {
-    p_angle->Limit = (int32_t)limit_angle16 << ANGLE32_SHIFT;
+    p_angle->LimitLower = lower_shifted;
+    p_angle->LimitUpper = upper_shifted;
+}
+
+/* Set bounds as an angle window [lower, upper] from angle16 inputs. */
+static inline void Angle_SetLimitsAngle(Angle_T * p_angle, angle16_t lower, angle16_t upper)
+{
+    p_angle->LimitLower = (int32_t)lower << ANGLE32_SHIFT;
+    p_angle->LimitUpper = (int32_t)upper << ANGLE32_SHIFT;
+}
+
+/*
+    Set bounds as a one-sided sector window: width ahead in sign(Delta), 0 behind.
+    Called after snapping Angle to a sensor boundary (e.g. Hall edge).
+        Delta > 0 : [Angle, Angle + width]
+        Delta < 0 : [Angle - width, Angle]
+*/
+static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
+{
+    int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
+
+    p_angle->LimitUpper = p_angle->Angle + ((p_angle->Delta > 0) * width_shifted);
+    p_angle->LimitLower = p_angle->Angle + ((p_angle->Delta < 0) * -width_shifted);
+}
+
+/*
+    Init: zero state + set symmetric bounds ±limit_angle16 around zero.
+*/
+static inline void Angle_InitLimit(Angle_T * p_angle, uangle16_t limit_angle16)
+{
+    p_angle->LimitUpper = (int32_t)limit_angle16 << ANGLE32_SHIFT;
+    p_angle->LimitLower = -((int32_t)limit_angle16 << ANGLE32_SHIFT);
     p_angle->Angle = 0;
     p_angle->Delta = 0;
 }
 
 /*
-    Reset accumulator on sensor edge / direction change. Retains Delta and Limit.
+    Reset accumulator on sensor edge / direction change. Retains Delta and limits.
 */
 static inline void Angle_ZeroAngle(Angle_T * p_angle) { p_angle->Angle = 0; }
 
@@ -172,19 +211,37 @@ static inline void Angle_ZeroAngle(Angle_T * p_angle) { p_angle->Angle = 0; }
 static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
 /*
-    Clamped integration. Angle = clamp(Angle + Delta, ±Limit).
-    Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
+    Bounded step. Angle = clamp(Angle + Delta, LimitLower, LimitUpper).
+    Branchless on ARM. Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
 */
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
-    p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -p_angle->Limit, p_angle->Limit);
+    p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, p_angle->LimitLower, p_angle->LimitUpper);
     return Angle_GetAngle16(p_angle);
 }
 
-/* One-shot bounded integration with an external limit — stateless variant for ramps */
-// static inline angle16_t Angle_InterpolateUpTo(Angle_T * p_angle, int32_t limit_shifted)
+/*
+    One-sided clamped step toward Limit in the direction of Delta.
+        Delta >= 0 : Angle = min(Angle + Delta, Limit)
+        Delta <  0 : Angle = max(Angle + Delta, Limit)
+    Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
+*/
+// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 // {
-//     p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -limit_shifted, limit_shifted);
+//     int32_t next = p_angle->Angle + p_angle->Delta;
+//     p_angle->Angle = (p_angle->Delta >= 0) ? math_min(next, p_angle->Limit) : math_max(next, p_angle->Limit);
+//     return Angle_GetAngle16(p_angle);
+// }
+
+static inline angle16_t Angle_InterpolateAbs(Angle_T * p_angle)
+{
+    p_angle->Angle = math_min(p_angle->Angle + p_angle->Delta, p_angle->LimitUpper);
+    return Angle_GetAngle16(p_angle);
+}
+
+// static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
+// {
+//     p_angle->Angle += p_angle->Delta;
 //     return Angle_GetAngle16(p_angle);
 // }
 
@@ -243,3 +300,10 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 //     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
 // }
 // Angle_Data_T;
+
+/* One-shot bounded integration with an external limit — stateless variant for ramps */
+// static inline angle16_t Angle_InterpolateUpTo(Angle_T * p_angle, int32_t limit_shifted)
+// {
+//     p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -limit_shifted, limit_shifted);
+//     return Angle_GetAngle16(p_angle);
+// }

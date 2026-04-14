@@ -88,8 +88,8 @@ static const accum32_t FRACT16_3PI_DIV_4      = 0x00012D97;
 #define ACCUM32(x) ((accum32_t)((x)*32768.0F))
 
 static inline fract16_t fract16(int16_t value, int32_t max) { return (fract16_t)(((int32_t)value << FRACT16_N_BITS) / max); }
-static inline fract16_t fract16_sat(accum32_t value)            { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
-static inline ufract16_t fract16_sat_positive(accum32_t value)  { return math_clamp(value, 0, FRACT16_MAX); }
+static inline fract16_t fract16_sat(accum32_t value) { return math_clamp(value, -FRACT16_MAX, FRACT16_MAX); }
+static inline ufract16_t fract16_sat_positive(accum32_t value) { return math_clamp(value, 0, FRACT16_MAX); }
 
 /*!
     @brief Unsaturated Multiply
@@ -100,10 +100,7 @@ static inline ufract16_t fract16_sat_positive(accum32_t value)  { return math_cl
 
     @return int32_t [-65536:65535] <=> [-2:2)
 */
-static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
-{
-    return ((factor * frac) >> FRACT16_N_BITS);
-}
+static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac) { return ((factor * frac) >> FRACT16_N_BITS); }
 
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
@@ -117,10 +114,7 @@ static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac)
 
     @return int16_t [-32767:32767] <=> (-1:1)
 */
-static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
-{
-    return fract16_sat(fract16_mul(factor, frac));
-}
+static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac) { return fract16_sat(fract16_mul(factor, frac)); }
 
 /*!
     @brief Unsaturated Divide
@@ -133,46 +127,25 @@ static inline fract16_t fract16_mul_sat(accum32_t factor, accum32_t frac)
     @param[in] dividend [-65536:65535] <=> [-2:2)
     @return int32_t [-1073741824:1073709056], [0XC0000000, 0X3FFF8000]
 */
-static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor)
-{
-    return ((dividend << FRACT16_N_BITS) / divisor);
-}
+static inline accum32_t fract16_div(accum32_t dividend, accum32_t divisor) { return ((dividend << FRACT16_N_BITS) / divisor); }
 
 /*!
     @return int16_t [-32767:32767]
 */
-static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor)
-{
-    return fract16_sat(fract16_div(dividend, divisor));
-}
+static inline fract16_t fract16_div_sat(accum32_t dividend, accum32_t divisor) { return fract16_sat(fract16_div(dividend, divisor)); }
 
 /* cast overflow as ufract */
-static inline ufract16_t fract16_abs(fract16_t x)
-{
-    return abs(x);
-}
+static inline ufract16_t fract16_abs(fract16_t x) { return abs(x); }
 
-static inline fract16_t fract16_abs_sat(fract16_t x)
-{
-    return (x == INT16_MIN) ? INT16_MAX : abs(x);
-}
+static inline fract16_t fract16_abs_sat(fract16_t x) { return (x == INT16_MIN) ? INT16_MAX : abs(x); }
 
-static inline fract16_t fract16_sqrt(fract16_t x)
-{
-    return fixed_sqrt((int32_t)x << FRACT16_N_BITS);
-}
+static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x << FRACT16_N_BITS); }
 
 /* shift without divisor on max ref */
 /* left shift as positive */
-static inline int8_t fract16_norm_shift(int16_t value)
-{
-    return (int8_t)(FRACT16_N_BITS - fixed_bit_width_signed(value));
-}
+static inline int8_t fract16_norm_shift(int16_t value) { return (int8_t)(FRACT16_N_BITS - fixed_bit_width_signed(value)); }
 
-static inline int16_t fract16_norm_scalar(int16_t value)
-{
-    return (1 << fract16_norm_shift(value));
-}
+static inline int16_t fract16_norm_scalar(int16_t value) { return (1 << fract16_norm_shift(value)); }
 
 // static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
 // {
@@ -268,7 +241,9 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
     vector xy
 */
 /******************************************************************************/
-extern void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta);
+struct fract16_xy { fract16_t x; fract16_t y; };
+extern struct fract16_xy fract16_vector(angle16_t theta);
+
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);
 extern ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit);
 extern ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit);

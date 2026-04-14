@@ -135,18 +135,11 @@ angle16_t fract16_atan2(fract16_t y, fract16_t x)
     vector_init
     let compiler optimize into single switch
 */
-// void fract16_xy(fract16_t * p_x, fract16_t * p_y, angle16_t theta)
-void fract16_vector(fract16_t * p_x, fract16_t * p_y, angle16_t theta)
+struct fract16_xy fract16_vector(angle16_t theta)
 {
-    *p_y = fract16_sin(theta);
-    *p_x = fract16_cos(theta);
+    return (struct fract16_xy) { .x = fract16_cos(theta), .y = fract16_sin(theta) };
 }
 
-/* Max sqrt 46339, 1.41F */
-ufract16_t fract16_vector_magnitude_squared(fract16_t x, fract16_t y)
-{
-    return (int32_t)x * x + (int32_t)y * y;
-}
 
 ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
@@ -171,23 +164,21 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
 {
     uint32_t mag_squared = ((int32_t)x * x) + ((int32_t)y * y);
     int32_t scalar = FRACT16_MAX; /* Q17.15, or use FRACT16_1_OVERSAT */
-    uint16_t magnitude;
 
     if (mag_squared > (int32_t)mag_limit * mag_limit)
     {
-        magnitude = fixed_sqrt(mag_squared);
-        scalar = fract16_div(mag_limit, magnitude); /* no saturation needed, mag_limit / magnitude < 1  */
+        scalar = fract16_div(mag_limit, fixed_sqrt(mag_squared)); /* no saturation needed, mag_limit / magnitude < 1  */
     }
 
     return scalar;
 }
 
-void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t scalar)
+void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t magnitude)
 {
-    if (scalar < FRACT16_MAX)
+    if (magnitude < FRACT16_MAX)
     {
-        *p_x = (fract16_t)fract16_mul(*p_x, scalar); /* no saturation needed, scalar < 1 */
-        *p_y = (fract16_t)fract16_mul(*p_y, scalar);
+        *p_x = (fract16_t)fract16_mul(*p_x, magnitude); /* no saturation needed, magnitude < 1 */
+        *p_y = (fract16_t)fract16_mul(*p_y, magnitude);
     }
 }
 

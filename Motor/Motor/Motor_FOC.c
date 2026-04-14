@@ -51,27 +51,64 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 /*
     Current Feedback Loop
 */
+#if defined(MOTOR_DECOUPLE_ENABLE)
+/*
+    Cross-coupling decoupling feedforward, limit-first ordering.
+        Vd_ff = -omega_e * Lq * Iq
+        Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
+
+    omega_e source: RotorSensor_GetElectricalDelta (electrical angle16 per control cycle).
+    K coefficients (fract16) are tuned such that fract16_mul(delta, K_*) yields the decoupling
+    product in the same fract16 voltage basis as the PI output.
+*/
+static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+{
+    fract16_t id = FOC_Id(&p_motor->Foc);
+    fract16_t iq = FOC_Iq(&p_motor->Foc);
+    angle16_t delta = RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
+
+    fract16_t omega_Lq  = fract16_mul(delta, p_motor->Config.Decouple_KLq_Fract16);
+    fract16_t omega_Ld  = fract16_mul(delta, p_motor->Config.Decouple_KLd_Fract16);
+    fract16_t omega_psi = fract16_mul(delta, p_motor->Config.Decouple_KPsi_Fract16);
+
+    /* Vd = PI_Id + Vd_ff, clipped to phase limit so Vq budget is well-defined */
+    int16_t vPhaseLimit = fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2);
+    fract16_t vd = foc_decouple_vd(PID_ProcPI(&p_motor->PidId, id, idReq), iq, omega_Lq);
+    vd = math_clamp(vd, -vPhaseLimit, vPhaseLimit);
+    FOC_SetVd(&p_motor->Foc, vd);
+
+    /* Vq PI budget = remaining circle after Vd, with room reserved for Vq_ff */
+    int16_t vqBudget = _FOC_VqCircleLimit(&p_motor->Foc, vPhaseLimit);
+    fract16_t vq_ff = foc_vq_ff(id, omega_Ld, omega_psi);
+    int16_t vqPiLimit = vqBudget - math_abs(vq_ff);
+    if (vqPiLimit < 0) { vqPiLimit = 0; }
+
+    PID_CaptureOutputLimits(&p_motor->PidIq, (p_motor->Direction == MOTOR_DIRECTION_CW) * -vqPiLimit, (p_motor->Direction == MOTOR_DIRECTION_CCW) * vqPiLimit);
+    FOC_SetVq(&p_motor->Foc, fract16_sat((accum32_t)PID_ProcPI(&p_motor->PidIq, iq, iqReq) + vq_ff));
+}
+#else
 /*
     Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc
 */
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-    int16_t vqLimit = _FOC_GetVqLimit(&p_motor->Foc, Phase_VBus_Fract16(), FRACT16_1_DIV_2);
+    int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
     PID_CaptureOutputLimits(&p_motor->PidIq, (p_motor->Direction == MOTOR_DIRECTION_CW) * -vqLimit, (p_motor->Direction == MOTOR_DIRECTION_CCW) * vqLimit);
     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
 }
+#endif
 
-// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
-// {
-//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
-//     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup */ /* propagate if limited.  */
-//     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-//     {
-//         _PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
-//     }
-// }
+static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+{
+    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
+    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
+    /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
+    if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
+    {
+        _PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
+    }
+}
 
 
 /* Set Vdq */

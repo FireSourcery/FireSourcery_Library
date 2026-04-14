@@ -42,8 +42,6 @@ void Encoder_ModeDT_InitValuesFrom(const Encoder_T * p_encoder, const Encoder_Co
     AngleCounter_Config_T angleCounterConfig =
     {
         .CountsPerRevolution = p_config->CountsPerRevolution,
-        .TimerFreq = p_encoder->TIMER.TIMER_FREQ,
-        .SampleFreq = p_encoder->TIMER.SAMPLE_FREQ,
         .PollingFreq = p_encoder->POLLING_FREQ,
         .FractSpeedRef_Rpm = p_config->ScalarSpeedRef_Rpm,
     };

@@ -34,8 +34,7 @@
 #include "Math/Linear/Linear_Q16.h"
 #include <stdint.h>
 
-#define VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcBits, Adcu) ((VRef_MilliV * Adcu / AdcBits) / (Gain))
-#define AMPS_OF_ADCU(Shunt, Gain, VRef_MilliV, AdcBits, Adcu) (VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcBits, Adcu) / (Shunt))
+
 
 /******************************************************************************/
 /*!
@@ -77,9 +76,29 @@ static inline uint16_t Linear_ADC_Of(const Linear_T * p_linear, int32_t normaliz
 
 /******************************************************************************/
 /*!
-    Extern
+    f([adcuZero - (2^adcBits - adcuZero)):adcuZero + (2^adcBits - adcuZero)]) = [-32768:32768]
+    multiply +/- 1 and shift
+    alternatively as const
 */
 /******************************************************************************/
+static void Linear_ADC_Init_Fract16(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuBits, bool isInverted)
+{
+    p_linear->Slope = isInverted ? -1 : 1;
+    p_linear->SlopeShift = 15U - adcuBits; // Adjust the shift to match the fractional bits
+    p_linear->InvSlope = p_linear->Slope;
+    p_linear->InvSlopeShift = p_linear->SlopeShift;
+    p_linear->X0 = adcuZero;
+    // ref only
+    p_linear->XDelta = (1U << adcuBits) - adcuZero;
+    p_linear->XReference = adcuZero + p_linear->XDelta;
+
+    // *p_linear = (Linear_T)LINEAR_ADC_INIT(adcuBits, adcuZero, isInverted);
+}
+
+
+// void Linear_ADC_InitAsPercent16(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuRef, bool isInverted)
+// void Linear_ADC_InitAsPhysical(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuRef, uint16_t unitRef, bool isInverted)
+
 // typedef struct Linear_ADC_Config
 // {
 //     uint16_t AdcuZero;
@@ -107,41 +126,6 @@ static inline uint16_t Linear_ADC_Of(const Linear_T * p_linear, int32_t normaliz
 
 /******************************************************************************/
 /*!
-    f([adcuZero - (2^adcBits - adcuZero)):adcuZero + (2^adcBits - adcuZero)]) = [-32768:32768]
-    multiply +/- 1 and shift
-    alternatively as const
-*/
-/******************************************************************************/
-static void Linear_ADC_Init_Fract16(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuBits, bool isInverted)
-{
-    p_linear->Slope = isInverted ? -1 : 1;
-    p_linear->SlopeShift = 15U - adcuBits; // Adjust the shift to match the fractional bits
-    p_linear->InvSlope = p_linear->Slope;
-    p_linear->InvSlopeShift = p_linear->SlopeShift;
-    p_linear->X0 = adcuZero;
-    // ref only
-    p_linear->XDelta = (1U << adcuBits) - adcuZero;
-    p_linear->XReference = adcuZero + p_linear->XDelta;
-
-    // *p_linear = (Linear_T)LINEAR_ADC_INIT(adcuBits, adcuZero, isInverted);
-}
-
-
-// void Linear_ADC_InitAsPercent16(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuRef, bool isInverted)
-// {
-//     Linear_Q16_Init(p_linear, adcuZero, adcuRef);
-//     p_linear->Slope = isInverted ? -1 : 1;
-// }
-
-
-// void Linear_ADC_InitAsPhysical(Linear_T * p_linear, uint16_t adcuZero, uint8_t adcuRef, uint16_t unitRef, bool isInverted)
-// {
-
-// }
-
-
-/******************************************************************************/
-/*!
     f([adcuZero:adcuRef]) = [0:65536]
 */
 /******************************************************************************/
@@ -155,79 +139,8 @@ static void Linear_ADC_Init_ZeroToPeakMilliV(Linear_T * p_linear, uint16_t adcVR
 #endif
 
 /* split general factor shift calc */
-// Alternatively
-// typedef struct Linear_ADC
-// {
-//     Linear_T Linear;
-//     int32_t UnitsRef;
-// }
-// Linear_ADC_T;
-
 // static inline int32_t Linear_ADC_CalcPhysical(const Linear_T * p_linear, uint16_t adcu) { return Linear_Q16_Units(p_linear, adcu); }
 // static inline int32_t Linear_ADC_CalcPhysical_Fract16(const Linear_T * p_linear, uint16_t fract16) { return Linear_Q16_Units16(p_linear, fract16); }
 // static inline int32_t Linear_ADC_CalcFract16_Physical(const Linear_T * p_linear, int32_t units) { return Linear_Q16_InvUnits16(p_linear, units); }
 // static inline uint16_t Linear_ADC_CalcAdcu_Physical(const Linear_T * p_linear, int16_t units) { return Linear_Q16_InvUnits(p_linear, units); }
 
-/******************************************************************************/
-
-/******************************************************************************/
-
-// linear_shift_fixed32
-// linear_shift_invfixed32
-// static inline int32_t linear_units_of_fixed(uint8_t nBits, int32_t y0_units, int32_t deltay_units, int32_t y_fixed32)
-// {
-//     return ((y_fixed32 * deltay_units) >> nBits) + y0_units;
-// }
-
-// static inline int32_t linear_fixed_of_units(uint8_t nBits, int32_t y0_units, int32_t deltay_units, int32_t y_units)
-// {
-//     return (((y_units - y0_units) << nBits) / deltay_units);
-// }
-
-/* y_fixed32 * (yref_units - y0_units) >> 16U + y0_units */
-/* fixed32 to y_units */
-// static inline int32_t linear_units_of_fixed(int32_t y0_units, int32_t deltay_units, int32_t y_fixed32)
-// {
-//     return ((y_fixed32 * deltay_units) / 65536) + y0_units;
-// }
-
-// /* (y_units - y0_units) << 16U / (yref_units - y0_units) */
-// /* y_units to fixed32 */
-// static inline int32_t linear_fixed_of_units(int32_t y0_units, int32_t deltay_units, int32_t y_units)
-// {
-//     return ((y_units - y0_units) * 65536 / deltay_units);
-// }
-
-// static inline int32_t Linear_Q16_Units16(const Linear_T * p_linear, int32_t y_fract16)
-// {
-//     return linear_units_of_fixed(p_linear->Y0, p_linear->YDelta, y_fract16);
-// }
-
-// static inline int32_t Linear_Q16_InvUnits16(const Linear_T * p_linear, int32_t y_units)
-// {
-//     return linear_fixed_of_units(p_linear->Y0, p_linear->YDelta, y_units);
-// }
-
-// /* x to fixed to y_units */
-// static inline int32_t linear_m16_f(int32_t m16_shifted, uint8_t shift, int32_t x0, int32_t y0_units, int32_t deltay_units, int32_t x)
-// {
-//     return linear_units_of_fixed(deltay_units, y0_units, linear_shift_f_x0(m16_shifted, shift, x0, x));
-// }
-
-// /* y_units to fixed to x */
-// static inline int32_t linear_m16_invf(int32_t invm16_shifted, uint8_t shift, int32_t x0, int32_t y0_units, int32_t deltay_units, int32_t y_units)
-// {
-//     return linear_shift_invf_x0(invm16_shifted, shift, x0, linear_fixed_of_units(deltay_units, y0_units, y_units));
-// }
-
-// /* User Units using YRef */
-// static inline int32_t Linear_Q16_Units(const Linear_T * p_linear, int32_t x)
-// {
-//     return linear_m16_f(p_linear->Slope, p_linear->SlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDelta, x);
-// }
-
-// /* Division limited to this function only */
-// static inline int32_t Linear_Q16_InvUnits(const Linear_T * p_linear, int32_t y)
-// {
-//     return linear_m16_invf(p_linear->InvSlope, p_linear->InvSlopeShift, p_linear->X0, p_linear->Y0, p_linear->YDelta, y);
-// }

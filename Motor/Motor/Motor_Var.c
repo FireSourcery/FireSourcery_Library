@@ -130,7 +130,7 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
     return value;
 }
 
-// alternatively var interface calls use sync buffer
+// alternatively user calls use Motor_Input buffer
 /* Calls to StateMachine use full context */
 void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue)
 {
@@ -140,13 +140,13 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
         case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_Direction_T)varValue);         break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);             break;
-        /* Set user index */
-        // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR, varValue);                  break;
-        // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR, varValue);                      break;
+        /* todo Set user index */
+        case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR, varValue);                  break;
+        case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR, varValue);                      break;
     }
 }
 
-// optionally get ramp target
+
 /* caller handle switch logic */
 void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue)
 {
@@ -403,13 +403,13 @@ int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId)
         // case MOTOR_VAR_REF_V_MAX_ADCU:              value = PHASE_ANALOG_V_MAX_ADCU;                               break;
         // case MOTOR_VAR_REF_I_MAX_ADCU:              value = PHASE_ANALOG_I_MAX_ADCU;                               break;
 
-        case MOTOR_VAR_REF_BOARD_V_RATED_VOLTS:     value = Phase_AnalogSensor_GetVRated();                         break;
-        case MOTOR_VAR_REF_BOARD_I_RATED_AMPS:      value = Phase_AnalogSensor_GetIRatedRms();                      break;
-        case MOTOR_VAR_REF_V_PHASE_R1:              value = PHASE_ANALOG_SENSOR_REF.V_PHASE_R1 / 10;       break;
-        case MOTOR_VAR_REF_V_PHASE_R2:              value = PHASE_ANALOG_SENSOR_REF.V_PHASE_R2 / 10;       break;
-        case MOTOR_VAR_REF_I_PHASE_R_BASE:          value = PHASE_ANALOG_SENSOR_REF.I_PHASE_R_BASE;        break;
-        case MOTOR_VAR_REF_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_SENSOR_REF.I_PHASE_R_MOSFETS;     break;
-        case MOTOR_VAR_REF_I_PHASE_GAIN:            value = PHASE_ANALOG_SENSOR_REF.I_PHASE_GAIN;          break;
+        case MOTOR_VAR_REF_BOARD_V_RATED_VOLTS:     value = Phase_AnalogCalibration_GetVRated();                         break;
+        case MOTOR_VAR_REF_BOARD_I_RATED_AMPS:      value = Phase_AnalogCalibration_GetIRatedRms();                      break;
+        case MOTOR_VAR_REF_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1 / 10;       break;
+        case MOTOR_VAR_REF_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2 / 10;       break;
+        case MOTOR_VAR_REF_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_REF_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_REF_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
 
     }
     return value;

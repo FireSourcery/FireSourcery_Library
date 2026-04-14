@@ -41,13 +41,13 @@
 /*
     Capture [FreqD] Pulse Frequency
     Call at SAMPLE_FREQ ~1ms
-    Delegates to AngleCounter_CaptureFreqD + PulseTimer_CaptureSampleTk
+    Delegates to AngleCounter_CaptureFreq + PulseTimer_CaptureSampleTk_Freq
 */
 static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
 {
     if (PulseTimer_IsExtendedStop(&p_encoder->TIMER) == false)
     {
-        AngleCounter_CaptureFreqD(&p_encoder->P_STATE->AngleCounter, PulseTimer_CaptureSampleTk(&p_encoder->TIMER));
+        AngleCounter_CaptureFreq(&p_encoder->P_STATE->AngleCounter, PulseTimer_CaptureSampleTk_Freq(&p_encoder->TIMER));
     }
     else
     {

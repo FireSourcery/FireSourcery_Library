@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,35 +24,30 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   AnalogReference.h
+    @file   Accumulator.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
+    @note   Stores internal state as shifted for precision, provides unshifted interface
 */
 /******************************************************************************/
-#ifndef ANALOG_REFERENCE_H
-#define ANALOG_REFERENCE_H
-
+#include "../math_general.h"
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Global Static Const  */
-typedef const struct Analog_Reference
+#include "Accumulator.h"
+
+
+/*
+    Fixed version. Ignore Shift field.
+*/
+#define ACCUM32_SHIFT 15
+
+static void Accumulator32_Init(Accumulator_T * p_accum, int16_t coefficient) { p_accum->Coefficient = (coefficient << ACCUM32_SHIFT); }
+
+static inline int32_t Accumulator32_Output(Accumulator_T * p_accum) { return (p_accum->Accumulator >> ACCUM32_SHIFT); }
+
+static inline int32_t Accumulator32_Step(Accumulator_T * p_accum, int16_t input)
 {
-    uint16_t ADC_BITS;
-    uint16_t ADC_MAX;
-    uint16_t ADC_VREF_MILLIV;
+    p_accum->Accumulator = accumulator(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, input);
+    return Accumulator32_Output(p_accum);
 }
-Analog_Reference_T;
-
-#define ANALOG_REFERENCE_ADC_MAX(AdcBits) ((1U << AdcBits) - 1U)
-#define ANALOG_REFERENCE_INIT(AdcBits, AdcVrefMilliv) (Analog_Reference_T){ .ADC_BITS = AdcBits, .ADC_MAX = ((1U << AdcBits) - 1U), .ADC_VREF_MILLIV = AdcVrefMilliv }
-
-/* Global Static. Define in Main App */
-extern const Analog_Reference_T ANALOG_REFERENCE;
-
-
-#endif
-
-// #define VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcMax, Adcu) ((VRef_MilliV * Adcu / AdcMax) / (Gain))
-// #define AMPS_OF_ADCU(Shunt, Gain, VRef_MilliV, AdcMax, Adcu) (VSAMPLE_OF_ADCU(Gain, VRef_MilliV, AdcMax, Adcu) / (Shunt))

@@ -220,6 +220,17 @@ typedef struct Motor_Config
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
 
+#if defined(MOTOR_DECOUPLE_ENABLE)
+    /*
+        dq cross-coupling decoupling coefficients.
+        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
+        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
+    */
+    fract16_t KLd_Fract16;
+    fract16_t KLq_Fract16;
+    fract16_t KPsi_Fract16;
+#endif
+
     /*
 
     */
@@ -473,8 +484,8 @@ static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vReq
 
 
 /* Current limit with shrink voltage range disproportionally, okay if voltage mode is for testing only */
-static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, Motor_VClamp(p_motor, req)); }
-// static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOnInputOf(&p_motor->VRamp, Motor_VClamp(p_motor, req)); }
+static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return _Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, Motor_VClamp(p_motor, req)); }
+// static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { return _Ramp_ProcNextOnInputOf(&p_motor->VRamp, Motor_VClamp(p_motor, req)); }
 
 /*
     Call ccw/cw using getters.

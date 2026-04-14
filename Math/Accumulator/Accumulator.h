@@ -35,9 +35,10 @@
 #include <stdbool.h>
 
 /*
-    Handle Shift coefficient shift by default
-        fract cases.
-        Sample Time
+    Integrator with Saturation forward rectangular approximation.
+
+    Internal state is kept shifted
+    Accumulator += input * Coefficient lands directly in shifted state.
 */
 typedef struct Accumulator
 {
@@ -46,25 +47,19 @@ typedef struct Accumulator
         value range [-UINT16_MAX:UINT16_MAX] => 2 * range << 14
         value range [-INT16_MAX:INT16_MAX]  => 2 * range << 15
     */
-    int32_t Accumulator; /* Output shifted */
+    int32_t Accumulator;    /* Shifted state; user-visible output = Accumulator >> Shift */
+    int32_t Coefficient;    /* Shifted gain K; Accumulator += input * Coefficient */
+    int8_t Shift;           /* Q-factor — bits of fractional precision in Accumulator */
 
-    int32_t Coefficient; /* shifted */
-    int8_t Shift;
+    int32_t LimitUpper;     /* Shifted upper saturation bound */
+    int32_t LimitLower;     /* Shifted lower saturation bound */
 
-    int32_t LimitUpper;
-    int32_t LimitLower;
-
-    // or caller handle union
-    uint16_t Index;
-    // uint16_t PrevInput;
-
-    // caller store config
-    // uint32_t SampleFreq;
-    // int32_t Coefficient;
+    uint16_t Index;         /* Sample counter (used by Avg) */
 }
 Accumulator_T;
 
 
+/* y(n) = clamp(y(n-1) + K·u(n), LimitLower, LimitUpper)  */
 static inline int32_t accumulator(int32_t rate, int32_t min, int32_t max, int32_t state, int32_t input)
 {
     return math_clamp(state + (rate * input), min, max);
@@ -75,48 +70,87 @@ static inline int32_t accumulator_target(int32_t rate, int32_t min, int32_t max,
     return accumulator(rate, min, max, state, math_sign(target32 - state));
 }
 
-/* Simple accumulation with coefficient scaling */
+/******************************************************************************/
+/*
+    Discrete-Time Integrator
+*/
+/******************************************************************************/
+static inline int32_t Accumulator_Output(Accumulator_T * p_accum) { return (p_accum->Accumulator >> p_accum->Shift); }
+
+/*
+    Unsaturated accumulation.
+*/
 static inline int32_t Accumulator_Add(Accumulator_T * p_accum, int16_t input)
 {
     p_accum->Accumulator += ((int32_t)input * p_accum->Coefficient);
-    return (p_accum->Accumulator >> p_accum->Shift);
+    return Accumulator_Output(p_accum);
 }
 
-// static inline int32_t Accumulator_Add_Sat(Accumulator_T * p_accum, int16_t input)
+/*
+    Forward Euler with saturation.
+*/
+static inline int32_t Accumulator_Step(Accumulator_T * p_accum, int16_t input)
+{
+    p_accum->Accumulator = accumulator(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, input);
+    return Accumulator_Output(p_accum);
+}
+
+/*
+    Ramp output toward target at ±Coefficient per step, saturated.
+    Target is unshifted (user-scale). Output settles on target when within one step.
+*/
+// static inline int32_t Accumulator_Ramp_Signed(Accumulator_T * p_accum, int32_t target)
 // {
-//     p_accum->Accumulator = accumulator(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, input);
-//     return (p_accum->Accumulator >> p_accum->Shift);
+//     int32_t error = (target << p_accum->Shift) - p_accum->Accumulator;
+//     int32_t step = math_clamp((int32_t)math_sign(error) * p_accum->Coefficient, -math_abs(error), math_abs(error));
+//     p_accum->Accumulator = math_clamp(p_accum->Accumulator + step, p_accum->LimitLower, p_accum->LimitUpper);
 // }
 
-// static inline int32_t Accumulator_Ramp(Accumulator_T * p_accum, int16_t target)
-// {
-//     return Accumulator_Add_Sat(p_accum, math_sign(target << p_accum->Shift - p_accum->Accumulator));
-// }
+static inline int32_t Accumulator_Ramp(Accumulator_T * p_accum, int32_t target)
+{
+    int32_t targetAccum = target << p_accum->Shift;
+    int32_t error = targetAccum - p_accum->Accumulator;
+    p_accum->Accumulator = (math_abs(error) <= (uint32_t)p_accum->Coefficient) ? targetAccum : (p_accum->Accumulator + math_sign(error) * (int32_t)p_accum->Coefficient);
+    return Accumulator_Output(p_accum);
+}
 
-/* Accessors */
-static inline int32_t Accumulator_GetOutput(const Accumulator_T * p_accum) { return (p_accum->Accumulator >> p_accum->Shift); }
-static inline void Accumulator_SetOutput(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = (value << p_accum->Shift); }
+/******************************************************************************/
+/*
+    Accessors
+*/
+/******************************************************************************/
+static inline void Accumulator_SetOutput(Accumulator_T * p_accum, int32_t value)
+{
+    p_accum->Accumulator = math_clamp((int32_t)value << p_accum->Shift, p_accum->LimitLower, p_accum->LimitUpper);
+}
 
-static inline int32_t Accumulator_GetCoefficient(const Accumulator_T * p_accum) { return p_accum->Coefficient >> p_accum->Shift; }
-// static inline int8_t Accumulator_GetShift(const Accumulator_T * p_accum) { return p_accum->Shift; }
-
-static inline int32_t Accumulator_GetLimitUpper(const Accumulator_T * p_accum) { return p_accum->LimitUpper; }
-static inline int32_t Accumulator_GetLimitLower(const Accumulator_T * p_accum) { return p_accum->LimitLower; }
-
+static inline int32_t Accumulator_Coefficient(const Accumulator_T * p_accum) { return p_accum->Coefficient >> p_accum->Shift; }
 static inline void Accumulator_SetCoefficient(Accumulator_T * p_accum, int32_t coefficient) { p_accum->Coefficient = coefficient; }
 
-static inline void Accumulator_SetLimits(Accumulator_T * p_accum, int16_t lower, int16_t upper)
+static inline int32_t Accumulator_LimitUpper(const Accumulator_T * p_accum) { return p_accum->LimitUpper >> p_accum->Shift; }
+static inline int32_t Accumulator_LimitLower(const Accumulator_T * p_accum) { return p_accum->LimitLower >> p_accum->Shift; }
+
+static inline void Accumulator_SetLimits(Accumulator_T * p_accum, int32_t lower, int32_t upper)
 {
     p_accum->LimitLower = ((int32_t)lower << p_accum->Shift);
     p_accum->LimitUpper = ((int32_t)upper << p_accum->Shift);
 }
 
-/* Status Functions */
+/******************************************************************************/
+/*
+    Status
+*/
+/******************************************************************************/
 static inline bool Accumulator_IsSaturatedHigh(const Accumulator_T * p_accum) { return (p_accum->Accumulator >= p_accum->LimitUpper); }
 static inline bool Accumulator_IsSaturatedLow(const Accumulator_T * p_accum) { return (p_accum->Accumulator <= p_accum->LimitLower); }
 static inline bool Accumulator_IsSaturated(const Accumulator_T * p_accum) { return Accumulator_IsSaturatedHigh(p_accum) || Accumulator_IsSaturatedLow(p_accum); }
 
-static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { p_accum->Accumulator = value << p_accum->Shift; }
+/******************************************************************************/
+/*
+    Reset
+*/
+/******************************************************************************/
+static inline void Accumulator_Reset(Accumulator_T * p_accum, int32_t value) { Accumulator_SetOutput(p_accum, value); }
 static inline void Accumulator_Clear(Accumulator_T * p_accum) { p_accum->Accumulator = 0; }
 
 
@@ -126,10 +160,7 @@ static inline void Accumulator_Clear(Accumulator_T * p_accum) { p_accum->Accumul
 */
 /******************************************************************************/
 /* external track index */
-static inline int32_t _Accumulator_Avg(Accumulator_T * p_accum, int32_t index, int32_t in)
-{
-    return Accumulator_Add(p_accum, in) / index;
-}
+static inline int32_t _Accumulator_Avg(Accumulator_T * p_accum, int32_t index, int32_t in) { return Accumulator_Add(p_accum, in) / index; }
 
 static inline int32_t Accumulator_Avg(Accumulator_T * p_accum, int32_t in)
 {
@@ -139,57 +170,7 @@ static inline int32_t Accumulator_Avg(Accumulator_T * p_accum, int32_t in)
 
 
 extern void Accumulator_Init(Accumulator_T * p_accum);
-
-
-/******************************************************************************/
-/*
-    Mathematical Utility Functions
-*/
-/******************************************************************************/
-
-// /*!
-//     @brief  Calculate coefficient from time constant
-//     @return Coefficient value
-//     @note   For exponential response: coeff = (1 << shift) / time_constant
-// */
-// static inline int32_t Accumulator_CoefficientFromTimeConstant(int32_t time_constant, int8_t shift)
-// {
-//     return (time_constant > 0) ? ((1 << shift) / time_constant) : (1 << shift);
-// }
-
-// /*!
-//     @brief  Calculate coefficient from alpha (0.0 to 1.0 range)
-//     @param  alpha_q16  Alpha value in Q0.16 format (0-65535)
-//     @return Coefficient scaled for specified shift
-// */
-// static inline int32_t Accumulator_CoefficientFromAlpha(int32_t alpha_q16, int8_t shift)
-// {
-//     return (alpha_q16 * (1 << shift)) >> 16;
-// }
-
-// /*!
-//     @brief  Calculate time constant from coefficient
-//     @return Time constant in samples
-// */
-// static inline int32_t Accumulator_TimeConstantFromCoefficient(int32_t coefficient, int8_t shift)
-// {
-//     return (coefficient > 0) ? ((1 << shift) / coefficient) : INT32_MAX;
-// }
-
-// /*!
-//     @brief  Scale coefficient for different shift value
-//     @return Scaled coefficient
-// */
-// static inline int32_t Accumulator_ScaleCoefficient(int32_t coefficient, int8_t old_shift, int8_t new_shift)
-// {
-//     if (new_shift > old_shift)
-//     {
-//         return coefficient << (new_shift - old_shift);
-//     }
-//     else
-//     {
-//         return coefficient >> (old_shift - new_shift);
-//     }
-// }
+extern void Accumulator_Init_Sat(Accumulator_T * p_accum, int8_t shift, int32_t coefficient, int32_t lower, int32_t upper, int32_t initial);
+extern void Accumulator_Init_AsFract16(Accumulator_T * p_accum, int16_t coefficient_param);
 
 

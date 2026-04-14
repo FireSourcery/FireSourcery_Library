@@ -52,7 +52,6 @@
     @param[in]  a, b, c
  */
  /******************************************************************************/
-// static inline void foc_clarke(accum32_t * p_alpha, accum32_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
 {
     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
@@ -133,13 +132,13 @@ static inline void foc_park_vector(fract16_t * p_d, fract16_t * p_q, fract16_t a
     *p_q = fract16_sat(q);
 }
 
-static inline void foc_park(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, fract16_t beta, angle16_t theta)
-{
-    fract16_t cos, sin;
+// static inline void foc_park(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, fract16_t beta, angle16_t theta)
+// {
+//     fract16_t cos, sin;
 
-    fract16_vector(&cos, &sin, theta);
-    foc_park_vector(p_d, p_q, alpha, beta, sin, cos);
-}
+//     fract16_vector(&cos, &sin, theta);
+//     foc_park_vector(p_d, p_q, alpha, beta, sin, cos);
+// }
 
 /******************************************************************************/
 /*!
@@ -158,13 +157,13 @@ static inline void foc_inv_park_vector(fract16_t * p_alpha, fract16_t * p_beta, 
     *p_beta = fract16_sat(beta);
 }
 
-static inline void foc_inv_park(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, angle16_t theta)
-{
-    fract16_t cos, sin;
+// static inline void foc_inv_park(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, angle16_t theta)
+// {
+//     fract16_t cos, sin;
 
-    fract16_vector(&cos, &sin, theta);
-    foc_inv_park_vector(p_alpha, p_beta, d, q, sin, cos);
-}
+//     fract16_vector(&cos, &sin, theta);
+//     foc_inv_park_vector(p_alpha, p_beta, d, q, sin, cos);
+// }
 
 /******************************************************************************/
 /*!
@@ -172,7 +171,39 @@ static inline void foc_inv_park(fract16_t * p_alpha, fract16_t * p_beta, fract16
     inlined for less redundant saturation
 */
 /******************************************************************************/
-static inline void foc_clarke_park(fract16_t * p_d, fract16_t * p_q, fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t cos)
+// static inline void foc_clarke_park(fract16_t * p_d, fract16_t * p_q, fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t cos)
+// {
+//     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
+//     int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
+
+//     int32_t d = fract16_mul(alpha, cos) + fract16_mul(beta, sin);
+//     int32_t q = -fract16_mul(alpha, sin) + fract16_mul(beta, cos);
+
+//     *p_d = fract16_sat(d);
+//     *p_q = fract16_sat(q);
+// }
+
+// static inline void foc_inv_clarke_park(fract16_t * p_a, fract16_t * p_b, fract16_t * p_c, fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
+// {
+//     int32_t alpha = fract16_mul(d, cos) - fract16_mul(q, sin);
+//     int32_t beta = fract16_mul(d, sin) + fract16_mul(q, cos);
+
+//     int32_t alpha_div2 = fract16_mul(alpha, FRACT16_1_DIV_2);
+//     int32_t beta_sqrt3_div2 = fract16_mul(beta, FRACT16_SQRT3_DIV_2);
+
+//     int32_t b = -alpha_div2 + beta_sqrt3_div2;
+//     int32_t c = -alpha_div2 - beta_sqrt3_div2;
+
+//     *p_a = fract16_sat(alpha);
+//     *p_b = fract16_sat(b);
+//     *p_c = fract16_sat(c);
+// }
+
+/* module returns */
+struct foc_abc { fract16_t a, b, c; };
+struct foc_dq { fract16_t d, q; };
+
+static inline struct foc_dq foc_clarke_park(fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t cos)
 {
     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
     int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
@@ -180,11 +211,10 @@ static inline void foc_clarke_park(fract16_t * p_d, fract16_t * p_q, fract16_t a
     int32_t d = fract16_mul(alpha, cos) + fract16_mul(beta, sin);
     int32_t q = -fract16_mul(alpha, sin) + fract16_mul(beta, cos);
 
-    *p_d = fract16_sat(d);
-    *p_q = fract16_sat(q);
+    return (struct foc_dq) { .d = fract16_sat(d), .q = fract16_sat(q) };
 }
 
-static inline void foc_inv_clarke_park(fract16_t * p_a, fract16_t * p_b, fract16_t * p_c, fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
+static inline struct foc_abc foc_inv_clarke_park(fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
 {
     int32_t alpha = fract16_mul(d, cos) - fract16_mul(q, sin);
     int32_t beta = fract16_mul(d, sin) + fract16_mul(q, cos);
@@ -195,10 +225,33 @@ static inline void foc_inv_clarke_park(fract16_t * p_a, fract16_t * p_b, fract16
     int32_t b = -alpha_div2 + beta_sqrt3_div2;
     int32_t c = -alpha_div2 - beta_sqrt3_div2;
 
-    *p_a = fract16_sat(alpha);
-    *p_b = fract16_sat(b);
-    *p_c = fract16_sat(c);
+    return (struct foc_abc) { .a = fract16_sat(alpha), .b = fract16_sat(b), .c = fract16_sat(c) };
 }
+
+/******************************************************************************/
+/*!
+    @brief  Cross-coupling decoupling feedforward for PMSM.
+
+    Cancels the speed-induced cross terms in the dq voltage equations:
+        Vd = R*Id + Ld*dId/dt  - omega_e*Lq*Iq
+        Vq = R*Iq + Lq*dIq/dt  + omega_e*Ld*Id + omega_e*psi_f
+
+    Feedforward to add to the PI output (before circle limit):
+        Vd_ff = -omega_e * Lq * Iq
+        Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
+
+    Caller precomputes the products as fract16 in the same per-unit basis as Vd/Vq:
+        omega_Ld  = omega_e * Ld
+        omega_Lq  = omega_e * Lq
+        omega_psi = omega_e * psi_f
+    Sign of omega_* follows electrical rotation (CCW positive).
+*/
+/******************************************************************************/
+static inline fract16_t foc_vd_ff(fract16_t iq, fract16_t omega_Lq) { return -fract16_mul(omega_Lq, iq); }
+static inline fract16_t foc_vq_ff(fract16_t id, fract16_t omega_Ld, fract16_t omega_psi) { return fract16_sat((accum32_t)fract16_mul(omega_Ld, id) + omega_psi); }
+
+static inline fract16_t foc_decouple_vd(fract16_t vd, fract16_t iq, fract16_t omega_Lq) { return fract16_sat((accum32_t)vd - fract16_mul(omega_Lq, iq)); }
+static inline fract16_t foc_decouple_vq(fract16_t vq, fract16_t id, fract16_t omega_Ld, fract16_t omega_psi) { return fract16_sat((accum32_t)vq + fract16_mul(omega_Ld, id) + omega_psi); }
 
 /******************************************************************************/
 /*!
@@ -211,61 +264,29 @@ static inline void foc_inv_clarke_park(fract16_t * p_a, fract16_t * p_b, fract16
 */
 /* vector_limit_clamp */
 /* applies vd limit on magnitude over limit only */
-// static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit, ufract16_t d_limit)
-// {
-//     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-//     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
-//     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-//     uint32_t d_limit_squared;
-//     uint16_t q_limit;
-//     bool is_limited = false;
+static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
+{
+    uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
+    uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
+    uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
+    bool is_limited = false;
 
-//     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
-//     {
-//         /* Apply d limit */
-//         d_limit_squared = (uint32_t)d_limit * d_limit;
-//         /* abs(d) > d_limit */
-//         if (d_squared > d_limit_squared)
-//         {
-//             *p_d = math_sign(*p_d) * d_limit;
-//             d_squared = d_limit_squared;
-//         }
+    if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
+    {
+        if (d_squared > mag_limit_squared)  /* abs(d) > d_limit */
+        {
+            *p_d = math_sign(*p_d) * magnitude_limit;
+            *p_q = 0;
+        }
+        else
+        {
+            *p_q = math_sign(*p_q) * fixed_sqrt(mag_limit_squared - d_squared);
+        }
+        is_limited = true;
+    }
 
-//         /* Apply q limit */
-//         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-//         *p_q = math_sign(*p_q) * q_limit;
-//         is_limited = true;
-//     }
-
-//     return is_limited;
-// }
-// static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
-// {
-//     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-//     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
-//     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-//     uint16_t q_limit;
-//     bool is_limited = false;
-
-//     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
-//     {
-//         /* abs(d) > d_limit */
-//         if (d_squared > mag_limit_squared)
-//         {
-//             *p_d = math_sign(*p_d) * magnitude_limit;
-//             d_squared = mag_limit_squared;
-//         }
-
-//         /* Apply q limit */
-//         q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-//         *p_q = math_sign(*p_q) * q_limit;
-//         is_limited = true;
-//     }
-
-//     return is_limited;
-// }
-
-
+    return is_limited;
+}
 
 /*  */
 static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
@@ -273,24 +294,16 @@ static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
     uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
     uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-    uint16_t q_limit;
     bool is_limited = false;
 
     if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
     {
-        q_limit = fixed_sqrt(mag_limit_squared - d_squared);
-        *p_q = math_sign(*p_q) * q_limit;
+        *p_q = math_sign(*p_q) * fixed_sqrt(mag_limit_squared - d_squared);
         is_limited = true;
     }
 
     return is_limited; /* or (d_squared + q_squared - mag_limit_squared)  */
 }
-
-
-// static inline fract16_t foc_circle_limit_q(fract16_t d, ufract16_t magnitude_limit)
-// {
-//     return fract16_vector_component(d, magnitude_limit);
-// }
 
 /******************************************************************************/
 /*!

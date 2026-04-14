@@ -40,32 +40,32 @@ extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTRO
     Status Flags for User Interface
     Combined boolean outputs for protocol convenience
 */
-typedef union MotorController_StatusFlags
-{
-    struct
-    {
-        uint16_t HeatWarning : 1U; // ILimit by Heat
-        uint16_t VSourceLow : 1U; // ILimit by VSourceLow
-        // uint16_t SpeedLimit         : 1U;
-        // uint16_t ILimit             : 1U;
-        // uint16_t BuzzerEnable       : 1U;
-        // derive from thermistor functions
-        // uint16_t ILimitHeatMosfets  : 1U;
-        // uint16_t ILimitHeatPcb      : 1U;
-        // uint16_t ILimitHeatMotors   : 1U;
-    };
-    uint16_t Value;
-}
-MotorController_StatusFlags_T;
+// typedef union MotorController_StatusFlags
+// {
+//     struct
+//     {
+//         uint16_t HeatWarning : 1U; // ILimit by Heat
+//         uint16_t VSourceLow : 1U; // ILimit by VSourceLow
+//         // uint16_t SpeedLimit         : 1U;
+//         // uint16_t ILimit             : 1U;
+//         // uint16_t BuzzerEnable       : 1U;
+//         // derive from thermistor functions
+//         // uint16_t ILimitHeatMosfets  : 1U;
+//         // uint16_t ILimitHeatPcb      : 1U;
+//         // uint16_t ILimitHeatMotors   : 1U;
+//     };
+//     uint16_t Value;
+// }
+// MotorController_StatusFlags_T;
 
-static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
-{
-    return (MotorController_StatusFlags_T)
-    {
-        // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
-        //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
-        // .HeatWarning    = p_dev->StateFlags.HeatWarning,
-        // .VSourceLow     = p_dev->StateFlags.VSourceLow,
-        // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
-    };
-}
+// static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
+// {
+//     return (MotorController_StatusFlags_T)
+//     {
+//         // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
+//         //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
+//         // .HeatWarning    = p_dev->StateFlags.HeatWarning,
+//         // .VSourceLow     = p_dev->StateFlags.VSourceLow,
+//         // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
+//     };
+// }

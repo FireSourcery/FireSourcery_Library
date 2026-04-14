@@ -53,7 +53,7 @@ void MotorController_Init(const MotorController_T * p_dev)
 
     VMonitor_Init(&p_dev->V_SOURCE);
     /* Overwrite */
-    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R1, .R2 = PHASE_ANALOG_SENSOR_REF.V_PHASE_R2, }, p_dev->V_SOURCE.P_LINEAR);
+    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_CALIBRATION.V_PHASE_R1, .R2 = PHASE_ANALOG_CALIBRATION.V_PHASE_R2, }, p_dev->V_SOURCE.P_LINEAR);
 
     VMonitor_Init(&p_dev->V_ACCESSORIES);
     VMonitor_Init(&p_dev->V_ANALOG);

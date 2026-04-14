@@ -42,38 +42,34 @@
 #ifndef PHASE_ANALOG_V_MAX_ADCU
 #define PHASE_ANALOG_V_MAX_ADCU (4096U)
 #define PHASE_ANALOG_V_FRACT16_SHIFT (3U)
-#define PHASE_ANALOG_V_FRACT16_ADCU_SCALAR (1L << PHASE_ANALOG_V_FRACT16_SHIFT)
+#define PHASE_ANALOG_V_FRACT16_FACTOR (1L << PHASE_ANALOG_V_FRACT16_SHIFT)
 #endif
 
 #ifndef PHASE_ANALOG_I_MAX_ADCU
 #define PHASE_ANALOG_I_MAX_ADCU (2048U)
 #define PHASE_ANALOG_I_FRACT16_SHIFT (4U)
-#define PHASE_ANALOG_I_FRACT16_ADCU_SCALAR (1L << PHASE_ANALOG_I_FRACT16_SHIFT)
+#define PHASE_ANALOG_I_FRACT16_FACTOR (1L << PHASE_ANALOG_I_FRACT16_SHIFT)
 #endif
 
+
+#ifndef PHASE_ANALOG_I_POLARITY
 #ifdef PHASE_ANALOG_I_SENSOR_INVERT
-#if   (PHASE_ANALOG_I_SENSOR_INVERT == false)
-#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
-#elif (PHASE_ANALOG_I_SENSOR_INVERT == true)
-#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (-1)
-#endif
+#define PHASE_ANALOG_I_POLARITY (-1)
 #else
-#define PHASE_ANALOG_I_SENSOR_INVERT (false)
-#define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR (1)
+#define PHASE_ANALOG_I_POLARITY (1)
 #endif
-// #define PHASE_ANALOG_I_SENSOR_INVERT_FACTOR ((PHASE_ANALOG_I_SENSOR_INVERT) ? -1 : 1)
+#endif
 
-static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_ADCU_SCALAR; }
-static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_ADCU_SCALAR * PHASE_ANALOG_I_SENSOR_INVERT_FACTOR); }
+static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_FACTOR; }
+static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY); }
 
 /******************************************************************************/
 /*
-    ADC Ref Sensor Calibration
+    ADC Sensor Calibration
     optionally store as base ref
-    Phase_AnalogBoard_T
 */
 /******************************************************************************/
-typedef const struct Phase_AnalogSensor
+typedef const struct Phase_AnalogCalibration
 {
     volatile uint32_t V_PHASE_R1;
     volatile uint32_t V_PHASE_R2;
@@ -85,26 +81,25 @@ typedef const struct Phase_AnalogSensor
     volatile uint16_t V_RATED;             /* VSource Limit */
     volatile uint16_t I_RATED_RMS;         /* */
 }
-Phase_AnalogSensor_T;
+Phase_AnalogCalibration_T;
 
-extern const Phase_AnalogSensor_T PHASE_ANALOG_SENSOR_REF;
+extern const Phase_AnalogCalibration_T PHASE_ANALOG_CALIBRATION;
 
-/* Init */
-// #define PHASE_ANALOG_I_MAX_INIT(Shunt_UOhm, Gain_10, VRef_MilliV) ((uint16_t)((1000.0F * VRef_MilliV * PHASE_ANALOG_I_MAX_ADCU / 4096) / ((Shunt) * (Gain) / 10.0F)))
+#define PHASE_ANALOG_V_MAX_VOLTS(VRef_mV, R1, R2) (((VRef_mV) * ((R1) + (R2))) + ((R2)*1000U/2U) / ((R2) * 1000U))
+/* (VRef_mV/2 * 1/1000) / (R_shunt_uOhm * 1/1000000 * Gain) */
+#define PHASE_ANALOG_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) ((500U * (VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U) / ((Shunt_uOhm) * (Gain)))
+// #define I_MAX_AMPS_(VRef_mV, Shunt_uOhm, Gain)  ((1000U * (VRef_mV)) / ((Shunt_uOhm) * (Gain)))
 
-static inline uint16_t Phase_AnalogSensor_GetVRated(void) { return PHASE_ANALOG_SENSOR_REF.V_RATED; }
-static inline uint16_t Phase_AnalogSensor_GetIRatedRms(void) { return PHASE_ANALOG_SENSOR_REF.I_RATED_RMS; }
+
+static inline uint16_t Phase_AnalogCalibration_GetVRated(void) { return PHASE_ANALOG_CALIBRATION.V_RATED; }
+static inline uint16_t Phase_AnalogCalibration_GetIRatedRms(void) { return PHASE_ANALOG_CALIBRATION.I_RATED_RMS; }
 
 /*
     Run-time conversion
 */
-static inline uint16_t Phase_AnalogSensor_GetVRated_Fract16(void) { return fract16(Phase_AnalogSensor_GetVRated(), Phase_Calibration_GetVMaxVolts()); }
-static inline uint16_t Phase_AnalogSensor_GetIRatedPeak_Fract16(void) { return (uint32_t)Phase_AnalogSensor_GetIRatedRms() * FRACT16_SQRT2 / Phase_Calibration_GetIMaxAmps(); }
+static inline uint16_t Phase_AnalogCalibration_GetVRated_Fract16(void) { return fract16(Phase_AnalogCalibration_GetVRated(), Phase_Calibration_GetVMaxVolts()); }
+static inline uint16_t Phase_AnalogCalibration_GetIRatedPeak_Fract16(void) { return (uint32_t)Phase_AnalogCalibration_GetIRatedRms() * FRACT16_SQRT2 / Phase_Calibration_GetIMaxAmps(); }
 
-// void InitUnitsVSource(void)
-// {
-//     Linear_Voltage_Init(&UnitsVSource_V, PHASE_CALIBRATION.V_ABC_R1, PHASE_CALIBRATION.V_ABC_R2, ANALOG_REFERENCE.ADC_VREF_MILLIV, ANALOG_REFERENCE.ADC_BITS);
-// }
 
 /******************************************************************************/
 /*!
