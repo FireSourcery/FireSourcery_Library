@@ -205,10 +205,8 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
-    int time = Micros();
     int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VRampOf(p_motor, p_motor->UserTorqueReq);
     Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->SensorState.AngleSpeed), 0, qReq);
-    p_motor->DebugCounter = Micros() - time;
 }
 
 /*

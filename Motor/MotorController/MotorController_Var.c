@@ -82,7 +82,7 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_dev, MotorCo
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
         case MOT_VAR_DEBUG0: value = 0;             break;
-        case MOT_VAR_DEBUG1: value = p_motorState->DebugCounter;          break;
+        case MOT_VAR_DEBUG1: value = 0;             break;
         case MOT_VAR_DEBUG2: value = 0;     break;
         case MOT_VAR_DEBUG3: value = 0;    break;
         case MOT_VAR_DEBUG4: value = 0;    break;
