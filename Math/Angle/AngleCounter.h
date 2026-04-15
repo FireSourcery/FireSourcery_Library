@@ -44,7 +44,7 @@
 typedef struct AngleCounter_Ref
 {
     /* wrapping angle */
-    angle16_t AnglePerCount;        /* AngleD Unit */
+    // angle16_t AnglePerCount;        /* AngleD Unit */
     uint32_t Angle32PerCount;       /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
 
     /* positive only signed for umambigous multiply with deltaD */
@@ -198,7 +198,7 @@ static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->Co
 /******************************************************************************/
 static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const AngleCounter_Config_T * p_config)
 {
-    p_ref->AnglePerCount = angle_per_count(p_config->CountsPerRevolution);
+    // p_ref->AnglePerCount = angle_per_count(p_config->CountsPerRevolution);
     p_ref->Angle32PerCount = angle32_per_count(p_config->CountsPerRevolution);
     p_ref->AngleSpeed32PerCount = angle32_speed_per_count(p_config->PollingFreq, p_ref->Angle32PerCount);
     p_ref->CountsPerRevolution = p_config->CountsPerRevolution;

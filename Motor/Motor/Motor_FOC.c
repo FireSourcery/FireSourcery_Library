@@ -106,6 +106,7 @@ static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int1
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
     {
+        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->PidIq)) { PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); }
         _PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
     }
 }

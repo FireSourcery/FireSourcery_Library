@@ -114,13 +114,6 @@ static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
     return _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
 
-static inline ufract16_t _FOC_CircleLimit(FOC_T * p_foc, ufract16_t vPhaseLimit, fract16_t vd)
-{
-    assert(abs(vd) <= vPhaseLimit); /* set by feedback output */
-    p_foc->Vd = vd;
-    return fixed_sqrt((uint32_t)vPhaseLimit * vPhaseLimit - (int32_t)p_foc->Vd * p_foc->Vd);
-}
-
 static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vPhaseLimit)
 {
     assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
@@ -130,6 +123,12 @@ static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vPha
 static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
 {
     return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
+}
+
+static inline ufract16_t _FOC_CircleLimit(FOC_T * p_foc, ufract16_t vPhaseLimit, fract16_t vd)
+{
+    p_foc->Vd = vd;
+    return _FOC_VqCircleLimit(p_foc, vPhaseLimit);
 }
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)

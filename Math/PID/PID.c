@@ -119,7 +119,7 @@ int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
 #ifndef NDEBUG
     // int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
-    if(!math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX)) { return p_pid->Output; } /* alternatively saturate error, but it may cause unexpected behavior. */
+    if(!math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX)) { return 0; }
 #endif
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;

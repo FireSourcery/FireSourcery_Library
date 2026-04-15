@@ -180,7 +180,7 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 static inline void Angle_ResolveInterpolationDelta(Angle_T * p_angle)
 {
     assert(math_abs(p_angle->Delta) < (int32_t)ANGLE16_PER_REVOLUTION / 2); /* sanity check speed is within range for interpolation */
-    p_angle->Interpolation.Delta = math_abs(p_angle->Delta) << ANGLE32_SHIFT; /* shift up for accumulation, preserves sign */
+    p_angle->Interpolation.Delta = math_abs(p_angle->Delta) << ANGLE32_SHIFT;
 }
 
 /* Disable until next edge */
@@ -199,6 +199,8 @@ static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
     p_angle->Interpolation.Sum = math_limit_upper(p_angle->Interpolation.Sum + p_angle->Interpolation.Delta, p_angle->Interpolation.Limit);
     return math_sign(p_angle->Delta) * (int32_t)(p_angle->Interpolation.Sum >> ANGLE32_SHIFT);
+
+    // return p_angle->Angle + math_sign(p_angle->Delta) * (int32_t)(p_angle->Interpolation.Sum >> ANGLE32_SHIFT);
 }
 
 static inline angle16_t Angle_InterpolateIndex(Angle_T * p_angle, size_t index)

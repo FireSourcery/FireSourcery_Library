@@ -62,6 +62,9 @@ static inline int32_t math_clamp_abs(int32_t x, int32_t limit)
 // static inline int32_t math_clamp_0_up(int32_t value )  { return (value > 0) * value; }
 // static inline int32_t math_clamp_0_down(int32_t value )  { return (value < 0) * value; }
 
+static inline bool math_in_wrap_window(int32_t x, int32_t lo, int32_t hi) { return (uint32_t)(x - lo) <= (uint32_t)(hi - lo); }
+
+
 static inline bool math_is_in_range(int32_t value, int32_t lower, int32_t upper) { return (value >= lower) && (value <= upper); }
 static inline bool math_is_out_of_range(int32_t value, int32_t lower, int32_t upper) { return (value < lower) || (value > upper); }
 

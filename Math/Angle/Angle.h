@@ -119,7 +119,6 @@ static inline angle16_t Angle_GetDelta16(const Angle_T * p_angle) { return (angl
 static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16) { p_angle->Angle = (int32_t)angle16 << ANGLE32_SHIFT; }
 
 /* Capture per-cycle delta from angle16 source */
-/*  assert(math_abs(delta_degPerCycle) < ANGLE16_PER_REVOLUTION / 2); */
 static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta_degPerCycle) { p_angle->Delta = (int32_t)delta_degPerCycle << ANGLE32_SHIFT; }
 
 /******************************************************************************/
@@ -186,25 +185,18 @@ static inline void Angle_SetLimitsAngle(Angle_T * p_angle, angle16_t lower, angl
 static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
 {
     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
-
-    p_angle->LimitUpper = p_angle->Angle + ((p_angle->Delta > 0) * width_shifted);
-    p_angle->LimitLower = p_angle->Angle + ((p_angle->Delta < 0) * -width_shifted);
+    if (p_angle->Delta >= 0)
+    {
+        p_angle->LimitUpper = p_angle->Angle + width_shifted;
+        p_angle->LimitLower = p_angle->Angle;
+    }
+    else
+    {
+        p_angle->LimitUpper = p_angle->Angle;
+        p_angle->LimitLower = p_angle->Angle - width_shifted;
+    }
 }
 
-// static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
-// {
-//     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
-//     if (p_angle->Delta >= 0)
-//     {
-//         p_angle->LimitUpper = p_angle->Angle + width_shifted;
-//         p_angle->LimitLower = p_angle->Angle;
-//     }
-//     else
-//     {
-//         p_angle->LimitUpper = p_angle->Angle;
-//         p_angle->LimitLower = p_angle->Angle - width_shifted;
-//     }
-// }
 /*
     Init: zero state + set symmetric bounds ±limit_angle16 around zero.
 */
@@ -233,34 +225,60 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 */
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
-    int32_t next = p_angle->Angle + p_angle->Delta;
-    uint32_t span = (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower);
-    uint32_t offset = (uint32_t)(next - p_angle->LimitLower);
+    /*  assert(math_abs(p_angle->Delta >> ANGLE32_SHIFT) < ANGLE16_PER_REVOLUTION / 2); */
+    /* (x − low) > (high − low) */
+    if ((uint32_t)(p_angle->Angle + p_angle->Delta - p_angle->LimitLower) > (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower))
+    {
+        p_angle->Angle = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
+    }
+    else
+    {
+        p_angle->Angle += p_angle->Delta;
+    }
 
-    if (offset > span) next = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
-
-    p_angle->Angle = next;
     return Angle_GetAngle16(p_angle);
 }
 
-/*
-    One-sided clamped step toward Limit in the direction of Delta.
-        Delta >= 0 : Angle = min(Angle + Delta, Limit)
-        Delta <  0 : Angle = max(Angle + Delta, Limit)
-    Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
-*/
+// /*
+//     One-sided clamp on step
+//         Delta >= 0 : Angle = min(Angle + Delta, Limit)
+//         Delta <  0 : Angle = max(Angle + Delta, Limit)
+// */
+// static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
+// {
+//     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
+//     p_angle->Limit = p_angle->Angle + math_sign(p_angle->Delta) * width_shifted;
+// }
+
+/* 	Step is pinned in [−room, 0] or [0, +room] */
 // static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 // {
-//     int32_t next = p_angle->Angle + p_angle->Delta;
-//     p_angle->Angle = (p_angle->Delta >= 0) ? math_min(next, p_angle->Limit) : math_max(next, p_angle->Limit);
+//     int32_t upper = math_max((uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle, 0);
+//     int32_t lower = math_min((uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle, 0);
+//     p_angle->Angle += math_clamp(p_angle->Delta, lower, upper);
 //     return Angle_GetAngle16(p_angle);
 // }
 
-static inline angle16_t Angle_InterpolateAbs(Angle_T * p_angle)
-{
-    p_angle->Angle = math_min(p_angle->Angle + p_angle->Delta, p_angle->LimitUpper);
-    return Angle_GetAngle16(p_angle);
-}
+/* [down_room, up_room] */
+// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
+// {
+//     int32_t upper = (uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle;
+//     int32_t lower = (uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle;
+//     p_angle->Angle += math_clamp(p_angle->Delta, lower, upper);
+//     return Angle_GetAngle16(p_angle);
+// }
+
+
+/******************************************************************************/
+/*
+    as progress state
+*/
+/******************************************************************************/
+// static inline angle16_t Angle_InterpolateAbs(Angle_T * p_angle)
+// {
+//     p_angle->Angle = math_min(p_angle->Angle + p_angle->Delta, p_angle->LimitUpper);
+//     return Angle_GetAngle16(p_angle);
+// }
 
 static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
 {
@@ -323,11 +341,3 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 //     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
 // }
 // Angle_Data_T;
-
-/* One-shot bounded integration with an external limit — stateless variant for ramps */
-// static inline angle16_t Angle_InterpolateUpTo(Angle_T * p_angle, int32_t limit_shifted)
-// {
-//     p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -limit_shifted, limit_shifted);
-//     return Angle_GetAngle16(p_angle);
-// }
-// p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -p_angle->Limit, p_angle->Limit);
