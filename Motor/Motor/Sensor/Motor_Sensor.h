@@ -64,3 +64,10 @@
 // }
 // Motor_Sensor_CalibrationStatus_T;
 
+// static bool Motor_Sensor_Validate(const Motor_T * p_motor, RotorSensor_Id_T id, int varValue)
+// {
+//     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, id)) return;
+//     if (p_motor->P_MOTOR->Config.SensorMode != id) return;
+// }
+
+

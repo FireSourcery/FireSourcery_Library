@@ -124,8 +124,6 @@ void Motor_Hall_Calibrate(const Motor_T * p_motor)
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-
-
 void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
 {
     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
@@ -137,3 +135,17 @@ void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
         default:  Motor_Hall_Calibrate(p_motor); break;
     }
 }
+
+// void Motor_Hall_GetStateVar(const Motor_T * p_motor, int varId, int varValue)
+// {
+//     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
+//     if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_HALL) return;
+
+//     switch (varId)
+//     {
+//         case 0:   Hall_VarId_Get(p_motor); break;
+//     }
+// }
+
+
+

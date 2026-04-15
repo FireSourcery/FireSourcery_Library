@@ -386,7 +386,7 @@ typedef struct Motor_State
 
 #if  defined(MOTOR_DEBUG_ENABLE) && !defined(NDEBUG)
     // volatile uint32_t MicrosRef;
-    // volatile uint32_t DebugCounter;
+    volatile uint32_t DebugCounter;
 #endif
 }
 Motor_State_T;

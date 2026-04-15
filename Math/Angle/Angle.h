@@ -191,6 +191,20 @@ static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle
     p_angle->LimitLower = p_angle->Angle + ((p_angle->Delta < 0) * -width_shifted);
 }
 
+// static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
+// {
+//     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
+//     if (p_angle->Delta >= 0)
+//     {
+//         p_angle->LimitUpper = p_angle->Angle + width_shifted;
+//         p_angle->LimitLower = p_angle->Angle;
+//     }
+//     else
+//     {
+//         p_angle->LimitUpper = p_angle->Angle;
+//         p_angle->LimitLower = p_angle->Angle - width_shifted;
+//     }
+// }
 /*
     Init: zero state + set symmetric bounds ±limit_angle16 around zero.
 */
@@ -210,13 +224,22 @@ static inline void Angle_ZeroAngle(Angle_T * p_angle) { p_angle->Angle = 0; }
 /* Disable integration until next Delta update */
 static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
+
 /*
-    Bounded step. Angle = clamp(Angle + Delta, LimitLower, LimitUpper).
-    Branchless on ARM. Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
+    Bounded step — wrapping-aware clamp.
+    Unsigned subtraction recovers the correct span/offset even when limits
+    overflow int32_t at the 0°/360° boundary in Q16.16.
+    Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
 */
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
-    p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, p_angle->LimitLower, p_angle->LimitUpper);
+    int32_t next = p_angle->Angle + p_angle->Delta;
+    uint32_t span = (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower);
+    uint32_t offset = (uint32_t)(next - p_angle->LimitLower);
+
+    if (offset > span) next = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
+
+    p_angle->Angle = next;
     return Angle_GetAngle16(p_angle);
 }
 
@@ -239,11 +262,11 @@ static inline angle16_t Angle_InterpolateAbs(Angle_T * p_angle)
     return Angle_GetAngle16(p_angle);
 }
 
-// static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
-// {
-//     p_angle->Angle += p_angle->Delta;
-//     return Angle_GetAngle16(p_angle);
-// }
+static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
+{
+    p_angle->Angle += p_angle->Delta;
+    return Angle_GetAngle16(p_angle);
+}
 
 
 /******************************************************************************/
@@ -307,3 +330,4 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 //     p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -limit_shifted, limit_shifted);
 //     return Angle_GetAngle16(p_angle);
 // }
+// p_angle->Angle = math_clamp(p_angle->Angle + p_angle->Delta, -p_angle->Limit, p_angle->Limit);

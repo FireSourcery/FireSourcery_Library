@@ -112,10 +112,8 @@ static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int1
 
 
 /* Set Vdq */
-static void ProcInnerFeedback(Motor_State_T * p_motor, angle16_t theta, int16_t dReq, int16_t qReq)
+static void ProcInnerFeedback(Motor_State_T * p_motor, int16_t dReq, int16_t qReq)
 {
-    FOC_SetTheta(&p_motor->Foc, theta);
-
     if (CaptureIabc(p_motor) == true)    /* else update angle only for voutput, until next cycle */
     {
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
@@ -150,10 +148,11 @@ static void ProcAngleOutput(Motor_State_T * p_motor)
     Activate angle with or without current feedback
     Req dq to Vabc to Duty abc
 */
-void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq)
+void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
-    //split capture feedback
-    ProcInnerFeedback(p_motor, angle, dReq, qReq);
+    FOC_SetTheta(&p_motor->Foc, theta);
+    // split capture feedback
+    ProcInnerFeedback(p_motor, dReq, qReq);
     ProcAngleOutput(p_motor);
 }
 
@@ -162,9 +161,9 @@ void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fract16_t 
     set once, no feedback
     SetVAngle
 */
-void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq)
+void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    FOC_SetTheta(&p_motor->Foc, angle);
+    FOC_SetTheta(&p_motor->Foc, theta);
     FOC_SetVd(&p_motor->Foc, vd);
     FOC_SetVq(&p_motor->Foc, vq);
     // circle limit here if needed
@@ -206,9 +205,10 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
-
+    int time = Micros();
     int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VRampOf(p_motor, p_motor->UserTorqueReq);
     Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->SensorState.AngleSpeed), 0, qReq);
+    p_motor->DebugCounter = Micros() - time;
 }
 
 /*
