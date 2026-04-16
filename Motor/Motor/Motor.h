@@ -220,16 +220,28 @@ typedef struct Motor_Config
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
 
-#if defined(MOTOR_DECOUPLE_ENABLE)
-    /*
-        dq cross-coupling decoupling coefficients.
-        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
-        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
-    */
-    fract16_t KLd_Fract16;
-    fract16_t KLq_Fract16;
-    fract16_t KPsi_Fract16;
-#endif
+//     /*
+//         Identified electrical parameters. User-readable SI units.
+//         Populated by CALIBRATION_STATE_ELECTRICAL (Motor_Calibration_Electrical.c).
+//         Rs_Fract16 is the normalized form: Rs / R_REF where R_REF = V_MAX_VOLTS / I_MAX_AMPS.
+//         Ld/Lq fract16 in-loop forms are KLd_Fract16 / KLq_Fract16 below (auto-derived at commit).
+//     */
+//     uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
+//     uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
+//     uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
+//     fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
+
+// #if defined(MOTOR_DECOUPLE_ENABLE)
+//     /*
+//         dq cross-coupling decoupling coefficients.
+//         Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
+//         Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
+//         Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
+//     */
+//     fract16_t KLd_Fract16;
+//     fract16_t KLq_Fract16;
+//     fract16_t KPsi_Fract16;
+// #endif
 
     /*
 
@@ -281,10 +293,6 @@ typedef struct Motor_State
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
     uint8_t CalibrationStateIndex;
-
-    // State_Active_T InterventionState;
-    // State_Active_T DirectionState;
-    // State_Active_T FeedbackState;
 
     /*
         Position Sensor
@@ -353,6 +361,37 @@ typedef struct Motor_State
     Accumulator_T FilterA;           /* Calibration use */
     Accumulator_T FilterB;
     Accumulator_T FilterC;
+    // /*
+    //     Electrical parameter identification scratch. Used by CALIBRATION_STATE_ELECTRICAL.
+    // */
+    // struct Motor_ParamId
+    // {
+    //     uint8_t  Step;              /* Motor_ParamId_Step_T */
+    //     uint32_t CycleCount;        /* cycles within current step */
+    //     fract16_t IdBias;           /* aligned Id setpoint */
+    //     /* accumulators */
+    //     int64_t  VdAccum;
+    //     int64_t  IdAccum;
+    //     uint32_t AccumN;
+    //     /* Ld step */
+    //     fract16_t VdBias;
+    //     fract16_t VdStep;
+    //     int16_t   IdSteady;
+    //     uint32_t  IdTauCycles;
+    //     /* Lq HFI */
+    //     angle16_t HfiPhase;
+    //     angle16_t HfiDelta;
+    //     int64_t   IqSumI;
+    //     int64_t   IqSumQ;
+    //     uint16_t  VhfAmpFract16;
+    //     uint16_t  HfFreqHz;
+    //     /* interim results */
+    //     uint16_t  Rs_MilliOhms;
+    //     uint16_t  Ld_MicroHenries;
+    //     uint16_t  Lq_MicroHenries;
+    //     fract16_t Rs_Fract16;
+    // }
+    // ParamId;
 
     /*
         Local Unit Conversion
@@ -458,13 +497,6 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
 /******************************************************************************/
 /*
     Run/Feedback State Limits
-*/
-/******************************************************************************/
-
-
-/******************************************************************************/
-/*
-    Ramp
 */
 /******************************************************************************/
 /* Ccw/Cw internal reference */

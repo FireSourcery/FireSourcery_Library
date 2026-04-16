@@ -50,7 +50,7 @@
         │
         └─ MAIN State
             │
-            └─ TRACTION Substate (Traction Level)
+            └─ TRACTION (Specialized Level)
                 │
                 ├─ NEUTRAL ───────► Motors: PASSIVE, Direction: CW/CCW (retained)
                 │                   Output: Float (or brake if commanded)

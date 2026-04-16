@@ -58,8 +58,8 @@ extern const Phase_Calibration_T PHASE_CALIBRATION;
 #define PHASE_V_TYPE_MAX_VOLTS PHASE_CALIBRATION.V_MAX_VOLTS
 #define PHASE_I_TYPE_MAX_AMPS PHASE_CALIBRATION.I_MAX_AMPS
 #else /* Compile time def only */
-#define PHASE_I_FRACT16(amps)   FRACT16((float)amps / I_MAX_AMPS)
-#define PHASE_V_FRACT16(volts)  FRACT16((float)volts / V_MAX_VOLTS)
+#define PHASE_V_FRACT16(volts)  FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
+#define PHASE_I_FRACT16(amps)   FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
 #endif
 
 
@@ -98,3 +98,20 @@ static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract1
 static inline accum32_t Phase_V_Fract16OfVolts(int16_t volts) { return volts * INT16_MAX / Phase_Calibration_GetVMaxVolts(); }
 static inline int16_t   Phase_V_VoltsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetVMaxVolts() / 32768; }
 static inline accum32_t Phase_Power_VAOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() * Phase_Calibration_GetVMaxVolts() / 32768; }
+
+/*
+    Resistance / Inductance conversions
+    R_REF = V_MAX_VOLTS / I_MAX_AMPS [Ohm]
+    Rs_Fract16 represents (R_Ohm / R_REF) in fract16.
+    Rs_MilliOhms = Rs_Fract16 * V_MAX_VOLTS * 1000 / (I_MAX_AMPS * 32768)
+    L conversions not fract16-based; inductance lives in uH directly. See KL*_Fract16 in Motor_Config_T for in-loop use.
+*/
+static inline accum32_t Phase_R_Fract16OfMilliOhms(uint16_t milliOhms)
+{
+    return ((accum32_t)milliOhms * Phase_Calibration_GetIMaxAmps() * INT16_MAX) / ((accum32_t)Phase_Calibration_GetVMaxVolts() * 1000);
+}
+
+static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
+{
+    return ((accum32_t)fract16 * Phase_Calibration_GetVMaxVolts() * 1000) / ((accum32_t)Phase_Calibration_GetIMaxAmps() * 32768);
+}

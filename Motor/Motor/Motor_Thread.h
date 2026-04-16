@@ -48,7 +48,6 @@
 /******************************************************************************/
 static inline void Motor_MarkAnalog_Thread(const Motor_T * p_dev)
 {
-    // or caller handle offset
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
 
@@ -57,29 +56,24 @@ static inline void Motor_MarkAnalog_Thread(const Motor_T * p_dev)
     Motor_PWM_Thread
 */
 /******************************************************************************/
-
-
-
 /*
-    Default 50us
+    ~50us
     Calling function clears interrupt flag
 */
 static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 {
     Motor_State_T * p_fields = p_dev->P_MOTOR;
-
-    // p_fields->MicrosRef = SysTime_GetMicros();
-
     Motor_CaptureSensor(p_dev);
 
+    // _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
     StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
 
     /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */
     // if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_FOC_WriteDuty(p_dev); } /* all substate must write to interface */
-    // Phase_WriteDuty_Fract16_Thread(&p_dev->PHASE, FOC_DutyA(&p_fields->Foc), FOC_DutyB(&p_fields->Foc), FOC_DutyC(&p_fields->Foc));
+    // Phase_WriteDuty_Thread(&p_dev->PHASE, motor->dutytriplet);
 
-     p_fields->ControlTimerBase++;
+    p_fields->ControlTimerBase++;
 }
 
 /* Controls StateMachine Proc. Local Critical */

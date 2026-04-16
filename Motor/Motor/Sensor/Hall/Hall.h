@@ -155,8 +155,6 @@ typedef const struct Hall
     Pin_T PIN_A;
     Pin_T PIN_B;
     Pin_T PIN_C;
-    // HAL_Timer_T * P_HAL_TIMER;    /*!< DeltaT Timer. */
-    // uint32_t TIMER_FREQ;                          /*!< DeltaT Timer Freq. Divisible by SAMPLE_FREQ */
     Hall_State_T * P_STATE;
     const Hall_Config_T * P_NVM_CONFIG;
 }
@@ -291,17 +289,6 @@ static inline bool Hall_PollCaptureSensors(const Hall_T * p_hall)
     if (isEdge) { _Hall_CaptureSensors(p_hall->P_STATE, sensors); }
     return isEdge;
 }
-
-// static inline Hall_Direction_T _Hall_CaptureEdge(Hall_State_T * p_state, Hall_Sensors_T sensors)
-// {
-//     if (p_state->Sensors.Value != sensors.Value) { _Hall_CaptureSensors(p_state, sensors); }
-//     return _Hall_DirectionOf(p_state->IdPrev, p_state->Id);
-// }
-
-// static inline Hall_Direction_T Hall_PollEdge(const Hall_T * p_hall)
-// {
-//     return _Hall_CaptureEdge(p_hall->P_STATE, Hall_ReadSensors(p_hall));
-// }
 
 /*
     return true once per electrical cycle

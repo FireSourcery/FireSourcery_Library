@@ -52,7 +52,7 @@ typedef struct PulseTimer_State
     /* Timer Capture */
     uint32_t DeltaT;        /* Timer counts between 2 pulse edges. Units in raw timer ticks */
     uint32_t SampleTh;       /* Ts timer value at last sample */
-    uint32_t SampleT;
+    // uint32_t SampleTk;
 
     /* Extended Timer */
     uint32_t ExtendedTimer;
@@ -120,14 +120,11 @@ PulseTimer_T;
 // #endif
 // }
 
-
-
 /******************************************************************************/
 /*!
     @brief  Capture Sample Time - Pulse Edge Polling/ISR
 */
 /******************************************************************************/
-
 /*
     Capture DeltaT - Pulse Edge Polling/ISR
     [0:PULSE_TIMER_MAX] => (0xFFFF / TIMER_FREQ) [seconds]

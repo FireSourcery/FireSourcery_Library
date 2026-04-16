@@ -153,15 +153,15 @@ static inline uint8_t MotorController_Var_GetHeatMosfetCount(const MotorControll
 static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController_T * p_dev) { return (p_dev->V_SOURCE.P_STATE != NULL) + (p_dev->V_ACCESSORIES.P_STATE != NULL) + (p_dev->V_ANALOG.P_STATE != NULL); }
 static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController_T * p_dev) { return p_dev->PROTOCOL_COUNT; }
 
-int MotorController_InstancesRef_Get(const MotorController_T * p_dev, MotorController_Var_StaticRef_T nameBase)
+int MotorController_InstancesRef_Get(const MotorController_T * p_dev, MotorController_Var_Board_T nameBase)
 {
     switch (nameBase)
     {
-        case MOT_VAR_REF_MOTOR_COUNT:               return MotorController_Var_GetMotorCount(p_dev);
-        case MOT_VAR_REF_V_MONITOR_COUNT:           return MotorController_Var_GetVMonitorCount(p_dev);
-        case MOT_VAR_REF_THERMISTOR_MOSFETS_COUNT:  return MotorController_Var_GetHeatMosfetCount(p_dev);
-        case MOT_VAR_REF_PROTOCOL_SOCKET_COUNT:     return MotorController_Var_GetProtocolCount(p_dev);
-        case MOT_VAR_REF_CAN_SOCKET_COUNT:          return 0; /* not yet implemented */
+        case MOT_VAR_BOARD_MOTOR_COUNT:               return MotorController_Var_GetMotorCount(p_dev);
+        case MOT_VAR_BOARD_V_MONITOR_COUNT:           return MotorController_Var_GetVMonitorCount(p_dev);
+        case MOT_VAR_BOARD_THERMISTOR_MOSFETS_COUNT:  return MotorController_Var_GetHeatMosfetCount(p_dev);
+        case MOT_VAR_BOARD_PROTOCOL_SOCKET_COUNT:     return MotorController_Var_GetProtocolCount(p_dev);
+        case MOT_VAR_BOARD_CAN_SOCKET_COUNT:          return 0; /* not yet implemented */
         default: return 0;
     }
 }
@@ -261,8 +261,8 @@ static int _HandleVMonitor_Get(const MotorController_T * p_dev, MotVarId_T varId
         case MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER:
             switch (varId.Base)
             {
-                case VDIVIDER_BOARD_R1: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R1);
-                case VDIVIDER_BOARD_R2: return Motor_Var_StaticRef_Get(MOTOR_VAR_REF_V_PHASE_R2);
+                case VDIVIDER_BOARD_R1: return Motor_Var_Board_Get(MOTOR_VAR_BOARD_V_PHASE_R1);
+                case VDIVIDER_BOARD_R2: return Motor_Var_Board_Get(MOTOR_VAR_BOARD_V_PHASE_R2);
                 default: return 0;
             }
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_dev->V_ACCESSORIES, varId.Base);
@@ -521,6 +521,11 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_dev, MotVa
             break;
     }
     return MOT_VAR_STATUS_OK;
+
+    // VarAccess_Table TABLE[] =
+    // {
+    //     [MACRO(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD)] = {.CheckSet = MotorController_IsMotorCmdState, .Getter = _Motor_Var_StateCmd_Get, .Setter = _Motor_Var_StateCmd_Set },
+    // }
 }
 
 /******************************************************************************/

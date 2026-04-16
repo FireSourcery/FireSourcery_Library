@@ -29,7 +29,7 @@
     @brief  Common Interface for Angle and Speed state
 */
 /******************************************************************************/
-#include "angle_speed_fn.h"
+#include "angle_speed_math.h"
 #include "../Fixed/fract16.h"
 
 #include <stdint.h>
@@ -63,43 +63,6 @@ typedef struct Angle
     int32_t LimitLower;
 }
 Angle_T;
-
-
-/*
-    Runtime Precomputed Ref
-*/
-typedef struct Angle_SpeedFractRef
-{
-    angle16_t SpeedMax_Angle16; /* DegPerCycle */
-    uint32_t InvSpeedMax_Fract32; /* CyclesPerDeg */
-    // uint32_t PollingFreq; keep for per second conversions if needed
-}
-Angle_SpeedFractRef_T;
-
-/* Config Options */
-// typedef struct Angle_SpeedFractRef_Rpm
-typedef struct Angle_SpeedFractCalib
-{
-    uint32_t PollingFreq;
-    uint32_t SpeedMax_Rpm;
-}
-Angle_SpeedFractCalib_T;
-
-#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
-#define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
-
-
-/*
-    Precomputed unit conversions — operate on shifted (Q16.16) delta.
-    All hot-path consumers keep Delta in shifted form; the helpers below
-    read/write from that representation directly.
-*/
-/* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
-static inline int16_t speed_fract16_of_angle_direct(angle16_t angleOfRpmMax, int16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleOfRpmMax; }
-
-static inline int16_t speed_fract16_of_angle(uint32_t angleOfRpmMaxInv_fract32, int16_t angle16) { return ((int32_t)angle16 * angleOfRpmMaxInv_fract32) >> 16U; }
-static inline int16_t angle_of_speed_fract16(angle16_t angleOfRpmMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleOfRpmMax); }
-
 
 /******************************************************************************/
 /*
@@ -139,7 +102,7 @@ static inline angle16_t Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_
 
 /*
     Wrap-mode step using the already-resolved shifted Delta.
-    For sensor paths that set Delta out-of-band (e.g. AngleCounter_ResolveInterpolationDelta).
+    For sensor paths that set Delta out-of-band (e.g. AngleCounter_ResolveAngleDelta).
 */
 static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
 {
@@ -162,15 +125,8 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
     Bounds are independent: direction-agnostic, re-targetable per edge.
 */
 /******************************************************************************/
-/* Set absolute bounds (shifted). For runtime retarget per sector edge. */
-static inline void _Angle_SetLimits(Angle_T * p_angle, int32_t lower_shifted, int32_t upper_shifted)
-{
-    p_angle->LimitLower = lower_shifted;
-    p_angle->LimitUpper = upper_shifted;
-}
-
 /* Set bounds as an angle window [lower, upper] from angle16 inputs. */
-static inline void Angle_SetLimitsAngle(Angle_T * p_angle, angle16_t lower, angle16_t upper)
+static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t upper)
 {
     p_angle->LimitLower = (int32_t)lower << ANGLE32_SHIFT;
     p_angle->LimitUpper = (int32_t)upper << ANGLE32_SHIFT;
@@ -182,7 +138,7 @@ static inline void Angle_SetLimitsAngle(Angle_T * p_angle, angle16_t lower, angl
         Delta > 0 : [Angle, Angle + width]
         Delta < 0 : [Angle - width, Angle]
 */
-static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
+static inline void Angle_SetLimitWindow(Angle_T * p_angle, uangle16_t width_angle16)
 {
     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
     if (p_angle->Delta >= 0)
@@ -200,7 +156,7 @@ static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle
 /*
     Init: zero state + set symmetric bounds ±limit_angle16 around zero.
 */
-static inline void Angle_InitLimit(Angle_T * p_angle, uangle16_t limit_angle16)
+static inline void Angle_InitLimits(Angle_T * p_angle, uangle16_t limit_angle16)
 {
     p_angle->LimitUpper = (int32_t)limit_angle16 << ANGLE32_SHIFT;
     p_angle->LimitLower = -((int32_t)limit_angle16 << ANGLE32_SHIFT);
@@ -218,10 +174,9 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
 
 /*
+    Integrate Saturated
     Bounded step — wrapping-aware clamp.
     Unsigned subtraction recovers the correct span/offset even when limits
-    overflow int32_t at the 0°/360° boundary in Q16.16.
-    Call at POLLING_FREQ (e.g. 20kHz). Returns projected angle16.
 */
 static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 {
@@ -239,52 +194,49 @@ static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
     return Angle_GetAngle16(p_angle);
 }
 
-// /*
-//     One-sided clamp on step
-//         Delta >= 0 : Angle = min(Angle + Delta, Limit)
-//         Delta <  0 : Angle = max(Angle + Delta, Limit)
-// */
-// static inline void Angle_SetLimitDelta(Angle_T * p_angle, uangle16_t width_angle16)
-// {
-//     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
-//     p_angle->Limit = p_angle->Angle + math_sign(p_angle->Delta) * width_shifted;
-// }
+/*
+    Clamp on Delta (which does not need wrap check)
+    p_angle->Angle += Angle_GetInterpolationDelta(p_angle);
+*/
+/*
+    Step is pinned in [−room, 0] or [0, +room]
+    no auto-correction, 0 on overshoot.
+*/
+static inline angle16_t _Angle_GetDeltaSat(const Angle_T * p_angle)
+{
+    int32_t upper = math_max((uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle, 0);
+    int32_t lower = math_min((uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle, 0);
+    return math_clamp(p_angle->Delta, lower, upper);
+}
 
-/* 	Step is pinned in [−room, 0] or [0, +room] */
-// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
-// {
-//     int32_t upper = math_max((uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle, 0);
-//     int32_t lower = math_min((uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle, 0);
-//     p_angle->Angle += math_clamp(p_angle->Delta, lower, upper);
-//     return Angle_GetAngle16(p_angle);
-// }
-
-/* [down_room, up_room] */
-// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
-// {
-//     int32_t upper = (uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle;
-//     int32_t lower = (uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle;
-//     p_angle->Angle += math_clamp(p_angle->Delta, lower, upper);
-//     return Angle_GetAngle16(p_angle);
-// }
-
+/*
+    Step Delta: [down_room, up_room]
+    which when both are negative (Angle above LimitUpper) forces any Delta back toward the window.
+*/
+static inline angle16_t _Angle_GetDeltaComp(const Angle_T * p_angle)
+{
+    int32_t upper = (uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle;
+    int32_t lower = (uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle;
+    return math_clamp(p_angle->Delta, lower, upper);
+}
 
 /******************************************************************************/
 /*
     as progress state
 */
 /******************************************************************************/
-// static inline angle16_t Angle_InterpolateAbs(Angle_T * p_angle)
+// static inline angle16_t Angle_Abs_Interpolate(Angle_T * p_angle)
 // {
+//     assert(p_angle->Angle < ANGLE16_PER_REVOLUTION / 2);
 //     p_angle->Angle = math_min(p_angle->Angle + p_angle->Delta, p_angle->LimitUpper);
 //     return Angle_GetAngle16(p_angle);
 // }
 
-static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
-{
-    p_angle->Angle += p_angle->Delta;
-    return Angle_GetAngle16(p_angle);
-}
+// static inline void Angle_Abs_SetLimit (Angle_T * p_angle, uangle16_t width_angle16)
+// {
+//     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
+//     p_angle->LimitUpper = p_angle->Angle + math_sign(p_angle->Delta) * width_shifted;
+// }
 
 
 /******************************************************************************/
@@ -292,6 +244,47 @@ static inline angle16_t _Angle_Interpolate(Angle_T * p_angle)
     Angle_SpeedFractRef_T
 */
 /******************************************************************************/
+/*
+    Runtime Precomputed Ref
+*/
+typedef struct Angle_SpeedFractRef
+{
+    angle16_t SpeedMax_Angle16; /* DegPerCycle */
+    uint32_t InvSpeedMax_Fract32; /* CyclesPerDeg */
+    // uint32_t PollingFreq; /* keep for per second conversions if needed */
+}
+Angle_SpeedFractRef_T;
+
+/* Config Options */
+// typedef struct Angle_SpeedFractRef_Rpm
+typedef struct Angle_SpeedFractCalib
+{
+    uint32_t PollingFreq;
+    uint32_t SpeedMax_Rpm;
+}
+Angle_SpeedFractCalib_T;
+
+#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
+#define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
+
+
+/*
+    Precomputed unit conversions — operate on shifted (Q16.16) delta.
+    All hot-path consumers keep Delta in shifted form; the helpers below
+    read/write from that representation directly.
+*/
+/* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
+static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
+static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
+static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
+
+
+#if defined(ANGLE_POLLING_FREQ) && defined(ANGLE_SPEED_MAX_RPM)
+static const Angle_SpeedFractRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_CALIB(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
+ANGLE_OF_SPEED_FRACT(Speed) angle_of_speed_fract16(ANGLE_SPEED_CALIB.SpeedMax_Angle16, Speed)
+SPEED_FRACT_OF_ANGLE(AngleDelta) speed_fract16_of_angle(ANGLE_SPEED_CALIB.InvSpeedMax_Fract32, AngleDelta)
+#endif
+
 /* Caller pass Ref ~ 2x for overflow range */
 static void Angle_SpeedRef_Init(Angle_SpeedFractRef_T * p_ref, angle16_t maxAngle16) { *p_ref = ANGLE_SPEED_FRACT_REF(maxAngle16); }
 static void Angle_SpeedRef_Init_Rpm(Angle_SpeedFractRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
@@ -312,6 +305,7 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 {
     return Angle_IntegrateDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
 }
+
 
 
 // typedef struct Angle_Config_T

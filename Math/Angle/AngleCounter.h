@@ -32,7 +32,7 @@
             Soft counter accumulation + mixed DeltaD/DeltaT (ModeDT) frequency estimation.
 */
 /******************************************************************************/
-#include "angle_counter_fn.h"
+#include "angle_counter_math.h"
 #include "Angle.h"
 
 /******************************************************************************/
@@ -116,7 +116,7 @@ static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t a
 
 static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
 
-/* Optional seperate capture */
+/* Optional seperate ResolveCounterDelta */
 static inline int32_t AngleCounter_ResolveDeltaD(AngleCounter_T * p_counter)
 {
     int32_t deltaD = p_counter->CounterD;
@@ -154,8 +154,9 @@ static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) 
 /*
     Propagate FreqD into Base.Delta as shifted Q16.16 angle increment per poll cycle.
     which lands directly in the tracker's shifted Delta.
+    [Angle/Poll/Count] * [Count/s] => [Angle/Poll]
 */
-static inline angle16_t AngleCounter_ResolveInterpolationDelta(AngleCounter_T * p_counter)
+static inline angle16_t AngleCounter_ResolveAngleDelta(AngleCounter_T * p_counter)
 {
     p_counter->Base.Delta = p_counter->Ref.AngleSpeed32PerCount * p_counter->FreqD;
     return p_counter->Base.Delta >> ANGLE_EXT_SHIFT;
@@ -165,10 +166,9 @@ static inline angle16_t AngleCounter_ResolveInterpolationDelta(AngleCounter_T * 
     Angle_T Base forwarding — interpolation interface
 */
 static inline angle16_t AngleCounter_Interpolate(AngleCounter_T * p_counter) { return Angle_Interpolate(&p_counter->Base); }
-static inline angle16_t AngleCounter_IntegrateStep(AngleCounter_T * p_counter) { return Angle_IntegrateStep(&p_counter->Base); }
-static inline void AngleCounter_InitLimit(AngleCounter_T * p_counter, angle16_t limit_angle16) { Angle_InitLimit(&p_counter->Base, limit_angle16); }
-static inline void AngleCounter_SetLimitsAngle(AngleCounter_T * p_counter, angle16_t lower, angle16_t upper) { Angle_SetLimitsAngle(&p_counter->Base, lower, upper); }
-static inline void AngleCounter_SetLimitDelta(AngleCounter_T * p_counter, uangle16_t width_angle16) { Angle_SetLimitDelta(&p_counter->Base, width_angle16); }
+static inline void AngleCounter_InitLimit(AngleCounter_T * p_counter, angle16_t limit_angle16) { Angle_InitLimits(&p_counter->Base, limit_angle16); }
+static inline void AngleCounter_SetLimits(AngleCounter_T * p_counter, angle16_t lower, angle16_t upper) { Angle_SetLimits(&p_counter->Base, lower, upper); }
+static inline void AngleCounter_SetLimitWindow(AngleCounter_T * p_counter, uangle16_t width_angle16) { Angle_SetLimitWindow(&p_counter->Base, width_angle16); }
 
 
 /******************************************************************************/
@@ -181,7 +181,6 @@ static inline int32_t AngleCounter_GetRpm(const AngleCounter_T * p_counter) { re
 static inline int32_t AngleCounter_GetCps(const AngleCounter_T * p_counter) { return cps_of_count_freq(p_counter->Ref.CountsPerRevolution, p_counter->FreqD); }
 
 static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { return p_counter->FreqD; }
-/* Counter Delta */
 // static inline int32_t AngleCounter_GetDeltaD(const AngleCounter_T * p_counter) { return p_counter->DeltaD; }
 
 /******************************************************************************/

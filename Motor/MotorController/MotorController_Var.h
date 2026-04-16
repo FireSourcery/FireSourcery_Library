@@ -134,16 +134,16 @@ MotorController_Var_Config_T;
 */
 /******************************************************************************/
 /* Board */
-typedef enum MotorController_Var_StaticRef
+typedef enum MotorController_Var_Board
 {
-    MOT_VAR_REF_MOTOR_COUNT,
-    MOT_VAR_REF_V_MONITOR_COUNT, /*  */
-    MOT_VAR_REF_THERMISTOR_MOSFETS_COUNT,
-    MOT_VAR_REF_PROTOCOL_SOCKET_COUNT,
-    MOT_VAR_REF_CAN_SOCKET_COUNT,
-    // MOT_VAR_REF_MAIN_SOFTWARE_VERSION, /* Read-only */
+    MOT_VAR_BOARD_MOTOR_COUNT,
+    MOT_VAR_BOARD_V_MONITOR_COUNT, /*  */
+    MOT_VAR_BOARD_THERMISTOR_MOSFETS_COUNT,
+    MOT_VAR_BOARD_PROTOCOL_SOCKET_COUNT,
+    MOT_VAR_BOARD_CAN_SOCKET_COUNT,
+    // MOT_VAR_BOARD_MAIN_SOFTWARE_VERSION, /* Read-only */
 }
-MotorController_Var_StaticRef_T;
+MotorController_Var_Board_T;
 
 /******************************************************************************/
 /*

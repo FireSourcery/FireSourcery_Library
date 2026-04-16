@@ -308,7 +308,6 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     }
 }
 
-
 static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,

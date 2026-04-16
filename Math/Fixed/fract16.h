@@ -68,10 +68,10 @@ static const fract16_t FRACT16_SQRT3_DIV_4 = 0x376D;
 static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
 static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
 
-static const fract16_t FRACT16_COS_120 = ((fract16_t)-16384);  /* cos(120°) = -0.5 */
-static const fract16_t FRACT16_SIN_120 = ((fract16_t)28378);   /* sin(120°) = sqrt(3)/2 */
-static const fract16_t FRACT16_COS_240 = ((fract16_t)-16384);  /* cos(240°) = -0.5 */
-static const fract16_t FRACT16_SIN_240 = ((fract16_t)-28378);  /* sin(240°) = -sqrt(3)/2 */
+static const fract16_t FRACT16_COS_120 = -FRACT16_1_DIV_2;  /* cos(120°) = -0.5 */
+static const fract16_t FRACT16_SIN_120 = FRACT16_SQRT3_DIV_2;   /* sin(120°) = sqrt(3)/2 */
+static const fract16_t FRACT16_COS_240 = -FRACT16_1_DIV_2;  /* cos(240°) = -0.5 */
+static const fract16_t FRACT16_SIN_240 = -FRACT16_SQRT3_DIV_2;  /* sin(240°) = -sqrt(3)/2 */
 
 /* Calculation with over saturation */
 static const accum32_t FRACT16_1_OVERSAT      = 0x00008000; /* 32768 */

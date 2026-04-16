@@ -280,27 +280,26 @@ Motor_Var_ConfigDebug_T;
 /******************************************************************************/
 /*
     Read-Only Ref
-    ConfigConst
+    static const
 */
 /******************************************************************************/
-// typedef enum Motor_Var_Board
-typedef enum Motor_Var_StaticRef
+typedef enum Motor_Var_Board
 {
-    MOTOR_VAR_REF_V_RATED,
-    MOTOR_VAR_REF_I_RATED,
-    MOTOR_VAR_REF_V_MAX,
-    MOTOR_VAR_REF_I_MAX,
-    MOTOR_VAR_REF_V_MAX_ADCU,
-    MOTOR_VAR_REF_I_MAX_ADCU,
-    MOTOR_VAR_REF_V_PHASE_R1,
-    MOTOR_VAR_REF_V_PHASE_R2,
-    MOTOR_VAR_REF_I_PHASE_R_BASE,
-    MOTOR_VAR_REF_I_PHASE_R_MOSFETS,
-    MOTOR_VAR_REF_I_PHASE_GAIN,
-    MOTOR_VAR_REF_BOARD_V_RATED_VOLTS,
-    MOTOR_VAR_REF_BOARD_I_RATED_AMPS,
+    MOTOR_VAR_BOARD_V_RATED,
+    MOTOR_VAR_BOARD_I_RATED,
+    MOTOR_VAR_BOARD_V_MAX,
+    MOTOR_VAR_BOARD_I_MAX,
+    MOTOR_VAR_BOARD_V_MAX_ADCU,
+    MOTOR_VAR_BOARD_I_MAX_ADCU,
+    MOTOR_VAR_BOARD_V_PHASE_R1,
+    MOTOR_VAR_BOARD_V_PHASE_R2,
+    MOTOR_VAR_BOARD_I_PHASE_R_BASE,
+    MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS,
+    MOTOR_VAR_BOARD_I_PHASE_GAIN,
+    MOTOR_VAR_BOARD_BOARD_V_RATED_VOLTS,
+    MOTOR_VAR_BOARD_BOARD_I_RATED_AMPS,
 }
-Motor_Var_StaticRef_T;
+Motor_Var_Board_T;
 
 
 typedef enum Motor_Var_PhaseVBus
@@ -349,7 +348,7 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
 int _Motor_Var_ConfigDebug_Get(const Motor_State_T * p_motor, Motor_Var_ConfigDebug_T varId);
 
 /* static */
-extern int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId);
+extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);
 extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 
 

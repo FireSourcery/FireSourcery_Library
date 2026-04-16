@@ -107,14 +107,9 @@ RotorSensor_Config_T;
 */
 typedef struct RotorSensor_State
 {
-    /* Electrical angle and speed state.
-       AngleSpeed.Angle:  sensor-resolved electrical angle (shifted Q16.16, project via Angle_GetAngle16)
-       AngleSpeed.Delta:  electrical angle per control cycle (shifted Q16.16) */
-    Angle_T AngleSpeed;
+    Angle_T AngleSpeed;     /* Electrical angle and speed state. */
     Angle_SpeedFractRef_T SpeedFractRef;
-
     accum32_t Speed_Fract16;
-
     angle16_t MechanicalAngle;
     // RotorSensor_Config_T Config;
 }

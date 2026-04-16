@@ -29,8 +29,8 @@
     @brief  angle math using cpr
 */
 /******************************************************************************/
+#include "angle_speed_math.h"
 #include "../Fixed/fract16.h"
-#include "angle_speed_fn.h"
 
 #define ANGLE_EXT_SHIFT (16)
 // #define ANGLE_SPEED_SHIFT (15)

@@ -36,7 +36,6 @@
 #include "Peripheral/ClockTimer/PulseTimer.h"
 #include "Math/Angle/AngleCounter.h"
 
-
 typedef const struct Hall_RotorSensor
 {
     const RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
@@ -57,3 +56,29 @@ extern const RotorSensor_VTable_T HALL_VTABLE;
     .P_COUNTER      = (p_Counter),                                                              \
     .POLLING_FREQ   = (PollingFreq),                                                            \
 }
+
+
+// typedef struct Hall_SensorState
+// {
+//     Hall_State_T Hall;
+//     PulseTimer_State_T Timer;
+//     AngleCounter_T Counter; /* Counter + frequency + interpolation state */
+// }
+// Hall_SensorState_T;
+
+// typedef const struct Hall_RotorSensor1
+// {
+//     const RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
+//     const Hall_T HALL;
+//     const PulseTimer_T TIMER;       /* Timer HAL wrap */
+//     Hall_SensorState_T * P_STATE;
+// }
+// Hall_RotorSensor1_T;
+
+// #define HALL_ROTOR_SENSOR_INIT(PinA, PinB, PinC, p_NvmConfig, p_TimerHal, TimerFreq, SampleFreq, p_RotorBaseState, p_HallSensorState) (Hall_RotorSensor1_T) \
+// {                                                                                               \
+//     .BASE           = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_RotorBaseState),                                 \
+//     .HALL           = HALL_INIT(PinA, PinB, PinC, p_NvmConfig, &(p_HallSensorState->Hall)),                  \
+//     .TIMER          = PULSE_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, &(p_HallSensorState->Timer)),   \
+// }
+

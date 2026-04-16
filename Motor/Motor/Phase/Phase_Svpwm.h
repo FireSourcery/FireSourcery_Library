@@ -33,19 +33,13 @@
 #include "Phase.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/Fixed/fract16.h"
-#include "../Math/math_svpwm.h"
+#include "../Math/svpwm_math.h"
 
-static inline void  Phase_WriteSvpwm(const Phase_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
+static inline void Phase_WriteSvpwm(const Phase_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
 {
-    fract16_t vNormA = svpwm_norm_vbus_inv(vBusInv_fract32, vA);
-    fract16_t vNormB = svpwm_norm_vbus_inv(vBusInv_fract32, vB);
-    fract16_t vNormC = svpwm_norm_vbus_inv(vBusInv_fract32, vC);
-    fract16_t vDutyA;
-    fract16_t vDutyB;
-    fract16_t vDutyC;
-    svpwm_midclamp_vbus(&vDutyA, &vDutyB, &vDutyC, vNormA, vNormB, vNormC);
+    struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_fract32, vA), svpwm_norm_vbus_inv(vBusInv_fract32, vB), svpwm_norm_vbus_inv(vBusInv_fract32, vC));
 
-    Phase_WriteDuty_Fract16(p_phase, vDutyA, vDutyB, vDutyC);
+    Phase_WriteDuty_Fract16(p_phase, duty.a, duty.b, duty.c);
 }
 
 

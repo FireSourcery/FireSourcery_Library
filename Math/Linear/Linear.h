@@ -31,7 +31,7 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
-#include "linear_fn.h"
+#include "linear_math.h"
 #include "Math/math_general.h"
 #include "Math/Fixed/fixed.h"
 

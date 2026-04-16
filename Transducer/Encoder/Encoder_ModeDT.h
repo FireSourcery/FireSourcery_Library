@@ -58,7 +58,7 @@ static inline void Encoder_ModeDT_CaptureFreqD(const Encoder_T * p_encoder)
 
 static inline angle16_t Encoder_ModeDT_ResolveInterpolation(const Encoder_T * p_encoder)
 {
-    return AngleCounter_ResolveInterpolationDelta(&p_encoder->P_STATE->AngleCounter);
+    return AngleCounter_ResolveAngleDelta(&p_encoder->P_STATE->AngleCounter);
 }
 
 /******************************************************************************/

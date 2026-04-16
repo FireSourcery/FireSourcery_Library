@@ -388,28 +388,26 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
     const
     Alternate access to board reference values
 */
-int Motor_Var_StaticRef_Get(Motor_Var_StaticRef_T varId)
+int Motor_Var_Board_Get(Motor_Var_Board_T varId)
 {
     int value = 0;
     switch (varId)
     {
-        // case MOTOR_VAR_REF_CONTROL_FREQ:                 value =                   break;
-        // case MOTOR_VAR_REF_SPEED_FEEDBACK_FREQ:          value =                   break;
-        // case MOTOR_VAR_REF_CURRENT_FEEDBACK_FREQ:        value =                   break;
-        case MOTOR_VAR_REF_V_RATED:                 value = Phase_Calibration_GetVRated_Fract16();                 break;
-        case MOTOR_VAR_REF_I_RATED:                 value = Phase_Calibration_GetIRatedPeak_Fract16();             break;
-        case MOTOR_VAR_REF_V_MAX:                   value = Phase_Calibration_GetVMaxVolts();                      break;
-        case MOTOR_VAR_REF_I_MAX:                   value = Phase_Calibration_GetIMaxAmps();                       break;
-        // case MOTOR_VAR_REF_V_MAX_ADCU:              value = PHASE_ANALOG_V_MAX_ADCU;                               break;
-        // case MOTOR_VAR_REF_I_MAX_ADCU:              value = PHASE_ANALOG_I_MAX_ADCU;                               break;
+        case MOTOR_VAR_BOARD_V_RATED:                 value = Phase_Calibration_GetVRated_Fract16();                 break;
+        case MOTOR_VAR_BOARD_I_RATED:                 value = Phase_Calibration_GetIRatedPeak_Fract16();             break;
+        case MOTOR_VAR_BOARD_V_MAX:                   value = Phase_Calibration_GetVMaxVolts();                      break;
+        case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_Calibration_GetIMaxAmps();                       break;
+        // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
+        // case MOTOR_VAR_BOARD_SPEED_FEEDBACK_FREQ:          value =                   break;
+        // case MOTOR_VAR_BOARD_CURRENT_FEEDBACK_FREQ:        value =                   break;
 
-        case MOTOR_VAR_REF_BOARD_V_RATED_VOLTS:     value = Phase_AnalogCalibration_GetVRated();                         break;
-        case MOTOR_VAR_REF_BOARD_I_RATED_AMPS:      value = Phase_AnalogCalibration_GetIRatedRms();                      break;
-        case MOTOR_VAR_REF_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1 / 10;       break;
-        case MOTOR_VAR_REF_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2 / 10;       break;
-        case MOTOR_VAR_REF_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
-        case MOTOR_VAR_REF_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
-        case MOTOR_VAR_REF_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
+        case MOTOR_VAR_BOARD_BOARD_V_RATED_VOLTS:     value = Phase_AnalogCalibration_GetVRated();                         break;
+        case MOTOR_VAR_BOARD_BOARD_I_RATED_AMPS:      value = Phase_AnalogCalibration_GetIRatedRms();                      break;
+        case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1 / 10;       break;
+        case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2 / 10;       break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
 
     }
     return value;
@@ -504,7 +502,7 @@ int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule
     if (p_motor == NULL) { return 0; }
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_StaticRef_Get(varId);
+        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_Board_Get(varId);
         case MOTOR_VAR_TYPE_V_BUS:                      return Motor_Var_PhaseVBus_Get(varId);
         case MOTOR_VAR_TYPE_PHASE:                      return 0;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);

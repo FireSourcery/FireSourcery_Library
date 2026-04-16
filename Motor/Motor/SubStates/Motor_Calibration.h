@@ -54,6 +54,8 @@ static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { retur
 */
 extern void Motor_Calibration_StartHome(const Motor_T * p_motor);
 extern void Motor_Calibration_EnterTuning(const Motor_T * p_motor);
+extern void Motor_Calibration_StartElectrical(const Motor_T * p_motor);
+extern bool Motor_Calibration_IsElectrical(const Motor_T * p_motor);
 
 /*
     Calibration SubState
@@ -64,6 +66,7 @@ typedef enum Motor_Calibration_StateId
     MOTOR_CALIBRATION_STATE_SENSOR,
     MOTOR_CALIBRATION_STATE_TUNING,
     MOTOR_CALIBRATION_STATE_HOMING,
+    MOTOR_CALIBRATION_STATE_ELECTRICAL,
 }
 Motor_Calibration_StateId_T;
 

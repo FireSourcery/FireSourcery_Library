@@ -140,7 +140,6 @@ struct fract16_xy fract16_vector(angle16_t theta)
     return (struct fract16_xy) { .x = fract16_cos(theta), .y = fract16_sin(theta) };
 }
 
-
 ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
     return fixed_sqrt((int32_t)x * x + (int32_t)y * y);
@@ -154,6 +153,15 @@ ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit)
 {
     assert(x < mag_limit);
     return fixed_sqrt((int32_t)mag_limit * mag_limit - (int32_t)x * x);
+}
+
+void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t magnitude)
+{
+    if (magnitude < FRACT16_MAX)
+    {
+        *p_x = (fract16_t)fract16_mul(*p_x, magnitude); /* no saturation needed, magnitude < 1 */
+        *p_y = (fract16_t)fract16_mul(*p_y, magnitude);
+    }
 }
 
 /*!
@@ -173,22 +181,9 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
     return scalar;
 }
 
-void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t magnitude)
-{
-    if (magnitude < FRACT16_MAX)
-    {
-        *p_x = (fract16_t)fract16_mul(*p_x, magnitude); /* no saturation needed, magnitude < 1 */
-        *p_y = (fract16_t)fract16_mul(*p_y, magnitude);
-    }
-}
-
 /*!
     Vector Circle Limit
-    @brief Limits the components a vector.
-    @param p_x Pointer to the x component of the vector.
-    @param p_y Pointer to the y component of the vector.
-    @param mag_limit The maximum allowed magnitude for the vector.
-    @return max/|Vxy| for reference.
+    @return max/|Vxy|
 */
 void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
 {

@@ -29,8 +29,8 @@
     @brief  FOC math functions - state wrapper for pure math functions.
 */
 /******************************************************************************/
-#include "math_foc.h"
-#include "math_svpwm.h"
+#include "foc_math.h"
+#include "svpwm_math.h"
 #include "Math/Fixed/fract16.h"
 
 typedef struct FOC
@@ -191,7 +191,6 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
 */
 
 /* [0:32767] <=> [0:1]AnalogRefMax */
-
 static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Id, p_foc->Iq); }
 static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Vd, p_foc->Vq); }
 
@@ -251,22 +250,22 @@ static inline fract16_t FOC_Vq(const FOC_T * p_foc) { return p_foc->Vq; }
     Inner layer assume plugging is clamped. speed sign = v sign.
 */
 /******************************************************************************/
-typedef enum FOC_Quadrant
-{
-    FOC_QUADRANT_0 = 0,    /* Zero / Idle */
-    FOC_QUADRANT_FORWARD_MOTORING   = 1,    /* Q1: +Vq, +Iq */
-    FOC_QUADRANT_FORWARD_GENERATING = 2,    /* Q2: +Vq, -Iq */
-    FOC_QUADRANT_REVERSE_MOTORING   = 3,    /* Q3: -Vq, -Iq */
-    FOC_QUADRANT_REVERSE_GENERATING = 4,    /* Q4: -Vq, +Iq */
-}
-FOC_Quadrant_T;
+// typedef enum FOC_Quadrant
+// {
+//     FOC_QUADRANT_0 = 0,    /* Zero / Idle */
+//     FOC_QUADRANT_FORWARD_MOTORING   = 1,    /* Q1: +Vq, +Iq */
+//     FOC_QUADRANT_FORWARD_GENERATING = 2,    /* Q2: +Vq, -Iq */
+//     FOC_QUADRANT_REVERSE_MOTORING   = 3,    /* Q3: -Vq, -Iq */
+//     FOC_QUADRANT_REVERSE_GENERATING = 4,    /* Q4: -Vq, +Iq */
+// }
+// FOC_Quadrant_T;
 
-static inline FOC_Quadrant_T FOC_GetQuadrant(const FOC_T * p_foc)
-{
-    if (p_foc->Iq == 0 && p_foc->Vq == 0) { return FOC_QUADRANT_0; }
-    if (p_foc->Iq > 0)  { return (p_foc->Vq >= 0) ? FOC_QUADRANT_FORWARD_MOTORING : FOC_QUADRANT_REVERSE_GENERATING; }
-    else                { return (p_foc->Vq <= 0) ? FOC_QUADRANT_REVERSE_MOTORING : FOC_QUADRANT_FORWARD_GENERATING; }
-}
+// static inline FOC_Quadrant_T FOC_GetQuadrant(const FOC_T * p_foc)
+// {
+//     if (p_foc->Iq == 0 && p_foc->Vq == 0) { return FOC_QUADRANT_0; }
+//     if (p_foc->Iq > 0)  { return (p_foc->Vq >= 0) ? FOC_QUADRANT_FORWARD_MOTORING : FOC_QUADRANT_REVERSE_GENERATING; }
+//     else                { return (p_foc->Vq <= 0) ? FOC_QUADRANT_REVERSE_MOTORING : FOC_QUADRANT_FORWARD_GENERATING; }
+// }
 
 static inline bool FOC_IsMotoringCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
 static inline bool FOC_IsGeneratingCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
