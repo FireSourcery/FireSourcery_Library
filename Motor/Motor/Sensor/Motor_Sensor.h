@@ -47,8 +47,7 @@
     Init using shared State
 */
 #define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) ROTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))
-#define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, TimerStruct, p_Counter, PollingFreq) \
-    HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, p_Counter, PollingFreq, &((MotorStateStruct).SensorState))
+#define MOTOR_SENSOR_TABLE_INIT_HALL(MotorStateStruct, HallStruct, TimerStruct, p_Counter, PollingFreq) HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, p_Counter, PollingFreq, &((MotorStateStruct).SensorState))
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
 

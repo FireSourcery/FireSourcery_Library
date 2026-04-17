@@ -29,9 +29,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-
-// Your code here
-
 #include "Encoder.h"
 #include "Encoder_ModeDT.h"
 
@@ -41,15 +38,11 @@
     ENCODER_HW_EMULATED mode DeltaD, ModeDT; DeltaT ISR Mode
 */
 /******************************************************************************/
+static inline Encoder_Phases_T _Encoder_ReadPins(const Encoder_T * p_encoder)
+{
+    return (Encoder_Phases_T) { .A = Pin_Input_ReadPhysical(&p_encoder->PIN_A), .B = Pin_Input_ReadPhysical(&p_encoder->PIN_B) };
+}
 
-/******************************************************************************/
-/*
-    Common
-*/
-/******************************************************************************/
-/*
-    Determine Direction
-*/
 static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encoder_Phases_T phases)
 {
     p_encoder->Phases.PrevA = p_encoder->Phases.A;
@@ -57,6 +50,11 @@ static inline uint8_t _Encoder_CaptureStateOf(Encoder_State_T * p_encoder, Encod
     p_encoder->Phases.A = phases.A;
     p_encoder->Phases.B = phases.B;
     return p_encoder->Phases.Value;
+}
+
+static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder)
+{
+    return _Encoder_CaptureStateOf(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder));
 }
 
 /*!
@@ -70,29 +68,16 @@ static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t cou
     AngleCounter_CaptureCountWrap(&p_encoder->AngleCounter, count);
 }
 
-/*
-
-*/
-static inline Encoder_Phases_T _Encoder_ReadPins(const Encoder_T * p_encoder)
-{
-    return (Encoder_Phases_T) { .A = Pin_Input_ReadPhysical(&p_encoder->PIN_A), .B = Pin_Input_ReadPhysical(&p_encoder->PIN_B) };
-}
-
-static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder)
-{
-    return _Encoder_CaptureStateOf(p_encoder->P_STATE, _Encoder_ReadPins(p_encoder));
-}
-
 /******************************************************************************/
 /*
-    Quadrature, Signed Direction
+    Quadrature decoder, Signed Direction
     Captures as ALeadB is Positive, compensate on user Get
 */
 /******************************************************************************/
 #define _ENCODER_TABLE_INC_2 (2)
 #define _ENCODER_TABLE_DEC_2 (-2)
 
-static inline void _Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
+static inline int8_t _Encoder_Quadrature_CountOf(const Encoder_T * p_encoder, uint8_t phasesState)
 {
     /* Phase in XXXXBABA order, ALeadB as increment */
     static const int8_t ENCODER_TABLE[] =
@@ -102,9 +87,13 @@ static inline void _Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
         1, _ENCODER_TABLE_DEC_2, 0, -1, /* 1001: as B falling edge, missed A rising edge */
         _ENCODER_TABLE_DEC_2, -1, 1, 0  /* 1100: as A falling edge, missed B rising edge */
     };
+    return ENCODER_TABLE[phasesState];
+}
 
+static inline void _Encoder_Quadrature_CapturePulse(const Encoder_T * p_encoder)
+{
     // if (count == +2||-2) { p_encoder->ErrorCount++; }
-    _Encoder_CaptureCount(p_encoder->P_STATE, ENCODER_TABLE[_Encoder_CapturePhasesState(p_encoder)]);
+    _Encoder_CaptureCount(p_encoder->P_STATE, _Encoder_Quadrature_CountOf(p_encoder, _Encoder_CapturePhasesState(p_encoder)));
 }
 
 /* Alternatively, single phase signed capture or combine with B */

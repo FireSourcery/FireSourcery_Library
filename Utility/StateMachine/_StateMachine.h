@@ -51,6 +51,7 @@ typedef struct StateMachine_Active
 
     /*
         Sync machine store inputs until [ProcState]
+        [SyncInputMask] as sentinel value + multi input buffer, 32 limit.
         proc the last input of each unique id
         multiple inputs of the same id will overwrite
     */

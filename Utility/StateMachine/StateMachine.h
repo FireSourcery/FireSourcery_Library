@@ -171,9 +171,12 @@ static inline void StateMachine_ApplyInput(StateMachine_T * p_this, state_input_
 
 /* HSM Common */
 /* Set SyncInput Proc InputFunction and Transition on next Sync ProcState */
+/*!
+    [_StateMachine_AcquireSyncInput] blocks [ProcSyncInput] only.
+    Multiple calls overwrite the previous, only the last set is processed.
+*/
 static void StateMachine_SetInput(StateMachine_T * p_this, state_input_t inputId, state_value_t inputValue)
 {
-    /* Disables [ProcInput] portion of [Sync_ProcState]. When MultiThreaded + non atomic */
     if (_StateMachine_AcquireSyncInput(p_this->P_ACTIVE) == true)
     {
         _StateMachine_SetSyncInput(p_this->P_ACTIVE, inputId, inputValue);

@@ -29,7 +29,7 @@
     @brief  Thin pulse timer/timer HAL wrapper.
 */
 /******************************************************************************/
-#include "HAL_ClockTimer.h"
+#include "Peripheral/ClockTimer/HAL_ClockTimer.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -62,6 +62,8 @@ typedef struct PulseTimer_State
 }
 PulseTimer_State_T;
 
+#define PULSE_TIMER_STATE_ALLOC() (&(PulseTimer_State_T){0})
+
 /******************************************************************************/
 /*
     Const Instance
@@ -71,10 +73,8 @@ typedef const struct PulseTimer
 {
     HAL_ClockTimer_T * P_HAL_TIMER;      /* DeltaT Timer */
     uint32_t TIMER_FREQ;
-
     uint32_t SAMPLE_FREQ;       /* Speed sample freq (e.g. 1kHz) */
     uint32_t SAMPLE_TIME;       /* TIMER_FREQ / SAMPLE_FREQ */
-
     PulseTimer_State_T * P_STATE;
 
     const volatile uint32_t * P_EXTENDED_TIMER; /* 32-bit extension for low-speed stop detection */
@@ -96,14 +96,14 @@ PulseTimer_T;
 {                                                           \
     .P_HAL_TIMER        = (p_TimerHal),                     \
     .TIMER_FREQ         = (TimerFreq),                      \
-    .P_EXTENDED_TIMER   = (p_ExtTimer),                     \
-    .EXTENDED_TIMER_FREQ = (ExtTimerFreq),                  \
     .SAMPLE_FREQ        = (SampleFreq),                     \
     .SAMPLE_TIME        = (TimerFreq) / (SampleFreq),       \
     .P_STATE            = (p_State),                        \
+    .P_EXTENDED_TIMER   = (p_ExtTimer),                     \
+    .EXTENDED_TIMER_FREQ = (ExtTimerFreq),                  \
+    .EXTENDED_TIMER_CONVERSION = (TimerFreq) / (ExtTimerFreq), \
 }
 
-#define PULSE_TIMER_STATE_ALLOC() (&(PulseTimer_State_T){0})
 
 
 /******************************************************************************/
@@ -162,6 +162,7 @@ static inline uint32_t _PulseTimer_CaptureSampleTh(const PulseTimer_T * p_timer)
     return p_state->SampleTh;
 }
 
+/* PulsePeriod * count */
 static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
 {
     PulseTimer_State_T * p_state = p_timer->P_STATE;
@@ -182,6 +183,7 @@ static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
     // return p_timer->SAMPLE_TIME + p_state->SampleTh - PulseTimer_CaptureSampleTh(p_timer);
 }
 
+/* PulseCount/s/count */
 static inline uint32_t PulseTimer_CaptureSampleTk_Freq(const PulseTimer_T * p_timer)
 {
     uint32_t sampleTk = PulseTimer_CaptureSampleTk(p_timer);

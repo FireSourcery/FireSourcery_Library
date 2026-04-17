@@ -65,8 +65,8 @@ static inline void Motor_PWM_Thread(const Motor_T * p_dev)
     Motor_State_T * p_fields = p_dev->P_MOTOR;
     Motor_CaptureSensor(p_dev);
 
-    // _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
-    StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
+    _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
+    // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
 
     /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */

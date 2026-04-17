@@ -222,8 +222,8 @@ uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder)
 */
 bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
 {
-    uint32_t angleDiff = (p_encoder->AngleCounter.Base.Angle > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Base.Angle - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Base.Angle);
-    return (angleDiff <= p_encoder->AngleCounter.Ref.Angle32PerCount);
+    // uint32_t angleDiff = (p_encoder->AngleCounter.Base.Angle > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Base.Angle - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Base.Angle);
+    // return (angleDiff <= p_encoder->AngleCounter.Ref.Angle32PerCount);
 }
 
 void Encoder_CompleteAlignValidate(Encoder_State_T * p_encoder)
@@ -253,37 +253,37 @@ void Encoder_SetQuadratureDirection(Encoder_State_T * p_encoder, bool isALeadBPo
 /*
     Run on calibration routine start
 */
-// void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
-// {
-// #if     defined(ENCODER_HW_DECODER)
-//     p_encoder->AngleCounter.CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-//     HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
-// #elif   defined(ENCODER_HW_EMULATED)
-//     p_encoder->AngleCounter.CounterD = 0;
-// #endif
-// }
+void Encoder_CaptureQuadratureReference(Encoder_State_T * p_encoder)
+{
+#if     defined(ENCODER_HW_DECODER)
+    p_encoder->AngleCounter.CounterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+    HAL_Encoder_WriteCounter(p_encoder->P_HAL_ENCODER_COUNTER, 0);
+#elif   defined(ENCODER_HW_EMULATED)
+    p_encoder->AngleCounter.CounterD = 0;
+#endif
+}
 
-// /*
-//     Call after having moved in the positive direction
-// */
-// void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
-// {
-// #if     defined(ENCODER_HW_DECODER)
-//     uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-//     // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
-//     p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->AngleCounter.CounterD);
-//     // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
-//     // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->AngleCounter.CounterD);
-//     // #endif
-// #elif   defined(ENCODER_HW_EMULATED)
-//     p_encoder->Config.IsALeadBPositive = (p_encoder->AngleCounter.CounterD > 0);
-// #endif
-// }
+/*
+    Call after having moved in the positive direction
+*/
+void Encoder_CalibrateQuadraturePositive(Encoder_State_T * p_encoder)
+{
+#if     defined(ENCODER_HW_DECODER)
+    uint32_t counterValue = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
+    // #ifdef ENCODER_HW_QUADRATURE_A_LEAD_B_INCREMENT
+    p_encoder->Config.IsALeadBPositive = (counterValue > p_encoder->AngleCounter.CounterD);
+    // #elif defined(ENCODER_HW_QUADRATURE_A_LEAD_B_DECREMENT)
+    // p_encoder->Config.IsALeadBPositive = !(counterValue > p_encoder->AngleCounter.CounterD);
+    // #endif
+#elif   defined(ENCODER_HW_EMULATED)
+    p_encoder->Config.IsALeadBPositive = (p_encoder->AngleCounter.CounterD > 0);
+#endif
+}
 
-// void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPositive)
-// {
-//     p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
-// }
+void Encoder_CalibrateQuadratureDirection(Encoder_State_T * p_encoder, bool isPositive)
+{
+    p_encoder->Config.IsALeadBPositive = ((Encoder_GetCounterD(p_encoder) > 0) == isPositive);
+}
 
 /******************************************************************************/
 /*!

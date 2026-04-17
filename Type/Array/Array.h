@@ -96,6 +96,9 @@ static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) {
 
 static inline void Array32_ForEach(Array_T * p_array, proc_t op) { void_array_foreach_call(p_array->P_ARRAY32, p_array->LENGTH, op); }
 
+// static inline VTable_T * Mux_Select(const Mux_T * p_mux, int select) { return (select < p_mux->SOURCE_COUNT) ? p_mux->PP_SOURCES[select] : NULL; }
+// // directly set, can be templated for permanent selection
+// static inline void Mux_SetField(const Mux_T * p_mux, int select, int fieldId, uintptr_t value) { VTable_SetField(p_mux->PP_SOURCES[select], p_mux->P_CONTEXT, fieldId, value); }
 
 /*
     Typed signature for Init and handle with _Generic

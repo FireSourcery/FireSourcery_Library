@@ -47,18 +47,13 @@ static inline void _ADC_CaptureResult(Analog_ConversionChannel_T * p_conversion,
     else { p_conversion->P_CONVERSION_STATE->State = result; }
 }
 
-// static inline void _ADC_CaptureConversion(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * p_conversion)
-// {
-//     _ADC_CaptureResult(p_conversion, HAL_ADC_ReadResult(p_hal, p_conversion->CHANNEL.PIN));
-// }
-
 static inline void _ADC_CaptureTo(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * const * p_conversions, uint8_t count)
 {
     if (count == HAL_ADC_ReadFifoCount(p_hal))
     {
         for (uint8_t index = 0U; index < count; index++) /* Read in the same way it was pushed */
         {
-            _ADC_CaptureResult(p_conversions[index], HAL_ADC_ReadResult(p_hal, p_conversions[index]->CHANNEL.PIN));
+            _ADC_CaptureResult(p_conversions[index], HAL_ADC_ReadResult(p_hal, p_conversions[index]->PIN));
         }
     }
 }
@@ -66,7 +61,7 @@ static inline void _ADC_CaptureTo(const HAL_ADC_T * p_hal, Analog_ConversionChan
 static void _ADC_ActivateFrom(HAL_ADC_T * p_hal, Analog_ConversionChannel_T * const * p_conversions, uint8_t count)
 {
     adc_pin_t pins[ADC_FIFO_LENGTH_MAX]; /* This should optimize away. */
-    for (uint8_t index = 0U; index < count; index++) { pins[index] = p_conversions[index]->CHANNEL.PIN; }
+    for (uint8_t index = 0U; index < count; index++) { pins[index] = p_conversions[index]->PIN; }
     HAL_ADC_ActivateEach(p_hal, pins, count);
 }
 
@@ -78,7 +73,7 @@ static inline void ADC_Capture(Analog_ADC_T * p_adc, const Analog_ADC_State_T * 
 #ifdef ANALOG_ADC_HW_FIFO_ENABLE
     _ADC_CaptureTo(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], p_state->ActiveConversionCount);
 #else
-    _ADC_CaptureResult(p_state->ActiveConversions[0U], HAL_ADC_ReadResult(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->CHANNEL.PIN));
+    _ADC_CaptureResult(p_state->ActiveConversions[0U], HAL_ADC_ReadResult(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->PIN));
 #endif
     // _ADC_CaptureTo(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], ADC_ReadActiveCount());
 }
@@ -91,7 +86,7 @@ static inline void ADC_Activate(Analog_ADC_T * p_adc, const Analog_ADC_State_T *
 #ifdef ANALOG_ADC_HW_FIFO_ENABLE
     _ADC_ActivateFrom(p_adc->P_HAL_ADC, &p_state->ActiveConversions[0U], p_state->ActiveConversionCount);
 #else
-    HAL_ADC_Activate(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->CHANNEL.PIN);
+    HAL_ADC_Activate(p_adc->P_HAL_ADC, p_state->ActiveConversions[0U]->PIN);
 #endif
     // _ADC_ActivateFrom(p_adc, &p_state->ActiveConversions[0U], ADC_ReadActiveCount());
 }
@@ -106,7 +101,7 @@ static inline void ADC_Activate(Analog_ADC_T * p_adc, const Analog_ADC_State_T *
 /*
     Set [ActiveConversions] to reflect fifo registers state
     Markers corresponding to this particular list of channels.
-    if p_source = p_adc->P_CONVERSION_CHANNELS => p_source[index].CHANNEL.ID = index
+    if p_source = p_adc->P_CONVERSION_CHANNELS => p_source[index].ID = index
 */
 /*
     Effectively sets State for OnComplete
@@ -169,7 +164,7 @@ static void _Analog_ADC_StartConversions(Analog_ADC_T * p_adc, Analog_Conversion
 
 static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversion)
 {
-    _Analog_ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->CHANNEL.ID)); // mask as adc fixed
+    _Analog_ADC_StartConversions(p_adc, p_conversion, (1UL << p_conversion->ID)); // mask as adc fixed
 }
 
 // static void _Analog_ADC_StartConversionBatch(Analog_ADC_T * p_adc, Analog_ConversionBatch_T * p_batch)

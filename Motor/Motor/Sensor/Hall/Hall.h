@@ -176,10 +176,6 @@ Hall_T;
     .P_NVM_CONFIG = (p_Config),                                  \
 }
 
-// #define HALL_ALLOC(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, p_Config) \
-//     HALL_INIT_FROM(p_PinAHal, PinAId, p_PinBHal, PinBId, p_PinCHal, PinCId, HALL_STATE_ALLOC(), p_Config)
-
-
 /******************************************************************************/
 /*
     Stateless Conversions

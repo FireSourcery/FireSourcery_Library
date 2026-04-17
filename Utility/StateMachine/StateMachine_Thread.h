@@ -74,9 +74,7 @@ static inline void StateMachine_Synchronous_RootFirst_Thread(StateMachine_T * p_
 }
 
 
-/*
-    HSM
-*/
+
 static inline void StateMachine_Hsm_Thread(StateMachine_T * p_stateMachine)
 {
     if (_StateMachine_AcquireAsyncIsr(p_stateMachine->P_ACTIVE) == true)

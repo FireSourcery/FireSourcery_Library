@@ -93,13 +93,18 @@ Components (parent depends on child, child is part-of parent)
 Parts (Related group, outer or inner)
 Extensions (optional, guarded by #ifdef)
 
+
+
+
 Subtypes as the unmarked case.
 SomeModule/
 ├── SomeModule.h            # Module public API
-├── [_Internal]/          # _ = private component, dependency OF this module
-├── [Variant]/                # plain = specialization/subtype OF this module
+├── [_Internal]/            # _ = private component, dependency OF this module
+├── [Variant]/              # plain = specialization/subtype OF this module
 └── Extension/              # opt-in features, #ifdef guarded
-├── SomeModule_Part          # Part, dependent or independt of SomeModule core
+├── SomeModule_Part         # Part, dependent or independt of SomeModule core
+    Dependent Part -> Include by core
+    Independent Part -> Core does not need to know
 
 alternatively Components as the unmarked case.
 ├── SomeModule.h            # Module public API

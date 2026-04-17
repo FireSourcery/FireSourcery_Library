@@ -39,7 +39,7 @@
 #include "Math/Fixed/fixed.h"
 #include "Math/math_general.h"
 
-#include "Peripheral/ClockTimer/PulseTimer.h"
+#include "Transducer/Pulse/PulseTimer.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -210,15 +210,6 @@ Encoder_T;
     @brief Hal Abstraction
 */
 /******************************************************************************/
-static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p_encoder)
-{
-#if     defined(ENCODER_QUADRATURE_MODE_ENABLE)
-    return (p_encoder->Config.IsQuadratureCaptureEnabled == true);
-#else
-    return false;
-#endif
-}
-
 /*
     Does not wrap in HW_EMULATED case
         = p_encoder->Angle32 / p_encoder->UnitAngleD;
@@ -252,18 +243,19 @@ static inline uint32_t _Encoder_GetAngle32(const Encoder_State_T * p_encoder)
 #endif
 }
 
+// keep different factor
+static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
+{
+#if     defined(ENCODER_HW_DECODER)
+    return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->AngleCounter.Ref.AnglePerCount;
+#elif   defined(ENCODER_HW_EMULATED)
+    return Angle_GetAngle16(&p_encoder->AngleCounter.Base);
+#endif
+}
+
 static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder) { return _Encoder_GetAngle32(p_encoder) >> ENCODER_ANGLE_SHIFT; }
 
-// keep different factor
-// static inline uint16_t Encoder_GetAngle(const Encoder_State_T * p_encoder)
-// {
-// #if     defined(ENCODER_HW_DECODER)
-//     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->AngleCounter.Ref.AnglePerCount;
-// #elif   defined(ENCODER_HW_EMULATED)
-//     return Angle_GetAngle16(&p_encoder->AngleCounter);
-// #endif
-// }
-
+/*  */
 static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 {
     AngleCounter_Zero(&p_encoder->AngleCounter);
@@ -275,28 +267,19 @@ static inline void _Encoder_ZeroPulseCount(Encoder_State_T * p_encoder)
 #endif
 }
 
-
-
 static inline void _Encoder_CaptureDeltaD(const Encoder_T * p_encoder, Encoder_State_T * p_state)
 {
 #if defined(ENCODER_HW_DECODER)
     /* For common interface functions. Emulated Capture in ISR */
     uint16_t counterD = HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER);
-    p_state->DeltaD = _Encoder_CaptureDeltaWrap(p_encoder->Config.CountsPerRevolution - 1U, p_state->CounterPrev, counterD);
+    p_state->DeltaD = _Encoder_CaptureDeltaWrap(p_encoder->Config.CountsPerRevolution - 1U, p_state->CounterD, counterD);
     // quadrature check overflow flag
     /* Do not clear the counter as it is also the angle in this case */
 #else
-//    AngleCounter_CaptureDeltaD(&p_state->AngleCounter);
+    // p_state->DeltaD = AngleCounter_ResolveDeltaD(&p_state->AngleCounter);
 #endif
 }
 
-
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { Angle_ZeroAngle(&p_encoder->AngleCounter.Base); }
 
 /******************************************************************************/
 /*!
@@ -309,6 +292,14 @@ static inline void Encoder_SinglePhase_CaptureDirection(Encoder_State_T * p_enco
 /* 0 until set */
 static inline int32_t _Encoder_SinglePhase_GetDirection(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
+static inline bool _Encoder_IsQuadratureCaptureEnabled(const Encoder_State_T * p_encoder)
+{
+#if     defined(ENCODER_QUADRATURE_MODE_ENABLE)
+    return (p_encoder->Config.IsQuadratureCaptureEnabled == true);
+#else
+    return false;
+#endif
+}
 /*
     Convert signed capture to user reference. Captured as ALeadB is positive by default
 */
@@ -325,6 +316,14 @@ static inline int32_t _Encoder_GetDirectionComp(const Encoder_State_T * p_encode
 /* return value assigned at Init */
 static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder) { return p_encoder->DirectionComp; }
 
+
+
+/******************************************************************************/
+/*!
+    @brief
+*/
+/******************************************************************************/
+static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { /* Angle_ZeroAngle(&p_encoder->AngleCounter.Base); */ }
 
 /******************************************************************************/
 /*!
@@ -347,12 +346,6 @@ static inline bool Encoder_IsPositionRefSet(Encoder_State_T * p_encoder) { retur
 static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_State_T * p_encoder) { return p_encoder->Config.IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
 static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t angle) { p_encoder->Config.IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
 static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
 
 
 /******************************************************************************/

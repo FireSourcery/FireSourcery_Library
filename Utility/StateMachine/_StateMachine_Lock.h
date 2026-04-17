@@ -67,6 +67,32 @@
     Selection between DisableIrq and Signal Lock
     alternatively Inputs spin-wait
 */
+
+/******************************************************************************/
+/*
+    [Asynchronous Machine]
+    Async input processed on function called. may change state immediately,
+    optionally implement periodic [Async_ProcState]
+    without SyncInput buffer polling
+
+    Input/State on the same thread:
+        Protected functions, no lock, are sufficent. same behavior as synchronous
+
+    Input/State on different threads:
+        Critical on input, Disable ProcState when input is processing
+*/
+/*
+    [_StateMachine_AcquireAsyncInput] blocks [ProcState] and other [ProcInput], or disableISR
+
+    Optionally use Signal lock, to keep system wide interrupts enabled.
+    Signal Case - blocks [ProcState] and other [ProcInput] without disabling interrupts
+        [ProcInput] must be on the same thread
+            [ProcInput] skips when unable to acquire lock, e.g. a non polling input maybe missed entirely
+            [ProcState] at higher prioity will not cause [ProcInput] to be missed
+        [ProcState] may be skipped
+*/
+/******************************************************************************/
+
 /* [ProcState] runs higher priority than[ProcInput], critical is implemented in[ProcInput] only */
 static inline bool _StateMachine_AcquireAsyncIsr(StateMachine_Active_T * p_active)
 {
@@ -171,10 +197,10 @@ static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * 
 */
 static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
-    _Critical_DisableIrq();
-    return true;
-#elif defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
+// #if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
+//     _Critical_DisableIrq();
+//     return true;
+#if defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
     return Critical_AcquireLock(&p_active->InputSignal);
 #else
     (void)p_active; return true;
@@ -183,9 +209,9 @@ static inline bool _StateMachine_AcquireSyncInput(StateMachine_Active_T * p_acti
 
 static inline void _StateMachine_ReleaseSyncInput(StateMachine_Active_T * p_active)
 {
-#if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
-    _Critical_EnableIrq();
-#elif defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
+// #if defined(STATE_MACHINE_SYNC_INPUT_CRITICAL)
+//     _Critical_EnableIrq();
+#if defined(STATE_MACHINE_SYNC_INPUT_SIGNAL)
     Critical_ReleaseLock(&p_active->InputSignal);
 #else
     (void)p_active;

@@ -38,6 +38,10 @@
 #define HAL_CLOCK_TIMER_SOURCE_FREQ CPU_FREQ
 #endif
 
+#ifndef HAL_CLOCK_TIMER_MAX
+#define HAL_CLOCK_TIMER_MAX (0xFFFFU)
+#endif
+
 typedef FTM_Type HAL_ClockTimer_T;
 
 /******************************************************************************/

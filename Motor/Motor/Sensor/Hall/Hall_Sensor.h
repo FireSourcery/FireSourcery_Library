@@ -33,7 +33,7 @@
 /******************************************************************************/
 #include "../RotorSensor.h"
 #include "Hall.h"
-#include "Peripheral/ClockTimer/PulseTimer.h"
+#include "Transducer/Pulse/PulseTimer.h"
 #include "Math/Angle/AngleCounter.h"
 
 typedef const struct Hall_RotorSensor
