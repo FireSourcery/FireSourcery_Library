@@ -52,14 +52,18 @@ typedef struct PulseEncoder_State
 }
 PulseEncoder_State_T;
 
+/*
+    Caller Maps TIMER.P_STATE
+*/
 typedef const struct PulseEncoder
 {
     const PulseTimer_T TIMER;           /* PulseTimer const; its P_STATE points into P_STATE->Timer */
     PulseEncoder_State_T * P_STATE;
+    // const uint32_t POLLING_FREQ;        /* Control loop frequency [Hz] for angle delta conversion */
 }
 PulseEncoder_T;
 
-#define PULSE_ENCODER_INIT(Timer, p_State) (PulseEncoder_T) { .TIMER = (Timer), .P_STATE = (p_State), }
+// #define PULSE_ENCODER_INIT(Timer, p_State) (PulseEncoder_T) { .TIMER = (Timer), .P_STATE = (p_State), }
 
 /*
     Assemble from primitives

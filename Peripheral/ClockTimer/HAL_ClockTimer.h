@@ -30,19 +30,31 @@
 */
 /******************************************************************************/
 #include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Types.h)
+
+/*
+    API
+*/
+static inline uint32_t HAL_ClockTimer_Read(const HAL_ClockTimer_T * p_timer);
+static inline void HAL_ClockTimer_Write(HAL_ClockTimer_T * p_timer, uint32_t count);
+static inline void HAL_ClockTimer_ClearOverflow(HAL_ClockTimer_T * p_timer);
+static inline bool HAL_ClockTimer_ReadOverflow(const HAL_ClockTimer_T * p_timer);
+static inline void HAL_ClockTimer_EnableOverflowInterrupt(HAL_ClockTimer_T * p_timer);
+static inline void HAL_ClockTimer_Enable(HAL_ClockTimer_T * p_timer);
+static inline uint32_t HAL_ClockTimer_InitFreq(HAL_ClockTimer_T * p_timer, uint32_t freq);
+static inline void HAL_ClockTimer_Init(HAL_ClockTimer_T * p_timer);
+
+/*
+    Export
+*/
 #include HAL_PERIPHERAL_PATH(HAL_ClockTimer.h)
 
-// static inline void HAL_ClockTimer_ClearOverflow(HAL_ClockTimer_T * p_timer);
-// static inline bool HAL_ClockTimer_ReadOverflow(const HAL_ClockTimer_T * p_timer);
-// static inline uint32_t HAL_ClockTimer_Read(const HAL_ClockTimer_T * p_timer);
-// static inline void HAL_ClockTimer_Write(HAL_ClockTimer_T * p_timer, uint32_t count);
-// static inline void HAL_ClockTimer_Enable(HAL_ClockTimer_T * p_timer);
-
-
-static inline uint32_t HAL_ClockTimer_CapturePeriodT(HAL_ClockTimer_T * p_hal)
+static inline uint32_t HAL_ClockTimer_CapturePeriod(HAL_ClockTimer_T * p_hal)
 {
-    bool isOverflow = HAL_ClockTimer_ReadOverflow(p_hal);
-    if (isOverflow) { HAL_ClockTimer_ClearOverflow(p_hal); }
+    uint32_t timerValue = HAL_ClockTimer_ReadOverflow(p_hal) ? HAL_CLOCK_TIMER_MAX : HAL_ClockTimer_Read(p_hal);
+    HAL_ClockTimer_ClearOverflow(p_hal);
     HAL_ClockTimer_Write(p_hal, 0U);
-    return isOverflow ? HAL_CLOCK_TIMER_MAX : HAL_ClockTimer_Read(p_hal);
+    return timerValue;
 }
+
+

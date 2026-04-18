@@ -122,7 +122,7 @@ static inline void _Phase_WriteOnOff(const Pin_T * p_pin, const PWM_T * p_pwm, b
 }
 
 /* ReadOnOff using register state */
-static inline bool _Phase_ReadOnOff(const Pin_T * p_pin, const PWM_T * p_pwm) { return _PHASE_PIN_DEF(Pin_Output_ReadPhysical(p_pin), PWM_ReadOutputState(p_pwm)); }
+static inline bool _Phase_ReadOnOff(const Pin_T * p_pin, const PWM_T * p_pwm) { _PHASE_PIN_DEF((void)p_pwm; return Pin_Output_ReadPhysical(p_pin), PWM_ReadOutputState(p_pwm)); }
 
 static inline void _Phase_EnableA(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_A, &p_phase->PWM_A); }
 static inline void _Phase_EnableB(const Phase_T * p_phase) { _Phase_Enable(&p_phase->PIN_B, &p_phase->PWM_B); }
@@ -148,8 +148,8 @@ static inline bool _Phase_ReadOnOffC(const Phase_T * p_phase) { return _Phase_Re
 static inline uint32_t _Phase_PwmSyncOf(const Phase_T * p_phase, Phase_Id_T id)
 {
     const Phase_Bitmask_T state = Phase_Bitmask(id);
-// #ifdef PHASE_INDIVIDUAL_CHANNEL_CONTROL
     return (_PWM_ChannelMaskOf(&p_phase->PWM_A, state.A) | _PWM_ChannelMaskOf(&p_phase->PWM_B, state.B) | _PWM_ChannelMaskOf(&p_phase->PWM_C, state.C));
+// #ifdef PHASE_INDIVIDUAL_CHANNEL_CONTROL
 // #else
 // return _PWM_Module_ChannelMaskOf(&p_phase->PWM_MODULE, state.Bits);
 // #endif
@@ -171,6 +171,8 @@ static inline void _Phase_SyncPwmInvert(const Phase_T * p_phase, Phase_Id_T stat
 {
 #ifdef PHASE_SYNC_INVERT_UPDATE
     _PWM_Module_WriteSyncInvert(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));
+#else
+    (void)p_phase; (void)state;
 #endif
 }
 
@@ -187,6 +189,8 @@ static inline void _Phase_SyncOnOff(const Phase_T * p_phase, Phase_Id_T state)
 {
 #ifdef PHASE_PIN_SYNC /* caller enable when PINs are of the same module */
     _Pin_WriteSyncOnOff(&p_phase->PIN_A, _Phase_PinSyncOf(p_phase, state));
+#else
+    (void)p_phase; (void)state;
 #endif
 // #ifndef PHASE_PIN_SWITCH
 //     _PWM_Module_WriteSyncOnOff(&p_phase->PWM_MODULE, _Phase_PwmSyncOf(p_phase, state));

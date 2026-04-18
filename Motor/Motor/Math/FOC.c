@@ -31,6 +31,7 @@
 
 void FOC_Init(FOC_T * p_foc)
 {
+    (void)p_foc;
 }
 
 // void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)

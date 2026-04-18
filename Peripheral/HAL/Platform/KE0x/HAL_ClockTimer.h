@@ -49,13 +49,16 @@ typedef FTM_Type HAL_ClockTimer_T;
     @section HAL_ClockTimer_T
 */
 /******************************************************************************/
-/* Clear interrupt. Read-after-write sequence to guarantee required serialization of memory operations */
-static inline void HAL_ClockTimer_ClearOverflow(HAL_ClockTimer_T * p_timer)          { p_timer->SC &= ~FTM_SC_TOF_MASK; (void)p_timer->SC; }
-static inline bool HAL_ClockTimer_ReadOverflow(const HAL_ClockTimer_T * p_timer)     { return p_timer->SC & FTM_SC_TOF_MASK; }
-static inline uint32_t HAL_ClockTimer_Read(const HAL_ClockTimer_T * p_timer)         { return p_timer->CNT; }
-static inline void HAL_ClockTimer_Write(HAL_ClockTimer_T * p_timer, uint32_t count)  { p_timer->CNT = FTM_CNT_COUNT(count); }
+static inline uint32_t HAL_ClockTimer_Read(const HAL_ClockTimer_T * p_timer) { return p_timer->CNT; }
+static inline void HAL_ClockTimer_Write(HAL_ClockTimer_T * p_timer, uint32_t count) { p_timer->CNT = FTM_CNT_COUNT(count); }
 
-static inline void HAL_ClockTimer_Enable(HAL_ClockTimer_T * p_timer)                 { p_timer->SC |= FTM_SC_CLKS(0b01U); }
+/* Clear interrupt. Read-after-write sequence to guarantee required serialization of memory operations */
+static inline void HAL_ClockTimer_ClearOverflow(HAL_ClockTimer_T * p_timer) { p_timer->SC &= ~FTM_SC_TOF_MASK; (void)p_timer->SC; }
+static inline bool HAL_ClockTimer_ReadOverflow(const HAL_ClockTimer_T * p_timer) { return p_timer->SC & FTM_SC_TOF_MASK; }
+
+static inline void HAL_ClockTimer_EnableOverflowInterrupt(HAL_ClockTimer_T * p_timer) { p_timer->SC |= FTM_SC_TOIE_MASK; }
+
+static inline void HAL_ClockTimer_Enable(HAL_ClockTimer_T * p_timer) { p_timer->SC |= FTM_SC_CLKS(0b01U); }
 
 /*!
     @return freq set

@@ -145,18 +145,14 @@ typedef void (*Protocol_ResetReqState_T)(void * p_subState);
     Stateless static string sync, ack, nack - Ack Nack Packet_BuildTxSync_T
     Dynamic ack nack string implementation use Protocol_ReqExtFunction_T
 */
-typedef const union Protocol_ReqSync
+typedef const struct Protocol_ReqSync
 {
-    struct
-    {
-        uint32_t TX_ACK         : 1U;   /* Tx Ack after Rx initial Request*/
-        uint32_t RX_ACK         : 1U;   /* Wait for Rx Ack after Tx Response */
-        uint32_t NACK_REPEAT    : 3U;   /* Common setting. Number of repeat TxPacket on Rx Nack, Tx Nack on RxPacket error */
-        uint32_t TX_ACK_EXT     : 1U;   /* Use for All Stateful Ext Request  */
-        uint32_t RX_ACK_EXT     : 1U;
-        uint32_t TX_ACK_ABORT   : 1U;   /* Use for All Stateful Ext Request  */
-    };
-    uint32_t ID;
+    uint32_t TX_ACK         : 1U;   /* Tx Ack after Rx initial Request*/
+    uint32_t RX_ACK         : 1U;   /* Wait for Rx Ack after Tx Response */
+    uint32_t NACK_REPEAT    : 3U;   /* Common setting. Number of repeat TxPacket on Rx Nack, Tx Nack on RxPacket error */
+    uint32_t TX_ACK_EXT     : 1U;   /* Use for All Stateful Ext Request  */
+    uint32_t RX_ACK_EXT     : 1U;
+    uint32_t TX_ACK_ABORT   : 1U;   /* Use for All Stateful Ext Request  */
 }
 Protocol_ReqSync_T;
 // typedef enum Protocol_SyncMode
@@ -346,26 +342,6 @@ Protocol_SyncStatus_T;
 
 
 
-// typedef const struct
-// {
-//     const Packet_Format_T * P_FORMAT;
-//     uint8_t * P_BUFFER;
-//     Protocol_HeaderMeta_T * P_META;
-//     const Packet_BuildTxHeader_T  BUILD_TX_HEADER;  // symmetric with Phase 2
-//     const Packet_BuildTxSync_T    BUILD_TX_SYNC;
-// }
-// Protocol_TxContext_T;
-
-// typedef const struct
-// {
-//     const Packet_Format_T * P_FORMAT;
-//     uint8_t * P_BUFFER;
-//     Protocol_HeaderMeta_T * P_META;
-//     Packet_RxParserState_T * P_RX_STATE;
-//     const Packet_ParseRxFraming_T PARSE_RX_FRAMING;  // Phase 1: Id + Length
-//     const Packet_ParseRxHeader_T  PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
-// }
-// Protocol_RxContext_T;
 
 // // After Tx — optionally wait for ack
 // Protocol_SyncStatus_T Sync_AfterTx(Protocol_SyncContext_T * p_sync, Protocol_RxCode_T rxCode, bool requireAck)

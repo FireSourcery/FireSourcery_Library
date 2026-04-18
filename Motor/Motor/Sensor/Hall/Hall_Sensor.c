@@ -25,8 +25,7 @@
     @file   Hall_RotorSensor.c
     @author FireSourcery
     @brief  Hall sensor RotorSensor implementation.
-            AngleCounter_T for counter + frequency + interpolation (via Angle_T Base),
-            PulseTimer for Timer HAL, Hall_T for sensor decode.
+            PulseEncoder_T bundles PulseTimer (edge timing) + AngleCounter (count/freq/interp via Angle_T Base).
             AngleSpeed in RotorSensor_State_T is the final output interface.
 */
 /******************************************************************************/
@@ -36,8 +35,8 @@
 static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_Init(&p_sensor->HALL);
-    PulseTimer_Init(&p_sensor->TIMER);
-    PulseTimer_SetExtendedWatchStop_Millis(&p_sensor->TIMER, 1000U);
+    PulseEncoder_Init(&p_sensor->PULSE);
+    PulseTimer_SetExtendedWatchStop_Millis(&p_sensor->PULSE.TIMER, 1000U);
 }
 
 /*
@@ -47,21 +46,18 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 */
 static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 {
-    AngleCounter_T * p_counter = p_sensor->P_COUNTER;
-
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true) /* 1/6 Electrical Cycle, typically > 1ms */
     {
-        PulseTimer_CaptureEdge(&p_sensor->TIMER);
-        AngleCounter_CaptureCount(p_counter, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
-        AngleCounter_SetAngle(p_counter, Hall_ResolveAngle(p_sensor->HALL.P_STATE)); /* Snap Base.Angle to exact sector boundary — self-corrects interpolation drift each edge */
-        AngleCounter_SetLimitWindow(p_counter, ANGLE16_PER_REVOLUTION / 6); /* Clamp interpolation to the next sector endpoint (60° ahead in sign(Delta)) */
+        PulseEncoder_CaptureEdge(&p_sensor->PULSE, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
+        PulseEncoder_SetAngle(&p_sensor->PULSE, Hall_ResolveAngle(p_sensor->HALL.P_STATE)); /* Snap Base.Angle to exact sector boundary — self-corrects interpolation drift each edge */
+        PulseEncoder_SetLimitWindow(&p_sensor->PULSE, ANGLE16_PER_REVOLUTION / 6); /* Clamp interpolation to the next sector endpoint (60° ahead in sign(Delta)) */
     }
     else /* 20kHz, interpolate toward next sector boundary using Base.Delta */
     {
-        AngleCounter_Interpolate(p_counter);
+        PulseEncoder_Interpolate(&p_sensor->PULSE);
     }
 
-    p_sensor->BASE.P_STATE->AngleSpeed.Angle = p_counter->Base.Angle;
+    p_sensor->BASE.P_STATE->AngleSpeed.Angle = p_sensor->PULSE.P_STATE->Counter.Base.Angle;
 }
 
 /*
@@ -69,16 +65,13 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 */
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
-    AngleCounter_T * p_counter = p_sensor->P_COUNTER;
-
-    if (PulseTimer_IsExtendedStop(&p_sensor->TIMER) == false) { AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(&p_sensor->TIMER)); }
-    else { p_counter->FreqD = 0; }
+    if (PulseEncoder_IsExtendedStop(&p_sensor->PULSE) == false) { PulseEncoder_CaptureFreq(&p_sensor->PULSE); }
+    else { p_sensor->PULSE.P_STATE->Counter.FreqD = 0; }
 
     /* Propagate FreqD for interpolation */
-    AngleCounter_ResolveAngleDelta(p_counter);
+    PulseEncoder_ResolveAngleDelta(&p_sensor->PULSE);
     /* Write speed to output interface */
-    p_sensor->BASE.P_STATE->Speed_Fract16 = (AngleCounter_GetSpeed_Fract16(p_counter) + p_sensor->BASE.P_STATE->Speed_Fract16) / 2;
-    // p_state->AngleSpeed.Delta = p_counter->Base.Delta;
+    p_sensor->BASE.P_STATE->Speed_Fract16 = (PulseEncoder_GetSpeed_Fract16(&p_sensor->PULSE) + p_sensor->BASE.P_STATE->Speed_Fract16) / 2;
 }
 
 
@@ -88,9 +81,9 @@ static bool Hall_RotorSensor_IsFeedbackAvailable(const Hall_RotorSensor_T * p_se
 static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_ZeroInitial(&p_sensor->HALL);
-    AngleCounter_Zero(p_sensor->P_COUNTER);
-    Angle_ZeroCaptureState(&p_sensor->P_COUNTER->Base);
-    PulseTimer_SetInitial(&p_sensor->TIMER);
+    AngleCounter_Zero(&p_sensor->PULSE.P_STATE->Counter);
+    Angle_ZeroCaptureState(&p_sensor->PULSE.P_STATE->Counter.Base);
+    PulseEncoder_SetInitial(&p_sensor->PULSE);
 }
 
 static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sensor) { return Hall_IsTableValid(p_sensor->HALL.P_STATE); }
@@ -107,9 +100,9 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
         .PollingFreq = p_sensor->POLLING_FREQ,
         .FractSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm,
     };
-    AngleCounter_InitFrom(p_sensor->P_COUNTER, &config);
+    AngleCounter_InitFrom(&p_sensor->PULSE.P_STATE->Counter, &config);
     /* Override angle delta factor for electrical interpolation: 6 edges per electrical cycle */
-    p_sensor->P_COUNTER->Ref.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
+    p_sensor->PULSE.P_STATE->Counter.Ref.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
 }
 
 static void Hall_RotorSensor_InitUnits_Elpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
@@ -120,11 +113,7 @@ static void Hall_RotorSensor_InitUnits_Elpeed(const Hall_RotorSensor_T * p_senso
         .PollingFreq = p_sensor->POLLING_FREQ,
         .FractSpeedRef_Rpm = p_config->SpeedTypeMax_Rpm * p_config->PolePairs,
     };
-    AngleCounter_InitFrom(p_sensor->P_COUNTER, &config);
-
-    // Angle_InitFrom(p_sensor->P_COUNTER.Base, &(Angle_Ref_T){  });
-    /* Init interpolation limit from electrical sector angle (60 deg per Hall sector) */
-    // AngleCounter_InitLimit(p_sensor->P_COUNTER, ANGLE16_PER_REVOLUTION / 6);
+    AngleCounter_InitFrom(&p_sensor->PULSE.P_STATE->Counter, &config);
 }
 
 /*
@@ -140,4 +129,3 @@ const RotorSensor_VTable_T HALL_VTABLE =
     .ZERO_INITIAL = (RotorSensor_Proc_T)Hall_RotorSensor_ZeroInitial,
     .VERIFY_CALIBRATION = (RotorSensor_Test_T)Hall_RotorSensor_VerifyCalibration,
 };
-

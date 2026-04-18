@@ -10,9 +10,6 @@
 /* Generic Interface. Generic Array/Memory Access */
 
 typedef int value_t;
-// typedef intptr_t value_t;
-// typedef register_t value_t;
-// typedef int key_t;
 // typedef size_t key_t;
 typedef void(*proc_t)(void * p_context);
 // typedef value_t(*poll_t)(void * p_context);
@@ -48,7 +45,7 @@ static inline bool call_test_set(test_value_t test, void * p_context, int value)
 
 // #define Call_Accessor(fn, ...) \
 //     _Generic(fn, \
-//         get_t: call_get_at(__VA_ARGS__), \
+//         get_t: call_get_at \
 //         set_t: call_set_at, \
 //         get_field_t: call_get_at, \
 //         set_field_t: call_set_at, \
@@ -59,6 +56,6 @@ static inline bool call_test_set(test_value_t test, void * p_context, int value)
 //         compare_t: call_compare, \
 //         transform_t: call_transform, \
 //         apply_t: call_apply  \
-//     )
+//     )(__VA_ARGS__)
 
 #endif

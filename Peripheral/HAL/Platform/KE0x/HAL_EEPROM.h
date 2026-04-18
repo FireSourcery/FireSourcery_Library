@@ -46,7 +46,7 @@ static inline void HAL_EEPROM_ClearErrorFlags(HAL_EEPROM_T * p_hal) { (void)p_ha
 static inline bool HAL_EEPROM_ReadErrorFlags(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
 static inline bool HAL_EEPROM_ReadErrorProtectionFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
 static inline bool HAL_EEPROM_ReadCompleteFlag(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
-static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, uintptr_t destAddress, const uint8_t * p_data) { (void)p_hal; }
+static inline void HAL_EEPROM_StartCmdWriteUnit(HAL_EEPROM_T * p_hal, uintptr_t destAddress, const uint8_t * p_data) { (void)p_hal; (void)destAddress; (void)p_data; }
 static inline bool HAL_EEPROM_ReadIsFirstTime(const HAL_EEPROM_T * p_hal) { (void)p_hal; }
 static inline void HAL_EEPROM_Init_Blocking(HAL_EEPROM_T * p_hal) { (void)p_hal; }
 

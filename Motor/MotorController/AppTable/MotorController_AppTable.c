@@ -58,6 +58,7 @@ static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
 
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
 {
+    (void)p_mc; (void)fromPark;
     return &MC_STATE_MAIN_MOTOR_CMD;
 }
 

@@ -95,8 +95,8 @@ typedef FTM_Type HAL_Encoder_Pin_T;
 static inline bool HAL_Encoder_ReadCounterOverflow(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
 static inline void HAL_Encoder_ClearCounterOverflow(HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
 static inline uint32_t HAL_Encoder_ReadCounter(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
-static inline void HAL_Encoder_WriteCounter(HAL_Encoder_Counter_T * p_encoder, uint32_t count) { (void)p_encoder; }
-static inline void HAL_Encoder_WriteCounterMax(HAL_Encoder_Counter_T * p_encoder, uint32_t max) { (void)p_encoder; }
+static inline void HAL_Encoder_WriteCounter(HAL_Encoder_Counter_T * p_encoder, uint32_t count) { (void)p_encoder; (void)count; }
+static inline void HAL_Encoder_WriteCounterMax(HAL_Encoder_Counter_T * p_encoder, uint32_t max) { (void)p_encoder; (void)max; }
 static inline void HAL_Encoder_InitCounter(HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; }
 /* Quadrature Decoder Counter */
 static inline bool HAL_Encoder_ReadCounterDirection(const HAL_Encoder_Counter_T * p_encoder) { (void)p_encoder; return (0U); }

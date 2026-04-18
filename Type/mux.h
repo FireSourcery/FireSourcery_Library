@@ -27,3 +27,7 @@ static inline bool mux_is_from(entry_t * p_entry, entry_table_t * pp_table, uint
     return isValid;
 }
 
+
+// static inline VTable_T * Mux_Select(const Mux_T * p_mux, int select) { return (select < p_mux->SOURCE_COUNT) ? p_mux->PP_SOURCES[select] : NULL; }
+// // directly set, can be templated for permanent selection
+// static inline void Mux_SetField(const Mux_T * p_mux, int select, int fieldId, uintptr_t value) { VTable_SetField(p_mux->PP_SOURCES[select], p_mux->P_CONTEXT, fieldId, value); }

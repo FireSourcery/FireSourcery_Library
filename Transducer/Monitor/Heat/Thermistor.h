@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <assert.h>
 
 /******************************************************************************/
 /*!
@@ -42,8 +43,6 @@
 */
 /******************************************************************************/
 #if defined(THERMISTOR_UNITS_LINEAR) || defined(THERMISTOR_UNITS_LUT)
-    // static const thermal_t ABSOLUTE_ZERO_CELSIUS = -273;
-    // static const thermal_t KELVIN_OFFSET = 273;
     #define THERMISTOR_VALUE_T int16_t
 #elif defined(THERMISTOR_UNITS_FLOAT)
     #define THERMISTOR_VALUE_T float
@@ -73,7 +72,7 @@ typedef struct Thermistor_Coeffs
     uint16_t B;
     uint32_t R0;
     uint16_t T0; /* In Kelvin. */
-    // Thermistor_Type_T Type;
+    // Thermistor_Type_T Type; /* Unused for now */
     // uint16_t VInRef_MilliV;
 
     /* Back Up Linear Unit Conversion. */
@@ -82,10 +81,9 @@ typedef struct Thermistor_Coeffs
 }
 Thermistor_Coeffs_T;
 
-#define THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin) { .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
-#define THERMISTOR_COEFF_ALLOC(TypeValue, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin))
+#define THERMISTOR_COEFF_INIT(TypeId, BValue, R0Value, T0_Kelvin) { .B = BValue, .R0 = R0Value, .T0 = T0_Kelvin, }
+#define THERMISTOR_COEFF_ALLOC(TypeId, BValue, R0Value, T0_Kelvin) (&(Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeId, BValue, R0Value, T0_Kelvin))
 #define THERMISTOR_COEFF_ALLOC_ZERO() (&(Thermistor_Coeffs_T){0})
-#define THERMISTOR_COEFF_ALLOC_CONST(TypeValue, BValue, R0Value, T0_Kelvin) (&(const Thermistor_Coeffs_T)THERMISTOR_COEFF_INIT(TypeValue, BValue, R0Value, T0_Kelvin))
 
 /*
 
@@ -97,35 +95,48 @@ typedef const struct Thermistor
     uint32_t R_PARALLEL;  /* Parallel pull-down if applicable. 0 for Disable */
     uint16_t V_SERIES_MV; /* If VSeries is different than AdcVRef */
 
-    /* Non detachable, disable Coefficient set functions */
-    const Thermistor_Coeffs_T * P_FIXED_COEFFS; /* Set as Read Only */
-
-    /* Configurable/Detachable */
-    Thermistor_Coeffs_T * P_COEFFS; /* NULL for Fixed */
-    const Thermistor_Coeffs_T * P_NVM_COEFFS; /* NULL for Fixed */
+    Thermistor_Coeffs_T * P_COEFFS; /* read access */
+    const Thermistor_Coeffs_T * P_CONST_COEFFS; /* Nvm or compile time constant */
 }
 Thermistor_T;
 
 #define THERMISTOR_V_SERIES_MV_NULL (0U) /* Use AdcVRef */
-
 // #define _THERMISTOR_BOARD_INIT(RSeries, RParallel, VSeries) { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, }
 
-#define THERMISTOR_INIT(RSeries, RParallel, VSeries, p_Fixed, p_Coeffs) \
-    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = p_Fixed, .P_COEFFS = p_Coeffs, }
+#define THERMISTOR_INIT(RSeries, RParallel, VSeries, p_Coeffs, p_ConstCoeffs) \
+    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_COEFFS = p_Coeffs, .P_CONST_COEFFS = p_ConstCoeffs, }
 
-    // static_assert(p_Fixed == NULL || p_Coeffs == NULL, "Thermistor must have either fixed or configurable coefficients, not both.");
-
-/* Init as Configurable/Detachable */
+/*
+    Init as Configurable/Detachable
+    p_NvmCoeffs maps to P_CONST_COEFFS — for wired instances, the const baseline is NVM-backed.
+*/
 #define THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, p_Coeffs, p_NvmCoeffs) \
-    { .R_SERIES = RSeries, .R_PARALLEL = RParallel, .V_SERIES_MV = VSeries, .P_FIXED_COEFFS = NULL, .P_COEFFS = p_Coeffs, .P_NVM_COEFFS = p_NvmCoeffs }
+    { .R_SERIES = (RSeries), .R_PARALLEL = (RParallel), .V_SERIES_MV = (VSeries), .P_COEFFS = (p_Coeffs), .P_CONST_COEFFS = (p_NvmCoeffs), }
 
-#define THERMISTOR_WIRED_ALLOC(RSeries, RParallel, VSeries, p_NvmCoeffs) \
-    THERMISTOR_WIRED_INIT(RSeries, RParallel, VSeries, THERMISTOR_COEFF_ALLOC_ZERO(), p_NvmCoeffs)
+/*
+    Init as Fixed to Board
+    Define in 2 steps:
+        static const Thermistor_Coeffs_T NAME = THERMISTOR_COEFF_FIXED_INIT(...);
+        THERMISTOR_FIXED_INIT(..., &NAME)
+    Set guarded by Thermistor_IsFixed (pointer-identity sentinel).
+*/
+#define THERMISTOR_COEFF_FIXED_INIT(BValue, R0Value, T0_Kelvin) { .B = (BValue), .R0 = (R0Value), .T0 = (T0_Kelvin), }
+#define THERMISTOR_FIXED_INIT(RSeries, RParallel, VSeries, p_FixedCoeffs) \
+    THERMISTOR_INIT((RSeries), (RParallel), (VSeries), (Thermistor_Coeffs_T *)(p_FixedCoeffs), (p_FixedCoeffs))
 
-/* Init as Fixed to Board */
-#define THERMISTOR_FIXED_INIT(RSeries, RParallel, VSeries, TypeValue, BValue, R0Value, T0_Kelvin) \
-    THERMISTOR_INIT(RSeries, RParallel, VSeries, THERMISTOR_COEFF_ALLOC_CONST(TypeValue, BValue, R0Value, T0_Kelvin), NULL)
-
+/*
+    Pointer-identity sentinel: P_COEFFS == P_CONST_COEFFS ⇒ aliased fixed instance.
+    Release-safe: returns false when P_COEFFS is NULL (misconfig); assert traps it in debug.
+*/
+static inline bool Thermistor_IsFixed(const Thermistor_T * p_therm) { return (p_therm->P_COEFFS == p_therm->P_CONST_COEFFS); }
+/* Get as read only */
+static inline const Thermistor_Coeffs_T * Thermistor_GetCoeffs(const Thermistor_T * p_therm) { return p_therm->P_COEFFS; }
+/* Get as configurable — non-NULL only when not fixed */
+static inline Thermistor_Coeffs_T * Thermistor_GetCoeffsConfigurable(const Thermistor_T * p_therm) { return Thermistor_IsFixed(p_therm) ? NULL : p_therm->P_COEFFS; }
+/* Const baseline source (NVM or .rodata) — non-NULL only when not fixed */
+static inline const Thermistor_Coeffs_T * Thermistor_GetCoeffsNvm(const Thermistor_T * p_therm) { return Thermistor_IsFixed(p_therm) ? NULL : p_therm->P_CONST_COEFFS; }
+/* Get as fixed */
+static inline const Thermistor_Coeffs_T * Thermistor_GetCoeffsFixed(const Thermistor_T * p_therm) { return Thermistor_IsFixed(p_therm) ? p_therm->P_CONST_COEFFS : NULL; }
 
 
 /******************************************************************************/
@@ -139,41 +150,34 @@ static inline thermal_t _Thermistor_KelvinOfCelsius(thermal_t celsius) { return 
 /*
 */
 /******************************************************************************/
-// static inline Thermistor_Type_T _Thermistor_GetType(const Thermistor_T * p_therm)   { return p_therm->P_COEFFS->Type; }
-static inline uint32_t _Thermistor_GetR0(const Thermistor_T * p_therm)              { return p_therm->P_COEFFS->R0; }
-static inline uint16_t _Thermistor_GetT0(const Thermistor_T * p_therm)              { return p_therm->P_COEFFS->T0; } /* Degrees Kelvin */
-static inline uint16_t _Thermistor_GetT0_DegC(const Thermistor_T * p_therm)         { return p_therm->P_COEFFS->T0 + ABSOLUTE_ZERO_CELSIUS; }
-static inline uint16_t _Thermistor_GetB(const Thermistor_T * p_therm)               { return p_therm->P_COEFFS->B; }
 
-// static inline void _Thermistor_SetType(const Thermistor_T * p_therm, uint16_t value)      { p_therm->P_COEFFS->Type = value; }
-static inline void _Thermistor_SetR0(const Thermistor_T * p_therm, uint32_t value)        { p_therm->P_COEFFS->R0 = value; }
-static inline void _Thermistor_SetT0(const Thermistor_T * p_therm, uint16_t value)        { p_therm->P_COEFFS->T0 = value; } /* Degrees Kelvin */
-static inline void _Thermistor_SetT0_DegC(const Thermistor_T * p_therm, uint16_t value)   { p_therm->P_COEFFS->T0 = value - ABSOLUTE_ZERO_CELSIUS; }
-static inline void _Thermistor_SetB(const Thermistor_T * p_therm, uint16_t value)         { p_therm->P_COEFFS->B = value; }
-static inline void _Thermistor_SetLinearDeltaR(const Thermistor_T * p_therm, uint32_t value) { p_therm->P_COEFFS->DeltaR = value; }
-static inline void _Thermistor_SetLinearDeltaT(const Thermistor_T * p_therm, uint16_t value) { p_therm->P_COEFFS->DeltaT = value; }
-
-static inline bool Thermistor_IsFixed(const Thermistor_T * p_therm) { return (p_therm->P_FIXED_COEFFS != NULL); }
-static inline const Thermistor_Coeffs_T * Thermistor_GetCoeffs(const Thermistor_T * p_therm) { return (p_therm->P_FIXED_COEFFS != NULL) ? p_therm->P_FIXED_COEFFS : p_therm->P_COEFFS; }
-
+static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->B; }
+static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->R0; }
+static inline thermal_t Thermistor_GetT0(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->T0; }
+static inline thermal_t Thermistor_GetT0_Kelvin(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->T0; }
+static inline thermal_t Thermistor_GetT0_Celsius(const Thermistor_T * p_therm) { return (Thermistor_GetT0(p_therm) + ABSOLUTE_ZERO_CELSIUS); }
+static inline int32_t Thermistor_GetLinearDeltaR(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->DeltaR; }
+static inline int16_t Thermistor_GetLinearDeltaT(const Thermistor_T * p_therm) { return Thermistor_GetCoeffs(p_therm)->DeltaT; }
 // static inline Thermistor_Type_T Thermistor_GetType(const Thermistor_T * p_therm)    { return Thermistor_GetCoeffs(p_therm)->Type; }
-static inline uint16_t Thermistor_GetB(const Thermistor_T * p_therm)                { return Thermistor_GetCoeffs(p_therm)->B; }
-static inline uint32_t Thermistor_GetR0(const Thermistor_T * p_therm)               { return Thermistor_GetCoeffs(p_therm)->R0; }
-static inline uint16_t Thermistor_GetT0(const Thermistor_T * p_therm)               { return Thermistor_GetCoeffs(p_therm)->T0; }
-static inline uint16_t Thermistor_GetT0_Kelvin(const Thermistor_T * p_therm)        { return Thermistor_GetCoeffs(p_therm)->T0; }
-static inline uint16_t Thermistor_GetT0_Celsius(const Thermistor_T * p_therm)       { return (Thermistor_GetT0(p_therm) + ABSOLUTE_ZERO_CELSIUS); }
-static inline int16_t Thermistor_GetLinearDeltaR(const Thermistor_T * p_therm)      { return Thermistor_GetCoeffs(p_therm)->DeltaR; }
-static inline int16_t Thermistor_GetLinearDeltaT(const Thermistor_T * p_therm)      { return Thermistor_GetCoeffs(p_therm)->DeltaT; }
-
-static inline uint32_t Thermistor_GetRSeries(const Thermistor_T * p_therm)          { return p_therm->R_SERIES; }
-static inline uint32_t Thermistor_GetRParallel(const Thermistor_T * p_therm)        { return p_therm->R_PARALLEL; } /* 0 for Disable */
-static inline uint16_t _Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)   { return p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
-static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm)    { return (p_therm->V_SERIES_MV == 0U) ? ANALOG_REFERENCE.ADC_VREF_MILLIV : p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
-
 // static inline bool Thermistor_IsPulldown(const Thermistor_T * p_therm)
-static inline uint16_t Thermistor_GetVAdcRef_MilliV(void) { return ANALOG_REFERENCE.ADC_VREF_MILLIV; }
-static inline uint16_t Thermistor_GetVAdcMax(void)        { return ANALOG_REFERENCE.ADC_MAX; }
 
+static inline uint32_t Thermistor_GetRSeries(const Thermistor_T * p_therm) { return p_therm->R_SERIES; }
+static inline uint32_t Thermistor_GetRParallel(const Thermistor_T * p_therm) { return p_therm->R_PARALLEL; } /* 0 for Disable */
+static inline uint16_t _Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm) { return p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
+
+static inline uint16_t Thermistor_GetVInRef_MilliV(const Thermistor_T * p_therm) { return (p_therm->V_SERIES_MV == 0U) ? ANALOG_REFERENCE.ADC_VREF_MILLIV : p_therm->V_SERIES_MV; } /* If VRef is different than ADC */
+static inline uint16_t Thermistor_GetVAdcRef_MilliV(void) { return ANALOG_REFERENCE.ADC_VREF_MILLIV; }
+static inline uint16_t Thermistor_GetVAdcMax(void) { return ANALOG_REFERENCE.ADC_MAX; }
+
+/* Unchecked setters — caller MUST check Thermistor_IsFixed first.
+   Internal use only (Id-table dispatchers). External callers should use the public API. */
+static inline void _Thermistor_SetR0(const Thermistor_T * p_therm, uint32_t value) { p_therm->P_COEFFS->R0 = value; }
+static inline void _Thermistor_SetT0(const Thermistor_T * p_therm, thermal_t value) { p_therm->P_COEFFS->T0 = (uint16_t)value; } /* Degrees Kelvin */
+static inline void _Thermistor_SetT0_Celsius(const Thermistor_T * p_therm, thermal_t value) { p_therm->P_COEFFS->T0 = (uint16_t)(value - ABSOLUTE_ZERO_CELSIUS); }
+static inline void _Thermistor_SetB(const Thermistor_T * p_therm, uint16_t value) { p_therm->P_COEFFS->B = value; }
+static inline void _Thermistor_SetLinearDeltaR(const Thermistor_T * p_therm, int32_t value) { p_therm->P_COEFFS->DeltaR = value; }
+static inline void _Thermistor_SetLinearDeltaT(const Thermistor_T * p_therm, int16_t value) { p_therm->P_COEFFS->DeltaT = value; }
+// static inline void _Thermistor_SetType(const Thermistor_T * p_therm, uint16_t value)      { p_therm->P_COEFFS->Type = value; }
 
 /******************************************************************************/
 /*
@@ -190,7 +194,7 @@ extern void Thermistor_ToLinear_CelsiusPerAdcu(const Thermistor_T * p_therm, Lin
 extern void Thermistor_ToLinear_CelsiusPerROhms(const Thermistor_T * p_therm, Linear_T * p_result);
 
 extern thermal_t Thermistor_CelsiusOfAdcu(const Thermistor_T * p_therm, uint16_t adcu);
-extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t degC);
+extern uint16_t Thermistor_AdcuOfCelsius(const Thermistor_T * p_therm, thermal_t celsius);
 
 /******************************************************************************/
 /*

@@ -50,6 +50,7 @@ static inline Traction_T * TractionApp(MotorController_T * p_mc) { return (Tract
 /* From Park */
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
 {
+    (void)fromPark;
     if (!Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero)) { return &STATE_NEUTRAL; }
 
     switch (TractionApp(p_mc)->P_TRACTION_STATE->Input.Direction)

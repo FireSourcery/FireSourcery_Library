@@ -126,6 +126,7 @@ void Motor_Hall_Calibrate(const Motor_T * p_motor)
 
 void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
 {
+    (void)varValue;
     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
     if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_HALL) return;
 
@@ -143,7 +144,7 @@ void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
 
 //     switch (varId)
 //     {
-//         case 0:   Hall_VarId_Get(p_motor); break;
+//         case HALL_PULSE_RPM:   Hall_VarId_Get(p_motor); break;
 //     }
 // }
 

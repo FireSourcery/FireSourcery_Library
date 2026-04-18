@@ -154,7 +154,7 @@ static void Init_Entry(MotorController_T * p_dev)
 
 static void Init_Proc(MotorController_T * p_dev)
 {
-
+    (void)p_dev;
 }
 
 static State_T * Init_Next(MotorController_T * p_dev)
@@ -214,7 +214,7 @@ static void Park_Entry(MotorController_T * p_dev)
 
 static void Park_Proc(MotorController_T * p_dev)
 {
-
+    (void)p_dev;
 }
 
 /*
@@ -279,7 +279,7 @@ static void Main_Entry(MotorController_T * p_dev)
 
 /* Handle Motor cmd arbitration if needed */
 /* App State common background proc */
-static void Main_Proc(MotorController_T * p_dev) {}
+static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 /*
     Note: Motor_OpenLoop and Motor_Calibration exits on VOut 0/Z
@@ -341,11 +341,12 @@ static void MotorCmd_Entry(MotorController_T * p_dev)
     Motor_Table_ApplyControl(&p_dev->MOTORS, PHASE_VOUT_0); /* Set PWM Output */
 }
 
-static void MotorCmd_Proc(MotorController_T * p_dev) {}
+static void MotorCmd_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 /* Passthrough from buffered CmdInput — same pattern as Main_InputMotorCmd */
 static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
 {
+    (void)p_dev; (void)cmd;
     // Motor_Input_T * p_input = &p_dev->P_MC->CmdInput;
     // switch ((MotorController_MotorCmd_T)cmd)
     // {
@@ -404,7 +405,7 @@ static void Lock_Entry(MotorController_T * p_dev)
 
 static void Lock_Proc(MotorController_T * p_dev)
 {
-
+    (void)p_dev;
 }
 
 /* Lock SubState/Cmd by passed value */
@@ -481,6 +482,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
 
 static State_T * Lock_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
 {
+    (void)p_dev; (void)cmd;
     return NULL;
 }
 

@@ -75,14 +75,12 @@ static inline uint32_t angle_counter_wrapped(uint32_t max, uint32_t prev, uint32
 /*
     generic base - compose multiply divide args
 */
-static inline int32_t _angle_speed_of_count(uint32_t freq_t, uint32_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * freq_t * count / cpr; }
-static inline int32_t _count_of_angle_speed(uint32_t freq_t, uint32_t cpr, int32_t angle) { return cpr * angle / ANGLE16_PER_REVOLUTION / freq_t; }
-
 /* rps_of_count_time direct _angle_speed_of_count >> 16 */
-static inline int32_t _angle_freq_of_count(uint32_t t_freq, uint32_t cpr, int32_t deltaD, uint16_t periodT) { return (deltaD * t_freq) / (cpr * periodT); }
+static inline int32_t _angle_freq_of_count(uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return (deltaD * timer_freq) / (cpr * deltaT); }
+static inline int32_t _angle_speed_of_count_direct(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return (uint64_t)ANGLE16_PER_REVOLUTION * deltaD * (timer_freq / polling_freq) / (cpr * deltaT); }
+/* e.g. directly on sampleTk  */
+static inline int32_t _angle_speed_of_count(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return _angle_freq_of_count((uint64_t)ANGLE16_PER_REVOLUTION * timer_freq / polling_freq, cpr, deltaD, deltaT); }
 
-/* timer_freq < polling */
-static inline int32_t angle_speed_of_count(uint32_t polling_freq, uint32_t unit_time_freq, uint16_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * unit_time_freq * count / (cpr * polling_freq); }
 
 /*
     FreqD [counts/sec] <=> angle16 per poll cycle
@@ -90,6 +88,8 @@ static inline int32_t angle_speed_of_count(uint32_t polling_freq, uint32_t unit_
 */
 static inline int32_t angle_speed_of_count_freq(uint32_t pollingFreq, uint16_t cpr, int32_t freqD) { return freqD * ANGLE16_PER_REVOLUTION / (cpr * pollingFreq); }
 static inline int32_t count_freq_of_angle_speed(uint32_t pollingFreq, uint16_t cpr, int32_t angle16_per_poll) { return (int64_t)angle16_per_poll * cpr * pollingFreq / ANGLE16_PER_REVOLUTION; }
+/* = deltaD * const / sampleTk */
+static inline int32_t angle_speed_per_count_t(uint32_t pollingFreq, uint32_t timer_freq, uint16_t cpr) { return timer_freq * ANGLE16_PER_REVOLUTION / (cpr * pollingFreq); }
 
 /*
     Angle Speed as Delta at Polling
@@ -110,7 +110,11 @@ static inline uint32_t angle32_speed_per_count_cpr(uint32_t polling_freq, uint16
 
 static inline uint32_t angle32_speed_per_count(uint32_t polling_freq, uint32_t angle32_per_count) { return angle32_per_count / polling_freq; }
 
-static inline uint32_t angle_speed_per_count(uint32_t polling_freq, uint32_t timer_freq, uint16_t cpr) { return (uint32_t)angle_speed_of_count(polling_freq, timer_freq, cpr, 1); }
+/* timer_freq / polling = t_freq */
+// static inline int32_t _angle_speed_of_count(uint32_t t_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return ANGLE16_PER_REVOLUTION * (deltaD * t_freq) / (cpr * deltaT); }
+/* timer_freq / polling < 1 */
+// static inline int32_t angle_speed_of_count(uint32_t polling_freq, uint32_t unit_time_freq, uint16_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * unit_time_freq * count / (cpr * polling_freq); }
+// static inline uint32_t angle_speed_per_count(uint32_t polling_freq, uint32_t timer_freq, uint16_t cpr) { return  (int64_t)ANGLE16_PER_REVOLUTION * timer_freq / (cpr * polling_freq); }
 
 
 /*
@@ -189,6 +193,8 @@ static inline int32_t rpm_of_count_freq(uint16_t cpr, int32_t freqD) { return cp
 static inline int32_t count_freq_of_rpm(uint16_t cpr, int32_t rpm) { return count_of_rpm(1U, cpr, rpm); }
 static inline int32_t cps_of_count_freq(uint16_t cpr, int32_t freqD) { return cps_of_count(1U, cpr, freqD); }
 
+// static inline int32_t _angle_speed_of_count(uint32_t freq_t, uint32_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * freq_t * count / cpr; }
+// static inline int32_t _count_of_angle_speed(uint32_t freq_t, uint32_t cpr, int32_t angle) { return cpr * angle / ANGLE16_PER_REVOLUTION / freq_t; }
 
 /******************************************************************************/
 /*

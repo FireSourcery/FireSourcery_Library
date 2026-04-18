@@ -42,9 +42,8 @@
     Wrapper around values array, preset functions for int types and operations
 */
 /******************************************************************************/
-typedef const struct ArrayMeta
+typedef const struct Array
 {
-    // const size_t TYPE_SIZE; // Size of each element in the p_array
     const union
     {
         void * P_BUFFER;
@@ -92,13 +91,10 @@ static inline void Array16_Set(Array_T * p_array, size_t index, int16_t value) {
 static inline int32_t Array32_Get(Array_T * p_array, size_t index)  { return p_array->P_ARRAY32[index]; }
 static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) { p_array->P_ARRAY32[index] = value; }
 
-// static inline void Array32_ForEach(Array_T * p_array, proc_t op) { for (size_t index = 0U; index < p_array->LENGTH; index++) { op(&((int32_t *)p_array->P_BUFFER)[index]); } }
+// static inline void Array32_ForEach(Array_T * p_array, proc_t op) { for (size_t index = 0U; index < p_array->LENGTH; index++) { op(&p_array->P_ARRAY32[index]); } }
 
 static inline void Array32_ForEach(Array_T * p_array, proc_t op) { void_array_foreach_call(p_array->P_ARRAY32, p_array->LENGTH, op); }
 
-// static inline VTable_T * Mux_Select(const Mux_T * p_mux, int select) { return (select < p_mux->SOURCE_COUNT) ? p_mux->PP_SOURCES[select] : NULL; }
-// // directly set, can be templated for permanent selection
-// static inline void Mux_SetField(const Mux_T * p_mux, int select, int fieldId, uintptr_t value) { VTable_SetField(p_mux->PP_SOURCES[select], p_mux->P_CONTEXT, fieldId, value); }
 
 /*
     Typed signature for Init and handle with _Generic
@@ -136,3 +132,4 @@ typedef const Array_T Array64_T;
 //     )(p_ArrayMeta, index)
 
 // #define Array_SetAs(T, p_ArrayMeta, index, value) (Array_At(T, p_ArrayMeta, index) = value)
+

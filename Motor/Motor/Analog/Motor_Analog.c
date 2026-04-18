@@ -103,7 +103,7 @@ static const State_T CALIBRATION_STATE =
     .NEXT       = (State_Input0_T)EndCalibration,
 };
 
-static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { return &CALIBRATION_STATE; }
+static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE; }
 
 void Motor_Analog_Calibrate(const Motor_T * p_motor)
 {

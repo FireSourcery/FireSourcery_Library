@@ -50,12 +50,6 @@ void Encoder_InitInterrupts_Incremental(const Encoder_T * p_encoder)
 }
 
 
-// void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder)
-// {
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_A, p_encoder->PIN_A_ID);
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_B, p_encoder->PIN_B_ID);
-//     HAL_Encoder_InitPinInterruptDualEdge(p_encoder->P_HAL_PIN_Z, p_encoder->PIN_Z_ID);
-// }
 
 // static inline void Encoder_Quadrature_InitDirection(Encoder_State_T * p_encoder) { p_encoder->DirectionComp = (p_encoder->Config.IsALeadBPositive == true) ? 1 : -1; }
 
@@ -222,8 +216,10 @@ uint16_t Encoder_GetAngleAligned(const Encoder_State_T * p_encoder)
 */
 bool Encoder_ProcAlignValidate(Encoder_State_T * p_encoder)
 {
+    (void)p_encoder;
     // uint32_t angleDiff = (p_encoder->AngleCounter.Base.Angle > p_encoder->AlignAngle) ? (p_encoder->AngleCounter.Base.Angle - p_encoder->AlignAngle) : (p_encoder->AlignAngle - p_encoder->AngleCounter.Base.Angle);
     // return (angleDiff <= p_encoder->AngleCounter.Ref.Angle32PerCount);
+    return true;
 }
 
 void Encoder_CompleteAlignValidate(Encoder_State_T * p_encoder)

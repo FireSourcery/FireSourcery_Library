@@ -60,12 +60,14 @@ void LimitArray_ClearAll(const LimitArray_T * p_limit)
 */
 bool TestSetUpper(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
 {
-    return (value > p_state->Max) ? ({ p_state->Max = value; p_state->MaxId = id; true; }) : false;
+    if (value > p_state->Max) { p_state->Max = value; p_state->MaxId = id; return true; }
+    return false;
 }
 
 bool TestSetLower(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
 {
-    return (value < p_state->Min) ? ({ p_state->Min = value; p_state->MinId = id; true; }) : false;
+    if (value < p_state->Min) { p_state->Min = value; p_state->MinId = id; return true; }
+    return false;
 }
 
 

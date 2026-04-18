@@ -50,6 +50,13 @@ void Hall_Init(const Hall_T * p_hall)
     Hall_InitFrom(p_hall, p_hall->P_NVM_CONFIG);
 }
 
+// void Hall_InitInterrupts(const Hall_T * p_hall)
+// {
+//     HAL_Hall_InitPinInterruptDualEdge(p_hall->P_HAL_PIN_A, p_hall->PIN_A_ID);
+//     HAL_Hall_InitPinInterruptDualEdge(p_hall->P_HAL_PIN_B, p_hall->PIN_B_ID);
+//     HAL_Hall_InitPinInterruptDualEdge(p_hall->P_HAL_PIN_C, p_hall->PIN_C_ID);
+// }
+
 
 /*
     180 Degree Active

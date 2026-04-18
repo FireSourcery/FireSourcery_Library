@@ -195,8 +195,8 @@ static inline void _State_Input(State_Active_T * p_active, void * p_context, sta
 /******************************************************************************/
 /* Accessor */
 /******************************************************************************/
-static inline state_value_t _State_Cmd(State_Cmd_T cmd, void * p_context, state_cmd_t id, state_value_t value) { return (cmd != NULL) ? cmd(p_context, value) : 0; }
-static inline state_value_t State_Cmd(State_T * p_state, void * p_context, state_cmd_t id, state_value_t value) { return _State_Cmd(p_state->P_CMD_TABLE[id], p_context, id, value); }
+static inline state_value_t _State_Cmd(State_Cmd_T cmd, void * p_context, state_value_t value) { return (cmd != NULL) ? cmd(p_context, value) : 0; }
+static inline state_value_t State_Cmd(State_T * p_state, void * p_context, state_cmd_t id, state_value_t value) { return _State_Cmd(p_state->P_CMD_TABLE[id], p_context, value); }
 
 static inline state_value_t _State_Getter(State_GetField_T getter, void * p_context, state_value_t field) { return (getter != NULL) ? getter(p_context, field) : 0; }
 static inline state_value_t State_GetValue(State_T * p_state, void * p_context, state_accessor_t id, state_value_t field) { return _State_Getter(p_state->P_ACCESSOR_TABLE[id].GET, p_context, field); }

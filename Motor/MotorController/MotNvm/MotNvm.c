@@ -52,6 +52,7 @@ NvMemory_Status_T MotNvm_Write_Blocking(const MotNvm_T * p_motNvm, const void * 
 
 NvMemory_Status_T MotNvm_Read_Blocking(const MotNvm_T * p_motNvm, const void * p_rom, size_t size, void * p_dest)
 {
+    (void)p_motNvm;
     memcpy(p_dest, (void *)p_rom, size);
     return NV_MEMORY_STATUS_SUCCESS;
 }
@@ -124,6 +125,7 @@ NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm)
 #if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
     return EEPROM_Write_Blocking(p_motNvm->P_EEPROM, (uintptr_t)p_motNvm->P_BOOT_REF, &p_mc->BootRef, sizeof(BootRef_T));
 #elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
+    (void)p_motNvm;
     return NV_MEMORY_STATUS_ERROR_OTHER; /* Save on all params */
 #endif
 }

@@ -70,25 +70,6 @@ void Encoder_ModeDT_Init_InterruptQuadrature(const Encoder_T * p_encoder)
     p_encoder->P_STATE->Config.IsQuadratureCaptureEnabled = true;
 }
 
-// void Encoder_ModeDT_Init(const Encoder_T * p_encoder)
-// {
-
-// }
-
-/* For hall sensor */
-// static void _Encoder_ModeDT_InitInterruptAbc(const Encoder_T * p_encoder)
-// {
-//     PulseTimer_Init(&p_encoder->TIMER);
-//     Encoder_InitInterrupts_ABC(p_encoder);
-// }
-
-/* For hall sensor */
-// void Encoder_ModeDT_Init_InterruptAbc(const Encoder_T * p_encoder)
-// {
-//     _Encoder_ModeDT_InitInterruptAbc(p_encoder);
-//     Encoder_ModeDT_InitValuesFrom(p_encoder, p_encoder->P_NVM_CONFIG);
-// }
-
 /*
     Zero Hw Counters
 */

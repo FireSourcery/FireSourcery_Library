@@ -158,7 +158,7 @@ static inline void _StateMachine_ReleaseAsyncInput(StateMachine_Active_T * p_act
 static inline bool _StateMachine_AcquireAsyncTransition(StateMachine_Active_T * p_active)
 {
 // #if defined(STATE_MACHINE_ASYNC_CRITICAL)
-//     (void)p_active;
+    (void)p_active;
     _Critical_DisableIrq();
     return true;
 // #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
@@ -171,7 +171,7 @@ static inline bool _StateMachine_AcquireAsyncTransition(StateMachine_Active_T * 
 static inline void _StateMachine_ReleaseAsyncTransition(StateMachine_Active_T * p_active)
 {
 // #if defined(STATE_MACHINE_ASYNC_CRITICAL)
-//     (void)p_active;
+    (void)p_active;
     _Critical_EnableIrq();
 // #elif defined(STATE_MACHINE_ASYNC_SIGNAL)
     // Critical_ReleaseLock(&p_active->InputSignal);
@@ -226,6 +226,7 @@ static inline void _StateMachine_ReleaseSyncInput(StateMachine_Active_T * p_acti
 /******************************************************************************/
 static inline bool _StateMachine_EnterCritical(StateMachine_Active_T * p_active)
 {
+    (void)p_active;
     _Critical_DisableIrq();
     return true;
     // return Critical_Enter(&p_active->CriticalState);
@@ -233,6 +234,7 @@ static inline bool _StateMachine_EnterCritical(StateMachine_Active_T * p_active)
 
 static inline void _StateMachine_ExitCritical(StateMachine_Active_T * p_active)
 {
+    (void)p_active;
     _Critical_EnableIrq();
     // Critical_Exit(p_active->CriticalState);
 }

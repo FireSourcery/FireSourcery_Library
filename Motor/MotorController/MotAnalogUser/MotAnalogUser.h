@@ -78,16 +78,13 @@ typedef struct MotAnalogUser_Config
     UserAIn_Config_T BrakeAInConfig;    /* Analog input config */
 
     /* alternatively load from Enum */
-    union
+    struct
     {
-        struct
-        {
-            uint8_t UseNeutralPin       : 1U; /*  alternatively as compile time enable */
-            uint8_t UseForwardPin       : 1U; /*  alternatively as compile time enable */
-            uint8_t UseThrottleEdgePin  : 1U;
-            uint8_t UseBrakeEdgePin     : 1U;
-            uint8_t UseSwitchBrakePin   : 1U;
-        };
+        uint8_t UseNeutralPin       : 1U; /*  alternatively as compile time enable */
+        uint8_t UseForwardPin       : 1U; /*  alternatively as compile time enable */
+        uint8_t UseThrottleEdgePin  : 1U;
+        uint8_t UseBrakeEdgePin     : 1U;
+        uint8_t UseSwitchBrakePin   : 1U;
     };
 
     uint16_t SwitchBrakeValue_Percent16;
@@ -141,7 +138,6 @@ typedef const struct MotAnalogUser
 }
 MotAnalogUser_T;
 
-#define MOT_ANALOG_USER_STATE_ALLOC() (&(MotAnalogUser_State_T){0})
 
 /* Pins can pass by value */
 #define MOT_ANALOG_USER_INIT(p_State, BrakePin, ThrottlePin, ForwardPin, ReversePin, NeutralPin, SwitchBrakePin, p_Timer, p_Config) (MotAnalogUser_T) \

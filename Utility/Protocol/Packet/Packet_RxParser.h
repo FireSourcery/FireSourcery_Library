@@ -39,19 +39,44 @@ typedef enum Protocol_RxState
     PROTOCOL_RX_STATE_WAIT_LENGTH, /* HEADER */
     PROTOCOL_RX_STATE_WAIT_PACKET, /* DATA */
     // PROTOCOL_RX_STATE_WAIT_REQ_SIGNAL,
+    //     PROTOCOL_PARSE_STATE_SYNC,          /* Looking for sync/start marker */
+    //     PROTOCOL_PARSE_STATE_HEADER,        /* Parsing header */
+    //     PROTOCOL_PARSE_STATE_PAYLOAD,       /* Parsing payload */
+    //     PROTOCOL_PARSE_STATE_CHECKSUM,      /* Parsing checksum/CRC */
+    //     PROTOCOL_PARSE_STATE_COMPLETE,      /* Packet complete */
+    //     PROTOCOL_PARSE_STATE_ERROR          /* Error state */
 }
 Protocol_RxState_T;
 
-// typedef enum Protocol_ParseState
-// {
-//     PROTOCOL_PARSE_STATE_SYNC,          /* Looking for sync/start marker */
-//     PROTOCOL_PARSE_STATE_HEADER,        /* Parsing header */
-//     PROTOCOL_PARSE_STATE_PAYLOAD,       /* Parsing payload */
-//     PROTOCOL_PARSE_STATE_CHECKSUM,      /* Parsing checksum/CRC */
-//     PROTOCOL_PARSE_STATE_COMPLETE,      /* Packet complete */
-//     PROTOCOL_PARSE_STATE_ERROR          /* Error state */
-// } Protocol_ParseState_T;
 
+// typedef const struct Packet_Context
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+// }
+// Packet_Context_T;
+
+// typedef const struct
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+//     const Packet_BuildTxHeader_T  BUILD_TX_HEADER;  // symmetric with Phase 2
+//     const Packet_BuildTxSync_T    BUILD_TX_SYNC;
+// }
+// Protocol_TxContext_T;
+
+// typedef const struct
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+//     Packet_RxParserState_T * P_RX_STATE;
+//     const Packet_ParseRxFraming_T PARSE_RX_FRAMING;  // Phase 1: Id + Length
+//     const Packet_ParseRxHeader_T  PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
+// }
+// Protocol_RxContext_T;
 
 typedef struct Packet_RxParserState
 {
@@ -150,6 +175,7 @@ static inline Protocol_RxState_T _Packet_RxStateOf(const Packet_Format_T * p_spe
     else if (rxCount < p_specs->RX_LENGTH_MAX) { return PROTOCOL_RX_STATE_WAIT_PACKET; }
     else { return PROTOCOL_RX_STATE_WAIT_BYTE_1; } /* Invalid length, reset */
 }
+
 static inline Protocol_RxCode_T _Packet_ProcRxParser(const Packet_Format_T * p_specs, const uint8_t * p_rxBuffer, packet_size_t * p_RxIndex, Protocol_HeaderMeta_T * p_rxMeta)
 {
     Protocol_RxCode_T rxStatus = PROTOCOL_RX_CODE_AWAIT_PACKET;
@@ -211,14 +237,6 @@ static inline Protocol_RxCode_T _Packet_ProcRxParser(const Packet_Format_T * p_s
 
 
 
-// typedef const struct Packet_Context
-// {
-//     const Packet_Format_T * P_SPECS;
-//     uint8_t * P_BUFFER;
-//     Packet_RxState_T * P_RX_STATE;
-//     Protocol_HeaderMeta_T * P_META;
-// }
-// Packet_Context_T;
 
 
 

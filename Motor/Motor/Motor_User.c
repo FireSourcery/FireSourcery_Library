@@ -84,6 +84,7 @@ void Motor_Stop(const Motor_T * p_motor)
 
 static State_T * _Motor_InputStart(const Motor_T * p_motor, state_value_t value)
 {
+    (void)p_motor;
     (void)value;
     return &MOTOR_STATE_PASSIVE;
 }

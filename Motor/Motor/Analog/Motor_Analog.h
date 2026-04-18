@@ -61,7 +61,7 @@ static inline void _Motor_Analog_Thread(const Motor_T * p_dev)
 
 static inline void _Motor_Analog_ByPhase_Thread(const Motor_T * p_dev)
 {
-
+    (void)p_dev;
 }
 
 

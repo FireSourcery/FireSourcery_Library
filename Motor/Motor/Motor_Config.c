@@ -69,7 +69,7 @@ static inline uint16_t Motor_Config_OpenLoopILimitOf(const Motor_State_T * p_mot
 */
 static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
 static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
-static inline uint16_t _Motor_SpeedRatedLimit(const Motor_State_T * p_motor) { return INT16_MAX; }
+static inline uint16_t _Motor_SpeedRatedLimit(const Motor_State_T * p_motor) { (void)p_motor; return INT16_MAX; }
 static inline uint16_t Motor_SpeedRatedLimitOf(const Motor_State_T * p_motor, uint16_t speed_fract16) { return math_min(_Motor_SpeedRatedLimit(p_motor), speed_fract16); }
 
 /******************************************************************************/

@@ -63,6 +63,7 @@ static void Tuning_Proc(const Motor_T * p_motor)
 
 static void Tuning_Exit(const Motor_T * p_motor)
 {
+    (void)p_motor;
 }
 
 // static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
@@ -151,6 +152,7 @@ static void Homing_Entry(const Motor_T * p_motor)
 */
 static void Homing_Proc(const Motor_T * p_motor)
 {
+    (void)p_motor;
     // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
     /* alternatively use openloop speed */
     // uint16_t angleDelta = 65536/1000;
@@ -190,6 +192,7 @@ static const State_T CALIBRATION_STATE_HOMING =
 
 static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
 {
+    (void)p_motor; (void)null;
     // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
     return &CALIBRATION_STATE_HOMING;
 }

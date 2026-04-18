@@ -31,35 +31,35 @@
 #ifndef HAL_ADC_H
 #define HAL_ADC_H
 
-
 #include "Peripheral/HAL/HAL_Peripheral.h"
+#include HAL_PERIPHERAL_PATH(HAL_Types.h)
+
+static inline uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel);
+static inline void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel);
+
+// static inline uint32_t HAL_ADC_ReadFifoResult(const HAL_ADC_T * p_hal);
+static inline void HAL_ADC_WriteFifoCount(HAL_ADC_T * p_hal, uint32_t count);
+static inline uint8_t HAL_ADC_ReadFifoCount(const HAL_ADC_T * p_hal);
+static inline void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel);
+static inline void HAL_ADC_ActivateFifo(HAL_ADC_T * p_hal, uint32_t pinChannel);
+
+static inline void HAL_ADC_Deactivate(HAL_ADC_T * p_hal);
+
+static inline void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_ClearConversionCompleteFlag(HAL_ADC_T * p_hal);
+static inline bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_hal);
+static inline bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_hal);
+
+static inline void HAL_ADC_AbortConversion(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal);
+static inline void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal);
+
+static inline void HAL_ADC_Init(HAL_ADC_T * p_hal);
+
 #include HAL_PERIPHERAL_PATH(HAL_ADC.h)
-
-extern uint32_t HAL_ADC_ReadResult(const HAL_ADC_T * p_hal, uint32_t pinChannel);
-extern void HAL_ADC_Activate(HAL_ADC_T * p_hal, uint32_t pinChannel);
-
-// extern uint32_t HAL_ADC_ReadFifoResult(const HAL_ADC_T * p_hal);
-extern void HAL_ADC_WriteFifoCount(HAL_ADC_T * p_hal, uint32_t count);
-extern uint8_t HAL_ADC_ReadFifoCount(const HAL_ADC_T * p_hal);
-extern void HAL_ADC_WriteFifoPin(HAL_ADC_T * p_hal, uint32_t pinChannel);
-extern void HAL_ADC_ActivateFifo(HAL_ADC_T * p_hal, uint32_t pinChannel);
-
-extern void HAL_ADC_Deactivate(HAL_ADC_T * p_hal);
-
-extern void HAL_ADC_EnableInterrupt(HAL_ADC_T * p_hal);
-extern void HAL_ADC_DisableInterrupt(HAL_ADC_T * p_hal);
-extern void HAL_ADC_ClearConversionCompleteFlag(HAL_ADC_T * p_hal);
-extern bool HAL_ADC_ReadConversionCompleteFlag(const HAL_ADC_T * p_hal);
-extern bool HAL_ADC_ReadConversionActiveFlag(const HAL_ADC_T * p_hal);
-
-extern void HAL_ADC_AbortConversion(HAL_ADC_T * p_hal);
-extern void HAL_ADC_EnableHwTrigger(HAL_ADC_T * p_hal);
-extern void HAL_ADC_DisableHwTrigger(HAL_ADC_T * p_hal);
-extern void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal);
-extern void HAL_ADC_DisableContinuousConversion(HAL_ADC_T * p_hal);
-
-extern void HAL_ADC_Init(HAL_ADC_T * p_hal);
-
 
 /******************************************************************************/
 /*!

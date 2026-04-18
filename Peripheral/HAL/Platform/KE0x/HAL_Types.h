@@ -24,33 +24,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   HAL_Watchdog.h
+    @file   HAL_Types.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
 #include "KE0x.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef WDOG_Type HAL_Watchdog_T;
 
-// static inline void HAL_Watchdog_Feed(HAL_Watchdog_T * p_hal)
-// {
-//     p_hal->CNT = WDOG_UPDATE_KEY1;
-//     p_hal->CNT = WDOG_UPDATE_KEY2;
-// }
-
-// static inline void HAL_Watchdog_Disable(HAL_Watchdog_T * p_hal)
-// {
-//     p_hal->CNT = WDOG_UPDATE_KEY1;
-//     p_hal->CNT = WDOG_UPDATE_KEY2;
-//     p_hal->TOVAL = 0xFFFFU;
-//     p_hal->CS1 = (uint8_t) ((p_hal->CS1) & ~WDOG_CS1_EN_MASK) | WDOG_CS1_UPDATE_MASK;
-//     p_hal->CS2 |= 0U;
-// }
-
-// static inline void HAL_Watchdog_Init(HAL_Watchdog_T * p_hal, uint16_t timeout)
-// {
-
-// }
+typedef FTM_Type HAL_ClockTimer_T;
+typedef ADC_Type HAL_ADC_T;

@@ -93,11 +93,13 @@ static void Motor_PollFaultFlags(const Motor_T * p_motor)
 /******************************************************************************/
 static void Init_Entry(const Motor_T * p_motor)
 {
+    (void)p_motor;
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
 }
 
 static void Init_Proc(const Motor_T * p_motor)
 {
+    (void)p_motor;
 }
 
 static State_T * Init_Next(const Motor_T * p_motor)
@@ -204,12 +206,14 @@ static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t f
 /* Transition for user req */
 static State_T * Stop_InputOpenLoop(const Motor_T * p_motor, state_value_t state)
 {
+    (void)state;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
 }
 
 /* Calibration go directly to SubState */
 static State_T * Stop_InputCalibration(const Motor_T * p_motor, state_value_t statePtr)
 {
+    (void)statePtr;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_CALIBRATION; } else { return NULL; }
 }
 
@@ -456,12 +460,13 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void Intervention_Entry(const Motor_T * p_motor)
 {
+    (void)p_motor;
     // Motor_FOC_MatchIVState(p_motor->P_MOTOR);
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     // p_motor->P_MOTOR->UserTorqueReq = 0;
 }
 
-static void Intervention_Proc(const Motor_T * p_motor) {}
+static void Intervention_Proc(const Motor_T * p_motor) { (void)p_motor; }
 
 static State_T * Intervention_InputRelease(const Motor_T * p_motor)
 {
@@ -534,7 +539,7 @@ static void OpenLoop_Entry(const Motor_T * p_motor)
 /*
     Proc SubState Tree
 */
-static void OpenLoop_Proc(const Motor_T * p_motor) {}
+static void OpenLoop_Proc(const Motor_T * p_motor) { (void)p_motor; }
 
 /* maintain consistent interface with Run, use substate cmd for phase output without exiting */
 /* No resume from OpenLoop, freewheel state check stop */
@@ -618,7 +623,7 @@ static void Calibration_Entry(const Motor_T * p_motor)
     p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
 
-static void Calibration_Proc(const Motor_T * p_motor) {}
+static void Calibration_Proc(const Motor_T * p_motor) { (void)p_motor; }
 
 
 /* Calibration State Exit with Direction == 0 and InputCalibration(STOP) */
@@ -699,6 +704,7 @@ static State_T * Fault_InputFault(const Motor_T * p_motor, state_value_t faultCm
 
 static State_T * Fault_InputCalibration(const Motor_T * p_motor, state_value_t state)
 {
+    (void)state;
     State_T * p_nextState = NULL;
 
     // if (p_motor->P_MOTOR->FaultFlags.Value & ~POSITIONSENSOR)

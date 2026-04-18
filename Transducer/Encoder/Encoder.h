@@ -153,7 +153,7 @@ typedef struct Encoder_State
 }
 Encoder_State_T;
 
-#define ENCODER_STATE_ALLOC() (&(Encoder_State_T){0})
+// #define ENCODER_STATE_ALLOC() (&(Encoder_State_T){0})
 
 typedef const struct Encoder
 {
@@ -167,11 +167,8 @@ typedef const struct Encoder
     Pin_T PIN_A;
     Pin_T PIN_B;
 #endif
-
     PulseTimer_T TIMER;
-
     uint32_t POLLING_FREQ;        /*!< Angle Sample Freq. DeltaT Interpolation Freq. */
-
     Encoder_State_T * P_STATE;    /*!< Pointer to Encoder State. */
     const Encoder_Config_T * P_NVM_CONFIG;
 }
@@ -197,10 +194,10 @@ Encoder_T;
 {                                                                                                               \
     _ENCODER_INIT_HW_COUNTER(p_CounterHal, p_PhaseAHal, PhaseAId, p_PhaseBHal, PhaseBId, p_PhaseZHal, PhaseZId) \
     _ENCODER_INIT_HW_PINS(p_PinAHal, PinAId, p_PinBHal, PinBId)                                                 \
-    .TIMER = PULSE_TIMER_INIT_EXTENDED(p_TimerHal, TimerFreq, p_ExtendedTimer, ExtendedTimerFreq, SpeedSampleFreq, &(p_State->TimerState)), \
+    .TIMER = PULSE_TIMER_INIT_EXTENDED(p_TimerHal, TimerFreq, SpeedSampleFreq, &((p_State)->TimerState), p_ExtendedTimer, ExtendedTimerFreq), \
     .POLLING_FREQ           = PollingFreq,                                  \
-    .P_STATE                = p_State,                                      \
-    .P_NVM_CONFIG           = p_Config,                                     \
+    .P_STATE                = (p_State),                                      \
+    .P_NVM_CONFIG           = p_Config,                                      \
 }
 
 
@@ -276,6 +273,7 @@ static inline void _Encoder_CaptureDeltaD(const Encoder_T * p_encoder, Encoder_S
     // quadrature check overflow flag
     /* Do not clear the counter as it is also the angle in this case */
 #else
+    (void)p_encoder; (void)p_state;
     // p_state->DeltaD = AngleCounter_ResolveDeltaD(&p_state->AngleCounter);
 #endif
 }
@@ -323,7 +321,7 @@ static inline int32_t Encoder_GetDirectionRef(const Encoder_State_T * p_encoder)
     @brief
 */
 /******************************************************************************/
-static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { /* Angle_ZeroAngle(&p_encoder->AngleCounter.Base); */ }
+static inline void Encoder_ZeroInterpolateAngle(Encoder_State_T * p_encoder) { (void)p_encoder; /* Angle_ZeroAngle(&p_encoder->AngleCounter.Base); */ }
 
 /******************************************************************************/
 /*!

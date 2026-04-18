@@ -155,6 +155,10 @@ typedef const struct Hall
     Pin_T PIN_A;
     Pin_T PIN_B;
     Pin_T PIN_C;
+    /* configure settings not included in Pin_T, case of seperate interrupt support */
+    // HAL_Hall_Pin_T * P_HAL_PIN_A; uint32_t PIN_A_ID;
+    // HAL_Hall_Pin_T * P_HAL_PIN_B; uint32_t PIN_B_ID;
+    // HAL_Hall_Pin_T * P_HAL_PIN_C; uint32_t PIN_C_ID;
     Hall_State_T * P_STATE;
     const Hall_Config_T * P_NVM_CONFIG;
 }

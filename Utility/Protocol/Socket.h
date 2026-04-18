@@ -142,8 +142,8 @@ typedef const struct Socket
 
     const volatile uint32_t * P_TIMER;
 
-    // Packet_Context_T * P_RX_PACKET_CONTEXT;
-    // Packet_Context_T * P_TX_PACKET_CONTEXT;
+    // Packet_Context_T  RX_PACKET_CONTEXT;
+    // Packet_Context_T  TX_PACKET_CONTEXT;
 }
 Socket_T;
 

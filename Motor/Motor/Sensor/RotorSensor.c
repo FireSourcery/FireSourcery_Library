@@ -34,7 +34,7 @@
     Empty Instance
 */
 /******************************************************************************/
-static void Empty_InitFrom(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; }
+static void Empty_InitFrom(const RotorSensor_T * p_sensor, const void * p_config) { (void)p_sensor; (void)p_config; }
 static void Empty_Proc(const RotorSensor_T * p_sensor) { (void)p_sensor; }
 static bool Empty_Test(const RotorSensor_T * p_sensor) { (void)p_sensor; return false; }
 static int Empty_Get(const RotorSensor_T * p_sensor) { (void)p_sensor; return 0; }

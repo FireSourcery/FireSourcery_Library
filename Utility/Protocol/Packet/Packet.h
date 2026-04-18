@@ -48,7 +48,8 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
 #endif
 
 /* Ensure alignment for packet buffers */
-#define PACKET_BUFFER_ALLOC(BufferLength) ((uint8_t *)(uint32_t[BufferLength/4]){0})
+#define PACKET_BUFFER_ALLOC(BufferLength) (alignas(4U) uint8_t[BufferLength]){0}
+// #define PACKET_BUFFER_ALLOC(BufferLength) (uint8_t *)(uint32_t[BufferLength/4]){0}
 
 /******************************************************************************/
 /*!

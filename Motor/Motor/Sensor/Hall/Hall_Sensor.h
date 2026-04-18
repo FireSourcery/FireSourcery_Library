@@ -27,58 +27,29 @@
     @file   Hall_RotorSensor.h
     @author FireSourcery
     @brief  Implement the RotorSensor interface for Hall sensors.
-            Composes: AngleCounter_T (counter + frequency + interpolation via Angle_T Base),
-            PulseTimer (Timer HAL wrap), Hall_T (sensor decode).
+            Composes: PulseEncoder_T (PulseTimer + AngleCounter bundle) + Hall_T (sensor decode).
 */
 /******************************************************************************/
 #include "../RotorSensor.h"
 #include "Hall.h"
-#include "Transducer/Pulse/PulseTimer.h"
+#include "Transducer/Pulse/PulseEncoder.h"
 #include "Math/Angle/AngleCounter.h"
 
 typedef const struct Hall_RotorSensor
 {
-    const RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
-    const Hall_T HALL;
-    const PulseTimer_T TIMER;       /* Timer HAL wrap */
-    AngleCounter_T * P_COUNTER;     /* Counter + frequency + interpolation state */
-    uint32_t POLLING_FREQ;          /* Control loop frequency [Hz] for angle delta conversion */
+    RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
+    Hall_T HALL;
+    PulseEncoder_T PULSE;     /* PulseTimer + AngleCounter bundle (edge timing + count/freq/interp) */
+    uint32_t POLLING_FREQ;   /* Control loop frequency [Hz] for angle delta conversion */
 }
 Hall_RotorSensor_T;
 
 extern const RotorSensor_VTable_T HALL_VTABLE;
 
-#define HALL_ROTOR_SENSOR_INIT(HallStruct, TimerStruct, p_Counter, PollingFreq, p_State) (Hall_RotorSensor_T) \
+#define HALL_ROTOR_SENSOR_INIT(HallStruct, PulseStruct, PollingFreq, p_State) (Hall_RotorSensor_T) \
 {                                                                                               \
     .BASE           = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_State),                                 \
     .HALL           = (HallStruct),                                                             \
-    .TIMER          = (TimerStruct),                                                            \
-    .P_COUNTER      = (p_Counter),                                                              \
+    .PULSE          = (PulseStruct),                                                            \
     .POLLING_FREQ   = (PollingFreq),                                                            \
 }
-
-
-// typedef struct Hall_SensorState
-// {
-//     Hall_State_T Hall;
-//     PulseTimer_State_T Timer;
-//     AngleCounter_T Counter; /* Counter + frequency + interpolation state */
-// }
-// Hall_SensorState_T;
-
-// typedef const struct Hall_RotorSensor1
-// {
-//     const RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
-//     const Hall_T HALL;
-//     const PulseTimer_T TIMER;       /* Timer HAL wrap */
-//     Hall_SensorState_T * P_STATE;
-// }
-// Hall_RotorSensor1_T;
-
-// #define HALL_ROTOR_SENSOR_INIT(PinA, PinB, PinC, p_NvmConfig, p_TimerHal, TimerFreq, SampleFreq, p_RotorBaseState, p_HallSensorState) (Hall_RotorSensor1_T) \
-// {                                                                                               \
-//     .BASE           = ROTOR_SENSOR_INIT(&HALL_VTABLE, p_RotorBaseState),                                 \
-//     .HALL           = HALL_INIT(PinA, PinB, PinC, p_NvmConfig, &(p_HallSensorState->Hall)),                  \
-//     .TIMER          = PULSE_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, &(p_HallSensorState->Timer)),   \
-// }
-

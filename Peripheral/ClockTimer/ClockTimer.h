@@ -64,21 +64,7 @@ ClockTimer_T;
     Capture DeltaT - Clock Edge Polling/ISR
     [0:CLOCK_TIMER_MAX] => (0xFFFF / TIMER_FREQ) [seconds]
 */
-static inline uint32_t ClockTimer_CaptureDeltaT(const ClockTimer_T * p_timer)
-{
-    uint32_t timerValue;
-    if (!HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER))
-    {
-        timerValue = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-    }
-    else
-    {
-        timerValue = CLOCK_TIMER_MAX;
-        HAL_ClockTimer_ClearOverflow(p_timer->P_HAL_TIMER);
-    }
-    HAL_ClockTimer_Write(p_timer->P_HAL_TIMER, 0U);
-    return timerValue;
-}
+static inline uint32_t ClockTimer_CaptureDeltaT(const ClockTimer_T * p_timer) { return HAL_ClockTimer_CapturePeriod(p_timer->P_HAL_TIMER); }
 
 /*
     Per SAMPLE_TIME

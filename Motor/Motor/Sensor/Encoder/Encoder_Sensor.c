@@ -57,7 +57,9 @@ static void Encoder_RotorSensor_CaptureSpeed(const Encoder_RotorSensor_T * p_sen
 
 static bool Encoder_RotorSensor_VerifyCalibration(const Encoder_RotorSensor_T * p_sensor)
 {
+    (void)p_sensor;
     // return Encoder_IsTableValid(p_this->HALL.P_STATE);
+    return true;
 }
 
 static void Encoder_RotorSensor_ZeroSensor(const Encoder_RotorSensor_T * p_sensor)

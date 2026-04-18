@@ -79,6 +79,7 @@ static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t cou
 
 static inline int8_t _Encoder_Quadrature_CountOf(const Encoder_T * p_encoder, uint8_t phasesState)
 {
+    (void)p_encoder;
     /* Phase in XXXXBABA order, ALeadB as increment */
     static const int8_t ENCODER_TABLE[] =
     {

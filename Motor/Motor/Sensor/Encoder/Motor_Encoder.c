@@ -108,6 +108,7 @@ void Motor_Encoder_CalibrateHomeOffset(const Motor_T * p_motor)
 
 void Motor_Encoder_StartVirtualHome(const Motor_T * p_motor)
 {
+    (void)p_motor;
     // Motor_Calibration_StartHome(p_motor);
 }
 
@@ -267,6 +268,7 @@ static const State_T VALIDATE_CLOSED_LOOP =
 
 static State_T * Cmd_Align(const Motor_T * p_motor, state_value_t null)
 {
+    (void)p_motor; (void)null;
     return &ALIGN;
 }
 
@@ -279,6 +281,7 @@ void Motor_Encoder_StartAlignZero(const Motor_T * p_motor)
 
 static State_T * Cmd_ValidateAlign(const Motor_T * p_motor, state_value_t null)
 {
+    (void)p_motor; (void)null;
     return &VALIDATE_ALIGN;
 }
 
@@ -290,6 +293,7 @@ void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor)
 
 static State_T * Cmd_ValidateClosedLoop(const Motor_T * p_motor, state_value_t null)
 {
+    (void)p_motor; (void)null;
     return &VALIDATE_CLOSED_LOOP;
 }
 
@@ -419,11 +423,13 @@ static State_T * StartUpValidateClosedLoopTransition(const Motor_T * p_motor)
 
 State_T * Motor_Encoder_GetStartUpState(const Motor_T * p_motor)
 {
+    (void)p_motor;
     return &START_UP;
 }
 
 static State_T * StartUpChain(const Motor_T * p_motor, state_value_t null)
 {
+    (void)null;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0) return &START_UP;
     else return NULL;
 }
