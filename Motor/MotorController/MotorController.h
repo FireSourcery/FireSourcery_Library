@@ -363,8 +363,9 @@ static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev
 /******************************************************************************/
 extern void MotorController_Init(const MotorController_T * p_dev);
 
-extern void MotorController_LoadConfigDefault(const MotorController_T * p_dev);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
+extern void _MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts);
+
 
 extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id);

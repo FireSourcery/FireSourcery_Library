@@ -94,6 +94,7 @@ typedef enum MotorController_Var_Input
     // MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,            // 1:Enable, 0:Disable
     // MOT_VAR_USER_RELAY_TOGGLE,
     // MOT_VAR_USER_METER_TOGGLE,
+
     /* MotorController_Var_User */
     // MOT_VAR_USER_ENTER_PARK,
     // MOT_VAR_USER_STATE_CMD,
@@ -110,7 +111,6 @@ typedef enum MotorController_Var_Config
 {
     MOT_VAR_V_SUPPLY_VOLTS,
     MOT_VAR_I_LIMIT_RESV,
-    // MOT_VAR_I_LIMIT_DC,
 
     MOT_VAR_MAIN_MODE,                  // [MotorController_MainMode_T]
     MOT_VAR_INPUT_MODE,                 // [MotorController_InputMode_T]
@@ -178,9 +178,11 @@ typedef enum MotorController_VarType_VMonitor
     /*
         Specialized instances. effectively access as object classes. simplify static value bounds.
     */
-    MOT_VAR_TYPE_V_MONITOR_SOURCE_STATE,
-    MOT_VAR_TYPE_V_MONITOR_SOURCE_CONFIG,
-    MOT_VAR_TYPE_V_MONITOR_SOURCE_VDIVIDER,
+   // MOT_VAR_TYPE_VBUS_OUT,
+   // MOT_VAR_TYPE_VBUS_CONFIG, /* VNominal, Derate scaling */ or combine
+    MOT_VAR_TYPE_V_MONITOR_VBUS_STATE,
+    MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG,
+    MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER,
 
     MOT_VAR_TYPE_V_MONITOR_ACCS_STATE,
     MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG,

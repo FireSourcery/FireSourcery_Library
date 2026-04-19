@@ -31,12 +31,10 @@
 #include "MotorController_User.h"
 
 
-/******************************************************************************/
-/*   */
-/******************************************************************************/
+
 /******************************************************************************/
 /*
-    Call via Key/Value, State/SubStates Cmds
+    Call State/SubStates Cmds
     vars not stored in host view cache
 */
 /******************************************************************************/
@@ -57,7 +55,6 @@ int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorControll
         /* Blocking functions can directly return status. */
         /* MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG will block */
         /* Non Blocking function, host/caller poll Async return status after. */
-        // checks the park state
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             MotorController_InputLock(p_dev, (MotorController_LockId_T)value);
             if (MotorController_IsEnterLockError(p_dev, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_dev); }
@@ -97,17 +94,12 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
 */
 /******************************************************************************/
 /*! @param[in] volts < PHASE_CALIBRATION.VMAX and VBusConfig.VSupplyNominal_V */
-void MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
+void MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
-    p_mc->Config.VBusConfig = VBUS_CONFIG_LIION(math_min(volts, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
-    VBus_InitFrom(p_dev->P_VBUS, &p_mc->Config.VBusConfig);
+    _MotorController_SetVSupply_V(p_dev, volts);
     /* may overwrite fault/warning if called in the same packet */
 }
 
-// void MotorController_SetILimit_DC(const MotorController_T * p_dev, uint16_t dc)
-// {
-// }
 
 void MotorController_SetInputMode(const MotorController_T * p_dev, MotorController_InputMode_T mode)
 {
@@ -124,17 +116,3 @@ void MotorController_SetInputMode(const MotorController_T * p_dev, MotorControll
     // }
 }
 
-// static inline bool _Traction_ProcOnDirection(const Traction_T * p_vehicle, Traction_Direction_T direction)
-// {
-//     // if((p_vehicle->P_TRACTION_STATE->Config.BuzzerFlagsEnable.OnReverse == true))
-//     // {
-//     //     if(p_this->DriveDirection == MOTOR_DIRECTION_CW)
-//     //     {
-//     //         Traction_BeepPeriodicType1(p_this);
-//     //     }
-//     //     else
-//     //     {
-//     //         Blinky_Stop(&p_this->Buzzer);
-//     //     }
-//     // }
-// }
