@@ -384,6 +384,7 @@ void Motor_EnterOpenLoopState(const Motor_T * p_motor)
 */
 /******************************************************************************/
 /* Handle remaining comparison with Motor heat I limits if its not handled by arbitration array */
+/*     // Motor_SetILimits(p_motor, math_min(i_Fract16, LimitArray_Upper(p_local))); */
 bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
     bool isLimit = true;
@@ -412,25 +413,43 @@ bool Motor_TryClearILimit(Motor_State_T * p_motor)
     return isLimit;
 }
 
+
+void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
+{
+    // if (LimitArray_IsUpperActive(p_local) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_local)); }
+    // else { Motor_TryClearSpeedLimit(p_motor); }
+    Motor_SetSpeedLimits(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+}
+
+void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
+{
+    // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
+    // else { Motor_TryClearILimit(p_motor); }
+    Motor_SetILimitMotoring(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+}
+
+void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
+{
+    // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
+    // else { Motor_TryClearILimit(p_motor); }
+    Motor_SetILimitGenerating(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+}
+
 /*
     Interface
     Set using comparison struct
 */
-void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-{
-    if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    else { Motor_TryClearSpeedLimit(p_motor); }
-}
+// void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
+// {
+//     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_limit)); }
+//     else { Motor_TryClearSpeedLimit(p_motor); }
+// }
 
-void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-{
-    if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_GetUpper(p_limit)); }
-    else { Motor_TryClearILimit(p_motor); }
-}
-
-
-
-
+// void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
+// {
+//     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
+//     else { Motor_TryClearILimit(p_motor); }
+// }
 
 /******************************************************************************/
 /*

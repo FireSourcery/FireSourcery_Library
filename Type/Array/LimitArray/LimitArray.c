@@ -33,21 +33,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-// #include <limits.h>
 #include <assert.h>
 
 /*!
     @brief Initialize the LimitArray_T structure.
     @param p_limit Pointer to the LimitArray_T structure.
 */
-void LimitArray_Init(const LimitArray_T * p_limit)
+void LimitArray_Init(LimitArray_T * p_limit)
 {
-    // p_limit->count = 0U;
     _LimitArray_State(p_limit)->Min = LIMIT_ARRAY_MAX;
     _LimitArray_State(p_limit)->Max = LIMIT_ARRAY_MIN;
 }
 
-void LimitArray_ClearAll(const LimitArray_T * p_limit)
+void LimitArray_ClearAll(LimitArray_T * p_limit)
 {
     _LimitArray_ClearState(_LimitArray_State(p_limit));
     _LimitArray_ClearValues(_LimitArray_Values(p_limit), p_limit->LENGTH);
@@ -78,7 +76,7 @@ bool TestSetLower(LimitArray_Augments_T * p_state, limit_id_t id, limit_t value)
    @param id The ID associated with the value.
    @return True if the value was a new min or max. The value of the entry is always set.
 */
-bool LimitArray_TrySetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
+bool LimitArray_TrySetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
     assert(id < p_limit->LENGTH); // Ensure id is within bounds. Compile-time constant
 
@@ -86,18 +84,17 @@ bool LimitArray_TrySetEntry(const LimitArray_T * p_limit, limit_id_t id, limit_t
     return TestSetUpper(_LimitArray_State(p_limit), id, value) || TestSetLower(_LimitArray_State(p_limit), id, value);
 }
 
-bool LimitArray_TestSetUpper(const LimitArray_T * p_limit, limit_id_t id, limit_t value)
+bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value)
 {
     _LimitArray_Values(p_limit)[id] = value;
     return TestSetUpper(_LimitArray_State(p_limit), id, value);
-    //return  LimitArray_GetUpper(p_limit);
 }
 
 
 /*
     Compare on remove O(n)
 */
-void LimitArray_ProcCompare(const LimitArray_T * p_limit)
+void LimitArray_ProcCompare(LimitArray_T * p_limit)
 {
     limit_t bufferMin = LIMIT_ARRAY_MAX;
     limit_t bufferMax = LIMIT_ARRAY_MIN;
@@ -117,7 +114,7 @@ void LimitArray_ProcCompare(const LimitArray_T * p_limit)
     _LimitArray_State(p_limit)->Max = bufferMax;
 }
 
-// static inline limit_t LimitArray_ProcCompareUpper(const LimitArray_T * p_limit)
+// static inline limit_t LimitArray_ProcCompareUpper(LimitArray_T * p_limit)
 // {
 //     _LimitArray_State(p_limit)->Min = _LimitArray_ProcCompareUpper(p_limit);
 // }
@@ -128,7 +125,7 @@ void LimitArray_ProcCompare(const LimitArray_T * p_limit)
     @param id The ID of the value to remove.
     @return True if the value was a active limit. The value of the entry is always cleared.
 */
-bool LimitArray_TryClearEntry(const LimitArray_T * p_limit, limit_id_t id)
+bool LimitArray_TryClearEntry(LimitArray_T * p_limit, limit_id_t id)
 {
     limit_t value = _LimitArray_Values(p_limit)[id];
     bool isLimit = (value == _LimitArray_State(p_limit)->Min) || (value == _LimitArray_State(p_limit)->Max);

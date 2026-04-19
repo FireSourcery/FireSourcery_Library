@@ -158,7 +158,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Thermistor Adcu is roughly linear in Warning region
                 Increasing Limit only, reset on warning clear.
             */
-           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_dev->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
+            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_dev->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:
@@ -180,8 +180,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
     Analog_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
 
-    // /* Process individual motor heat monitoring */
-    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_dev->P_MOTOR_CONSTS[iMotor]); }
+    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Heat_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
 }
 
 /******************************************************************************/
@@ -218,7 +217,7 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
         case VMONITOR_STATUS_WARNING_LOW:
             if (RangeMonitor_IsTriggeringEdge(p_dev->V_SOURCE.P_STATE) == true)
             {
-                MotorController_CaptureVSource(p_dev);
+                // MotorController_CaptureVSource(p_dev);
                 // LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
             }
             break;

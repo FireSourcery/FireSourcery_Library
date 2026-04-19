@@ -42,7 +42,7 @@
     beep, LimitArray, and multi-motor disable at the controller layer.
 */
 /******************************************************************************/
-typedef VMonitor_State_T VBus_Monitor_T;
+// typedef VMonitor_State_T VBus_Monitor_T;
 
 static inline VMonitor_State_T * VBus_Monitor(VBus_T * p_vbus) { return &p_vbus->MonitorState; }
 

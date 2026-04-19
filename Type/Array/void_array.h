@@ -186,7 +186,7 @@ static inline bool void_array_is_any_value(size_t type, const void * p_buffer, s
     return is_any;
 }
 
-#define void_array_foreach_call(p_buffer, length, function, ...) \
+#define array_foreach_call(p_buffer, length, function, ...) \
     _Generic((function), \
         proc_t:   void_array_foreach,        \
         set_t:    void_array_foreach_set,    \
@@ -251,6 +251,23 @@ static inline void * void_array_max(size_t type, const void * p_buffer, size_t l
 
 static inline value_t void_array_min_value(size_t type, const void * p_buffer, size_t length) { return void_pointer_as_value(type, void_array_min(type, p_buffer, length)); }
 static inline value_t void_array_max_value(size_t type, const void * p_buffer, size_t length) { return void_pointer_as_value(type, void_array_max(type, p_buffer, length)); }
+
+struct range { value_t min; value_t max; };
+
+// static inline struct range void_array_min_max(size_t type, const void * p_buffer, size_t length)
+// {
+//     const void * p_min = p_buffer;
+//     const void * p_max = p_buffer;
+//     void * p_unit;
+//     for (size_t index = 1U; index < length; index++)
+//     {
+//         p_unit = void_pointer_at(type, p_buffer, index);
+//         if (memcmp(p_unit, p_min, type) < 0) { p_min = p_unit; }
+//         else if (memcmp(p_unit, p_max, type) > 0) { p_max = p_unit; }
+//     }
+//     return (struct range){ .min = void_pointer_as_value(type, p_min), .max = void_pointer_as_value(type, p_max) };
+// }
+
 
 static inline int compare_int(const void * a, const void * b) { return (*(int *)a - *(int *)b); }
 

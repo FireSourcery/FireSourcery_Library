@@ -393,6 +393,8 @@ extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, M
 extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id);
 extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id);
+extern bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id);
 
 // extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_dev);
 

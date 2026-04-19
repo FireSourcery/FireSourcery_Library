@@ -86,7 +86,11 @@ static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 
 */
 /******************************************************************************/
-/* Caller handle I Limit HeatMonitor_GetScalarLimit_Percent16(&p_motor->Thermistor) */
+/*
+    Per-motor winding thermal derate. Writes to motor-local arrays so one motor's
+    heat does not broadcast to peers; composition into the effective cap happens
+    inside Motor_Table_Apply* at the controller tick.
+*/
 static inline void Motor_Heat_Thread(const Motor_T * p_dev)
 {
     switch (HeatMonitor_Poll(&p_dev->HEAT_MONITOR, Analog_Conversion_GetResult(&p_dev->HEAT_MONITOR_CONVERSION)))
@@ -94,12 +98,17 @@ static inline void Motor_Heat_Thread(const Motor_T * p_dev)
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsStatusClearing(p_dev->HEAT_MONITOR.P_STATE) == true)
             {
-                // Motor_ClearILimitMotoringEntry(p_dev, MOTOR_I_LIMIT_HEAT_THIS);
+                LimitArray_TryClearEntry(&p_dev->I_LIMITS_LOCAL,     MOTOR_I_LIMIT_HEAT_WINDING);
+                LimitArray_TryClearEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING);
             }
             break;
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:  /* repeatedly checks if heat is a lower ILimit when another ILimit is active */
-            // Motor_SetILimitMotoringEntry_Scalar(p_dev, MOTOR_I_LIMIT_HEAT_THIS, HeatMonitor_GetScalarLimit_Percent16(&p_dev->Thermistor));
-            break;
+        case HEAT_MONITOR_STATUS_WARNING_HIGH:
+            {
+                uint16_t i_limit = fract16_mul(HeatMonitor_GetScalarLimit_Percent16(&p_dev->HEAT_MONITOR) / 2, Phase_Calibration_GetIRatedPeak_Fract16());
+                LimitArray_TrySetEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING, i_limit);
+                LimitArray_TrySetEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING, i_limit);
+                break;
+            }
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             Motor_StateMachine_SetFault(p_dev, MOTOR_FAULT_OVERHEAT);
             break;

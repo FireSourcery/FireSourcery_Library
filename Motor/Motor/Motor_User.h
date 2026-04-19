@@ -228,25 +228,16 @@ extern void Motor_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 #if defined(MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
 extern void Motor_EnterOpenLoopState(const Motor_T * p_motor);
-
-extern void Motor_SetOpenLoopV(Motor_State_T * p_motor, int16_t volts_fract16);
-extern void Motor_SetOpenLoopI(Motor_State_T * p_motor, int16_t amps_fract16);
-extern void Motor_SetOpenLoopCmd(Motor_State_T * p_motor, int16_t ivCmd);
-extern void Motor_SetOpenLoopCmd_Scalar(Motor_State_T * p_motor, int16_t scalar_fract16);
-extern void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed_fract16);
 #endif
 
-extern int16_t Motor_GetCmd(const Motor_State_T * p_motor);
-extern int16_t Motor_GetSetpoint(const Motor_State_T * p_motor);
-extern int16_t Motor_GetSetpoint_Scalar(const Motor_State_T * p_motor);
-
-extern void Motor_SetActiveCmdValue(Motor_State_T * p_motor, int16_t userCmd);
 extern void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd);
 
 
 extern bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16);
 extern bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_Fract16);
-extern void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
-extern void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit);
+
+void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
+void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
+void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
 
 extern void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input);

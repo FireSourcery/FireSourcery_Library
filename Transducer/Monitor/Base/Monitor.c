@@ -138,6 +138,7 @@ Monitor_Status_T Monitor_Poll(Monitor_T * p_monitor, int32_t input)
     switch (p_monitor->Direction)
     {
         case MONITOR_DISABLED:
+            p_monitor->LastInput = input;
             break;
         case MONITOR_THRESHOLD_LOW:
             p_monitor->LastInput = input;

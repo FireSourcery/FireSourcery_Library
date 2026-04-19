@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2025 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,47 +24,38 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   .h
+    @file   Motor_Limits.h
     @author FireSourcery
-    @brief  Limits Input
+    @brief  Motor-local arbitration sources (per-motor scope).
+
+    Complements system-scope MotLimits.h. Per-motor sources write to a
+    Motor-owned LimitArray so one motor's derate does not broadcast to
+    peers sharing the same controller.
 */
 /******************************************************************************/
-#ifndef MOT_LIMITS_H
-#define MOT_LIMITS_H
-
 #include "Type/Array/LimitArray/LimitArray.h"
 
-/*
-    System-scope arbitration ids. Per-motor sources (winding heat, stall,
-    field-weakening) live in Motor_Limits.h — never add them here or a single
-    motor's derate would broadcast to all motors sharing this controller.
-*/
-typedef enum MotILimitId
+/* Per-motor motoring-current sources */
+typedef enum Motor_ILimitId
 {
-    MOT_I_LIMIT_HEAT_MC,        /* thermal — MCU/PCB (shared) */
-    MOT_I_LIMIT_V_LOW,          /* power — VBus undervoltage droop */
-    MOT_I_LIMIT_USER,           /* user / protocol */
-    MOT_I_LIMIT_COUNT,
+    MOTOR_I_LIMIT_HEAT_WINDING,     /* this motor's winding NTC / I^2t */
+    MOTOR_I_LIMIT_STALL,            /* startup / lock current cap */
+    MOTOR_I_LIMIT_COUNT,
 }
-MotILimitId_T;
+Motor_ILimitId_T;
 
-typedef enum MotIGenLimitId
+/* Per-motor generating-current sources */
+typedef enum Motor_IGenLimitId
 {
-    MOT_I_GEN_LIMIT_HEAT_MC,     /* thermal caps regen symmetrically */
-    MOT_I_GEN_LIMIT_V_HIGH,      /* power — VBus overvoltage regen chop */
-    MOT_I_GEN_LIMIT_USER,        /* user regen strength */
-    MOT_I_GEN_LIMIT_COUNT,
+    MOTOR_I_GEN_LIMIT_HEAT_WINDING,
+    MOTOR_I_GEN_LIMIT_COUNT,
 }
-MotIGenLimitId_T;
+Motor_IGenLimitId_T;
 
-typedef enum MotSpeedLimitId
+/* Per-motor speed sources */
+typedef enum Motor_SpeedLimitId
 {
-    MOT_SPEED_LIMIT_MC,          /* generic system cap */
-    MOT_SPEED_LIMIT_V_BUS,       /* power — back-EMF ceiling from VBus */
-    MOT_SPEED_LIMIT_USER,
-    MOT_SPEED_LIMIT_COUNT,
+    MOTOR_SPEED_LIMIT_FIELD_WEAKEN, /* optional per-motor FW clamp */
+    MOTOR_SPEED_LIMIT_COUNT,
 }
-MotSpeedLimitId_T;
-
-
-#endif
+Motor_SpeedLimitId_T;

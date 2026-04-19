@@ -91,9 +91,14 @@ static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_table, Motor_SetCmdV
 
 // static inline void Motor_Table_ApplyInputs(Motor_Table_T * p_table, Motor_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ProcSyncInput(&p_table->P_MONITORS[iMotor], p_input); } }
 
-static inline void Motor_Table_ApplySpeedLimit(Motor_Table_T * p_table, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_table->P_STATES[iMotor], p_limit); } }
-static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_table, LimitArray_T * p_limit) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitWith(&p_table->P_STATES[iMotor], p_limit); } }
-
+/*
+    Two-scope arbitration: per motor, effective limit = min(system_upper, local_upper).
+    Both scopes default to LIMIT_ARRAY_MAX when inactive, so the composition falls
+    through to Motor_Set* which clamps to Config cap — equivalent to "reset".
+*/
+static inline void Motor_Table_ApplySpeedLimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].SPEED_LIMITS_LOCAL, p_system); } }
+static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitMotoringWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].I_LIMITS_LOCAL, p_system); } }
+static inline void Motor_Table_ApplyIGenLimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitGeneratingWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].I_GEN_LIMITS_LOCAL, p_system); } }
 
 
 /******************************************************************************/

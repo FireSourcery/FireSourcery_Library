@@ -93,7 +93,7 @@ static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) {
 
 // static inline void Array32_ForEach(Array_T * p_array, proc_t op) { for (size_t index = 0U; index < p_array->LENGTH; index++) { op(&p_array->P_ARRAY32[index]); } }
 
-static inline void Array32_ForEach(Array_T * p_array, proc_t op) { void_array_foreach_call(p_array->P_ARRAY32, p_array->LENGTH, op); }
+static inline void Array32_ForEach(Array_T * p_array, proc_t op) { array_foreach_call(p_array->P_ARRAY32, p_array->LENGTH, op); }
 
 
 /*

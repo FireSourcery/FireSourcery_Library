@@ -54,6 +54,7 @@
 #include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Utility/Timer/Timer.h"
 #include "Type/Array/LimitArray/LimitArray.h"
+#include "Motor_Limits.h"
 
 #include "Math/Fixed/fixed.h"
 #include "Math/Angle/Angle.h"
@@ -184,28 +185,7 @@ static const Motor_FaultFlags_T MOTOR_FAULT_OVERHEAT         = { .Overheat      
 static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor = 1U };
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
-typedef enum Motor_ILimitId
-{
-    MOTOR_I_LIMIT_HEAT_WINDING,     /* motor NTC / I²t */
-    MOTOR_I_LIMIT_STALL,            /* startup / lock current cap */
-    MOTOR_I_LIMIT_COMMON,           /* in case of nesting arbitration arrays */
-    MOTOR_I_LIMIT_COUNT,
-}
-Motor_ILimitId_T;
-
-typedef enum Motor_IGenLimitId
-{
-    MOTOR_I_GEN_LIMIT_HEAT_WINDING,
-    MOTOR_I_GEN_LIMIT_COMMON,
-    MOTOR_I_GEN_LIMIT_COUNT,
-}
-Motor_IGenLimitId_T;
-
-// typedef enum Motor_SpeedLimitId
-// {
-//     MOTOR_SPEED_LIMIT_FIELD_WEAKEN,
-//     MOTOR_SPEED_LIMIT_COUNT,
-// } Motor_SpeedLimitId_T;
+/* Motor-local arbitration ids: see Motor_Limits.h */
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -244,6 +224,25 @@ typedef struct Motor_Config
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
 
+    /*
+
+    */
+    /* All OpenLoop Modes - UserCmd, Align */
+    uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. */
+
+    /* Calibration and Jog Align */
+    uint16_t AlignScalar_Fract16;           /* Applies V or I. as scalar [0:1.0F] [0:32768]. */
+    uint32_t AlignTime_Cycles;              /* Ramp time and step duration */
+
+    /* OpenLoop Run/StartUp Preset */
+// #if defined(MOTOR_OPEN_LOOP_ENABLE)
+    uint16_t OpenLoopRampSpeedFinal_Fract16;
+    uint32_t OpenLoopRampSpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
+    uint16_t OpenLoopRampIFinal_Fract16;
+    uint32_t OpenLoopRampITime_Cycles;          /* Time to reach OpenLoopI */
+    // uint16_t OpenLoopGain_VHz;
+// #endif
+
 //     /*
 //         Identified electrical parameters. User-readable SI units.
 //         Populated by CALIBRATION_STATE_ELECTRICAL (Motor_Calibration_Electrical.c).
@@ -266,31 +265,10 @@ typedef struct Motor_Config
 //     fract16_t KLq_Fract16;
 //     fract16_t KPsi_Fract16;
 // #endif
-
-    /*
-
-    */
-    /* All OpenLoop Modes - UserCmd, Align */
-    uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. */
-
-    /* Calibration and Jog Align */
-    uint16_t AlignScalar_Fract16;           /* Applies V or I. as scalar [0:1.0F] [0:32768]. */
-    uint32_t AlignTime_Cycles;              /* Ramp time and step duration */
-
-    /* OpenLoop Run/StartUp Preset */
-// #if defined(MOTOR_OPEN_LOOP_ENABLE)
-    uint16_t OpenLoopRampSpeedFinal_Fract16;
-    uint32_t OpenLoopRampSpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
-    uint16_t OpenLoopRampIFinal_Fract16;
-    uint32_t OpenLoopRampITime_Cycles;          /* Time to reach OpenLoopI */
-    // uint16_t OpenLoopGain_VHz;
-// #endif
-
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
-
 #if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
     uint16_t SurfaceDiameter;
     uint16_t GearRatioOutput;
@@ -376,6 +354,19 @@ typedef struct Motor_State
 
     /*  */
     HeatMonitor_State_T HeatMonitorState;
+
+
+    /*
+        Motor-local arbitration buffers. Handles live in Motor_T (P_I_LIMITS_LOCAL, etc.).
+        Per-motor sources (winding heat, stall, field-weaken) write here so a single
+    */
+    limit_t                 ILimits[MOTOR_I_LIMIT_COUNT];
+    LimitArray_Augments_T   ILimitsActive;
+    limit_t                 IGenLimits[MOTOR_I_GEN_LIMIT_COUNT];
+    LimitArray_Augments_T   IGenLimitsActive;
+    limit_t                 SpeedLimits[MOTOR_SPEED_LIMIT_COUNT];
+    LimitArray_Augments_T   SpeedLimitsActive;
+
 
     /*
         Storable Config
@@ -476,9 +467,18 @@ typedef const struct Motor
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
+    /* Motor-local arbitration handles. Buffers + augments live in Motor_State_T. */
+    LimitArray_T I_LIMITS_LOCAL;
+    LimitArray_T I_GEN_LIMITS_LOCAL;
+    LimitArray_T SPEED_LIMITS_LOCAL;
     // Motor_VarAccess_T VAR_ACCESS;
 }
 Motor_T;
+
+#define MOTOR_LIMITS_LOCAL_INIT(p_MotorState)                                                               \
+    .I_LIMITS_LOCAL       = LIMIT_ARRAY_INIT(&(p_MotorState)->ILimits[0],      MOTOR_I_LIMIT_COUNT,       &(p_MotorState)->ILimitsActive),       \
+    .I_GEN_LIMITS_LOCAL   = LIMIT_ARRAY_INIT(&(p_MotorState)->IGenLimits[0],  MOTOR_I_GEN_LIMIT_COUNT,   &(p_MotorState)->IGenLimitsActive),   \
+    .SPEED_LIMITS_LOCAL   = LIMIT_ARRAY_INIT(&(p_MotorState)->SpeedLimits[0],  MOTOR_SPEED_LIMIT_COUNT,   &(p_MotorState)->SpeedLimitsActive)
 
 // #define MOTOR_CONTROL_TIMER_INIT(p_MotorContext, MotorState) TIMER_T_ALLOC(
 

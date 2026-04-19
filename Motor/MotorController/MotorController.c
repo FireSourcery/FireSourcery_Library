@@ -175,7 +175,18 @@ bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitI
 {
     if (LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
     return false;
+}
 
+bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t i_fract16)
+{
+    if (LimitArray_TrySetEntry(&p_dev->I_GEN_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
+    return false;
+}
+
+bool _MotorController_ClearIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id)
+{
+    if (LimitArray_TryClearEntry(&p_dev->I_GEN_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
+    return false;
 }
 
 

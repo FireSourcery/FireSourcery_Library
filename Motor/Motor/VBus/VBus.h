@@ -151,7 +151,6 @@ static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
     p_vbus->PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / p_vbus->VBus_Fract16;
 }
 
-
 /*
     Rolling two-sample filter; matches the prior Phase_VBus single-pole behavior.
     Callers (typically MotorController's VBus thread) pass fract16 derived from ADCU.
@@ -160,7 +159,6 @@ static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 {
     _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
 }
-
 
 /*
     Seed live state to VSupplyNominal before the first ADC sample lands.
