@@ -51,9 +51,7 @@ void MotorController_Init(const MotorController_T * p_dev)
 
     MotAnalogUser_Init(&p_dev->ANALOG_USER);
 
-    VMonitor_Init(&p_dev->V_SOURCE);
-    /* Overwrite */
-    VDivider_ToLinear(&(VDivider_T) { .R1 = PHASE_ANALOG_CALIBRATION.V_PHASE_R1, .R2 = PHASE_ANALOG_CALIBRATION.V_PHASE_R2, }, p_dev->V_SOURCE.P_LINEAR);
+    VBus_InitFrom(p_dev->P_VBUS, &p_mc->Config.VBusConfig);
 
     VMonitor_Init(&p_dev->V_ACCESSORIES);
     VMonitor_Init(&p_dev->V_ANALOG);
@@ -61,7 +59,6 @@ void MotorController_Init(const MotorController_T * p_dev)
     HeatMonitor_Init(&p_dev->HEAT_PCB);
     HeatMonitor_Group_Init(&p_dev->HEAT_MOSFETS);
 
-    Phase_VBus_InitV(p_mc->Config.VSupplyRef);
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
     Blinky_Init(&p_dev->BUZZER);
@@ -80,7 +77,7 @@ void MotorController_Init(const MotorController_T * p_dev)
     /* Alternatively set nominal on init */
     for (uint8_t i = 0U; i < p_dev->HEAT_MOSFETS.COUNT; i++) { Analog_Conversion_Mark(&p_dev->P_HEAT_MOSFET_CONVERSIONS[i]); }
     Analog_Conversion_Mark(&p_dev->HEAT_PCB_CONVERSION);
-    Analog_Conversion_Mark(&p_dev->V_SOURCE_CONVERSION);
+    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
     Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
@@ -93,59 +90,22 @@ void MotorController_Init(const MotorController_T * p_dev)
     Runtime only
 */
 /******************************************************************************/
-/*
-    Set runtime Config (RAM copy) via abstraction layer functions (in user units)
-    Convenience function over p_mc->Config compile time initializers
-    On first time boot up. propagate defaults
-
-    when if (BootRef_IsValid() == false)
-*/
-void MotorController_LoadConfigDefault(const MotorController_T * p_dev)
-{
-    RangeMonitor_Enable(p_dev->V_SOURCE.P_STATE);
-    MotorController_ResetVSourceMonitorDefaults(p_dev);
-
-    // VMonitor_ResetLimitsDefault(&p_mc->VMonitorAccs);
-    // VMonitor_ResetLimitsDefault(&p_mc->VMonitorSense);
-    // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++)
-}
-
-
 void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 {
     static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
     p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
 }
 
-/******************************************************************************/
 /*
-
+    Reinstall config into the VBus instance: re-seeds monitor thresholds from
+    VSupplyNominal_V and the LiIon defaults. Callers first mutate
+    Config.VBusConfig, then invoke this to push the change into live state.
 */
-/******************************************************************************/
-// fault past 57% or vPhaseFract16*vBusInv_Fract32 may overflow
-void _MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
+void _MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
 {
-    p_dev->P_MC->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_dev); /* may overwrite fault/warning if called in the same packet */
+    p_dev->P_MC->Config.VBusConfig = VBUS_CONFIG_LIION(math_min(volts, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
+    VBus_InitFrom(p_dev->P_VBUS, &p_dev->P_MC->Config.VBusConfig);
 }
-
-/* auto value using */
-void MotorController_InitVSupplyAutoValue(const MotorController_T * p_dev)
-{
-    assert(Phase_Calibration_IsValid() == true); /* Must be loaded before */
-    _MotorController_SetVSupplyRef(p_dev, Linear_Voltage_Of(p_dev->V_SOURCE.P_LINEAR, Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION)));
-}
-
-void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev)
-{
-    VMonitor_InitLimitsDefault(p_dev->V_SOURCE.P_STATE, Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC->Config.VSupplyRef), 25, 15, 5);
-}
-// bool MotorController_ValidateVSupplyMonitor(const MotorController_T * p_dev)
-// {
-//    RangeMonitor_Config_T * p_config = &p_dev->V_SOURCE.P_STATE->Config;
-//    uint32_t nominal = Linear_Voltage_AdcuOfV(p_dev->V_SOURCE.P_LINEAR, p_dev->P_MC->Config.VSupplyRef);
-// //    math_is_in_range(p_config->FaultOverLimit.Limit, nominal * 70 / 100, nominal * 130 / 100);
-// }
 
 
 /******************************************************************************/
@@ -165,17 +125,17 @@ bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpe
     return false;
 }
 
-bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
-{
-    if (LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
-    return false;
-}
+// bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
+// {
+//     if (LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
+//     return false;
+// }
 
-bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
-{
-    if (LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
-    return false;
-}
+// bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
+// {
+//     if (LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
+//     return false;
+// }
 
 bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t i_fract16)
 {

@@ -96,13 +96,12 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
     Config
 */
 /******************************************************************************/
-/*! @param[in] volts < PHASE_CALIBRATION.VMAX and Config.VSupplyRef */
+/*! @param[in] volts < PHASE_CALIBRATION.VMAX and VBusConfig.VSupplyNominal_V */
 void MotorController_SetVSupplyRef(const MotorController_T * p_dev, uint16_t volts)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
-    p_mc->Config.VSupplyRef = math_min(volts, Phase_Calibration_GetVRated_V());
-    MotorController_ResetVSourceMonitorDefaults(p_dev);
-    /* todo as bound limits */
+    p_mc->Config.VBusConfig = VBUS_CONFIG_LIION(math_min(volts, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
+    VBus_InitFrom(p_dev->P_VBUS, &p_mc->Config.VBusConfig);
     /* may overwrite fault/warning if called in the same packet */
 }
 

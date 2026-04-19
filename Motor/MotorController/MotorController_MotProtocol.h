@@ -69,3 +69,14 @@ extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTRO
 //         // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
 //     };
 // }
+
+// static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
+// {
+//     switch (p_dev->P_MC->Config.InputMode)
+//     {
+//         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
+//         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
+//         default: return false;
+//     }
+// }

@@ -458,6 +458,7 @@ Motor_State_T;
 typedef const struct Motor
 {
     Motor_State_T * P_MOTOR;
+    VBus_T * P_VBUS;
     Phase_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */

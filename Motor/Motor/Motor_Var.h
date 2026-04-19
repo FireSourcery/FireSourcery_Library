@@ -309,12 +309,7 @@ typedef enum Motor_Var_PhaseVBus
 }
 Motor_Var_PhaseVBus_T;
 
-// typedef enum Motor_Var_PhaseVBusConfig
-// {
-//     MOTOR_VAR_PHASE_V_BUS_UPPER_FAULT,
-//     MOTOR_VAR_PHASE_V_BUS_MONITOR,
-// }
-// Motor_Var_PhaseVBus_T;
+
 
 /******************************************************************************/
 /*

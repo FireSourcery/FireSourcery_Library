@@ -151,18 +151,3 @@ extern void MotorController_SetInputMode(MotorController_T * p_dev, MotorControl
 extern int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value);
 extern bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction);
 
-// extern NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer);
-// extern NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size);
-
-// extern void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_dev, bool isEnable);
-// extern void MotorController_SetOptILimitOnOff(MotorController_T * p_dev, bool isEnable);
-
-/*
-    Controller NvM Variables Config
-    boundry check on external input if needed
-*/
-// static inline void MotorController_User_SetInitMode(MotorController_State_T * p_mcState, MotorController_MainMode_T mode)      { p_mcState->Config.InitMode = mode; }
-// static inline void MotorController_User_SetILimitOnLowV(MotorController_State_T * p_mcState, uint16_t i_Fract16)              { p_mcState->Config.VLowILimit_Fract16 = i_Fract16; }
-// static inline void MotorController_User_SetOptDinMode(MotorController_State_T * p_mcState, MotorController_OptDinMode_T mode) { p_mcState->Config.OptDinMode = mode; }
-// static inline void MotorController_User_DisableOptDin(MotorController_State_T * p_mcState)                                    { p_mcState->Config.OptDinMode = MOTOR_CONTROLLER_OPT_DIN_DISABLE; }
-// static inline void MotorController_User_SetOptDinSpeedLimit(MotorController_State_T * p_mcState, uint16_t i_Fract16)          { p_mcState->Config.OptSpeedLimit_Fract16 = i_Fract16; }

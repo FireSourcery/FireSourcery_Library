@@ -98,7 +98,7 @@ static inline void Motor_Heat_Thread(const Motor_T * p_dev)
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsStatusClearing(p_dev->HEAT_MONITOR.P_STATE) == true)
             {
-                LimitArray_TryClearEntry(&p_dev->I_LIMITS_LOCAL,     MOTOR_I_LIMIT_HEAT_WINDING);
+                LimitArray_TryClearEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING);
                 LimitArray_TryClearEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING);
             }
             break;

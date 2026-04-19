@@ -183,7 +183,7 @@ static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, cons
 /*
 
 */
-static inline void Phase_Analog_CaptureVBus(adc_result_t adcu) { Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu)); }
+// static inline void Phase_Analog_CaptureVBus(adc_result_t adcu) { Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu)); }
 
 
 /*  */

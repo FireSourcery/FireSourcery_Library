@@ -185,10 +185,11 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
 /******************************************************************************/
 /*
-    VSource Monitor Thread
+    VBus Monitor Thread
 */
 /******************************************************************************/
-static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T * p_dev)
+
+static void _MotorController_VBus_EnterFault(const MotorController_T * p_dev)
 {
     Motor_Table_ForceDisableControl(&p_dev->MOTORS);
     /*
@@ -196,45 +197,36 @@ static void _MotorController_VSourceMonitor_EnterFault(const MotorController_T *
         if overwritten, main will check fault flags and enter, or on next poll.
         input handlers store a local copy of the function pointer before performing null check. so it should not crash the program.
     */
-    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VSOURCE_LIMIT);
+    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VBUS_LIMIT);
 }
 
-static inline void _MotorController_VSourceMonitor_Thread(const MotorController_T * p_dev)
+static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
-
-    // alternatively
-    // Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION));
-    // switch (RangeMonitor_Poll(p_dev->V_SOURCE.P_STATE, Phase_VBus_Fract16()))
-
-// #if defined(MOTOR_V_SENSORS_ANALOG)
-    switch (RangeMonitor_Poll(p_dev->V_SOURCE.P_STATE, Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION)))
+    switch (VBus_PollMonitor(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))))
     {
-        case VMONITOR_STATUS_FAULT_OVERVOLTAGE:  _MotorController_VSourceMonitor_EnterFault(p_dev); break;
-        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE: _MotorController_VSourceMonitor_EnterFault(p_dev); break;
-        case VMONITOR_STATUS_WARNING_HIGH:
+        case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
+        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:
+            _MotorController_VBus_EnterFault(p_dev);
             break;
         case VMONITOR_STATUS_WARNING_LOW:
-            if (RangeMonitor_IsTriggeringEdge(p_dev->V_SOURCE.P_STATE) == true)
-            {
-                // MotorController_CaptureVSource(p_dev);
-                // LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
-            }
+            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_LOW, VBus_GetILimitUnderV_Fract16(p_dev->P_VBUS));
+            break;
+        case VMONITOR_STATUS_WARNING_HIGH:
+            _MotorController_SetIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH, VBus_GetIGenLimitOverV_Fract16(p_dev->P_VBUS));
             break;
         case VMONITOR_STATUS_NORMAL:
-            if (RangeMonitor_IsClearingEdge(p_dev->V_SOURCE.P_STATE) == true)
+            if (VBus_IsClearingEdge(p_dev->P_VBUS) == true)
             {
-                // LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, MOT_I_LIMIT_V_LOW);
+                _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_V_LOW);
+                _MotorController_ClearIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH);
             }
             break;
         default: break;
     }
 
-    if (RangeMonitor_IsTriggeringEdge(p_dev->V_SOURCE.P_STATE) == true) { MotorController_BeepMonitorTrigger(p_dev); }
+    if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotorController_BeepMonitorTrigger(p_dev); }
 
-    Analog_Conversion_Mark(&p_dev->V_SOURCE_CONVERSION);
-
-// #endif
+    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 }
 
 /******************************************************************************/
@@ -252,7 +244,7 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     if (RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VACCS_LIMIT); }
     if (RangeMonitor_IsAnyFault(p_dev->V_ANALOG.P_STATE) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT); }
 
-    if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
+    if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
     Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
@@ -279,7 +271,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
         // maybe interrupted by enterFault on 1ms thread
-        _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
+        _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
+        // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
@@ -331,13 +324,14 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
+            VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
+            /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
+            if (VBus_IsUnderNominal(p_dev->P_VBUS) == true) { _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS)); }
+
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
 
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
-
-            MotorController_CaptureVSource(p_dev); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
-
         }
     }
 }
@@ -348,7 +342,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
-    _MotorController_VSourceMonitor_Thread(p_dev);
+    _MotorController_VBus_Thread(p_dev);
 
     // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
     // {
@@ -366,31 +360,19 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
     High Freq, High Priority
 */
 /* Alternatively these can be placed directly user main if the compiler does not optimize */
-// static inline void MotorController_PWM_Thread(const MotorController_T * p_dev)
-// {
-//     // p_fields->MicrosRef = SysTime_GetMicros();
+static inline void MotorController_PWM_Thread(const MotorController_T * p_dev)
+{
+    // p_fields->MicrosRef = SysTime_GetMicros();
+    if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
+    {
+        for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
+    }
 
-//     // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_MarkAnalog_Thread(&p_dev->MOTORS.P_MONITORS[iMotor]); }
+    for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
+    for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
-//     // if (Motor_IsAnalogCycle(&p_dev->MOTORS.P_MONITORS[0U]) == true) /* todo common timer */
-//     // {
-//     //     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
-//     // }
-
-//     if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)
-//     {
-//         for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_MONITORS[iMotor]); }
-//     }
-
-//     // if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true) /* removable */
-//     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
-
-
-//     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_MONITORS[iMotor]); }
-
-//     // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
-//     // HAL_PWM_ClearInterrupt(p_dev->HAL_PWM); /* BOARD_PWM_HAL */
-//     // Motor_ClearInterrupt(&p_dev->MOTORS.P_ARRAY[0U]);
-//     p_dev->P_MC->ControlCounter++;
-// }
+    // timer_counter_wrapped(1000U, p_fields->MicrosRef, SysTime_GetMicros());
+    // HAL_PWM_ClearInterrupt(p_dev->HAL_PWM); /* BOARD_PWM_HAL */
+    p_dev->P_MC->ControlCounter++;
+}
 

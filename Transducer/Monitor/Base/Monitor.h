@@ -168,6 +168,10 @@ static inline int32_t Monitor_GetValue(const Monitor_T * p_monitor) { return p_m
 static inline int32_t Monitor_GetLastInputComparable(const Monitor_T * p_monitor) { return p_monitor->LastInput * p_monitor->Direction; }
 static inline bool Monitor_IsEnabled(const Monitor_T * p_monitor) { return p_monitor->Direction != MONITOR_DISABLED; }
 
+/*  */
+static inline int32_t Monitor_IsUnderNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) < p_monitor->Config.Nominal; }
+static inline int32_t Monitor_IsOverNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) > p_monitor->Config.Nominal; }
+
 /* LastOutput = output state of last status hysteresis level. set on status poll, or switch on status */
 
 /******************************************************************************/

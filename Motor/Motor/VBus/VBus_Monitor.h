@@ -46,16 +46,29 @@
 
 static inline VMonitor_State_T * VBus_Monitor(VBus_T * p_vbus) { return &p_vbus->MonitorState; }
 
-static inline VMonitor_Status_T VBus_CaptureAndPoll(VBus_T * p_vbus, uint16_t fract16)
+/* Poll Monitor Only */
+static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus, uint16_t fract16)
 {
-    VBus_CaptureFract16(p_vbus, fract16);
-    return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16);
+    return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, fract16);
 }
 
-static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus)
+static inline VMonitor_Status_T VBus_CaptureAndPollWith(VBus_T * p_vbus, VMonitor_State_T * p_monitorState, uint16_t fract16)
 {
-    return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16);
+    VBus_CaptureFract16(p_vbus, fract16);
+    return (VMonitor_Status_T)RangeMonitor_Poll(p_monitorState, p_vbus->VBus_Fract16);
 }
+
+/* including MonitorState */
+static inline VMonitor_Status_T VBus_CaptureAndPoll(VBus_T * p_vbus, uint16_t fract16)
+{
+    return VBus_CaptureAndPollWith(p_vbus, &p_vbus->MonitorState, fract16);
+}
+
+/*
+
+*/
+static inline bool VBus_IsUnderNominal(const VBus_T * p_vbus) { return RangeMonitor_IsUnderNominal(&p_vbus->MonitorState); }
+static inline bool VBus_IsOverNominal(const VBus_T * p_vbus) { return RangeMonitor_IsOverNominal(&p_vbus->MonitorState); }
 
 static inline VMonitor_Status_T VBus_Status(const VBus_T * p_vbus) { return (VMonitor_Status_T)p_vbus->MonitorState.Status; }
 static inline bool VBus_IsUnderWarning(const VBus_T * p_vbus) { return RangeMonitor_IsUnderWarning(&p_vbus->MonitorState); }

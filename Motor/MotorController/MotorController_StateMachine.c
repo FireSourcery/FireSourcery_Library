@@ -107,7 +107,7 @@ void MotorController_PollFaultFlags(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
 
-    p_mc->FaultFlags.VSourceLimit = RangeMonitor_IsAnyFault(p_dev->V_SOURCE.P_STATE);
+    p_mc->FaultFlags.VBusLimit = VBus_IsAnyFault(p_dev->P_VBUS);
     p_mc->FaultFlags.VAccsLimit = RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE);
     p_mc->FaultFlags.VAnalogLimit = RangeMonitor_IsAnyFault(p_dev->V_ANALOG.P_STATE);
     p_mc->FaultFlags.PcbOverheat = (Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == MONITOR_STATUS_FAULT);
@@ -170,9 +170,7 @@ static State_T * Init_Next(MotorController_T * p_dev)
 
         if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; }
         /* Enforce VMonitor Enable */ /* Disabled on invalid config */
-        if (RangeMonitor_IsEnabled(p_dev->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VSourceLimit = 1U; }
-        /* Check separately */
-        // if (RangeMonitor_ValidateConfig(p_dev->V_SOURCE.P_STATE) == false) { p_mc->FaultFlags.VSourceLimit = 1U; }
+        if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
         if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == false) { p_mc->FaultFlags.Motors = 1U; }
 

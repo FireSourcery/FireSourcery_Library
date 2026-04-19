@@ -40,6 +40,9 @@
 #include "Motor/Motor/Motor_StateMachine.h"
 // #include "Motor/Motor/Motor_Include.h"
 
+#include "Motor/Motor/VBus/VBus.h"
+#include "Motor/Motor/VBus/VBus_Monitor.h"
+
 #include "Transducer/Blinky/Blinky.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
@@ -81,7 +84,7 @@
 /*
     User InputMux
 */
-// DriveCmdSource
+// DriveUserSource
 typedef enum MotorController_InputMode
 {
     MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
@@ -114,7 +117,7 @@ typedef union MotorController_FaultFlags
     {
         uint16_t MosfetsOverheat    : 1U;
         uint16_t PcbOverheat        : 1U;
-        uint16_t VSourceLimit       : 1U; /* VSourceMonitor for over/under  */
+        uint16_t VBusLimit          : 1U; /* VBus monitor over/under */
         uint16_t VAccsLimit         : 1U;
         uint16_t VAnalogLimit       : 1U;
         uint16_t Motors             : 1U; /* Sensor/StartUp */
@@ -131,7 +134,7 @@ MotorController_FaultFlags_T;
 
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT = { .MosfetsOverheat = 1U };
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT     = { .PcbOverheat     = 1U };
-static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VSOURCE_LIMIT    = { .VSourceLimit    = 1U };
+static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VBUS_LIMIT       = { .VBusLimit       = 1U };
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VACCS_LIMIT      = { .VAccsLimit      = 1U };
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_VANALOG_LIMIT    = { .VAnalogLimit    = 1U };
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_MOTORS           = { .Motors          = 1U };
@@ -161,16 +164,13 @@ typedef struct MotorController_Config
         MotorController Voltages
         PHASE_CALIBRATION.V_MAX -> ADC Saturation
         PHASE_CALIBRATION.V_RATED -> controller voltage max
-        Config.VSupplyRef -> user set nominal voltage
-        MotorAnalogReference.VSource_V-> live voltage
+        Config.Nominal -> user set nominal voltage
+        VBus.V -> live voltage
     */
-    VBus_Config_T VBusConfig; /* VBus Monitor Config  */
-    // alternatively split motor static instance
-    uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
-    uint16_t VLowILimit_Fract16;
+    VBus_Config_T VBusConfig; /* VBus profile + monitor + derate */
 
-    // MotorController_MainMode_T InitMode; /* alternatively state_t stand in */
-    int InitMode; /* alternatively state_t stand in */
+    // MotorController_MainMode_T InitMode;
+    int InitMode; /* enum stand in */
     MotorController_InputMode_T InputMode;
     bool IsParkStateEnabled;
 
@@ -193,7 +193,6 @@ MotorController_Config_T;
 /*!
 */
 /******************************************************************************/
-/* Internal runtime state. these can be moved to submodules eventually. */
 typedef struct MotorController_State
 {
     /* State and SubState */
@@ -284,8 +283,8 @@ typedef const struct MotorController
     HeatMonitor_Group_T HEAT_MOSFETS;
     Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
 
-    VMonitor_T V_SOURCE;        /* Controller Supply */ /* Linear units used for initial config and optional local unit conversion only */
-    Analog_Conversion_T V_SOURCE_CONVERSION;
+    VBus_T * P_VBUS;                              /* DC bus — owns live fract16, derate config, monitor */
+    Analog_Conversion_T VBUS_CONVERSION;
 
     VMonitor_T V_ACCESSORIES;   /* ~12V */
     Analog_Conversion_T V_ACCESSORIES_CONVERSION;
@@ -299,9 +298,9 @@ typedef const struct MotorController
 
     MotorController_App_T * P_APP; /* Single compile time selection for now */
     const void * P_APP_CONTEXT;
-    // directly map components. this would be most similar to implementing in MotorController_T, minus the type coupling.
-    // void * P_RUNTIME;
-    // const void * P_NVM_CONFIG;
+    // directly map components. this would be most similar to implementing within MotorController_T, minus the type coupling.
+    // void * P_APP_RUNTIME;
+    // const void * P_APP_NVM_CONFIG;
 
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
@@ -319,15 +318,11 @@ static inline State_T * MotorController_App_EnterMain(MotorController_T * p_mc) 
 static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_mc) { p_mc->P_APP->PROC_ANALOG_USER(p_mc); }
 static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc->P_APP->INIT != NULL) { p_mc->P_APP->INIT(p_mc); } }
 
-
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-/* Set Motor Ref using read Value */
-static inline void MotorController_CaptureVSource(const MotorController_T * p_dev) { Phase_Analog_CaptureVBus(Analog_Conversion_GetResult(&p_dev->V_SOURCE_CONVERSION)); }
-
 static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_dev) { return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
@@ -338,16 +333,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
-// static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
-// {
-//     switch (p_dev->P_MC->Config.InputMode)
-//     {
-//         case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    return true;
-//         case MOTOR_CONTROLLER_INPUT_MODE_CAN:       return true;
-//         case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    return false;
-//         default: return false;
-//     }
-// }
+
 
 /* Common Buffered Input */
 static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
@@ -368,14 +354,6 @@ static inline void MotorController_BeepMonitorTrigger(const MotorController_T * 
 static inline void MotorController_BeepStop(const MotorController_T * p_dev)             { Blinky_Stop(&p_dev->BUZZER); }
 static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev)        { Blinky_Disable(&p_dev->BUZZER); }
 
-// buzzer state
-// on Init poll
-// if(p_mc->InitFlags.Word != 0U) { wait = true; }
-//     if((p_mc->Config.BuzzerFlagsEnable.ThrottleOnInit == true) && (p_mc->BuzzerFlagsActive.ThrottleOnInit == 0U))
-//     {
-//         p_mc->BuzzerFlagsActive.ThrottleOnInit = 1U;
-        // MotorController_BeepShort(p_mc);
-//     }
 
 
 /******************************************************************************/
@@ -386,7 +364,6 @@ static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev
 extern void MotorController_Init(const MotorController_T * p_dev);
 
 extern void MotorController_LoadConfigDefault(const MotorController_T * p_dev);
-extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
 extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);

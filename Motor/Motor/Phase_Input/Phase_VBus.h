@@ -24,64 +24,35 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase_Analog.h
+    @file   Phase_VBus.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Compatibility shim — Phase_VBus_* API delegates to the named
+            VBus_Instance singleton (a VBus_T). Kept so existing Motor-layer
+            callers (Motor_FOC, Motor_User, etc.) continue to compile while
+            VBus_T owns the canonical live/config/monitor state.
 */
 /******************************************************************************/
-#include "Phase_Calibration.h"
-#include "../Phase/Phase_Types.h"
+#include "../VBus/VBus.h"
 
 #include "Math/Fixed/fract16.h"
+#include <stdint.h>
 
-/******************************************************************************/
-/*!
-    VBus Runtime
-*/
-/******************************************************************************/
-typedef struct Phase_VBus
+
+extern VBus_T VBus_Instance;
+
+static inline void Phase_VBus_CaptureFract16(uint16_t fract16) { VBus_CaptureFract16(&VBus_Instance, fract16); }
+
+static inline void Phase_VBus_InitV(uint16_t volts)
 {
-   uint16_t VBus_Fract16;
-   uint32_t PerV_Fract32;
-   /* Config */
-   uint16_t VNominal_Fract16; /* VSupply */
-//    uint16_t SpeedRef; handle static instance for units
-}
-Phase_VBus_T;
-
-/*
-    static Global State
-*/
-extern Phase_VBus_T Phase_VBus;
-
-static inline void _Phase_VBus_CaptureFract16(uint16_t fract16)
-{
-    Phase_VBus.VBus_Fract16 = fract16;
-    Phase_VBus.PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_VBus.VBus_Fract16; /* shift 16 as fract32 */
+    VBus_Instance.Config.VSupplyNominal_V = volts;
+    VBus_Instance.Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(volts);
+    VBus_InitLive(&VBus_Instance);
 }
 
-static void Phase_VBus_InitV(uint16_t volts)
-{
-    Phase_VBus.VNominal_Fract16 = fract16(volts, Phase_Calibration_GetVMaxVolts());
-    _Phase_VBus_CaptureFract16(Phase_VBus.VNominal_Fract16); /* init to nominal for startup */
-}
-
-static inline void Phase_VBus_CaptureFract16(uint16_t fract16)
-{
-    _Phase_VBus_CaptureFract16((fract16 + Phase_VBus.VBus_Fract16) / 2);
-}
-
-static inline ufract16_t Phase_VBus_Fract16(void) { return Phase_VBus.VBus_Fract16; }
-static inline uint32_t Phase_VBus_Inv_Fract32(void) { return Phase_VBus.PerV_Fract32; }
-
-static inline uint16_t Phase_VBus_Volts(void) { return fract16_mul(Phase_VBus.VBus_Fract16, Phase_Calibration_GetVMaxVolts()); }
-
-static inline ufract16_t Phase_VBus_GetVNominal(void) { return Phase_VBus.VNominal_Fract16; }
-/* Runtime phase peak */
-/* Alternatively use Nominal */
-static inline ufract16_t Phase_VBus_GetVRef(void) { return Phase_VBus.VBus_Fract16 / 2; }
-static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phase_VBus.VBus_Fract16, FRACT16_1_DIV_SQRT3); }
-
-static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return (int32_t)phaseV * Phase_VBus.PerV_Fract32 / 65536; }
-
-
+static inline ufract16_t Phase_VBus_Fract16(void)         { return VBus_Fract16(&VBus_Instance); }
+static inline uint32_t   Phase_VBus_Inv_Fract32(void)     { return VBus_Inv_Fract32(&VBus_Instance); }
+static inline uint16_t   Phase_VBus_Volts(void)           { return VBus_Volts(&VBus_Instance); }
+static inline ufract16_t Phase_VBus_GetVNominal(void)     { return VBus_VNominal_Fract16(&VBus_Instance.Config); }
+static inline ufract16_t Phase_VBus_GetVRef(void)         { return VBus_GetVPhaseRef(&VBus_Instance); }
+static inline ufract16_t Phase_VBus_GetVRefSvpwm(void)    { return VBus_GetVPhaseRefSvpwm(&VBus_Instance); }
+static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return VBus_NormOf(&VBus_Instance, phaseV); }
