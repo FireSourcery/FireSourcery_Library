@@ -66,7 +66,22 @@
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
+- Keep functions declarative. Favor less local variables, particularly in cases that do not impact optimization.
+-
+## API Design
+- **Minimize forwarders.** When a wrapper function is a single-line pass-through to a peer module (`Outer_Foo(p) { return Inner_Foo(&p->inner); }`), it duplicates API surface without adding value. Prefer:
+  - **Free-function bridges** (`SubjectPrimary_Collaborator_Verb`) — no wrapper type — when coordination surface is small (≤ ~5 functions) and peers are public vocabulary. Precedent: C stdlib (`fprintf`, `memcpy`).
+  - **Mediator with peer getters** — wrapper keeps only coordination functions; exposes peers via getters — when coordination points are numerous or the wrapper holds its own state.
+  - **Full-forwarder facade** — only when peer types must be hidden from callers (rare).
+- Types earn themselves by holding state or enforcing invariants, not by re-exporting another type's API.
+- For value-embedded members (`Outer_T { Inner_T Base; }`), forwarders are acceptable to keep inner layout private. Never return a mutable pointer to a value-embedded member.
 
+## API Scoping
+- **Parameters declare dependencies.** A function takes the narrowest struct that contains every field it reads or writes. `f(Input_T *)` states "reads only config."
+- **Multiple access levels per module is expected. Consistency is within a scope, not across scopes.
+- **Name by scope when disambiguation helps.** `Motor_Config_DegOfRpm` — the middle identifier says which struct-level. Reserve leading underscore for module-internal helpers, not narrower-scope public API.
+- **Promote to a wider scope only on demand.** Add `Motor_DegOfRpm(const Motor_State_T *)` as a thin forwarder only when a real caller has the wider handle often enough that the extra typing matters.
+- **Primary structs are exempt for clean ergonomics** e.g. `*_State_T`, `*_Config_T`
 
 ## Directory Map
 

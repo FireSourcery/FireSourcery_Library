@@ -28,7 +28,6 @@
 
 */
 /******************************************************************************/
-#include "Config.h"
 #include "MotorController_App.h"
 #include "MotorController_Thread.h"
 #include "MotorController_MotProtocol.h"

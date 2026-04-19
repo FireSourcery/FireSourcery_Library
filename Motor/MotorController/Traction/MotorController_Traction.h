@@ -97,7 +97,7 @@ extern void MotorController_Traction_SetBrake(MotorController_T * p_mc, uint16_t
 extern void MotorController_Traction_SetRelease(MotorController_T * p_mc);
 
 extern void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
-extern void MotorController_Traction_SetDirection(MotorController_T * p_mc, sign_t direction);
+extern void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction);
 
 extern void MotorController_Traction_ProcAnalogUser(MotorController_T * p_mc);
 extern sign_t MotorController_Traction_GetDirection(MotorController_T * p_mc);

@@ -56,7 +56,6 @@ typedef struct PulseTimer_State
 
     /* Extended Timer */
     uint32_t ExtendedTimer;
-    uint32_t ExtendedTimerConversion;   /* Extended timer ticks to base timer ticks */
     uint16_t ExtendedTimerStop;        /* Extended timer ticks to determine stopped */
     /* Optional Ref */
 }
@@ -203,7 +202,7 @@ static inline uint32_t _PulseTimer_GetExtendedDelta(const PulseTimer_T * p_timer
 */
 static inline uint32_t PulseTimer_CaptureExtendedDeltaT(const PulseTimer_T * p_timer)
 {
-    if (PulseTimer_CaptureDeltaT(p_timer) == PULSE_TIMER_MAX) { p_timer->P_STATE->DeltaT = _PulseTimer_GetExtendedDelta(p_timer) * p_timer->P_STATE->ExtendedTimerConversion; }
+    if (PulseTimer_CaptureDeltaT(p_timer) == PULSE_TIMER_MAX) { p_timer->P_STATE->DeltaT = _PulseTimer_GetExtendedDelta(p_timer) * p_timer->EXTENDED_TIMER_CONVERSION; }
     p_timer->P_STATE->ExtendedTimer = *(p_timer->P_EXTENDED_TIMER);
     return p_timer->P_STATE->DeltaT;
 }
@@ -248,7 +247,6 @@ static inline void PulseTimer_Init(const PulseTimer_T * p_timer)
 {
     HAL_ClockTimer_Init(p_timer->P_HAL_TIMER);
     HAL_ClockTimer_InitFreq(p_timer->P_HAL_TIMER, p_timer->TIMER_FREQ);
-    p_timer->P_STATE->ExtendedTimerConversion = p_timer->TIMER_FREQ / p_timer->EXTENDED_TIMER_FREQ;
 }
 
 static inline void PulseTimer_SetInitial(const PulseTimer_T * p_timer)

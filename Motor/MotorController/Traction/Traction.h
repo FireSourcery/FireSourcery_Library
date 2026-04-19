@@ -47,6 +47,9 @@ typedef enum Traction_Cmd
 }
 Traction_Cmd_T;
 
+/*
+    Traction_User
+*/
 /* alternatively convert to MotorInput */
 typedef struct Traction_Input
 {
@@ -93,7 +96,8 @@ static inline bool Traction_Input_PollBrake(Traction_Input_T * p_input, uint16_t
 
 static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, sign_t direction)
 {
-    return (direction != p_input->Direction) ? ({ p_input->Direction = direction; true; }) : false;
+    if (direction != p_input->Direction) { p_input->Direction = direction; return true; }
+    else { return false; }
 }
 
 static inline sign_t Traction_Input_GetDirectionCmd(const Traction_Input_T * p_input) { return p_input->Direction; }
@@ -133,6 +137,7 @@ typedef struct Traction_Config
     Traction_ThrottleMode_T ThrottleMode;
     Traction_BrakeMode_T BrakeMode;
     Traction_ZeroMode_T ZeroMode;
+    // uint8_t RequireZeroOnEntry;
 }
 Traction_Config_T;
 
@@ -155,6 +160,7 @@ typedef const struct Traction
     const Traction_Config_T * P_NVM_CONFIG;
 }
 Traction_T;
+
 
 // #define TRACTION_INIT()
 

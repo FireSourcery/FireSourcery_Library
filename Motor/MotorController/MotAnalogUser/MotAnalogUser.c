@@ -37,7 +37,6 @@ void MotAnalogUser_Init(const MotAnalogUser_T * p_user)
     if (p_user->P_STATE->Config.UseSwitchBrakePin == true) { UserDIn_Init(&p_user->SWITCH_BRAKE_DIN); }
 
     /* Initialize state */
-    p_user->P_STATE->Cmd = MOT_ANALOG_USER_CMD_PROC_ZERO;
 }
 
 

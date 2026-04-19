@@ -36,7 +36,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 /******************************************************************************/
 /*
     Application handle
@@ -55,10 +54,9 @@ typedef const struct Analog_Conversion
 }
 Analog_Conversion_T;
 
-#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex)  (Analog_Conversion_T) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, /* .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), */ }
 #define ANALOG_CONVERSION_INIT(p_AdcStruct, ChannelIndex) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (ChannelIndex)  }
+#define ANALOG_CONVERSION_INIT_FROM(AdcStruct, ChannelIndex) (Analog_Conversion_T) { .P_ADC = &AdcStruct, .CHANNEL = ChannelIndex, /* .P_CONVERSION_CHANNEL = &((AdcStruct).P_CONVERSION_CHANNELS[ChannelIndex]), */ }
 // #define ANALOG_CONVERSION_INIT(p_AdcStruct, p_ConversionChannel) (Analog_Conversion_T) { .P_ADC = (p_AdcStruct), .CHANNEL = (p_ConversionChannel)->CHANNEL.ID, .P_CONVERSION_CHANNEL = (p_ConversionChannel), }
-
 
 static inline void Analog_Conversion_Mark(const Analog_Conversion_T * p_conv) { Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL); }
 static inline bool Analog_Conversion_IsMarked(const Analog_Conversion_T * p_conv) { return Analog_ADC_IsMarked(p_conv->P_ADC, p_conv->CHANNEL); }
@@ -68,7 +66,6 @@ static inline Analog_ConversionChannel_T * Analog_Conversion_ChannelOf(const Ana
 
 static inline adc_result_t Analog_Conversion_GetResult(const Analog_Conversion_T * p_conv) { return Analog_Conversion_ChannelOf(p_conv)->P_CONVERSION_STATE->Result; }
 static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_conv) { Analog_Conversion_ChannelOf(p_conv)->P_CONVERSION_STATE->Result = 0U; }
-
 
 /******************************************************************************/
 /*
@@ -101,6 +98,13 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 // #include "Analog_ADC.h"
 // #include "Analog_Conversion.h"
 
+
+// global table or batch
+// typedef struct
+// {
+//     Analog_Conversion_T * P_CONVERSIONS; /* [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3] */
+//     uint8_t COUNT;
+// } Analog_ChannelTable_T; /* [adc_channel] → Analog_Conversion_T * */
 
 /******************************************************************************/
 /*

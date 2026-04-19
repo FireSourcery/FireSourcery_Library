@@ -380,7 +380,7 @@ Motor_VarType_Base_T;
 
 typedef enum Motor_VarType_SubModule
 {
-    MOTOR_VAR_TYPE_STATIC_BOARD_REF,    /* Not instanced */
+    MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
     MOTOR_VAR_TYPE_V_BUS,               /* Not instanced */
     MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */

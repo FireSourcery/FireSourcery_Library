@@ -44,16 +44,13 @@
 typedef struct AngleCounter_Ref
 {
     /* wrapping angle */
-    // angle16_t AnglePerCount;        /* AngleD Unit */
-    uint32_t Angle32PerCount;       /*!< [(UINT32_MAX+1)/CountsPerRevolution] => Angle = PulseCounter * UnitAngleD >> DEGREES_SHIFT */
+    // angle16_t AnglePerCount;     /* AngleD Unit */
+    uint32_t Angle32PerCount;       /* [(UINT32_MAX+1)/CountsPerRevolution] */
+    uint32_t AngleSpeed32PerCount;  /* AngleSpeed Unit at PollingFreq */
+    uint32_t SpeedFractPerCount;    /* FractSpeed Unit */
 
-    /* positive only signed for umambigous multiply with deltaD */
-    int32_t AngleSpeed32PerCount;  /* AngleSpeed Unit at PollingFreq */
-    int32_t SpeedFractPerCount;    /* FractSpeed Unit */
-
+    /* physical units handle with /cpr */
     uint16_t CountsPerRevolution;   /* Counter counts per mechanical revolution */
-
-    // physical units handle with /cpr
 }
 AngleCounter_Ref_T;
 
@@ -69,7 +66,6 @@ typedef struct AngleCounter
 {
     Angle_T Base;
     int32_t CounterD;       /* Signed pulse counter. Accumulated +1/-1 from edges */
-    // int32_t DeltaD;
     int32_t FreqD;          /* Pulse frequency [Hz]. DeltaD over 1 second */
     AngleCounter_Ref_T Ref; /* Runtime unit conversion */
 }
@@ -87,7 +83,7 @@ typedef struct AngleCounter_Config
 AngleCounter_Config_T;
 
 
-static inline Angle_T * AngleCounter_Base(AngleCounter_T * p_counter) { return &p_counter->Base; }
+static inline Angle_T * AngleCounter_Angle(AngleCounter_T * p_counter) { return &p_counter->Base; }
 
 /******************************************************************************/
 /*
@@ -103,11 +99,13 @@ static inline void AngleCounter_CaptureCount(AngleCounter_T * p_counter, int sig
     p_counter->CounterD += sign;
 }
 
-static inline void AngleCounter_CaptureCountWrap(AngleCounter_T * p_counter, int sign)
+static inline void AngleCounter_CaptureCountAngle(AngleCounter_T * p_counter, int sign)
 {
     p_counter->CounterD += sign;
     p_counter->Base.Angle += sign * p_counter->Ref.Angle32PerCount;
 }
+
+static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->CounterD = 0; }
 
 /*
     Directly set angle on sensor snapshot.
@@ -158,7 +156,7 @@ static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) 
 */
 static inline angle16_t AngleCounter_ResolveAngleDelta(AngleCounter_T * p_counter)
 {
-    p_counter->Base.Delta = p_counter->Ref.AngleSpeed32PerCount * p_counter->FreqD;
+    p_counter->Base.Delta = (int32_t)p_counter->Ref.AngleSpeed32PerCount * p_counter->FreqD;
     return p_counter->Base.Delta >> ANGLE_EXT_SHIFT;
 }
 
@@ -166,9 +164,9 @@ static inline angle16_t AngleCounter_ResolveAngleDelta(AngleCounter_T * p_counte
     Angle_T Base forwarding — interpolation interface
 */
 static inline angle16_t AngleCounter_Interpolate(AngleCounter_T * p_counter) { return Angle_Interpolate(&p_counter->Base); }
-static inline void AngleCounter_InitLimit(AngleCounter_T * p_counter, angle16_t limit_angle16) { Angle_InitLimits(&p_counter->Base, limit_angle16); }
-static inline void AngleCounter_SetLimits(AngleCounter_T * p_counter, angle16_t lower, angle16_t upper) { Angle_SetLimits(&p_counter->Base, lower, upper); }
 static inline void AngleCounter_SetLimitWindow(AngleCounter_T * p_counter, uangle16_t width_angle16) { Angle_SetLimitWindow(&p_counter->Base, width_angle16); }
+static inline void AngleCounter_SetLimits(AngleCounter_T * p_counter, angle16_t lower, angle16_t upper) { Angle_SetLimits(&p_counter->Base, lower, upper); }
+static inline void AngleCounter_InitLimits(AngleCounter_T * p_counter, angle16_t limit_angle16) { Angle_InitLimits(&p_counter->Base, limit_angle16); }
 
 
 /******************************************************************************/
@@ -188,7 +186,7 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
     Init / Reset
 */
 /******************************************************************************/
-static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->CounterD = 0; }
+
 
 /******************************************************************************/
 /*

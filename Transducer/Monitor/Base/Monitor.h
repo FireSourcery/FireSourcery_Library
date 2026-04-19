@@ -110,6 +110,14 @@ typedef struct Monitor_FaultLimit
 }
 Monitor_FaultLimit_T;
 
+// typedef struct Monitor_Level
+// {
+//     int32_t Setpoint;
+//     int32_t Resetpoint; /* single direction use resetpoint. Dual direction derive from band width */
+//     // bool IsEnabled; /* Per level disable */
+// }
+// Monitor_Level_T;
+
 /******************************************************************************/
 /*
 

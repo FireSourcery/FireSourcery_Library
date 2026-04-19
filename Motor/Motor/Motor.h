@@ -35,6 +35,8 @@
 #include "Phase_Input/Phase_VBus.h"
 #include "Phase_Input/Phase_Analog.h"
 #include "Phase_Input/Phase_Calibration.h"
+#include "VBus/VBus.h"
+#include "VBus/VBus_Monitor.h"
 
 #include "Sensor/RotorSensor_Table.h"
 #include "Sensor/RotorSensor.h"
@@ -182,6 +184,28 @@ static const Motor_FaultFlags_T MOTOR_FAULT_OVERHEAT         = { .Overheat      
 static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor = 1U };
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
+typedef enum Motor_ILimitId
+{
+    MOTOR_I_LIMIT_HEAT_WINDING,     /* motor NTC / I²t */
+    MOTOR_I_LIMIT_STALL,            /* startup / lock current cap */
+    MOTOR_I_LIMIT_COMMON,           /* in case of nesting arbitration arrays */
+    MOTOR_I_LIMIT_COUNT,
+}
+Motor_ILimitId_T;
+
+typedef enum Motor_IGenLimitId
+{
+    MOTOR_I_GEN_LIMIT_HEAT_WINDING,
+    MOTOR_I_GEN_LIMIT_COMMON,
+    MOTOR_I_GEN_LIMIT_COUNT,
+}
+Motor_IGenLimitId_T;
+
+// typedef enum Motor_SpeedLimitId
+// {
+//     MOTOR_SPEED_LIMIT_FIELD_WEAKEN,
+//     MOTOR_SPEED_LIMIT_COUNT,
+// } Motor_SpeedLimitId_T;
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.

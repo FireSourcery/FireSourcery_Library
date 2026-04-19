@@ -45,6 +45,8 @@ typedef const struct VDivider
 VDivider_T;
 
 #define V_DIVIDER_INIT(RefR1, RefR2) (VDivider_T) { .R1 = (RefR1), .R2 = (RefR2) }
+// VDivider_VoltsOfAdcu
+// VDivider_AdcuOfVolts
 
 /******************************************************************************/
 /*!

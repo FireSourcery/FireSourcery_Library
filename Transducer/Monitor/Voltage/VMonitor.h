@@ -54,7 +54,6 @@ typedef const struct VMonitor
     VMonitor_State_T * P_STATE;
     VDivider_T VDIVIDER; // VDivider_T * P_VDIVIDER; /* pointer for separate region of memory */
     Linear_T * P_LINEAR; /* if defined local unit conversion */
-
     const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
 }
 VMonitor_T;
@@ -82,10 +81,8 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_Stat
 /*
 */
 /******************************************************************************/
-static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_T * p_context) { return (p_context != NULL) ? &p_context->VDIVIDER : NULL; }
-static inline VMonitor_State_T * VMonitor_GetState(const VMonitor_T * p_context) { return (p_context != NULL) ? p_context->P_STATE : NULL; }
-
-
+static inline VDivider_T * VMonitor_GetVDivider(const VMonitor_T * p_context) { return  &p_context->VDIVIDER; }
+static inline VMonitor_State_T * VMonitor_GetState(const VMonitor_T * p_context) { return p_context->P_STATE; }
 
 /******************************************************************************/
 /*

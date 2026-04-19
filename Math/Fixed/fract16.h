@@ -147,11 +147,37 @@ static inline int8_t fract16_norm_shift(int16_t value) { return (int8_t)(FRACT16
 
 static inline int16_t fract16_norm_scalar(int16_t value) { return (1 << fract16_norm_shift(value)); }
 
+static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(30 - fixed_bit_width_signed(value)); }
+
 // static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
-// {
-// }
 
+/******************************************************************************/
+/*!
+    Linear interpolation / remap family
 
+    Canonical forms:
+        lerp(a, b, t)              = a + t*(b - a),           t in [0, 1]
+        inv_lerp(lo, hi, x)        = (x - lo) / (hi - lo)     (a.k.a. normalize)
+        remap(iLo,iHi, oLo,oHi, x) = lerp(oLo, oHi, inv_lerp(iLo, iHi, x))
+*/
+/******************************************************************************/
+/* lerp: a + t*(b - a), t in [0, FRACT16_MAX] representing [0, 1] */
+/* [0:FRACT16_MAX] => [a:b] */
+static inline int32_t fract16_lerp(int32_t a, int32_t b, ufract16_t t) { return a + ((b - a) * t >> FRACT16_N_BITS); }
+
+/* inv_lerp: (x - lo) / (hi - lo) scaled to [0, FRACT16_MAX] */
+/* [lo:hi] => [0:FRACT16_MAX] */
+static inline ufract16_t fract16_inv_lerp(int32_t lo, int32_t hi, int32_t x) { return (FRACT16_MAX * (x - lo) / (hi - lo)); }
+
+static inline ufract16_t fract16_normalize(int32_t lo, int32_t hi, int32_t x) { return fract16_inv_lerp(lo, hi, x); }
+
+/* Saturated normalize: input clamped to [lo, hi] -> output in [0, FRACT16_MAX] */
+static inline ufract16_t fract16_normalize_sat(int32_t lo, int32_t hi, int32_t x)
+{
+    if (x >= hi) { return FRACT16_MAX; }
+    if (x <= lo) { return 0; }
+    return fract16_normalize(lo, hi, x);
+}
 
 
 /******************************************************************************/

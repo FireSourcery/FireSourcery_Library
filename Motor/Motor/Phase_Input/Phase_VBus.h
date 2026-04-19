@@ -85,26 +85,3 @@ static inline ufract16_t Phase_VBus_GetVRefSvpwm(void) { return fract16_mul(Phas
 static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return (int32_t)phaseV * Phase_VBus.PerV_Fract32 / 65536; }
 
 
-// typedef const struct
-// {
-//   PhaseVBus_T * P_STATE;
-//   VMonitor_State_T MONITOR;
-// //   Analog_Conversion_T PHASE_ANALOG;
-// }
-// PhaseVBus_Context_T;
-
-/* Singleton Const */
-// extern VMonitor_T PHASE_VBUS_MONITOR;
-
-// extern PhaseVBus_Context_T PHASE_VBUS_CONTEXT;
-
-// extern Phase_VBusMonitor_T Phase_VBusMonitor; //monitor state for nominal and limits
-// VMonitor_State_T * P_STATE;
-// const VMonitor_Config_T * P_NVM_CONFIG; /* NVM Config */
-
-// typedef struct Phase_VBus_Config
-// {
-//     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
-//     uint16_t VLowILimit_Fract16;
-// }
-// Phase_VBus_Config_T;

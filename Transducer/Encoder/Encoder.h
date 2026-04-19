@@ -246,7 +246,7 @@ static inline uint16_t _Encoder_GetAngle(const Encoder_State_T * p_encoder)
 #if     defined(ENCODER_HW_DECODER)
     return HAL_Encoder_ReadCounter(p_encoder->P_HAL_ENCODER_COUNTER) * (uint32_t)p_encoder->AngleCounter.Ref.AnglePerCount;
 #elif   defined(ENCODER_HW_EMULATED)
-    return Angle_GetAngle16(&p_encoder->AngleCounter.Base);
+    return Angle_Value(&p_encoder->AngleCounter.Base);
 #endif
 }
 

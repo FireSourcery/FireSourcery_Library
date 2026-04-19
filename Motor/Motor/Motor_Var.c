@@ -502,7 +502,7 @@ int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule
     if (p_motor == NULL) { return 0; }
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return Motor_Var_Board_Get(varId);
+        case MOTOR_VAR_TYPE_BOARD_CONST:           return Motor_Var_Board_Get(varId);
         case MOTOR_VAR_TYPE_V_BUS:                      return Motor_Var_PhaseVBus_Get(varId);
         case MOTOR_VAR_TYPE_PHASE:                      return 0;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);
@@ -522,7 +522,7 @@ void Motor_VarType_SubModule_Set(const Motor_T * p_motor, Motor_VarType_SubModul
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        HeatMonitor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);              break;
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          HeatMonitor_Thermistor_ConfigId_Set(&p_motor->HEAT_MONITOR, varId, varValue);   break;
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              _Motor_Var_PidTuning_Set(p_motor->P_MOTOR, varId, varValue);              break;
-        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           break;
+        case MOTOR_VAR_TYPE_BOARD_CONST:           break;
         case MOTOR_VAR_TYPE_V_BUS:                      break;
         case MOTOR_VAR_TYPE_PHASE:                      break;
         default: break;
@@ -538,7 +538,7 @@ bool Motor_VarType_SubModule_CheckSet(const Motor_T * p_motor, Motor_VarType_Sub
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
-        case MOTOR_VAR_TYPE_STATIC_BOARD_REF:           return false;
+        case MOTOR_VAR_TYPE_BOARD_CONST:           return false;
         case MOTOR_VAR_TYPE_V_BUS:                      return false;
         case MOTOR_VAR_TYPE_PHASE:                      return false;
         default: return false;

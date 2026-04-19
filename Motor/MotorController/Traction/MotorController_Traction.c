@@ -383,7 +383,8 @@ void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t
     if (MotorController_Traction_GetDirection(p_mc) != direction) { Blinky_Blink(&p_mc->BUZZER, 500U); }
 }
 
-void MotorController_Traction_SetDirection(MotorController_T * p_mc, sign_t direction)
+/*  */
+void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction)
 {
     if (Traction_Input_PollDirectionEdge(&TractionApp(p_mc)->P_TRACTION_STATE->Input, direction))
     {
@@ -401,14 +402,7 @@ void MotorController_Traction_SetDirection(MotorController_T * p_mc, sign_t dire
 */
 void MotorController_Traction_ProcAnalogUser(const MotorController_T * p_mc)
 {
-    switch (MotAnalogUser_GetDirectionEdge(&p_mc->ANALOG_USER))
-    {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_Traction_ApplyDirectionCmd(p_mc, 1);       break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_Traction_ApplyDirectionCmd(p_mc, -1);      break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_Traction_ApplyDirectionCmd(p_mc, 0);       break;
-        default: break;
-    }
-
+    MotorController_Traction_CaptureDirection(p_mc, (sign_t)MotAnalogUser_GetDirection(&p_mc->ANALOG_USER));
     MotorController_Traction_SetThrottleBrake(p_mc, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER), MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
 }
 

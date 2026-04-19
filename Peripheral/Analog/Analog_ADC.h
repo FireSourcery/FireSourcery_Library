@@ -37,6 +37,17 @@
 
 
 
+#ifdef HAL_ADC_FIFO_LENGTH_MAX
+#define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
+#endif
+
+#ifndef ADC_FIFO_LENGTH_MAX
+#define ADC_FIFO_LENGTH_MAX 1U
+#endif
+
+#if (ADC_FIFO_LENGTH_MAX > 1U)
+#define ADC_FIFO_ENABLED
+#endif
 // #if     defined(ANALOG_ADC_HW_FIFO_DISABLE)
 // #elif   defined(ANALOG_ADC_HW_FIFO_ENABLE)
 // #else
@@ -49,18 +60,6 @@
 //     #define ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE
 // #endif
 
-
-#ifdef HAL_ADC_FIFO_LENGTH_MAX
-#define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
-#endif
-
-#ifndef ADC_FIFO_LENGTH_MAX
-#define ADC_FIFO_LENGTH_MAX 1U
-#endif
-
-#if (ADC_FIFO_LENGTH_MAX > 1U)
-#define ADC_FIFO_ENABLED
-#endif
 
 /******************************************************************************/
 /*
@@ -128,7 +127,16 @@ Analog_ConversionChannel_T;
 
 // #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T) \
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
-
+// static inline void _ADC_CaptureResult(Analog_ConversionChannel_T * p_conversion, adc_result_t result)
+// {
+//     /* eliminate double buffer, at additional interrupt time */
+//     if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
+//     else { p_conversion->P_CONVERSION_STATE->State = result; }
+// }
+// static inline void _ADC_CaptureConversion(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * p_conversion)
+// {
+//     _ADC_CaptureResult(p_conversion, HAL_ADC_ReadResult(p_hal, p_conversion->PIN));
+// }
 
 /******************************************************************************/
 /*

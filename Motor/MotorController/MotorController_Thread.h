@@ -64,7 +64,6 @@
 static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
-    MotAnalogUser_Cmd_T cmd;
 
     MotAnalogUser_CaptureInput(&p_dev->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_dev->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_dev->ANALOG_USER_CONVERSIONS));
 
@@ -75,7 +74,6 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_d
         MotAnalogUser_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS);
     }
 }
-
 
 /*
     Optional Din
@@ -89,6 +87,7 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
     {
         UserDIn_PollEdge(&p_dev->OPT_DIN);
 
+        //DIN VTABLE
         switch (p_mc->Config.OptDinMode)
         {
             case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
@@ -220,13 +219,13 @@ static inline void _MotorController_VSourceMonitor_Thread(const MotorController_
             if (RangeMonitor_IsTriggeringEdge(p_dev->V_SOURCE.P_STATE) == true)
             {
                 MotorController_CaptureVSource(p_dev);
-                // LimitArray_TrySetEntry(&p_dev->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
+                // LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, MOT_I_LIMIT_V_LOW, p_mc->Config.VLowILimit_Fract16);
             }
             break;
         case VMONITOR_STATUS_NORMAL:
             if (RangeMonitor_IsClearingEdge(p_dev->V_SOURCE.P_STATE) == true)
             {
-                // LimitArray_TryClearEntry(&p_dev->MOT_I_LIMITS, MOT_I_LIMIT_V_LOW);
+                // LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, MOT_I_LIMIT_V_LOW);
             }
             break;
         default: break;
@@ -342,7 +341,6 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 
         }
     }
-    // todo transient recorder proc
 }
 
 /*

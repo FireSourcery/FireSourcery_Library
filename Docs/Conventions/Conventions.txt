@@ -117,3 +117,29 @@ SomeModule/
 ├── Base/
 ├── [Variant]/            # plain = specialization/subtype OF this module
 └── Extension/            # opt-in features, #ifdef guarded
+
+
+The Subject_Collaborator_* form matches how Linux names cross-subsystem calls (netdev_master_upper_dev_link, skb_copy_datagram_iter): primary subject first, collaborators follow, verb last.
+When coupling two peers:
+0 coordination points → no wrapper, no bridge. Callers compose directly.
+≤ ~5 coordination points, peers are public vocabulary → Multi-context free functions (Subject_Collaborator_*). No wrapper type.
+Many coordination points, or composite owns meaningful state → Mediator wrapper with peer getters (Option A).
+Peers must be hidden from callers → Full-forwarder facade (Option B).
+
+
+
+Multiple API Access Points — Architecture Principle
+The principle: signatures as capability contracts
+    e.g. Traction_Input_T
+
+every module interface should expose the minimum information a client needs. Narrow parameter types are the function-level expression of this.
+Interface Segregation Principle: "clients should not be forced to depend on methods they do not use." The function-signature analogue: don't force callers to supply state the function doesn't read.
+prefer narrower parameter types to reduce physical dependencies. A function taking Config_T * can live in a lower-tier header than one taking Outer_T *; the compiler enforces the layering.
+
+
+Leading-underscore for "inner" (current pattern at line 129): _Motor_DegOfRpm
+Suffix-by-struct: when naming collisions likely
+A function's parameter type is the narrowest struct that contains every field it reads or writes. Name the function Module_Scope_Verb() where Scope identifies that struct when multiple scopes share the module namespace.
+exempt for main structs (Config, State, etc.)
+
+A public function's scope prefix is determined by the widest struct its effects reach, not the struct it takes as a parameter.

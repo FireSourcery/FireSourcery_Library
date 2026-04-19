@@ -105,8 +105,7 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
     alternatively store as control domain units
 */
 /* Config stored in Electrical Degrees need to sync with pole pairs */
-// uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
-// uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
+
 // #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
 // #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
 // #define MOTOR_SPEED_MAX_DIGITAL
@@ -117,6 +116,22 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_State_T * p_motor, ac
 // 2048 37500 erpm
 // 1024 18750 erpm, 8 pole pairs 2344 rpm
 /* Base in electrical domain */
-// static inline uint32_t Motor_GetSpeedRated_DegPerCycle(const Motor_State_T * p_motor) { return p_motor->Config.SpeedRated_DegPerCycle; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_State_T * p_motor) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_motor->Config.SpeedRated_DegPerCycle); }
-// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_State_T * p_motor) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->Config.PolePairs, p_motor->Config.SpeedRated_DegPerCycle); }
+// typedef struct Motor_Specs_ControlDomain
+// {
+//     uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
+//     uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
+// }Motor_Specs_ControlDomain_T;
+// static inline uint32_t Motor_GetSpeedRated_DegPerCycle(const Motor_Specs_ControlDomain_T * p_motor) { return p_motor->SpeedRated_DegPerCycle; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_Specs_ControlDomain_T * p_motor) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_motor->SpeedRated_DegPerCycle); }
+// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Specs_ControlDomain_T * p_motor) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->PolePairs, p_motor->SpeedRated_DegPerCycle); }
+
+
+// static inline int16_t _Motor_DegOfRpm(const Motor_Config_T * p_motor, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_motor->PolePairs, speed_rpm); }
+// static inline int16_t _Motor_RpmOfDeg(const Motor_Config_T * p_motor, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_motor->PolePairs, speed_degPerCycle); }
+
+// /*
+//     Speed/V relation based on Kv.
+//     Rpm of Kv * V
+// */
+// static inline uint16_t Motor_RpmOfKv(const Motor_Config_T * p_motor, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_motor->Kv * Phase_Calibration_GetVMaxVolts()); }
+// static inline uint16_t Motor_VFract16OfKv(const Motor_Config_T * p_motor, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_motor->Kv * Phase_Calibration_GetVMaxVolts()); }

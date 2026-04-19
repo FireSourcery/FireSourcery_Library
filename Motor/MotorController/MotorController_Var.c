@@ -106,7 +106,7 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VSupplyRef;                        break;
-        case MOT_VAR_I_LIMIT_LOW_V:            value = p_state->Config.VLowILimit_Fract16;                break;
+        case MOT_VAR_I_LIMIT_RESV:            value = p_state->Config.VLowILimit_Fract16;                break;
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
         case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
@@ -128,7 +128,7 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupplyRef(p_dev, value);                                   break;
-        case MOT_VAR_I_LIMIT_LOW_V:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
+        case MOT_VAR_I_LIMIT_RESV:         p_state->Config.VLowILimit_Fract16 = value;                                             break;
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
         case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);                     break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
@@ -228,7 +228,7 @@ static int _HandleGeneral_Get(const MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_GENERAL_USER_OUT:      return MotorController_Var_Output_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_GENERAL_CONFIG:        return MotorController_Config_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_GENERAL_USER_IN:       return 0;
-        case MOT_VAR_TYPE_GENERAL_STATIC_REF:    return MotorController_InstancesRef_Get(p_dev, varId.Base);
+        case MOT_VAR_TYPE_GENERAL_BOARD_CONST:    return MotorController_InstancesRef_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_GENERAL_DEBUG:         return MotorController_Var_OutputDebug_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_GetAsInput(&p_dev->ANALOG_USER, varId.Base);
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_dev->ANALOG_USER, varId.Base);
@@ -242,7 +242,7 @@ static MotVarId_Status_T _HandleGeneral_Set(const MotorController_T * p_dev, Mot
     {
         case MOT_VAR_TYPE_GENERAL_USER_OUT:         return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:      return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_GENERAL_STATIC_REF:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_GENERAL_BOARD_CONST:       return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_DEBUG:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_dev, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_dev, varId.Base, value);                              break;

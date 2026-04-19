@@ -40,7 +40,6 @@
     Unit Calculation Functions - Pure Functions
 */
 /******************************************************************************/
-
 /*!
     @brief Encoder Counter
 */
@@ -68,59 +67,26 @@ static inline uint32_t angle_counter_wrapped(uint32_t max, uint32_t prev, uint32
 /******************************************************************************/
 /*
     Speed in Digital Units: Fract, AngleDelta
-    Speed in physical units
-    Capture Mode:
 */
 /******************************************************************************/
 /*
-    generic base - compose multiply divide args
-*/
-/* rps_of_count_time direct _angle_speed_of_count >> 16 */
-static inline int32_t _angle_freq_of_count(uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return (deltaD * timer_freq) / (cpr * deltaT); }
-static inline int32_t _angle_speed_of_count_direct(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return (uint64_t)ANGLE16_PER_REVOLUTION * deltaD * (timer_freq / polling_freq) / (cpr * deltaT); }
-/* e.g. directly on sampleTk  */
-static inline int32_t _angle_speed_of_count(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return _angle_freq_of_count((uint64_t)ANGLE16_PER_REVOLUTION * timer_freq / polling_freq, cpr, deltaD, deltaT); }
-
-
-/*
-    FreqD [counts/sec] <=> angle16 per poll cycle
-    angle16_per_poll = FreqD * ANGLE16_PER_REVOLUTION / (CPR * pollingFreq)
-*/
-static inline int32_t angle_speed_of_count_freq(uint32_t pollingFreq, uint16_t cpr, int32_t freqD) { return freqD * ANGLE16_PER_REVOLUTION / (cpr * pollingFreq); }
-static inline int32_t count_freq_of_angle_speed(uint32_t pollingFreq, uint16_t cpr, int32_t angle16_per_poll) { return (int64_t)angle16_per_poll * cpr * pollingFreq / ANGLE16_PER_REVOLUTION; }
-/* = deltaD * const / sampleTk */
-static inline int32_t angle_speed_per_count_t(uint32_t pollingFreq, uint32_t timer_freq, uint16_t cpr) { return timer_freq * ANGLE16_PER_REVOLUTION / (cpr * pollingFreq); }
-
-/*
-    Angle Speed as Delta at Polling
-
-    Polling Angle Unit
+    Angle Speed Polling Unit [AngularSpeed / POLLING_FREQ]
     Angle = (Count/Time) * [(DEGREES / CountsPerRevolution) / POLLING_FREQ]
-        AngularSpeed / POLLING_FREQ
 
+    FreqD e.g:
+    FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ] >> SHIFT
+        cpr * FreqD < pollingFreq/2:
+        shift EXT_SHIFT => FreqD < cpr * pollingFreq => counts per poll < cpr
     Alternatively at run time
         FreqD * [DEGREES / CountsPerRevolution] / POLLING_FREQ
 */
-/*
-    FreqD * [(DEGREES << SHIFT) / CountsPerRevolution / POLLING_FREQ] >> SHIFT
-    cpr * FreqD < pollingFreq/2:
-    shift EXT_SHIFT => FreqD < cpr * pollingFreq => counts per poll < cpr
-*/
 static inline uint32_t angle32_speed_per_count_cpr(uint32_t polling_freq, uint16_t cpr) { return angle32_per_count(cpr) / polling_freq; }
-
 static inline uint32_t angle32_speed_per_count(uint32_t polling_freq, uint32_t angle32_per_count) { return angle32_per_count / polling_freq; }
 
-/* timer_freq / polling = t_freq */
-// static inline int32_t _angle_speed_of_count(uint32_t t_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return ANGLE16_PER_REVOLUTION * (deltaD * t_freq) / (cpr * deltaT); }
-/* timer_freq / polling < 1 */
-// static inline int32_t angle_speed_of_count(uint32_t polling_freq, uint32_t unit_time_freq, uint16_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * unit_time_freq * count / (cpr * polling_freq); }
-// static inline uint32_t angle_speed_per_count(uint32_t polling_freq, uint32_t timer_freq, uint16_t cpr) { return  (int64_t)ANGLE16_PER_REVOLUTION * timer_freq / (cpr * polling_freq); }
-
-
 /*
-    Speed Fract16 = Speed_Rpm * FRACT16_MAX / max_rpm
-    Speed Fract16 => DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)] / DeltaT
-    Speed Fract16 => [DeltaD / DeltaT] * [UnitTime_Freq] * [FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)]
+    Speed Fract16 [Speed_Rpm * FRACT16_MAX / max_rpm]
+    Speed Fract16 = DeltaD * [UnitTime_Freq * FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)] / DeltaT
+    Speed Fract16 = [[DeltaD / DeltaT] * [UnitTime_Freq]] * [FRACT16_MAX * 60 / (CountsPerRevolution * max_rpm)]
 
     e.g.
     Shift = 1:
@@ -142,29 +108,56 @@ static inline uint32_t angle32_speed_per_count(uint32_t polling_freq, uint32_t a
 static inline uint32_t fract16_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT16_SCALE * freq_t) / cpr; }
 static inline uint32_t rpm_fract16_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract16_per_count(freq_t * 60U, cpr * max_rpm); }
 
-static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
-static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }
-
 /* [0:speedmax] => [0:~INT32_MAX/2] */
 /* angle_accum_per_count */
 static inline uint32_t accum32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)(FRACT16_SCALE << 15) * freq_t) / cpr; }
 static inline uint32_t rpm_accum32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return accum32_per_count(freq_t * 60U, cpr * max_rpm); }
 
+// static inline uint32_t fract32_per_count(uint32_t freq_t, uint32_t cpr) { return ((uint64_t)FRACT32_SCALE * freq_t) / cpr; }
+// static inline uint32_t rpm_fract32_per_count(uint32_t freq_t, uint32_t cpr, uint32_t max_rpm) { return fract32_per_count(freq_t * 60U, cpr * max_rpm); }
 
 /******************************************************************************/
 /*
-    Addtional per second conversion
+    generic base - compose multiply divide args
+*/
+/******************************************************************************/
+/* rps_of_count_time direct _angle_speed_of_count >> 16 */
+static inline int32_t _angle_freq_of_count(uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return (deltaD * timer_freq) / (cpr * deltaT); }
+/* timer_freq / polling < 1 */
+static inline int32_t _angle_speed_of_count_direct(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return deltaD * (int64_t)ANGLE16_PER_REVOLUTION * timer_freq / polling_freq / (cpr * deltaT); }
+
+/* timer_freq / polling = t_freq */
+/*
+    DeltaD * [UnitTime_Freq / polling_freq * DEGREES / CountsPerRevolution] / sampleTk
+*/
+static inline int32_t _angle_speed_of_count(uint32_t polling_freq, uint32_t timer_freq, uint32_t cpr, int32_t deltaD, uint16_t deltaT) { return _angle_freq_of_count(((uint64_t)ANGLE16_PER_REVOLUTION * timer_freq / polling_freq), cpr, deltaD, deltaT); }
+
+/*
+    deltaD * [unit] / sampleTk
+    when large cpr
+*/
+static inline int32_t angle_speed_per_count_t(uint32_t pollingFreq, uint32_t timer_freq, uint16_t cpr) { return _angle_speed_of_count_direct(pollingFreq, timer_freq, cpr, 1, 1); }
+
+/*
+    FreqD [counts/sec] <=> angle16 per poll cycle
+    angle16_per_poll = FreqD * ANGLE16_PER_REVOLUTION / (CPR * pollingFreq)
+*/
+static inline int32_t angle_speed_of_count_freq(uint32_t pollingFreq, uint16_t cpr, int32_t freqD) { return freqD * ANGLE16_PER_REVOLUTION / (cpr * pollingFreq); }
+static inline int32_t count_freq_of_angle_speed(uint32_t pollingFreq, uint16_t cpr, int32_t angle16_per_poll) { return (int64_t)angle16_per_poll * cpr * pollingFreq / ANGLE16_PER_REVOLUTION; }
+
+/******************************************************************************/
+/*
+    per second units for config
 */
 /******************************************************************************/
 /*
     Angle/S - Direct to per second.
         same as RPS normalized to [0:65536]
+    AngularSpeed[DEGREES/s]: DEGREES / CountsPerRevolution * DeltaD * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
+    RotationalSpeed[N/s]   : DeltaD / CountsPerRevolution * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
 
     AngleSpeed = DeltaD * [DEGREES * UnitTime_Freq / CountsPerRevolution] / DeltaT
             <=> [AngleAccumPerCount * UnitTime_Freq >> SHIFT]
-
-    AngularSpeed[DEGREES/s]     = DEGREES / CountsPerRevolution * DeltaD * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
-    RotationalSpeed[N/s]        = DeltaD / CountsPerRevolution * UnitTime_Freq[Hz] / DeltaT[TimerTicks]
 
     e.g. DEGREES_BITS = 16,
         UnitAngularSpeed = 160,000          : UnitTime_Freq = 20000, CountsPerRevolution = 8192
@@ -175,14 +168,13 @@ static inline uint32_t rpm_accum32_per_count(uint32_t freq_t, uint32_t cpr, uint
 */
 static inline int32_t cps_of_count(uint32_t sampleFreq, uint32_t cpr, int32_t deltaD) { return (deltaD * sampleFreq) / cpr; }
 static inline int32_t count_of_cps(uint32_t sampleFreq, uint32_t cpr, int32_t cps) { return (cps * cpr) / sampleFreq; }
-// static inline int32_t angle_speed_of_count(uint32_t sampleFreq, uint16_t cpr, int32_t deltaD) { return (deltaD * ANGLE16_PER_REVOLUTION) / (cpr * sampleFreq); }
-// static inline int32_t count_of_angle_speed(uint32_t sampleFreq, uint16_t cpr, int32_t angle) { return (sampleFreq * cpr * angle) / ANGLE16_PER_REVOLUTION; }
+// static inline int32_t angle_cps_of_count(uint32_t sampleFreq, uint16_t cpr, int32_t deltaD) { return (deltaD * ANGLE16_PER_REVOLUTION) / (cpr * sampleFreq); }
+// static inline int32_t count_of_angle_cps(uint32_t sampleFreq, uint16_t cpr, int32_t angle) { return (sampleFreq * cpr * angle) / ANGLE16_PER_REVOLUTION; }
+// static inline int32_t _angle_cps_of_count(uint32_t freq_t, uint32_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * freq_t * count / cpr; }
+// static inline int32_t _count_of_angle_cps(uint32_t freq_t, uint32_t cpr, int32_t angle) { return cpr * angle / ANGLE16_PER_REVOLUTION / freq_t; }
 
 static inline int32_t rpm_of_count(uint32_t sampleFreq, uint32_t cpr, int32_t deltaD) { return cps_of_count(sampleFreq, cpr, deltaD * SECONDS_PER_MINUTE); }
 static inline int32_t count_of_rpm(uint32_t sampleFreq, uint32_t cpr, int32_t rpm) { return (rpm * cpr) / (sampleFreq * 60U); }
-
-// static inline uint32_t rads_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * ANGLE16_PER_RADIAN) / cpr; }
-// static inline uint32_t count_of_rads(uint32_t sampleFreq, uint32_t cpr, uint32_t rads) { return (rads * cpr) / (sampleFreq * ANGLE16_PER_RADIAN); }
 
 /*
     FreqD [counts/sec] <=> RPM
@@ -193,8 +185,9 @@ static inline int32_t rpm_of_count_freq(uint16_t cpr, int32_t freqD) { return cp
 static inline int32_t count_freq_of_rpm(uint16_t cpr, int32_t rpm) { return count_of_rpm(1U, cpr, rpm); }
 static inline int32_t cps_of_count_freq(uint16_t cpr, int32_t freqD) { return cps_of_count(1U, cpr, freqD); }
 
-// static inline int32_t _angle_speed_of_count(uint32_t freq_t, uint32_t cpr, int32_t count) { return (int64_t)ANGLE16_PER_REVOLUTION * freq_t * count / cpr; }
-// static inline int32_t _count_of_angle_speed(uint32_t freq_t, uint32_t cpr, int32_t angle) { return cpr * angle / ANGLE16_PER_REVOLUTION / freq_t; }
+
+// static inline uint32_t rads_of_count(uint32_t sampleFreq, uint32_t cpr, uint32_t deltaD) { return (deltaD * sampleFreq * ANGLE16_PER_RADIAN) / cpr; }
+// static inline uint32_t count_of_rads(uint32_t sampleFreq, uint32_t cpr, uint32_t rads) { return (rads * cpr) / (sampleFreq * ANGLE16_PER_RADIAN); }
 
 /******************************************************************************/
 /*

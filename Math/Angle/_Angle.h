@@ -141,7 +141,7 @@ static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle)
     Integrate from commanded input
 */
 /******************************************************************************/
-static inline angle16_t Angle_IntegrateDelta(Angle_T * p_angle, angle16_t delta_degPerCycle)
+static inline angle16_t Angle_Integrate(Angle_T * p_angle, angle16_t delta_degPerCycle)
 {
     p_angle->Angle += delta_degPerCycle;
     p_angle->Delta = delta_degPerCycle;
@@ -158,7 +158,7 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, fract16_
 
 // static inline void Angle_IntegrateAngle(Angle_T * p_angle, angle16_t angle)
 // {
-//     Angle_IntegrateDelta(p_angle, angle - p_angle->Angle);
+//     Angle_Integrate(p_angle, angle - p_angle->Angle);
 // }
 
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)

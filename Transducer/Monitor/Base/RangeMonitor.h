@@ -68,10 +68,7 @@ typedef enum RangeMonitor_Status
 RangeMonitor_Status_T;
 
 /*
-    RangeMonitor simplify config
-    Consolidate high/low monitors
-        // Monitor_Setpoint_T High;
-        // Monitor_Setpoint_T Low;
+    Shared hysteresis
 */
 typedef struct RangeMonitor_Zone
 {
@@ -90,12 +87,12 @@ typedef struct RangeMonitor_Config
     Monitor_FaultLimit_T FaultOverLimit;     /* Fault level (hard limit, no hysteresis) */
     Monitor_FaultLimit_T FaultUnderLimit;    /* Fault level (hard limit, no hysteresis) */
 
+    // RangeMonitor_FaultLimit_T Fault; /* more consistent ergonomically */
     /* Warning thresholds with hysteresis */
     RangeMonitor_Zone_T Warning;   /* Warning level with hysteresis */
 
-    int32_t Nominal;  /*  */
+    int32_t Nominal;
     bool IsEnabled;
-    // RangeMonitor_Direction_T Direction;
 }
 RangeMonitor_Config_T;
 
@@ -138,11 +135,10 @@ static inline bool RangeMonitor_IsLowSideCondition(const RangeMonitor_T * p_moni
 
 static inline bool RangeMonitor_IsAnyCondition(const RangeMonitor_T * p_monitor) { return p_monitor->Status != RANGE_MONITOR_STATUS_NORMAL; }
 /* Check which direction caused the issue */
-static inline bool RangeMonitor_IsHighSideFault(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_FAULT_OVER_LIMIT; }
-static inline bool RangeMonitor_IsLowSideFault(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_FAULT_UNDER_LIMIT; }
-static inline bool RangeMonitor_IsHighSideWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_HIGH; }
-static inline bool RangeMonitor_IsLowSideWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_LOW; }
-
+static inline bool RangeMonitor_IsOverFault(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_FAULT_OVER_LIMIT; }
+static inline bool RangeMonitor_IsUnderFault(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_FAULT_UNDER_LIMIT; }
+static inline bool RangeMonitor_IsOverWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_HIGH; }
+static inline bool RangeMonitor_IsUnderWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_LOW; }
 
 /*
     Event detection
@@ -177,10 +173,6 @@ static inline bool RangeMonitor_IsEnabled(const RangeMonitor_T * p_monitor) { re
 static inline void RangeMonitor_SetEnabled(RangeMonitor_T * p_monitor, bool isEnabled) { p_monitor->Config.IsEnabled = isEnabled; }
 static inline void RangeMonitor_Enable(RangeMonitor_T * p_monitor) { RangeMonitor_SetEnabled(p_monitor, true); }
 static inline void RangeMonitor_Disable(RangeMonitor_T * p_monitor) { RangeMonitor_SetEnabled(p_monitor, false); }
-/* Check if high-side monitoring is properly configured */
-// static inline bool RangeMonitor_IsHighSideEnabled(const RangeMonitor_T * p_monitor) { return p_monitor->MonitorHigh.Config.IsEnabled; }
-/* Check if low-side monitoring is properly configured */
-// static inline bool RangeMonitor_IsLowSideEnabled(const RangeMonitor_T * p_monitor) { return p_monitor->MonitorLow.Config.IsEnabled; }
 
 /* Getters format */
 static inline int32_t RangeMonitor_GetFaultOverLimit(const RangeMonitor_T * p_monitor) { return p_monitor->Config.FaultOverLimit.Limit; }

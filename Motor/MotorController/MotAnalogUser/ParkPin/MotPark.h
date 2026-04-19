@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,34 +24,18 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Config.h
+    @file   MotPark.h
     @author FireSourcery
-    @brief  Motor module preprocessor configuration options and defaults
-
+    @brief  Optional park-request digital input. Pure pin owner: emits engage/
+            disengage edges; aggregate wires them to the top-level state machine.
 */
 /******************************************************************************/
-#ifndef MOTOR_CONTROLLER_H
-#define MOTOR_CONTROLLER_H
+#include "Transducer/UserIn/UserDIn.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-
-// #if     defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-// #elif   defined(MOTOR_CONTROLLER_CAN_BUS_DISABLE)
-// #else
-//     #define MOTOR_CONTROLLER_CAN_BUS_ENABLE
-// #endif
-
-
-// #if     defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-// #elif   defined(MOTOR_CONTROLLER_SHELL_DISABLE)
-// #else
-//     #define MOTOR_CONTROLLER_SHELL_DISABLE
-// #endif
-
-// #if     defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
-// #elif   defined(MOTOR_CONTROLLER_DEBUG_DISABLE)
-// #else
-//     #define MOTOR_CONTROLLER_DEBUG_DISABLE
-// #endif
-
-#endif
-
+typedef struct MotPark_Config
+{
+    uint8_t AutoParkOnStop  : 1U; /* optional: also request park when motor stops */
+}
+MotPark_Config_T;

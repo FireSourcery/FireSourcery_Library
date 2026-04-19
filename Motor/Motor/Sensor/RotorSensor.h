@@ -206,10 +206,10 @@ static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, con
 static inline const Angle_T * RotorSensor_GetAngleState(const RotorSensor_T * p_sensor) { return &p_sensor->P_STATE->AngleSpeed; }
 
 /* Angle Feedback. Shared E-Cycle edge detect, User output */
-static inline angle16_t RotorSensor_GetElectricalAngle(const RotorSensor_T * p_sensor) { return Angle_GetAngle16(&p_sensor->P_STATE->AngleSpeed); }
+static inline angle16_t RotorSensor_GetElectricalAngle(const RotorSensor_T * p_sensor) { return Angle_Value(&p_sensor->P_STATE->AngleSpeed); }
 // ElectricalDeltaAngle, DigitalSpeed [Degrees Per ControlCycle]
 /* Electrical Speed,  < 32768 by SpeedRated */
-static inline angle16_t RotorSensor_GetElectricalDelta(const RotorSensor_T * p_sensor) { return Angle_GetDelta16(&p_sensor->P_STATE->AngleSpeed); }
+static inline angle16_t RotorSensor_GetElectricalDelta(const RotorSensor_T * p_sensor) { return Angle_Delta(&p_sensor->P_STATE->AngleSpeed); }
 /* fract16 [-32767:32767]*2 Speed Feedback Variable. -/+ => virtual CW/CCW */
 static inline int32_t RotorSensor_GetSpeed_Fract16(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->Speed_Fract16; }
 /* Speed sampled over 1ms */

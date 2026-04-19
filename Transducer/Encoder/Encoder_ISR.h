@@ -65,7 +65,7 @@ static inline uint8_t _Encoder_CapturePhasesState(const Encoder_T * p_encoder)
 static inline void _Encoder_CaptureCount(Encoder_State_T * p_encoder, int8_t count)
 {
     /* instead of imitating the hw decoder case, capture a separate Angle32 */
-    AngleCounter_CaptureCountWrap(&p_encoder->AngleCounter, count);
+    AngleCounter_CaptureCountAngle(&p_encoder->AngleCounter, count);
 }
 
 /******************************************************************************/

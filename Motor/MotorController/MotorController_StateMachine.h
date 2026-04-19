@@ -239,7 +239,12 @@ typedef enum MotorController_LockId
 }
 MotorController_LockId_T;
 
-/* specialized var handlers */
+/*!
+    @retval 0xFF when TopState not in Lock State
+    @retval IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK
+    @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
+*/
+/* specialized handlers per substateId. alternatively PathId Scheme. */
 static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorController_T * p_dev)
 {
     return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
@@ -263,15 +268,6 @@ static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorCont
     _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_LOCK, id);
     return p_dev->P_MC->LockOpStatus; /* optionally return status, or use getter after */
 }
-
-/* Lock State returns to ENTER */
-/*!
-    @retval 0xFF when TopState not in Lock State
-    @retval IsComplete SubState => 0xFF, TopState => MC_STATE_LOCK
-    @retval Processing SubState => id or 0, TopState => MC_STATE_LOCK
-*/
-/* may return 0xFF. most states passthrough. */
-// static inline MotorController_LockId_T MotorController_GetLockState(MotorController_T * p_dev) { return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
 static inline MotorController_LockOpStatus_T MotorController_EnterLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_ENTER); }
 static inline MotorController_LockOpStatus_T MotorController_ExitLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_EXIT); }

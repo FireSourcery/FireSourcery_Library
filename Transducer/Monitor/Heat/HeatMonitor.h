@@ -85,7 +85,6 @@ typedef const struct HeatMonitor
     Thermistor_T THERMISTOR; // alternatively as pointer for flexible def region
     Linear_T * P_LINEAR; /* Optional for local unit conversion */
     // Linear_T * P_LINEAR_R_OHMS;  /* R of Adcu */
-    // Linear_T * P_LINEAR_T_CELCIUS;
     // Linear_T * P_LINEAR_T_DEGREES; /* Degree units using config */
 
     /* Common across instances in a GroupContext */

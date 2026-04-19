@@ -43,14 +43,32 @@ typedef enum UserDIn_Edge
 }
 UserDIn_Edge_T;
 
-// typedef enum UserDIn_Mode
+typedef enum UserDIn_Mode
+{
+    USER_DIN_MODE_DISABLED,
+    USER_DIN_MODE_NORMAL,           /* Standard debounced input */
+    USER_DIN_MODE_TOGGLE,           /* Toggle on each press */
+    USER_DIN_MODE_MOMENTARY,        /* Active only while pressed */
+    USER_DIN_MODE_HOLD,             /* Requires hold time */
+}
+UserDIn_Mode_T;
+
+/*  */
+typedef const struct UserDIn_Cmd
+{
+    // UserDIn_Edge_T Edge;
+    void (*CMD)(void * p_context, UserDIn_Edge_T edge);
+    void * P_CONTEXT;
+}
+UserDIn_Cmd_T;
+
+
+// typedef struct UserDIn_Config
 // {
-//     USER_DIN_MODE_NORMAL,           /* Standard debounced input */
-//     USER_DIN_MODE_TOGGLE,           /* Toggle on each press */
-//     USER_DIN_MODE_MOMENTARY,        /* Active only while pressed */
-//     USER_DIN_MODE_HOLD,             /* Requires hold time */
+//     UserDIn_Mode_T Mode;
+//     size_t CmdId;
 // }
-// UserDIn_Mode_T;
+// UserDIn_Config_T;
 
 /******************************************************************************/
 /*
@@ -64,7 +82,8 @@ typedef struct UserDIn_State
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
-    // UserDIn_Mode_T Mode;
+    UserDIn_Mode_T Mode;
+    UserDIn_Cmd_T * p_OptCmd; /* Optional command to execute on edge */
 }
 UserDIn_State_T;
 
@@ -80,6 +99,7 @@ typedef const struct UserDIn
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
     // UserDIn_Mode_T MODE; /* Default mode */
+    // UserDIn_Cmd_T CMD; /* Fixed Cmd */
 }
 UserDIn_T;
 

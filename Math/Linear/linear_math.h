@@ -87,7 +87,27 @@ static inline int32_t linear_invf_full(int32_t m_factor, int32_t m_divisor, int3
 /******************************************************************************/
 /* */
 /******************************************************************************/
+/* [in_low:in_high] -> [out_low:out_high], linear, unsaturated */
+static inline int32_t linear_map(int32_t in_low, int32_t in_high, int32_t out_low, int32_t out_high, int32_t x)
+{
+    return out_low + ((out_high - out_low) * (x - in_low) / (in_high - in_low));
+}
+
+/* Saturated: input clamped to [in_low, in_high] */
+static inline int32_t linear_map_sat(int32_t in_low, int32_t in_high, int32_t out_low, int32_t out_high, int32_t x)
+{
+    if (x >= in_high) { return out_high; }
+    if (x <= in_low) { return out_low; }
+    return linear_map(in_low, in_high, out_low, out_high, x);
+}
+
+
+/******************************************************************************/
+/* */
+/******************************************************************************/
 static inline int32_t linear_f_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t x) { return ((m_factor * x + (m_divisor / 2)) / m_divisor + b); }
 static inline int32_t linear_invf_round(int32_t m_factor, int32_t m_divisor, int32_t b, int32_t y) { return (((y - b) * m_divisor + (m_factor / 2)) / m_factor); }
+
+
 
 #endif

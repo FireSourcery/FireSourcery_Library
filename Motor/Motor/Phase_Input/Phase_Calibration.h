@@ -91,7 +91,6 @@ static bool Phase_Calibration_IsValid(void)
 
 /*
     Local unit conversions
-    // fract16(amps, Phase_Calibration_GetIMaxAmps())
 */
 static inline accum32_t Phase_I_Fract16OfAmps(int16_t amps) { return amps * INT16_MAX / Phase_Calibration_GetIMaxAmps(); }
 static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() / 32768; }

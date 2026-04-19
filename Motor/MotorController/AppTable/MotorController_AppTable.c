@@ -41,13 +41,13 @@
 /******************************************************************************/
 static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    switch (MotAnalogUser_GetDirectionEdge(&p_dev->ANALOG_USER))
-    {
-        case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CCW);   break;
-        case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CW);    break;
-        case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_NULL);      break;
-        default: break;
-    }
+    // switch (MotAnalogUser_GetDirectionEdge(&p_dev->ANALOG_USER))
+    // {
+    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CCW);   break;
+    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CW);    break;
+    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_NULL);      break;
+    //     default: break;
+    // }
 
     MotorController_SetCmdValue(p_dev, MotAnalogUser_GetThrottle(&p_dev->ANALOG_USER));
     // if (p_dev->P_MC->CmdInput.CmdValue == 0U)

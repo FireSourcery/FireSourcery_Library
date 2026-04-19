@@ -57,9 +57,9 @@ PulseEncoder_State_T;
 */
 typedef const struct PulseEncoder
 {
-    const PulseTimer_T TIMER;           /* PulseTimer const; its P_STATE points into P_STATE->Timer */
+    const PulseTimer_T TIMER;         /* PulseTimer const; its P_STATE points into P_STATE->Timer */
     PulseEncoder_State_T * P_STATE;
-    // const uint32_t POLLING_FREQ;        /* Control loop frequency [Hz] for angle delta conversion */
+    // const uint32_t POLLING_FREQ;   /* Control loop frequency [Hz] for angle delta conversion */
 }
 PulseEncoder_T;
 
@@ -70,6 +70,17 @@ PulseEncoder_T;
 */
 #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State) \
     PULSE_ENCODER_INIT(PULSE_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, &((p_State)->Timer)), p_State)
+
+// #define PULSE_ENCODER_INIT_FROM(p_TimerHal, TimerFreq, SampleFreq, p_State, extended, extendedFreq) \
+// {
+//     .TIMER = PULSE_TIMER_INIT_EXTENDED
+//     (
+//         p_TimerHal, TimerFreq, SampleFreq,
+//         &p_State->Timer,
+//         extended, extendedFreq
+//     ),
+//     .P_STATE = p_State
+// };
 
 
 /******************************************************************************/
@@ -90,7 +101,7 @@ static inline void PulseEncoder_CaptureEdge(const PulseEncoder_T * p_encoder, in
 static inline void PulseEncoder_CaptureEdgeWrap(const PulseEncoder_T * p_encoder, int sign)
 {
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
-    AngleCounter_CaptureCountWrap(&p_encoder->P_STATE->Counter, sign);
+    AngleCounter_CaptureCountAngle(&p_encoder->P_STATE->Counter, sign);
 }
 
 /******************************************************************************/
@@ -104,63 +115,11 @@ static inline void PulseEncoder_CaptureFreq(const PulseEncoder_T * p_encoder)
     AngleCounter_CaptureFreq(&p_encoder->P_STATE->Counter, PulseTimer_CaptureSampleTk_Freq(&p_encoder->TIMER));
 }
 
-/*
-    Bridge FreqD → Angle_T.Delta in shifted Q16.16 for interpolation
-    Call after CaptureFreq, before the control-loop interpolation step.
-*/
-static inline angle16_t PulseEncoder_ResolveAngleDelta(const PulseEncoder_T * p_encoder)
-{
-    return AngleCounter_ResolveAngleDelta(&p_encoder->P_STATE->Counter);
-}
+static inline Angle_T * PulseEncoder_Angle(const PulseEncoder_T * p_encoder) { return AngleCounter_Angle(&p_encoder->P_STATE->Counter); }
+static inline AngleCounter_T * PulseEncoder_Counter(const PulseEncoder_T * p_encoder) { return &p_encoder->P_STATE->Counter; }
+static inline PulseTimer_T * PulseEncoder_Timer(const PulseEncoder_T * p_encoder) { return &p_encoder->TIMER; }
 
-/******************************************************************************/
-/*
-    Control Loop — call per control cycle for inter-edge angle estimate
-*/
-/******************************************************************************/
-static inline angle16_t PulseEncoder_Interpolate(const PulseEncoder_T * p_encoder)
-{
-    return AngleCounter_Interpolate(&p_encoder->P_STATE->Counter);
-}
 
-/******************************************************************************/
-/*
-    Angle snap — caller-driven angle capture (Hall sector boundary, index pulse)
-*/
-/******************************************************************************/
-static inline void PulseEncoder_SetAngle(const PulseEncoder_T * p_encoder, angle16_t angle)    { AngleCounter_SetAngle(&p_encoder->P_STATE->Counter, angle); }
-static inline void PulseEncoder_ZeroAngle(const PulseEncoder_T * p_encoder)                    { AngleCounter_ZeroAngle(&p_encoder->P_STATE->Counter); }
-static inline void PulseEncoder_SetLimitWindow(const PulseEncoder_T * p_encoder, uangle16_t w) { AngleCounter_SetLimitWindow(&p_encoder->P_STATE->Counter, w); }
-
-/******************************************************************************/
-/*
-    Stop Detection — delegate to PulseTimer
-*/
-/******************************************************************************/
-static inline bool PulseEncoder_IsStop(const PulseEncoder_T * p_encoder)         { return PulseTimer_IsStop(&p_encoder->TIMER); }
-static inline bool PulseEncoder_IsExtendedStop(const PulseEncoder_T * p_encoder) { return PulseTimer_IsExtendedStop(&p_encoder->TIMER); }
-
-/******************************************************************************/
-/*
-    Query — delegate to AngleCounter
-*/
-/******************************************************************************/
-static inline int32_t PulseEncoder_GetFreqD(const PulseEncoder_T * p_encoder)         { return AngleCounter_GetFreqD(&p_encoder->P_STATE->Counter); }
-static inline int32_t PulseEncoder_GetRpm(const PulseEncoder_T * p_encoder)           { return AngleCounter_GetRpm(&p_encoder->P_STATE->Counter); }
-static inline int32_t PulseEncoder_GetCps(const PulseEncoder_T * p_encoder)           { return AngleCounter_GetCps(&p_encoder->P_STATE->Counter); }
-static inline int32_t PulseEncoder_GetSpeed_Fract16(const PulseEncoder_T * p_encoder) { return AngleCounter_GetSpeed_Fract16(&p_encoder->P_STATE->Counter); }
-
-static inline const Angle_T * PulseEncoder_GetAngleState(const PulseEncoder_T * p_encoder) { return AngleCounter_Base(&p_encoder->P_STATE->Counter); }
-
-/******************************************************************************/
-/*
-    Init
-*/
-/******************************************************************************/
-static inline void PulseEncoder_Init(const PulseEncoder_T * p_encoder)
-{
-    PulseTimer_Init(&p_encoder->TIMER);
-}
 
 static inline void PulseEncoder_InitFrom(const PulseEncoder_T * p_encoder, const AngleCounter_Config_T * p_config)
 {
@@ -172,3 +131,7 @@ static inline void PulseEncoder_SetInitial(const PulseEncoder_T * p_encoder)
 {
     PulseTimer_SetInitial(&p_encoder->TIMER);
 }
+
+
+
+

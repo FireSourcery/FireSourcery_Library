@@ -153,27 +153,27 @@ void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev
     Collective Setting Limit
 */
 /******************************************************************************/
-bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id, limit_t speed_fract16)
+bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_dev->MOT_SPEED_LIMITS, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->MOT_SPEED_LIMITS); return true; }
+    if (LimitArray_TrySetEntry(&p_dev->SPEED_LIMIT_SOURCES, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
     return false;
 }
 
-bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id)
+bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id)
 {
-    if (LimitArray_TryClearEntry(&p_dev->MOT_SPEED_LIMITS, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->MOT_SPEED_LIMITS); return true; }
+    if (LimitArray_TryClearEntry(&p_dev->SPEED_LIMIT_SOURCES, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
     return false;
 }
 
-bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id, limit_t i_fract16)
+bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_dev->MOT_I_LIMITS, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->MOT_I_LIMITS); return true; }
+    if (LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
     return false;
 }
 
-bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id)
+bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
 {
-    if (LimitArray_TryClearEntry(&p_dev->MOT_I_LIMITS, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->MOT_I_LIMITS); return true; }
+    if (LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
     return false;
 
 }

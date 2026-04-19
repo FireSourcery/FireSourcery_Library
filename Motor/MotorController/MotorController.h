@@ -29,12 +29,9 @@
     @brief  Facade Wrapper
 */
 /******************************************************************************/
-#include "Config.h"
-
-#include "MotNvm/MotNvm.h"
 #include "MotAnalogUser/MotAnalogUser.h"
 #include "MotAnalogUser/MotAnalogUser_Conversion.h"
-
+#include "MotNvm/MotNvm.h"
 #include "MotLimits/MotLimits.h"
 
 #include "Motor/Motor/Motor_Table.h"
@@ -75,6 +72,8 @@
 /* Part  */
 #include "MotorController_App.h"
 
+
+
 /******************************************************************************/
 /*!
 */
@@ -96,7 +95,8 @@ typedef enum MotorController_OptDinMode
     MOTOR_CONTROLLER_OPT_DIN_DISABLE,
     MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
     MOTOR_CONTROLLER_OPT_DIN_SERVO,
-    MOTOR_CONTROLLER_OPT_DIN_USER_FUNCTION,
+    MOTOR_CONTROLLER_OPT_DIN_PARK,
+    // MOTOR_CONTROLLER_OPT_DIN_USER_FUNCTION,
 }
 MotorController_OptDinMode_T;
 
@@ -164,6 +164,7 @@ typedef struct MotorController_Config
         Config.VSupplyRef -> user set nominal voltage
         MotorAnalogReference.VSource_V-> live voltage
     */
+    VBus_Config_T VBusConfig; /* VBus Monitor Config  */
     // alternatively split motor static instance
     uint16_t VSupplyRef;            /* VMonitor.Nominal Source/Battery Voltage. Sync with MotorAnalogReference VSource_V */
     uint16_t VLowILimit_Fract16;
@@ -263,9 +264,18 @@ typedef const struct MotorController
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
+// alternatively wrap inner
+// typedef const struct MotorDrive
+// {
+//     Motor_Table_T MOTORS;
+//     LimitArray_T SPEED_LIMIT_SOURCES;
+//     LimitArray_T I_LIMIT_SOURCES;
+// }
+// MotorDrive_T;
     Motor_Table_T MOTORS; /* Motor Array Context */
-    LimitArray_T MOT_SPEED_LIMITS;
-    LimitArray_T MOT_I_LIMITS;
+    LimitArray_T SPEED_LIMIT_SOURCES;
+    LimitArray_T I_LIMIT_SOURCES;
+    LimitArray_T I_GEN_LIMIT_SOURCES;
 
     /* Monitor - Detection + response with full context */
     HeatMonitor_T HEAT_PCB;
@@ -348,6 +358,8 @@ static inline Motor_Input_T * MotorController_GetMotorInput(const MotorControlle
     split MotBuzzer
 */
 /******************************************************************************/
+static inline Blinky_T * MotorController_Buzzer(const MotorController_T * p_dev) { return &p_dev->BUZZER; }
+
 static inline void MotorController_BeepShort(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
 static inline void MotorController_BeepPeriodicType1(const MotorController_T * p_dev)    { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
 static inline void MotorController_BeepPeriodic(const MotorController_T * p_dev)         { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
@@ -377,10 +389,10 @@ extern void MotorController_LoadConfigDefault(const MotorController_T * p_dev);
 extern void MotorController_ResetVSourceMonitorDefaults(const MotorController_T * p_dev);
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
-extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimit_Id_T id);
-extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimit_Id_T id);
+extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id);
+extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id);
 
 // extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_dev);
 

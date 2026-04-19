@@ -60,4 +60,3 @@ typedef const struct MotorController_App
 }
 MotorController_App_T;
 
-

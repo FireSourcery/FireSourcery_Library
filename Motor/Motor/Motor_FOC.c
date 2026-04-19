@@ -137,7 +137,7 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, f
 /* Call bounds input */
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq)
 {
-    Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOf(&p_motor->TorqueRamp, qReq));
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOf(&p_motor->TorqueRamp, qReq));
 
     // as i loop only
     // FOC_SetTheta(&p_motor->Foc, theta);
@@ -170,7 +170,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
     Motor_ExternControl(p_motor);
 #endif
     int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VRampOf(p_motor, p_motor->UserTorqueReq);
-    Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->SensorState.AngleSpeed), 0, qReq);
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), 0, qReq);
 }
 
 /*
@@ -180,7 +180,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 */
 void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 {
-    FOC_SetTheta(&p_motor->Foc, Angle_GetAngle16(&p_motor->SensorState.AngleSpeed));
+    FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
 
     if (p_motor->PhaseInput.VFlags.Bits == PHASE_ID_ABC)
     {
@@ -301,7 +301,7 @@ void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
-    Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, p_motor->UserTorqueReq), 0);
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, p_motor->UserTorqueReq), 0);
 }
 
 
@@ -318,7 +318,7 @@ void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 
 void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 {
-    Motor_FOC_AngleControl(p_motor, Angle_GetAngle16(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(p_motor)), 0); /*  */
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(p_motor)), 0); /*  */
 }
 
 /*

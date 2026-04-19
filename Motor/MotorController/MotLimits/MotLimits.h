@@ -32,47 +32,37 @@
 
 #include "Type/Array/LimitArray/LimitArray.h"
 
-#define SPEED_LIMIT_ID_COUNT (2U)
+#define SPEED_LIMIT_ID_COUNT (3U)
 #define I_LIMIT_ID_COUNT (4U)
 
-typedef enum MotILimit_Id
+typedef enum MotILimitId
 {
-    // MOT_I_LIMIT_HEAT_MOTOR,    /* MotorHeat */
-    MOT_I_LIMIT_HEAT_MC,
-    MOT_I_LIMIT_V_LOW,
-    MOT_I_LIMIT_USER,
+    MOT_I_LIMIT_HEAT_MC,        /* thermal — MCU/PCB */
+    MOT_I_LIMIT_HEAT_MOTOR,     /* thermal — per-motor winding */
+    MOT_I_LIMIT_V_LOW,          /* power — VBus undervoltage droop */
+    MOT_I_LIMIT_USER,           /* user / protocol */
+    MOT_I_LIMIT_COUNT,
 }
-MotILimit_Id_T;
+MotILimitId_T;
 
-/* SpeedLimitId */
-typedef enum MotSpeedLimit_Id
+typedef enum MotIGenLimitId
 {
-    MOT_SPEED_LIMIT_MC,
+    MOT_I_GEN_LIMIT_HEAT_MC,     /* thermal caps regen symmetrically */
+    MOT_I_GEN_LIMIT_HEAT_MOTOR,
+    MOT_I_GEN_LIMIT_V_HIGH,      /* power — VBus overvoltage regen chop */
+    MOT_I_GEN_LIMIT_USER,        /* user regen strength */
+    MOT_I_GEN_LIMIT_COUNT,
+}
+MotIGenLimitId_T;
+
+typedef enum MotSpeedLimitId
+{
+    MOT_SPEED_LIMIT_MC,          /* generic system cap */
+    MOT_SPEED_LIMIT_V_BUS,       /* power — back-EMF ceiling from VBus */
     MOT_SPEED_LIMIT_USER,
+    MOT_SPEED_LIMIT_COUNT,
 }
-MotSpeedLimit_Id_T;
-
-// typedef struct
-// {
-//     LimitArray_T SpeedLimit; /* Speed Limit */
-//     LimitArray_T ILimit;     /* I Limit */
-// }
-// MotLimits_T;
-
-// typedef struct
-// {
-//      Motor_Table_T MOTORS;
-// }
-// MotLimits_Context_T;
-
-// #define MOT_LIMITS_INIT(p_this)                         \
-// {                                                       \
-//     .SpeedLimit = LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT),    \
-//     .ILimit = LIMIT_ALLOC(I_LIMIT_ID_COUNT),            \
-// };
-
-// #define MOT_SPEED_LIMITS_INIT(p_this) LIMIT_ALLOC(SPEED_LIMIT_ID_COUNT)
-// #define MOT_I_LIMITS_INIT(p_this) LIMIT_ALLOC(I_LIMIT_ID_COUNT)
+MotSpeedLimitId_T;
 
 
 #endif
