@@ -59,6 +59,10 @@ void MotorController_Init(const MotorController_T * p_dev)
     HeatMonitor_Init(&p_dev->HEAT_PCB);
     HeatMonitor_Group_Init(&p_dev->HEAT_MOSFETS);
 
+    LimitArray_ClearAll(&p_dev->SPEED_LIMIT_SOURCES);
+    LimitArray_ClearAll(&p_dev->I_LIMIT_SOURCES);
+    LimitArray_ClearAll(&p_dev->I_GEN_LIMIT_SOURCES);
+
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
     Blinky_Init(&p_dev->BUZZER);
@@ -115,37 +119,37 @@ void _MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t vol
 /******************************************************************************/
 bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_dev->SPEED_LIMIT_SOURCES, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
+    if (LimitArray_TestSetUpper(&p_dev->SPEED_LIMIT_SOURCES, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
     return false;
 }
 
 bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id)
 {
-    if (LimitArray_TryClearEntry(&p_dev->SPEED_LIMIT_SOURCES, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
+    if (LimitArray_TestClearEntry(&p_dev->SPEED_LIMIT_SOURCES, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
     return false;
 }
 
-// bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
-// {
-//     if (LimitArray_TrySetEntry(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
-//     return false;
-// }
+bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
+{
+    if (LimitArray_TestSetUpper(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
+    return false;
+}
 
-// bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
-// {
-//     if (LimitArray_TryClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
-//     return false;
-// }
+bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
+{
+    if (LimitArray_TestClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
+    return false;
+}
 
 bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t i_fract16)
 {
-    if (LimitArray_TrySetEntry(&p_dev->I_GEN_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
+    if (LimitArray_TestSetUpper(&p_dev->I_GEN_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
     return false;
 }
 
 bool _MotorController_ClearIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id)
 {
-    if (LimitArray_TryClearEntry(&p_dev->I_GEN_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
+    if (LimitArray_TestClearEntry(&p_dev->I_GEN_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
     return false;
 }
 

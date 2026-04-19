@@ -229,7 +229,8 @@ static inline bool LimitArray_IsActive(LimitArray_T * p_limit) { return (LimitAr
 extern void LimitArray_Init(LimitArray_T * p_limit);
 extern void LimitArray_ClearAll(LimitArray_T * p_limit);
 
-extern bool LimitArray_TrySetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value);
-extern bool LimitArray_TryClearEntry(LimitArray_T * p_limit, limit_id_t id);
+extern bool LimitArray_TestSetEntry(LimitArray_T * p_limit, limit_id_t id, limit_t value);
+extern bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit_t value);
+extern bool LimitArray_TestClearEntry(LimitArray_T * p_limit, limit_id_t id);
 
 #endif // LIMIT_ARRAY_H

@@ -326,7 +326,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 
             VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
-            if (VBus_IsUnderNominal(p_dev->P_VBUS) == true) { _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS)); }
+            _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS));
+            // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true) { _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS)); }
 
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
