@@ -228,8 +228,8 @@ int _Motor_Var_ConfigDebug_Get(const Motor_State_T * p_motor, Motor_Var_ConfigDe
     switch (varId)
     {
         case MOTOR_VAR_SPEED_RATED_RPM:                 value = Motor_GetSpeedRated_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVBusRef_Rpm(p_motor);              break;
-        case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVBusRef_DegPerCycle(p_motor);             break;
+        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
+        case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_DegPerCycle(p_motor);             break;
         case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
         case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }

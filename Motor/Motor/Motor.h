@@ -302,7 +302,7 @@ typedef struct Motor_State
     const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
 
-    // VBus_T * p_VBus; /* BackPointer for now */
+    VBus_T * p_VBus; /* BackPointer for now */
     /*
         Ramp -> Feedback State
     */

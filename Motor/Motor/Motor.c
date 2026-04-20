@@ -46,7 +46,6 @@ void Motor_Init(const Motor_T * p_dev)
         HW Modules Init
     */
     Phase_Init(&p_dev->PHASE);
-    // Phase_Analog_Init(&p_dev->PHASE);
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_ActivateMode(&p_dev->PHASE, p_dev->P_MOTOR->Config.PhasePwmMode);
 #endif
@@ -55,7 +54,9 @@ void Motor_Init(const Motor_T * p_dev)
     p_dev->P_MOTOR->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR->Config.SensorMode);
     RotorSensor_Init(p_dev->P_MOTOR->p_ActiveSensor);
 
-    // HeatMonitor_Init(&p_dev->HEAT_MONITOR);
+    p_dev->P_MOTOR->p_VBus = p_dev->P_VBUS; /* BackPointer for now */
+
+    HeatMonitor_Init(&p_dev->HEAT_MONITOR);
 
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);

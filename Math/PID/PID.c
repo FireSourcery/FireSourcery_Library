@@ -92,6 +92,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     // IntegralAccum += ki_contribution + Kb * (clamped - unclamped);
 }
 
+extern void Debug_Beep();
+
 /*!
     dynamic output limits
     update synchronous with proc
@@ -118,8 +120,8 @@ void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 {
 #ifndef NDEBUG
+    if (!math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX)) { Debug_Beep(); }
     // int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
-    if(!math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX)) { return 0; }
 #endif
     p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
