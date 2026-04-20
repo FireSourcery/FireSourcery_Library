@@ -79,7 +79,9 @@ typedef const struct RotorSensor_Table
 // #if defined(MOTOR_SENSOR_HALL_ENABLE)
     const Hall_RotorSensor_T HALL;    // const Hall_T HALL;
 // #endif
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE)
     const Encoder_RotorSensor_T ENCODER; // const Encoder_T ENCODER;
+#endif
 }
 RotorSensor_Table_T;
 
@@ -97,7 +99,9 @@ static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table
     switch (id)
     {
         case ROTOR_SENSOR_ID_HALL: return &p_table->HALL.BASE;
+        #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case ROTOR_SENSOR_ID_ENCODER: return &p_table->ENCODER.BASE;
+        #endif
         default: return &p_table->EMPTY;
     }
 }

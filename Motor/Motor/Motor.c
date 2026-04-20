@@ -99,6 +99,8 @@ void Motor_Reset(Motor_State_T * p_motor)
     Motor_InitSpeedRamp(p_motor);
     Motor_InitTorqueRamp(p_motor);
 
+    Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VBus_GetVNominal());
+
     /* Preset rate ramps do not need output limits */
     /* Start at 0 speed in FOC mode for continuous angle displacements */
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
@@ -146,7 +148,6 @@ void Motor_InitSpeedRamp(Motor_State_T * p_motor)
 void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->TorqueRamp, p_motor->Config.TorqueRampTime_Cycles, Phase_Calibration_GetIRatedPeak_Fract16()); /* Current by default */
-    Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_VBus_GetVNominal());
     Motor_ResolveILimits(p_motor);
 }
 

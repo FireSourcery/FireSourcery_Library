@@ -51,6 +51,84 @@
 #define MOTOR_SENSOR_TABLE_INIT_ENCODER(MotorStateStruct, EncoderStruct) ENCODER_ROTOR_SENSOR_INIT(EncoderStruct, &((MotorStateStruct).SensorState))
 
 
+/******************************************************************************/
+/*
+    Sensor ISR
+*/
+/******************************************************************************/
+/* Optionally use Hall ISR */
+static inline void Motor_HallEncoderA_ISR(const Motor_T * p_dev)
+{
+#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+    Encoder_OnPhaseA_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+#endif
+#if defined(MOTOR_HALL_MODE_ISR)
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+#endif
+}
+
+static inline void Motor_HallEncoderB_ISR(const Motor_T * p_dev)
+{
+#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+    Encoder_OnPhaseB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+#endif
+#if defined(MOTOR_HALL_MODE_ISR)
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+#endif
+}
+
+static inline void Motor_HallEncoderAB_ISR(const Motor_T * p_dev)
+{
+#ifdef MOTOR_SENSOR_ENCODER_ENABLE
+    Encoder_OnPhaseAB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+#endif
+#if defined(MOTOR_HALL_MODE_ISR)
+    if (p_dev->P_MOTOR->Config.SensorMode == ROTOR_SENSOR_ID_HALL) { Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL); }
+#endif
+}
+
+static inline void Motor_HallEncoderCZ_ISR(const Motor_T * p_dev)
+{
+    switch (p_dev->P_MOTOR->Config.SensorMode)
+    {
+        #ifdef MOTOR_SENSOR_ENCODER_ENABLE
+        case ROTOR_SENSOR_ID_ENCODER:
+            Encoder_OnIndex_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+            break;
+        #endif
+
+        #ifdef MOTOR_HALL_MODE_ISR
+        case ROTOR_SENSOR_ID_HALL:
+            Encoder_OnPhaseC_Hall_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
+            Hall_CaptureAngle_ISR(&p_dev->SENSOR_TABLE.HALL.HALL);
+            break;
+        #endif
+        default: break;
+    }
+}
+
+/******************************************************************************/
+/*
+    Handled by RotorSensor_Table
+    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
+*/
+/******************************************************************************/
+typedef enum Motor_VarType_Sensor
+{
+    MOTOR_VAR_TYPE_HALL_STATE,
+    MOTOR_VAR_TYPE_HALL_CONFIG,
+    MOTOR_VAR_TYPE_HALL_CMD,
+    MOTOR_VAR_TYPE_ENCODER_STATE,
+    MOTOR_VAR_TYPE_ENCODER_CONFIG,
+    MOTOR_VAR_TYPE_ENCODER_CMD,
+}
+Motor_VarType_Sensor_T;
+
+
+extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
+extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
+extern bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
+
 
 /******************************************************************************/
 /*!
@@ -68,5 +146,3 @@
 //     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, id)) return;
 //     if (p_motor->P_MOTOR->Config.SensorMode != id) return;
 // }
-
-

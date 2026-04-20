@@ -29,11 +29,7 @@
     @brief  Var - Field-like Property Interface Getter/Setter via Id Key
 */
 /******************************************************************************/
-#include "Motor_StateMachine.h"
-
-// #include "Sensor/RotorSensor_Table.h"
-// #include "Type/Var/VarAccess.h"
-
+#include "Motor.h"
 #include <assert.h>
 
 /******************************************************************************/
@@ -385,23 +381,6 @@ typedef enum Motor_VarType_SubModule
 }
 Motor_VarType_SubModule_T;
 
-
-/*
-    Handled by RotorSensor_Table
-    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
-*/
-typedef enum Motor_VarType_Sensor
-{
-    MOTOR_VAR_TYPE_HALL_STATE,
-    MOTOR_VAR_TYPE_HALL_CONFIG,
-    MOTOR_VAR_TYPE_HALL_CMD,
-    MOTOR_VAR_TYPE_ENCODER_STATE,
-    MOTOR_VAR_TYPE_ENCODER_CONFIG,
-    MOTOR_VAR_TYPE_ENCODER_CMD,
-}
-Motor_VarType_Sensor_T;
-
-
 extern int Motor_VarType_Base_Get(const Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
 extern void Motor_VarType_Base_Set(const Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
 extern bool Motor_VarType_Base_CheckSet(const Motor_T * p_motor, Motor_VarType_Base_T typeId);
@@ -410,6 +389,3 @@ extern int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_Su
 extern void Motor_VarType_SubModule_Set(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
 extern bool Motor_VarType_SubModule_CheckSet(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId);
 
-extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
-extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId);

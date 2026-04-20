@@ -36,8 +36,6 @@
             Does NOT own:
               - ADC channel binding / ADCU<->Volts unit conversion — held by
                 the layer that binds the physical channel (MotorController).
-
-            Subject_Collaborator_Verb pattern (e.g. VBusMonitor_VBus_Poll).
 */
 /******************************************************************************/
 #include "VBus_Config.h"
@@ -53,13 +51,9 @@
 
 /*
     Unified VBus concept for cohesion across MotorController and Motor layers.
-    - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Fract32 for voltage normalization and derating calculations.
-
-     - Controller layer calls VBus_CaptureFract16 every monitor tick to update live state from ADCU.
-     - Controller layer calls VBus_PollMonitor:
-         to get the latest RangeMonitor_Status_T for fault dispatch, beep, LimitArray, and multi-motor disable
-
     This keeps all bus voltage concepts together in one place, instead of scattering them across multiple layers.
+    - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Fract32 for voltage normalization and derating calculations.
+    - Controller layer calls VBus_CaptureFract16 / VBus_PollMonitor:
 */
 
 /******************************************************************************/
@@ -72,8 +66,9 @@ typedef struct VBus
     uint16_t VBus_Fract16;          /* Filtered live ratio — canonical FOC input */
     uint32_t PerV_Fract32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
 
-    VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
+    // uint32_t PerVNominal_Fract32;
     VMonitor_State_T MonitorState;
+    VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
 }
 VBus_T;
 
@@ -103,6 +98,7 @@ static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 static inline void VBus_InitLive(VBus_T * p_vbus)
 {
     _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V));
+    // p_vbus->PerVNominal_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
 }
 
 static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
@@ -114,6 +110,7 @@ static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config
 }
 
 
+// static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_CaptureFract16(p_vbus, Phase_Analog_VFract16Of(adcu)); }
 
 /******************************************************************************/
 /*!
@@ -206,6 +203,7 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
     uint16_t vNominal = VBus_VNominal_Fract16(&p_vbus->Config);
     if (vNominal == 0U) { return FRACT16_MAX; }   /* fail-open on blank NVM */
     return math_clamp(fract16_div(p_vbus->VBus_Fract16, vNominal), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
+    // return math_clamp(fract16_mul(p_vbus->VBus_Fract16, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
 }
 
 /*
@@ -226,3 +224,23 @@ static inline uint32_t VBus_GetChargeLevel_Fract16(const VBus_T * p_vbus)
     return fract16_normalize_sat(p_vbus->Config.MonitorConfig.FaultUnderLimit.Limit, p_vbus->Config.MonitorConfig.Warning.LimitHigh, p_vbus->VBus_Fract16);
 }
 
+
+
+
+typedef enum VBus_VarId
+{
+    VBUS_VAR_ID_VBUS_FRACT16,
+    VBUS_VAR_ID_PER_V_FRACT32,
+}
+VBus_VarId_T;
+
+typedef enum VBus_ConfigId
+{
+    VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V,
+    VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR,
+    VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR,
+    VBUS_CONFIG_ID_SPEED_DERATE_FLOOR,
+    // VBUS_CONFIG_ID_VLOW_DERATE_V,
+    // VBUS_CONFIG_ID_VHIGH_DERATE_V,
+}
+VBus_ConfigId_T;

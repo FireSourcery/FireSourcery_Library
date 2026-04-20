@@ -36,7 +36,7 @@
 #include "../../Motor_FOC.h"
 #include "../RotorSensor.h"
 
-
+#ifdef MOTOR_SENSOR_ENCODER_ENABLE
 static inline Encoder_T * GetEncoder(const Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.ENCODER.ENCODER; }
 static inline Encoder_State_T * GetEncoderState(const Motor_T * p_motor) { return GetEncoder(p_motor)->P_STATE; }
 
@@ -477,3 +477,5 @@ static inline bool ProcDirection(const Motor_T * p_motor)
 
     return isComplete;
 }
+
+#endif

@@ -52,8 +52,7 @@ void Phase_Init(const Phase_T * p_phase)
 */
 void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
 {
-    // assert(id != PHASE_ID_ABC);
-    const Phase_Bitmask_T state = Phase_Bitmask(id);
+    Phase_Bitmask_T state = Phase_Bitmask(id);
     Phase_WriteDuty(p_phase, duty * state.A, duty * state.B, duty * state.C);
 }
 
