@@ -30,45 +30,23 @@
 */
 /******************************************************************************/
 #include "Utility/Protocol/Protocol.h"
+#include "Motor/MotProtocol/MotPacket.h"
+#include "Motor/MotProtocol/MotProtocol.h"
+#include "Motor/MotorController/MotorController_Var.h"
 
 #define MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH (10U)
 
 extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];
 
 
-/*
-    Status Flags for User Interface
-    Combined boolean outputs for protocol convenience
-*/
-// typedef union MotorController_StatusFlags
-// {
-//     struct
-//     {
-//         uint16_t HeatWarning : 1U; // ILimit by Heat
-//         uint16_t VSourceLow : 1U; // ILimit by VSourceLow
-//         // uint16_t SpeedLimit         : 1U;
-//         // uint16_t ILimit             : 1U;
-//         // uint16_t BuzzerEnable       : 1U;
-//         // derive from thermistor functions
-//         // uint16_t ILimitHeatMosfets  : 1U;
-//         // uint16_t ILimitHeatPcb      : 1U;
-//         // uint16_t ILimitHeatMotors   : 1U;
-//     };
-//     uint16_t Value;
-// }
-// MotorController_StatusFlags_T;
+static packet_size_t MotorController_BuildVarRead(const MotorController_T * p_dev, MotPacket_VarReadResp_T * p_vars, const MotPacket_VarReadReq_T * p_ids, uint8_t count)
+{
+    for (uint8_t iVar = 0U; iVar < count; iVar++) { p_vars->Value16[iVar] = (uint16_t)MotorController_Var_Get(p_dev, (MotVarId_T)p_ids->MotVarIds[iVar]); }
+}
 
-// static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
-// {
-//     return (MotorController_StatusFlags_T)
-//     {
-//         // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
-//         //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
-//         // .HeatWarning    = p_dev->StateFlags.HeatWarning,
-//         // .VSourceLow     = p_dev->StateFlags.VSourceLow,
-//         // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
-//     };
-// }
+
+
+
 
 // static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
 // {

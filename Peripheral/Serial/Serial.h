@@ -71,7 +71,6 @@ Serial_T;
     .RX_RING = RING_T_ALLOC(sizeof(uint8_t), RxBufferSize),     \
 }
 
-//todo with RingT/Context
 
 /******************************************************************************/
 /*!

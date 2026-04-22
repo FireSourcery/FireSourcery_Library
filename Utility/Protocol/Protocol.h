@@ -192,14 +192,14 @@ Protocol_Req_T;
 // #define PROTOCOL_REQ_EXT(Id, ProcReqResp, ProcExt, ReqSyncExt) \
 //     { .ID = (packet_id_t)Id, .PROC = (Protocol_ProcReqResp_T)ProcReqResp, .PROC_EXT = (Protocol_ProcReqExt_T)ProcExt, .SYNC = ReqSyncExt, }
 
-/* Faster reverse map */
-typedef Protocol_Req_T * (*Protocol_ReqMapper_T)(void * p_app, packet_id_t id);
+/* Fast reverse map */
+typedef Protocol_Req_T * (*Protocol_ReqMapper_T)(packet_id_t id);
 
 /*! @return pointer to Req */
 static inline const Protocol_Req_T * _Protocol_SearchReqTable(Protocol_Req_T * p_reqTable, size_t tableLength, packet_id_t id)
 {
     const Protocol_Req_T * p_req = NULL;
-    for (uint8_t iChar = 0U; iChar < tableLength; iChar++) { if (p_reqTable[iChar].ID == id) { p_req = &p_reqTable[iChar]; break; } }
+    for (uint8_t iReq = 0U; iReq < tableLength; iReq++) { if (p_reqTable[iReq].ID == id) { p_req = &p_reqTable[iReq]; break; } }
     return p_req;
 }
 
@@ -428,6 +428,7 @@ Protocol_SyncStatus_T;
 //     }
 //     return PROTOCOL_REQ_CODE_ERROR_ID;
 // }
+
 // static void Socket_Proc(const Socket_T * p_socket, Socket_State_T * p_state)
 // {
 //     Protocol_RxCode_T rxCode = ProcRxParse(p_socket, p_state);

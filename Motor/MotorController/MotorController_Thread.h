@@ -47,6 +47,10 @@
 #define MOTOR_CONTROLLER_MAIN_DIVIDER_10 (15U) /* Approx. 10 ms */
 #endif
 
+#ifndef MOTOR_CONTROLLER_MAIN_DIVIDER_25
+#define MOTOR_CONTROLLER_MAIN_DIVIDER_25 (31U) /* Approx. 25 ms */
+#endif
+
 #ifndef MOTOR_CONTROLLER_MAIN_DIVIDER_1000
 #define MOTOR_CONTROLLER_MAIN_DIVIDER_1000 (1023U) /* Approx. 1 S */
 #endif
@@ -312,14 +316,18 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             Blinky_Proc(&p_dev->METER);
         }
 
+    #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
+        if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_25) == true)
+        {
+            CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_20);
+        }
+    #endif
+
         /*
             Low Freq, Low Priority, ~1s ~1024ms
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_1000) == true)
         {
-            /* In case of Serial Rx Overflow Timeout */
-            for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_dev->P_SERIALS[iSerial]); }
-
             _MotorController_ProcOptDin(p_dev);
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
@@ -332,7 +340,12 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
 
-            if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T){ .Value = p_mc->FaultFlags.Value }); }
+            if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
+        #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
+            CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_1000);
+        #endif
+            /* In case of Serial Rx Overflow Timeout */
+            for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_dev->P_SERIALS[iSerial]); }
         }
     }
 }

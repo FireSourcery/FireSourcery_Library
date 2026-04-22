@@ -85,6 +85,39 @@ static inline void MotorController_ForceDisableControl(MotorController_T * p_dev
     p_dev->P_MC->CmdInput.Direction = MOTOR_DIRECTION_NULL;
 }
 
+/*
+    Status Flags for User Interface
+    Combined boolean outputs for protocol convenience
+*/
+typedef union MotorController_StatusFlags
+{
+    struct
+    {
+        // uint16_t HeatWarning : 1U; // ILimit by Heat
+        // uint16_t VSourceLow : 1U; // ILimit by VSourceLow
+        // uint16_t SpeedLimit         : 1U;
+        // uint16_t ILimit             : 1U;
+        // uint16_t BuzzerEnable       : 1U;
+        // derive from thermistor functions
+        // uint16_t ILimitHeatMosfets  : 1U;
+        // uint16_t ILimitHeatPcb      : 1U;
+        // uint16_t ILimitHeatMotors   : 1U;
+    };
+    uint16_t Value;
+}
+MotorController_StatusFlags_T;
+
+static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(MotorController_T * p_dev)
+{
+    return (MotorController_StatusFlags_T)
+    {
+        // .HeatWarning    = Monitor_GetStatus(p_dev->HEAT_PCB.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT ||
+        //                   Monitor_GetStatus(p_dev->HEAT_MOSFETS.P_STATE) == HEAT_MONITOR_STATUS_WARNING_OVERHEAT,
+        // .HeatWarning    = p_dev->StateFlags.HeatWarning,
+        // .VSourceLow     = p_dev->StateFlags.VSourceLow,
+        // .BuzzerEnable   = p_dev->StateFlags.BuzzerEnable,
+    };
+}
 
 /******************************************************************************/
 /*
@@ -133,11 +166,11 @@ static inline void MotorController_SetRxWatchdog(MotorController_T * p_dev, bool
 /*
     Boot Buffer
 */
-static inline BootRef_T MotorController_GetBootReg(const MotorController_State_T * p_mcState)          { return p_mcState->BootRef; }
-static inline void MotorController_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg)  { p_mcState->BootRef.Word = bootReg.Word; }
-static inline void MotorController_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable)     { p_mcState->BootRef.FastBoot = isEnable; }
-static inline void MotorController_SetBeep(MotorController_State_T * p_mcState, bool isEnable)         { p_mcState->BootRef.Beep = isEnable; }
-static inline void MotorController_SetBlink(MotorController_State_T * p_mcState, bool isEnable)        { p_mcState->BootRef.Blink = isEnable; }
+static inline BootRef_T MotorController_GetBootReg(const MotorController_State_T * p_mcState) { return p_mcState->BootRef; }
+static inline void MotorController_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg) { p_mcState->BootRef.Word = bootReg.Word; }
+static inline void MotorController_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.FastBoot = isEnable; }
+static inline void MotorController_SetBeep(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.Beep = isEnable; }
+static inline void MotorController_SetBlink(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.Blink = isEnable; }
 
 
 /******************************************************************************/

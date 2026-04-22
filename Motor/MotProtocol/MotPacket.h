@@ -120,9 +120,9 @@ typedef enum MotPacket_Id ENUM8_T
 MotPacket_Id_T;
 
 /*
-    4-Byte Control Char, Short
+    4-Byte Control
 */
-// typedef struct MOT_PACKET_PACKED MotPacket_ControlChar
+// typedef struct MOT_PACKET_PACKED MotPacket_Control
 typedef struct MOT_PACKET_PACKED MotPacket_Sync
 {
     uint8_t Start;      /* MOT_PACKET_START_BYTE */
@@ -192,7 +192,7 @@ typedef struct MOT_PACKET_PACKED MotPacket_VersionReq {} MotPacket_VersionReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_VersionResp { uint32_t Protocol; uint32_t Library; uint32_t Firmware; } MotPacket_VersionResp_T;
 
 /* fixed 8 uint32_t  */
-typedef struct MOT_PACKET_PACKED MotPacket_VersionFlexResp { uint32_t Versions[MOT_PACKET_PAYLOAD_LENGTH_MAX / sizeof(uint32_t)]; }   MotPacket_VersionFlexResp_T;
+typedef struct MOT_PACKET_PACKED MotPacket_VersionFlexResp { uint32_t Versions[MOT_PACKET_PAYLOAD_LENGTH_MAX / sizeof(uint32_t)]; } MotPacket_VersionFlexResp_T;
 // typedef struct MotPacket_SoftwareVersionResp { uint32_t Protocol; uint32_t Library; uint32_t Firmware; }                    MotPacket_VersionResp_T;
 
 /******************************************************************************/
@@ -281,6 +281,22 @@ typedef struct MOT_PACKET_PACKED MotPacket_DataModeResp { uint16_t Status; }    
 /*! Data Mode Raw Data Packet */
 /******************************************************************************/
 typedef struct MOT_PACKET_PACKED MotPacket_DataMode { uint8_t ByteData[MOT_PACKET_PAYLOAD_LENGTH_MAX]; } MotPacket_DataMode_T;
+
+
+/******************************************************************************/
+
+/******************************************************************************/
+typedef union MotPacket_MotorStateFlags
+{
+    struct
+    {
+        uint8_t Direction    : 2U;
+        uint8_t FeedbackMode : 4U;
+        uint8_t VOutState    : 2U;
+    };
+    uint8_t Value;
+}
+MotPacket_MotorStateFlags_T;
 
 
 /******************************************************************************/

@@ -28,6 +28,7 @@
 
 */
 /******************************************************************************/
+#include "MotorController_MotProtocol.h"
 #include "Motor/MotProtocol/MotPacket.h"
 #include "Motor/MotProtocol/MotProtocol.h"
 #include "Motor/MotorController/MotorController_Var.h"
@@ -136,14 +137,16 @@ static packet_size_t Call_Blocking(const MotorController_T * p_dev, MotPacket_T 
 /* Resp Truncates 32-Bit Vars */
 static packet_size_t VarRead(const MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    const MotPacket_VarReadReq_T * p_req = (const MotPacket_VarReadReq_T *)p_rxPacket->Payload;
-    MotPacket_VarReadResp_T * p_resp = (MotPacket_VarReadResp_T *)p_txPacket->Payload;
+    // const MotPacket_VarReadReq_T * p_req = (const MotPacket_VarReadReq_T *)p_rxPacket->Payload;
+    // MotPacket_VarReadResp_T * p_resp = (MotPacket_VarReadResp_T *)p_txPacket->Payload;
     uint8_t varCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
 
-    for (uint8_t index = 0U; index < varCount; index++)
-    {
-        p_resp->Value16[index] = (uint16_t)MotorController_Var_Get(p_dev, (MotVarId_T)p_req->MotVarIds[index]);
-    }
+    // for (uint8_t index = 0U; index < varCount; index++)
+    // {
+    //     p_resp->Value16[index] = (uint16_t)MotorController_Var_Get(p_dev, (MotVarId_T)p_req->MotVarIds[index]);
+    // }
+
+    MotorController_BuildVarRead(p_dev, (MotPacket_VarReadResp_T *)p_txPacket->Payload, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, varCount);
     return MotPacket_VarReadResp_BuildHeader(p_txPacket, varCount);
 }
 

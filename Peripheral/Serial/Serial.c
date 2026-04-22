@@ -191,15 +191,6 @@ bool Serial_RecvByte(Serial_T * p_serial, uint8_t * p_rxChar)
     return isSuccess;
 }
 
-/*
-    Caller check Serial_GetRxFullCount to avoid meta data collision
-*/
-uint8_t Serial_GetByte(Serial_T * p_serial)
-{
-    uint8_t rxChar;
-    if(Serial_RecvByte(p_serial, &rxChar) == false) { rxChar = 0xFFU; }
-    return rxChar;
-}
 
 
 /*

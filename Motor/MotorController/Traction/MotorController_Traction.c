@@ -232,7 +232,7 @@ static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_val
     switch ((Traction_Cmd_T)mode)
     {
         case TRACTION_CMD_RELEASE:   Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z);      break;
-        case TRACTION_CMD_BRAKE:     Traction_StartBrakeMode(TractionApp(p_mc));                     break;
+        case TRACTION_CMD_BRAKE:     Traction_StartBrakeMode(TractionApp(p_mc));                 break;
         case TRACTION_CMD_THROTTLE:  break;
         default: break;
     }
@@ -357,10 +357,10 @@ void MotorController_Traction_SetRelease(MotorController_T * p_mc)
     MotorController_Traction_PollStartCmd(p_mc);
 }
 
-void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttleCmd, uint16_t brakeCmd)
+void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttle, uint16_t brake)
 {
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue = throttleCmd;
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue = brakeCmd;
+    TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue = throttle;
+    TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue = brake;
     MotorController_Traction_PollStartCmd(p_mc);
     switch (TractionApp(p_mc)->P_TRACTION_STATE->Input.DriveCmd)
     {

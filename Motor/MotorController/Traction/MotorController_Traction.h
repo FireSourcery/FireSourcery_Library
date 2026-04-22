@@ -88,13 +88,11 @@ extern const MotorController_App_T MC_APP_TRACTION;
 
 */
 /******************************************************************************/
-
-
-/*  */
 extern void MotorController_Traction_PollStartCmd(MotorController_T * p_mc);
 extern void MotorController_Traction_SetThrottle(MotorController_T * p_mc, uint16_t userCmd);
 extern void MotorController_Traction_SetBrake(MotorController_T * p_mc, uint16_t userCmd);
 extern void MotorController_Traction_SetRelease(MotorController_T * p_mc);
+extern void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttle, uint16_t brake);
 
 extern void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction);
 extern void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction);
@@ -102,10 +100,13 @@ extern void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, 
 extern void MotorController_Traction_ProcAnalogUser(MotorController_T * p_mc);
 extern sign_t MotorController_Traction_GetDirection(MotorController_T * p_mc);
 
+/*
+
+*/
 extern void MotorController_Traction_VarId_Set(MotorController_T * p_mc, Traction_VarId_T id, int value);
 extern int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_T id);
 
-int MotorController_Traction_ConfigId_Get(const MotorController_T * p_mc, Traction_ConfigId_T id);
+int MotorController_Traction_ConfigId_Get(MotorController_T * p_mc, Traction_ConfigId_T id);
 void MotorController_Traction_ConfigId_Set(MotorController_T * p_mc, Traction_ConfigId_T id, int value);
 
 

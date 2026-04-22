@@ -52,9 +52,10 @@
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 #include "Peripheral/Serial/Serial.h"
-// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-// #include "Peripheral/CanBus/CanBus.h"
-// #endif
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+#include "Peripheral/CanBus/CanBus.h"
+#include "Peripheral/CanBus/CanBus_Service.h"
+#endif
 
 #include "Utility/Timer/Timer.h"
 #include "Utility/StateMachine/StateMachine.h"
@@ -182,10 +183,10 @@ typedef struct MotorController_Config
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
 
-#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-    uint8_t CanServicesId;
-    bool CanIsEnable;
-#endif
+// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+//     uint8_t CanServicesId;
+//     bool IsCanEnable;
+// #endif
 }
 MotorController_Config_T;
 
@@ -243,6 +244,9 @@ typedef const struct MotorController
     uint8_t SERIAL_COUNT;
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * P_CAN_BUS;
+    // CanBus_Service_T CAN_BUS_SERVICE;
+    CanBus_Broadcast_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
+    CanBus_Broadcast_T CAN_BUS_BROADCAST_1000;
 #endif
 
     /*

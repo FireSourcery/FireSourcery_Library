@@ -47,7 +47,7 @@ typedef const struct TimerT
 TimerT_T;
 
 #define TIMER_STATE_ALLOC() (&(Timer_State_T){0})
-#define TIMER_T_INIT(p_BaseTimer, BaseFreq, p_State) { .BASE = TIMER_BASE_INIT(p_BaseTimer, BaseFreq), .P_STATE = p_State, }
+#define TIMER_T_INIT(p_BaseTimer, BaseFreq, p_State) (TimerT_T){ .BASE = TIMER_BASE_INIT(p_BaseTimer, BaseFreq), .P_STATE = p_State, }
 #define TIMER_T_ALLOC(p_BaseTimer, BaseFreq) TIMER_T_INIT(p_BaseTimer, BaseFreq, TIMER_STATE_ALLOC())
 
 /******************************************************************************/

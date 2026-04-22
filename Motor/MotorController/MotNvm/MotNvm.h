@@ -93,7 +93,6 @@ typedef const struct
     uintptr_t MANUFACTURE_ADDRESS;
     uint8_t MANUFACTURE_SIZE;
 
-    // Phase_Calibration_T * P_PHASE_ANALOG_REF; /* Motor Analog Reference */
     const BootRef_T * P_BOOT_REF;
 }
 MotNvm_T;
@@ -116,7 +115,7 @@ struct HAL_Nvm_Manufacturer;
 typedef const struct HAL_Nvm_Manufacturer HAL_Nvm_Manufacturer_T;
 
 extern void HAL_Nvm_MapPhaseCalibration(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
-extern void HAL_Nvm_MapPhaseAnalogSensorRef(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogCalibration_T * p_buffer);
+extern void HAL_Nvm_MapPhaseAnalogCalibration(const HAL_Nvm_Manufacturer_T * p_manufacture, Phase_AnalogCalibration_T * p_buffer);
 
 NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, HAL_Nvm_Manufacturer_T * p_source);
 

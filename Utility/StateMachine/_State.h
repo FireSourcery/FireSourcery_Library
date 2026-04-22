@@ -31,7 +31,6 @@
 /******************************************************************************/
 #include "State.h"
 
-
 /******************************************************************************/
 /*!
     [State_T] Common
@@ -157,7 +156,7 @@ static inline void State_OnTransition(State_T * p_state, State_T * p_new, void *
 
 
 /*
-    Minimal handler for orthogonal states
+    Minimal handler for orthogonal states alternatively ** pp_
 */
 typedef struct State_Active { State_T * p_State; } State_Active_T;
 
