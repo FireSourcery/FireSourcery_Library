@@ -44,8 +44,6 @@
     Motor State Machine
 */
 /******************************************************************************/
-#define MSM_TRANSITION_TABLE_LENGTH (7U)
-
 #ifndef MOTOR_STATE_MACHINE_INIT_WAIT
 #define MOTOR_STATE_MACHINE_INIT_WAIT (1500U) /* For 1S polling to run twice */
 #endif
@@ -94,6 +92,7 @@ typedef enum Motor_StateInput
     // MOTOR_STATE_INPUT_STATE_CMD, /* Transition Cmd, common entry for Stop, Start, Timer, etc */
     // MOTOR_STATE_INPUT_USER_BUFFER,
     // MOTOR_STATE_INPUT_CAPTURE_ADC,
+    MOTOR_TRANSITION_TABLE_LENGTH,
 }
 Motor_StateInput_T;
 

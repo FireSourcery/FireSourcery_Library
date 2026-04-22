@@ -113,38 +113,48 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
     Synchronized start with 1 callback, seperate state buffer
 */
 /******************************************************************************/
+// typedef struct Analog_AdcBatchState
+// {
+//     volatile uint32_t ChannelMarkers; /* Bitmask of active channels. 1 << ChannelIndex */
+//     // volatile uint32_t CompleteMarkers; /* marked on complete. channel markers 0 may indicate not started */
+// }
+// Analog_BatchState_T;
 
 // typedef const struct Analog_Batch
 // {
-//     Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
-//     uint8_t COUNT;                                // Number of conversions in the batch
-// outer batch state use P_ConversionChannel.flag or out p_BatchState
+//     // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
+//     Analog_BatchState_T * P_BATCH_STATE;    // Context for batch completion
+//     uint8_t COUNT;                          // Number of conversions in the batch
+//     struct
+//     {
+//         Analog_ADC_T * P_ADC;
+//         uint32_t ADC_MASK;
+//         uint32_t BATCH_MASK;
+//         Analog_BatchState_T STATE;
+//     }
+//     ADC_BATCHS[]; // Per ADC batch context, including callback and channel mask
+//     // outer batch state use P_ConversionChannel.flag or out p_BatchState
 // }
 // Analog_Batch_T;
 
-// #define ANALOG_BATCH_INIT(p_First, Count) { .P_CONVERSIONS = (p_First), .COUNT = (Count), }
-
-// static inline void _Analog_BatchConversion_Mark(const Analog_Conversion_T * p_conv)
-// {
-//     p_conv->P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked = 1U;
-//     Analog_ADC_MarkConversion(p_conv->P_ADC, p_conv->CHANNEL);
-// }
+// // #define ANALOG_BATCH_INIT(p_First, Count) { .P_CONVERSIONS = (p_First), .COUNT = (Count), }
 
 // static inline void Analog_Batch_Mark(const Analog_Batch_T * p_batch)
 // {
-//     for (uint8_t i = 0; i < p_batch->COUNT; i++)
+//     for (uint8_t i = 0; i < ADC_COUNT; i++)
 //     {
-//         _Analog_BatchConversion_Mark(&p_batch->P_CONVERSIONS[i]);
+//         Analog_ADC_MarkAll(p_batch->ADC_BATCHS[i].P_ADC, p_batch->ADC_BATCHS[i].ADC_MASK);
 //     }
 // }
 
 // static inline bool Analog_Batch_IsComplete(const Analog_Batch_T * p_batch)
 // {
-//     for (uint8_t i = 0; i < p_batch->COUNT; i++)
-//     {
-//         if (p_batch->P_CONVERSIONS[i].P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked != 0U) return false;
-//     }
-//     return true;
+//     p_batch->P_BATCH_STATE->ChannelMarkers = 0U;
+//     // for (uint8_t i = 0; i < p_batch->COUNT; i++)
+//     // {
+//     //     if (p_batch->P_CONVERSIONS[i].P_CONVERSION_CHANNEL->P_CONVERSION_STATE->IsMarked != 0U) return false;
+//     // }
+//     // return true;
 // }
 
 // typedef struct Analog_Options

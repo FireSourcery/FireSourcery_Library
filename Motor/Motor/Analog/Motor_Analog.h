@@ -34,7 +34,7 @@
 #include "../Motor.h"
 #include "Peripheral/Analog/Analog.h"
 
-
+/* VBus_Analog_Capture in VBus.h */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVc(&p_motor->PhaseInput, adcu); }

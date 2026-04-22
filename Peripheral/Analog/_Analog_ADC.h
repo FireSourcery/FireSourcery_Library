@@ -47,7 +47,6 @@ static inline void _ADC_CaptureResult(Analog_ConversionChannel_T * p_conversion,
     else { p_conversion->P_CONVERSION_STATE->State = result; }
 }
 
-
 static inline void _ADC_CaptureTo(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * const * p_conversions, uint8_t count)
 {
     if (count == HAL_ADC_ReadFifoCount(p_hal))

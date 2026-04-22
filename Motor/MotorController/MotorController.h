@@ -183,10 +183,10 @@ typedef struct MotorController_Config
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
 
-// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 //     uint8_t CanServicesId;
-//     bool IsCanEnable;
-// #endif
+    bool IsCanEnable;
+#endif
 }
 MotorController_Config_T;
 
@@ -202,6 +202,8 @@ typedef struct MotorController_State
     MotorController_InitFlags_T InitFlags;
     uint32_t StateCounter; /* Calibration */
     uint32_t ControlCounter; /* PWM */
+
+    // MotLimits_T Limits; /* mot to contigous alloc */
 
     // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
@@ -223,6 +225,10 @@ typedef struct MotorController_State
 #if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
     Shell_T Shell;
     uint16_t ShellSubState;
+#endif
+
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+    // CanBus_Service_T * p_CanBus_Service; /* optional runtime disable */
 #endif
 }
 MotorController_State_T;

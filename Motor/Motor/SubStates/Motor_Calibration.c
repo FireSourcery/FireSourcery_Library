@@ -98,7 +98,7 @@ const State_T CALIBRATION_STATE_TUNING =
     .LOOP       = (State_Action_T)Tuning_Proc,
 };
 
-static const State_Input_T TUNING_TRANSITION_TABLE[MSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T TUNING_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Tuning_InputFeedbackMode,
     [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,

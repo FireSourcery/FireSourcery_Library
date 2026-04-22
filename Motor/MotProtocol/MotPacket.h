@@ -300,9 +300,6 @@ MotPacket_MotorStateFlags_T;
 
 
 /******************************************************************************/
-/*! Ctrlr side */
-/******************************************************************************/
-/******************************************************************************/
 /*!
     Extern
 */
@@ -332,8 +329,6 @@ extern uint8_t MotPacket_DataModeWriteResp_Build(MotPacket_T * p_packet, uint16_
 
 extern uint8_t MotPacket_ByteData_Build(MotPacket_T * p_packet, const uint8_t * p_data, uint8_t size);
 extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_T * p_packet);
-
-
 
 
 
@@ -376,36 +371,8 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_T * p_packet);
 // typedef struct MotPacket_WriteVarReq { uint16_t MotVarId; uint16_t Flags; uint32_t Value32; }                   MotPacket_WriteVarReq_T;
 // typedef struct MotPacket_WriteVarResp { uint16_t MotVarId; uint16_t Status; }                                   MotPacket_WriteVarResp_T;
 
-// extern uint16_t MotPacket_FixedVarReadReq_ParseVarId(const MotPacket_FixedVarReadReq_T * p_reqPacket);
-// extern uint8_t MotPacket_FixedVarReadResp_Build(MotPacket_FixedVarReadResp_T * p_respPacket, uint32_t value);
-// extern uint16_t MotPacket_FixedWriteVarReq_ParseVarId(const MotPacket_WriteVarReq_T * p_reqPacket);
-// extern uint32_t MotPacket_FixedWriteVarReq_ParseVarValue(const MotPacket_WriteVarReq_T * p_reqPacket);
-// extern uint8_t MotPacket_FixedWriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint16_t status);
 
 
-/******************************************************************************/
-/*! Cmdr side */
-/******************************************************************************/
-// extern uint8_t MotPacket_GetRespLength(MotPacket_Id_T headerId);
-// extern uint8_t MotPacket_PingReq_GetRespLength(void);
-// extern uint8_t MotPacket_PingReq_Build(MotPacket_PingReq_T * p_reqPacket);
-// extern MotPacket_Id_T MotPacket_PingResp_Parse(const MotPacket_PingResp_T * p_respPacket);
-
-// // extern uint8_t MotPacket_StopReq_GetRespLength(void);
-// extern uint8_t MotPacket_StopReq_Build(MotPacket_StopReq_T * p_reqPacket);
-// extern MotPacket_HeaderStatus_T MotPacket_StopResp_Parse(const MotPacket_StopResp_T * p_respPacket);
-
-// // extern uint8_t MotPacket_ReadVarReq_GetRespLength(void);
-// extern uint8_t MotPacket_ReadVarReq_Build(MotPacket_ReadVarReq_T * p_reqPacket, uint16_t motVarId);
-// extern uint32_t MotPacket_ReadVarResp_Parse(const MotPacket_ReadVarResp_T * p_respPacket, uint32_t * p_value);
-
-// // extern uint8_t MotPacket_WriteVarReq_GetRespLength(void);
-// extern uint8_t MotPacket_WriteVarReq_Build(MotPacket_WriteVarReq_T * p_reqPacket, uint16_t motVarId, uint32_t value);
-// extern MotPacket_HeaderStatus_T MotPacket_WriteVarResp_Parse(const MotPacket_WriteVarResp_T * p_respPacket);
-
-// // extern uint8_t MotPacket_CallReq_GetRespLength(void);
-// extern uint8_t MotPacket_CallResp_Build(MotPacket_CallResp_T * p_respPacket, MotPacket_HeaderStatus_T status);
-// extern MotPacket_HeaderStatus_T MotPacket_CallReq_Parse(const MotPacket_CallReq_T * p_respPacket);
 
 
 #endif

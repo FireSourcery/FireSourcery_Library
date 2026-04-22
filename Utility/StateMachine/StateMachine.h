@@ -162,13 +162,6 @@ static void StateMachine_InputSyncTransition(StateMachine_T * p_this, state_inpu
     _StateMachine_ApplyInputSyncTransition(p_this->P_ACTIVE, p_this->P_CONTEXT, inputId, inputValue);
 }
 
-/* Selection interface */
-static inline void StateMachine_ApplyInput(StateMachine_T * p_this, state_input_t inputId, state_value_t inputValue)
-{
-// #if defined(STATE_MACHINE_INPUT_ASYNC_TRANSITION)
-    StateMachine_InputAsyncTransition(p_this, inputId, inputValue);
-}
-
 /* HSM Common */
 /* Set SyncInput Proc InputFunction and Transition on next Sync ProcState */
 /*!
@@ -182,6 +175,13 @@ static void StateMachine_SetInput(StateMachine_T * p_this, state_input_t inputId
         _StateMachine_SetSyncInput(p_this->P_ACTIVE, inputId, inputValue);
         _StateMachine_ReleaseSyncInput(p_this->P_ACTIVE);
     }
+}
+
+/* Selection interface */
+static inline void StateMachine_ApplyInput(StateMachine_T * p_this, state_input_t inputId, state_value_t inputValue)
+{
+// #if defined(STATE_MACHINE_INPUT_ASYNC_TRANSITION)
+    StateMachine_InputAsyncTransition(p_this, inputId, inputValue);
 }
 
 /*
@@ -251,15 +251,15 @@ static void StateMachine_Tree_InputSyncTransition(StateMachine_T * p_this, state
     _StateMachine_Branch_ApplyAsyncInput(p_this->P_ACTIVE, p_this->P_CONTEXT, id, value);
 }
 
+static inline void StateMachine_Tree_SetInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
+{
+    StateMachine_SetInput(p_this, id, value); /* common */
+}
+
 /* Default select */
 static inline void StateMachine_Tree_Input(StateMachine_T * p_this, state_input_t id, state_value_t value)
 {
     StateMachine_Tree_InputAsyncTransition(p_this, id, value);
-}
-
-static inline void StateMachine_Tree_SetInput(StateMachine_T * p_this, state_input_t id, state_value_t value)
-{
-    StateMachine_SetInput(p_this, id, value); /* common */
 }
 
 /*

@@ -115,11 +115,25 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_f
 }
 
 
-// typedef enum Motor_Var_PhaseVBusConfig
-// {
-// .VSupplyNominal_V = (VNominal), \
-// .IDerateUnderVFloor_Fract16 = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
-// .IDerateOverVFloor_Fract16 = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
-// .SpeedDerateFloor_Fract16 = FRACT16(0.70F),  /* speed clamp never below 70% */             \
-// }
-// Motor_Var_PhaseVBus_T;
+typedef enum VBus_ConfigId
+{
+    VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V,
+    VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR,
+    VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR,
+    VBUS_CONFIG_ID_SPEED_DERATE_FLOOR,
+}
+VBus_ConfigId_T;
+
+static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
+{
+    int value = 0;
+    switch (id)
+    {
+        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        value = p_config->VSupplyNominal_V; break;
+        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    value = p_config->IDerateUnderVFloor_Fract16; break;
+        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     value = p_config->IDerateOverVFloor_Fract16; break;
+        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       value = p_config->SpeedDerateFloor_Fract16; break;
+        default: break;
+    }
+    return value;
+}

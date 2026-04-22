@@ -65,4 +65,15 @@ typedef enum MotSpeedLimitId
 MotSpeedLimitId_T;
 
 
+typedef struct
+{
+    LimitArray_Augments_T ILimitState;
+    limit_t ILimitValues[MOT_I_LIMIT_COUNT];
+    LimitArray_Augments_T IGenLimitState;
+    limit_t IGenLimitValues[MOT_I_GEN_LIMIT_COUNT];
+    LimitArray_Augments_T SpeedLimitState;
+    limit_t SpeedLimitValues[MOT_SPEED_LIMIT_COUNT];
+}
+MotLimits_T;
+
 #endif

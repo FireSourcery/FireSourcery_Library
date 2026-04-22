@@ -103,6 +103,7 @@ static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, 
 static inline sign_t Traction_Input_GetDirectionCmd(const Traction_Input_T * p_input) { return p_input->Direction; }
 
 
+
 /*
     Config States
 */

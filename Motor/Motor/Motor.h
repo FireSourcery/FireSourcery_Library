@@ -225,7 +225,7 @@ typedef struct Motor_Config
     PID_Config_T PidI;      /* Idq Control */
 
     /*
-
+        OpenLoop
     */
     /* All OpenLoop Modes - UserCmd, Align */
     uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. */
@@ -377,6 +377,7 @@ typedef struct Motor_State
     Accumulator_T FilterA;           /* Calibration use */
     Accumulator_T FilterB;
     Accumulator_T FilterC;
+
     // /*
     //     Electrical parameter identification scratch. Used by CALIBRATION_STATE_ELECTRICAL.
     // */

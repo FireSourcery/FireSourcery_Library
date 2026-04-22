@@ -44,6 +44,7 @@ static inline void MotorController_CallParkPin(const MotorController_T * p_dev, 
 
 static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
 // static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->PARK_PIN; }
+
 static inline void MotorController_ProcParkPin(const MotorController_T * p_dev )
 {
     UserDIn_PollEdge(MotorController_ParkPin(p_dev));

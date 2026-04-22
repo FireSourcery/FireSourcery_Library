@@ -44,6 +44,7 @@ void MotorController_Init(const MotorController_T * p_dev)
     for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_Init(&p_dev->P_SERIALS[iSerial]); }
 
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+    // if (p_dev->P_CAN_BUS == NULL && p_mc->Config.IsCanEnable == true) { CanBus_Init(p_dev->P_CAN_BUS); }
     if (p_dev->P_CAN_BUS == NULL) { CanBus_Init(p_dev->P_CAN_BUS); }
 #endif
 

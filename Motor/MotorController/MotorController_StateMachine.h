@@ -42,8 +42,6 @@
     State Machine Definitions
 */
 /******************************************************************************/
-#define MCSM_TRANSITION_TABLE_LENGTH (5U)
-
 /*
     state_input_t
     Input Id
@@ -56,7 +54,6 @@ typedef enum MotorController_StateInput
     MC_STATE_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MC_STATE_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
 
-
     /* App extends the input alphabet. keep as one list.  */
     // MC_STATE_INPUT_APP_USER_1,   /* Reserve table space, or use mapper, or buffer */
     // App wraps motor generic
@@ -64,6 +61,9 @@ typedef enum MotorController_StateInput
     // MC_STATE_INPUT_PHASE,
     // MC_STATE_INPUT_FEEDBACK,
     // MC_STATE_INPUT_DIRECTION,
+
+    MC_TRANSITION_TABLE_LENGTH,
+
 }
 MotorController_StateInput_T;
 

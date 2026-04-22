@@ -25,34 +25,26 @@
             Pure pin owner — no arbitration or drive-state awareness.
 */
 /******************************************************************************/
-#include "Transducer/UserIn/UserDIn.h"
+#include "../../MotorController_StateMachine.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 
-/******************************************************************************/
-/*
-    Config
-*/
-/******************************************************************************/
-typedef struct SwitchBrake_Config
+
+
+// static inline void MotorController_CallSwitchBrakePin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
+// {
+//     switch (edge)
+//     {
+//         case USER_DIN_EDGE_RISING: math_max(MotAnalogUser_GetBrake(p_dev->ANALOG_USER), p_dev->P_MC.SwitchBrake.Value); break;
+//         case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
+//         default: break;
+//     }
+// }
+
+static inline UserDIn_T * MotorController_SwitchBrakePin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
+
+static inline void MotorController_ProcSwitchBrakePin(const MotorController_T * p_dev)
 {
-    uint16_t Value_Percent16;   /* Brake value applied while pin is active, [0:65535] */
-    bool  IsEnabled;    /* NVM runtime enable (SKU has pin but unused) */
+    UserDIn_PollEdge(MotorController_SwitchBrakePin(p_dev));
 }
-SwitchBrake_Config_T;
-
-
-typedef const struct
-{
-    const UserDIn_T DIN;
-}
-SwitchBrake_T;
-
-/* Max-fuse helper for callers holding an analog brake value. */
-static inline uint16_t SwitchBrake_FuseBrake(const SwitchBrake_T * p_sb, uint16_t analogBrake)
-{
-    uint16_t floor = SwitchBrake_GetValue(p_sb);
-    return (floor > analogBrake) ? floor : analogBrake;
-}
-
-

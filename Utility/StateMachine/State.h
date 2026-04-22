@@ -205,7 +205,7 @@ typedef const struct State
     */
     State_InputMapper_T TRANSITION_MAPPER;
 
-    //todo
+    // todo
     /*
         Accessor functions
         State controlled value access

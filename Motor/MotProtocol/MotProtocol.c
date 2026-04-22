@@ -92,6 +92,7 @@ Protocol_RxCode_T MotProtocol_ParseRxMeta(const MotPacket_T * p_rxPacket, packet
     return rxCode;
 }
 
+/* todo */
 Protocol_RxCode_T MotProtocol_ParseRxControl(const MotPacket_T * p_rxPacket, packet_size_t rxCount, Protocol_HeaderMeta_T * p_rxMeta)
 {
     assert(rxCount > (MOT_PACKET_LENGTH_MIN - 1U)); /* Length Field is valid */ /* (rxCount < MOT_PACKET_LENGTH_MIN) ParseMeta should not have been called */

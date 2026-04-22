@@ -61,11 +61,7 @@ CanBus_Buffer_T;
 
 
 typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data);
-/* */
 // typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data, uint32_t length);
-typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
-
-
 
 /******************************************************************************/
 /*! Runtime state */
@@ -143,11 +139,21 @@ static inline void CanBus_RxData_ISR(CanBus_T * p_can)
     }
 }
 
+/*
+    Directly map to user buffer
+*/
+// typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
+
+// static inline bool _CanBus_PollRxData(CanBus_T * p_can, CanBus_RxDataMapper_T mapper)
+// {
+//     bool hasData = HAL_CAN_ReadRxFullFlag(p_can->P_HAL);
+//     if (hasData) { HAL_CAN_ReadRxData(p_can->P_HAL, mapper(p_can->P_CONTEXT, HAL_CAN_ReadRxId(p_can->P_HAL).Id)); }
+//     return hasData;
+// }
 
 /*
     Stateful
 */
-
 /*
     Rx
     Rx data frame received

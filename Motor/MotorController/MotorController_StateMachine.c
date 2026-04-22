@@ -92,7 +92,7 @@ static const State_T STATE_FAULT;
 const StateMachine_Machine_T MCSM_MACHINE =
 {
     .P_STATE_INITIAL = &STATE_INIT,
-    .TRANSITION_TABLE_LENGTH = MCSM_TRANSITION_TABLE_LENGTH,
+    .TRANSITION_TABLE_LENGTH = MC_TRANSITION_TABLE_LENGTH,
 };
 
 /******************************************************************************/
@@ -181,7 +181,7 @@ static State_T * Init_Next(MotorController_T * p_dev)
     return p_nextState;
 }
 
-static const State_Input_T INIT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T INIT_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]  = NULL, /* MotorController_EnterFault is disabled for INIT_STATE */
 };
@@ -243,7 +243,7 @@ static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
     return p_nextState;
 }
 
-static const State_Input_T PARK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T PARK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
@@ -306,7 +306,7 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     }
 }
 
-static const State_Input_T MAIN_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T MAIN_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Main_InputStateCmd,
@@ -362,7 +362,7 @@ static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
     // Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);
 }
 
-static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT] = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)Main_InputStateCmd,
@@ -484,7 +484,7 @@ static State_T * Lock_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     return NULL;
 }
 
-static const State_Input_T LOCK_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T LOCK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_LOCK]           = (State_Input_T)Lock_InputLockOp_Blocking,
@@ -637,7 +637,7 @@ static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, s
     return NULL;
 }
 
-static const State_Input_T FAULT_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T FAULT_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]  = (State_Input_T)Fault_InputFault,
     [MC_STATE_INPUT_LOCK]   = (State_Input_T)Fault_InputLockSaveConfig_Blocking,

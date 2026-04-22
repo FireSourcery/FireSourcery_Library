@@ -274,30 +274,25 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
         */
         /* SubStates update on proc, at least once Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        // maybe interrupted by enterFault on 1ms thread
+        // may be interrupted by enterFault on 1ms thread
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-    // #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
-    //     if (p_mc->Config.IsCanEnable == true) { CanBus_ProcServices(p_dev->P_CAN_BUS); }
-    // #endif
         /* Proc in all State */
         switch (p_mc->Config.InputMode)
         {
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-                _MotorController_ProcAnalogUser(p_dev);
+                _MotorController_ProcAnalogUser(p_dev); /* AnalogUser is drive functions only */
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-                /* optionally */
-                // if (MotAnalogUser_PollBrakePins(&p_dev->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
-                /* Only active when Serial is selected as primary input */
+                /* Only active when Serial is selected as drive input */
                 // if (MotorController_PollRxLost(p_dev) == true)
                 // {
-                // Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_ReleaseVZ);
-                //     MotorController_ForceDisableControl(p_dev);
-                //     MotorController_EnterFault(p_dev);
+                    // Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_ReleaseVZ);
+                    //     MotorController_ForceDisableControl(p_dev);
+                    //     MotorController_EnterFault(p_dev);
                 // }
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN:
@@ -319,7 +314,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
     #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_25) == true)
         {
-            CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_20);
+            // todo as empty service struct
+            if (p_mc->Config.IsCanEnable == true) { CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_20); }
         }
     #endif
 
@@ -332,17 +328,17 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
-            VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios  Set Motors VSupplyRef using ADC reading. Low Freq unless in warning region */
+            VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
             _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS));
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true) { _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS)); }
 
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
-
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
+
         #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
-            CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_1000);
+            if (p_mc->Config.IsCanEnable == true) { CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_1000); }
         #endif
             /* In case of Serial Rx Overflow Timeout */
             for (uint8_t iSerial = 0U; iSerial < p_dev->SERIAL_COUNT; iSerial++) { Serial_PollRestartRxIsr(&p_dev->P_SERIALS[iSerial]); }

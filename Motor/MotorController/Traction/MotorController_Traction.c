@@ -165,7 +165,7 @@ static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_
     }
 }
 
-static const State_Input_T DRIVE_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T DRIVE_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_APP_USER] = (State_Input_T)Drive_InputAppUser,
     [MC_STATE_INPUT_STATE_CMD] = NULL, /* propagate up */
@@ -259,7 +259,7 @@ static State_T * Neutral_InputAppUser(const MotorController_T * p_mc, state_valu
     }
 }
 
-static const State_Input_T NEUTRAL_TRANSITION_TABLE[MCSM_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T NEUTRAL_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_APP_USER] = (State_Input_T)Neutral_InputAppUser,
 };

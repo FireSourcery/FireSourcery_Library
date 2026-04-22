@@ -31,9 +31,7 @@
 /******************************************************************************/
 #include "Phase_Calibration.h"
 #include "Phase_Input.h"
-#include "Phase_VBus.h"
 #include "../Phase/Phase_Types.h"
-// #include "../Phase/Phase.h"
 #include "Peripheral/Analog/Analog.h"
 
 /*
@@ -180,15 +178,6 @@ static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, cons
 static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_B, adcu); }
 static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_C, adcu); }
 
-/*
-
-*/
-// static inline void Phase_Analog_CaptureVBus(adc_result_t adcu) { Phase_VBus_CaptureFract16(Phase_Analog_VFract16Of(adcu)); }
-
-
-/*  */
-/* Global "Static" Const, for all Motor instances */
-// extern Analog_Conversion_T PHASE_ANALOG_VBUS;
 
 
 // /*!

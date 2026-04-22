@@ -116,7 +116,7 @@ typedef const struct Analog_ConversionChannel
     // const uint32_t ID_MASK;
     /* each channel allocates it own buffer. directly use by oncomplete needs HAL only, accounts for results buffer map */
     volatile Analog_ConversionState_T * P_CONVERSION_STATE;
-    /* #ifdef  for replace by batch */
+
     Analog_Capture_T CAPTURE; /* Overwrite capture to ADC Buffer */
     void * P_CONTEXT;
 }
@@ -127,16 +127,7 @@ Analog_ConversionChannel_T;
 
 // #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T) \
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
-// static inline void _ADC_CaptureResult(Analog_ConversionChannel_T * p_conversion, adc_result_t result)
-// {
-//     /* eliminate double buffer, at additional interrupt time */
-//     if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
-//     else { p_conversion->P_CONVERSION_STATE->State = result; }
-// }
-// static inline void _ADC_CaptureConversion(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * p_conversion)
-// {
-//     _ADC_CaptureResult(p_conversion, HAL_ADC_ReadResult(p_hal, p_conversion->PIN));
-// }
+
 
 /******************************************************************************/
 /*
@@ -153,9 +144,8 @@ Analog_ConversionChannel_T;
 //     volatile uint32_t CompleteMarkers; /* marked on complete. channel markers 0 may indicate not started */
 // }
 // Analog_AdcBatchState_T;
-
 // typedef void (*Analog_CaptureBatch_T)(void * p_context, Analog_ConversionChannel_T * p_states);
-// // Analog_AdcBatch_T;
+// Analog_AdcBatch_T;
 // typedef const struct
 // {
 //     // index as adc map, global, or context dense
@@ -165,7 +155,7 @@ Analog_ConversionChannel_T;
 //     // or resolve at runtime
 //     uint32_t CHANNELS_MASK; /* Bitmask of channels to match for completion */
 
-//     volatile uint32_t * P_BATCH_STATE; /* Context for batch completion */
+//     // volatile uint32_t * P_BATCH_STATE; /* Context for batch completion */
 //     Analog_Callback_T ON_COMPLETE;
 //     void * P_CONTEXT;
 // }
@@ -260,7 +250,7 @@ Analog_ADC_T;
 static inline void Analog_ADC_MarkConversion(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers |= (1U << channel); }
 static inline bool Analog_ADC_IsMarked(const Analog_ADC_T * p_adc, analog_channel_t channel) { return (p_adc->P_ADC_STATE->ChannelMarkers & (1U << channel)) != 0UL; }
 // static inline void Analog_ADC_ClearMark(const Analog_ADC_T * p_adc, analog_channel_t channel) { p_adc->P_ADC_STATE->ChannelMarkers &= ~(1U << channel); }
-static inline void Analog_ADC_MarkAll(const Analog_ADC_T * p_adc, analog_mask_t channels) { p_adc->P_ADC_STATE->ChannelMarkers |= channels; }
+static inline void Analog_ADC_MarkAll(const Analog_ADC_T * p_adc, analog_mask_t mask) { p_adc->P_ADC_STATE->ChannelMarkers |= mask; }
 
 static inline Analog_ConversionChannel_T * Analog_ADC_ConversionOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return &p_adc->P_CONVERSION_CHANNELS[channel]; }
 static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analog_channel_t channel) { return p_adc->P_CONVERSION_CHANNELS[channel].P_CONVERSION_STATE->Result; }
@@ -279,7 +269,6 @@ static inline void Analog_ADC_Deactivate(const Analog_ADC_T * p_adc) { HAL_ADC_D
 
 /******************************************************************************/
 /*!
-
 */
 /******************************************************************************/
 static void Analog_ADC_Init(const Analog_ADC_T * p_adc)
