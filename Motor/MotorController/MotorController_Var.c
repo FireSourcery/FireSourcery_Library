@@ -28,7 +28,12 @@
 */
 /******************************************************************************/
 #include "MotorController_Var.h"
+#include "MotorController_User.h"
+#include "../Motor/Motor_Var.h"
+#include "../Motor/VBus/VBus.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
+
+#include "System/SysTime/SysTime.h"
 
 /* only point of coupling to AppTable */
 #include "AppTable/MotorController_AppTable.h"
@@ -256,8 +261,8 @@ static int _HandleVMonitor_Get(const MotorController_T * p_dev, MotVarId_T varId
 {
     switch ((MotorController_VarType_VMonitor_T)varId.Type)
     {
-        // case MOT_VAR_TYPE_V_VBUS_STATE:           return RangeVarId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
-        // case MOT_VAR_TYPE_V_VBUS_CONFIG:          retuMonitor_ConfigId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
+        case MOT_VAR_TYPE_VBUS_OUT:                       return VBus_VarId_Get(p_dev->P_VBUS, varId.Base);
+        case MOT_VAR_TYPE_VBUS_CONFIG:                    return VBus_ConfigId_Get(&p_dev->P_VBUS->Config, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:           return RangeMonitor_VarId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:          return RangeMonitor_ConfigId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:
@@ -390,144 +395,108 @@ static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
     return (mode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) || (mode == MOTOR_CONTROLLER_INPUT_MODE_CAN);
 }
 
+typedef bool (*MotorController_TestAccess_T)(MotorController_T * p_dev);
+
 /*
     Input Guard
     Checks for Input and Config policies before variable access
 */
 static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_dev, MotVarId_T varId)
 {
-    switch ((MotVarId_Prefix_T)varId.Prefix)
+    switch (MOT_VAR_ID_TYPE_ID((MotVarId_Prefix_T)varId.Prefix, (uint8_t)varId.Type))
     {
-        case MOT_VAR_ID_PREFIX_MOTOR:
-            switch ((Motor_VarType_Base_T)varId.Type)
-            {
-                case MOTOR_VAR_TYPE_USER_CONTROL:
-                case MOTOR_VAR_TYPE_USER_SETPOINT:
-                    if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    break;
-                case MOTOR_VAR_TYPE_STATE_CMD:
-                    if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    break;
-                case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:
-                case MOTOR_VAR_TYPE_CONFIG_ACTUATION:
-                case MOTOR_VAR_TYPE_CONFIG_PID:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                case MOTOR_VAR_TYPE_CALIBRATION_CMD:
-                    if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor: User control/setpoint
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_CONTROL):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_SETPOINT):
+            if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
-        case MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE:
-            switch ((Motor_VarType_SubModule_T)varId.Type)
-            {
-                case MOTOR_VAR_TYPE_PID_TUNING_IO:
-                    if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    break;
-                case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:
-                case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor: State commands
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD):
+            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
-        case MOT_VAR_ID_PREFIX_MOTOR_SENSOR:
-            switch ((Motor_VarType_Sensor_T)varId.Type)
-            {
-                case MOTOR_VAR_TYPE_HALL_CONFIG:
-                case MOTOR_VAR_TYPE_ENCODER_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                case MOTOR_VAR_TYPE_HALL_CMD:
-                case MOTOR_VAR_TYPE_ENCODER_CMD:
-                    if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_CALIBRATION):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_ACTUATION):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_PID):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
-        case MOT_VAR_ID_PREFIX_GENERAL:
-            switch ((MotorController_VarType_General_T)varId.Type)
-            {
-                case MOT_VAR_TYPE_GENERAL_USER_IN:
-                    if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    break;
-                case MOT_VAR_TYPE_GENERAL_CONFIG:
-                case MOT_VAR_TYPE_ANALOG_USER_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor: Calibration commands
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CALIBRATION_CMD):
+            if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
-        case MOT_VAR_ID_PREFIX_V_MONITOR:
-            switch ((MotorController_VarType_VMonitor_T)varId.Type)
-            {
-                case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:
-                case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:
-                case MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor Sub-module: PID tuning
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_PID_TUNING_IO):
+            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
-        case MOT_VAR_ID_PREFIX_HEAT_MONITOR:
-            switch ((MotorController_VarType_HeatMonitor_T)varId.Type)
-            {
-                case MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG:
-                case MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor Sub-module: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_THERMISTOR_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
-        case MOT_VAR_ID_PREFIX_COMMUNICATION:
-            switch ((MotorController_VarType_Communication_T)varId.Type)
-            {
-                case MOT_VAR_TYPE_SOCKET_CONFIG:
-                case MOT_VAR_TYPE_CAN_BUS_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor Sensor: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SENSOR, MOTOR_VAR_TYPE_HALL_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SENSOR, MOTOR_VAR_TYPE_ENCODER_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
-        case MOT_VAR_ID_PREFIX_APP_USER:
-            switch ((MotorController_VarType_AppUser_T)varId.Type)
-            {
-                case MOT_VAR_TYPE_TRACTION_CONTROL:
-                    if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-                    break;
-                case MOT_VAR_TYPE_TRACTION_CONFIG:
-                    if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-                    break;
-                default:
-                    break;
-            }
+        // Motor Sensor: Commands
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SENSOR, MOTOR_VAR_TYPE_HALL_CMD):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SENSOR, MOTOR_VAR_TYPE_ENCODER_CMD):
+            if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // General: User input
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_GENERAL_USER_IN):
+            if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            break;
+
+        // General: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_GENERAL_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_GENERAL, MOT_VAR_TYPE_ANALOG_USER_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // Voltage Monitor: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_V_MONITOR, MOT_VAR_TYPE_VBUS_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_V_MONITOR, MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_V_MONITOR, MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_V_MONITOR, MOT_VAR_TYPE_V_MONITOR_ANALOG_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // Heat Monitor: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_HEAT_MONITOR, MOT_VAR_TYPE_HEAT_MONITOR_PCB_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_HEAT_MONITOR, MOT_VAR_TYPE_HEAT_MONITOR_MOSFETS_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // Communication: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_COMMUNICATION, MOT_VAR_TYPE_SOCKET_CONFIG):
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_COMMUNICATION, MOT_VAR_TYPE_CAN_BUS_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // App User: Control
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_APP_USER, MOT_VAR_TYPE_TRACTION_CONTROL):
+            if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            break;
+
+        // App User: Config
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_APP_USER, MOT_VAR_TYPE_TRACTION_CONFIG):
+            if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
             break;
 
         default:
             break;
     }
     return MOT_VAR_STATUS_OK;
-
-    // VarAccess_Table TABLE[] =
-    // {
-    //     [MACRO(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD)] = {.CheckSet = MotorController_IsMotorCmdState, .Getter = _Motor_Var_StateCmd_Get, .Setter = _Motor_Var_StateCmd_Set },
-    // }
 }
 
 /******************************************************************************/
@@ -596,3 +565,21 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVa
 //         default:  return false;
 //     }
 // }
+
+
+    // static const struct { MotorController_TestAccess_T CheckSet; MotVarId_Status_T ErrorStatus; } TABLE[] =
+    // {
+    //     [MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_CONTROL)] = { .CheckSet = MotorController_IsMotorCmdState, .ErrorStatus = MOT_VAR_STATUS_ERROR_ACCESS_DISABLED },
+    // };
+
+    // if (MOT_VAR_ID_TYPE_ID(varId.Prefix, varId.Type) < sizeof(TABLE)/sizeof(TABLE[0]))
+    // {
+    //     MotorController_TestAccess_T checkSet = TABLE[MOT_VAR_ID_TYPE_ID(varId.Prefix, varId.Type)].CheckSet;
+    //     if (checkSet != NULL && !checkSet((MotorController_T *)p_dev)) return TABLE[MOT_VAR_ID_TYPE_ID(varId.Prefix, varId.Type)].ErrorStatus;
+    // }
+
+    // expandsion
+    // VarAccess_Table TABLE[] =
+    // {
+    //     [MACRO(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD)] = {.CheckSet = MotorController_IsMotorCmdState, .Getter = _Motor_Var_StateCmd_Get, .Setter = _Motor_Var_StateCmd_Set },
+    // }

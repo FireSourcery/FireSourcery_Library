@@ -29,12 +29,8 @@
     @brief  Var - Field-like Property Interface, Getter/Setter via Id Key
 */
 /******************************************************************************/
-#include "MotorController_User.h"
 #include "MotorController.h"
-#include "../Motor/Sensor/Motor_Sensor.h"
-#include "../Motor/Motor_Var.h"
 #include "../MotProtocol/MotVarId.h"
-#include "System/SysTime/SysTime.h"
 
 /******************************************************************************/
 /*
@@ -165,11 +161,12 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_GENERAL_BOARD_CONST,
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
-    MOT_VAR_TYPE_BUZZER_CONTROL,
-    MOT_VAR_TYPE_BUZZER_CONFIG,
-    MOT_VAR_TYPE_OPT_DIN_CONTROL,
-    MOT_VAR_TYPE_OPT_DIN_CONFIG,
-    MOT_VAR_TYPE_RELAY_CONFIG,
+
+    // MOT_VAR_TYPE_BUZZER_CONTROL,
+    // MOT_VAR_TYPE_BUZZER_CONFIG,
+    // MOT_VAR_TYPE_OPT_DIN_CONTROL,
+    // MOT_VAR_TYPE_OPT_DIN_CONFIG,
+    // MOT_VAR_TYPE_RELAY_CONFIG,
 }
 MotorController_VarType_General_T;
 
@@ -178,8 +175,8 @@ typedef enum MotorController_VarType_VMonitor
     /*
         Specialized instances. effectively access as object classes. simplify static value bounds.
     */
-   // MOT_VAR_TYPE_VBUS_OUT,
-   // MOT_VAR_TYPE_VBUS_CONFIG, /* VNominal, Derate scaling */ or combine
+    MOT_VAR_TYPE_VBUS_OUT,
+    MOT_VAR_TYPE_VBUS_CONFIG, /* VNominal, Derate scaling */
     MOT_VAR_TYPE_V_MONITOR_VBUS_STATE,
     MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG,
     MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER,

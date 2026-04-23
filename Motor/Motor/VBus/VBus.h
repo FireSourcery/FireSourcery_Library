@@ -219,7 +219,7 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 }
 
 /*
-    Physical units fract16
+    Physical scale fract16
 */
 static inline ufract16_t VBus_GetILimitUnderV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateUnderV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
 static inline ufract16_t VBus_GetIGenLimitOverV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
@@ -238,20 +238,26 @@ static inline uint32_t VBus_GetChargeLevel_Fract16(const VBus_T * p_vbus)
 
 
 
-
+/******************************************************************************/
+/*!
+    VarId accessors
+*/
+/******************************************************************************/
 typedef enum VBus_VarId
 {
     VBUS_VAR_ID_VBUS_FRACT16,
     VBUS_VAR_ID_PER_V_FRACT32,
+    VBUS_VAR_ID_CHARGE_LEVEL_FRACT16,
 }
 VBus_VarId_T;
 
-static inline uint32_t VBus_Var_Get(const VBus_T * p_vbus, VBus_VarId_T var_id)
+static inline uint32_t VBus_VarId_Get(const VBus_T * p_vbus, VBus_VarId_T var_id)
 {
     switch (var_id)
     {
         case VBUS_VAR_ID_VBUS_FRACT16: return p_vbus->VBus_Fract16;
         case VBUS_VAR_ID_PER_V_FRACT32: return p_vbus->PerV_Fract32;
+        case VBUS_VAR_ID_CHARGE_LEVEL_FRACT16: return VBus_GetChargeLevel_Fract16(p_vbus);
         default: return 0U;
     }
 }

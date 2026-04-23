@@ -502,7 +502,7 @@ int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule
     if (p_motor == NULL) { return 0; }
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_BOARD_CONST:           return Motor_Var_Board_Get(varId);
+        case MOTOR_VAR_TYPE_BOARD_CONST:                return Motor_Var_Board_Get(varId);
         case MOTOR_VAR_TYPE_V_BUS:                      return Motor_Var_PhaseVBus_Get(varId);
         case MOTOR_VAR_TYPE_PHASE:                      return 0;
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);

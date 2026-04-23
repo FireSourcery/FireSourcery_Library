@@ -115,6 +115,13 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_f
 }
 
 
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 typedef enum VBus_ConfigId
 {
     VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V,

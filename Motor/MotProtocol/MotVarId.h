@@ -49,13 +49,23 @@ typedef union MotVarId
         uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
         uint16_t Resv           : 2U;
     };
+    struct
+    {
+        uint16_t _Base           : 4U;
+        uint16_t FullType        : 8U; /* Combines Type and Prefix */
+        uint16_t _Instance       : 2U;
+        uint16_t _Resv           : 2U;
+    };
     uint16_t Value;
 }
 MotVarId_T;
 
 #define MOT_VAR_ID_TYPE_ID(Prefix, Type) ((uint16_t)(((Prefix) << 4U) | (Type)))
 
-/* Prefixs Type to start as 0 index */
+/*
+    Prefixs
+    Namespaces for struct type to restart at 0 index
+*/
 typedef enum MotVarId_Prefix
 {
     MOT_VAR_ID_PREFIX_MOTOR,
