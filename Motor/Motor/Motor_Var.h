@@ -54,8 +54,8 @@ typedef enum Motor_Var_UserOut
     MOTOR_VAR_HEAT, /* included in HEAT_MONITOR_OUT */
     /*   */
     MOTOR_VAR_SPEED_REQ,  /* Ramp Out with User Sign */
-    MOTOR_VAR_TORQUE_IV_REQ, /*   */
-    // MOTOR_VAR_TORQUE_V_REQ, /*   */
+    MOTOR_VAR_TORQUE_I_REQ, /*   */
+    MOTOR_VAR_TORQUE_V_REQ, /*   */
     /* Derived Local */
     MOTOR_VAR_V_SPEED_EFFECTIVE,
     MOTOR_VAR_POWER,

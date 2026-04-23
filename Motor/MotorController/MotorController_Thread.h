@@ -206,7 +206,7 @@ static void _MotorController_VBus_EnterFault(const MotorController_T * p_dev)
 
 static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
 {
-    switch (VBus_PollMonitor(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))))
+    switch (VBus_PollMonitor(p_dev->P_VBUS))
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:
@@ -261,7 +261,6 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     High Freq, Low Priority,
 */
 /******************************************************************************/
-
 static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
@@ -277,6 +276,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
         // may be interrupted by enterFault on 1ms thread
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
+
+        // VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
@@ -328,10 +329,9 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 
-            VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
             _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS));
-            // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true) { _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS)); }
+            // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */
             if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
@@ -353,12 +353,6 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     _MotorController_VBus_Thread(p_dev);
-
-    // if (p_mc->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
-    // {
-    //     if (MotAnalogUser_PollBrakePins(&p_dev->ANALOG_USER) == true) { MotorController_ForceDisableControl(p_mc); }
-    // }
-
 #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);
 #endif
@@ -377,6 +371,7 @@ static inline void MotorController_PWM_Thread(const MotorController_T * p_dev)
     {
         for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { _Motor_Analog_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }
     }
+    Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 
     for (uint8_t iAdc = 0U; iAdc < p_dev->ADC_COUNT; iAdc++) { Analog_ADC_ProcMarked(&p_dev->P_ANALOG_ADCS[iAdc]); }
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_PWM_Thread(&p_dev->MOTORS.P_DEVS[iMotor]); }

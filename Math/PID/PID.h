@@ -127,7 +127,7 @@ static inline int16_t _PID_GetKi_Fixed16_Runtime(const PID_T * p_pid) { return _
 extern void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config);
 // extern void PID_Init(PID_T * p_pid);
 extern void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max);
-extern int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint);
+extern int16_t PID_ProcPI(PID_T * p_pid, int16_t feedback, int16_t setpoint);
 extern void PID_Reset(PID_T * p_pid);
 extern void _PID_SetOutputState(PID_T * p_pid, int16_t output);
 extern void PID_SetOutputState(PID_T * p_pid, int16_t output);

@@ -48,16 +48,15 @@
     Caller maintain feedback state to determine units
 */
 static inline int16_t _Motor_GetIVSetpoint(const Motor_State_T * p_motor)               { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
-static inline int16_t _Motor_GetTorqueSetpoint(const Motor_State_T * p_motor)           { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
 static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_State_T * p_motor)    { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
+
+static inline int16_t _Motor_GetTorqueSetpoint(const Motor_State_T * p_motor)           { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
 static inline int16_t _Motor_GetSpeedSetpoint(const Motor_State_T * p_motor)            { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
 
 static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
 static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
-
-// static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : ; }
 
 /******************************************************************************/
 /*!

@@ -56,12 +56,10 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
     Conventional parallel PID calculation
     @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 
-    integral [-32768:32767] << 15
-    error [-32768:32767] << 15
-    for (INT32_MAX / 2) + (INT32_MAX / 2) without saturated add
-    cannot be the case both integral and error are -32768
+    integralAccum [-32768:32767] << 15
+    p_pid->IntegralGain * 65535) >> p_pid->IntegralGainShift < INT32_MAX / 2
 */
-static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
+static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
@@ -92,7 +90,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int16_t error)
     // IntegralAccum += ki_contribution + Kb * (clamped - unclamped);
 }
 
-extern void Debug_Beep();
 
 /*!
     dynamic output limits
@@ -100,30 +97,20 @@ extern void Debug_Beep();
 */
 void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
-#ifndef NDEBUG
-    if (max <= min) { return; }
-#endif
-    p_pid->OutputMin = min;
-    p_pid->OutputMax = max;
+    if (max > min)
+    {
+        p_pid->OutputMin = min;
+        p_pid->OutputMax = max;
+    }
 }
 
 /*!
-    @param[in] setpoint [-32768:32767] with over saturation
-    @param[in] feedback [-32768:32767] with over saturation
-
-    inputs upto 2x over saturation.
-    error must be within [-32768:32767]
-
-    e.g setpoint 32767, feedback 40000 => ok
-        setpoint 32767, feedback -2 => overflow
+    @param[in] setpoint [-32768:32767]
+    @param[in] feedback [-32768:32767]
 */
-int16_t PID_ProcPI(PID_T * p_pid, int32_t feedback, int32_t setpoint)
+int16_t PID_ProcPI(PID_T * p_pid, int16_t feedback, int16_t setpoint)
 {
-#ifndef NDEBUG
-    if (!math_is_in_range(setpoint - feedback, INT16_MIN, INT16_MAX)) { Debug_Beep(); }
-    // int16_t error = math_clamp(setpoint - feedback, INT16_MIN, INT16_MAX);
-#endif
-    p_pid->Output = math_clamp(CalcPI(p_pid, setpoint - feedback), p_pid->OutputMin, p_pid->OutputMax);
+    p_pid->Output = math_clamp(CalcPI(p_pid, (int32_t)setpoint - (int32_t)feedback), p_pid->OutputMin, p_pid->OutputMax);
     return p_pid->Output;
 }
 

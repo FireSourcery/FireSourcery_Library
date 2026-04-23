@@ -39,8 +39,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MOTOR_TICKS_OF_SPEED_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (RampInterval) / (UnitsPerS))
-#define MOTOR_TICKS_OF_TORQUE_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (RampInterval) / (UnitsPerS)) /* V or I */
+// #define MOTOR_TICKS_OF_SPEED_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (RampInterval) / (UnitsPerS))
+// #define MOTOR_TICKS_OF_TORQUE_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (RampInterval) / (UnitsPerS)) /* V or I */
 
 /* scale to rated max */
 #ifndef MOTOR_OPEN_LOOP_MAX_SCALAR
