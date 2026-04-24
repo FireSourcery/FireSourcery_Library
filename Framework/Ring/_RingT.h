@@ -61,9 +61,6 @@
  */
 /******************************************************************************/
 
-
-
-
 /******************************************************************************/
 /* Level 1 — strided array access (reusable anywhere) */
 /******************************************************************************/
@@ -87,7 +84,6 @@ static inline void * ring_array_at(size_t type, const void * p_array, size_t pow
 // }
 
 
-
 /******************************************************************************/
 /* Level 2 — ring state (cursors + optional lock) */
 /******************************************************************************/
@@ -101,13 +97,9 @@ typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_State
 }
 Ring_State_T;
 
-
 /* Level 3 — span (buffer + capacity) */
 typedef const struct { void * P_BUFFER; size_t LENGTH; } Span_T;
-
-
-static inline void * RingT_At(size_t stride, Array_T array, size_t index) { return ring_array_at(stride, array.P_BUFFER, array.LENGTH, ((Ring_State_T *)array.P_AUGMENTS)->Head + index); }
-
+// typedef const struct { void * P_BUFFER; size_t POW2_MASK; } Ring_Span_T;
 
 
 static inline size_t _RingT_GetCapacity(Span_T type)
@@ -168,14 +160,37 @@ static bool RingT_PushBack(size_t stride, Span_T span, Ring_State_T * p_state, c
 /******************************************************************************/
 /* Level 5 — typed wrapper (user-facing, Correct-Pairing guarantee) */
 /******************************************************************************/
-typedef const struct RingT
+/*
+    3 forms to consider:
+    RingT_At(size_t stride, Span_T span, const Ring_State_T * p_state, size_t index)
+
+    RingT as Augmented Array without stride size:
+    RingT_At(size_t stride, RingT_T array, size_t index)
+
+    RingT as complete handle with stride size:
+    RingT_At(RingT_T ring, size_t index)
+
+    Type-erased storage takes stride from the caller, not from its own state.
+    Container types whose storage is mechanically byte-addressable (ring buffers, pools, queues of untyped bytes) should accept stride as a parameter rather than storing it as a field. The caller's type system already knows the element size; duplicating it in the container wastes rodata and creates two sources of truth.
+    When a typed call-site is wanted, provide a declaration macro (kfifo-style) that pairs a typed buffer pointer with the container's shape descriptor. Operation macros derive sizeof(*typed_ptr) at the call site — compile-time literal, zero runtime cost, identical source to the "typed handle" form without its storage overhead.
+    Cited: Linux kernel DECLARE_KFIFO; Stroustrup, The C++ Programming Language 4e §25.3.4.1; Stepanov, Elements of Programming §7.
+
+    RingT_At(size_t stride, RingT_T array, size_t index) is selected as the final API form. This keeps stride as a generic parameter.
+    A generic container should carry information about its shape, not about the types it transports.
+*/
+
+// typedef const struct RingT { Span_T SPAN; Ring_State_T * P_STATE; } RingT_T;
+
+typedef const union RingT
 {
-    // size_t UNIT_SIZE;
-    Span_T SPAN;
-    Ring_State_T * P_STATE;
+    struct { void * P_BUFFER; size_t LENGTH; Ring_State_T * P_STATE; };
+    Array_T ARRAY;
 }
 RingT_T;
 
+static inline void * RingT_At(size_t stride, RingT_T ring, size_t index) { return ring_array_at(stride, ring.P_BUFFER, ring.LENGTH, ring.P_STATE->Head + index); }
+
+static inline bool RingT_PushBack(size_t stride, RingT_T ring, const void * p_unit) {}
 
 // typedef struct __attribute__((aligned(sizeof(uintptr_t)))) Ring_Alloc
 // {
@@ -184,24 +199,13 @@ RingT_T;
 // }
 // Ring_Alloc_T;
 
-// // static inline void * RingT_At(size_t stride, const Ring_State_T * p_state, length, size_t index) { return ring_array_at(stride, span.P_BUFFER, span.LENGTH, p_state->Head + index); }
+// static inline void * RingT_At(size_t stride, const Ring_State_T * p_state, length, size_t index) { return ring_array_at(stride, span.P_BUFFER, span.LENGTH, p_state->Head + index); }
 // #define _RING_BUFFER_ALLOC(BytesSize) ((uintptr_t[(BytesSize) / sizeof(uintptr_t)]){}) /* guarantees align and no ascii fill */
 // #define RING_STATE_ALLOC(UnitSize, Length) ((Ring_State_T *)(_RING_BUFFER_ALLOC(sizeof(Ring_State_T) + ((UnitSize) * (Length)))))
 // #define RING_T_ALLOC(UnitSize, Length) RING_T_INIT(UnitSize, Length, RING_STATE_ALLOC(UnitSize, Length))
 
 
 
-// /* Alt */
-// typedef const struct { void * P_BUFFER; size_t POW2_MASK; } Ring_Span_T;
-// typedef const struct Array
-// {
-//     void * P_BUFFER;
-//     size_t LENGTH;
-//     Ring_State_T * P_AUGMENTS;
-// }
-// Array_T;
-
-// static inline bool RingT_PushBack(size_t stride, RingT_T ring, const void * p_unit) {  }
 
 
 
