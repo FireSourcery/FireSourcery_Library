@@ -32,7 +32,7 @@
 #define MOT_PROTOCOL_H
 
 #include "MotPacket.h"
-#include "Utility/Protocol/Protocol.h"
+#include "Framework/Protocol/Protocol.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 
 #define MOT_PROTOCOL_BAUD_RATE_DEFAULT  (19200U)

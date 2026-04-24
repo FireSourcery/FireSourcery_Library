@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Blinky.h"
 #include "Peripheral/Pin/Pin.h"
-#include "Utility/Timer/Timer.h"
+#include "Framework/Timer/Timer.h"
 
 #include <stddef.h>
 

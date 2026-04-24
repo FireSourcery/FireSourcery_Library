@@ -1,7 +1,7 @@
 #include "MotAnalogUser.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine_Tree.h"
+#include "Framework/StateMachine/StateMachine.h"
+#include "Framework/StateMachine/_StateMachine_Tree.h"
 
 
 

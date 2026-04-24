@@ -107,7 +107,7 @@ static inline void HAL_ADC_ActivateEach(HAL_ADC_T * p_hal, const adc_pin_t * p_p
 #endif
 }
 
-// static inline void HAL_ADC_CaptureEach(const HAL_ADC_T * p_hal, const adc_pin_t * p_pins, uint8_t count, adc_result_t * p_results)
+// static inline void HAL_ADC_CaptureEach(const HAL_ADC_T * p_hal, const channgles * p_channels, const adc_pin_t * p_pins, uint8_t count, adc_result_t * p_results)
 // {
 //     assert(count <= HAL_ADC_FIFO_LENGTH_MAX);
 //     for (uint8_t iPin = 0U; iPin < count; iPin++) { p_results[iPin] = HAL_ADC_ReadFifoResult(p_hal, p_pins[iPin]); }

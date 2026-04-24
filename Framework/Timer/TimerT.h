@@ -39,16 +39,19 @@
     - Hardware register addresses inlined
 */
 /******************************************************************************/
+/*
+    Wrapper provides pairing as Unit-Coherent Handle.
+*/
 typedef const struct TimerT
 {
     Timer_Base_T BASE;
-    Timer_State_T * P_STATE; /* Pointer to Timer State */
+    Timer_State_T * P_STATE;
 }
 TimerT_T;
 
 #define TIMER_STATE_ALLOC() (&(Timer_State_T){0})
 #define TIMER_T_INIT(p_BaseTimer, BaseFreq, p_State) (TimerT_T){ .BASE = TIMER_BASE_INIT(p_BaseTimer, BaseFreq), .P_STATE = p_State, }
-#define TIMER_T_ALLOC(p_BaseTimer, BaseFreq) TIMER_T_INIT(p_BaseTimer, BaseFreq, TIMER_STATE_ALLOC())
+// #define TIMER_T_ALLOC(p_BaseTimer, BaseFreq) TIMER_T_INIT(p_BaseTimer, BaseFreq, TIMER_STATE_ALLOC())
 
 /******************************************************************************/
 /*
@@ -100,28 +103,10 @@ static inline void TimerT_StartOneShot(TimerT_T * p_timer, uint32_t period) { _T
 static inline void TimerT_StartCounterN(TimerT_T * p_timer, uint32_t period, uint32_t shots) { _TimerT_StartCountN(&p_timer->BASE, p_timer->P_STATE, period, shots); }
 static inline void TimerT_RestartOneShot(TimerT_T * p_timer) { _TimerT_RestartOneShot(&p_timer->BASE, p_timer->P_STATE); }
 
-
-// /* Context unit conversions (compile-time optimized) */
-// static inline uint32_t TimerT_GetElapsed_Millis(const TimerT_T * p_timer)
-// {
-//     return (TimerT_GetElapsed(p_timer) * 1000U) / p_timer->BASE.FREQ;
-// }
-
-// static inline uint32_t TimerT_GetElapsed_Micros(const TimerT_T * p_timer)
-// {
-//     uint32_t elapsed = TimerT_GetElapsed(p_timer);
-//     return (elapsed > UINT32_MAX / 1000000U) ?
-//         (elapsed / p_timer->BASE.FREQ * 1000000U) :
-//         (elapsed * 1000000U / p_timer->BASE.FREQ);
-// }
-
-// static inline void TimerT_SetPeriod_Millis(const TimerT_T * p_timer, uint32_t millis)
-// {
-//     p_timer->P_STATE->Period = (p_timer->BASE.FREQ * millis) / 1000U;
-// }
-
-// static inline void TimerT_StartPeriod_Millis(const TimerT_T * p_timer, uint32_t millis)
-// {
-//     TimerT_SetPeriod_Millis(p_timer, millis);
-//     TimerT_Restart(p_timer);
-// }
+/******************************************************************************/
+/* Context unit conversions (compile-time optimized) */
+/******************************************************************************/
+static inline uint32_t TimerT_GetElapsed_Millis(const TimerT_T * p_timer) { return _TimerT_GetElapsed_Millis(&p_timer->BASE, p_timer->P_STATE); }
+static inline uint32_t TimerT_GetElapsed_Micros(const TimerT_T * p_timer) { return _TimerT_GetElapsed_Micros(&p_timer->BASE, p_timer->P_STATE); }
+static inline void TimerT_SetPeriod_Millis(const TimerT_T * p_timer, uint32_t millis) { _TimerT_SetPeriod_Millis(&p_timer->BASE, p_timer->P_STATE, millis); }
+static inline void TimerT_StartPeriod_Millis(const TimerT_T * p_timer, uint32_t millis) { _TimerT_StartPeriod_Millis(&p_timer->BASE, p_timer->P_STATE, millis); }

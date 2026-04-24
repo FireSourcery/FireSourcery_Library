@@ -120,6 +120,9 @@ static inline void HAL_ADC_EnableContinuousConversion(HAL_ADC_T * p_hal) { p_hal
 
     Minimal Init, Board sets clock configuration
 */
+
+// #define HAL_ADC_CONVERSION_TIME(ADC_CLK_FREQ_HZ) ((23.5f / (ADC_CLK_FREQ_HZ / 1000000.0f)) + 5.0f) /* in microseconds */
+
 static inline void HAL_ADC_Init(HAL_ADC_T * p_hal)
 {
     p_hal->SC2 = (p_hal->SC2 & ~ADC_SC2_REFSEL_MASK) | ADC_SC2_REFSEL(1U); /*!< Analog supply pin pair (VDDA/VSSA). >*/

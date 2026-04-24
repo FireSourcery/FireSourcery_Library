@@ -144,3 +144,15 @@ static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
     }
     return value;
 }
+
+static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int value)
+{
+    switch (id)
+    {
+        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
+        case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor_Fract16 = value; break;
+        case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor_Fract16 = value; break;
+        case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor_Fract16 = value; break;
+        default: break;
+    }
+}

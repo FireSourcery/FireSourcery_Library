@@ -97,20 +97,12 @@ static inline bool Timer_Modal_Poll(Timer_T * p_timer) { return _TimerT_Modal_Po
 static inline void Timer_Start(Timer_T * p_timer, uint32_t period) { _TimerT_Start(&p_timer->Base, &p_timer->State, period); }
 static inline void Timer_Stop(Timer_T * p_timer) { _TimerT_Stop(&p_timer->State); }
 
-// /*
-//     Unit Conversions
-// */
-// static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer)  { return Timer_GetElapsed(p_timer) / p_timer->BaseFreq; }
-// /* overflow at 1 hour for millis, 3 min for 20khz */
-// static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer)   { return Timer_GetElapsed(p_timer) * 1000U / p_timer->BaseFreq; }
-
-// static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer)
-// {
-//     uint32_t ticks = Timer_GetElapsed(p_timer);
-//     return (ticks > UINT32_MAX / 1000000U) ? (ticks / p_timer->BaseFreq * 1000000U) : (ticks * 1000000U / p_timer->BaseFreq);
-// }
-
-// /* freq != 0U, freq < BaseFreq */
-// static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq)              { p_timer->Period = p_timer->BaseFreq / freq; }
-// static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis)   { p_timer->Period = p_timer->BaseFreq * millis / 1000U; }
-// static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) { Timer_SetPeriod_Millis(p_timer, millis); Timer_Restart(p_timer); }
+/*
+    Unit Conversions
+*/
+static inline uint32_t Timer_GetElapsed_Seconds(Timer_T * p_timer) { return _TimerT_GetElapsed_Seconds(&p_timer->Base, &p_timer->State); }
+static inline uint32_t Timer_GetElapsed_Millis(Timer_T * p_timer) { return _TimerT_GetElapsed_Millis(&p_timer->Base, &p_timer->State); }
+static inline uint32_t Timer_GetElapsed_Micros(Timer_T * p_timer) { return _TimerT_GetElapsed_Micros(&p_timer->Base, &p_timer->State); }
+static inline void Timer_SetFreq(Timer_T * p_timer, uint16_t freq) { _TimerT_SetFreq(&p_timer->Base, &p_timer->State, freq); }
+static inline void Timer_SetPeriod_Millis(Timer_T * p_timer, uint32_t millis) { _TimerT_SetPeriod_Millis(&p_timer->Base, &p_timer->State, millis); }
+static inline void Timer_StartPeriod_Millis(Timer_T * p_timer, uint32_t millis) { _TimerT_StartPeriod_Millis(&p_timer->Base, &p_timer->State, millis); }

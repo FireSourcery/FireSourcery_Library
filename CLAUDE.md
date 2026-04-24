@@ -46,7 +46,7 @@
 - **Config struct pattern**: Modules use `const` config structs (`CONFIG` / `CONST`) separated from mutable state
 - **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations
 - **Thread/ISR separation**: `_Thread.h` files define periodic processing functions; ISR-safe boundaries are explicit
-- **State machines**: Hierarchical state machine framework in `Utility/StateMachine/` used extensively for motor control states
+- **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states
 - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
@@ -192,7 +192,7 @@ FireSourcery_Library/
 │   ├── Field/                   #   Struct field offset utilities
 │   └── Word/                    #   Word-level operations, version struct
 │
-└── Utility/                     # Reusable utility frameworks
+└── Framework/                     # Reusable utility frameworks
     ├── Protocol/                #   Generic request-response protocol engine
     │   ├── Protocol.c/h         #     Protocol state machine
     │   ├── Socket.c/h           #     Socket-style connection abstraction
@@ -229,7 +229,7 @@ Peripheral/*  ──→  HAL/Platform/*  ──→  External/CMSIS, External/S32
                                 │
 System/*  ──→  HAL (Critical, Reboot, SysTime)
                                 │
-Utility/*  (StateMachine, Protocol, Ring, Timer) — framework, no HW dependency
+Framework/*  (StateMachine, Protocol, Ring, Timer) — framework, no HW dependency
 Math/*  — pure computation, no HW dependency
 Type/*  — pure type utilities, no dependency
 ```
@@ -248,7 +248,7 @@ Type/*  — pure type utilities, no dependency
 
 ### Adding a new state to a state machine
 1. Define state entry/exit/input handler functions
-2. Add `State_T` definition using macros from `Utility/StateMachine/State.h`
+2. Add `State_T` definition using macros from `Framework/StateMachine/State.h`
 3. Register in the parent state machine's state table
 
 ## Testing & Debugging

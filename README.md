@@ -39,4 +39,4 @@ A **General Embedded C Library** and **Motor Control Library**
 
 * Transducers - Sensors and Actuators algorithms layer. Utilizes Peripheral layer.
 
-* Utility - Software tools and algorithms independent of hardware.
+* Framework - Software tools and algorithms independent of hardware.

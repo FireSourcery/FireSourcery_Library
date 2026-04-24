@@ -72,7 +72,7 @@
 
 // Usage
 
-/*  */
+/* Flyweight-descriptor */
 typedef const struct Ring_Type
 {
     size_t UNIT_SIZE;     /* Bytes */

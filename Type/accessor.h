@@ -43,19 +43,19 @@ static inline bool call_test(test_t test, void * p_context) { return (test != NU
 static inline bool call_test_set(test_value_t test, void * p_context, int value) { return (test != NULL) ? test(p_context, value) : true; }
 
 
-// #define Call_Accessor(fn, ...) \
-//     _Generic(fn, \
-//         get_t: call_get_at \
-//         set_t: call_set_at, \
-//         get_field_t: call_get_at, \
-//         set_field_t: call_set_at, \
-//         test_value_t: call_test_entry, \
-//         test_t: call_test, \
-//         try_proc_t: call_try_proc, \
-//         try_set_t: call_try_set, \
-//         compare_t: call_compare, \
-//         transform_t: call_transform, \
-//         apply_t: call_apply  \
-//     )(__VA_ARGS__)
+#define Call_Accessor(fn, ...) \
+    _Generic(fn, \
+        get_t: call_get_at \
+        set_t: call_set_at, \
+        get_field_t: call_get_at, \
+        set_field_t: call_set_at, \
+        test_value_t: call_test_entry, \
+        test_t: call_test, \
+        try_proc_t: call_try_proc, \
+        try_set_t: call_try_set, \
+        compare_t: call_compare, \
+        transform_t: call_transform, \
+        apply_t: call_apply  \
+    )(__VA_ARGS__)
 
 #endif

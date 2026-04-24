@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,23 +24,22 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file
+    @file   HAL_Flash.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef HAL_FLASH_H
-#define HAL_FLASH_H
-
 #include "Peripheral/HAL/HAL_Peripheral.h"
-#include HAL_PERIPHERAL_PATH(HAL_Flash.h)
+#include HAL_PERIPHERAL_PATH(HAL_Types.h)
 
-/* Include by HAL_Flash.h */
+
 #ifndef FLASH_ATTRIBUTE_RAM_SECTION
 #define FLASH_ATTRIBUTE_RAM_SECTION NV_MEMORY_ATTRIBUTE_RAM_SECTION
 #endif
 
+/*
+
+*/
 FLASH_ATTRIBUTE_RAM_SECTION static inline bool HAL_Flash_ReadCompleteFlag(const HAL_Flash_T * p_regs);
 
 /*
@@ -78,4 +79,7 @@ static inline void HAL_Flash_UnlockSecurity(HAL_Flash_T * p_regs, uint8_t * p_ke
 */
 static inline void HAL_Flash_Init(HAL_Flash_T * p_regs);
 
-#endif /* HAL_FLASH_H */
+/*
+
+*/
+#include HAL_PERIPHERAL_PATH(HAL_Flash.h)

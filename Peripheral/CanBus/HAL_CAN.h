@@ -33,7 +33,6 @@
 #include HAL_PERIPHERAL_PATH(HAL_Types.h)
 
 
-
 /* split data handling, unless sequence/launch constraints */
 /*
     4 type combinations by function
@@ -106,8 +105,12 @@ HAL_CAN_DriverStatus_T;
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadRxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 
-#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
 
 /* using data interface */

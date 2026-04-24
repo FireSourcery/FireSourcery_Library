@@ -31,7 +31,7 @@
 #include "MotPacket.h"
 #include "../Version.h"
 
-#include "Utility/Protocol/Packet/Packet.h"
+#include "Framework/Protocol/Packet/Packet.h"
 
 #include <string.h>
 #include <stddef.h>

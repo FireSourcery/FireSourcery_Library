@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Utility/StateMachine/StateMachine.h"
+#include "Framework/StateMachine/StateMachine.h"
 
 // #define APP_SUBSTATE_ID(appId, subId) (() | ((appId) << 8U) | (subId))
 

@@ -30,7 +30,7 @@
 /******************************************************************************/
 #include "Thread.h"
 #include "Config.h"
-#include "Utility/Timer/Timer.h"
+#include "Framework/Timer/Timer.h"
 
 #include <stdbool.h>
 #include <stdint.h>

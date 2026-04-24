@@ -113,6 +113,13 @@ StateMachine_T;
 
 /******************************************************************************/
 /*!
+    @note Architecture Notes
+    Wraps 2 pointer context and lock operation in one layer.
+*/
+/******************************************************************************/
+
+/******************************************************************************/
+/*!
     Public Functions
     Defined as static per compilation unit - per [StateMachine_T]
     Let context wrapper optimize away. Pass literals to _StateMachine. [_StateMachine] as common compilation unit

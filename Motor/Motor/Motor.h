@@ -50,9 +50,9 @@
 #include "Transducer/Encoder/Encoder_ISR.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
-#include "Utility/Timer/Timer.h"
+#include "Framework/StateMachine/StateMachine.h"
+#include "Framework/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
+#include "Framework/Timer/Timer.h"
 #include "Type/Array/LimitArray/LimitArray.h"
 #include "Motor_Limits.h"
 
@@ -134,6 +134,13 @@ static inline Motor_Direction_T Motor_Direction_Cast(int direction)
         default: return MOTOR_DIRECTION_NULL; /* Invalid direction */
     }
 }
+
+typedef struct Motor_Range
+{
+    int16_t Cw;
+    int16_t Ccw;
+}
+Motor_Range_T;
 
 /******************************************************************************/
 /*
@@ -333,8 +340,7 @@ typedef struct Motor_State
     */
     uint16_t ILimitMotoring_Fract16;
     uint16_t ILimitGenerating_Fract16;
-    /* Cached directional limits - alternatively resolve getters 20kz */
-    // optional split and handle with struct
+    /* Cached directional limits */
     int16_t ILimitCcw_Fract16;      /* + */
     int16_t ILimitCw_Fract16;       /* - */
     int16_t UserTorqueReq;
@@ -410,6 +416,7 @@ typedef struct Motor_State
     // }
     // ParamId;
 
+#if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
     /*
         Local Unit Conversion
     */
@@ -418,7 +425,7 @@ typedef struct Motor_State
     // Linear_T UnitsIc;
     // Linear_T UnitsVabc;         /* Vbemf/VPhase Fract16 conversion of adcu */
     // Linear_T UnitsVSpeed;       /* VbemfSpeed. Vbemf_Fract16 of Speed_Fract16. Resume voltage, calculated Vbemf */
-
+#endif
     /* Jog */
     // uint32_t JogIndex;
 
@@ -504,6 +511,13 @@ typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value
 typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
 
 
+/******************************************************************************/
+/*
+    Motor Module
+    Cohesion of StateMachine NvmConfig
+    refactor sub contexts and  Motor_State_T * p_  should be absorbed by Motor_T API
+*/
+/******************************************************************************/
 
 /******************************************************************************/
 /*
@@ -537,6 +551,10 @@ typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value
     Cw Motoring (-V, 0)
 */
 static inline ufract16_t Motor_VAntiPlugging(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) * select * Phase_VBus_GetVRefSvpwm(); }
+static inline Motor_Range_T Motor_VLimitsCw(const Motor_State_T * p_motor) { return  ((Motor_Range_T) { .Cw = 0 - Phase_VBus_GetVRefSvpwm(), .Ccw = 0 }); }
+static inline Motor_Range_T Motor_VLimitsCcw(const Motor_State_T * p_motor) { return  ((Motor_Range_T) { .Cw = 0, .Ccw = Phase_VBus_GetVRefSvpwm() }); }
+static inline Motor_Range_T Motor_VAntiPluggingLimits(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_VLimitsCcw(p_motor) : Motor_VLimitsCw(p_motor); }
+
 static inline fract16_t Motor_VLimitCcw(const Motor_State_T * p_motor) { return Motor_VAntiPlugging(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t Motor_VLimitCw(const Motor_State_T * p_motor) { return Motor_VAntiPlugging(p_motor, MOTOR_DIRECTION_CW); }
 static inline fract16_t Motor_VClamp(const Motor_State_T * p_motor, int16_t vReq) { return math_clamp(vReq, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); }
@@ -557,10 +575,10 @@ static inline fract16_t Motor_VRampOf(Motor_State_T * p_motor, int16_t req) { re
 static inline ufract16_t _Motor_ILimitAs(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Direction == select) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16; }
 static inline fract16_t _Motor_GetILimitCcw(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetILimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_ILimitAs(p_motor, MOTOR_DIRECTION_CW)); }
-// let the compiler optimize
-// struct Limits { fract16_t Cw; fract16_t Ccw; };
-// static inline struct Limits _Motor_ILimitsMotoringCcw(const Motor_State_T * p_motor) { return ((struct Limits) { .Cw = 0 - p_motor->ILimitGenerating_Fract16, .Ccw = p_motor->ILimitMotoring_Fract16 }); }
-// static inline struct Limits _Motor_ILimitsMotoringCw(const Motor_State_T * p_motor) { return ((struct Limits) { .Cw = 0 - p_motor->ILimitMotoring_Fract16, .Ccw = p_motor->ILimitGenerating_Fract16 }); }
+static inline Motor_Range_T _Motor_ILimitsMotoringCcw(const Motor_State_T * p_motor) { return ((Motor_Range_T) { .Cw = 0 - p_motor->ILimitGenerating_Fract16, .Ccw = p_motor->ILimitMotoring_Fract16 }); }
+static inline Motor_Range_T _Motor_ILimitsMotoringCw(const Motor_State_T * p_motor) { return ((Motor_Range_T) { .Cw = 0 - p_motor->ILimitMotoring_Fract16, .Ccw = p_motor->ILimitGenerating_Fract16 }); }
+static inline Motor_Range_T Motor_GetILimits(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? _Motor_ILimitsMotoringCcw(p_motor) : _Motor_ILimitsMotoringCw(p_motor); }
+
 
 /* Getters cache on update */
 static inline fract16_t Motor_ILimitCcw(const Motor_State_T * p_motor) { return p_motor->ILimitCcw_Fract16; }
@@ -569,8 +587,12 @@ static inline fract16_t Motor_IClamp(const Motor_State_T * p_motor, int16_t iReq
 
 static void Motor_ResolveILimits(Motor_State_T * p_motor)
 {
-    p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
-    p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
+    // p_motor->ILimitCcw_Fract16 = _Motor_GetILimitCcw(p_motor);
+    // p_motor->ILimitCw_Fract16 = _Motor_GetILimitCw(p_motor);
+    Motor_Range_T iLimits = Motor_GetILimits(p_motor);
+    p_motor->ILimitCcw_Fract16 = iLimits.Ccw;
+    p_motor->ILimitCw_Fract16 = iLimits.Cw;
+
     Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor));
 
     if ((p_motor->FeedbackMode.Speed == 1) && (p_motor->FeedbackMode.Current == 1))  /* SpeedPid Output is I */
@@ -590,6 +612,10 @@ static inline fract16_t Motor_IRampOf(Motor_State_T * p_motor, int16_t req) { re
 static inline ufract16_t _Motor_SpeedLimitAs(const Motor_State_T * p_motor, Motor_Direction_T select) { return (p_motor->Config.DirectionForward == select) ? p_motor->SpeedLimitForward_Fract16 : p_motor->SpeedLimitReverse_Fract16; }
 static inline fract16_t _Motor_GetSpeedLimitCcw(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, MOTOR_DIRECTION_CCW); }
 static inline fract16_t _Motor_GetSpeedLimitCw(const Motor_State_T * p_motor) { return (0 - _Motor_SpeedLimitAs(p_motor, MOTOR_DIRECTION_CW)); }
+static inline Motor_Range_T _Motor_SpeedLimitsCcw(const Motor_State_T * p_motor) { return ((Motor_Range_T) { .Cw = 0 - p_motor->SpeedLimitReverse_Fract16, .Ccw = p_motor->SpeedLimitForward_Fract16 }); }
+static inline Motor_Range_T _Motor_SpeedLimitsCw(const Motor_State_T * p_motor) { return ((Motor_Range_T) { .Cw = 0 - p_motor->SpeedLimitForward_Fract16, .Ccw = p_motor->SpeedLimitReverse_Fract16 }); }
+static inline Motor_Range_T Motor_GetSpeedLimits(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? _Motor_SpeedLimitsCcw(p_motor) : _Motor_SpeedLimitsCw(p_motor); }
+
 
 static inline fract16_t Motor_SpeedLimitCcw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCcw_Fract16; }
 static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { return p_motor->SpeedLimitCw_Fract16; }
@@ -597,8 +623,12 @@ static inline fract16_t Motor_SpeedClamp(const Motor_State_T * p_motor, int16_t 
 
 static void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
 {
-    p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
-    p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);
+    // p_motor->SpeedLimitCcw_Fract16 = _Motor_GetSpeedLimitCcw(p_motor);
+    // p_motor->SpeedLimitCw_Fract16 = _Motor_GetSpeedLimitCw(p_motor);
+    Motor_Range_T speedLimits = Motor_GetSpeedLimits(p_motor);
+    p_motor->SpeedLimitCcw_Fract16 = speedLimits.Ccw;
+    p_motor->SpeedLimitCw_Fract16 = speedLimits.Cw;
+
     Ramp_SetOutputLimit(&p_motor->SpeedRamp, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor));
 }
 
@@ -669,24 +699,6 @@ static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t sp
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Motor_SpeedRampOf(p_motor, speedReq));
 }
 
-
-// static inline bool Motor_IsDirectionMismatch(const Motor_State_T * p_motor)
-// {
-//     return (Motor_GetDirectionFeedback(p_motor) != MOTOR_DIRECTION_NULL) && (Motor_GetDirectionFeedback(p_motor) != p_motor->Direction);
-// }
-
-// static inline void Motor_ProcDirection(const Motor_State_T * p_motor)
-// {
-//     if (Motor_GetDirectionFeedback(p_motor) != p_motor->Direction)
-//     {
-//         // Runtime reversal detected – update applied direction for control
-//      if(EffectiveFeedbackSpeed != direction) plugging handler
-//     }
-//     if (RotorSensor_IsDirectionReliable(p_motor->p_ActiveSensor) == true)
-//         use feedback direction for interpolation and speed sign
-//     else
-//         use commanded direction(or hold last reliable direction)
-// }
 
 /******************************************************************************/
 /*
@@ -803,8 +815,8 @@ static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor)
     Ccw: [0:value]
     Cw: [value:0]
 */
-static inline int32_t _Motor_CcwOf(int32_t value) { return (value > 0) * value; }
-static inline int32_t _Motor_CwOf(int32_t value) { return (value < 0) * value; }
+// static inline int32_t _Motor_CcwOf(int32_t value) { return (value > 0) * value; }
+// static inline int32_t _Motor_CwOf(int32_t value) { return (value < 0) * value; }
 
 static inline int32_t _Motor_MotoringOnly(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction == math_sign(value)) * value; }
 static inline int32_t _Motor_GeneratingOnly(const Motor_State_T * p_motor, int32_t value) { return (p_motor->Direction != math_sign(value)) * value; }

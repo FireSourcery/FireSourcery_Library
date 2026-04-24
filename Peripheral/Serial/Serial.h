@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "HAL_Serial.h"
 #include "Config.h"
-#include "Utility/Ring/Ring.h"
+#include "Framework/Ring/Ring.h"
 
 #include <stdint.h>
 #include <stdbool.h>

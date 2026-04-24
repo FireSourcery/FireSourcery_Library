@@ -36,21 +36,22 @@
 typedef struct FOC
 {
     /* Theta - Save for Inverse Park */
-    fract16_t Sine, Cosine;
+    alignas(4) fract16_t Sine, Cosine;
 
     /* Feedback Variable */
-    fract16_t Id, Iq;
+    alignas(4) fract16_t Id, Iq;
 
     /* Control Variable. VOutput. Feedforward Input. */
     /* VBemf during Freewheel */
-    fract16_t Vd, Vq; /* VdReq, VqReq */
+    alignas(4) fract16_t Vd, Vq; /* VdReq, VqReq */
 
     /* VBemf Inputs during Freewheel - Capture by ADC */
     /* Intermediate VOut */
-    fract16_t Va, Vb, Vc;
+    alignas(4) fract16_t Va, Vb, Vc;
 
     /* Scalar. optionally handle by phase */
-    ufract16_t DutyA, DutyB, DutyC;
+    alignas(4) ufract16_t DutyA, DutyB, DutyC;
+
 
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;

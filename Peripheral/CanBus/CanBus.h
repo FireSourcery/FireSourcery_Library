@@ -52,7 +52,7 @@ CanBus_BufferState_T;
 typedef struct
 {
     CAN_Frame_T Frame;
-    CAN_Frame_T TxBuffer;
+    // CAN_Frame_T TxBuffer;
     CanBus_BufferState_T State;
     uint32_t BroadcastTime;
     uint32_t HwIndex;

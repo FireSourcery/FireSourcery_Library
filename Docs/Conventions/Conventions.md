@@ -148,7 +148,7 @@ Peers must be hidden from callers → Full-forwarder facade (Option B).
 
 ## Data Type by semantics
 
-struct define the shape of memory
+struct defines the shape of memory
 add sematics: "types" of structs by purpose and access patterns
 
 static polymorism context / compile time configuration constants
@@ -156,10 +156,10 @@ static polymorism context / compile time configuration constants
 HAL wrapper - configuration mix in to register access
     PWM_T
 
-Runtime Configuration - runtime selectable configuration. mostly transparent data - in user domain or internal domain?
+Runtime Configuration - runtime selectable configuration. mostly transparent data - in user domain units or internal domain units?
     MotorController_Config_T
 
-Runtime optimization
+Runtime optimization - derived
     Angle_SpeedFractRef_T
     Linear_T
 
@@ -179,4 +179,21 @@ Data Transfer Interface - data is the interface
         meta data encoded in struct shape.
         placement offset, size, matters
 
-ownership vs pointer refernce determined by thread of operation
+    struc Tag only for internal?
+
+#
+2 pointer context API signitures at most - (p_const, p_state, value)
+Does the wrapper hold a changeable policy?
+Does the wrapper enforce a pairing invariant the bare form can violate?
+Does the wrapper add a cross-cutting decorator like locking/tracing?
+Is every pointer in the wrapper used at runtime on the hot path? (lifetime-coherent)
+
+
+#
+ownership vs pointer reference determined by thread of operation
+
+
+
+#
+Adding indirection without adding concept vs enforcing pair correctness
+

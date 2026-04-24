@@ -37,6 +37,7 @@
     Phase Calibration and Scaling References
 */
 /******************************************************************************/
+/* Phase_Board */
 typedef const struct Phase_Calibration
 {
     /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. Optionally allow runtime overwrite */

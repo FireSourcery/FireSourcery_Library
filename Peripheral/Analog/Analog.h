@@ -47,8 +47,11 @@
 typedef const struct Analog_Conversion
 {
     Analog_ADC_T * P_ADC;
+
     analog_channel_t CHANNEL;
-    // Analog_ConversionChannel_T * P_CONVERSION_CHANNEL;
+    // Analog_Capture_T CAPTURE;
+    // void * P_CONTEXT;
+
     /* reserve interface for extension */
     // Analog_Options_T OPTIONS;
 }
@@ -106,34 +109,37 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 //     uint8_t COUNT;
 // } Analog_ChannelTable_T; /* [adc_channel] → Analog_Conversion_T * */
 
-/******************************************************************************/
-/*
-    Conversion Batch
-    interface across multiple ADCs.
-    Synchronized start with 1 callback, seperate state buffer
-*/
-/******************************************************************************/
+
+
+// /******************************************************************************/
+// /*
+//     Conversion Batch
+//     interface across multiple ADCs.
+//     Synchronized start with 1 callback, seperate state buffer
+// */
+// /******************************************************************************/
 // typedef struct Analog_AdcBatchState
 // {
 //     volatile uint32_t ChannelMarkers; /* Bitmask of active channels. 1 << ChannelIndex */
 //     // volatile uint32_t CompleteMarkers; /* marked on complete. channel markers 0 may indicate not started */
+//     // adc_result_t Results[ADC_CHANNEL_COUNT_MAX];
 // }
 // Analog_BatchState_T;
 
 // typedef const struct Analog_Batch
 // {
-//     // Analog_Conversion_T * P_CONVERSIONS;          // [0,1,2,3] => [adc_channel_1, adc_channel_9, adc_channel_3]
 //     Analog_BatchState_T * P_BATCH_STATE;    // Context for batch completion
 //     uint8_t COUNT;                          // Number of conversions in the batch
 //     struct
 //     {
 //         Analog_ADC_T * P_ADC;
-//         uint32_t ADC_MASK;
+//         Analog_AdcBatch_T BATCH;
 //         uint32_t BATCH_MASK;
-//         Analog_BatchState_T STATE;
 //     }
-//     ADC_BATCHS[]; // Per ADC batch context, including callback and channel mask
-//     // outer batch state use P_ConversionChannel.flag or out p_BatchState
+//     ADC_BATCHS[];
+
+//     // struct { Analog_ADC_T * P_ADC; Analog_AdcBatch_T BATCH; } ADC_BATCHS[]; //
+//     // Analog_Callback_T ON_COMPLETE;
 // }
 // Analog_Batch_T;
 
@@ -169,5 +175,6 @@ static inline void Analog_Conversion_ClearResult(const Analog_Conversion_T * p_c
 //     uint8_t Priority
 // }
 // Analog_Options_T;
+
 
 

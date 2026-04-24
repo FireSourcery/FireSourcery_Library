@@ -60,7 +60,10 @@
     @usability Progressive complexity - choose appropriate layer
 */
 /******************************************************************************/
-/* Timer Traits/Type */
+/*
+    Timer Traits/Type
+    Timer_Source
+*/
 typedef const struct Timer_Base
 {
     const volatile uint32_t * P_TIME; /* Base Register or Counter */
@@ -88,21 +91,10 @@ typedef struct Timer_State
 {
     uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
     uint32_t TimeRef;
-    uint32_t Counter;   /* Repeat */
+    uint32_t Counter;   /* 1 extra field for Repeat and Counter */
     Timer_Mode_T Mode;  /* Mode with disable. */
 }
 Timer_State_T;
-
-// alternatively as a common def
-// typedef struct Timer
-// {
-//     const Timer_Base_T Base;  /* Base Timer. Optionally as entirely RAM contained. allocate unused for template case */
-    // uint32_t Period;    /* In Base Freq Ticks, 0 is Disable */
-    // uint32_t TimeRef;
-    // uint32_t Counter;   /* Repeat */
-    // Timer_Mode_T Mode;  /* Mode with disable. */   // bool IsOneShot;
-// }
-// Timer_T;
 
 /******************************************************************************/
 /*

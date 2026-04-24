@@ -57,14 +57,14 @@
 #include "Peripheral/CanBus/CanBus_Service.h"
 #endif
 
-#include "Utility/Timer/Timer.h"
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/Protocol/Protocol.h"
-#include "Utility/Protocol/Socket.h"
+#include "Framework/Timer/Timer.h"
+#include "Framework/StateMachine/StateMachine.h"
+#include "Framework/Protocol/Protocol.h"
+#include "Framework/Protocol/Socket.h"
 #if defined(MOTOR_CONTROLLER_SHELL_ENABLE)
-#include "Utility/Shell/Shell.h"
+#include "Framework/Shell/Shell.h"
 #endif
-#include "Utility/BootRef/BootRef.h"
+#include "Framework/BootRef/BootRef.h"
 #include "Type/Word/Version.h"
 
 #include "Math/Linear/Linear.h"

@@ -36,7 +36,6 @@
 #include <stdbool.h>
 
 
-
 #ifdef HAL_ADC_FIFO_LENGTH_MAX
 #define ADC_FIFO_LENGTH_MAX HAL_ADC_FIFO_LENGTH_MAX
 #endif
@@ -128,38 +127,20 @@ Analog_ConversionChannel_T;
 // #define ANALOG_CONVERSION_CHANNEL_INIT_ALLOC(ChannelId, PinId, p_Context, CaptureFn, ...) (Analog_ConversionChannel_T) \
 //     { .ID = ChannelId, .PIN = PinId , .CAPTURE = (Analog_Capture_T)CaptureFn, .P_CONTEXT = p_Context, .P_CONVERSION_STATE = ANALOG_CONVERSION_STATE_ALLOC(), }
 
-
 /******************************************************************************/
 /*
 */
 /******************************************************************************/
-// Per ADC batch part
-/*
-    Batch Part + subsitute fixed channels
-    per adc
-*/
-// typedef struct Analog_AdcBatchState
-// {
-//     volatile uint32_t ChannelMarkers; /* Bitmask of active channels. 1 << ChannelIndex */
-//     volatile uint32_t CompleteMarkers; /* marked on complete. channel markers 0 may indicate not started */
-// }
-// Analog_AdcBatchState_T;
+// // Per ADC batch part
 // typedef void (*Analog_CaptureBatch_T)(void * p_context, Analog_ConversionChannel_T * p_states);
-// Analog_AdcBatch_T;
 // typedef const struct
 // {
-//     // index as adc map, global, or context dense
-//     // if channels correspond to adc fixed channels, then ADC iterate through all channels without repeat
-//     // duplicate to map callback
-//     Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /* [0,1,2,3] => [adc_channel_x, adc_channel_y, adc_channel_z] */
-//     // or resolve at runtime
-//     uint32_t CHANNELS_MASK; /* Bitmask of channels to match for completion */
-
-//     // volatile uint32_t * P_BATCH_STATE; /* Context for batch completion */
+//     uint32_t CHANNELS_MASK;  /* directly maps to adc so no batch state is needed, adc holds batch operator  */
+//     adc_result_t * P_RESULTS;
 //     Analog_Callback_T ON_COMPLETE;
 //     void * P_CONTEXT;
 // }
-// Analog_ConversionBatch_T;
+// Analog_AdcBatch_T; Analog_ConversionContext_T
 
 
 /******************************************************************************/
@@ -168,6 +149,24 @@ Analog_ConversionChannel_T;
     Critical section buffer shared by ISR and StartConversions.
 */
 /******************************************************************************/
+// typedef struct Analog_ChannelContext / Substription
+// Analog_ConversionChannel_T
+// typedef struct Analog_OnComplete
+// {
+//     analog_channel_t CHANNEL;
+//     Analog_Capture_T CAPTURE;
+//     void * P_CONTEXT;
+// }
+// Analog_OnComplete_T;
+
+// static inline void _ADC_OnComplete(Analog_OnComplete_T * p_conversion, adc_result_t * p_buffer, adc_result_t result)
+// {
+//     /* eliminate double buffer, at additional interrupt time */
+//     if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
+//     else { p_buffer[p_conversion->CHANNEL] = result; }
+// }
+
+
 typedef struct Analog_ADC_State
 {
     /*
@@ -181,23 +180,19 @@ typedef struct Analog_ADC_State
     */
     const Analog_ConversionChannel_T * ActiveConversions[ADC_FIFO_LENGTH_MAX]; /* Array of pointers */
     uint8_t ActiveConversionCount; /* Hw fifo only. Number of active channels being processed by ADC */
+    // const adc_channel_t ActiveConversions[ADC_FIFO_LENGTH_MAX];     // alternative simplified implementation, map by adc_channel_t
+    // const Analog_OnComplete_T * ActiveConversions[ADC_FIFO_LENGTH_MAX];
 
-    /* Batch State */
+    /* Batch/Queue State */
     /* If left non atomic. a mark channel call may be missed. */
     volatile uint32_t ChannelMarkers; /* Bitmask of selected channels. 1 << ChannelIndex */
-    // volatile uint32_t CompleteMarkers;
+    // void * ChannelContexts[ADC_CHANNEL_COUNT_MAX];
 
-    // const Analog_BatchContext_T * p_BatchContext;
-
+    /* ActiveBatch Const context */
     /* Selectable conversions context */
     /* Separate execution from per channel operation */
-    // let regular calls to mark will mark base markers
-
     // full context include call back in context
-    // const Analog_ConversionContext_T * p_ActiveContext; // channels + marker
-
-    // alternative simplified implementation, map by adc_channel_t
-    // const adc_channel_t ActiveConversions[ADC_FIFO_LENGTH_MAX];
+    // const Analog_ConversionContext_T * p_ActiveContext;
 
 #ifndef NDEBUG
     uint32_t ErrorCount;
@@ -224,17 +219,11 @@ typedef const struct Analog_ADC
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
     uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
-
-    // const Analog_ConversionBatch_T * P_CONVERSION_BATCHS; /* call back to notify batch status */
-
-// split granular def simplfy batch reuse.
-// alternative simplified implementation, map by adc_channel_t
-// adc_pin_t * P_PIN_MAP;
-// adc_result_t * P_RESULT_BUFFER;
-
-    // owned by global table
-    // const Analog_ConversionChannel_T * P_MAP_CHANNELS;  /* shared global table */
-    // const uint8_t * P_CHANNEL_MAP;                       /* [adc_slot] → MAP_CHANNELS index */
+    /* map by adc_channel_t. handle DMA */
+    const adc_pin_t * P_CHANNEL_PINS;
+    adc_result_t * P_CHANNEL_RESULTS;
+    // const struct { const adc_pin_t PIN; adc_result_t * P_RESULT; } * P_CHANNELS;
+    // const struct { Analog_Capture_T CAPTURE; void * P_CONTEXT; } * P_CHANNEL_CALLBACKS; /* optionally, overrides P_RESULT */
 }
 Analog_ADC_T;
 
@@ -265,6 +254,8 @@ static inline adc_result_t Analog_ADC_ResultOf(const Analog_ADC_T * p_adc, analo
 */
 static inline bool Analog_ADC_ReadIsActive(const Analog_ADC_T * p_adc) { return HAL_ADC_ReadConversionActiveFlag(p_adc->P_HAL_ADC); }
 static inline void Analog_ADC_Deactivate(const Analog_ADC_T * p_adc) { HAL_ADC_Deactivate(p_adc->P_HAL_ADC); }
+
+
 
 
 /******************************************************************************/

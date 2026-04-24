@@ -99,6 +99,8 @@ static inline void _TimerT_Counter_Init(const Timer_Base_T * p_base, Timer_State
 static inline void _TimerT_Counter_Set(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t period) { (void)p_base; p_state->Period = period; }
 static inline void _TimerT_Counter_Reset(const Timer_Base_T * p_base, Timer_State_T * p_state) { p_state->Counter = 0U; _TimerT_Restart(p_base, p_state); }
 static inline bool _TimerT_Counter_IsAligned(const Timer_State_T * p_state, uint32_t mask) { return ((p_state->Counter & mask) == 0UL); }
+// static inline bool _TimerT_Counter_IsAlignedValue(const Timer_State_T * p_state, uint32_t divider) { return _TimerT_Counter_IsAligned(p_state, divider - 1U); }
+// static inline bool _TimerT_Counter_IsAlignedDivider(const Timer_State_T * p_state, uint32_t divider) { return ((p_state->Counter % divider) == 0UL); }
 
 
 /*
@@ -251,7 +253,7 @@ static inline void _TimerT_Enable(Timer_State_T * p_state) { p_state->Mode = TIM
 
 
 /* Start/Stop operations */
-/* check for disabled state  */
+/* check for disabled state */
 
 static inline void _TimerT_StartMode(const Timer_Base_T * p_base, Timer_State_T * p_state, Timer_Mode_T mode, uint32_t period)
 {
@@ -301,11 +303,9 @@ static inline uint32_t _TimerT_GetElapsed_Micros(const Timer_Base_T * p_base, Ti
 }
 
 /* freq != 0U, freq < BaseFreq */
-static inline void _Timer_SetFreq(const Timer_Base_T * p_base, Timer_State_T * p_state, uint16_t freq)              { p_state->Period = p_base->FREQ / freq; }
-static inline void _Timer_SetPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis)   { p_state->Period = p_base->FREQ * millis / 1000U; }
-static inline void _Timer_StartPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis) { _Timer_SetPeriod_Millis(p_base, p_state, millis); _TimerT_Restart(p_base, p_state); }
-
-
+static inline void _TimerT_SetFreq(const Timer_Base_T * p_base, Timer_State_T * p_state, uint16_t freq) { p_state->Period = p_base->FREQ / freq; }
+static inline void _TimerT_SetPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis) { p_state->Period = p_base->FREQ * millis / 1000U; }
+static inline void _TimerT_StartPeriod_Millis(const Timer_Base_T * p_base, Timer_State_T * p_state, uint32_t millis) { _TimerT_SetPeriod_Millis(p_base, p_state, millis); _TimerT_Restart(p_base, p_state); }
 
 
 

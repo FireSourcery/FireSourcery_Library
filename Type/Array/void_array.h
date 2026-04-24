@@ -21,19 +21,15 @@
             Macro arguments lose type constraints
 */
 /******************************************************************************/
-/*!
-    @param TYPE `inline` function is intended to unwrap.
-        size_t TYPE = sizeof(element type)
-*/
-static inline void * void_pointer_at(size_t type, const void * p_buffer, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
 
-/*!
-    switch copy
-    @brief Copy data from source to destination based on the size.
-    @param dest Pointer to the destination buffer.
-    @param src Pointer to the source buffer.
-    @param size Size of the data to copy.
+/*
+    value operations should inline with type
 */
+/*!
+   generic switch copy / memcpy
+*/
+/* less function call when 'type' is not compile time const */
+/* same as memcpy when type is compile time literal */
 static inline void void_copy(void * p_dest, const void * p_src, size_t size)
 {
     switch (size)
@@ -51,7 +47,10 @@ static inline void void_copy(void * p_dest, const void * p_src, size_t size)
 /* Copy as type */
 static inline void void_pointer_assign(size_t type, void * p_unit, const void * p_value) { void_copy(p_unit, p_value, type); }
 
-/* this should inline with type */
+/*
+    Scalar value path
+*/
+/* value sign extension */
 static inline value_t void_pointer_as_value(size_t type, const void * p_unit)
 {
     value_t value = 0;
@@ -68,6 +67,8 @@ static inline value_t void_pointer_as_value(size_t type, const void * p_unit)
     return value;
 }
 
+/* value version signiture clamp with type */
+/* preserves endianess */
 static inline void void_pointer_assign_as_value(size_t type, void * p_unit, value_t value)
 {
     switch (type)
@@ -83,6 +84,18 @@ static inline void void_pointer_assign_as_value(size_t type, void * p_unit, valu
 }
 
 
+/*!
+    @param type size of the element type
+*/
+static inline void * void_array_at(size_t type, const void * p_buffer, size_t index) { return ((uint8_t *)p_buffer + (index * type)); }
+
+/*
+    array
+    single unit at index by value
+*/
+static inline value_t void_array_get(size_t type, const void * p_buffer, size_t index) { return void_pointer_as_value(type, void_array_at(type, p_buffer, index)); }
+static inline void void_array_set(size_t type, void * p_buffer, size_t index, value_t value) { void_pointer_assign_as_value(type, void_array_at(type, p_buffer, index), value); }
+
 /*
     multiple units by pointer
 */
@@ -92,18 +105,16 @@ static inline void void_array_copy_from(size_t type, void * p_buffer, const void
 /******************************************************************************/
 /*
     Iteration
+    length in units
+    For each doesnt need transparent type optimization to pass through to memcpy
 */
 /******************************************************************************/
-
 /*
     accessors with 0 additional arguments
 */
-/*
-    length in units
-*/
 static inline void void_array_foreach(size_t type, void * p_buffer, size_t length, proc_t unit_op)
 {
-    for (size_t index = 0U; index < length; index++) { unit_op(void_pointer_at(type, p_buffer, index)); }
+    for (size_t index = 0U; index < length; index++) { unit_op(void_array_at(type, p_buffer, index)); }
 }
 
 #define array_foreach(p_buffer, length, op) void_array_foreach(sizeof(*(p_buffer)), (void *)p_buffer, length, (proc_t)op)
@@ -115,7 +126,7 @@ static inline void void_array_foreach(size_t type, void * p_buffer, size_t lengt
 static inline bool void_array_for_every(size_t type, void * p_buffer, size_t length, try_proc_t unit_poll)
 {
     bool is_every = true;
-    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_pointer_at(type, p_buffer, index)) == false) { is_every = false; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_array_at(type, p_buffer, index)) == false) { is_every = false; } }
     return is_every;
 }
 
@@ -125,7 +136,7 @@ static inline bool void_array_for_every(size_t type, void * p_buffer, size_t len
 static inline bool void_array_for_any(size_t type, void * p_buffer, size_t length, try_proc_t unit_poll)
 {
     bool is_any = false;
-    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_pointer_at(type, p_buffer, index)) == true) { is_any = true; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_poll(void_array_at(type, p_buffer, index)) == true) { is_any = true; } }
     return is_any;
 }
 
@@ -135,54 +146,51 @@ static inline bool void_array_for_any(size_t type, void * p_buffer, size_t lengt
 static inline bool void_array_is_every(size_t type, const void * p_buffer, size_t length, test_t unit_test)
 {
     bool is_every = true;
-    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(type, p_buffer, index)) == false) { is_every = false; break; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_array_at(type, p_buffer, index)) == false) { is_every = false; break; } }
     return is_every;
 }
 
 static inline bool void_array_is_any(size_t type, const void * p_buffer, size_t length, test_t unit_test)
 {
     bool is_any = false;
-    for (size_t index = 0U; index < length; index++) { if (unit_test(void_pointer_at(type, p_buffer, index)) == true) { is_any = true; break; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_test(void_array_at(type, p_buffer, index)) == true) { is_any = true; break; } }
     return is_any;
 }
 
 /*
     register size value interface
-*/
-/*
     accessors with parameters of register width type
-    using register size as parameter interface
 */
 static inline void void_array_foreach_set(size_t type, void * p_buffer, size_t length, set_t unit_setter, value_t value)
 {
-    for (size_t index = 0U; index < length; index++) { unit_setter(void_pointer_at(type, p_buffer, index), value); }
+    for (size_t index = 0U; index < length; index++) { unit_setter(void_array_at(type, p_buffer, index), value); }
 }
 
 static inline bool void_array_for_every_set(size_t type, void * p_buffer, size_t length, try_set_t unit_try, value_t value)
 {
     bool is_every = true;
-    for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(type, p_buffer, index), value) == false) { is_every = false; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_try(void_array_at(type, p_buffer, index), value) == false) { is_every = false; } }
     return is_every;
 }
 
 static inline bool void_array_for_any_set(size_t type, void * p_buffer, size_t length, try_set_t unit_try, value_t value)
 {
     bool is_any = false;
-    for (size_t index = 0U; index < length; index++) { if (unit_try(void_pointer_at(type, p_buffer, index), value) == true) { is_any = true; } }
+    for (size_t index = 0U; index < length; index++) { if (unit_try(void_array_at(type, p_buffer, index), value) == true) { is_any = true; } }
     return is_any;
 }
 
 static inline bool void_array_is_every_value(size_t type, const void * p_buffer, size_t length, test_value_t test, value_t value)
 {
     bool is_every = true;
-    for (size_t index = 0U; index < length; index++) { if (test(void_pointer_at(type, p_buffer, index), value) == false) { is_every = false; break; } }
+    for (size_t index = 0U; index < length; index++) { if (test(void_array_at(type, p_buffer, index), value) == false) { is_every = false; break; } }
     return is_every;
 }
 
 static inline bool void_array_is_any_value(size_t type, const void * p_buffer, size_t length, test_value_t test, value_t value)
 {
     bool is_any = false;
-    for (size_t index = 0U; index < length; index++) { if (test(void_pointer_at(type, p_buffer, index), value) == true) { is_any = true; break; } }
+    for (size_t index = 0U; index < length; index++) { if (test(void_array_at(type, p_buffer, index), value) == true) { is_any = true; break; } }
     return is_any;
 }
 
@@ -198,24 +206,14 @@ typedef int (*visitor2_t)(const void * p_context, value_t opt1, value_t opt2);
 
 // static inline void _array_foreach(size_t type, void * p_buffer, size_t length, visitor2_t visitor, value_t value1, value_t value2)
 // {
-//     for (size_t index = 0U; index < length; index++) { visitor(void_pointer_at(type, p_buffer, index), value1, value2); }
+//     for (size_t index = 0U; index < length; index++) { visitor(void_array_at(type, p_buffer, index), value1, value2); }
 // }
 // static inline void void_array_foreach(size_t type, void * p_buffer, size_t length, proc_t unit_op)
 // {
 //     _array_foreach(type, p_buffer, length, (visitor2_t)unit_op, 0, 0);
 // }
 
-/******************************************************************************/
-/*
-    Value Array
-*/
-/******************************************************************************/
-/*
-    array
-    single unit at index by value
-*/
-static inline value_t void_array_get(size_t type, const void * p_buffer, size_t index) { return void_pointer_as_value(type, void_pointer_at(type, p_buffer, index)); }
-static inline void void_array_set(size_t type, void * p_buffer, size_t index, value_t value) { void_pointer_assign_as_value(type, void_pointer_at(type, p_buffer, index), value); }
+
 
 /******************************************************************************/
 /*
@@ -231,7 +229,7 @@ static inline void * void_array_min(size_t type, const void * p_buffer, size_t l
     void * p_unit;
     for (size_t index = 1U; index < length; index++)
     {
-        p_unit = void_pointer_at(type, p_buffer, index);
+        p_unit = void_array_at(type, p_buffer, index);
         if (memcmp(p_unit, p_min, type) < 0) { p_min = p_unit; }
     }
     return (void *)p_min;
@@ -243,7 +241,7 @@ static inline void * void_array_max(size_t type, const void * p_buffer, size_t l
     void * p_unit;
     for (size_t index = 1U; index < length; index++)
     {
-        p_unit = void_pointer_at(type, p_buffer, index);
+        p_unit = void_array_at(type, p_buffer, index);
         if (memcmp(p_unit, p_max, type) > 0) { p_max = p_unit; }
     }
     return (void *)p_max;
@@ -261,7 +259,7 @@ struct range { value_t min; value_t max; };
 //     void * p_unit;
 //     for (size_t index = 1U; index < length; index++)
 //     {
-//         p_unit = void_pointer_at(type, p_buffer, index);
+//         p_unit = void_array_at(type, p_buffer, index);
 //         if (memcmp(p_unit, p_min, type) < 0) { p_min = p_unit; }
 //         else if (memcmp(p_unit, p_max, type) > 0) { p_max = p_unit; }
 //     }
@@ -277,7 +275,7 @@ static inline void * void_array_min_with(size_t type, void * p_buffer, size_t le
     void * p_unit;
     for (size_t index = 1U; index < length; index++)
     {
-        p_unit = void_pointer_at(type, p_buffer, index);
+        p_unit = void_array_at(type, p_buffer, index);
         if (compare(p_min, p_unit) > 0) { p_min = p_unit; }
     }
     return p_min;
@@ -289,7 +287,7 @@ static inline void * void_array_max_with(size_t type, void * p_buffer, size_t le
     void * p_unit;
     for (size_t index = 1U; index < length; index++)
     {
-        p_unit = void_pointer_at(type, p_buffer, index);
+        p_unit = void_array_at(type, p_buffer, index);
         if (compare(p_max, p_unit) < 0) { p_max = p_unit; }
     }
     return p_max;

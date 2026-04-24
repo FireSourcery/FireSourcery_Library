@@ -38,7 +38,7 @@
 
 #include "Transducer/Encoder/Encoder_ISR.h"
 
-#include "Utility/StateMachine/StateMachine_Thread.h"
+#include "Framework/StateMachine/StateMachine_Thread.h"
 
 
 /******************************************************************************/

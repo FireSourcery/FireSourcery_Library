@@ -32,8 +32,8 @@
 #include "Motor_Commutation.h"
 #include "Motor.h"
 
-#include "Utility/StateMachine/StateMachine.h"
-#include "Utility/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
+#include "Framework/StateMachine/StateMachine.h"
+#include "Framework/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
 
 #include "System/Critical/Critical.h"
 #include "System/SysTime/SysTime.h"

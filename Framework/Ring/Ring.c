@@ -259,7 +259,7 @@ bool Ring_EnqueueN(Ring_T * p_ring, const void * p_units, size_t unitCount)
     {
         if (unitCount <= Ring_GetEmptyCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PushBack(p_ring, void_array_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -276,7 +276,7 @@ bool Ring_DequeueN(Ring_T * p_ring, void * p_result, size_t unitCount)
     {
         if (unitCount <= Ring_GetFullCount(p_ring))
         {
-            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
+            for (size_t iUnit = 0U; iUnit < unitCount; ++iUnit) { PopFront(p_ring, void_array_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
             isSuccess = true;
         }
         ReleaseCritical(p_ring);
@@ -296,7 +296,7 @@ size_t Ring_EnqueueMax(Ring_T * p_ring, const void * p_units, size_t unitCount)
     {
         count = Ring_GetEmptyCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PushBack(p_ring, void_array_at(p_ring->Type.UNIT_SIZE, p_units, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;
@@ -314,7 +314,7 @@ size_t Ring_DequeueMax(Ring_T * p_ring, void * p_result, size_t unitCount)
     {
         count = Ring_GetFullCount(p_ring);
         if (count > unitCount) { count = unitCount; }
-        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_pointer_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
+        for (size_t iUnit = 0U; iUnit < count; ++iUnit) { PopFront(p_ring, void_array_at(p_ring->Type.UNIT_SIZE, p_result, iUnit)); }
         ReleaseCritical(p_ring);
     }
     return count;

@@ -53,13 +53,13 @@ typedef const struct Array
         uint64_t * P_ARRAY64;
     };
     size_t LENGTH;    // Length of the p_array
-    // void * P_AUGMENTS; // P_HEADER/P_STATE
+    void * P_AUGMENTS; // P_HEADER/P_STATE
 }
 Array_T;
 
 // static allocation only, for inline convenience
-#define _BUFFER_ALLOC(Bytes) ((void *)(uint8_t[(Bytes)]){})
-#define _ARRAY_ALLOC(T, Length) ((void *)(T[(Length)]){})
+#define _BUFFER_ALLOC(Bytes) ((void *)(alignas(uintptr_t) uint8_t[(Bytes)]){})
+#define _ARRAY_ALLOC(T, Length) ((void *)(alignas(uintptr_t) T[(Length)]){})
 
 /*
     Length in Units
@@ -68,68 +68,19 @@ Array_T;
 #define ARRAY_INIT_ALLOC(TypeSize, Length, p_Augments) ARRAY_INIT(_BUFFER_ALLOC((TypeSize) * (Length)), Length, p_Augments)
 #define ARRAY_INIT_ALLOC_AS(T, Length, p_Augments) ARRAY_INIT(_ARRAY_ALLOC(T, Length), Length, p_Augments)
 
+
+#define _ARRAY_AUGMENTED_ALLOC(AugmentsSize, Length) ((void *)(alignas(uintptr_t) uint8_t[(AugmentsSize) * (Length)]){})
+#define ARRAY_AUGMENTED_INIT(p_Alloc, AugmentsSize, Length) { .P_BUFFER = ((uint8_t *)(p_Alloc) + (AugmentsSize)), .LENGTH = (Length), .P_AUGMENTS = (p_Alloc) }
+
 /*
     Void * or Struct
-    rely on compiler optimization to inline type size
+    compiler optimization to inline type size
 */
-static inline void _Array_Set(const size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(void_pointer_at(type, p_array->P_BUFFER, index), p_value, type); }
-static inline void _Array_ForEach(const size_t type, Array_T * p_array, proc_t op) { void_array_foreach(type, p_array->P_BUFFER, p_array->LENGTH, op); }
-static inline void _Array_SetEach(const size_t type, Array_T * p_array, set_t op, value_t value) { void_array_foreach_set(type, p_array->P_BUFFER, p_array->LENGTH, op, value); }
+static inline intptr_t Array_GetV(size_t type, Array_T * p_array, size_t index) { return void_array_get(type, p_array->P_BUFFER, index); }
+static inline void Array_SetV(size_t type, Array_T * p_array, size_t index, value_t value) { void_array_set(type, p_array->P_BUFFER, index, value); }
 
-/*
-    Value Array
-    Compile time typed
-*/
-static inline int8_t * Array8_At(Array_T * p_array, size_t index) { return &p_array->P_ARRAY8[index]; }
+static inline void Array_Set(size_t type, Array_T * p_array, size_t index, const void * p_value) { memcpy(void_array_at(type, p_array->P_BUFFER, index), p_value, type); }
+static inline void Array_Get(size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(p_value, void_array_at(type, p_array->P_BUFFER, index), type); }
 
-static inline int8_t Array8_Get(Array_T * p_array, size_t index) { return p_array->P_ARRAY8[index]; }
-static inline void Array8_Set(Array_T * p_array, size_t index, int8_t value) { p_array->P_ARRAY8[index] = value; }
-
-static inline int16_t Array16_Get(Array_T * p_array, size_t index) { return p_array->P_ARRAY16[index]; }
-static inline void Array16_Set(Array_T * p_array, size_t index, int16_t value) { p_array->P_ARRAY16[index] = value; }
-
-static inline int32_t Array32_Get(Array_T * p_array, size_t index)  { return p_array->P_ARRAY32[index]; }
-static inline void Array32_Set(Array_T * p_array, size_t index, int32_t value) { p_array->P_ARRAY32[index] = value; }
-
-// static inline void Array32_ForEach(Array_T * p_array, proc_t op) { for (size_t index = 0U; index < p_array->LENGTH; index++) { op(&p_array->P_ARRAY32[index]); } }
-
-static inline void Array32_ForEach(Array_T * p_array, proc_t op) { array_foreach_call(p_array->P_ARRAY32, p_array->LENGTH, op); }
-
-
-/*
-    Typed signature for Init and handle with _Generic
-*/
-typedef const Array_T Array8_T;
-typedef const Array_T Array16_T;
-typedef const Array_T Array32_T;
-typedef const Array_T Array64_T;
-
-/* cast the wrapper type */
-#define ValueArray_Get(p_array, index) \
-    _Generic(p_array, \
-        Array8_T *: Array8_Get, \
-        Array16_T *: Array16_Get, \
-        Array32_T *: Array32_Get, \
-        Array64_T *: Array64_Get,  \
-        default : ArrayPtr_Get \
-    )(p_array, index)
-
-#define ValueArray_Set(p_array, index, value) \
-    _Generic(p_array, \
-        Array8_T *: Array8_Set, \
-        Array16_T *: Array16_Set, \
-        Array32_T *: Array32_Set, \
-        Array64_T *: Array64_Set, \
-        default  : ArrayPtr_Set \
-    )(p_array, index, value)
-
-// #define Array_GetAs(T, p_ArrayMeta, index) \
-//     _Generic((T)0, \
-//         int8_t  : Array8_Get, \
-//         int16_t : Array16_Get, \
-//         int32_t : Array32_Get, \
-//         default  :   \
-//     )(p_ArrayMeta, index)
-
-// #define Array_SetAs(T, p_ArrayMeta, index, value) (Array_At(T, p_ArrayMeta, index) = value)
-
+// static inline void Array_Set(size_t type, Array_T array, size_t index, const void * p_value) { memcpy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
+// static inline void Array_Get(size_t type, Array_T array, size_t index, void * p_value) { memcpy(p_value, void_array_at(type, array.P_BUFFER, index), type); }

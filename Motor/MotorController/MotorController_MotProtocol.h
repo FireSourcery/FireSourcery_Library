@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Utility/Protocol/Protocol.h"
+#include "Framework/Protocol/Protocol.h"
 #include "Motor/MotProtocol/MotPacket.h"
 #include "Motor/MotProtocol/MotProtocol.h"
 #include "Motor/MotorController/MotorController_Var.h"

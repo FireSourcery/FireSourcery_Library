@@ -47,6 +47,7 @@ static inline void _ADC_CaptureResult(Analog_ConversionChannel_T * p_conversion,
     else { p_conversion->P_CONVERSION_STATE->State = result; }
 }
 
+// static inline void _ADC_CaptureTo(const HAL_ADC_T * p_hal,Analog_ConversionChannel_T *  p_pins, Analog_ConversionState_T   * p_state, Analog_Callbacks_T * p_callbacks,  uint8_t count)
 static inline void _ADC_CaptureTo(const HAL_ADC_T * p_hal, Analog_ConversionChannel_T * const * p_conversions, uint8_t count)
 {
     if (count == HAL_ADC_ReadFifoCount(p_hal))
@@ -147,6 +148,7 @@ static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_c
 }
 
 
+
 /******************************************************************************/
 /*!
     Unsynchronized Activation
@@ -156,6 +158,8 @@ static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_c
      select from mapped or parameters
 */
 /******************************************************************************/
+static inline void Analog_ADC_StartConversion(Analog_ADC_T * p_adc, analog_channel_t channel) { ADC_StartFrom(p_adc, &p_adc->P_CONVERSION_CHANNELS[channel], (1UL << channel)); }
+
 static void _Analog_ADC_StartConversions(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
     if (Analog_ADC_ReadIsActive(p_adc) == false) { ADC_StartFrom(p_adc, p_conversions, markers); }
@@ -173,8 +177,6 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 //     _Analog_ADC_StartConversions(p_adc->P_ADC_STATE, p_adc->P_CONVERSION_CHANNELS, p_batch->CHANNELS);
 //     p_adc->P_ADC_STATE->Callback = p_batch->P_CONTEXT;
 // }
-
-
 
 /******************************************************************************/
 /*!

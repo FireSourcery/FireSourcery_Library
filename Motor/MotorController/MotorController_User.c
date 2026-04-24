@@ -93,7 +93,7 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
     Config
 */
 /******************************************************************************/
-/*! @param[in] volts < PHASE_CALIBRATION.VMAX and VBusConfig.VSupplyNominal_V */
+/*! @param[in] volts < GetVRated_V   */
 void MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
 {
     _MotorController_SetVSupply_V(p_dev, volts);
