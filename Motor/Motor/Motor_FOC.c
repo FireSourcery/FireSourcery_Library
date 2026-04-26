@@ -47,6 +47,12 @@ static bool CaptureIabc(Motor_State_T * p_motor)
     return isCaptureI;
 }
 
+// static inline interval_t Motor_GetVqLimits(const Motor_State_T * p_motor)
+// {
+//     int32_t window = Phase_VBus_GetVNominal() / 8; /* plugging clamped beyond 1/2 VPhaseRef. e.g 20VBus -> [-2.5, 2.5] or [0, 5] */
+//     int32_t vSpeed = _Motor_GetVSpeed_Fract16(p_motor);
+//     return (interval_t) { .low = vSpeed - window, .high = vSpeed + window, };
+// }
 
 /*
     Current Feedback Loop
@@ -58,7 +64,8 @@ static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
     int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
-    PID_CaptureOutputLimits(&p_motor->PidIq, (p_motor->Direction == MOTOR_DIRECTION_CW) * -vqLimit, (p_motor->Direction == MOTOR_DIRECTION_CCW) * vqLimit);
+    interval_t band = interval_of_sign((sign_t)p_motor->Direction, vqLimit);
+    PID_CaptureOutputLimits(&p_motor->PidIq, band.low, band.high);
     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
 }
 
@@ -69,8 +76,8 @@ static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int1
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
     {
-        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->PidIq)) { PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); }
         _PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
+        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->PidIq)) { PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); }
     }
 }
 
@@ -267,7 +274,8 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 */
 void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, int16_t vRef)
 {
-    PID_SetOutputLimits(&p_motor->PidIq, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor));
+    interval_t v = VBus_AntiPluggingLimits(p_motor->p_VBus, (sign_t)p_motor->Direction);
+    PID_SetOutputLimits(&p_motor->PidIq, v.low, v.high);
     PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
 }
 
@@ -281,6 +289,7 @@ void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction
     Motor_SetDirection(p_motor, direction); /* alternatively caller handle */
     Motor_FOC_ApplyVLimits(p_motor);
 }
+
 
 
 
@@ -319,7 +328,7 @@ void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 
 void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 {
-    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(p_motor)), 0); /*  */
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(&p_motor->Config)), 0); /*  */
 }
 
 /*
@@ -328,7 +337,7 @@ void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor)
 {
-    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, Motor_GetIAlign(p_motor) * p_motor->Direction);  /* continue from align current */
+    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, Motor_GetIAlign(&p_motor->Config) * p_motor->Direction);  /* continue from align current */
     Ramp_SetOutputState(&p_motor->OpenLoopIRamp, 0);
     Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
     /* continue from align angle State, in case it is not 0/A */

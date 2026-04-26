@@ -116,11 +116,11 @@ static inline uint16_t _UserAIn_GetValue(const UserAIn_State_T * p_state) { retu
 */
 /******************************************************************************/
 /* Edge as threshold */
-static inline bool UserAIn_IsOn(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) * _UserAIn_IsOn(p_dev->P_STATE); }
+static inline bool UserAIn_IsOn(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_IsOn(p_dev->P_STATE) : false; }
 
 /*! @return Percent16 by default */
 /* Check IsOn on get, rather than overwrite 0 when off, Value remains prev captured value */
-static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) * _UserAIn_GetValue(p_dev->P_STATE); }
+static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) ? _UserAIn_GetValue(p_dev->P_STATE) : 0; }
 
 /*!
     Edge detection - considers EdgePin status

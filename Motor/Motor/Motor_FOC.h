@@ -79,16 +79,10 @@ static inline motor_value_t Motor_FOC_GetIPhase_UFract16(const Motor_State_T * p
 static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetActivePower(&p_motor->Foc); }
 
-/* vq is expected to be the same sign as p_motor->Direction */
 
-/* I limit in [Direction] selected */
-static inline uint16_t Motor_FOC_GetILimit(const Motor_State_T * p_motor) { return (FOC_IsMotoringCmd(&p_motor->Foc) ? p_motor->ILimitMotoring_Fract16 : p_motor->ILimitGenerating_Fract16); }
+/*
 
-static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_Iq(&p_motor->Foc), _Motor_GetILimitCw(p_motor), _Motor_GetILimitCcw(p_motor)); }
-static inline bool Motor_FOC_IsILimitReached(const Motor_State_T * p_motor) { return (FOC_GetIMagnitude(&p_motor->Foc) > Motor_FOC_GetILimit(p_motor)); }
-// static inline bool _Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return (abs(FOC_Iq(&p_motor->Foc)) > Motor_FOC_GetILimit(p_motor)); }
-
-
+*/
 static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) > 0); }
 static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
 
@@ -137,6 +131,12 @@ static inline Motor_FOC_OperatingState_T Motor_FOC_OperatingState(int16_t speed,
 // static inline bool Motor_FOC_StateIsGenerating(Motor_FOC_OperatingState_T s){ return abs(s) >= 2; }
 // static inline bool Motor_FOC_StateIsPlugging(Motor_FOC_OperatingState_T s)  { return abs(s) == 3; }
 
+
+/*
+ */
+/* vq is expected to be the same sign as p_motor->Direction */
+
+// static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_Iq(&p_motor->Foc), Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 
 /******************************************************************************/
 /*!

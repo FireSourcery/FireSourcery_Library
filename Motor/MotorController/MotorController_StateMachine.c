@@ -169,7 +169,8 @@ static State_T * Init_Next(MotorController_T * p_dev)
         MotorController_PollFaultFlags(p_dev); /* Clear latching fault flags set by sensor polling in Main thread */
 
         if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; }
-        /* Enforce VMonitor Enable */ /* Disabled on invalid config */
+        if (VBus_Config_IsValid(&p_dev->P_VBUS->Config) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
+        /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
         if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == false) { p_mc->FaultFlags.Motors = 1U; }

@@ -56,9 +56,9 @@ int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 
 /*
     Bounds at target
+    Limits are applied to the target. Ramp smoothing applies on limit update
     clamp: if step overshoots, saturate at target
 */
-/* Limits are applied to the target. Ramp smoothing applies on limit update */
 // int32_t Ramp_Continous_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
 {
@@ -79,11 +79,11 @@ int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
     return Ramp_GetOutput(p_ramp);
 }
 
-int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target)
-{
-    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target, lower, upper) << RAMP_SHIFT);
-    return Ramp_GetOutput(p_ramp);
-}
+// int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target)
+// {
+//     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target, lower, upper) << RAMP_SHIFT);
+//     return Ramp_GetOutput(p_ramp);
+// }
 
 /******************************************************************************/
 /*

@@ -60,7 +60,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
     static_assert(HALL_SENSORS_VIRTUAL_B == PHASE_ID_B);
     static_assert(HALL_SENSORS_VIRTUAL_C == PHASE_ID_C);
 
-    const uint16_t duty = Motor_GetVAlign_Duty(p_motor->P_MOTOR);
+    const uint16_t duty = Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {

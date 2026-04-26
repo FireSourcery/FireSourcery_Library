@@ -79,6 +79,15 @@ static void Motor_PollFaultFlags(const Motor_T * p_motor)
     p_motor->P_MOTOR->FaultFlags.Overheat = 0;
 }
 
+void _Motor_SetDirection(Motor_State_T * p_motor, VBus_T * p_vbus, Motor_Direction_T direction)
+{
+    Motor_SetDirection(p_motor, direction); /* alternatively caller handle */
+    uint16_t vRef = VBus_GetVPhaseRefSvpwm(p_vbus);
+    interval_t vInterval = VBus_AntiPluggingLimits(p_vbus, (sign_t)direction);
+    PID_SetOutputLimits(&p_motor->PidIq, vInterval.low, vInterval.high);
+    PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
+}
+
 /******************************************************************************/
 /*!
     @brief States
@@ -108,9 +117,8 @@ static State_T * Init_Next(const Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
-        // (Motor_CheckConfig() == true)    // check params, sync config limits
         if (Phase_Calibration_IsValid() == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
-        // if (Motor_ValidateIabcZeroRef(p_motor) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
+        if (Motor_Config_IsValid(&p_motor->P_MOTOR->Config) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
 
         p_motor->P_MOTOR->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR->p_ActiveSensor);
         Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */

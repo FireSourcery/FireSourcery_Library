@@ -214,7 +214,7 @@ void Motor_Config_SetOpenLoopScalarLimit(Motor_State_T * p_motor, uint16_t scala
 {
     p_motor->Config.OpenLoopLimitScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);
     p_motor->Config.AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);;
-    p_motor->Config.OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopILimitOf(&p_motor->Config, p_motor->Config.OpenLoopRampIFinal_Fract16);
+    p_motor->Config.OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopIRatedLimitOf(&p_motor->Config, p_motor->Config.OpenLoopRampIFinal_Fract16);
 }
 
 
@@ -229,7 +229,7 @@ void Motor_Config_SetAlignTime_Millis(Motor_State_T * p_motor, uint16_t millis) 
 */
 void Motor_Config_SetOpenLoopRampIFinal_Fract16(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->Config.OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopILimitOf(&p_motor->Config, i_fract16);
+    p_motor->Config.OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopIRatedLimitOf(&p_motor->Config, i_fract16);
     // PropagateSet(p_motor, Motor_ResetOpenLoopRamp);
 }
 

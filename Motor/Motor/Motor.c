@@ -54,7 +54,7 @@ void Motor_Init(const Motor_T * p_dev)
     p_dev->P_MOTOR->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR->Config.SensorMode);
     RotorSensor_Init(p_dev->P_MOTOR->p_ActiveSensor);
 
-    // p_dev->P_MOTOR->p_VBus = p_dev->P_VBUS; /* BackPointer for now */
+    p_dev->P_MOTOR->p_VBus = p_dev->P_VBUS; /* BackPointer for now */
 
     HeatMonitor_Init(&p_dev->HEAT_MONITOR);
 
@@ -144,16 +144,16 @@ void Motor_InitUnits(Motor_State_T * p_motor)
 /******************************************************************************/
 static void _Motor_ResolveILimits(Motor_State_T * p_motor)
 {
-    Motor_Range_T iLimits = Motor_GetILimits(p_motor);
-    p_motor->ILimitCcw_Fract16 = iLimits.Ccw;
-    p_motor->ILimitCw_Fract16 = iLimits.Cw;
+    interval_t iLimits = Motor_GetILimits(p_motor);
+    p_motor->ILimitCcw_Fract16 = iLimits.high;
+    p_motor->ILimitCw_Fract16  = iLimits.low;
 }
 
 static void _Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
 {
-    Motor_Range_T speedLimits = Motor_GetSpeedLimits(p_motor);
-    p_motor->SpeedLimitCcw_Fract16 = speedLimits.Ccw;
-    p_motor->SpeedLimitCw_Fract16 = speedLimits.Cw;
+    interval_t speedLimits = Motor_GetSpeedLimits(p_motor);
+    p_motor->SpeedLimitCcw_Fract16 = speedLimits.high;
+    p_motor->SpeedLimitCw_Fract16  = speedLimits.low;
 }
 
 static void Motor_ResolveILimits(Motor_State_T * p_motor)
@@ -218,15 +218,17 @@ void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode)
 {
     p_motor->FeedbackMode.Value = mode.Value;
 
+    interval_t v = VBus_AntiPluggingLimits(p_motor->p_VBus, (sign_t)p_motor->Direction);
+
     if (p_motor->FeedbackMode.Speed == 1U)
     {
         if (p_motor->FeedbackMode.Current == 1U) { PID_SetOutputLimits(&p_motor->PidSpeed, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); } /* SpeedPid Output is I */
-        else                                     { PID_SetOutputLimits(&p_motor->PidSpeed, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); } /* SpeedPid Output is V */
+        else                                     { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
     }
 
     if (p_motor->FeedbackMode.Current == 1U)    { Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
-    else                                        { Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); }
-    // else                                        { Ramp_SetOutputLimit(&p_motor->VRamp, Motor_VLimitCw(p_motor), Motor_VLimitCcw(p_motor)); }
+    else                                        { Ramp_SetOutputLimit(&p_motor->TorqueRamp, v.low, v.high); }
+    // else                                        { Ramp_SetOutputLimit(&p_motor->VRamp, v.low, v.high); }
 }
 
 

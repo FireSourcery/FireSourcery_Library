@@ -62,10 +62,13 @@ static inline int32_t math_clamp_abs(int32_t x, int32_t limit)
     return math_clamp(x, -abs, abs);
 }
 
+
+
 static inline bool math_is_in_range(int32_t value, int32_t lower, int32_t upper) { return (value >= lower) && (value <= upper); }
 static inline bool math_is_out_of_range(int32_t value, int32_t lower, int32_t upper) { return (value < lower) || (value > upper); }
 
 static inline bool math_in_wrap_window(int32_t x, int32_t lo, int32_t hi) { return (uint32_t)(x - lo) <= (uint32_t)(hi - lo); }
+
 /* positive as lshift */
 static inline int32_t math_shift_signed(int32_t value, int8_t shift) { return (shift > 0) ? (value << shift) : (value >> (-shift)); }
 
@@ -98,8 +101,45 @@ static inline int32_t math_add_sat(int32_t a, int32_t b)
 static inline int32_t math_limit_upper(int32_t value, int32_t upper) { return math_min(value, upper); }
 static inline int32_t math_limit_lower(int32_t value, int32_t lower) { return math_max(value, lower); }
 
-// static inline int32_t math_clamp_0_up(int32_t value )  { return (value > 0) * value; }
-// static inline int32_t math_clamp_0_down(int32_t value )  { return (value < 0) * value; }
+
+/*
+    interval
+*/
+/* smallest interval containing 0 and `value` */
+static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
+
+/* topological pair: magnitudes laid out as [-lowMag, +highMag] */
+static inline interval_t interval_of_pair(int32_t lowMag, int32_t highMag) { return (interval_t) { .low = -lowMag, .high = +highMag }; }
+
+/* sign-keyed half-plane: magnitude on the matching side, zero on the other */
+static inline interval_t interval_of_sign(sign_t sign, uint32_t magnitude)
+{
+    switch (sign)
+    {
+        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +magnitude };
+        case SIGN_NEGATIVE: return (interval_t) { .low = -magnitude, .high = 0 };
+        default:            return (interval_t) { .low = 0, .high = 0 };
+    }
+}
+
+/* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
+static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
+{
+    switch (sign)
+    {
+        case SIGN_POSITIVE: return (interval_t) { .low = -opposedMag, .high = +alignedMag };
+        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = +opposedMag };
+        default:            return (interval_t) { .low = 0, .high = 0 };
+    }
+}
+
+
+static inline int32_t interval_clamp(int32_t v, interval_t b) { return math_clamp(v, b.low, b.high); }
+static inline bool interval_contains(int32_t v, interval_t b) { return v >= b.low && v <= b.high; }
+static inline interval_t interval_intersect(interval_t a, interval_t b) { return (interval_t) { .low = math_max(a.low, b.low), .high = math_min(a.high, b.high) }; }
+// static inline interval_t interval_scale(interval_t b, fract16_t k) { return (interval_t) { .low = fract16_mul(b.low, k), .high = fract16_mul(b.high, k) }; }
+
+
 
 
 /*

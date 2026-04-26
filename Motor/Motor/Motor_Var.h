@@ -258,9 +258,6 @@ typedef enum Motor_Var_ConfigPid
 }
 Motor_Var_ConfigPid_T;
 
-/*  */
-// typedef RotorSensor_Id_T Motor_Var_RotorSensorCmd_T; /* sensorId as VarId, cmd as VarValue */
-
 /* Debug */
 typedef enum Motor_Var_ConfigDebug
 {

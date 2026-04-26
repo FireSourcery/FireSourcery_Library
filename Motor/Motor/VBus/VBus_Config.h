@@ -55,9 +55,6 @@ typedef struct VBus_Config
     uint16_t IDerateOverVFloor_Fract16;    /* Regen-I scale at VHighDerate (e.g. 0.10). Floor for VBus_IDerate_OverV  ramp (regen) */
     uint16_t SpeedDerateFloor_Fract16;     /* Speed-limit scale clamp (e.g. 0.70) — back-EMF headroom preserved even at low VBus. Floor for speed derate (back-EMF ceiling) */
 
-    // Linear_T IDerateUnderVLinear; /* Precomputed from VLowDerate, VSupplyNominal, and IDerateUnderVFloor_Fract16. */
-    // Linear_T IDerateOverVLinear;
-
     VMonitor_Config_T MonitorConfig;    /* Nominal, Warn/Fault Low/High, Hysteresis. In runtime units */
 }
 VBus_Config_T;
@@ -72,7 +69,7 @@ static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) {
 static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
 static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
 
-
+/*  */
 static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
 static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
 static inline uint16_t VBus_GetVSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
@@ -114,6 +111,33 @@ static inline uint16_t VBus_GetVFullPower_V(const VBus_Config_T * p_vbus) { retu
 static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_fract16)
 {
     *p_config = VBUS_CONFIG_LIION(vNominal_fract16, Phase_Calibration_GetVMaxVolts());
+}
+
+
+/******************************************************************************/
+/*!
+    Validate / IsValid
+*/
+/******************************************************************************/
+static inline void VBus_Config_Validate(VBus_Config_T * p_config)
+{
+    p_config->VSupplyNominal_V           = math_min(p_config->VSupplyNominal_V, Phase_Calibration_GetVRated_V());
+    p_config->IDerateUnderVFloor_Fract16 = math_min(p_config->IDerateUnderVFloor_Fract16, INT16_MAX);
+    p_config->IDerateOverVFloor_Fract16  = math_min(p_config->IDerateOverVFloor_Fract16,  INT16_MAX);
+    p_config->SpeedDerateFloor_Fract16   = math_min(p_config->SpeedDerateFloor_Fract16,   INT16_MAX);
+}
+
+static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
+{
+    return (p_config->VSupplyNominal_V != 0U)
+        && (p_config->VSupplyNominal_V           <= Phase_Calibration_GetVRated_V())
+        && (p_config->IDerateUnderVFloor_Fract16 <= INT16_MAX)
+        && (p_config->IDerateOverVFloor_Fract16  <= INT16_MAX)
+        && (p_config->SpeedDerateFloor_Fract16   <= INT16_MAX)
+        && (p_config->MonitorConfig.Warning.LimitLow  < p_config->MonitorConfig.Nominal)
+        && (p_config->MonitorConfig.Warning.LimitHigh > p_config->MonitorConfig.Nominal)
+        && (p_config->MonitorConfig.FaultUnderLimit.Limit < p_config->MonitorConfig.Warning.LimitLow)
+        && (p_config->MonitorConfig.FaultOverLimit.Limit  > p_config->MonitorConfig.Warning.LimitHigh);
 }
 
 

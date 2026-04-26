@@ -67,6 +67,9 @@ typedef struct VBus
     uint32_t PerV_Fract32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
 
     // uint32_t PerVNominal_Fract32;
+    // Linear_T IDerateUnderVLinear; /* Precomputed from VLowDerate, VSupplyNominal, and IDerateUnderVFloor_Fract16. */
+    // Linear_T IDerateOverVLinear;
+
     VMonitor_State_T MonitorState;
     VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
 }
@@ -138,6 +141,9 @@ static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbu
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
 static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Fract32 / 65536; }
+
+static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
+
 
 
 /******************************************************************************/
@@ -213,7 +219,7 @@ static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return VB
 static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 {
     uint16_t vNominal = VBus_VNominal_Fract16(&p_vbus->Config);
-    if (vNominal == 0U) { return FRACT16_MAX; }   /* fail-open on blank NVM */
+    if (p_vbus->VBus_Fract16 >= vNominal) { return FRACT16_MAX; }
     return math_clamp(fract16_div(p_vbus->VBus_Fract16, vNominal), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
     // return math_clamp(fract16_mul(p_vbus->VBus_Fract16, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
 }

@@ -54,7 +54,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
 {
     const SinCos_RotorSensor_T * p_sensor = GetSinCosSensor(p_motor);
     SinCos_State_T * p_sinCosState = p_sensor->SIN_COS.P_STATE;
-    const uint16_t duty = Motor_GetVAlign_Duty(p_motor->P_MOTOR);
+    const uint16_t duty = Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
