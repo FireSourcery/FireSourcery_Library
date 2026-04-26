@@ -54,8 +54,59 @@ static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { retur
 */
 extern void Motor_Calibration_StartHome(const Motor_T * p_motor);
 extern void Motor_Calibration_EnterTuning(const Motor_T * p_motor);
+extern bool Motor_Calibration_IsTuning(const Motor_T * p_motor);
 extern void Motor_Calibration_StartElectrical(const Motor_T * p_motor);
 extern bool Motor_Calibration_IsElectrical(const Motor_T * p_motor);
+
+/******************************************************************************/
+/*!
+    Tuning excitation and capture.
+    Drives the active loop's setpoint with a deterministic test signal and
+    records (setpoint, feedback) per control tick. Buffer is shipped off-target
+    (CAN/serial) for identification; gains are written back via Motor_Config.
+*/
+/******************************************************************************/
+typedef enum Motor_Tuning_Excite
+{
+    MOTOR_TUNING_EXCITE_TRACK,      /* Manual: pass UserSpeedReq/UserTorqueReq through unchanged */
+    MOTOR_TUNING_EXCITE_STEP,       /* Hold zero StepDelay ticks, then jump to Amplitude */
+    MOTOR_TUNING_EXCITE_SQUARE,     /* +Amplitude / -Amplitude every HalfPeriod ticks */
+}
+Motor_Tuning_Excite_T;
+
+typedef enum Motor_Tuning_Channel
+{
+    MOTOR_TUNING_CHANNEL_SPEED,     /* Drive UserSpeedReq, capture Speed_Fract16 */
+    MOTOR_TUNING_CHANNEL_IQ,        /* Drive UserTorqueReq, capture FOC_Iq */
+}
+Motor_Tuning_Channel_T;
+
+typedef struct Motor_Tuning_Config
+{
+    Motor_Tuning_Excite_T  Shape;
+    Motor_Tuning_Channel_T Channel;
+    int16_t                Amplitude;       /* fract16 setpoint amplitude */
+    uint16_t               HalfPeriod;      /* control ticks per half-period (SQUARE) */
+    uint16_t               StepDelay;       /* idle ticks before edge (STEP) */
+}
+Motor_Tuning_Config_T;
+
+#define MOTOR_TUNING_CAPTURE_LEN 128U       /* @20kHz: 6.4ms window */
+
+typedef struct Motor_Tuning_Capture
+{
+    int16_t  Setpoint[MOTOR_TUNING_CAPTURE_LEN];
+    int16_t  Feedback[MOTOR_TUNING_CAPTURE_LEN];
+    uint16_t Index;
+    bool     Full;
+}
+Motor_Tuning_Capture_T;
+
+extern void Motor_Calibration_EnterAutoTuning(const Motor_T * p_motor);
+extern void Motor_Calibration_Tuning_ArmExcite(const Motor_T * p_motor, const Motor_Tuning_Config_T * p_config);
+extern void Motor_Calibration_Tuning_Disarm(const Motor_T * p_motor);
+extern bool Motor_Calibration_Tuning_IsCaptureDone(const Motor_T * p_motor);
+extern const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(const Motor_T * p_motor);
 
 /*
     Calibration SubState

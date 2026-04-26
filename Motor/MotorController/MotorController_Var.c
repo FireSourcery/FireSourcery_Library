@@ -111,7 +111,7 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VBusConfig.VSupplyNominal_V;       break;
-        // case MOT_VAR_CONFIG_RESV:             value = p_state->Config.VBusConfig.IDerateUnderVFloor_Fract16; break; //to vbus config
+        // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
         case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
@@ -133,7 +133,7 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
     switch (id)
     {
         case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                            break;
-        // case MOT_VAR_CONFIG_RESV:          p_state->Config.VBusConfig.IDerateUnderVFloor_Fract16 = value;                          break;
+        // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
         case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);                     break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;

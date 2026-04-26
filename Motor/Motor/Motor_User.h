@@ -108,8 +108,16 @@ static inline ufract16_t Motor_GetIBus_UFract16(const Motor_State_T * p_motor) {
 /*  */
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
+#ifdef MOTOR_UNIT_CONVERSION_LOCAL
+static inline int16_t Motor_GetSpeed_Rpm(const Motor_State_T * p_motor)             { return  (p_motor, Motor_GetSpeed_Fract16(p_motor)); }
+static inline int16_t Motor_GetIPhase_Amps(const Motor_State_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
+static inline int16_t Motor_GetVPhase_Volts(const Motor_State_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
+static inline int32_t Motor_GetElectricalPower_VA(const Motor_State_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
+static inline thermal_t Motor_GetHeat_DegC(const Motor_State_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+#endif
 
 /*
+
 */
 static inline bool Motor_IsILimitSet(const Motor_State_T * p_motor)
 {
@@ -121,13 +129,6 @@ static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
     return (p_motor->SpeedLimitForward_Fract16 != p_motor->Config.SpeedLimitForward_Fract16) || (p_motor->SpeedLimitReverse_Fract16 != p_motor->Config.SpeedLimitReverse_Fract16);
 }
 
-#ifdef MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_GetSpeed_Rpm(const Motor_State_T * p_motor)             { return  (p_motor, Motor_GetSpeed_Fract16(p_motor)); }
-static inline int16_t Motor_GetIPhase_Amps(const Motor_State_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
-static inline int16_t Motor_GetVPhase_Volts(const Motor_State_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
-static inline int32_t Motor_GetElectricalPower_VA(const Motor_State_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
-static inline thermal_t Motor_GetHeat_DegC(const Motor_State_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
-#endif
 
 /*
     User config frame

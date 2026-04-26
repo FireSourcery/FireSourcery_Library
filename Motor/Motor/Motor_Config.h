@@ -33,23 +33,13 @@
 #ifndef MOTOR_CONFIG_H
 #define MOTOR_CONFIG_H
 
-#include "_Motor_Config.h"
+
 #include "Motor.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-// #define MOTOR_TICKS_OF_SPEED_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (RampInterval) / (UnitsPerS))
-// #define MOTOR_TICKS_OF_TORQUE_RAMP(RampInterval, UnitsPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (RampInterval) / (UnitsPerS)) /* V or I */
 
-/* scale to rated max */
-#ifndef MOTOR_OPEN_LOOP_MAX_SCALAR
-#define MOTOR_OPEN_LOOP_MAX_SCALAR FRACT16(0.1F)
-#endif
-
-// #ifndef MOTOR_OPEN_LOOP_V_SCALAR_MAX
-// #define MOTOR_OPEN_LOOP_V_SCALAR_MAX FRACT16(0.1F)
-// #endif
 
 /******************************************************************************/
 /*
@@ -75,7 +65,8 @@ static inline uint16_t Motor_Config_GetKv(const Motor_State_T * p_motor)        
 static inline uint16_t Motor_Config_GetSpeedRated(const Motor_State_T * p_motor)                      { return p_motor->Config.SpeedRated_Rpm; }
 static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_State_T * p_motor)           { return p_motor->Config.VSpeedScalar_Fract16; }
 
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return ((uint32_t)p_motor->Config.VSpeedScalar_Fract16 * Motor_GetSpeedVNominalRef_Rpm(p_motor)) >> 15U; }
+// static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return ((uint32_t)p_motor->Config.VSpeedScalar_Fract16 * Motor_GetSpeedVNominalRef_Rpm(&p_motor->Config)) >> 15U; }
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_State_T * p_motor)              { return  0U;}
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_State_T * p_motor)                     { return p_motor->Config.IabcZeroRef_Adcu.A; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_State_T * p_motor)                     { return p_motor->Config.IabcZeroRef_Adcu.B; }
@@ -178,26 +169,6 @@ extern void Motor_Config_SetILimitGenerating_Amp(Motor_State_T * p_motor, uint16
 extern void Motor_Config_SetILimit_Amp(Motor_State_T * p_motor, uint16_t motoring_Amp, uint16_t generating_Amp);
 #endif
 
-// direct field access without propagate
-// int32_t _Motor_Config_Calibration_Get(const Motor_Config_T * p_config, Motor_ConfigId_Calibration_T varId)
-// {
-//     int32_t value = 0;
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_COMMUTATION_MODE:              value = p_config->CommutationMode;                          break;
-//         case MOTOR_VAR_SENSOR_MODE:                   value = p_config->SensorMode;                               break;
-//         // case MOTOR_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_motor);      break;
-//         // case MOTOR_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_motor);                 break;
-//         // case MOTOR_VAR_KV:                            value = Motor_Config_GetKv(p_motor);                        break;
-//         // case MOTOR_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
-//         // case MOTOR_VAR_SPEED_RATED:               value = Motor_Config_GetSpeedRated(p_motor);                break;
-//         // case MOTOR_VAR_IA_ZERO_ADCU:                  value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
-//         // case MOTOR_VAR_IB_ZERO_ADCU:                  value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
-//         // case MOTOR_VAR_IC_ZERO_ADCU:                  value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
-//             // case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_motor);             break;
-//     }
-//     return value;
-// }
 
 
 #endif

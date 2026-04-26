@@ -48,7 +48,6 @@ void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
 }
 
 
-
 static inline int16_t GetIntegral(const PID_T * p_pid) { return (int16_t)(p_pid->IntegralAccum >> 15); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
 
@@ -57,7 +56,7 @@ static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->Integra
     @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
 
     integralAccum [-32768:32767] << 15
-    p_pid->IntegralGain * 65535) >> p_pid->IntegralGainShift < INT32_MAX / 2
+    (IntegralGain * 65535) >> p_pid->IntegralGainShift < INT32_MAX / 2
 */
 static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 {
@@ -66,17 +65,12 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     /* Dynamic Clamp */
     int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
     int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
-    // int32_t integralMin = p_pid->OutputMin;
-    // int32_t integralMax = p_pid->OutputMax;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
             Alternatively, store as Riemann Sum. (Ki * ErrorSum * SampleTime)
         Forward rectangular approximation.
     */
-    // assert(abs(p_pid->IntegralAccum) < INT32_MAX / 2);
-    // assert(abs((p_pid->IntegralGain * error) >> p_pid->IntegralGainShift) < INT32_MAX / 2);
-
     int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
     int32_t integral = p_pid->IntegralAccum >> 15;
@@ -84,10 +78,6 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     p_pid->ErrorPrev = error;
 
     return proportional + integral;
-
-    // int32_t unclamped = proportional + integral;
-    // int32_t clamped = math_clamp(unclamped, OutputMin, OutputMax);
-    // IntegralAccum += ki_contribution + Kb * (clamped - unclamped);
 }
 
 

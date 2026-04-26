@@ -129,19 +129,36 @@ Analog_ConversionChannel_T;
 
 /******************************************************************************/
 /*
+    Per ADC batch part
+    todo
 */
 /******************************************************************************/
-// // Per ADC batch part
-// typedef void (*Analog_CaptureBatch_T)(void * p_context, Analog_ConversionChannel_T * p_states);
-// typedef const struct
-// {
-//     uint32_t CHANNELS_MASK;  /* directly maps to adc so no batch state is needed, adc holds batch operator  */
-//     adc_result_t * P_RESULTS;
-//     Analog_Callback_T ON_COMPLETE;
-//     void * P_CONTEXT;
-// }
-// Analog_AdcBatch_T; Analog_ConversionContext_T
+typedef void (*Analog_CaptureBatch_T)(void * p_context, Analog_ConversionChannel_T * p_states);
+typedef const struct
+{
+    uint32_t CHANNELS_MASK;  /* directly maps to adc so no batch state is needed, adc holds batch operator  */
+    adc_result_t * P_RESULTS;
+    Analog_Callback_T ON_COMPLETE;
+    void * P_CONTEXT;
+}
+Analog_AdcBatch_T;
 
+// typedef struct Analog_ChannelContext / Substription
+// Analog_ConversionChannel_T Analog_ConversionContext_T
+typedef struct Analog_OnComplete
+{
+    analog_channel_t CHANNEL;
+    Analog_Capture_T CAPTURE;
+    void * P_CONTEXT;
+}
+Analog_OnComplete_T;
+
+static inline void _ADC_OnComplete(Analog_OnComplete_T * p_conversion, adc_result_t * p_buffer, adc_result_t result)
+{
+    /* eliminate double buffer, at additional interrupt time */
+    if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
+    else { p_buffer[p_conversion->CHANNEL] = result; }
+}
 
 /******************************************************************************/
 /*
@@ -149,24 +166,6 @@ Analog_ConversionChannel_T;
     Critical section buffer shared by ISR and StartConversions.
 */
 /******************************************************************************/
-// typedef struct Analog_ChannelContext / Substription
-// Analog_ConversionChannel_T
-// typedef struct Analog_OnComplete
-// {
-//     analog_channel_t CHANNEL;
-//     Analog_Capture_T CAPTURE;
-//     void * P_CONTEXT;
-// }
-// Analog_OnComplete_T;
-
-// static inline void _ADC_OnComplete(Analog_OnComplete_T * p_conversion, adc_result_t * p_buffer, adc_result_t result)
-// {
-//     /* eliminate double buffer, at additional interrupt time */
-//     if (p_conversion->CAPTURE != NULL) { p_conversion->CAPTURE(p_conversion->P_CONTEXT, result); }
-//     else { p_buffer[p_conversion->CHANNEL] = result; }
-// }
-
-
 typedef struct Analog_ADC_State
 {
     /*

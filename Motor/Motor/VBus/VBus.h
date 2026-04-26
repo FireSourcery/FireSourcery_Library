@@ -104,7 +104,7 @@ static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 */
 static inline void VBus_InitLive(VBus_T * p_vbus)
 {
-    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V));
+    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V)); /* alternatively VBus use its own ratio corresponding to board */
     // p_vbus->PerVNominal_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
 }
 

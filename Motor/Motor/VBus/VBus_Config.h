@@ -58,11 +58,12 @@ typedef struct VBus_Config
     // Linear_T IDerateUnderVLinear; /* Precomputed from VLowDerate, VSupplyNominal, and IDerateUnderVFloor_Fract16. */
     // Linear_T IDerateOverVLinear;
 
-    VMonitor_Config_T MonitorConfig;    /* Nominal, Warn/Fault Low/High, hysteresis, IsEnabled */
+    VMonitor_Config_T MonitorConfig;    /* Nominal, Warn/Fault Low/High, Hysteresis. In runtime units */
 }
 VBus_Config_T;
 
 static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
+static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 
 /*
     - Regen-derate uses [VFullPower:VHighDerate] (OV ramp). Full regen below VFullPower, floor regen above VHighDerate.
@@ -71,10 +72,11 @@ static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { r
 static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
 static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
 
-static inline uint16_t VBus_GetVSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
+
 static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
 static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
-// static inline uint16_t VBus_GetVFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->Config.VFullPower_V; }
+static inline uint16_t VBus_GetVSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
+static inline uint16_t VBus_GetVFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 
 /*
     Li-ion default config — thresholds anchored to cell chemistry, scaled around VNominal.
@@ -113,7 +115,6 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_f
 {
     *p_config = VBUS_CONFIG_LIION(vNominal_fract16, Phase_Calibration_GetVMaxVolts());
 }
-
 
 
 

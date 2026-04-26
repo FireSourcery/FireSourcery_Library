@@ -31,6 +31,9 @@
 /******************************************************************************/
 #include "Hall/Hall_Sensor.h"
 #include "Encoder/Encoder_Sensor.h"
+#if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+#include "SinCos/SinCos_Sensor.h"
+#endif
 #include "RotorSensor.h"
 
 
@@ -82,6 +85,9 @@ typedef const struct RotorSensor_Table
 #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
     const Encoder_RotorSensor_T ENCODER; // const Encoder_T ENCODER;
 #endif
+#if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+    const SinCos_RotorSensor_T SIN_COS;
+#endif
 }
 RotorSensor_Table_T;
 
@@ -101,6 +107,9 @@ static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table
         case ROTOR_SENSOR_ID_HALL: return &p_table->HALL.BASE;
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case ROTOR_SENSOR_ID_ENCODER: return &p_table->ENCODER.BASE;
+        #endif
+        #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+        case ROTOR_SENSOR_ID_SIN_COS: return &p_table->SIN_COS.BASE;
         #endif
         default: return &p_table->EMPTY;
     }

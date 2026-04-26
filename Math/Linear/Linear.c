@@ -29,19 +29,6 @@
 /******************************************************************************/
 #include "Linear.h"
 
-/******************************************************************************/
-/*!
-    Helper
-*/
-/******************************************************************************/
-/*!
-    Shift <= log2(INT32_MAX / ((xRef - x0) * Slope)) - 1
-    @param[in] inputInterval - max input delta without overflow
-*/
-uint8_t _Linear_SlopeShift(int32_t factor, int32_t divisor, int32_t inputInterval)
-{
-    return fixed_lshift_max_signed((inputInterval * 2 - 1) * factor / divisor); /* divide first rounds up log2 */
-}
 
 /******************************************************************************/
 /*!
@@ -67,20 +54,17 @@ void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y
 {
 #ifdef LINEAR_DIVIDE_SHIFT
     p_linear->X0                = 0;
-    p_linear->XReference        = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor + 0 */
-    p_linear->XDelta            = p_linear->XReference - p_linear->X0;
-    p_linear->SlopeShift        = _Linear_SlopeShift(factor, divisor, p_linear->XDelta);
+    p_linear->XDelta            = linear_invf(factor, divisor, y0, yRef); /* (yRef - y0)*divisor/factor */
+    p_linear->SlopeShift        = fixed_lshift_max_signed(p_linear->XDelta * 2 * factor / divisor);
     p_linear->Slope             = (factor << p_linear->SlopeShift) / divisor;
     p_linear->Y0                = y0;
-    p_linear->YReference        = yRef;
     p_linear->YDelta            = yRef - y0;
-    p_linear->InvSlopeShift     = _Linear_SlopeShift(divisor, factor, p_linear->YDelta);
+    p_linear->InvSlopeShift     = fixed_lshift_max_signed(p_linear->YDelta * 2 * divisor / factor);
     p_linear->InvSlope          = (divisor << p_linear->InvSlopeShift) / factor;
 #elif defined(LINEAR_DIVIDE_NUMERICAL)
     p_linear->SlopeFactor = factor;
     p_linear->SlopeDivisor = divisor;
     p_linear->Y0 = y0;
-    p_linear->YReference = yRef;
 #endif
 }
 
@@ -98,20 +82,14 @@ void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xRef, int32_t y0, 
 #ifdef LINEAR_DIVIDE_SHIFT
     p_linear->X0                = x0;
     p_linear->Y0                = y0;
-    p_linear->XReference        = xRef;
-    p_linear->YReference        = yRef;
     p_linear->XDelta            = xRef - x0;
     p_linear->YDelta            = yRef - y0;
-    p_linear->SlopeShift        = _Linear_SlopeShift(p_linear->YDelta, p_linear->XDelta, p_linear->XDelta);
+    p_linear->SlopeShift        = fixed_lshift_max_signed(2 * p_linear->YDelta);
     p_linear->Slope             = (p_linear->YDelta << p_linear->SlopeShift) / p_linear->XDelta;
-    p_linear->InvSlopeShift     = _Linear_SlopeShift(p_linear->XDelta, p_linear->YDelta, p_linear->YDelta);
+    p_linear->InvSlopeShift     = fixed_lshift_max_signed(2 * p_linear->XDelta);
     p_linear->InvSlope          = (p_linear->XDelta << p_linear->InvSlopeShift) / p_linear->YDelta;
 #endif
 }
-
-
-// void Linear_Map_Init(Linear_T * p_linear, int32_t x0, int32_t xDelta, int32_t y0, int32_t yDelta)
-// void Linear_Init(Linear_T * p_linear, int32_t factor, int32_t divisor, int32_t y0, int32_t x0)
 
 /*
     Allow 2x input interval (XRef-X0), over saturation before overflow
@@ -142,10 +120,8 @@ void Linear_Fixed_Init(Linear_T * p_linear, uint8_t nFractionalBits, int32_t x0,
 
     /* User reference only */
     p_linear->XDelta = xRef - x0;
-    p_linear->XReference = xRef;
-    p_linear->Y0 = 0;  // y0 is always 0 for this mapping
-    p_linear->YDelta = (1U << nFractionalBits);  // YRef is always = 2^nFractionalBits
-    p_linear->YReference = p_linear->YDelta;  // YRef is always = 2^nFractionalBits
+    p_linear->Y0 = 0;
+    p_linear->YDelta = (1U << nFractionalBits);
 }
 
 // void Linear_AsCoeffcient(Linear_T * p_linear)

@@ -34,6 +34,16 @@
 #include "../Motor.h"
 #include "Peripheral/Analog/Analog.h"
 
+/* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
+#ifndef PHASE_ANALOG_DIVIDER_MASK
+#define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
+#endif
+
+static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
+
+/*  */
+static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
+
 /* VBus_Analog_Capture in VBus.h */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
 static inline void Motor_Analog_CaptureVb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }

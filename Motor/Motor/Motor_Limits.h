@@ -59,3 +59,28 @@ typedef enum Motor_SpeedLimitId
     MOTOR_SPEED_LIMIT_COUNT,
 }
 Motor_SpeedLimitId_T;
+
+
+// /*
+//     Motor-local arbitration buffers. Handles live in Motor_T (P_I_LIMITS_LOCAL, etc.).
+//     Per-motor sources (winding heat, stall, field-weaken) write here so a single
+// */
+// typedef struct Motor_Limits
+// {
+//     limit_t                 ILimits[MOTOR_I_LIMIT_COUNT];
+//     LimitArray_Augments_T   ILimitsActive;
+//     limit_t                 IGenLimits[MOTOR_I_GEN_LIMIT_COUNT];
+//     LimitArray_Augments_T   IGenLimitsActive;
+//     limit_t                 SpeedLimits[MOTOR_SPEED_LIMIT_COUNT];
+//     LimitArray_Augments_T   SpeedLimitsActive;
+
+// } Motor_Limits_T;
+
+
+
+// void Motor_SetSpeedLimitWith(Motor_SpeedControl_T * p_motor, Motor_Limits_T * p_motor, LimitArray_T * p_system)
+// {
+//     // if (LimitArray_IsUpperActive(p_local) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_local)); }
+//     // else { Motor_TryClearSpeedLimit(p_motor); }
+//     Motor_SetSpeedLimits(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+// }

@@ -66,9 +66,6 @@ typedef struct Linear
     /* Zero-to-peak */
     int32_t XDelta;         /* (XRef - X0), f([X0-XDelta:X0+XDelta]) => [-YRef:YRef] */
     int32_t YDelta;
-    /* Optionally store for saturation check */
-    int32_t XReference;     /* f([X0:XRef]) <=> fixed32 [0:65536] */
-    int32_t YReference;     /* f(x)[Y0:YRef] <=> fixed32 [0:65536] */
 }
 Linear_T;
 
@@ -81,19 +78,11 @@ Linear_T;
     .InvSlopeShift      = ,                     \
     .X0                 = ,                     \
     .Y0                 = ,                     \
-    .XReference         = ,                     \
-    .YReference         = ,                     \
 }
 #endif
 
+// static inline fixed_factor_t Linear_Coefficient(const Linear_T * p_linear) { return (fixed_factor_t) { p_linear->Slope, p_linear->SlopeShift }; }
 
-// linear_t Linear_AsCoefficient(const Linear_T * p_linear) { return { p_linear->Slope, p_linear->SlopeShift }; }
-
-// typedef struct
-// {
-//     int32_t Factor;
-//     uint8_t Shift;
-// } Linear_Coefficient_T;
 
 /******************************************************************************/
 /*!
@@ -105,14 +94,13 @@ static inline int32_t Linear_GetXRef(const Linear_T * p_linear) { return p_linea
 static inline int32_t Linear_GetYRef(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta; }
 static inline int32_t Linear_GetXDelta(const Linear_T * p_linear) { return p_linear->XDelta; }
 static inline int32_t Linear_GetYDelta(const Linear_T * p_linear) { return p_linear->YDelta; }
-// static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + math_abs(p_linear->YDelta) * 2; }
-// static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + math_abs(p_linear->XDelta) * 2; }
-static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + p_linear->YDelta * ((p_linear->YDelta >= 0) ? 2 : -2); }
-static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + p_linear->XDelta * ((p_linear->XDelta >= 0) ? 2 : -2); }
-static inline int32_t Linear_GetXMin(const Linear_T * p_linear) { return math_min(p_linear->X0 - p_linear->XDelta, p_linear->XReference); }  /* X0 + XDelta == XReference  */
-static inline int32_t Linear_GetXMax(const Linear_T * p_linear) { return math_max(p_linear->X0 + p_linear->XDelta, p_linear->XReference); }
-static inline int32_t Linear_GetYMin(const Linear_T * p_linear) { return math_min(p_linear->Y0 - p_linear->YDelta, p_linear->YReference); }
-static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return math_max(p_linear->Y0 + p_linear->YDelta, p_linear->YReference); }
+static inline int32_t Linear_GetYRefOverflow(const Linear_T * p_linear) { return p_linear->Y0 + math_abs(p_linear->YDelta) * 2; }
+static inline int32_t Linear_GetXRefOverflow(const Linear_T * p_linear) { return p_linear->X0 + math_abs(p_linear->XDelta) * 2; }
+
+static inline int32_t Linear_GetXMin(const Linear_T * p_linear) { return p_linear->X0 - math_abs(p_linear->XDelta); }
+static inline int32_t Linear_GetXMax(const Linear_T * p_linear) { return p_linear->X0 + math_abs(p_linear->XDelta); }
+static inline int32_t Linear_GetYMin(const Linear_T * p_linear) { return p_linear->Y0 - math_abs(p_linear->YDelta); }
+static inline int32_t Linear_GetYMax(const Linear_T * p_linear) { return p_linear->Y0 + math_abs(p_linear->YDelta); }
 
 /******************************************************************************/
 /*!

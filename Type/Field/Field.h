@@ -128,6 +128,16 @@ typedef const struct Accessor
 }
 Accessor_T;
 
+typedef struct VarAccess
+{
+    int Id;
+    int(*Get)(const void * p_context);
+    void (*Set)(void * p_context, int value);
+    void (*TestSet)(void * p_context);
+    void (*PropagateSet)(void * p_context);
+}
+VarAccess_T;
+
 static inline int Accessor_Get(Accessor_T * p_this, void * p_context, int id) { return p_this->GET_FIELD(p_context, id); }
 static inline void Accessor_Set(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }
 // static inline int Accessor_SetWithGuard(Accessor_T * p_this, void * p_context, int id, int value) { p_this->SET_FIELD(p_context, id, value); }

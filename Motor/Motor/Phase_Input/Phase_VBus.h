@@ -40,16 +40,7 @@
 
 extern VBus_T VBus_Instance;
 
-// static inline void Phase_VBus_CaptureFract16(uint16_t fract16) { VBus_CaptureFract16(&VBus_Instance, fract16); }
 
-// static inline void Phase_VBus_InitV(uint16_t volts)
-// {
-//     VBus_Instance.Config.VSupplyNominal_V = volts;
-//     VBus_Instance.Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(volts);
-//     VBus_InitLive(&VBus_Instance);
-// }
-// static inline ufract16_t Phase_VBus_NormOf(fract16_t phaseV) { return VBus_NormOf(&VBus_Instance, phaseV); }
-// static inline uint16_t   Phase_VBus_Volts(void)           { return VBus_Volts(&VBus_Instance); }
 
 static inline ufract16_t Phase_VBus_Fract16(void)         { return VBus_Fract16(&VBus_Instance); }
 static inline uint32_t   Phase_VBus_Inv_Fract32(void)     { return VBus_Inv_Fract32(&VBus_Instance); }

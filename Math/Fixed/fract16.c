@@ -140,6 +140,11 @@ struct fract16_xy fract16_vector(angle16_t theta)
     return (struct fract16_xy) { .x = fract16_cos(theta), .y = fract16_sin(theta) };
 }
 
+
+/*
+    vector in components
+*/
+
 ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y)
 {
     return fixed_sqrt((int32_t)x * x + (int32_t)y * y);

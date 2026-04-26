@@ -34,7 +34,7 @@
 // #include <stdfix.h>
 
 
-// typedef struct norm32 { int32_t Factor; uint8_t Shift; } norm32_t;
+
 
 // /* From factor/divisor ratio (general slope) */
 // static inline norm32_t norm_of_ratio(int32_t factor, int32_t divisor, int32_t inputMax)

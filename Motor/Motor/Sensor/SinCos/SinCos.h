@@ -1,3 +1,5 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -24,141 +26,125 @@
 /*!
     @file   SinCos.h
     @author FireSourcery
-    @brief
-
+    @brief  Analog Sin/Cos resolver decode. Quadrature analog inputs -> mech angle.
+            Pure decode core; sensor adapter (RotorSensor VTable) lives in SinCos_Sensor.h.
 */
 /******************************************************************************/
-#ifndef SIN_COS_H
-#define SIN_COS_H
-
-#include "Math/Linear/Linear_ADC.h"
+#include "Peripheral/Analog/Linear_ADC.h"
+#include "Math/Linear/Linear_Q16.h"
 #include "Math/Fixed/fract16.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct
+/*
+    [SinCos_Config_T]
+    f(adcuMin..adcuMax) -> [-32768..32767] fract16, then atan2 -> angle16
+*/
+typedef struct SinCos_Config
 {
     uint16_t Min_Adcu;
     uint16_t Max_Adcu;
     uint16_t Min_MilliV;
     uint16_t Max_MilliV;
-    uint16_t ElectricalRotationsRatio; /* = PolePairs / CyclesPerRotation */
-//    uint16_t CyclePerMechRotation;
-    angle16_t AngleOffet;
-    bool IsCcwPositive;        /* Calibrates Ccw as positive */
+    uint16_t ElectricalRotationsRatio;  /* PolePairs / CyclesPerMechRotation */
+    angle16_t AngleOffset;              /* Sensor-to-rotor zero offset, subtracted on capture */
+    bool IsCcwPositive;                 /* Calibrates virtual CCW as increasing angle */
 }
 SinCos_Config_T;
 
-
-typedef struct
+/*
+    [SinCos_State_T]
+*/
+typedef struct SinCos_State
 {
     SinCos_Config_T Config;
-    Linear_T UnitsAngle;
-    angle16_t Angle; /* Sensor Output Angle, Mechanical Angle or proportional */
-    // bool IsDirectionPositive;
+    Linear_T UnitsAngle;        /* ADC -> fract16 scaling, derived from Config Min/Max */
+    angle16_t Angle;            /* Last captured mechanical angle (post-offset, post-sign) */
+}
+SinCos_State_T;
 
-    // angle16_t DebugAPre;
-    // angle16_t DebugBPre;
-    // angle16_t DebugAPostMech;
-    // angle16_t DebugBPostMech;
-    // angle16_t DebugAPostElec;
-    // angle16_t DebugBPostElec;
+/*
+    [SinCos_T] const handle.
+    Decode core only — ADC sourcing lives in the sensor adapter (SinCos_Sensor).
+*/
+typedef const struct SinCos
+{
+    SinCos_State_T * P_STATE;
+    const SinCos_Config_T * P_NVM_CONFIG;
 }
 SinCos_T;
 
-#define SIN_COS_INIT(p_Config) { .CONST = { .P_CONFIG = p_Config, } }
+#define SIN_COS_STATE_ALLOC() (&(SinCos_State_T){0})
+
+#define SIN_COS_INIT(p_State, p_Config) (SinCos_T) { .P_STATE = (p_State), .P_NVM_CONFIG = (p_Config), }
 
 
-
+/******************************************************************************/
 /*
-    Activate Adc outside module
+    Inline decode — caller activates ADC, passes raw counts.
 */
-static inline angle16_t _SinCos_CalcAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
+/******************************************************************************/
+/* Raw atan2 decode, no offset/sign correction */
+static inline angle16_t _SinCos_DecodeAngle(const SinCos_State_T * p_state, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    fract16_t sin = Linear_ADC_Fract16(&p_sincos->UnitsAngle, sin_Adcu);
-    fract16_t cos = Linear_ADC_Fract16(&p_sincos->UnitsAngle, cos_Adcu);
-    angle16_t angle = fract16_atan2(sin, cos);
-    return angle;
+    fract16_t sin = Linear_Q16_Fract(&p_state->UnitsAngle, sin_Adcu);
+    fract16_t cos = Linear_Q16_Fract(&p_state->UnitsAngle, cos_Adcu);
+    return fract16_atan2(sin, cos);
 }
 
-/*
-    Calibration set to return CCW as positive
-*/
-static inline angle16_t SinCos_CaptureAngle(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu)
+/* Calibrated mechanical angle: offset-shifted, sign-corrected to virtual CCW-positive */
+static inline angle16_t SinCos_CaptureAngle(SinCos_State_T * p_state, uint16_t sin_Adcu, uint16_t cos_Adcu)
 {
-    angle16_t angle = _SinCos_CalcAngle(p_sincos, sin_Adcu, cos_Adcu);
-    angle = angle - p_sincos->Config.AngleOffet; /* move to sinCos calc */
-    if(p_sincos->Config.IsCcwPositive == false) { angle = 0 - angle; };
-    p_sincos->Angle = angle; //need counter to add offset if multiple cycles per rotation
-    return angle;
+    angle16_t angle = _SinCos_DecodeAngle(p_state, sin_Adcu, cos_Adcu) - p_state->Config.AngleOffset;
+    p_state->Angle = p_state->Config.IsCcwPositive ? angle : (angle16_t)(0 - angle);
+    return p_state->Angle;
 }
 
-static inline angle16_t SinCos_GetMechanicalAngle(SinCos_T * p_sincos) { return p_sincos->Angle; }
-/* effectively modulus angle max */
-static inline angle16_t SinCos_GetElectricalAngle(SinCos_T * p_sincos) { return (angle16_t)((int32_t)p_sincos->Angle * p_sincos->Config.ElectricalRotationsRatio); }
-
+/******************************************************************************/
 /*
-    CCW is positive
+    Query
 */
-// static inline void SinCos_SetDirectionCcw(SinCos_T * p_sincos)     { p_sincos->IsDirectionPositive = p_sincos->Config.IsCcwPositive; }
-// static inline void SinCos_SetDirectionCw(SinCos_T * p_sincos)     { p_sincos->IsDirectionPositive = !p_sincos->Config.IsCcwPositive; }
+/******************************************************************************/
+static inline angle16_t SinCos_GetMechanicalAngle(const SinCos_State_T * p_state) { return p_state->Angle; }
 
-typedef enum Motor_Var_ConfigSinCos
+/* Project mech -> electrical via configured ratio */
+static inline angle16_t SinCos_GetElectricalAngle(const SinCos_State_T * p_state)
 {
-    MOTOR_VAR_SIN_COS_ZERO_ADCU,
-    MOTOR_VAR_SIN_COS_MAX_ADCU,
-    MOTOR_VAR_SIN_COS_MAX_MILLIV,
-    MOTOR_VAR_SIN_COS_ANGLE_OFFSET,
-    MOTOR_VAR_SIN_COS_IS_B_POSITIVE,
-    MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE,
+    return (angle16_t)((int32_t)p_state->Angle * p_state->Config.ElectricalRotationsRatio);
 }
-Motor_Var_ConfigSinCos_T;
 
-// int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId)
-// {
-//     int32_t value = 0;
 
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_SIN_COS_ZERO_ADCU:               value = p_motor->SinCos.Config.Zero_Adcu;                           break;
-//         case MOTOR_VAR_SIN_COS_MAX_ADCU:                value = p_motor->SinCos.Config.Max_Adcu;                            break;
-//         case MOTOR_VAR_SIN_COS_MAX_MILLIV:              value = p_motor->SinCos.Config.Max_Milliv;                          break;
-//         case MOTOR_VAR_SIN_COS_ANGLE_OFFSET:            value = p_motor->SinCos.Config.AngleOffset;                         break;
-//         case MOTOR_VAR_SIN_COS_IS_B_POSITIVE:           value = p_motor->SinCos.Config.IsBPositive;                         break;
-//         case MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE: value = p_motor->SinCos.Config.ElectricalRotationsPerCycle;  break;
-//     }
-
-//     return value;
-// }
-
-// void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue)
-// {
-
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_SIN_COS_ZERO_ADCU:               p_motor->SinCos.Config.Zero_Adcu = varValue;                           break;
-//         case MOTOR_VAR_SIN_COS_MAX_ADCU:                p_motor->SinCos.Config.Max_Adcu = varValue;                            break;
-//         case MOTOR_VAR_SIN_COS_MAX_MILLIV:              p_motor->SinCos.Config.Max_Milliv = varValue;                          break;
-//         case MOTOR_VAR_SIN_COS_ANGLE_OFFSET:            p_motor->SinCos.Config.AngleOffset = varValue;                         break;
-//         case MOTOR_VAR_SIN_COS_IS_B_POSITIVE:           p_motor->SinCos.Config.IsBPositive = varValue;                         break;
-//         case MOTOR_VAR_SIN_COS_ELECTRICAL_ROTATIONS_PER_CYCLE: p_motor->SinCos.Config.ElectricalRotationsPerCycle = varValue;  break;
-//     }
-
-// }
-
+/******************************************************************************/
 /*
-    Extern declarations
+    Extern
 */
-extern void SinCos_Init(SinCos_T * p_sincos);
-extern void SinCos_ResetUnitsAngle(SinCos_T * p_sincos);
-extern void SinCos_SetAngleRatio(SinCos_T * p_sincos, uint16_t polePairs);
-extern void SinCos_SetConfigAdc(SinCos_T * p_sincos, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV);
-extern void SinCos_SetConfigAdc_mV(SinCos_T * p_sincos, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV);
-extern void SinCos_CalibrateAngleOffset(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
-extern void SinCos_CalibrateCcwPositive(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
-extern void SinCos_CalibrateA(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
-extern void SinCos_CalibrateB(SinCos_T * p_sincos, uint16_t sin_Adcu, uint16_t cos_Adcu);
+/******************************************************************************/
+extern void SinCos_Init(const SinCos_T * p_sincos);
+extern void SinCos_State_ResetUnits(SinCos_State_T * p_state);
+extern void SinCos_Config_SetAngleRatio(SinCos_State_T * p_state, uint16_t electricalRotationsRatio);
+extern void SinCos_Config_SetAdc(SinCos_State_T * p_state, uint16_t min_Adcu, uint16_t max_Adcu, uint16_t min_mV, uint16_t max_mV);
+extern void SinCos_Config_SetAdc_mV(SinCos_State_T * p_state, uint16_t adcVref_mV, uint16_t min_mV, uint16_t max_mV);
+extern void SinCos_CalibrateAngleOffset(SinCos_State_T * p_state, uint16_t sin_Adcu, uint16_t cos_Adcu);
+extern void SinCos_CalibrateCcwPositive(SinCos_State_T * p_state, uint16_t sin_Adcu, uint16_t cos_Adcu);
 
-#endif
 
+/******************************************************************************/
+/*
+    Var ID — generic config access
+*/
+/******************************************************************************/
+typedef enum SinCos_ConfigId
+{
+    SIN_COS_CONFIG_MIN_ADCU,
+    SIN_COS_CONFIG_MAX_ADCU,
+    SIN_COS_CONFIG_MIN_MILLIV,
+    SIN_COS_CONFIG_MAX_MILLIV,
+    SIN_COS_CONFIG_ANGLE_OFFSET,
+    SIN_COS_CONFIG_IS_CCW_POSITIVE,
+    SIN_COS_CONFIG_ELECTRICAL_ROTATIONS_RATIO,
+}
+SinCos_ConfigId_T;
+
+extern int SinCos_ConfigId_Get(const SinCos_State_T * p_state, SinCos_ConfigId_T id);
+extern void SinCos_ConfigId_Set(SinCos_State_T * p_state, SinCos_ConfigId_T id, int value);

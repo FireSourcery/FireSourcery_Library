@@ -38,10 +38,35 @@
 
 #define RAMP_SHIFT 14
 
-
-#define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Delta, UnitsPerSecond) ((UpdateFreq_Hz) * (Delta) / (UnitsPerSecond))
+/* storage in range, ticks */
 #define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
-#define RAMP_RATE_PER_SECOND(updateFreq_Hz, ratePerS) (((int32_t)ratePerS << RAMP_SHIFT) / updateFreq_Hz)
+#define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Range, UnitsPerSecond) ((UpdateFreq_Hz) * (Range) / (UnitsPerSecond))
+
+#define RAMP_COEF_OF_SLOPE(UpdateFreq_Hz, SlopePerSecond) (((int32_t)(SlopePerSecond) << RAMP_SHIFT) / (UpdateFreq_Hz))
+#define RAMP_COEF_OF_DURATION_TICKS(Range, DurationTicks) (((int32_t)(Range) << RAMP_SHIFT) / (DurationTicks))
+#define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (((int32_t)(Range) << RAMP_SHIFT) * 1000U / ((UpdateFreq_Hz) * (DurationMs)))
+// #define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (RAMP_COEF_OF_DURATION_TICKS(Range, RAMP_TICKS_OF_MILLIS((float)UpdateFreq_Hz, DurationMs)) )
+
+
+/*
+    Compile time full init
+*/
+#define RAMP_INIT(Coefficient, LowerLimit, UpperLimit, Initial) \
+(Ramp_T)                                                    \
+{                                                           \
+    .Accumulator =                                          \
+    {                                                       \
+        .Shift       = RAMP_SHIFT,                          \
+        .Coefficient = (Coefficient),                       \
+        .LimitLower  = (int32_t)(LowerLimit) << RAMP_SHIFT, \
+        .LimitUpper  = (int32_t)(UpperLimit) << RAMP_SHIFT, \
+        .Accumulator = (int32_t)(Initial)    << RAMP_SHIFT, \
+    },                                                      \
+}
+
+/* convenience: full-fract16 saturating ramp from a duration */
+#define RAMP_INIT_FRACT16_MS(UpdateFreq_Hz, DurationMs) RAMP_INIT(RAMP_COEF_OF_DURATION_MS((UpdateFreq_Hz), 65535, (DurationMs)), INT16_MIN, INT16_MAX, 0)
+
 
 /******************************************************************************/
 /*
@@ -65,7 +90,12 @@ Ramp_T;
 /*  */
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Accumulator >> RAMP_SHIFT); }
 /* Match Output */
-static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = (match << RAMP_SHIFT); }
+// static inline void _Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = (match << RAMP_SHIFT); }
+
+static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
+{
+    p_ramp->Accumulator.Accumulator = math_clamp((match << RAMP_SHIFT), p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
+}
 
 
 /* single step proc only */
@@ -82,9 +112,11 @@ extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
 extern int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
+extern void Ramp_SetCoefficient(Ramp_T * p_ramp, uint32_t rate_accum32);
 extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetOutputLimit(Ramp_T * p_ramp, int16_t lower, int16_t upper);
 extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);

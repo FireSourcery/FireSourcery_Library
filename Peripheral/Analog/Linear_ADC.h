@@ -53,10 +53,8 @@
     .InvSlopeShift      = 15U - adcuBits,               \
     .X0                 = adcuZero,                     \
     .XDelta             = (1L << adcBits) - adcuZero,   \
-    .XReference         = (1L << adcBits),              \
     .Y0                 = 0,                            \
     .YDelta             = 32768 * (isInverted ? -1 : 1),    \
-    .YReference         = 32768 * (isInverted ? -1 : 1),    \
 }
 
 /******************************************************************************/
@@ -88,9 +86,7 @@ static void Linear_ADC_Init_Fract16(Linear_T * p_linear, uint16_t adcuZero, uint
     p_linear->InvSlope = p_linear->Slope;
     p_linear->InvSlopeShift = p_linear->SlopeShift;
     p_linear->X0 = adcuZero;
-    // ref only
     p_linear->XDelta = (1U << adcuBits) - adcuZero;
-    p_linear->XReference = adcuZero + p_linear->XDelta;
 
     // *p_linear = (Linear_T)LINEAR_ADC_INIT(adcuBits, adcuZero, isInverted);
 }

@@ -131,6 +131,8 @@ static inline void _Motor_StateMachine_Thread(StateMachine_T * p_stateMachine)
     _Motor_StateMachine(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
 }
 
+static inline void _Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
+static inline void _Motor_SetDirection_Cast(Motor_State_T * p_motor, state_value_t mode) { Motor_SetDirection(p_motor, Motor_Direction_Cast(mode)); }
 
 /******************************************************************************/
 /*
@@ -153,7 +155,6 @@ static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_mot
 // static inline Motor_OpenLoopState_T Motor_GetOpenLoopState(const Motor_State_T * p_motor)        { return p_motor->OpenLoopState; }
 // static inline Motor_CalibrationState_T Motor_GetCalibrationState(const Motor_State_T * p_motor)  { return p_motor->CalibrationState; }
 // static inline uint8_t Motor_GetCalibrationStateIndex(const Motor_State_T * p_motor)              { return p_motor->CalibrationStateIndex; }
-
 
 /******************************************************************************/
 /*

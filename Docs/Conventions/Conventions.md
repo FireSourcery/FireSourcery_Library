@@ -28,7 +28,6 @@ Module_Input_T       — Data written by external, read by module
 Module_Output_T      — Data written by module, read by external
 Module_Packet_T      — Wire/serialization format
 
-optionally without invariant, keep struct Module_Data without typedef
 
 
 Suffix	Meaning	Lifetime	Who writes
@@ -180,6 +179,10 @@ Data Transfer Interface - data is the interface
         placement offset, size, matters
 
     struc Tag only for internal?
+
+Data - Tranparent without invarant
+Obj - with interface
+
 
 #
 2 pointer context API signitures at most - (p_const, p_state, value)

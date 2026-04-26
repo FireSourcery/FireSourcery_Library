@@ -68,10 +68,8 @@ void Linear_Voltage_Init(Linear_T * p_linear, uint32_t r1, uint32_t r2, uint16_t
 #endif
     p_linear->X0                = 0;
     p_linear->Y0                = 0;
-    p_linear->XReference        = 1UL << adcBits;
-    p_linear->YReference        = Linear_Of(p_linear, p_linear->XReference);
-    p_linear->XDelta            = p_linear->XReference - p_linear->X0;
-    p_linear->YDelta            = p_linear->YReference - p_linear->Y0;
+    p_linear->XDelta            = 1UL << adcBits;
+    p_linear->YDelta            = Linear_Of(p_linear, p_linear->XDelta);
 }
 
 // @param[in] vInRef - Scalar Fract16 reference

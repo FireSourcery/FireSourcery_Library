@@ -1,32 +1,46 @@
-// typedef enum Motor_Analog_Channel
-// {
-// #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
-//     PHASE_ANALOG_CHANNEL_SIN,
-//     PHASE_ANALOG_CHANNEL_COS,
-// #endif
-// }
-// Motor_Analog_Channel_T;
+#pragma once
 
-// typedef union Phase_Input_Conversions
-// {
-//     struct
-//     {
-//     #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
-//         const Analog_Conversion_T CONVERSION_SIN;
-//         const Analog_Conversion_T CONVERSION_COS;
-//     #endif
-//     };
-// }
-// Phase_Input_Conversions_T;
+/******************************************************************************/
+/*!
+    @section LICENSE
 
-// void Motor_MarkAnalog_Thread(Motor_State_T * p_motor)
-// {
-// #if defined(MOTOR_SENSOR_SIN_COS_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-//     if (p_motor->Config.SensorMode == ROTOR_SENSOR_ID_SIN_COS)
-//     {
-//         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-//         Analog_MarkConversion(&p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
-//     }
-//     // RotorSensor_MarkAnalog(&p_motor->Sensor);
-// #endif
-// }
+    Copyright (C) 2025 FireSourcery
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   SinCos_Analog.h
+    @author FireSourcery
+    @brief  Analog conversion bundle for SinCos sensor inputs.
+*/
+/******************************************************************************/
+#include "Peripheral/Analog/Analog.h"
+
+#include <stdint.h>
+
+/*
+    [SinCos_Analog_T]
+    Owns the two ADC conversion descriptors. Result buffers live inside each
+    descriptor's channel state; SinCos_T points at those result fields.
+*/
+typedef const struct SinCos_Analog
+{
+    Analog_Conversion_T SIN;
+    Analog_Conversion_T COS;
+}
+SinCos_Analog_T;
+
+#define SIN_COS_ANALOG_INIT(AdcSin, IndexSin, AdcCos, IndexCos)         \
+{                                                                       \
+    .SIN = ANALOG_CONVERSION_INIT_FROM(AdcSin, IndexSin),               \
+    .COS = ANALOG_CONVERSION_INIT_FROM(AdcCos, IndexCos),               \
+}
+
+static inline void SinCos_Analog_Mark(const SinCos_Analog_T * p_analog)
+{
+    Analog_Conversion_Mark(&p_analog->SIN);
+    Analog_Conversion_Mark(&p_analog->COS);
+}
+
+static inline uint16_t SinCos_Analog_GetSin(const SinCos_Analog_T * p_analog) { return Analog_Conversion_GetResult(&p_analog->SIN); }
+static inline uint16_t SinCos_Analog_GetCos(const SinCos_Analog_T * p_analog) { return Analog_Conversion_GetResult(&p_analog->COS); }

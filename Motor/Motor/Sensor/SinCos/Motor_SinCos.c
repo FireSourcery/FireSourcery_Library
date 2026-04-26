@@ -1,92 +1,131 @@
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2025 FireSourcery
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   Motor_SinCos.c
+    @author FireSourcery
+    @brief  Motor-level SinCos calibration state machine.
+
+    Calibration sequence (each step holds 1x AlignTime):
+        0: Energize Phase A — rotor settles at electrical 0
+        1: Sample sin/cos -> AngleOffset
+        2: Energize Phase B — rotor settles at electrical +120°
+        3: Sample sin/cos -> IsCcwPositive (sign of decoded angle)
+        4: Deactivate phases, finish
+*/
+/******************************************************************************/
+#include "Motor_SinCos.h"
+#include "SinCos_Sensor.h"
+
+#include "../../Motor_StateMachine.h"
 
 
-// void Motor_ResetUnitsSinCos(Motor_State_T * p_motor)
-// {
-//     if (p_motor->Config.PolePairs != p_motor->SinCos.Config.ElectricalRotationsRatio)
-//     {
-//         SinCos_SetAngleRatio(&p_motor->SinCos, p_motor->Config.PolePairs);
-//     }
-// }
-
-// static inline void Motor_Calibrate_StartSinCos(Motor_State_T * p_motor)
-// {
-//     Timer_StartPeriod(&p_motor->ControlTimer, p_motor->Config.AlignTime_ControlCycles);
-// }
-
-// static inline bool Motor_Calibrate_SinCos(Motor_State_T * p_motor)
-// {
-//     bool isComplete = false;
-
-//     if (Timer_Periodic_Poll(&p_motor->ControlTimer) == true)
-//     {
-//         switch (p_motor->CalibrationStateIndex)
-//         {
-//             case 0U:
-//                 Phase_WriteDuty_Fract16(&p_motor->PHASE, Motor_GetVAlign_Duty( p_motor), 0U, 0U);
-//                 p_motor->CalibrationStateIndex = 2U;
-//                 /* wait 1s */
-//                 break;
-
-//                 // case 1U:
-//                 //     //can repeat adc and filter results, or skip state use check in sensor routine
-//                 //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-//                 //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
-//                 //     p_motor->CalibrationStateIndex = 2U;
-//                 //     /* wait 50us, 1s */
-//                 //     break;
-
-//             case 2U:
-//                 SinCos_CalibrateA(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                 Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, Motor_GetVAlign_Duty( p_motor), 0U);
-//                 p_motor->CalibrationStateIndex = 4U;
-//                 /* wait 1s */
-//                 break;
-
-//                 // case 3U:
-//                 //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_SIN);
-//                 //     AnalogN_EnqueueConversion(p_motor->CONST.P_ANALOG, &p_motor->CONST.ANALOG_CONVERSIONS.CONVERSION_COS);
-//                 //     p_motor->CalibrationStateIndex = 4U;
-//                 //     break;
-
-//             case 4U:
-//                 SinCos_CalibrateB(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                 //                Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, 0U, Motor_GetVAlign_Duty( p_motor));
-//                 p_motor->CalibrationStateIndex = 5U;
-//                 // isComplete = true;
-//                 Phase_WriteDuty_Fract16(&p_motor->PHASE, Motor_GetVAlign_Duty( p_motor), 0U, 0U);
-//                 break;
-
-//             case 5U:
-//                 p_motor->SinCos.DebugAPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                 p_motor->SinCos.DebugAPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
-//                 Phase_WriteDuty_Fract16(&p_motor->PHASE, 0U, Motor_GetVAlign_Duty( p_motor), 0U);
-//                 p_motor->CalibrationStateIndex = 6U;
-//                 break;
-
-//             case 6U:
-//                 p_motor->SinCos.DebugBPostMech = SinCos_CaptureAngle(&p_motor->SinCos, p_motor->AnalogResults.Sin_Adcu, p_motor->AnalogResults.Cos_Adcu);
-//                 p_motor->SinCos.DebugBPostElec = SinCos_GetElectricalAngle(&p_motor->SinCos);
-//                 p_motor->CalibrationStateIndex = 0U;
-//                 isComplete = true;
-//                 break;
-//             default: break;
-//         }
-//     }
-
-//     return isComplete;
-// }
+/******************************************************************************/
+/*!
+    Accessors
+*/
+/******************************************************************************/
+static inline const SinCos_RotorSensor_T * GetSinCosSensor(const Motor_T * p_motor)
+{
+    return &p_motor->SENSOR_TABLE.SIN_COS;
+}
 
 
-// int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId) {}
+/******************************************************************************/
+/*!
+    Calibration State
+*/
+/******************************************************************************/
+static void Calibration_Entry(const Motor_T * p_motor)
+{
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Phase_ActivateV0(&p_motor->PHASE);
+    p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+}
 
-// void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue) {}
+static State_T * Calibration_End(const Motor_T * p_motor);
 
-// const VarAccess_VTable_T MOTOR_VAR_CONFIG_SIN_COS =
-// {
-//     .GET_AT = Motor_Var_ConfigSinCos_Get,
-//     .SET_AT = Motor_Var_ConfigSinCos_Set,
-//     .TEST_SET = Motor_Config_IsConfigState,
-// };
+static void Calibration_Proc(const Motor_T * p_motor)
+{
+    const SinCos_RotorSensor_T * p_sensor = GetSinCosSensor(p_motor);
+    SinCos_State_T * p_sinCosState = p_sensor->SIN_COS.P_STATE;
+    const uint16_t duty = Motor_GetVAlign_Duty(p_motor->P_MOTOR);
 
-// extern int32_t Motor_Var_ConfigSinCos_Get(const Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId);
-// extern void Motor_Var_ConfigSinCos_Set(Motor_State_T * p_motor, Motor_Var_ConfigSinCos_T varId, int32_t varValue);
+    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+    {
+        switch (p_motor->P_MOTOR->CalibrationStateIndex)
+        {
+            case 0U:
+                Phase_Align(&p_motor->PHASE, PHASE_ID_A, duty);
+                p_motor->P_MOTOR->CalibrationStateIndex = 1U;
+                break;
+
+            case 1U:
+                SinCos_CalibrateAngleOffset(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
+                Phase_Align(&p_motor->PHASE, PHASE_ID_INV_C, duty);  /* electrical +120° */
+                p_motor->P_MOTOR->CalibrationStateIndex = 2U;
+                break;
+
+            case 2U:
+                SinCos_CalibrateCcwPositive(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
+                Phase_Deactivate(&p_motor->PHASE);
+                p_motor->P_MOTOR->CalibrationStateIndex = 3U;
+                break;
+
+            default: break;
+        }
+    }
+}
+
+static State_T * Calibration_End(const Motor_T * p_motor)
+{
+    if (p_motor->P_MOTOR->CalibrationStateIndex >= 3U)
+    {
+        p_motor->P_MOTOR->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR->p_ActiveSensor);
+        return &MOTOR_STATE_CALIBRATION;
+    }
+    return NULL;
+}
+
+static const State_T CALIBRATION_STATE_SIN_COS =
+{
+    .ID         = 0U,
+    .P_TOP      = &MOTOR_STATE_CALIBRATION,
+    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+    .DEPTH      = 1U,
+    .ENTRY      = (State_Action_T)Calibration_Entry,
+    .LOOP       = (State_Action_T)Calibration_Proc,
+    .NEXT       = (State_Input0_T)Calibration_End,
+};
+
+
+/******************************************************************************/
+/*!
+    Public
+*/
+/******************************************************************************/
+static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_SIN_COS; }
+
+void Motor_SinCos_Calibrate(const Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+}
+
+void Motor_SinCos_Cmd(const Motor_T * p_motor, int varId, int varValue)
+{
+    (void)varValue;
+    if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_SIN_COS)) return;
+    if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_SIN_COS) return;
+
+    switch (varId)
+    {
+        case 0:   Motor_SinCos_Calibrate(p_motor); break;
+        default:  Motor_SinCos_Calibrate(p_motor); break;
+    }
+}

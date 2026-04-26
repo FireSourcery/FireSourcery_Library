@@ -58,9 +58,11 @@ extern const Phase_Calibration_T PHASE_CALIBRATION;
 #if !defined(PHASE_V_TYPE_MAX_VOLTS) && !defined(PHASE_I_TYPE_MAX_AMPS)
 #define PHASE_V_TYPE_MAX_VOLTS PHASE_CALIBRATION.V_MAX_VOLTS
 #define PHASE_I_TYPE_MAX_AMPS PHASE_CALIBRATION.I_MAX_AMPS
+#define PHASE_V_FRACT16(volts, Max) FRACT16((float)volts / Max)
+#define PHASE_I_FRACT16(amps, Max) FRACT16((float)amps / Max)
 #else /* Compile time def only */
-#define PHASE_V_FRACT16(volts)  FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
-#define PHASE_I_FRACT16(amps)   FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
+#define PHASE_V_FRACT16(volts) FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
+#define PHASE_I_FRACT16(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
 #endif
 
 
@@ -73,6 +75,9 @@ static inline uint16_t Phase_Calibration_GetIRatedPeak_Fract16(void) { return PH
 static inline uint16_t Phase_Calibration_GetVRated_V(void) { return Phase_Calibration_GetVRated_Fract16() * Phase_Calibration_GetVMaxVolts() / 32768; }
 static inline int16_t Phase_Calibration_GetIRatedPeak_Amps(void) { return Phase_Calibration_GetIRatedPeak_Fract16() * Phase_Calibration_GetIMaxAmps() / 32768; }
 
+/******************************************************************************/
+
+/******************************************************************************/
 static inline bool _Phase_Calibration_IsValid(uint16_t value) { return ((value != 0U) && (value != 0xFFFFU)); }
 
 static bool Phase_Calibration_IsValid(void)
@@ -86,13 +91,12 @@ static bool Phase_Calibration_IsValid(void)
     );
 }
 
-/* Rated Limit - applied on set config */
-// static inline uint16_t Phase_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
-// static inline uint16_t Phase_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
 
+/******************************************************************************/
 /*
     Local unit conversions
 */
+/******************************************************************************/
 static inline accum32_t Phase_I_Fract16OfAmps(int16_t amps) { return amps * INT16_MAX / Phase_Calibration_GetIMaxAmps(); }
 static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() / 32768; }
 static inline accum32_t Phase_V_Fract16OfVolts(int16_t volts) { return volts * INT16_MAX / Phase_Calibration_GetVMaxVolts(); }

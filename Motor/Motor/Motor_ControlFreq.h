@@ -93,15 +93,15 @@
 #define MOTOR_SPEED_CYCLES(Milliseconds)    CYCLES_OF_MS(MOTOR_SPEED_LOOP_FREQ, Milliseconds)
 #define MOTOR_SPEED_TIME_MS(Cycles)         MS_OF_CYCLES(MOTOR_SPEED_LOOP_FREQ, Cycles)
 
-/* 0 -> 1x, 1 -> 2x, 2 -> 4x, 3 -> 8x */
-#ifndef PHASE_ANALOG_DIVIDER_MASK
-#define PHASE_ANALOG_DIVIDER_MASK ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U) /* must be pow2 */
-#endif
 
-static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
+/* perserve invariance */
+#define MOTOR_SPEED_RAMP_CYCLES(DeltaOutput, UnitPerS) ((uint32_t)MOTOR_SPEED_LOOP_FREQ * (DeltaOutput) / (UnitPerS))
+#define MOTOR_TORQUE_RAMP_CYCLES(DeltaOutput, UnitPerS) ((uint32_t)MOTOR_CONTROL_FREQ * (DeltaOutput) / (UnitPerS))
 
-/*  */
-static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
+#define MOTOR_SPEED_RAMP_COEF_OF_MS(RangeFract16, DurationMs)   RAMP_COEF_OF_DURATION_MS(MOTOR_SPEED_LOOP_FREQ, RangeFract16, DurationMs)
+#define MOTOR_SPEED_RAMP_COEF_OF_SLOPE(Fract16PerS)             RAMP_COEF_OF_SLOPE(MOTOR_SPEED_LOOP_FREQ, Fract16PerS)
+#define MOTOR_TORQUE_RAMP_COEF_OF_MS(RangeFract16, DurationMs)  RAMP_COEF_OF_DURATION_MS(MOTOR_CONTROL_FREQ, RangeFract16, DurationMs)
+#define MOTOR_TORQUE_RAMP_COEF_OF_SLOPE(Fract16PerS)            RAMP_COEF_OF_SLOPE(MOTOR_CONTROL_FREQ, Fract16PerS)
 
 /*
     Local Conversion Units

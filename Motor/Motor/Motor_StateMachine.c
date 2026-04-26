@@ -199,7 +199,7 @@ static State_T * Stop_InputDirection(const Motor_T * p_motor, state_value_t dire
 
 static State_T * Stop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
     return NULL;
 }
 
@@ -320,7 +320,7 @@ static State_T * Passive_InputDirection(const Motor_T * p_motor, state_value_t d
 
 static State_T * Passive_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
     return NULL;
 }
 
@@ -423,7 +423,7 @@ static State_T * Run_InputControl(const Motor_T * p_motor, state_value_t phaseOu
 // return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
 static State_T * Run_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
     return NULL;
 }
@@ -504,7 +504,7 @@ static State_T * Intervention_InputControl(const Motor_T * p_motor, state_value_
 /* Store only */
 static State_T * Intervention_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
     return NULL;
 }
 
@@ -572,7 +572,7 @@ static State_T * OpenLoop_InputDirection(const Motor_T * p_motor, state_value_t 
 
 static State_T * OpenLoop_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode); /* a different flag mode will change ramp limits */
+    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode); /* a different flag mode will change ramp limits */
     return NULL;
 }
 

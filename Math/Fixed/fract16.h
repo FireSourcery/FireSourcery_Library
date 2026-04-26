@@ -43,15 +43,15 @@
 #define FRACT16_SCALE (32768) /* 2^15 */
 #define FRACT32_SCALE (2147483648)
 
+#define ACCUM32_SAT (0x3FFFFFFF) /* Soft max for ACCUM32_SAT * 2 without overflow */
+
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 
 typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] extended integer bits. */
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
-typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */
+typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */ // percent16
 
-/*  */
-typedef int32_t factor32_t; /*!< Q2.30 */
 
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
@@ -147,9 +147,10 @@ static inline int8_t fract16_norm_shift(int16_t value) { return (int8_t)(FRACT16
 
 static inline int16_t fract16_norm_scalar(int16_t value) { return (1 << fract16_norm_shift(value)); }
 
-static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(30 - fixed_bit_width_signed(value)); }
+static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
 
 // static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
+// typedef struct fixed_factor { int32_t Factor; uint8_t Shift; } fixed_factor_t;
 
 /******************************************************************************/
 /*!
@@ -193,7 +194,6 @@ typedef int32_t nangle32_t; /* rev.angle */
 // typedef int32_t turn32_t;
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
-// #define ANGLE16_SIGNED_MAX (INT16_MAX)
 // #define ANGLE16_360 (65536UL)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
@@ -210,6 +210,9 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
+
+static inline angle16_t angle16_of_radians(fract16_t rad) { return (angle16_t)(((int32_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
+// static inline angle16_t angle16_of_fract16(fract16_t fract16) { return fract16 * 2; } /* [0, 1) => [0, 2pi) */
 
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
@@ -268,6 +271,7 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 */
 /******************************************************************************/
 struct fract16_xy { fract16_t x; fract16_t y; };
+// struct phasor { fract16_t re; fract16_t im; };
 extern struct fract16_xy fract16_vector(angle16_t theta);
 
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);

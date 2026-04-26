@@ -229,16 +229,13 @@ static inline int32_t cps_of_count_freq(uint16_t cpr, int32_t freqD) { return cp
 //     return numerator / denominator;
 // }
 
-/*
-    Only When base units in mm, as set via SetGroundRatio function.
-*/
-// static inline uint32_t Encoder_GroundSpeedOf_Mph(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+// static inline uint32_t Encoder_GroundSpeedOf_Mph(UnitSurfaceSpeed, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 // {
-//     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1609344U);
+//     return deltaD_Ticks *  UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1609344U);
 // }
 
-// static inline uint32_t Encoder_GroundSpeedOf_Kmh(const Encoder_State_T * p_encoder, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
+// static inline uint32_t Encoder_GroundSpeedOf_Kmh(UnitSurfaceSpeed, uint32_t deltaD_Ticks, uint32_t deltaT_Ticks)
 // {
-//     return deltaD_Ticks * p_encoder->UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
+//     return deltaD_Ticks *  UnitSurfaceSpeed * 60U * 60U / (deltaT_Ticks * 1000000U);
 // }
 

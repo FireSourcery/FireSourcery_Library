@@ -109,10 +109,7 @@ uint8_t fixed_bit_width(uint32_t x)
     0x80000000 -> 31
     0x00000000 -> 0
 */
-uint8_t fixed_bit_width_signed(int32_t x)
-{
-    return fixed_bit_width(math_abs(x));
-}
+uint8_t fixed_bit_width_signed(int32_t x) { return fixed_bit_width(math_abs(x)); }
 
 /*
     determine scaling factor
@@ -120,18 +117,12 @@ uint8_t fixed_bit_width_signed(int32_t x)
 
 /* leading zeros */
 /* x != 0 */
-uint8_t fixed_lshift_max_unsigned(uint32_t x)
-{
-    return (32U - fixed_bit_width(x));
-}
+uint8_t fixed_lshift_max_unsigned(uint32_t x) { return _leading_zeros(x); }
 
-/* leading sign/zero bits - 1 */
+/* leading redundant sign bits */
 /* x != 0 */
 /* fixed32_norm_shift */
-uint8_t fixed_lshift_max_signed(int32_t x)
-{
-    return (31U - fixed_bit_width_signed(x));
-}
+uint8_t fixed_lshift_max_signed(int32_t x) { return _leading_sign_bits(x); }
 
 
 // input_range(int32_t x0, int32_t xRef)
@@ -143,35 +134,27 @@ uint8_t fixed_lshift_max_signed(int32_t x)
     65536 -> 16
     65537 -> 16
 */
-uint8_t fixed_log2(uint32_t x)
-{
-    return (x == 0U) ? 0U : (fixed_bit_width(x) - 1U);
-}
+uint8_t fixed_log2(uint32_t x) { return (x == 0U) ? 0U : (fixed_bit_width(x) - 1U); }
 
 /*
     65535 -> 16
     65536 -> 16
     65537 -> 17
 */
-uint8_t fixed_log2_ceiling(uint32_t x)
+uint8_t fixed_log2_ceiling(uint32_t x) { return (x == 0U) ? 0U : fixed_bit_width(x - 1U); }
+
+interval_t fixed_log2_bound(uint32_t x)
 {
-    return (x == 0U) ? 0U : fixed_bit_width(x - 1U);
+    interval_t result;
+    result.low = fixed_log2(x);
+    result.high = result.low + 1U;
+    return result;
 }
 
-
-void fixed_log2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
+interval_t fixed_pow2_bound(uint32_t x)
 {
-    *p_lower = fixed_log2(x);
-    *p_upper = *p_lower + 1U;
-}
-
-void fixed_pow2_bound(uint32_t * p_lower, uint32_t * p_upper,  uint32_t x)
-{
-    uint32_t log2lower;
-    uint32_t log2upper;
-    fixed_log2_bound(&log2lower, &log2upper, x);
-    *p_lower = 1U << log2lower;
-    *p_upper = 1U << log2upper;
+    interval_t result = fixed_log2_bound(x);
+    return  (interval_t) { .low = 1U << result.low, .high = 1U << result.high };
 }
 
 uint8_t fixed_log2_round(uint32_t x)
