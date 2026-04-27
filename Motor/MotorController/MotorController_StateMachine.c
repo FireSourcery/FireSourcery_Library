@@ -463,7 +463,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
 
             case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
                 // if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == true)
-                Motor_Table_StopAll(&p_dev->MOTORS); //optionally same as lock exit
+                // Motor_Table_StopAll(&p_dev->MOTORS); //optionally same as lock exit
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
                 break;

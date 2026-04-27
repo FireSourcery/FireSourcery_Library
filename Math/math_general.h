@@ -38,6 +38,7 @@
 
 /* non domain specific */
 typedef enum sign { SIGN_NEGATIVE = -1, SIGN_ZERO = 0, SIGN_POSITIVE = 1 } sign_t;
+
 typedef struct { int32_t low; int32_t high; } interval_t;
 typedef struct { int32_t a; int32_t b; } pair_t;
 

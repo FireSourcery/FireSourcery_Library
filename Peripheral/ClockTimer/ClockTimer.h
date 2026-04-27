@@ -64,12 +64,12 @@ ClockTimer_T;
     Capture DeltaT - Clock Edge Polling/ISR
     [0:CLOCK_TIMER_MAX] => (0xFFFF / TIMER_FREQ) [seconds]
 */
-static inline uint32_t ClockTimer_CaptureDeltaT(const ClockTimer_T * p_timer) { return HAL_ClockTimer_CapturePeriod(p_timer->P_HAL_TIMER); }
+static inline uint32_t ClockTimer_CaptureDeltaT(ClockTimer_T * p_timer) { return HAL_ClockTimer_CapturePeriod(p_timer->P_HAL_TIMER); }
 
 /*
     Per SAMPLE_TIME
 */
-static inline uint32_t ClockTimer_CaptureSampleTh(const ClockTimer_T * p_timer, uint32_t prevSampleTh)
+static inline uint32_t ClockTimer_CaptureSampleTh(ClockTimer_T * p_timer, uint32_t prevSampleTh)
 {
     return HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (prevSampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
 }
@@ -80,13 +80,13 @@ static inline uint32_t ClockTimer_CaptureSampleTh(const ClockTimer_T * p_timer, 
     @brief Initialize the clock timer.
 */
 /******************************************************************************/
-static inline void ClockTimer_Init(const ClockTimer_T * p_timer)
+static inline void ClockTimer_Init(ClockTimer_T * p_timer)
 {
     HAL_ClockTimer_Init(p_timer->P_HAL_TIMER);
     HAL_ClockTimer_InitFreq(p_timer->P_HAL_TIMER, p_timer->TIMER_FREQ);
 }
 
-static inline void ClockTimer_SetInitial(const ClockTimer_T * p_timer)
+static inline void ClockTimer_SetInitial(ClockTimer_T * p_timer)
 {
     HAL_ClockTimer_ClearOverflow(p_timer->P_HAL_TIMER);
     HAL_ClockTimer_Write(p_timer->P_HAL_TIMER, 0U);
@@ -95,12 +95,12 @@ static inline void ClockTimer_SetInitial(const ClockTimer_T * p_timer)
 /*
     Capture with overflow
 */
-// static inline void ClockTimer_Overflow_ISR(const ClockTimer_T * p_timer)
+// static inline void ClockTimer_Overflow_ISR(ClockTimer_T * p_timer)
 // {
 //     p_timer->P_STATE->OverflowCount++;
 // }
 
-// static inline void _DeltaT_CaptureExtended(const ClockTimer_T * p_timer)
+// static inline void _DeltaT_CaptureExtended(ClockTimer_T * p_timer)
 // {
 //     uint32_t periodT = (p_timer->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_timer->P_HAL_ENCODER_TIMER);
 //     HAL_Encoder_WriteTimer(p_timer->P_HAL_ENCODER_TIMER, 0U);
@@ -110,7 +110,7 @@ static inline void ClockTimer_SetInitial(const ClockTimer_T * p_timer)
 // }
 
 // // Stop detection — single threshold in base timer ticks
-// static inline bool _DeltaT_IsExtendedStop(const ClockTimer_T * p_timer)
+// static inline bool _DeltaT_IsExtendedStop(ClockTimer_T * p_timer)
 // {
 //     uint32_t elapsed = (p_timer->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_timer->P_HAL_ENCODER_TIMER);
 //     return (elapsed > p_timer->P_STATE->Config.DeltaTStop);

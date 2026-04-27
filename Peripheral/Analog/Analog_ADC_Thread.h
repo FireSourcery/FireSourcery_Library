@@ -152,6 +152,15 @@ static inline void Analog_ADC_ProcMarked(const Analog_ADC_T * p_adc)
 }
 
 
+
+
+
+
+// static inline uint32_t ADC_BatchComplete(  Analog_Batch_T * p_source)
+// {
+
+// }
+
 /*
 */
 // static inline void Analog_ADCN_ProcMarked(const Analog_ADC_T * const p_adcs, uint8_t count)

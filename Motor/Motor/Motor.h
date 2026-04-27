@@ -490,6 +490,15 @@ Motor_T;
 
 // #define MOTOR_CONTROL_TIMER_INIT(p_MotorContext, MotorState) TIMER_T_ALLOC(
 
+static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
+{
+#ifdef MOTOR_CONFIG_NVM_ONLY
+    return p_motor->P_NVM_CONFIG;
+#else
+    return &p_motor->P_MOTOR->Config;
+#endif
+}
+
 /******************************************************************************/
 /*
     Types for generic accessor

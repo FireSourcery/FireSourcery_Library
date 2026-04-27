@@ -139,14 +139,11 @@ static inline uint32_t ADC_SetStateFrom(Analog_ADC_State_T * p_state, Analog_Con
 //     return markers ^ sourceMarkers; /* return processed markers */
 // }
 
-
 static void ADC_StartFrom(Analog_ADC_T * p_adc, Analog_ConversionChannel_T * p_conversions, uint32_t markers)
 {
     ADC_SetStateFrom(p_adc->P_ADC_STATE, p_conversions, markers);
-    // p_state->ChannelMarkers &= ~processed;
     ADC_Activate(p_adc, p_adc->P_ADC_STATE);
 }
-
 
 
 /******************************************************************************/
@@ -178,18 +175,14 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 //     p_adc->P_ADC_STATE->Callback = p_batch->P_CONTEXT;
 // }
 
+
+
+
 /******************************************************************************/
 /*!
 */
 /******************************************************************************/
-// static inline uint8_t ADC_ReadActiveCount(const Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
-// {
-// #ifdef ANALOG_ADC_HW_FIFO_ENABLE
-//     return HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC);
-// #else
-//     return 1U;
-// #endif
-// }
+
 
 // void ADC_WriteOptions(Analog_ADC_T * p_adc, const Analog_Options_T * p_options)
 // {
@@ -218,3 +211,11 @@ static void _Analog_ADC_StartConversion(Analog_ADC_T * p_adc, Analog_ConversionC
 
 
 
+// static inline uint8_t ADC_ReadActiveCount(const Analog_ADC_T * p_adc, const Analog_ADC_State_T * p_state)
+// {
+// #ifdef ANALOG_ADC_HW_FIFO_ENABLE
+//     return HAL_ADC_ReadFifoCount(p_adc->P_HAL_ADC);
+// #else
+//     return 1U;
+// #endif
+// }
