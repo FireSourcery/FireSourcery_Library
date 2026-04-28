@@ -31,6 +31,8 @@
 #include "MotorController.h"
 #include <string.h>
 
+#include "MotAnalogUser/OptPin/MotorController_OptPin.h"
+
 void MotorController_Init(const MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
@@ -51,6 +53,8 @@ void MotorController_Init(const MotorController_T * p_dev)
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
 
     MotAnalogUser_Init(&p_dev->ANALOG_USER);
+
+    _MotorController_InitOptDin(p_dev);
 
     VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
 

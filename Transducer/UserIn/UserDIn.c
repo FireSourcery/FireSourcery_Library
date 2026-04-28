@@ -40,15 +40,15 @@
     Private Helper Functions
 */
 /******************************************************************************/
-static inline bool ReadPin(const UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
-static inline uint32_t GetTime(const UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
+static inline bool ReadPin(UserDIn_T * p_dev) { return Pin_Input_Read(&p_dev->PIN); }
+static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 
 /******************************************************************************/
 /*
     Public Functions
 */
 /******************************************************************************/
-void UserDIn_Init(const UserDIn_T * p_dev)
+void UserDIn_Init(UserDIn_T * p_dev)
 {
     Pin_Input_Init(&p_dev->PIN);
 
@@ -65,24 +65,36 @@ void UserDIn_Init(const UserDIn_T * p_dev)
     Polling Functions
 */
 /*! @return On/Off state */
-bool UserDIn_PollState(const UserDIn_T * p_dev) { return Debounce_Poll(&p_dev->P_STATE->Debounce, GetTime(p_dev), ReadPin(p_dev)); }
+bool UserDIn_PollState(UserDIn_T * p_dev) { return Debounce_Poll(&p_dev->P_STATE->Debounce, GetTime(p_dev), ReadPin(p_dev)); }
 
 /*! @return true on change */
-bool UserDIn_PollEdge(const UserDIn_T * p_dev)
+bool UserDIn_PollEdge(UserDIn_T * p_dev)
 {
     p_dev->P_STATE->OutputPrev = Debounce_GetState(&p_dev->P_STATE->Debounce);
     Debounce_Poll(&p_dev->P_STATE->Debounce, GetTime(p_dev), ReadPin(p_dev));
     return is_edge(p_dev->P_STATE->OutputPrev, Debounce_GetState(&p_dev->P_STATE->Debounce));
 }
 
-bool UserDIn_PollRisingEdge(const UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == true); }
+bool UserDIn_PollRisingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == true); }
 
-bool UserDIn_PollFallingEdge(const UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == false); }
+bool UserDIn_PollFallingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == false); }
 
-UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev)
+UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev)
 {
     return UserDIn_PollEdge(p_dev) * (UserDIn_Edge_T)(p_dev->P_STATE->Debounce.Output - p_dev->P_STATE->OutputPrev);
 }
+
+
+UserDIn_Edge_T UserDIn_Modal_PollEdgeValue(UserDIn_T * p_dev)
+{
+    switch (p_dev->P_STATE->Mode)
+    {
+        case USER_DIN_MODE_DISABLED: return USER_DIN_EDGE_NULL;
+        case USER_DIN_MODE_NORMAL: return UserDIn_PollEdgeValue(p_dev);
+        default: return USER_DIN_EDGE_NULL;
+    }
+}
+
 
 
 // /******************************************************************************/
@@ -90,7 +102,7 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev)
 //     Mode Extensions - Toggle Mode
 // */
 // /******************************************************************************/
-// static bool _UserDIn_ProcessToggleMode(const UserDIn_T * p_dev)
+// static bool _UserDIn_ProcessToggleMode( UserDIn_T * p_dev)
 // {
 //     if (Debounce_IsRisingEdge(&p_dev->P_STATE->Debounce) && _UserDIn_GetActiveState(p_dev))
 //         p_dev->P_STATE->ToggleState = !p_dev->P_STATE->ToggleState;
@@ -102,14 +114,14 @@ UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev)
 //     Mode Extensions - Momentary Mode
 // */
 // /******************************************************************************/
-// bool _UserDIn_ProcessMomentaryMode(const UserDIn_T * p_dev) { return _UserDIn_GetActiveState(p_dev); }
+// bool _UserDIn_ProcessMomentaryMode( UserDIn_T * p_dev) { return _UserDIn_GetActiveState(p_dev); }
 
 // /******************************************************************************/
 // /*
 //     Mode Extensions - Hold Mode
 // */
 // /******************************************************************************/
-// static bool _UserDIn_ProcessHoldMode(const UserDIn_T * p_dev)
+// static bool _UserDIn_ProcessHoldMode( UserDIn_T * p_dev)
 // {
 //     bool activeState = _UserDIn_GetActiveState(p_dev);
 //     uint16_t currentTime = GetTime(p_dev);

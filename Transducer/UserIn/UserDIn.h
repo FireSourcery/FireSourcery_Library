@@ -53,15 +53,6 @@ typedef enum UserDIn_Mode
 }
 UserDIn_Mode_T;
 
-/*  */
-typedef const struct UserDIn_Cmd
-{
-    // UserDIn_Edge_T Edge;
-    void (*CMD)(void * p_context, UserDIn_Edge_T edge);
-    void * P_CONTEXT;
-}
-UserDIn_Cmd_T;
-
 
 // typedef struct UserDIn_Config
 // {
@@ -83,7 +74,7 @@ typedef struct UserDIn_State
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
     UserDIn_Mode_T Mode;
-    UserDIn_Cmd_T * p_OptCmd; /* Optional command to execute on edge */
+    // UserDIn_Cmd_T * p_OptCmd; /* Optional command to execute on edge */
 }
 UserDIn_State_T;
 
@@ -116,19 +107,23 @@ UserDIn_T;
     State Query Functions
 */
 /******************************************************************************/
-static inline bool UserDIn_GetState(const UserDIn_T * p_dev) { return Debounce_GetState(&p_dev->P_STATE->Debounce); }
-static inline bool UserDIn_IsEdge(const UserDIn_T * p_dev) { return is_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
-static inline bool UserDIn_IsRisingEdge(const UserDIn_T * p_dev) { return is_rising_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
-static inline bool UserDIn_IsFallingEdge(const UserDIn_T * p_dev) { return is_falling_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
-static inline UserDIn_Edge_T UserDIn_GetEdge(const UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline bool UserDIn_GetState(UserDIn_T * p_dev) { return Debounce_GetState(&p_dev->P_STATE->Debounce); }
+static inline bool UserDIn_IsEdge(UserDIn_T * p_dev) { return is_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline bool UserDIn_IsRisingEdge(UserDIn_T * p_dev) { return is_rising_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline bool UserDIn_IsFallingEdge(UserDIn_T * p_dev) { return is_falling_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+static inline UserDIn_Edge_T UserDIn_GetEdge(UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
+
+static inline void UserDIn_Modal_Disable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; }
+static inline void UserDIn_Modal_Enable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL; }
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-extern void UserDIn_Init(const UserDIn_T * p_dev);
-extern bool UserDIn_PollEdge(const UserDIn_T * p_dev);
-extern bool UserDIn_PollRisingEdge(const UserDIn_T * p_dev);
-extern bool UserDIn_PollFallingEdge(const UserDIn_T * p_dev);
-extern UserDIn_Edge_T UserDIn_PollEdgeValue(const UserDIn_T * p_dev);
+extern void UserDIn_Init(UserDIn_T * p_dev);
+extern bool UserDIn_PollEdge(UserDIn_T * p_dev);
+extern bool UserDIn_PollRisingEdge(UserDIn_T * p_dev);
+extern bool UserDIn_PollFallingEdge(UserDIn_T * p_dev);
+extern UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev);
+

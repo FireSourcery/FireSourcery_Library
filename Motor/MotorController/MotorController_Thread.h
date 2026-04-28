@@ -79,45 +79,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_d
     }
 }
 
-/*
-    Optional Din
-*/
-static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
-{
-    MotorController_State_T * p_mc = p_dev->P_MC;
-    uint8_t dinStatus = 0U;
-
-    if (p_mc->Config.OptDinMode != MOTOR_CONTROLLER_OPT_DIN_DISABLE)
-    {
-        UserDIn_PollEdge(&p_dev->OPT_DIN);
-
-        //DIN VTABLE
-        switch (p_mc->Config.OptDinMode)
-        {
-            case MOTOR_CONTROLLER_OPT_DIN_DISABLE: break;
-            case MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT:
-                switch (UserDIn_GetEdge(&p_dev->OPT_DIN))
-                {
-                    case USER_DIN_EDGE_RISING:  MotorController_SetUserSpeedLimitAll(p_dev, p_mc->Config.OptSpeedLimit_Fract16); break;
-                    case USER_DIN_EDGE_FALLING: MotorController_ClearUserSpeedLimitAll(p_dev); break;
-                    default: break;
-                }
-                break;
-            // #ifdef MOTOR_CONTROLLER_SERVO_ENABLE
-            // case MOTOR_CONTROLLER_OPT_DIN_SERVO:
-            //     switch (Debounce_GetEdge(&p_mc->OptDin))
-            //     {
-            //         case DEBOUNCE_EDGE_RISING:  MotorController_EnterServoMode(p_mc);  break;
-            //         case DEBOUNCE_EDGE_FALLING: MotorController_ExitServoMode(p_mc);   break;
-            //         default: break;
-            //     }
-            //     break;
-            // #endif
-            default: break;
-        }
-    }
-}
-
+#include "MotAnalogUser/OptPin/MotorController_OptPin.h"
 /*
     Monitor Threads only set fault flags. Do not clear until user input clear
 */
@@ -280,6 +242,8 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
         // VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
+
+        _MotorController_ProcOptDin(p_dev); /* Poll OptDin every cycle, as it may be used for critical functions like fault reset or park */
 
         /* Proc in all State */
         switch (p_mc->Config.InputMode)

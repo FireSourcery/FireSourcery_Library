@@ -171,7 +171,7 @@ typedef enum Cia402_State
 }
 Cia402_State_T;
 
-static inline Cia402_Status_T Cia402_EncodeStatus(Cia402_State_T status) { return (Cia402_Status_T) { .Word = (uint16_t)status }; }
+// static inline Cia402_Status_T Cia402_EncodeStatus(Cia402_State_T status) { return (Cia402_Status_T) { .Word = (uint16_t)status }; }
 
 // static inline Cia402_State_T Cia402_DecodeStatus(Cia402_Status_T status)
 // {
@@ -279,25 +279,29 @@ Cia402_FaultReactionOption_T;
     Object Dictionary Indices (CiA 402)
 */
 /******************************************************************************/
-#define CIA402_OD_CONTROLWORD               (0x6040U) /* RW  U16  Master command */
-#define CIA402_OD_STATUSWORD                (0x6041U) /* RO  U16  Drive state report */
-#define CIA402_OD_QUICK_STOP_OPTION_CODE    (0x605AU) /* RW  I16  Quick stop behavior */
-#define CIA402_OD_SHUTDOWN_OPTION_CODE      (0x605BU) /* RW  I16  Shutdown behavior */
-#define CIA402_OD_DISABLE_OP_OPTION_CODE    (0x605CU) /* RW  I16  Disable operation behavior */
-#define CIA402_OD_HALT_OPTION_CODE          (0x605DU) /* RW  I16  Halt behavior */
-#define CIA402_OD_FAULT_REACTION_CODE       (0x605EU) /* RW  I16  Fault reaction profile */
-#define CIA402_OD_MODES_OF_OPERATION        (0x6060U) /* RW  I8   Requested mode */
-#define CIA402_OD_MODES_OF_OPERATION_DISP   (0x6061U) /* RO  I8   Active mode */
-#define CIA402_OD_POSITION_ACTUAL           (0x6064U) /* RO  I32  Position feedback */
-#define CIA402_OD_VELOCITY_ACTUAL           (0x606CU) /* RO  I32  Velocity feedback */
-#define CIA402_OD_TARGET_TORQUE             (0x6071U) /* RW  I16  Torque setpoint (per-mille rated) */
-#define CIA402_OD_TORQUE_ACTUAL             (0x6077U) /* RO  I16  Torque feedback (per-mille rated) */
-#define CIA402_OD_CURRENT_ACTUAL            (0x6078U) /* RO  I16  Current feedback (per-mille rated) */
-#define CIA402_OD_DC_LINK_VOLTAGE           (0x6079U) /* RO  U32  DC bus voltage (mV) */
-#define CIA402_OD_TARGET_POSITION           (0x607AU) /* RW  I32  Position setpoint (PP / CSP) */
-#define CIA402_OD_TARGET_VELOCITY           (0x60FFU) /* RW  I32  Velocity setpoint */
-#define CIA402_OD_QUICK_STOP_DECELERATION   (0x6085U) /* RW  U32  Quick-stop ramp rate */
-#define CIA402_OD_SUPPORTED_DRIVE_MODES     (0x6502U) /* RO  U32  Bitmask of supported modes */
+typedef enum Cia402_OdIndex
+{
+    CIA402_OD_CONTROLWORD               = (0x6040U), /* RW  U16  Master command */
+    CIA402_OD_STATUSWORD                = (0x6041U), /* RO  U16  Drive state report */
+    CIA402_OD_QUICK_STOP_OPTION_CODE    = (0x605AU), /* RW  I16  Quick stop behavior */
+    CIA402_OD_SHUTDOWN_OPTION_CODE      = (0x605BU), /* RW  I16  Shutdown behavior */
+    CIA402_OD_DISABLE_OP_OPTION_CODE    = (0x605CU), /* RW  I16  Disable operation behavior */
+    CIA402_OD_HALT_OPTION_CODE          = (0x605DU), /* RW  I16  Halt behavior */
+    CIA402_OD_FAULT_REACTION_CODE       = (0x605EU), /* RW  I16  Fault reaction profile */
+    CIA402_OD_MODES_OF_OPERATION        = (0x6060U), /* RW  I8   Requested mode */
+    CIA402_OD_MODES_OF_OPERATION_DISP   = (0x6061U), /* RO  I8   Active mode */
+    CIA402_OD_POSITION_ACTUAL           = (0x6064U), /* RO  I32  Position feedback */
+    CIA402_OD_VELOCITY_ACTUAL           = (0x606CU), /* RO  I32  Velocity feedback */
+    CIA402_OD_TARGET_TORQUE             = (0x6071U), /* RW  I16  Torque setpoint (per-mille rated) */
+    CIA402_OD_TORQUE_ACTUAL             = (0x6077U), /* RO  I16  Torque feedback (per-mille rated) */
+    CIA402_OD_CURRENT_ACTUAL            = (0x6078U), /* RO  I16  Current feedback (per-mille rated) */
+    CIA402_OD_DC_LINK_VOLTAGE           = (0x6079U), /* RO  U32  DC bus voltage (mV) */
+    CIA402_OD_TARGET_POSITION           = (0x607AU), /* RW  I32  Position setpoint (PP / CSP) */
+    CIA402_OD_TARGET_VELOCITY           = (0x60FFU), /* RW  I32  Velocity setpoint */
+    CIA402_OD_QUICK_STOP_DECELERATION   = (0x6085U), /* RW  U32  Quick-stop ramp rate */
+    CIA402_OD_SUPPORTED_DRIVE_MODES     = (0x6502U), /* RO  U32  Bitmask of supported modes */
+}
+Cia402_OdIndex_T;
 
 /*
     Controlword 0x6040 RW with the bit semantics above (master → drive command path)

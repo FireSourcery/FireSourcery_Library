@@ -51,7 +51,7 @@ BootRef_IsValid_T;
 
 typedef union BootRef
 {
-    struct
+    alignas(4) struct
     {
         volatile uint32_t IsValid       : 2U;
         volatile uint32_t FastBoot      : 1U;
@@ -60,7 +60,7 @@ typedef union BootRef
         // volatile uint32_t LoadDefault   : 1U;
         // volatile uint32_t ProtocolId    : 2U;
     };
-    volatile uint32_t Word;
+    alignas(4) volatile uint32_t Word;
 }
 BootRef_T;
 

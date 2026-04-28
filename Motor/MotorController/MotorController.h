@@ -46,6 +46,7 @@
 #include "Transducer/Blinky/Blinky.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
+#include "Transducer/UserIn/UserDIn_Cmd.h"
 
 #include "Peripheral/Analog/Analog.h"
 #include "Peripheral/Analog/Analog_ADC.h"
@@ -94,15 +95,7 @@ typedef enum MotorController_InputMode
 }
 MotorController_InputMode_T;
 
-typedef enum MotorController_OptDinMode
-{
-    MOTOR_CONTROLLER_OPT_DIN_DISABLE,
-    MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT,
-    MOTOR_CONTROLLER_OPT_DIN_SERVO,
-    MOTOR_CONTROLLER_OPT_DIN_PARK,
-    // MOTOR_CONTROLLER_OPT_DIN_USER_FUNCTION,
-}
-MotorController_OptDinMode_T;
+
 
 /******************************************************************************/
 /*!
@@ -170,7 +163,7 @@ typedef struct MotorController_Config
     // MotorController_InitFlags_T InitChecksEnabled;
 
     /* OptDin */
-    MotorController_OptDinMode_T OptDinMode;
+    int OptDinMode;
     uint16_t OptSpeedLimit_Fract16;
     uint16_t OptILimit_Fract16;
 
@@ -196,6 +189,8 @@ typedef struct MotorController_State
 
     // MotLimits_T Limits; /* mot to contigous alloc */
 
+    UserDIn_Fn_T  OptDinCmd; /* Configurable input command, e.g. for speed limit or servo position */
+
     // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
 
@@ -206,7 +201,6 @@ typedef struct MotorController_State
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
 
-    // there can move to calibration as static
     Accumulator_T AvgBuffer0;
     Accumulator_T AvgBuffer1;
 
@@ -253,6 +247,7 @@ typedef const struct MotorController
     MotAnalogUser_T ANALOG_USER;
     MotAnalogUser_Conversion_T ANALOG_USER_CONVERSIONS; /* AnalogUser Conversions */
     UserDIn_T OPT_DIN; /* Configurable input */
+    // UserDIn_T OPT_DINS;
     Blinky_T BUZZER;
     Blinky_T METER;
     Pin_T RELAY_PIN;
@@ -338,7 +333,7 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 
 
 /* Common Buffered Input */
-static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
+// static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
 
 
 /******************************************************************************/

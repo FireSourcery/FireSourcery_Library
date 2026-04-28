@@ -24,31 +24,32 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_MotPark.h
+    @file   UserDIn_Cmd.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../../MotorController_StateMachine.h"
+#include "UserDIn.h"
 
+typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
+// typedef void (*UserDIn_Fn_T)(void * p_context, bool prevState, bool currentState);
 
-static inline void MotorController_CallParkPin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
+/*  */
+typedef const struct UserDIn_Cmd
 {
-    switch (edge)
-    {
-        case USER_DIN_EDGE_RISING:  MotorController_EnterPark(p_dev); break;
-        case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
-        default: break;
-    }
+    // UserDIn_Edge_T Edge;
+    UserDIn_Fn_T CMD;
+    void * P_CONTEXT;
+}
+UserDIn_Cmd_T;
+
+static void UserDIn_CmdNull(void * p_context, UserDIn_Edge_T edge) { (void)p_context; (void)edge; }
+static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
+static const UserDIn_Fn_T USER_DIN_FN_NULL = UserDIn_CmdNull;
+
+// Your code here
+static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
+{
+    p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_PollEdgeValue(p_dev));
 }
 
-// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
-// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->PARK_PIN; }
-
-#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
-#include "ParkPin/MotorController_ParkPin.h"
-static inline void MotorController_ProcOptDin(const MotorController_T * p_dev)
-{
-    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(&p_dev->OPT_DIN[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]));
-}
-#endif

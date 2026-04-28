@@ -31,20 +31,19 @@
 #include <stdbool.h>
 
 
-
-// static inline void MotorController_CallSwitchBrakePin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
-// {
-//     switch (edge)
-//     {
-//         case USER_DIN_EDGE_RISING: math_max(MotAnalogUser_GetBrake(p_dev->ANALOG_USER), p_dev->P_MC.SwitchBrake.Value); break;
-//         case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
-//         default: break;
-//     }
-// }
-
-static inline UserDIn_T * MotorController_SwitchBrakePin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
-
-static inline void MotorController_ProcSwitchBrakePin(const MotorController_T * p_dev)
+static inline void MotorController_CallSwitchBrakePin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
 {
-    UserDIn_PollEdge(MotorController_SwitchBrakePin(p_dev));
+    switch (edge)
+    {
+        // case USER_DIN_EDGE_RISING: math_max(MotAnalogUser_GetBrake(p_dev->ANALOG_USER), p_dev->P_MC.SwitchBrake.Value); break;
+        // case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
+        default: break;
+    }
 }
+
+// static inline UserDIn_T * MotorController_SwitchBrakePin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
+
+// static inline void MotorController_ProcSwitchBrakePin(const MotorController_T * p_dev)
+// {
+//     UserDIn_PollEdge(MotorController_SwitchBrakePin(p_dev));
+// }

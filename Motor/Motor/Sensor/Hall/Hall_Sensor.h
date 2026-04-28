@@ -40,7 +40,7 @@ typedef const struct Hall_RotorSensor
     RotorSensor_T BASE;       /* P_STATE->AngleSpeed is the final output interface */
     Hall_T HALL;
     PulseEncoder_T PULSE;     /* PulseTimer + AngleCounter bundle (edge timing + count/freq/interp) */
-    uint32_t POLLING_FREQ;   /* Control loop frequency [Hz] for angle delta conversion */
+    uint32_t POLLING_FREQ;    /* Control loop frequency [Hz] for angle delta conversion */
 }
 Hall_RotorSensor_T;
 

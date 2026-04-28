@@ -42,15 +42,6 @@
 
 */
 /******************************************************************************/
-/* Virtual State Where ID => 0bCBA */
-#define HALL_SENSORS_VIRTUAL_A      (0b001U)
-#define HALL_SENSORS_VIRTUAL_B      (0b010U)
-#define HALL_SENSORS_VIRTUAL_C      (0b100U)
-/* 180 Degree active sensors */
-#define HALL_SENSORS_VIRTUAL_INV_A  (0b110U)
-#define HALL_SENSORS_VIRTUAL_INV_B  (0b101U)
-#define HALL_SENSORS_VIRTUAL_INV_C  (0b011U)
-
 #define HALL_SENSORS_TABLE_LENGTH (8U)
 
 #define HALL_ID_BITS (3U)
@@ -75,6 +66,15 @@ Hall_Sensors_T;
 */
 typedef enum Hall_Id
 {
+    /* Virtual State Where ID => 0bCBA */
+    HALL_SENSORS_VIRTUAL_A = (0b001U),
+    HALL_SENSORS_VIRTUAL_B = (0b010U),
+    HALL_SENSORS_VIRTUAL_C = (0b100U),
+    /* 180 Degree active sensors */
+    HALL_SENSORS_VIRTUAL_INV_A = (0b110U),
+    HALL_SENSORS_VIRTUAL_INV_B = (0b101U),
+    HALL_SENSORS_VIRTUAL_INV_C = (0b011U),
+
     /*
         Rotor Angle, CCW is increasing Angle
     */
