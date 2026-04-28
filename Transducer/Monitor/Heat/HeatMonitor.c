@@ -35,12 +35,18 @@
     Context
 */
 /******************************************************************************/
+// void HeatMonitor_InitLimitScalar(const HeatMonitor_T * p_context)
+// {
+//     //after loading config
+//     if (p_context->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(&p_context->P_STATE->Config, p_context->P_LIMIT_SCALAR); }
+// }
+
 void HeatMonitor_InitFrom(const HeatMonitor_T * p_context, const HeatMonitor_Config_T * p_config)
 {
     assert(p_context->P_STATE != NULL); /* Ensure state is provided */
 
     Monitor_InitFrom(p_context->P_STATE, p_config); /* Monitor_T auto handle invert */
-    if (p_context->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(p_context->P_STATE, p_context->P_LIMIT_SCALAR); }
+    if (p_context->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(&p_context->P_STATE->Config, p_context->P_LIMIT_SCALAR); }
 
     Thermistor_Init(&p_context->THERMISTOR); /* Configurable/Wired Thermistor load Coeffcients */
     if (p_context->P_LINEAR != NULL) { Thermistor_ToLinear_CelsiusPerAdcu(&p_context->THERMISTOR, p_context->P_LINEAR); }
@@ -50,6 +56,8 @@ void HeatMonitor_Init(const HeatMonitor_T * p_context)
 {
     HeatMonitor_InitFrom(p_context, p_context->P_NVM_CONFIG);
 }
+
+
 
 
 /******************************************************************************/
@@ -63,7 +71,7 @@ void HeatMonitor_Group_Init(const HeatMonitor_Group_T * p_group)
     /* Initialize shared state with group configuration */
     Monitor_InitFrom(p_group->P_STATE, p_group->P_NVM_CONFIG);
     /* Initialize shared limit scalar */
-    if (p_group->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(p_group->P_STATE, p_group->P_LIMIT_SCALAR); }
+    if (p_group->P_LIMIT_SCALAR != NULL) { HeatMonitor_ToLimitScalar(&p_group->P_STATE->Config, p_group->P_LIMIT_SCALAR); }
 
     /* Pass the same detection parameters to each */
     for (uint8_t i = 0; i < p_group->COUNT; i++)

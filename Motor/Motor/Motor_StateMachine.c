@@ -288,6 +288,7 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
         exiting a state on loss of any condition, but entering may not be guaranteed by setting a single condition.
         app layer exit park state may preserve disabled state while storing direction in motor state.
     maintains compatibility with none direction based handling.
+    (direction != p_motor->P_MOTOR->Direction) needs to stay in syync
 */
 static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t direction)
 {
@@ -622,9 +623,20 @@ static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phase
     return NULL;
 }
 
-static State_T * Calibration_InputStop(Motor_T * p_motor, state_value_t direction)
+static State_T * Calibration_InputDirection(Motor_T * p_motor, state_value_t direction)
 {
-    return (direction == MOTOR_DIRECTION_NULL) ? &MOTOR_STATE_PASSIVE : NULL;
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U)
+    {
+        switch ((Motor_Direction_T)direction)
+        {
+            case MOTOR_DIRECTION_NULL:  /* Intentional fall-through */
+            case MOTOR_DIRECTION_CW:
+            case MOTOR_DIRECTION_CCW:
+                Motor_FOC_SetDirection(p_motor->P_MOTOR, direction); break;
+            default: break; /* Invalid direction */
+        }
+    }
+    return NULL;
 }
 
 /*
@@ -650,7 +662,7 @@ static const State_Input_T CALIBRATION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_L
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
     [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Calibration_InputControl,
     [MOTOR_STATE_INPUT_CALIBRATION]     = (State_Input_T)Calibration_InputCalibration,
-    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Calibration_InputStop,
+    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Calibration_InputDirection,
     [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = NULL,
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };

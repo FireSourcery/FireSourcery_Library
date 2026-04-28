@@ -26,7 +26,6 @@ A **General Embedded C Library** and **Motor Control Library**
 
 ### Directory Contents Overview
 
-* Math - General math functions
 
 * Motor - Motor Control Library
   - Motor - Functions and state information for the operation of a single unique motor.
@@ -39,4 +38,7 @@ A **General Embedded C Library** and **Motor Control Library**
 
 * Transducers - Sensors and Actuators algorithms layer. Utilizes Peripheral layer.
 
+Generic layers
+* Math - Numerical value. General math functions
+* Type - Shape of memory.
 * Framework - Software tools and algorithms independent of hardware.

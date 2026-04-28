@@ -55,7 +55,7 @@
 #include "Framework/StateMachine/StateMachine.h"
 #include "Framework/StateMachine/_StateMachine.h" /* Include the private header to contain StateMachine_Active_T within Motor_State_T */
 #include "Framework/Timer/Timer.h"
-#include "Type/Array/LimitArray/LimitArray.h"
+#include "Framework/LimitArray/LimitArray.h"
 #include "Motor_Limits.h"
 
 #include "Math/Fixed/fixed.h"

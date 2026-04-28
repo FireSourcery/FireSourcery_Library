@@ -59,12 +59,6 @@ typedef enum HeatMonitor_Status
 }
 HeatMonitor_Status_T;
 
-// typedef struct HeatMonitor_Config
-// {
-//      HeatMonitor_Config_T Config;
-//      Thermistor_Coeffs_T Coeffs; /* Coefficients for thermistor conversion */
-// }
-// HeatMonitor_Config_T;
 
 /******************************************************************************/
 /*!
@@ -102,9 +96,9 @@ HeatMonitor_T;
     Monitor_T extentions
 */
 /******************************************************************************/
-static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_State_T * p_heat, Linear_T * p_limitScalar)
+static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_Config_T * p_heat, Linear_T * p_limitScalar)
 {
-    Linear_Q16_Init(p_limitScalar, p_heat->Config.Fault.Limit, p_heat->Config.Warning.Setpoint);
+    Linear_Q16_Init(p_limitScalar, p_heat->Fault.Limit, p_heat->Warning.Setpoint);
 }
 
 /******************************************************************************/
@@ -112,7 +106,8 @@ static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_State_T * p_heat,
     Single Context
 */
 /******************************************************************************/
-static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_T * p_context, int32_t input) { return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, input); }
+static inline HeatMonitor_Status_T _HeatMonitor_Poll(const HeatMonitor_T * p_context, int32_t input) { return (HeatMonitor_Status_T)Monitor_Poll(p_context->P_STATE, input); }
+static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_T * p_context, int32_t input) { return _HeatMonitor_Poll(p_context, (input + p_context->P_STATE->LastInput) / 2); }
 
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */
@@ -200,6 +195,9 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollCollective(const HeatMo
     return (HeatMonitor_Status_T)Monitor_Poll(p_group->P_STATE, p_group->P_MONITORS[_HeatMonitor_Group_FindHottest(p_group)].P_STATE->LastInput);
 }
 
+// static inline HeatMonitor_Status_T HeatMonitor_Group_PollCollective(const HeatMonitor_Group_T * p_group, uint8_t index, int32_t input)
+// {
+//  }
 
 /******************************************************************************/
 /*

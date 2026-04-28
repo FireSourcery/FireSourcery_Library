@@ -33,6 +33,7 @@
 #include "Motor/Motor/Motor_Thread.h"
 
 #include "Peripheral/Analog/Analog_ADC_Thread.h"
+#include "MotAnalogUser/OptPin/MotorController_OptPin.h"
 
 /******************************************************************************/
 /*
@@ -79,7 +80,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_d
     }
 }
 
-#include "MotAnalogUser/OptPin/MotorController_OptPin.h"
+
 /*
     Monitor Threads only set fault flags. Do not clear until user input clear
 */
@@ -92,6 +93,10 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     HeatMonitor_Status_T status;
+
+// #ifndef NDEBUG
+    if (MotorController_IsFault(p_dev) == true) { return; }
+// #endif
 
     /* Poll PCB Temperature Monitor */
     switch (HeatMonitor_Poll(&p_dev->HEAT_PCB, Analog_Conversion_GetResult(&p_dev->HEAT_PCB_CONVERSION)))
@@ -111,6 +116,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     }
 
     /* Poll MOSFET Temperature Monitors Group Collective */
+    /* todo compose fan in at array level */
     switch (HeatMonitor_Group_PollCollective(&p_dev->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:

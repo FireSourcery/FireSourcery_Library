@@ -427,6 +427,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
             case MOTOR_CONTROLLER_LOCK_EXIT:
                 if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED)))
                 {
+                    Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     // p_nextState = &STATE_PARK;
                     p_nextState = AppParkState(p_dev); /* Check AppParkState enable, optionally enter Park or Main */

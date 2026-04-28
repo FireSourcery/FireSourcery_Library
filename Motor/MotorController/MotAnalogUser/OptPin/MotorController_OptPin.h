@@ -49,7 +49,6 @@ typedef enum MotorController_OptDinMode
     MOTOR_CONTROLLER_OPT_DIN_BUZZER,
     MOTOR_CONTROLLER_OPT_DIN_METER,
     MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT,
-    // MOTOR_CONTROLLER_OPT_DIN_SERVO,
 }
 MotorController_OptDinMode_T;
 
@@ -82,7 +81,7 @@ static inline void MotorController_SpeedLimitPin(MotorController_T * p_dev, User
 //     UserDIn_PollEdgeCmd(&p_dev->OPT_DIN, p_dev-> );
 // }
 
-static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
+static inline void _MotorController_ProcOptDin(MotorController_T * p_dev)
 {
     // p_dev->P_MC->OptDinCmd(p_dev, UserDIn_PollEdge(&p_dev->OPT_DIN));
     // UserDIn_PollEdgeCmd(&p_dev->OPT_DIN, p_dev->P_MC->OptDinCmd);
@@ -90,24 +89,30 @@ static inline void _MotorController_ProcOptDin(const MotorController_T * p_dev)
     UserDIn_PollEdgeCmd(&p_dev->OPT_DIN, &cmd);
 }
 
-static const UserDIn_Fn_T OPT_PIN_TABLE[] =
-{
-    [MOTOR_CONTROLLER_OPT_DIN_DISABLE]      =  (UserDIn_Fn_T)UserDIn_CmdNull,
-    [MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT]  =  (UserDIn_Fn_T)MotorController_SpeedLimitPin,
-    [MOTOR_CONTROLLER_OPT_DIN_PARK]         =  (UserDIn_Fn_T)MotorController_CallParkPin,
-    [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] =  (UserDIn_Fn_T)MotorController_CallSwitchBrakePin,
-};
 
+static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_T mode)
+{
+    static const UserDIn_Fn_T OPT_PIN_TABLE[] =
+    {
+        [MOTOR_CONTROLLER_OPT_DIN_DISABLE]      =  (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_SPEED_LIMIT]  =  (UserDIn_Fn_T)MotorController_SpeedLimitPin,
+        [MOTOR_CONTROLLER_OPT_DIN_PARK]         =  (UserDIn_Fn_T)MotorController_CallParkPin,
+        [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] =  (UserDIn_Fn_T)MotorController_CallSwitchBrakePin,
+
+        [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_PARK] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_FORWARD] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_REVERSE] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_RELAY] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_BUZZER] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_METER] = (UserDIn_Fn_T)UserDIn_CmdNull,
+        [MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT] = (UserDIn_Fn_T)UserDIn_CmdNull,
+    };
+    return (mode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT) ? OPT_PIN_TABLE[mode] : (UserDIn_Fn_T)UserDIn_CmdNull;
+}
 
 static inline void _MotorController_InitOptDin(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
-    if (p_mc->Config.OptDinMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT)
-    {
-        p_mc->OptDinCmd = OPT_PIN_TABLE[p_mc->Config.OptDinMode];
-    }
-    else
-    {
-        p_mc->OptDinCmd = (UserDIn_Fn_T)UserDIn_CmdNull;
-    }
+    p_dev->P_MC->OptDinCmd = _MotorController_OptDinFn(p_dev->P_MC->Config.OptDinMode);
+
 }

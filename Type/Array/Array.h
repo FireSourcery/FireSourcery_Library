@@ -42,20 +42,39 @@
     Wrapper around values array, preset functions for int types and operations
 */
 /******************************************************************************/
+typedef const union
+{
+    uint8_t * P_ARRAY8;
+    uint16_t * P_ARRAY16;
+    uint32_t * P_ARRAY32;
+    uint64_t * P_ARRAY64;
+}_Array_Cast;
+
 typedef const struct Array
 {
-    const union
-    {
-        void * P_BUFFER;
-        uint8_t * P_ARRAY8;
-        uint16_t * P_ARRAY16;
-        uint32_t * P_ARRAY32;
-        uint64_t * P_ARRAY64;
-    };
+    const union { void * P_BUFFER; _Array_Cast CAST; };
     size_t LENGTH;    // Length of the p_array
     void * P_AUGMENTS; // P_HEADER/P_STATE
 }
 Array_T;
+
+typedef const struct
+{
+    const union { void * P_BUFFER; _Array_Cast CAST; };
+    size_t LENGTH;
+}
+Array_Span_T;
+
+typedef const struct Array
+{
+    const union { void * P_BUFFER; _Array_Cast CAST; };
+    size_t LENGTH;    // Length of the p_array
+    void * P_AUGMENTS; // P_HEADER/P_STATE
+}
+// Array_Handle_T;
+Array_Params_T;
+
+
 
 // static allocation only, for inline convenience
 #define _BUFFER_ALLOC(Bytes) ((void *)(alignas(uintptr_t) uint8_t[(Bytes)]){})

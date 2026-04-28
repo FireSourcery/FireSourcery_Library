@@ -44,8 +44,8 @@ typedef const struct UserDIn_Cmd
 UserDIn_Cmd_T;
 
 static void UserDIn_CmdNull(void * p_context, UserDIn_Edge_T edge) { (void)p_context; (void)edge; }
-static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
 static const UserDIn_Fn_T USER_DIN_FN_NULL = UserDIn_CmdNull;
+static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
 
 // Your code here
 static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)

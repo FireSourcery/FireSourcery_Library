@@ -49,6 +49,6 @@ static inline void MotorController_CallParkPin(const MotorController_T * p_dev, 
 #include "ParkPin/MotorController_ParkPin.h"
 static inline void MotorController_ProcOptDin(const MotorController_T * p_dev)
 {
-    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(&p_dev->OPT_DIN[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]));
+    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(&p_dev->OPT_DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]));
 }
 #endif

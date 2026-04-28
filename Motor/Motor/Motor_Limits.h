@@ -33,7 +33,7 @@
     peers sharing the same controller.
 */
 /******************************************************************************/
-#include "Type/Array/LimitArray/LimitArray.h"
+#include "Framework/LimitArray/LimitArray.h"
 
 /* Per-motor motoring-current sources */
 typedef enum Motor_ILimitId

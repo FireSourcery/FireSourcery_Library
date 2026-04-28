@@ -280,7 +280,7 @@ typedef const struct MotorController
     Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
 
     VBus_T * P_VBUS;                    /* DC bus — owns live fract16, derate config, monitor */
-    VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vs config */
+    const VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vbus config */
     Analog_Conversion_T VBUS_CONVERSION;
 
     VMonitor_T V_ACCESSORIES;   /* ~12V */

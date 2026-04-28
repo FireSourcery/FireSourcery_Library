@@ -30,7 +30,7 @@
 #ifndef MOT_LIMITS_H
 #define MOT_LIMITS_H
 
-#include "Type/Array/LimitArray/LimitArray.h"
+#include "Framework/LimitArray/LimitArray.h"
 
 /*
     System-scope arbitration ids. Per-motor sources (winding heat, stall,
