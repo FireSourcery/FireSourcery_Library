@@ -212,6 +212,9 @@ static inline bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 // static inline bool Motor_Config_IsCcwPositive(Motor_Config_T * p_motor) { return p_motor->DirectionForward == MOTOR_DIRECTION_CCW; }
 // static inline void Motor_Config_SetCcwPositive(Motor_Config_T * p_motor, bool isCcwPositive) { p_motor->DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
 
+/*
+
+
 
 /*
     Derived Parameters during initialization or from Host
@@ -240,23 +243,3 @@ static inline bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 // static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Specs_ControlDomain_T * p_config) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, p_config->SpeedRated_DegPerCycle); }
 
 
-/* direct field access without propagate */
-// int32_t _Motor_Config_Calibration_Get(const Motor_Config_T * p_config, Motor_ConfigId_Calibration_T varId)
-// {
-//     int32_t value = 0;
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_COMMUTATION_MODE:              value = p_config->CommutationMode;                          break;
-//         case MOTOR_VAR_SENSOR_MODE:                   value = p_config->SensorMode;                               break;
-//         // case MOTOR_VAR_DIRECTION_CALIBRATION:         value = Motor_Config_GetDirectionCalibration(p_config);      break;
-//         // case MOTOR_VAR_POLE_PAIRS:                    value = Motor_Config_GetPolePairs(p_config);                 break;
-//         // case MOTOR_VAR_KV:                            value = Motor_Config_GetKv(p_config);                        break;
-//         // case MOTOR_VAR_V_SPEED_SCALAR:                value = Motor_Config_GetVSpeedScalar_UFract16(p_config);     break;
-//         // case MOTOR_VAR_SPEED_RATED:               value = Motor_Config_GetSpeedRated(p_config);                break;
-//         // case MOTOR_VAR_IA_ZERO_ADCU:                  value = Motor_Config_GetIaZero_Adcu(p_config);               break;
-//         // case MOTOR_VAR_IB_ZERO_ADCU:                  value = Motor_Config_GetIbZero_Adcu(p_config);               break;
-//         // case MOTOR_VAR_IC_ZERO_ADCU:                  value = Motor_Config_GetIcZero_Adcu(p_config);               break;
-//             // case MOTOR_VAR_I_PEAK_REF_ADCU:               value = Motor_Config_GetIPeakRef_Adcu(p_config);             break;
-//     }
-//     return value;
-// }

@@ -94,10 +94,16 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
 */
 /******************************************************************************/
 /*! @param[in] volts < GetVRated_V   */
+/* may overwrite fault/warning if called in the same packet */
+/*
+    Reinstall config into the VBus instance: re-seeds monitor thresholds from
+    VSupplyNominal_V and the LiIon defaults. Callers first mutate
+    Config.VBusConfig, then invoke this to push the change into live state.
+*/
 void MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
 {
-    _MotorController_SetVSupply_V(p_dev, volts);
-    /* may overwrite fault/warning if called in the same packet */
+    VBus_Config_Init_LiIon(&p_dev->P_VBUS->Config, volts);
+    VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
 }
 
 

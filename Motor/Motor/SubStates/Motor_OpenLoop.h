@@ -90,3 +90,9 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
 //     // MOTOR_VAR_OPEN_LOOP_RUN,
 // }
 // Motor_OpenLoop_Cmd_T;
+// typedef enum Motor_OpenLoop_Cmd
+// {
+//     MOTOR_OPEN_LOOP_CMD_PHASE_OUTPUT = (1 << 8) | MOTOR_STATE_INPUT_OPEN_LOOP,
+// }
+// Motor_OpenLoop_Cmd_T;
+// static void Motor_OpenLoop_Input(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, { Motor_OpenLoop_Cmd_T , value}; }

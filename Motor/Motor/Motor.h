@@ -791,6 +791,8 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
 extern void Motor_Init(const Motor_T * p_dev);
 extern void Motor_Reset(Motor_State_T * p_motor);
 
+extern void Motor_Reinit(Motor_T * p_motor);
+
 extern void Motor_ReinitSensor(Motor_State_T * p_motor);
 extern void Motor_InitUnits(Motor_State_T * p_motor);
 

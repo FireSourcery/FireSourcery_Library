@@ -63,38 +63,6 @@
     Caller / Var layer validate enum bounds
 */
 
-/******************************************************************************/
-/*
-    Transition to Stop / Runtime inactive
-    Stop disables inputs until next Start.
-*/
-/******************************************************************************/
-static State_T * _Motor_InputStop(const Motor_T * p_motor, state_value_t value)
-{
-    (void)value;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_STOP; }
-    return NULL;
-}
-
-void Motor_Stop(const Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputStop };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-}
-
-static State_T * _Motor_InputStart(const Motor_T * p_motor, state_value_t value)
-{
-    (void)p_motor;
-    (void)value;
-    return &MOTOR_STATE_PASSIVE;
-}
-
-void Motor_Start(const Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_STOP, .NEXT = (State_Input_T)_Motor_InputStart };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-    // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
-}
 
 /******************************************************************************/
 /*!
@@ -173,7 +141,7 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
     p_motor->P_MOTOR->UserSpeedReq = 0;
     p_motor->P_MOTOR->UserTorqueReq = 0;
-    // Motor_Stop(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
+    // Motor_Disable(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
 }
 
 /******************************************************************************/

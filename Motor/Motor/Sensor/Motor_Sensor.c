@@ -54,10 +54,10 @@ int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typ
     switch (typeId)
     {
         case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId);
-        case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(p_motor->SENSOR_TABLE.HALL.HALL.P_STATE, varId);
+        case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId);
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
-        case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId);
         #endif
         default: return 0;
     }
@@ -67,11 +67,11 @@ void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T ty
 {
     switch (typeId)
     {
-        case MOTOR_VAR_TYPE_HALL_CONFIG:      Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL, varId, varValue);            break;
+        case MOTOR_VAR_TYPE_HALL_CONFIG:      _Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId, varValue);            break;
         case MOTOR_VAR_TYPE_HALL_CMD:         Motor_Hall_Cmd(p_motor, varId, varValue); break;
         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
-        case MOTOR_VAR_TYPE_ENCODER_CONFIG:   Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER, varId, varValue);   break;
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG:   _Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId, varValue);   break;
         case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
         case MOTOR_VAR_TYPE_ENCODER_CMD:                 break;
         #endif

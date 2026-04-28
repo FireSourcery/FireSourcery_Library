@@ -110,7 +110,7 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_state->Config.VBusConfig.VSupplyNominal_V;       break;
+        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V; break;
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
@@ -132,10 +132,10 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
     MotorController_State_T * p_state = p_dev->P_MC;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                            break;
+        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                            break; /* can deprciate  */
         // case MOT_VAR_CONFIG_RESV:
-        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                           break;
-        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);                     break;
+        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                       break;
+        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);            break;
         case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = (MotorController_OptDinMode_T)value;           break;
         case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
         case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
@@ -556,6 +556,7 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVa
         default:                                  return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
 }
+
 // Check if a variable requires protocol control authority
 // static inline bool MotVarId_IsProtocolControl(MotVarId_T varId)
 // {

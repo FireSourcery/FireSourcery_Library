@@ -341,9 +341,9 @@ static inline bool Encoder_IsPositionRefSet(Encoder_State_T * p_encoder) { retur
     @brief inline config
 */
 /******************************************************************************/
-static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_State_T * p_encoder) { return p_encoder->Config.IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
-static inline void Encoder_SetIndexZeroRef(Encoder_State_T * p_encoder, uint16_t angle) { p_encoder->Config.IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
-static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_encoder->Config.IndexAngleRef = 0U; }
+static inline uint16_t Encoder_GetIndexZeroRef(const Encoder_Config_T * p_encoder) { return p_encoder->IndexAngleRef >> ENCODER_ANGLE_SHIFT; }
+static inline void Encoder_SetIndexZeroRef(Encoder_Config_T * p_encoder, uint16_t angle) { p_encoder->IndexAngleRef = angle << ENCODER_ANGLE_SHIFT; }
+static inline void Encoder_ClearIndexZeroRef(Encoder_Config_T * p_encoder) { p_encoder->IndexAngleRef = 0U; }
 
 
 /******************************************************************************/
@@ -352,7 +352,6 @@ static inline void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder) { p_en
 */
 /******************************************************************************/
 extern void Encoder_InitInterrupts_Quadrature(const Encoder_T * p_encoder);
-extern void Encoder_InitInterrupts_ABC(const Encoder_T * p_encoder);
 
 void Encoder_StartHoming(Encoder_State_T * p_encoder);
 uint16_t Encoder_GetHomingAngle(const Encoder_State_T * p_encoder);
@@ -360,7 +359,7 @@ bool Encoder_IsHomingIndexFound(const Encoder_State_T * p_encoder);
 bool Encoder_IsHomingIndexError(const Encoder_State_T * p_encoder);
 bool Encoder_PollHomingComplete(Encoder_State_T * p_encoder);
 void Encoder_CalibrateIndexZeroRef(Encoder_State_T * p_encoder);
-void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder);
+// void Encoder_ClearIndexZeroRef(Encoder_State_T * p_encoder);
 
 extern void Encoder_CheckAlignRef(Encoder_State_T * p_encoder);
 extern void Encoder_CaptureAlignZero(Encoder_State_T * p_encoder);
@@ -416,8 +415,8 @@ typedef enum Encoder_ConfigId
 }
 Encoder_ConfigId_T;
 
-extern int32_t _Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId);
-extern void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
+extern int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId);
+extern void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId, int32_t value);
 
 extern void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue);
 

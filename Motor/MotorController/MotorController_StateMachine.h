@@ -312,6 +312,23 @@ typedef union MotorController_FaultCmd
 }
 MotorController_FaultCmd_T;
 
-extern void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
-extern void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
-extern bool MotorController_TryClearFaultAll(MotorController_T * p_dev);
+// extern void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
+// extern void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
+// extern bool MotorController_TryClearFaultAll(MotorController_T * p_dev);
+static void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
+{
+    StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
+}
+
+static void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
+{
+    StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultClear = faultFlags.Value }.Value);
+}
+
+static bool MotorController_TryClearFaultAll(MotorController_T * p_dev)
+{
+    MotorController_ClearFault(p_dev, (MotorController_FaultFlags_T) { .Value = UINT16_MAX });
+    return !MotorController_IsFault(p_dev);
+}
+
+

@@ -35,11 +35,6 @@
 #include <stddef.h>
 #include <assert.h>
 
-// per layer
-// #ifndef STATE_COUNT_MAX
-// #define STATE_COUNT_MAX (8U)
-// #endif
-
 /* For Run time Sync buffer only. alternatively, fam or context pointer */
 #ifndef STATE_TRANSITION_TABLE_LENGTH_MAX
 #define STATE_TRANSITION_TABLE_LENGTH_MAX (16U) /* Max number of inputs per state. */
@@ -56,9 +51,11 @@ typedef intptr_t state_value_t;     /* Optional input parameter. User define pla
 // #define STATE_INPUT_ID_NULL         (0xFFU)
 // #define STATE_INPUT_VALUE_NULL      (0U)
 
-/* first 8 bits reserve for table, extended ids share the same name space.  */
+/*
+    Optional scheme to map sub state inputs
+first 8 bits reserve for table, extended ids share the same name space.  */
+#define STATE_INPUT_MAPPER_ID(BaseId, SubId) (((SubId) << 8U) | (BaseId)) /* base remains valid for direct table look up, maybe useful for nullcheck, while extended input can be passed to mapper. */
 #define STATE_INPUT_MAPPER_START_ID (0x100U) /* Id above this value will be passed to mapper. */
-// #define STATE_INPUT_MAPPER_ID_START(BaseId) ((1 << 8U) | (BaseId)) /* base remains valid for direct table look up, maybe useful for nullcheck, while extended input can be passed to mapper. */
 
 /*
     A State Action/Output. On Transition - Entry/Exit. Mapped per State.

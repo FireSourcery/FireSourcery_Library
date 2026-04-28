@@ -36,7 +36,7 @@
 #include <stdbool.h>
 
 /******************************************************************************/
-/*! Message Buffer state — driver-layer concept, not part of the CAN frame */
+/*! Message Buffer */
 /******************************************************************************/
 typedef enum
 {
@@ -59,9 +59,16 @@ typedef struct
 }
 CanBus_Buffer_T;
 
-
+/******************************************************************************/
+/*! Rx Callbacks */
+/******************************************************************************/
 typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data);
 // typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data, uint32_t length);
+
+/*
+    Full-frame Rx callback — preserves DLC, RTR, and ID metadata.
+*/
+typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
 
 /******************************************************************************/
 /*! Runtime state */
@@ -97,8 +104,8 @@ CanBus_T;
     .REQ_CALLBACK = Callback,                                                \
 }
 
-// static inline uint8_t * CanBus_GetRxData(CanBus_T * p_can) { return &p_can->P_STATE->Channel[0].Frame.Data; }
-// static inline uint32_t CanBus_GetRxId(CanBus_T * p_can) { return &p_can->P_STATE->Channel[0].Frame.CanId; }
+
+
 
 /******************************************************************************/
 /*! ISR handlers */
@@ -336,6 +343,12 @@ extern void CanBus_InitBaudRate(CanBus_T * p_can, uint32_t bitRate);
 extern void CanBus_SendData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);
 /* Tx — interrupt-driven, tracks buffer state; sets RX_WAIT_REMOTE on RTR frame */
 extern void CanBus_Send(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);
+/* Tx — accept a fully-built frame. */
+extern void CanBus_SendFrame(CanBus_T * p_can, const CAN_Frame_T * p_frame);
+
+/* Tx — remote frame request. sets buffer state to RX_WAIT_REMOTE for the response. */
+extern void CanBus_SendRemote(CanBus_T * p_can, can_id_t id, size_t length);
+
 /* Rx — polling */
 extern size_t CanBus_ReceiveData(CanBus_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData, size_t length);
 /* Arms Rx buffer and enables interrupt */

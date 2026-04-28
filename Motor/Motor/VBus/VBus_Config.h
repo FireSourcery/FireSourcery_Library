@@ -59,6 +59,55 @@ typedef struct VBus_Config
 }
 VBus_Config_T;
 
+/*
+    Li-ion default config — thresholds anchored to cell chemistry, scaled around VNominal.
+
+    Per-cell voltages (3.7 V nominal / 3.0 V cutoff / 4.2 V fresh):
+        Fresh charge   4.20 V → 114% of nominal  (Warning.LimitHigh) — regen derate starts here
+        Nominal        3.70 V → 100%             (Nominal)
+        BMS cutoff     3.00 V →  81% of nominal  (FaultUnderLimit)
+    Hardware / pre-cutoff margins (tunable per platform):
+        FET-OV margin  +7% above fresh    → 122%  (FaultOverLimit)
+        Pre-UV margin  +10% above cutoff  →  89%  (Warning.LimitLow) — I-derate ramp start
+        Warning hyst   3% of nominal       (~1 V at 37 V)
+*/
+#define _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax) (VMonitor_Config_T) \
+{                                                                                                               \
+    .Nominal                = ((VNominal) * ACCUM32(1.000F) / (VMax)),  /* 100% — 37 V VSupplyRef */              \
+    .FaultOverLimit.Limit   = ((VNominal) * ACCUM32(1.220F) / (VMax)),  /* 122% — 45 V — FET/cap margin */        \
+    .Warning.LimitHigh      = ((VNominal) * ACCUM32(1.135F) / (VMax)),  /* 114% — 42 V — fresh, regen chop */     \
+    .Warning.LimitLow       = ((VNominal) * ACCUM32(0.890F) / (VMax)),  /*  89% — 33 V — I-derate start */        \
+    .FaultUnderLimit.Limit  = ((VNominal) * ACCUM32(0.810F) / (VMax)),  /*  81% — 30 V — BMS cutoff */            \
+    .Warning.Hysteresis     = ((VNominal) * ACCUM32(0.030F) / (VMax)),  /*   3% — ~1 V at 37 V */                 \
+    .IsEnabled              = true,                                                                             \
+}
+
+#define VBUS_CONFIG_LIION(VNominal, VMax) (VBus_Config_T) \
+{                                                                                                  \
+    .VSupplyNominal_V           = (VNominal),                                                    \
+    .IDerateUnderVFloor_Fract16 = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
+    .IDerateOverVFloor_Fract16  = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
+    .SpeedDerateFloor_Fract16   = FRACT16(0.70F),  /* speed clamp never below 70% */             \
+    .MonitorConfig              = _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax)                    \
+}
+
+
+static inline VBus_Config_T VBus_Config_LiIon(uint16_t vNominal_V)
+{
+    return VBUS_CONFIG_LIION(math_min(vNominal_V, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
+}
+
+static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V)
+{
+    *p_config = VBus_Config_LiIon(vNominal_V);
+}
+
+
+/******************************************************************************/
+/*!
+    VMonitor alias
+*/
+/******************************************************************************/
 static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 
@@ -74,44 +123,6 @@ static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { retu
 static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
 static inline uint16_t VBus_GetVSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline uint16_t VBus_GetVFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
-
-/*
-    Li-ion default config — thresholds anchored to cell chemistry, scaled around VNominal.
-
-    Per-cell voltages (3.7 V nominal / 3.0 V cutoff / 4.2 V fresh):
-        Fresh charge   4.20 V → 114% of nominal  (Warning.LimitHigh) — regen derate starts here
-        Nominal        3.70 V → 100%             (Nominal)
-        BMS cutoff     3.00 V →  81% of nominal  (FaultUnderLimit)
-    Hardware / pre-cutoff margins (tunable per platform):
-        FET-OV margin  +7% above fresh    → 122%  (FaultOverLimit)
-        Pre-UV margin  +10% above cutoff  →  89%  (Warning.LimitLow) — I-derate ramp start
-        Warning hyst   3% of nominal       (~1 V at 37 V)
-*/
-#define _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax) (VMonitor_Config_T) \
-{                                                                                                               \
-    .Nominal                = FRACT16((VNominal) * 1.000F / (VMax)),  /* 100% — 37 V VSupplyRef */              \
-    .FaultOverLimit.Limit   = FRACT16((VNominal) * 1.220F / (VMax)),  /* 122% — 45 V — FET/cap margin */        \
-    .Warning.LimitHigh      = FRACT16((VNominal) * 1.135F / (VMax)),  /* 114% — 42 V — fresh, regen chop */     \
-    .Warning.LimitLow       = FRACT16((VNominal) * 0.890F / (VMax)),  /*  89% — 33 V — I-derate start */        \
-    .FaultUnderLimit.Limit  = FRACT16((VNominal) * 0.810F / (VMax)),  /*  81% — 30 V — BMS cutoff */            \
-    .Warning.Hysteresis     = FRACT16((VNominal) * 0.030F / (VMax)),  /*   3% — ~1 V at 37 V */                 \
-    .IsEnabled              = true,                                                                             \
-}
-
-#define VBUS_CONFIG_LIION(VNominal, VMax) (VBus_Config_T) \
-{                                                                                                  \
-    .VSupplyNominal_V           = (VNominal),                                                    \
-    .IDerateUnderVFloor_Fract16 = FRACT16(0.30F),  /* 30% I-max at ramp bottom */                \
-    .IDerateOverVFloor_Fract16  = FRACT16(0.10F),  /* 10% regen at ramp top */                   \
-    .SpeedDerateFloor_Fract16   = FRACT16(0.70F),  /* speed clamp never below 70% */             \
-    .MonitorConfig              = _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax)                    \
-}
-
-
-static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_fract16)
-{
-    *p_config = VBUS_CONFIG_LIION(vNominal_fract16, Phase_Calibration_GetVMaxVolts());
-}
 
 
 /******************************************************************************/
@@ -139,7 +150,6 @@ static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
         && (p_config->MonitorConfig.FaultUnderLimit.Limit < p_config->MonitorConfig.Warning.LimitLow)
         && (p_config->MonitorConfig.FaultOverLimit.Limit  > p_config->MonitorConfig.Warning.LimitHigh);
 }
-
 
 
 /******************************************************************************/
@@ -174,7 +184,8 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
 {
     switch (id)
     {
-        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
+        // case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        p_config->VSupplyNominal_V = value; break;
+        case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V:        VBus_Config_Init_LiIon(p_config, value); break; /* re-init whole config to maintain internal consistency of thresholds */
         case VBUS_CONFIG_ID_IDERATE_UNDER_V_FLOOR:    p_config->IDerateUnderVFloor_Fract16 = value; break;
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor_Fract16 = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor_Fract16 = value; break;

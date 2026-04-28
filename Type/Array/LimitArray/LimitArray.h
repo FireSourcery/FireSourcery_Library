@@ -106,14 +106,14 @@ static void _LimitArray_ClearAll(LimitArray_Augments_T * p_state, limit_t * p_va
 static inline limit_t _LimitArray_Upper(const LimitArray_Augments_T * p_state) { return p_state->Min; }
 static inline limit_t _LimitArray_Lower(const LimitArray_Augments_T * p_state) { return p_state->Max; }
 
-static inline bool _LimitArray_TrySetUpper(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
+static inline bool _LimitArray_TestSetUpper(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
 {
     p_values[id] = value;
     if (value > p_state->Max) { p_state->Max = value; p_state->MaxId = id; return true; }
     return false;
 }
 
-static inline bool _LimitArray_TrySetLower(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
+static inline bool _LimitArray_TestSetLower(LimitArray_Augments_T * p_state, limit_t * p_values, limit_id_t id, limit_t value)
 {
     p_values[id] = value;
     if (value < p_state->Min) { p_state->Min = value; p_state->MinId = id; return true; }

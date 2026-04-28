@@ -125,8 +125,8 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
 /*
     MotorController AppTable
 */
-static State_T * EnterMain(MotorController_T * p_dev) { return MotorController_App_EnterMain(p_dev); }
-static State_T * ParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &STATE_PARK : EnterMain(p_dev)); }
+static State_T * EnterAppMain(MotorController_T * p_dev) { Motor_Table_StartAll(&p_dev->MOTORS); return MotorController_App_EnterMain(p_dev); }
+static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &STATE_PARK : EnterAppMain(p_dev)); }
 
 
 /******************************************************************************/
@@ -173,10 +173,10 @@ static State_T * Init_Next(MotorController_T * p_dev)
         /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == false) { p_mc->FaultFlags.Motors = 1U; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == false) { p_mc->FaultFlags.Motors = 1U; }
 
         /* In the case of boot into motor spinning state. Go to fault state disable output */
-        if (p_mc->FaultFlags.Value == 0U) { p_nextState = ParkState(p_dev); } else { p_nextState = &STATE_FAULT; }
+        if (p_mc->FaultFlags.Value == 0U) { p_nextState = AppParkState(p_dev); } else { p_nextState = &STATE_FAULT; }
     }
 
     return p_nextState;
@@ -228,7 +228,7 @@ static State_T * Park_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
         case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &STATE_PARK;
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &STATE_PARK;
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterAppMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
         default: break;
     }
     return NULL;
@@ -239,7 +239,7 @@ static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
     State_T * p_nextState = NULL;
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == true) { p_nextState = &MC_STATE_LOCK; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == true) { p_nextState = &MC_STATE_LOCK; }
     }
     return p_nextState;
 }
@@ -286,7 +286,7 @@ static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 static State_T * Common_InputPark(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
-    if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == true) { p_nextState = &STATE_PARK; }
+    if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == true) { p_nextState = &STATE_PARK; }
     /* alternatively caller handle */
     else if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_dev->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = &STATE_PARK; } /* Applies stop on enter */
     else { MotorController_BeepShort(p_dev); }
@@ -301,7 +301,7 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
         case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_dev); /* Motors in Stop first */
             // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      Motor_Table_StopAll(&p_dev->MOTORS);    return NULL; /* Exit sub-state, disable inputs */
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     Motor_Table_StartAll(&p_dev->MOTORS);   return EnterMain(p_dev); /* Enter app sub-state from Main idle */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     Motor_Table_StartAll(&p_dev->MOTORS);   return EnterAppMain(p_dev); /* Enter app sub-state from Main idle */
             // if rootState == MAIN
         default:     return NULL;
     }
@@ -425,11 +425,11 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP)))
+                if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED)))
                 {
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     // p_nextState = &STATE_PARK;
-                    p_nextState = ParkState(p_dev); /* Check ParkState enable, optionally enter Park or Main */
+                    p_nextState = AppParkState(p_dev); /* Check AppParkState enable, optionally enter Park or Main */
                 }
                 else
                 {
@@ -440,6 +440,8 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
             /* todo check start from top state only substate == current state */
             case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
+
+                Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
                 opStatus = 0;
                 break;
 
@@ -462,7 +464,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
-                // if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_STOP) == true)
+                // if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == true)
                 // Motor_Table_StopAll(&p_dev->MOTORS); //optionally same as lock exit
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
@@ -619,7 +621,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
         p_mc->FaultFlags.Value |= cmd.FaultSet;
     }
 
-    return (p_mc->FaultFlags.Value == 0U) ? ParkState(p_dev) : NULL;
+    return (p_mc->FaultFlags.Value == 0U) ? AppParkState(p_dev) : NULL;
 }
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, state_value_t lockId)
@@ -658,20 +660,20 @@ static const State_T STATE_FAULT =
 */
 /******************************************************************************/
 /* Pass only delta flags — handler applies OR FaultSet / AND-NOT FaultClear atomically */
-void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
-}
+// void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
+// {
+//     StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
+// }
 
-void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
-{
-    StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultClear = faultFlags.Value }.Value);
-}
+// void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
+// {
+//     StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultClear = faultFlags.Value }.Value);
+// }
 
-bool MotorController_TryClearFaultAll(MotorController_T * p_dev)
-{
-    MotorController_ClearFault(p_dev, (MotorController_FaultFlags_T){ .Value = UINT16_MAX });
-    return !MotorController_IsFault(p_dev);
-}
+// bool MotorController_TryClearFaultAll(MotorController_T * p_dev)
+// {
+//     MotorController_ClearFault(p_dev, (MotorController_FaultFlags_T){ .Value = UINT16_MAX });
+//     return !MotorController_IsFault(p_dev);
+// }
 
 

@@ -76,4 +76,13 @@ typedef struct
 }
 MotLimits_T;
 
+// bool _MotorController_SetSpeedLimitAll(MotLimits_T * p_dev, Motor_Table_T * p_motors, MotSpeedLimitId_T id, limit_t speed_fract16)
+// {
+//     if (_LimitArray_TestSetUpper(&p_dev->SpeedLimitState, p_dev->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(p_motors, &p_dev->SpeedLimitState); return true; }
+//     return false;
+// }
+
+
+
+
 #endif

@@ -26,7 +26,6 @@ void CanBus_SendData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, si
 
 // }
 
-
 /*
     State tracking with Tx interrupt for Remote requests
 */

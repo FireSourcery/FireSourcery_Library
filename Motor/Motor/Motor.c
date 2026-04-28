@@ -115,6 +115,11 @@ void Motor_Reset(Motor_State_T * p_motor)
     // Motor_ResetUnitsIabc(p_motor);
 }
 
+void Motor_Reinit(Motor_T * p_motor)
+{
+    if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
+    Motor_Reset(p_motor->P_MOTOR);
+}
 
 /******************************************************************************/
 /*

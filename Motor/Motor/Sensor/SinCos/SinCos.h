@@ -146,5 +146,5 @@ typedef enum SinCos_ConfigId
 }
 SinCos_ConfigId_T;
 
-extern int SinCos_ConfigId_Get(const SinCos_State_T * p_state, SinCos_ConfigId_T id);
-extern void SinCos_ConfigId_Set(SinCos_State_T * p_state, SinCos_ConfigId_T id, int value);
+extern int SinCos_ConfigId_Get(const SinCos_Config_T * p_state, SinCos_ConfigId_T id);
+extern void SinCos_ConfigId_Set(SinCos_Config_T * p_state, SinCos_ConfigId_T id, int value);

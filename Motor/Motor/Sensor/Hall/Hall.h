@@ -375,8 +375,7 @@ typedef enum Hall_VarId
 }
 Hall_VarId_T;
 
-void Hall_VarId_Set(const Hall_T * p_hall, Hall_VarId_T varId, int varValue);
-int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId);
+extern int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId);
 
 typedef enum Hall_ConfigId
 {
@@ -389,11 +388,11 @@ typedef enum Hall_ConfigId
 }
 Hall_ConfigId_T;
 
-extern int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId);
-extern void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue);
+extern int _Hall_ConfigId_Get(const Hall_Config_T * p_hall, Hall_ConfigId_T varId);
+extern void _Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int varValue);
 
-void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue);
-int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId);
+extern void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue);
+extern int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId);
 
 #endif
 

@@ -55,10 +55,11 @@ static inline bool HAL_CAN_ReadRxRemoteFlag(HAL_CAN_T * p_hal);
 static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data);
 
 static inline bool HAL_CAN_ReadTxEmptyFlag(HAL_CAN_T * p_hal);
-static inline bool HAL_CAN_ReadRxFullFlag(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_EnableTxEmptyInterrupt(HAL_CAN_T * p_hal);
-static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_DisableTxEmptyInterrupt(HAL_CAN_T * p_hal);
+
+static inline bool HAL_CAN_ReadRxFullFlag(HAL_CAN_T * p_hal);
+static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_DisableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal);
 
@@ -69,10 +70,10 @@ static inline uint8_t HAL_CAN_MapMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t u
 // static inline uint8_t HAL_CAN_MapTxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId);
 // static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t userId);
 
-static inline bool HAL_CAN_ReadTxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
-static inline bool HAL_CAN_ReadTxRemoteRxEmpty(HAL_CAN_T * p_hal, uint8_t hwIndex);
-static inline bool HAL_CAN_ReadTxRemoteRxFull(HAL_CAN_T * p_hal, uint8_t hwIndex);
-static inline bool HAL_CAN_ReadRxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
+// static inline bool HAL_CAN_ReadTxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
+// static inline bool HAL_CAN_ReadTxRemoteRxEmpty(HAL_CAN_T * p_hal, uint8_t hwIndex);
+// static inline bool HAL_CAN_ReadTxRemoteRxFull(HAL_CAN_T * p_hal, uint8_t hwIndex);
+// static inline bool HAL_CAN_ReadRxComplete(HAL_CAN_T * p_hal, uint8_t hwIndex);
 
 // static inline void HAL_CAN_ClearTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline void HAL_CAN_EnableTxInterrupt(HAL_CAN_T * p_hal, uint8_t hwIndex);

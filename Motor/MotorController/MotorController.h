@@ -161,15 +161,6 @@ MotorController_InitFlags_T;
 
 typedef struct MotorController_Config
 {
-    /*
-        MotorController Voltages
-        PHASE_CALIBRATION.V_MAX -> ADC Saturation
-        PHASE_CALIBRATION.V_RATED -> controller voltage max
-        Config.Nominal -> user set nominal voltage
-        VBus.V -> live voltage
-    */
-    VBus_Config_T VBusConfig; /* VBus profile + monitor + derate */
-
     // MotorController_MainMode_T InitMode;
     int InitMode; /* enum stand in */
     MotorController_InputMode_T InputMode;
@@ -293,7 +284,8 @@ typedef const struct MotorController
     HeatMonitor_Group_T HEAT_MOSFETS;
     Analog_Conversion_T * P_HEAT_MOSFET_CONVERSIONS;
 
-    VBus_T * P_VBUS;                              /* DC bus — owns live fract16, derate config, monitor */
+    VBus_T * P_VBUS;                    /* DC bus — owns live fract16, derate config, monitor */
+    VBus_Config_T * P_VBUS_NVM_CONFIG;    /* hold vs config */
     Analog_Conversion_T VBUS_CONVERSION;
 
     VMonitor_T V_ACCESSORIES;   /* ~12V */

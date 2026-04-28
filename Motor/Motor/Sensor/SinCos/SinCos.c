@@ -93,32 +93,32 @@ void SinCos_CalibrateCcwPositive(SinCos_State_T * p_state, uint16_t sin_Adcu, ui
     Var ID
 */
 /******************************************************************************/
-int SinCos_ConfigId_Get(const SinCos_State_T * p_state, SinCos_ConfigId_T id)
+int SinCos_ConfigId_Get(const SinCos_Config_T * p_state, SinCos_ConfigId_T id)
 {
     switch (id)
     {
-        case SIN_COS_CONFIG_MIN_ADCU:                  return p_state->Config.Min_Adcu;
-        case SIN_COS_CONFIG_MAX_ADCU:                  return p_state->Config.Max_Adcu;
-        case SIN_COS_CONFIG_MIN_MILLIV:                return p_state->Config.Min_MilliV;
-        case SIN_COS_CONFIG_MAX_MILLIV:                return p_state->Config.Max_MilliV;
-        case SIN_COS_CONFIG_ANGLE_OFFSET:              return (int16_t)p_state->Config.AngleOffset;
-        case SIN_COS_CONFIG_IS_CCW_POSITIVE:           return p_state->Config.IsCcwPositive;
-        case SIN_COS_CONFIG_ELECTRICAL_ROTATIONS_RATIO: return p_state->Config.ElectricalRotationsRatio;
+        case SIN_COS_CONFIG_MIN_ADCU:                  return p_state->Min_Adcu;
+        case SIN_COS_CONFIG_MAX_ADCU:                  return p_state->Max_Adcu;
+        case SIN_COS_CONFIG_MIN_MILLIV:                return p_state->Min_MilliV;
+        case SIN_COS_CONFIG_MAX_MILLIV:                return p_state->Max_MilliV;
+        case SIN_COS_CONFIG_ANGLE_OFFSET:              return (int16_t)p_state->AngleOffset;
+        case SIN_COS_CONFIG_IS_CCW_POSITIVE:           return p_state->IsCcwPositive;
+        case SIN_COS_CONFIG_ELECTRICAL_ROTATIONS_RATIO: return p_state->ElectricalRotationsRatio;
         default: return 0;
     }
 }
 
-void SinCos_ConfigId_Set(SinCos_State_T * p_state, SinCos_ConfigId_T id, int value)
+void SinCos_ConfigId_Set(SinCos_Config_T * p_state, SinCos_ConfigId_T id, int value)
 {
     switch (id)
     {
-        case SIN_COS_CONFIG_MIN_ADCU:                  p_state->Config.Min_Adcu = value; SinCos_State_ResetUnits(p_state); break;
-        case SIN_COS_CONFIG_MAX_ADCU:                  p_state->Config.Max_Adcu = value; SinCos_State_ResetUnits(p_state); break;
-        case SIN_COS_CONFIG_MIN_MILLIV:                p_state->Config.Min_MilliV = value; break;
-        case SIN_COS_CONFIG_MAX_MILLIV:                p_state->Config.Max_MilliV = value; break;
-        case SIN_COS_CONFIG_ANGLE_OFFSET:              p_state->Config.AngleOffset = (angle16_t)value; break;
-        case SIN_COS_CONFIG_IS_CCW_POSITIVE:           p_state->Config.IsCcwPositive = (bool)value; break;
-        case SIN_COS_CONFIG_ELECTRICAL_ROTATIONS_RATIO: p_state->Config.ElectricalRotationsRatio = value; break;
+        case SIN_COS_CONFIG_MIN_ADCU:                  p_state->Min_Adcu = value; SinCos_State_ResetUnits(p_state); break;
+        case SIN_COS_CONFIG_MAX_ADCU:                  p_state->Max_Adcu = value; SinCos_State_ResetUnits(p_state); break;
+        case SIN_COS_CONFIG_MIN_MILLIV:                p_state->Min_MilliV = value; break;
+        case SIN_COS_CONFIG_MAX_MILLIV:                p_state->Max_MilliV = value; break;
+        case SIN_COS_CONFIG_ANGLE_OFFSET:              p_state->AngleOffset = (angle16_t)value; break;
+        case SIN_COS_CONFIG_IS_CCW_POSITIVE:           p_state->IsCcwPositive = (bool)value; break;
+        case SIN_COS_CONFIG_ELECTRICAL_ROTATIONS_RATIO: p_state->ElectricalRotationsRatio = value; break;
         default: break;
     }
 }

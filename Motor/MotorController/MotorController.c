@@ -52,17 +52,13 @@ void MotorController_Init(const MotorController_T * p_dev)
 
     MotAnalogUser_Init(&p_dev->ANALOG_USER);
 
-    VBus_InitFrom(p_dev->P_VBUS, &p_mc->Config.VBusConfig);
+    VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
 
     VMonitor_Init(&p_dev->V_ACCESSORIES);
     VMonitor_Init(&p_dev->V_ANALOG);
 
     HeatMonitor_Init(&p_dev->HEAT_PCB);
     HeatMonitor_Group_Init(&p_dev->HEAT_MOSFETS);
-
-    LimitArray_ClearAll(&p_dev->SPEED_LIMIT_SOURCES);
-    LimitArray_ClearAll(&p_dev->I_LIMIT_SOURCES);
-    LimitArray_ClearAll(&p_dev->I_GEN_LIMIT_SOURCES);
 
     for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_Init(&p_dev->MOTORS.P_DEVS[iMotor]); }
 
@@ -86,6 +82,10 @@ void MotorController_Init(const MotorController_T * p_dev)
     Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
+    LimitArray_ClearAll(&p_dev->SPEED_LIMIT_SOURCES);
+    LimitArray_ClearAll(&p_dev->I_LIMIT_SOURCES);
+    LimitArray_ClearAll(&p_dev->I_GEN_LIMIT_SOURCES);
+
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
@@ -101,16 +101,6 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
     p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
 }
 
-/*
-    Reinstall config into the VBus instance: re-seeds monitor thresholds from
-    VSupplyNominal_V and the LiIon defaults. Callers first mutate
-    Config.VBusConfig, then invoke this to push the change into live state.
-*/
-void _MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
-{
-    p_dev->P_MC->Config.VBusConfig = VBUS_CONFIG_LIION(math_min(volts, Phase_Calibration_GetVRated_V()), Phase_Calibration_GetVMaxVolts());
-    VBus_InitFrom(p_dev->P_VBUS, &p_dev->P_MC->Config.VBusConfig);
-}
 
 
 /******************************************************************************/

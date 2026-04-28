@@ -59,7 +59,7 @@ static void Tuning_Proc(const Motor_T * p_motor)
 */
 static State_T * Tuning_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    Motor_SetFeedbackMode(p_motor->P_MOTOR, Motor_FeedbackMode_Cast(feedbackMode));
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
     return NULL;
 }

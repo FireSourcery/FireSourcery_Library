@@ -267,6 +267,16 @@ Angle_SpeedFractCalib_T;
 #define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
 #define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
 
+// #if defined(ANGLE_POLLING_FREQ) && defined(ANGLE_SPEED_MAX_RPM)
+// static const Angle_SpeedFractRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_CALIB(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
+// #endif
+
+static inline Angle_SpeedFractRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
+static inline Angle_SpeedFractRef_T Angle_SpeedFractRef_FromCalib(uint32_t pollingFreq, uint32_t maxRpm) { return ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
+
+/* Caller pass Ref ~ 2x for overflow range */
+static void Angle_SpeedRef_Init(Angle_SpeedFractRef_T * p_ref, angle16_t maxAngle16) { *p_ref = ANGLE_SPEED_FRACT_REF(maxAngle16); }
+static void Angle_SpeedRef_Init_Rpm(Angle_SpeedFractRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
 
 /*
     Precomputed unit conversions — operate on shifted (Q16.16) delta.
@@ -277,17 +287,6 @@ Angle_SpeedFractCalib_T;
 static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
 static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
 static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
-
-
-#if defined(ANGLE_POLLING_FREQ) && defined(ANGLE_SPEED_MAX_RPM)
-static const Angle_SpeedFractRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_CALIB(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
-ANGLE_OF_SPEED_FRACT(Speed) angle_of_speed_fract16(ANGLE_SPEED_CALIB.SpeedMax_Angle16, Speed)
-SPEED_FRACT_OF_ANGLE(AngleDelta) speed_fract16_of_angle(ANGLE_SPEED_CALIB.InvSpeedMax_Fract32, AngleDelta)
-#endif
-
-/* Caller pass Ref ~ 2x for overflow range */
-static void Angle_SpeedRef_Init(Angle_SpeedFractRef_T * p_ref, angle16_t maxAngle16) { *p_ref = ANGLE_SPEED_FRACT_REF(maxAngle16); }
-static void Angle_SpeedRef_Init_Rpm(Angle_SpeedFractRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
 
 
 /* Directly set the speed if available; updates Delta in shifted form */
@@ -308,30 +307,3 @@ static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const An
 
 
 
-// typedef struct Angle_Config_T
-// {
-//     Angle_SpeedFractRef_T SpeedFractRef;
-// }
-// Angle_Config_T;
-
-// static void Angle_InitFrom(Angle_T * p_angle, const Angle_Config_T * p_config)
-// {
-//     p_angle->SpeedFractRef
-// }
-
-
-/*
-    Query
-*/
-// static inline fract16_t Angle_GetSpeed_Angle16(const Angle_T * p_angle) { return p_angle->Delta; }
-// static inline fract16_t Angle_GetSpeed_Fract16(const Angle_T * p_angle) { return p_angle->Speed_Fract16; }
-
-
-/* as data interface */
-// typedef struct angle_speed { angle16_t Angle; angle16_t Delta; } angle_speed_t;
-// typedef struct Angle_Data
-// {
-//     angle16_t Angle; /* Position Angle */
-//     angle16_t Delta; /* DegPerCycle, DigitalSpeed */
-// }
-// Angle_Data_T;

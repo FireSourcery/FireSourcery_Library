@@ -219,21 +219,21 @@ static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { retur
 */
 /******************************************************************************/
 /* Getters */
-static inline int32_t Monitor_GetFaultLimit(const Monitor_T * p_monitor) { return p_monitor->Config.Fault.Limit; }
-static inline int32_t Monitor_GetWarningSetpoint(const Monitor_T * p_monitor) { return p_monitor->Config.Warning.Setpoint; }
-static inline int32_t Monitor_GetWarningResetpoint(const Monitor_T * p_monitor) { return p_monitor->Config.Warning.Resetpoint; }
-static inline int32_t Monitor_GetNominal(const Monitor_T * p_monitor) { return p_monitor->Config.Nominal; }
+static inline int32_t Monitor_GetFaultLimit(const Monitor_Config_T * p_config) { return p_config->Fault.Limit; }
+static inline int32_t Monitor_GetWarningSetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Setpoint; }
+static inline int32_t Monitor_GetWarningResetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Resetpoint; }
+static inline int32_t Monitor_GetNominal(const Monitor_Config_T * p_config) { return p_config->Nominal; }
 
 /* Setters */
-static inline void _Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) { p_monitor->Config.Fault.Limit = limit; }
-static inline void _Monitor_SetWarningSetpoint(Monitor_T * p_monitor, int32_t setpoint) { p_monitor->Config.Warning.Setpoint = setpoint; }
-static inline void _Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint) { p_monitor->Config.Warning.Resetpoint = resetpoint; }
-static inline void _Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Config.Nominal = nominal; }
+static inline void _Monitor_SetFaultLimit(Monitor_Config_T * p_config, int32_t limit) { p_config->Fault.Limit = limit; }
+static inline void _Monitor_SetWarningSetpoint(Monitor_Config_T * p_config, int32_t setpoint) { p_config->Warning.Setpoint = setpoint; }
+static inline void _Monitor_SetWarningResetpoint(Monitor_Config_T * p_config, int32_t resetpoint) { p_config->Warning.Resetpoint = resetpoint; }
+static inline void _Monitor_SetNominal(Monitor_Config_T * p_config, int32_t nominal) { p_config->Nominal = nominal; }
 
-static inline bool Monitor_IsConfigEnabled(const Monitor_T * p_monitor) { return p_monitor->Config.IsEnabled; }
-static inline void Monitor_SetEnabled(Monitor_T * p_monitor, bool isEnabled) { p_monitor->Config.IsEnabled = isEnabled; }
-static inline void Monitor_Enable(Monitor_T * p_monitor) { Monitor_SetEnabled(p_monitor, true); }
-static inline void Monitor_Disable(Monitor_T * p_monitor) { Monitor_SetEnabled(p_monitor, false); }
+static inline bool Monitor_IsConfigEnabled(const Monitor_Config_T * p_config) { return p_config->IsEnabled; }
+static inline void Monitor_SetEnabled(Monitor_Config_T * p_config, bool isEnabled) { p_config->IsEnabled = isEnabled; }
+static inline void Monitor_Enable(Monitor_Config_T * p_config) { Monitor_SetEnabled(p_config, true); }
+static inline void Monitor_Disable(Monitor_Config_T * p_config) { Monitor_SetEnabled(p_config, false); }
 
 /******************************************************************************/
 /*

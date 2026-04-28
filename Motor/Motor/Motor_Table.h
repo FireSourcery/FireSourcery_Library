@@ -118,10 +118,10 @@ static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_table, int s
 typedef void(*Motor_ContextProc_T)(Motor_T * p_motor);
 /* Motor_Table_ForEachProc */
 static inline void Motor_Table_ForEachApply(Motor_Table_T * p_table, Motor_ContextProc_T function) { void_array_foreach(sizeof(Motor_T), (void *)p_table->P_DEVS, p_table->LENGTH, (proc_t)function); }
-// static inline void Motor_Table_StartAll(Motor_Table_T * p_table) { Motor_Table_ForEachApply(p_table, (Motor_ContextProc_T)Motor_Start); }
+// static inline void Motor_Table_StartAll(Motor_Table_T * p_table) { Motor_Table_ForEachApply(p_table, (Motor_ContextProc_T)Motor_Enable); }
 
-static inline void Motor_Table_StopAll(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Stop(&p_table->P_DEVS[iMotor]); } }
-static inline void Motor_Table_StartAll(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Start(&p_table->P_DEVS[iMotor]); } }
+static inline void Motor_Table_StopAll(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Disable(&p_table->P_DEVS[iMotor]); } }
+static inline void Motor_Table_StartAll(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Enable(&p_table->P_DEVS[iMotor]); } }
 static inline void Motor_Table_ForceDisableControl(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ForceDisableControl(&p_table->P_DEVS[iMotor]); } }
 static inline void Motor_Table_EnterCalibration(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Calibration_Enter(&p_table->P_DEVS[iMotor]); } }
 static inline void Motor_Table_EnterCalibrateAdc(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_Analog_Calibrate(&p_table->P_DEVS[iMotor]); } }

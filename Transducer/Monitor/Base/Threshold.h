@@ -35,6 +35,7 @@
 
 /*
     Interface for configuration types
+    Handle Configs. Bridge to Hysteresis with Setpoint/Resetpoint pairs
 */
 
 /*
@@ -79,3 +80,7 @@ typedef struct Threshold_Range
     // int32_t Bandwitdh;
 }
 Threshold_Range_T;
+
+static inline Threshold_Setpoint_T Threshold_Setpoint_FromHigh(Threshold_Range_T * p_zone) { return (Threshold_Setpoint_T) { .Setpoint = p_zone->LimitHigh, .Resetpoint = p_zone->LimitHigh - p_zone->Deadband }; }
+static inline Threshold_Setpoint_T Threshold_Setpoint_FromLow(Threshold_Range_T * p_zone) { return (Threshold_Setpoint_T) { .Setpoint = p_zone->LimitLow, .Resetpoint = p_zone->LimitLow + p_zone->Deadband }; }
+

@@ -124,32 +124,32 @@ int Hall_VarId_Get(const Hall_T * p_hall, Hall_VarId_T varId)
 }
 
 
-void _Hall_ConfigId_Set(Hall_State_T * p_hall, Hall_ConfigId_T varId, int varValue)
+void _Hall_ConfigId_Set(Hall_Config_T * p_hall, Hall_ConfigId_T varId, int varValue)
 {
     switch (varId)
     {
-        case HALL_CONFIG_SENSOR_TABLE_1: p_hall->Config.SensorsTable[1U] = varValue; break;
-        case HALL_CONFIG_SENSOR_TABLE_2: p_hall->Config.SensorsTable[2U] = varValue; break;
-        case HALL_CONFIG_SENSOR_TABLE_3: p_hall->Config.SensorsTable[3U] = varValue; break;
-        case HALL_CONFIG_SENSOR_TABLE_4: p_hall->Config.SensorsTable[4U] = varValue; break;
-        case HALL_CONFIG_SENSOR_TABLE_5: p_hall->Config.SensorsTable[5U] = varValue; break;
-        case HALL_CONFIG_SENSOR_TABLE_6: p_hall->Config.SensorsTable[6U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_1: p_hall->SensorsTable[1U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_2: p_hall->SensorsTable[2U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_3: p_hall->SensorsTable[3U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_4: p_hall->SensorsTable[4U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_5: p_hall->SensorsTable[5U] = varValue; break;
+        case HALL_CONFIG_SENSOR_TABLE_6: p_hall->SensorsTable[6U] = varValue; break;
         // case HALL_CONFIG_RUN_CALIBRATION: break;
         default: break;
     }
 }
 
-int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId)
+int _Hall_ConfigId_Get(const Hall_Config_T * p_hall, Hall_ConfigId_T varId)
 {
     int value = 0;
     switch (varId)
     {
-        case HALL_CONFIG_SENSOR_TABLE_1: value = p_hall->Config.SensorsTable[1U]; break;
-        case HALL_CONFIG_SENSOR_TABLE_2: value = p_hall->Config.SensorsTable[2U]; break;
-        case HALL_CONFIG_SENSOR_TABLE_3: value = p_hall->Config.SensorsTable[3U]; break;
-        case HALL_CONFIG_SENSOR_TABLE_4: value = p_hall->Config.SensorsTable[4U]; break;
-        case HALL_CONFIG_SENSOR_TABLE_5: value = p_hall->Config.SensorsTable[5U]; break;
-        case HALL_CONFIG_SENSOR_TABLE_6: value = p_hall->Config.SensorsTable[6U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_1: value = p_hall->SensorsTable[1U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_2: value = p_hall->SensorsTable[2U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_3: value = p_hall->SensorsTable[3U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_4: value = p_hall->SensorsTable[4U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_5: value = p_hall->SensorsTable[5U]; break;
+        case HALL_CONFIG_SENSOR_TABLE_6: value = p_hall->SensorsTable[6U]; break;
         // case HALL_CONFIG_RUN_CALIBRATION: break;
         default: break;
     }
@@ -159,12 +159,12 @@ int _Hall_ConfigId_Get(const Hall_State_T * p_hall, Hall_ConfigId_T varId)
 void Hall_ConfigId_Set(const Hall_T * p_hall, Hall_ConfigId_T varId, int varValue)
 {
     if (p_hall == NULL) return;
-    _Hall_ConfigId_Set(p_hall->P_STATE, varId, varValue);
+    _Hall_ConfigId_Set(&p_hall->P_STATE->Config, varId, varValue);
 }
 
 int Hall_ConfigId_Get(const Hall_T * p_hall, Hall_ConfigId_T varId)
 {
     if (p_hall == NULL) return 0;
-    return _Hall_ConfigId_Get(p_hall->P_STATE, varId);
+    return _Hall_ConfigId_Get(&p_hall->P_STATE->Config, varId);
 }
 

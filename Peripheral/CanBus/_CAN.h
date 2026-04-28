@@ -66,7 +66,6 @@ typedef struct
 }
 CAN_ExtendedWireId_T;
 
-/* parsable */
 typedef enum
 {
     CAN_FRAME_TYPE_DATA,        //    Data frame: a frame containing node data for transmission

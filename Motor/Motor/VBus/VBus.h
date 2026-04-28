@@ -55,7 +55,12 @@
     - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Fract32 for voltage normalization and derating calculations.
     - Controller layer calls VBus_CaptureFract16 / VBus_PollMonitor:
 */
-
+/*
+    PHASE_CALIBRATION.V_MAX -> ADC Saturation
+    PHASE_CALIBRATION.V_RATED -> controller voltage max
+    Config.Nominal -> user set nominal voltage
+    VBus.V -> live voltage
+*/
 /******************************************************************************/
 /*!
     VBus — live state + embedded config
@@ -72,6 +77,7 @@ typedef struct VBus
 
     VMonitor_State_T MonitorState;
     VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
+    /* Caller holds Nvm Address */
 }
 VBus_T;
 
@@ -114,7 +120,7 @@ static inline void VBus_InitLive(VBus_T * p_vbus)
 static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
 {
     if (p_config != NULL) { p_vbus->Config = *p_config; }
-    p_vbus->Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
+    p_vbus->Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V); /* keep in sync */
     RangeMonitor_InitFrom(&p_vbus->MonitorState, &p_vbus->Config.MonitorConfig);
     VBus_InitLive(p_vbus);
 }

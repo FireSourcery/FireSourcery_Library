@@ -348,33 +348,30 @@ void Encoder_SetScalarSpeedRef(Encoder_State_T * p_encoder, uint16_t speedRef)
 
 */
 /******************************************************************************/
-
-
-
-int32_t _Encoder_ConfigId_Get(const Encoder_State_T * p_encoder, Encoder_ConfigId_T varId)
+int32_t _Encoder_ConfigId_Get(const Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId)
 {
     int32_t value = 0;
     switch (varId)
     {
-        case ENCODER_CONFIG_COUNTS_PER_REVOLUTION:             value = p_encoder->Config.CountsPerRevolution;            break;
-        case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_encoder->Config.IsQuadratureCaptureEnabled;     break;
-        case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              value = p_encoder->Config.IsALeadBPositive;               break;
-        case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       value = p_encoder->Config.ExtendedDeltaTStop;             break;
+        case ENCODER_CONFIG_COUNTS_PER_REVOLUTION:             value = p_encoder->CountsPerRevolution;            break;
+        case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     value = p_encoder->IsQuadratureCaptureEnabled;     break;
+        case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              value = p_encoder->IsALeadBPositive;               break;
+        case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       value = p_encoder->ExtendedDeltaTStop;             break;
         case ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR:          value = 0;    break;
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    value = Encoder_GetIndexZeroRef(p_encoder);             break;
-        // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                value = p_encoder->Config.IndexAngleRef;                  break;
+        // case ENCODER_CONFIG_CALIBRATE_ZERO_REF:                value = p_encoder->IndexAngleRef;                  break;
     }
     return value;
 }
 
-void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
+void _Encoder_ConfigId_Set(Encoder_Config_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
 {
     switch (varId)
     {
-        case ENCODER_CONFIG_COUNTS_PER_REVOLUTION:             p_encoder->Config.CountsPerRevolution = varValue;            break;
-        case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     p_encoder->Config.IsQuadratureCaptureEnabled = varValue;     break;
-        case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              p_encoder->Config.IsALeadBPositive = varValue;               break;
-        case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       p_encoder->Config.ExtendedDeltaTStop = varValue;             break;
+        case ENCODER_CONFIG_COUNTS_PER_REVOLUTION:             p_encoder->CountsPerRevolution = varValue;            break;
+        case ENCODER_CONFIG_IS_QUADRATURE_CAPTURE_ENABLED:     p_encoder->IsQuadratureCaptureEnabled = varValue;     break;
+        case ENCODER_CONFIG_IS_A_LEAD_B_POSITIVE:              p_encoder->IsALeadBPositive = varValue;               break;
+        case ENCODER_CONFIG_EXTENDED_TIMER_DELTA_T_STOP:       p_encoder->ExtendedDeltaTStop = varValue;             break;
         case ENCODER_CONFIG_INTERPOLATE_ANGLE_SCALAR:          break;
 
         case ENCODER_CONFIG_INDEX_ZERO_REF:                    Encoder_SetIndexZeroRef(p_encoder, varValue);              break;
@@ -387,6 +384,6 @@ void _Encoder_ConfigId_Set(Encoder_State_T * p_encoder, Encoder_ConfigId_T varId
 */
 void Encoder_ConfigId_Set(const Encoder_T * p_encoder, Encoder_ConfigId_T varId, int32_t varValue)
 {
-    _Encoder_ConfigId_Set(p_encoder->P_STATE, varId, varValue);
+    _Encoder_ConfigId_Set(&p_encoder->P_STATE->Config, varId, varValue);
     // _Encoder_ResetUnits(p_encoder);
 }

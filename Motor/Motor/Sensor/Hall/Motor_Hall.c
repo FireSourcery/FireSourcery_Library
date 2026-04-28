@@ -30,6 +30,7 @@
 #include "Motor_Hall.h"
 #include "Hall.h"
 
+#include "../../Motor_FOC.h"
 #include "../../Motor_StateMachine.h"
 
 
@@ -44,53 +45,76 @@ static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSO
     Calibration State
 */
 /******************************************************************************/
+/*
+    Phase_Id_T and Hall_VirtualId_T share numeric values - one table drives both.
+    Sequence: 6 vectors at 60deg electrical; conventional Align -> Settle -> Read.
+    Align runs every tick (current PID closes loop); timer paces vector advance.
+*/
+static_assert(HALL_SENSORS_VIRTUAL_A     == PHASE_ID_A);
+static_assert(HALL_SENSORS_VIRTUAL_INV_C == PHASE_ID_INV_C);
+static_assert(HALL_SENSORS_VIRTUAL_B     == PHASE_ID_B);
+static_assert(HALL_SENSORS_VIRTUAL_INV_A == PHASE_ID_INV_A);
+static_assert(HALL_SENSORS_VIRTUAL_C     == PHASE_ID_C);
+static_assert(HALL_SENSORS_VIRTUAL_INV_B == PHASE_ID_INV_B);
+
+
+#define CAL_STEP_COUNT    (6U)
+
 /* Include [Phase] and [P_PARENT] State */
 static void Calibration_Entry(const Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateV0(&p_motor->PHASE);
+    Hall_StartCalibrate(GetHall(p_motor));
+    PID_Reset(&p_motor->P_MOTOR->PidId);
+    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    Motor_SetFeedbackMode(p_motor->P_MOTOR, MOTOR_FEEDBACK_MODE_CURRENT);
     p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
 
-static State_T * Calibration_End(const Motor_T * p_motor);
+/*
+    Voltage-mode align: open-loop fixed duty (one-shot per call is sufficient).
+*/
+static void Calibration_Align_V(const Motor_T * p_motor, Phase_Id_T id)
+{
+    Phase_Align(&p_motor->PHASE, id, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
+}
 
+/*
+    Current-mode align: PID Id -> Vd, projected onto vector angle via FOC chain.
+    Must run every tick to close the current loop. Torque ramp ramps Id from 0
+    up to IAlign across the settle window, avoiding a current step at each new
+    vector; ramp is reset to 0 at every vector boundary.
+*/
+static void Calibration_Align_I(const Motor_T * p_motor, Phase_Id_T id)
+{
+    const fract16_t idReq = Motor_OpenLoopTorqueRampOf(p_motor->P_MOTOR, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    Motor_FOC_AngleControl(p_motor->P_MOTOR, Phase_AngleOf(id), idReq, 0);
+}
+
+/*
+    Drive each tick (current loop runs continuously across the settle window),
+    sample hall and advance vector at the boundary, reset ramp for next vector.
+*/
 static void Calibration_Proc(const Motor_T * p_motor)
 {
-    static_assert(HALL_SENSORS_VIRTUAL_A == PHASE_ID_A);
-    static_assert(HALL_SENSORS_VIRTUAL_B == PHASE_ID_B);
-    static_assert(HALL_SENSORS_VIRTUAL_C == PHASE_ID_C);
+    static const Phase_Id_T CAL_VECTORS[] = { PHASE_ID_A, PHASE_ID_INV_C, PHASE_ID_B, PHASE_ID_INV_A, PHASE_ID_C, PHASE_ID_INV_B, };
 
-    const uint16_t duty = Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
+    const Phase_Id_T id = CAL_VECTORS[p_motor->P_MOTOR->CalibrationStateIndex];
+
+    Calibration_Align_I(p_motor, id);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        switch (p_motor->P_MOTOR->CalibrationStateIndex) /* Phase_ReadAlign() */
-        {
-            /* alternatively buffer align */
-            case 0U: Hall_StartCalibrate(GetHall(p_motor));                               Phase_Align(&p_motor->PHASE, PHASE_ID_A, duty);        p_motor->P_MOTOR->CalibrationStateIndex = 1U;    break;
-            case 1U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_A);       Phase_Align(&p_motor->PHASE, PHASE_ID_INV_C, duty);    p_motor->P_MOTOR->CalibrationStateIndex = 2U;    break;
-            case 2U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_C);   Phase_Align(&p_motor->PHASE, PHASE_ID_B, duty);        p_motor->P_MOTOR->CalibrationStateIndex = 3U;    break;
-            case 3U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_B);       Phase_Align(&p_motor->PHASE, PHASE_ID_INV_A, duty);    p_motor->P_MOTOR->CalibrationStateIndex = 4U;    break;
-            case 4U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_A);   Phase_Align(&p_motor->PHASE, PHASE_ID_C, duty);        p_motor->P_MOTOR->CalibrationStateIndex = 5U;    break;
-            case 5U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_C);       Phase_Align(&p_motor->PHASE, PHASE_ID_INV_B, duty);    p_motor->P_MOTOR->CalibrationStateIndex = 6U;    break;
-            case 6U: Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_B);   Phase_Deactivate(&p_motor->PHASE);                          p_motor->P_MOTOR->CalibrationStateIndex = 7U;    break;
-            default: break;
-        }
-
-        // _StateMachine_Transition(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, Calibration_End(p_motor));
+        Hall_CalibrateState(GetHall(p_motor), (Hall_Id_T)id);
+        Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+        p_motor->P_MOTOR->CalibrationStateIndex++;
     }
 }
 
-// static void Calibration_Proc_IFeedback(const Motor_T * p_motor)
-// {
-//     uint16_t vPhase = PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), Motor_GetVAlign_Duty( p_motor)); // use phase pid or align to angle
-//     const uint16_t duty = vPhase * Phase_VBus_Inv_Fract32() >> 16;
-// }
-
-// seperate in case move to   input.
 static State_T * Calibration_End(const Motor_T * p_motor)
 {
-    if (p_motor->P_MOTOR->CalibrationStateIndex >= 7U)
+    if (p_motor->P_MOTOR->CalibrationStateIndex >= CAL_STEP_COUNT)
     {
         p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsTableValid(GetHall(p_motor)->P_STATE);
         return &MOTOR_STATE_CALIBRATION;
@@ -148,5 +172,39 @@ void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
 //     }
 // }
 
+
+
+// static void Calibration_Proc(const Motor_T * p_motor)
+// {
+//     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) != true) return;
+
+//     const uint16_t duty = Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
+
+//     switch (p_motor->P_MOTOR->CalibrationStateIndex)
+//     {
+//         case CAL_STEP_ALIGN_A:      Phase_Align(&p_motor->PHASE, PHASE_ID_A, duty); break;
+//         case CAL_STEP_READ_A:       Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_A);     break;
+
+//         case CAL_STEP_ALIGN_INV_C:  Phase_Align(&p_motor->PHASE, PHASE_ID_INV_C, duty); break;
+//         case CAL_STEP_READ_INV_C:   Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_C); break;
+
+//         case CAL_STEP_ALIGN_B:      Phase_Align(&p_motor->PHASE, PHASE_ID_B, duty); break;
+//         case CAL_STEP_READ_B:       Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_B);     break;
+
+//         case CAL_STEP_ALIGN_INV_A:  Phase_Align(&p_motor->PHASE, PHASE_ID_INV_A, duty); break;
+//         case CAL_STEP_READ_INV_A:   Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_A); break;
+
+//         case CAL_STEP_ALIGN_C:      Phase_Align(&p_motor->PHASE, PHASE_ID_C, duty); break;
+//         case CAL_STEP_READ_C:       Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_C);     break;
+
+//         case CAL_STEP_ALIGN_INV_B:  Phase_Align(&p_motor->PHASE, PHASE_ID_INV_B, duty); break;
+//         case CAL_STEP_READ_INV_B:   Hall_CalibrateState(GetHall(p_motor), HALL_SENSORS_VIRTUAL_INV_B); break;
+
+//         case CAL_STEP_DONE:         Phase_Deactivate(&p_motor->PHASE); break;
+//         default: break;
+//     }
+
+//     p_motor->P_MOTOR->CalibrationStateIndex++;
+// }
 
 
