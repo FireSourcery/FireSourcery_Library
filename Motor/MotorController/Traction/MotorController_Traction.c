@@ -211,6 +211,7 @@ static void Neutral_Proc(const MotorController_T * p_mc)
 */
 static State_T * InputDriveDirection(const MotorController_T * p_mc, state_value_t direction)
 {
+    // Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); /* optionally set, async mode returns immediately.  */
     if (Motor_Table_IsEveryUserDirection(&p_mc->MOTORS, direction) == true) { return &STATE_DRIVE; }
     if (Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); return &STATE_DRIVE; }
     return NULL;

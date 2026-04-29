@@ -48,15 +48,12 @@
     Buffer user inputs as 'cmd/input state'
         Direction selection is not an event that causes a state transition.
         It is a configuration parameter that the user sets independently of the operating state.
-        Keep Direction buffered.
 
     Motor handles direction state.
 
     Inactive orthogonal region
 
     Multi Input to Multi States
-
-
 */
 /******************************************************************************/
 /******************************************************************************/
@@ -131,6 +128,18 @@ static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->C
 
 /******************************************************************************/
 /*!
+
+    Each MotorController State constrains the range of Motor States
+    INIT            any (motors in INIT or already DISABLED)
+    PARK            DISABLED
+    MAIN            PASSIVE / RUN / OPEN_LOOP (any non-fault, non-DISABLED-required state)
+    MAIN_MOTOR_CMD  PASSIVE / RUN / OPEN_LOOP (entry sets PHASE_VOUT_0)
+    LOCK            DISABLED / CALIBRATION
+    FAULT           DISABLED / FAULT
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
     @brief Init State
 
     Init State does not transistion to fault, wait for ADC
@@ -142,7 +151,6 @@ static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
 
 static void Init_Entry(MotorController_T * p_dev)
 {
-    (void)p_dev;
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
     MotorController_BeepShort(p_dev);
 }
@@ -281,17 +289,23 @@ static void Main_Entry(MotorController_T * p_dev)
 static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 /*
-    Note: Motor_OpenLoop and Motor_Calibration exits on VOut 0/Z
+    Note: Motor_OpenLoop exits on VOut 0/Z
+    Motor_Calibration needs Calibration_Exit
 */
+/* Entry guard for part */
 static State_T * Common_InputPark(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
+    // Motor_Table_StopAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
+    /* Guard applies for both Async and Sync Motor handling transitions */
     if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == true) { p_nextState = &STATE_PARK; }
-    /* alternatively caller handle */
+    /* If caller buffers input. Caller includes knowedge of whether callee is in an accepting state. */
     else if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_PASSIVE) && Motor_Table_IsEvery(&p_dev->MOTORS, Motor_IsSpeedZero) == true) { p_nextState = &STATE_PARK; } /* Applies stop on enter */
     else { MotorController_BeepShort(p_dev); }
     return p_nextState;
 }
+
+
 
 /* App State defaults transitions — propagated from sub-states via HSM */
 static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
@@ -416,7 +430,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
     MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
     /* From Top state only. no sub state active. */
-    if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) /* || */
+    if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) /* Blcoks sub state inheritance  */
     {
         switch ((MotorController_LockId_T)lockId)
         {
@@ -429,7 +443,6 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 {
                     Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    // p_nextState = &STATE_PARK;
                     p_nextState = AppParkState(p_dev); /* Check AppParkState enable, optionally enter Park or Main */
                 }
                 else
@@ -465,8 +478,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
-                // if (Motor_Table_IsEveryState(&p_dev->MOTORS, MOTOR_STATE_ID_DISABLED) == true)
-                // Motor_Table_StopAll(&p_dev->MOTORS); //optionally same as lock exit
+                Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
                 break;
@@ -482,17 +494,17 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
     return p_nextState;
 }
 
-static State_T * Lock_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
-{
-    (void)p_dev; (void)cmd;
-    return NULL;
-}
+// static State_T * Lock_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
+// {
+//     (void)p_dev; (void)cmd;
+//     return NULL;
+// }
 
 static const State_Input_T LOCK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_LOCK]           = (State_Input_T)Lock_InputLockOp_Blocking,
-    [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Lock_InputStateCmd,
+    // [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Lock_InputStateCmd,
 };
 
 const State_T MC_STATE_LOCK =

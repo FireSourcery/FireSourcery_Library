@@ -102,8 +102,8 @@ static void Calibration_Proc(const Motor_T * p_motor)
 {
     assert(p_motor->P_MOTOR->CalibrationStateIndex < CAL_STEP_COUNT);
 
-    static const Phase_Id_T CAL_VECTORS[] = { PHASE_ID_A, PHASE_ID_INV_C, PHASE_ID_B, PHASE_ID_INV_A, PHASE_ID_C, PHASE_ID_INV_B, };
-    Phase_Id_T id = CAL_VECTORS[p_motor->P_MOTOR->CalibrationStateIndex];
+    static const Phase_Id_T CAL_STEP[CAL_STEP_COUNT] = { PHASE_ID_A, PHASE_ID_INV_C, PHASE_ID_B, PHASE_ID_INV_A, PHASE_ID_C, PHASE_ID_INV_B, };
+    Phase_Id_T id = CAL_STEP[p_motor->P_MOTOR->CalibrationStateIndex];
 
     Calibration_Align_I(p_motor, id);
 

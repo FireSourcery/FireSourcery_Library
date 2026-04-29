@@ -117,7 +117,7 @@ static inline Phase_Id_T Phase_PrevOf(Phase_Id_T id)
 
     return TABLE[id];
 }
-
+// Phase_RotateBy(Phase_Id_T id, sectors)
 
 static inline int Phase_SignOf(Phase_Id_T prev, Phase_Id_T new)
 {
@@ -198,20 +198,47 @@ typedef union Phase_Triplet
 }
 Phase_Triplet_T;
 
-// static inline int16_t Phase_ValueAlignedOf(Phase_Triplet_T * p_input, Phase_Id_T id)
+/* Triplet -> Bitmask reductions v */
+static inline Phase_Bitmask_T Phase_BitmaskOf(Phase_Triplet_T values)
+{
+    return (Phase_Bitmask_T) { .A = (values.A > 0), .B = (values.B > 0), .C = (values.C > 0) };
+}
+
+static inline Phase_Bitmask_T Phase_BitmaskOfThreshold(Phase_Triplet_T values, int16_t threshold)
+{
+    return (Phase_Bitmask_T) { .A = (values.A > threshold), .B = (values.B > threshold), .C = (values.C > threshold) };
+}
+
+static inline Phase_Triplet_T _Phase_Mask(Phase_Bitmask_T bits, uint16_t value)
+{
+    return (Phase_Triplet_T) { value & -(int32_t)bits.A, value & -(int32_t)bits.B, value & -(int32_t)bits.C, };
+}
+
+static inline Phase_Triplet_T Phase_Aligned(Phase_Id_T id, uint16_t value)
+{
+    return _Phase_Mask(Phase_Bitmask(id), value);
+}
+
+// static inline Phase_Triplet_T Phase_AlignedSignedOf(  Phase_Id_T id, uint16_t value)
 // {
 //     switch (id)
 //     {
-//         case PHASE_ID_A:        return p_input->A;
-//         case PHASE_ID_B:        return p_input->B;
-//         case PHASE_ID_C:        return p_input->C;
-//         case PHASE_ID_INV_A:    return (0 - p_input->A);
-//         case PHASE_ID_INV_B:    return (0 - p_input->B);
-//         case PHASE_ID_INV_C:    return (0 - p_input->C);
+//         case PHASE_ID_A:        return{value, 0, 0};
+//         case PHASE_ID_B:        return{0, value, 0};
+//         case PHASE_ID_C:        return{0, 0, value};
+//         case PHASE_ID_INV_A:    return{0 - value, 0, 0};
+//         case PHASE_ID_INV_B:    return{0, 0 - value, 0};
+//         case PHASE_ID_INV_C:    return{0, 0, 0 - value};
 //         default:                return 0;
 //     }
 // }
 
+
+/******************************************************************************/
+/*!
+    Phase_Data
+*/
+/******************************************************************************/
 typedef struct Phase_Data
 {
     // union { struct { int16_t A; int16_t B; int16_t C; }; Phase_Triplet_T Vector; }; keep anonymous access for ABC, convinience pass combined values.

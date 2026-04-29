@@ -237,6 +237,11 @@ typedef const struct State
 #endif
     // /* const sub-TYPE context */
     // const void * P_EXTENSION; /* Maybe more convenient than inheritance */
+
+    //multi layer transition consitency, if exit is not suffcient
+    // Mode requests(not commands).The upper layer requests a mode; the lower layer accepts or rejects based on its own state.
+    // Mode acknowledgement.The transition is a multi - step protocol : request → arbitration → confirm → entered.
+    // Transition timeouts with explicit fallback.If the acknowledgement doesn't come within deadline, the upper layer enters a degraded state (not the originally-requested one).
 }
 State_T;
 

@@ -142,8 +142,12 @@ static void StateMachine_Reset(StateMachine_T * p_this)
 }
 
 /******************************************************************************/
-/*
+/*!
     [StateMachine]
+
+    @note Synchronous here refers to synchrounous with the StateMachine Process, NOT the function call.
+        Async processes immediately.
+        Sync processes on the next StateMachine Process.
 */
 /******************************************************************************/
 /******************************************************************************/

@@ -351,7 +351,8 @@ static inline void MotorController_BeepMonitorTrigger(const MotorController_T * 
 static inline void MotorController_BeepStop(const MotorController_T * p_dev)             { Blinky_Stop(&p_dev->BUZZER); }
 static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev)        { Blinky_Disable(&p_dev->BUZZER); }
 
-
+// static inline void MotorController_BeepInit(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
+// static inline void MotorController_BeepStateRefused(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
 
 /******************************************************************************/
 /*

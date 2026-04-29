@@ -60,3 +60,10 @@ typedef const struct MotorController_App
 }
 MotorController_App_T;
 
+// typedef const struct
+// {
+//     Motor_Table_T MOTORS;
+//     void * P_STATE;
+//     const void * P_NVM_CONFIG;
+// }
+// DriveApp_T;

@@ -104,6 +104,19 @@ static void Debounce_Init(Debounce_T * p_debounce, uint16_t debounceTime)
 }
 
 
+/* Integrator Style */
+// typedef struct Debounce
+// {
+//     uint8_t  Count;
+//     uint8_t  Threshold;
+//     bool     Output;
+// }
+// Debounce_T;
 
-
-
+// static inline bool Debounce_Filter(Debounce_T * p, bool raw)
+// {
+//     p->Count = math_clamp((int)p->Count + (raw ? 1 : -1), 0, p->Threshold);
+//     if (p->Count == 0) {p->Output = false;}
+//     else if (p->Count == p->Threshold) {p->Output = true;}
+//     return p->Output;
+// }

@@ -68,8 +68,8 @@ static inline int32_t _angle_freq_of_speed_direct(uint32_t polling_freq, int32_t
 #define POLLING_PERIOD_FRACT32(pollingFreq) (FRACT32_SCALE / (pollingFreq))
 /* effecticely polling_period_fract32 */
 /* FRACT32_SCALE = ANGLE16_PER_REVOLUTION * FRACT16_SCALE */
-#define ANGLE_PER_CPS_ACCUM32(pollingFreq) ((uint32_t)ANGLE16_PER_REVOLUTION * FRACT16_SCALE / (pollingFreq))
-#define CPS_PER_ANGLE_ACCUM32(pollingFreq) ((pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
+#define ANGLE_SPEED_PER_RPS(pollingFreq) ((uint32_t)ANGLE16_PER_REVOLUTION * FRACT16_SCALE / (pollingFreq))
+#define RPS_PER_ANGLE_SPEED(pollingFreq) ((pollingFreq) / (ANGLE16_PER_REVOLUTION / FRACT16_SCALE))
 
 /*
     Runtime - Compile time optimizable
@@ -78,10 +78,10 @@ static inline int32_t _angle_freq_of_speed_direct(uint32_t polling_freq, int32_t
     32768 == (INT32_MAX + 1) / ANGLE16_PER_REVOLUTION
 */
 /* optionally without int64 cast for base rates */
-static inline int32_t _angle_freq_of(uint32_t polling_freq, int32_t angle_per_poll) { return angle_per_poll * (int32_t)CPS_PER_ANGLE_ACCUM32(polling_freq) / FRACT16_SCALE; }
+static inline int32_t _angle_freq_of(uint32_t polling_freq, int32_t angle_per_poll) { return angle_per_poll * (int32_t)RPS_PER_ANGLE_SPEED(polling_freq) / FRACT16_SCALE; }
 
 /* cps [0:pollingFreq/2] */
-static inline int32_t angle_speed_of(uint32_t polling_freq, int32_t cps) { return cps * (int32_t)ANGLE_PER_CPS_ACCUM32(polling_freq) / FRACT16_SCALE; }
+static inline int32_t angle_speed_of(uint32_t polling_freq, int32_t cps) { return cps * (int32_t)ANGLE_SPEED_PER_RPS(polling_freq) / FRACT16_SCALE; }
 /* keep (int64_t) for scaled polling rate. e.g rpm */
 static inline int32_t angle_freq_of(uint32_t polling_freq, int32_t angle_per_poll) { return ANGLE_FREQ_OF(polling_freq, angle_per_poll); }
 
@@ -129,7 +129,7 @@ static inline int32_t mech_rpm_of_el_angle(uint32_t pollingFreq, uint8_t polePai
 /* cps [0:POLLING_FREQ/2] */
 static inline int32_t angle_of_cps(uint32_t pollingFreq, int16_t cps) { return angle_speed_of(pollingFreq, cps); }
 // static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return _angle_freq_of(pollingFreq, angle16); }
-static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return angle16 * (int32_t)CPS_PER_ANGLE_ACCUM32(pollingFreq) / FRACT16_SCALE; }
+static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return angle16 * (int32_t)RPS_PER_ANGLE_SPEED(pollingFreq) / FRACT16_SCALE; }
 
 /*
     Radians

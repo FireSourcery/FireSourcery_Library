@@ -66,6 +66,8 @@ typedef enum Motor_StateId
 }
 Motor_StateId_T;
 
+// extern const State_T SUPERVISOR_STATE_INIT; // statemachine handler calls entr/exit conditions
+
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;
 extern const State_T MOTOR_STATE_DISABLED;
@@ -171,6 +173,8 @@ static inline bool Motor_IsConfig(const Motor_T * p_motor)
     return (Motor_IsState(p_motor, MOTOR_STATE_ID_DISABLED) || Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT));
 }
 
+// static inline bool Motor_IsDisableReady(const Motor_T * p_motor) { return StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_PASSIVE); }
+
 
 /******************************************************************************/
 /*
@@ -204,6 +208,14 @@ static void Motor_Enable(const Motor_T * p_motor)
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
     // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
 }
+
+// static void Motor_NormalizeToDisabled(const Motor_T * p_motor)
+// {
+//     Motor_Calibration_Exit(p_motor);
+//     Motor_OpenLoop_Exit(p_motor);
+//     Motor_Disable(p_motor);
+// }
+
 
 /* todo add user init ramp down */
 

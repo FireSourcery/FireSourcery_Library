@@ -32,6 +32,7 @@
 #define LIMIT_ARRAY_H
 
 #include "Type/Array/Array.h"
+#include "Math/math_general.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -53,7 +54,6 @@ typedef uint16_t limit_t;
 #endif
 
 typedef size_t limit_id_t;
-// typedef struct { limit_t Lower; limit_t Upper; } LimitPair_T;
 
 /*
     Augments
@@ -95,7 +95,8 @@ static void _LimitArray_Init(LimitArray_Augments_T * p_state, limit_t * p_values
     p_state->Max = LIMIT_ARRAY_MIN;
 }
 
-// static inline limit_t _LimitArray_Apply(const LimitArray_Augments_T * p_limits, limit_t req) { return math_clamp(req, p_limits->Min, p_limits->Max); }
+static inline interval_t _LimitArray_GetBand(const LimitArray_Augments_T * p_state) { return (interval_t) { .low = p_state->Min, .high = p_state->Max, }; }
+static inline limit_t _LimitArray_Apply(const LimitArray_Augments_T * p_limits, int req) { return math_clamp(req, p_limits->Min, p_limits->Max); }
 
 static void _LimitArray_ClearAll(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length)
 {
@@ -217,11 +218,17 @@ static inline limit_t LimitArray_Upper(LimitArray_T * p_limit) { return _LimitAr
 */
 static inline limit_t LimitArray_Lower(LimitArray_T * p_limit) { return _LimitArray_State(p_limit)->Max; }
 
+
+
 static inline bool LimitArray_IsUpperActive(LimitArray_T * p_limit) { return (_LimitArray_State(p_limit)->Min != LIMIT_ARRAY_MAX); }
 static inline bool LimitArray_IsLowerActive(LimitArray_T * p_limit) { return (_LimitArray_State(p_limit)->Max != LIMIT_ARRAY_MIN); }
 static inline bool LimitArray_IsActive(LimitArray_T * p_limit) { return (LimitArray_IsUpperActive(p_limit) || LimitArray_IsLowerActive(p_limit)); }
 
-// static inline limit_t LimitArray_Apply(LimitArray_T * p_limits, limit_t req) { return _LimitArray_Apply(_LimitArray_State(p_limits), req); }
+static inline void LimitArray_Apply(LimitArray_T * p_limits, limit_t req) { _LimitArray_Apply(_LimitArray_State(p_limits), req); }
+
+static inline limit_t LimitArray_UpperComposed(LimitArray_T * p_a, LimitArray_T * p_b) { return math_min(LimitArray_Upper(p_a), LimitArray_Upper(p_b)); }
+static inline limit_t LimitArray_LowerComposed(LimitArray_T * p_a, LimitArray_T * p_b) { return math_max(LimitArray_Lower(p_a), LimitArray_Lower(p_b)); }
+// void LimitArray_ProcCompareComposed(LimitArray_T * p_limit, LimitArray_T * p_b)
 
 /*
 
@@ -234,3 +241,24 @@ extern bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit
 extern bool LimitArray_TestClearEntry(LimitArray_T * p_limit, limit_id_t id);
 
 #endif // LIMIT_ARRAY_H
+//fanout
+// typedef void (*Notify_Fn_T)(void * p_subscriber);
+
+// typedef const struct Notify_Sub
+// {
+//     Notify_Fn_T ON_EVENT;
+//     void * P_SUBSCRIBER;
+// }
+// Notify_Sub_T;
+
+// typedef const struct Notify
+// {
+//     const Notify_Sub_T * P_SUBS;
+//     size_t COUNT;
+// }
+// Notify_T;
+
+// static inline void Notify_Fire(const Notify_T * p)
+// {
+//     for (size_t i = 0; i < p->COUNT; i++) p->P_SUBS[i].ON_EVENT(p->P_SUBS[i].P_SUBSCRIBER);
+// }

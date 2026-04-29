@@ -100,7 +100,6 @@ static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_
         [MOTOR_CONTROLLER_OPT_DIN_SWITCH_BRAKE] =  (UserDIn_Fn_T)MotorController_CallSwitchBrakePin,
 
         [MOTOR_CONTROLLER_OPT_DIN_I_LIMIT] = (UserDIn_Fn_T)UserDIn_CmdNull,
-        [MOTOR_CONTROLLER_OPT_DIN_PARK] = (UserDIn_Fn_T)UserDIn_CmdNull,
         [MOTOR_CONTROLLER_OPT_DIN_FORWARD] = (UserDIn_Fn_T)UserDIn_CmdNull,
         [MOTOR_CONTROLLER_OPT_DIN_REVERSE] = (UserDIn_Fn_T)UserDIn_CmdNull,
         [MOTOR_CONTROLLER_OPT_DIN_RELAY] = (UserDIn_Fn_T)UserDIn_CmdNull,

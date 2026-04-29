@@ -60,13 +60,13 @@ Phase_Output_T;
 /******************************************************************************/
 typedef const struct Phase
 {
-    const PWM_Module_T PWM_MODULE;
-    const PWM_T PWM_A;
-    const PWM_T PWM_B;
-    const PWM_T PWM_C;
-    const Pin_T PIN_A;
-    const Pin_T PIN_B;
-    const Pin_T PIN_C;
+    PWM_Module_T PWM_MODULE;
+    PWM_T PWM_A;
+    PWM_T PWM_B;
+    PWM_T PWM_C;
+    Pin_T PIN_A;
+    Pin_T PIN_B;
+    Pin_T PIN_C;
 }
 Phase_T;
 
@@ -221,9 +221,20 @@ static inline Phase_Bitmask_T _Phase_ReadState(const Phase_T * p_phase)
     return (Phase_Bitmask_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
 }
 
+// static inline Phase_Triplet_T _Phase_ReadDuty(const Phase_T * p_phase)
+// {
+//     return (Phase_Triplet_T)
+//     {
+//         .A = PWM_ReadDuty(&p_phase->PWM_A),
+//         .B = PWM_ReadDuty(&p_phase->PWM_B),
+//         .C = PWM_ReadDuty(&p_phase->PWM_C),
+//     };
+// }
+
 /* Voltage/Output State */
 static inline Phase_Bitmask_T _Phase_ReadDutyState(const Phase_T * p_phase)
 {
+    // return Phase_BitmaskOf
     return (Phase_Bitmask_T)
     {
         .A = (PWM_ReadDuty_Ticks(&p_phase->PWM_A) != 0U),

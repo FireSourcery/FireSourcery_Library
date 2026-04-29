@@ -52,8 +52,10 @@ typedef const struct Pin
 }
 Pin_T;
 
-#define PIN_INIT(p_Hal, Id, ...) (Pin_T) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = false, __VA_ARGS__ } /* Default to not inverted */
+#define PIN_INIT(p_Hal, Id) (Pin_T) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = false } /* Default to not inverted */
 #define PIN_INIT_INVERT(p_Hal, Id, IsInvert) (Pin_T) { .P_HAL_PIN = p_Hal, .ID = PIN_ID_INIT(Id), .IS_INVERT = IsInvert, }
+
+// {p_Hal, PIN_ID_INIT(Id)}
 
 /******************************************************************************/
 /*!

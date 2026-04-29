@@ -226,39 +226,21 @@ typedef enum angle16_quadrant
 angle16_quadrant_t;
 
 /* e.g. Mechanical Angle */
-static inline angle16_quadrant_t angle16_quadrant(angle16_t theta)
-{
-    return (angle16_quadrant_t)((uint16_t)theta & ANGLE16_QUADRANT_MASK);
-}
+static inline angle16_quadrant_t angle16_quadrant(angle16_t theta) { return (angle16_quadrant_t)((uint16_t)theta & ANGLE16_QUADRANT_MASK); }
 
-static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1)
-{
-    return ((uint16_t)theta0 > (uint16_t)theta1);
-}
+static inline bool angle16_cycle_inc(angle16_t theta0, angle16_t theta1) { return ((uint16_t)theta0 > (uint16_t)theta1); }
 
-static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1)
-{
-    return ((uint16_t)theta0 < (uint16_t)theta1);
-}
+static inline bool angle16_cycle_dec(angle16_t theta0, angle16_t theta1) { return ((uint16_t)theta0 < (uint16_t)theta1); }
 
-static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, int sign)
-{
-    return ((sign > 0) == angle16_cycle_inc(theta0, theta1));
-}
+static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, int sign) { return ((sign > 0) == angle16_cycle_inc(theta0, theta1)); }
 
 /* polling freq must be sufficient */
 /* crossing 0 and 180 */
 /* angle16_half_cycle */
-static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1)
-{
-    return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); /* ((theta0 ^ theta1) < 0); */
-}
-
+ /* ((theta0 ^ theta1) < 0); */
+static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1) { return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); }
 /* angle16_quarter_cycle */
-static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1)
-{
-    return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U);
-}
+static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1) { return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U); }
 
 /*  */
 extern fract16_t fract16_sin(angle16_t theta);
