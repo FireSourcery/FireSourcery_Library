@@ -63,7 +63,6 @@ typedef enum MotorController_StateInput
     // MC_STATE_INPUT_DIRECTION,
 
     MC_TRANSITION_TABLE_LENGTH,
-
 }
 MotorController_StateInput_T;
 
@@ -79,10 +78,12 @@ typedef enum MotorController_StateId
 }
 MotorController_StateId_T;
 
+extern const State_T MC_STATE_PARK;
 extern const State_T MC_STATE_MAIN;
-extern const State_T MC_STATE_LOCK;
-
+extern const State_T MC_STATE_MAIN_TUNING;
 extern const State_T MC_STATE_MAIN_MOTOR_CMD;
+extern const State_T MC_STATE_LOCK;
+extern const State_T MC_STATE_FAULT;
 
 /*
     extern for Init
@@ -98,7 +99,8 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 /******************************************************************************/
 static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_State_T * p_data) { return StateMachine_GetRootStateId(&p_data->StateMachine); }
 
-
+/* Host side checks Root state to parse id */
+/* handle with unique handler per type */
 static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
 // static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
 
@@ -110,25 +112,19 @@ static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const M
 */
 /******************************************************************************/
 /* Top State only */
-static inline bool MotorController_IsState(MotorController_T * p_dev, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_dev->STATE_MACHINE.P_ACTIVE, stateId); }
+// static inline bool MotorController_IsState(MotorController_T * p_dev, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_dev->STATE_MACHINE.P_ACTIVE, stateId); }
 
-static inline bool MotorController_IsPark(MotorController_T * p_dev)   { return MotorController_IsState(p_dev, MC_STATE_ID_PARK); }
-static inline bool MotorController_IsFault(MotorController_T * p_dev)  { return MotorController_IsState(p_dev, MC_STATE_ID_FAULT); }
-static inline bool MotorController_IsLock(MotorController_T * p_dev)   { return MotorController_IsState(p_dev, MC_STATE_ID_LOCK); }
+static inline bool MotorController_IsPark(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_PARK); }
+static inline bool MotorController_IsFault(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_FAULT); }
+static inline bool MotorController_IsLock(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 
 static inline bool MotorController_IsConfig(MotorController_T * p_dev) { return (MotorController_IsLock(p_dev) || MotorController_IsFault(p_dev)); }
-/* check by var set */
+
+static inline bool MotorController_IsTuning(MotorController_T * p_dev) { return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TUNING); }
+
 static inline bool MotorController_IsMotorCmdState(MotorController_T * p_dev) { return StateMachine_IsActiveBranch(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD); }
 
-
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-/* Active Main  */
-/* return != 0xFF for App active.  */
-// static inline state_t MotorController_GetMainSubState(MotorController_T * p_dev) { return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
+static inline bool MotorController_IsMotorCmdAccess(MotorController_T * p_dev) { return MotorController_IsMotorCmdState(p_dev) || MotorController_IsTuning(p_dev); }
 
 
 /******************************************************************************/
@@ -162,6 +158,30 @@ static inline void MotorController_EnterMain(MotorController_T * p_dev) { MotorC
 /* Transition to idle */
 static inline void MotorController_EnterMainIdle(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
 
+
+/******************************************************************************/
+/*
+    Main / Operational States
+*/
+/******************************************************************************/
+/* Active Main  */
+/* file scope. app use subtype getter */
+typedef enum MotorController_MainSubstateId
+{
+    MC_STATE_ID_MAIN_MOTOR_CMD,
+    MC_STATE_ID_MAIN_TUNING,
+    // MC_STATE_ID_MAIN_APP_START,
+}
+MotorController_MainSubstateId_T;
+
+static inline MotorController_MainSubstateId_T MotorController_GetMainSubstateId(MotorController_T * p_dev)
+{
+    if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TUNING)) { return MC_STATE_ID_MAIN_TUNING; }
+    if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD)) { return MC_STATE_ID_MAIN_MOTOR_CMD; }
+    return (MotorController_MainSubstateId_T)STATE_ID_NULL; /* ignores app state under main */
+    // return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN);
+}
+
 /******************************************************************************/
 /*!
     Motor Cmd Generalized Input
@@ -175,7 +195,6 @@ typedef enum MotorController_MotorCmd
     MOTOR_CONTROLLER_USER_CMD_DIRECTION,
 }
 MotorController_MotorCmd_T;
-
 
 static inline void MotorController_ApplyUserCmd(MotorController_T * p_dev, MotorController_MotorCmd_T cmd)
 {
@@ -232,7 +251,7 @@ typedef enum MotorController_LockId
     MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG, /* on Error read from Nvm to RAM */
     MOTOR_CONTROLLER_LOCK_REBOOT,
     MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE, /* Exit to Motor Cmd Mode. from lock only */
-    // MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE,  /* Motors to Calibration->Tuning */
+    MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE,  /*  */
     // MOTOR_CONTROLLER_LOCK_NVM_SAVE_BOOT,
     // MOTOR_CONTROLLER_LOCK_NVM_WRITE_ONCE,
     // MOTOR_CONTROLLER_LOCK_NVM_READ_ONCE,

@@ -49,8 +49,8 @@ int MotorController_Var_Output_Get(const MotorController_T * p_dev, MotorControl
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_ZERO:                  value = 0;                                                                  break;
-        case MOT_VAR_MILLIS:                value = Millis();                                                           break;
+        case MOT_VAR_ZERO:                      value = 0;                                                                  break;
+        case MOT_VAR_MILLIS:                    value = Millis();                                                           break;
         case MOT_VAR_SYSTEM_STATE:              value = MotorController_GetStateId(p_dev->P_MC);              break;
         case MOT_VAR_SYSTEM_SUB_STATE:          value = _MotorController_GetSubStateId(p_dev->P_MC);          break;
         case MOT_VAR_SYSTEM_FAULT_FLAGS:        value = MotorController_GetFaultFlags(p_dev->P_MC).Value;     break;
@@ -81,8 +81,8 @@ int MotorController_Var_OutputDebug_Get(const MotorController_T * p_dev, MotorCo
 {
     int value = 0;
     // #ifndef NDEBUG
-    Motor_T * p_motor = Motor_Table_ContextAt(&p_dev->MOTORS, 0) ;
-    Motor_State_T * p_motorState = Motor_Table_ContextAt(&p_dev->MOTORS, 0)->P_MOTOR;
+    Motor_T * p_motor = Motor_Table_At(&p_dev->MOTORS, 0) ;
+    Motor_State_T * p_motorState = Motor_Table_At(&p_dev->MOTORS, 0)->P_MOTOR;
     switch (id)
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
@@ -181,7 +181,7 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_dev, MotorContr
     @brief Motor Prefix Handlers
 */
 /******************************************************************************/
-static inline Motor_T * MotorAt(const MotorController_T * p_dev, uint8_t motor) { return (motor < p_dev->MOTORS.LENGTH) ? Motor_Table_ContextAt(&p_dev->MOTORS, motor) : NULL; }
+static inline Motor_T * MotorAt(const MotorController_T * p_dev, uint8_t motor) { return (motor < p_dev->MOTORS.LENGTH) ? Motor_Table_At(&p_dev->MOTORS, motor) : NULL; }
 
 static int _HandleMotor_Get(const MotorController_T * p_dev, MotVarId_T varId) { return Motor_VarType_Base_Get(MotorAt(p_dev, varId.Instance), (Motor_VarType_Base_T)varId.Type, varId.Base); }
 
@@ -189,7 +189,7 @@ static MotVarId_Status_T _HandleMotor_Set(const MotorController_T * p_dev, MotVa
 {
     Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
     if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    if (!Motor_VarType_Base_CheckSet(p_motor, (Motor_VarType_Base_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
+    // if (!Motor_VarType_Base_CheckSet(p_motor, (Motor_VarType_Base_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
     Motor_VarType_Base_Set(p_motor, (Motor_VarType_Base_T)varId.Type, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -200,7 +200,7 @@ static MotVarId_Status_T _HandleMotorSubModule_Set(const MotorController_T * p_d
 {
     Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
     if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    if (!Motor_VarType_SubModule_CheckSet(p_motor, (Motor_VarType_SubModule_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
+    // if (!Motor_VarType_SubModule_CheckSet(p_motor, (Motor_VarType_SubModule_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
     Motor_VarType_SubModule_Set(p_motor, (Motor_VarType_SubModule_T)varId.Type, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -211,7 +211,7 @@ static MotVarId_Status_T _HandleMotorSensor_Set(const MotorController_T * p_dev,
 {
     Motor_T * p_motor = MotorAt(p_dev, varId.Instance);
     if (p_motor == NULL) return MOT_VAR_STATUS_ERROR_INVALID_ID;
-    if (!Motor_VarType_Sensor_CheckSet(p_motor, (Motor_VarType_Sensor_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
+    // if (!Motor_VarType_Sensor_CheckSet(p_motor, (Motor_VarType_Sensor_T)varId.Type)) return MOT_VAR_STATUS_ERROR_READ_ONLY;
     Motor_VarType_Sensor_Set(p_motor, (Motor_VarType_Sensor_T)varId.Type, varId.Base, value);
     return MOT_VAR_STATUS_OK;
 }
@@ -408,7 +408,6 @@ static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
     return (mode == MOTOR_CONTROLLER_INPUT_MODE_SERIAL) || (mode == MOTOR_CONTROLLER_INPUT_MODE_CAN);
 }
 
-typedef bool (*MotorController_TestAccess_T)(MotorController_T * p_dev);
 
 /*
     Input Guard
@@ -418,16 +417,28 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_dev, MotVa
 {
     switch (MOT_VAR_ID_TYPE_ID((MotVarId_Prefix_T)varId.Prefix, (uint8_t)varId.Type))
     {
+        /* Direct Motor Control */
         // Motor: User control/setpoint
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_CONTROL):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_USER_SETPOINT):
             if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
-            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            if (!MotorController_IsMotorCmdAccess(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
         // Motor: State commands
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD):
-            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_OPEN_LOOP_CMD):
+            if (!MotorController_IsMotorCmdAccess(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
+            break;
+
+        // Motor: Calibration commands, motor in calibration or enter
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CALIBRATION_CMD):
+            if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
+            break;
+
+        // Motor Sub-module: PID tuning
+        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_PID_TUNING_IO):
+            if (!MotorController_IsTuning(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
         // Motor: Config
@@ -435,16 +446,6 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_dev, MotVa
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_ACTUATION):
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CONFIG_PID):
             if (!MotorController_IsConfig(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-            break;
-
-        // Motor: Calibration commands
-        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_CALIBRATION_CMD):
-            if (!MotorController_IsLock(p_dev)) return MOT_VAR_STATUS_ERROR_NOT_CONFIG_STATE;
-            break;
-
-        // Motor Sub-module: PID tuning
-        case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_MOTOR_SUB_MODULE, MOTOR_VAR_TYPE_PID_TUNING_IO):
-            if (!MotorController_IsMotorCmdState(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
         // Motor Sub-module: Config
@@ -498,6 +499,8 @@ static MotVarId_Status_T CheckInputPolicy(const MotorController_T * p_dev, MotVa
 
         // App User: Control
         case MOT_VAR_ID_TYPE_ID(MOT_VAR_ID_PREFIX_APP_USER, MOT_VAR_TYPE_TRACTION_CONTROL):
+            // or interface provides var handler
+            if (!(MotorController_AppTable_Mode(p_dev) == MOTOR_CONTROLLER_MAIN_MODE_TRACTION)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             if (!IsProtocolControlMode(p_dev)) return MOT_VAR_STATUS_ERROR_ACCESS_DISABLED;
             break;
 
@@ -580,6 +583,7 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVa
 //     }
 // }
 
+// typedef bool (*MotorController_TestAccess_T)(MotorController_T * p_dev);
 
     // static const struct { MotorController_TestAccess_T CheckSet; MotVarId_Status_T ErrorStatus; } TABLE[] =
     // {
@@ -595,5 +599,5 @@ MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVa
     // expandsion
     // VarAccess_Table TABLE[] =
     // {
-    //     [MACRO(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD)] = {.CheckSet = MotorController_IsMotorCmdState, .Getter = _Motor_Var_StateCmd_Get, .Setter = _Motor_Var_StateCmd_Set },
+    //     [MACRO(MOT_VAR_ID_PREFIX_MOTOR, MOTOR_VAR_TYPE_STATE_CMD)] = {.CheckSet = MotorController_IsMotorCmdState, .Getter = _Motor_Var_StateCmd_Get, .Setter = _Motor_Var_StateCmd_Call },
     // }

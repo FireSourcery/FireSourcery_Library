@@ -38,7 +38,7 @@
 static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
 static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
 
-/*   for Cmds that begin with a substate */
+/*  for Cmds that begin with a substate */
 static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
 
 /*
@@ -69,7 +69,6 @@ Motor_OpenLoop_StateId_T;
 
 static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP); }
 
-
 /*
     Access by Id - directly correspond to VarId
 */
@@ -81,15 +80,11 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
 //     MOTOR_OPEN_LOOP_CMD_ANGLE_ALIGN,
 //     MOTOR_OPEN_LOOP_CMD_JOG,
 //     MOTOR_OPEN_LOOP_CMD_STARTUP,
-
-//     // MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
-//     // MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
-//     // MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
-//     // MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
-//     // MOTOR_VAR_OPEN_LOOP_JOG,
-//     // MOTOR_VAR_OPEN_LOOP_RUN,
 // }
 // Motor_OpenLoop_Cmd_T;
+
+
+
 // typedef enum Motor_OpenLoop_Cmd
 // {
 //     MOTOR_OPEN_LOOP_CMD_PHASE_OUTPUT = (1 << 8) | MOTOR_STATE_INPUT_OPEN_LOOP,

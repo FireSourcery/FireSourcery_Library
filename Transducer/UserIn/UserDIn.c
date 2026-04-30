@@ -76,13 +76,8 @@ bool UserDIn_PollEdge(UserDIn_T * p_dev)
 }
 
 bool UserDIn_PollRisingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == true); }
-
 bool UserDIn_PollFallingEdge(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) && (UserDIn_GetState(p_dev) == false); }
-
-UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev)
-{
-    return UserDIn_PollEdge(p_dev) * (UserDIn_Edge_T)(p_dev->P_STATE->Debounce.Output - p_dev->P_STATE->OutputPrev);
-}
+UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev) { return UserDIn_PollEdge(p_dev) ? UserDIn_GetEdge(p_dev) : USER_DIN_EDGE_NULL; }
 
 
 UserDIn_Edge_T UserDIn_Modal_PollEdgeValue(UserDIn_T * p_dev)

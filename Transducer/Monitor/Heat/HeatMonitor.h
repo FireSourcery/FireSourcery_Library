@@ -160,6 +160,7 @@ typedef const struct HeatMonitor_Group
     /* HeatMonitor_State_T per sensor, for individual status */
     HeatMonitor_T * P_MONITORS;
     uint8_t COUNT;
+    // optionally LimitArray_T
 
     /* Collective State */
     HeatMonitor_State_T * P_STATE;

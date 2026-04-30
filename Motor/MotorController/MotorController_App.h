@@ -33,6 +33,8 @@
 
 // #define APP_SUBSTATE_ID(appId, subId) (() | ((appId) << 8U) | (subId))
 
+/* MotorController_App -> MotorController -> MotorController_AppTable */
+
 /* Part of MotorController */
 struct MotorController;
 typedef const struct MotorController MotorController_T;

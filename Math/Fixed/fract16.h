@@ -181,6 +181,7 @@ static inline ufract16_t fract16_normalize_sat(int32_t lo, int32_t hi, int32_t x
 }
 
 
+
 /******************************************************************************/
 /*!
     angle16

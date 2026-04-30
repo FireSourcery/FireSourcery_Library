@@ -46,33 +46,19 @@ static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachin
 /* Calibration exits the substate and return to the parent state on complete */
 /* IsComplete SubState = TopState = MOTOR_STATE_ID_CALIBRATION */
 static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
+
 /*
     Calibration SubState
 */
 typedef enum Motor_Calibration_StateId
 {
     MOTOR_CALIBRATION_STATE_DISABLE,
-    MOTOR_CALIBRATION_STATE_SENSOR,
+    // MOTOR_CALIBRATION_STATE_SENSOR,
     MOTOR_CALIBRATION_STATE_TUNING,
     MOTOR_CALIBRATION_STATE_HOMING,
     MOTOR_CALIBRATION_STATE_ELECTRICAL,
 }
 Motor_Calibration_StateId_T;
-
-// typedef enum Motor_CalibrationState
-// {
-//     MOTOR_CALIBRATION_STATE_DISABLE,
-//     MOTOR_CALIBRATION_STATE_ADC,
-//     MOTOR_CALIBRATION_STATE_HALL,
-//     MOTOR_CALIBRATION_STATE_ENCODER,
-//     MOTOR_CALIBRATION_STATE_SIN_COS,
-//     MOTOR_CALIBRATION_STATE_POSITION_SENSOR,
-//     MOTOR_CALIBRATION_STATE_IDLE,
-// }
-// Motor_CalibrationState_T;
-
-
-
 
 
 /*

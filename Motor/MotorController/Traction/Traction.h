@@ -195,6 +195,7 @@ typedef enum Traction_VarId
     TRACTION_VAR_THROTTLE,           // [0:65535]
     TRACTION_VAR_BRAKE,              // [0:65535]
     TRACTION_VAR_RELEASE,
+    TRACTION_VAR_STATE_ID,
     // TRACTION_VAR_THROTTLE_ONLY,           // [0:65535]
     // TRACTION_VAR_BRAKE_ONLY,              // [0:65535]
 }

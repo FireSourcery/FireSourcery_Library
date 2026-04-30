@@ -141,9 +141,16 @@ typedef enum MotorController_Var_Board
 }
 MotorController_Var_Board_T;
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 /******************************************************************************/
 /*
     [MotorController_VarType]
+
     Types
     Type of Base
         each id directly corresponds to var base literal enum type

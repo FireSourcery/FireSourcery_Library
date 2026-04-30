@@ -237,6 +237,8 @@ static inline bool MotAnalogUser_IsAnyBrakeOn(const MotAnalogUser_T * p_user) { 
 /******************************************************************************/
 static inline uint16_t MotAnalogUser_GetThrottle(const MotAnalogUser_T * p_user) { return UserAIn_GetValue(&p_user->THROTTLE_AIN); }
 
+static inline uint16_t _MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user) { return UserAIn_GetValue(&p_user->BRAKE_AIN); }
+
 static inline uint16_t MotAnalogUser_GetBrake(const MotAnalogUser_T * p_user)
 {
     uint16_t brakeValue = UserAIn_GetValue(&p_user->BRAKE_AIN);

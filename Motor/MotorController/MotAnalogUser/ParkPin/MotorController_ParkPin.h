@@ -42,10 +42,10 @@ static inline void MotorController_CallParkPin(const MotorController_T * p_dev, 
     }
 }
 
-// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }
+#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
+// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]; }
 // static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->PARK_PIN; }
 
-#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
 #include "ParkPin/MotorController_ParkPin.h"
 static inline void MotorController_ProcOptDin(const MotorController_T * p_dev)
 {

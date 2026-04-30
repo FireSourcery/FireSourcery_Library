@@ -218,6 +218,12 @@ static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { retur
     Config
 */
 /******************************************************************************/
+// static inline ufract16_t Monitor_WarningDerateScale(const Monitor_Config_T * p_config, int32_t input)
+// {
+//     return linear_map_sat(p_config->Warning.Setpoint, p_config->Fault.Limit, FRACT16_MAX, 0, input);
+// }
+
+
 /* Getters */
 static inline int32_t Monitor_GetFaultLimit(const Monitor_Config_T * p_config) { return p_config->Fault.Limit; }
 static inline int32_t Monitor_GetWarningSetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Setpoint; }

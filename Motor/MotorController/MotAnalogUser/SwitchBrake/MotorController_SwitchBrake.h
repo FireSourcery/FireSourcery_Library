@@ -30,15 +30,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef struct SwitchBrake_Config
+{
+    uint16_t Value_Percent16;   /* Brake value applied while pin is active, [0:65535] */
+    bool  IsEnabled;    /* NVM runtime enable (SKU has pin but unused) */
+}
+SwitchBrake_Config_T;
 
-static inline void MotorController_CallSwitchBrakePin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
+static inline void _MotorController_CallSwitchBrakePin(MotorController_T * p_dev, SwitchBrake_Config_T * p_config, UserDIn_Edge_T edge)
 {
     switch (edge)
     {
-        // case USER_DIN_EDGE_RISING: math_max(MotAnalogUser_GetBrake(p_dev->ANALOG_USER), p_dev->P_MC.SwitchBrake.Value); break;
+        // case USER_DIN_EDGE_RISING: math_max(_MotAnalogUser_GetBrake(&p_dev->ANALOG_USER), p_config->Value_Percent16); break;
         // case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
-        default: break;
+        // default: break;
     }
+}
+
+static inline void  MotorController_CallSwitchBrakePin(MotorController_T * p_dev,  UserDIn_Edge_T edge)
+{
+    // _MotorController_CallSwitchBrakePin(p_dev, &p_dev->P_NVM_CONFIG->ANALOG_USER_SWITCH_BRAKE_CONFIG, edge);
 }
 
 // static inline UserDIn_T * MotorController_SwitchBrakePin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DIN; }

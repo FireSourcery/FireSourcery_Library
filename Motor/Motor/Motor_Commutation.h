@@ -92,3 +92,4 @@ static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_moto
 // static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) {
 //     ((typeof(Motor_FOC_SetDirection) *)(_Motor_CommutationModeFn(p_motor, Motor_FOC_SetDirection, Motor_SetDirection)))(p_motor, direction);
 // }
+

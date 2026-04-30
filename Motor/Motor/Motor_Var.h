@@ -159,24 +159,30 @@ typedef enum Motor_Var_StateCmd
 {
     MOTOR_VAR_CLEAR_FAULT,
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
-
-    // MOTOR_VAR_USER_START, // handle by direction for now
-    // MOTOR_VAR_USER_STOP,
-
-    MOTOR_VAR_OPEN_LOOP_ENTER,        /* Enter State. optional pass sub statecmd */
-    MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
-    MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
-    MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
-    MOTOR_VAR_OPEN_LOOP_JOG,
-    MOTOR_VAR_OPEN_LOOP_RUN,
-    // MOTOR_VAR_OPEN_LOOP_HOMING,
-
+    MOTOR_VAR_USER_ENABLE,
+    MOTOR_VAR_USER_DISABLE,
     // alternatively, main enter/exit only
     // MOTOR_VAR_CMD_EXIT_FAULT,
     // MOTOR_VAR_CMD_ENTER_CALIBRATION,
     // MOTOR_VAR_CMD_ENTER_OPEN_LOOP,
 }
 Motor_Var_StateCmd_T;
+
+
+/*
+    possibly merge with per module StateId
+*/
+typedef enum Motor_Var_OpenLoopCmd
+{
+    MOTOR_VAR_OPEN_LOOP_ENTER,   /* Enter State. optional pass sub statecmd */
+    MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT,
+    MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN,
+    MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN,
+    MOTOR_VAR_OPEN_LOOP_JOG,
+    MOTOR_VAR_OPEN_LOOP_RUN,
+    // MOTOR_VAR_OPEN_LOOP_HOMING,
+}
+Motor_Var_OpenLoopCmd_T;
 
 /*
     Calibration State Base Cmds
@@ -185,10 +191,10 @@ Motor_Var_StateCmd_T;
 */
 typedef enum Motor_Var_CalibrationCmd
 {
-    MOTOR_VAR_CALIBRATION_ENTER, /* Enter first before calling Substate */
-    MOTOR_VAR_CALIBRATION_CMD_ADC, //Motor_Analog_Calibrate
+    MOTOR_VAR_CALIBRATION_ENTER,    /* Enter first before calling Substate */
+    MOTOR_VAR_CALIBRATION_CMD_ADC,  /* Motor_Analog_Calibrate */
     MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME,
-    MOTOR_VAR_CALIBRATION_ENTER_TUNING,
+    // MOTOR_VAR_CALIBRATION_ENTER_TUNING,
     // MOTOR_VAR_CALIBRATION_RESET_TUNING,
     // MOTOR_VAR_CALIBRATION_SENSOR, /* Generic call for active type */
 }
@@ -220,16 +226,6 @@ typedef enum Motor_Var_Board
 }
 Motor_Var_Board_T;
 
-
-typedef enum Motor_Var_PhaseVBus
-{
-    MOTOR_VAR_PHASE_V_BUS,     // in frac16. additionally to vmonitor in adcu
-    // MOTOR_VAR_PHASE_V_BUS_MONITOR_,
-}
-Motor_Var_PhaseVBus_T;
-
-
-
 /******************************************************************************/
 /*
    Base Id Access
@@ -243,7 +239,9 @@ int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId);
 int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T varId);
 void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
 void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue);
-void _Motor_Var_StateCmd_Set(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
+
+void _Motor_Var_StateCmd_Call(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
+void _Motor_Var_OpenLoopCmd_Call(const Motor_T * p_motor, Motor_Var_OpenLoopCmd_T varId, int varValue);
 void _Motor_Var_CalibrationCmd_Call(const Motor_T * p_motor, Motor_Var_CalibrationCmd_T varId, int varValue);
 
 #include "Motor_Config.h"
@@ -253,7 +251,6 @@ void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T var
 
 /* static */
 extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);
-extern int Motor_Var_PhaseVBus_Get(Motor_Var_PhaseVBus_T varId);
 
 
 
@@ -272,11 +269,12 @@ typedef enum Motor_VarType_Base
     MOTOR_VAR_TYPE_ROTOR_OUT, /* Speed Angle */
     MOTOR_VAR_TYPE_FOC_OUT,
     MOTOR_VAR_TYPE_STATE_CMD, /* Non polling Cmds */
-    // MOTOR_VAR_TYPE_CMD_RESV,
+    MOTOR_VAR_TYPE_OPEN_LOOP_CMD,
+    MOTOR_VAR_TYPE_CALIBRATION_CMD,
+    MOTOR_VAR_TYPE_CMD_RESV,
     MOTOR_VAR_TYPE_CONFIG_CALIBRATION,
     MOTOR_VAR_TYPE_CONFIG_ACTUATION,
     MOTOR_VAR_TYPE_CONFIG_PID,
-    MOTOR_VAR_TYPE_CALIBRATION_CMD,
     MOTOR_VAR_TYPE_CONFIG_DEBUG,
     MOTOR_VAR_TYPE_CONFIG_RESV,
 }
@@ -285,7 +283,7 @@ Motor_VarType_Base_T;
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
-    MOTOR_VAR_TYPE_V_BUS, /* Resv */               /* Not instanced */
+    MOTOR_VAR_TYPE_SUBMODULE_RESV0,
     MOTOR_VAR_TYPE_PHASE,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */

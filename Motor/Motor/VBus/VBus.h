@@ -136,6 +136,7 @@ static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBu
 /******************************************************************************/
 /*!
     Accessors — live ratio (FOC / modulation)
+    Motor Access
 */
 /******************************************************************************/
 static inline ufract16_t VBus_Fract16(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16; }
@@ -155,6 +156,7 @@ static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t d
 /******************************************************************************/
 /*!
     Derating — battery droop (UV ramp) and regen chopping (OV ramp).
+    MotorController owns the arbitration array
 
     Battery VBus spans a wide range: peak (freshly charged, no load),
     nominal (VSupplyRef), through sag under load, down to undervoltage cutoff.
@@ -211,6 +213,7 @@ static inline ufract16_t VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMonit
     Config-bound derate — threshold args pulled from Config.
 */
 /******************************************************************************/
+/* DerateScale unitless */
 static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return VBus_IDerateUnderVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
 static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return VBus_IDerateOverVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
 
@@ -229,6 +232,7 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
     return math_clamp(fract16_div(p_vbus->VBus_Fract16, vNominal), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
     // return math_clamp(fract16_mul(p_vbus->VBus_Fract16, p_vbus->PerVNominal_Fract32), p_vbus->Config.SpeedDerateFloor_Fract16, FRACT16_MAX);
 }
+
 
 /*
     Physical scale fract16

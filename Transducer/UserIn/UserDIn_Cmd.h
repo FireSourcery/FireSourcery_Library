@@ -50,6 +50,7 @@ static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONT
 // Your code here
 static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
 {
+    // UserDIn_Edge_T edge = UserDIn_Modal_PollEdgeValue(p_dev); with disable
     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_PollEdgeValue(p_dev));
 }
 

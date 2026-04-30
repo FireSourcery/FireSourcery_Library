@@ -66,7 +66,6 @@ typedef enum Motor_StateId
 }
 Motor_StateId_T;
 
-// extern const State_T SUPERVISOR_STATE_INIT; // statemachine handler calls entr/exit conditions
 
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;
@@ -91,7 +90,7 @@ typedef enum Motor_StateInput
     MOTOR_STATE_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MOTOR_STATE_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
-    // MOTOR_STATE_INPUT_STATE_CMD, /* Transition Cmd, common entry for Stop, Start, Timer, etc */
+    // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start, Timer, etc */
     // MOTOR_STATE_INPUT_USER_BUFFER,
     // MOTOR_STATE_INPUT_CAPTURE_ADC,
     MOTOR_TRANSITION_TABLE_LENGTH,
@@ -118,7 +117,7 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
-
+/* select proc composite  */
 static inline void _Motor_StateMachine(StateMachine_Active_T * p_active, void * p_dev)
 {
     if (_StateMachine_AcquireAsyncIsr(p_active) == true)
@@ -133,7 +132,6 @@ static inline void _Motor_StateMachine_Thread(StateMachine_T * p_stateMachine)
     _Motor_StateMachine(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
 }
 
-
 /******************************************************************************/
 /*
 */
@@ -143,6 +141,7 @@ static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { 
 /* Host side checks Root state to parse id */
 /* handle with unique handler per type */
 static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
+
 
 /*
     StateMachine controlled values
@@ -164,10 +163,16 @@ static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_mot
 /* Wrap Motor_T for interface */
 /* Does not include substates */
 static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsRootStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
+// static inline bool Motor_IsState(const Motor_T * p_motor, State_T * p_state) { return (StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, p_state)); }
 
 static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT); }
 
-/* Optionally enforce config in calibration state, rather than disabled state */
+
+/*
+    let app layer handle permission. motor layer handles its own struct mapping.
+    motor layer saftey concerns electrical chacteristics. application layer handles memory access.
+    motor layer handles unique domain concerns.
+*/
 static inline bool Motor_IsConfig(const Motor_T * p_motor)
 {
     return (Motor_IsState(p_motor, MOTOR_STATE_ID_DISABLED) || Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT));
@@ -251,7 +256,7 @@ static void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T 
 static bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor)
 {
     Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T){ .Value = UINT16_MAX });
-    return !Motor_IsFault(p_motor);
+    return !StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_FAULT);
 }
 
 

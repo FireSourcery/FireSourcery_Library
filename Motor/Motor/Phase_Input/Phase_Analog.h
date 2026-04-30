@@ -88,7 +88,9 @@ extern const Phase_AnalogCalibration_T PHASE_ANALOG_CALIBRATION;
 #define PHASE_ANALOG_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) ((500U * (VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U) / ((Shunt_uOhm) * (Gain)))
 // #define I_MAX_AMPS_(VRef_mV, Shunt_uOhm, Gain)  ((1000U * (VRef_mV)) / ((Shunt_uOhm) * (Gain)))
 
+// static inline uint16_t Phase_AnalogCalibration_GetVMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.V_PHASE_R1, PHASE_ANALOG_CALIBRATION.V_PHASE_R2); }
 
+// handled in calibration
 static inline uint16_t Phase_AnalogCalibration_GetVRated(void) { return PHASE_ANALOG_CALIBRATION.V_RATED; }
 static inline uint16_t Phase_AnalogCalibration_GetIRatedRms(void) { return PHASE_ANALOG_CALIBRATION.I_RATED_RMS; }
 

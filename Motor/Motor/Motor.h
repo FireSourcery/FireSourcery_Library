@@ -800,6 +800,7 @@ extern void Motor_InitSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_InitTorqueRamp(Motor_State_T * p_motor);
 extern void Motor_ResetSpeedPid(Motor_State_T * p_motor);
 extern void Motor_ResetIPid(Motor_State_T * p_motor);
+void _Motor_ResetTuning(Motor_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);

@@ -40,12 +40,8 @@
 static inline State_T * StateMachine_GetRootState(const StateMachine_Active_T * p_active) { return _State_GetRoot(p_active->p_ActiveState); }
 static inline State_T * StateMachine_GetLeafState(const StateMachine_Active_T * p_active) { return p_active->p_ActiveState; }
 
-static inline state_t StateMachine_GetRootStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetRootState(p_active)->ID; }
-static inline state_t StateMachine_GetLeafStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetLeafState(p_active)->ID; }
 
 static inline bool StateMachine_IsRootState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetRootState(p_active)); }
-static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == StateMachine_GetRootState(p_active)->ID); }
-
 static inline bool StateMachine_IsLeafState(const StateMachine_Active_T * p_active, State_T * p_state) { return (p_state == StateMachine_GetLeafState(p_active)); }
 
 /* Match up along the active path */
@@ -54,47 +50,18 @@ static inline bool StateMachine_IsActiveBranch(const StateMachine_Active_T * p_a
 /* Ancestor or Descendant */
 static inline bool StateMachine_IsDirectBranch(const StateMachine_Active_T * p_active, State_T * p_state) { return State_IsDirectLineage(StateMachine_GetLeafState(p_active), p_state); }
 
+static inline state_t StateMachine_GetRootStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetRootState(p_active)->ID; }
+static inline state_t StateMachine_GetLeafStateId(const StateMachine_Active_T * p_active) { return StateMachine_GetLeafState(p_active)->ID; }
 
-/* return an id  */
 /* ActiveStateOfBranch */
 static inline state_t StateMachine_GetActiveSubStateId(const StateMachine_Active_T * p_active, State_T * p_ancestor)
 {
     return State_IsAncestor(StateMachine_GetLeafState(p_active), p_ancestor) ? p_active->p_ActiveState->ID : STATE_ID_NULL;
 }
 
+/* depreciate for pointer compare */
+static inline bool StateMachine_IsRootStateId(const StateMachine_Active_T * p_active, state_t stateId) { return (stateId == StateMachine_GetRootState(p_active)->ID); }
 
-/******************************************************************************/
-/*!
-    @brief  Encodes the entire active substate path into a 32-bit ID.
-
-    Encoding formats (selectable):
-      - 4-bit fields × 8 levels: supports 16 substates per level, 8 depth max
-      - 8-bit fields × 4 levels: supports 256 substates per level, 4 depth max
-
-    Root state -> leaf state maps to LSB -> MSB.
-    Unused (deeper) fields are 0.
-
-    e.g. for path Root(2) -> Sub(3) -> SubSub(1):
-      4-bit: 0x00002310  (reading MSB to LSB: ...0, 2, 3, 1, 0...)
-      8-bit: 0x02030100
-*/
-/******************************************************************************/
-// typedef union State_PathId
-// {
-//     uint32_t BranchId;
-//     struct
-//     {
-//         uint32_t Depth0 : 4;
-//         uint32_t Depth1 : 4;
-//         uint32_t Depth2 : 4;
-//         uint32_t Depth3 : 4;
-//         uint32_t Depth4 : 4;
-//         uint32_t Depth5 : 4;
-//         uint32_t Depth6 : 4;
-//         uint32_t Depth7 : 4;
-//     };
-// }
-// State_PathId_T;
 
 // static inline State_PathId_T StateMachine_GetPathId(const StateMachine_Active_T * p_active)
 // {

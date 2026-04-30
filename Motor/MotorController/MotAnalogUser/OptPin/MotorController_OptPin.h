@@ -61,7 +61,7 @@ typedef struct MotorController_OptDinConfig
     uint16_t       SpeedLimit_Fract16;
     uint16_t       TorqueLimit_Fract16;
     uint16_t       SwitchBrakeScalar;
-    bool           AutoParkOnSto;
+    bool           AutoParkOnStop;
 }
 MotorController_OptDinConfig_T;
 

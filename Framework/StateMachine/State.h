@@ -47,7 +47,7 @@ typedef uint32_t state_t;           /* State Id. User may overwrite with enum. u
 typedef uint32_t state_input_t;     /* Input/Handler Id. Maps to [State_Input_T]. Index into transition table. Implementation may overwrite with enum. use 32 for mapper */
 typedef intptr_t state_value_t;     /* Optional input parameter. User define platform register size */
 
-#define STATE_ID_NULL               (0xFFFFFFFFU)
+#define STATE_ID_NULL               ((state_t)0xFFFFFFFFUL)
 // #define STATE_INPUT_ID_NULL         (0xFFU)
 // #define STATE_INPUT_VALUE_NULL      (0U)
 
@@ -158,7 +158,7 @@ typedef const struct State_Accessor { State_GetField_T GET; State_SetField_T SET
 /******************************************************************************/
 typedef const struct State
 {
-    state_t ID;               /* [State] instances may optionally remain private, by calling via id */
+    state_t ID;               /* [State] Id for serialization. instances may optionally remain private. control flow should remain on [State_T *] */
     State_Action_T ENTRY;     /* Common to all transition to current state, including self transition */
 #ifdef STATE_MACHINE_EXIT_FUNCTION_ENABLE
     State_Action_T EXIT;
@@ -247,14 +247,48 @@ State_T;
 
 // #define STATE_INIT_WITH_ASSERT(...) {  }
 
+/******************************************************************************/
 /*
-    Hierarchical State ID encoding.
-    Each depth level occupies a nibble (4 bits).
-    Bits [3:0]   = Root state index
-    Bits [7:4]   = Depth-1 child index
-    Bits [11:8]  = Depth-2 child index
+    PathId solves layer namespace
+    scoped/typed getter also allows file / depedency namespace
 */
-/* Supports up to 8 levels of nesting (8 nibbles) */
+/*!
+    @brief  Encodes the entire active substate path into a 32-bit ID.
+
+    Encoding formats (selectable):
+      - 4-bit fields × 8 levels: supports 16 substates per level, 8 depth max
+      - 8-bit fields × 4 levels: supports 256 substates per level, 4 depth max
+
+    Root state -> leaf state maps to LSB -> MSB.
+    Unused (deeper) fields are 0.
+
+    e.g. for path Root(2) -> Sub(3) -> SubSub(1):
+      4-bit: 0x00002310  (reading MSB to LSB: ...0, 2, 3, 1, 0...)
+      8-bit: 0x02030100
+*/
+/******************************************************************************/
+typedef const union State_PathId
+{
+    uint32_t Id;
+    struct
+    {
+        uint32_t Depth0 : 4;
+        uint32_t Depth1 : 4;
+        uint32_t Depth2 : 4;
+        uint32_t Depth3 : 4;
+        uint32_t Depth4 : 4;
+        uint32_t Depth5 : 4;
+        uint32_t Depth6 : 4;
+        uint32_t Depth7 : 4;
+    };
+}
+State_PathId_T;
+
+/*
+    .ID = (State_PathId_T){ ROOT_ID, SUB_ID, ... }.Id
+*/
+// #define STATE_PATH_ID(ROOT_ID, ...) (State_PathId_T){ ROOT_ID, __VA_ARGS__ }.Id
+
 
 #define STATE_ID_BITS     (4U)
 #define STATE_ID_MASK     (0xFU)

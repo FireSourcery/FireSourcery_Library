@@ -288,6 +288,14 @@ sign_t MotorController_Traction_GetDirection(const MotorController_T * p_mc)
     return (StateMachine_GetLeafState(p_mc->STATE_MACHINE.P_ACTIVE) == &STATE_NEUTRAL) ? (sign_t)MOTOR_DIRECTION_NULL : MotorController_GetDirection(p_mc);
 }
 
+Traction_StateId_T MotorController_Traction_GetStateId(MotorController_T * p_dev)
+{
+    if (StateMachine_GetLeafState(p_dev->STATE_MACHINE.P_ACTIVE) == &STATE_NEUTRAL) { return TRACTION_STATE_ID_NEUTRAL; }
+    if (StateMachine_GetLeafState(p_dev->STATE_MACHINE.P_ACTIVE) == &STATE_DRIVE) { return TRACTION_STATE_ID_DRIVE; }
+    return (Traction_StateId_T)STATE_ID_NULL;
+}
+
+
 /******************************************************************************/
 /*!
     @brief StateMachine Input
@@ -424,10 +432,10 @@ void MotorController_Traction_VarId_Set(MotorController_T * p_mc, Traction_VarId
 {
     switch (id)
     {
-        case TRACTION_VAR_DIRECTION:   MotorController_Traction_ApplyDirectionCmd(p_mc, (sign_t)value);   break;
+        case TRACTION_VAR_DIRECTION:   MotorController_Traction_ApplyDirectionCmd(p_mc, (sign_t)value);  break;
         case TRACTION_VAR_THROTTLE:    MotorController_Traction_SetThrottle(p_mc, (uint16_t)value);      break;
         case TRACTION_VAR_BRAKE:       MotorController_Traction_SetBrake(p_mc, (uint16_t)value);         break;
-        default: break;
+        case TRACTION_VAR_STATE_ID:    break; /* read only */
         // case TRACTION_VAR_THROTTLE_ONLY:    MotorController_Traction_SetThrottle(p_mc, (uint16_t)value);      break;
         // case TRACTION_VAR_BRAKE_ONLY:       MotorController_Traction_SetBrake(p_mc, (uint16_t)value);         break;
     }
@@ -441,6 +449,7 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
         case TRACTION_VAR_DIRECTION:   value = MotorController_Traction_GetDirection(p_mc);     break;
         case TRACTION_VAR_THROTTLE:    value = TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue;  break;
         case TRACTION_VAR_BRAKE:       value = TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue;     break;
+        case TRACTION_VAR_STATE_ID:    value = MotorController_Traction_GetStateId(p_mc); break;
             // case TRACTION_VAR_THROTTLE_ONLY:    value = TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue;  break;
             // case TRACTION_VAR_BRAKE_ONLY:       value = TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue;     break;
         default: break;

@@ -501,9 +501,9 @@ static const State_Input_T INTERVENTION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_
 const State_T MOTOR_STATE_INTERVENTION =
 {
     .ID                 = MOTOR_STATE_ID_INTERVENTION,
-    .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
     .ENTRY              = (State_Action_T)Intervention_Entry,
     .LOOP               = (State_Action_T)Intervention_Proc,
+    .P_TRANSITION_TABLE = &INTERVENTION_TRANSITION_TABLE[0U],
 };
 
 

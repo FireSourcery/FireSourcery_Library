@@ -209,6 +209,15 @@ void Motor_ResetIPid(Motor_State_T * p_motor)
     PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
 }
 
+void _Motor_ResetTuning(Motor_T * p_motor)
+{
+    /* load from nvm to main consistency for save */
+    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
+    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
+    Motor_ResetSpeedPid(p_motor->P_MOTOR);
+    Motor_ResetIPid(p_motor->P_MOTOR);
+}
+
 /******************************************************************************/
 /*
     Inner unconditional set, always overwrite.

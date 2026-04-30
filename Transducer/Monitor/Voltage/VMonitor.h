@@ -77,6 +77,7 @@ static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_Stat
 // {
 // }
 
+
 /******************************************************************************/
 /*
 */
