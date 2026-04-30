@@ -386,6 +386,7 @@ void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, Li
 {
     // if (LimitArray_IsUpperActive(p_local) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_local)); }
     // else { Motor_TryClearSpeedLimit(p_motor); }
+
     Motor_SetSpeedLimits(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
 }
 
@@ -415,7 +416,11 @@ void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_loc
 
 // void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
 // {
-//     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
+//     // LimitArray_T * p_local = &p_motor->I_LIMIT_SOURCES;
+//     if (LimitArray_IsUpperActive(p_limit) == true)
+//     {
+//         Motor_TryILimit(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_limit), Phase_Calibration_GetIRatedPeak_Fract16()));
+//     }
 //     else { Motor_TryClearILimit(p_motor); }
 // }
 

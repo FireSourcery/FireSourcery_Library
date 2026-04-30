@@ -50,12 +50,6 @@
         Direction selection is not an event that causes a state transition.
         It is a configuration parameter that the user sets independently of the operating state.
 
-    Motor handles direction state.
-
-    Inactive orthogonal region
-
-    Multi Input to Multi States
-
     - A new state is justified by a different safety envelope, not a different purpose
     - One-shot automated procedures get a state; interactive parameter adjustment does not
     - Orthogonal concerns get orthogonal mechanisms
@@ -293,10 +287,10 @@ static void Main_Entry(MotorController_T * p_dev)
 static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 /*
+    Entry guard for Park
     Note: Motor_OpenLoop exits on VOut 0/Z
     Motor_Calibration needs Calibration_Exit
 */
-/* Entry guard for part */
 static State_T * Common_InputPark(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
@@ -315,12 +309,14 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     switch (cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_dev); /* Motors in Stop first */
-            // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      /* Motor_Table_DisableAll(&p_dev->MOTORS); */    return NULL; /* return MAIN to  Exit sub-state, disable inputs */
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return EnterAppMain(p_dev); /* Enter app sub-state from Main idle */
-            // if rootState == MAIN
-        default:     return NULL;
+        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
+        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:          return &MC_STATE_MAIN; /* todo V0 thrshold, return MAIN to  Exit sub-state, disable inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
+            if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { return EnterAppMain(p_dev); } /* Enter app sub-state from Main idle */
+            return NULL;
+        default:  return NULL;
     }
+    return NULL;
 }
 
 static const State_Input_T MAIN_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
@@ -345,6 +341,7 @@ const State_T MC_STATE_MAIN =
 /*!
     @brief Default Motor Command
 
+    Motor State: PASSIVE / RUN / OPEN_LOOP
     Motors passthrough coordinated default
     marker for accepting [Motor_VarId] interface inputs
     as top state until id scheme is determined.
@@ -380,14 +377,17 @@ static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
 
 static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
-    [MC_STATE_INPUT_FAULT] = (State_Input_T)TransitionFault,
-    [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)Main_InputStateCmd,
+    // [MC_STATE_INPUT_FAULT] = (State_Input_T)TransitionFault,
+    // [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)Main_InputStateCmd,
     [MC_STATE_INPUT_MOTOR_CMD] = (State_Input_T)MotorCmd_Input,
 };
 
 const State_T MC_STATE_MAIN_MOTOR_CMD =
 {
     .ID         = MC_STATE_ID_MOTOR_CMD,
+    .P_TOP      = &MC_STATE_MAIN,
+    .P_PARENT   = &MC_STATE_MAIN,
+    .DEPTH      = 1U,
     .ENTRY      = (State_Action_T)MotorCmd_Entry,
     .LOOP       = (State_Action_T)MotorCmd_Proc,
     .P_TRANSITION_TABLE = &MOTOR_CMD_TRANSITION_TABLE[0U],
@@ -397,8 +397,8 @@ const State_T MC_STATE_MAIN_MOTOR_CMD =
 /******************************************************************************/
 /*!
     @brief
-    Inherits from Main, transition from Lock only
-    marker for interface write, optionally  route through state input
+    Motor States: PASSIVE / RUN
+    marker for interface write, optionally route through state input
 */
 /******************************************************************************/
 static void MotorTuning_Entry(MotorController_T * p_dev)
@@ -408,7 +408,8 @@ static void MotorTuning_Entry(MotorController_T * p_dev)
 
 static void MotorTuning_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
-static State_T * MotorTuning_Input(MotorController_T * p_dev, state_value_t cmd)
+/* optionally target 1 motor */
+static State_T * MotorTuning_InputCmd(MotorController_T * p_dev, state_value_t cmd)
 {
     (void)p_dev; (void)cmd;
 }
@@ -425,30 +426,34 @@ static State_T * MotorTuning_InputTuning(MotorController_T * p_dev, state_value_
     return NULL;
 }
 
-//todo other exits restore
 static State_T * MotorTuning_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:           return NULL;
-            // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
+        case MOTOR_CONTROLLER_STATE_CMD_PARK:
+            {
+                State_T * p_nextState = Common_InputPark(p_dev);
+                if (p_nextState != NULL) { Motor_Table_ForEachApply(&p_dev->MOTORS, _Motor_ResetTuning); }
+                return p_nextState;
+            }
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return NULL;
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return NULL;
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return EnterAppMain(p_dev);
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return NULL;
         default:     return NULL;
     }
 }
 
 static const State_Input_T TUNING_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
+    [MC_STATE_INPUT_FAULT] = (State_Input_T)TransitionFault,
     [MC_STATE_INPUT_LOCK] = (State_Input_T)MotorTuning_InputTuning,
+    [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)MotorTuning_InputStateCmd,
 };
 
 const State_T MC_STATE_MAIN_TUNING =
 {
-    .ID         = MC_STATE_ID_MAIN_TUNING,
-    .P_TOP      = &MC_STATE_MAIN,
-    .P_PARENT   = &MC_STATE_MAIN,
-    .DEPTH      = 1U,
+    .ID         = MC_STATE_ID_MOTOR_TUNING,
+    .DEPTH      = 0U,
     .ENTRY      = (State_Action_T)MotorTuning_Entry,
     .LOOP       = (State_Action_T)MotorTuning_Proc,
     .P_TRANSITION_TABLE = &TUNING_TRANSITION_TABLE[0U],
@@ -466,12 +471,10 @@ const State_T MC_STATE_MAIN_TUNING =
 /******************************************************************************/
 static void Lock_Entry(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
-
     Motor_Table_DisableAll(&p_dev->MOTORS);
     Motor_Table_EnterCalibration(&p_dev->MOTORS); /* Enter Calibration State for all motors */
 
-    p_mc->LockOpStatus = 0U;
+    p_dev->P_MC->LockOpStatus = 0U;
 
     MotorController_BeepShort(p_dev);
 }
@@ -511,10 +514,8 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 }
                 break;
 
-            /* todo check start from top state only substate == current state */
             case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
-
                 Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
                 opStatus = 0;
                 break;
@@ -524,12 +525,11 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
 
             case MOTOR_CONTROLLER_LOCK_CALIBRATE_ADC: /* alternatively split */
                 Motor_Table_EnterCalibrateAdc(&p_dev->MOTORS); /* Motor handles it own state */
-                // opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING;
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_LOCK_CALIBRATE_ADC; /* Enter Calibration SubState */
                 break;
 
-                /* Generic select or call motor function */
+            /* Generic select or call motor function */
             // case MOTOR_CONTROLLER_LOCK_CALIBRATE_SENSOR:  StartCalibrateSensor(p_dev);    break;
 
             /* No return */
@@ -537,7 +537,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 HAL_Reboot();  // optionally deinit clock select
                 break;
 
-            case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE: /* keep available for pid tunning */
+            case MOTOR_CONTROLLER_LOCK_MOTOR_CMD_MODE:
                 Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_MOTOR_CMD; /* */
@@ -548,11 +548,6 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 p_nextState = &MC_STATE_MAIN_TUNING; /* */
                 break;
-
-            // case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE:       break;
-            // case MOTOR_CONTROLLER_NVM_BOOT:                  p_mc->NvmStatus = MotorController_SaveBootReg_Blocking(p_dev);       break;
-            // case MOTOR_CONTROLLER_BLOCKING_NVM_WRITE_ONCE:   p_mc->NvmStatus = MotorController_WriteOnce_Blocking(p_dev);         break;
-
         }
     }
 

@@ -459,12 +459,12 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
 
 int MotorController_Traction_ConfigId_Get(const MotorController_T * p_mc, Traction_ConfigId_T id)
 {
-    return Traction_ConfigId_Get(TractionApp(p_mc)->P_TRACTION_STATE, id);
+    return Traction_ConfigId_Get(&TractionApp(p_mc)->P_TRACTION_STATE->Config, id);
 }
 
 void MotorController_Traction_ConfigId_Set(MotorController_T * p_mc, Traction_ConfigId_T id, int value)
 {
-    Traction_ConfigId_Set(TractionApp(p_mc)->P_TRACTION_STATE, id, value);
+    Traction_ConfigId_Set(&TractionApp(p_mc)->P_TRACTION_STATE->Config, id, value);
 }
 
 

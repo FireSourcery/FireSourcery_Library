@@ -268,6 +268,8 @@ typedef const struct MotorController
 // }
 // MotorDrive_T;
     Motor_Table_T MOTORS; /* Motor Array Context */
+
+    /* Store in physical units representation for now */
     LimitArray_T SPEED_LIMIT_SOURCES;
     LimitArray_T I_LIMIT_SOURCES;
     LimitArray_T I_GEN_LIMIT_SOURCES;

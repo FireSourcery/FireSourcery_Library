@@ -42,7 +42,12 @@ void Traction_Init(const Traction_T * p_handle)
     // StateMachine_Init(&p_handle->STATE_MACHINE);
 }
 
-
+// typedef const struct MotorDrive
+// {
+//     Motor_FeedbackMode_T FEEDBACK_MODE;
+//     void (*APPLY_CMD)(const Motor_T * p , motor_value_t value);
+// }
+// MotorDrive_T;
 
 /******************************************************************************/
 /*
@@ -138,48 +143,47 @@ void Traction_ProcRelease(const Traction_T * p_vehicle)
     Var Id
 */
 /******************************************************************************/
-int Traction_ConfigId_Get(const Traction_State_T * p_vehicleState, Traction_ConfigId_T id)
+int Traction_ConfigId_Get(const Traction_Config_T * p_config, Traction_ConfigId_T id)
 {
     int value = 0;
     switch (id)
     {
-        case TRACTION_CONFIG_THROTTLE_MODE:    value = p_vehicleState->Config.ThrottleMode;                 break;
-        case TRACTION_CONFIG_BRAKE_MODE:       value = p_vehicleState->Config.BrakeMode;                    break;
-        case TRACTION_CONFIG_ZERO_MODE:        value = p_vehicleState->Config.ZeroMode;                     break;
+        case TRACTION_CONFIG_THROTTLE_MODE:    value = p_config->ThrottleMode;                 break;
+        case TRACTION_CONFIG_BRAKE_MODE:       value = p_config->BrakeMode;                    break;
+        case TRACTION_CONFIG_ZERO_MODE:        value = p_config->ZeroMode;                     break;
     }
     return value;
 }
 
-void Traction_ConfigId_Set(Traction_State_T * p_vehicleState, Traction_ConfigId_T id, int value)
+void Traction_ConfigId_Set(Traction_Config_T * p_config, Traction_ConfigId_T id, int value)
 {
     switch (id)
     {
-        case TRACTION_CONFIG_THROTTLE_MODE:    p_vehicleState->Config.ThrottleMode = (Traction_ThrottleMode_T)value;     break;
-        case TRACTION_CONFIG_BRAKE_MODE:       p_vehicleState->Config.BrakeMode = (Traction_BrakeMode_T)value;           break;
-        case TRACTION_CONFIG_ZERO_MODE:        p_vehicleState->Config.ZeroMode = (Traction_ZeroMode_T)value;             break;
+        case TRACTION_CONFIG_THROTTLE_MODE:    p_config->ThrottleMode = (Traction_ThrottleMode_T)value;     break;
+        case TRACTION_CONFIG_BRAKE_MODE:       p_config->BrakeMode = (Traction_BrakeMode_T)value;           break;
+        case TRACTION_CONFIG_ZERO_MODE:        p_config->ZeroMode = (Traction_ZeroMode_T)value;             break;
         default: break;
     }
 }
 
-
-// void Traction_VarId_Set(const Traction_T * p_vehicle, Traction_VarId_T id, int value)
+// void Traction_VarId_Set(const Traction_Input_T * p_traction, Traction_VarId_T id, int value)
 // {
 //     switch (id)
 //     {
-//         case TRACTION_VAR_DIRECTION:   Traction_User_ApplyDirection(p_vehicle, (sign_t)value);       break; // call outer passthrough in most cases
-//         case TRACTION_VAR_THROTTLE:    Traction_User_ApplyThrottle(p_vehicle, (uint16_t)value);      break;
-//         case TRACTION_VAR_BRAKE:       Traction_User_ApplyBrake(p_vehicle, (uint16_t)value);         break;
+//         case TRACTION_VAR_DIRECTION:   Traction_Input_PollDirectionEdge(p_traction, (sign_t)value);       break; // call outer passthrough in most cases
+//         case TRACTION_VAR_THROTTLE:    Traction_Input_PollThrottle(p_traction, (uint16_t)value);      break;
+//         case TRACTION_VAR_BRAKE:       Traction_Input_PollBrake(p_traction, (uint16_t)value);         break;
 //     }
 // }
 
-// int Traction_VarId_Get(const Traction_T * p_vehicle, Traction_VarId_T id)
+// int Traction_VarId_Get(const Traction_Input_T * p_traction, Traction_VarId_T id)
 // {
 //     int value = 0;
 //     switch (id)
 //     {
-//         case TRACTION_VAR_DIRECTION:   value = Traction_StateMachine_GetDirection(p_vehicle);     break;
-//         case TRACTION_VAR_THROTTLE:    value = p_vehicle->P_TRACTION_STATE->Input.ThrottleValue;  break;
-//         case TRACTION_VAR_BRAKE:       value = p_vehicle->P_TRACTION_STATE->Input.BrakeValue;     break;
+//         case TRACTION_VAR_DIRECTION:   value = p_traction->Direction;      break;
+//         case TRACTION_VAR_THROTTLE:    value = p_traction->ThrottleValue;  break;
+//         case TRACTION_VAR_BRAKE:       value = p_traction->BrakeValue;     break;
 //     }
 //     return value;
 // }

@@ -112,6 +112,7 @@ static inline HeatMonitor_Status_T HeatMonitor_Poll(const HeatMonitor_T * p_cont
 /* Heat limit calculation */
 /* assert(p_heat->P_LIMIT_SCALAR != NULL) */
 static inline uint16_t HeatMonitor_GetScalarLimit_Percent16(const HeatMonitor_T * p_heat) { return Linear_Q16_Percent(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
+static inline uint16_t HeatMonitor_GetDerate_Fract16(const HeatMonitor_T * p_heat) { return Linear_Q16_UFract(p_heat->P_LIMIT_SCALAR, p_heat->P_STATE->LastInput); }
 
 /******************************************************************************/
 /*
@@ -169,7 +170,7 @@ typedef const struct HeatMonitor_Group
 }
 HeatMonitor_Group_T;
 
-
+/* or merge with limit array */
 /* Monitor_GetLastInputComparable returns value for > compare */
 /* Find hottest sensor */
 static inline uint8_t _HeatMonitor_Group_FindHottest(const HeatMonitor_Group_T * p_group)
@@ -205,20 +206,12 @@ static inline HeatMonitor_Status_T HeatMonitor_Group_PollCollective(const HeatMo
     Group Query Functions - Polling results
 */
 /******************************************************************************/
-static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_Group_T * p_group)
-{
-    return Linear_Q16_Percent(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput);
-}
+static inline uint16_t HeatMonitor_Group_GetScalarLimit_Percent16(const HeatMonitor_Group_T * p_group) { return Linear_Q16_Percent(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput); }
+static inline uint16_t HeatMonitor_Group_GetDerate_Fract16(const HeatMonitor_Group_T * p_group) { return Linear_Q16_UFract(p_group->P_LIMIT_SCALAR, p_group->P_STATE->LastInput); }
 
-static inline HeatMonitor_State_T * HeatMonitor_Group_State(const HeatMonitor_Group_T * p_group)
-{
-    return (HeatMonitor_State_T *)(p_group->P_STATE);
-}
+static inline HeatMonitor_State_T * HeatMonitor_Group_State(const HeatMonitor_Group_T * p_group) { return (HeatMonitor_State_T *)(p_group->P_STATE); }
 
-static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor_Group_T * p_group)
-{
-    return (HeatMonitor_Status_T)Monitor_GetStatus(p_group->P_STATE);
-}
+static inline HeatMonitor_Status_T HeatMonitor_Group_GetStatus(const HeatMonitor_Group_T * p_group) { return (HeatMonitor_Status_T)Monitor_GetStatus(p_group->P_STATE); }
 
 /******************************************************************************/
 /*

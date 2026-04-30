@@ -95,11 +95,21 @@ Array_Params_T;
     Void * or Struct
     compiler optimization to inline type size
 */
-static inline intptr_t Array_GetV(size_t type, Array_T * p_array, size_t index) { return void_array_get(type, p_array->P_BUFFER, index); }
-static inline void Array_SetV(size_t type, Array_T * p_array, size_t index, value_t value) { void_array_set(type, p_array->P_BUFFER, index, value); }
+static inline intptr_t Array_GetV(size_t type, Array_T array, size_t index) { return void_array_get(type, array.P_BUFFER, index); }
+static inline void Array_SetV(size_t type, Array_T array, size_t index, value_t value) { void_array_set(type, array.P_BUFFER, index, value); }
 
-static inline void Array_Set(size_t type, Array_T * p_array, size_t index, const void * p_value) { memcpy(void_array_at(type, p_array->P_BUFFER, index), p_value, type); }
-static inline void Array_Get(size_t type, Array_T * p_array, size_t index, void * p_value) { memcpy(p_value, void_array_at(type, p_array->P_BUFFER, index), type); }
+static inline void Array_Set(size_t type, Array_T array, size_t index, const void * p_value) { memcpy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
+static inline void Array_Get(size_t type, Array_T array, size_t index, void * p_value) { memcpy(p_value, void_array_at(type, array.P_BUFFER, index), type); }
 
-// static inline void Array_Set(size_t type, Array_T array, size_t index, const void * p_value) { memcpy(void_array_at(type, array.P_BUFFER, index), p_value, type); }
-// static inline void Array_Get(size_t type, Array_T array, size_t index, void * p_value) { memcpy(p_value, void_array_at(type, array.P_BUFFER, index), type); }
+
+// static inline void Array_CopyTo(size_t type, Array_T array, size_t index, size_t count, const void * p_value)
+// {
+//     assert((index + count) <= array.LENGTH);
+//     void_array_copy_to(type, void_array_at(type, array.P_BUFFER, index), p_value, count);
+// }
+
+// static inline void Array_CopyFrom(size_t type, Array_T array, size_t index, size_t count, const void * p_value)
+// {
+//     assert((index + count) <= array.LENGTH);
+//     void_array_copy_from(type, void_array_at(type, array.P_BUFFER, index), p_value, count);
+// }

@@ -47,6 +47,7 @@ void StartCalibrateAdc(MotorController_T * p_dev)
     Accumulator_Init(&p_mc->AvgBuffer0);
     Accumulator_Init(&p_mc->AvgBuffer1);
     // Motor_Table_EnterCalibrateAdc(&p_dev->MOTORS); /* Motor handles it own state */
+    // p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING;
 }
 
 /* Proc Per ms */

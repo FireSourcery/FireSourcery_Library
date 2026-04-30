@@ -209,28 +209,10 @@ typedef enum Traction_ConfigId
 }
 Traction_ConfigId_T;
 
-/* IO vars use full context */
-// extern int Traction_VarId_Get(const Traction_T * p_vehicle, Traction_VarId_T id);
-// extern void _Traction_VarId_Set(const Traction_T * p_vehicle, Traction_VarId_T id, int value);
 
-extern int Traction_ConfigId_Get(const Traction_State_T * p_this, Traction_ConfigId_T id);
-extern void Traction_ConfigId_Set(Traction_State_T * p_this, Traction_ConfigId_T id, int value);
+extern int _Traction_VarId_Get(const Traction_Input_T * p_vehicle, Traction_VarId_T id);
+extern void _Traction_VarId_Set(Traction_Input_T * p_vehicle, Traction_VarId_T id, int value);
 
-
-/******************************************************************************/
-/*!
-    DriveCmd - Throttle, Brake, Zero
-    "state" changes on edge detection
-    @param[in] driveCmd Throttle, Brake, Zero
-    @param[in] cmdValue [0:65535]
-*/
-/******************************************************************************/
-/*
-    set to sync buffer. proc in state or input
-    Direction handle in state machine
-*/
-// static inline bool Traction_User_PollCmdEdge(Traction_State_T * p_this) { return Traction_Input_PollCmdEdge(&p_this->Input); }
-// static inline void Traction_User_SetThrottle(Traction_State_T * p_this, uint16_t userCmd) { p_this->Input.ThrottleValue = userCmd; }
-// static inline void Traction_User_SetBrake(Traction_State_T * p_this, uint16_t userCmd) { p_this->Input.BrakeValue = userCmd; }
-// static inline void Traction_User_SetZero(Traction_State_T * p_this) { p_this->Input.ThrottleValue = 0U; p_this->Input.BrakeValue = 0U; }
+extern int Traction_ConfigId_Get(const Traction_Config_T * p_this, Traction_ConfigId_T id);
+extern void Traction_ConfigId_Set(Traction_Config_T * p_this, Traction_ConfigId_T id, int value);
 

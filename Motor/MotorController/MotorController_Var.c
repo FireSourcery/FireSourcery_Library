@@ -66,10 +66,10 @@ void MotorController_Var_Input_Set(const MotorController_T * p_dev, MotorControl
 {
     switch (id)
     {
-        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
-        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_Output_T)value);                                 break;
+        // case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
+        // case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
+        // case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
+        // case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_Output_T)value);                                 break;
 
         // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_dev, (bool)value);        break;
         // case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_dev, (bool)value);            break;
@@ -133,7 +133,7 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
     MotorController_State_T * p_state = p_dev->P_MC;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                            break; /* can deprciate  */
+        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                       break;
         case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);            break;
@@ -300,9 +300,9 @@ static MotVarId_Status_T _HandleVMonitor_Set(const MotorController_T * p_dev, Mo
             break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:          RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;
 
-        case MOT_VAR_TYPE_VBUS_OUT:                       return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:        return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_VBUS_OUT:                         return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            VMonitor_ConfigId_Set(&p_dev->V_ACCESSORIES, varId.Base, value); break;

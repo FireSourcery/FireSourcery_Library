@@ -279,20 +279,20 @@ void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
 
 void Motor_SetSpeedLimits(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
-    p_motor->SpeedLimitReverse_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+    p_motor->SpeedLimitForward_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
+    p_motor->SpeedLimitReverse_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
     Motor_ResolveSpeedLimits(p_motor);
 }
 
 void Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
+    p_motor->SpeedLimitForward_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
     if (Motor_IsDirectionForward(p_motor) == true) { Motor_ResolveSpeedLimits(p_motor); }
 }
 
 void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitReverse_Fract16 = math_limit_upper(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+    p_motor->SpeedLimitReverse_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
     if (Motor_IsDirectionReverse(p_motor) == true) { Motor_ResolveSpeedLimits(p_motor); }
 }
 
@@ -308,20 +308,20 @@ void Motor_ResetILimit(Motor_State_T * p_motor)
 
 void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
+    p_motor->ILimitMotoring_Fract16 = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
     Motor_ResolveILimits(p_motor);
 }
 
 void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
+    p_motor->ILimitGenerating_Fract16 = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
     Motor_ResolveILimits(p_motor);
 }
 
 void Motor_SetILimits(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
-    p_motor->ILimitGenerating_Fract16 = math_limit_upper(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
+    p_motor->ILimitMotoring_Fract16 = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
+    p_motor->ILimitGenerating_Fract16 = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
     Motor_ResolveILimits(p_motor);
 }
 

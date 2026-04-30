@@ -131,7 +131,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
                 Thermistor Adcu is roughly linear in Warning region
                 Increasing Limit only, reset on warning clear.
             */
-            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetScalarLimit_Percent16(&p_dev->HEAT_MOSFETS) / 2, Phase_Calibration_GetIRatedPeak_Fract16()));
+            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS), Phase_Calibration_GetIRatedPeak_Fract16()));
             break;
 
         case HEAT_MONITOR_STATUS_NORMAL:

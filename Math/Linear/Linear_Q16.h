@@ -52,7 +52,7 @@
 /******************************************************************************/
 static inline int16_t _Linear_SatSigned16(int32_t value16) { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
 static inline int16_t _Linear_SatSigned16_Abs(int32_t value16) { return _Linear_SatSigned16(math_abs(value16)); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }
+static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, INT16_MAX)); }
 static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16) { return _Linear_SatUnsigned16(math_abs(value16)); }
 
 

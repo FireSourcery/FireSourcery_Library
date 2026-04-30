@@ -365,6 +365,7 @@ typedef struct Motor_State
         Motor-local arbitration buffers. Handles live in Motor_T (P_I_LIMITS_LOCAL, etc.).
         Per-motor sources (winding heat, stall, field-weaken) write here so a single
     */
+    // Motor_Limits_T
     limit_t                 ILimits[MOTOR_I_LIMIT_COUNT];
     LimitArray_Augments_T   ILimitsActive;
     limit_t                 IGenLimits[MOTOR_I_GEN_LIMIT_COUNT];
