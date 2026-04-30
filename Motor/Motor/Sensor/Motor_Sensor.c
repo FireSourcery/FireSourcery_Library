@@ -72,8 +72,8 @@ void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T ty
         case MOTOR_VAR_TYPE_HALL_STATE:                  break;
         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
         case MOTOR_VAR_TYPE_ENCODER_CONFIG:   _Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId, varValue);   break;
-        case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
         case MOTOR_VAR_TYPE_ENCODER_CMD:                 break;
+        case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
         #endif
         default: break;
     }
@@ -86,10 +86,10 @@ bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType_Sensor
     {
         case MOTOR_VAR_TYPE_HALL_STATE:     return false;
         case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_HALL_CMD:       return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
+        case MOTOR_VAR_TYPE_HALL_CMD:       return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
         case MOTOR_VAR_TYPE_ENCODER_STATE:  return false;
         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_ENCODER_CMD:    return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
+        case MOTOR_VAR_TYPE_ENCODER_CMD:    return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
         default: return false;
     }
 }

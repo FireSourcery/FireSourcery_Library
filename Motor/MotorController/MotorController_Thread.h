@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include "MotorController_User.h"
+#include "MotorController_StateMachine.h"
 #include "Motor/Motor/Motor_Thread.h"
 
 #include "Peripheral/Analog/Analog_ADC_Thread.h"
@@ -304,7 +305,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */
-            if (Motor_Table_IsAnyState(&p_dev->MOTORS, MOTOR_STATE_ID_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
+            if (Motor_Table_IsAnyState(&p_dev->MOTORS, &MOTOR_STATE_FAULT) == true) { MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOTORS); }
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
         #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE

@@ -129,17 +129,17 @@ static inline void Motor_Table_EnterCalibrateAdc(Motor_Table_T * p_table) { for 
 static inline bool Motor_Table_IsCalibrationComplete(Motor_Table_T * p_table) { return void_array_is_every(sizeof(Motor_T), p_table->P_DEVS, p_table->LENGTH, (test_t)Motor_Calibration_IsComplete); }
 
 /* IsEveryMachineState */
-static inline bool Motor_Table_IsEveryState(Motor_Table_T * p_table, Motor_StateId_T stateId)
+static inline bool Motor_Table_IsEveryState(Motor_Table_T * p_table, State_T * p_state)
 {
     bool isEvery = true;
-    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_IsState(&p_table->P_DEVS[iMotor], stateId) == false) { isEvery = false; break; } }
+    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_IsState(&p_table->P_DEVS[iMotor], p_state) == false) { isEvery = false; break; } }
     return isEvery;
 }
 
-static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_table, Motor_StateId_T stateId)
+static inline bool Motor_Table_IsAnyState(Motor_Table_T * p_table, State_T * p_state)
 {
     bool isAny = false;
-    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_IsState(&p_table->P_DEVS[iMotor], stateId) == true) { isAny = true; break; } }
+    for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { if (Motor_IsState(&p_table->P_DEVS[iMotor], p_state) == true) { isAny = true; break; } }
     return isAny;
 }
 

@@ -426,7 +426,7 @@ bool Motor_VarType_SubModule_CheckSet(const Motor_T * p_motor, Motor_VarType_Sub
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return Motor_IsConfig(p_motor);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return Motor_IsConfig(p_motor);
         // case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION);
-        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, MOTOR_STATE_ID_RUN);
+        case MOTOR_VAR_TYPE_PID_TUNING_IO:              return Motor_IsState(p_motor, &MOTOR_STATE_RUN);
         case MOTOR_VAR_TYPE_BOARD_CONST:                return false;
         case MOTOR_VAR_TYPE_PHASE:                      return false;
         default: return false;

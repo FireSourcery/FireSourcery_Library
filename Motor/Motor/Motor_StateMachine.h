@@ -160,13 +160,9 @@ static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_mot
 /*
 */
 /******************************************************************************/
-/* Wrap Motor_T for interface */
-/* Does not include substates */
-static inline bool Motor_IsState(const Motor_T * p_motor, Motor_StateId_T stateId) { return (StateMachine_IsRootStateId(p_motor->STATE_MACHINE.P_ACTIVE, stateId)); }
-// static inline bool Motor_IsState(const Motor_T * p_motor, State_T * p_state) { return (StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, p_state)); }
+static inline bool Motor_IsState(const Motor_T * p_motor, State_T * p_state) { return (StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, p_state)); }
 
-static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT); }
-
+static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, &MOTOR_STATE_FAULT); }
 
 /*
     let app layer handle permission. motor layer handles its own struct mapping.
@@ -175,7 +171,7 @@ static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState
 */
 static inline bool Motor_IsConfig(const Motor_T * p_motor)
 {
-    return (Motor_IsState(p_motor, MOTOR_STATE_ID_DISABLED) || Motor_IsState(p_motor, MOTOR_STATE_ID_CALIBRATION) || Motor_IsState(p_motor, MOTOR_STATE_ID_FAULT));
+    return (Motor_IsState(p_motor, &MOTOR_STATE_DISABLED) || Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION) || Motor_IsState(p_motor, &MOTOR_STATE_FAULT));
 }
 
 // static inline bool Motor_IsDisableReady(const Motor_T * p_motor) { return StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_PASSIVE); }

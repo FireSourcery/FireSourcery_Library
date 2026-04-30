@@ -1,10 +1,37 @@
-// static State_T * Lock_CalibrateAdc(const MotorController_T * p_dev, state_value_t lockId)
-// {
-//     return &MC_STATE_LOCK_CALIBRATE_ADC;
-// }
+#pragma once
 
-// void MotorController_Lock_CalibrateAdc(const MotorController_T * p_dev)
-// {
-//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MC_STATE_LOCK, .NEXT = (State_Input_T)Lock_CalibrateAdc, };
-//     StateMachine_Tree_InvokeTransition(&p_dev->STATE_MACHINE, &CMD, 0);
-// }
+/******************************************************************************/
+/*!
+    @section LICENSE
+
+    Copyright (C) 2025 FireSourcery
+
+    This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+/******************************************************************************/
+/******************************************************************************/
+/*!
+    @file   MotorController_Analog.h
+    @author FireSourcery
+    @brief  [Brief description of the file]
+*/
+/******************************************************************************/
+#include "MotorController_StateMachine.h"
+#include "MotorController.h"
+
+extern const State_T MC_STATE_LOCK_CALIBRATE_ADC;
+
+void MotorController_Lock_CalibrateAdc(const MotorController_T * p_dev);

@@ -29,6 +29,7 @@
 /******************************************************************************/
 #include "MotorController_Var.h"
 #include "MotorController_User.h"
+#include "MotorController_StateMachine.h"
 #include "../Motor/Motor_Var.h"
 #include "../Motor/VBus/VBus.h"
 #include "../Motor/Sensor/Motor_Sensor.h"
@@ -543,7 +544,7 @@ int MotorController_Var_Get(const MotorController_T * p_dev, MotVarId_T varId)
 /******************************************************************************/
 MotVarId_Status_T MotorController_Var_Set(const MotorController_T * p_dev, MotVarId_T varId, int value)
 {
-    MotVarId_Status_T accessStatus = CheckInputPolicy(p_dev, varId);
+    volatile MotVarId_Status_T accessStatus = CheckInputPolicy(p_dev, varId);
     if (accessStatus != MOT_VAR_STATUS_OK) return accessStatus;
 
     switch ((MotVarId_Prefix_T)varId.Prefix)

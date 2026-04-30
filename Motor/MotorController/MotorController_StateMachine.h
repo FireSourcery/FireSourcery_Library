@@ -78,6 +78,7 @@ typedef enum MotorController_StateId
 }
 MotorController_StateId_T;
 
+extern const State_T MC_STATE_INIT;
 extern const State_T MC_STATE_PARK;
 extern const State_T MC_STATE_MAIN;
 extern const State_T MC_STATE_MAIN_TUNING;
@@ -291,10 +292,7 @@ static inline MotorController_LockOpStatus_T MotorController_InputLock(MotorCont
 static inline MotorController_LockOpStatus_T MotorController_EnterLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_ENTER); }
 static inline MotorController_LockOpStatus_T MotorController_ExitLockState(MotorController_T * p_dev) { return MotorController_InputLock(p_dev, MOTOR_CONTROLLER_LOCK_EXIT); }
 
-static inline bool MotorController_IsEnterLockError(MotorController_T * p_dev, MotorController_LockId_T id)
-{
-    return (((MotorController_LockId_T)id != MOTOR_CONTROLLER_LOCK_EXIT) && (MotorController_IsLock(p_dev) == false));
-}
+static inline bool MotorController_IsEnterLockError(MotorController_T * p_dev, MotorController_LockId_T id) { return ((id == MOTOR_CONTROLLER_LOCK_ENTER) && !MotorController_IsLock(p_dev)); }
 
 /* Save RAM to NVM */
 static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorController_T * p_dev)
