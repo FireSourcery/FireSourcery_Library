@@ -180,6 +180,7 @@ static int VBus_ConfigId_Get(const VBus_Config_T * p_config, VBus_ConfigId_T id)
     return value;
 }
 
+/* may overwrite fault/warning if called in the same packet */
 static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int value)
 {
     switch (id)

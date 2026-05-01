@@ -74,12 +74,12 @@ typedef struct UserDIn_State
 {
     Debounce_T Debounce;
     bool OutputPrev;
+    UserDIn_Mode_T Mode;        /* Provide Disable */
+    UserDIn_Fn_T OptCmd;        /* hold the function for simplicity */
+    UserDIn_Config_T Config;
     // bool ToggleState;                   /* For toggle mode */
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
-    UserDIn_Mode_T Mode;
-    // UserDIn_Config_T Config;
-    UserDIn_Fn_T OptCmd; /* hold the function for simplicity */
 }
 UserDIn_State_T;
 

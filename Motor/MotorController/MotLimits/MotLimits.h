@@ -86,12 +86,55 @@ static inline uint16_t MotLimits_SpeedDerate(MotLimits_T * p_dev) { return _Limi
 // static inline LimitArray_T MotLimits_GetIGenLimitArray(MotLimits_T * p_dev) { return (LimitArray_T) { .P_BUFFER = &p_dev->IGenLimitValues[0U], .LENGTH = MOT_I_GEN_LIMIT_COUNT, .P_AUGMENTS = &p_dev->IGenLimitState, }; }
 // static inline LimitArray_T MotLimits_GetSpeedLimitArray(MotLimits_T * p_dev) { return (LimitArray_T) { .P_BUFFER = &p_dev->SpeedLimitValues[0U], .LENGTH = MOT_SPEED_LIMIT_COUNT, .P_AUGMENTS = &p_dev->SpeedLimitState, }; }
 
-
-// bool _MotorController_SetSpeedLimitAll(MotLimits_T * p_dev, Motor_Table_T * p_motors, MotSpeedLimitId_T id, limit_t speed_fract16)
+// bool MotLimits_SetSpeedLimitAll(MotLimits_T * p_dev, Motor_Table_T * p_motors, MotSpeedLimitId_T id, limit_t speed_fract16)
 // {
 //     if (_LimitArray_TestSetUpper(&p_dev->SpeedLimitState, p_dev->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(p_motors, &p_dev->SpeedLimitState); return true; }
 //     return false;
 // }
+
+// bool MotLimits_SetSpeedLimit(MotLimits_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
+// {
+//     if (_LimitArray_TestSetUpper(&p_dev->SpeedLimitState, p_dev->SpeedLimitValues, id, speed_fract16) == true)
+//     { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SpeedLimitState); return true; }
+//     return false;
+// }
+
+// bool MotLimits_ClearSpeedLimit(MotLimits_T * p_dev, MotSpeedLimitId_T id)
+// {
+//     if (_LimitArray_TestClearEntry(&p_dev->SpeedLimitState, p_dev->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true)
+//     { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SpeedLimitState); return true; }
+//     return false;
+// }
+
+// bool MotLimits_SetILimit(MotLimits_T * p_dev, MotILimitId_T id, limit_t i_fract16)
+// {
+//     if (_LimitArray_TestSetUpper(&p_dev->ILimitState, p_dev->ILimitValues, id, i_fract16) == true)
+//     { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->ILimitState); return true; }
+//     return false;
+// }
+
+// bool MotLimits_ClearILimit(MotLimits_T * p_dev, MotILimitId_T id)
+// {
+//     if (_LimitArray_TestClearEntry(&p_dev->ILimitState, p_dev->ILimitValues, id) == true)
+//     { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->ILimitState); return true; }
+//     return false;
+// }
+
+// bool MotLimits_SetIGenLimit(MotLimits_T * p_dev, MotIGenLimitId_T id, limit_t i_fract16)
+// {
+//     if (_LimitArray_TestSetUpper(&p_dev->IGenLimitState, p_dev->IGenLimitValues, id, i_fract16) == true)
+//     { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->IGenLimitState); return true; }
+//     return false;
+// }
+
+// bool MotLimits_ClearIGenLimit(MotLimits_T * p_dev, MotIGenLimitId_T id)
+// {
+//     if (_LimitArray_TestClearEntry(&p_dev->IGenLimitState, p_dev->IGenLimitValues, id) == true)
+//     { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->IGenLimitState); return true; }
+//     return false;
+// }
+
+
 
 
 

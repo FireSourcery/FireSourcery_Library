@@ -166,9 +166,6 @@ static inline void MotorController_SetBlink(MotorController_State_T * p_mcState,
     Extern
 */
 /******************************************************************************/
-extern void MotorController_SetVSupply_V(MotorController_T * p_dev, uint16_t volts);
-extern void MotorController_SetInputMode(MotorController_T * p_dev, MotorController_InputMode_T mode);
-
 extern int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value);
 extern bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction);
 

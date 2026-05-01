@@ -216,6 +216,7 @@ static inline void _Phase_WriteState(const Phase_T * p_phase, Phase_Id_T id)
 }
 
 /* ReadChannels */
+/* ReadActiveOutput */
 static inline Phase_Bitmask_T _Phase_ReadState(const Phase_T * p_phase)
 {
     return (Phase_Bitmask_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
@@ -234,7 +235,6 @@ static inline Phase_Bitmask_T _Phase_ReadState(const Phase_T * p_phase)
 /* Voltage/Output State */
 static inline Phase_Bitmask_T _Phase_ReadDutyState(const Phase_T * p_phase)
 {
-    // return Phase_BitmaskOf
     return (Phase_Bitmask_T)
     {
         .A = (PWM_ReadDuty_Ticks(&p_phase->PWM_A) != 0U),

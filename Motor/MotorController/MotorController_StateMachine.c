@@ -160,7 +160,7 @@ static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
 static void Init_Entry(MotorController_T * p_dev)
 {
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
-    MotorController_BeepShort(p_dev);
+    MotBuzzer_Short(MotorController_Buzzer(p_dev));
 }
 
 // static void Init_Exit(MotorController_T * p_dev)
@@ -252,12 +252,11 @@ static State_T * Park_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
 
 static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
 {
-    State_T * p_nextState = NULL;
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED) == true) { p_nextState = &MC_STATE_LOCK; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED) == true) { return &MC_STATE_LOCK; }
     }
-    return p_nextState;
+    return NULL;
 }
 
 static const State_Input_T PARK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
@@ -309,7 +308,7 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
     if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED)) { p_nextState = &MC_STATE_PARK; }
     /* If caller buffers input. Caller includes knowedge of whether callee is in an accepting state. */
     else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEvery(&p_dev->MOTORS, Motor_IsSpeedZero)) { p_nextState = &MC_STATE_PARK; } /* Applies stop on enter */
-    else { MotorController_BeepShort(p_dev); }
+    else { MotBuzzer_Short(MotorController_Buzzer(p_dev)); }
     return p_nextState;
 }
 
@@ -319,8 +318,8 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     switch (cmd)
     {
         case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_dev); /* Motors in Stop first */
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:   return NULL; /* Motors in Stop first */
-        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:          return &MC_STATE_MAIN; /* todo V0 thrshold, return MAIN to  Exit sub-state, disable inputs */
+        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:      return NULL;
+        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:   return &MC_STATE_MAIN; /* todo V0 thrshold, return MAIN to  Exit sub-state, disable inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
             if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { return EnterAppMain(p_dev); } /* Enter app sub-state from Main idle */
             return NULL;
@@ -486,7 +485,7 @@ static void Lock_Entry(MotorController_T * p_dev)
 
     p_dev->P_MC->LockOpStatus = 0U;
 
-    MotorController_BeepShort(p_dev);
+    MotBuzzer_Short(MotorController_Buzzer(p_dev));
 }
 
 static void Lock_Proc(MotorController_T * p_dev)
@@ -600,7 +599,7 @@ static void Fault_Entry(MotorController_T * p_dev)
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
 //     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 // #endif
-    MotorController_BeepPeriodic(p_dev);
+    MotBuzzer_Periodic(MotorController_Buzzer(p_dev));
 }
 
 static void Fault_Proc(MotorController_T * p_dev)

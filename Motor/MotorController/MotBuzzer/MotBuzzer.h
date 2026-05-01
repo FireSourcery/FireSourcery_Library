@@ -55,12 +55,11 @@ MotBuzzer_OptionFlags_T;
 typedef struct MotBuzzer_Config
 {
     MotBuzzer_OptionFlags_T EventFlags; /* which events trigger a beep */
-    uint8_t IsEnabled : 1U;             /* master enable; when 0 the pin stays silent */
+    bool IsEnabled;
 }
 MotBuzzer_Config_T;
 
 typedef Blinky_T MotBuzzer_T;
-
 
 static inline void MotBuzzer_Short(MotBuzzer_T * p_dev) { Blinky_Blink(p_dev, 500U); }
 static inline void MotBuzzer_PeriodicType1(MotBuzzer_T * p_dev) { Blinky_StartPeriodic(p_dev, 500U, 500U); }

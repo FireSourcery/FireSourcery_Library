@@ -187,11 +187,7 @@ void Motor_StartVoltageMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p
 // _Motor_SetTorqueMotoringCmd(p_motor, math_clamp(volts_fract16, 0, Phase_VBus_GetVRef()));
 void Motor_SetVoltageCmd(Motor_State_T * p_motor, int16_t volts_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, volts_fract16); }
 void Motor_SetVoltageCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetVoltageCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRef())); }
-
-// void _Motor_SetVRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16)
-// {
-//     // Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4);
-// }
+// void _Motor_SetVFreqCmd(Motor_State_T * p_motor, int16_t scalar_fract16) {   Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4); }
 
 /******************************************************************************/
 /*!
@@ -219,16 +215,6 @@ void Motor_ApplyTorque0(const Motor_T * p_motor)
     _Motor_SetTorqueMotoringCmd(p_motor->P_MOTOR, 0);
 }
 
-/*
-    alternatively throttle layer handle
-*/
-/* + as selected motoring direction. Speed reduce to 0 only. clamped by anti-plugging in feedback loop */
-// _Motor_SetSpeedMotoringCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - Motor_SpeedLimitGenerating(p_motor), Motor_SpeedLimitMotoring(p_motor)));
-void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedMotoringCmd(p_motor, speed_fract16); }
-
-/* select higher value as consistent reference */
-void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetSpeedMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16)); }
-
 
 /******************************************************************************/
 /*!
@@ -252,17 +238,6 @@ void Motor_SetTorqueCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) {
 void Motor_SetTorqueVCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
 void Motor_SetTorqueVCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueVCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRefSvpwm())); }
 
-// void Motor_SetTorqueDriveCmd(Motor_State_T * p_motor, int16_t i_fract16)
-// {
-//     // _Motor_SetTorqueCmd(p_motor, math_clamp(i_fract16, (int32_t)0 - Motor_ILimitReverse(p_motor), Motor_ILimitForward(p_motor)));
-//     _Motor_SetTorqueMotoringCmd(p_motor, i_fract16);
-// }
-
-// void Motor_SetTorqueDriveCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
-// {
-//     Motor_SetTorqueDriveCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16));
-// }
-
 /******************************************************************************/
 /*!
     Speed Mode
@@ -276,17 +251,42 @@ void Motor_StartSpeedMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_m
 /*!
     @param[in] speed [-32768:32767] - Rpm Fract16
 */
-/* Optionally only allow selected direction, reverse direction set Direction first */
-/* Sensor speed interpolation use auto detect */
-/* + as absolute direction, selected by config. anti-plugging must be on feedback */
-// _Motor_SetSpeedCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
 void Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedCmd(p_motor, speed_fract16); }
+/* Optionally only allow selected direction, reverse direction set Direction first */
+// _Motor_SetSpeedCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
 
 /* ofLimit / Percent */
 void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
 {
     Motor_SetSpeedCmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16));
 }
+
+
+/******************************************************************************/
+/*!
+    Motoring
+*/
+/******************************************************************************/
+// void Motor_SetTorqueDriveCmd(Motor_State_T * p_motor, int16_t i_fract16)
+// {
+//     // _Motor_SetTorqueCmd(p_motor, math_clamp(i_fract16, (int32_t)0 - Motor_ILimitReverse(p_motor), Motor_ILimitForward(p_motor)));
+//     _Motor_SetTorqueMotoringCmd(p_motor, i_fract16);
+// }
+
+// void Motor_SetTorqueDriveCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
+// {
+//     Motor_SetTorqueDriveCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16));
+// }
+
+/*
+    alternatively throttle layer handle
+*/
+/* + as selected motoring direction. Speed reduce to 0 only. clamped by anti-plugging in feedback loop */
+// _Motor_SetSpeedMotoringCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - Motor_SpeedLimitGenerating(p_motor), Motor_SpeedLimitMotoring(p_motor)));
+void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedMotoringCmd(p_motor, speed_fract16); }
+
+/* select higher value as consistent reference */
+void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetSpeedMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16)); }
 
 /******************************************************************************/
 /*!
@@ -297,14 +297,14 @@ void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
     Unitless scalar as Motoring Direction
     Scalar to Config value for consistent user handling
 */
-void _Motor_SetActiveDriveCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetMotoringCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmdScalar(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetICmdScalar(p_motor, userCmd); }
     else                           { Motor_SetVoltageCmdScalar(p_motor, userCmd); }
 }
 
-void _Motor_SetActiveCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetUserCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Speed == 1U)          { Motor_SetSpeedCmdScalar(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetTorqueCmdScalar(p_motor, userCmd); }
@@ -313,8 +313,36 @@ void _Motor_SetActiveCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mod
 
 void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd)
 {
-    _Motor_SetActiveCmdScalar(p_motor, p_motor->FeedbackMode, userCmd);
+    _Motor_SetUserCmdScalar(p_motor, p_motor->FeedbackMode, userCmd);
 }
+
+
+/* mixed units */
+void _Motor_SetMotoringCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+{
+    if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmd(p_motor, userCmd); }
+    else if (mode.Current == 1U)   { Motor_SetICmd(p_motor, userCmd); }
+    else                           { Motor_SetVoltageCmd(p_motor, userCmd); }
+}
+
+void _Motor_SetUserCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+{
+    if (mode.Speed == 1U)          { Motor_SetSpeedCmd(p_motor, userCmd); }
+    else if (mode.Current == 1U)   { Motor_SetTorqueCmd(p_motor, userCmd); }
+    else                           { Motor_SetTorqueVCmd(p_motor, userCmd); }
+}
+
+// #include "Motor_Drive.h"
+// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, Motor_QuadrantCmd_T cmd)
+// {
+
+// }
+
+// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_DriveCmd_T cmd)
+// {
+
+// }
+
 
 /******************************************************************************/
 /*!

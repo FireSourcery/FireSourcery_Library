@@ -91,6 +91,7 @@ static inline UserDIn_T * OptDin_SwitchBrake(UserDIn_T * p_pins, OptDin_State_T 
     Helpers
 */
 /******************************************************************************/
+/* OptDin_PollingMap_T polling ids include descriptor. move this to generic */
 static inline void OptDin_ResolveBindings(OptDin_State_T * p_state, UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count)
 {
     for (uint8_t i = 0; i < count; i++)

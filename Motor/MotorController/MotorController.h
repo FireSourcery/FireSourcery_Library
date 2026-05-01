@@ -45,6 +45,7 @@
 #include "Motor/Motor/VBus/VBus_Monitor.h"
 
 #include "Transducer/Blinky/Blinky.h"
+#include "MotBuzzer/MotBuzzer.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
@@ -342,12 +343,11 @@ static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc
 
 */
 /******************************************************************************/
-static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_dev) { return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
+static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
 static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 {
-    assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT);
     p_dev->P_MC->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_dev));
     return p_dev->P_MC->FaultFlags.RxLost;
 }
@@ -358,22 +358,10 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 
 /******************************************************************************/
 /*
-    split MotBuzzer
+    MotBuzzer
 */
 /******************************************************************************/
-static inline Blinky_T * MotorController_Buzzer(const MotorController_T * p_dev) { return &p_dev->BUZZER; }
-
-static inline void MotorController_BeepShort(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
-static inline void MotorController_BeepPeriodicType1(const MotorController_T * p_dev)    { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
-static inline void MotorController_BeepPeriodic(const MotorController_T * p_dev)         { Blinky_StartPeriodic(&p_dev->BUZZER, 500U, 500U); }
-static inline void MotorController_BeepDouble(const MotorController_T * p_dev)           { Blinky_BlinkN(&p_dev->BUZZER, 250U, 250U, 2U); }
-static inline void MotorController_BeepMonitorTrigger(const MotorController_T * p_dev)   { Blinky_BlinkN(&p_dev->BUZZER, 250U, 250U, 1U); }
-static inline void MotorController_BeepStop(const MotorController_T * p_dev)             { Blinky_Stop(&p_dev->BUZZER); }
-static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev)        { Blinky_Disable(&p_dev->BUZZER); }
-
-// static inline void MotorController_BeepInit(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
-// static inline void MotorController_BeepStateRefused(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
-
+static inline MotBuzzer_T * MotorController_Buzzer(const MotorController_T * p_dev) { return &p_dev->BUZZER; }
 
 
 

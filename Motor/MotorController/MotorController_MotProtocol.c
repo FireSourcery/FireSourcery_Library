@@ -55,7 +55,7 @@ static packet_size_t Ping(const MotorController_T * p_dev, MotPacket_PingResp_T 
 {
     (void)p_rxPacket;
     // MotorController_BeepN(p_dev, 500U, 500U, 1U);
-    MotorController_BeepShort(p_dev);
+    MotBuzzer_Short(MotorController_Buzzer(p_dev));
     return MotPacket_PingResp_Build(p_txPacket, MOT_PACKET_SYNC_ACK);
 }
 

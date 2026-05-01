@@ -47,9 +47,8 @@ int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorControll
 
     switch (id)
     {
-        case MOT_USER_SYSTEM_BEEP:          MotorController_BeepShort(p_dev);                       break;
-        /* Stop active periodic. does not disable */
-        case MOT_USER_SYSTEM_BEEP_STOP:     MotorController_BeepStop(p_dev);                        break;
+        case MOT_USER_SYSTEM_BEEP:          MotBuzzer_Short(MotorController_Buzzer(p_dev));          break;
+        case MOT_USER_SYSTEM_BEEP_STOP:     MotBuzzer_Stop(MotorController_Buzzer(p_dev));           break;
         case MOT_USER_SYSTEM_CLEAR_FAULT:           MotorController_ClearFault(p_dev, (MotorController_FaultFlags_T) { .Value = value });    break;
         case MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL: MotorController_ForceDisableControl(p_dev);         break;
         /* Blocking functions can directly return status. */
@@ -57,7 +56,7 @@ int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorControll
         /* Non Blocking function, host/caller poll Async return status after. */
         case MOT_USER_SYSTEM_LOCK_STATE_INPUT:
             MotorController_InputLock(p_dev, (MotorController_LockId_T)value);
-            if (MotorController_IsEnterLockError(p_dev, (MotorController_LockId_T)value) == true) { MotorController_BeepShort(p_dev); }
+            if (MotorController_IsEnterLockError(p_dev, (MotorController_LockId_T)value) == true) { MotBuzzer_Short(MotorController_Buzzer(p_dev)); }
             status = MotorController_GetLockOpStatus(p_dev);
             break;
 
@@ -87,38 +86,4 @@ bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t direction)
     return true;
 }
 
-
-/******************************************************************************/
-/*
-    Config
-*/
-/******************************************************************************/
-/*! @param[in] volts < GetVRated_V   */
-/* may overwrite fault/warning if called in the same packet */
-/*
-    Reinstall config into the VBus instance: re-seeds monitor thresholds from
-    VSupplyNominal_V and the LiIon defaults. Callers first mutate
-    Config.VBusConfig, then invoke this to push the change into live state.
-*/
-void MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts)
-{
-    VBus_Config_Init_LiIon(&p_dev->P_VBUS->Config, volts);
-    VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
-}
-
-
-void MotorController_SetInputMode(const MotorController_T * p_dev, MotorController_InputMode_T mode)
-{
-    MotorController_State_T * p_mc = p_dev->P_MC;
-
-    p_mc->Config.InputMode = mode;
-
-    // switch (p_mc->Config.InputMode)
-    // {
-    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    //         break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    //         break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:    //         break;
-    //     default:  break;
-    // }
-}
 

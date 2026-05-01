@@ -45,7 +45,10 @@ void Traction_Init(const Traction_T * p_handle)
     // StateMachine_Init(&p_handle->STATE_MACHINE);
 }
 
-
+// void _Traction_ApplyThrottleValue(Motor_T * p_motor, Traction_Input_T * p_vehicle)
+// {
+//     Motor_SetSpeedMotoringCmdScalar(p_motor->P_MOTOR, p_vehicle->ThrottleValue / 2);
+// }
 
 /******************************************************************************/
 /*

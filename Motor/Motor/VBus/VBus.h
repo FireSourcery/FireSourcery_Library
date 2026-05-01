@@ -59,7 +59,7 @@
     PHASE_CALIBRATION.V_MAX -> ADC Saturation
     PHASE_CALIBRATION.V_RATED -> controller voltage max
     Config.Nominal -> user set nominal voltage
-    VBus.V -> live voltage
+    VBus -> live voltage
 */
 /******************************************************************************/
 /*!
@@ -86,6 +86,7 @@ VBus_T;
     Capture / Init
 */
 /******************************************************************************/
+/* Phase scaling without filter */
 static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     p_vbus->VBus_Fract16 = fract16;
@@ -101,12 +102,6 @@ static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
     _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
 }
 
-/* Phase scaling without filter */
-// static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
-// {
-//     p_vbus->VBus_Fract16 = (fract16 + p_vbus->VBus_Fract16) / 2U;
-//     p_vbus->PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / p_vbus->VBus_Fract16;
-// }
 
 /*
     Seed live state to VSupplyNominal before the first ADC sample lands.
@@ -131,6 +126,8 @@ static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config
 */
 #include "../Phase_Input/Phase_Analog.h" /* for Phase_Analog_VFract16Of() */
 static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_CaptureFract16(p_vbus, Phase_Analog_VFract16Of(adcu)); }
+/* optionally  */
+// static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { _VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
 
 
 /******************************************************************************/
@@ -274,6 +271,18 @@ static inline uint32_t VBus_VarId_Get(const VBus_T * p_vbus, VBus_VarId_T var_id
         case VBUS_VAR_ID_VBUS_FRACT16: return p_vbus->VBus_Fract16;
         case VBUS_VAR_ID_PER_V_FRACT32: return p_vbus->PerV_Fract32;
         case VBUS_VAR_ID_CHARGE_LEVEL_FRACT16: return VBus_GetChargeLevel_Fract16(p_vbus);
+        default: return 0U;
+    }
+}
+
+
+/*  */
+static inline uint32_t VBus_BoardId_Get(VDivider_ConfigId_T var_id)
+{
+    switch (var_id)
+    {
+        case VDIVIDER_BOARD_R1: return PHASE_ANALOG_CALIBRATION.V_PHASE_R1;
+        case VDIVIDER_BOARD_R2: return PHASE_ANALOG_CALIBRATION.V_PHASE_R2;
         default: return 0U;
     }
 }

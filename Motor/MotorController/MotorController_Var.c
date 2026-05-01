@@ -68,10 +68,11 @@ void MotorController_Var_Input_Set(const MotorController_T * p_dev, MotorControl
 {
     switch (id)
     {
-        // case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
-        // case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
-        // case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
-        // case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_Output_T)value);                                 break;
+        /* inactive for now */
+        case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
+        case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
+        case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
+        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_Output_T)value);                                 break;
 
         // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_dev, (bool)value);        break;
         // case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_dev, (bool)value);            break;
@@ -113,7 +114,7 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V; break;
+        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V;             break;
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
@@ -136,10 +137,10 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
     MotorController_State_T * p_state = p_dev->P_MC;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
+        // case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
         // case MOT_VAR_CONFIG_RESV:
-        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                       break;
-        case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);            break;
+        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;               break;
+        case MOT_VAR_INPUT_MODE:             p_state->Config.InputMode = (MotorController_InputMode_T)value;            break;
 
         // case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
         // case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
@@ -273,8 +274,9 @@ static MotVarId_Status_T _HandleGeneral_Set(const MotorController_T * p_dev, Mot
         case MOT_VAR_TYPE_GENERAL_DEBUG:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_dev, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_dev, varId.Base, value);                              break;
-        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(p_dev, varId.Base, value);                break;
+        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(p_dev, varId.Base, value);                              break;
         case MOT_VAR_TYPE_OPT_DIN_CONFIG:           OptDin_ConfigId_Set(&p_dev->P_MC->Config.OptDinConfig, varId.Base, value);         break;
+        /* Pin function [OptDin_T] */
         case MOT_VAR_TYPE_USER_DIN_CONFIG:          UserDIn_Config_SetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base, value);                        break;
 
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
@@ -290,17 +292,12 @@ static int _HandleVMonitor_Get(const MotorController_T * p_dev, MotVarId_T varId
 {
     switch ((MotorController_VarType_VMonitor_T)varId.Type)
     {
-        case MOT_VAR_TYPE_VBUS_OUT:                       return VBus_VarId_Get(p_dev->P_VBUS, varId.Base);
-        case MOT_VAR_TYPE_VBUS_CONFIG:                    return VBus_ConfigId_Get(&p_dev->P_VBUS->Config, varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:           return RangeMonitor_VarId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:          return RangeMonitor_ConfigId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:
-            switch ((VDivider_ConfigId_T)varId.Base)
-            {
-                case VDIVIDER_BOARD_R1: return Motor_Var_Board_Get(MOTOR_VAR_BOARD_V_PHASE_R1);
-                case VDIVIDER_BOARD_R2: return Motor_Var_Board_Get(MOTOR_VAR_BOARD_V_PHASE_R2);
-                default: return 0;
-            }
+        case MOT_VAR_TYPE_VBUS_OUT:                         return VBus_VarId_Get(p_dev->P_VBUS, varId.Base);
+        case MOT_VAR_TYPE_VBUS_CONFIG:                      return VBus_ConfigId_Get(&p_dev->P_VBUS->Config, varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return RangeMonitor_VarId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            return RangeMonitor_ConfigId_Get(VBus_Monitor(p_dev->P_VBUS), varId.Base);
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return VBus_BoardId_Get(varId.Base);
+
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return VMonitor_VarId_Get(&p_dev->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            return VMonitor_ConfigId_Get(&p_dev->V_ACCESSORIES, varId.Base);
         case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER:          return VMonitor_VDivider_ConfigId_Get(&p_dev->V_ACCESSORIES, varId.Base);
@@ -315,18 +312,12 @@ static MotVarId_Status_T _HandleVMonitor_Set(const MotorController_T * p_dev, Mo
 {
     switch ((MotorController_VarType_VMonitor_T)varId.Type)
     {
-        case MOT_VAR_TYPE_VBUS_CONFIG:
-            switch ((VBus_ConfigId_T)varId.Base)
-            {
-                case VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V: MotorController_SetVSupply_V(p_dev, value); break;
-                default: VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); break;
-            }
-            break;
-        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:          RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;
-
         case MOT_VAR_TYPE_VBUS_OUT:                         return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        case MOT_VAR_TYPE_VBUS_CONFIG:                      VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); break; /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
+        case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
+
         case MOT_VAR_TYPE_V_MONITOR_ACCS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_ACCS_CONFIG:            VMonitor_ConfigId_Set(&p_dev->V_ACCESSORIES, varId.Base, value); break;

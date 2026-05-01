@@ -86,6 +86,7 @@ extern const State_T MC_STATE_MAIN_TUNING;
 extern const State_T MC_STATE_MAIN_MOTOR_CMD;
 extern const State_T MC_STATE_LOCK;
 extern const State_T MC_STATE_FAULT;
+/* add P_VAR_ACCESS table this layer only  */
 
 /*
     extern for Init

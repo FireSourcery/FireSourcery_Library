@@ -53,7 +53,7 @@ static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 */
 void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
 {
-    // if (p_config != NULL) { p_dev ->P_STATE.Confg = *p_config; }
+    // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
     if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; return; } /* runtime config for no pin connected. read as 0 */
     Pin_Input_Init(&p_dev->PIN);
 

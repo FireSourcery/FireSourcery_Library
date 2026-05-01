@@ -105,15 +105,15 @@ MotorController_Var_Input_T;
 /******************************************************************************/
 typedef enum MotorController_Var_Config
 {
-    MOT_VAR_V_SUPPLY_VOLTS,
+    MOT_VAR_V_SUPPLY_VOLTS, /* can depreciate */
     MOT_VAR_CONFIG_RESV,
 
     MOT_VAR_MAIN_MODE,                  // [MotorController_MainMode_T]
     MOT_VAR_INPUT_MODE,                 // [MotorController_InputMode_T]
     MOT_VAR_BUZZER_FLAGS_ENABLE,        // [MotorController_BuzzerFlags_T]
 
-    /* OptDin */
-    MOT_VAR_OPT_DIN_FUNCTION,           // [MotorController_OptDinMode_T]
+    /* OptDin */ /* moved to MOT_VAR_TYPE_OPT_DIN_CONFIG */
+    MOT_VAR_OPT_DIN_FUNCTION,           //  move
     MOT_VAR_OPT_SPEED_LIMIT,            //
     MOT_VAR_OPT_I_LIMIT,
 

@@ -147,7 +147,7 @@ static void _LimitArray_ProcCompare(LimitArray_Augments_T * p_state, limit_t * p
     p_state->Max = bufferMax;
 }
 
-static inline bool _LimitArray_TryClearEntry(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length, limit_id_t id)
+static inline bool _LimitArray_TestClearEntry(LimitArray_Augments_T * p_state, limit_t * p_values, size_t length, limit_id_t id)
 {
     limit_t value = p_values[id];
     bool isLimit = (value == p_state->Min) || (value == p_state->Max);
@@ -209,7 +209,7 @@ static inline limit_t LimitArray_LowerComposed(LimitArray_T * p_a, LimitArray_T 
 
 
 /*
-
+    fprwarders
 */
 static inline limit_t * _LimitArray_Values(LimitArray_T * p_limit) { return (limit_t *)p_limit->P_BUFFER; }
 static inline LimitArray_Augments_T * _LimitArray_State(LimitArray_T * p_limit) { return (LimitArray_Augments_T *)p_limit->P_AUGMENTS; }
@@ -247,19 +247,10 @@ static bool LimitArray_TestSetUpper(LimitArray_T * p_limit, limit_id_t id, limit
 */
 static void LimitArray_ProcCompare(LimitArray_T * p_limit) { _LimitArray_ProcCompare(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH); }
 
-// static inline limit_t LimitArray_ProcCompareUpper(LimitArray_T * p_limit)
-// {
-//     _LimitArray_State(p_limit)->Min = _LimitArray_ProcCompareUpper(p_limit);
-// }
+static bool LimitArray_TestClearEntry(LimitArray_T * p_limit, limit_id_t id) { return _LimitArray_TestClearEntry(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH, id); }
 
-/*!
-    @brief Remove a value from the p_limit control by ID.
-    @param p_limit Pointer to the LimitArray_T structure.
-    @param id The ID of the value to remove.
-    @return True if the value was a active limit. The value of the entry is always cleared.
-*/
-static bool LimitArray_TestClearEntry(LimitArray_T * p_limit, limit_id_t id) { return _LimitArray_TryClearEntry(_LimitArray_State(p_limit), _LimitArray_Values(p_limit), p_limit->LENGTH, id); }
-
+// diagnostic
+// static inline limit_t LimitArray_ProcCompareUpper(LimitArray_T * p_limit) { _LimitArray_State(p_limit)->Min = _LimitArray_ProcCompareUpper(p_limit); }
 
 //fanout
 // typedef void (*Notify_Fn_T)(void * p_subscriber);

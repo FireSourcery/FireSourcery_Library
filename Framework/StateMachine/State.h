@@ -213,6 +213,8 @@ typedef const struct State
     const State_Accessor_T * P_ACCESSOR_TABLE; /* Virtual getter setter */
 
     const State_Data_T * P_DATA_VECTOR; /* Optional data vector. Virtualize access to state data. */ /* user optionally cast struct view */
+    /* const sub-TYPE context */
+    const void * P_ADAPTER; /* Maybe more convenient than inheritance */
 
     /*
         [Hierarchical State Machine]
@@ -229,19 +231,11 @@ typedef const struct State
     const struct State * P_TOP;     /* SubStates maintain pointer to top level state. */
     uint8_t DEPTH;                  /* Depth of state. Depth must be consistent for iteration */
 
-
     /* Can be generalized as P_TRANSITION_TABLE[MENU](p_context, direction) */
 #ifdef STATE_MACHINE_LINKED_STATES_ENABLE
     struct State * P_LINK_NEXT;
     struct State * P_LINK_PREV;
 #endif
-    // /* const sub-TYPE context */
-    // const void * P_EXTENSION; /* Maybe more convenient than inheritance */
-
-    //multi layer transition consitency, if exit is not suffcient
-    // Mode requests(not commands).The upper layer requests a mode; the lower layer accepts or rejects based on its own state.
-    // Mode acknowledgement.The transition is a multi - step protocol : request → arbitration → confirm → entered.
-    // Transition timeouts with explicit fallback.If the acknowledgement doesn't come within deadline, the upper layer enters a degraded state (not the originally-requested one).
 }
 State_T;
 

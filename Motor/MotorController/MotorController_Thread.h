@@ -69,14 +69,11 @@
 /******************************************************************************/
 static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++)
-    {
-        UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION));
-    }
+    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION)); }
 
-    Shifter_Poll(&p_dev->SHIFTER);
+    Shifter_Poll(&p_dev->SHIFTER); /* optionally move to app */
 
-    MotorController_App_ProcAnalogUser((MotorController_T *)p_dev);
+    MotorController_App_ProcAnalogUser(p_dev);
 
     if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
@@ -103,15 +100,13 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     HeatMonitor_Status_T status;
 
 // #ifndef NDEBUG
-    if (MotorController_IsFault(p_dev) == true) { return; }
+    // if (MotorController_IsFault(p_dev) == true) { return; }
 // #endif
 
     /* Poll PCB Temperature Monitor */
     switch (HeatMonitor_Poll(&p_dev->HEAT_PCB, Analog_Conversion_GetResult(&p_dev->HEAT_PCB_CONVERSION)))
     {
-        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT);
-            break;
+        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:        MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_PCB_OVERHEAT);            break;
         case HEAT_MONITOR_STATUS_WARNING_HIGH: break;
         case HEAT_MONITOR_STATUS_NORMAL: break;
         default: break;
@@ -125,34 +120,26 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 
     /* Poll MOSFET Temperature Monitors Group Collective */
     /* todo compose fan in at array level */
+    /*
+        Apply thermal current limiting based on hottest MOSFETs
+        Does not check for edge trigger
+        Thermistor Adcu is roughly linear in Warning region
+        Increasing Limit only, reset on warning clear.
+    */
     switch (HeatMonitor_Group_PollCollective(&p_dev->HEAT_MOSFETS))
     {
-        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);
-            break;
-
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:
-            /*
-                Apply thermal current limiting based on hottest MOSFETs
-                Does not check for edge trigger
-                Thermistor Adcu is roughly linear in Warning region
-                Increasing Limit only, reset on warning clear.
-            */
-            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS), Phase_Calibration_GetIRatedPeak_Fract16()));
-            break;
-
+        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);            break;
+        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS), Phase_Calibration_GetIRatedPeak_Fract16()));            break;
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsWarningClearing(p_dev->HEAT_MOSFETS.P_STATE)) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC); }
             break;
-
-        default:
-            break;
+        default: break;
     }
 
 
     if (Monitor_IsWarningTriggering(p_dev->HEAT_PCB.P_STATE) || Monitor_IsWarningTriggering(p_dev->HEAT_MOSFETS.P_STATE))
     {
-        MotorController_BeepMonitorTrigger(p_dev);
+        MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev));
     }
 
 
@@ -169,31 +156,26 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
 */
 /******************************************************************************/
 
+/*
+    if this interrupts a lower priority transition, that transition may overwrite the fault transition, causing exit from fault.
+    if overwritten, main will check fault flags and enter, or on next poll.
+    input handlers store a local copy of the function pointer before performing null check. so it should not crash the program.
+*/
 static void _MotorController_VBus_EnterFault(const MotorController_T * p_dev)
 {
     Motor_Table_ForceDisableControl(&p_dev->MOTORS);
-    /*
-        if this interrupts a lower priority transition, that transition may overwrite the fault transition, causing exit from fault.
-        if overwritten, main will check fault flags and enter, or on next poll.
-        input handlers store a local copy of the function pointer before performing null check. so it should not crash the program.
-    */
     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VBUS_LIMIT);
 }
 
 static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
 {
+    // VBus_PollCaptureMonitor move filtered here
     switch (VBus_PollMonitor(p_dev->P_VBUS))
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
-        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:
-            _MotorController_VBus_EnterFault(p_dev);
-            break;
-        case VMONITOR_STATUS_WARNING_LOW:
-            _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_LOW, VBus_GetILimitUnderV_Fract16(p_dev->P_VBUS));
-            break;
-        case VMONITOR_STATUS_WARNING_HIGH:
-            _MotorController_SetIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH, VBus_GetIGenLimitOverV_Fract16(p_dev->P_VBUS));
-            break;
+        case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
+        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_LOW, VBus_GetILimitUnderV_Fract16(p_dev->P_VBUS));            break;
+        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH, VBus_GetIGenLimitOverV_Fract16(p_dev->P_VBUS));  break;
         case VMONITOR_STATUS_NORMAL:
             if (VBus_IsClearingEdge(p_dev->P_VBUS) == true)
             {
@@ -204,7 +186,7 @@ static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
         default: break;
     }
 
-    if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotorController_BeepMonitorTrigger(p_dev); }
+    if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
 
     Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 }
@@ -257,14 +239,11 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-
-
         /* Proc in all State */
         switch (p_mc->Config.InputMode)
         {
-            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:
-                _MotorController_ProcAnalogUser(p_dev); /* AnalogUser is drive functions only */
-                break;
+            /* AnalogUser is drive functions only */
+            case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:                _MotorController_ProcAnalogUser(p_dev);                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
                 /* Only active when Serial is selected as drive input */
                 // if (MotorController_PollRxLost(p_dev) == true)
@@ -274,8 +253,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
                     //     MotorController_EnterFault(p_dev);
                 // }
                 break;
-            case MOTOR_CONTROLLER_INPUT_MODE_CAN:
-                break;
+            case MOTOR_CONTROLLER_INPUT_MODE_CAN:  break;
         }
 
         /*

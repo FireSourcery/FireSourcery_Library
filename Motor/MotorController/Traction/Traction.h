@@ -147,11 +147,16 @@ typedef struct Traction_State
 {
     Traction_Input_T Input;
     Traction_Config_T Config;
-    // StateMachine_Active_T StateMachine;
-    // Motor_Drive_T * p_ThrottleDrive;
-    // Motor_Drive_T * p_BrakeDrive;
 }
 Traction_State_T;
+
+// typedef const struct Traction
+// {
+//     Traction_Input_T Input;
+//     Traction_Config_T Config;
+// }
+// Traction_T;
+
 
 /*
     [Traction Context]

@@ -80,7 +80,7 @@ static inline bool Motor_Table_IsAnyValue(Motor_Table_T * p_table, Motor_State_T
 
 // #define Motor_SetWith(p_motor, setter, value, ...) ((Motor_CastSetter(p_motor, focSet))(p_motor, value __VA_OPT__(,) __VA_ARGS__))
 
-
+/// todo create a set on ArraySpan
 /*
     Feedback Mode Set first
 */

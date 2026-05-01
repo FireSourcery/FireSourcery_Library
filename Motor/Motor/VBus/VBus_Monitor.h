@@ -54,7 +54,7 @@ static inline VMonitor_State_T * VBus_Monitor(VBus_T * p_vbus) { return &p_vbus-
 /* Poll Monitor Only */
 static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16); }
 
-static inline VMonitor_Status_T VBus_PollCaptureMonitor(VBus_T * p_vbus, uint16_t fract16) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, fract16); }
+static inline VMonitor_Status_T VBus_PollCaptureMonitor(VBus_T * p_vbus, uint16_t fract16) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (fract16 + p_vbus->VBus_Fract16) / 2); }
 
 /*
 
@@ -71,3 +71,5 @@ static inline bool VBus_IsTriggeringEdge(const VBus_T * p_vbus) { return RangeMo
 static inline bool VBus_IsClearingEdge(const VBus_T * p_vbus) { return RangeMonitor_IsClearingEdge(&p_vbus->MonitorState); }
 static inline bool VBus_IsAnyFault(const VBus_T * p_vbus) { return RangeMonitor_IsAnyFault(&p_vbus->MonitorState); }
 static inline bool VBus_IsEnabled(const VBus_T * p_vbus) { return RangeMonitor_IsEnabled(&p_vbus->MonitorState.Config); }
+
+
