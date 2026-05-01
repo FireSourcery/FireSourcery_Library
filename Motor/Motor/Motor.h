@@ -218,6 +218,7 @@ typedef struct Motor_Config
     uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_CALIB_AMPS. */
     uint16_t ILimitGenerating_Fract16;
 
+    //todo,
     // uint32_t SpeedRampSlope_Accum32; /* Fract16 per tick << 15 */
     // uint32_t TorqueRampSlope_Accum32;
 
@@ -362,8 +363,8 @@ typedef struct Motor_State
 
 
     /*
-        Motor-local arbitration buffers. Handles live in Motor_T (P_I_LIMITS_LOCAL, etc.).
-        Per-motor sources (winding heat, stall, field-weaken) write here so a single
+        Motor-local arbitration buffers. Compose with system limits
+        todo derate in scalar form
     */
     // Motor_Limits_T
     limit_t                 ILimits[MOTOR_I_LIMIT_COUNT];

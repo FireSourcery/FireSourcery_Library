@@ -51,10 +51,10 @@ Field_T;
 
 #define FIELD(Type, Member) ((Field_T){ .SIZE = sizeof(((Type *)0)->Member), .OFFSET = offsetof(Type, Member) })
 
-static inline int32_t get_field(const void * p_context, size_t size, size_t offset)
+static inline int get_field(const void * p_context, size_t size, size_t offset)
 {
     const uint8_t * p_base = (const uint8_t *)p_context + offset;
-    int32_t value;
+    int value;
     switch (size)
     {
         case 1U: value = (int32_t)(*(const int8_t *)p_base);   break;
@@ -65,7 +65,7 @@ static inline int32_t get_field(const void * p_context, size_t size, size_t offs
     return value;
 }
 
-static inline void set_field(void * p_context, size_t size, size_t offset, int32_t value)
+static inline void set_field(void * p_context, size_t size, size_t offset, int value)
 {
     uint8_t * p_base = (uint8_t *)p_context + offset;
     switch (size)

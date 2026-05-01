@@ -47,11 +47,12 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
 */
 /******************************************************************************/
 /*!
-    Interface
-    Around [MotorController_T] for StateMachine Access
+    Interface Around [MotorController_T] for StateMachine Access
 
-    Includes Main substate.
-    Common States including Park must be handled outside
+    A specialized operating Mode plugged into MotorController.
+    - Owns an HSM subtree under MC_STATE_MAIN  (State / Mode pattern)
+    - Registers behavior via a fixed vtable    (Microkernel / Plugin)
+    - Internally selects Strategy tables for input motor mappings
 */
 /******************************************************************************/
 typedef const struct MotorController_App
@@ -59,6 +60,7 @@ typedef const struct MotorController_App
     MotorController_App_Proc_T PROC_ANALOG_USER;
     MotorController_App_Proc_T INIT;
     State_Input_T ENTER_MAIN;
+    // void * P_BUFFER;
 }
 MotorController_App_T;
 

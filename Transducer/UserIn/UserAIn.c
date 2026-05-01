@@ -49,7 +49,8 @@ static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, u
 void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 {
     if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_STATE->Config = *p_config; }
-    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Init(p_dev->P_EDGE_PIN); }
+    if (p_dev->P_EDGE_PIN != NULL && p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Init(p_dev->P_EDGE_PIN); }
+    else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
 
     /* Initialize linear conversion */
     Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
@@ -80,7 +81,7 @@ static inline void _UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value
 
 void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
-    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_PollEdge(p_dev->P_EDGE_PIN); }
+    if (p_dev->P_EDGE_PIN != NULL) { UserDIn_Modal_PollEdgeValue(p_dev->P_EDGE_PIN); }
 
     /* Analog capture stops when pin gate selects disable. filerted value persists... */
     /* Note: When edge pin blocks, analog value persists (not cleared to 0) */
@@ -97,20 +98,20 @@ void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
-    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE);
+    return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE);
 }
 
 bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
-    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE);
+    return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE);
 }
 
 /* get value needs to check pin on getter */
 bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
     UserAIn_CaptureValue(p_dev, value_adcu);
-    return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_PollFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE);
+    return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_PollFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE);
 }
 
 

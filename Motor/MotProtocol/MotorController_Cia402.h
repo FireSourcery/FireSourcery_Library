@@ -24,18 +24,30 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotPark.h
+    @file   MotorController_Cia402.h
     @author FireSourcery
-    @brief  Optional park-request digital input. Pure pin owner: emits engage/
-            disengage edges; aggregate wires them to the top-level state machine.
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Transducer/UserIn/UserDIn.h"
-#include <stdint.h>
-#include <stdbool.h>
 
-typedef struct MotPark_Config
-{
-    uint8_t AutoParkOnStop  : 1U; /* optional: also request park when motor stops */
-}
-MotPark_Config_T;
+#include "Motor/MotorController/MotorController_Var.h"
+
+
+/******************************************************************************/
+/*
+    Outer dispatcher — one inbound CAN frame, switch on COB-ID
+
+    Returns true if a response should be transmitted (currently SDO only).
+    Frames not addressed to this node, or in unconsumed COB-ID classes
+    (NMT, SYNC, EMCY, our own TxPDOs, SDO response), are ignored.
+
+    TxPDOs are produced periodically via the BuildTxPdoN counterparts —
+    they are not driven by Rx events.
+*/
+/******************************************************************************/
+
+extern void MotorController_Cia402_HandleRxRequest(MotorController_T * p_mc, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx);
+
+extern void MotorController_Cia402_BuildTxPdo1(MotorController_T * p_mc, CAN_Frame_T * p_tx);
+extern void MotorController_Cia402_BuildTxPdo2(MotorController_T * p_mc, CAN_Frame_T * p_tx);
+

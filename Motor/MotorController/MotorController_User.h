@@ -129,23 +129,11 @@ static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(Motor
     User Setting Speed/I Limit
 */
 /******************************************************************************/
-static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t limit_fract16)    { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev)                          { return _MotorController_ClearSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER); }
-static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t limit_fract16)        { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, limit_fract16); }
-static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_dev)                              { return _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_USER); }
+static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t limit_fract16) { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev) { return _MotorController_ClearSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER); }
+static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t limit_fract16) { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_dev) { return _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_USER); }
 
-/* using user channel */
-static inline void MotorController_SetOptSpeedLimitOnOff(MotorController_T * p_dev, bool isEnable)
-{
-    if (isEnable == true) { MotorController_SetUserSpeedLimitAll(p_dev, p_dev->P_MC->Config.OptSpeedLimit_Fract16); }
-    else { MotorController_ClearUserSpeedLimitAll(p_dev); }
-}
-
-static inline void MotorController_SetOptILimitOnOff(MotorController_T * p_dev, bool isEnable)
-{
-    if (isEnable == true) { MotorController_SetUserILimitAll(p_dev, p_dev->P_MC->Config.OptILimit_Fract16); }
-    else { MotorController_ClearUserILimitAll(p_dev); }
-}
 
 /******************************************************************************/
 /*

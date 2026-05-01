@@ -18,10 +18,7 @@
 /*!
     @file   MotBuzzer.h
     @author FireSourcery
-    @brief  Audible indicator wrapping Blinky_T. Owns the beep pin and the
-            runtime enable / beep-on-event configuration. Aggregate modules
-            (MotorController, Traction) drive it via the Beep* API; MotBuzzer
-            itself has no policy knowledge.
+    @brief
 */
 /******************************************************************************/
 #include "Transducer/Blinky/Blinky.h"
@@ -30,9 +27,7 @@
 
 /******************************************************************************/
 /*
-    Event flags — which conditions the aggregate should beep for.
-    MotBuzzer stores these; callers read the flag they need before invoking a
-    Beep* helper. Keep the struct 16-bit aligned so it fits a single NVM word.
+
 */
 /******************************************************************************/
 typedef union MotBuzzer_OptionFlags
@@ -64,6 +59,19 @@ typedef struct MotBuzzer_Config
 }
 MotBuzzer_Config_T;
 
+typedef Blinky_T MotBuzzer_T;
+
+
+static inline void MotBuzzer_Short(MotBuzzer_T * p_dev) { Blinky_Blink(p_dev, 500U); }
+static inline void MotBuzzer_PeriodicType1(MotBuzzer_T * p_dev) { Blinky_StartPeriodic(p_dev, 500U, 500U); }
+static inline void MotBuzzer_Periodic(MotBuzzer_T * p_dev) { Blinky_StartPeriodic(p_dev, 500U, 500U); }
+static inline void MotBuzzer_Double(MotBuzzer_T * p_dev) { Blinky_BlinkN(p_dev, 250U, 250U, 2U); }
+
+/* Domain mapped */
+static inline void MotBuzzer_MonitorTrigger(MotBuzzer_T * p_dev) { Blinky_BlinkN(p_dev, 250U, 250U, 1U); }
+
+static inline void MotBuzzer_Stop(MotBuzzer_T * p_dev) { Blinky_Stop(p_dev); }
+static inline void MotBuzzer_Disable(MotBuzzer_T * p_dev) { Blinky_Disable(p_dev); }
 
 
 // buzzer state

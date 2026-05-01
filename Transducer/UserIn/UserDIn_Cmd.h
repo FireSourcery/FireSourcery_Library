@@ -31,26 +31,21 @@
 /******************************************************************************/
 #include "UserDIn.h"
 
-typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
-// typedef void (*UserDIn_Fn_T)(void * p_context, bool prevState, bool currentState);
 
-/*  */
-typedef const struct UserDIn_Cmd
-{
-    // UserDIn_Edge_T Edge;
-    UserDIn_Fn_T CMD;
-    void * P_CONTEXT;
-}
-UserDIn_Cmd_T;
+// /*  */
+// typedef const struct UserDIn_Cmd
+// {
+//     UserDIn_Fn_T CMD;
+//     void * P_CONTEXT;
+// }
+// UserDIn_Cmd_T;
 
-static void UserDIn_CmdNull(void * p_context, UserDIn_Edge_T edge) { (void)p_context; (void)edge; }
-static const UserDIn_Fn_T USER_DIN_FN_NULL = UserDIn_CmdNull;
-static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
 
-// Your code here
-static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
-{
-    // UserDIn_Edge_T edge = UserDIn_Modal_PollEdgeValue(p_dev); with disable
-    p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_PollEdgeValue(p_dev));
-}
+// static const UserDIn_Cmd_T USER_DIN_CMD_NULL = { .CMD = UserDIn_CmdNull, .P_CONTEXT = NULL };
+
+
+// static inline void UserDIn_PollEdgeCmd(UserDIn_T * p_dev, UserDIn_Cmd_T * p_cmd)
+// {
+//     p_cmd->CMD(p_cmd->P_CONTEXT, UserDIn_Modal_PollEdgeValue(p_dev));
+// }
 

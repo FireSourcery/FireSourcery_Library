@@ -71,7 +71,7 @@ static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_Broadcast_T * p
 {
     uint8_t data[8U];
     p_broadcast->BROADCAST(p_can->P_CONTEXT, &data[0U]);
-    CanBus_Send(p_can, ((can_id_t) {.CanId = p_broadcast->ID }), &data[0U], 8U);
+    CanBus_TxData(p_can, ((can_id_t) {.CanId = p_broadcast->ID }), &data[0U], 8U);
 }
 
 // typedef const struct

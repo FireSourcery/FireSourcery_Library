@@ -5,36 +5,30 @@
     Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 */
 /******************************************************************************/
 /******************************************************************************/
 /*!
     @file   MotBuzzer.c
     @author FireSourcery
+    @brief
 */
 /******************************************************************************/
 #include "MotBuzzer.h"
 
-void MotBuzzer_Init(const MotBuzzer_T * p_buzzer)
+void MotBuzzer_Init(MotBuzzer_T * p_buzzer)
 {
     if (p_buzzer->P_NVM_CONFIG != NULL) { p_buzzer->P_STATE->Config = *p_buzzer->P_NVM_CONFIG; }
     Blinky_Init(&p_buzzer->BLINKY);
     if (p_buzzer->P_STATE->Config.IsEnabled == 0U) { Blinky_Disable(&p_buzzer->BLINKY); }
 }
 
-void MotBuzzer_SetEnabled(const MotBuzzer_T * p_buzzer, bool isEnabled)
-{
-    p_buzzer->P_STATE->Config.IsEnabled = isEnabled;
-    if (isEnabled == false) { Blinky_Stop(&p_buzzer->BLINKY); Blinky_Disable(&p_buzzer->BLINKY); }
-    else                    { Blinky_Enable(&p_buzzer->BLINKY); }
-}
-
-void MotBuzzer_SetEventFlags(const MotBuzzer_T * p_buzzer, MotBuzzer_OptionFlags_T flags)
-{
-    p_buzzer->P_STATE->Config.EventFlags = flags;
-}
-
-int32_t MotBuzzer_VarId_Get(const MotBuzzer_T * p_buzzer, MotBuzzer_VarId_T id)
+int32_t MotBuzzer_VarId_Get(MotBuzzer_T * p_buzzer, MotBuzzer_VarId_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -45,7 +39,7 @@ int32_t MotBuzzer_VarId_Get(const MotBuzzer_T * p_buzzer, MotBuzzer_VarId_T id)
     return value;
 }
 
-int32_t MotBuzzer_ConfigId_Get(const MotBuzzer_T * p_buzzer, MotBuzzer_ConfigId_T id)
+int32_t MotBuzzer_ConfigId_Get(const MotBuzzer_Config_T * p_buzzer, MotBuzzer_ConfigId_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -57,7 +51,7 @@ int32_t MotBuzzer_ConfigId_Get(const MotBuzzer_T * p_buzzer, MotBuzzer_ConfigId_
     return value;
 }
 
-void MotBuzzer_ConfigId_Set(const MotBuzzer_T * p_buzzer, MotBuzzer_ConfigId_T id, int32_t value)
+void MotBuzzer_ConfigId_Set(MotBuzzer_Config_T * p_buzzer, MotBuzzer_ConfigId_T id, int32_t value)
 {
     switch (id)
     {

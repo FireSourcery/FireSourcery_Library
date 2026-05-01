@@ -1,11 +1,10 @@
-
 #pragma once
 
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -25,25 +24,35 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotAnalogUser_Conversion.h
+    @file   MotorController_MotPark.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "Peripheral/Analog/Analog.h"
+#include "../../MotorController_StateMachine.h"
 
-typedef const struct MotAnalogUser_Conversion
-{
-    const Analog_Conversion_T THROTTLE;
-    const Analog_Conversion_T BRAKE;
-}
-MotAnalogUser_Conversion_T;
 
-static inline void MotAnalogUser_Conversion_Mark(const MotAnalogUser_Conversion_T * p_this)
+static inline void MotorController_CallParkPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
 {
-    Analog_Conversion_Mark(&p_this->THROTTLE);
-    Analog_Conversion_Mark(&p_this->BRAKE);
+    switch (edge)
+    {
+        case USER_DIN_EDGE_RISING:  MotorController_EnterPark(p_dev); break;
+        case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
+        default: break;
+    }
 }
 
-static inline uint16_t MotAnalogUser_Conversion_GetThrottle(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->THROTTLE); }
-static inline uint16_t MotAnalogUser_Conversion_GetBrake(const MotAnalogUser_Conversion_T * p_const) { return Analog_Conversion_GetResult(&p_const->BRAKE); }
+/* Compile time defined availability */
+#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
+static inline UserDIn_T * _MotorController_ParkPin(MotorController_T * p_dev) { return &p_dev->DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]; }
+
+static inline void MotorController_ProcParkPin(MotorController_T * p_dev)
+{
+    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(_MotorController_ParkPin(p_dev)));
+}
+#else
+/* optionally search, callback set on config */
+// static inline UserDIn_T * _MotorController_ParkPin(MotorController_T * p_dev) { return }
+static inline void MotorController_ProcParkPin(MotorController_T * p_dev) { (void)p_dev; }
+#endif
+

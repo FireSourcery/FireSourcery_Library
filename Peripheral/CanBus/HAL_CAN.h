@@ -164,6 +164,10 @@ static inline can_id_t HAL_CAN_ReadRxId(HAL_CAN_T * p_hal)
     return id;
 }
 
+
+/*
+
+*/
 static inline void HAL_CAN_WriteTxMessage(HAL_CAN_T * p_hal, const CAN_Frame_T * p_txFrame)
 {
     HAL_CAN_WriteTxId(p_hal, p_txFrame->CanId);

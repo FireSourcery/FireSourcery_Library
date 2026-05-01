@@ -124,6 +124,16 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
 static State_T * EnterAppMain(MotorController_T * p_dev) { Motor_Table_EnableAll(&p_dev->MOTORS); return MotorController_App_EnterMain(p_dev); }
 static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &MC_STATE_PARK : EnterAppMain(p_dev)); }
 
+// State_T * MotorController_ResolveInitialParkState(MotorController_T * p_dev)
+// {
+//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return &MC_STATE_PARK; }
+//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
+//     {
+//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return &MC_STATE_PARK; }
+//     }
+//     return MotorController_App_EnterMain(p_dev);
+// }
+
 
 /******************************************************************************/
 /*!
@@ -506,7 +516,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 {
                     Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = AppParkState(p_dev); /* Check AppParkState enable, optionally enter Park or Main */
+                    p_nextState = AppParkState(p_dev);  /* if no transition to lock without serial, just use park */
                 }
                 else
                 {

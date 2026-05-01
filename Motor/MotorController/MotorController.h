@@ -30,7 +30,8 @@
 */
 /******************************************************************************/
 #include "MotAnalogUser/MotAnalogUser.h"
-#include "MotAnalogUser/MotAnalogUser_Conversion.h"
+#include "MotAnalogUser/Shifter/Shifter.h"
+#include "MotAnalogUser/OptPin/OptDin.h"
 #include "MotNvm/MotNvm.h"
 #include "MotLimits/MotLimits.h"
 
@@ -76,7 +77,6 @@
 
 /* Part  */
 #include "MotorController_App.h"
-
 
 
 /******************************************************************************/
@@ -162,10 +162,10 @@ typedef struct MotorController_Config
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
 
-    /* OptDin */
-    int OptDinMode;
-    uint16_t OptSpeedLimit_Fract16;
-    uint16_t OptILimit_Fract16;
+    OptDin_Config_T OptDinConfig;
+    Shifter_Config_T ShifterConfig;
+    UserDIn_Config_T DInConfigs[MOT_USER_DIN_COUNT]; /* stores cmd id */
+    UserAIn_Config_T AInConfigs[MOT_USER_AIN_COUNT];
 
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
 //     uint8_t CanServicesId;
@@ -189,10 +189,14 @@ typedef struct MotorController_State
 
     // MotLimits_T Limits; /* mot to contigous alloc */
 
-    UserDIn_Fn_T  OptDinCmd; /* Configurable input command, e.g. for speed limit or servo position */
-
     // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
+
+    // /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
+    UserAIn_State_T AInStates[MOT_USER_AIN_COUNT];
+    UserDIn_State_T AInGateStates[MOT_USER_AIN_COUNT];
+
+    OptDin_State_T OptDinState;
 
     /* Generic async return status, alternatively as union */
     uint8_t LockOpStatus; /* async status */
@@ -235,6 +239,7 @@ typedef const struct MotorController
     uint8_t SERIAL_COUNT;
 #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
     CanBus_T * P_CAN_BUS;
+    uint8_t CAN_BUS_COUNT;
     // CanBus_Service_T CAN_BUS_SERVICE;
     CanBus_Broadcast_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
     CanBus_Broadcast_T CAN_BUS_BROADCAST_1000;
@@ -244,10 +249,10 @@ typedef const struct MotorController
         Peripheral Services Context
     */
     /* Transducer */
-    MotAnalogUser_T ANALOG_USER;
-    MotAnalogUser_Conversion_T ANALOG_USER_CONVERSIONS; /* AnalogUser Conversions */
-    UserDIn_T OPT_DIN; /* Configurable input */
-    // UserDIn_T OPT_DINS;
+    Shifter_T SHIFTER;              /* Direction shifter pins */
+    UserDIn_T DINS[MOT_USER_DIN_COUNT];
+    struct { UserAIn_T PIN; Analog_Conversion_T CONVERSION; } AINS[MOT_USER_AIN_COUNT];
+
     Blinky_T BUZZER;
     Blinky_T METER;
     Pin_T RELAY_PIN;
@@ -267,6 +272,7 @@ typedef const struct MotorController
 //     LimitArray_T I_LIMIT_SOURCES;
 // }
 // MotorDrive_T;
+
     Motor_Table_T MOTORS; /* Motor Array Context */
 
     /* Store in physical units representation for now */
@@ -306,6 +312,20 @@ typedef const struct MotorController
 }
 MotorController_T;
 
+
+/*
+    Per-slot UserAIn_T initializer for AINS[Index].PIN.
+    Maps state into the contiguous MotorController_State_T-side AInStates[]/AInPinStates[] arrays.
+    Caller pairs this with .CONVERSION = ANALOG_CONVERSION_INIT_FROM(...) at the same slot.
+*/
+#define MOT_AIN_INIT(Index, PinHal, PinId, IsInvert, p_Timer, p_McState, p_Config) (UserAIn_T) \
+{                                                                                              \
+    .P_EDGE_PIN   = &USER_DIN_INIT_FROM(PinHal, PinId, IsInvert, &(p_McState)->AInGateStates[Index], (p_Timer), 10U),                                      \
+    .P_STATE      = &(p_McState)->AInStates[Index],                                            \
+    .P_NVM_CONFIG = &((p_Config)->AInConfigs[Index]),                                           \
+    .FILTER_SHIFT = 0U,                                                                        \
+}
+
 /******************************************************************************/
 /*!
     App Dispatch - delegates to embedded APP vtable in MotorController_T
@@ -333,10 +353,8 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 }
 
 
-
 /* Common Buffered Input */
 // static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
-
 
 /******************************************************************************/
 /*
@@ -355,6 +373,9 @@ static inline void MotorController_DisableBuzzer(const MotorController_T * p_dev
 
 // static inline void MotorController_BeepInit(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
 // static inline void MotorController_BeepStateRefused(const MotorController_T * p_dev)            { Blinky_Blink(&p_dev->BUZZER, 500U); }
+
+
+
 
 /******************************************************************************/
 /*

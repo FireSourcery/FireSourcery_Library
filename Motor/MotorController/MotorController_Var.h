@@ -137,6 +137,8 @@ typedef enum MotorController_Var_Board
     MOT_VAR_BOARD_THERMISTOR_MOSFETS_COUNT,
     MOT_VAR_BOARD_PROTOCOL_SOCKET_COUNT,
     MOT_VAR_BOARD_CAN_SOCKET_COUNT,
+    MOT_VAR_BOARD_DIN_COUNT,
+    MOT_VAR_BOARD_AIN_COUNT,
     // MOT_VAR_BOARD_MAIN_SOFTWARE_VERSION, /* Read-only */
 }
 MotorController_Var_Board_T;
@@ -169,10 +171,12 @@ typedef enum MotorController_VarType_General
     MOT_VAR_TYPE_ANALOG_USER_VAR_OUT, // peripheral status
     MOT_VAR_TYPE_ANALOG_USER_CONFIG,
 
+    MOT_VAR_TYPE_OPT_DIN_CONFIG, // common values
+    MOT_VAR_TYPE_USER_DIN_STATE,
+    MOT_VAR_TYPE_USER_DIN_CONFIG, // instanced
+
     // MOT_VAR_TYPE_BUZZER_CONTROL,
     // MOT_VAR_TYPE_BUZZER_CONFIG,
-    // MOT_VAR_TYPE_OPT_DIN_CONTROL,
-    // MOT_VAR_TYPE_OPT_DIN_CONFIG,
     // MOT_VAR_TYPE_RELAY_CONFIG,
 }
 MotorController_VarType_General_T;

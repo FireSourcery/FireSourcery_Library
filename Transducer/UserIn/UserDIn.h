@@ -54,12 +54,16 @@ typedef enum UserDIn_Mode
 UserDIn_Mode_T;
 
 
-// typedef struct UserDIn_Config
-// {
-//     UserDIn_Mode_T Mode;
-//     size_t CmdId;
-// }
-// UserDIn_Config_T;
+typedef struct UserDIn_Config
+{
+    UserDIn_Mode_T Mode;
+    size_t CmdId;
+}
+UserDIn_Config_T;
+
+typedef void (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
+// typedef int (*UserDIn_Fn_T)(void * p_context, UserDIn_Edge_T edge);
+// typedef void (*UserDIn_Fn_T)(void * p_context, bool prevState, bool currentState);
 
 /******************************************************************************/
 /*
@@ -74,7 +78,8 @@ typedef struct UserDIn_State
     // bool HoldState;                     /* For hold mode */
     // uint16_t HoldStartTime;             /* Hold timing */
     UserDIn_Mode_T Mode;
-    // UserDIn_Cmd_T * p_OptCmd; /* Optional command to execute on edge */
+    // UserDIn_Config_T Config;
+    UserDIn_Fn_T OptCmd; /* hold the function for simplicity */
 }
 UserDIn_State_T;
 
@@ -89,8 +94,10 @@ typedef const struct UserDIn
     UserDIn_State_T * P_STATE;
     const volatile uint32_t * P_TIMER;
     uint16_t DEBOUNCE_TIME;
+    UserDIn_Config_T * P_NVM_CONFIG; /* optionally */
     // UserDIn_Mode_T MODE; /* Default mode */
     // UserDIn_Cmd_T CMD; /* Fixed Cmd */
+    // UserDIn_Fn_T * P_CMD_TABLE;
 }
 UserDIn_T;
 
@@ -101,6 +108,11 @@ UserDIn_T;
 
 #define USER_DIN_INIT_FROM(p_PinHal, PinId, PinIsInvert, p_State, p_Timer, DebounceTime) \
     USER_DIN_INIT(PIN_INIT_INVERT(p_PinHal, PinId, PinIsInvert), p_State, p_Timer, DebounceTime)
+
+/*
+*/
+static void UserDIn_CmdNull(void * p_context, UserDIn_Edge_T edge) { (void)p_context; (void)edge; }
+
 
 /******************************************************************************/
 /*
@@ -113,17 +125,91 @@ static inline bool UserDIn_IsRisingEdge(UserDIn_T * p_dev) { return is_rising_ed
 static inline bool UserDIn_IsFallingEdge(UserDIn_T * p_dev) { return is_falling_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 static inline UserDIn_Edge_T UserDIn_GetEdge(UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 
+static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return UserDIn_GetState(p_din) ? value : 0; }
+
+// static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return ((p_din != NULL) && UserDIn_GetState(p_din)) ? value : 0U; }
+
+/*
+    GetState should remain 0 when disabled and only polled with Modal_Poll
+*/
 static inline void UserDIn_Modal_Disable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; }
 static inline void UserDIn_Modal_Enable(UserDIn_T * p_dev) { p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL; }
+static inline bool UserDIn_Modal_IsDisable(UserDIn_T * p_dev) { return p_dev->P_STATE->Mode == USER_DIN_MODE_DISABLED; }
+
+
+
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
+extern void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config);
 extern void UserDIn_Init(UserDIn_T * p_dev);
 extern bool UserDIn_PollEdge(UserDIn_T * p_dev);
 extern bool UserDIn_PollRisingEdge(UserDIn_T * p_dev);
 extern bool UserDIn_PollFallingEdge(UserDIn_T * p_dev);
 extern UserDIn_Edge_T UserDIn_PollEdgeValue(UserDIn_T * p_dev);
 
+extern UserDIn_Edge_T UserDIn_Modal_PollEdgeValue(UserDIn_T * p_dev);
+
+extern void _UserDIn_Modal_PollEdgeCmd(UserDIn_T * p_dev, void * p_context);
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+
+typedef enum UserDIn_VarId
+{
+    USER_DIN_OUTPUT,
+    USER_DIN_PIN_STATE,
+}
+UserDIn_VarId_T;
+
+typedef enum UserDIn_ConfigId
+{
+    USER_DIN_CONFIG_CMD_FN,
+    USER_DIN_CONFIG_IS_ENABLED,
+    USER_DIN_CONFIG_MODE,
+}
+UserDIn_ConfigId_T;
+
+static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int varId)
+{
+    if (instance >= length) { return 0; }
+    UserDIn_T * p_dev = &p_array[instance];
+    switch (varId)
+    {
+        case USER_DIN_OUTPUT:       return UserDIn_GetState(p_dev);
+        case USER_DIN_PIN_STATE:    return Pin_Output_ReadPhysical(&p_dev->PIN);
+        default:  return 0;
+    }
+}
+
+static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId)
+{
+    if (instance >= length) { return 0; }
+    UserDIn_Config_T * p_config = &p_array[instance];
+    switch (configId)
+    {
+        case USER_DIN_CONFIG_CMD_FN:        return p_config->CmdId;
+        case USER_DIN_CONFIG_IS_ENABLED:    return (p_config->Mode != USER_DIN_MODE_DISABLED);
+        case USER_DIN_CONFIG_MODE:          return p_config->Mode;
+        default: return 0;
+    }
+}
+
+static inline void UserDIn_Config_SetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId, int value)
+{
+    if (instance >= length) { return; }
+    UserDIn_Config_T * p_config = &p_array[instance];
+    switch (configId)
+    {
+        case USER_DIN_CONFIG_CMD_FN:        p_config->CmdId = value; break;
+        case USER_DIN_CONFIG_IS_ENABLED:    p_config->Mode = value ? USER_DIN_MODE_NORMAL : USER_DIN_MODE_DISABLED; break;
+        case USER_DIN_CONFIG_MODE:          p_config->Mode = value; break;
+        default: break;
+    }
+}

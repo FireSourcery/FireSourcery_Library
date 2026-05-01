@@ -45,7 +45,7 @@ typedef struct UserAIn_Config
     /* Determine Linear_T Units at runtime */
     uint16_t AdcZero;                   /* Minimum ADC value for 0% */
     uint16_t AdcMax;                    /* Maximum ADC value for 100% */
-    // bool UseEdgePin;
+    bool UseEdgePin;
     // bool IsEnabled;                  /* Software enable/disable */
     // uint16_t Threshold;
     // uint16_t FilterShift;
@@ -65,6 +65,7 @@ typedef struct UserAIn_State
     uint16_t ValuePrev;                 /* Previous value for edge detection */
     uint16_t RawValue_Adcu;             /* Raw ADC reading */
 
+    // bool (*EdgePinPassthrough)(UserDIn_T * p_dev);
     UserAIn_Config_T Config;            /* Hold for runtime updates */
 }
 UserAIn_State_T;
@@ -96,7 +97,11 @@ UserAIn_T;
     Private Helper Functions
 */
 /******************************************************************************/
-static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_GetState(p_pin); }
+static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return (p_pin == NULL) || UserDIn_Modal_IsDisable(p_pin) || UserDIn_GetState(p_pin); }
+static inline bool _UserAIn_IsEdgePinEnabled(const UserDIn_T * p_pin) { return (p_pin != NULL) && !UserDIn_Modal_IsDisable(p_pin); }
+// skip null check with modal mode UserDIn_T EDGE_PIN no-op
+// static inline bool _UserAIn_IsEdgePinPassthrough(const UserDIn_T * p_pin) { return UserDIn_Modal_IsDisable(p_pin) || UserDIn_GetState(p_pin); }
+// static inline bool _UserAIn_IsEdgePinEnabled(const UserDIn_T * p_pin) { return !UserDIn_Modal_IsDisable(p_pin); }
 static inline bool _UserAIn_IsEdgePinOn(const UserDIn_T * p_pin) { return (p_pin != NULL) && UserDIn_GetState(p_pin); } /* for diagnostics */
 
 /*
@@ -127,9 +132,9 @@ static inline uint16_t UserAIn_GetValue(const UserAIn_T * p_dev) { return _UserA
     @brief Check for edge without polling (query current state only)
     @note Uses digital pin edge if present, otherwise analog threshold edge
 */
-static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE); }
-static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
-static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return (p_dev->P_EDGE_PIN != NULL) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsRisingEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsRisingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsRisingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsFallingEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsFallingEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsFallingEdge(p_dev->P_STATE); }
+static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return _UserAIn_IsEdgePinEnabled(p_dev->P_EDGE_PIN) ? UserDIn_IsEdge(p_dev->P_EDGE_PIN) : _UserAIn_IsEdge(p_dev->P_STATE); }
 
 
 /******************************************************************************/
@@ -147,3 +152,10 @@ extern bool UserAIn_PollRisingEdge(const UserAIn_T * p_dev, uint16_t value_adcu)
 extern bool UserAIn_PollFallingEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
 extern bool UserAIn_PollEdge(const UserAIn_T * p_dev, uint16_t value_adcu);
 
+typedef enum UserAIn_ConfigId
+{
+    USER_AIN_ZERO_ADCU,
+    USER_AIN_MAX_ADCU,
+    USER_AIN_EDGE_PIN_IS_ENABLE,
+}
+UserAIn_ConfigId_T;

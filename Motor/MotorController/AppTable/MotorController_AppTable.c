@@ -41,15 +41,8 @@
 /******************************************************************************/
 static inline void MotorCmdApp_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    // switch (MotAnalogUser_GetDirectionEdge(&p_dev->ANALOG_USER))
-    // {
-    //     case MOT_ANALOG_USER_DIRECTION_FORWARD_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CCW);   break;
-    //     case MOT_ANALOG_USER_DIRECTION_REVERSE_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_CW);    break;
-    //     case MOT_ANALOG_USER_DIRECTION_NEUTRAL_EDGE:  MotorController_SetDirection(p_dev, MOTOR_DIRECTION_NULL);      break;
-    //     default: break;
-    // }
-
-    MotorController_SetCmdValue(p_dev, MotAnalogUser_GetThrottle(&p_dev->ANALOG_USER));
+    if (Shifter_PollDirectionEdge(&p_dev->SHIFTER)) { MotorController_SetDirection(p_dev, (Motor_Direction_T)Shifter_GetDirection(&p_dev->SHIFTER)); }
+    MotorController_SetCmdValue(p_dev, UserAIn_GetValue(&p_dev->AINS[MOT_AIN_THROTTLE].PIN));
     // if (p_dev->P_MC->CmdInput.CmdValue == 0U)
     // {
     //     MotorController_SetControlState(p_dev, PHASE_VOUT_Z);
@@ -65,7 +58,6 @@ static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPar
 MotorController_App_T MC_APP_MOTOR_CMD =
 {
     .PROC_ANALOG_USER = MotorCmdApp_ProcAnalogUser,
-    // .P_INITIAL_STATE = &MC_STATE_MAIN_MOTOR_CMD,
     .ENTER_MAIN = (State_Input_T)EnterMain,
 };
 

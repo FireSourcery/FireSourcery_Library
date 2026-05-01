@@ -52,9 +52,17 @@ void MotorController_Init(const MotorController_T * p_dev)
 
     for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Init(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-    MotAnalogUser_Init(&p_dev->ANALOG_USER);
+    Shifter_InitFrom(&p_dev->SHIFTER, &p_dev->P_MC->Config.ShifterConfig);
 
-    _MotorController_InitOptDin(p_dev);
+    for (uint8_t iAin = 0U; iAin < MOT_USER_AIN_COUNT; iAin++) { UserAIn_InitFrom(&p_dev->AINS[iAin].PIN, &p_dev->P_MC->Config.AInConfigs[iAin]); }
+
+    for (uint8_t iDin = 0; iDin < MOT_USER_DIN_COUNT; iDin++)
+    {
+        UserDIn_InitFrom(&p_dev->DINS[iDin], &p_dev->P_MC->Config.DInConfigs[iDin]);
+        p_dev->DINS[iDin].P_STATE->OptCmd = _MotorController_OptDinFn(p_dev->P_MC->Config.DInConfigs[iDin].CmdId);
+    }
+    OptDin_ResolveBindings(&p_mc->OptDinState, p_dev->DINS, &p_mc->Config.DInConfigs[0], MOT_USER_DIN_COUNT);
+    // OptDin_ResolveCallbacks( p_dev->DINS, &p_mc->Config.DInConfigs[0], MOT_USER_DIN_COUNT);
 
     VBus_InitFrom(p_dev->P_VBUS, p_dev->P_VBUS_NVM_CONFIG);
 
@@ -69,7 +77,7 @@ void MotorController_Init(const MotorController_T * p_dev)
     Blinky_Init(&p_dev->BUZZER);
     Blinky_Init(&p_dev->METER);
     Pin_Output_Init(&p_dev->RELAY_PIN);
-    UserDIn_Init(&p_dev->OPT_DIN); /* 5-10ms by default */
+    // UserDIn_Init(&p_dev->OPT_DIN); /* 5-10ms by default */
 
     TimerT_Periodic_Init(&p_dev->MILLIS_TIMER, 1U);
 

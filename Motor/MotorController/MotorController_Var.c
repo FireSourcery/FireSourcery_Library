@@ -36,6 +36,8 @@
 
 #include "System/SysTime/SysTime.h"
 
+#include "MotAnalogUser/MotoController_AnalogUser.h"
+
 /* only point of coupling to AppTable */
 #include "AppTable/MotorController_AppTable.h"
 
@@ -115,9 +117,10 @@ int MotorController_Config_Get(const MotorController_T * p_dev, MotorController_
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
-        case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
-        case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
-        case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
+
+        // case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
+        // case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
+        // case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
 
         case MOT_VAR_BOOT_REF_FAST_BOOT:    value = p_state->BootRef.FastBoot;     break;
         case MOT_VAR_BOOT_REF_BEEP:         value = p_state->BootRef.Beep;         break;
@@ -137,9 +140,10 @@ void MotorController_Config_Set(const MotorController_T * p_dev, MotorController
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;                       break;
         case MOT_VAR_INPUT_MODE:            MotorController_SetInputMode(p_dev, (MotorController_InputMode_T)value);            break;
-        case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
-        case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
-        case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
+
+        // case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
+        // case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
+        // case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
 
         case MOT_VAR_BOOT_REF_FAST_BOOT:    MotorController_SetFastBoot(p_state, value);     break;
         case MOT_VAR_BOOT_REF_BEEP:         MotorController_SetBeep(p_state, value);         break;
@@ -158,6 +162,14 @@ static inline uint8_t MotorController_Var_GetMotorCount(const MotorController_T 
 static inline uint8_t MotorController_Var_GetHeatMosfetCount(const MotorController_T * p_dev) { return HeatMonitor_Group_GetInstanceCount(&p_dev->HEAT_MOSFETS); }
 static inline uint8_t MotorController_Var_GetVMonitorCount(const MotorController_T * p_dev) { return (p_dev->P_VBUS != NULL) + (p_dev->V_ACCESSORIES.P_STATE != NULL) + (p_dev->V_ANALOG.P_STATE != NULL); }
 static inline uint8_t MotorController_Var_GetProtocolCount(const MotorController_T * p_dev) { return p_dev->PROTOCOL_COUNT; }
+static inline uint8_t MotorController_Var_GetCanSocketCount(const MotorController_T * p_dev)
+{
+#if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
+    return p_dev->CAN_BUS_COUNT;
+#else
+    return 0;
+#endif
+}
 
 int MotorController_InstancesRef_Get(const MotorController_T * p_dev, MotorController_Var_Board_T nameBase)
 {
@@ -167,7 +179,9 @@ int MotorController_InstancesRef_Get(const MotorController_T * p_dev, MotorContr
         case MOT_VAR_BOARD_V_MONITOR_COUNT:           return MotorController_Var_GetVMonitorCount(p_dev);
         case MOT_VAR_BOARD_THERMISTOR_MOSFETS_COUNT:  return MotorController_Var_GetHeatMosfetCount(p_dev);
         case MOT_VAR_BOARD_PROTOCOL_SOCKET_COUNT:     return MotorController_Var_GetProtocolCount(p_dev);
-        case MOT_VAR_BOARD_CAN_SOCKET_COUNT:          return 0; /* not yet implemented */
+        case MOT_VAR_BOARD_CAN_SOCKET_COUNT:          return MotorController_Var_GetCanSocketCount(p_dev);
+        case MOT_VAR_BOARD_DIN_COUNT:                 return MOT_USER_DIN_COUNT;
+        case MOT_VAR_BOARD_AIN_COUNT:                 return MOT_USER_AIN_COUNT;
         default: return 0;
     }
 }
@@ -236,11 +250,18 @@ static int _HandleGeneral_Get(const MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_GENERAL_USER_IN:       return 0;
         case MOT_VAR_TYPE_GENERAL_BOARD_CONST:    return MotorController_InstancesRef_Get(p_dev, varId.Base);
         case MOT_VAR_TYPE_GENERAL_DEBUG:         return MotorController_Var_OutputDebug_Get(p_dev, varId.Base);
-        case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_GetAsInput(&p_dev->ANALOG_USER, varId.Base);
-        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(&p_dev->ANALOG_USER, varId.Base);
+        case MOT_VAR_TYPE_ANALOG_USER_VAR_OUT:   return MotAnalogUser_VarId_GetAsInput(p_dev, varId.Base);
+        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:    return MotAnalogUser_ConfigId_Get(p_dev, varId.Base);
+        case MOT_VAR_TYPE_OPT_DIN_CONFIG:        return OptDin_ConfigId_Get(&p_dev->P_MC->Config.OptDinConfig, varId.Base);
+        case MOT_VAR_TYPE_USER_DIN_STATE:        return UserDIn_Var_GetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
+        case MOT_VAR_TYPE_USER_DIN_CONFIG:       return UserDIn_Config_GetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
         default: return 0;
     }
 }
+
+
+
+
 
 static MotVarId_Status_T _HandleGeneral_Set(const MotorController_T * p_dev, MotVarId_T varId, int value)
 {
@@ -252,7 +273,10 @@ static MotVarId_Status_T _HandleGeneral_Set(const MotorController_T * p_dev, Mot
         case MOT_VAR_TYPE_GENERAL_DEBUG:            return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_dev, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_dev, varId.Base, value);                              break;
-        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(&p_dev->ANALOG_USER, varId.Base, value);                break;
+        case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(p_dev, varId.Base, value);                break;
+        case MOT_VAR_TYPE_OPT_DIN_CONFIG:           OptDin_ConfigId_Set(&p_dev->P_MC->Config.OptDinConfig, varId.Base, value);         break;
+        case MOT_VAR_TYPE_USER_DIN_CONFIG:          UserDIn_Config_SetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base, value);                        break;
+
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
     return MOT_VAR_STATUS_OK;

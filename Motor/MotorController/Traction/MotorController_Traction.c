@@ -45,7 +45,7 @@ static const State_T STATE_DRIVE;
 static const State_T STATE_NEUTRAL;
 
 static inline Traction_T * TractionApp(MotorController_T * p_mc) { return (Traction_T *)(p_mc->P_APP_CONTEXT); }
-// static inline Traction_State_T * _TractionApp(MotorController_T * p_mc) { return ((Traction_T *)(p_mc->P_APP_CONTEXT))->P_TRACTION_STATE; }
+static inline Traction_State_T * TractionAdapter(MotorController_T * p_mc) { return ((Traction_T *)(p_mc->P_APP_CONTEXT))->P_TRACTION_STATE; }
 
 /* From Park */
 static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPark)
@@ -53,7 +53,7 @@ static State_T * EnterMain(const MotorController_T * p_mc, state_value_t fromPar
     (void)fromPark;
     if (!Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero)) { return &STATE_NEUTRAL; }
 
-    switch (TractionApp(p_mc)->P_TRACTION_STATE->Input.Direction)
+    switch (TractionAdapter(p_mc)->Input.Direction)
     {
         case MOTOR_DIRECTION_NULL:       return &STATE_NEUTRAL;
         case MOTOR_DIRECTION_FORWARD:    return &STATE_DRIVE;
@@ -94,9 +94,9 @@ MotorController_App_T MC_APP_TRACTION =
 /******************************************************************************/
 static void Drive_Entry(const MotorController_T * p_mc)
 {
-    assert(TractionApp(p_mc)->P_TRACTION_STATE->Input.Direction != MOTOR_DIRECTION_NULL); /* Direction should have been checked on transition.*/
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.DriveCmd = TRACTION_CMD_RELEASE; // next input is edge transition
-    Motor_Table_ApplyUserDirection(&p_mc->MOTORS, TractionApp(p_mc)->P_TRACTION_STATE->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */
+    assert(TractionAdapter(p_mc)->Input.Direction != MOTOR_DIRECTION_NULL); /* Direction should have been checked on transition.*/
+    TractionAdapter(p_mc)->Input.DriveCmd = TRACTION_CMD_RELEASE; // next input is edge transition
+    Motor_Table_ApplyUserDirection(&p_mc->MOTORS, TractionAdapter(p_mc)->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */
 }
 
 static void Drive_Proc(const MotorController_T * p_mc)
@@ -130,6 +130,8 @@ static State_T * Drive_InputCmdStart(const MotorController_T * p_mc, state_value
 static State_T * Drive_InputThrottleValue(const MotorController_T * p_mc, state_value_t value)
 {
     Traction_ApplyThrottleValue(TractionApp(p_mc), value);
+
+    // Motor_Table_SetCmdWith(&p_mc->MOTORS, TractionAdapter(p_mc)->p_ThrottleDrive->APPLY_CMD, value / 2);
     return NULL;
 }
 
@@ -154,7 +156,7 @@ static State_T * Drive_InputBrakeValue(const MotorController_T * p_mc, state_val
 /* App-specific commands — reads from Traction.Input (buffered by MotorController_Traction_ApplyDirection etc.) */
 static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
 {
-    Traction_Input_T * p_input = &TractionApp(p_mc)->P_TRACTION_STATE->Input;
+    Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
     {
         case TRACTION_STATE_INPUT_DIRECTION: return Drive_InputDirection(p_mc, p_input->Direction);
@@ -163,6 +165,10 @@ static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_
         case TRACTION_STATE_INPUT_BRAKE_VALUE: return Drive_InputBrakeValue(p_mc, p_input->BrakeValue);
         default: return NULL;
     }
+
+    // Traction_State_T * s = &TractionAdapter(p_mc)[0];
+    // Motor_Table_ApplyInput(&p_mc->MOTORS, Traction_ToMotorInput(&s->Input, &s->Config));
+    // return NULL;
 }
 
 static const State_Input_T DRIVE_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
@@ -249,7 +255,7 @@ static State_T * Neutral_InputBrakeValue(const MotorController_T * p_mc, state_v
 /* App-specific commands — reads from Traction.Input (buffered by MotorController_Traction_ApplyDirection etc.) */
 static State_T * Neutral_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
 {
-    Traction_Input_T * p_input = &TractionApp(p_mc)->P_TRACTION_STATE->Input;
+    Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
     {
         case TRACTION_STATE_INPUT_DIRECTION: return Neutral_InputDirection(p_mc, p_input->Direction);
@@ -344,34 +350,34 @@ void _MotorController_Traction_ApplyCmd(MotorController_T * p_mc, Traction_State
 */
 void MotorController_Traction_PollStartCmd(MotorController_T * p_mc)
 {
-    if (Traction_Input_PollCmdEdge(&TractionApp(p_mc)->P_TRACTION_STATE->Input)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
+    if (Traction_Input_PollCmdEdge(&TractionAdapter(p_mc)->Input)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
 }
 
 void MotorController_Traction_SetThrottle(MotorController_T * p_mc, uint16_t userCmd)
 {
-    if (Traction_Input_PollThrottle(&TractionApp(p_mc)->P_TRACTION_STATE->Input, userCmd)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
+    if (Traction_Input_PollThrottle(&TractionAdapter(p_mc)->Input, userCmd)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
     else { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_THROTTLE_VALUE); }
 }
 
 void MotorController_Traction_SetBrake(MotorController_T * p_mc, uint16_t userCmd)
 {
-    if (Traction_Input_PollBrake(&TractionApp(p_mc)->P_TRACTION_STATE->Input, userCmd)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
+    if (Traction_Input_PollBrake(&TractionAdapter(p_mc)->Input, userCmd)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
     else { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_BRAKE_VALUE); }
 }
 
 void MotorController_Traction_SetRelease(MotorController_T * p_mc)
 {
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue = 0U;
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue = 0U;
+    TractionAdapter(p_mc)->Input.ThrottleValue = 0U;
+    TractionAdapter(p_mc)->Input.BrakeValue = 0U;
     MotorController_Traction_PollStartCmd(p_mc);
 }
 
 void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_t throttle, uint16_t brake)
 {
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue = throttle;
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue = brake;
+    TractionAdapter(p_mc)->Input.ThrottleValue = throttle;
+    TractionAdapter(p_mc)->Input.BrakeValue = brake;
     MotorController_Traction_PollStartCmd(p_mc);
-    switch (TractionApp(p_mc)->P_TRACTION_STATE->Input.DriveCmd)
+    switch (TractionAdapter(p_mc)->Input.DriveCmd)
     {
         case TRACTION_CMD_BRAKE:     _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_BRAKE_VALUE);         break;
         case TRACTION_CMD_THROTTLE:  _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_THROTTLE_VALUE);      break;
@@ -387,7 +393,7 @@ void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_
 // caller handled edge detection
 void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t direction)
 {
-    TractionApp(p_mc)->P_TRACTION_STATE->Input.Direction = direction;
+    TractionAdapter(p_mc)->Input.Direction = direction;
     _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DIRECTION);
     if (MotorController_Traction_GetDirection(p_mc) != direction) { Blinky_Blink(&p_mc->BUZZER, 500U); }
 }
@@ -395,7 +401,7 @@ void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t
 /*  */
 void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction)
 {
-    if (Traction_Input_PollDirectionEdge(&TractionApp(p_mc)->P_TRACTION_STATE->Input, direction))
+    if (Traction_Input_PollDirectionEdge(&TractionAdapter(p_mc)->Input, direction))
     {
         _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DIRECTION);
     }
@@ -406,13 +412,14 @@ void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t 
 
 */
 /******************************************************************************/
-/*
-    Can change to interface mapping later
-*/
+static inline uint16_t AInThrottle(const MotorController_T * p_mc) { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_THROTTLE].PIN); }
+static inline uint16_t AInBrake(const MotorController_T * p_mc)    { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_BRAKE].PIN); }
+
+#include "../MotAnalogUser/OptPin/MotorController_SwitchBrake.h"
 void MotorController_Traction_ProcAnalogUser(const MotorController_T * p_mc)
 {
-    MotorController_Traction_CaptureDirection(p_mc, (sign_t)MotAnalogUser_GetDirection(&p_mc->ANALOG_USER));
-    MotorController_Traction_SetThrottleBrake(p_mc, MotAnalogUser_GetThrottle(&p_mc->ANALOG_USER), MotAnalogUser_GetBrake(&p_mc->ANALOG_USER));
+    MotorController_Traction_CaptureDirection(p_mc, (sign_t)Shifter_ResolveDirection(&p_mc->SHIFTER));
+    MotorController_Traction_SetThrottleBrake(p_mc, AInThrottle(p_mc), MotorController_FuseSwitchBrake(p_mc, AInBrake(p_mc)));
 }
 
 
@@ -447,11 +454,11 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
     switch (id)
     {
         case TRACTION_VAR_DIRECTION:   value = MotorController_Traction_GetDirection(p_mc);     break;
-        case TRACTION_VAR_THROTTLE:    value = TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue;  break;
-        case TRACTION_VAR_BRAKE:       value = TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue;     break;
+        case TRACTION_VAR_THROTTLE:    value = TractionAdapter(p_mc)->Input.ThrottleValue;  break;
+        case TRACTION_VAR_BRAKE:       value = TractionAdapter(p_mc)->Input.BrakeValue;     break;
         case TRACTION_VAR_STATE_ID:    value = MotorController_Traction_GetStateId(p_mc); break;
-            // case TRACTION_VAR_THROTTLE_ONLY:    value = TractionApp(p_mc)->P_TRACTION_STATE->Input.ThrottleValue;  break;
-            // case TRACTION_VAR_BRAKE_ONLY:       value = TractionApp(p_mc)->P_TRACTION_STATE->Input.BrakeValue;     break;
+            // case TRACTION_VAR_THROTTLE_ONLY:    value = TractionAdapter(p_mc)->Input.ThrottleValue;  break;
+            // case TRACTION_VAR_BRAKE_ONLY:       value = TractionAdapter(p_mc)->Input.BrakeValue;     break;
         default: break;
     }
     return value;
@@ -459,12 +466,12 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
 
 int MotorController_Traction_ConfigId_Get(const MotorController_T * p_mc, Traction_ConfigId_T id)
 {
-    return Traction_ConfigId_Get(&TractionApp(p_mc)->P_TRACTION_STATE->Config, id);
+    return Traction_ConfigId_Get(&TractionAdapter(p_mc)->Config, id);
 }
 
 void MotorController_Traction_ConfigId_Set(MotorController_T * p_mc, Traction_ConfigId_T id, int value)
 {
-    Traction_ConfigId_Set(&TractionApp(p_mc)->P_TRACTION_STATE->Config, id, value);
+    Traction_ConfigId_Set(&TractionAdapter(p_mc)->Config, id, value);
 }
 
 

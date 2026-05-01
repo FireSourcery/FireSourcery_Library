@@ -63,9 +63,9 @@ Traction_Input_T;
 
 static inline Traction_Cmd_T Traction_Input_EvaluateCmd(const Traction_Input_T * p_input)
 {
-    if      (p_input->BrakeValue > 0U)       { return TRACTION_CMD_BRAKE; } // optionally check throttle active error
-    else if (p_input->ThrottleValue > 0U)    { return TRACTION_CMD_THROTTLE; }
-    else                                     { return TRACTION_CMD_RELEASE; }
+    if (p_input->BrakeValue > 0U) { return TRACTION_CMD_BRAKE; } // optionally check throttle active error
+    if (p_input->ThrottleValue > 0U) { return TRACTION_CMD_THROTTLE; }
+    return TRACTION_CMD_RELEASE;
 }
 
 /*
@@ -139,6 +139,7 @@ typedef struct Traction_Config
     Traction_BrakeMode_T BrakeMode;
     Traction_ZeroMode_T ZeroMode;
     // uint8_t RequireZeroOnEntry;
+    // uint16_t SwitchBrakeFloor_Percent16;
 }
 Traction_Config_T;
 
@@ -147,12 +148,15 @@ typedef struct Traction_State
     Traction_Input_T Input;
     Traction_Config_T Config;
     // StateMachine_Active_T StateMachine;
+    // Motor_Drive_T * p_ThrottleDrive;
+    // Motor_Drive_T * p_BrakeDrive;
 }
 Traction_State_T;
 
 /*
     [Traction Context]
     StateMachine with Sync Input
+    maybe depreciate
 */
 typedef const struct Traction
 {

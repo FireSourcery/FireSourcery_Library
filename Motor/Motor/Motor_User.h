@@ -172,6 +172,21 @@ typedef struct Motor_InputData
 Motor_Input_T;
 
 
+typedef int16_t motor_cmd_t;
+
+// typedef const struct Motor_Drive
+// {
+//     Motor_FeedbackMode_T FEEDBACK_MODE;
+//     void (*APPLY_CMD)(Motor_State_T * p_motor, motor_cmd_t value);
+// }
+// Motor_Drive_T;
+
+typedef struct
+{
+    Motor_FeedbackMode_T FeedbackMode;
+    int16_t CmdValue;
+}
+Motor_DriveCmd_T;
 
 /******************************************************************************/
 /*!

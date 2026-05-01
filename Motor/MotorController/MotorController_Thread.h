@@ -69,18 +69,25 @@
 /******************************************************************************/
 static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++)
+    {
+        UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION));
+    }
 
-    MotAnalogUser_CaptureInput(&p_dev->ANALOG_USER, MotAnalogUser_Conversion_GetThrottle(&p_dev->ANALOG_USER_CONVERSIONS), MotAnalogUser_Conversion_GetBrake(&p_dev->ANALOG_USER_CONVERSIONS));
+    Shifter_Poll(&p_dev->SHIFTER);
 
     MotorController_App_ProcAnalogUser((MotorController_T *)p_dev);
 
     if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)
     {
-        MotAnalogUser_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS);
+        for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { Analog_Conversion_Mark(&p_dev->AINS[i].CONVERSION); }
     }
 }
 
+// static inline void _MotorController_ProcOptDins(MotorController_T * p_dev)
+// {
+//     for (uint8_t i = 0; i < p_dev->DINS; i++) { _UserDIn_Modal_PollEdgeCmd(&p_dev->DINS[i], p_dev); }
+// }
 
 /*
     Monitor Threads only set fault flags. Do not clear until user input clear
@@ -250,7 +257,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-        _MotorController_ProcOptDin(p_dev); /* Poll OptDin every cycle, as it may be used for critical functions like fault reset or park */
+
 
         /* Proc in all State */
         switch (p_mc->Config.InputMode)
@@ -296,7 +303,9 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_1000) == true)
         {
-            _MotorController_ProcOptDin(p_dev);
+            // _MotorController_ProcOptDin(p_dev);
+            for (uint8_t iDin = 0; iDin < MOT_USER_DIN_COUNT; iDin++) { _UserDIn_Modal_PollEdgeCmd(&p_dev->DINS[iDin], (void *)p_dev); } /* Poll with Cmd */
+
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */
             _MotorController_HeatMonitor_Thread(p_dev);
 

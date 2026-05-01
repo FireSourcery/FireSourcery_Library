@@ -211,6 +211,8 @@ static inline uint32_t HAL_CAN_ReadRxExtendedId(HAL_CAN_T * p_hal)
     return _HAL_CAN_DecodeExtId(p_hal->REIDR0, p_hal->REIDR1, p_hal->REIDR2, p_hal->REIDR3);
 }
 
+static inline uint8_t HAL_CAN_ReadRxLength(HAL_CAN_T * p_hal) { return p_hal->RDLR & 0x0FU; }
+
 static inline bool HAL_CAN_ReadRxRemoteFlag(HAL_CAN_T * p_hal)
 {
     IDR1_3_UNION idr1 = { .Bytes = p_hal->REIDR1 };
@@ -227,8 +229,8 @@ static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data)
 {
     uint8_t length = p_hal->RDLR & 0x0FU;
     for (uint8_t i = 0U; i < length; i++) { p_data[i] = p_hal->REDSR[i]; }
+    p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK;
     return length;
-    /* RXF cleared by UnlockRx / ClearRxInterrupt — do not release buffer here */
 }
 
 /******************************************************************************/
@@ -304,8 +306,8 @@ static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t
 /******************************************************************************/
 /* Foreground buffer auto-locks on first register read */
 static inline bool HAL_CAN_LockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)p_hal; (void)hwIndex; return true; }
-/* Release buffer by clearing RXF */
-static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
+/* Cleared on Read */
+static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
 
 
 /******************************************************************************/

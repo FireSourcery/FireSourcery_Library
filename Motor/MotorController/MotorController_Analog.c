@@ -36,14 +36,20 @@
     @brief CalibrateAdc SubState
 */
 /******************************************************************************/
+static inline void SetAdcZero(const MotorController_T * p_dev, MotAnalogUser_AinId_T id, uint16_t zero_Adcu)
+{
+    p_dev->P_MC->Config.AInConfigs[id].AdcZero = zero_Adcu;
+    UserAIn_Init(&p_dev->AINS[id].PIN);
+}
+
 void StartCalibrateAdc(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     p_mc->StateCounter = 0U;
-    Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
-    Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
-    Analog_Conversion_ClearResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
-    Analog_Conversion_ClearResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
+    Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
+    Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
+    Analog_Conversion_ClearResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
+    Analog_Conversion_ClearResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
     Accumulator_Init(&p_mc->AvgBuffer0);
     Accumulator_Init(&p_mc->AvgBuffer1);
     // Motor_Table_EnterCalibrateAdc(&p_dev->MOTORS); /* Motor handles it own state */
@@ -57,10 +63,10 @@ void ProcCalibrateAdc(MotorController_T * p_dev)
 
     if (p_mc->StateCounter != 0U) /* skip first time */
     {
-        Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE));
-        Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE));
-        Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE);
-        Analog_Conversion_Mark(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE);
+        Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION));
+        Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION));
+        Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
+        Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
     }
 
     p_mc->StateCounter++;
@@ -75,8 +81,8 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 
     if (p_mc->StateCounter > TIME)
     {
-        MotAnalogUser_SetThrottleZero(&p_dev->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.THROTTLE)));
-        MotAnalogUser_SetBrakeZero(&p_dev->ANALOG_USER, Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->ANALOG_USER_CONVERSIONS.BRAKE)));
+        SetAdcZero(p_dev, MOT_AIN_THROTTLE, Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION)));
+        SetAdcZero(p_dev, MOT_AIN_BRAKE,    Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION)));
         p_mc->LockOpStatus = 0; /* success */
 
         p_nextState = &MC_STATE_LOCK; /* return to lock state */

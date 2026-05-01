@@ -636,7 +636,7 @@ Cia402_TxPdo_SwPosition_T;
 */
 typedef union Cia402_Pdo
 {
-    uint8_t  Bytes[8];
+    uint8_t Bytes[8];
 }
 Cia402_Pdo_T;
 

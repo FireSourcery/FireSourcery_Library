@@ -24,31 +24,16 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   MotorController_MotPark.h
+    @file   MotorController_SwitchBrake.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
 #include "../../MotorController_StateMachine.h"
 
+static inline UserDIn_T * MotorController_SwitchBrakePin(MotorController_T * p_dev) { return OptDin_SwitchBrake(&p_dev->DINS[0U], &p_dev->P_MC->OptDinState); }
 
-static inline void MotorController_CallParkPin(const MotorController_T * p_dev, UserDIn_Edge_T edge)
+static inline uint16_t MotorController_FuseSwitchBrake(MotorController_T * p_dev, uint16_t brake_Percent16)
 {
-    switch (edge)
-    {
-        case USER_DIN_EDGE_RISING:  MotorController_EnterPark(p_dev); break;
-        case USER_DIN_EDGE_FALLING: MotorController_EnterMain(p_dev); break;
-        default: break;
-    }
+    return OptDin_FuseSwitchBrake(MotorController_SwitchBrakePin(p_dev), p_dev->P_MC->Config.OptDinConfig.SwitchBrakeFloor_Percent16, brake_Percent16);
 }
-
-#if defined(MOTOR_CONTROLLER_OPT_DIN_PARK_ID)
-// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->OPT_DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]; }
-// static inline UserDIn_T * MotorController_ParkPin(const MotorController_T * p_dev) { return (UserDIn_T *)&p_dev->PARK_PIN; }
-
-#include "ParkPin/MotorController_ParkPin.h"
-static inline void MotorController_ProcOptDin(const MotorController_T * p_dev)
-{
-    MotorController_CallParkPin(p_dev, UserDIn_PollEdge(&p_dev->OPT_DINS[MOTOR_CONTROLLER_OPT_DIN_PARK_ID]));
-}
-#endif

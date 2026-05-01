@@ -76,6 +76,17 @@ typedef struct
 }
 MotLimits_T;
 
+static inline uint16_t MotLimits_IDerate(MotLimits_T * p_dev) { return _LimitArray_Upper(&p_dev->ILimitState); }
+static inline uint16_t MotLimits_IGenDerate(MotLimits_T * p_dev) { return _LimitArray_Upper(&p_dev->IGenLimitState); }
+static inline uint16_t MotLimits_SpeedDerate(MotLimits_T * p_dev) { return _LimitArray_Upper(&p_dev->SpeedLimitState); }
+
+
+// for composition
+// static inline LimitArray_T MotLimits_GetILimitArray(MotLimits_T * p_dev) { return (LimitArray_T) { .P_BUFFER = &p_dev->ILimitValues[0U], .LENGTH = MOT_I_LIMIT_COUNT, .P_AUGMENTS = &p_dev->ILimitState, }; }
+// static inline LimitArray_T MotLimits_GetIGenLimitArray(MotLimits_T * p_dev) { return (LimitArray_T) { .P_BUFFER = &p_dev->IGenLimitValues[0U], .LENGTH = MOT_I_GEN_LIMIT_COUNT, .P_AUGMENTS = &p_dev->IGenLimitState, }; }
+// static inline LimitArray_T MotLimits_GetSpeedLimitArray(MotLimits_T * p_dev) { return (LimitArray_T) { .P_BUFFER = &p_dev->SpeedLimitValues[0U], .LENGTH = MOT_SPEED_LIMIT_COUNT, .P_AUGMENTS = &p_dev->SpeedLimitState, }; }
+
+
 // bool _MotorController_SetSpeedLimitAll(MotLimits_T * p_dev, Motor_Table_T * p_motors, MotSpeedLimitId_T id, limit_t speed_fract16)
 // {
 //     if (_LimitArray_TestSetUpper(&p_dev->SpeedLimitState, p_dev->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(p_motors, &p_dev->SpeedLimitState); return true; }

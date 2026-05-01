@@ -105,62 +105,65 @@ CanBus_T;
 }
 
 
+/******************************************************************************/
+/*! Call Poll status */
+/******************************************************************************/
+/*
+    returns >0 on rx data available. copy directly to user provided buffer
+*/
+static inline size_t CanBus_PollRxData(CanBus_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
+{
+    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
+    {
+        *p_rxId = HAL_CAN_ReadRxId(p_can->P_HAL);
+        return HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData);
+    }
+    return 0;
+}
 
+// caller directly switch on id version
+static inline can_id_t CanBus_PollRxId(CanBus_T * p_can) { return HAL_CAN_ReadRxFullFlag(p_can->P_HAL) ? HAL_CAN_ReadRxId(p_can->P_HAL) : (can_id_t) { 0 }; }
+static inline size_t CanBus_ReadRxData(CanBus_T * p_can, uint8_t * p_rxData) { return HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData); }
+
+/* return null for empty buffer */
+static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
+{
+    CAN_Frame_T * p_buffer = &p_can->P_STATE->Channel[0U].Frame;
+    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
+    {
+        if (HAL_CAN_LockRx(p_can->P_HAL, 0))
+        {
+            HAL_CAN_ReadRxMessage(p_can->P_HAL, p_buffer);
+            HAL_CAN_UnlockRx(p_can->P_HAL, 0);
+            return p_buffer;
+        }
+    }
+    return NULL;
+}
 
 /******************************************************************************/
 /*! ISR handlers */
 /******************************************************************************/
-static inline bool CanBus_PollRxData(CanBus_T * p_can)
-{
-    CanBus_Buffer_T * p_buf = &p_can->P_STATE->Channel[0U];
-    bool hasData = HAL_CAN_ReadRxFullFlag(p_can->P_HAL);
-    if (hasData)
-    {
-        HAL_CAN_ReadRxMessage(p_can->P_HAL, &p_buf->Frame);
-        if (p_can->REQ_CALLBACK != NULL) { p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buf->Frame.CanId.Id, &p_buf->Frame.Data[0U]); }
-    }
-    return hasData;
-}
-
+/* with callback optionally mapping to table */
 /*
     without checking Remote
 */
 static inline void CanBus_RxData_ISR(CanBus_T * p_can)
 {
-    CanBus_Buffer_T * p_buf = &p_can->P_STATE->Channel[0U];
-    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
+    CAN_Frame_T * p_buffer = CanBus_PollRx(p_can);
+    if (p_buffer != NULL)
     {
-        HAL_CAN_ReadRxMessage(p_can->P_HAL, &p_buf->Frame);
-
-        if (p_can->REQ_CALLBACK != NULL)
-        {
-            p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buf->Frame.CanId.Id, &p_buf->Frame.Data[0U]);
-        }
-        else
-        {
-            p_buf->State = CAN_BUS_BUFFER_RX_WAIT_SERVICE;
-            HAL_CAN_DisableRxFullInterrupt(p_can->P_HAL);
-        }
-
+        p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buffer->CanId.Id, &p_buffer->Data[0U]);
         HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
     }
 }
 
-/*
-    Directly map to user buffer
-*/
-// typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
 
-// static inline bool _CanBus_PollRxData(CanBus_T * p_can, CanBus_RxDataMapper_T mapper)
-// {
-//     bool hasData = HAL_CAN_ReadRxFullFlag(p_can->P_HAL);
-//     if (hasData) { HAL_CAN_ReadRxData(p_can->P_HAL, mapper(p_can->P_CONTEXT, HAL_CAN_ReadRxId(p_can->P_HAL).Id)); }
-//     return hasData;
-// }
-
+/******************************************************************************/
 /*
     Stateful
 */
+/******************************************************************************/
 /*
     Rx
     Rx data frame received
@@ -172,7 +175,6 @@ static inline void _CanBus_Rx_ISR(CanBus_T * p_can, uint8_t bufferId, uint8_t hw
 
     if (HAL_CAN_LockRx(p_can->P_HAL, hwIndex))
     {
-        // CanBus_ReceiveData(p_can, (can_id_t *)&p_buf->Frame.CanId, &p_buf->Frame.Data[0U], 8U);
         HAL_CAN_ReadRxMessage(p_can->P_HAL, &p_buf->Frame);
         // HAL_CAN_ClearRxInterrupt(p_can->P_HAL, hwIndex);
         HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
@@ -340,7 +342,7 @@ extern void CanBus_Init(CanBus_T * p_can);
 extern void CanBus_InitBaudRate(CanBus_T * p_can, uint32_t bitRate);
 
 /* Tx — polling, no interrupt, fire-and-forget */
-extern void CanBus_SendData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);
+extern void CanBus_TxData(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);
 /* Tx — interrupt-driven, tracks buffer state; sets RX_WAIT_REMOTE on RTR frame */
 extern void CanBus_Send(CanBus_T * p_can, can_id_t id, const uint8_t * p_txData, size_t length);
 /* Tx — accept a fully-built frame. */

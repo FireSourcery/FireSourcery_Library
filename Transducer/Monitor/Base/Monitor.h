@@ -183,9 +183,9 @@ static inline int32_t Monitor_IsOverNominal(const Monitor_T * p_monitor) { retur
     Status
 */
 static inline Monitor_Status_T Monitor_GetStatus(const Monitor_T * p_monitor) { return p_monitor->Status; }
-static inline bool Monitor_IsNormal(const Monitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_NORMAL; }
-static inline bool Monitor_IsAbnormal(const Monitor_T * p_monitor) { return p_monitor->Status != MONITOR_STATUS_NORMAL; }
 
+// static inline bool Monitor_IsNormal(const Monitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_NORMAL; }
+// static inline bool Monitor_IsAbnormal(const Monitor_T * p_monitor) { return p_monitor->Status != MONITOR_STATUS_NORMAL; }
 // static inline bool Monitor_RequiresOperatorAttention(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_WARNING; }
 // static inline bool Monitor_RequiresImmediateAction(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_ALARM; }
 // static inline bool Monitor_IsInEmergencyState(const Monitor_T * p_monitor) { return (p_monitor->Status == MONITOR_STATUS_CRITICAL) || (p_monitor->Status == MONITOR_STATUS_FAULT); }

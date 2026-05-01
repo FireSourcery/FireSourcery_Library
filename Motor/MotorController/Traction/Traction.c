@@ -31,9 +31,12 @@
 #include "Traction.h"
 
 
+
 void _Traction_InitFrom(Traction_State_T * p_fields, const Traction_Config_T * p_config)
 {
     if (p_config != NULL) { p_fields->Config = *p_config; }
+    // p_fields->p_ThrottleDrive = &THROTTLE_MAPS[p_fields->Config.ThrottleMode];
+    // p_fields->p_BrakeDrive = &BRAKE_MAPS[p_fields->Config.BrakeMode];
 }
 
 void Traction_Init(const Traction_T * p_handle)
@@ -42,12 +45,7 @@ void Traction_Init(const Traction_T * p_handle)
     // StateMachine_Init(&p_handle->STATE_MACHINE);
 }
 
-// typedef const struct MotorDrive
-// {
-//     Motor_FeedbackMode_T FEEDBACK_MODE;
-//     void (*APPLY_CMD)(const Motor_T * p , motor_value_t value);
-// }
-// MotorDrive_T;
+
 
 /******************************************************************************/
 /*
@@ -188,77 +186,77 @@ void Traction_ConfigId_Set(Traction_Config_T * p_config, Traction_ConfigId_T id,
 //     return value;
 // }
 
-
-// optionally handle by motor layer
-// static inline int16_t Traction_Input_GetMotorCmd(const Traction_Input_T * p_input)
+// handle select direction align
+// static const Motor_Drive_T THROTTLE_MAPS[] =
 // {
-//     switch (p_input->DriveCmd)
+//     [TRACTION_THROTTLE_MODE_SPEED]  = { MOTOR_FEEDBACK_MODE_SPEED_CURRENT, Motor_SetSpeedMotoringCmdScalar  },
+//     [TRACTION_THROTTLE_MODE_TORQUE] = { MOTOR_FEEDBACK_MODE_CURRENT, Motor_SetICmdScalar },
+// };
+
+// static const Motor_Drive_T BRAKE_MAPS[] =
+// {
+//     [TRACTION_BRAKE_MODE_TORQUE] = { MOTOR_FEEDBACK_MODE_CURRENT, Motor_SetICmdScalar },
+// };
+
+
+// Motor_Input_T Traction_ToMotorInput(const Traction_State_T * p_traction)
+// {
+//     const Traction_Input_T * p_in = &p_traction->Input;
+//     const Traction_Config_T * p_config = &p_traction->Config;
+
+//     switch (p_in->DriveCmd)
 //     {
-//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue; // as motoring
-//         case TRACTION_CMD_BRAKE:     return -(int16_t)p_input->BrakeValue * p_input->Direction; // as signed torque
-//         case TRACTION_CMD_THROTTLE:  return (int16_t)p_input->ThrottleValue * p_input->Direction;
-//         case TRACTION_CMD_RELEASE:   return 0;
-//         default: return 0;
+//         case TRACTION_CMD_THROTTLE: return (Motor_Input_T)
+//         {
+//             .FeedbackMode = (p_config->ThrottleMode == TRACTION_THROTTLE_MODE_SPEED) ? MOTOR_FEEDBACK_MODE_SPEED_CURRENT : MOTOR_FEEDBACK_MODE_CURRENT,
+//             .CmdValue = (int16_t)(p_in->ThrottleValue / 2),
+//             .PhaseOutput = PHASE_VOUT_PWM,
+//             .Direction = p_in->Direction,
+//         };
+//         case TRACTION_CMD_BRAKE: return (Motor_Input_T)
+//         {
+//             .FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT,
+//             .PhaseOutput = PHASE_VOUT_PWM,
+//             .CmdValue = -(int16_t)(p_in->BrakeValue / 2),
+//             .Direction = p_in->Direction,
+//         };
+//         case TRACTION_CMD_RELEASE: return (Motor_Input_T)
+//         {
+//             .PhaseOutput = (p_config->ZeroMode == TRACTION_ZERO_MODE_FLOAT) ? PHASE_VOUT_Z : PHASE_VOUT_PWM,
+//             .CmdValue = 0,
+//             .Direction = p_in->Direction,
+//         };
+//         default: return (Motor_Input_T) { .PhaseOutput = PHASE_VOUT_Z };
 //     }
 // }
 
-// alternatively as input conversion,
-
-// interface for   data common
-
-// static inline void Traction_Input_FromAnalogUser(Traction_Input_T * p_user, MotAnalogUser_T * P_analog)
+// Motor_Input_T Traction_ToMotorInput(const Traction_State_T * p_traction)
 // {
-//     p_user->ThrottleValue = MotAnalogUser_GetAInValue(P_analog, MOT_ANALOG_USER_AIN_THROTTLE);
-//     p_user->BrakeValue = MotAnalogUser_GetAInValue(P_analog, MOT_ANALOG_USER_AIN_BRAKE);
-// }
+//     const Traction_Input_T * p_in = &p_traction->Input;
+//     const Traction_Config_T * p_config = &p_traction->Config;
 
-// void Traction_Input_ToMotorInput (const Traction_Input_T * p_user, Motor_Input_T * P_input )
-// {
-    //     switch (dir)
-    //     {
-    //         case MOTOR_CONTROLLER_DIRECTION_PARK:
-    //             P_input->Direction = MOTOR_DIRECTION_NULL;
-    //             P_input->PhaseOutput = PHASE_VOUT_Z;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_REVERSE:
-    //             P_input->Direction = MOTOR_DIRECTION_CW;
-    //             P_input->PhaseOutput = PHASE_VOUT_PWM;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_FORWARD:
-    //             P_input->Direction = MOTOR_DIRECTION_CCW;
-    //             P_input->PhaseOutput = PHASE_VOUT_PWM;
-    //             break;
-    //         case MOTOR_CONTROLLER_DIRECTION_NEUTRAL:
-    //             P_input->PhaseOutput = PHASE_VOUT_Z;
-    //             break;
-    //         default:
-    //             break;
-    //     }
-//
-// }
-
-// static inline void Input_FromThrottle(Motor_Input_T * p_user, Traction_ThrottleMode_T mode, uint16_t throttle)
-// {
-//     p_user->CmdValue = (int32_t)throttle / 2; // [0:32767]
-
-//     switch (mode)
+//     switch (p_in->DriveCmd)
 //     {
-//         case TRACTION_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
-//         case TRACTION_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
-//         default: break;
-//     }
-// }
-
-// static inline void Traction_Input_FromProtocol(Traction_T * vehicle, Motor_Input_T * p_user, id, value)
-
-// static inline void Traction_Input_FromAnalogUser(Traction_T * vehicle, Motor_Input_T * p_user, MotAnalogUser_T * P_analog)
-// {
-//     p_user->CmdValue = (int32_t)MotAnalogUser_GetThrottle(P_analog) / 2; // [0:32767]
-
-//     switch (vehicle->P_TRACTION_STATE->Config.ThrottleMode)
-//     {
-//         case TRACTION_THROTTLE_MODE_SPEED:   p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_SPEED_CURRENT;      break;
-//         case TRACTION_THROTTLE_MODE_TORQUE:  p_user->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT;            break;
-//         default: break;
+//         case TRACTION_CMD_THROTTLE: return (Motor_Input_T)
+//         {
+//             .FeedbackMode = (p_config->ThrottleMode == TRACTION_THROTTLE_MODE_SPEED) ? MOTOR_FEEDBACK_MODE_SPEED_CURRENT : MOTOR_FEEDBACK_MODE_CURRENT,
+//             .CmdValue = (int16_t)(p_in->ThrottleValue / 2),
+//             .PhaseOutput = PHASE_VOUT_PWM,
+//             .Direction = p_in->Direction,
+//         };
+//         case TRACTION_CMD_BRAKE: return (Motor_Input_T)
+//         {
+//             .FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT,
+//             .PhaseOutput = PHASE_VOUT_PWM,
+//             .CmdValue = -(int16_t)(p_in->BrakeValue / 2),
+//             .Direction = p_in->Direction,
+//         };
+//         case TRACTION_CMD_RELEASE: return (Motor_Input_T)
+//         {
+//             .PhaseOutput = (p_config->ZeroMode == TRACTION_ZERO_MODE_FLOAT) ? PHASE_VOUT_Z : PHASE_VOUT_PWM,
+//             .CmdValue = 0,
+//             .Direction = p_in->Direction,
+//         };
+//         default: return (Motor_Input_T) { .PhaseOutput = PHASE_VOUT_Z };
 //     }
 // }

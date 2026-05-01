@@ -55,7 +55,7 @@ static inline Cia402_Adapter_T * Motor_Cia402_Adapter(Motor_T * p_motor) { retur
     Decodes the canonical command and detects the FaultReset rising edge
     against the previous value held in the adapter.
 */
-static inline void Motor_Cia402_WriteControl(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, Cia402_Control_T control)
+static inline void Motor_Cia402_WriteControl(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, Cia402_Control_T control)
 {
     Cia402_Control_T prev = p_adapter->Input.PrevControl;
 
@@ -91,7 +91,7 @@ static inline void Motor_Cia402_WriteControl(const Motor_T * p_motor, Cia402_Ada
 
     PASSIVE splits into RTSO (Phase=Z) and SO (Phase=V0). Read live phase output to disambiguate.
 */
-static inline Cia402_Status_T Motor_Cia402_ReadStatus(const Motor_T * p_motor)
+static inline Cia402_Status_T Motor_Cia402_ReadStatus(Motor_T * p_motor)
 {
     Cia402_Status_T status = { .Word = 0U };
     Motor_StateId_T id = Motor_GetStateId(p_motor->P_MOTOR);
@@ -124,7 +124,7 @@ static inline Cia402_Status_T Motor_Cia402_ReadStatus(const Motor_T * p_motor)
     Object Dictionary
 */
 /******************************************************************************/
-Cia402_OdStatus_T Motor_Cia402_Od_Get(const Motor_T * p_motor, const Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t * p_value)
+Cia402_OdStatus_T Motor_Cia402_Od_Get(Motor_T * p_motor, const Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t * p_value)
 {
     Cia402_OdInfo_T info = Cia402_Od_GetInfo(index, subindex);
 
@@ -158,7 +158,7 @@ Cia402_OdStatus_T Motor_Cia402_Od_Get(const Motor_T * p_motor, const Cia402_Adap
 }
 
 
-Cia402_OdStatus_T Motor_Cia402_Od_Set(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t value)
+Cia402_OdStatus_T Motor_Cia402_Od_Set(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint16_t index, uint8_t subindex, int32_t value)
 {
     Cia402_OdInfo_T info = Cia402_Od_GetInfo(index, subindex);
     if (info.Type   == CIA402_OD_TYPE_NONE)   { return (subindex != 0U) ? CIA402_OD_ERR_SUBINDEX : CIA402_OD_ERR_NO_OBJECT; }
@@ -181,10 +181,6 @@ Cia402_OdStatus_T Motor_Cia402_Od_Set(const Motor_T * p_motor, Cia402_Adapter_T 
 
     return CIA402_OD_OK;
 }
-
-
-
-
 
 
 /******************************************************************************/
@@ -242,24 +238,24 @@ static inline Cia402_OdInterface_T _OdInterface(Motor_Cia402_Ctx_T * p_ctx)
     Caller picks the variant matching the configured TxPDO mapping.
 */
 /******************************************************************************/
-void Motor_Cia402_BuildTxPdo_Sw(const Motor_T * p_motor, Cia402_TxPdo_Sw_T * p_pdo)
+void Motor_Cia402_BuildTxPdo_Sw(Motor_T * p_motor, Cia402_TxPdo_Sw_T * p_pdo)
 {
     p_pdo->Statusword = Motor_Cia402_ReadStatus(p_motor);
 }
 
-void Motor_Cia402_BuildTxPdo_SwVelocity(const Motor_T * p_motor, Cia402_TxPdo_SwVelocity_T * p_pdo)
+void Motor_Cia402_BuildTxPdo_SwVelocity(Motor_T * p_motor, Cia402_TxPdo_SwVelocity_T * p_pdo)
 {
     p_pdo->Statusword     = Motor_Cia402_ReadStatus(p_motor);
     p_pdo->VelocityActual = (int32_t)Motor_GetSpeed_Fract16(p_motor->P_MOTOR);
 }
 
-void Motor_Cia402_BuildTxPdo_SwTorque(const Motor_T * p_motor, Cia402_TxPdo_SwTorque_T * p_pdo)
+void Motor_Cia402_BuildTxPdo_SwTorque(Motor_T * p_motor, Cia402_TxPdo_SwTorque_T * p_pdo)
 {
     p_pdo->Statusword   = Motor_Cia402_ReadStatus(p_motor);
     p_pdo->TorqueActual = (int16_t)p_motor->P_MOTOR->Foc.Iq;
 }
 
-void Motor_Cia402_BuildTxPdo_SwPosition(const Motor_T * p_motor, Cia402_TxPdo_SwPosition_T * p_pdo)
+void Motor_Cia402_BuildTxPdo_SwPosition(Motor_T * p_motor, Cia402_TxPdo_SwPosition_T * p_pdo)
 {
     p_pdo->Statusword     = Motor_Cia402_ReadStatus(p_motor);
     p_pdo->PositionActual = (int32_t)RotorSensor_GetMechanicalAngle(p_motor->P_MOTOR->p_ActiveSensor);
@@ -278,24 +274,24 @@ void Motor_Cia402_BuildTxPdo_SwPosition(const Motor_T * p_motor, Cia402_TxPdo_Sw
     consumes the new target rather than a stale one.
 */
 /******************************************************************************/
-void Motor_Cia402_HandleRxPdo_Cw(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_Cw_T * p_pdo)
+void Motor_Cia402_HandleRxPdo_Cw(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_Cw_T * p_pdo)
 {
     Motor_Cia402_WriteControl(p_motor, p_adapter, p_pdo->Controlword);
 }
 
-void Motor_Cia402_HandleRxPdo_CwTorque(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwTorque_T * p_pdo)
+void Motor_Cia402_HandleRxPdo_CwTorque(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwTorque_T * p_pdo)
 {
     Motor_SetTorqueCmd(p_motor->P_MOTOR, p_pdo->TargetTorque);
     Motor_Cia402_WriteControl(p_motor, p_adapter, p_pdo->Controlword);
 }
 
-void Motor_Cia402_HandleRxPdo_CwVelocity(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwVelocity_T * p_pdo)
+void Motor_Cia402_HandleRxPdo_CwVelocity(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwVelocity_T * p_pdo)
 {
     Motor_SetSpeedCmd(p_motor->P_MOTOR, (int16_t)p_pdo->TargetVelocity);
     Motor_Cia402_WriteControl(p_motor, p_adapter, p_pdo->Controlword);
 }
 
-void Motor_Cia402_HandleRxPdo_CwPosition(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwPosition_T * p_pdo)
+void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwPosition_T * p_pdo)
 {
     /* Motor_SetPositionCmd not yet wired through. Controlword still applied. */
     /* Motor_SetPositionCmd(p_motor->P_MOTOR, (uint16_t)p_pdo->TargetPosition); */
@@ -318,126 +314,95 @@ void Motor_Cia402_HandleRxPdo_CwPosition(const Motor_T * p_motor, Cia402_Adapter
     Motor_Cia402_Adapter().
 */
 /******************************************************************************/
-bool Motor_Cia402_HandleSdo(const Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
+bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
 {
     Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
     const Cia402_OdInterface_T od = _OdInterface(&ctx);
     return Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U;
 }
 
-
 /******************************************************************************/
 /*
-    COB-ID dispatcher
-
-    Routes one inbound CAN frame to the right SDO/RxPDO handler based on the
-    function code (upper 4 bits of CobId) and the node id (lower 7 bits).
-    Mode-aware for RxPDO2 — picks the typed overlay per ActiveMode.
-
-    Returns true and fills *p_tx if a response should be transmitted.
-
-    Build-side counterpart Motor_Cia402_BuildTxPdoN is called periodically
-    (event-driven, SYNC, or timer) to produce TxPDO frames.
-
-    Frames not addressed to this node, and frames in COB-ID classes the
-    drive doesn't consume here (NMT 0x000, SYNC 0x080, NMT heartbeat 0x700,
-    SDO response 0x580, our own TxPDOs 0x180/0x280/...), are ignored.
+    TxPDO build dispatchers
 */
 /******************************************************************************/
+// size_t Motor_Cia402_BuildTxPdo1(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, uint32_t * p_id, uint8_t * p_resp)
+// {
+//     Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_resp);
+//     SetCanFrameId(p_tx, CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId);
+//     p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
+// }
 
-bool Motor_Cia402_HandleCanRx(const Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
-{
-    Cia402_Adapter_T * p_adapter = Motor_Cia402_Adapter((Motor_T *)p_motor);
+// void Motor_Cia402_BuildTxPdo2(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, CAN_Frame_T * p_tx)
+// {
 
-    if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return false; }
+//     SetCanFrameId(p_tx, CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId);
 
-    Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
-    const Cia402_OdInterface_T od = _OdInterface(&ctx);
-
-    switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
-    {
-        case CIA402_COB_RXPDO1_BASE: /* 0x200 — Controlword only */
-        case CIA402_COB_RXPDO2_BASE: /* 0x300 — mode-aware Controlword + setpoint */
-            Cia402_Pdo_HandleRx(&od, p_adapter, p_rx->CanId.Id, (const Cia402_Pdo_T *)p_rx->Data, p_rx->DataLength);
-            return false;
-
-        case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
-            {
-                const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
-                Cia402_Sdo_T * p_resp = (Cia402_Sdo_T *)p_tx->Data;
-                if (Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U)
-                {
-                    p_tx->CanId.Id = (uint32_t)(CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
-                    p_tx->CanId.Eff = 0U;
-                    p_tx->DataLength = 8U;
-                    return true;
-                }
-                return false;
-            }
-
-        default:
-            /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
-            return false;
-    }
-}
-
-
-/******************************************************************************/
-/*
-    TxPDO build dispatchers — produce one outbound CAN frame per cycle.
-    Mode-aware: TxPDO2 layout follows ActiveMode the same way RxPDO2 does.
-*/
-/******************************************************************************/
-static inline void SetCanFrameId(CAN_Frame_T * p_tx, uint32_t cobId)
-{
-    p_tx->CanId.Id  = cobId;
-    p_tx->CanId.Eff = 0U;
-    p_tx->CanId.Rtr = 0U;
-}
-
-void Motor_Cia402_BuildTxPdo1(const Motor_T * p_motor, CAN_Frame_T * p_tx)
-{
-    Cia402_Adapter_T * p_adapter = Motor_Cia402_Adapter((Motor_T *)p_motor);
-    if (p_adapter == NULL) { return; }
-
-    Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_tx->Data);
-    SetCanFrameId(p_tx, CIA402_COB_TXPDO1_BASE | p_adapter->Config.NodeId);
-    p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
-}
-
-void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor, CAN_Frame_T * p_tx)
-{
-    Cia402_Adapter_T * p_adapter = Motor_Cia402_Adapter((Motor_T *)p_motor);
-    if (p_adapter == NULL) { return; }
-
-    SetCanFrameId(p_tx, CIA402_COB_TXPDO2_BASE | p_adapter->Config.NodeId);
-
-    switch (p_adapter->Input.ActiveMode)
-    {
-        case CIA402_MODE_PROFILE_TORQUE:
-        case CIA402_MODE_CYCLIC_SYNC_TORQUE:
-            Motor_Cia402_BuildTxPdo_SwTorque(p_motor, (Cia402_TxPdo_SwTorque_T *)p_tx->Data);
-            p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwTorque_T);
-            break;
-        case CIA402_MODE_VELOCITY:
-        case CIA402_MODE_PROFILE_VELOCITY:
-        case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
-            Motor_Cia402_BuildTxPdo_SwVelocity(p_motor, (Cia402_TxPdo_SwVelocity_T *)p_tx->Data);
-            p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwVelocity_T);
-            break;
-        case CIA402_MODE_PROFILE_POSITION:
-        case CIA402_MODE_CYCLIC_SYNC_POSITION:
-            Motor_Cia402_BuildTxPdo_SwPosition(p_motor, (Cia402_TxPdo_SwPosition_T *)p_tx->Data);
-            p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwPosition_T);
-            break;
-        default:
-            Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_tx->Data);
-            p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
-            break;
-    }
-}
+//     switch (p_adapter->Input.ActiveMode)
+//     {
+//         case CIA402_MODE_PROFILE_TORQUE:
+//         case CIA402_MODE_CYCLIC_SYNC_TORQUE:
+//             Motor_Cia402_BuildTxPdo_SwTorque(p_motor, (Cia402_TxPdo_SwTorque_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwTorque_T);
+//             break;
+//         case CIA402_MODE_VELOCITY:
+//         case CIA402_MODE_PROFILE_VELOCITY:
+//         case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
+//             Motor_Cia402_BuildTxPdo_SwVelocity(p_motor, (Cia402_TxPdo_SwVelocity_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwVelocity_T);
+//             break;
+//         case CIA402_MODE_PROFILE_POSITION:
+//         case CIA402_MODE_CYCLIC_SYNC_POSITION:
+//             Motor_Cia402_BuildTxPdo_SwPosition(p_motor, (Cia402_TxPdo_SwPosition_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_SwPosition_T);
+//             break;
+//         default:
+//             Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_tx->Data);
+//             p_tx->DataLength = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
+//             break;
+//     }
+// }
 
 
+
+// bool Motor_Cia402_HandleCanRx(const Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// {
+//     Cia402_Adapter_T * p_adapter = Motor_Cia402_Adapter((Motor_T *)p_motor);
+
+//     if (CIA402_COB_NODE(p_rx->CanId.Id) != p_adapter->Config.NodeId) { return false; }
+
+//     Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
+//     const Cia402_OdInterface_T od = _OdInterface(&ctx);
+
+//     switch (CIA402_COB_FUNCTION(p_rx->CanId.Id))
+//     {
+//         case CIA402_COB_RXPDO1_BASE: /* 0x200 — Controlword only */
+//         case CIA402_COB_RXPDO2_BASE: /* 0x300 — mode-aware Controlword + setpoint */
+//             Cia402_Pdo_HandleRx(&od, p_adapter, p_rx->CanId.Id, (const Cia402_Pdo_T *)p_rx->Data, p_rx->DataLength);
+//             return false;
+
+//         case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
+//             {
+//                 const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
+//                 Cia402_Sdo_T * p_resp = (Cia402_Sdo_T *)p_tx->Data;
+//                 if (Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U)
+//                 {
+//                     p_tx->CanId.Id = (uint32_t)(CIA402_COB_SDO_RSP_BASE | p_adapter->Config.NodeId);
+//                     p_tx->CanId.Eff = 0U;
+//                     p_tx->DataLength = 8U;
+//                     return true;
+//                 }
+//                 return false;
+//             }
+
+//         default:
+//             /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
+//             return false;
+//     }
+// }
+
+
+// /* likely optimized over 2 virtual calls */
 // bool Motor_Cia402_HandleCanRx(const Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 // {
 //     if (CIA402_COB_NODE(p_rx->CobId) != nodeId) { return false; }
@@ -472,17 +437,17 @@ void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor, CAN_Frame_T * p_tx)
 //             return false;
 
 //         case CIA402_COB_SDO_REQ_BASE: /* 0x600 — SDO download/upload request */
-//         {
-//             const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
-//             Cia402_Sdo_T * p_resp      = (Cia402_Sdo_T *)p_tx->Data;
-//             if (Motor_Cia402_HandleSdo(p_motor, p_adapter, p_req, p_resp) == true)
 //             {
-//                 p_tx->CobId = (uint16_t)(CIA402_COB_SDO_RSP_BASE | nodeId);
-//                 p_tx->Dlc   = 8U;
-//                 return true;
+//                 const Cia402_Sdo_T * p_req = (const Cia402_Sdo_T *)p_rx->Data;
+//                 Cia402_Sdo_T * p_resp = (Cia402_Sdo_T *)p_tx->Data;
+//                 if (Motor_Cia402_HandleSdo(p_motor, p_adapter, p_req, p_resp) == true)
+//                 {
+//                     p_tx->CobId = (uint16_t)(CIA402_COB_SDO_RSP_BASE | nodeId);
+//                     p_tx->Dlc = 8U;
+//                     return true;
+//                 }
+//                 return false;
 //             }
-//             return false;
-//         }
 
 //         default:
 //             /* Not consumed by this drive (NMT, SYNC, EMCY, our own TxPDOs, etc.) */
@@ -491,81 +456,38 @@ void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor, CAN_Frame_T * p_tx)
 // }
 
 
-// /******************************************************************************/
-// /*
-//     TxPDO build dispatchers — produce one outbound CAN frame per cycle.
-//     Mode-aware: TxPDO2 layout follows ActiveMode the same way RxPDO2 does.
-// */
-// /******************************************************************************/
-// void Motor_Cia402_BuildTxPdo1(const Motor_T * p_motor, CAN_Frame_T * p_tx)
-// {
-//     Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_tx->Data);
-//     p_tx->CobId = (uint16_t)(CIA402_COB_TXPDO1_BASE | nodeId);
-//     p_tx->Dlc   = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
-// }
-
-// void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor,   CAN_Frame_T * p_tx)
-// {
-//     p_tx->CobId = (uint16_t)(CIA402_COB_TXPDO2_BASE | nodeId);
-
-//     switch (p_adapter->Input.ActiveMode)
-//     {
-//         case CIA402_MODE_PROFILE_TORQUE:
-//         case CIA402_MODE_CYCLIC_SYNC_TORQUE:
-//             Motor_Cia402_BuildTxPdo_SwTorque(p_motor, (Cia402_TxPdo_SwTorque_T *)p_tx->Data);
-//             p_tx->Dlc = (uint8_t)sizeof(Cia402_TxPdo_SwTorque_T);
-//             break;
-//         case CIA402_MODE_VELOCITY:
-//         case CIA402_MODE_PROFILE_VELOCITY:
-//         case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
-//             Motor_Cia402_BuildTxPdo_SwVelocity(p_motor, (Cia402_TxPdo_SwVelocity_T *)p_tx->Data);
-//             p_tx->Dlc = (uint8_t)sizeof(Cia402_TxPdo_SwVelocity_T);
-//             break;
-//         case CIA402_MODE_PROFILE_POSITION:
-//         case CIA402_MODE_CYCLIC_SYNC_POSITION:
-//             Motor_Cia402_BuildTxPdo_SwPosition(p_motor, (Cia402_TxPdo_SwPosition_T *)p_tx->Data);
-//             p_tx->Dlc = (uint8_t)sizeof(Cia402_TxPdo_SwPosition_T);
-//             break;
-//         default:
-//             Motor_Cia402_BuildTxPdo_Sw(p_motor, (Cia402_TxPdo_Sw_T *)p_tx->Data);
-//             p_tx->Dlc = (uint8_t)sizeof(Cia402_TxPdo_Sw_T);
-//             break;
-//     }
-// }
-
-
 /* Motor_Cia402_Od.c */
 
 /* ---- Per-entry accessors ---- */
 
-// static int32_t OdGet_Controlword(const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->PrevControl.Word; }
-// static int32_t OdGet_Statusword (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_Cia402_ReadStatus(p).Word; }
-// static int32_t OdGet_Modes      (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int8_t)a->ActiveMode; }
-// static int32_t OdGet_PosActual  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return RotorSensor_GetMechanicalAngle(p->P_MOTOR->p_ActiveSensor); }
-// static int32_t OdGet_VelActual  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetSpeed_Fract16(p->P_MOTOR); }
-// static int32_t OdGet_TorqueTgt  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return _Motor_GetTorqueSetpoint(p->P_MOTOR); }
-// static int32_t OdGet_TorqueAct  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return p->P_MOTOR->Foc.Iq; }
-// static int32_t OdGet_CurrentAct (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetIPhase_Fract16(p->P_MOTOR); }
-// static int32_t OdGet_VBus       (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; (void)a; return Phase_VBus_Fract16(); }
-// static int32_t OdGet_VelTarget  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetSpeedSetpoint(p->P_MOTOR); }
-// static int32_t OdGet_QsDecel    (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int32_t)a->QuickStopDecel; }
-// static int32_t OdGet_Supported  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; (void)a; return MOTOR_CIA402_SUPPORTED_DRIVE_MODES; }
-// static int32_t OdGet_QsOption   (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->QuickStopOption; }
-// static int32_t OdGet_ShdnOption (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->ShutdownOption; }
-// static int32_t OdGet_DisOption  (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->DisableOpOption; }
-// static int32_t OdGet_HaltOption (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->HaltOption; }
-// static int32_t OdGet_FltReact   (const Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->FaultReactOption; }
+// static int32_t OdGet_Controlword(Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->PrevControl.Word; }
+// static int32_t OdGet_Statusword (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_Cia402_ReadStatus(p).Word; }
+// static int32_t OdGet_Modes      (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int8_t)a->ActiveMode; }
+// static int32_t OdGet_PosActual  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return RotorSensor_GetMechanicalAngle(p->P_MOTOR->p_ActiveSensor); }
+// static int32_t OdGet_VelActual  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetSpeed_Fract16(p->P_MOTOR); }
+// static int32_t OdGet_TorqueTgt  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return _Motor_GetTorqueSetpoint(p->P_MOTOR); }
+// static int32_t OdGet_TorqueAct  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return p->P_MOTOR->Foc.Iq; }
+// static int32_t OdGet_CurrentAct (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetIPhase_Fract16(p->P_MOTOR); }
+// static int32_t OdGet_VBus       (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; (void)a; return Phase_VBus_Fract16(); }
+// static int32_t OdGet_VelTarget  (Motor_T * p, const Motor_Cia402_T * a)        { (void)a; return Motor_GetSpeedSetpoint(p->P_MOTOR); }
+// static int32_t OdGet_QsDecel    (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return (int32_t)a->QuickStopDecel; }
+// static int32_t OdGet_Supported  (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; (void)a; return MOTOR_CIA402_SUPPORTED_DRIVE_MODES; }
+// static int32_t OdGet_QsOption   (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->QuickStopOption; }
+// static int32_t OdGet_ShdnOption (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->ShutdownOption; }
+// static int32_t OdGet_DisOption  (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->DisableOpOption; }
+// static int32_t OdGet_HaltOption (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->HaltOption; }
+// static int32_t OdGet_FltReact   (Motor_T * p, const Motor_Cia402_T * a)        { (void)p; return a->FaultReactOption; }
 
-// static Cia402_OdStatus_T OdSet_Controlword(const Motor_T * p, Motor_Cia402_T * a, int32_t v) { Motor_Cia402_WriteControl(a, p, (Cia402_Control_T){ .Word = (uint16_t)v }); return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_Modes      (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; Motor_Cia402_WriteOpMode(a, (Cia402_OpMode_T)(int8_t)v); return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_TorqueTgt  (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)a; Motor_SetTorqueCmd(p->P_MOTOR, (int16_t)v); return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_VelTarget  (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)a; Motor_SetSpeedCmd  (p->P_MOTOR, (int16_t)v); return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_QsDecel    (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->QuickStopDecel  = (uint32_t)v;            return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_QsOption   (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->QuickStopOption = (Cia402_QuickStopOption_T)v;     return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_ShdnOption (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->ShutdownOption  = (Cia402_ShutdownOption_T)v;      return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_DisOption  (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->DisableOpOption = (Cia402_DisableOpOption_T)v;     return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_HaltOption (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->HaltOption      = (Cia402_HaltOption_T)v;          return CIA402_OD_OK; }
-// static Cia402_OdStatus_T OdSet_FltReact   (const Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->FaultReactOption= (Cia402_FaultReactionOption_T)v; return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_Controlword(Motor_T * p, Motor_Cia402_T * a, int32_t v) { Motor_Cia402_WriteControl(a, p, (Cia402_Control_T){ .Word = (uint16_t)v }); return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_Modes      (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; Motor_Cia402_WriteOpMode(a, (Cia402_OpMode_T)(int8_t)v); return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_TorqueTgt  (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)a; Motor_SetTorqueCmd(p->P_MOTOR, (int16_t)v); return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_VelTarget  (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)a; Motor_SetSpeedCmd  (p->P_MOTOR, (int16_t)v); return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_QsDecel    (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->QuickStopDecel  = (uint32_t)v;            return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_QsOption   (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->QuickStopOption = (Cia402_QuickStopOption_T)v;     return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_ShdnOption (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->ShutdownOption  = (Cia402_ShutdownOption_T)v;      return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_DisOption  (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->DisableOpOption = (Cia402_DisableOpOption_T)v;     return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_HaltOption (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->HaltOption      = (Cia402_HaltOption_T)v;          return CIA402_OD_OK; }
+// static Cia402_OdStatus_T OdSet_FltReact   (Motor_T * p, Motor_Cia402_T * a, int32_t v) { (void)p; a->FaultReactOption= (Cia402_FaultReactionOption_T)v; return CIA402_OD_OK; }
 
 
 // /* ---- The table (sorted by Index for binary search) ---- */
@@ -618,7 +540,7 @@ void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor, CAN_Frame_T * p_tx)
 //     return (Cia402_OdInfo_T){ .Type = e->Type, .Access = e->Access, .Size = TypeSize(e->Type) };
 // }
 
-// Cia402_OdStatus_T Motor_Cia402_Od_Get(const Motor_T * p, const Motor_Cia402_T * a, uint16_t index, uint8_t subindex, int32_t * p_value)
+// Cia402_OdStatus_T Motor_Cia402_Od_Get(Motor_T * p, const Motor_Cia402_T * a, uint16_t index, uint8_t subindex, int32_t * p_value)
 // {
 //     const Cia402_OdEntry_T * e = Find(index, subindex);
 //     if (e == NULL)        { return CIA402_OD_ERR_NO_OBJECT; }
@@ -627,7 +549,7 @@ void Motor_Cia402_BuildTxPdo2(const Motor_T * p_motor, CAN_Frame_T * p_tx)
 //     return CIA402_OD_OK;
 // }
 
-// Cia402_OdStatus_T Motor_Cia402_Od_Set(const Motor_T * p, Motor_Cia402_T * a, uint16_t index, uint8_t subindex, int32_t value)
+// Cia402_OdStatus_T Motor_Cia402_Od_Set(Motor_T * p, Motor_Cia402_T * a, uint16_t index, uint8_t subindex, int32_t value)
 // {
 //     const Cia402_OdEntry_T * e = Find(index, subindex);
 //     if (e == NULL)        { return CIA402_OD_ERR_NO_OBJECT; }
