@@ -38,7 +38,6 @@
 /*
     [Traction_Input_T]
 */
-/* Cmd SubState use edge detection - DriveState */
 typedef enum Traction_Cmd
 {
     TRACTION_CMD_RELEASE,
@@ -50,7 +49,6 @@ Traction_Cmd_T;
 /*
     Traction_User
 */
-/* alternatively convert to MotorInput */
 typedef struct Traction_Input
 {
     sign_t Direction;
@@ -59,11 +57,10 @@ typedef struct Traction_Input
     Traction_Cmd_T DriveCmd;
 }
 Traction_Input_T;
-/* optionally handle park,fnr in 1 id */
 
 static inline Traction_Cmd_T Traction_Input_EvaluateCmd(const Traction_Input_T * p_input)
 {
-    if (p_input->BrakeValue > 0U) { return TRACTION_CMD_BRAKE; } // optionally check throttle active error
+    if (p_input->BrakeValue > 0U) { return TRACTION_CMD_BRAKE; }
     if (p_input->ThrottleValue > 0U) { return TRACTION_CMD_THROTTLE; }
     return TRACTION_CMD_RELEASE;
 }
@@ -103,9 +100,8 @@ static inline bool Traction_Input_PollDirectionEdge(Traction_Input_T * p_input, 
 static inline sign_t Traction_Input_GetDirectionCmd(const Traction_Input_T * p_input) { return p_input->Direction; }
 
 
-
 /*
-    Config States
+    Config
 */
 typedef enum Traction_BrakeMode
 {
@@ -143,36 +139,13 @@ typedef struct Traction_Config
 }
 Traction_Config_T;
 
-typedef struct Traction_State
+typedef struct Traction
 {
     Traction_Input_T Input;
     Traction_Config_T Config;
 }
-Traction_State_T;
-
-// typedef const struct Traction
-// {
-//     Traction_Input_T Input;
-//     Traction_Config_T Config;
-// }
-// Traction_T;
-
-
-/*
-    [Traction Context]
-    StateMachine with Sync Input
-    maybe depreciate
-*/
-typedef const struct Traction
-{
-    Traction_State_T * P_TRACTION_STATE;
-    Motor_Table_T MOTORS;
-    const Traction_Config_T * P_NVM_CONFIG;
-}
 Traction_T;
 
-
-// #define TRACTION_INIT()
 
 
 /******************************************************************************/
@@ -180,18 +153,8 @@ Traction_T;
 
 */
 /******************************************************************************/
-extern void Traction_Init(const Traction_T * p_vehicle);
+extern void Traction_InitFrom(Traction_T * p_traction, const Traction_Config_T * p_config);
 
-extern void Traction_StartThrottleMode(const Traction_T * p_vehicle);
-extern void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, uint16_t value);
-extern void Traction_StartBrakeMode(const Traction_T * p_vehicle);
-extern void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, uint16_t value);
-extern void Traction_StartDriveZero(const Traction_T * p_vehicle);
-extern void Traction_ProcDriveZero(const Traction_T * p_vehicle);
-extern void Traction_ProcInputCmd(const Traction_T * p_vehicle);
-extern void Traction_StartCmdMode(const Traction_T * p_vehicle, Traction_Cmd_T mode);
-extern void Traction_ProcThrottleValue(const Traction_T * p_vehicle);
-extern void Traction_ProcBrakeValue(const Traction_T * p_vehicle);
 
 /******************************************************************************/
 /*
@@ -203,10 +166,8 @@ typedef enum Traction_VarId
     TRACTION_VAR_DIRECTION,          // sign_t,
     TRACTION_VAR_THROTTLE,           // [0:65535]
     TRACTION_VAR_BRAKE,              // [0:65535]
-    TRACTION_VAR_RELEASE,
-    TRACTION_VAR_STATE_ID,
-    // TRACTION_VAR_THROTTLE_ONLY,           // [0:65535]
-    // TRACTION_VAR_BRAKE_ONLY,              // [0:65535]
+    TRACTION_VAR_COMMAND,           // Traction_Cmd_T
+    TRACTION_VAR_STATE_ID,          // Traction_StateId_T
 }
 Traction_VarId_T;
 
@@ -219,9 +180,20 @@ typedef enum Traction_ConfigId
 Traction_ConfigId_T;
 
 
-extern int _Traction_VarId_Get(const Traction_Input_T * p_vehicle, Traction_VarId_T id);
-extern void _Traction_VarId_Set(Traction_Input_T * p_vehicle, Traction_VarId_T id, int value);
-
 extern int Traction_ConfigId_Get(const Traction_Config_T * p_this, Traction_ConfigId_T id);
 extern void Traction_ConfigId_Set(Traction_Config_T * p_this, Traction_ConfigId_T id, int value);
 
+// extern int _Traction_VarId_Get(const Traction_Input_T * p_vehicle, Traction_VarId_T id);
+// extern void _Traction_VarId_Set(Traction_Input_T * p_vehicle, Traction_VarId_T id, int value);
+
+
+// extern void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t value);
+// extern void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t value);
+// extern void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_ProcDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_ProcInputCmd(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_StartCmdMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors, Traction_Cmd_T mode);
+// extern void Traction_ProcThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
+// extern void Traction_ProcBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors);

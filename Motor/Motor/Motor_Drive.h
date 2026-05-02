@@ -56,6 +56,14 @@ Motor_QuadrantSign_T;
 // }
 // Motor_Quadrant_T;
 
+// typedef union Motor_Quadrant
+// {
+//     struct { uint8_t ForwardNeg : 1; uint8_t MotoringNeg : 1; }  ;
+//     struct { uint8_t SpeedSign : 1; uint8_t TorqueSign : 1; }  ;
+//     uint8_t Bits : 2;
+// }
+// Motor_Quadrant_T;
+
 static inline Motor_QuadrantSign_T Motor_QuadrantSign(int16_t speed, int16_t torque) { return (Motor_QuadrantSign_T) { .Forward = (speed >= 0), .Motoring = (torque * speed >= 0) }; }
 // static inline Motor_Axis_T Motor_FromQuadrant(Motor_Axis_T m, Motor_QuadrantSign_T q)
 // {
@@ -112,27 +120,21 @@ static inline Motor_QuadrantId_T Motor_QuadrantId(int16_t speed, fract16_t iq, f
 // static inline bool Motor_IsGenerating(Motor_QuadrantId_T s){ return abs(s) >= 2; }
 // static inline bool Motor_IsPlugging(Motor_QuadrantId_T s)  { return abs(s) == 3; }
 
- typedef struct
-{
-    uint16_t Cmd        : 14; /* Abs value [0:16383] */
-    uint16_t Generating : 1; /*  */
-    uint16_t Reverse    : 1; /* User */
-}
-Motor_QuadrantCmd_T;
 
-typedef struct
-{
-    Motor_FeedbackMode_T FeedbackMode;
-    Motor_QuadrantCmd_T Cmd;
-}
-Motor_DriveCmd_T;
 
-static inline int16_t Motor_QuadrantCmd_AsUser(Motor_QuadrantCmd_T cmd) { return (cmd.Reverse ? -cmd.Cmd : cmd.Cmd); }
-/*   + aligned with rotation, - opposing (regen/brake) */
-static inline int16_t Motor_QuadrantCmd_AsMotoring(Motor_QuadrantCmd_T cmd, Motor_Direction_T motor)
-{
-    return (cmd.Generating ? -cmd.Cmd : cmd.Cmd);
-}
+// typedef struct
+// {
+//     Motor_FeedbackMode_T FeedbackMode;
+//     Motor_QuadrantCmd_T Cmd;
+// }
+// Motor_DriveCmd_T;
+
+// static inline int16_t Motor_QuadrantCmd_AsUser(Motor_QuadrantCmd_T cmd) { return (cmd.Reverse ? -cmd.Cmd : cmd.Cmd); }
+// /*   + aligned with rotation, - opposing (regen/brake) */
+// static inline int16_t Motor_QuadrantCmd_AsMotoring(Motor_QuadrantCmd_T cmd, Motor_Direction_T motor)
+// {
+//     return (cmd.Generating ? -cmd.Cmd : cmd.Cmd);
+// }
 
   /*    case Motoring:    return v * Motor_GetRunDirection(p);
         case Generati:  return -v * Motor_GetRunDirection(p); */
@@ -149,9 +151,3 @@ static inline int16_t Motor_QuadrantCmd_AsMotoring(Motor_QuadrantCmd_T cmd, Moto
 // Motor_DriveDirection_T;
 
 
-// void Motor_ApplyDriveCmd(const Motor_T * p, Motor_DriveCmd_T cmd)
-// {
-//     Motor_QuadrantSign_T runtime = Motor_QuadrantSign(Motor_GetSpeed(p), Motor_GetIq(p));
-//     int16_t signed_cmd = Motor_QuadrantSign_AsMotoring(runtime, cmd.Cmd.Cmd);   /* or AsSpeed, per FeedbackMode */
-//     Motor_ApplyFeedbackCmd(p, cmd.FeedbackMode, signed_cmd);
-// }

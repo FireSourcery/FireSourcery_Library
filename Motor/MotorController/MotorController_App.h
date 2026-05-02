@@ -40,6 +40,7 @@ struct MotorController;
 typedef const struct MotorController MotorController_T;
 
 typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
+// typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc, void * p_config);
 
 /*
     All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State

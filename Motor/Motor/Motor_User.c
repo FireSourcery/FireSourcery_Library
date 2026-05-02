@@ -332,15 +332,60 @@ void _Motor_SetUserCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, 
     else                           { Motor_SetTorqueVCmd(p_motor, userCmd); }
 }
 
+typedef struct
+{
+    uint16_t Magnitude : 15;
+    uint16_t Reverse : 1;
+    uint16_t Frame : 1;
+}
+Motor_QuadrantCmd_T;
+
+typedef struct
+{
+    Motor_FeedbackMode_T FeedbackMode;
+    Motor_QuadrantCmd_T Cmd;
+}
+Motor_DriveCmd_T;
+
 // #include "Motor_Drive.h"
 // void Motor_SetDriveCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, Motor_QuadrantCmd_T cmd)
 // {
-
+//     if (cmd.Frame == 0) { _Motor_SetUserCmdUnits(p_motor, mode, cmd.Magnitude); }
+//     else { _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Magnitude); }
 // }
 
-// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_DriveCmd_T cmd)
+// typedef struct
 // {
+//     uint8_t Motoring : 1;
+//     uint8_t Forward : 1;
+// }
+// Motor_QuadrantSign_T;
+// typedef struct
+// {
+//     int16_t Cmd ;
+//     Motor_QuadrantSign_T QuadrantSign;
+// }
+// Motor_QuadrantCmd_T;
 
+// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, Motor_QuadrantCmd_T cmd)
+// {
+//     switch ((uint8_t)cmd.QuadrantSign)
+//     {
+//         case  : /* Forward Motoring */
+//             _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Cmd);
+//             break;
+//         case  : /* Reverse Motoring */
+//             _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Cmd);
+//             break;
+//         case  : /* Forward Generating */
+//             _Motor_SetUserCmdUnits(p_motor, mode, cmd.Cmd);
+//             break;
+//         case  : /* Reverse Generating */
+//             _Motor_SetUserCmdUnits(p_motor, mode, cmd.Cmd);
+//             break;
+//         default:
+//             break;
+//     }
 // }
 
 

@@ -303,11 +303,9 @@ typedef const struct MotorController
     StateMachine_T STATE_MACHINE;
 
     MotorController_App_T * P_APP; /* Single compile time selection for now */
-    const void * P_APP_CONTEXT;
-    // directly map components. this would be most similar to implementing within MotorController_T, minus the type coupling.
-    // void * P_APP_RUNTIME;
-    // const void * P_APP_NVM_CONFIG;
-
+    void * P_APP_STATE;             /* Adapter state — cast to app's concrete type (Traction_T, Servo_T, ...) */
+    const void * P_APP_NVM_CONFIG;  /* Adapter NVM config — cast to app's concrete config type */
+    /* directly map components. same as implementing within MotorController_T, minus the type coupling. */
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
 }

@@ -88,6 +88,9 @@ extern const MotorController_App_T MC_APP_TRACTION;
 
 */
 /******************************************************************************/
+/* MotorController.c */
+static inline Traction_T * MotorController_Traction_Cast(MotorController_T * p_mc) { return (Traction_T *)(p_mc->P_APP_STATE); }
+static inline const Traction_Config_T * MotorController_Traction_CastNvm(MotorController_T * p_mc) { return (const Traction_Config_T *)(p_mc->P_APP_NVM_CONFIG); }
 
 
 extern void MotorController_Traction_PollStartCmd(MotorController_T * p_mc);
