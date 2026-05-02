@@ -36,6 +36,11 @@
     System-scope arbitration ids. Per-motor sources (winding heat, stall,
     field-weakening) live in Motor_Limits.h — never add them here or a single
     motor's derate would broadcast to all motors sharing this controller.
+
+    Slot values are unitless Q15 ufract16 derate factors in [0, FRACT16_MAX] ≡ [0, 1] of rated.
+    Sources push their derate directly (no rated multiplication at the source).
+    Active derate = LimitArray_Upper(...) = min of stored derates = most-restrictive source.
+    Consumer multiplies by rated once: physical = fract16_mul(rated, active_derate).
 */
 typedef enum MotILimitId
 {

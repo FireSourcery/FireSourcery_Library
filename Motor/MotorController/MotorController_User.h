@@ -127,11 +127,13 @@ static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(Motor
 /******************************************************************************/
 /*
     User Setting Speed/I Limit
+    derate_fract16: Q15 ufract16 in [0, FRACT16_MAX] ≡ [0, 1] of rated.
+    Caller passes a unitless ratio; rated multiplication happens at the Motor_Table_Apply* boundary.
 */
 /******************************************************************************/
-static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t limit_fract16) { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_SetUserSpeedLimitAll(MotorController_T * p_dev, uint16_t derate_fract16) { return _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER, derate_fract16); }
 static inline bool MotorController_ClearUserSpeedLimitAll(MotorController_T * p_dev) { return _MotorController_ClearSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_USER); }
-static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t limit_fract16) { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, limit_fract16); }
+static inline bool MotorController_SetUserILimitAll(MotorController_T * p_dev, uint16_t derate_fract16) { return _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_USER, derate_fract16); }
 static inline bool MotorController_ClearUserILimitAll(MotorController_T * p_dev) { return _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_USER); }
 
 

@@ -129,7 +129,7 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     switch (HeatMonitor_Group_PollCollective(&p_dev->HEAT_MOSFETS))
     {
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:    MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_MOSFETS_OVERHEAT);            break;
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, fract16_mul(HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS), Phase_Calibration_GetIRatedPeak_Fract16()));            break;
+        case HEAT_MONITOR_STATUS_WARNING_HIGH:      _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC, HeatMonitor_Group_GetDerate_Fract16(&p_dev->HEAT_MOSFETS));            break;
         case HEAT_MONITOR_STATUS_NORMAL:
             if (Monitor_IsWarningClearing(p_dev->HEAT_MOSFETS.P_STATE)) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_HEAT_MC); }
             break;
@@ -174,8 +174,8 @@ static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
     {
         case VMONITOR_STATUS_FAULT_OVERVOLTAGE:
         case VMONITOR_STATUS_FAULT_UNDERVOLTAGE:    _MotorController_VBus_EnterFault(p_dev);    break;
-        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_LOW, VBus_GetILimitUnderV_Fract16(p_dev->P_VBUS));            break;
-        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH, VBus_GetIGenLimitOverV_Fract16(p_dev->P_VBUS));  break;
+        case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_LOW, VBus_GetIDerateUnderV(p_dev->P_VBUS));            break;
+        case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetIGenLimitAll(p_dev, MOT_I_GEN_LIMIT_V_HIGH, VBus_GetIDerateOverV(p_dev->P_VBUS));  break;
         case VMONITOR_STATUS_NORMAL:
             if (VBus_IsClearingEdge(p_dev->P_VBUS) == true)
             {
@@ -288,7 +288,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
             _MotorController_HeatMonitor_Thread(p_dev);
 
             /* Vbus Speed derate scales continuously below VNominal, independent of warning thresholds */
-            _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, _VBus_GetSpeedLimit_Fract16(p_dev->P_VBUS));
+            _MotorController_SetSpeedLimitAll(p_dev, MOT_SPEED_LIMIT_V_BUS, VBus_GetSpeedDerate(p_dev->P_VBUS));
             // if (VBus_IsUnderNominal(p_dev->P_VBUS) == true)
 
             /* Can use low priority check, as motor is already in fault state. */

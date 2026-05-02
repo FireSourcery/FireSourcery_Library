@@ -26,9 +26,11 @@
 /*!
     @file   LimitArray.h
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Multi-source derate arbitration — slot-indexed monoid reducer with cached aggregate.
+
 */
 /******************************************************************************/
+#include "Math/Fixed/fract16.h"
 #include "Type/Array/Array.h"
 #include "Math/math_general.h"
 
@@ -43,12 +45,13 @@ typedef int32_t limit_t;
 #define LIMIT_ARRAY_CLEAR (INT32_MIN) /* (LIMIT_ARRAY_MIN - 1) is reserved  */
 #else
 /*
-    limits as unsigned
+    Unitless Q15 derate factor — ufract16_t in [0, FRACT16_MAX] ≡ [0, 1] of rated.
+    Cleared = FRACT16_MAX = 1.0 = "no constraint" = identity for min reducer.
 */
-typedef uint16_t limit_t;
+typedef ufract16_t limit_t;
 #define LIMIT_ARRAY_MIN (0U)
-#define LIMIT_ARRAY_MAX (UINT16_MAX)
-#define LIMIT_ARRAY_CLEAR (LIMIT_ARRAY_MAX) /* UpperLimit unaffected. LowerLimit may incur additional logic */
+#define LIMIT_ARRAY_MAX (FRACT16_MAX)
+#define LIMIT_ARRAY_CLEAR (LIMIT_ARRAY_MAX) /* identity for min; "no constraint" = 1.0 */
 #endif
 
 typedef size_t limit_id_t;

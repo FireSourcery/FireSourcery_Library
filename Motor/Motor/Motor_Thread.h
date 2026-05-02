@@ -104,9 +104,10 @@ static inline void Motor_Heat_Thread(const Motor_T * p_dev)
             break;
         case HEAT_MONITOR_STATUS_WARNING_HIGH:
             {
-                uint16_t i_limit = fract16_mul(HeatMonitor_GetScalarLimit_Percent16(&p_dev->HEAT_MONITOR) / 2, Phase_Calibration_GetIRatedPeak_Fract16());
-                LimitArray_TestSetEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING, i_limit);
-                LimitArray_TestSetEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING, i_limit);
+                /* Push derate directly — Q15 ratio; rated multiply happens once at Motor_Table_ApplyILimit. */
+                uint16_t derate = HeatMonitor_GetDerate_Fract16(&p_dev->HEAT_MONITOR);
+                LimitArray_TestSetEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING, derate);
+                LimitArray_TestSetEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING, derate);
                 break;
             }
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:

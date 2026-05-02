@@ -227,10 +227,6 @@ extern void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_frac
 extern void Motor_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 
-#if defined(MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
-extern void Motor_EnterOpenLoopState(const Motor_T * p_motor);
-#endif
-
 extern void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd);
 
 

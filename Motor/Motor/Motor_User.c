@@ -267,20 +267,9 @@ void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
     Motoring
 */
 /******************************************************************************/
-// void Motor_SetTorqueDriveCmd(Motor_State_T * p_motor, int16_t i_fract16)
-// {
-//     // _Motor_SetTorqueCmd(p_motor, math_clamp(i_fract16, (int32_t)0 - Motor_ILimitReverse(p_motor), Motor_ILimitForward(p_motor)));
-//     _Motor_SetTorqueMotoringCmd(p_motor, i_fract16);
-// }
+void Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, i_fract16); }
+void Motor_SetTorqueMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
 
-// void Motor_SetTorqueDriveCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
-// {
-//     Motor_SetTorqueDriveCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16));
-// }
-
-/*
-    alternatively throttle layer handle
-*/
 /* + as selected motoring direction. Speed reduce to 0 only. clamped by anti-plugging in feedback loop */
 // _Motor_SetSpeedMotoringCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - Motor_SpeedLimitGenerating(p_motor), Motor_SpeedLimitMotoring(p_motor)));
 void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedMotoringCmd(p_motor, speed_fract16); }
@@ -334,59 +323,12 @@ void _Motor_SetUserCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, 
 
 typedef struct
 {
-    uint16_t Magnitude : 15;
-    uint16_t Reverse : 1;
-    uint16_t Frame : 1;
-}
-Motor_QuadrantCmd_T;
-
-typedef struct
-{
     Motor_FeedbackMode_T FeedbackMode;
-    Motor_QuadrantCmd_T Cmd;
+    int16_t Cmd;
 }
 Motor_DriveCmd_T;
 
-// #include "Motor_Drive.h"
-// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, Motor_QuadrantCmd_T cmd)
-// {
-//     if (cmd.Frame == 0) { _Motor_SetUserCmdUnits(p_motor, mode, cmd.Magnitude); }
-//     else { _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Magnitude); }
-// }
 
-// typedef struct
-// {
-//     uint8_t Motoring : 1;
-//     uint8_t Forward : 1;
-// }
-// Motor_QuadrantSign_T;
-// typedef struct
-// {
-//     int16_t Cmd ;
-//     Motor_QuadrantSign_T QuadrantSign;
-// }
-// Motor_QuadrantCmd_T;
-
-// void Motor_SetDriveCmd(Motor_T * p_motor, Motor_FeedbackMode_T mode, Motor_QuadrantCmd_T cmd)
-// {
-//     switch ((uint8_t)cmd.QuadrantSign)
-//     {
-//         case  : /* Forward Motoring */
-//             _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Cmd);
-//             break;
-//         case  : /* Reverse Motoring */
-//             _Motor_SetMotoringCmdUnits(p_motor, mode, cmd.Cmd);
-//             break;
-//         case  : /* Forward Generating */
-//             _Motor_SetUserCmdUnits(p_motor, mode, cmd.Cmd);
-//             break;
-//         case  : /* Reverse Generating */
-//             _Motor_SetUserCmdUnits(p_motor, mode, cmd.Cmd);
-//             break;
-//         default:
-//             break;
-//     }
-// }
 
 
 /******************************************************************************/
@@ -394,16 +336,6 @@ Motor_DriveCmd_T;
     Open Loop
 */
 /******************************************************************************/
-/*
-*/
-void Motor_EnterOpenLoopState(const Motor_T * p_motor)
-{
-    StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); /* Set FeedbackMode on Entry */
-}
-
-/*
-    Open Loop Cmd Limit clamp on proc.
-*/
 /******************************************************************************/
 /*!
 */
@@ -455,26 +387,29 @@ bool Motor_TryClearILimit(Motor_State_T * p_motor)
 }
 
 
+/*
+    LimitArrays store Q15 derates; rated multiplication happens here at the consumer boundary.
+*/
 void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
 {
     // if (LimitArray_IsUpperActive(p_local) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_local)); }
     // else { Motor_TryClearSpeedLimit(p_motor); }
 
-    Motor_SetSpeedLimits(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+    Motor_SetSpeedLimits(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), FRACT16_1_DIV_2));
 }
 
 void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
 {
     // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
     // else { Motor_TryClearILimit(p_motor); }
-    Motor_SetILimitMotoring(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+    Motor_SetILimitMotoring(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), Phase_Calibration_GetIRatedPeak_Fract16()));
 }
 
 void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
 {
     // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
     // else { Motor_TryClearILimit(p_motor); }
-    Motor_SetILimitGenerating(p_motor, math_min(LimitArray_Upper(p_system), LimitArray_Upper(p_local)));
+    Motor_SetILimitGenerating(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), Phase_Calibration_GetIRatedPeak_Fract16()));
 }
 
 /*
