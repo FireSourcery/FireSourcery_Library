@@ -85,8 +85,8 @@ void _Motor_SetDirection(Motor_T * p_dev, VBus_T * p_vbus, Motor_Direction_T dir
     Motor_SetDirection(p_dev, direction); /* alternatively caller handle */
     uint16_t vRef = VBus_GetVPhaseRefSvpwm(p_vbus);
     interval_t vInterval = VBus_AntiPluggingLimits(p_vbus, (sign_t)direction);
-    PID_SetOutputLimits(&p_motor->PidIq, vInterval.low, vInterval.high);
-    PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
+    PID_SetOutputLimits(&p_motor->Foc.PidIq, vInterval.low, vInterval.high);
+    PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
 }
 
 static inline void _Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }

@@ -32,6 +32,7 @@
 #include "foc_math.h"
 #include "svpwm_math.h"
 #include "Math/Fixed/fract16.h"
+#include "Math/PID/PID.h"
 
 typedef struct FOC
 {
@@ -52,8 +53,10 @@ typedef struct FOC
     /* Scalar. optionally handle by phase */
     alignas(4) ufract16_t DutyA, DutyB, DutyC;
 
-    // PID_T PidIq;
-    // PID_T PidId;
+    /* Inner current loop — pair has no semantic life outside the d-q frame.
+       Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object. */
+    PID_T PidIq;
+    PID_T PidId;
 
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
@@ -142,11 +145,29 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = v.c;
 }
 
+/******************************************************************************/
+/*!
+    Inner current loop — d-q PID pair operations.
+    Co-located with the d-q vectors they read from / write to.
+*/
+/******************************************************************************/
+static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+{
+    PID_SetOutputState(&p_foc->PidId, vd);
+    PID_SetOutputState(&p_foc->PidIq, vq);
+}
+
+static inline void FOC_ResetCurrentLoop(FOC_T * p_foc)
+{
+    PID_Reset(&p_foc->PidIq);
+    PID_Reset(&p_foc->PidId);
+}
+
 // static void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 // {
 //     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 //     int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
-//     interval_t band = interval_of_sign(math_sign(p_foc->Vq), vqLimit);
+//     interval_t band = interval_of_sign(math_sign(p_foc->Vq), vqLimit); /* sign-keying  needs direction */
 //     PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
 //     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
 // }

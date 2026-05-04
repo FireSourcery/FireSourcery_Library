@@ -328,9 +328,7 @@ typedef struct Motor_State
     */
     Ramp_T TorqueRamp;                      /* { Target, Output, Limit, Coefficient } — full torque setpoint contract */
     volatile Phase_Input_T PhaseInput;
-    FOC_T Foc;
-    PID_T PidIq;                /* Input (IqReq - IqFeedback), Output Vq. Sign as CCW/CW direction */
-    PID_T PidId;
+    FOC_T Foc;                              /* d-q vectors AND inner-loop PIDs (Foc.PidIq, Foc.PidId) */
     // PID_T PidIPhase;         /* Align, or use getter */
     Ramp_T VRamp; /* Optional VRamp */
 

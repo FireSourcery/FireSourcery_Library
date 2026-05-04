@@ -66,7 +66,7 @@ static void Calibration_Entry(const Motor_T * p_motor)
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateV0(&p_motor->PHASE);
     Hall_StartCalibrate(GetHall(p_motor));
-    PID_Reset(&p_motor->P_MOTOR->PidId);
+    PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Ramp_SetOutputLimit(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
     Motor_SetFeedbackMode(p_motor->P_MOTOR, MOTOR_FEEDBACK_MODE_CURRENT);

@@ -129,8 +129,8 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_Config_T * p_motor) { re
 // static inline int16_t Motor_OpenLoopVLimitOf(const Motor_Config_T * p_motor, int16_t vReq) { return math_clamp(vReq, (int32_t)0 - Motor_OpenLoopVLimit(p_motor), Motor_OpenLoopVLimit(p_motor)); }
 // static inline uint16_t Motor_GetVAlign(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->AlignScalar_Fract16, Phase_VBus_GetVRef()); }
 
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_motor) { return Motor_GetSpeedRated_Fract16(p_motor); }
-static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Config_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
+// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_motor) { return Motor_GetSpeedRated_Fract16(p_motor); }
+// static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Config_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
 
 /******************************************************************************/
 /*

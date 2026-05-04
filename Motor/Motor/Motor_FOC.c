@@ -62,22 +62,22 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 */
 static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
-    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
+    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
     int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
     interval_t band = interval_of_sign((sign_t)p_motor->Direction, vqLimit);
-    PID_CaptureOutputLimits(&p_motor->PidIq, band.low, band.high);
-    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
+    PID_CaptureOutputLimits(&p_motor->Foc.PidIq, band.low, band.high);
+    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
 }
 
 static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
 {
-    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->PidId, FOC_Id(&p_motor->Foc), idReq));
-    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->PidIq, FOC_Iq(&p_motor->Foc), iqReq));
+    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
+    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
     {
-        _PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
-        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->PidIq)) { PID_SetOutputState(&p_motor->PidIq, FOC_Vq(&p_motor->Foc)); }
+        _PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
+        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->Foc.PidIq)) { PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); }
     }
 }
 
@@ -210,8 +210,7 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
 {
     FOC_ClearCaptureState(&p_motor->Foc); /* Clear for view, updated again on enter control */
     FOC_ClearOutputState(&p_motor->Foc); /* Emergency stop, capture bemf subsitute */
-    PID_Reset(&p_motor->PidIq);
-    PID_Reset(&p_motor->PidId);
+    FOC_ResetCurrentLoop(&p_motor->Foc);
     PID_Reset(&p_motor->PidSpeed);
     Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
@@ -223,15 +222,14 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
 
 void _Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
 {
-    PID_SetOutputState(&p_motor->PidId, vd);
-    PID_SetOutputState(&p_motor->PidIq, vq);
+    FOC_MatchIVState(&p_motor->Foc, vd, vq);
 }
 
 /* torque only states */
 void Motor_FOC_MatchIVState(Motor_State_T * p_motor)
 {
-    if (FOC_Vq(&p_motor->Foc) == 0) { _Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); }
-    else { _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc)); }
+    int16_t vqMatch = (FOC_Vq(&p_motor->Foc) == 0) ? Motor_GetVSpeed_Fract16(p_motor) : FOC_Vq(&p_motor->Foc);
+    FOC_MatchIVState(&p_motor->Foc, 0, vqMatch);
 }
 
 /*!
@@ -264,8 +262,8 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, int16_t vRef)
 {
     interval_t v = VBus_AntiPluggingLimits(p_motor->p_VBus, (sign_t)p_motor->Direction);
-    PID_SetOutputLimits(&p_motor->PidIq, v.low, v.high);
-    PID_SetOutputLimits(&p_motor->PidId, 0 - vRef, vRef);
+    PID_SetOutputLimits(&p_motor->Foc.PidIq, v.low, v.high);
+    PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
 }
 
 void Motor_FOC_ApplyVLimits(Motor_State_T * p_motor)

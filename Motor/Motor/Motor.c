@@ -78,8 +78,8 @@ void Motor_Reset(Motor_State_T * p_motor)
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
     PID_InitFrom(&p_motor->PidSpeed, &p_motor->Config.PidSpeed);
-    PID_InitFrom(&p_motor->PidIq, &p_motor->Config.PidI);
-    PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
 #if defined(MOTOR_SIX_STEP_ENABLE)
     PID_Init(&p_motor->PidIBus);
     BEMF_Init(&p_motor->Bemf);
@@ -185,8 +185,8 @@ void Motor_ResetSpeedPid(Motor_State_T * p_motor)
 
 void Motor_ResetIPid(Motor_State_T * p_motor)
 {
-    PID_InitFrom(&p_motor->PidIq, &p_motor->Config.PidI);
-    PID_InitFrom(&p_motor->PidId, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
+    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
 }
 
 void _Motor_ResetTuning(Motor_T * p_motor)
