@@ -35,7 +35,7 @@
 /*
 
 */
-void Motor_Init(const Motor_T * p_dev)
+void Motor_Init(Motor_T * p_dev)
 {
     // assert(Phase_VBus_GetVNominal() != 0U); /* set by caller init */
 
@@ -53,8 +53,6 @@ void Motor_Init(const Motor_T * p_dev)
     /* Using Config Id */
     p_dev->P_MOTOR->p_ActiveSensor = RotorSensor_Of(&p_dev->SENSOR_TABLE, p_dev->P_MOTOR->Config.SensorMode);
     RotorSensor_Init(p_dev->P_MOTOR->p_ActiveSensor);
-
-    p_dev->P_MOTOR->p_VBus = p_dev->P_VBUS; /* BackPointer for now */
 
     HeatMonitor_Init(&p_dev->HEAT_MONITOR);
 
@@ -204,11 +202,12 @@ void _Motor_ResetTuning(Motor_T * p_motor)
     FeedbackMode may update feedback limits
 */
 /******************************************************************************/
-void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode)
+void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 {
-    p_motor->FeedbackMode.Value = mode.Value;
+    Motor_State_T * p_motor = p_dev->P_MOTOR;
+    interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)p_dev->P_MOTOR->Direction);
 
-    interval_t v = VBus_AntiPluggingLimits(p_motor->p_VBus, (sign_t)p_motor->Direction);
+    p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
 
     if (p_motor->FeedbackMode.Speed == 1U)
     {
@@ -241,12 +240,17 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     Active Limits
 */
 /******************************************************************************/
-/*
-    effective when system ResolveLimits is disabled.
-    Virtual fields resolved to ccw/cw limits on se
-    write direction-resolved Ccw/Cw directly.
-*/
-/* Forward direction = Config.DirectionForward sign; lands in Ccw if forward==CCW, else in -Cw. */
+// static inline void _Motor_SetILimitCcw(const Motor_State_T * p_motor, int16_t value) { return Ramp_SetLimitUpper(&p_motor->TorqueRamp); }
+// static inline void _Motor_SetILimitCw(const Motor_State_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->TorqueRamp); }
+// static inline void _Motor_SetSpeedLimitCcw(const Motor_State_T * p_motor, int16_t value) { return Ramp_GetLimitUpper(&p_motor->SpeedRamp); }
+// static inline void _Motor_SetSpeedLimitCw(const Motor_State_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->SpeedRamp); }
+
+// /*
+//     effective when system ResolveLimits is disabled.
+//     Virtual fields resolved to ccw/cw limits on se
+//     write direction-resolved Ccw/Cw directly.
+// */
+// /* Forward direction = Config.DirectionForward sign; lands in Ccw if forward==CCW, else in -Cw. */
 // void _Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
 // {
 //     ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
@@ -272,7 +276,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 //     }
 // }
 
-/* Motoring sign matches Direction: lands in Ccw if Direction==CCW, else in -Cw. */
+// /* Motoring sign matches Direction: lands in Ccw if Direction==CCW, else in -Cw. */
 // void _Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
 // {
 //     ufract16_t i_mot = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);

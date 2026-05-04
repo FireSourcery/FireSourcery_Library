@@ -78,6 +78,8 @@ static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_St
 /*
 
 */
+// static inline bool _Motor_FOC_IsMotoring(const FOC_T * p_foc, speed) { return (FOC_Iq(p_foc) * (int32_t)RotorSensor_GetSpeed_Fract16(p_sensor) > 0); }
+
 static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) > 0); }
 static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
 static inline bool _Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0); }

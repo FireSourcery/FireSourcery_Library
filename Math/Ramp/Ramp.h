@@ -99,6 +99,7 @@ static inline void  Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Ta
 static inline int32_t Ramp_GetLimitLower(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.LimitLower >> RAMP_SHIFT); }
 static inline int32_t Ramp_GetLimitUpper(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.LimitUpper >> RAMP_SHIFT); }
 
+/* OnInput Limits */
 static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {
     p_ramp->Accumulator.LimitLower = (int32_t)lower << RAMP_SHIFT;

@@ -303,7 +303,7 @@ static void paramid_step_idle(Motor_State_T * p_motor)
 /******************************************************************************/
 extern const State_T MOTOR_STATE_CALIBRATION;
 
-static void paramid_common_entry(const Motor_T * p_motor, Motor_Calibration_StateId_T stateIdx)
+static void paramid_common_entry(Motor_T * p_motor, Motor_Calibration_StateId_T stateIdx)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -331,9 +331,9 @@ static void paramid_common_entry(const Motor_T * p_motor, Motor_Calibration_Stat
 /******************************************************************************/
 extern const State_T CALIBRATION_STATE_RS;
 
-static void Rs_Entry(const Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_RS); }
+static void Rs_Entry(Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_RS); }
 
-static void Rs_Proc(const Motor_T * p_motor)
+static void Rs_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -369,15 +369,15 @@ const State_T CALIBRATION_STATE_RS =
     .LOOP     = (State_Action_T)Rs_Proc,
 };
 
-static State_T * Rs_Start(const Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_RS; }
+static State_T * Rs_Start(Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_RS; }
 
-void Motor_Calibration_StartRs(const Motor_T * p_motor)
+void Motor_Calibration_StartRs(Motor_T * p_motor)
 {
     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Rs_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-bool Motor_Calibration_IsRs(const Motor_T * p_motor)
+bool Motor_Calibration_IsRs(Motor_T * p_motor)
 {
     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_RS);
 }
@@ -391,9 +391,9 @@ bool Motor_Calibration_IsRs(const Motor_T * p_motor)
 /******************************************************************************/
 extern const State_T CALIBRATION_STATE_LD;
 
-static void Ld_Entry(const Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_LD); }
+static void Ld_Entry(Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_LD); }
 
-static void Ld_Proc(const Motor_T * p_motor)
+static void Ld_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -434,15 +434,15 @@ const State_T CALIBRATION_STATE_LD =
     .LOOP     = (State_Action_T)Ld_Proc,
 };
 
-static State_T * Ld_Start(const Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_LD; }
+static State_T * Ld_Start(Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_LD; }
 
-void Motor_Calibration_StartLd(const Motor_T * p_motor)
+void Motor_Calibration_StartLd(Motor_T * p_motor)
 {
     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Ld_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-bool Motor_Calibration_IsLd(const Motor_T * p_motor)
+bool Motor_Calibration_IsLd(Motor_T * p_motor)
 {
     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_LD);
 }
@@ -456,9 +456,9 @@ bool Motor_Calibration_IsLd(const Motor_T * p_motor)
 /******************************************************************************/
 extern const State_T CALIBRATION_STATE_LQ;
 
-static void Lq_Entry(const Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_LQ); }
+static void Lq_Entry(Motor_T * p_motor) { paramid_common_entry(p_motor, MOTOR_CALIBRATION_STATE_LQ); }
 
-static void Lq_Proc(const Motor_T * p_motor)
+static void Lq_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -499,15 +499,15 @@ const State_T CALIBRATION_STATE_LQ =
     .LOOP     = (State_Action_T)Lq_Proc,
 };
 
-static State_T * Lq_Start(const Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_LQ; }
+static State_T * Lq_Start(Motor_T * p_motor, state_value_t v) { (void)p_motor; (void)v; return (State_T *)&CALIBRATION_STATE_LQ; }
 
-void Motor_Calibration_StartLq(const Motor_T * p_motor)
+void Motor_Calibration_StartLq(Motor_T * p_motor)
 {
     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Lq_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-bool Motor_Calibration_IsLq(const Motor_T * p_motor)
+bool Motor_Calibration_IsLq(Motor_T * p_motor)
 {
     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_LQ);
 }

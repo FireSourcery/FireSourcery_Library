@@ -38,7 +38,7 @@
 // /*
 //     Same as run
 // */
-// static void Tuning_Entry(const Motor_T * p_motor)
+// static void Tuning_Entry(Motor_T * p_motor)
 // {
 //     Phase_ActivateT0(&p_motor->PHASE);
 
@@ -49,7 +49,7 @@
 //     Motor_ResetIPid(p_motor->P_MOTOR);
 // }
 
-// static void Tuning_Proc(const Motor_T * p_motor)
+// static void Tuning_Proc(Motor_T * p_motor)
 // {
 //     Motor_ProcOuterFeedback(p_motor->P_MOTOR);
 //     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
@@ -58,7 +58,7 @@
 
 // /*
 // */
-// static State_T * Tuning_InputFeedbackMode(const Motor_T * p_motor, state_value_t feedbackMode)
+// static State_T * Tuning_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 // {
 //     Motor_SetFeedbackMode(p_motor->P_MOTOR, Motor_FeedbackMode_Cast(feedbackMode));
 //     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
@@ -83,21 +83,21 @@
 //     .P_TRANSITION_TABLE = TUNING_TRANSITION_TABLE,
 // };
 
-// // void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
+// // void Motor_Calibration_EnterTuning(Motor_T * p_motor)
 // // {
 // //     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNING);
 // // }
 
-// static State_T * Tuning_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_TUNING; }
+// static State_T * Tuning_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_TUNING; }
 
-// void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
+// void Motor_Calibration_EnterTuning(Motor_T * p_motor)
 // {
 //     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Tuning_Start };
 //     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 // }
 
 
-// bool Motor_Calibration_IsTuning(const Motor_T * p_motor) { return (StateMachine_IsActiveBranch(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_TUNING)); }
+// bool Motor_Calibration_IsTuning(Motor_T * p_motor) { return (StateMachine_IsActiveBranch(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_TUNING)); }
 
 
 /******************************************************************************/
@@ -141,15 +141,12 @@ static void Capture_Sample(Motor_Tuning_Capture_T * p_cap, int16_t sp, int16_t f
 /*
     Same loop as Run; if armed for Excite, override the active loop's setpoint and capture (sp, fb).
 */
-static void AutoTuning_Entry(const Motor_T * p_motor)
+static void AutoTuning_Entry(Motor_T * p_motor)
 {
     Phase_ActivateT0(&p_motor->PHASE);
 
     /* reload from NVM so live edits are discarded on (re)entry */
-    p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
-    p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
-    Motor_ResetSpeedPid(p_motor->P_MOTOR);
-    Motor_ResetIPid(p_motor->P_MOTOR);
+    _Motor_ResetTuning(p_motor);
 
     s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
     s_TuningCapture.Index = 0U;
@@ -158,7 +155,7 @@ static void AutoTuning_Entry(const Motor_T * p_motor)
     sp_TuningOwner = p_motor->P_MOTOR;
 }
 
-static void AutoTuning_Proc(const Motor_T * p_motor)
+static void AutoTuning_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -180,7 +177,7 @@ static void AutoTuning_Proc(const Motor_T * p_motor)
 }
 
 
-// static State_T * Tuning_InputControl(const Motor_T * p_motor, state_value_t phaseOutput)
+// static State_T * Tuning_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 // {
 //     State_T * p_nextState = NULL;
 //     switch ((Phase_Output_T)phaseOutput)
@@ -207,14 +204,14 @@ const State_T CALIBRATION_STATE_AUTO_TUNING =
 
 
 
-// void Motor_Calibration_EnterTuning(const Motor_T * p_motor)
+// void Motor_Calibration_EnterTuning(Motor_T * p_motor)
 // {
 //     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNING);
 // }
 
-static State_T * AutoTuning_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_AUTO_TUNING; }
+static State_T * AutoTuning_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_AUTO_TUNING; }
 
-void Motor_Calibration_EnterAutoTuning(const Motor_T * p_motor)
+void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)AutoTuning_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
@@ -225,7 +222,7 @@ void Motor_Calibration_EnterAutoTuning(const Motor_T * p_motor)
     Arm an excite + capture run. No-op if motor isn't currently in TUNING.
     Re-arming during a run resets the capture buffer and tick counter.
 */
-void Motor_Calibration_Tuning_ArmExcite(const Motor_T * p_motor, const Motor_Tuning_Config_T * p_config)
+void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, const Motor_Tuning_Config_T * p_config)
 {
     if (Motor_Calibration_IsTuning(p_motor) == false) { return; }
     s_TuningConfig = *p_config;
@@ -235,7 +232,7 @@ void Motor_Calibration_Tuning_ArmExcite(const Motor_T * p_motor, const Motor_Tun
     sp_TuningOwner = p_motor->P_MOTOR;
 }
 
-void Motor_Calibration_Tuning_Disarm(const Motor_T * p_motor)
+void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor)
 {
     if (sp_TuningOwner != p_motor->P_MOTOR) { return; }
     s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
@@ -243,12 +240,12 @@ void Motor_Calibration_Tuning_Disarm(const Motor_T * p_motor)
     Ramp_SetTarget(&p_motor->P_MOTOR->TorqueRamp, 0);
 }
 
-bool Motor_Calibration_Tuning_IsCaptureDone(const Motor_T * p_motor)
+bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor)
 {
     return (sp_TuningOwner == p_motor->P_MOTOR) && s_TuningCapture.Full;
 }
 
-const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(const Motor_T * p_motor)
+const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor)
 {
     return (sp_TuningOwner == p_motor->P_MOTOR) ? &s_TuningCapture : NULL;
 }
@@ -262,7 +259,7 @@ const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(const Motor_T
 /*
     with position sensor without position feedback loop
 */
-static void Homing_Entry(const Motor_T * p_motor)
+static void Homing_Entry(Motor_T * p_motor)
 {
     // for now
     p_motor->P_MOTOR->ControlTimerBase = 0U;
@@ -281,7 +278,7 @@ static void Homing_Entry(const Motor_T * p_motor)
 /*
 
 */
-static void Homing_Proc(const Motor_T * p_motor)
+static void Homing_Proc(Motor_T * p_motor)
 {
     (void)p_motor;
     // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
@@ -321,7 +318,7 @@ static const State_T CALIBRATION_STATE_HOMING =
     .LOOP       = (State_Action_T)Homing_Proc,
 };
 
-static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
+static State_T * Homing_Start(Motor_T * p_motor, state_value_t null)
 {
     (void)p_motor; (void)null;
     // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
@@ -329,7 +326,7 @@ static State_T * Homing_Start(const Motor_T * p_motor, state_value_t null)
 }
 
 /* Transition from any Calibration State */
-void Motor_Calibration_StartHome(const Motor_T * p_motor)
+void Motor_Calibration_StartHome(Motor_T * p_motor)
 {
     static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Homing_Start, };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);

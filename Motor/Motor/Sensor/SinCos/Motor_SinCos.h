@@ -17,5 +17,5 @@
 /******************************************************************************/
 #include "../../Motor.h"
 
-extern void Motor_SinCos_Calibrate(const Motor_T * p_motor);
-extern void Motor_SinCos_Cmd(const Motor_T * p_motor, int varId, int varValue);
+extern void Motor_SinCos_Calibrate(Motor_T * p_motor);
+extern void Motor_SinCos_Cmd(Motor_T * p_motor, int varId, int varValue);

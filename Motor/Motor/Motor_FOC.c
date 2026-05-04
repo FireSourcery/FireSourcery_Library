@@ -143,9 +143,7 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, f
 
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq)
 {
-    /* Call bounds input */
-    // Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOf(&p_motor->TorqueRamp, qReq));
-    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Motor_IRampOf(p_motor, qReq));
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, qReq));
 
     // as i loop only
     // FOC_SetTheta(&p_motor->Foc, theta);
@@ -210,7 +208,7 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
 {
     FOC_ClearCaptureState(&p_motor->Foc); /* Clear for view, updated again on enter control */
     FOC_ClearOutputState(&p_motor->Foc); /* Emergency stop, capture bemf subsitute */
-    FOC_ResetCurrentLoop(&p_motor->Foc);
+    FOC_ResetFeedbackLoop(&p_motor->Foc);
     PID_Reset(&p_motor->PidSpeed);
     Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
@@ -259,22 +257,25 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
 
     p_motor->Direction is set by caller
 */
-void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, int16_t vRef)
+void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, Motor_Direction_T direction, int16_t vRef)
 {
-    interval_t v = VBus_AntiPluggingLimits(p_motor->p_VBus, (sign_t)p_motor->Direction);
+    interval_t v = interval_of_sign((sign_t)direction, vRef);
     PID_SetOutputLimits(&p_motor->Foc.PidIq, v.low, v.high);
     PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
 }
 
-void Motor_FOC_ApplyVLimits(Motor_State_T * p_motor)
+void Motor_FOC_ApplyVLimits(Motor_T * p_dev, Motor_Direction_T direction)
 {
-    _Motor_FOC_ApplyVLimits(p_motor, Phase_VBus_GetVRefSvpwm());
+    interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)direction);  /* unidirectional range [0, vRef] or [vRef, 0] */
+    int16_t vRef = VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS);
+    PID_SetOutputLimits(&p_dev->P_MOTOR->Foc.PidIq, v.low, v.high);
+    PID_SetOutputLimits(&p_dev->P_MOTOR->Foc.PidId, 0 - vRef, vRef);
 }
 
 void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     Motor_SetDirection(p_dev, direction); /* alternatively caller handle */
-    Motor_FOC_ApplyVLimits(p_dev->P_MOTOR);
+    Motor_FOC_ApplyVLimits(p_dev, direction);
 }
 
 

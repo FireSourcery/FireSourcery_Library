@@ -54,14 +54,14 @@ static inline void Motor_Analog_CaptureIb(Motor_State_T * p_motor, adc_result_t 
 static inline void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
-static inline void Motor_Analog_MarkVabc(const Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
-static inline void Motor_Analog_MarkIabc(const Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
+static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }
+static inline void Motor_Analog_MarkIabc(Motor_T * p_motor) { Phase_Analog_MarkIabc(&p_motor->PHASE_ANALOG); }
 
 
-static inline bool Motor_IsAnalogCycle(const Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
+static inline bool Motor_IsAnalogCycle(Motor_T * p_dev) { return _Motor_IsAnalogCycle(p_dev->P_MOTOR->ControlTimerBase); }
 
 /* Optionally mark on Start */
-static inline void _Motor_Analog_Thread(const Motor_T * p_dev)
+static inline void _Motor_Analog_Thread(Motor_T * p_dev)
 {
     // RotorSensor_MarkAnalog(&p_dev->Sensor);
     /* foc return on first 1. alternatively handle per phase */
@@ -69,7 +69,7 @@ static inline void _Motor_Analog_Thread(const Motor_T * p_dev)
     else { Motor_Analog_MarkVabc(p_dev); }
 }
 
-static inline void _Motor_Analog_ByPhase_Thread(const Motor_T * p_dev)
+static inline void _Motor_Analog_ByPhase_Thread(Motor_T * p_dev)
 {
     (void)p_dev;
 }
@@ -77,5 +77,5 @@ static inline void _Motor_Analog_ByPhase_Thread(const Motor_T * p_dev)
 
 /*
 */
-extern void Motor_Analog_Calibrate(const Motor_T * p_motor);
+extern void Motor_Analog_Calibrate(Motor_T * p_motor);
 

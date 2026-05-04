@@ -38,7 +38,7 @@
 /*!
 */
 /******************************************************************************/
-static inline Hall_T * GetHall(const Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.HALL.HALL; }
+static inline Hall_T * GetHall(Motor_T * p_motor) { return &p_motor->SENSOR_TABLE.HALL.HALL; }
 
 /******************************************************************************/
 /*!
@@ -61,7 +61,7 @@ static_assert(HALL_SENSORS_VIRTUAL_INV_B == PHASE_ID_INV_B);
 #define CAL_STEP_COUNT    (6U)
 
 /* Include [Phase] and [P_PARENT] State */
-static void Calibration_Entry(const Motor_T * p_motor)
+static void Calibration_Entry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateV0(&p_motor->PHASE);
@@ -69,14 +69,14 @@ static void Calibration_Entry(const Motor_T * p_motor)
     PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Ramp_SetOutputLimit(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
-    Motor_SetFeedbackMode(p_motor->P_MOTOR, MOTOR_FEEDBACK_MODE_CURRENT);
+    Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
     p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
 
 /*
     Voltage-mode align: open-loop fixed duty (one-shot per call is sufficient).
 */
-static void Calibration_Align_V(const Motor_T * p_motor, Phase_Id_T id)
+static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 {
     Phase_Align(&p_motor->PHASE, id, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
 }
@@ -87,7 +87,7 @@ static void Calibration_Align_V(const Motor_T * p_motor, Phase_Id_T id)
     up to IAlign across the settle window, avoiding a current step at each new
     vector; ramp is reset to 0 at every vector boundary.
 */
-static void Calibration_Align_I(const Motor_T * p_motor, Phase_Id_T id)
+static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
     const fract16_t idReq = Motor_OpenLoopTorqueRampOf(p_motor->P_MOTOR, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
     Motor_FOC_AngleControl(p_motor->P_MOTOR, Phase_AngleOf(id), idReq, 0);
@@ -98,7 +98,7 @@ static void Calibration_Align_I(const Motor_T * p_motor, Phase_Id_T id)
     Drive each tick (current loop runs continuously across the settle window),
     sample hall and advance vector at the boundary, reset ramp for next vector.
 */
-static void Calibration_Proc(const Motor_T * p_motor)
+static void Calibration_Proc(Motor_T * p_motor)
 {
     assert(p_motor->P_MOTOR->CalibrationStateIndex < CAL_STEP_COUNT);
 
@@ -115,7 +115,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
     }
 }
 
-static State_T * Calibration_End(const Motor_T * p_motor)
+static State_T * Calibration_End(Motor_T * p_motor)
 {
     if (p_motor->P_MOTOR->CalibrationStateIndex >= CAL_STEP_COUNT)
     {
@@ -143,16 +143,16 @@ static const State_T CALIBRATION_STATE_HALL =
 
 */
 /******************************************************************************/
-static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_HALL; }
+static State_T * Calibration_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_HALL; }
 
-void Motor_Hall_Calibrate(const Motor_T * p_motor)
+void Motor_Hall_Calibrate(Motor_T * p_motor)
 {
     // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HALL);
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
+void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
 {
     (void)varValue;
     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
@@ -165,7 +165,7 @@ void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
     }
 }
 
-// void Motor_Hall_GetStateVar(const Motor_T * p_motor, int varId, int varValue)
+// void Motor_Hall_GetStateVar(Motor_T * p_motor, int varId, int varValue)
 // {
 //     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
 //     if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_HALL) return;
@@ -178,7 +178,7 @@ void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue)
 
 
 
-// static void Calibration_Proc(const Motor_T * p_motor)
+// static void Calibration_Proc(Motor_T * p_motor)
 // {
 //     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) != true) return;
 

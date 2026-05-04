@@ -294,7 +294,7 @@ static inline NvMemory_Status_T MotorController_SaveConfig_Blocking(MotorControl
 // if all calibration function use substate
 static inline bool MotorController_IsLockOpComplete(MotorController_T * p_dev)
 {
-    return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK) && Motor_Table_IsCalibrationComplete(&p_dev->MOTORS);
+    return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK) && Motor_Table_IsEvery(&p_dev->MOTORS, Motor_Calibration_IsComplete);
 }
 
 /* return union status */

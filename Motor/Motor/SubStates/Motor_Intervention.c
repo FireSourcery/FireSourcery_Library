@@ -47,18 +47,18 @@
     Auto-escalates to RampSafe on timeout if speed remains above freewheel limit.
 */
 /******************************************************************************/
-static void TorqueZero_Entry(const Motor_T * p_motor)
+static void TorqueZero_Entry(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
     p_state->ControlTimerBase = 0U;
-    Motor_SetFeedbackMode(p_state, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
+    Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
     Motor_FOC_MatchIVState(p_state);
     Ramp_SetOutputState(&p_state->TorqueRamp, 0);
     /* seed Target to a small generating bias */
     // Ramp_SetTarget(&p_state->TorqueRamp, -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20));
 }
 
-static void TorqueZero_Proc(const Motor_T * p_motor)
+static void TorqueZero_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only;
@@ -67,7 +67,7 @@ static void TorqueZero_Proc(const Motor_T * p_motor)
     Motor_FOC_WriteDuty(p_motor);
 }
 
-static State_T * TorqueZero_Next(const Motor_T * p_motor)
+static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -96,7 +96,7 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
     Monitors deceleration progress; escalates to Fault on watchdog timeout.
 */
 /******************************************************************************/
-static void RampSafe_Entry(const Motor_T * p_motor)
+static void RampSafe_Entry(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -107,7 +107,7 @@ static void RampSafe_Entry(const Motor_T * p_motor)
     p_state->ControlTimerBase = 0U;
 }
 
-static void RampSafe_Proc(const Motor_T * p_motor)
+static void RampSafe_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -121,7 +121,7 @@ static void RampSafe_Proc(const Motor_T * p_motor)
     Motor_FOC_WriteDuty(p_motor);
 }
 
-static State_T * RampSafe_Next(const Motor_T * p_motor)
+static State_T * RampSafe_Next(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 

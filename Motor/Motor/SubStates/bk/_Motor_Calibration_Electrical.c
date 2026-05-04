@@ -364,7 +364,7 @@ static void paramid_proc_rampdown(Motor_State_T * p_motor)
 extern const State_T MOTOR_STATE_CALIBRATION;
 extern const State_T CALIBRATION_STATE_ELECTRICAL;
 
-static void Electrical_Entry(const Motor_T * p_motor)
+static void Electrical_Entry(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -384,7 +384,7 @@ static void Electrical_Entry(const Motor_T * p_motor)
     p_state->ParamId.VhfAmpFract16 = PARAMID_VHF_FRACT16;
 }
 
-static void Electrical_Proc(const Motor_T * p_motor)
+static void Electrical_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
 
@@ -417,13 +417,13 @@ const State_T CALIBRATION_STATE_ELECTRICAL =
 
 
 /* Transition entry */
-static State_T * Electrical_Start(const Motor_T * p_motor, state_value_t value)
+static State_T * Electrical_Start(Motor_T * p_motor, state_value_t value)
 {
     (void)p_motor; (void)value;
     return (State_T *)&CALIBRATION_STATE_ELECTRICAL;
 }
 
-void Motor_Calibration_StartElectrical(const Motor_T * p_motor)
+void Motor_Calibration_StartElectrical(Motor_T * p_motor)
 {
     static const StateMachine_TransitionCmd_T CMD =
     {
@@ -433,7 +433,7 @@ void Motor_Calibration_StartElectrical(const Motor_T * p_motor)
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-bool Motor_Calibration_IsElectrical(const Motor_T * p_motor)
+bool Motor_Calibration_IsElectrical(Motor_T * p_motor)
 {
     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_ELECTRICAL);
 }

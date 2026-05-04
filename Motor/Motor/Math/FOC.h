@@ -151,27 +151,33 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     Co-located with the d-q vectors they read from / write to.
 */
 /******************************************************************************/
+static void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t idReq, int16_t iqReq)
+{
+    p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+    int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
+    interval_t band = interval_of_sign(direction, vqLimit); /* sign-keying  needs direction */
+    PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
+    p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+}
+
 static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 {
     PID_SetOutputState(&p_foc->PidId, vd);
     PID_SetOutputState(&p_foc->PidIq, vq);
 }
 
-static inline void FOC_ResetCurrentLoop(FOC_T * p_foc)
+static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
 {
     PID_Reset(&p_foc->PidIq);
     PID_Reset(&p_foc->PidId);
 }
 
-// static void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
-// {
-//     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
-//     int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
-//     interval_t band = interval_of_sign(math_sign(p_foc->Vq), vqLimit); /* sign-keying  needs direction */
-//     PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
-//     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-// }
-
+static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, int16_t vRef)
+{
+    interval_t v = interval_of_sign(direction, vRef);
+    PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);
+    PID_SetOutputLimits(&p_foc->PidId, 0 - vRef, vRef);
+}
 
 /******************************************************************************/
 /*!

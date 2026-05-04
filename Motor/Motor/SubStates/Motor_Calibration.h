@@ -37,15 +37,15 @@
 /*
     Use inputId - Maps to multiple state. Substates use TransitionInput_T check for Parent State only
 */
-static inline void Motor_Calibration_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
-static inline void Motor_Calibration_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)NULL); }
+static inline void Motor_Calibration_Enter(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&MOTOR_STATE_CALIBRATION); }
+static inline void Motor_Calibration_Exit(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)NULL); }
 
 /*  for Cmds that begin with a substate */
-// static void Motor_Calibration_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }
+// static void Motor_Calibration_EnterBranch(Motor_T * p_motor, State_T * p_subState) { _StateMachine_Branch_EnterSubstate(&p_motor->STATE_MACHINE, &MOTOR_STATE_CALIBRATION, p_subState); }
 
 /* Calibration exits the substate and return to the parent state on complete */
 /* IsComplete SubState = TopState = MOTOR_STATE_ID_CALIBRATION */
-static inline bool Motor_Calibration_IsComplete(const Motor_T * p_motor) { return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
+static inline bool Motor_Calibration_IsComplete(Motor_T * p_motor) { return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_CALIBRATION); }
 
 /*
     Calibration SubState
@@ -64,11 +64,11 @@ Motor_Calibration_StateId_T;
 /*
 
 */
-extern void Motor_Calibration_StartHome(const Motor_T * p_motor);
-extern void Motor_Calibration_EnterTuning(const Motor_T * p_motor);
-extern bool Motor_Calibration_IsTuning(const Motor_T * p_motor);
-extern void Motor_Calibration_StartElectrical(const Motor_T * p_motor);
-extern bool Motor_Calibration_IsElectrical(const Motor_T * p_motor);
+extern void Motor_Calibration_StartHome(Motor_T * p_motor);
+extern void Motor_Calibration_EnterTuning(Motor_T * p_motor);
+extern bool Motor_Calibration_IsTuning(Motor_T * p_motor);
+extern void Motor_Calibration_StartElectrical(Motor_T * p_motor);
+extern bool Motor_Calibration_IsElectrical(Motor_T * p_motor);
 
 /******************************************************************************/
 /*!
@@ -114,9 +114,9 @@ typedef struct Motor_Tuning_Capture
 }
 Motor_Tuning_Capture_T;
 
-extern void Motor_Calibration_EnterAutoTuning(const Motor_T * p_motor);
-extern void Motor_Calibration_Tuning_ArmExcite(const Motor_T * p_motor, const Motor_Tuning_Config_T * p_config);
-extern void Motor_Calibration_Tuning_Disarm(const Motor_T * p_motor);
-extern bool Motor_Calibration_Tuning_IsCaptureDone(const Motor_T * p_motor);
-extern const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(const Motor_T * p_motor);
+extern void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor);
+extern void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, const Motor_Tuning_Config_T * p_config);
+extern void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor);
+extern bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor);
+extern const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor);
 

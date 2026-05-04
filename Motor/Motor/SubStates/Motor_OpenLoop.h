@@ -35,21 +35,21 @@
 /*
 
 */
-static inline void Motor_OpenLoop_Enter(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
-static inline void Motor_OpenLoop_Exit(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
+static inline void Motor_OpenLoop_Enter(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)&MOTOR_STATE_OPEN_LOOP); }
+static inline void Motor_OpenLoop_Exit(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)NULL); }
 
 /*  for Cmds that begin with a substate */
-static void Motor_OpenLoop_EnterBranch(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
+static void Motor_OpenLoop_EnterBranch(Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, (uintptr_t)p_subState); }
 
 /*
     Extern
 */
 /* Activate */
-extern void Motor_OpenLoop_SetPhaseOutput(const Motor_T * p_motor, Phase_Output_T state);
-extern void Motor_OpenLoop_SetPhaseAlign(const Motor_T * p_motor, Phase_Id_T align);
-extern void Motor_OpenLoop_SetAngleAlign(const Motor_T * p_motor, angle16_t angle);
-extern void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction);
-extern void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor);
+extern void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_Output_T state);
+extern void Motor_OpenLoop_SetPhaseAlign(Motor_T * p_motor, Phase_Id_T align);
+extern void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle);
+extern void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction);
+extern void Motor_OpenLoop_StartRunChain(Motor_T * p_motor);
 
 /*
     Open Loop SubState
@@ -90,7 +90,7 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
 //     MOTOR_OPEN_LOOP_CMD_PHASE_OUTPUT = (1 << 8) | MOTOR_STATE_INPUT_OPEN_LOOP,
 // }
 // Motor_OpenLoop_Cmd_T;
-// static void Motor_OpenLoop_Input(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, { Motor_OpenLoop_Cmd_T , value}; }
+// static void Motor_OpenLoop_Input(Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, { Motor_OpenLoop_Cmd_T , value}; }
 
 
 
@@ -99,7 +99,7 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
     Vard Id
 */
 /******************************************************************************/
-// void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T varId, int32_t varValue)
+// void _Motor_OpenLoop_VarCmd(Motor_T * p_motor, Motor_OpenLoop_Cmd_T varId, int32_t varValue)
 // {
 //     switch (varId)
 //     {

@@ -236,7 +236,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
                 /* Only active when Serial is selected as drive input */
                 // if (MotorController_PollRxLost(p_dev) == true)
                 // {
-                    // Motor_Table_ForEachApply(&p_dev->MOTORS, Motor_ReleaseVZ);
+                    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);
                     //     MotorController_ForceDisableControl(p_dev);
                     //     MotorController_EnterFault(p_dev);
                 // }

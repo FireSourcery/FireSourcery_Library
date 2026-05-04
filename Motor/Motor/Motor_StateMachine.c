@@ -89,8 +89,8 @@ void _Motor_SetDirection(Motor_T * p_dev, VBus_T * p_vbus, Motor_Direction_T dir
     PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
 }
 
-static inline void _Motor_SetFeedbackMode_Cast(Motor_State_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
-static inline void _Motor_SetDirection_Cast(Motor_T * p_dev, state_value_t mode) { Motor_SetDirection(p_dev, Motor_Direction_Cast(mode)); }
+static inline void _Motor_SetFeedbackMode_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
+static inline void _Motor_SetDirection_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetDirection(p_motor, Motor_Direction_Cast(mode)); }
 
 
 /******************************************************************************/
@@ -188,7 +188,7 @@ static State_T * Disabled_InputDirection(Motor_T * p_motor, state_value_t direct
 
 static State_T * Disabled_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     return NULL;
 }
 
@@ -315,7 +315,7 @@ static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t directi
 
 static State_T * Passive_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     return NULL;
 }
 
@@ -408,7 +408,7 @@ static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
 // return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
 static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
     return NULL;
 }
@@ -488,7 +488,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
 /* Store only */
 static State_T * Intervention_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     return NULL;
 }
 
@@ -558,7 +558,7 @@ static State_T * OpenLoop_InputDirection(Motor_T * p_motor, state_value_t direct
 
 static State_T * OpenLoop_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor->P_MOTOR, feedbackMode); /* a different flag mode will change ramp limits */
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode); /* a different flag mode will change ramp limits */
     return NULL;
 }
 
@@ -752,7 +752,7 @@ const State_T MOTOR_STATE_FAULT =
 // }
 
 
-// // inline bool Motor_IsClosedLoop(const Motor_T * p_motor)
+// // inline bool Motor_IsClosedLoop(Motor_T * p_motor)
 // // {
 // //     return ((_Motor_IsSensorAvailable(p_motor) == true) && (_Motor_IsOpenLoop(p_motor) == false));
 // // }

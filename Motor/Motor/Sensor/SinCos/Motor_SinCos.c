@@ -30,7 +30,7 @@
     Accessors
 */
 /******************************************************************************/
-static inline const SinCos_RotorSensor_T * GetSinCosSensor(const Motor_T * p_motor)
+static inline const SinCos_RotorSensor_T * GetSinCosSensor(Motor_T * p_motor)
 {
     return &p_motor->SENSOR_TABLE.SIN_COS;
 }
@@ -41,16 +41,16 @@ static inline const SinCos_RotorSensor_T * GetSinCosSensor(const Motor_T * p_mot
     Calibration State
 */
 /******************************************************************************/
-static void Calibration_Entry(const Motor_T * p_motor)
+static void Calibration_Entry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateV0(&p_motor->PHASE);
     p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
 
-static State_T * Calibration_End(const Motor_T * p_motor);
+static State_T * Calibration_End(Motor_T * p_motor);
 
-static void Calibration_Proc(const Motor_T * p_motor)
+static void Calibration_Proc(Motor_T * p_motor)
 {
     const SinCos_RotorSensor_T * p_sensor = GetSinCosSensor(p_motor);
     SinCos_State_T * p_sinCosState = p_sensor->SIN_COS.P_STATE;
@@ -82,7 +82,7 @@ static void Calibration_Proc(const Motor_T * p_motor)
     }
 }
 
-static State_T * Calibration_End(const Motor_T * p_motor)
+static State_T * Calibration_End(Motor_T * p_motor)
 {
     if (p_motor->P_MOTOR->CalibrationStateIndex >= 3U)
     {
@@ -109,15 +109,15 @@ static const State_T CALIBRATION_STATE_SIN_COS =
     Public
 */
 /******************************************************************************/
-static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_SIN_COS; }
+static State_T * Calibration_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_SIN_COS; }
 
-void Motor_SinCos_Calibrate(const Motor_T * p_motor)
+void Motor_SinCos_Calibrate(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-void Motor_SinCos_Cmd(const Motor_T * p_motor, int varId, int varValue)
+void Motor_SinCos_Cmd(Motor_T * p_motor, int varId, int varValue)
 {
     (void)varValue;
     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_SIN_COS)) return;

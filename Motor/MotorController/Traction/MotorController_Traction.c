@@ -50,7 +50,7 @@ static inline Traction_T * TractionAdapter(MotorController_T * p_mc) { return ((
 static State_T * EnterMain(MotorController_T * p_mc, state_value_t fromPark)
 {
     (void)fromPark;
-    if (!Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero)) { return &STATE_NEUTRAL; }
+    if (!Motor_Table_IsEverySpeedZero(&p_mc->MOTORS)) { return &STATE_NEUTRAL; }
 
     switch (TractionAdapter(p_mc)->Input.Direction)
     {
@@ -147,7 +147,7 @@ void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_mot
     switch (p_vehicle->Config.ZeroMode)
     {
         case TRACTION_ZERO_MODE_FLOAT:   Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z);         break;
-        case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEachApply(p_motors, Motor_ApplyTorque0);   break;
+        case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEach(p_motors, Motor_ApplyTorque0);   break;
         case TRACTION_ZERO_MODE_REGEN:       /* Traction_SetRegenMotorAll(p_this); */ break;
         default: break;
     }
@@ -157,7 +157,7 @@ void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_mot
 void Traction_ProcRelease(const Traction_T * p_vehicle, Motor_Table_T * p_motors)
 {
     (void)p_vehicle; (void)p_motors;
-    // Motor_Table_ForEachApply(p_motors, Motor_Hypervisor);
+    // Motor_Table_ForEach(p_motors, Motor_Hypervisor);
 }
 
 /******************************************************************************/
@@ -300,7 +300,7 @@ static State_T * InputDriveDirection(MotorController_T * p_mc, state_value_t dir
 {
     // Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); /* optionally set, async mode returns immediately.  */
     if (Motor_Table_IsEveryUserDirection(&p_mc->MOTORS, direction) == true) { return &STATE_DRIVE; }
-    if (Motor_Table_IsEvery(&p_mc->MOTORS, Motor_IsSpeedZero) == true) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); return &STATE_DRIVE; }
+    if (Motor_Table_IsEverySpeedZero(&p_mc->MOTORS) == true) { Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); return &STATE_DRIVE; }
     return NULL;
 }
 

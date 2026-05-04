@@ -57,7 +57,7 @@
 */
 /******************************************************************************/
 /* Optionally use Hall ISR */
-static inline void Motor_HallEncoderA_ISR(const Motor_T * p_dev)
+static inline void Motor_HallEncoderA_ISR(Motor_T * p_dev)
 {
 #ifdef MOTOR_SENSOR_ENCODER_ENABLE
     Encoder_OnPhaseA_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
@@ -67,7 +67,7 @@ static inline void Motor_HallEncoderA_ISR(const Motor_T * p_dev)
 #endif
 }
 
-static inline void Motor_HallEncoderB_ISR(const Motor_T * p_dev)
+static inline void Motor_HallEncoderB_ISR(Motor_T * p_dev)
 {
 #ifdef MOTOR_SENSOR_ENCODER_ENABLE
     Encoder_OnPhaseB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
@@ -77,7 +77,7 @@ static inline void Motor_HallEncoderB_ISR(const Motor_T * p_dev)
 #endif
 }
 
-static inline void Motor_HallEncoderAB_ISR(const Motor_T * p_dev)
+static inline void Motor_HallEncoderAB_ISR(Motor_T * p_dev)
 {
 #ifdef MOTOR_SENSOR_ENCODER_ENABLE
     Encoder_OnPhaseAB_ISR(&p_dev->SENSOR_TABLE.ENCODER.ENCODER);
@@ -87,7 +87,7 @@ static inline void Motor_HallEncoderAB_ISR(const Motor_T * p_dev)
 #endif
 }
 
-static inline void Motor_HallEncoderCZ_ISR(const Motor_T * p_dev)
+static inline void Motor_HallEncoderCZ_ISR(Motor_T * p_dev)
 {
     switch (p_dev->P_MOTOR->Config.SensorMode)
     {
@@ -125,9 +125,9 @@ typedef enum Motor_VarType_Sensor
 Motor_VarType_Sensor_T;
 
 
-extern int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
-extern void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
+extern int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
+extern void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
+extern bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
 
 
 /******************************************************************************/
@@ -135,13 +135,13 @@ extern bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType
     Calibration State Access
 */
 /******************************************************************************/
-// extern void Motor_Sensor_CalibrationCmd_Call(const Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
+// extern void Motor_Sensor_CalibrationCmd_Call(Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
 // typedef enum Motor_Sensor_CalibrationStatus
 // {
 // }
 // Motor_Sensor_CalibrationStatus_T;
 
-// static bool Motor_Sensor_Validate(const Motor_T * p_motor, RotorSensor_Id_T id, int varValue)
+// static bool Motor_Sensor_Validate(Motor_T * p_motor, RotorSensor_Id_T id, int varValue)
 // {
 //     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, id)) return;
 //     if (p_motor->P_MOTOR->Config.SensorMode != id) return;

@@ -38,7 +38,7 @@
 #define MOTOR_HALL_MODE_POLLING
 #endif
 
-extern void Motor_Hall_Calibrate(const Motor_T * p_motor);
+extern void Motor_Hall_Calibrate(Motor_T * p_motor);
 
-extern void Motor_Hall_Cmd(const Motor_T * p_motor, int varId, int varValue);
+extern void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue);
 

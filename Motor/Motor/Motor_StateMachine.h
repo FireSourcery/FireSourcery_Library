@@ -112,7 +112,7 @@ Motor_StateInput_T;
 extern const StateMachine_Machine_T MSM_MACHINE;
 
 /*!
-    @param p_MotorDev [const Motor_T *]
+    @param p_MotorDev [Motor_T *]
     @param MotorRuntime [Motor_State_T]
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
@@ -160,21 +160,21 @@ static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_mot
 /*
 */
 /******************************************************************************/
-static inline bool Motor_IsState(const Motor_T * p_motor, State_T * p_state) { return (StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, p_state)); }
+static inline bool Motor_IsState(Motor_T * p_motor, State_T * p_state) { return (StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, p_state)); }
 
-static inline bool Motor_IsFault(const Motor_T * p_motor) { return Motor_IsState(p_motor, &MOTOR_STATE_FAULT); }
+static inline bool Motor_IsFault(Motor_T * p_motor) { return Motor_IsState(p_motor, &MOTOR_STATE_FAULT); }
 
 /*
     let app layer handle permission. motor layer handles its own struct mapping.
     motor layer saftey concerns electrical chacteristics. application layer handles memory access.
     motor layer handles unique domain concerns.
 */
-static inline bool Motor_IsConfig(const Motor_T * p_motor)
+static inline bool Motor_IsConfig(Motor_T * p_motor)
 {
     return (Motor_IsState(p_motor, &MOTOR_STATE_DISABLED) || Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION) || Motor_IsState(p_motor, &MOTOR_STATE_FAULT));
 }
 
-// static inline bool Motor_IsDisableReady(const Motor_T * p_motor) { return StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_PASSIVE); }
+// static inline bool Motor_IsDisableReady(Motor_T * p_motor) { return StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_PASSIVE); }
 
 
 /******************************************************************************/
@@ -183,34 +183,34 @@ static inline bool Motor_IsConfig(const Motor_T * p_motor)
     Stop disables inputs until next Start.
 */
 /******************************************************************************/
-static State_T * _Motor_InputDisable(const Motor_T * p_motor, state_value_t value)
+static State_T * _Motor_InputDisable(Motor_T * p_motor, state_value_t value)
 {
     (void)value;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_DISABLED; }
     return NULL;
 }
 
-static void Motor_Disable(const Motor_T * p_motor)
+static void Motor_Disable(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputDisable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
-static State_T * _Motor_InputEnable(const Motor_T * p_motor, state_value_t value)
+static State_T * _Motor_InputEnable(Motor_T * p_motor, state_value_t value)
 {
     (void)p_motor;
     (void)value;
     return &MOTOR_STATE_PASSIVE;
 }
 
-static void Motor_Enable(const Motor_T * p_motor)
+static void Motor_Enable(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_DISABLED, .NEXT = (State_Input_T)_Motor_InputEnable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
     // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
 }
 
-// static void Motor_NormalizeToDisabled(const Motor_T * p_motor)
+// static void Motor_NormalizeToDisabled(Motor_T * p_motor)
 // {
 //     Motor_Calibration_Exit(p_motor);
 //     Motor_OpenLoop_Exit(p_motor);
@@ -235,9 +235,9 @@ typedef union Motor_FaultCmd
 }
 Motor_FaultCmd_T;
 
-// extern void Motor_StateMachine_SetFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
-// extern void Motor_StateMachine_ClearFault(const Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
-// extern bool Motor_StateMachine_TryClearFaultAll(const Motor_T * p_motor);
+// extern void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
+// extern void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
+// extern bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor);
 
 static void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
@@ -256,4 +256,4 @@ static bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor)
 }
 
 
-// static inline void Motor_StateMachine_Input(const Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }
+// static inline void Motor_StateMachine_Input(Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }

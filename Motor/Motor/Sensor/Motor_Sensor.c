@@ -39,7 +39,7 @@
 
 */
 /******************************************************************************/
-// static inline RotorSensor_T * Sensor(const Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->Config.SensorMode); }
+// static inline RotorSensor_T * Sensor(Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->Config.SensorMode); }
 
 /******************************************************************************/
 /*
@@ -48,7 +48,7 @@
 /******************************************************************************/
 // #include "Sensor/Motor_Sensor.h" /* for calibration cmd */
 
-int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
+int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
     switch (typeId)
@@ -63,7 +63,7 @@ int Motor_VarType_Sensor_Get(const Motor_T * p_motor, Motor_VarType_Sensor_T typ
     }
 }
 
-void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue)
+void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue)
 {
     switch (typeId)
     {
@@ -79,7 +79,7 @@ void Motor_VarType_Sensor_Set(const Motor_T * p_motor, Motor_VarType_Sensor_T ty
     }
 }
 
-bool Motor_VarType_Sensor_CheckSet(const Motor_T * p_motor, Motor_VarType_Sensor_T typeId)
+bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId)
 {
     if (p_motor == NULL) { return false; }
     switch (typeId)

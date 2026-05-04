@@ -111,20 +111,6 @@ typedef enum Motor_Var_UserSetpoint
 }
 Motor_Var_UserSetpoint_T;
 
-/*
-    Rotor Angle/Speed State + Feedback
-    Read-Only, RealTime
-*/
-typedef enum Motor_Var_Rotor
-{
-    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,   /* in digital degrees */
-    MOTOR_VAR_ROTOR_ELECTRICAL_DELTA,   /* Internal Ccw/Cw */
-    MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Internal Ccw/Cw */
-    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,   /* if supported */
-    MOTOR_VAR_ROTOR_DIRECTION, // 1:Ccw, -1:Cw, 0:Stop
-    // optionally control loop state
-}
-Motor_Var_Rotor_T;
 
 /*
     FOC State
@@ -231,22 +217,22 @@ Motor_Var_Board_T;
    Base Id Access
 */
 /******************************************************************************/
-int _Motor_Var_UserOut_Get(const Motor_State_T * p_motor, Motor_Var_UserOut_T varId);
-int _Motor_Var_Rotor_Get(const Motor_State_T * p_motor, Motor_Var_Rotor_T varId);
-int _Motor_Var_Foc_Get(const Motor_State_T * p_motor, Motor_Var_Foc_T varId);
+int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId);
+
+int _Motor_Var_Foc_Get(Motor_T * p_motor, Motor_Var_Foc_T varId);
 
 /* Caller handle access control */
-int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T varId);
-void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
-void _Motor_Var_UserSetpoint_Set(const Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue);
+int _Motor_Var_UserControl_Get(Motor_T * p_motor, Motor_Var_UserControl_T varId);
+void _Motor_Var_UserControl_Set(Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue);
+void _Motor_Var_UserSetpoint_Set(Motor_T * p_motor, Motor_Var_UserSetpoint_T varId, int varValue);
 
-void _Motor_Var_StateCmd_Call(const Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
-void _Motor_Var_OpenLoopCmd_Call(const Motor_T * p_motor, Motor_Var_OpenLoopCmd_T varId, int varValue);
-void _Motor_Var_CalibrationCmd_Call(const Motor_T * p_motor, Motor_Var_CalibrationCmd_T varId, int varValue);
+void _Motor_Var_StateCmd_Call(Motor_T * p_motor, Motor_Var_StateCmd_T varId, int varValue);
+void _Motor_Var_OpenLoopCmd_Call(Motor_T * p_motor, Motor_Var_OpenLoopCmd_T varId, int varValue);
+void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_T varId, int varValue);
 
 #include "Motor_Config.h"
-int _Motor_Var_PidTuning_Get(const Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId);
-void _Motor_Var_PidTuning_Set(Motor_State_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
+int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId);
+void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
 
 /* static */
@@ -292,11 +278,11 @@ typedef enum Motor_VarType_SubModule
 }
 Motor_VarType_SubModule_T;
 
-extern int Motor_VarType_Base_Get(const Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
-extern void Motor_VarType_Base_Set(const Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Base_CheckSet(const Motor_T * p_motor, Motor_VarType_Base_T typeId);
+extern int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
+extern void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
+extern bool Motor_VarType_Base_CheckSet(Motor_T * p_motor, Motor_VarType_Base_T typeId);
 
-extern int Motor_VarType_SubModule_Get(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId);
-extern void Motor_VarType_SubModule_Set(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
-extern bool Motor_VarType_SubModule_CheckSet(const Motor_T * p_motor, Motor_VarType_SubModule_T typeId);
+extern int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId);
+extern void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
+extern bool Motor_VarType_SubModule_CheckSet(Motor_T * p_motor, Motor_VarType_SubModule_T typeId);
 

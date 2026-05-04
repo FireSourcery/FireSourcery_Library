@@ -35,14 +35,14 @@
 /*!
 */
 /******************************************************************************/
-void Motor_Encoder_StartHoming(const Motor_T * p_motor);
-void Motor_Encoder_CalibrateHomeOffset(const Motor_T * p_motor);
-void Motor_Encoder_StartVirtualHome(const Motor_T * p_motor);
+void Motor_Encoder_StartHoming(Motor_T * p_motor);
+void Motor_Encoder_CalibrateHomeOffset(Motor_T * p_motor);
+void Motor_Encoder_StartVirtualHome(Motor_T * p_motor);
 
-void Motor_Encoder_StartAlignZero(const Motor_T * p_motor);
-void Motor_Encoder_StartValidateAlign(const Motor_T * p_motor);
-void Motor_Encoder_StartValidateClosedLoop(const Motor_T * p_motor);
+void Motor_Encoder_StartAlignZero(Motor_T * p_motor);
+void Motor_Encoder_StartValidateAlign(Motor_T * p_motor);
+void Motor_Encoder_StartValidateClosedLoop(Motor_T * p_motor);
 
-void Motor_Encoder_StartUpChain(const Motor_T * p_motor);
-// State_T * Motor_Encoder_GetStartUpState(const Motor_T * p_motor);
+void Motor_Encoder_StartUpChain(Motor_T * p_motor);
+// State_T * Motor_Encoder_GetStartUpState(Motor_T * p_motor);
 

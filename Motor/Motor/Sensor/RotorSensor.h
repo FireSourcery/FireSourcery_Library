@@ -225,8 +225,36 @@ static inline bool RotorSensor_IsSpeedReliable(const RotorSensor_T * p_sensor) {
 
 static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(const RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
 
+/******************************************************************************/
+/*!
+    Id interface
+*/
+/******************************************************************************/
+/*
+    Rotor Angle/Speed State + Feedback
+    Read-Only, RealTime
+*/
+typedef enum Motor_Var_Rotor
+{
+    MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE,   /* in digital degrees */
+    MOTOR_VAR_ROTOR_ELECTRICAL_DELTA,   /* Internal Ccw/Cw */
+    MOTOR_VAR_ROTOR_SPEED_FEEDBACK,     /* Internal Ccw/Cw */
+    MOTOR_VAR_ROTOR_MECHANICAL_ANGLE,   /* if supported */
+    MOTOR_VAR_ROTOR_DIRECTION,          /* 1:Ccw, -1:Cw, 0:Stop  */
+}
+Motor_Var_Rotor_T;
 
-/* set the direction compensation */
-/* Optionally force sensor direction detection. handle internal */
-// static inline void RotorSensor_SetDirectionComp(const RotorSensor_T * p_sensor, int direction) { p_sensor->P_VTABLE->SET_DIRECTION(p_sensor, direction); }
+static int _Motor_Var_Rotor_Get(RotorSensor_T * p_sensor, Motor_Var_Rotor_T varId)
+{
+    switch (varId)
+    {
+        case MOTOR_VAR_ROTOR_ELECTRICAL_ANGLE:   return RotorSensor_GetElectricalAngle(p_sensor);
+        case MOTOR_VAR_ROTOR_ELECTRICAL_DELTA:   return RotorSensor_GetElectricalDelta(p_sensor);
+        case MOTOR_VAR_ROTOR_SPEED_FEEDBACK:     return RotorSensor_GetSpeed_Fract16(p_sensor);
+        case MOTOR_VAR_ROTOR_MECHANICAL_ANGLE:   return RotorSensor_GetMechanicalAngle(p_sensor);
+        case MOTOR_VAR_ROTOR_DIRECTION:          return RotorSensor_GetFeedbackDirection(p_sensor);
+        default: return 0;
+    }
+}
 
+// int _Motor_Var_Rotor_Get(Motor_T * p_motor, Motor_Var_Rotor_T varId);
