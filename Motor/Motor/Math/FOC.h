@@ -76,7 +76,6 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
     p_foc->Sine = vec.y;
 }
 
-
 /*
     InputI
 */
@@ -155,17 +154,6 @@ static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
     p_foc->DutyC = duty.c;
 }
 
-
-
-static inline ufract16_t FOC_Va(const FOC_T * p_foc) { return p_foc->Va; }
-static inline ufract16_t FOC_Vb(const FOC_T * p_foc) { return p_foc->Vb; }
-static inline ufract16_t FOC_Vc(const FOC_T * p_foc) { return p_foc->Vc; }
-
-/* VDuty */
-static inline ufract16_t FOC_DutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
-static inline ufract16_t FOC_DutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
-static inline ufract16_t FOC_DutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
-
 /******************************************************************************/
 /*
     VBemf
@@ -178,15 +166,31 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vq = v.q;
 }
 
-// static inline ufract16_t FOC_GetVBemfA(const FOC_T * p_foc) { return p_foc->Va; }
-// static inline ufract16_t FOC_GetVBemfB(const FOC_T * p_foc) { return p_foc->Vb; }
-// static inline ufract16_t FOC_GetVBemfC(const FOC_T * p_foc) { return p_foc->Vc; }
 
 /******************************************************************************/
 /*!
     Query
 */
 /******************************************************************************/
+/*
+
+*/
+static inline fract16_t FOC_Id(const FOC_T * p_foc) { return p_foc->Id; }
+static inline fract16_t FOC_Iq(const FOC_T * p_foc) { return p_foc->Iq; }
+static inline fract16_t FOC_Vd(const FOC_T * p_foc) { return p_foc->Vd; }
+static inline fract16_t FOC_Vq(const FOC_T * p_foc) { return p_foc->Vq; }
+
+/* VBemf Common */
+static inline ufract16_t FOC_Va(const FOC_T * p_foc) { return p_foc->Va; }
+static inline ufract16_t FOC_Vb(const FOC_T * p_foc) { return p_foc->Vb; }
+static inline ufract16_t FOC_Vc(const FOC_T * p_foc) { return p_foc->Vc; }
+
+/* VDuty */
+static inline ufract16_t FOC_DutyA(const FOC_T * p_foc) { return p_foc->DutyA; }
+static inline ufract16_t FOC_DutyB(const FOC_T * p_foc) { return p_foc->DutyB; }
+static inline ufract16_t FOC_DutyC(const FOC_T * p_foc) { return p_foc->DutyC; }
+
+
 /*
     Run-time derived
 */
@@ -220,20 +224,6 @@ static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16
 
 static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return (int32_t)fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
 
-static inline fract16_t FOC_Id(const FOC_T * p_foc) { return p_foc->Id; }
-static inline fract16_t FOC_Iq(const FOC_T * p_foc) { return p_foc->Iq; }
-static inline fract16_t FOC_Vd(const FOC_T * p_foc) { return p_foc->Vd; }
-static inline fract16_t FOC_Vq(const FOC_T * p_foc) { return p_foc->Vq; }
-
-// static inline fract16_t FOC_GetIa(const FOC_T * p_foc) { return p_foc->Ia; }
-// static inline fract16_t FOC_GetIb(const FOC_T * p_foc) { return p_foc->Ib; }
-// static inline fract16_t FOC_GetIc(const FOC_T * p_foc) { return p_foc->Ic; }
-// static inline fract16_t FOC_GetIalpha(const FOC_T * p_foc) { return p_foc->Ialpha; }
-// static inline fract16_t FOC_GetIbeta(const FOC_T * p_foc) { return p_foc->Ibeta; }
-// static inline fract16_t FOC_GetReqD(const FOC_T * p_foc) { return p_foc->ReqD; }
-// static inline fract16_t FOC_GetReqQ(const FOC_T * p_foc) { return p_foc->ReqQ; }
-// static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Ialpha, p_foc->Ibeta); }
-// static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc)     { return fract16_vector_magnitude(p_foc->Valpha, p_foc->Vbeta); }
 
 /******************************************************************************/
 /*!
@@ -268,8 +258,9 @@ static inline fract16_t FOC_Vq(const FOC_T * p_foc) { return p_foc->Vq; }
 //     else                { return (p_foc->Vq <= 0) ? FOC_QUADRANT_REVERSE_MOTORING : FOC_QUADRANT_FORWARD_GENERATING; }
 // }
 
-static inline bool FOC_IsMotoringCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
-static inline bool FOC_IsGeneratingCmd(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
+static inline bool FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
+
 
 
 /******************************************************************************/

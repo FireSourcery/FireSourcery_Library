@@ -284,10 +284,10 @@ void Motor_FOC_ApplyVLimits(Motor_State_T * p_motor)
     _Motor_FOC_ApplyVLimits(p_motor, Phase_VBus_GetVRefSvpwm());
 }
 
-void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
+void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
-    Motor_SetDirection(p_motor, direction); /* alternatively caller handle */
-    Motor_FOC_ApplyVLimits(p_motor);
+    Motor_SetDirection(p_dev, direction); /* alternatively caller handle */
+    Motor_FOC_ApplyVLimits(p_dev->P_MOTOR);
 }
 
 

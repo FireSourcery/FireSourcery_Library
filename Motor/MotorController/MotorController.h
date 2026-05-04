@@ -188,7 +188,7 @@ typedef struct MotorController_State
     uint32_t StateCounter; /* Calibration */
     uint32_t ControlCounter; /* PWM */
 
-    // MotLimits_T Limits; /* mot to contigous alloc */
+    MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
 
     // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
@@ -265,21 +265,7 @@ typedef const struct MotorController
     MotNvm_T MOT_NVM; /* Non-volatile Memory controller */
 
     /* Motor Services Context */
-// alternatively wrap inner
-// typedef const struct MotorDrive
-// {
-//     Motor_Table_T MOTORS;
-//     LimitArray_T SPEED_LIMIT_SOURCES;
-//     LimitArray_T I_LIMIT_SOURCES;
-// }
-// MotorDrive_T;
-
     Motor_Table_T MOTORS; /* Motor Array Context */
-
-    /* Store in physical units representation for now */
-    LimitArray_T SPEED_LIMIT_SOURCES;
-    LimitArray_T I_LIMIT_SOURCES;
-    LimitArray_T I_GEN_LIMIT_SOURCES;
 
     /* Monitor - Detection + response with full context */
     HeatMonitor_T HEAT_PCB;
@@ -303,9 +289,9 @@ typedef const struct MotorController
     StateMachine_T STATE_MACHINE;
 
     MotorController_App_T * P_APP; /* Single compile time selection for now */
+    /* directly map sub app components. same as implementing within MotorController_T, minus the type coupling. */
     void * P_APP_STATE;             /* Adapter state — cast to app's concrete type (Traction_T, Servo_T, ...) */
     const void * P_APP_NVM_CONFIG;  /* Adapter NVM config — cast to app's concrete config type */
-    /* directly map components. same as implementing within MotorController_T, minus the type coupling. */
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
 }
@@ -319,10 +305,10 @@ MotorController_T;
 */
 #define MOT_AIN_INIT(Index, PinHal, PinId, IsInvert, p_Timer, p_McState, p_Config) (UserAIn_T) \
 {                                                                                              \
-    .P_EDGE_PIN   = &USER_DIN_INIT_FROM(PinHal, PinId, IsInvert, &(p_McState)->AInGateStates[Index], (p_Timer), 10U),                                      \
-    .P_STATE      = &(p_McState)->AInStates[Index],                                            \
+    .P_EDGE_PIN   = &USER_DIN_INIT_FROM(PinHal, PinId, IsInvert, &(p_McState)->AInGateStates[Index], (p_Timer), 10U),   \
+    .P_STATE      = &(p_McState)->AInStates[Index],                                             \
     .P_NVM_CONFIG = &((p_Config)->AInConfigs[Index]),                                           \
-    .FILTER_SHIFT = 0U,                                                                        \
+    .FILTER_SHIFT = 0U,                                                                         \
 }
 
 /******************************************************************************/
@@ -350,7 +336,6 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
-
 /* Common Buffered Input */
 // static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
 
@@ -362,7 +347,6 @@ static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
 static inline MotBuzzer_T * MotorController_Buzzer(const MotorController_T * p_dev) { return &p_dev->BUZZER; }
 
 
-
 /******************************************************************************/
 /*
     Extern
@@ -371,15 +355,8 @@ static inline MotBuzzer_T * MotorController_Buzzer(const MotorController_T * p_d
 extern void MotorController_Init(const MotorController_T * p_dev);
 
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
-extern void _MotorController_SetVSupply_V(const MotorController_T * p_dev, uint16_t volts);
-
 
 extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id);
 extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id);
-extern bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id);
-
-// extern NvMemory_Status_T MotorController_SaveConfig_Blocking(const MotorController_T * p_dev);
-

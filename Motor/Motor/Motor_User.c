@@ -166,10 +166,18 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
         StateMachine_Proc thread updates Ramp OutputState
 */
 /******************************************************************************/
-static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = p_motor->Config.DirectionForward * userCmd; }
-static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = p_motor->Config.DirectionForward * speed_fract16; }
-static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = p_motor->Direction * userCmd; }
-static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = p_motor->Direction * speed_fract16; }
+/*!
+    Convert between a user reference direction to virtual CCW/CW direction
+    @param[in] userCmd  fract16 or percent16. positive as the direction set at config
+*/
+static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return fract16_sat(p_motor->Config.DirectionForward * userCmd); }
+/* Positive as the active appliedV/motoring direction. */
+static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return fract16_sat(p_motor->Direction * userCmd); }
+
+static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserForwardOf(p_motor, userCmd); }
+static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserForwardOf(p_motor, speed_fract16); }
+static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserMotoringOf(p_motor, userCmd); }
+static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserMotoringOf(p_motor, speed_fract16); }
 
 
 /******************************************************************************/
@@ -306,7 +314,9 @@ void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd)
 }
 
 
-/* mixed units */
+/*
+    mixed units
+*/
 void _Motor_SetMotoringCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmd(p_motor, userCmd); }
@@ -351,86 +361,6 @@ Motor_DriveCmd_T;
 // }
 
 
-/******************************************************************************/
-/*
-    Set system "user" layer
-*/
-/******************************************************************************/
-/* Handle remaining comparison with Motor heat I limits if its not handled by arbitration array */
-/*     // Motor_SetILimits(p_motor, math_min(i_Fract16, LimitArray_Upper(p_local))); */
-bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
-{
-    bool isLimit = true;
-    Motor_SetSpeedLimits(p_motor, speed_ufract16);
-    return isLimit;
-}
-
-bool Motor_TryClearSpeedLimit(Motor_State_T * p_motor)
-{
-    bool isLimit = true;
-    Motor_ResetSpeedLimit(p_motor);
-    return isLimit;
-}
-
-bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16)
-{
-    bool isLimit = true;
-    Motor_SetILimits(p_motor, i_Fract16);
-    return isLimit;
-}
-
-bool Motor_TryClearILimit(Motor_State_T * p_motor)
-{
-    bool isLimit = true;
-    Motor_ResetILimit(p_motor);
-    return isLimit;
-}
-
-
-/*
-    LimitArrays store Q15 derates; rated multiplication happens here at the consumer boundary.
-*/
-void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
-{
-    // if (LimitArray_IsUpperActive(p_local) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_local)); }
-    // else { Motor_TryClearSpeedLimit(p_motor); }
-
-    Motor_SetSpeedLimits(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), FRACT16_1_DIV_2));
-}
-
-void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
-{
-    // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
-    // else { Motor_TryClearILimit(p_motor); }
-    Motor_SetILimitMotoring(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), Phase_Calibration_GetIRatedPeak_Fract16()));
-}
-
-void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system)
-{
-    // if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TryILimit(p_motor, LimitArray_Upper(p_limit)); }
-    // else { Motor_TryClearILimit(p_motor); }
-    Motor_SetILimitGenerating(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_system), Phase_Calibration_GetIRatedPeak_Fract16()));
-}
-
-/*
-    Interface
-    Set using comparison struct
-*/
-// void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-// {
-//     if (LimitArray_IsUpperActive(p_limit) == true) { Motor_TrySpeedLimit(p_motor, LimitArray_Upper(p_limit)); }
-//     else { Motor_TryClearSpeedLimit(p_motor); }
-// }
-
-// void Motor_SetILimitWith(Motor_State_T * p_motor, LimitArray_T * p_limit)
-// {
-//     // LimitArray_T * p_local = &p_motor->I_LIMIT_SOURCES;
-//     if (LimitArray_IsUpperActive(p_limit) == true)
-//     {
-//         Motor_TryILimit(p_motor, fract16_mul(LimitArray_UpperComposed(p_local, p_limit), Phase_Calibration_GetIRatedPeak_Fract16()));
-//     }
-//     else { Motor_TryClearILimit(p_motor); }
-// }
 
 /******************************************************************************/
 /*

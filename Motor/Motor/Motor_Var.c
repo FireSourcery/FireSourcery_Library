@@ -123,9 +123,9 @@ int _Motor_Var_UserControl_Get(const Motor_T * p_motor, Motor_Var_UserControl_T 
         case MOTOR_VAR_USER_FEEDBACK_MODE:      value = Motor_GetFeedbackMode(p_motor->P_MOTOR).Value;        break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:       value = Motor_GetPhaseState(p_motor);                               break;
 
-        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_SpeedLimitMotoring(p_motor->P_MOTOR);           break;
-        case MOTOR_VAR_USER_I_LIMIT_MOTORING:   value = Motor_ILimitMotoring(p_motor->P_MOTOR);               break;
-        case MOTOR_VAR_USER_I_LIMIT_GENERATING: value = Motor_ILimitGenerating(p_motor->P_MOTOR);             break;
+        case MOTOR_VAR_USER_SPEED_LIMIT:        value = Motor_User_SpeedLimit(p_motor->P_MOTOR);           break;
+        case MOTOR_VAR_USER_I_LIMIT_MOTORING:   value = Motor_User_ILimitMotoring(p_motor->P_MOTOR);               break;
+        case MOTOR_VAR_USER_I_LIMIT_GENERATING: value = Motor_User_ILimitGenerating(p_motor->P_MOTOR);             break;
         /* RAMP_ON_OFF */
     }
     return value;
@@ -137,13 +137,13 @@ void _Motor_Var_UserControl_Set(const Motor_T * p_motor, Motor_Var_UserControl_T
 {
     switch (varId)
     {
-        /* todo StateMachine validates input */
+        /* todo cast enum bounds */
         case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_Direction_T)varValue);         break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
         case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);             break;
-        /* todo Set user index */
-        case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR, varValue);                  break;
-        case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR, varValue);                      break;
+        /* if local user Set user index */
+        // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR, varValue);                  break;
+        // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR, varValue);                      break;
     }
 }
 

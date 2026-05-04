@@ -61,11 +61,11 @@ static inline void Motor_Cia402_WriteControl(Motor_T * p_motor, Cia402_Adapter_T
 
     switch (Cia402_DecodeControlCmd(control))
     {
-        case CIA402_CMD_DISABLE_VOLTAGE:        Motor_ReleaseVZ(p_motor);           break;
+        case CIA402_CMD_DISABLE_VOLTAGE:        Motor_Disable(p_motor);             break;
         case CIA402_CMD_SHUTDOWN:               Motor_ReleaseVZ(p_motor);           break;
         case CIA402_CMD_SWITCH_ON:              Motor_ReleaseV0(p_motor);           break;
         case CIA402_CMD_ENABLE_OPERATION:       Motor_ActivateControl(p_motor);     break;
-        case CIA402_CMD_QUICK_STOP:             /* Motor_Disable(p_motor);  */               break; /* change to  */
+        case CIA402_CMD_QUICK_STOP:             /* Motor_Disable(p_motor);  */      break;
         case CIA402_CMD_FAULT_RESET:
             if (Cia402_IsFaultResetEdge(prev, control) == true) { Motor_StateMachine_TryClearFaultAll(p_motor); }
             break;

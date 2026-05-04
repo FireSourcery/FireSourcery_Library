@@ -61,9 +61,6 @@ void Motor_Init(const Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
-    LimitArray_ClearAll(&p_dev->I_LIMITS_LOCAL);
-    LimitArray_ClearAll(&p_dev->I_GEN_LIMITS_LOCAL);
-    LimitArray_ClearAll(&p_dev->SPEED_LIMITS_LOCAL);
 
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
@@ -147,56 +144,37 @@ void Motor_InitUnits(Motor_State_T * p_motor)
 
 */
 /******************************************************************************/
-static void _Motor_ResolveILimits(Motor_State_T * p_motor)
-{
-    interval_t iLimits = Motor_GetILimits(p_motor);
-    p_motor->ILimitCcw_Fract16 = iLimits.high;
-    p_motor->ILimitCw_Fract16  = iLimits.low;
-}
-
-static void _Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
-{
-    interval_t speedLimits = Motor_GetSpeedLimits(p_motor);
-    p_motor->SpeedLimitCcw_Fract16 = speedLimits.high;
-    p_motor->SpeedLimitCw_Fract16  = speedLimits.low;
-}
-
-static void Motor_ResolveILimits(Motor_State_T * p_motor)
-{
-    _Motor_ResolveILimits(p_motor);
-
-    Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor));
-    if ((p_motor->FeedbackMode.Speed == 1) && (p_motor->FeedbackMode.Current == 1))  /* SpeedPid Output is I */
-    {
-        PID_SetOutputLimits(&p_motor->PidSpeed, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor));
-    }
-}
-
-static void Motor_ResolveSpeedLimits(Motor_State_T * p_motor)
-{
-    _Motor_ResolveSpeedLimits(p_motor);
-
-    Ramp_SetOutputLimit(&p_motor->SpeedRamp, Motor_SpeedLimitCw(p_motor), Motor_SpeedLimitCcw(p_motor));
-}
-
 
 /* Ramp slope set independent of user Config.limits. By characteristics.   todo set with frac32 */
 void Motor_InitSpeedRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(&p_motor->Config));
-    Motor_ResolveSpeedLimits(p_motor);
+    // Motor_ResolveSpeedLimits(p_motor);
 }
 
 void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 {
     Ramp_Init(&p_motor->TorqueRamp, p_motor->Config.TorqueRampTime_Cycles, Phase_Calibration_GetIRatedPeak_Fract16()); /* Current by default */
-    Motor_ResolveILimits(p_motor);
+    // Motor_ResolveILimits(p_motor);
 }
 
 // void Motor_EnableSpeedRamp(Motor_State_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
 // void Motor_DisableSpeedRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
 // void Motor_EnableTorqueRamp(Motor_State_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
 // void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
+
+/* use wider config window before direction are known */
+void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
+{
+    p_motor->SpeedLimitCcw_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
+    p_motor->SpeedLimitCw_Fract16 = -p_motor->Config.SpeedLimitForward_Fract16;
+}
+
+void Motor_ResetILimit(Motor_State_T * p_motor)
+{
+    p_motor->ILimitCcw_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
+    p_motor->ILimitCw_Fract16 = -p_motor->Config.ILimitMotoring_Fract16;
+}
 
 void Motor_ResetSpeedPid(Motor_State_T * p_motor)
 {
@@ -218,11 +196,7 @@ void _Motor_ResetTuning(Motor_T * p_motor)
     Motor_ResetIPid(p_motor->P_MOTOR);
 }
 
-/******************************************************************************/
-/*
-    Inner unconditional set, always overwrite.
-*/
-/******************************************************************************/
+
 /******************************************************************************/
 /*
     FeedbackMode may update feedback limits
@@ -251,12 +225,12 @@ void Motor_SetFeedbackMode(Motor_State_T * p_motor, Motor_FeedbackMode_T mode)
     Direction - applied voltage direction
 */
 /******************************************************************************/
-void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
+void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
-    p_motor->Direction = direction;
-    RotorSensor_ZeroInitial(p_motor->p_ActiveSensor);
-    Motor_ResolveILimits(p_motor);
-    Motor_ResolveSpeedLimits(p_motor);
+    p_dev->P_MOTOR->Direction = direction;
+    RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
+    Motor_ResolveILimits(p_dev);
+    Motor_ResolveSpeedLimits(p_dev);
 }
 
 
@@ -268,62 +242,76 @@ void Motor_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction)
 */
 /******************************************************************************/
 /*
-    Speed Limit
+    effective when system ResolveLimits is disabled.
+    Virtual fields resolved to ccw/cw limits on se
+    write direction-resolved Ccw/Cw directly.
 */
-void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
+/* Forward direction = Config.DirectionForward sign; lands in Ccw if forward==CCW, else in -Cw. */
+void _Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
-    p_motor->SpeedLimitReverse_Fract16 = p_motor->Config.SpeedLimitReverse_Fract16;
-    Motor_ResolveSpeedLimits(p_motor);
+    ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
+    if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCcw_Fract16 = v; } else { p_motor->SpeedLimitCw_Fract16 = -v; }
 }
 
-void Motor_SetSpeedLimits(Motor_State_T * p_motor, uint16_t speed_ufract16)
+void _Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
-    p_motor->SpeedLimitReverse_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
-    Motor_ResolveSpeedLimits(p_motor);
+    ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+    if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCw_Fract16 = -v; } else { p_motor->SpeedLimitCcw_Fract16 = v; }
 }
 
-void Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
+void _Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 {
-    p_motor->SpeedLimitForward_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
-    if (Motor_IsDirectionForward(p_motor) == true) { Motor_ResolveSpeedLimits(p_motor); }
+    _Motor_SetSpeedLimitForward(p_motor, speed_ufract16);
+    _Motor_SetSpeedLimitReverse(p_motor, speed_ufract16);
 }
 
-void Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// void _Motor_SetSpeedLimits(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// {
+//     switch (p_motor->Config.DirectionForward)
+//     {
+//     }
+// }
+
+/* Motoring sign matches Direction: lands in Ccw if Direction==CCW, else in -Cw. */
+void _Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->SpeedLimitReverse_Fract16 = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
-    if (Motor_IsDirectionReverse(p_motor) == true) { Motor_ResolveSpeedLimits(p_motor); }
+    ufract16_t i_mot = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
+    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCcw_Fract16 = i_mot; } else { p_motor->ILimitCw_Fract16 = -i_mot; }
 }
 
-/*
-    ILimit
-*/
-void Motor_ResetILimit(Motor_State_T * p_motor)
+/* Generating sign opposes Direction: lands in -Cw if Direction==CCW, else in Ccw. */
+void _Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
-    p_motor->ILimitGenerating_Fract16 = p_motor->Config.ILimitGenerating_Fract16;
-    Motor_ResolveILimits(p_motor);
+    ufract16_t i_gen = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
+    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCw_Fract16 = -i_gen; } else { p_motor->ILimitCcw_Fract16 = i_gen; }
 }
 
-void Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
+void _Motor_SetILimit(Motor_State_T * p_motor, uint16_t i_fract16)
 {
-    p_motor->ILimitMotoring_Fract16 = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
-    Motor_ResolveILimits(p_motor);
+    _Motor_SetILimitMotoring(p_motor, i_fract16);
+    _Motor_SetILimitGenerating(p_motor, i_fract16);
 }
 
-void Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
+/*  Motor_GetILimits */
+void _Motor_SetILimits(Motor_State_T * p_motor, uint16_t motoring, uint16_t generating)
 {
-    p_motor->ILimitGenerating_Fract16 = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
-    Motor_ResolveILimits(p_motor);
+    switch (p_motor->Direction)
+    {
+        case MOTOR_DIRECTION_CCW:
+            p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
+            p_motor->ILimitCw_Fract16 = -math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
+            break;
+        case MOTOR_DIRECTION_CW:
+            p_motor->ILimitCcw_Fract16 = math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
+            p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
+            break;
+        default:
+            p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
+            p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
+            break;
+    }
 }
 
-void Motor_SetILimits(Motor_State_T * p_motor, uint16_t i_fract16)
-{
-    p_motor->ILimitMotoring_Fract16 = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
-    p_motor->ILimitGenerating_Fract16 = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
-    Motor_ResolveILimits(p_motor);
-}
 
 
 

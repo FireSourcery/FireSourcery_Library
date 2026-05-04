@@ -112,38 +112,26 @@ static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { retu
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
 // static inline bool Motor_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
+/* quick derive view */
+static inline ufract16_t Motor_User_ILimitMotoring(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? p_motor->ILimitCcw_Fract16 : -p_motor->ILimitCw_Fract16; }
+static inline ufract16_t Motor_User_ILimitGenerating(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? -p_motor->ILimitCw_Fract16 : p_motor->ILimitCcw_Fract16; }
+/* Direction-forward speed limit, virtual via Ccw/Cw. */
+static inline ufract16_t Motor_User_SpeedLimit(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? (ufract16_t)p_motor->SpeedLimitCcw_Fract16 : (ufract16_t)(-p_motor->SpeedLimitCw_Fract16); }
+
 /*
 
 */
-static inline bool Motor_IsILimitSet(const Motor_State_T * p_motor)
-{
-    return (p_motor->ILimitMotoring_Fract16 != p_motor->Config.ILimitMotoring_Fract16) || (p_motor->ILimitGenerating_Fract16 != p_motor->Config.ILimitGenerating_Fract16);
-}
-
-static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
-{
-    return (p_motor->SpeedLimitForward_Fract16 != p_motor->Config.SpeedLimitForward_Fract16) || (p_motor->SpeedLimitReverse_Fract16 != p_motor->Config.SpeedLimitReverse_Fract16);
-}
-
-
-/*
-    User config frame
-    Effective Limits
-*/
-static inline ufract16_t Motor_SpeedLimitForward(const Motor_State_T * p_motor) { return p_motor->SpeedLimitForward_Fract16; }
-static inline ufract16_t Motor_SpeedLimitReverse(const Motor_State_T * p_motor) { return p_motor->SpeedLimitReverse_Fract16; }
-static inline ufract16_t Motor_SpeedLimitMotoring(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction); }
-static inline ufract16_t Motor_SpeedLimitGenerating(const Motor_State_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction * -1); }
-
-// static inline fract16_t Motor_SpeedLimitMotoringReq(const Motor_State_T * p_motor, int16_t speedReq) { return math_clamp(speedReq, (int32_t)0 - Motor_SpeedLimitGenerating(p_motor), Motor_SpeedLimitMotoring(p_motor)); }
+// static inline bool Motor_IsILimitSet(const Motor_State_T * p_motor)
+// {
+//     return (Motor_User_ILimitMotoring(p_motor) != p_motor->Config.ILimitMotoring_Fract16) || (Motor_User_ILimitGenerating(p_motor) != p_motor->Config.ILimitGenerating_Fract16);
+// }
+// static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
+// {
+//     return (Motor_SpeedLimitForward(p_motor) != p_motor->Config.SpeedLimitForward_Fract16) || (Motor_SpeedLimitReverse(p_motor) != p_motor->Config.SpeedLimitReverse_Fract16);
+// }
 
 
-static inline ufract16_t Motor_ILimitMotoring(const Motor_State_T * p_motor) { return p_motor->ILimitMotoring_Fract16; }
-static inline ufract16_t Motor_ILimitGenerating(const Motor_State_T * p_motor) { return p_motor->ILimitGenerating_Fract16; }
-static inline ufract16_t Motor_ILimitForward(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, p_motor->Config.DirectionForward); }
-static inline ufract16_t Motor_ILimitReverse(const Motor_State_T * p_motor) { return _Motor_ILimitAs(p_motor, p_motor->Config.DirectionForward * -1); }
 
-static inline fract16_t Motor_ILimitMotoringReq(const Motor_State_T * p_motor, int16_t iReq) { return math_clamp(iReq, (int32_t)0 - Motor_ILimitGenerating(p_motor), Motor_ILimitMotoring(p_motor)); }
 
 /******************************************************************************/
 /*!
@@ -233,8 +221,13 @@ extern void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd);
 extern bool Motor_TryILimit(Motor_State_T * p_motor, uint16_t i_Fract16);
 extern bool Motor_TrySpeedLimit(Motor_State_T * p_motor, uint16_t speed_Fract16);
 
-void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
-void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
-void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
+/* Single-pointer Apply path — pulls system derate from Motor_T.P_SYSTEM_* and composes with inline local. */
+void Motor_SetILimitWith(const Motor_T * p_motor);
+void Motor_SetSpeedLimitWith(const Motor_T * p_motor);
+
+/* Old two-array forwarders preserved as comments for migration reference. */
+// void Motor_SetSpeedLimitWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
+// void Motor_SetILimitMotoringWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
+// void Motor_SetILimitGeneratingWith(Motor_State_T * p_motor, LimitArray_T * p_local, LimitArray_T * p_system);
 
 extern void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input);

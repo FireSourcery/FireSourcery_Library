@@ -33,7 +33,7 @@
 
 // #define APP_SUBSTATE_ID(appId, subId) (() | ((appId) << 8U) | (subId))
 
-/* MotorController_App -> MotorController -> MotorController_AppTable */
+/* MotorController_App -> MotorController -> MotorController_AppTable -> MotorController_Var */
 
 /* Part of MotorController */
 struct MotorController;
@@ -42,10 +42,7 @@ typedef const struct MotorController MotorController_T;
 typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
 // typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc, void * p_config);
 
-/*
-    All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
-    Protocol freely maps,
-*/
+
 /******************************************************************************/
 /*!
     Interface Around [MotorController_T] for StateMachine Access
@@ -58,6 +55,10 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
 /******************************************************************************/
 typedef const struct MotorController_App
 {
+    /*
+        All apps include independent AnalogUser handlers. Interpretation based on App handled separately from State
+        Protocol freely maps,
+    */
     MotorController_App_Proc_T PROC_ANALOG_USER;
     MotorController_App_Proc_T INIT;
     State_Input_T ENTER_MAIN;

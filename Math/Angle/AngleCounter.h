@@ -71,7 +71,6 @@ typedef struct AngleCounter
 }
 AngleCounter_T;
 
-
 /* Units conversion */
 typedef struct AngleCounter_Config
 {
@@ -84,6 +83,7 @@ AngleCounter_Config_T;
 
 
 static inline Angle_T * AngleCounter_Angle(AngleCounter_T * p_counter) { return &p_counter->Base; }
+
 
 /******************************************************************************/
 /*
@@ -209,3 +209,29 @@ static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCo
     AngleCounter_Zero(p_angle);
 }
 
+
+
+/******************************************************************************/
+/*
+    Collaborator pattern
+*/
+// /******************************************************************************/
+// typedef struct
+// {
+//     int32_t CounterD;       /* Signed pulse counter. Accumulated +1/-1 from edges */
+//     int32_t FreqD;          /* Pulse frequency [Hz]. DeltaD over 1 second */
+//     AngleCounter_Ref_T Ref; /* Runtime unit conversion */
+// }
+// Angle_Counter_T;
+
+// static inline void Angle_Counter_Capture(Angle_T * p_angle, Angle_Counter_T * p_counter, int sign)
+// {
+//     p_counter->CounterD += sign;
+//     p_angle->Angle += sign * p_counter->Ref.Angle32PerCount;
+// }
+
+// static inline angle16_t _Angle_Counter_ResolveAngleDelta(Angle_T * p_angle, const AngleCounter_T * p_counter)
+// {
+//     p_angle->Delta = (int32_t)p_counter->Ref.AngleSpeed32PerCount * p_counter->FreqD;
+//     return p_angle->Delta >> ANGLE_EXT_SHIFT;
+// }

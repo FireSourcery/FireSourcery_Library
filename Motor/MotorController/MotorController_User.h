@@ -51,15 +51,14 @@ typedef enum MotorController_SystemCmd
     MOT_USER_SYSTEM_FORCE_DISABLE_CONTROL,  // Force Disable control Non StateMachine checked, also handled via MOT_PACKET_STOP_ALL
     MOT_USER_SYSTEM_CLEAR_FAULT,            // Fault State / Flags
     MOT_USER_SYSTEM_RX_WATCHDOG,        // on/off
-    MOT_USER_SYSTEM_LOCK_STATE_INPUT,       // MotorController_LockId_T as input: Nvm, Calibration
+    MOT_USER_SYSTEM_LOCK_STATE_INPUT,       // [MotorController_LockId_T]. includes Nvm, Calibration
     // MOT_USER_SYSTEM_LOCK_STATE_EXIT,
-    MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // substate id, MotorController_LockId_T as status
-    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // operation, Async operation status. optionally pass MotorController_LockId_T for selection
+    MOT_USER_SYSTEM_LOCK_STATE_STATUS,  // substate id, [MotorController_LockId_T] as status
+    MOT_USER_SYSTEM_LOCK_ASYNC_STATUS,  // operation, Async operation status. optionally pass [MotorController_LockId_T] for selection
 
     MOT_USER_SYSTEM_STATE_COMMAND,      // State Command
     MOT_USER_SYSTEM_DIRECTION_COMMAND,
-//     // MOT_VAR_TYPE_COMMAND_METER, move to other services
-//     // MOT_VAR_TYPE_COMMAND_RELAY,
+
 //     MOT_VAR_TYPE_COMMAND_NVM,
 //     MOT_VAR_TYPE_COMMAND_CALIBRATION,
     _MOT_USER_SYSTEM_CMD_END = 16U,
@@ -73,17 +72,6 @@ MotorController_SystemCmd_T;
 // }
 // MotorController_GenericStatus_T;
 
-
-/* Non StateMachine checked disable motors. Caller ensure non field weakening state */
-/* Update State to prevent input overwrite */
-static inline void MotorController_ForceDisableControl(MotorController_T * p_dev)
-{
-    Motor_Table_ForceDisableControl(&p_dev->MOTORS);
-    MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
-    p_dev->P_MC->CmdInput.CmdValue = 0;
-    p_dev->P_MC->CmdInput.PhaseOutput = PHASE_VOUT_Z;
-    p_dev->P_MC->CmdInput.Direction = MOTOR_DIRECTION_NULL;
-}
 
 /*
     Status Flags for User Interface
@@ -124,6 +112,17 @@ static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(Motor
     Non StateMachine Checked
 */
 /******************************************************************************/
+/* Non StateMachine checked disable motors. Caller ensure non field weakening state */
+/* Update State to prevent input overwrite */
+static inline void MotorController_ForceDisableControl(MotorController_T * p_dev)
+{
+    Motor_Table_ForceDisableControl(&p_dev->MOTORS);
+    MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
+    p_dev->P_MC->CmdInput.CmdValue = 0;
+    p_dev->P_MC->CmdInput.PhaseOutput = PHASE_VOUT_Z;
+    p_dev->P_MC->CmdInput.Direction = MOTOR_DIRECTION_NULL;
+}
+
 /******************************************************************************/
 /*
     User Setting Speed/I Limit

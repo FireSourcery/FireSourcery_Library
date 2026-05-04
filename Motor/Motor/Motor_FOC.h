@@ -60,12 +60,8 @@
 /*!
 */
 /******************************************************************************/
-static inline void _Motor_FOC_WriteDuty(const Phase_T * p_phase, const FOC_T * p_foc)
-{
-    Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc));
-}
-
-static inline void Motor_FOC_WriteDuty(const Motor_T * p_motor) { _Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_MOTOR->Foc); }
+static inline void _Motor_FOC_WriteDuty(Phase_T * p_phase, const FOC_T * p_foc) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
+static inline void Motor_FOC_WriteDuty(Motor_T * p_motor) { _Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_MOTOR->Foc); }
 
 /******************************************************************************/
 /*!
@@ -78,7 +74,6 @@ static inline motor_value_t Motor_FOC_GetVPhase_Fract16(const Motor_State_T * p_
 static inline motor_value_t Motor_FOC_GetIPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetIMagnitude(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetVPhase_UFract16(const Motor_State_T * p_motor)            { return FOC_GetVMagnitude(&p_motor->Foc); }
 static inline motor_value_t Motor_FOC_GetElectricalPower_UFract16(const Motor_State_T * p_motor)   { return FOC_GetActivePower(&p_motor->Foc); }
-
 
 /*
 
@@ -100,13 +95,6 @@ static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return 
 static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
 
-
-
-/*
- */
-/* vq is expected to be the same sign as p_motor->Direction */
-
-// static inline bool Motor_FOC_IsIqLimitReached(const Motor_State_T * p_motor) { return math_is_in_range(FOC_Iq(&p_motor->Foc), Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
 
 /******************************************************************************/
 /*!
@@ -133,7 +121,7 @@ extern void Motor_FOC_StartAlignValidate(Motor_State_T * p_motor);
 extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor);
 
-extern void Motor_FOC_SetDirection(Motor_State_T * p_motor, Motor_Direction_T direction);
+extern void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction);
 extern void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor);
 
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE

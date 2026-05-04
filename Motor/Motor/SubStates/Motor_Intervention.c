@@ -53,7 +53,8 @@ static void TorqueZero_Entry(const Motor_T * p_motor)
     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     // p_motor->P_MOTOR->UserTorqueReq = 0;
     /* cases where current sampling  */
-    p_motor->P_MOTOR->UserTorqueReq = -1 * p_state->Direction * fract16_mul(p_state->ILimitGenerating_Fract16, 32768/20);
+    /* ILimitGenerating_Fract16 cached field gone — use virtual getter (resolves from Ccw/Cw via direction). */
+    p_motor->P_MOTOR->UserTorqueReq = -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20);
 }
 
 static void TorqueZero_Proc(const Motor_T * p_motor)

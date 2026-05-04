@@ -94,9 +94,8 @@ void MotorController_Init(const MotorController_T * p_dev)
     Analog_Conversion_Mark(&p_dev->V_ACCESSORIES_CONVERSION);
     Analog_Conversion_Mark(&p_dev->V_ANALOG_CONVERSION);
 
-    LimitArray_ClearAll(&p_dev->SPEED_LIMIT_SOURCES);
-    LimitArray_ClearAll(&p_dev->I_LIMIT_SOURCES);
-    LimitArray_ClearAll(&p_dev->I_GEN_LIMIT_SOURCES);
+    MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
+    MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
 
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
@@ -120,39 +119,37 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
     Collective Setting Limit
 */
 /******************************************************************************/
-bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
+/*
+    System-side setters operate directly on MotorController_State_T.Limits (embedded MotLimits_T).
+    Use _LimitArray_* underscore form (augments + values + length explicit) since there's no
+    LimitArray_T descriptor to wrap them. MotLimits typed wrappers may come later — see notes
+    in MotLimits.h on Motor_Table coupling.
+*/
+bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
 {
-    if (LimitArray_TestSetUpper(&p_dev->SPEED_LIMIT_SOURCES, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
+    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+    if (_LimitArray_TestSetUpper(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS); return true; }
     return false;
 }
 
-bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id)
+bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id)
 {
-    if (LimitArray_TestClearEntry(&p_dev->SPEED_LIMIT_SOURCES, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS, &p_dev->SPEED_LIMIT_SOURCES); return true; }
+    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+    if (_LimitArray_TestClearEntry(&p_lim->SpeedLimitState, p_lim->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true) { Motor_Table_ApplySpeedLimit(&p_dev->MOTORS); return true; }
     return false;
 }
 
-bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
+bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t i_fract16)
 {
-    if (LimitArray_TestSetUpper(&p_dev->I_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
+    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+    if (_LimitArray_TestSetUpper(&p_lim->ILimitState, p_lim->ILimitValues, id, i_fract16) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS); return true; }
     return false;
 }
 
-bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id)
+bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id)
 {
-    if (LimitArray_TestClearEntry(&p_dev->I_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS, &p_dev->I_LIMIT_SOURCES); return true; }
-    return false;
-}
-
-bool _MotorController_SetIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id, limit_t i_fract16)
-{
-    if (LimitArray_TestSetUpper(&p_dev->I_GEN_LIMIT_SOURCES, id, i_fract16) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
-    return false;
-}
-
-bool _MotorController_ClearIGenLimitAll(const MotorController_T * p_dev, MotIGenLimitId_T id)
-{
-    if (LimitArray_TestClearEntry(&p_dev->I_GEN_LIMIT_SOURCES, id) == true) { Motor_Table_ApplyIGenLimit(&p_dev->MOTORS, &p_dev->I_GEN_LIMIT_SOURCES); return true; }
+    MotLimits_T * p_lim = &p_dev->P_MC->Limits;
+    if (_LimitArray_TestClearEntry(&p_lim->ILimitState, p_lim->ILimitValues, MOT_I_LIMIT_COUNT, id) == true) { Motor_Table_ApplyILimit(&p_dev->MOTORS); return true; }
     return false;
 }
 

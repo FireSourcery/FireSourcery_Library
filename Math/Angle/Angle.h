@@ -72,6 +72,8 @@ Angle_T;
 static inline angle16_t Angle_Value(const Angle_T * p_angle) { return (angle16_t)(p_angle->Angle >> ANGLE32_SHIFT); }
 static inline angle16_t Angle_Delta(const Angle_T * p_angle) { return (angle16_t)(p_angle->Delta >> ANGLE32_SHIFT); }
 
+static inline struct fract16_xy Angle_UnitVector(const Angle_T * p_angle) { return fract16_vector(Angle_Value(p_angle)); }
+
 
 /******************************************************************************/
 /*

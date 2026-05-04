@@ -44,6 +44,13 @@ typedef const struct Motor_Table
     const size_t LENGTH;
 }
 Motor_Table_T;
+// typedef const struct MotorDrive
+// {
+//     Motor_Table_T MOTORS;
+//     LimitArray_T SPEED_LIMIT_SOURCES;
+//     LimitArray_T I_LIMIT_SOURCES;
+// }
+// MotorDrive_T;
 
 static inline Motor_State_T * Motor_Table_StateAt(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_STATES[motorIndex]); }
 static inline Motor_T * Motor_Table_At(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_DEVS[motorIndex]); }
@@ -92,14 +99,12 @@ static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_table, Motor_SetCmdV
 // static inline void Motor_Table_ApplyInputs(Motor_Table_T * p_table, Motor_Input_T * p_input) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ProcSyncInput(&p_table->P_MONITORS[iMotor], p_input); } }
 
 /*
-    Two-scope arbitration: per motor, effective limit = min(system_upper, local_upper).
-    Both scopes default to LIMIT_ARRAY_MAX when inactive, so the composition falls
-    through to Motor_Set* which clamps to Config cap — equivalent to "reset".
+    Single-scope arbitration: per motor, effective derate = min(local_inline, system_augments).
+    System augments are reached via Motor_T.P_SYSTEM_* pointer (Mediator pattern, like P_VBUS).
+    Caller no longer passes the system array — motor pulls fresh from its own pointer.
 */
-static inline void Motor_Table_ApplySpeedLimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetSpeedLimitWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].SPEED_LIMITS_LOCAL, p_system); } }
-static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitMotoringWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].I_LIMITS_LOCAL, p_system); } }
-static inline void Motor_Table_ApplyIGenLimit(Motor_Table_T * p_table, LimitArray_T * p_system) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_SetILimitGeneratingWith(&p_table->P_STATES[iMotor], &p_table->P_DEVS[iMotor].I_GEN_LIMITS_LOCAL, p_system); } }
-
+static inline void Motor_Table_ApplySpeedLimit(Motor_Table_T * p_table) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResolveSpeedLimits(&p_table->P_DEVS[iMotor]); } }
+static inline void Motor_Table_ApplyILimit(Motor_Table_T * p_table)     { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ResolveILimits(&p_table->P_DEVS[iMotor]); } }
 
 /******************************************************************************/
 /*
@@ -108,6 +113,10 @@ static inline void Motor_Table_ApplyIGenLimit(Motor_Table_T * p_table, LimitArra
 /******************************************************************************/
 // typedef void (*Motor_ContextAction_T)(const Motor_T * p_dev, Motor_State_T * p_state);
 // static inline void _Motor_Table_Context_ForEach(Motor_State_T * p_motors, int count, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_State_T), p_motors, count, (proc_t)function); }
+
+// typedef bool(*Motor_TrySet_T)(Motor_T * p_motor, int value);
+// static inline bool Motor_Array_IsEverySet(Motor_T * p_motors, Motor_TrySet_T test, int value) { return void_array_for_every_set(sizeof(Motor_State_T), p_motors, MOTOR_COUNT, (try_set_t)test, value); }
+
 
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_table, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_table->P_DEVS[iMotor], mode); } }
 

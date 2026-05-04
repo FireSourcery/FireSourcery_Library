@@ -70,6 +70,23 @@
 //     }
 // }
 
+// static inline void FOC_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
+// {
+//     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, p_foc->ReqD);
+//     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, p_foc->ReqQ);
+// }
+
+// static inline void FOC_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq, fract16_t idReq, fract16_t iqReq)
+// {
+//     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, idReq);
+//     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, iqReq);
+// }
+
+// static inline void FOC_ProcId(FOC_T * p_foc, PID_T * p_pidId, fract16_t idReq)
+// {
+//     p_foc->Vd = PID_ProcPI(p_pidId, p_foc->Id, idReq);
+// }
+
 // typedef struct FOC_Feedback
 // {
 //     FOC_T Foc;
@@ -78,21 +95,14 @@
 //     PID_T PidId;
 // }
 // FOC_Feedback_T;
+// static inline void  _FOC_TorqueControl(FOC_Feedback_T * p_foc, uint32_t vbus,  fract16_t torqueReq)
 
-// static inline void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq)
+// typedef struct FOC_Feedback
 // {
-//     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, p_foc->ReqD);
-//     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, p_foc->ReqQ);
+//     FOC_T Foc;
+//     PID_T PidIq;
+//     PID_T PidId;
 // }
-
-// static inline void FOC_Feedback_Proc(FOC_T * p_foc, PID_T * PidId, PID_T * PidIq, fract16_t idReq, fract16_t iqReq)
-// {
-//     p_foc->Vd = PID_ProcPI(PidId, p_foc->Id, idReq);
-//     p_foc->Vq = PID_ProcPI(PidIq, p_foc->Iq, iqReq);
-// }
-
-// static inline void FOC_Feedback_ProcId(FOC_T * p_foc, PID_T * p_pidId, fract16_t idReq)
-// {
-//     p_foc->Vd = PID_ProcPI(p_pidId, p_foc->Id, idReq);
-// }
+// FOC_Feedback_T;
+// static inline void  _FOC_TorqueControl(FOC_Feedback_T * p_foc, uint32_t vbus, Ramp_T * p_torqueRamp, fract16_t torqueReq)
 

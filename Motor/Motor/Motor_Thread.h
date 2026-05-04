@@ -87,29 +87,14 @@ static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 */
 /******************************************************************************/
 /*
-    Per-motor winding thermal derate. Writes to motor-local arrays so one motor's
-    heat does not broadcast to peers; composition into the effective cap happens
-    inside Motor_Table_Apply* at the controller tick.
+    Per-motor winding thermal derate.
 */
 static inline void Motor_Heat_Thread(const Motor_T * p_dev)
 {
     switch (HeatMonitor_Poll(&p_dev->HEAT_MONITOR, Analog_Conversion_GetResult(&p_dev->HEAT_MONITOR_CONVERSION)))
     {
-        case HEAT_MONITOR_STATUS_NORMAL:
-            if (Monitor_IsStatusClearing(p_dev->HEAT_MONITOR.P_STATE) == true)
-            {
-                LimitArray_TestClearEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING);
-                LimitArray_TestClearEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING);
-            }
-            break;
-        case HEAT_MONITOR_STATUS_WARNING_HIGH:
-            {
-                /* Push derate directly — Q15 ratio; rated multiply happens once at Motor_Table_ApplyILimit. */
-                uint16_t derate = HeatMonitor_GetDerate_Fract16(&p_dev->HEAT_MONITOR);
-                LimitArray_TestSetEntry(&p_dev->I_LIMITS_LOCAL, MOTOR_I_LIMIT_HEAT_WINDING, derate);
-                LimitArray_TestSetEntry(&p_dev->I_GEN_LIMITS_LOCAL, MOTOR_I_GEN_LIMIT_HEAT_WINDING, derate);
-                break;
-            }
+        // case HEAT_MONITOR_STATUS_NORMAL:
+        // case HEAT_MONITOR_STATUS_WARNING_HIGH:
         case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
             Motor_StateMachine_SetFault(p_dev, MOTOR_FAULT_OVERHEAT);
             break;

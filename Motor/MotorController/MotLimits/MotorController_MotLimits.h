@@ -1,9 +1,10 @@
+#pragma once
 
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -23,17 +24,11 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   .h
+    @file   MotorController_MotLimits.h
     @author FireSourcery
-
-    @brief  Limits Input
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
+
+#include "../MotorController.h"
 #include "MotLimits.h"
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-
