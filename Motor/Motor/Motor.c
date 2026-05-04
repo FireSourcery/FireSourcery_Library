@@ -166,14 +166,16 @@ void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 /* use wider config window before direction are known */
 void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
 {
-    p_motor->SpeedLimitCcw_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
-    p_motor->SpeedLimitCw_Fract16 = -p_motor->Config.SpeedLimitForward_Fract16;
+    // p_motor->SpeedLimitCcw_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
+    // p_motor->SpeedLimitCw_Fract16 = -p_motor->Config.SpeedLimitForward_Fract16;
+    Ramp_SetOutputLimit(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
 }
 
 void Motor_ResetILimit(Motor_State_T * p_motor)
 {
-    p_motor->ILimitCcw_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
-    p_motor->ILimitCw_Fract16 = -p_motor->Config.ILimitMotoring_Fract16;
+    // p_motor->ILimitCcw_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
+    // p_motor->ILimitCw_Fract16 = -p_motor->Config.ILimitMotoring_Fract16;
+    Ramp_SetOutputLimit(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
 }
 
 void Motor_ResetSpeedPid(Motor_State_T * p_motor)
@@ -236,9 +238,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
 /******************************************************************************/
 /*!
-    Active Limits - Non directional
-    Table comparison control
-    Derive directional Feedback Limits
+    Active Limits
 */
 /******************************************************************************/
 /*
@@ -247,23 +247,23 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     write direction-resolved Ccw/Cw directly.
 */
 /* Forward direction = Config.DirectionForward sign; lands in Ccw if forward==CCW, else in -Cw. */
-void _Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
-{
-    ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
-    if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCcw_Fract16 = v; } else { p_motor->SpeedLimitCw_Fract16 = -v; }
-}
+// void _Motor_SetSpeedLimitForward(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// {
+//     ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitForward_Fract16);
+//     if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCcw_Fract16 = v; } else { p_motor->SpeedLimitCw_Fract16 = -v; }
+// }
 
-void _Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
-{
-    ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
-    if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCw_Fract16 = -v; } else { p_motor->SpeedLimitCcw_Fract16 = v; }
-}
+// void _Motor_SetSpeedLimitReverse(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// {
+//     ufract16_t v = math_min(speed_ufract16, p_motor->Config.SpeedLimitReverse_Fract16);
+//     if (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) { p_motor->SpeedLimitCw_Fract16 = -v; } else { p_motor->SpeedLimitCcw_Fract16 = v; }
+// }
 
-void _Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
-{
-    _Motor_SetSpeedLimitForward(p_motor, speed_ufract16);
-    _Motor_SetSpeedLimitReverse(p_motor, speed_ufract16);
-}
+// void _Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
+// {
+//     _Motor_SetSpeedLimitForward(p_motor, speed_ufract16);
+//     _Motor_SetSpeedLimitReverse(p_motor, speed_ufract16);
+// }
 
 // void _Motor_SetSpeedLimits(Motor_State_T * p_motor, uint16_t speed_ufract16)
 // {
@@ -273,44 +273,44 @@ void _Motor_SetSpeedLimit(Motor_State_T * p_motor, uint16_t speed_ufract16)
 // }
 
 /* Motoring sign matches Direction: lands in Ccw if Direction==CCW, else in -Cw. */
-void _Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
-{
-    ufract16_t i_mot = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
-    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCcw_Fract16 = i_mot; } else { p_motor->ILimitCw_Fract16 = -i_mot; }
-}
+// void _Motor_SetILimitMotoring(Motor_State_T * p_motor, uint16_t i_fract16)
+// {
+//     ufract16_t i_mot = math_min(i_fract16, p_motor->Config.ILimitMotoring_Fract16);
+//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCcw_Fract16 = i_mot; } else { p_motor->ILimitCw_Fract16 = -i_mot; }
+// }
 
-/* Generating sign opposes Direction: lands in -Cw if Direction==CCW, else in Ccw. */
-void _Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
-{
-    ufract16_t i_gen = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
-    if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCw_Fract16 = -i_gen; } else { p_motor->ILimitCcw_Fract16 = i_gen; }
-}
+// /* Generating sign opposes Direction: lands in -Cw if Direction==CCW, else in Ccw. */
+// void _Motor_SetILimitGenerating(Motor_State_T * p_motor, uint16_t i_fract16)
+// {
+//     ufract16_t i_gen = math_min(i_fract16, p_motor->Config.ILimitGenerating_Fract16);
+//     if (p_motor->Direction == MOTOR_DIRECTION_CCW) { p_motor->ILimitCw_Fract16 = -i_gen; } else { p_motor->ILimitCcw_Fract16 = i_gen; }
+// }
 
-void _Motor_SetILimit(Motor_State_T * p_motor, uint16_t i_fract16)
-{
-    _Motor_SetILimitMotoring(p_motor, i_fract16);
-    _Motor_SetILimitGenerating(p_motor, i_fract16);
-}
+// void _Motor_SetILimit(Motor_State_T * p_motor, uint16_t i_fract16)
+// {
+//     _Motor_SetILimitMotoring(p_motor, i_fract16);
+//     _Motor_SetILimitGenerating(p_motor, i_fract16);
+// }
 
-/*  Motor_GetILimits */
-void _Motor_SetILimits(Motor_State_T * p_motor, uint16_t motoring, uint16_t generating)
-{
-    switch (p_motor->Direction)
-    {
-        case MOTOR_DIRECTION_CCW:
-            p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
-            p_motor->ILimitCw_Fract16 = -math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
-            break;
-        case MOTOR_DIRECTION_CW:
-            p_motor->ILimitCcw_Fract16 = math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
-            p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
-            break;
-        default:
-            p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
-            p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
-            break;
-    }
-}
+// /*  Motor_GetILimits */
+// void _Motor_SetILimits(Motor_State_T * p_motor, uint16_t motoring, uint16_t generating)
+// {
+//     switch (p_motor->Direction)
+//     {
+//         case MOTOR_DIRECTION_CCW:
+//             p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
+//             p_motor->ILimitCw_Fract16 = -math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
+//             break;
+//         case MOTOR_DIRECTION_CW:
+//             p_motor->ILimitCcw_Fract16 = math_min(generating, p_motor->Config.ILimitGenerating_Fract16);
+//             p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitMotoring_Fract16);
+//             break;
+//         default:
+//             p_motor->ILimitCcw_Fract16 = math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
+//             p_motor->ILimitCw_Fract16 = -math_min(motoring, p_motor->Config.ILimitGenerating_Fract16);
+//             break;
+//     }
+// }
 
 
 

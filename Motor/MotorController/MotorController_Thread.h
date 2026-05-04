@@ -67,7 +67,7 @@
     Mapped to Thread - Proc in All States
 */
 /******************************************************************************/
-static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_dev)
+static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
 {
     for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION)); }
 
@@ -89,7 +89,7 @@ static inline void _MotorController_ProcAnalogUser(const MotorController_T * p_d
     Heat Monitor Thread
 */
 /******************************************************************************/
-static inline void _MotorController_HeatMonitor_Thread(const MotorController_T * p_dev)
+static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     HeatMonitor_Status_T status;
@@ -114,7 +114,6 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     }
 
     /* Poll MOSFET Temperature Monitors Group Collective */
-    /* todo compose fan in at array level */
     /*
         Apply thermal current limiting based on hottest MOSFETs
         Does not check for edge trigger
@@ -155,13 +154,13 @@ static inline void _MotorController_HeatMonitor_Thread(const MotorController_T *
     if overwritten, main will check fault flags and enter, or on next poll.
     input handlers store a local copy of the function pointer before performing null check. so it should not crash the program.
 */
-static void _MotorController_VBus_EnterFault(const MotorController_T * p_dev)
+static void _MotorController_VBus_EnterFault(MotorController_T * p_dev)
 {
     Motor_Table_ForceDisableControl(&p_dev->MOTORS);
     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_VBUS_LIMIT);
 }
 
-static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
+static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
 {
     // VBus_PollCaptureMonitor move filtered here
     switch (VBus_PollMonitor(p_dev->P_VBUS))
@@ -185,7 +184,7 @@ static inline void _MotorController_VBus_Thread(const MotorController_T * p_dev)
    VAux Monitor Thread
 */
 /******************************************************************************/
-static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T * p_dev)
+static inline void _MotorController_VMonitorBoard_Thread(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
 
@@ -208,7 +207,7 @@ static inline void _MotorController_VMonitorBoard_Thread(const MotorController_T
     High Freq, Low Priority,
 */
 /******************************************************************************/
-static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
+static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
 
@@ -296,7 +295,7 @@ static inline void MotorController_Main_Thread(const MotorController_T * p_dev)
 /*
     Med Freq, Med-High Priority
 */
-static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_dev)
+static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
     _MotorController_VBus_Thread(p_dev);
@@ -311,7 +310,7 @@ static inline void MotorController_Timer1Ms_Thread(const MotorController_T * p_d
     High Freq, High Priority
 */
 /* Alternatively these can be placed directly user main if the compiler does not optimize */
-static inline void MotorController_PWM_Thread(const MotorController_T * p_dev)
+static inline void MotorController_PWM_Thread(MotorController_T * p_dev)
 {
     // p_fields->MicrosRef = SysTime_GetMicros();
     if (_Motor_IsAnalogCycle(p_dev->P_MC->ControlCounter) == true)

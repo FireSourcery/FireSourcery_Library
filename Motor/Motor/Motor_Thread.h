@@ -46,7 +46,7 @@
     Motor_MarkAnalog_Thread
 */
 /******************************************************************************/
-static inline void Motor_MarkAnalog_Thread(const Motor_T * p_dev)
+static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 {
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
@@ -60,7 +60,7 @@ static inline void Motor_MarkAnalog_Thread(const Motor_T * p_dev)
     ~50us
     Calling function clears interrupt flag
 */
-static inline void Motor_PWM_Thread(const Motor_T * p_dev)
+static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
     Motor_State_T * p_fields = p_dev->P_MOTOR;
     Motor_CaptureSensor(p_dev);
@@ -77,9 +77,9 @@ static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 }
 
 /* Controls StateMachine Proc. Local Critical */
-// static inline void Motor_ClearInterrupt(const Motor_T * p_motor) { Phase_ClearInterrupt(&p_motor->PHASE); }
-// static inline void Motor_DisableInterrupt(const Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }
-// static inline void Motor_EnableInterrupt(const Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->PHASE); }
+// static inline void Motor_ClearInterrupt(Motor_T * p_motor) { Phase_ClearInterrupt(&p_motor->PHASE); }
+// static inline void Motor_DisableInterrupt(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }
+// static inline void Motor_EnableInterrupt(Motor_T * p_motor) { Phase_EnableInterrupt(&p_motor->PHASE); }
 
 /******************************************************************************/
 /*
@@ -89,15 +89,13 @@ static inline void Motor_PWM_Thread(const Motor_T * p_dev)
 /*
     Per-motor winding thermal derate.
 */
-static inline void Motor_Heat_Thread(const Motor_T * p_dev)
+static inline void Motor_Heat_Thread(Motor_T * p_dev)
 {
     switch (HeatMonitor_Poll(&p_dev->HEAT_MONITOR, Analog_Conversion_GetResult(&p_dev->HEAT_MONITOR_CONVERSION)))
     {
         // case HEAT_MONITOR_STATUS_NORMAL:
         // case HEAT_MONITOR_STATUS_WARNING_HIGH:
-        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT:
-            Motor_StateMachine_SetFault(p_dev, MOTOR_FAULT_OVERHEAT);
-            break;
+        case HEAT_MONITOR_STATUS_FAULT_OVERHEAT: Motor_StateMachine_SetFault(p_dev, MOTOR_FAULT_OVERHEAT); break;
         default: break;
     }
 

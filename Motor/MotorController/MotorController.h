@@ -327,24 +327,24 @@ static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc
 
 */
 /******************************************************************************/
-static inline Socket_T * MotorController_GetMainSocket(const MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
+static inline Socket_T * MotorController_GetMainSocket(MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
-static inline bool MotorController_PollRxLost(const MotorController_T * p_dev)
+static inline bool MotorController_PollRxLost(MotorController_T * p_dev)
 {
     p_dev->P_MC->FaultFlags.RxLost = Socket_IsRxLost(MotorController_GetMainSocket(p_dev));
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
 /* Common Buffered Input */
-// static inline Motor_Input_T * MotorController_GetMotorInput(const MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
+// static inline Motor_Input_T * MotorController_GetMotorInput(MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
 
 /******************************************************************************/
 /*
     MotBuzzer
 */
 /******************************************************************************/
-static inline MotBuzzer_T * MotorController_Buzzer(const MotorController_T * p_dev) { return &p_dev->BUZZER; }
+static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
 
 
 /******************************************************************************/
@@ -352,11 +352,11 @@ static inline MotBuzzer_T * MotorController_Buzzer(const MotorController_T * p_d
     Extern
 */
 /******************************************************************************/
-extern void MotorController_Init(const MotorController_T * p_dev);
+extern void MotorController_Init(MotorController_T * p_dev);
 
 extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
 
-extern bool _MotorController_SetSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearSpeedLimitAll(const MotorController_T * p_dev, MotSpeedLimitId_T id);
-extern bool _MotorController_SetILimitAll(const MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
-extern bool _MotorController_ClearILimitAll(const MotorController_T * p_dev, MotILimitId_T id);
+extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);
+extern bool _MotorController_SetILimitAll(MotorController_T * p_dev, MotILimitId_T id, limit_t limit_fract16);
+extern bool _MotorController_ClearILimitAll(MotorController_T * p_dev, MotILimitId_T id);

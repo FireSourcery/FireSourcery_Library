@@ -685,7 +685,7 @@ Handler-Driven Ack (DataModeWrite) — handler validates before acking
 // PROTOCOL_REQ(MOT_PACKET_DATA_MODE_READ, DataModeReadInit, DataModeReadProc, SYNC_EXT(...))
 
 // // PROC — Entry: parse request, validate, send initial response
-// static packet_size_t DataModeReadInit(const MotorController_T * p_mc,
+// static packet_size_t DataModeReadInit(MotorController_T * p_mc,
 //     MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 // {
 //     // Parse and validate the data mode request
@@ -704,7 +704,7 @@ Handler-Driven Ack (DataModeWrite) — handler validates before acking
 // }
 
 // // PROC_EXT — Do: stream data chunks until complete
-// static Protocol_ReqCode_T DataModeReadProc(const MotorController_T * p_mc,
+// static Protocol_ReqCode_T DataModeReadProc(MotorController_T * p_mc,
 //     Protocol_ReqContext_T * p_ctx)
 // {
 //     MotProtocol_DataModeState_T * p_xfer = p_ctx->p_SubState;

@@ -173,19 +173,19 @@ void Traction_ProcRelease(const Traction_T * p_vehicle, Motor_Table_T * p_motors
     DriveZero must release control, to transition into Park State
 */
 /******************************************************************************/
-static void Drive_Entry(const MotorController_T * p_mc)
+static void Drive_Entry(MotorController_T * p_mc)
 {
     assert(TractionAdapter(p_mc)->Input.Direction != MOTOR_DIRECTION_NULL); /* Direction should have been checked on transition.*/
     TractionAdapter(p_mc)->Input.DriveCmd = TRACTION_CMD_RELEASE; // next input is edge transition
     Motor_Table_ApplyUserDirection(&p_mc->MOTORS, TractionAdapter(p_mc)->Input.Direction); /* Buffered direction cmd from user input, independent of motor state */
 }
 
-static void Drive_Proc(const MotorController_T * p_mc)
+static void Drive_Proc(MotorController_T * p_mc)
 {
 
 }
 
-static State_T * Drive_InputDirection(const MotorController_T * p_mc, state_value_t direction)
+static State_T * Drive_InputDirection(MotorController_T * p_mc, state_value_t direction)
 {
     switch (direction)
     {
@@ -196,7 +196,7 @@ static State_T * Drive_InputDirection(const MotorController_T * p_mc, state_valu
     }
 }
 
-static State_T * Drive_InputCmdStart(const MotorController_T * p_mc, state_value_t mode)
+static State_T * Drive_InputCmdStart(MotorController_T * p_mc, state_value_t mode)
 {
     switch (mode)
     {
@@ -208,7 +208,7 @@ static State_T * Drive_InputCmdStart(const MotorController_T * p_mc, state_value
     return NULL;
 }
 
-static State_T * Drive_InputThrottleValue(const MotorController_T * p_mc, state_value_t value)
+static State_T * Drive_InputThrottleValue(MotorController_T * p_mc, state_value_t value)
 {
     Traction_ApplyThrottleValue(TractionAdapter(p_mc), &p_mc->MOTORS, value);
 
@@ -216,7 +216,7 @@ static State_T * Drive_InputThrottleValue(const MotorController_T * p_mc, state_
     return NULL;
 }
 
-static State_T * Drive_InputBrakeValue(const MotorController_T * p_mc, state_value_t value)
+static State_T * Drive_InputBrakeValue(MotorController_T * p_mc, state_value_t value)
 {
     Traction_ApplyBrakeValue(TractionAdapter(p_mc), &p_mc->MOTORS, value);
     return NULL;
@@ -235,7 +235,7 @@ static State_T * Drive_InputBrakeValue(const MotorController_T * p_mc, state_val
 // }
 
 /* App-specific commands — reads from Traction.Input (buffered by MotorController_Traction_ApplyDirection etc.) */
-static State_T * Drive_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
+static State_T * Drive_InputAppUser(MotorController_T * p_mc, state_value_t appCmd)
 {
     Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
@@ -282,13 +282,13 @@ static const State_T STATE_DRIVE =
     Motor Direction unchanged upon entering MC Neutral
 */
 /******************************************************************************/
-static void Neutral_Entry(const MotorController_T * p_mc)
+static void Neutral_Entry(MotorController_T * p_mc)
 {
     Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z);
     // if (p_mc->p_mc_STATE->Input.Cmd != TRACTION_CMD_BRAKE) { Motor_Table_ApplyControl(&p_mc->MOTORS, PHASE_VOUT_Z); }  /* If enter neutral while braking, handle discontinuity */
 }
 
-static void Neutral_Proc(const MotorController_T * p_mc)
+static void Neutral_Proc(MotorController_T * p_mc)
 {
 
 }
@@ -296,7 +296,7 @@ static void Neutral_Proc(const MotorController_T * p_mc)
 /*
     Motor Keeps Direction State
 */
-static State_T * InputDriveDirection(const MotorController_T * p_mc, state_value_t direction)
+static State_T * InputDriveDirection(MotorController_T * p_mc, state_value_t direction)
 {
     // Motor_Table_ApplyUserDirection(&p_mc->MOTORS, direction); /* optionally set, async mode returns immediately.  */
     if (Motor_Table_IsEveryUserDirection(&p_mc->MOTORS, direction) == true) { return &STATE_DRIVE; }
@@ -304,7 +304,7 @@ static State_T * InputDriveDirection(const MotorController_T * p_mc, state_value
     return NULL;
 }
 
-static State_T * Neutral_InputDirection(const MotorController_T * p_mc, state_value_t direction)
+static State_T * Neutral_InputDirection(MotorController_T * p_mc, state_value_t direction)
 {
     switch ((sign_t)direction)
     {
@@ -315,7 +315,7 @@ static State_T * Neutral_InputDirection(const MotorController_T * p_mc, state_va
     }
 }
 
-static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_value_t mode)
+static State_T * Neutral_InputCmdStart(MotorController_T * p_mc, state_value_t mode)
 {
     switch ((Traction_Cmd_T)mode)
     {
@@ -327,14 +327,14 @@ static State_T * Neutral_InputCmdStart(const MotorController_T * p_mc, state_val
     return NULL;
 }
 
-static State_T * Neutral_InputBrakeValue(const MotorController_T * p_mc, state_value_t value)
+static State_T * Neutral_InputBrakeValue(MotorController_T * p_mc, state_value_t value)
 {
     Traction_ApplyBrakeValue(TractionAdapter(p_mc), &p_mc->MOTORS, value);
     return NULL;
 }
 
 /* App-specific commands — reads from Traction.Input (buffered by MotorController_Traction_ApplyDirection etc.) */
-static State_T * Neutral_InputAppUser(const MotorController_T * p_mc, state_value_t appCmd)
+static State_T * Neutral_InputAppUser(MotorController_T * p_mc, state_value_t appCmd)
 {
     Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
@@ -370,7 +370,7 @@ static const State_T STATE_NEUTRAL =
 /******************************************************************************/
 /* also returns NEUTRAL on motors mismatch  */
 /* Motors may keep direction state in Neutral */
-sign_t MotorController_Traction_GetDirection(const MotorController_T * p_mc)
+sign_t MotorController_Traction_GetDirection(MotorController_T * p_mc)
 {
     return (StateMachine_GetLeafState(p_mc->STATE_MACHINE.P_ACTIVE) == &STATE_NEUTRAL) ? (sign_t)MOTOR_DIRECTION_NULL : MotorController_GetDirection(p_mc);
 }
@@ -493,11 +493,11 @@ void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t 
 
 */
 /******************************************************************************/
-static inline uint16_t AInThrottle(const MotorController_T * p_mc) { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_THROTTLE].PIN); }
-static inline uint16_t AInBrake(const MotorController_T * p_mc) { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_BRAKE].PIN); }
+static inline uint16_t AInThrottle(MotorController_T * p_mc) { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_THROTTLE].PIN); }
+static inline uint16_t AInBrake(MotorController_T * p_mc) { return UserAIn_GetValue(&p_mc->AINS[MOT_AIN_BRAKE].PIN); }
 
 #include "../MotAnalogUser/OptPin/MotorController_SwitchBrake.h"
-void MotorController_Traction_ProcAnalogUser(const MotorController_T * p_mc)
+void MotorController_Traction_ProcAnalogUser(MotorController_T * p_mc)
 {
     MotorController_Traction_CaptureDirection(p_mc, (sign_t)Shifter_ResolveDirection(&p_mc->SHIFTER));
     MotorController_Traction_SetThrottleBrake(p_mc, AInThrottle(p_mc), MotorController_FuseSwitchBrake(p_mc, AInBrake(p_mc)));
@@ -541,7 +541,7 @@ int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction_VarId_
     return value;
 }
 
-int MotorController_Traction_ConfigId_Get(const MotorController_T * p_mc, Traction_ConfigId_T id)
+int MotorController_Traction_ConfigId_Get(MotorController_T * p_mc, Traction_ConfigId_T id)
 {
     return Traction_ConfigId_Get(&TractionAdapter(p_mc)->Config, id);
 }

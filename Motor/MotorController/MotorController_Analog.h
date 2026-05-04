@@ -34,4 +34,4 @@
 
 extern const State_T MC_STATE_LOCK_CALIBRATE_ADC;
 
-void MotorController_Lock_CalibrateAdc(const MotorController_T * p_dev);
+void MotorController_Lock_CalibrateAdc(MotorController_T * p_dev);

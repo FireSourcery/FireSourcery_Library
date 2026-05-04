@@ -82,25 +82,21 @@ static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_fract32, fra
 }
 
 
-
 /*
     Transform V with midclamp 3rd harmonic adjustment
     without shifting to half Duty
 */
-// static inline void svpwm_midclamp_transform(int32_t * p_vA, int32_t * p_vB, int32_t * p_vC)
-// {
-//     // # Find the maximum and minimum of the three phase voltages
-//     int32_t vMax = math_max(math_max(*p_vA, *p_vB), *p_vC);
-//     int32_t vMin = math_min(math_min(*p_vA, *p_vB), *p_vC);
+static inline struct svpwm_abc svpwm_midclamp_transform(fract16_t vA, fract16_t vB, fract16_t vC)
+{
+    // # Find the maximum and minimum of the three phase voltages
+    int32_t vMax = math_max(math_max(vA, vB), vC);
+    int32_t vMin = math_min(math_min(vA, vB), vC);
 
-//     // # Calculate the zero - sequence voltage(midclamp adjustment)
-//     int32_t vZero = (vMax + vMin) / 2;
+    // # Calculate the zero - sequence voltage(midclamp adjustment)
+    int32_t vZero = (vMax + vMin) / 2;
 
-//     // # Adjust the phase voltages to ensure midclamp
-//     *p_vA = *p_vA - vZero;
-//     *p_vB = *p_vB - vZero;
-//     *p_vC = *p_vC - vZero;
-// }
+    return (struct svpwm_abc) { .a = fract16_sat_positive(vA - vZero), .b = fract16_sat_positive(vB - vZero), .c = fract16_sat_positive(vC - vZero) };
+}
 
 
 /*!

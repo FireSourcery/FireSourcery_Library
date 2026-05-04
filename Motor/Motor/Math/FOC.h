@@ -52,6 +52,8 @@ typedef struct FOC
     /* Scalar. optionally handle by phase */
     alignas(4) ufract16_t DutyA, DutyB, DutyC;
 
+    // PID_T PidIq;
+    // PID_T PidId;
 
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
@@ -139,6 +141,16 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vb = v.b;
     p_foc->Vc = v.c;
 }
+
+// static void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
+// {
+//     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+//     int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
+//     interval_t band = interval_of_sign(math_sign(p_foc->Vq), vqLimit);
+//     PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
+//     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+// }
+
 
 /******************************************************************************/
 /*!

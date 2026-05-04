@@ -153,8 +153,6 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
     User frame
     forward / reverse, throttle, brake
     in the calibrated / physical frame (signed by Config.DirectionForward)
-    Caller: protocol handler, Var interface
-
     Motor_Set[Quantity][Frame]Cmd[InputType]
 */
 /******************************************************************************/
@@ -170,11 +168,14 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
     Convert between a user reference direction to virtual CCW/CW direction
     @param[in] userCmd  fract16 or percent16. positive as the direction set at config
 */
-static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return fract16_sat(p_motor->Config.DirectionForward * userCmd); }
+static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
 /* Positive as the active appliedV/motoring direction. */
-static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return fract16_sat(p_motor->Direction * userCmd); }
+static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
+/* Input from scalar always != INT16_MIN */
+// assert(math_clamp(userCmd, -Phase_Calibration_GetIRatedPeak_Fract16(), Phase_Calibration_GetIRatedPeak_Fract16()));
 static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserForwardOf(p_motor, userCmd); }
+// assert(math_clamp(userCmd, -Motor_SpeedType, 32767)); Motor_SpeedTypeMax
 static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserForwardOf(p_motor, speed_fract16); }
 static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserMotoringOf(p_motor, userCmd); }
 static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserMotoringOf(p_motor, speed_fract16); }

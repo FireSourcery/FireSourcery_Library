@@ -93,7 +93,7 @@ MotAnalogUser_ConfigId_T;
     Resolves AINS[] via MOT_AIN_THROTTLE / MOT_AIN_BRAKE; SwitchBrake via OptDin_SwitchBrake
 */
 /******************************************************************************/
-static inline int32_t MotAnalogUser_VarId_Get(const MotorController_T * p_mc, MotAnalogUser_VarId_T id)
+static inline int32_t MotAnalogUser_VarId_Get(MotorController_T * p_mc, MotAnalogUser_VarId_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -116,7 +116,7 @@ static inline int32_t MotAnalogUser_VarId_Get(const MotorController_T * p_mc, Mo
     return value;
 }
 
-static inline int32_t MotAnalogUser_VarId_GetAsInput(const MotorController_T * p_mc, MotAnalogUser_VarId_T id)
+static inline int32_t MotAnalogUser_VarId_GetAsInput(MotorController_T * p_mc, MotAnalogUser_VarId_T id)
 {
     int32_t value = 0;
     switch (id)
@@ -144,7 +144,7 @@ static inline int32_t MotAnalogUser_VarId_GetAsInput(const MotorController_T * p
     Config (NVM-backed runtime values)
 */
 /******************************************************************************/
-static inline int32_t MotAnalogUser_ConfigId_Get(const MotorController_T * p_mc, MotAnalogUser_ConfigId_T id)
+static inline int32_t MotAnalogUser_ConfigId_Get(MotorController_T * p_mc, MotAnalogUser_ConfigId_T id)
 {
     const MotorController_Config_T * p_config = &p_mc->P_MC->Config;
     int32_t value = 0;
@@ -163,7 +163,7 @@ static inline int32_t MotAnalogUser_ConfigId_Get(const MotorController_T * p_mc,
 }
 
 //todo mc reset replace UserAIn_Init(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);
-static inline void MotAnalogUser_ConfigId_Set(const MotorController_T * p_mc, MotAnalogUser_ConfigId_T id, int32_t value)
+static inline void MotAnalogUser_ConfigId_Set(MotorController_T * p_mc, MotAnalogUser_ConfigId_T id, int32_t value)
 {
     MotorController_Config_T * p_config = &p_mc->P_MC->Config;
     switch (id)

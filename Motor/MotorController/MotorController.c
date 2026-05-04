@@ -33,7 +33,7 @@
 
 #include "MotAnalogUser/OptPin/MotorController_OptPin.h"
 
-void MotorController_Init(const MotorController_T * p_dev)
+void MotorController_Init(MotorController_T * p_dev)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
 

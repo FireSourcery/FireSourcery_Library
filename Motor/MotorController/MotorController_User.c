@@ -38,7 +38,7 @@
     vars not stored in host view cache
 */
 /******************************************************************************/
-int MotorController_CallSystemCmd(const MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
+int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
 {
     MotorController_State_T * p_mc = p_dev->P_MC;
 

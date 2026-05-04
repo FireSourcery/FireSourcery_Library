@@ -53,23 +53,33 @@
 /*
     Simplify CommutationMode Check
     This function should optimize away select if only 1 mode is enabled
-
 */
 /******************************************************************************/
+// static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_motor, const void * focFunction, const void * sixStepFunction)
+// {
+//     const void * fn;
+//     switch (p_motor->Config.CommutationMode)
+//     {
+// #if defined(MOTOR_FOC_ENABLE)
+//         case MOTOR_COMMUTATION_MODE_FOC: fn = focFunction; break;
+// #endif
+// #if defined(MOTOR_SIX_STEP_ENABLE)
+//         case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction; break;
+// #endif
+//         // default: assert(false); break;
+//     }
+//     return fn;
+// }
+
+/* compile time config only */
 static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_motor, const void * focFunction, const void * sixStepFunction)
 {
-    const void * fn;
-    switch (p_motor->Config.CommutationMode)
-    {
 #if defined(MOTOR_FOC_ENABLE)
-        case MOTOR_COMMUTATION_MODE_FOC: fn = focFunction; break;
+    return focFunction;
 #endif
 #if defined(MOTOR_SIX_STEP_ENABLE)
-        case MOTOR_COMMUTATION_MODE_SIX_STEP: fn = sixStepFunction; break;
+    return sixStepFunction;
 #endif
-        // default: assert(false); break;
-    }
-    return fn;
 }
 
 // c23

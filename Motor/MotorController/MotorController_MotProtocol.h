@@ -39,7 +39,7 @@
 extern const Protocol_Req_T MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE[MOTOR_CONTROLLER_MOT_PROTOCOL_REQ_TABLE_LENGTH];
 
 
-static packet_size_t MotorController_BuildVarRead(const MotorController_T * p_dev, MotPacket_VarReadResp_T * p_vars, const MotPacket_VarReadReq_T * p_ids, uint8_t count)
+static packet_size_t MotorController_BuildVarRead(MotorController_T * p_dev, MotPacket_VarReadResp_T * p_vars, const MotPacket_VarReadReq_T * p_ids, uint8_t count)
 {
     for (uint8_t iVar = 0U; iVar < count; iVar++) { p_vars->Value16[iVar] = (uint16_t)MotorController_Var_Get(p_dev, (MotVarId_T)p_ids->MotVarIds[iVar]); }
 }
@@ -48,7 +48,7 @@ static packet_size_t MotorController_BuildVarRead(const MotorController_T * p_de
 
 
 
-// static inline bool IsProtocolControlMode(const MotorController_T * p_dev)
+// static inline bool IsProtocolControlMode(MotorController_T * p_dev)
 // {
 //     switch (p_dev->P_MC->Config.InputMode)
 //     {

@@ -51,8 +51,7 @@
 /*
     Compile time full init
 */
-#define RAMP_INIT(Coefficient, LowerLimit, UpperLimit, Initial) \
-(Ramp_T)                                                    \
+#define RAMP_INIT(Coefficient, LowerLimit, UpperLimit, Initial) (Ramp_T) \
 {                                                           \
     .Accumulator =                                          \
     {                                                       \
@@ -73,12 +72,15 @@
     Implementation by shifted accumulator.
         output state can be set directly.
         Index based implementation need inverse function
+    complete setpoint object: { shape, bound, output, target }
 */
 /******************************************************************************/
 typedef struct Ramp
 {
     Accumulator_T Accumulator;
-    // int16_t Target;
+    int32_t Target; /* including target collapses procNext paths, handle on set instaed */
+    // int32_t TargetLimitUpper; /* optionally 2 layer limit, with Accumulator.Limit as hw saturation */
+    // int32_t TargetLimitLower;
 }
 Ramp_T;
 
@@ -89,14 +91,29 @@ Ramp_T;
 /******************************************************************************/
 /*  */
 static inline int32_t Ramp_GetOutput(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Accumulator >> RAMP_SHIFT); }
-/* Match Output */
-// static inline void _Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = (match << RAMP_SHIFT); }
+static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match) { p_ramp->Accumulator.Accumulator = math_clamp((match << RAMP_SHIFT), p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); }
 
-static inline void Ramp_SetOutputState(Ramp_T * p_ramp, int32_t match)
+static inline int32_t Ramp_GetTarget(const Ramp_T * p_ramp) { return p_ramp->Target >> RAMP_SHIFT; }
+static inline void  Ramp_SetTarget(Ramp_T * p_ramp, int32_t target) { p_ramp->Target = math_clamp((int32_t)target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); }
+
+static inline int32_t Ramp_GetLimitLower(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.LimitLower >> RAMP_SHIFT); }
+static inline int32_t Ramp_GetLimitUpper(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.LimitUpper >> RAMP_SHIFT); }
+
+static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {
-    p_ramp->Accumulator.Accumulator = math_clamp((match << RAMP_SHIFT), p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
+    p_ramp->Accumulator.LimitLower = (int32_t)lower << RAMP_SHIFT;
+    p_ramp->Accumulator.LimitUpper = (int32_t)upper << RAMP_SHIFT;
+    /* Limit setter re-clamps the stored target alongside the accumulator. */
+    p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
 }
 
+/* Snap the output */
+static inline void Ramp_SetOutputLimit_Snap(Ramp_T * p_ramp, int32_t lower, int32_t upper)
+{
+    Ramp_SetOutputLimit(p_ramp, lower, upper);
+    p_ramp->Accumulator.Accumulator = math_clamp(p_ramp->Accumulator.Accumulator, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
+
+}
 
 /* single step proc only */
 static inline bool _Ramp_IsDisabled(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.Coefficient == (UINT16_MAX << RAMP_SHIFT)); }
@@ -109,15 +126,15 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coeffici
 */
 /******************************************************************************/
 extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
-extern int32_t Ramp_ProcNextWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
 
 extern int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
-extern int32_t Ramp_ProcNextOnInputWith(Ramp_T * p_ramp, int16_t lower, int16_t upper, int16_t target);
+
+extern int32_t Ramp_ProcNext(Ramp_T * p_ramp);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetCoefficient(Ramp_T * p_ramp, uint32_t rate_accum32);
 extern void Ramp_SetSlope(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
-extern void Ramp_SetOutputLimit(Ramp_T * p_ramp, int16_t lower, int16_t upper);
+
 extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
 

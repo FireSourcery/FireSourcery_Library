@@ -30,6 +30,33 @@
 */
 /******************************************************************************/
 #include "FOC.h"
+#include "../Phase/Phase.h"
+#include "Math/PID/PID.h"
+#include "Math/Ramp/Ramp.h"
+
+/* From Iabc to Idq */
+static inline bool _FOC_CaptureIabc(FOC_T * p_foc, Phase_Data_T * p_phaseData)
+{
+    if (p_phaseData->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
+    {
+        FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
+        p_phaseData->Flags.Bits = PHASE_ID_0; /* Clear capture flag after processing */
+        return true;
+    }
+    else
+    {
+        return false; /* No new data captured */
+    }
+}
+
+/* FeedbackState */
+static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
+{
+    FOC_SetTheta(p_foc, angle);
+    _FOC_CaptureIabc(p_foc, p_phaseData);
+}
+
+static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_T * p_phase) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
 
 
 /* with Scaled DutyAlpha, DutyBeta */
