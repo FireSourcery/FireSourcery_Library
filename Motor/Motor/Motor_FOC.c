@@ -177,7 +177,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     Motor_ExternControl(p_motor);
 #endif
-    int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Motor_IRampOf(p_motor, p_motor->UserTorqueReq) : Motor_VRampOf(p_motor, p_motor->UserTorqueReq);
+    int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Ramp_ProcNext(&p_motor->TorqueRamp) : Motor_VRamp(p_motor);
     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), 0, qReq);
 }
 
@@ -217,37 +217,25 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
     Phase_Input_ClearI(&p_motor->PhaseInput);
     Phase_Input_ClearV(&p_motor->PhaseInput);
-    p_motor->UserTorqueReq = 0;
-    p_motor->UserSpeedReq = 0;
+    Ramp_SetTarget(&p_motor->TorqueRamp, 0);
+    Ramp_SetTarget(&p_motor->SpeedRamp, 0);
 }
 
 void _Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
 {
     PID_SetOutputState(&p_motor->PidId, vd);
     PID_SetOutputState(&p_motor->PidIq, vq);
-    Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Iq(&p_motor->Foc)); /* case transitioning without release into freewheel */
 }
 
 /* torque only states */
 void Motor_FOC_MatchIVState(Motor_State_T * p_motor)
 {
-// if (FOC_Vq(&p_motor->Foc) == 0) { FOC_SetVq(&p_motor->Foc, Motor_GetVSpeed_Fract16(p_motor)); }
-// _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc));
-
-    if (FOC_Vq(&p_motor->Foc) == 0)
-    {
-        _Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor));
-    }
-    else
-    {
-        _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc));
-    }
-
-    p_motor->UserTorqueReq = Ramp_GetOutput(&p_motor->TorqueRamp);
+    if (FOC_Vq(&p_motor->Foc) == 0) { _Motor_FOC_MatchIVState(p_motor, 0, Motor_GetVSpeed_Fract16(p_motor)); }
+    else { _Motor_FOC_MatchIVState(p_motor, 0, FOC_Vq(&p_motor->Foc)); }
 }
 
 /*!
-    Match Feedback State/Ouput to Output Voltage
+    Match Feedback State/Output to Output Voltage
     On FeedbackMode update and Freewheel to Run
     StateMachine blocks feedback proc
 */
@@ -256,14 +244,15 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
     if (p_motor->FeedbackMode.Current == 1U)
     {
         Motor_FOC_MatchIVState(p_motor);
+        Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Iq(&p_motor->Foc)); /* case transitioning without release into freewheel */
     }
     else
     {
         Ramp_SetOutputState(&p_motor->TorqueRamp, FOC_Vq(&p_motor->Foc)); //different units for now
-        p_motor->UserTorqueReq = FOC_Vq(&p_motor->Foc);
     }
 
-    Motor_MatchSpeedTorqueState(p_motor, p_motor->UserTorqueReq); // or let state machine handle
+    Ramp_SetTarget(&p_motor->TorqueRamp, Ramp_GetOutput(&p_motor->TorqueRamp));
+    Motor_MatchSpeedTorqueState(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)); // or let state machine handle
 }
 
 /*
@@ -300,7 +289,7 @@ void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 */
 /******************************************************************************/
 /*
-    Align using UserTorqueReq
+    Align using TorqueRamp.Target
 */
 /* ElectricalAngle set by caller. Does not Angle_ZeroCaptureState */
 void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
@@ -311,7 +300,7 @@ void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
-    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, p_motor->UserTorqueReq), 0);
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)), 0);
 }
 
 

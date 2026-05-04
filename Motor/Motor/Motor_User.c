@@ -139,8 +139,8 @@ void Motor_ForceDisableControl(const Motor_T * p_motor)
     Phase_Deactivate(&p_motor->PHASE);
     Motor_ReleaseVZ(p_motor);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
-    p_motor->P_MOTOR->UserSpeedReq = 0;
-    p_motor->P_MOTOR->UserTorqueReq = 0;
+    Ramp_SetTarget(&p_motor->P_MOTOR->SpeedRamp, 0);
+    Ramp_SetTarget(&p_motor->P_MOTOR->TorqueRamp, 0);
     // Motor_Disable(p_motor); /* optionally transition to Stop, or stay in current state with control disabled */
 }
 
@@ -174,11 +174,11 @@ static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_
 
 /* Input from scalar always != INT16_MIN */
 // assert(math_clamp(userCmd, -Phase_Calibration_GetIRatedPeak_Fract16(), Phase_Calibration_GetIRatedPeak_Fract16()));
-static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserForwardOf(p_motor, userCmd); }
+static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserForwardOf(p_motor, userCmd)); }
+static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserMotoringOf(p_motor, userCmd)); }
 // assert(math_clamp(userCmd, -Motor_SpeedType, 32767)); Motor_SpeedTypeMax
-static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserForwardOf(p_motor, speed_fract16); }
-static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { p_motor->UserTorqueReq = Motor_UserMotoringOf(p_motor, userCmd); }
-static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { p_motor->UserSpeedReq = Motor_UserMotoringOf(p_motor, speed_fract16); }
+static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserForwardOf(p_motor, speed_fract16)); }
+static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserMotoringOf(p_motor, speed_fract16)); }
 
 
 /******************************************************************************/

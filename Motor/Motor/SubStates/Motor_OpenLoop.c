@@ -46,7 +46,8 @@ static State_T * OpenLoop_PhaseOutput(const Motor_T * p_motor, state_value_t pha
 {
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
     Phase_ActivateOutputState(&p_motor->PHASE, (Phase_Output_T)phaseState); // clear outputState V, or enable last duty
-    return &MOTOR_STATE_OPEN_LOOP;
+    // return &MOTOR_STATE_OPEN_LOOP;
+    return NULL; /* remain in MOTOR_STATE_OPEN_LOOP*/
 }
 
 /* ActivateOutput */
@@ -65,7 +66,7 @@ static State_T * OpenLoop_Jog(const Motor_T * p_motor, state_value_t direction)
     if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
     if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config)); }
     Angle_CaptureAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
-    return &MOTOR_STATE_OPEN_LOOP;
+    return NULL;
 }
 
 void Motor_OpenLoop_SetJog(const Motor_T * p_motor, int8_t direction)
@@ -230,24 +231,7 @@ void Motor_OpenLoop_StartRunChain(const Motor_T * p_motor)
 
 
 
-/******************************************************************************/
-/*
-    Vard Id
-*/
-/******************************************************************************/
-// void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T varId, int32_t varValue)
-// {
-//     switch (varId)
-//     {
-//         case MOTOR_VAR_OPEN_LOOP_ENTER:         Motor_OpenLoop_Enter(p_motor);                                      break;
-//         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
-//         case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
-//         case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
-//         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
-//         case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
-//         // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
-//     }
-// }
+
 
 /******************************************************************************/
 /*

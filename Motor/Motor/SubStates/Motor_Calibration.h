@@ -80,7 +80,7 @@ extern bool Motor_Calibration_IsElectrical(const Motor_T * p_motor);
 /******************************************************************************/
 typedef enum Motor_Tuning_Excite
 {
-    MOTOR_TUNING_EXCITE_TRACK,      /* Manual: pass UserSpeedReq/UserTorqueReq through unchanged */
+    MOTOR_TUNING_EXCITE_TRACK,      /* Manual: pass SpeedRamp/TorqueRamp Target through unchanged */
     MOTOR_TUNING_EXCITE_STEP,       /* Hold zero StepDelay ticks, then jump to Amplitude */
     MOTOR_TUNING_EXCITE_SQUARE,     /* +Amplitude / -Amplitude every HalfPeriod ticks */
 }
@@ -88,8 +88,8 @@ Motor_Tuning_Excite_T;
 
 typedef enum Motor_Tuning_Channel
 {
-    MOTOR_TUNING_CHANNEL_SPEED,     /* Drive UserSpeedReq, capture Speed_Fract16 */
-    MOTOR_TUNING_CHANNEL_IQ,        /* Drive UserTorqueReq, capture FOC_Iq */
+    MOTOR_TUNING_CHANNEL_SPEED,     /* Drive SpeedRamp.Target, capture Speed_Fract16 */
+    MOTOR_TUNING_CHANNEL_IQ,        /* Drive TorqueRamp.Target, capture FOC_Iq */
 }
 Motor_Tuning_Channel_T;
 

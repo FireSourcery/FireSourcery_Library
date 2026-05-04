@@ -32,7 +32,10 @@
 
 /******************************************************************************/
 /******************************************************************************/
-
+/*
+    Ramp Target is owned by user setters
+    Intervention States used adjusted or alternate target.
+*/
 /******************************************************************************/
 /*!
     @brief SubState: Torque Zero (SS0)
@@ -50,17 +53,17 @@ static void TorqueZero_Entry(const Motor_T * p_motor)
     p_state->ControlTimerBase = 0U;
     Motor_SetFeedbackMode(p_state, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
     Motor_FOC_MatchIVState(p_state);
-    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    // p_motor->P_MOTOR->UserTorqueReq = 0;
-    /* cases where current sampling  */
-    /* ILimitGenerating_Fract16 cached field gone — use virtual getter (resolves from Ccw/Cw via direction). */
-    p_motor->P_MOTOR->UserTorqueReq = -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20);
+    Ramp_SetOutputState(&p_state->TorqueRamp, 0);
+    /* seed Target to a small generating bias */
+    // Ramp_SetTarget(&p_state->TorqueRamp, -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20));
 }
 
 static void TorqueZero_Proc(const Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
-    Motor_FOC_ProcTorqueReq(p_state, 0, _Motor_GeneratingOnly(p_state, p_state->UserTorqueReq));
+    /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only;
+       motoring-side requests are zeroed. Output ramps from 0 (set in Entry) toward the filtered value. */
+    Motor_FOC_ProcTorqueReq(p_state, 0, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
     Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -111,10 +114,10 @@ static void RampSafe_Proc(const Motor_T * p_motor)
     if (p_state->SpeedUpdateFlag == true)
     {
         p_state->SpeedUpdateFlag = false;
-        p_state->UserTorqueReq = _Motor_GeneratingOnly(p_state, Motor_SpeedControlOf(p_state, 0));
+        Motor_SpeedControlOf(p_state, 0); /* drive to zero speed */
     }
 
-    Motor_FOC_ProcTorqueReq(p_state, 0, Motor_IRampOf(p_state, p_state->UserTorqueReq));
+    Motor_FOC_ProcTorqueReq(p_state, 0, PID_GetOutput(&p_state->PidSpeed));
     Motor_FOC_WriteDuty(p_motor);
 }
 

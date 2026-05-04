@@ -91,3 +91,24 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
 // }
 // Motor_OpenLoop_Cmd_T;
 // static void Motor_OpenLoop_Input(const Motor_T * p_motor, State_T * p_subState) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_OPEN_LOOP, { Motor_OpenLoop_Cmd_T , value}; }
+
+
+
+/******************************************************************************/
+/*
+    Vard Id
+*/
+/******************************************************************************/
+// void _Motor_OpenLoop_VarCmd(const Motor_T * p_motor, Motor_OpenLoop_Cmd_T varId, int32_t varValue)
+// {
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_OPEN_LOOP_ENTER:         Motor_OpenLoop_Enter(p_motor);                                      break;
+//         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
+//         case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
+//         case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
+//         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
+//         case MOTOR_VAR_OPEN_LOOP_RUN:           Motor_OpenLoop_StartRunChain(p_motor);                              break;
+//         // case MOTOR_VAR_OPEN_LOOP_HOMING:     break;
+//     }
+// }

@@ -167,8 +167,8 @@ static void AutoTuning_Proc(const Motor_T * p_motor)
         int16_t sp = Excite_Eval(&s_TuningConfig, s_TuningTick);
         int16_t fb = Capture_Feedback(p_state, s_TuningConfig.Channel);
 
-        if (s_TuningConfig.Channel == MOTOR_TUNING_CHANNEL_SPEED) { p_state->UserSpeedReq = sp; }
-        else                                                      { p_state->UserTorqueReq = sp; }
+        if (s_TuningConfig.Channel == MOTOR_TUNING_CHANNEL_SPEED) { Ramp_SetTarget(&p_state->SpeedRamp, sp); }
+        else                                                      { Ramp_SetTarget(&p_state->TorqueRamp, sp); }
 
         Capture_Sample(&s_TuningCapture, sp, fb);
         s_TuningTick++;
@@ -239,8 +239,8 @@ void Motor_Calibration_Tuning_Disarm(const Motor_T * p_motor)
 {
     if (sp_TuningOwner != p_motor->P_MOTOR) { return; }
     s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
-    p_motor->P_MOTOR->UserSpeedReq = 0;
-    p_motor->P_MOTOR->UserTorqueReq = 0;
+    Ramp_SetTarget(&p_motor->P_MOTOR->SpeedRamp, 0);
+    Ramp_SetTarget(&p_motor->P_MOTOR->TorqueRamp, 0);
 }
 
 bool Motor_Calibration_Tuning_IsCaptureDone(const Motor_T * p_motor)
