@@ -181,7 +181,6 @@ void _Motor_Var_OpenLoopCmd_Call(Motor_T * p_motor, Motor_Var_OpenLoopCmd_T varI
     }
 }
 
-
 void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_T varId, int varValue)
 {
     (void)varValue; /* some cmds may use varValue as param */

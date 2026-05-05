@@ -95,11 +95,12 @@ static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_moto
 #define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) ((Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor __VA_OPT__(,) __VA_ARGS__))
 
 
-/*     alternatively separate 3 sets of functions as abstraction layer */
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, direction); }
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_SixStep_SetDirection(p_motor, direction); }
 
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) {
+// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction)
+// {
 //     ((typeof(Motor_FOC_SetDirection) *)(_Motor_CommutationModeFn(p_motor, Motor_FOC_SetDirection, Motor_SetDirection)))(p_motor, direction);
 // }
 
+/* alternatively separate 3 sets of functions as abstraction layer */
+// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, direction); }
+// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_SixStep_SetDirection(p_motor, direction); }

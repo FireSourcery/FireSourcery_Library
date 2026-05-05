@@ -205,3 +205,5 @@ static inline void State_SetValue(State_T * p_state, void * p_context, state_acc
 
 
 static inline state_value_t State_Data(State_T * p_state, void * p_context, size_t id) { return p_state->P_DATA_VECTOR[id](p_context); }
+
+static inline void State_ActionInput(State_T * p_state, void * p_context, size_t id) { if (p_state->P_ACTION_TABLE != NULL) { _State_Action(p_state->P_ACTION_TABLE[id], p_context); } }

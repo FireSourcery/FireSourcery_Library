@@ -114,7 +114,7 @@ static void RampSafe_Proc(Motor_T * p_motor)
     if (p_state->SpeedUpdateFlag == true)
     {
         p_state->SpeedUpdateFlag = false;
-        Motor_SpeedControlOf(p_state, 0); /* drive to zero speed */
+        Motor_ProcSpeedControlSource(p_state, 0); /* drive to zero speed */
     }
 
     Motor_FOC_ProcTorqueReq(p_state, 0, PID_GetOutput(&p_state->PidSpeed));

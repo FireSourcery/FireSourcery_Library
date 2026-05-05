@@ -43,10 +43,9 @@ typedef struct FOC
     alignas(4) fract16_t Id, Iq;
 
     /* Control Variable. VOutput. Feedforward Input. */
-    /* VBemf during Freewheel */
+    /* VBemf inputs during Freewheel */
     alignas(4) fract16_t Vd, Vq; /* VdReq, VqReq */
 
-    /* VBemf Inputs during Freewheel - Capture by ADC */
     /* Intermediate VOut */
     alignas(4) fract16_t Va, Vb, Vc;
 
@@ -145,6 +144,33 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = v.c;
 }
 
+
+/******************************************************************************/
+/*!
+    VDuty Out
+*/
+/******************************************************************************/
+/* precomputed vBusInv_fract32 <=> 1.0F/VBus */
+static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
+{
+    struct svpwm_abc duty = svpwm_midclamp_vbus(vBusInv_fract32, p_foc->Va, p_foc->Vb, p_foc->Vc);
+    p_foc->DutyA = duty.a;
+    p_foc->DutyB = duty.b;
+    p_foc->DutyC = duty.c;
+}
+
+/******************************************************************************/
+/*
+    VBemf
+*/
+/******************************************************************************/
+static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
+{
+    struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
+    p_foc->Vd = v.d;
+    p_foc->Vq = v.q;
+}
+
 /******************************************************************************/
 /*!
     Inner current loop — d-q PID pair operations.
@@ -172,37 +198,25 @@ static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
     PID_Reset(&p_foc->PidId);
 }
 
-static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, int16_t vRef)
+static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
-    interval_t v = interval_of_sign(direction, vRef);
+    interval_t v = interval_of_sign(direction, vPhaseLimit);
     PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);
-    PID_SetOutputLimits(&p_foc->PidId, 0 - vRef, vRef);
+    PID_SetOutputLimits(&p_foc->PidId, 0 - vPhaseLimit, vPhaseLimit);
 }
 
-/******************************************************************************/
-/*!
-    VDuty Out
-*/
-/******************************************************************************/
-/* precomputed vBusInv_fract32 <=> 1.0F/VBus */
-static inline void FOC_ProcSvpwm(FOC_T * p_foc, uint32_t vBusInv_fract32)
+static inline void FOC_ProcOutputDuty(FOC_T * p_foc, uint32_t vBusInv_fract32)
 {
-    struct svpwm_abc duty = svpwm_midclamp_vbus(vBusInv_fract32, p_foc->Va, p_foc->Vb, p_foc->Vc);
-    p_foc->DutyA = duty.a;
-    p_foc->DutyB = duty.b;
-    p_foc->DutyC = duty.c;
+    FOC_ProcInvClarkePark(p_foc);
+    FOC_ProcSvpwm(p_foc, vBusInv_fract32);
 }
 
-/******************************************************************************/
-/*
-    VBemf
-*/
-/******************************************************************************/
-static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
+static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, uint32_t vBusInv_fract32, fract16_t theta, fract16_t vd, fract16_t vq)
 {
-    struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
-    p_foc->Vd = v.d;
-    p_foc->Vq = v.q;
+    FOC_SetTheta(p_foc, theta);
+    FOC_SetVd(p_foc, vd);
+    FOC_SetVq(p_foc, vq);
+    FOC_ProcOutputDuty(p_foc, vBusInv_fract32);
 }
 
 

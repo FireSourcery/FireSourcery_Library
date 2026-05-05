@@ -50,6 +50,23 @@ Motor_Table_T;
 static inline Motor_State_T * Motor_Table_StateAt(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_STATES[motorIndex]); }
 static inline Motor_T * Motor_Table_At(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_DEVS[motorIndex]); }
 
+/******************************************************************************/
+/*
+    Types for generic accessor
+*/
+/******************************************************************************/
+typedef int motor_value_t;
+// typedef register_t motor_value_t;
+
+typedef void(*Motor_Proc_T)(Motor_State_T * p_motor);
+
+typedef motor_value_t(*Motor_Get_T)(const Motor_State_T * p_motor);
+typedef void(*Motor_Set_T)(Motor_State_T * p_motor, motor_value_t value);
+
+typedef bool(*Motor_State_Test_T)(const Motor_State_T * p_motor);
+typedef bool(*Motor_State_TryProc_T)(Motor_State_T * p_motor);
+typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value);
+typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
 
 static inline void _Motor_Table_ForEach(Motor_Table_T * p_table, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (proc_t)function); }
 
@@ -86,9 +103,7 @@ static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_table, Motor_SetCmdV
 /*
 */
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_table, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_table->P_DEVS[iMotor], mode); } }
-
 static inline void Motor_Table_ApplyControl(Motor_Table_T * p_table, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyControlState(&p_table->P_DEVS[iMotor], state); } }
-
 static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_table, int sign) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_table->P_DEVS[iMotor], sign); } }
 
 /* on states */
@@ -151,8 +166,8 @@ static inline bool Motor_Table_IsEvery(Motor_Table_T * p_table, Motor_Test_T tes
 static inline bool Motor_Table_IsAny(Motor_Table_T * p_table, Motor_Test_T test) { return void_array_is_any(sizeof(Motor_T), p_table->P_DEVS, p_table->LENGTH, (test_t)test); }
 
 static inline void Motor_Table_DisableAll(Motor_Table_T * p_table) { Motor_Table_ForEach(p_table, Motor_Disable); }
-static inline void Motor_Table_EnableAll(Motor_Table_T * p_table) {  Motor_Table_ForEach(p_table, Motor_Enable); }
-static inline void Motor_Table_ForceDisableControl(Motor_Table_T * p_table) {  Motor_Table_ForEach(p_table, Motor_ForceDisableControl); }
+static inline void Motor_Table_EnableAll(Motor_Table_T * p_table) { Motor_Table_ForEach(p_table, Motor_Enable); }
+static inline void Motor_Table_ForceDisableControl(Motor_Table_T * p_table) { Motor_Table_ForEach(p_table, Motor_ForceDisableControl); }
 
 
 /* IsEveryMachineState */

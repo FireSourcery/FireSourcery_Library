@@ -26,10 +26,30 @@
 /*!
     @file   Phase_Input.h
     @author FireSourcery
-    @brief  Submodule for Motor VOut.
+    @brief
 */
 /******************************************************************************/
 #include "../Phase/Phase_Types.h"
+
+
+// #if     defined(PHASE_V_SENSORS_ISOLATED)
+// #elif   defined(PHASE_V_SENSORS_ANALOG)
+// #else
+// #define PHASE_V_SENSORS_ANALOG
+// #endif
+
+// #if     defined(MOTOR_I_SENSORS_AB)
+// #elif   defined(MOTOR_I_SENSORS_ABC)
+// #else
+//     #define MOTOR_I_SENSORS_ABC
+// #endif
+
+// #if     defined(MOTOR_V_SENSORS_ISOLATED)
+// #elif   defined(MOTOR_V_SENSORS_ANALOG)
+// #else
+//     #define MOTOR_V_SENSORS_ANALOG
+// #endif
+
 
 /*
     Transport Data Interface
@@ -57,26 +77,38 @@ static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p
 static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.C; }
 
 
-
 static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->Iabc = (Phase_Triplet_T){ 0 }; p_phase->IFlags.Bits = 0U; }
 static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->Vabc = (Phase_Triplet_T){ 0 }; p_phase->VFlags.Bits = 0U; }
 
 
+/******************************************************************************/
+/*!
+    Var Interface
+*/
+/******************************************************************************/
+typedef enum Phase_InputVar
+{
+    PHASE_INPUT_VAR_VA,
+    PHASE_INPUT_VAR_VB,
+    PHASE_INPUT_VAR_VC,
+    PHASE_INPUT_VAR_IA,
+    PHASE_INPUT_VAR_IB,
+    PHASE_INPUT_VAR_IC,
+}
+Phase_InputVar_T;
 
-// #if     defined(PHASE_V_SENSORS_ISOLATED)
-// #elif   defined(PHASE_V_SENSORS_ANALOG)
-// #else
-// #define PHASE_V_SENSORS_ANALOG
-// #endif
 
-// #if     defined(MOTOR_I_SENSORS_AB)
-// #elif   defined(MOTOR_I_SENSORS_ABC)
-// #else
-//     #define MOTOR_I_SENSORS_ABC
-// #endif
+static inline int Phase_InputVar_Get(const Phase_Input_T * p_phase, Phase_InputVar_T var)
+{
+    switch (var)
+    {
+        case PHASE_INPUT_VAR_VA: return p_phase->Vabc.A;
+        case PHASE_INPUT_VAR_VB: return p_phase->Vabc.B;
+        case PHASE_INPUT_VAR_VC: return p_phase->Vabc.C;
+        case PHASE_INPUT_VAR_IA: return p_phase->Iabc.A;
+        case PHASE_INPUT_VAR_IB: return p_phase->Iabc.B;
+        case PHASE_INPUT_VAR_IC: return p_phase->Iabc.C;
+        default: return 0;
+    }
+}
 
-// #if     defined(MOTOR_V_SENSORS_ISOLATED)
-// #elif   defined(MOTOR_V_SENSORS_ANALOG)
-// #else
-//     #define MOTOR_V_SENSORS_ANALOG
-// #endif

@@ -84,7 +84,6 @@ static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /*
 */
 typedef struct { int32_t low; int32_t high; } interval_t;
 
-
 /* smallest interval containing 0 and `value` */
 static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
 
@@ -114,8 +113,8 @@ static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, 
 }
 
 
-static inline int32_t interval_clamp(int32_t v, interval_t b) { return math_clamp(v, b.low, b.high); }
-static inline bool interval_contains(int32_t v, interval_t b) { return v >= b.low && v <= b.high; }
+static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
+static inline bool interval_contains(interval_t b, int32_t v) { return v >= b.low && v <= b.high; }
 static inline interval_t interval_intersect(interval_t a, interval_t b) { return (interval_t) { .low = math_max(a.low, b.low), .high = math_min(a.high, b.high) }; }
 // static inline interval_t interval_scale(interval_t b, fract16_t k) { return (interval_t) { .low = fract16_mul(b.low, k), .high = fract16_mul(b.high, k) }; }
 

@@ -72,10 +72,10 @@ extern const State_T MOTOR_STATE_INIT;
 extern const State_T MOTOR_STATE_DISABLED;
 extern const State_T MOTOR_STATE_PASSIVE;
 extern const State_T MOTOR_STATE_RUN;
+extern const State_T MOTOR_STATE_INTERVENTION;
 extern const State_T MOTOR_STATE_OPEN_LOOP;
 extern const State_T MOTOR_STATE_CALIBRATION;
 extern const State_T MOTOR_STATE_FAULT;
-extern const State_T MOTOR_STATE_INTERVENTION;
 
 /******************************************************************************/
 /*
@@ -92,10 +92,18 @@ typedef enum Motor_StateInput
     MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
     // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start, Timer, etc */
     // MOTOR_STATE_INPUT_USER_BUFFER,
-    // MOTOR_STATE_INPUT_CAPTURE_ADC,
     MOTOR_TRANSITION_TABLE_LENGTH,
 }
 Motor_StateInput_T;
+
+/* map State_Cmd_T or Accessor */
+typedef enum Motor_StateAction
+{
+    MOTOR_STATE_INPUT_ON_SPEED, /* Speed feedback */
+    MOTOR_STATE_INPUT_ON_PHASE, /* Phase I/V */
+    MOTOR_STATE_ACTION_TABLE_LENGTH,
+}
+Motor_StateAction_T;
 
 /*
     [Phase_Output_T]

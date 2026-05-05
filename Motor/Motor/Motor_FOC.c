@@ -218,10 +218,6 @@ void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor)
     Ramp_SetTarget(&p_motor->SpeedRamp, 0);
 }
 
-void _Motor_FOC_MatchIVState(Motor_State_T * p_motor, int16_t vd, int16_t vq)
-{
-    FOC_MatchIVState(&p_motor->Foc, vd, vq);
-}
 
 /* torque only states */
 void Motor_FOC_MatchIVState(Motor_State_T * p_motor)
@@ -250,35 +246,6 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
     Ramp_SetTarget(&p_motor->TorqueRamp, Ramp_GetOutput(&p_motor->TorqueRamp));
     Motor_MatchSpeedTorqueState(p_motor, Ramp_GetOutput(&p_motor->TorqueRamp)); // or let state machine handle
 }
-
-/*
-    Set on Direction change
-    Iq/Id PID always Vq/Vd. Clip opposite user direction range, no plugging.
-
-    p_motor->Direction is set by caller
-*/
-void _Motor_FOC_ApplyVLimits(Motor_State_T * p_motor, Motor_Direction_T direction, int16_t vRef)
-{
-    interval_t v = interval_of_sign((sign_t)direction, vRef);
-    PID_SetOutputLimits(&p_motor->Foc.PidIq, v.low, v.high);
-    PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
-}
-
-void Motor_FOC_ApplyVLimits(Motor_T * p_dev, Motor_Direction_T direction)
-{
-    interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)direction);  /* unidirectional range [0, vRef] or [vRef, 0] */
-    int16_t vRef = VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS);
-    PID_SetOutputLimits(&p_dev->P_MOTOR->Foc.PidIq, v.low, v.high);
-    PID_SetOutputLimits(&p_dev->P_MOTOR->Foc.PidId, 0 - vRef, vRef);
-}
-
-void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
-{
-    Motor_SetDirection(p_dev, direction); /* alternatively caller handle */
-    Motor_FOC_ApplyVLimits(p_dev, direction);
-}
-
-
 
 
 /******************************************************************************/

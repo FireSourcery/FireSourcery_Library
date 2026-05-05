@@ -368,4 +368,35 @@ extern Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned);
 
 
 
+/******************************************************************************/
+/*!
+    Var Interface
+*/
+/******************************************************************************/
+// typedef enum Phase_VOutVar
+// {
+//     PHASE_OUTPUT_MODE,
+//     PHASE_PIN_A,
+//     PHASE_PWM_A,
+//     PHASE_PIN_B,
+//     PHASE_PWM_B,
+//     PHASE_PIN_C,
+//     PHASE_PWM_C,
+// }
+// Phase_VOutVar_T;
 
+// static inline int Phase_VOutVar_Get(Phase_T * p_phase, Phase_VOutVar_T var)
+// {
+//     switch (var)
+//     {
+//         case PHASE_OUTPUT_MODE: return Phase_ReadOutputState(p_phase);
+//         case PHASE_VOUTPUT_DUTY_A: return PWM_ReadDuty(&p_phase->PWM_A);
+//         case PHASE_VOUTPUT_ON_OFF_A: return _Phase_ReadOnOffA(p_phase);
+//         case PHASE_PWM_A: return p_phase->PWM_A.ID;
+//         case PHASE_PIN_B: return p_phase->PIN_B.ID;
+//         case PHASE_PWM_B: return p_phase->PWM_B.ID;
+//         case PHASE_PIN_C: return p_phase->PIN_C.ID;
+//         case PHASE_PWM_C: return p_phase->PWM_C.ID;
+//         default: return 0;
+//     }
+// }

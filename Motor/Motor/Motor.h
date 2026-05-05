@@ -284,7 +284,7 @@ Motor_Config_T;
 
 /*
     Motor State - Runtime variable state.
-    "Procedural composition over a passive aggregate."
+    "Procedural composition over a passive aggregate." Cohesion of StateMachine NvmConfig
 */
 /* Motor_Runtime_T */
 typedef struct Motor_State
@@ -473,32 +473,7 @@ static inline const Angle_T * Motor_AngleSpeedState(Motor_T * p_motor) { return 
 
 static inline Phase_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
 
-/******************************************************************************/
-/*
-    Types for generic accessor
-*/
-/******************************************************************************/
-typedef int motor_value_t;
-// typedef register_t motor_value_t;
 
-typedef void(*Motor_Proc_T)(Motor_State_T * p_motor);
-
-typedef motor_value_t(*Motor_Get_T)(const Motor_State_T * p_motor);
-typedef void(*Motor_Set_T)(Motor_State_T * p_motor, motor_value_t value);
-
-typedef bool(*Motor_State_Test_T)(const Motor_State_T * p_motor);
-typedef bool(*Motor_State_TryProc_T)(Motor_State_T * p_motor);
-typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value);
-typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
-
-
-/******************************************************************************/
-/*
-    Motor Module
-    Cohesion of StateMachine NvmConfig
-    refactor sub contexts and  Motor_State_T * p_  should be absorbed by Motor_T API
-*/
-/******************************************************************************/
 
 /******************************************************************************/
 /*
@@ -543,11 +518,9 @@ static inline ufract16_t Motor_GetSpeedDerate(Motor_T * p_motor) { return math_m
 */
 /*
     provide traceability from a parameter object
-    Config.SpeedLimitForward_Fract16 is read by Motor_SpeedLimitForward(),
-        which feeds Motor_GetSpeedLimits(),
-        which feeds Motor_ResolveSpeedLimits(),
-        which writes SpeedRamp.LimitUpper,
-        which is enforced by Accumulator saturation on every Ramp_ProcNext()
+    Config * Derate => virtualized Field,
+        => Motor_Get*Limits() => Motor_Resolve*Limits() => *Ramp.Limits
+        Ramp.Limits is enforced by saturation on every Ramp_ProcNext()
 */
 static inline ufract16_t Motor_ILimitMotoring(Motor_T * p_motor) { return fract16_mul(Motor_GetIDerate(p_motor), p_motor->P_MOTOR->Config.ILimitMotoring_Fract16); }
 static inline ufract16_t Motor_ILimitGenerating(Motor_T * p_motor) { return fract16_mul(Motor_GetIDerate(p_motor), p_motor->P_MOTOR->Config.ILimitGenerating_Fract16); }
@@ -642,6 +615,7 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
+        // StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, p_motor, MOTOR_STATE_INPUT_ON_SPEED);
         p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
     }
 }
@@ -655,7 +629,6 @@ static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_State_T *
 static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 
 
-
 /******************************************************************************/
 /*
    Proc FeedbackMode Flags
@@ -666,8 +639,7 @@ static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Mo
     Stateless cascade override: run SpeedPID against an alternate per-tick speedReq
     without touching SpeedRamp.Target. Used by intervention state.
 */
-/* Motor_ProcSpeedControlSource */
-static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
+static inline fract16_t Motor_ProcSpeedControlSource(Motor_State_T * p_motor, int16_t speedReq)
 {
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNextOnInputOf(&p_motor->SpeedRamp, speedReq));
 }
@@ -675,13 +647,12 @@ static inline fract16_t Motor_SpeedControlOf(Motor_State_T * p_motor, int16_t sp
 /*
     Stored-target form: PID(feedback, Ramp_ProcNext(SpeedRamp)). Reads SpeedRamp.Target.
 */
-/* _Motor_ProcSpeedControlUserReq */
 static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
 {
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNext(&p_motor->SpeedRamp));
 }
 
-// fract16_t Motor_ProcSpeedControl(const Motor_T * p_motor) { return _Motor_ProcSpeedControl(p_motor->P_MOTOR);}
+// fract16_t Motor_ProcSpeedControl(  Motor_T * p_motor) { return _Motor_ProcSpeedControl(p_motor->P_MOTOR);}
 
 /*
     Speed Feedback Loop
@@ -698,7 +669,7 @@ static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
 {
     if (p_motor->SpeedUpdateFlag == true)
     {
-        p_motor->SpeedUpdateFlag = false; //todo p_motor->SpeedUpdateFlag an adc state machine inputs
+        p_motor->SpeedUpdateFlag = false; // todo  , adc state machine inputs
         Motor_ProcSpeedFeedback(p_motor);
     }
 }
@@ -720,39 +691,14 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
     From Config
 */
 /******************************************************************************/
-/*
-todo move to Motor_Config_T
-   Calibration values derive with system config
-*/
-// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedRated_Fract16(&p_motor->Config), FRACT16_2_DIV_SQRT3); }
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_State_T * p_motor) { return Motor_GetSpeedRated_Fract16(&p_motor->Config); }
-static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
-
-
-/*!
-    V <=> Speed conversion based on Kv.
-    Speed/SpeedRated => V/VBusRef
-    @return V_Fract16 - VBusRef of Speed Kv
-*/
-static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_State_T * p_motor, accum32_t speed_fract16) { return Phase_VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(&p_motor->Config); }
-static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_State_T * p_motor, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(&p_motor->Config) / Phase_VBus_GetVNominal(); }
-
-/* Phase peak. */
-static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_State_T * p_motor, accum32_t speed_fract16) { return Motor_VBusOfSpeed_Fract16(p_motor, speed_fract16) / 2; }
-
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-/* when SPEED_MAX = Kv * VNominal * 2 */
-// static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Phase_VBus_GetVNominal(), Motor_GetSpeedFeedback(p_motor)); }
+static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return Motor_IsSpeedFreewheelLimit(&p_motor->Config, Motor_GetSpeedFeedback(p_motor)); }
 
 /*!
     VPhase approximation via Speed
 */
-static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return Motor_VPhaseOfSpeed_Fract16(p_motor, Motor_GetSpeedFeedback(p_motor)); }
+/* when SPEED_MAX = Kv * VNominal * 2 */
+static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Phase_VBus_GetVNominal(), Motor_GetSpeedFeedback(p_motor)); }
+// static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return Phase_VBus_GetVNominal() * Motor_GetSpeedFeedback(p_motor) / Motor_GetSpeedRated_Fract16(&p_motor->Config) / 2; }
 
 static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->Config.VSpeedScalar_Fract16); }
 

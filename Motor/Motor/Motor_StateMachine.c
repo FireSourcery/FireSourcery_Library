@@ -79,14 +79,14 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
     p_motor->P_MOTOR->FaultFlags.Overheat = 0;
 }
 
-void _Motor_SetDirection(Motor_T * p_dev, VBus_T * p_vbus, Motor_Direction_T direction)
+/*
+    Set on Direction change
+    Clip opposite user direction range, no plugging.
+*/
+static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
-    Motor_State_T * p_motor = p_dev->P_MOTOR;
-    Motor_SetDirection(p_dev, direction); /* alternatively caller handle */
-    uint16_t vRef = VBus_GetVPhaseRefSvpwm(p_vbus);
-    interval_t vInterval = VBus_AntiPluggingLimits(p_vbus, (sign_t)direction);
-    PID_SetOutputLimits(&p_motor->Foc.PidIq, vInterval.low, vInterval.high);
-    PID_SetOutputLimits(&p_motor->Foc.PidId, 0 - vRef, vRef);
+    Motor_SetDirection(p_dev, direction);
+    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS)); /* overwritten on loop */
 }
 
 static inline void _Motor_SetFeedbackMode_Cast(Motor_T * p_motor, state_value_t mode) { Motor_SetFeedbackMode(p_motor, Motor_FeedbackMode_Cast(mode)); }
@@ -164,7 +164,7 @@ static void Disabled_Entry(Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
-    Motor_FOC_SetDirection(p_motor,MOTOR_DIRECTION_NULL);
+    _Motor_SetDirection(p_motor, MOTOR_DIRECTION_NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
@@ -180,7 +180,7 @@ static State_T * Disabled_InputDirection(Motor_T * p_motor, state_value_t direct
         case MOTOR_DIRECTION_NULL:
         case MOTOR_DIRECTION_CW:
         case MOTOR_DIRECTION_CCW:
-            Motor_FOC_SetDirection(p_motor,direction); break;
+            _Motor_SetDirection(p_motor, direction); break;
         default: break; /* Invalid direction */
     }
     return NULL;
@@ -303,7 +303,7 @@ static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t directi
             case MOTOR_DIRECTION_NULL: /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                Motor_FOC_SetDirection(p_motor,direction); break;
+                _Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
         /* Null direction can function as disable while other directions not function as enable. */
@@ -354,6 +354,7 @@ const State_T MOTOR_STATE_PASSIVE =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
+    p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
     Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
 
@@ -423,10 +424,22 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
 };
 
+static void Run_OnSpeed(Motor_T * p_motor)
+{
+    Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
+}
+
+static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
+    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+};
+
 const State_T MOTOR_STATE_RUN =
 {
     .ID                 = MOTOR_STATE_ID_RUN,
     .P_TRANSITION_TABLE = &RUN_TRANSITION_TABLE[0U],
+    .P_ACTION_TABLE     = &RUN_ACTION_TABLE[0U],
     .ENTRY              = (State_Action_T)Run_Entry,
     .LOOP               = (State_Action_T)Run_Proc,
 };
@@ -549,7 +562,7 @@ static State_T * OpenLoop_InputDirection(Motor_T * p_motor, state_value_t direct
             /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                Motor_FOC_SetDirection(p_motor,direction); break;
+                _Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
     }
@@ -633,7 +646,7 @@ static State_T * Calibration_InputDirection(Motor_T * p_motor, state_value_t dir
             case MOTOR_DIRECTION_NULL:  /* Intentional fall-through */
             case MOTOR_DIRECTION_CW:
             case MOTOR_DIRECTION_CCW:
-                Motor_FOC_SetDirection(p_motor,direction); break;
+                _Motor_SetDirection(p_motor, direction); break;
             default: break; /* Invalid direction */
         }
     }

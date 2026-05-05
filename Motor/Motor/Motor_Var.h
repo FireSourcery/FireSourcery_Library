@@ -120,7 +120,7 @@ typedef enum Motor_Var_Foc
 {
     MOTOR_VAR_FOC_IA,
     MOTOR_VAR_FOC_IB,
-    MOTOR_VAR_FOC_IC,
+    MOTOR_VAR_FOC_IC, /* move to phase input */
     MOTOR_VAR_FOC_ID,
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,

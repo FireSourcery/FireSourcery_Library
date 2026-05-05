@@ -132,6 +132,14 @@ static inline state_value_t _StateMachine_GetValue(const StateMachine_Active_T *
     return State_GetValue(StateMachine_GetActiveState(p_active), p_context, id, field);
 }
 
+
+/* or map to root state */
+static inline void StateMachine_ActionInput(const StateMachine_Active_T * p_active, void * p_context, size_t id)
+{
+    State_ActionInput(StateMachine_GetActiveState(p_active), p_context, id);
+}
+
+
 /******************************************************************************/
 /*!
     Extern Protected Functions

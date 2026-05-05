@@ -129,8 +129,25 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_Config_T * p_motor) { re
 // static inline int16_t Motor_OpenLoopVLimitOf(const Motor_Config_T * p_motor, int16_t vReq) { return math_clamp(vReq, (int32_t)0 - Motor_OpenLoopVLimit(p_motor), Motor_OpenLoopVLimit(p_motor)); }
 // static inline uint16_t Motor_GetVAlign(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->AlignScalar_Fract16, Phase_VBus_GetVRef()); }
 
-// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_motor) { return Motor_GetSpeedRated_Fract16(p_motor); }
-// static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Config_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
+
+// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return fract16_mul(Motor_GetSpeedRated_Fract16(p_config), FRACT16_2_DIV_SQRT3); }
+static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return Motor_GetSpeedRated_Fract16(p_config); }
+static inline bool Motor_IsSpeedFreewheelLimit(const Motor_Config_T * p_config, accum32_t speed_fract16) { return (math_abs(speed_fract16) < Motor_GetSpeedFreewheelLimit_UFract16(p_config)); }
+
+/******************************************************************************/
+/*!
+    V <=> Speed conversion based on Kv.
+    Speed/SpeedRated => V/VBusRef
+    @return V_Fract16 - VBusRef of Speed Kv
+*/
+/******************************************************************************/
+static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { return Phase_VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_config); }
+static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_Config_T * p_config, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(p_config) / Phase_VBus_GetVNominal(); }
+
+/* Phase peak. */
+static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { return Motor_VBusOfSpeed_Fract16(p_config, speed_fract16) / 2; }
+/* when SPEED_MAX = Kv * VNominal * 2 */
+// static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { (void)p_config; return fract16_mul(Phase_VBus_GetVNominal(), speed_fract16); }
 
 /******************************************************************************/
 /*

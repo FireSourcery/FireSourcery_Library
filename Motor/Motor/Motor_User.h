@@ -62,24 +62,25 @@ static inline ufract16_t Motor_GetVSpeedEffective_UFract16(const Motor_State_T *
     Conversion functions only on user call. No periodic proc.
     Partial conversion local side. Alternatively app side handle
 */
+/* FOC_ calls migrate wrap with communtation as needed */
 /*!
     @return IPhase Zero to Peak.
 */
-static inline ufract16_t Motor_GetIPhase_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_UFract16, NULL); }
+static inline ufract16_t Motor_GetIPhase_UFract16(const Motor_State_T * p_motor) { return FOC_GetIMagnitude(&p_motor->Foc); }
 /* iPhase motoring as positive. generating as negative. */
-static inline fract16_t Motor_GetIPhase_Fract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetIPhase_Fract16, NULL) * p_motor->Direction; ; }
+static inline fract16_t Motor_GetIPhase_Fract16(const Motor_State_T * p_motor) { return Motor_GetIPhase_UFract16(p_motor) * p_motor->Direction; ; }
 
 /*
     Sampled BEMF during freewheel or VOut during active control
 */
-static inline ufract16_t Motor_GetVPhase_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetVPhase_UFract16, NULL); }
-static inline fract16_t Motor_GetVPhase_Fract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetVPhase_Fract16, NULL) * p_motor->Direction; ; }
+static inline ufract16_t Motor_GetVPhase_UFract16(const Motor_State_T * p_motor) { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline fract16_t Motor_GetVPhase_Fract16(const Motor_State_T * p_motor) { return Motor_GetVPhase_UFract16(p_motor) * p_motor->Direction; ; }
 
 /*
     Ideal electrical power physical VA
 */
 /* [1:1.5] */
-static inline uint16_t Motor_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return Motor_CommutationModeFn_Call(p_motor, Motor_FOC_GetElectricalPower_UFract16, NULL); }
+static inline uint16_t Motor_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return FOC_GetActivePower(&p_motor->Foc); }
 static inline ufract16_t Motor_GetIBus_UFract16(const Motor_State_T * p_motor) { return FOC_GetIBus(&p_motor->Foc, Phase_VBus_Fract16()); }
 
 /*  */

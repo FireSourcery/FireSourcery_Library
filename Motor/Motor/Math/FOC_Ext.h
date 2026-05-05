@@ -56,6 +56,17 @@ static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseDa
     _FOC_CaptureIabc(p_foc, p_phaseData);
 }
 
+static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, angle16_t theta)
+{
+    FOC_SetTheta(p_foc, theta);
+    if (p_input->Flags.Bits == PHASE_ID_ABC)
+    {
+        FOC_ProcVBemfClarkePark(p_foc, p_input->Values.A, p_input->Values.B, p_input->Values.C);
+        p_input->Flags.Bits = PHASE_ID_0;
+    }
+}
+
+
 static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_T * p_phase) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
 
 
@@ -75,16 +86,16 @@ static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_T * p_phase) { Phas
 /* Store as max modulation, derive V_Fract16 by vbus */
 /* V_Fract16 when Vd Vq are stored as normalized scalar values */
 // #ifdef FOC_V_AS_SCALAR
-// // static inline ufract16_t FOC_Va(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Va); }
-// // static inline ufract16_t FOC_Vb(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vb); }
-// // static inline ufract16_t FOC_Vc(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vc); }
+// static inline ufract16_t FOC_Va(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Va); }
+// static inline ufract16_t FOC_Vb(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vb); }
+// static inline ufract16_t FOC_Vc(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vc); }
 
-// // static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Valpha); }
-// // static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
+// static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Valpha); }
+// static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
 
-// // static inline void _FOC_SetVBemfA(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VDutyOfV_Inv32(vBusInv_fract32, va); }
-// // static inline void _FOC_SetVBemfB(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vb); }
-// // static inline void _FOC_SetVBemfC(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vc); }
+// static inline void _FOC_SetVBemfA(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VDutyOfV_Inv32(vBusInv_fract32, va); }
+// static inline void _FOC_SetVBemfB(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vb); }
+// static inline void _FOC_SetVBemfC(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vc); }
 // #else
 
 
