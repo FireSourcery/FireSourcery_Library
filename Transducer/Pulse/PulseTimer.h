@@ -43,6 +43,7 @@
 */
 /******************************************************************************/
 /*
+    Pulse Timer needs state for SampleTh
     State - Timer-specific only
     Counter/FreqD state lives in AngleCounter_T (math layer)
 */
@@ -110,13 +111,20 @@ PulseTimer_T;
 
 */
 /******************************************************************************/
-// static inline uint32_t _PulseTimer_BaseFreq(const PulseTimer_T * p_timer)
+// static inline uint32_t _PulseTimer_BaseFreq(PulseTimer_T * p_timer)
 // {
 // #ifdef PULSE_DYNAMIC_TIMER
 //     return p_timer->P_STATE->UnitTime_Freq;
 // #else
 //     return p_timer->TIMER_FREQ;
 // #endif
+// }
+
+// simplify init mem maping
+// static inline uint32_t _PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer, PulseTimer_State_T * p_state)
+// {
+//     p_state->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_state->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+//     return p_state->SampleTh;
 // }
 
 /******************************************************************************/
@@ -128,7 +136,7 @@ PulseTimer_T;
     Capture DeltaT - Pulse Edge Polling/ISR
     [0:PULSE_TIMER_MAX] => (0xFFFF / TIMER_FREQ) [seconds]
 */
-static inline uint32_t PulseTimer_CaptureDeltaT(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureDeltaT(PulseTimer_T * p_timer)
 {
     p_timer->P_STATE->DeltaT = HAL_ClockTimer_CapturePeriod(p_timer->P_HAL_TIMER);
     return p_timer->P_STATE->DeltaT;
@@ -138,14 +146,14 @@ static inline uint32_t PulseTimer_CaptureDeltaT(const PulseTimer_T * p_timer)
     Per SAMPLE_TIME
 */
 /* ticks since last pulse, accumulating on overflow */
-static inline uint32_t PulseTimer_CaptureSampleTh(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
 {
     PulseTimer_State_T * p_state = p_timer->P_STATE;
     p_state->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_state->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
     return p_state->SampleTh;
 }
 
-static inline uint32_t _PulseTimer_CaptureSampleTh(const PulseTimer_T * p_timer)
+static inline uint32_t _PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
 {
     p_timer->P_STATE->SampleTh = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
     return p_timer->P_STATE->SampleTh;
@@ -153,7 +161,7 @@ static inline uint32_t _PulseTimer_CaptureSampleTh(const PulseTimer_T * p_timer)
 
 /* PulsePeriod * count */
 /* T spanning M pulses in the sample window. Returns 0 while accumulating. */
-static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureSampleTk(PulseTimer_T * p_timer)
 {
     PulseTimer_State_T * p_state = p_timer->P_STATE;
 
@@ -174,14 +182,14 @@ static inline uint32_t PulseTimer_CaptureSampleTk(const PulseTimer_T * p_timer)
 }
 
 /* PulseCount/s/count */
-static inline uint32_t PulseTimer_CaptureSampleTk_Freq(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureSampleTk_Freq(PulseTimer_T * p_timer)
 {
     uint32_t sampleTk = PulseTimer_CaptureSampleTk(p_timer);
     return (sampleTk > p_timer->SAMPLE_TIME / 2) ? (p_timer->TIMER_FREQ / sampleTk) : 0;
 }
 
 
-static inline bool PulseTimer_IsStop(const PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }
+static inline bool PulseTimer_IsStop(PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }
 
 /******************************************************************************/
 /*!
@@ -193,14 +201,14 @@ static inline bool PulseTimer_IsStop(const PulseTimer_T * p_timer) { return (p_t
         1.6ms to 107S for TimerFreq = 40Mhz
 */
 /******************************************************************************/
-static inline uint32_t _PulseTimer_GetExtendedDelta(const PulseTimer_T * p_timer) { return *(p_timer->P_EXTENDED_TIMER) - p_timer->P_STATE->ExtendedTimer; }
+static inline uint32_t _PulseTimer_GetExtendedDelta(PulseTimer_T * p_timer) { return *(p_timer->P_EXTENDED_TIMER) - p_timer->P_STATE->ExtendedTimer; }
 
 /*
     Call on Encoder Edge.
     Capture as overwrite
     32 bit DeltaT overflow should be caught by CheckExtendedStop, which is a shorter period
 */
-static inline uint32_t PulseTimer_CaptureExtendedDeltaT(const PulseTimer_T * p_timer)
+static inline uint32_t PulseTimer_CaptureExtendedDeltaT(PulseTimer_T * p_timer)
 {
     if (PulseTimer_CaptureDeltaT(p_timer) == PULSE_TIMER_MAX) { p_timer->P_STATE->DeltaT = _PulseTimer_GetExtendedDelta(p_timer) * p_timer->EXTENDED_TIMER_CONVERSION; }
     p_timer->P_STATE->ExtendedTimer = *(p_timer->P_EXTENDED_TIMER);
@@ -210,13 +218,13 @@ static inline uint32_t PulseTimer_CaptureExtendedDeltaT(const PulseTimer_T * p_t
 /*
     Use Extended Timer to check 0 speed.
 */
-static inline bool PulseTimer_IsExtendedStop(const PulseTimer_T * p_timer) { return (_PulseTimer_GetExtendedDelta(p_timer) > p_timer->P_STATE->ExtendedTimerStop); }
+static inline bool PulseTimer_IsExtendedStop(PulseTimer_T * p_timer) { return (_PulseTimer_GetExtendedDelta(p_timer) > p_timer->P_STATE->ExtendedTimerStop); }
 
 /*
     Set stop detection threshold from milliseconds.
     @param[in] millis  Timeout in milliseconds — no edges within this period => stopped
 */
-static inline void PulseTimer_SetExtendedWatchStop_Millis(const PulseTimer_T * p_timer, uint32_t millis)
+static inline void PulseTimer_SetExtendedWatchStop_Millis(PulseTimer_T * p_timer, uint32_t millis)
 {
     p_timer->P_STATE->ExtendedTimerStop = (uint16_t)(p_timer->EXTENDED_TIMER_FREQ * millis / 1000U);
 }
@@ -224,7 +232,7 @@ static inline void PulseTimer_SetExtendedWatchStop_Millis(const PulseTimer_T * p
 
 
 /* Alias for Hall edge capture — captures DeltaT and resets timer */
-static inline uint32_t PulseTimer_CaptureEdge(const PulseTimer_T * p_timer) { return PulseTimer_CaptureExtendedDeltaT(p_timer); }
+static inline uint32_t PulseTimer_CaptureEdge(PulseTimer_T * p_timer) { return PulseTimer_CaptureExtendedDeltaT(p_timer); }
 
 
 /******************************************************************************/
@@ -233,8 +241,8 @@ static inline uint32_t PulseTimer_CaptureEdge(const PulseTimer_T * p_timer) { re
     DeltaT / TimerFreq = DeltaT [Seconds]
 */
 /******************************************************************************/
-static inline uint32_t PulseTimer_DeltaT_Freq(const PulseTimer_T * p_timer) { return p_timer->TIMER_FREQ / p_timer->P_STATE->DeltaT; }
-static inline uint32_t PulseTimer_DeltaT_Ms(const PulseTimer_T * p_timer) { return p_timer->P_STATE->DeltaT * 1000U / p_timer->TIMER_FREQ; }
+static inline uint32_t PulseTimer_DeltaT_Freq(PulseTimer_T * p_timer) { return p_timer->TIMER_FREQ / p_timer->P_STATE->DeltaT; }
+static inline uint32_t PulseTimer_DeltaT_Ms(PulseTimer_T * p_timer) { return p_timer->P_STATE->DeltaT * 1000U / p_timer->TIMER_FREQ; }
 
 
 
@@ -243,13 +251,13 @@ static inline uint32_t PulseTimer_DeltaT_Ms(const PulseTimer_T * p_timer) { retu
     @brief Initialize the pulse timer.
 */
 /******************************************************************************/
-static inline void PulseTimer_Init(const PulseTimer_T * p_timer)
+static inline void PulseTimer_Init(PulseTimer_T * p_timer)
 {
     HAL_ClockTimer_Init(p_timer->P_HAL_TIMER);
     HAL_ClockTimer_InitFreq(p_timer->P_HAL_TIMER, p_timer->TIMER_FREQ);
 }
 
-static inline void PulseTimer_SetInitial(const PulseTimer_T * p_timer)
+static inline void PulseTimer_SetInitial(PulseTimer_T * p_timer)
 {
     HAL_ClockTimer_ClearOverflow(p_timer->P_HAL_TIMER);
     HAL_ClockTimer_Write(p_timer->P_HAL_TIMER, 0U);
@@ -260,12 +268,12 @@ static inline void PulseTimer_SetInitial(const PulseTimer_T * p_timer)
 /*
     Capture with overflow
 */
-// static inline void PulseTimer_Overflow_ISR(const PulseTimer_T * p_timer)
+// static inline void PulseTimer_Overflow_ISR(PulseTimer_T * p_timer)
 // {
 //     p_timer->P_STATE->OverflowCount++;
 // }
 
-// static inline void Encoder_DeltaT_CaptureExtended(const PulseTimer_T * p_timer)
+// static inline void  CaptureExtended(PulseTimer_T * p_timer)
 // {
 //     uint32_t periodT = (p_timer->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_timer->P_HAL_ENCODER_TIMER);
 //     HAL_Encoder_WriteTimer(p_timer->P_HAL_ENCODER_TIMER, 0U);
@@ -275,7 +283,7 @@ static inline void PulseTimer_SetInitial(const PulseTimer_T * p_timer)
 // }
 
 // // Stop detection — single threshold in base timer ticks
-// static inline bool Encoder_DeltaT_IsExtendedStop(const PulseTimer_T * p_timer)
+// static inline bool  IsExtendedStop(PulseTimer_T * p_timer)
 // {
 //     uint32_t elapsed = (p_timer->P_STATE->OverflowCount << 16) | HAL_Encoder_ReadTimer(p_timer->P_HAL_ENCODER_TIMER);
 //     return (elapsed > p_timer->P_STATE->Config.DeltaTStop);

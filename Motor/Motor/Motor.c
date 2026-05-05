@@ -103,6 +103,9 @@ void Motor_Reset(Motor_State_T * p_motor)
         Feedback State
     */
     FOC_Init(&p_motor->Foc);
+    p_motor->Foc.IdFwGain = p_motor->Config.FieldWeakening.IdFwGain;
+    p_motor->Foc.IdFwMax = p_motor->Config.FieldWeakening.IdFwMax;
+
     p_motor->ControlTimerBase = 0U;
 
     /* Keep for physical units and external reading */
@@ -230,8 +233,14 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     p_dev->P_MOTOR->Direction = direction;
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
-    Motor_ResolveILimits(p_dev);
     Motor_ResolveSpeedLimits(p_dev);
+    Motor_ResolveILimits(p_dev);
+
+
+    // if (p_state->FeedbackMode.Current == 0)
+    // {interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)p_dev->P_MOTOR->Direction);
+    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+    // }
 }
 
 

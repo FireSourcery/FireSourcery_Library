@@ -32,7 +32,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 /******************************************************************************/
 /*
     Helpers
@@ -47,32 +46,6 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_Config_T * p_config, accum32
 */
 static inline uint16_t Motor_RpmOfKv(const Motor_Config_T * p_config, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_config->Kv * Phase_Calibration_GetVMaxVolts()); }
 static inline uint16_t Motor_VFract16OfKv(const Motor_Config_T * p_config, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_config->Kv * Phase_Calibration_GetVMaxVolts()); }
-
-/******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-/*
-    Speed VBus Ref
-    Generally [SpeedRated] via Kv * V
-*/
-/* Motor_GetKvVBus_Rpm */
-static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(const Motor_Config_T * p_config) { return Motor_RpmOfKv(p_config, Phase_VBus_GetVNominal()); }
-static inline uint16_t Motor_GetSpeedVNominalRef_Angle(const Motor_Config_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedVNominalRef_Rpm(p_config)); }
-
-static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_Config_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
-static inline uint16_t Motor_SpeedVRef_Angle(const Motor_Config_T * p_config, uint16_t vNominal_fract16) { return _Motor_AngleOfRpm(p_config, Motor_SpeedVRef_Rpm(p_config, vNominal_fract16)); }
-
-/*
-    [SpeedRated] via direct Parameter
-    Simplify user set and decouples from VBus module
-    Config set Kv mediates
-*/
-static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Config_T * p_config) { return p_config->SpeedRated_Rpm; }
-static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_Config_T * p_config) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
-static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_Config_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
-
 
 
 /******************************************************************************/
@@ -93,6 +66,7 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Config_T * p_config);
 #define SPEED_RPM_OF_FRACT16(Fract16)  (Fract16 * MOTOR_SPEED_TYPE_MAX_RPM() / 32768)
 #endif
 
+
 static inline uint16_t Motor_GetSpeedTypeMax_Rpm(const Motor_Config_T * p_config) { return MOTOR_SPEED_TYPE_MAX_RPM(p_config); }
 static inline uint16_t Motor_GetSpeedTypeMax_Angle(const Motor_Config_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedTypeMax_Rpm(p_config)); }
 
@@ -104,9 +78,64 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_Config_T * p_config, 
 /* [SpeedRated_Rpm] = [KvVBusNominal] = [SpeedTypeMax_Rpm] / 2  */
 /* Keep instanced */
 static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_Config_T * p_config) { (void)p_config; return INT16_MAX / 2; }
-static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config, const VBus_Config_T * p_vbus) { (void)p_config; return VBus_VNominal_Fract16(p_vbus); }
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
+/*
+    Speed VBus Ref
+    Generally [SpeedRated] via Kv * V
+*/
+/* Motor_GetKvVBus_Rpm */
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(const Motor_Config_T * p_config) { return Motor_RpmOfKv(p_config, Phase_VBus_GetVNominal()); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Angle(const Motor_Config_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedVNominalRef_Rpm(p_config)); }
+
+static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_Config_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
+static inline uint16_t Motor_SpeedVRef_Angle(const Motor_Config_T * p_config, uint16_t vNominal_fract16) { return _Motor_AngleOfRpm(p_config, Motor_SpeedVRef_Rpm(p_config, vNominal_fract16)); }
 
 
+/*
+    [SpeedRated] via direct Parameter
+    Simplify user set and decouples from VBus module
+    Config set Kv mediates
+*/
+static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Config_T * p_config) { return p_config->SpeedRated_Rpm; }
+static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_Config_T * p_config) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
+static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_Config_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
+
+static inline uint16_t Motor_GetEffectiveSpeedRated_Rpm(const Motor_Config_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
+
+
+/* [V / (rad/s)] */
+static inline accum32_t Motor_GetKe_Fract32(const Motor_Config_T * p_config) { return (int64_t)FRACT32_SCALE * 60 / (2 * FRACT16_PI * p_config->Kv); }
+
+/* [VFract16 / (Angle16/ControlCycle)] */
+static inline accum32_t Motor_GetKe_Angle16(const Motor_Config_T * p_config) { return Motor_VFract16OfKv(p_config, Motor_GetSpeedRated_Rpm(p_config)) / Motor_GetSpeedRated_Angle(p_config); }
+
+/*
+    [VFract16 / SpeedFract16]
+    V_fract16 = fract16_mul(Ke_SpeedFract, Speed_fract16)
+    where omega_fract16 = ω / ω_max × FRACT16_MAX
+
+    when SpeedTypeMax = Kv * VNominal * 2
+    Ke = VNominal * 2
+*/
+// static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_Config_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
+static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_Config_T * p_config) { return fract16_div(Motor_VFract16OfKv(p_config, Motor_GetSpeedRated_Rpm(p_config)), Motor_GetSpeedRated_Fract16(p_config)); }
+
+
+// FluxLinkage [Wb] = Ke_mech / PolePairs
+// λm = 60 / (2π · Kv · pp · VMax)
+static inline accum32_t Motor_GetFluxLinkage_Angle16(const Motor_Config_T * p_config) { return Motor_GetKe_Angle16(p_config) / p_config->PolePairs; }
+
+// V_fract16 = fract16_mul(FluxLinkage_SpeedFract16, speedElec_fract16)
+static inline accum32_t Motor_GetFluxLinkage_SpeedFract16(const Motor_Config_T * p_config) { return Motor_GetKe_SpeedFract16(p_config) / p_config->PolePairs; }
+
+// static inline uint16_t _Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config) { return Motor_VFract16OfKv(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
+// static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config, const VBus_Config_T * p_vbus) { (void)p_config; return VBus_VNominal_Fract16(p_vbus); }
+// static inline uint16_t Motor_GetSpeedVMatch_(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
 
 /******************************************************************************/
 /*
@@ -141,13 +170,12 @@ static inline bool Motor_IsSpeedFreewheelLimit(const Motor_Config_T * p_config, 
     @return V_Fract16 - VBusRef of Speed Kv
 */
 /******************************************************************************/
+/* when SpeedTypeMax = Kv * VNominal * 2 */
 static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { return Phase_VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_config); }
 static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_Config_T * p_config, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(p_config) / Phase_VBus_GetVNominal(); }
 
 /* Phase peak. */
-static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { return Motor_VBusOfSpeed_Fract16(p_config, speed_fract16) / 2; }
-/* when SPEED_MAX = Kv * VNominal * 2 */
-// static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { (void)p_config; return fract16_mul(Phase_VBus_GetVNominal(), speed_fract16); }
+static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_config, accum32_t speed_fract16) { (void)p_config; return fract16_mul(Phase_VBus_GetVNominal(), speed_fract16); }
 
 /******************************************************************************/
 /*
@@ -172,7 +200,7 @@ static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_Config_T * p_con
 static inline uint16_t Motor_IRatedLimitOf(uint16_t i_fract16) { return math_min(Phase_Calibration_GetIRatedPeak_Fract16(), i_fract16); }
 static inline uint16_t Motor_VRatedLimitOf(uint16_t v_fract16) { return math_min(Phase_Calibration_GetVRated_Fract16(), v_fract16); }
 static inline uint16_t _Motor_SpeedRatedLimit(const Motor_Config_T * p_config) { (void)p_config; return FRACT16_1_DIV_SQRT3; }
-// static inline uint16_t _Motor_SpeedRatedLimit_Fw(const Motor_Config_T * p_config) { (void)p_config; return INT16_MAX; }
+static inline uint16_t _Motor_SpeedRatedLimitFw(const Motor_Config_T * p_config) { (void)p_config; return INT16_MAX; }
 static inline uint16_t Motor_SpeedRatedLimitOf(const Motor_Config_T * p_config, uint16_t speed_fract16) { return math_min(_Motor_SpeedRatedLimit(p_config), speed_fract16); }
 
 /* local limit */
@@ -222,6 +250,24 @@ static inline bool Motor_Config_IsValid(const Motor_Config_T * p_config)
     );
 }
 
+static inline void Motor_Config_ValidateFw(Motor_Config_T * p_config)
+{
+    uint16_t speedCeiling = (p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config);
+
+    p_config->SpeedLimitForward_Fract16             = math_min(speedCeiling, p_config->SpeedLimitForward_Fract16);
+    p_config->SpeedLimitReverse_Fract16             = math_min(speedCeiling, p_config->SpeedLimitReverse_Fract16);
+    p_config->FieldWeakening.IdFwMax        = Motor_IRatedLimitOf(p_config->FieldWeakening.IdFwMax);
+}
+
+static inline bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
+{
+    return
+    (
+        (p_config->SpeedLimitForward_Fract16 <= ((p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+        && (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+    );
+}
+
 
 
 /*
@@ -230,6 +276,9 @@ static inline bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 // static inline void Motor_Config_SetDirectionCalibration(Motor_Config_T * p_motor, Motor_Direction_T forward) { if (forward != MOTOR_DIRECTION_NULL) { p_motor->DirectionForward = forward; } }
 // static inline bool Motor_Config_IsCcwPositive(Motor_Config_T * p_motor) { return p_motor->DirectionForward == MOTOR_DIRECTION_CCW; }
 // static inline void Motor_Config_SetCcwPositive(Motor_Config_T * p_motor, bool isCcwPositive) { p_motor->DirectionForward = (isCcwPositive) ? MOTOR_DIRECTION_CCW : MOTOR_DIRECTION_CW; }
+
+
+
 
 /*
 
@@ -251,14 +300,25 @@ static inline bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 // 2048 37500 erpm
 // 1024 18750 erpm, 8 pole pairs 2344 rpm
 
+// typedef struct Motor_SpeedConfig_ControlDomain
+// {
+//     uint16_t Kv ;     /* Kv in control domain units */
+//     uint16_t SpeedRated ;        /* electrical degrees per control cycle */
+// } Motor_SpeedConfig_ControlDomain_T;
+
 /* Base in electrical domain */
-// typedef struct Motor_Specs_ControlDomain
+// typedef struct Motor_SpeedConfig_ControlDomain
 // {
 //     uint16_t Kv_DegPerCyclePerVFract16;     /* Kv in control domain units */
 //     uint16_t SpeedRated_DegPerCycle;        /* electrical degrees per control cycle */
-// }Motor_Specs_ControlDomain_T;
-// static inline uint32_t Motor_GetSpeedRated_Angle(const Motor_Specs_ControlDomain_T * p_config) { return p_config->SpeedRated_DegPerCycle; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_Specs_ControlDomain_T * p_config) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_config->SpeedRated_DegPerCycle); }
-// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_Specs_ControlDomain_T * p_config) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, p_config->SpeedRated_DegPerCycle); }
+// }Motor_SpeedConfig_ControlDomain_T;
+// static inline uint32_t Motor_GetSpeedRated_Angle(const Motor_SpeedConfig_ControlDomain_T * p_config) { return p_config->SpeedRated_DegPerCycle; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_SpeedConfig_ControlDomain_T * p_config) { return rpm_of_angle(MOTOR_CONTROL_FREQ, p_config->SpeedRated_DegPerCycle); }
+// static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_SpeedConfig_ControlDomain_T * p_config) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, p_config->SpeedRated_DegPerCycle); }
 
 
+// #if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
+// uint16_t SurfaceDiameter;
+// uint16_t GearRatioOutput;
+// uint16_t GearRatioInput;
+// #endif

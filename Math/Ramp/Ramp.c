@@ -58,8 +58,14 @@ int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
 {
     int32_t diff = target32 - p_ramp->Accumulator.Accumulator;
-    return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + math_sign(diff) * (int32_t)p_ramp->Accumulator.Coefficient);
+    return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + math_sign(diff) * p_ramp->Accumulator.Coefficient);
 }
+
+// static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
+// {
+//     interval_t interval = (interval_t){ .low = math_min(0, target32), .high = math_max(0, target32) };
+//     math_clamp((p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient), interval.low, interval.high);
+// }
 
 // caller hold input limits
 int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
@@ -69,7 +75,8 @@ int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
 }
 
 
-/* Ramp_ProcNextOf replace when Ramp_ProcNext's Target clamps on limtis update */
+/*  replace when Ramp_ProcNext's Target clamps on limtis update */
+/* unitifed Ramp_ProcNextOf */
 int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
 {
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));

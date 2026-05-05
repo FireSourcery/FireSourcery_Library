@@ -32,9 +32,13 @@ Module_Packet_T      — Wire/serialization format
 
 Suffix	Meaning	Lifetime	Who writes
 _Calib	User-facing units	Persistent (NVM)	User/host tool
-_Config	Runtime units	Persistent or init-time	Init function
 _Ref	Derived/precomputed	Computed at init	Init function
-_State or none	Runtime mutable	Volatile	Runtime functions
+
+Composite modules.
+Containers indicate storage RAM / NVM / static descriptor optimizable
+_Config	Storage in NVM
+_State Runtime mutable
+_T descriptor
 
 
     FLASH (const):

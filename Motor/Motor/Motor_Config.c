@@ -71,10 +71,10 @@ void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 /* allow independent set */
 void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
 {
-    p_config->SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVNominalRef_Rpm(p_config) * 2);
+    // p_config->SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVNominalRef_Rpm(p_config) * 2);
 }
 
-void Motor_Config_ResolveSpeedRated(Motor_Config_T * p_config, uint16_t vNominal) { p_config->SpeedRated_Rpm = Motor_SpeedVRef_Rpm(p_config, vNominal); }
+// void Motor_Config_ResolveSpeedRated(Motor_Config_T * p_config, uint16_t vNominal) { p_config->SpeedRated_Rpm = Motor_SpeedVRef_Rpm(p_config, vNominal); }
 
 /*
     V of Speed Ref
@@ -83,15 +83,8 @@ void Motor_Config_ResolveSpeedRated(Motor_Config_T * p_config, uint16_t vNominal
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
 
-void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedVNominalRef_Rpm(p_motor))); }
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
-
-// void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(p_motor))); }
-// static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(p_motor)); }
-
-static inline uint16_t _Motor_GetSpeedRated_Rpm(const Motor_Config_T * p_config) { return Motor_GetSpeedVNominalRef_Rpm(p_config); }
-static inline uint16_t _Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config) { return Motor_VFract16OfKv(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
-
+void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(p_motor))); }
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(p_motor)); }
 
 
 /******************************************************************************/
@@ -372,11 +365,11 @@ int _Motor_Var_ConfigDebug_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigD
     int value = 0;
     switch (varId)
     {
-        case MOTOR_VAR_SPEED_RATED_RPM:                 value = _Motor_GetSpeedRated_Rpm(p_motor);             break;
+        // case MOTOR_VAR_SPEED_RATED_RPM:                 value = _Motor_GetSpeedRated_Rpm(p_motor);             break;
         case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
         case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
-        case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
+        // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
+        // case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }
     return value;
 }

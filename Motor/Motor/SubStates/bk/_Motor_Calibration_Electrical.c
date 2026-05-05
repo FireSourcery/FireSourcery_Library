@@ -362,7 +362,6 @@ static void paramid_proc_rampdown(Motor_State_T * p_motor)
 */
 /******************************************************************************/
 extern const State_T MOTOR_STATE_CALIBRATION;
-extern const State_T CALIBRATION_STATE_ELECTRICAL;
 
 static void Electrical_Entry(Motor_T * p_motor)
 {

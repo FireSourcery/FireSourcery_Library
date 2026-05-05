@@ -91,14 +91,14 @@ PulseEncoder_T;
 */
 /******************************************************************************/
 /* Count only. Angle supplied externally (sector LUT, Hall snap, etc.) */
-static inline void PulseEncoder_CaptureEdge(const PulseEncoder_T * p_encoder, int sign)
+static inline void PulseEncoder_CaptureEdge(PulseEncoder_T * p_encoder, int sign)
 {
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
     AngleCounter_CaptureCount(&p_encoder->P_STATE->Counter, sign);
 }
 
 /* Count + wrap angle. Angle derived from counter (encoder-style) */
-static inline void PulseEncoder_CaptureEdgeWrap(const PulseEncoder_T * p_encoder, int sign)
+static inline void PulseEncoder_CaptureEdgeWrap(PulseEncoder_T * p_encoder, int sign)
 {
     PulseTimer_CaptureEdge(&p_encoder->TIMER);
     AngleCounter_CaptureCountAngle(&p_encoder->P_STATE->Counter, sign);
@@ -110,24 +110,24 @@ static inline void PulseEncoder_CaptureEdgeWrap(const PulseEncoder_T * p_encoder
     Derives FreqD from PulseTimer sample period and the accumulated DeltaD.
 */
 /******************************************************************************/
-static inline void PulseEncoder_CaptureFreq(const PulseEncoder_T * p_encoder)
+static inline void PulseEncoder_CaptureFreq(PulseEncoder_T * p_encoder)
 {
     AngleCounter_CaptureFreq(&p_encoder->P_STATE->Counter, PulseTimer_CaptureSampleTk_Freq(&p_encoder->TIMER));
 }
 
-static inline Angle_T * PulseEncoder_Angle(const PulseEncoder_T * p_encoder) { return AngleCounter_Angle(&p_encoder->P_STATE->Counter); }
-static inline AngleCounter_T * PulseEncoder_Counter(const PulseEncoder_T * p_encoder) { return &p_encoder->P_STATE->Counter; }
-static inline PulseTimer_T * PulseEncoder_Timer(const PulseEncoder_T * p_encoder) { return &p_encoder->TIMER; }
+static inline Angle_T * PulseEncoder_Angle(PulseEncoder_T * p_encoder) { return AngleCounter_Angle(&p_encoder->P_STATE->Counter); }
+static inline AngleCounter_T * PulseEncoder_Counter(PulseEncoder_T * p_encoder) { return &p_encoder->P_STATE->Counter; }
+static inline PulseTimer_T * PulseEncoder_Timer(PulseEncoder_T * p_encoder) { return &p_encoder->TIMER; }
 
 
 
-static inline void PulseEncoder_InitFrom(const PulseEncoder_T * p_encoder, const AngleCounter_Config_T * p_config)
+static inline void PulseEncoder_InitFrom(PulseEncoder_T * p_encoder, const AngleCounter_Config_T * p_config)
 {
     PulseTimer_Init(&p_encoder->TIMER);
     AngleCounter_InitFrom(&p_encoder->P_STATE->Counter, p_config);
 }
 
-static inline void PulseEncoder_SetInitial(const PulseEncoder_T * p_encoder)
+static inline void PulseEncoder_SetInitial(PulseEncoder_T * p_encoder)
 {
     PulseTimer_SetInitial(&p_encoder->TIMER);
 }

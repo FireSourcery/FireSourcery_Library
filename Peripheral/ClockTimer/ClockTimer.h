@@ -47,13 +47,10 @@ typedef const struct ClockTimer
 {
     HAL_ClockTimer_T * P_HAL_TIMER;      /* DeltaT Timer */
     uint32_t TIMER_FREQ;
-    uint32_t SAMPLE_FREQ;       /* Speed sample freq (e.g. 1kHz) */
-    uint32_t SAMPLE_TIME;       /* TIMER_FREQ / SAMPLE_FREQ */
+    // uint32_t SAMPLE_FREQ;       /* Speed sample freq (e.g. 1kHz) */
+    // uint32_t SAMPLE_TIME;       /* TIMER_FREQ / SAMPLE_FREQ */
 }
 ClockTimer_T;
-
-#define CLOCK_TIMER_INIT(p_TimerHal, TimerFreq, SampleFreq, p_State) (ClockTimer_T) \
-    { .P_HAL_TIMER = (p_TimerHal), .TIMER_FREQ = (TimerFreq), .SAMPLE_FREQ = (SampleFreq), .SAMPLE_TIME = (TimerFreq) / (SampleFreq), }
 
 /******************************************************************************/
 /*!
@@ -69,10 +66,10 @@ static inline uint32_t ClockTimer_CaptureDeltaT(ClockTimer_T * p_timer) { return
 /*
     Per SAMPLE_TIME
 */
-static inline uint32_t ClockTimer_CaptureSampleTh(ClockTimer_T * p_timer, uint32_t prevSampleTh)
-{
-    return HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (prevSampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-}
+// static inline uint32_t ClockTimer_CaptureSampleTh(ClockTimer_T * p_timer, uint32_t prevSampleTh)
+// {
+//     return HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (prevSampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+// }
 
 
 /******************************************************************************/

@@ -54,6 +54,12 @@ typedef struct FOC
     PID_T PidIq;
     PID_T PidId;
 
+    fract16_t IdFw;   /* field weakening d-axis integrator state */
+    // Accumulator_T IdFwIntegrator; /* field weakening d-axis integrator accumulator */
+    fract16_t IdFwGain;
+    fract16_t IdFwMax; /*Maximum demagnetizing current. */
+    // fract16_t IsMax;   /* Current circle radius */
+
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
 
@@ -64,6 +70,25 @@ typedef struct FOC
     // ufract16_t Modulation;
 }
 FOC_T;
+
+// typedef struct
+// {
+//     /* Inner current loop — pair has no semantic life outside the d-q frame.
+//        Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object. */
+//     PID_T PidIq;
+//     PID_T PidId;
+// }
+// FOC_Feedback_T;
+
+typedef struct
+{
+    // fract16_t IdFwGain;
+    // fract16_t IdFwMax; /*Maximum demagnetizing current. */
+    // fract16_t IsMax;   /* Current circle radius */
+    uint16_t IdFwMax;               /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
+    uint16_t IdFwGain;              /* Field weakening integrator gain per control cycle */
+}
+FOC_FieldWeakeningConfig_T;
 
 /******************************************************************************/
 /*
@@ -97,7 +122,6 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
 /*
     OutputV
 */
-
 /* Feedback/Feedforward Control */
 static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
@@ -141,7 +165,6 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = v.c;
 }
 
-
 /******************************************************************************/
 /*
     VBemf
@@ -153,6 +176,10 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vd = v.d;
     p_foc->Vq = v.q;
 }
+
+
+
+
 
 /******************************************************************************/
 /*!
@@ -188,11 +215,6 @@ static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
     PID_SetOutputState(&p_foc->PidIq, vq);
 }
 
-static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
-{
-    PID_Reset(&p_foc->PidIq);
-    PID_Reset(&p_foc->PidId);
-}
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
@@ -268,6 +290,34 @@ static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16
 static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return (int32_t)fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
 
 
+
+
+/******************************************************************************/
+/*
+    Fw
+*/
+/******************************************************************************/
+/*
+    Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
+    Id_fw = (Vs_max/ωe - λ_pm) / Ld
+
+    |V_ref| = √(Vd² + Vq²)
+    error = Vdc_limit - |V_ref|
+    Id_fw += Ki · error   (integrator, Id ≤ 0)
+*/
+/* Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwMax), 0]. */
+static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
+{
+    int16_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (int16_t)FOC_GetVMagnitude(p_foc);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -(int32_t)p_foc->IdFwMax, 0);
+    return p_foc->IdFw;
+}
+
+static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
+{
+    p_foc->IdFwMax = 0;
+}
+
 /******************************************************************************/
 /*!
     Quadrant Detection
@@ -304,6 +354,23 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16
 static inline bool _FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
 static inline bool _FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
 
+static inline bool FOC_IsMotoring(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed > 0); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed < 0); }
+
+/*
+    Plugging: applied Vq opposes back-EMF direction (speed sign)
+    Speed sign gives true rotor direction regardless of Vq/Iq
+*/
+/* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
+static inline bool FOC_IsPlugging(const FOC_T * p_foc, int32_t speed) { return (p_foc->Vq * (int32_t)speed < 0); }
+/*
+    Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
+*/
+/* Generating  AND Vq aligns with speed - true regeneration */
+static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC_IsGenerating(p_foc, speed) && !FOC_IsPlugging(p_foc, speed)); }
+
+
+
 
 
 /******************************************************************************/
@@ -336,8 +403,6 @@ static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
     p_foc->Iq = 0;
-    // p_foc->Ialpha = 0; /* User view Phase values */
-    // p_foc->Ibeta = 0;
 }
 
 static void FOC_ClearOutputState(FOC_T * p_foc)
@@ -349,6 +414,12 @@ static void FOC_ClearOutputState(FOC_T * p_foc)
     p_foc->Vc = 0;
 }
 
+static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
+{
+    PID_Reset(&p_foc->PidIq);
+    PID_Reset(&p_foc->PidId);
+    p_foc->IdFw = 0;
+}
 
 
 /******************************************************************************/

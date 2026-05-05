@@ -92,19 +92,6 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, f
     FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
-/* alternate source analogous to Motor_ProcSpeedControlSource */
-void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq)
-{
-    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, qReq));
-
-    // as i loop only
-    // FOC_SetTheta(&p_motor->Foc, theta);
-
-    // if (CaptureIabc(p_motor) == true)
-    // {
-    //     ProcIFeedback(p_motor, dReq, qReq);
-    // }
-}
 
 
 /******************************************************************************/
@@ -122,16 +109,39 @@ void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t 
         VSourceInvScalar,
 */
 /* applicable on batch callback */
-
 // void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
 // void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor, VBus_T * p_vBus)
+
 void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 {
-#ifdef MOTOR_EXTERN_CONTROL_ENABLE
-    Motor_ExternControl(p_motor);
-#endif
     int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Ramp_ProcNext(&p_motor->TorqueRamp) : Motor_VRamp(p_motor);
+    // int16_t dReq = (p_motor->FeedbackMode.Current == 1U) ? FOC_ProcIdFieldWeakening(&p_motor->Foc, Phase_VBus_Fract16()) : 0;
     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), 0, qReq);
+}
+
+
+// void Motor_FOC_ProcAngleControl_Extern(Motor_State_T * p_motor)
+// {
+// #ifdef MOTOR_EXTERN_CONTROL_ENABLE
+//     Motor_ExternControl(p_motor);
+// #endif
+//     int16_t qReq = (p_motor->FeedbackMode.Current == 1U) ? Ramp_ProcNext(&p_motor->TorqueRamp) : Motor_VRamp(p_motor);
+//     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), 0, qReq);
+// }
+
+/* alternate source analogous to Motor_ProcSpeedControlSource */
+void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t qReq)
+{
+    int16_t dReq = (p_motor->FeedbackMode.Current == 1U) ? FOC_ProcIdFieldWeakening(&p_motor->Foc, Phase_VBus_Fract16()) : 0;
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, qReq));
+
+    // as i loop only
+    // FOC_SetTheta(&p_motor->Foc, theta);
+
+    // if (CaptureIabc(p_motor) == true)
+    // {
+    //     ProcIFeedback(p_motor, dReq, qReq);
+    // }
 }
 
 /*

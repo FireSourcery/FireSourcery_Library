@@ -91,31 +91,6 @@ static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_inp
 static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Triplet_T) { .A = p_foc->Va, .B = p_foc->Vb, .C = p_foc->Vc, }; }
 
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-// static inline bool _FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
-// static inline bool _FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
-
-
-static inline bool FOC_IsMotoring(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed > 0); }
-static inline bool FOC_IsGenerating(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed < 0); }
-
-/*
-    Plugging: applied Vq opposes back-EMF direction (speed sign)
-    Speed sign gives true rotor direction regardless of Vq/Iq
-*/
-/* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
-static inline bool FOC_IsPlugging(const FOC_T * p_foc, int32_t speed) { return (p_foc->Vq * (int32_t)speed < 0); }
-/*
-    Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
-*/
-/* Generating  AND Vq aligns with speed - true regeneration */
-static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC_IsGenerating(p_foc, speed) && !FOC_IsPlugging(p_foc, speed)); }
-
-
 
 /******************************************************************************/
 /*!
@@ -123,6 +98,11 @@ static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC
 */
 /******************************************************************************/
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 /* Estimate efficiency based on I²R losses */
 // static inline ufract16_t FOC_GetEfficiency(const FOC_T * p_foc, fract16_t rPhase)
 // {
@@ -136,38 +116,22 @@ static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC
 // }
 
 
-// Add field weakening support
-// static inline fract16_t FOC_CalcFieldWeakeningId(const FOC_T * p_foc, fract16_t vBus, fract16_t speed)
-// {
-//     /* Calculate Id for field weakening at high speeds */
-//     fract16_t vLimit = fract16_mul(vBus, FRACT16_1_DIV_SQRT3);
-//     fract16_t vBemfEst = fract16_mul(speed, MOTOR_KE_CONSTANT);  /* Requires motor constant */
 
-//     if (vBemfEst > vLimit)
-//     {
-//         /* Need field weakening */
-//         return -(vBemfEst - vLimit);  /* Negative Id for field weakening */
-//     }
-// Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
-// Id_fw = (Vs_max/ωe - λ_pm) / Ld
-//     return 0;  /* No field weakening needed */
-// }
 
+/* For interior PM motors, add MTPA calculation:
+Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
+*/
+// Id_opt = -λ_pm/(2·Ld) + sqrt((λ_pm/(2·Ld))² + Iq²)
+// Id_opt = -λ_pm / (2·(Lq - Ld)) + sqrt((λ_pm / (2·(Lq - Ld)))² + Iq²)
 // // Add maximum torque per amp (MTPA) calculation
 // static inline void FOC_CalcMTPA(FOC_T * p_foc, fract16_t iqReq)
 // {
 //     /* Simplified MTPA for surface-mounted PM motors */
 //     p_foc->ReqD = 0;  /* Id = 0 for SMPM motors */
 //     p_foc->ReqQ = iqReq;
-
-//     /* For interior PM motors, add MTPA calculation:
-//      * Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
-//      */
-// Id_opt = -λ_pm/(2·Ld) + sqrt((λ_pm/(2·Ld))² + Iq²)
-// Id_opt = -λ_pm / (2·(Lq - Ld)) + sqrt((λ_pm / (2·(Lq - Ld)))² + Iq²)
 // }
 
-// // Add six-step commutation for high-speed operation
+// Add six-step commutation for high-speed operation
 // static inline void FOC_ProcSixStep(FOC_T * p_foc, angle16_t angle, fract16_t magnitude)
 // {
 //     Motor_SectorId_T sector = FOC_GetSectorId(angle);
@@ -283,4 +247,35 @@ static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC
 //     /* Estimate temperature from I²R losses */
 //     accum32_t power = FOC_GetTotalPower(p_foc);
 //     p_diag->avgPower = (p_diag->avgPower * 15 + power) >> 4;  /* IIR filter */
+// }
+
+/*
+    Debug
+*/
+// bool FOC_ValidateInputs(const FOC_T * p_foc)
+// {
+//     /* Check for reasonable current values */
+//     if (abs(p_foc->Ia) > FRACT16_MAX * 9 / 10) return false;
+//     if (abs(p_foc->Ib) > FRACT16_MAX * 9 / 10) return false;
+//     if (abs(p_foc->Ic) > FRACT16_MAX * 9 / 10) return false;
+
+//     /* Validate Kirchhoff's current law: Ia + Ib + Ic ≈ 0 */
+//     int32_t currentSum = (int32_t)p_foc->Ia + p_foc->Ib + p_foc->Ic;
+//     if (abs(currentSum) > FRACT16_MAX / 20) return false;  /* 5% tolerance */
+
+//     /* Check for reasonable voltage requests */
+//     int32_t vMagSq = (int32_t)p_foc->Vd * p_foc->Vd + (int32_t)p_foc->Vq * p_foc->Vq;
+//     if (vMagSq > (int32_t)FRACT16_MAX * FRACT16_MAX) return false;
+
+//     return true;
+// }
+
+// bool FOC_ValidateTheta(fract16_t sine, fract16_t cosine)
+// {
+//     /* Validate unit circle: sin²θ + cos²θ ≈ 1 */
+//     int32_t magnitudeSquared = (int32_t)sine * sine + (int32_t)cosine * cosine;
+//     int32_t expected = (int32_t)FRACT16_MAX * FRACT16_MAX;
+//     int32_t tolerance = expected / 20;  /* 5% tolerance */
+
+//     return abs(magnitudeSquared - expected) < tolerance;
 // }

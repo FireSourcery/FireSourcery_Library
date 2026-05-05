@@ -203,6 +203,7 @@ static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const Angle
     p_ref->SpeedFractPerCount = rpm_accum32_per_count(1, p_config->CountsPerRevolution, p_config->FractSpeedRef_Rpm); /* For FreqD for now, or split */
 }
 
+
 static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCounter_Config_T * p_config)
 {
     AngleCounter_Ref_Init(&p_angle->Ref, p_config);

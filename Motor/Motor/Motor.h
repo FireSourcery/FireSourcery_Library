@@ -216,6 +216,7 @@ typedef struct Motor_Config
     uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_CALIB_AMPS. */
     uint16_t ILimitGenerating_Fract16;
 
+
     //todo,
     // uint32_t SpeedRampSlope_Accum32; /* Fract16 per tick << 15 */
     // uint32_t TorqueRampSlope_Accum32;
@@ -246,41 +247,48 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-//     /*
-//         Identified electrical parameters. User-readable SI units.
-//         Populated by CALIBRATION_STATE_ELECTRICAL (Motor_Calibration_Electrical.c).
-//         Rs_Fract16 is the normalized form: Rs / R_REF where R_REF = V_MAX_VOLTS / I_MAX_AMPS.
-//         Ld/Lq fract16 in-loop forms are KLd_Fract16 / KLq_Fract16 below (auto-derived at commit).
-//     */
-//     uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
-//     uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
-//     uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
-//     fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
+    FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 
-// #if defined(MOTOR_DECOUPLE_ENABLE)
-//     /*
-//         dq cross-coupling decoupling coefficients.
-//         Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
-//         Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
-//         Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
-//     */
-//     fract16_t KLd_Fract16;
-//     fract16_t KLq_Fract16;
-//     fract16_t KPsi_Fract16;
-// #endif
+    /*
+        Identified electrical parameters. User-readable SI units.
+        Populated by CALIBRATION_STATE_ELECTRICAL (Motor_Calibration_Electrical.c).
+        Rs_Fract16 is the normalized form: Rs / R_REF where R_REF = V_MAX_VOLTS / I_MAX_AMPS.
+        Ld/Lq fract16 in-loop forms are KLd_Fract16 / KLq_Fract16 below (auto-derived at commit).
+    */
+    uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
+    uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
+    uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
+    // fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
+
+#if defined(MOTOR_DECOUPLE_ENABLE)
+    /*
+        dq cross-coupling decoupling coefficients.
+        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
+        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
+        Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
+    */
+    fract16_t KLd_Fract16;
+    fract16_t KLq_Fract16;
+    fract16_t KPsi_Fract16;
+#endif
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
-#if defined(MOTOR_UNIT_CONVERSION_LOCAL) && defined(MOTOR_SURFACE_SPEED_ENABLE)
-    uint16_t SurfaceDiameter;
-    uint16_t GearRatioOutput;
-    uint16_t GearRatioInput;
-#endif
+
 }
 Motor_Config_T;
 
 #include "_Motor_Config.h"
+
+typedef struct
+{
+    uint16_t SpeedRated_Angle16;
+    uint16_t Ke_Angle16;
+    uint16_t Ke_SpeedFract16;
+}
+Motor_ElectricalRef_T;
+
 
 /*
     Motor State - Runtime variable state.
@@ -547,16 +555,6 @@ static void Motor_ResolveILimits(Motor_T * p_motor)
     Motor_State_T * p_state = p_motor->P_MOTOR;
     interval_t iLimits = Motor_GetILimits(p_motor);
     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
-
-    // if (p_state->FeedbackMode.Current == 1)
-    // {
-    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
-    // }
-    // else
-    // {
-
-    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
-    // }
 
     /* Optionally handle on pull instead. */
     if ((p_state->FeedbackMode.Speed == 1) && (p_state->FeedbackMode.Current == 1))  /* SpeedPid Output is I */

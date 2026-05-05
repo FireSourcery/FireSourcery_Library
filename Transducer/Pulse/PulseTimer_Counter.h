@@ -40,20 +40,20 @@
 */
 /******************************************************************************/
 /* Count only. Angle supplied externally (sector LUT, Hall snap, etc.) */
-static inline void PulseTimer_Counter_CaptureEdge(const PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+static inline void PulseTimer_Counter_CaptureEdge(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
 {
     PulseTimer_CaptureEdge(p_timer);
     AngleCounter_CaptureCount(p_counter, sign);
 }
 
 /* Count + wrap angle. Angle derived from counter (Timer-style) */
-static inline void PulseTimer_Counter_CaptureEdgeWrap(const PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+static inline void PulseTimer_Counter_CaptureEdgeWrap(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
 {
     PulseTimer_CaptureEdge(p_timer);
     AngleCounter_CaptureCountAngle(p_counter, sign);
 }
 
-static inline void PulseTimer_Counter_CaptureFreq(const PulseTimer_T * p_timer, AngleCounter_T * p_counter)
+static inline void PulseTimer_Counter_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)
 {
     AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(p_timer));
 }

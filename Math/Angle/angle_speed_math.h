@@ -140,8 +140,6 @@ static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { retu
 static inline int32_t angle_of_rads_direct(uint32_t pollingFreq, int32_t rads) { return ((int32_t)rads * ANGLE16_PER_RADIAN) / pollingFreq; }
 static inline int32_t rads_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return (angle16 * pollingFreq) / ANGLE16_PER_RADIAN; }
 
-
-
 /******************************************************************************/
 /*
     fract16
