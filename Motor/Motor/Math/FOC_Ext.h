@@ -30,7 +30,7 @@
 */
 /******************************************************************************/
 #include "FOC.h"
-#include "../Phase/Phase.h"
+#include "../Phase/Phase_VOut.h"
 #include "Math/PID/PID.h"
 #include "Math/Ramp/Ramp.h"
 
@@ -67,7 +67,7 @@ static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, a
 }
 
 
-static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_T * p_phase) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
+static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_VOut_T * p_phase) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
 
 
 /* with Scaled DutyAlpha, DutyBeta */

@@ -28,9 +28,9 @@
 */
 /******************************************************************************/
 /******************************************************************************/
-#include "Phase.h"
+#include "Phase_VOut.h"
 
-void Phase_Init(const Phase_T * p_phase)
+void Phase_Init(Phase_VOut_T * p_phase)
 {
     PWM_Module_Init(&p_phase->PWM_MODULE);
     PWM_Channel_Init(&p_phase->PWM_A);
@@ -50,14 +50,14 @@ void Phase_Init(const Phase_T * p_phase)
 /*
     Duty only
 */
-void Phase_Align(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
+void Phase_Align(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty)
 {
     Phase_Bitmask_T state = Phase_Bitmask(id);
     Phase_WriteDuty(p_phase, duty * state.A, duty * state.B, duty * state.C);
 }
 
 /* 1 as 1/2 vBus */
-void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar_fract16)
+void Phase_Align_VScalar(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar_fract16)
 {
     Phase_Align(p_phase, id, (uint32_t)scalar_fract16 * 3 / 4);
 }
@@ -65,7 +65,7 @@ void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar
 /*
     Enable Ouput
 */
-// void Phase_ActivateAlign(const Phase_T * p_phase, Phase_Id_T id, uint16_t duty)
+// void Phase_ActivateAlign(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t duty)
 // {
 //     Phase_Align(p_phase, id, duty);
 //     Phase_ActivateOutput(p_phase);
@@ -75,26 +75,26 @@ void Phase_Align_VScalar(const Phase_T * p_phase, Phase_Id_T id, uint16_t scalar
     Jog with prev State
 */
 /* valid after align output write only */
-Phase_Id_T Phase_ReadAlign(const Phase_T * p_phase) { return _Phase_ReadDutyState(p_phase).Bits; }
-Phase_Id_T Phase_ReadAlignNext(const Phase_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
-Phase_Id_T Phase_ReadAlignPrev(const Phase_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }
+Phase_Id_T Phase_ReadAlign(Phase_VOut_T * p_phase) { return _Phase_ReadDutyState(p_phase).Bits; }
+Phase_Id_T Phase_ReadAlignNext(Phase_VOut_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
+Phase_Id_T Phase_ReadAlignPrev(Phase_VOut_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }
 
 /* A towards B */
-Phase_Id_T Phase_JogNext(const Phase_T * p_phase, uint16_t duty)
+Phase_Id_T Phase_JogNext(Phase_VOut_T * p_phase, uint16_t duty)
 {
     Phase_Id_T id = Phase_ReadAlignNext(p_phase);
     Phase_Align(p_phase, id, duty);
     return id;
 }
 
-Phase_Id_T Phase_JogPrev(const Phase_T * p_phase, uint16_t duty)
+Phase_Id_T Phase_JogPrev(Phase_VOut_T * p_phase, uint16_t duty)
 {
     Phase_Id_T id = Phase_ReadAlignPrev(p_phase);
     Phase_Align(p_phase, id, duty);
     return id;
 }
 
-Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
+Phase_Id_T Phase_JogSigned(Phase_VOut_T * p_phase, int16_t dutySigned)
 {
     Phase_Id_T id;
     if      (dutySigned > 0) { id = Phase_JogNext(p_phase, (uint16_t)dutySigned); }
@@ -104,9 +104,9 @@ Phase_Id_T Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
 }
 
 // call check after update
-// void _Phase_JogNext(const Phase_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_NextOf(Phase_ReadAlign(p_phase)), duty); }
-// void _Phase_JogPrev(const Phase_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_PrevOf(Phase_ReadAlign(p_phase)), duty); }
-// void _Phase_JogSigned(const Phase_T * p_phase, int16_t dutySigned)
+// void _Phase_JogNext(Phase_VOut_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_NextOf(Phase_ReadAlign(p_phase)), duty); }
+// void _Phase_JogPrev(Phase_VOut_T * p_phase, uint16_t duty) { Phase_Align(p_phase, Phase_PrevOf(Phase_ReadAlign(p_phase)), duty); }
+// void _Phase_JogSigned(Phase_VOut_T * p_phase, int16_t dutySigned)
 // {
 //     if (dutySigned > 0) { _Phase_JogNext(p_phase, (uint16_t)dutySigned); }
 //     else if (dutySigned < 0) { _Phase_JogPrev(p_phase, (uint16_t)(0 - dutySigned)); }

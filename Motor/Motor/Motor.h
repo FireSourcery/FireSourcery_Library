@@ -30,7 +30,7 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "Phase/Phase.h"
+#include "Phase/Phase_VOut.h"
 #include "Phase_Input/Phase_Input.h"
 #include "Phase_Input/Phase_VBus.h"
 #include "Phase_Input/Phase_Analog.h"
@@ -438,7 +438,7 @@ typedef const struct Motor
 {
     Motor_State_T * P_MOTOR;
     const VBus_T * P_VBUS; /* Read-only */
-    Phase_T PHASE;
+    Phase_VOut_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     HeatMonitor_T HEAT_MONITOR;
@@ -471,7 +471,7 @@ static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 static inline const RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
 static inline const Angle_T * Motor_AngleSpeedState(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
 
-static inline Phase_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
+static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
 
 
 

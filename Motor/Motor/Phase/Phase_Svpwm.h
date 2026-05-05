@@ -30,12 +30,12 @@
 */
 /******************************************************************************/
 
-#include "Phase.h"
+#include "Phase_VOut.h"
 #include "Math/Fixed/fract16.h"
 #include "Math/Fixed/fract16.h"
 #include "../Math/svpwm_math.h"
 
-static inline void Phase_WriteSvpwm(const Phase_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
+static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, uint16_t vA, uint16_t vB, uint16_t vC)
 {
     struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_fract32, vA), svpwm_norm_vbus_inv(vBusInv_fract32, vB), svpwm_norm_vbus_inv(vBusInv_fract32, vC));
 

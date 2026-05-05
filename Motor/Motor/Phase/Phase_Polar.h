@@ -23,7 +23,7 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase.h
+    @file   Phase_VOut.h
     @author FireSourcery
 
     @brief   Part of Phase. 2-Phase Polar implementation
@@ -35,7 +35,7 @@
 #ifndef PHASE_POLAR_H
 #define PHASE_POLAR_H
 
-#include "Phase.h"
+#include "Phase_VOut.h"
 
 /*
     2-Phase Active, Six-Step Commutation
@@ -63,38 +63,38 @@ typedef enum Phase_Polar_Mode
 Phase_Polar_Mode_T;
 
 
-extern void Phase_Unipolar1_ActivateDutyAC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyBC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyBA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyCA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyCB(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar1_ActivateDutyAB(Phase_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar1_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
 
-extern void Phase_Unipolar2_ActivateDutyAC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyBC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyBA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyCA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyCB(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Unipolar2_ActivateDutyAB(Phase_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Unipolar2_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
 
-extern void Phase_Bipolar_ActivateDutyAC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyBC(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyBA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyCA(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyCB(Phase_T * p_phase, uint16_t duty);
-extern void Phase_Bipolar_ActivateDutyAB(Phase_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty);
+extern void Phase_Bipolar_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty);
 
-extern void Phase_Polar_Ground(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputAC(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputBC(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputBA(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputCA(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputCB(Phase_T * p_phase);
-extern void Phase_Polar_ActivateOutputAB(Phase_T * p_phase);
+extern void Phase_Polar_Ground(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputAC(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputBC(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputBA(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputCA(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputCB(Phase_VOut_T * p_phase);
+extern void Phase_Polar_ActivateOutputAB(Phase_VOut_T * p_phase);
 
-extern void Phase_Polar_ActivateMode(Phase_T * p_phase, Phase_Polar_Mode_T phaseMode);
-extern void Phase_Polar_Activate(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
-extern void Phase_Polar_ActivateDuty(Phase_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
-extern void Phase_Polar_ActivateOutput(Phase_T * p_phase, Phase_Polar_T phaseId);
+extern void Phase_Polar_ActivateMode(Phase_VOut_T * p_phase, Phase_Polar_Mode_T phaseMode);
+extern void Phase_Polar_Activate(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
+extern void Phase_Polar_ActivateDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty);
+extern void Phase_Polar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId);
 
 #endif
