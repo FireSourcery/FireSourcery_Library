@@ -58,27 +58,23 @@
 /* Phase_Feedback/Capture/Measure */
 typedef struct Phase_Input
 {
-    Phase_Triplet_T Vabc;
-    Phase_Bitmask_T VFlags;
-    Phase_Triplet_T Iabc;
-    Phase_Bitmask_T IFlags;
-    // Phase_Data_T V;
-    // Phase_Data_T I;
+    Phase_Data_T V;
+    Phase_Data_T I;
 }
 Phase_Input_T;
 
 
 /* light units wrapper */
-static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.A; }
-static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.B; }
-static inline int16_t Phase_Input_GetVc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Vabc.C; }
-static inline int16_t Phase_Input_GetIa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.A; }
-static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.B; }
-static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->Iabc.C; }
+static inline int16_t Phase_Input_GetVa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.A; }
+static inline int16_t Phase_Input_GetVb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.B; }
+static inline int16_t Phase_Input_GetVc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->V.Values.C; }
+static inline int16_t Phase_Input_GetIa_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.A; }
+static inline int16_t Phase_Input_GetIb_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.B; }
+static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p_phase) { return p_phase->I.Values.C; }
 
 
-static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->Iabc = (Phase_Triplet_T){ 0 }; p_phase->IFlags.Bits = 0U; }
-static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->Vabc = (Phase_Triplet_T){ 0 }; p_phase->VFlags.Bits = 0U; }
+static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->I = (Phase_Data_T){ 0 }; }
+static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->V = (Phase_Data_T){ 0 }; }
 
 
 /******************************************************************************/
@@ -102,12 +98,12 @@ static inline int Phase_InputVar_Get(const Phase_Input_T * p_phase, Phase_InputV
 {
     switch (var)
     {
-        case PHASE_INPUT_VAR_VA: return p_phase->Vabc.A;
-        case PHASE_INPUT_VAR_VB: return p_phase->Vabc.B;
-        case PHASE_INPUT_VAR_VC: return p_phase->Vabc.C;
-        case PHASE_INPUT_VAR_IA: return p_phase->Iabc.A;
-        case PHASE_INPUT_VAR_IB: return p_phase->Iabc.B;
-        case PHASE_INPUT_VAR_IC: return p_phase->Iabc.C;
+        case PHASE_INPUT_VAR_VA: return p_phase->V.Values.A;
+        case PHASE_INPUT_VAR_VB: return p_phase->V.Values.B;
+        case PHASE_INPUT_VAR_VC: return p_phase->V.Values.C;
+        case PHASE_INPUT_VAR_IA: return p_phase->I.Values.A;
+        case PHASE_INPUT_VAR_IB: return p_phase->I.Values.B;
+        case PHASE_INPUT_VAR_IC: return p_phase->I.Values.C;
         default: return 0;
     }
 }

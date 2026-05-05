@@ -34,8 +34,13 @@
 #include "Math/PID/PID.h"
 #include "Math/Ramp/Ramp.h"
 
+/******************************************************************************/
+/*!
+    Collaborator Pattern
+*/
+/******************************************************************************/
 /* From Iabc to Idq */
-static inline bool _FOC_CaptureIabc(FOC_T * p_foc, Phase_Data_T * p_phaseData)
+static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_phaseData)
 {
     if (p_phaseData->Flags.Bits == PHASE_ID_ABC)  /* alternatively use batch callback */
     {
@@ -50,15 +55,22 @@ static inline bool _FOC_CaptureIabc(FOC_T * p_foc, Phase_Data_T * p_phaseData)
 }
 
 /* FeedbackState */
-static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
-{
-    FOC_SetTheta(p_foc, angle);
-    _FOC_CaptureIabc(p_foc, p_phaseData);
-}
+// static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
+// {
+//     FOC_SetTheta(p_foc, angle);
+//     FOC_CaptureIabc(p_foc, p_phaseData);
+// }
 
-static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, angle16_t theta)
+// static inline void  _FOC_ProcIFeedbackLoop(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle, ufract16_t vBus, sign_t direction, int16_t dReq, int16_t qReq)
+// {
+//     FOC_SetTheta(p_foc, angle);
+//     FOC_CaptureIabc(p_foc, p_phaseData);
+//     FOC_ProcIFeedback(p_foc, vBus, direction, dReq, qReq);
+//     FOC_ProcOutputDuty(p_foc, Phase_VBus_Inv_Fract32());
+// }
+
+static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_input)
 {
-    FOC_SetTheta(p_foc, theta);
     if (p_input->Flags.Bits == PHASE_ID_ABC)
     {
         FOC_ProcVBemfClarkePark(p_foc, p_input->Values.A, p_input->Values.B, p_input->Values.C);
@@ -66,39 +78,50 @@ static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, a
     }
 }
 
-
-static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_VOut_T * p_phase) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
-
-
-/* with Scaled DutyAlpha, DutyBeta */
-/*
-    Normalized by a factor of sqrt(3)/2,
-        alpha 1/sqrt(3) => a = .5
-        alphaDuty 1.15 => a = 1.0
-*/
-// static inline void FOC_ProcInvParkInvClarkeSvpwm(FOC_T * p_foc)
+// static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, angle16_t theta)
 // {
-//     foc_inv_park_vector(&p_foc->Valpha, &p_foc->Vbeta, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-//     svpwm_midclamp(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, _FOC_DutyOfV(p_foc, p_foc->Valpha), _FOC_DutyOfV(p_foc, p_foc->Vbeta));
+//     FOC_SetTheta(p_foc, theta);
+//     if (p_input->Flags.Bits == PHASE_ID_ABC)
+//     {
+//         FOC_ProcVBemfClarkePark(p_foc, p_input->Values.A, p_input->Values.B, p_input->Values.C);
+//         p_input->Flags.Bits = PHASE_ID_0;
+//     }
 // }
 
-
-/* Store as max modulation, derive V_Fract16 by vbus */
-/* V_Fract16 when Vd Vq are stored as normalized scalar values */
-// #ifdef FOC_V_AS_SCALAR
-// static inline ufract16_t FOC_Va(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Va); }
-// static inline ufract16_t FOC_Vb(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vb); }
-// static inline ufract16_t FOC_Vc(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Vc); }
-
-// static inline ufract16_t FOC_GetValpha(const FOC_T * p_foc) { return _FOC_VOfVDuty(p_foc, p_foc->Valpha); }
-// static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(FOC_GetValpha(p_foc), FOC_GetVbeta(p_foc)); }
-
-// static inline void _FOC_SetVBemfA(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t va) { p_foc->Va = _FOC_VDutyOfV_Inv32(vBusInv_fract32, va); }
-// static inline void _FOC_SetVBemfB(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vb) { p_foc->Vb = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vb); }
-// static inline void _FOC_SetVBemfC(FOC_T * p_foc, int32_t vBusInv_fract32, ufract16_t vc) { p_foc->Vc = _FOC_VDutyOfV_Inv32(vBusInv_fract32, vc); }
-// #else
+static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Triplet_T) { .A = p_foc->Va, .B = p_foc->Vb, .C = p_foc->Vc, }; }
 
 
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+// static inline bool _FOC_IsMotoring(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq > 0); }
+// static inline bool _FOC_IsGenerating(const FOC_T * p_foc) { return (p_foc->Vq * p_foc->Iq < 0); }
+
+
+static inline bool FOC_IsMotoring(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed > 0); }
+static inline bool FOC_IsGenerating(const FOC_T * p_foc, int32_t speed) { return (p_foc->Iq * (int32_t)speed < 0); }
+
+/*
+    Plugging: applied Vq opposes back-EMF direction (speed sign)
+    Speed sign gives true rotor direction regardless of Vq/Iq
+*/
+/* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
+static inline bool FOC_IsPlugging(const FOC_T * p_foc, int32_t speed) { return (p_foc->Vq * (int32_t)speed < 0); }
+/*
+    Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
+*/
+/* Generating  AND Vq aligns with speed - true regeneration */
+static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC_IsGenerating(p_foc, speed) && !FOC_IsPlugging(p_foc, speed)); }
+
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 
 /* Estimate efficiency based on I²R losses */
 // static inline ufract16_t FOC_GetEfficiency(const FOC_T * p_foc, fract16_t rPhase)
@@ -125,7 +148,8 @@ static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_VOut_T * p_phase) {
 //         /* Need field weakening */
 //         return -(vBemfEst - vLimit);  /* Negative Id for field weakening */
 //     }
-
+// Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
+// Id_fw = (Vs_max/ωe - λ_pm) / Ld
 //     return 0;  /* No field weakening needed */
 // }
 
@@ -139,6 +163,8 @@ static inline void _FOC_WriteDuty(const FOC_T * p_foc, Phase_VOut_T * p_phase) {
 //     /* For interior PM motors, add MTPA calculation:
 //      * Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
 //      */
+// Id_opt = -λ_pm/(2·Ld) + sqrt((λ_pm/(2·Ld))² + Iq²)
+// Id_opt = -λ_pm / (2·(Lq - Ld)) + sqrt((λ_pm / (2·(Lq - Ld)))² + Iq²)
 // }
 
 // // Add six-step commutation for high-speed operation

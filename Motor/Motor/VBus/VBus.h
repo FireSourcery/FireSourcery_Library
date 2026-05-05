@@ -143,9 +143,9 @@ static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
 static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16 / 2U; }
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
+
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
 static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Fract32 / 65536; }
-
 static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 
@@ -231,12 +231,12 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 }
 
 
-// /*
-//     Physical scale fract16
-// */
+/*
+    Physical scale fract16
+*/
 // static inline ufract16_t VBus_GetILimitUnderV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateUnderV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
-// static inline ufract16_t VBus_GetIGenLimitOverV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
-// /* May move to per motor calculation */
+// static inline ufract16_t VBus_GetILimitOverV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
+/* May move to per motor calculation */
 // static inline ufract16_t _VBus_GetSpeedLimit_Fract16(const VBus_T * p_vbus) { return VBus_GetSpeedDerate(p_vbus) / 2; } /* Speed rated = SpeedTypeMax / 2 = 32768/2 for all cases for now */
 
 /******************************************************************************/

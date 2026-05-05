@@ -216,7 +216,7 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
     }
 
     if (p_motor->FeedbackMode.Current == 1U)    { Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
-    else                                        { Ramp_SetOutputLimit(&p_motor->TorqueRamp, v.low, v.high); }
+    else                                        { Ramp_SetOutputLimit(&p_motor->TorqueRamp, v.low, v.high); } /* alternatively use Vramp */
     // else                                        { Ramp_SetOutputLimit(&p_motor->VRamp, v.low, v.high); }
 }
 

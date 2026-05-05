@@ -147,7 +147,7 @@ Cia402_OdStatus_T Motor_Cia402_Od_Get(Motor_T * p_motor, const Cia402_Adapter_T 
         case CIA402_OD_TARGET_TORQUE:           *p_value = (int16_t)_Motor_GetTorqueSetpoint(p_motor->P_MOTOR);                     break;
         case CIA402_OD_TORQUE_ACTUAL:           *p_value = (int16_t)p_motor->P_MOTOR->Foc.Iq;                                       break;
         case CIA402_OD_CURRENT_ACTUAL:          *p_value = (int16_t)Motor_GetIPhase_Fract16(p_motor->P_MOTOR);                      break;
-        case CIA402_OD_DC_LINK_VOLTAGE:         *p_value = (int32_t)Phase_VBus_Fract16();                                           break;
+        case CIA402_OD_DC_LINK_VOLTAGE:         *p_value = (int32_t)VBus_Fract16(p_motor->P_VBUS);                                   break;
         case CIA402_OD_TARGET_VELOCITY:         *p_value = (int32_t)Motor_GetSpeedSetpoint(p_motor->P_MOTOR);                       break;
         case CIA402_OD_QUICK_STOP_DECELERATION: *p_value = (int32_t)p_adapter->Config.QuickStopDecel;                               break;
         case CIA402_OD_SUPPORTED_DRIVE_MODES:   *p_value = (int32_t)MOTOR_CIA402_SUPPORTED_DRIVE_MODES;                             break;

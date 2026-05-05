@@ -36,7 +36,9 @@
 #include "Motor.h"
 #include "Motor_Debug.h"
 
-#include "Math/FOC.h"
+#include "Math/FOC_Ext.h"
+
+#include "Phase/Phase_Svpwm.h"
 
 
 /******************************************************************************/
@@ -55,23 +57,6 @@
 */
 /******************************************************************************/
 
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-static inline void _Motor_FOC_WriteDuty(Phase_VOut_T * p_phase, const FOC_T * p_foc) { Phase_WriteDuty_Fract16(p_phase, FOC_DutyA(p_foc), FOC_DutyB(p_foc), FOC_DutyC(p_foc)); }
-static inline void Motor_FOC_WriteDuty(Motor_T * p_motor) { _Motor_FOC_WriteDuty(&p_motor->PHASE, &p_motor->P_MOTOR->Foc); }
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-/*
-
-*/
-// static inline bool _Motor_FOC_IsMotoring(const FOC_T * p_foc, speed) { return (FOC_Iq(p_foc) * (int32_t)RotorSensor_GetSpeed_Fract16(p_sensor) > 0); }
 
 static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) > 0); }
 static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
@@ -96,12 +81,15 @@ static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Mo
     Extern
 */
 /******************************************************************************/
-extern void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor);
-extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
+extern void Motor_FOC_WriteDuty(Motor_T * p_motor);
+
 extern void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
 extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
+extern void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq);
 
-void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq);
+extern void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
+
 
 extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
 extern void Motor_FOC_MatchIVState(Motor_State_T * p_motor);
@@ -115,9 +103,6 @@ extern void Motor_FOC_StartAlignValidate(Motor_State_T * p_motor);
 
 extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor);
-
-extern void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction);
-extern void Motor_FOC_SetDirectionForward(Motor_State_T * p_motor);
 
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
 extern void Motor_ExternControl(Motor_State_T * p_motor);

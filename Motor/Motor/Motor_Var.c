@@ -58,35 +58,12 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
         case MOTOR_VAR_TORQUE_V_REQ:                value = Motor_GetVSetpoint(p_state);                    break;
 
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_UFract16(p_state);     break;
-        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_UFract16(p_state);     break;
-        case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_UFract16(p_state);                break;
+        case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_Fract16(p_state);     break;
+        case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_Fract16(p_state);                break;
     }
     return value;
 }
 
-
-int _Motor_Var_Foc_Get(Motor_T * p_motor, Motor_Var_Foc_T varId)
-{
-    const Motor_State_T * p_state = p_motor->P_MOTOR;
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_FOC_IA:      value = p_state->PhaseInput.Iabc.A;       break;
-        case MOTOR_VAR_FOC_IB:      value = p_state->PhaseInput.Iabc.B;       break;
-        case MOTOR_VAR_FOC_IC:      value = p_state->PhaseInput.Iabc.C;       break;
-        case MOTOR_VAR_FOC_ID:      value = p_state->Foc.Id;                  break;
-        case MOTOR_VAR_FOC_IQ:      value = p_state->Foc.Iq;                  break;
-        case MOTOR_VAR_FOC_VD:      value = p_state->Foc.Vd;                  break;
-        case MOTOR_VAR_FOC_VQ:      value = p_state->Foc.Vq;                  break;
-        case MOTOR_VAR_FOC_VA:      value = p_state->Foc.Va;                  break;
-        case MOTOR_VAR_FOC_VB:      value = p_state->Foc.Vb;                  break;
-        case MOTOR_VAR_FOC_VC:      value = p_state->Foc.Vc;                  break;
-        // case MOTOR_VAR_FOC_REQ_Q:   value = Ramp_GetOutput(&p_state->TorqueRamp);     break;
-        case MOTOR_VAR_FOC_INTEGRAL_D:    value = PID_GetIntegral(&p_state->Foc.PidId);   break;
-        case MOTOR_VAR_FOC_INTEGRAL_Q:    value = PID_GetIntegral(&p_state->Foc.PidIq);   break;
-    }
-    return value;
-}
 
 /******************************************************************************/
 /*
@@ -301,7 +278,7 @@ int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int v
     {
         case MOTOR_VAR_TYPE_USER_OUT:               return _Motor_Var_UserOut_Get(p_motor, varId);
         case MOTOR_VAR_TYPE_ROTOR_OUT:              return _Motor_Var_Rotor_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
-        case MOTOR_VAR_TYPE_FOC_OUT:                return _Motor_Var_Foc_Get(p_motor, varId);
+        case MOTOR_VAR_TYPE_FOC_OUT:                return _Motor_Var_Foc_Get(&p_motor->P_MOTOR->Foc, varId);
         case MOTOR_VAR_TYPE_USER_CONTROL:           return _Motor_Var_UserControl_Get(p_motor, varId);
         case MOTOR_VAR_TYPE_USER_SETPOINT:          return 0;
         case MOTOR_VAR_TYPE_CONFIG_CALIBRATION:     return _Motor_Var_ConfigCalibration_Get(&p_motor->P_MOTOR->Config, varId);

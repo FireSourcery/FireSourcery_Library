@@ -112,30 +112,7 @@ typedef enum Motor_Var_UserSetpoint
 Motor_Var_UserSetpoint_T;
 
 
-/*
-    FOC State
-    Read-Only, RealTime
-*/
-typedef enum Motor_Var_Foc
-{
-    MOTOR_VAR_FOC_IA,
-    MOTOR_VAR_FOC_IB,
-    MOTOR_VAR_FOC_IC, /* move to phase input */
-    MOTOR_VAR_FOC_ID,
-    MOTOR_VAR_FOC_IQ,
-    MOTOR_VAR_FOC_VD,
-    MOTOR_VAR_FOC_VQ,
-    MOTOR_VAR_FOC_VA,
-    MOTOR_VAR_FOC_VB,
-    MOTOR_VAR_FOC_VC,
-    MOTOR_VAR_FOC_REQ_D,
-    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req */
-    // MOTOR_VAR_FOC_ID_REQ, /* return I or 0 */
-    // MOTOR_VAR_FOC_IQ_REQ,
-    MOTOR_VAR_FOC_INTEGRAL_D,
-    MOTOR_VAR_FOC_INTEGRAL_Q,
-}
-Motor_Var_Foc_T;
+
 
 /*!
     [Var_StateCmd]
@@ -218,8 +195,6 @@ Motor_Var_Board_T;
 */
 /******************************************************************************/
 int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId);
-
-int _Motor_Var_Foc_Get(Motor_T * p_motor, Motor_Var_Foc_T varId);
 
 /* Caller handle access control */
 int _Motor_Var_UserControl_Get(Motor_T * p_motor, Motor_Var_UserControl_T varId);

@@ -33,12 +33,13 @@
 
 
 /*
-    Boundary chatter mostly shifts away.
+    Clamp output
 */
 static int32_t NextOf(const Ramp_T * p_ramp, int32_t cw32, int32_t ccw32, int32_t target32)
 {
     int32_t output32 = p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient;
     return math_clamp(output32, cw32, ccw32);
+    // return accumulator(p_ramp->Accumulator.Coefficient, cw32, ccw32, p_ramp->Accumulator.Accumulator, math_sign(target32 - p_ramp->Accumulator.Accumulator));
 }
 
 int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
@@ -67,6 +68,8 @@ int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
     return Ramp_GetOutput(p_ramp);
 }
 
+
+/* Ramp_ProcNextOf replace when Ramp_ProcNext's Target clamps on limtis update */
 int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
 {
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));

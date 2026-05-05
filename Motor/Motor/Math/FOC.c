@@ -29,46 +29,6 @@
 /******************************************************************************/
 #include "FOC.h"
 
-void FOC_Init(FOC_T * p_foc)
-{
-    (void)p_foc;
-}
-
-// void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)
-// {
-//     p_foc->VModulation = fract16_mul(modulation, FRACT16_1_DIV_SQRT3);
-// }
-
-/* Prep Align using input intensity */
-void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
-{
-    p_foc->Vd = vd;
-    p_foc->Vq = 0;
-    p_foc->Sine = 0;
-    p_foc->Cosine = FRACT16_MAX;
-}
-
-void FOC_ZeroSvpwm(FOC_T * p_foc)
-{
-    p_foc->DutyA = FRACT16_1_DIV_2;
-    p_foc->DutyB = FRACT16_1_DIV_2;
-    p_foc->DutyC = FRACT16_1_DIV_2;
-}
-
-void FOC_ClearCaptureState(FOC_T * p_foc)
-{
-    p_foc->Id = 0;
-    p_foc->Iq = 0;
-    // p_foc->Ialpha = 0; /* User view Phase values */
-    // p_foc->Ibeta = 0;
-}
-
-void FOC_ClearOutputState(FOC_T * p_foc)
-{
-    p_foc->Vd = 0;
-    p_foc->Vq = 0;
-}
-
 
 /*
     Debug

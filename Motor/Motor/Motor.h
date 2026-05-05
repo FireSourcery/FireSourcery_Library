@@ -547,6 +547,17 @@ static void Motor_ResolveILimits(Motor_T * p_motor)
     Motor_State_T * p_state = p_motor->P_MOTOR;
     interval_t iLimits = Motor_GetILimits(p_motor);
     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+
+    // if (p_state->FeedbackMode.Current == 1)
+    // {
+    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+    // }
+    // else
+    // {
+
+    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+    // }
+
     /* Optionally handle on pull instead. */
     if ((p_state->FeedbackMode.Speed == 1) && (p_state->FeedbackMode.Current == 1))  /* SpeedPid Output is I */
     {
@@ -757,7 +768,7 @@ extern void Motor_InitSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_InitTorqueRamp(Motor_State_T * p_motor);
 extern void Motor_ResetSpeedPid(Motor_State_T * p_motor);
 extern void Motor_ResetIPid(Motor_State_T * p_motor);
-void _Motor_ResetTuning(Motor_T * p_motor);
+extern void _Motor_ResetTuning(Motor_T * p_motor);
 
 extern void Motor_SetFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode);
 extern void Motor_SetDirection(Motor_T * p_motor, Motor_Direction_T direction);

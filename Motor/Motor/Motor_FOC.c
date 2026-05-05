@@ -36,15 +36,10 @@
 
 */
 /******************************************************************************/
-static bool CaptureIabc(Motor_State_T * p_motor)
+
+void Motor_FOC_WriteDuty(Motor_T * p_motor)
 {
-    bool isCaptureI = (p_motor->PhaseInput.IFlags.Bits == PHASE_ID_ABC);
-    if (isCaptureI == true)  /* alternatively use batch callback */
-    {
-        FOC_ProcClarkePark(&p_motor->Foc, p_motor->PhaseInput.Iabc.A, p_motor->PhaseInput.Iabc.B, p_motor->PhaseInput.Iabc.C);
-        p_motor->PhaseInput.IFlags.Bits = PHASE_ID_0;
-    }
-    return isCaptureI;
+    Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Fract32(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 }
 
 // static inline interval_t Motor_GetVqLimits(const Motor_State_T * p_motor)
@@ -54,77 +49,37 @@ static bool CaptureIabc(Motor_State_T * p_motor)
 //     return (interval_t) { .low = vSpeed - window, .high = vSpeed + window, };
 // }
 
-/*
-    Current Feedback Loop
-*/
-/*
-    Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc
-*/
-static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
-{
-    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
-    int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
-    interval_t band = interval_of_sign((sign_t)p_motor->Direction, vqLimit);
-    PID_CaptureOutputLimits(&p_motor->Foc.PidIq, band.low, band.high);
-    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
-}
-
-static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
-{
-    FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
-    FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
-    /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
-    if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-    {
-        _PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
-        // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->Foc.PidIq)) { PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); }
-    }
-}
-
-
 /* Set Vdq */
-static void ProcInnerFeedback(Motor_State_T * p_motor, int16_t dReq, int16_t qReq)
+static inline void ProcInnerFeedback(Motor_State_T * p_motor, int16_t vBus, int16_t dReq, int16_t qReq)
 {
-    if (CaptureIabc(p_motor) == true)    /* else update angle only for voutput, until next cycle */
+    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I) == true)    /* else update angle only for voutput, until next cycle */
     {
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
-            ProcIFeedback(p_motor, dReq, qReq);
+            FOC_ProcIFeedback(&p_motor->Foc, vBus, (sign_t)p_motor->Direction, dReq, qReq);
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
             FOC_SetVq(&p_motor->Foc, qReq);
             FOC_SetVd(&p_motor->Foc, dReq);
-            FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16());
+            FOC_ProcVectorLimit(&p_motor->Foc, vBus);
             /* Still check CaptureIabc for overcurrent */
         }
     }
-}
-
-
-/* From Vdq to Vabc Duty */
-static void ProcAngleOutput(Motor_State_T * p_motor)
-{
     FOC_ProcInvClarkePark(&p_motor->Foc);
-    FOC_ProcSvpwm(&p_motor->Foc, Phase_VBus_Inv_Fract32());
 }
 
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+// common call
 /*
     Activate angle with or without current feedback
     Req dq to Vabc to Duty abc
 */
+// void Motor_FOC_AngleControl(Motor_State_T * p_motor, vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);
-    // split capture feedback
-    ProcInnerFeedback(p_motor, dReq, qReq);
-    ProcAngleOutput(p_motor);
+    ProcInnerFeedback(p_motor, Phase_VBus_Fract16(), dReq, qReq);
 }
 
 /*
@@ -134,13 +89,10 @@ void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t theta, fract16_t 
 */
 void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    FOC_SetTheta(&p_motor->Foc, theta);
-    FOC_SetVd(&p_motor->Foc, vd);
-    FOC_SetVq(&p_motor->Foc, vq);
-    // circle limit here if needed
-    ProcAngleOutput(p_motor);
+    FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
+/* alternate source analogous to Motor_ProcSpeedControlSource */
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t qReq)
 {
     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), dReq, Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, qReq));
@@ -155,8 +107,7 @@ void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t 
 }
 
 
-
-
+/******************************************************************************/
 /*
     Feedback Control Loop
     StateMachine calls each PWM, ~20kHz
@@ -170,6 +121,10 @@ void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t dReq, fract16_t 
         PidId,
         VSourceInvScalar,
 */
+/* applicable on batch callback */
+
+// void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
+// void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor, VBus_T * p_vBus)
 void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 {
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
@@ -187,12 +142,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 {
     FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
-
-    if (p_motor->PhaseInput.VFlags.Bits == PHASE_ID_ABC)
-    {
-        FOC_ProcVBemfClarkePark(&p_motor->Foc, p_motor->PhaseInput.Vabc.A, p_motor->PhaseInput.Vabc.B, p_motor->PhaseInput.Vabc.C);
-        p_motor->PhaseInput.VFlags.Bits = PHASE_ID_0;
-    }
+    FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
 }
 
 
@@ -354,3 +304,29 @@ void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 //     FOC_SetVq(&p_motor->Foc, fract16_sat((accum32_t)PID_ProcPI(&p_motor->PidIq, iq, iqReq) + vq_ff));
 // }
 // #else
+
+
+
+
+
+
+// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// {
+//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
+//     int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
+//     interval_t band = interval_of_sign((sign_t)p_motor->Direction, vqLimit);
+//     PID_CaptureOutputLimits(&p_motor->Foc.PidIq, band.low, band.high);
+//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
+// }
+
+// static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// {
+//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
+//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
+//     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
+//     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
+//     {
+//         _PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
+//         // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->Foc.PidIq)) { PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); }
+//     }
+// }

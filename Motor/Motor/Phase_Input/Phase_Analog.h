@@ -166,9 +166,9 @@ static inline void _Phase_CaptureVAdcu(volatile Phase_Triplet_T * p_triplet, vol
     _Phase_Capture(p_triplet, p_bits, channel, Phase_Analog_VFract16Of(adcu));
 }
 
-static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_A, adcu); }
-static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_B, adcu); }
-static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->Vabc, &p_phase->VFlags, PHASE_INDEX_C, adcu); }
+static inline void Phase_Analog_CaptureVa(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->V.Values, &p_phase->V.Flags, PHASE_INDEX_A, adcu); }
+static inline void Phase_Analog_CaptureVb(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->V.Values, &p_phase->V.Flags, PHASE_INDEX_B, adcu); }
+static inline void Phase_Analog_CaptureVc(volatile Phase_Input_T * p_phase, adc_result_t adcu) { _Phase_CaptureVAdcu(&p_phase->V.Values, &p_phase->V.Flags, PHASE_INDEX_C, adcu); }
 
 static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, volatile Phase_Bitmask_T * p_bits, const Phase_Triplet_T * p_zeroRefs, Phase_Index_T channel, adc_result_t adcu)
 {
@@ -176,9 +176,9 @@ static inline void _Phase_CaptureIAdcu(volatile Phase_Triplet_T * p_triplet, vol
     _Phase_Capture(p_triplet, p_bits, channel, Phase_Analog_IFract16Of(p_zeroRefs->Values[channel], adcu));
 }
 
-static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_A, adcu); }
-static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_B, adcu); }
-static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->Iabc, &p_phase->IFlags, p_zeroRefs, PHASE_INDEX_C, adcu); }
+static inline void Phase_Analog_CaptureIa(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_A, adcu); }
+static inline void Phase_Analog_CaptureIb(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_B, adcu); }
+static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, const Phase_Triplet_T * p_zeroRefs, adc_result_t adcu) { _Phase_CaptureIAdcu(&p_phase->I.Values, &p_phase->I.Flags, p_zeroRefs, PHASE_INDEX_C, adcu); }
 
 
 

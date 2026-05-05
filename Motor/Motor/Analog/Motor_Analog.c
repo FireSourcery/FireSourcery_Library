@@ -51,7 +51,7 @@ static void StartCalibration(const Motor_T * p_motor)
     p_fields->Config.IabcZeroRef_Adcu.A = 0U;
     p_fields->Config.IabcZeroRef_Adcu.B = 0U;
     p_fields->Config.IabcZeroRef_Adcu.C = 0U;
-    p_fields->PhaseInput.IFlags.Bits = PHASE_ID_0;
+    p_fields->PhaseInput.I.Flags.Bits = PHASE_ID_0;
     Motor_Analog_MarkIabc(p_motor);
 }
 
@@ -63,12 +63,12 @@ static void ProcCalibration(const Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR;
 
-    if (p_fields->PhaseInput.IFlags.Bits == PHASE_ID_ABC)
+    if (p_fields->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
     {
         Accumulator_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
         Accumulator_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
         Accumulator_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
-        p_fields->PhaseInput.IFlags.Bits = PHASE_ID_0;
+        p_fields->PhaseInput.I.Flags.Bits = PHASE_ID_0;
         Motor_Analog_MarkIabc(p_motor);
     }
 }
