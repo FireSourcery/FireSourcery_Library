@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "../Motor_StateMachine.h"
 
-
+extern const State_T CALIBRATION_STATE_ANGLE_ALIGN;
 
 
 /*

@@ -82,11 +82,9 @@ FOC_T;
 
 typedef struct
 {
-    // fract16_t IdFwGain;
-    // fract16_t IdFwMax; /*Maximum demagnetizing current. */
     // fract16_t IsMax;   /* Current circle radius */
-    uint16_t IdFwMax;               /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    uint16_t IdFwGain;              /* Field weakening integrator gain per control cycle */
+    ufract16_t IdFwMax;               /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
+    ufract16_t IdFwGain;              /* Field weakening integrator gain per control cycle */
 }
 FOC_FieldWeakeningConfig_T;
 
@@ -298,14 +296,15 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16
 */
 /******************************************************************************/
 /*
-    Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
-    Id_fw = (Vs_max/ωe - λ_pm) / Ld
-
     |V_ref| = √(Vd² + Vq²)
     error = Vdc_limit - |V_ref|
     Id_fw += Ki · error   (integrator, Id ≤ 0)
 */
 /* Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwMax), 0]. */
+/*
+    Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
+    Id_fw = (Vs_max/ωe - λ_pm) / Ld
+*/
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 {
     int16_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (int16_t)FOC_GetVMagnitude(p_foc);

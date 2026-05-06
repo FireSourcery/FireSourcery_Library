@@ -465,16 +465,17 @@ static void Intervention_Entry(Motor_T * p_motor)
 
 static void Intervention_Proc(Motor_T * p_motor) { (void)p_motor; }
 
-static State_T * Intervention_InputRelease(Motor_T * p_motor)
+static inline State_T * Intervention_InputRelease(Motor_T * p_motor)
 {
     if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
     return NULL;
 }
 
-static State_T * Intervention_InputResume(Motor_T * p_motor)
+static inline State_T * Intervention_InputResume(Motor_T * p_motor)
 {
     if (StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_TORQUE_ZERO)
         && RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true)
+    // if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true)
     {
         return &MOTOR_STATE_RUN;
     }

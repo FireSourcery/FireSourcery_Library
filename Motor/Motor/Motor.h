@@ -186,6 +186,35 @@ static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
 
+typedef struct
+{
+    uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
+    uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
+    uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
+    fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
+
+#if defined(MOTOR_DECOUPLE_ENABLE)
+    /*
+        dq cross-coupling decoupling coefficients.
+        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
+        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
+        Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
+    */
+    fract16_t KLd_Fract16;
+    fract16_t KLq_Fract16;
+    fract16_t KPsi_Fract16;
+#endif
+}
+Motor_ElectricalParams_T;
+
+typedef struct
+{
+    uint16_t SpeedRated_Angle16;
+    uint16_t Ke_Angle16;
+    uint16_t Ke_SpeedFract16;
+}
+Motor_ElectricalSpeedRef_T;
+
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
 */
@@ -249,45 +278,14 @@ typedef struct Motor_Config
 
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 
-    /*
-        Identified electrical parameters. User-readable SI units.
-        Populated by CALIBRATION_STATE_ELECTRICAL (Motor_Calibration_Electrical.c).
-        Rs_Fract16 is the normalized form: Rs / R_REF where R_REF = V_MAX_VOLTS / I_MAX_AMPS.
-        Ld/Lq fract16 in-loop forms are KLd_Fract16 / KLq_Fract16 below (auto-derived at commit).
-    */
-    uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
-    uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
-    uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
-    // fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
-
-#if defined(MOTOR_DECOUPLE_ENABLE)
-    /*
-        dq cross-coupling decoupling coefficients.
-        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
-        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
-        Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
-    */
-    fract16_t KLd_Fract16;
-    fract16_t KLq_Fract16;
-    fract16_t KPsi_Fract16;
-#endif
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
-
 }
 Motor_Config_T;
 
 #include "_Motor_Config.h"
-
-typedef struct
-{
-    uint16_t SpeedRated_Angle16;
-    uint16_t Ke_Angle16;
-    uint16_t Ke_SpeedFract16;
-}
-Motor_ElectricalRef_T;
 
 
 /*
@@ -362,37 +360,7 @@ typedef struct Motor_State
     Accumulator_T FilterB;
     Accumulator_T FilterC;
 
-    /*
-        Electrical parameter identification scratch. Used by CALIBRATION_STATE_ELECTRICAL.
-    */
-    // struct Motor_ParamId
-    // {
-    //     uint8_t  Step;              /* Motor_ParamId_Step_T */
-    //     uint32_t CycleCount;        /* cycles within current step */
-    //     fract16_t IdBias;           /* aligned Id setpoint */
-    //     /* accumulators */
-    //     int64_t  VdAccum;
-    //     int64_t  IdAccum;
-    //     uint32_t AccumN;
-    //     /* Ld step */
-    //     fract16_t VdBias;
-    //     fract16_t VdStep;
-    //     int16_t   IdSteady;
-    //     uint32_t  IdTauCycles;
-    //     /* Lq HFI */
-    //     angle16_t HfiPhase;
-    //     angle16_t HfiDelta;
-    //     int64_t   IqSumI;
-    //     int64_t   IqSumQ;
-    //     uint16_t  VhfAmpFract16;
-    //     uint16_t  HfFreqHz;
-    //     /* interim results */
-    //     uint16_t  Rs_MilliOhms;
-    //     uint16_t  Ld_MicroHenries;
-    //     uint16_t  Lq_MicroHenries;
-    //     fract16_t Rs_Fract16;
-    // }
-    // ParamId;
+
 
 #if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
     /*
@@ -648,7 +616,7 @@ static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Mo
     Stateless cascade override: run SpeedPID against an alternate per-tick speedReq
     without touching SpeedRamp.Target. Used by intervention state.
 */
-static inline fract16_t Motor_ProcSpeedControlSource(Motor_State_T * p_motor, int16_t speedReq)
+static inline fract16_t Motor_ProcSpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
 {
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNextOnInputOf(&p_motor->SpeedRamp, speedReq));
 }

@@ -31,10 +31,59 @@
 
 /******************************************************************************/
 /*!
-    @brief
+    Same as open loop align under Calibration branch
+    Caller set angle
 */
 /******************************************************************************/
+static void AngleAlign_Entry(Motor_T * p_motor)
+{
+    Phase_ActivateT0(&p_motor->PHASE);
+    Motor_FOC_StartAlignCmd(p_motor->P_MOTOR); // using commutation mode
+}
 
+static void AngleAlign_Loop(Motor_T * p_motor)
+{
+    Motor_FOC_ProcAlignCmd(p_motor->P_MOTOR);
+    Motor_FOC_WriteDuty(p_motor);
+}
+
+/*
+    Angle Cmd and User Current/Voltage Cmd
+*/
+const State_T CALIBRATION_STATE_ANGLE_ALIGN =
+{
+    // .ID         = MOTOR_STATE_ID_CALIBRATION,
+    .P_TOP = &MOTOR_STATE_CALIBRATION,
+    .P_PARENT = &MOTOR_STATE_CALIBRATION,
+    .DEPTH = 1U,
+    .ENTRY = (State_Action_T)AngleAlign_Entry,
+    .LOOP = (State_Action_T)AngleAlign_Loop,
+    .NEXT = NULL,
+};
+
+// static State_T * Calibration_AngleAlign(Motor_T * p_motor, state_value_t angle)
+// {
+//     Angle_CaptureAngle(&p_motor->P_MOTOR->OpenLoopAngle, angle);
+//     return &CALIBRATION_STATE_ANGLE_ALIGN;
+// }
+
+// void Motor_Calibration_StartAngleAlign(Motor_T * p_motor, angle16_t angle)
+// {
+//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_AngleAlign, };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, angle);
+// }
+
+// void Motor_Calibration_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
+// {
+//     Motor_Calibration_StartAngleAlign(p_motor, Phase_AngleOf(align));
+// }
+
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
 // /*
 //     Same as run
 // */

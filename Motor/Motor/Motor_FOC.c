@@ -82,18 +82,6 @@ void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t theta, fract16_t 
     ProcInnerFeedback(p_motor, Phase_VBus_Fract16(), dReq, qReq);
 }
 
-/*
-    Feed forward voltage angle
-    set once, no feedback
-    SetVAngle
-*/
-void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
-{
-    FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
-}
-
-
-
 /******************************************************************************/
 /*
     Feedback Control Loop
@@ -129,7 +117,7 @@ void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor)
 //     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->SensorState.AngleSpeed), 0, qReq);
 // }
 
-/* alternate source analogous to Motor_ProcSpeedControlSource */
+/* alternate source analogous to Motor_ProcSpeedControlOf */
 void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t qReq)
 {
     int16_t dReq = (p_motor->FeedbackMode.Current == 1U) ? FOC_ProcIdFieldWeakening(&p_motor->Foc, Phase_VBus_Fract16()) : 0;
@@ -155,6 +143,16 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
 }
 
+
+/*
+    Feed forward voltage angle
+    set once, no feedback
+    SetVAngle
+*/
+void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
+{
+    FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
+}
 
 /******************************************************************************/
 /*!
@@ -218,6 +216,11 @@ void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor)
     Align using TorqueRamp.Target
 */
 /* ElectricalAngle set by caller. Does not Angle_ZeroCaptureState */
+void Motor_FOC_SetAlignCmdAngle(Motor_State_T * p_motor, angle16_t angle)
+{
+    Angle_CaptureAngle(&p_motor->OpenLoopAngle, angle);
+}
+
 void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 {
     p_motor->FeedbackMode.Current = 1U; /* config alternatively */
@@ -227,6 +230,11 @@ void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor)
 void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor)
 {
     Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp)), 0);
+}
+
+void Motor_FOC_ProcAlignCmdOf(Motor_State_T * p_motor, fract16_t idReq)
+{
+    Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, idReq), 0);
 }
 
 

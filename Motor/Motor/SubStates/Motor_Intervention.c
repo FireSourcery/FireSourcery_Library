@@ -52,8 +52,9 @@ static void TorqueZero_Entry(Motor_T * p_motor)
     Motor_State_T * p_state = p_motor->P_MOTOR;
     p_state->ControlTimerBase = 0U;
     Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
-    Motor_FOC_MatchIVState(p_state);
-    Ramp_SetOutputState(&p_state->TorqueRamp, 0);
+    // Motor_FOC_MatchIVState(p_state);
+    // Ramp_SetOutputState(&p_state->TorqueRamp, 0);
+    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
 
     /* seed Target to a small generating bias */
     // Ramp_SetTarget(&p_state->TorqueRamp, -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20));
@@ -64,7 +65,9 @@ static void TorqueZero_Proc(Motor_T * p_motor)
     Motor_State_T * p_state = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only;
        motoring-side requests are zeroed. Output ramps from 0 (set in Entry) toward the filtered value. */
-    Motor_FOC_ProcTorqueReq(p_state, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
+    Motor_FOC_ProcTorqueReq(p_state, 0);
+    // user cmd to resume
+    // Motor_FOC_ProcTorqueReq(p_state, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
     Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -115,7 +118,7 @@ static void RampSafe_Proc(Motor_T * p_motor)
     if (p_state->SpeedUpdateFlag == true)
     {
         p_state->SpeedUpdateFlag = false;
-        Motor_ProcSpeedControlSource(p_state, 0); /* drive to zero speed */
+        Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
     }
 
     Motor_FOC_ProcTorqueReq(p_state, PID_GetOutput(&p_state->PidSpeed));
