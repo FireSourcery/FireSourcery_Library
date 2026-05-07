@@ -196,9 +196,19 @@ typedef struct
     uint16_t  Rs_MilliOhms;     /* [mOhm] stator resistance per phase */
     uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
     uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
-    fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
+    ufract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
 }
 Motor_ElectricalParams_T;
+
+
+
+// typedef struct
+// {
+//     fract16_t Ld_Fract16;
+//     fract16_t Lq_Fract16;
+//     fract16_t Psi_Fract16;
+// }
+// Motor_ElectricalParamsRef_T;
 
 typedef struct
 {
@@ -207,6 +217,24 @@ typedef struct
     uint16_t Ke_SpeedFract16;
 }
 Motor_ElectricalSpeedRef_T;
+
+// typedef struct
+// {
+//     uint8_t PolePairs;
+//     uint16_t Kv;
+//     uint16_t SpeedRated;
+// }
+// Motor_ElectricalSpeedParams_T;
+
+// typedef struct
+// {
+// Motor_ElectricalSpeedParams_T
+//     uint32_t Psi ;
+//     uint32_t Ld ;
+//     uint32_t Lq ;
+//     uint32_t Rs ;
+// }
+// Motor_ElectricalParams_T;
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -218,6 +246,7 @@ typedef struct Motor_Config
     */
     RotorSensor_Id_T SensorMode;
     Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
+
     uint8_t PolePairs;                  /* Motor Pole Pairs. Use to derive Mech/Electrical speed calibration */
     uint16_t Kv;                        /* [RpmPerVolt] Motor Constant. Use to derive SpeedVRef. Optionally sets SpeedRated */
     uint16_t SpeedRated_Rpm;            /* [Rpm] for same units as kv. Speed at nominal VSource. Clamp or scale limits. Derives Angle and Fract16 */
@@ -235,7 +264,7 @@ typedef struct Motor_Config
     */
     uint16_t SpeedLimitForward_Fract16;     /* [0:32767] = [0:100%] of SpeedTypeMax */
     uint16_t SpeedLimitReverse_Fract16;
-    uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_CALIB_AMPS. */
+    uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_TYPE_MAX_AMPS. */
     uint16_t ILimitGenerating_Fract16;
 
 
@@ -254,11 +283,12 @@ typedef struct Motor_Config
         OpenLoop
     */
     /* All OpenLoop Modes - UserCmd, Align */
-    uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. */
+    uint16_t OpenLoopLimitScalar_Fract16;   /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitScalar_Fract16 * V/I RATED */
 
     /* Calibration and Jog Align */
-    uint16_t AlignScalar_Fract16;           /* Applies V or I. as scalar [0:1.0F] [0:32768]. */
-    uint32_t AlignTime_Cycles;              /* Ramp time and step duration */
+    uint16_t IAlign_Fract16;                 /* OpenLoop/Calibration Align Current, as fract16 of I_TYPE_MAX_AMPS. */
+    uint16_t VAlign_Fract16;                 /* OpenLoop/Calibration Align Voltage, as fract16 of V_TYPE_MAX_VOLTS. */
+    uint32_t AlignTime_Cycles;               /* Ramp time and step duration */
 
     /* OpenLoop Run/StartUp Preset */
 // #if defined(MOTOR_OPEN_LOOP_ENABLE)

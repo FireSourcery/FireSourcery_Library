@@ -46,33 +46,34 @@
 //     uint8_t Motoring : 1;
 //     uint8_t Forward  : 1;
 // }
-// Motor_QuadrantSign_T;
+// Motor_Quadrant_T;
+// static inline Motor_QuadrantSign_T Motor_Quadrant(int16_t speed, int16_t torque) { return (Motor_QuadrantSign_T) { .Forward = (speed >= 0), .Motoring = (torque * speed >= 0) }; }
+
 // typedef union Motor_Quadrant
 // {
 //     struct { uint8_t Forward : 1; uint8_t Motoring : 1; }  ;
 //     struct { uint8_t SpeedNeg : 1; uint8_t TorqueNeg : 1; }  ;
 //     uint8_t Bits : 2;
 // }
-// Motor_Quadrant_T;
-
-// // typedef union Motor_Quadrant
-// // {
-// //     struct { uint8_t ForwardNeg : 1; uint8_t MotoringNeg : 1; }  ;
-// //     struct { uint8_t SpeedSign : 1; uint8_t TorqueSign : 1; }  ;
-// //     uint8_t Bits : 2;
-// // }
-// // Motor_Quadrant_T;
-
+// Motor_QuadrantSign_T;
 // static inline Motor_QuadrantSign_T Motor_QuadrantSign(int16_t speed, int16_t torque) { return (Motor_QuadrantSign_T) { .Forward = (speed >= 0), .Motoring = (torque * speed >= 0) }; }
-// // static inline Motor_Axis_T Motor_FromQuadrant(Motor_Axis_T m, Motor_QuadrantSign_T q)
-// // {
-// //     int16_t speed = q.Forward ? (int16_t)m.Speed : -(int16_t)m.Speed;
-// //     int16_t torque = ((!q.Forward) ^ (!q.Motoring)) ? -(int16_t)m.Torque : (int16_t)m.Torque;
-// //     return (Motor_Axis_T) { speed, torque };
-// // }
+// typedef union Motor_Quadrant
+// {
+//     struct { uint8_t ForwardNeg : 1; uint8_t MotoringNeg : 1; }  ;
+//     struct { uint8_t SpeedSign : 1; uint8_t TorqueSign : 1; }  ;
+//     uint8_t Bits : 2;
+// }
+// Motor_QuadrantSign_T;
 
-// typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;  /* fract16 */
-// // typedef struct { int16_t Speed; int16_t Torque; } Motor_Operating_T;
+// static inline Motor_Axis_T Motor_FromQuadrant(Motor_Axis_T m, Motor_QuadrantSign_T q)
+// {
+//     int16_t speed = q.Forward ? (int16_t)m.Speed : -(int16_t)m.Speed;
+//     int16_t torque = ((!q.Forward) ^ (!q.Motoring)) ? -(int16_t)m.Torque : (int16_t)m.Torque;
+//     return (Motor_Axis_T) { speed, torque };
+// }
+
+typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;
+// typedef struct { int16_t Speed; int16_t Torque; } Motor_Operating_T;
 // static inline int32_t _Motor_InstantPower(Motor_Axis_T feedback) { return (int32_t)feedback.Speed * feedback.Torque; }
 // static inline int32_t _Motor_IsMotoring(Motor_Axis_T feedback) { return _Motor_InstantPower(feedback) > 0; }
 
@@ -128,18 +129,6 @@
 // }
 // Motor_DriveCmd_T;
 
-// static inline int16_t Motor_QuadrantCmd_AsUser(Motor_QuadrantCmd_T cmd) { return (cmd.Reverse ? -cmd.Cmd : cmd.Cmd); }
-// /*   + aligned with rotation, - opposing (regen/brake) */
-// static inline int16_t Motor_QuadrantCmd_AsMotoring(Motor_QuadrantCmd_T cmd, Motor_Direction_T motor)
-// {
-//     return (cmd.Generating ? -cmd.Cmd : cmd.Cmd);
-// }
-
-  /*    case Motoring:    return v * Motor_GetRunDirection(p);
-        case Generati:  return -v * Motor_GetRunDirection(p); */
-
-/* value << 1 */
-// static inline int16_t Motor_QuadrantCmd_AsMotoring(Motor_QuadrantCmd_T cmd) { return (cmd.Reverse ^ cmd.Generating) ? -(int16_t)cmd.Cmd : (int16_t)cmd.Cmd; }
 
 // typedef enum Motor_DriveDirection
 // {

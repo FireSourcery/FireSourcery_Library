@@ -66,6 +66,7 @@ void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 {
     p_config->Kv = kv;
     p_config->SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_config);
+    /* alternatively kv determines scalar */
 }
 
 /* allow independent set */
@@ -130,17 +131,18 @@ void Motor_Config_SetTorqueRampTime_Millis(Motor_Config_T * p_config, uint16_t m
 */
 /******************************************************************************/
 /*  */
+void Motor_Config_SetIAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->IAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopILimit_Fract16(p_config)); }
+void Motor_Config_SetVAlign(Motor_Config_T * p_config, uint16_t scalar16) { p_config->VAlign_Fract16 = math_min(scalar16, _Motor_GetOpenLoopVLimit_Fract16(p_config)); }
+
+/*  */
 void Motor_Config_SetOpenLoopScalarLimit(Motor_Config_T * p_config, uint16_t scalar16)
 {
     p_config->OpenLoopLimitScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);
-    p_config->AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING);
-    p_config->OpenLoopRampIFinal_Fract16 = _Motor_OpenLoopIRatedLimitOf(p_config, p_config->OpenLoopRampIFinal_Fract16);
+    Motor_Config_SetIAlign(p_config, p_config->IAlign_Fract16); /* re-resolve align against new limit */
+    Motor_Config_SetVAlign(p_config, p_config->VAlign_Fract16); /* re-resolve align against new limit */
 }
 
-
-/* */
-void Motor_Config_SetAlignPowerScalar(Motor_Config_T * p_config, uint16_t scalar16) { p_config->AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING); }
-
+// void Motor_Config_SetAlignPowerScalar(Motor_Config_T * p_config, uint16_t scalar16) { p_config->AlignScalar_Fract16 = math_min(scalar16, MOTOR_OPEN_LOOP_CEILING); }
 void Motor_Config_SetAlignTime_Cycles(Motor_Config_T * p_config, uint32_t cycles) { p_config->AlignTime_Cycles = cycles; }
 void Motor_Config_SetAlignTime_Millis(Motor_Config_T * p_config, uint16_t millis) { p_config->AlignTime_Cycles = _Motor_ControlCyclesOf(millis); }
 
@@ -152,9 +154,9 @@ void Motor_Config_SetOpenLoopRampITime_Cycles(Motor_Config_T * p_config, uint32_
 void Motor_Config_SetOpenLoopRampITime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetOpenLoopRampITime_Cycles(p_config, _Motor_ControlCyclesOf(millis)); }
 
 /*
-    OpenLoop Ramp tick on control timer
+    OpenLoop Ramp ticks on control timer, unlike speedRamp
 */
-void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_Config_T * p_config, uint16_t speed_fract16) { p_config->OpenLoopRampSpeedFinal_Fract16 = speed_fract16; }
+void Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(Motor_Config_T * p_config, uint16_t speed_fract16) { p_config->OpenLoopRampSpeedFinal_Fract16 = _Motor_OpenLoopSpeedRatedLimitOf(p_config, speed_fract16); }
 
 void Motor_Config_SetOpenLoopRampSpeedTime_Cycles(Motor_Config_T * p_config, uint32_t cycles) { p_config->OpenLoopRampSpeedTime_Cycles = cycles; }
 void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_Config_T * p_config, uint16_t millis) { Motor_Config_SetOpenLoopRampSpeedTime_Cycles(p_config, _Motor_ControlCyclesOf(millis)); }
@@ -224,7 +226,7 @@ static inline uint16_t Motor_Config_GetTorqueRampTime_Millis(const Motor_Config_
 /******************************************************************************/
 static inline uint16_t Motor_Config_GetOpenLoopScalarLimit(const Motor_Config_T * p_config) { return p_config->OpenLoopLimitScalar_Fract16; }
 
-static inline uint16_t Motor_Config_GetAlignPowerScalar(const Motor_Config_T * p_config) { return p_config->AlignScalar_Fract16; }
+// static inline uint16_t Motor_Config_GetAlignPowerScalar(const Motor_Config_T * p_config) { return p_config->AlignScalar_Fract16; }
 static inline uint32_t Motor_Config_GetAlignTime_Cycles(const Motor_Config_T * p_config) { return p_config->AlignTime_Cycles; }
 static inline uint16_t Motor_Config_GetAlignTime_Millis(const Motor_Config_T * p_config) { return _Motor_MillisOf(p_config->AlignTime_Cycles); }
 
@@ -290,7 +292,9 @@ int _Motor_Var_ConfigActuation_Get(const Motor_Config_T * p_motor, Motor_Var_Con
         case MOTOR_VAR_SPEED_RAMP_TIME:             value = Motor_Config_GetSpeedRampTime_Millis(p_motor);          break;
         case MOTOR_VAR_TORQUE_RAMP_TIME:            value = Motor_Config_GetTorqueRampTime_Millis(p_motor);         break;
         case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       value = Motor_Config_GetOpenLoopScalarLimit(p_motor);           break;
-        case MOTOR_VAR_ALIGN_POWER:                 value = Motor_Config_GetAlignPowerScalar(p_motor);              break;
+        // case MOTOR_VAR_ALIGN_POWER:                 value = Motor_Config_GetAlignPowerScalar(p_motor);              break;
+        case MOTOR_VAR_I_ALIGN:                     value = p_motor->IAlign_Fract16;  break;
+        case MOTOR_VAR_V_ALIGN:                     value = p_motor->VAlign_Fract16;  break;
         case MOTOR_VAR_ALIGN_TIME:                  value = Motor_Config_GetAlignTime_Millis(p_motor);              break;
     // #if defined(MOTOR_OPEN_LOOP_ENABLE) || defined(MOTOR_SENSOR_SENSORLESS_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
         case MOTOR_VAR_OPEN_LOOP_RAMP_I_FINAL:      value = Motor_Config_GetOpenLoopIFinal_Fract16(p_motor);        break;
@@ -316,7 +320,9 @@ void _Motor_Var_ConfigActuation_Set(Motor_Config_T * p_motor, Motor_Var_ConfigAc
         case MOTOR_VAR_SPEED_RAMP_TIME:             Motor_Config_SetSpeedRampTime_Millis (p_motor, varValue);           break;
         case MOTOR_VAR_TORQUE_RAMP_TIME:            Motor_Config_SetTorqueRampTime_Millis (p_motor, varValue);          break;
         case MOTOR_VAR_OPEN_LOOP_POWER_LIMIT:       Motor_Config_SetOpenLoopScalarLimit(p_motor, varValue);             break;
-        case MOTOR_VAR_ALIGN_POWER:                 Motor_Config_SetAlignPowerScalar (p_motor, varValue);               break;
+        case MOTOR_VAR_I_ALIGN:                     Motor_Config_SetIAlign(p_motor, varValue);                                break;
+        case MOTOR_VAR_V_ALIGN:                     Motor_Config_SetVAlign(p_motor, varValue);                                break;
+        // case MOTOR_VAR_ALIGN_POWER:                 Motor_Config_SetAlignPowerScalar (p_motor, varValue);               break;
         case MOTOR_VAR_ALIGN_TIME:                  Motor_Config_SetAlignTime_Millis(p_motor, varValue);                break;
         case MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_FINAL:  Motor_Config_SetOpenLoopRampSpeedFinal_Fract16(p_motor, varValue);  break;
         case MOTOR_VAR_OPEN_LOOP_RAMP_SPEED_TIME:   Motor_Config_SetOpenLoopRampSpeedTime_Millis (p_motor, varValue);   break;

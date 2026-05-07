@@ -104,6 +104,15 @@ static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
 
 */
 /******************************************************************************/
+// static inline FOC_DecouplingCoeff_T Motor_ResolveDecouplingCoeffs(ld, lq, kv)
+// {
+//     return (FOC_DecouplingCoeff_T)
+//     {
+//         .Ld_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Ld_MicroHenries),
+//         .Lq_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Lq_MicroHenries),
+//         .Psi_Fract16 =   ke_vfract16_per_angle16(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv)
+//     };
+// }
 
 /******************************************************************************/
 /*!

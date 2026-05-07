@@ -54,8 +54,8 @@
 /*
     Constant expression path (for #define composition, initializers)
 */
-#define ANGLE_SPEED_OF(pollingFreq, cps)  (((int64_t)cps * ANGLE16_PER_REVOLUTION) / (pollingFreq)) /* alternatively macro version use float path */
-#define ANGLE_FREQ_OF(pollingFreq, angle16)  (((int64_t)angle16 * (pollingFreq)) / ANGLE16_PER_REVOLUTION)
+#define ANGLE_SPEED_OF(pollingFreq, cps)    (((int64_t)(cps) * ANGLE16_PER_REVOLUTION) / (pollingFreq))
+#define ANGLE_FREQ_OF(pollingFreq, angle16) (((int64_t)(angle16) * (pollingFreq)) / ANGLE16_PER_REVOLUTION)
 
 /* direct for comparison */
 static inline int32_t _angle_speed_of_freq_direct(uint32_t polling_freq, int32_t cps) { return ANGLE_SPEED_OF(polling_freq, cps); }
@@ -137,8 +137,9 @@ static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { retu
 
     ANGLE16_PER_RADIAN ~= PollingFreq / 2 ~= [angle16/poll]
 */
-static inline int32_t angle_of_rads_direct(uint32_t pollingFreq, int32_t rads) { return ((int32_t)rads * ANGLE16_PER_RADIAN) / pollingFreq; }
-static inline int32_t rads_of_angle_direct(uint32_t pollingFreq, int16_t angle16) { return (angle16 * pollingFreq) / ANGLE16_PER_RADIAN; }
+/* from scaled storage */
+static inline int32_t angle_of_rads_fract16(uint32_t pollingFreq, accum32_t rads_fract16) { return ((int64_t)rads_fract16 * ANGLE16_PER_RADIAN) / pollingFreq / FRACT16_SCALE; }
+static inline int32_t rads_fract16_of_angle(uint32_t pollingFreq, int16_t angle16) { return ((int64_t)angle16 * pollingFreq * FRACT16_SCALE) / ANGLE16_PER_RADIAN; }
 
 /******************************************************************************/
 /*

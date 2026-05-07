@@ -72,8 +72,6 @@ FOC_T;
 
 // typedef struct
 // {
-//     /* Inner current loop — pair has no semantic life outside the d-q frame.
-//        Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object. */
 //     PID_T PidIq;
 //     PID_T PidId;
 // }
@@ -90,15 +88,9 @@ FOC_FieldWeakeningConfig_T;
 typedef struct
 {
 // #if defined(MOTOR_DECOUPLE_ENABLE)
-    /*
-        dq cross-coupling decoupling coefficients.
-        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
-        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
-        Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
-    */
-    fract16_t KLd_Fract16;
-    fract16_t KLq_Fract16;
-    fract16_t KPsi_Fract16;
+    fract16_t Ld_Fract16;
+    fract16_t Lq_Fract16;
+    fract16_t Psi_Fract16;
 // #endif
 }
 FOC_DecouplingCoeff_T;
