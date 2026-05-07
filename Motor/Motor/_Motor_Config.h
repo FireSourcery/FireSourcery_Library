@@ -172,7 +172,7 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_Config_T * p_motor) { re
 /*  */
 // static inline uint16_t Motor_OpenLoopVLimit(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->OpenLoopLimitScalar_Fract16, Phase_VBus_GetVRef()); }
 // static inline int16_t Motor_OpenLoopVLimitOf(const Motor_Config_T * p_motor, int16_t vReq) { return math_clamp(vReq, (int32_t)0 - Motor_OpenLoopVLimit(p_motor), Motor_OpenLoopVLimit(p_motor)); }
-// static inline uint16_t Motor_GetVAlign(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->AlignScalar_Fract16, Phase_VBus_GetVRef()); }
+static inline uint16_t Motor_GetVAlign(const Motor_Config_T * p_motor, const VBus_T * p_vbus) { return fract16_mul(p_motor->AlignScalar_Fract16, VBus_Fract16(p_vbus)); }
 
 
 // static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return fract16_mul(Motor_GetSpeedRated_Fract16(p_config), FRACT16_2_DIV_SQRT3); }

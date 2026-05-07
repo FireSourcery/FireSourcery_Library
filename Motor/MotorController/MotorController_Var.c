@@ -139,7 +139,7 @@ void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_C
     {
         // case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
         // case MOT_VAR_CONFIG_RESV:
-        case MOT_VAR_MAIN_MODE:             p_state->Config.InitMode = (MotorController_MainMode_T)value;               break;
+        case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;               break;
         case MOT_VAR_INPUT_MODE:             p_state->Config.InputMode = (MotorController_InputMode_T)value;            break;
 
         // case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
