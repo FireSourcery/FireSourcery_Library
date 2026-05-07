@@ -71,13 +71,13 @@
     Release stays in ready mode.
 */
 /******************************************************************************/
-inline void Motor_ActivateControl(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
+inline void Motor_ActivateControl(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_PWM); }
 
-inline void Motor_ReleaseVZ(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z); }
+inline void Motor_ReleaseVZ(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_Z); }
 
-inline void Motor_ReleaseV0(const Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
+inline void Motor_ReleaseV0(Motor_T * p_motor) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, PHASE_VOUT_0); }
 
-inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, state); }
+inline void Motor_ApplyControlState(Motor_T * p_motor, Phase_VOutMode_T state) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_PHASE_OUTPUT, state); }
 
 
 /******************************************************************************/
@@ -104,7 +104,7 @@ inline void Motor_ApplyControlState(const Motor_T * p_motor, Phase_Output_T stat
     User set [FeedbackMode] without starting Run
     Using sync mode. activates the next pwm cycle
 */
-inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_T mode)
+inline void Motor_ApplyFeedbackMode(Motor_T * p_motor, Motor_FeedbackMode_T mode)
 {
     if (mode.Value != p_motor->P_MOTOR->FeedbackMode.Value) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FEEDBACK_MODE, mode.Value); }
 }
@@ -119,13 +119,13 @@ inline void Motor_ApplyFeedbackMode(const Motor_T * p_motor, Motor_FeedbackMode_
 /*
     Apply virtual
 */
-void Motor_ApplyVirtualDirection(const Motor_T * p_motor, Motor_Direction_T direction)
+void Motor_ApplyVirtualDirection(Motor_T * p_motor, Motor_Direction_T direction)
 {
     if (direction != p_motor->P_MOTOR->Direction) { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_DIRECTION, direction); }
 }
 
 /* calibrated positive or ccw */
-void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR->Config.DirectionForward * direction); }
+void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR->Config.DirectionForward * direction); }
 
 
 
@@ -134,7 +134,7 @@ void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T directi
    Disable control. non StateMachine checked
 */
 /******************************************************************************/
-void Motor_ForceDisableControl(const Motor_T * p_motor)
+void Motor_ForceDisableControl(Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_ReleaseVZ(p_motor);
@@ -186,7 +186,7 @@ static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t s
     Voltage Mode
 */
 /******************************************************************************/
-void Motor_StartVoltageMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
+void Motor_StartVoltageMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_VOLTAGE); }
 
 /*!
     @param[in] voltage [0:32767]
@@ -204,7 +204,7 @@ void Motor_SetVoltageCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) 
 */
 /******************************************************************************/
 /* Match to 0 torque on start */
-void Motor_StartIMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
+void Motor_StartIMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); }
 
 /*!
     @param[in] current [-32768:32767] as "Amps Fract16"
@@ -218,7 +218,7 @@ void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqu
 void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
 
 /* Call handles 0 cmd values. alternatively intervention state */
-void Motor_ApplyTorque0(const Motor_T * p_motor)
+void Motor_ApplyTorque0(Motor_T * p_motor)
 {
     Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
     _Motor_SetTorqueMotoringCmd(p_motor->P_MOTOR, 0);
@@ -255,7 +255,7 @@ void Motor_SetTorqueVCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) 
 /*!
     Default speed mode is speed with current loop
 */
-void Motor_StartSpeedMode(const Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
+void Motor_StartSpeedMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_SPEED_CURRENT); }
 
 /*!
     @param[in] speed [-32768:32767] - Rpm Fract16
@@ -368,7 +368,7 @@ Motor_DriveCmd_T;
     Specialized Sync input
 */
 /******************************************************************************/
-// void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input)
+// void Motor_ProcSyncInput(Motor_T * p_motor, Motor_Input_T * p_input)
 // {
 //     if (p_input->PhaseOutput != Motor_GetPhaseState(p_motor))
 //     {
@@ -396,7 +396,7 @@ Motor_DriveCmd_T;
 // }
 
 // /* units as FeedbackMode Set */
-// void Motor_ProcInputSetpoint(const Motor_T * p_motor, Motor_Input_T * p_input)
+// void Motor_ProcInputSetpoint(Motor_T * p_motor, Motor_Input_T * p_input)
 // {
 //     if (p_input->CmdValue != Motor_GetCmd(p_motor->P_MOTOR)) /* compare applicable to mixed units values */
 //     {

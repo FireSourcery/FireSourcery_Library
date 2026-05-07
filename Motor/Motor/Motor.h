@@ -99,6 +99,11 @@
 #define MOTOR_EXTERN_CONTROL_DISABLE
 #endif
 
+/* Caller define to largest used */
+#ifndef MOTOR_CALIBRATION_BUFFER_SIZE
+#define MOTOR_CALIBRATION_BUFFER_SIZE 128U
+#endif
+
 /******************************************************************************/
 /*
 */
@@ -192,18 +197,6 @@ typedef struct
     uint16_t  Ld_MicroHenries;  /* [uH]  d-axis inductance */
     uint16_t  Lq_MicroHenries;  /* [uH]  q-axis inductance */
     fract16_t Rs_Fract16;       /* Rs / (V_MAX_VOLTS / I_MAX_AMPS) as fract16 */
-
-#if defined(MOTOR_DECOUPLE_ENABLE)
-    /*
-        dq cross-coupling decoupling coefficients.
-        Applied as: omega_L = fract16_mul(ElectricalDelta_angle16, K_Fract16)
-        Tune K_ such that omega_L lands in the same fract16 voltage basis as the PI output.
-        Precomputed fract16 in-loop form of Ld / Lq / psi_f; recomputed at electrical-cal commit.
-    */
-    fract16_t KLd_Fract16;
-    fract16_t KLq_Fract16;
-    fract16_t KPsi_Fract16;
-#endif
 }
 Motor_ElectricalParams_T;
 
@@ -276,9 +269,12 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
+    Motor_ElectricalParams_T ElectricalParams; /* Motor Electrical Parameters. Can be updated with calibration. */
+    FOC_DecouplingCoeff_T Decoupling; /* optional for decoupling compensation. Requires Ld, Lq, and KPsi. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
+
 #if defined(MOTOR_SIX_STEP_ENABLE)
     Phase_Polar_Mode_T PhasePwmMode;     /* Only 1 nvm param for phase module. */
 #endif
@@ -289,10 +285,9 @@ Motor_Config_T;
 
 
 /*
-    Motor State - Runtime variable state.
+    Moto Runtime variable state.
     "Procedural composition over a passive aggregate." Cohesion of StateMachine NvmConfig
 */
-/* Motor_Runtime_T */
 typedef struct Motor_State
 {
     /*
@@ -305,7 +300,7 @@ typedef struct Motor_State
     Motor_Direction_T Direction;            /* Direction of applied/cmd V. Calibration correction applied on get/set access. DirectionMotoring. Applies to: Motoring/Generating Cmd Active Limits, Sensor Interpolation */
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
-    uint8_t CalibrationStateIndex;
+
 
     /*
         Position Sensor
@@ -340,6 +335,7 @@ typedef struct Motor_State
     // PID_T PidIPhase;         /* Align, or use getter */
     Ramp_T VRamp; /* Optional VRamp */
 
+    // Phase_Triplet_T VOut; /* output buffer */
 
     /* OpenLoop Preset, StartUp. No boundary checking */
     Ramp_T OpenLoopSpeedRamp;       /* Preset Speed Ramp */
@@ -356,11 +352,7 @@ typedef struct Motor_State
     */
     Motor_Config_T Config;
 
-    Accumulator_T FilterA;           /* Calibration use */
-    Accumulator_T FilterB;
-    Accumulator_T FilterC;
-
-
+    uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for calibration procedures. */
 
 #if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
     /*
@@ -374,6 +366,7 @@ typedef struct Motor_State
 #endif
     /* Jog */
     // uint32_t JogIndex;
+
 
     /*
         Six-Step
@@ -403,12 +396,12 @@ Motor_State_T;
 
 /*!
     @brief Motor Const Handle - Compile time const configuration instance.
-    program, meta, parameters. unrelated to end user config.
-    Context of Thread and StateMachine.
+    program, meta, unrelated to end user config.
+    Context for Thread and StateMachine.
 */
 /*
     const context dependency of StateMachine: PHASE, TIMER
-    alternatively, reduce StateMachine context, handle with pointer from state
+    alternatively, reduce StateMachine context to mutable only, handle with pointer from state
 */
 typedef const struct Motor
 {
@@ -443,11 +436,11 @@ static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 #endif
 }
 
-
-static inline const RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
-static inline const Angle_T * Motor_AngleSpeedState(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
-
+/* virtualized getters */
 static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
+static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
+static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
+
 
 
 
@@ -484,6 +477,7 @@ static inline ufract16_t Motor_GetSpeedLocalDerate(Motor_T * p_motor) { (void)p_
 /* Handle remaining comparison not handled by arbitration array */
 static inline ufract16_t Motor_GetIDerate(Motor_T * p_motor) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_I_LIMIT)); }
 static inline ufract16_t Motor_GetSpeedDerate(Motor_T * p_motor) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_SPEED_LIMIT)); }
+
 
 /*
     Virtual fields, user config frames
@@ -721,7 +715,7 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
     Layer 3: composes via p_motor->P_MOTOR to reach component structs.
 */
 /******************************************************************************/
-// extern void Motor_InitFrom(const Motor_T * p_dev, const Motor_Config_T * p_config);
+// extern void Motor_InitFrom(Motor_T * p_dev, const Motor_Config_T * p_config);
 extern void Motor_Init(Motor_T * p_dev);
 extern void Motor_Reset(Motor_State_T * p_motor);
 
@@ -774,4 +768,5 @@ extern void Motor_SetILimit_Scalar(Motor_State_T * p_motor, uint16_t scalar_ufra
 //     Motor_SetElAngleFeedforward(p_motor, angle * p_motor->Config.PolePairs);
 // }
 
-
+// static inline ufract16_t _Motor_GetIDerate(Motor_State_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
+// static inline ufract16_t _Motor_GetSpeedDerate(Motor_State_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_limits)); }

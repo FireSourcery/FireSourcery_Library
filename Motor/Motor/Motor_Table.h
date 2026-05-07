@@ -103,7 +103,7 @@ static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_table, Motor_SetCmdV
 /*
 */
 static inline void Motor_Table_ApplyFeedbackMode(Motor_Table_T * p_table, Motor_FeedbackMode_T mode) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyFeedbackMode(&p_table->P_DEVS[iMotor], mode); } }
-static inline void Motor_Table_ApplyControl(Motor_Table_T * p_table, Phase_Output_T state) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyControlState(&p_table->P_DEVS[iMotor], state); } }
+static inline void Motor_Table_ApplyControl(Motor_Table_T * p_table, Phase_VOutMode_T state) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyControlState(&p_table->P_DEVS[iMotor], state); } }
 static inline void Motor_Table_ApplyUserDirection(Motor_Table_T * p_table, int sign) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { Motor_ApplyUserDirection(&p_table->P_DEVS[iMotor], sign); } }
 
 /* on states */

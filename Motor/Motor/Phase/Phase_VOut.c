@@ -75,7 +75,7 @@ void Phase_Align_VScalar(Phase_VOut_T * p_phase, Phase_Id_T id, uint16_t scalar_
     Jog with prev State
 */
 /* valid after align output write only */
-Phase_Id_T Phase_ReadAlign(Phase_VOut_T * p_phase) { return _Phase_ReadDutyState(p_phase).Bits; }
+Phase_Id_T Phase_ReadAlign(Phase_VOut_T * p_phase) { return (Phase_Id_T)_Phase_ReadDutyAlign(p_phase).Bits; }
 Phase_Id_T Phase_ReadAlignNext(Phase_VOut_T * p_phase) { return Phase_NextOf(Phase_ReadAlign(p_phase)); }
 Phase_Id_T Phase_ReadAlignPrev(Phase_VOut_T * p_phase) { return Phase_PrevOf(Phase_ReadAlign(p_phase)); }
 

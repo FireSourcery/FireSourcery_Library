@@ -76,13 +76,18 @@ static void _Phase_ActivateInvertPolarityC(Phase_VOut_T * p_phase) { PWM_Disable
     2-Phase Polar PWM
 */
 /******************************************************************************/
-void Phase_Unipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { _Phase_WriteState(p_phase, phaseId); }
+void Phase_Unipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { _Phase_WriteGates(p_phase, phaseId); }
 
 /*
     Activate Duty Only
 */
 static inline void _Phase_Unipolar1_WriteDuty(const PWM_T * p_vDuty, const PWM_T * p_vGround, uint16_t duty) { PWM_WriteDuty(p_vDuty, duty); PWM_WriteDuty(p_vGround, 0U); }
-
+// void Phase_Unipolar1_ActivateDutyAC(Phase_VOut_T * p_phase, uint16_t duty){}
+// void Phase_Unipolar1_ActivateDutyBC(Phase_VOut_T * p_phase, uint16_t duty){}
+// void Phase_Unipolar1_ActivateDutyBA(Phase_VOut_T * p_phase, uint16_t duty){}
+// void Phase_Unipolar1_ActivateDutyCA(Phase_VOut_T * p_phase, uint16_t duty){}
+// void Phase_Unipolar1_ActivateDutyCB(Phase_VOut_T * p_phase, uint16_t duty){}
+// void Phase_Unipolar1_ActivateDutyAB(Phase_VOut_T * p_phase, uint16_t duty){}
 void Phase_Unipolar1_WriteDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, uint16_t duty)
 {
     switch (phaseId)
@@ -101,7 +106,7 @@ void Phase_Unipolar1_WriteDuty(Phase_VOut_T * p_phase, Phase_Polar_T phaseId, ui
 
 /******************************************************************************/
 /******************************************************************************/
-void Phase_Unipolar2_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { _Phase_WriteState(p_phase, phaseId); }
+void Phase_Unipolar2_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { _Phase_WriteGates(p_phase, phaseId); }
 
 /*
     PwmPositive = PwmPeriodTotal/2 + PwmScalar/2
@@ -151,7 +156,7 @@ static inline void _Phase_Bipolar_InvertPolarity(Phase_VOut_T * p_phase, Phase_P
     }
 }
 
-void Phase_Bipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { Phase_Deactivate(p_phase); _Phase_Bipolar_InvertPolarity(p_phase, phaseId);  _Phase_WriteState(p_phase, phaseId); }
+void Phase_Bipolar_ActivateOutput(Phase_VOut_T * p_phase, Phase_Polar_T phaseId) { Phase_Deactivate(p_phase); _Phase_Bipolar_InvertPolarity(p_phase, phaseId);  _Phase_WriteGates(p_phase, phaseId); }
 
 // void Phase_Bipolar_ActivateOutputAC(Phase_VOut_T * p_phase) { { Phase_Deactivate(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotB(p_phase); }
 // void Phase_Bipolar_ActivateOutputBC(Phase_VOut_T * p_phase) { { Phase_Deactivate(p_phase); _Phase_ActivateInvertPolarityC(p_phase); } _Phase_ActivateOutputNotA(p_phase); }

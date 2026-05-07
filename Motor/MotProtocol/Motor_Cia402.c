@@ -365,7 +365,7 @@ bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, con
 
 
 
-// bool Motor_Cia402_HandleCanRx(const Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// bool Motor_Cia402_HandleCanRx(Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 // {
 //     Cia402_Adapter_T * p_adapter = Motor_Cia402_Adapter((Motor_T *)p_motor);
 
@@ -403,7 +403,7 @@ bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, con
 
 
 // /* likely optimized over 2 virtual calls */
-// bool Motor_Cia402_HandleCanRx(const Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
+// bool Motor_Cia402_HandleCanRx(Motor_T * p_motor, const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 // {
 //     if (CIA402_COB_NODE(p_rx->CobId) != nodeId) { return false; }
 

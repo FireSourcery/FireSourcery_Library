@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include <stdint.h>
 #include <stdbool.h>
+#include "Math/motor_params_math.h"
 
 /******************************************************************************/
 /*
@@ -136,6 +137,21 @@ static inline accum32_t Motor_GetFluxLinkage_SpeedFract16(const Motor_Config_T *
 // static inline uint16_t _Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config) { return Motor_VFract16OfKv(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
 // static inline uint16_t Motor_GetVSpeedRated_Fract16(const Motor_Config_T * p_config, const VBus_Config_T * p_vbus) { (void)p_config; return VBus_VNominal_Fract16(p_vbus); }
 // static inline uint16_t Motor_GetSpeedVMatch_(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
+
+/******************************************************************************/
+/*
+    decoupling K's
+*/
+/******************************************************************************/
+
+static void Motor_ResolveDecouplingCoeffs(Motor_Config_T * p_config)
+{
+// #if defined(MOTOR_DECOUPLE_ENABLE)
+    p_config->Decoupling.KLd_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Ld_MicroHenries);
+    p_config->Decoupling.KLq_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Lq_MicroHenries);
+    p_config->Decoupling.KPsi_Fract16 = kpsi_fract16_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv);
+// #endif
+}
 
 /******************************************************************************/
 /*

@@ -84,7 +84,7 @@ typedef enum MotorController_Var_Input
     MOT_VAR_USER_GENERAL_SET_POINT,             // [-32768:32767]
     MOT_VAR_USER_GENERAL_DIRECTION,             // Collective Direction 1:Forward, -1:Reverse, 0:Neutral, different from Motor Stop
     MOT_VAR_USER_GENERAL_FEEDBACK_MODE,         //
-    MOT_VAR_USER_GENERAL_PHASE_OUTPUT,          // Output mode Float/Hold/VPwm. [Phase_Output_T]
+    MOT_VAR_USER_GENERAL_PHASE_OUTPUT,          // Output mode Float/Hold/VPwm. [Phase_VOutMode_T]
 
     // MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF,        // 1:Enable, 0:Disable
     // MOT_VAR_USER_OPT_I_LIMIT_ON_OFF,            // 1:Enable, 0:Disable

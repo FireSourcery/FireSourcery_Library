@@ -73,6 +73,7 @@ typedef union Phase_Bitmask
 Phase_Bitmask_T;
 
 static inline Phase_Bitmask_T Phase_Bitmask(Phase_Id_T id) { return (Phase_Bitmask_T) { .Bits = id }; }
+static inline Phase_Id_T Phase_IdOf(Phase_Bitmask_T id) { return (Phase_Id_T)id.Bits; }
 
 // static inline Phase_Id_T Phase_Of(int index) { return (index ^ (index >> 1U)); }
 // static inline int Phase_IndexOf(Phase_Id_T id) { return (id ^ (id >> 1U) ^ (id >> 2U)); }
@@ -209,6 +210,7 @@ static inline Phase_Bitmask_T Phase_BitmaskOfThreshold(Phase_Triplet_T values, i
     return (Phase_Bitmask_T) { .A = (values.A > threshold), .B = (values.B > threshold), .C = (values.C > threshold) };
 }
 
+/* -(int32_t)bool apply  */
 static inline Phase_Triplet_T _Phase_Mask(Phase_Bitmask_T bits, uint16_t value)
 {
     return (Phase_Triplet_T) { value & -(int32_t)bits.A, value & -(int32_t)bits.B, value & -(int32_t)bits.C, };

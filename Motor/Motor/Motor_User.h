@@ -45,7 +45,7 @@
     Inline Getters/Setters
 */
 /******************************************************************************/
-static inline Phase_Output_T Motor_GetPhaseState(const Motor_T * p_const) { return Phase_ReadOutputState(&p_const->PHASE); }
+static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
 /*! @return [-32767/2:32767/2] <=> [-1:1) */
 static inline accum32_t Motor_GetSpeed_Fract16(const Motor_State_T * p_motor) { return Motor_GetSpeedFeedback(p_motor) * p_motor->Config.DirectionForward; }
@@ -149,7 +149,7 @@ typedef struct Motor_InputData
     int16_t CmdValue;   /* [-32768:32767] */
     Motor_Direction_T Direction;
     Motor_FeedbackMode_T FeedbackMode;
-    Phase_Output_T PhaseOutput;
+    Phase_VOutMode_T PhaseOutput;
     /* optionally */
     uint16_t SpeedLimit;
     uint16_t ILimit;
@@ -164,27 +164,27 @@ Motor_Input_T;
     Extern
 */
 /******************************************************************************/
-extern void Motor_ActivateControl(const Motor_T * p_const);
-extern void Motor_ReleaseVZ(const Motor_T * p_const);
-extern void Motor_ReleaseV0(const Motor_T * p_const);
-extern void Motor_ApplyControlState(const Motor_T * p_const, Phase_Output_T state);
+extern void Motor_ActivateControl(Motor_T * p_const);
+extern void Motor_ReleaseVZ(Motor_T * p_const);
+extern void Motor_ReleaseV0(Motor_T * p_const);
+extern void Motor_ApplyControlState(Motor_T * p_const, Phase_VOutMode_T state);
 
-extern void Motor_Disable(const Motor_T * p_const);
-extern void Motor_Enable(const Motor_T * p_motor);
+extern void Motor_Disable(Motor_T * p_const);
+extern void Motor_Enable(Motor_T * p_motor);
 
-extern void Motor_ApplyFeedbackMode(const Motor_T * p_const, Motor_FeedbackMode_T mode);
+extern void Motor_ApplyFeedbackMode(Motor_T * p_const, Motor_FeedbackMode_T mode);
 
-extern void Motor_ApplyVirtualDirection(const Motor_T * p_const, Motor_Direction_T direction);
-extern void Motor_ApplyUserDirection(const Motor_T * p_motor, Motor_Direction_T sign);
-extern void Motor_ApplyDirectionForward(const Motor_T * p_const);
-extern void Motor_ApplyDirectionReverse(const Motor_T * p_const);
+extern void Motor_ApplyVirtualDirection(Motor_T * p_const, Motor_Direction_T direction);
+extern void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T sign);
+extern void Motor_ApplyDirectionForward(Motor_T * p_const);
+extern void Motor_ApplyDirectionReverse(Motor_T * p_const);
 
-extern void Motor_ForceDisableControl(const Motor_T * p_const);
+extern void Motor_ForceDisableControl(Motor_T * p_const);
 
-extern void Motor_StartVoltageMode(const Motor_T * p_const);
-extern void Motor_StartIMode(const Motor_T * p_const);
-extern void Motor_StartTorqueMode(const Motor_T * p_const);
-extern void Motor_StartSpeedMode(const Motor_T * p_const);
+extern void Motor_StartVoltageMode(Motor_T * p_const);
+extern void Motor_StartIMode(Motor_T * p_const);
+extern void Motor_StartTorqueMode(Motor_T * p_const);
+extern void Motor_StartSpeedMode(Motor_T * p_const);
 
 /*
     Ramp Values
@@ -197,7 +197,7 @@ extern void Motor_SetRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
 extern void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16);
 extern void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
 
-extern void Motor_ApplyTorque0(const Motor_T * p_motor);
+extern void Motor_ApplyTorque0(Motor_T * p_motor);
 
 extern void Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t torque);
 extern void Motor_SetTorqueCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
@@ -210,4 +210,4 @@ extern void Motor_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
 
 extern void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd);
 
-extern void Motor_ProcSyncInput(const Motor_T * p_motor, Motor_Input_T * p_input);
+extern void Motor_ProcSyncInput(Motor_T * p_motor, Motor_Input_T * p_input);

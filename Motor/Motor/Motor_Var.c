@@ -103,7 +103,7 @@ void _Motor_Var_UserControl_Set(Motor_T * p_motor, Motor_Var_UserControl_T varId
         /* todo cast enum bounds */
         case MOTOR_VAR_USER_DIRECTION:          Motor_ApplyUserDirection(p_motor, (Motor_Direction_T)varValue);         break;
         case MOTOR_VAR_USER_FEEDBACK_MODE:      Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));    break;
-        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);             break;
+        case MOTOR_VAR_USER_PHASE_OUTPUT:       Motor_ApplyControlState(p_motor, (Phase_VOutMode_T)varValue);             break;
         /* if local user Set user index */
         // case MOTOR_VAR_USER_SPEED_LIMIT:         Motor_TrySpeedLimit(p_motor->P_MOTOR, varValue);                  break;
         // case MOTOR_VAR_USER_I_LIMIT_MOTORING:    Motor_TryILimit(p_motor->P_MOTOR, varValue);                      break;
@@ -149,7 +149,7 @@ void _Motor_Var_OpenLoopCmd_Call(Motor_T * p_motor, Motor_Var_OpenLoopCmd_T varI
     {
 
         case MOTOR_VAR_OPEN_LOOP_ENTER:         Motor_OpenLoop_Enter(p_motor);                                      break;
-        case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
+        case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_VOutMode_T)varValue);   break;
         // case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
         case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;
@@ -166,8 +166,8 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
         case MOTOR_VAR_CALIBRATION_ENTER:               Motor_Calibration_Enter(p_motor);       break;
         case MOTOR_VAR_CALIBRATION_CMD_ADC:             Motor_Analog_Calibrate(p_motor);        break;
         case MOTOR_VAR_CALIBRATION_CMD_VIRTUAL_HOME:    Motor_Calibration_StartHome(p_motor);   break;
-        // case MOTOR_VAR_CALIBRATION_ENTER_TUNING:        break;
-        // case MOTOR_VAR_CALIBRATION_ENTER_TUNING:        Motor_Calibration_EnterTuning(p_motor); break;
+        case MOTOR_VAR_CALIBRATION_CMD_ELECTRICAL:      Motor_Calibration_StartElectrical(p_motor);   break;
+        // case MOTOR_VAR_CALIBRATION_CMD_PID_TUNING:      Motor_Calibration_StartPidTuning(p_motor);    break;
     }
 }
 

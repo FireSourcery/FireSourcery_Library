@@ -173,6 +173,7 @@ static inline void Shifter_Poll(Shifter_T * p_shifter)
     UserDIn_Modal_PollEdgeValue(&p_shifter->NEUTRAL_DIN);
 #endif
 }
+
 static inline Shifter_Pins_T Shifter_GetPins(Shifter_T * p_shifter)
 {
     Shifter_Pins_T pins =

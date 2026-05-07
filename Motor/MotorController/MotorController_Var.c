@@ -72,7 +72,7 @@ void MotorController_Var_Input_Set(MotorController_T * p_dev, MotorController_Va
         case MOT_VAR_USER_GENERAL_SET_POINT:        MotorController_SetCmdValue(p_dev, (int16_t)value);                                            break;
         case MOT_VAR_USER_GENERAL_FEEDBACK_MODE:    MotorController_SetFeedbackMode(p_dev, (Motor_FeedbackMode_T) { .Value = (uint8_t)value });    break;
         case MOT_VAR_USER_GENERAL_DIRECTION:        MotorController_SetDirection(p_dev, (int16_t)value);                                            break;
-        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_Output_T)value);                                 break;
+        case MOT_VAR_USER_GENERAL_PHASE_OUTPUT:     MotorController_SetControlState(p_dev, (Phase_VOutMode_T)value);                                 break;
 
         // case MOT_VAR_USER_OPT_SPEED_LIMIT_ON_OFF:   MotorController_SetOptSpeedLimitOnOff(p_dev, (bool)value);        break;
         // case MOT_VAR_USER_OPT_I_LIMIT_ON_OFF:       MotorController_SetOptILimitOnOff(p_dev, (bool)value);            break;

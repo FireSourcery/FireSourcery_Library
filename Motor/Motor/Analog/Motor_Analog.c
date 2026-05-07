@@ -30,24 +30,46 @@
 #include "Motor_Analog.h"
 #include "../Motor_StateMachine.h"
 
+
+typedef struct CalibrationBuffer
+{
+    Accumulator_T FilterA;
+    Accumulator_T FilterB;
+    Accumulator_T FilterC;
+}
+CalibrationBuffer_T;
+
+static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE, "CalibrationBuffer_T must fit within MOTOR_CALIBRATION_BUFFER_SIZE");
+
+/* allow adc module callback to skip storing raw value */
+/* Phase_Input_Get Fract16 performed with 0 as zero reference */
+static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY)); }
+
+static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
+
+static Accumulator_T * GetFilterA(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterA; }
+static Accumulator_T * GetFilterB(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterB; }
+static Accumulator_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterC; }
+
 /******************************************************************************/
 /*!
     @brief Calibration Routine via Motor_T StateMachine
 */
 /******************************************************************************/
-static void StartCalibration(const Motor_T * p_motor)
+static void StartCalibration(Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
+    *p_buffer = (CalibrationBuffer_T){ 0 };
 
-    // Timer_StartPeriod_Millis(&p_fields->ControlTimer, 2000U); /* 2 Seconds */
-    TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, 40000U); /* 2 Seconds */
+    TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(2000U));
 
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
     Phase_ActivateOutput(&p_motor->PHASE);
 
-    Accumulator_Init(&p_fields->FilterA);
-    Accumulator_Init(&p_fields->FilterB);
-    Accumulator_Init(&p_fields->FilterC);
+    Accumulator_Init(GetFilterA(p_motor));
+    Accumulator_Init(GetFilterB(p_motor));
+    Accumulator_Init(GetFilterC(p_motor));
     p_fields->Config.IabcZeroRef_Adcu.A = 0U;
     p_fields->Config.IabcZeroRef_Adcu.B = 0U;
     p_fields->Config.IabcZeroRef_Adcu.C = 0U;
@@ -55,35 +77,34 @@ static void StartCalibration(const Motor_T * p_motor)
     Motor_Analog_MarkIabc(p_motor);
 }
 
-/* allow adc module callback to skip storing raw value */
-/* Phase_Input_Get Fract16 performed with 0 as zero reference */
-static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY)); }
 
-static void ProcCalibration(const Motor_T * p_motor)
+static void ProcCalibration(Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
 
     if (p_fields->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
     {
-        Accumulator_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
-        Accumulator_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
-        Accumulator_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
+        Accumulator_Avg(GetFilterA(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.A));
+        Accumulator_Avg(GetFilterB(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.B));
+        Accumulator_Avg(GetFilterC(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.C));
         p_fields->PhaseInput.I.Flags.Bits = PHASE_ID_0;
         Motor_Analog_MarkIabc(p_motor);
     }
 }
 
-static State_T * EndCalibration(const Motor_T * p_motor)
+static State_T * EndCalibration(Motor_T * p_motor)
 {
     Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
 
     State_T * p_nextState = NULL;
 
     if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
-        p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(&p_fields->FilterA, AdcuOf(Phase_Input_GetIa_Fract16(&p_fields->PhaseInput)));
-        p_fields->Config.IabcZeroRef_Adcu.B = Accumulator_Avg(&p_fields->FilterB, AdcuOf(Phase_Input_GetIb_Fract16(&p_fields->PhaseInput)));
-        p_fields->Config.IabcZeroRef_Adcu.C = Accumulator_Avg(&p_fields->FilterC, AdcuOf(Phase_Input_GetIc_Fract16(&p_fields->PhaseInput)));
+        p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(GetFilterA(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.A));
+        p_fields->Config.IabcZeroRef_Adcu.B = Accumulator_Avg(GetFilterB(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.B));
+        p_fields->Config.IabcZeroRef_Adcu.C = Accumulator_Avg(GetFilterC(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.C));
         Phase_Deactivate(&p_motor->PHASE);
         p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }
@@ -103,9 +124,9 @@ static const State_T CALIBRATION_STATE =
     .NEXT       = (State_Input0_T)EndCalibration,
 };
 
-static State_T * Calibration_Start(const Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE; }
+static State_T * Calibration_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE; }
 
-void Motor_Analog_Calibrate(const Motor_T * p_motor)
+void Motor_Analog_Calibrate(Motor_T * p_motor)
 {
     // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE);
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_Start };

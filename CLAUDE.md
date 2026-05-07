@@ -9,7 +9,7 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
-### Demand Elegance (Balanced)
+### Demand Elegance
 - For non-trivial changes: pause and ask "is there a more elegant way?"
 - If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
 - Skip this for simple, obvious fixes – don't over-engineer
@@ -66,8 +66,9 @@
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
-- Keep functions declarative. Favor less local variables, particularly in cases that do not impact optimization.
--
+- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
+- **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
+
 ## API Design
 - **Minimize forwarders.** When a wrapper function is a single-line pass-through to a peer module (`Outer_Foo(p) { return Inner_Foo(&p->inner); }`), it duplicates API surface without adding value. Prefer:
   - **Free-function bridges** (`SubjectPrimary_Collaborator_Verb`) — no wrapper type — when coordination surface is small (≤ ~5 functions) and peers are public vocabulary. Precedent: C stdlib (`fprintf`, `memcpy`).

@@ -245,7 +245,7 @@ static void Passive_Proc(Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
-    switch (Phase_ReadOutputState(&p_motor->PHASE))
+    switch (Phase_ReadVOut(&p_motor->PHASE))
     {
         case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }    break;
             // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
@@ -257,7 +257,7 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
 {
     State_T * p_nextState = NULL;
 
-    switch ((Phase_Output_T)phaseOutput)
+    switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
             if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }
@@ -381,7 +381,7 @@ static State_T * Run_InputRelease(Motor_T * p_motor)
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
 static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
-    switch ((Phase_Output_T)phaseOutput)
+    switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:      return Run_InputRelease(p_motor);
         case PHASE_VOUT_0:      return Run_InputRelease(p_motor);
@@ -488,7 +488,7 @@ static inline State_T * Intervention_InputResume(Motor_T * p_motor)
 */
 static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
-    switch ((Phase_Output_T)phaseOutput)
+    switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
         case PHASE_VOUT_0:
@@ -544,7 +544,7 @@ static void OpenLoop_Proc(Motor_T * p_motor) { (void)p_motor; }
 /* No resume from OpenLoop, freewheel state check stop */
 static State_T * OpenLoop_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
-    switch ((Phase_Output_T)phaseOutput)
+    switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:      return &MOTOR_STATE_PASSIVE;
         case PHASE_VOUT_0:      return &MOTOR_STATE_PASSIVE;
@@ -619,16 +619,19 @@ static void Calibration_Entry(Motor_T * p_motor)
 {
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Disabled or Substates */
     p_motor->P_MOTOR->ControlTimerBase = 0U;
-    p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+    // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
 
-static void Calibration_Proc(Motor_T * p_motor) { (void)p_motor; }
+static void Calibration_Proc(Motor_T * p_motor)
+{
+    // p_motor->P_MOTOR->CalibrationTimer++;
+}
 
 
-/* Calibration State Exit with Direction == 0 and InputCalibration(DISABLED) */
+/* Calibration State and InputCalibration(DISABLED) */
 static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
-    switch ((Phase_Output_T)phaseOutput)
+    switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:     Phase_Deactivate(&p_motor->PHASE); break;
         case PHASE_VOUT_0:     Phase_ActivateV0(&p_motor->PHASE); break;

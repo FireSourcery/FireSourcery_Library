@@ -16,6 +16,8 @@ Module_State_T       — mutable runtime.
         object - has invariant interface
 
 Module_State_T       — switch() to determine processing. either as StateMachine module State_T or enum id
+Stage - Substate
+
 Module_Status_T      — Enum return
 Module_Flags_T       — Bitfield status/control
 Module_Config_T      — Persistent parameters (NVM-storable)

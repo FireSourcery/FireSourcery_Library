@@ -87,6 +87,8 @@ extern void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fra
 extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
 extern void Motor_FOC_ProcTorqueReq(Motor_State_T * p_motor, fract16_t qReq);
 
+void Motor_FOC_ProcAngleAlignOf(Motor_State_T * p_motor, angle16_t angle, fract16_t idReq);
+
 extern void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
 

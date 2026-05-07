@@ -44,6 +44,7 @@ static inline void MotorController_CallSpeedLimitPin(MotorController_T * p_dev, 
         default: break;
     };
 }
+
 static inline void MotorController_CallILimitPin(MotorController_T * p_dev, UserDIn_Edge_T edge)
 {
     switch (edge)
@@ -53,7 +54,6 @@ static inline void MotorController_CallILimitPin(MotorController_T * p_dev, User
         default: break;
     };
 }
-
 
 static inline UserDIn_Fn_T _MotorController_OptDinFn(MotorController_OptDinMode_T mode)
 {

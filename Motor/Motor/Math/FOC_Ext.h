@@ -91,6 +91,13 @@ static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_inp
 static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Triplet_T) { .A = p_foc->Va, .B = p_foc->Vb, .C = p_foc->Vc, }; }
 
 
+static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
+{
+    struct foc_abc vOut = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    return (Phase_Triplet_T) { .A = vOut.a, .B = vOut.b, .C = vOut.c, };
+}
+
+
 
 /******************************************************************************/
 /*!

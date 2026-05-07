@@ -67,6 +67,8 @@ Motor_Calibration_StateId_T;
 extern void Motor_Calibration_StartHome(Motor_T * p_motor);
 extern void Motor_Calibration_EnterTuning(Motor_T * p_motor);
 extern bool Motor_Calibration_IsTuning(Motor_T * p_motor);
+
+/* Extern here for now */
 extern void Motor_Calibration_StartElectrical(Motor_T * p_motor);
 extern bool Motor_Calibration_IsElectrical(Motor_T * p_motor);
 
@@ -115,8 +117,8 @@ typedef struct Motor_Tuning_Capture
 Motor_Tuning_Capture_T;
 
 extern void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor);
-extern void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, const Motor_Tuning_Config_T * p_config);
+extern void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config);
 extern void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor);
 extern bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor);
-extern const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor);
+extern Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor);
 

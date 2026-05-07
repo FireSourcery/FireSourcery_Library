@@ -37,8 +37,9 @@
 /******************************************************************************/
 static void AngleAlign_Entry(Motor_T * p_motor)
 {
-    Phase_ActivateT0(&p_motor->PHASE);
-    Motor_FOC_StartAlignCmd(p_motor->P_MOTOR); // using commutation mode
+    Phase_ActivateV0(&p_motor->PHASE);
+    // Motor_FOC_SetAlignCmdAngle(p_motor->P_MOTOR, 0);
+    Motor_FOC_StartAlignCmd(p_motor->P_MOTOR);
 }
 
 static void AngleAlign_Loop(Motor_T * p_motor)
@@ -163,7 +164,7 @@ static Motor_Tuning_Capture_T s_TuningCapture;
 static const Motor_State_T *  sp_TuningOwner;
 static uint32_t               s_TuningTick;
 
-static int16_t Excite_Eval(const Motor_Tuning_Config_T * p_cfg, uint32_t tick)
+static int16_t Excite_Eval(Motor_Tuning_Config_T * p_cfg, uint32_t tick)
 {
     switch (p_cfg->Shape)
     {
@@ -229,7 +230,7 @@ static void AutoTuning_Proc(Motor_T * p_motor)
 // static State_T * Tuning_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 // {
 //     State_T * p_nextState = NULL;
-//     switch ((Phase_Output_T)phaseOutput)
+//     switch ((Phase_VOutMode_T)phaseOutput)
 //     {
 //         // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
 //         case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
@@ -271,7 +272,7 @@ void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor)
     Arm an excite + capture run. No-op if motor isn't currently in TUNING.
     Re-arming during a run resets the capture buffer and tick counter.
 */
-void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, const Motor_Tuning_Config_T * p_config)
+void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config)
 {
     if (Motor_Calibration_IsTuning(p_motor) == false) { return; }
     s_TuningConfig = *p_config;
@@ -294,7 +295,7 @@ bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor)
     return (sp_TuningOwner == p_motor->P_MOTOR) && s_TuningCapture.Full;
 }
 
-const Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor)
+Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor)
 {
     return (sp_TuningOwner == p_motor->P_MOTOR) ? &s_TuningCapture : NULL;
 }
@@ -312,7 +313,7 @@ static void Homing_Entry(Motor_T * p_motor)
 {
     // for now
     p_motor->P_MOTOR->ControlTimerBase = 0U;
-    p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+    // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
     p_motor->P_MOTOR->FeedbackMode.Current = 0U;
 
     // Phase_ActivateV0(&p_motor->PHASE);

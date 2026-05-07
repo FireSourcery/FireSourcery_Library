@@ -47,13 +47,13 @@
 //     uint8_t Forward  : 1;
 // }
 // Motor_QuadrantSign_T;
-// // typedef union Motor_Quadrant
-// // {
-// //     struct { uint8_t Forward : 1; uint8_t Motoring : 1; }  ;
-// //     struct { uint8_t SpeedNeg : 1; uint8_t TorqueNeg : 1; }  ;
-// //     uint8_t Bits : 2;
-// // }
-// // Motor_Quadrant_T;
+// typedef union Motor_Quadrant
+// {
+//     struct { uint8_t Forward : 1; uint8_t Motoring : 1; }  ;
+//     struct { uint8_t SpeedNeg : 1; uint8_t TorqueNeg : 1; }  ;
+//     uint8_t Bits : 2;
+// }
+// Motor_Quadrant_T;
 
 // // typedef union Motor_Quadrant
 // // {

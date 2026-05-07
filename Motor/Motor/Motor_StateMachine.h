@@ -85,7 +85,7 @@ extern const State_T MOTOR_STATE_FAULT;
 typedef enum Motor_StateInput
 {
     MOTOR_STATE_INPUT_FAULT,            /* Toggle Fault */
-    MOTOR_STATE_INPUT_PHASE_OUTPUT,     /* [Phase_Output_T] Map to Run/Release */
+    MOTOR_STATE_INPUT_PHASE_OUTPUT,     /* [Phase_VOutMode_T] Map to Run/Release */
     MOTOR_STATE_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T]  */
     MOTOR_STATE_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MOTOR_STATE_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
@@ -106,7 +106,7 @@ typedef enum Motor_StateAction
 Motor_StateAction_T;
 
 /*
-    [Phase_Output_T]
+    [Phase_VOutMode_T]
     VZ/V0 -> Release
     VPWM -> Run
 */

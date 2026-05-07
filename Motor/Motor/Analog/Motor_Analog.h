@@ -65,7 +65,7 @@ static inline void _Motor_Analog_Thread(Motor_T * p_dev)
 {
     // RotorSensor_MarkAnalog(&p_dev->Sensor);
     /* foc return on first 1. alternatively handle per phase */
-    if (_Phase_ReadState(&p_dev->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_dev); }
+    if (_Phase_ReadGates(&p_dev->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_dev); }
     else { Motor_Analog_MarkVabc(p_dev); }
 }
 

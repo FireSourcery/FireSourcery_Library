@@ -78,14 +78,16 @@ PWM_T;
 /******************************************************************************/
 /* where PWM_DUTY_MAX is 100% duty */
 static inline uint32_t _PWM_DutyTicksOf(const PWM_T * p_pwm, uint32_t duty) { return p_pwm->PERIOD_TICKS * duty / PWM_DUTY_MAX; }
+static inline uint32_t _PWM_DutyOf(const PWM_T * p_pwm, uint32_t ticks) { return PWM_DUTY_MAX * ticks / p_pwm->PERIOD_TICKS; }
 static inline uint32_t _PWM_TicksOfPercent16(const PWM_T * p_pwm, uint16_t percent16) { return p_pwm->PERIOD_TICKS * percent16 >> 16U; }
 static inline uint32_t _PWM_TicksOfFract16(const PWM_T * p_pwm, uint16_t fract16) { return p_pwm->PERIOD_TICKS * fract16 >> 15U; }
 
 /*
     Actuate arguments immediately, unless use sync is enabled
 */
-static inline uint32_t PWM_ReadDuty_Ticks(const PWM_T * p_pwm) { return HAL_PWM_ReadDuty(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID); }
 static inline void PWM_WriteDuty_Ticks(const PWM_T * p_pwm, uint32_t duty_Ticks) { HAL_PWM_WriteDuty(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID, duty_Ticks); }
+static inline uint32_t PWM_ReadDuty_Ticks(const PWM_T * p_pwm) { return HAL_PWM_ReadDuty(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID); }
+
 
 static inline void PWM_WriteDuty_Percent16(const PWM_T * p_pwm, uint16_t percent16)   { PWM_WriteDuty_Ticks(p_pwm, _PWM_TicksOfPercent16(p_pwm, percent16)); }
 static inline void PWM_WriteDuty_Fract16(const PWM_T * p_pwm, uint16_t fract16)       { PWM_WriteDuty_Ticks(p_pwm, _PWM_TicksOfFract16(p_pwm, fract16)); }
@@ -96,6 +98,8 @@ static inline void PWM_WriteDuty_Fract16(const PWM_T * p_pwm, uint16_t fract16) 
 static inline void PWM_WriteDuty(const PWM_T * p_pwm, uint32_t duty)           { PWM_WriteDuty_Ticks(p_pwm, _PWM_DutyTicksOf(p_pwm, duty)); }
 static inline void PWM_WriteDutyMidPlus(const PWM_T * p_pwm, uint32_t duty)    { PWM_WriteDuty_Ticks(p_pwm, (p_pwm->PERIOD_TICKS + _PWM_DutyTicksOf(p_pwm, duty)) / 2U); }
 static inline void PWM_WriteDutyMidMinus(const PWM_T * p_pwm, uint32_t duty)   { PWM_WriteDuty_Ticks(p_pwm, (p_pwm->PERIOD_TICKS - _PWM_DutyTicksOf(p_pwm, duty)) / 2U); }
+
+static inline uint32_t PWM_ReadDuty(const PWM_T * p_pwm) { return _PWM_DutyOf(p_pwm, HAL_PWM_ReadDuty(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID)); }
 
 static inline void PWM_Enable(const PWM_T * p_pwm)                  { HAL_PWM_EnableOutput(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID); }
 static inline void PWM_Disable(const PWM_T * p_pwm)                 { HAL_PWM_DisableOutput(p_pwm->P_HAL_PWM, p_pwm->CHANNEL_ID); }

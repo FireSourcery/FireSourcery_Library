@@ -49,7 +49,6 @@ typedef const struct Phase_Calibration
     volatile uint16_t I_RATED_PEAK_FRACT16;
 }
 Phase_Calibration_T;
-//todo volatile in getter instead
 
 /* Define in Main App */
 /* run-time overwrite or compile time def. */

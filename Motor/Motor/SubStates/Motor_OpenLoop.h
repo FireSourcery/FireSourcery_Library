@@ -45,7 +45,7 @@ static void Motor_OpenLoop_EnterBranch(Motor_T * p_motor, State_T * p_subState) 
     Extern
 */
 /* Activate */
-extern void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_Output_T state);
+extern void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_VOutMode_T state);
 extern void Motor_OpenLoop_SetPhaseAlign(Motor_T * p_motor, Phase_Id_T align);
 extern void Motor_OpenLoop_SetAngleAlign(Motor_T * p_motor, angle16_t angle);
 extern void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction);
@@ -104,7 +104,7 @@ static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Sta
 //     switch (varId)
 //     {
 //         case MOTOR_VAR_OPEN_LOOP_ENTER:         Motor_OpenLoop_Enter(p_motor);                                      break;
-//         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_Output_T)varValue);   break;
+//         case MOTOR_VAR_OPEN_LOOP_PHASE_OUTPUT:  Motor_OpenLoop_SetPhaseOutput(p_motor, (Phase_VOutMode_T)varValue);   break;
 //         case MOTOR_VAR_OPEN_LOOP_PHASE_ALIGN:   Motor_OpenLoop_SetPhaseAlign(p_motor, (Phase_Id_T)varValue);        break;
 //         case MOTOR_VAR_OPEN_LOOP_ANGLE_ALIGN:   Motor_OpenLoop_SetAngleAlign(p_motor, varValue);                    break;
 //         case MOTOR_VAR_OPEN_LOOP_JOG:           Motor_OpenLoop_SetJog(p_motor, varValue);                           break;

@@ -65,10 +65,10 @@ static inline int32_t accumulator(int32_t rate, int32_t min, int32_t max, int32_
     return math_clamp(state + (rate * input), min, max);
 }
 
-static inline int32_t accumulator_target(int32_t rate, int32_t min, int32_t max, int32_t state, int32_t target32)
-{
-    return accumulator(rate, min, max, state, math_sign(target32 - state));
-}
+// static inline int32_t accumulator_direction(int32_t rate, int32_t min, int32_t max, int32_t state, int32_t target32)
+// {
+//     return accumulator(rate, min, max, state, math_sign(target32 - state));
+// }
 
 
 /******************************************************************************/
@@ -125,15 +125,17 @@ static inline int32_t Accumulator_Step(Accumulator_T * p_accum, int16_t input)
 */
 static inline int32_t Accumulator_Ramp(Accumulator_T * p_accum, int32_t target)
 {
-    int32_t targetAccum = target << p_accum->Shift;
+    int32_t targetAccum = math_clamp(target << p_accum->Shift, p_accum->LimitLower, p_accum->LimitUpper);
     int32_t error = targetAccum - p_accum->Accumulator;
     p_accum->Accumulator = (math_abs(error) <= (uint32_t)p_accum->Coefficient) ? targetAccum : (p_accum->Accumulator + math_sign(error) * (int32_t)p_accum->Coefficient);
     return Accumulator_Output(p_accum);
 }
-// static inline int32_t Accumulator_Ramp_Signed(Accumulator_T * p_accum, int32_t target)
+
+// static inline int32_t Accumulator_LimitOnInput(Accumulator_T * p_accum, int32_t target)
 // {
-//     int32_t error = (target << p_accum->Shift) - p_accum->Accumulator;
-//     int32_t step = math_clamp((int32_t)math_sign(error) * p_accum->Coefficient, -math_abs(error), math_abs(error));
+//     int32_t targetAccum = math_clamp(target << p_accum->Shift, p_accum->LimitLower, p_accum->LimitUpper);
+//     int32_t error = targetAccum - p_accum->Accumulator;
+
 //     p_accum->Accumulator = math_clamp(p_accum->Accumulator + step, p_accum->LimitLower, p_accum->LimitUpper);
 // }
 

@@ -47,21 +47,16 @@
     Kv — Speed / Voltage
         Kv [RPM/V]: rpm = Kv × V
         The "unit" of Kv is integer RPM per Volt stored as uint16_t.
-
-    Factor precomputation:
-        kv_rpm_per_unit(kv, v_max) — max RPM at full-scale V (the denominator for fract16)
-        rpm_of_kv_fract16   = fract16_mul(v_fract16,  kv_rpm_per_unit)
-        v_fract16_of_kv_rpm = fract16_div(rpm,         kv_rpm_per_unit)
 */
 /******************************************************************************/
 /* Precomputed factor: RPM at full-scale voltage — use as denominator. */
-static inline int32_t kv_rpm_per_unit(uint16_t kv, uint16_t v_max_volts) { return (int32_t)kv * v_max_volts; }
+static inline int32_t kv_rpm_per_unit(uint16_t v_max_volts, uint16_t kv) { return (int32_t)kv * v_max_volts; }
 
 /* rpm_of_kv: Speed [RPM] = Kv × V.  v_fract16 in [0, FRACT16_MAX]. */
-static inline int32_t rpm_of_kv_fract16(uint16_t kv, uint16_t v_max_volts, int16_t v_fract16) { return fract16_mul(v_fract16, kv_rpm_per_unit(kv, v_max_volts)); }
+static inline int32_t rpm_of_kv_vfract16(uint16_t v_max_volts, uint16_t kv, int16_t v_fract16) { return fract16_mul(v_fract16, kv_rpm_per_unit(kv, v_max_volts)); }
 
 /* v_fract16_of_kv_rpm: V_fract16 = Speed / Kv.  rpm in [0, kv × v_max]. */
-static inline int32_t v_fract16_of_kv_rpm(uint16_t kv, uint16_t v_max_volts, int32_t rpm) { return fract16_div(rpm, kv_rpm_per_unit(kv, v_max_volts)); }
+static inline int32_t vfract16_of_kv_rpm(uint16_t v_max_volts, uint16_t kv, int32_t rpm) { return fract16_div(rpm, kv_rpm_per_unit(kv, v_max_volts)); }
 
 /******************************************************************************/
 /*!
@@ -85,8 +80,31 @@ static inline int32_t v_fract16_of_kv_rpm(uint16_t kv, uint16_t v_max_volts, int
 static inline int32_t ke_speed_fract16(int16_t v_nominal_fract16, int16_t speed_rated_fract16_val) { return fract16_div(v_nominal_fract16, speed_rated_fract16_val); }
 
 /* Ke in rad/s domain, normalized to V_max. Uses 64-bit intermediate to avoid overflow. */
-static inline int32_t ke_rads_fract16(uint16_t kv, uint16_t v_max_volts) { return (int64_t)60 * FRACT16_MAX * FRACT16_MAX / ((int64_t)2 * FRACT16_PI * kv * v_max_volts); }
+static inline int32_t ke_rads_fract16(uint16_t v_max_volts, uint16_t kv) { return (int64_t)60 * FRACT16_MAX * FRACT16_MAX / ((int64_t)2 * FRACT16_PI * kv * v_max_volts); }
 
+/* Ke_SI in millivolts per rad/s from Kv [RPM/V]: Ke_SI = 60000 / (2π × Kv) [mV/(rad/s)]. */
+static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return (kv > 0U) ? (60000U * FRACT16_MAX / (2U * FRACT16_PI * kv)) : 0U; }
+
+
+/******************************************************************************/
+/*!
+    Rs — Stator Resistance Normalization
+        R_ref = V_max / I_max     [Ω per full-scale unit]
+        Rs_fract16 = Rs [Ω] / R_ref = Rs × I_max × FRACT16_MAX / V_max
+                   = Rs_mOhm × I_max × FRACT16_MAX / (V_max × 1000)
+
+        Rs_fract16 is the normalized resistance used directly in PI feedforward:
+            V_fract16 = fract16_mul(Rs_fract16, I_fract16)
+*/
+/******************************************************************************/
+/* Rs_fract16 from measured resistance in milliohms. */
+static inline fract16_t rs_fract16_of_mohms(uint16_t v_max_volts, uint16_t i_max_amps, uint16_t rs_mOhm) { return (fract16_t)math_min((uint32_t)(((uint64_t)rs_mOhm * i_max_amps * FRACT16_MAX) / ((uint32_t)v_max_volts * 1000U)), (uint32_t)FRACT16_MAX); }
+
+/* Rs back to milliohms from stored fract16 value. */
+static inline uint32_t rs_mohms_of_fract16(uint16_t v_max_volts, uint16_t i_max_amps, fract16_t rs_fract16) { return ((uint32_t)rs_fract16 * v_max_volts * 1000U) / ((uint32_t)i_max_amps * FRACT16_MAX); }
+
+/* Rs_Fract16 = Vd_Fract16 / Id_Fract16 (normalized by R_REF = V_MAX/I_MAX). */
+static inline fract16_t rs_fract16(int32_t vd_fract16, int32_t id_fract16) { return (fract16_t)math_clamp(fract16_div(vd_fract16, id_fract16), 0, FRACT16_MAX); }
 
 
 /******************************************************************************/
@@ -107,27 +125,17 @@ static inline int32_t ke_rads_fract16(uint16_t kv, uint16_t v_max_volts) { retur
         L from HFI:               L_uH = V_hf / (2π × f_hf × I_hf) × 1e6
 */
 /******************************************************************************/
-/* KL_fract16 from inductance in µH.
-   KL = π × L_uH × 1e-6 × I_max × Fs / V_max  = π×10^6 × L_uH × I_max × Fs / (V_max × 10^12) */
-static inline fract16_t kl_fract16_of_uh(uint16_t l_uH, uint16_t v_max_volts, uint16_t i_max_amps, uint32_t polling_freq)
-{
-    if (v_max_volts == 0U) { return 0; }
-    uint64_t num = (uint64_t)3141593ULL * l_uH * i_max_amps * polling_freq;
-    uint64_t den = (uint64_t)v_max_volts * 1000000ULL * 1000000ULL;
-    return (fract16_t)math_min((uint32_t)(num / den), (uint32_t)FRACT16_MAX);
-}
 
 /* L_uH from RL time-constant τ [control cycles]: L = Rs × τ  →  uH = mOhm × cycles × 1000 / Fs. */
-static inline uint16_t l_uh_of_rs_tau(uint16_t rs_mOhm, uint32_t tau_cycles, uint32_t polling_freq)
+static inline uint16_t l_uh_of_rs_tau(uint32_t polling_freq, uint16_t rs_mOhm, uint32_t tau_cycles)
 {
     if (polling_freq == 0U) { return 0U; }
     uint32_t uH = ((uint32_t)rs_mOhm * tau_cycles * 1000U) / polling_freq;
     return (uint16_t)math_min(uH, (uint32_t)UINT16_MAX);
 }
 
-/* L_uH from high-frequency injection: L = V_hf / (2π × f_hf × I_hf).
-   vhf_fract16, iq_amp_fract16 are normalized to [V_max, I_max] respectively. */
-static inline uint16_t l_uh_of_hfi(uint16_t vhf_fract16, uint32_t iq_amp_fract16, uint32_t hf_freq, uint16_t v_max_volts, uint16_t i_max_amps)
+/* L_uH from high-frequency injection: L = V_hf / (2π × f_hf × I_hf). vhf_fract16, iq_amp_fract16 are normalized to [V_max, I_max] respectively. */
+static inline uint16_t l_uh_of_hfi(uint16_t v_max_volts, uint16_t i_max_amps, uint32_t hf_freq, uint16_t vhf_fract16, uint32_t iq_amp_fract16)
 {
     if (iq_amp_fract16 == 0U || hf_freq == 0U) { return 0U; }
     uint64_t num = (uint64_t)vhf_fract16 * v_max_volts * 1000000ULL;
@@ -137,6 +145,24 @@ static inline uint16_t l_uh_of_hfi(uint16_t vhf_fract16, uint32_t iq_amp_fract16
 }
 
 
+
+/*
+    Decouple coefficients from Ld/Lq [H]:
+        KL_Fract16 = pi * L * I_MAX / (V_MAX * Ts)
+
+    where fract16_mul(delta_angle16, KL) yields omega_e * L * I_MAX / V_MAX in fract16 voltage basis.
+    With L in uH, V_MAX in volts, Ts = 1/MOTOR_CONTROL_FREQ s:
+        KL = pi * (uH/1e6) * I_MAX * MOTOR_CONTROL_FREQ / V_MAX
+           = pi * uH * I_MAX * MOTOR_CONTROL_FREQ / (V_MAX * 1e6)
+*/
+/* KL_fract16 from inductance in µH. KL = π × L_uH × 1e-6 × I_max × Fs / V_max  = π×10^6 × L_uH × I_max × Fs / (V_max × 10^12) */
+static inline fract16_t kl_fract16_of_uh(uint32_t polling_freq, uint16_t v_max_volts, uint16_t i_max_amps, uint16_t l_uH)
+{
+    if (v_max_volts == 0U) { return 0; }
+    uint64_t num = (uint64_t)3141593ULL * l_uH * i_max_amps * polling_freq;
+    uint64_t den = (uint64_t)v_max_volts * 1000000ULL * 1000000ULL;
+    return (fract16_t)math_min((uint32_t)(num / den), (uint32_t)FRACT16_MAX);
+}
 
 /******************************************************************************/
 /*!
@@ -154,7 +180,7 @@ static inline uint16_t l_uh_of_hfi(uint16_t vhf_fract16, uint32_t iq_amp_fract16
 */
 /******************************************************************************/
 /* KPsi_fract16 from Kv [RPM/V]. */
-static inline fract16_t kpsi_fract16_of_kv(uint16_t kv, uint16_t v_max_volts, uint32_t polling_freq)
+static inline fract16_t kpsi_fract16_of_kv(uint32_t polling_freq, uint16_t v_max_volts, uint16_t kv)
 {
     if (kv == 0U || v_max_volts == 0U) { return 0; }
     uint32_t num = 30U * polling_freq;
@@ -163,7 +189,7 @@ static inline fract16_t kpsi_fract16_of_kv(uint16_t kv, uint16_t v_max_volts, ui
 }
 
 /* KPsi_fract16 from Ke_SI [V/(rad/s)] stored as millivolts-per-rads (×1000 for integer). */
-static inline fract16_t kpsi_fract16_of_ke_mvrads(uint32_t ke_mV_per_rads, uint16_t v_max_volts, uint32_t polling_freq)
+static inline fract16_t kpsi_fract16_of_ke_mvrads(uint32_t polling_freq, uint16_t v_max_volts, uint32_t ke_mV_per_rads)
 {
     if (v_max_volts == 0U) { return 0; }
     /* KPsi = π × ke_SI × Fs / V_max = 3141593 × ke_mV × Fs / (V_max × 1e9) */
@@ -172,33 +198,24 @@ static inline fract16_t kpsi_fract16_of_ke_mvrads(uint32_t ke_mV_per_rads, uint1
     return (fract16_t)math_min((uint32_t)(num / den), (uint32_t)FRACT16_MAX);
 }
 
-/* Ke_SI in millivolts per rad/s from Kv [RPM/V]: Ke_SI = 60000 / (2π × Kv) [mV/(rad/s)]. */
-static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return (kv > 0U) ? (60000U * FRACT16_MAX / (2U * FRACT16_PI * kv)) : 0U; }
 
 
-/******************************************************************************/
-/*!
-    Rs — Stator Resistance Normalization
-        R_ref = V_max / I_max     [Ω per full-scale unit]
-        Rs_fract16 = Rs [Ω] / R_ref = Rs × I_max × FRACT16_MAX / V_max
-                   = Rs_mOhm × I_max × FRACT16_MAX / (V_max × 1000)
-
-        Rs_fract16 is the normalized resistance used directly in PI feedforward:
-            V_fract16 = fract16_mul(Rs_fract16, I_fract16)
+/*
+    Psi_f [Wb] = 60 / (2*pi * Kv_RpmPerVolt * PolePairs)
+    KPsi_Fract16 = pi * Psi_f / (V_MAX * Ts) = pi * Psi_f * Fs / V_MAX
 */
-/******************************************************************************/
-/* Rs_fract16 from measured resistance in milliohms. */
-static inline fract16_t rs_fract16_of_milliohms(uint16_t rs_mOhm, uint16_t v_max_volts, uint16_t i_max_amps) { return (fract16_t)math_min((uint32_t)(((uint64_t)rs_mOhm * i_max_amps * FRACT16_MAX) / ((uint32_t)v_max_volts * 1000U)), (uint32_t)FRACT16_MAX); }
+// static fract16_t  kpsi_fract16(uint16_t kv_rpmPerVolt, uint8_t polePairs)
+// {
+//     uint32_t v_max = Phase_Calibration_GetVMaxVolts();
+//     if (kv_rpmPerVolt == 0U || polePairs == 0U || v_max == 0U) { return 0; }
+//     /* KPsi = pi * 60 * Fs / (2*pi * Kv * PolePairs * V_MAX) = 30 * Fs / (Kv * PolePairs * V_MAX) */
+//     uint64_t num = (uint64_t)30U * MOTOR_CONTROL_FREQ * 32768ULL;
+//     uint64_t den = (uint64_t)kv_rpmPerVolt * polePairs * v_max;
+//     uint64_t k = num / den;
+//     if (k > FRACT16_MAX) { k = FRACT16_MAX; }
+//     return (fract16_t)k;
+// }
 
-/* Rs back to milliohms from stored fract16 value. */
-static inline uint32_t rs_milliohms_of_fract16(fract16_t rs_fract16, uint16_t v_max_volts, uint16_t i_max_amps) { return ((uint32_t)rs_fract16 * v_max_volts * 1000U) / ((uint32_t)i_max_amps * FRACT16_MAX); }
-
-/* Rs_Fract16 = Vd_Fract16 / Id_Fract16 (normalized by R_REF = V_MAX/I_MAX). */
-static inline fract16_t rs_fract16(int32_t vd_fract16, int32_t id_fract16)
-{
-    if (id_fract16 <= 0) { return 0; }
-    return (fract16_t)math_clamp(fract16_div(vd_fract16, id_fract16), 0, FRACT16_MAX);
-}
 
 
 
@@ -221,42 +238,4 @@ static inline fract16_t rs_fract16(int32_t vd_fract16, int32_t id_fract16)
 // /* Rated speed as fract16: FRACT16_MAX/2 when max = 2×rated. */
 // static inline int16_t speed_rated_fract16(uint16_t speed_rated_rpm, uint32_t max_rpm) { return speed_fract16_of_rpm(speed_rated_rpm, max_rpm); }
 
-
-// /*
-//     Decouple coefficients from Ld/Lq [H]:
-//         KL_Fract16 = pi * L * I_MAX / (V_MAX * Ts)
-
-//     where fract16_mul(delta_angle16, KL) yields omega_e * L * I_MAX / V_MAX in fract16 voltage basis.
-//     With L in uH, V_MAX in volts, Ts = 1/MOTOR_CONTROL_FREQ s:
-//         KL = pi * (uH/1e6) * I_MAX * MOTOR_CONTROL_FREQ / V_MAX
-//            = pi * uH * I_MAX * MOTOR_CONTROL_FREQ / (V_MAX * 1e6)
-// */
-// static fract16_t  kl_fract16(uint16_t l_uH)
-// {
-//     uint32_t v_max = Phase_Calibration_GetVMaxVolts();
-//     uint32_t i_max = Phase_Calibration_GetIMaxAmps();
-//     if (v_max == 0U) { return 0; }
-//     /* pi approx 3141593/1e6 */
-//     uint64_t num = (uint64_t)3141593ULL * l_uH * i_max * MOTOR_CONTROL_FREQ;
-//     uint64_t den = (uint64_t)v_max * 1000000ULL * 1000000ULL;
-//     uint64_t k = num / den;
-//     if (k > FRACT16_MAX) { k = FRACT16_MAX; }
-//     return (fract16_t)k;
-// }
-
-// /*
-//     Psi_f [Wb] = 60 / (2*pi * Kv_RpmPerVolt * PolePairs)
-//     KPsi_Fract16 = pi * Psi_f / (V_MAX * Ts) = pi * Psi_f * Fs / V_MAX
-// */
-// static fract16_t  kpsi_fract16(uint16_t kv_rpmPerVolt, uint8_t polePairs)
-// {
-//     uint32_t v_max = Phase_Calibration_GetVMaxVolts();
-//     if (kv_rpmPerVolt == 0U || polePairs == 0U || v_max == 0U) { return 0; }
-//     /* KPsi = pi * 60 * Fs / (2*pi * Kv * PolePairs * V_MAX) = 30 * Fs / (Kv * PolePairs * V_MAX) */
-//     uint64_t num = (uint64_t)30U * MOTOR_CONTROL_FREQ * 32768ULL;
-//     uint64_t den = (uint64_t)kv_rpmPerVolt * polePairs * v_max;
-//     uint64_t k = num / den;
-//     if (k > FRACT16_MAX) { k = FRACT16_MAX; }
-//     return (fract16_t)k;
-// }
 

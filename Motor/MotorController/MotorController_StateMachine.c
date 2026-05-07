@@ -381,7 +381,7 @@ static State_T * MotorCmd_Input(MotorController_T * p_dev, state_value_t cmd)
     // per motor
     // Motor_ApplyUserDirection(Motor_Table_At(&p_dev->MOTORS, p_input->MotorId), p_input->Direction);
     // Motor_ApplyFeedbackMode(p_motor, Motor_FeedbackMode_Cast(varValue));
-    // Motor_ApplyControlState(p_motor, (Phase_Output_T)varValue);
+    // Motor_ApplyControlState(p_motor, (Phase_VOutMode_T)varValue);
 }
 
 static const State_Input_T MOTOR_CMD_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =

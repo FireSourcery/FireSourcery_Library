@@ -43,14 +43,13 @@
     VOutput State
     As collective ABC ouput or 3-state interpretation of a single-phase.
 */
-// typedef enum Phase_VOutMode
-typedef enum Phase_Output
+typedef enum Phase_VOutMode
 {
     PHASE_VOUT_Z,  /* Disabled. 0 as High-Z, it is the result of Pin Low/0 */
     PHASE_VOUT_0,     /* VPwm 0, Pin 1 */
     PHASE_VOUT_PWM,   /* VPwm 1, Pin 1 */
 }
-Phase_Output_T;
+Phase_VOutMode_T;
 
 /******************************************************************************/
 /*!
@@ -66,6 +65,7 @@ typedef const struct Phase_VOut
     Pin_T PIN_A;
     Pin_T PIN_B;
     Pin_T PIN_C;
+    // Phase_Data_T * P_OUTPUT_BUFFER;
 }
 Phase_VOut_T;
 
@@ -202,10 +202,10 @@ static inline void _Phase_SyncOnOff(Phase_VOut_T * p_phase, Phase_Id_T state)
 */
 /******************************************************************************/
 /* Let the compiler optimize/expand into the 8 derived functions */
-static inline void _Phase_WriteState(Phase_VOut_T * p_phase, Phase_Id_T id)
+static inline void _Phase_WriteGates(Phase_VOut_T * p_phase, Phase_Id_T id)
 {
 #ifdef PHASE_PIN_SYNC
-    _Phase_SyncOnOff(p_phase, id);
+    _Phase_SyncOnOff(p_phase, id); /* single register write */
 #else
     const Phase_Bitmask_T state = Phase_Bitmask(id);
     _Phase_WriteOnOffA(p_phase, state.A);
@@ -214,25 +214,18 @@ static inline void _Phase_WriteState(Phase_VOut_T * p_phase, Phase_Id_T id)
 #endif
 }
 
-/* ReadChannels */
-/* ReadActiveOutput */
-static inline Phase_Bitmask_T _Phase_ReadState(Phase_VOut_T * p_phase)
+static inline Phase_Bitmask_T _Phase_ReadGates(Phase_VOut_T * p_phase)
 {
     return (Phase_Bitmask_T) { .A = _Phase_ReadOnOffA(p_phase), .B = _Phase_ReadOnOffB(p_phase), .C = _Phase_ReadOnOffC(p_phase) };
 }
 
-// static inline Phase_Triplet_T _Phase_ReadDuty(Phase_VOut_T * p_phase)
-// {
-//     return (Phase_Triplet_T)
-//     {
-//         .A = PWM_ReadDuty(&p_phase->PWM_A),
-//         .B = PWM_ReadDuty(&p_phase->PWM_B),
-//         .C = PWM_ReadDuty(&p_phase->PWM_C),
-//     };
-// }
+static inline Phase_Triplet_T _Phase_ReadDuty(Phase_VOut_T * p_phase)
+{
+    return (Phase_Triplet_T) { .A = PWM_ReadDuty(&p_phase->PWM_A), .B = PWM_ReadDuty(&p_phase->PWM_B), .C = PWM_ReadDuty(&p_phase->PWM_C), };
+}
 
 /* Voltage/Output State */
-static inline Phase_Bitmask_T _Phase_ReadDutyState(Phase_VOut_T * p_phase)
+static inline Phase_Bitmask_T _Phase_ReadDutyAlign(Phase_VOut_T * p_phase)
 {
     return (Phase_Bitmask_T)
     {
@@ -248,7 +241,7 @@ static inline Phase_Bitmask_T _Phase_ReadDutyState(Phase_VOut_T * p_phase)
 /* Using Register State */
 static inline void Phase_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
 {
-    Phase_Bitmask_T state = _Phase_ReadState(p_phase);
+    Phase_Bitmask_T state = _Phase_ReadGates(p_phase);
 
     if (state.A == 1U) { PWM_WriteDuty(&p_phase->PWM_A, pwmA); }
     if (state.B == 1U) { PWM_WriteDuty(&p_phase->PWM_B, pwmB); }
@@ -297,10 +290,10 @@ static inline void Phase_WriteDuty_Vector(Phase_VOut_T * p_phase, Phase_Triplet_
 }
 
 /* High-Z */
-static inline void Phase_Deactivate(Phase_VOut_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_0); }
+static inline void Phase_Deactivate(Phase_VOut_T * p_phase) { _Phase_WriteGates(p_phase, PHASE_ID_0); }
 
 /* active stored */
-static inline void Phase_ActivateOutput(Phase_VOut_T * p_phase) { _Phase_WriteState(p_phase, PHASE_ID_ABC); }
+static inline void Phase_ActivateOutput(Phase_VOut_T * p_phase) { _Phase_WriteGates(p_phase, PHASE_ID_ABC); }
 
 /* V0 */
 /* Enable all at 0 duty. NOT for Bipolar active. */
@@ -318,25 +311,23 @@ static inline void Phase_ActivateT0(Phase_VOut_T * p_phase)
     Phase_ActivateOutput(p_phase);
 }
 
-static inline bool Phase_IsFloat(Phase_VOut_T * p_phase) { return (_Phase_ReadState(p_phase).Bits == PHASE_ID_0); }
-static inline bool Phase_IsVDuty(Phase_VOut_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits != PHASE_ID_0); }
-static inline bool Phase_IsV0(Phase_VOut_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0)); }
+static inline bool Phase_IsFloat(Phase_VOut_T * p_phase) { return (_Phase_ReadGates(p_phase).Bits == PHASE_ID_0); }
+static inline bool Phase_IsVDuty(Phase_VOut_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyAlign(p_phase).Bits != PHASE_ID_0); }
+static inline bool Phase_IsV0(Phase_VOut_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyAlign(p_phase).Bits == PHASE_ID_0)); }
 
 /*
 
 */
 
 /* Collective state */
-static inline Phase_Output_T Phase_ReadOutputState(Phase_VOut_T * p_phase)
+static inline Phase_VOutMode_T Phase_ReadVOut(Phase_VOut_T * p_phase)
 {
-    Phase_Output_T state;
-    if (_Phase_ReadState(p_phase).Bits == PHASE_ID_0) { state = PHASE_VOUT_Z; }
-    else if (_Phase_ReadDutyState(p_phase).Bits == PHASE_ID_0) { state = PHASE_VOUT_0; }
-    else { state = PHASE_VOUT_PWM; }
-    return state;
+    if (_Phase_ReadGates(p_phase).Bits == PHASE_ID_0)       { return PHASE_VOUT_Z; }
+    if (_Phase_ReadDutyAlign(p_phase).Bits == PHASE_ID_0)   { return PHASE_VOUT_0; }
+    return PHASE_VOUT_PWM;
 }
 
-static inline void Phase_ActivateOutputState(Phase_VOut_T * p_phase, Phase_Output_T state)
+static inline void Phase_ActivateVOut(Phase_VOut_T * p_phase, Phase_VOutMode_T state)
 {
     switch (state)
     {
@@ -383,12 +374,23 @@ extern Phase_Id_T Phase_JogSigned(Phase_VOut_T * p_phase, int16_t dutySigned);
 //     PHASE_PWM_C,
 // }
 // Phase_VOutVar_T;
+// typedef enum Phase_VOutVar
+// {
+//     PHASE_OUTPUT_MODE,
+//     PHASE_GATE_A,
+//     PHASE_DUTY_A,
+//     PHASE_GATE_B,
+//     PHASE_DUTY_B,
+//     PHASE_GATE_C,
+//     PHASE_DUTY_C,
+// }
+// Phase_VOutVar_T;
 
 // static inline int Phase_VOutVar_Get(Phase_VOut_T * p_phase, Phase_VOutVar_T var)
 // {
 //     switch (var)
 //     {
-//         case PHASE_OUTPUT_MODE: return Phase_ReadOutputState(p_phase);
+//         case PHASE_OUTPUT_MODE: return Phase_ReadVOut(p_phase);
 //         case PHASE_VOUTPUT_DUTY_A: return PWM_ReadDuty(&p_phase->PWM_A);
 //         case PHASE_VOUTPUT_ON_OFF_A: return _Phase_ReadOnOffA(p_phase);
 //         case PHASE_PWM_A: return p_phase->PWM_A.ID;
