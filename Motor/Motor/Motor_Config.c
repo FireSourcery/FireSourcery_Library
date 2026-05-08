@@ -28,8 +28,6 @@
 */
 /******************************************************************************/
 #include "Motor_Config.h"
-// #include "_Motor_Config.h"
-#include "Motor.h"
 
 
 /******************************************************************************/
@@ -68,7 +66,7 @@ static inline uint16_t _Motor_OpenLoopSpeedRatedLimitOf(const Motor_Config_T * p
 
 void Motor_Config_Validate(Motor_Config_T * p_config)
 {
-    p_config->SpeedRated_Rpm              = math_min(p_config->SpeedRated_Rpm, Motor_RpmOfKv(p_config, Phase_Calibration_GetVRated_Fract16()));
+    p_config->SpeedRating.SpeedRated_Rpm  = math_min(p_config->SpeedRating.SpeedRated_Rpm, Motor_RpmOfKv(&p_config->SpeedRating, Phase_Calibration_GetVRated_Fract16()));
     p_config->VSpeedScalar_Fract16        = math_min(p_config->VSpeedScalar_Fract16, INT16_MAX);
 
     p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);
@@ -93,10 +91,10 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
         (p_config->IabcZeroRef_Adcu.A != 0U) &&
         (p_config->IabcZeroRef_Adcu.B != 0U) &&
         (p_config->IabcZeroRef_Adcu.C != 0U) &&
-        (p_config->PolePairs != 0U)
-        && (p_config->Kv != 0U)
-        && (p_config->SpeedRated_Rpm != 0U)
-        && (p_config->SpeedRated_Rpm              <= Motor_GetSpeedVNominalRef_Rpm(p_config) * 2)
+        (p_config->SpeedRating.PolePairs != 0U)
+        && (p_config->SpeedRating.Kv != 0U)
+        && (p_config->SpeedRating.SpeedRated_Rpm != 0U)
+        // && (p_config->SpeedRating.SpeedRated_Rpm  <= Motor_GetSpeedVNominalRef_Rpm(p_config) * 2)
         && (p_config->VSpeedScalar_Fract16        <= INT16_MAX)
         && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config))
         && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
@@ -149,14 +147,14 @@ void Motor_Config_SetSensorMode(Motor_Config_T * p_config, RotorSensor_Id_T mode
 
 void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs)
 {
-    p_config->PolePairs = polePairs;
+    p_config->SpeedRating.PolePairs = polePairs;
 }
 
 /* Setting Kv overwrites SpeedRefs. SpeedRefs can be set independently from Kv or lock */
 void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 {
-    p_config->Kv = kv;
-    p_config->SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_config);
+    p_config->SpeedRating.Kv = kv;
+    // p_config->SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_config);
     /* alternatively kv determines scalar */
 }
 
@@ -175,8 +173,8 @@ void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
 
-void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(p_motor))); }
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(p_motor)); }
+void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating))); }
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
 
 
 /******************************************************************************/
@@ -282,9 +280,9 @@ static inline void Motor_Config_SetDirectionCalibration(Motor_Config_T * p_confi
     Set with Propagate
 */
 static inline RotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_Config_T * p_config) { return p_config->SensorMode; }
-static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->PolePairs; }
-static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return p_config->Kv; }
-static inline uint16_t Motor_Config_GetSpeedRated(const Motor_Config_T * p_config) { return p_config->SpeedRated_Rpm; }
+static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->SpeedRating.PolePairs; }
+static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return p_config->SpeedRating.Kv; }
+static inline uint16_t Motor_Config_GetSpeedRated(const Motor_Config_T * p_config) { return p_config->SpeedRating.SpeedRated_Rpm; }
 static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_Config_T * p_config) { return p_config->VSpeedScalar_Fract16; }
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.A; }
@@ -471,8 +469,8 @@ int _Motor_Var_ConfigDebug_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigD
     switch (varId)
     {
         // case MOTOR_VAR_SPEED_RATED_RPM:                 value = _Motor_GetSpeedRated_Rpm(p_motor);             break;
-        case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
-        case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
+        // case MOTOR_VAR_SPEED_V_REF_RPM:                 value = Motor_GetSpeedVNominalRef_Rpm(p_motor);              break;
+        // case MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE:       value = Motor_GetSpeedVNominalRef_Angle(p_motor);             break;
         // case MOTOR_VAR_SPEED_V_MATCH_REF_RPM:           value = Motor_Config_GetSpeedVMatchRef_Rpm(p_motor);         break;
         // case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }

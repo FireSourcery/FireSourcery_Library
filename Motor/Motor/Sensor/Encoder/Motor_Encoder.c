@@ -62,7 +62,7 @@ static void ProcHoming(Motor_T * p_motor)
     /* alternatively openloop speed/angle ramp */
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
-        angle16_t angle = Encoder_GetHomingAngle(GetEncoderState(p_motor)) * p_state->Config.PolePairs;
+        angle16_t angle = Encoder_GetHomingAngle(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
         Angle_Integrate(&p_state->OpenLoopAngle, angle);
         Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), Motor_GetVAlign_Duty(&p_state->Config), 0);
         Motor_FOC_WriteDuty(p_motor);

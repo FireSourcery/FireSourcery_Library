@@ -59,7 +59,7 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
-
+    // Motor_Config_ResolveSpeedRated
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
@@ -72,6 +72,8 @@ void Motor_Init(Motor_T * p_dev)
 void Motor_Reset(Motor_State_T * p_motor)
 {
     Motor_Config_Validate(&p_motor->Config);
+    p_motor->ElectricalSpeedRef = Motor_ElectricalSpeedRef_FromSpeedRating(&p_motor->Config.SpeedRating);
+
     Motor_InitUnits(p_motor);
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
@@ -97,7 +99,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     // Ramp_SetOutputLimit(&p_motor->OpenLoopSpeedRamp, -Motor_GetSpeedRated_Fract16(p_motor), Motor_GetSpeedRated_Fract16(p_motor));
     // Ramp_SetOutputLimit(&p_motor->OpenLoopIRamp, -Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor));
 
-    Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_Angle(&p_motor->Config));
+    Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
     /*
         Feedback State
@@ -131,9 +133,9 @@ void Motor_InitUnits(Motor_State_T * p_motor)
 {
     RotorSensor_Config_T config =
     {
-        .PolePairs = p_motor->Config.PolePairs,
-        .SpeedTypeMax_DegPerCycle = Motor_GetSpeedTypeMax_Angle(&p_motor->Config),  /* allow up to 2x the rated speed for unit conversion */
-        .SpeedTypeMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config),
+        .PolePairs = p_motor->Config.SpeedRating.PolePairs,
+        .SpeedTypeMax_DegPerCycle = Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),  /* allow up to 2x the rated speed for unit conversion */
+        .SpeedTypeMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating),
     };
 
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
@@ -149,7 +151,7 @@ void Motor_InitUnits(Motor_State_T * p_motor)
 /* Ramp slope set independent of user Config.limits. By characteristics.   todo set with frac32 */
 void Motor_InitSpeedRamp(Motor_State_T * p_motor)
 {
-    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(&p_motor->Config));
+    Ramp_Init(&p_motor->SpeedRamp, p_motor->Config.SpeedRampTime_Cycles, Motor_GetSpeedRated_Fract16(&p_motor->Config.SpeedRating));
     // Motor_ResolveSpeedLimits(p_motor);
 }
 
