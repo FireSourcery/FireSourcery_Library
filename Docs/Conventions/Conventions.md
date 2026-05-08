@@ -42,6 +42,12 @@ _Config	Storage in NVM
 _State Runtime mutable
 _T descriptor
 
+Internal details use Module_*
+Outer abstractions get the shorten name.
+
+
+{Vocabulary, Surface, Facet, Constituent}
+
 
     FLASH (const):
     ┌─────────────────────────────┐

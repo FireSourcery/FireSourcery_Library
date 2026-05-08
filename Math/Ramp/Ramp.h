@@ -100,6 +100,7 @@ static inline int32_t Ramp_GetLimitLower(const Ramp_T * p_ramp) { return (p_ramp
 static inline int32_t Ramp_GetLimitUpper(const Ramp_T * p_ramp) { return (p_ramp->Accumulator.LimitUpper >> RAMP_SHIFT); }
 
 /* OnInput Limits */
+/* Set Target Window */
 static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {
     p_ramp->Accumulator.LimitLower = (int32_t)lower << RAMP_SHIFT;
@@ -108,6 +109,7 @@ static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t u
     p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
 }
 
+/* ClampOutput */
 /* Snap the output */
 static inline void Ramp_SetOutputLimit_Snap(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {

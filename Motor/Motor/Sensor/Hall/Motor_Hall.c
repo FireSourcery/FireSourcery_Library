@@ -31,7 +31,7 @@
 #include "Hall.h"
 
 #include "../../Motor_FOC.h"
-#include "../../Motor_StateMachine.h"
+#include "../../StateMachine/Motor_StateMachine.h"
 
 
 /******************************************************************************/

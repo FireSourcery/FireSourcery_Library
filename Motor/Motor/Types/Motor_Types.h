@@ -139,3 +139,19 @@ typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;
 // Motor_DriveDirection_T;
 
 
+/* Open-loop / alignment phase */
+// typedef struct
+// {
+//     uint16_t LimitScalar_Fract16;
+//     uint16_t IAlign_Fract16;
+//     uint16_t VAlign_Fract16;
+// }
+// Motor_OpenLoopAlign_T;
+// typedef struct
+// {
+//     uint16_t SpeedFinal_Fract16;
+//     uint32_t SpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
+//     uint16_t IFinal_Fract16;
+//     uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
+// }
+// Motor_OpenLoopRun_T;

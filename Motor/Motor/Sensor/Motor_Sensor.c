@@ -28,7 +28,7 @@
 */
 /******************************************************************************/
 #include "Motor_Sensor.h"
-#include "../Motor_StateMachine.h"
+#include "../StateMachine/Motor_StateMachine.h"
 
 /*
     requires [Motor] StateMachine outside of Sensor Interface
@@ -47,6 +47,21 @@
 */
 /******************************************************************************/
 // #include "Sensor/Motor_Sensor.h" /* for calibration cmd */
+
+// int RotorSensor_Table_Get(RotorSensor_Table_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
+// {
+//     if (p_motor == NULL) { return 0; }
+//     switch (typeId)
+//     {
+//         case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->HALL.HALL, varId);
+//         case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(&p_motor->HALL.HALL.P_STATE->Config, varId);
+//         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+//         case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->ENCODER.ENCODER.P_STATE, varId);
+//         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->ENCODER.ENCODER.P_STATE->Config, varId);
+//         #endif
+//         default: return 0;
+//     }
+// }
 
 int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
 {

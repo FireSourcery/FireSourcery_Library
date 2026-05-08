@@ -114,6 +114,9 @@ static inline bool Motor_Table_IsEveryUserDirection(Motor_Table_T * p_table, int
     return isEvery;
 }
 
+// update to dev
+// static inline bool Motor_Table_IsEverySpeedZero(Motor_Table_T * p_table) { return Motor_Table_IsEvery(p_table, Motor_IsSpeedZero); }
+
 static inline bool Motor_Table_IsEverySpeedZero(Motor_Table_T * p_table)
 {
     bool isEvery = true;

@@ -64,7 +64,7 @@ extern const Phase_Calibration_T PHASE_CALIBRATION;
 #define PHASE_I_FRACT16(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
 #endif
 
-/* Getter interface. */
+/* Keep virtual getters in case structure changes */
 static inline uint16_t Phase_Calibration_GetIMaxAmps(void) { return PHASE_CALIBRATION.I_MAX_AMPS; }
 static inline uint16_t Phase_Calibration_GetVMaxVolts(void) { return PHASE_CALIBRATION.V_MAX_VOLTS; }
 static inline uint16_t Phase_Calibration_GetVRated_Fract16(void) { return PHASE_CALIBRATION.V_RATED_FRACT16; }

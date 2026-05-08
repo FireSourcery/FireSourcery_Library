@@ -67,6 +67,8 @@ static inline int32_t vfract16_of_kv_rpm(uint16_t v_max_volts, uint16_t kv, int3
 //     return (fract16_t)math_clamp(vfract16_of_kv_rpm(v_max_volts, kv, rpm), 0, FRACT16_MAX);
 // }
 
+static inline uint32_t motor_kt(uint16_t kv) { return fract16_div(60 * FRACT16_SCALE, kv * 2 * FRACT16_PI); } /* [Nm/A] = 60 / (2π × Kv) */
+
 /******************************************************************************/
 /*!
     Ke — Normalized Voltage-per-Speed (back-EMF constant)

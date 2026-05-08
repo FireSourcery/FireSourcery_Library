@@ -55,7 +55,7 @@
       RAMP_SAFE    (SS1) - Active deceleration to zero speed, no user resume.
 */
 /******************************************************************************/
-#include "../Motor_StateMachine.h"
+#include "Motor_StateMachine.h"
 
 /******************************************************************************/
 /*

@@ -96,6 +96,33 @@ typedef struct
 FOC_DecouplingCoeff_T;
 
 
+/* same shape for uH and PU  */
+typedef struct
+{
+    fract16_t Ld;
+    fract16_t Lq;
+    fract16_t Rs;
+    fract16_t Psi;
+}
+FOC_Electrical_T;
+
+// typedef struct
+// {
+//     uint16_t Ld_MicroHenries;
+//     uint16_t Lq_MicroHenries;
+//     uint16_t Rs_MilliOhms;
+// }
+// FOC_ElectricalConfig_T;
+
+// typedef struct
+// {
+//     fract16_t Ld_Fract16;
+//     fract16_t Lq_Fract16;
+//     fract16_t Rs_Fract16;
+//     fract16_t Psi_Fract16;
+// }
+// FOC_Electrical_T;
+
 
 
 /******************************************************************************/

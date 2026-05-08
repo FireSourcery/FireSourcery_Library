@@ -30,9 +30,9 @@
             Input/Output/Cmd functions, includes error checking.
 */
 /******************************************************************************/
-#include "Motor_StateMachine.h"
-#include "Motor/Motor/SubStates/Motor_Calibration.h"
-#include "Motor/Motor/SubStates/Motor_OpenLoop.h"
+#include "StateMachine/Motor_StateMachine.h"
+#include "StateMachine/Motor_Calibration.h"
+#include "StateMachine/Motor_OpenLoop.h"
 
 #include "Motor_FOC.h"
 

@@ -104,7 +104,10 @@ typedef struct ElectricalCalibration
 
     int64_t   IqSumI;
     int64_t   IqSumQ;
-    Motor_ElectricalParams_T Results;
+
+    FOC_Electrical_T Results;
+    // FOC_Electrical_T ResultsPu;
+    fract16_t Rs_Fract16;
 }
 ElectricalCalibration_T;
 
@@ -145,7 +148,7 @@ static void SetNext(ElectricalCalibration_T * p_params, ElectricalCalibraton_Sta
 /*
     LD_INJECT: voltage-mode Vd = Vbias + step, measure time for Id to cross 63% of (Id_steady + step/Rs).
 */
-static int32_t GetIdTau(ElectricalCalibration_T * p_params) { return p_params->IdSteady + ((uint64_t)fract16_div(p_params->VdStep, p_params->Results.Rs_Fract16) * 20724) / 32768; }
+static int32_t GetIdTau(ElectricalCalibration_T * p_params) { return p_params->IdSteady + ((uint64_t)fract16_div(p_params->VdStep, p_params->Rs_Fract16 ) * 20724) / 32768; }
 
 /*
     Motor_FOC_AngleControl(p_motor, 0, p_params->IdBias, 0);
@@ -161,8 +164,8 @@ static void ProcRs(ElectricalCalibration_T * p_params, fract16_t vd, fract16_t i
         int32_t vd_avg = (int32_t)(p_params->VdAccum / p_params->AccumN);
         int32_t id_avg = (int32_t)(p_params->IdAccum / p_params->AccumN);
 
-        p_params->Results.Rs_Fract16 = rs_fract16(vd_avg, id_avg);
-        p_params->Results.Rs_MilliOhms = rs_mohms_of_fract16(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Rs_Fract16);
+        p_params->Rs_Fract16 = rs_fract16(vd_avg, id_avg);
+        p_params->Results.Rs  = rs_mohms_of_fract16(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Rs_Fract16);
 
         /* Precompute steady-state Vd bias so Ld step averages to Id_bias. */
         // p_params->VdStep               = PARAMID_LD_VSTEP_FRACT16;
@@ -196,7 +199,7 @@ static void ProcLd(ElectricalCalibration_T * p_params, fract16_t id)
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_LD_WINDOW_MS))
     {
         if (p_params->IdTauCycles == 0U) { p_params->IdTauCycles = p_params->CycleCount; }
-        p_params->Results.Ld_MicroHenries = l_uh_of_rs_tau(MOTOR_CONTROL_FREQ, p_params->Results.Rs_MilliOhms, p_params->IdTauCycles);
+        p_params->Results.Ld = l_uh_of_rs_tau(MOTOR_CONTROL_FREQ, p_params->Results.Rs, p_params->IdTauCycles);
         SetNext(p_params, PARAMID_STEP_LQ_HFI);
     }
 }
@@ -223,7 +226,7 @@ static void ProcLq(ElectricalCalibration_T * p_params, fract16_t iq)
         int32_t i_norm = (int32_t)((p_params->IqSumI * 2) / p_params->AccumN / 32768);
         int32_t q_norm = (int32_t)((p_params->IqSumQ * 2) / p_params->AccumN / 32768);
         uint32_t mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
-        p_params->Results.Lq_MicroHenries = l_uh_of_hfi(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->HfiFreqHz, p_params->Vhfi, mag);
+        p_params->Results.Lq = l_uh_of_hfi(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->HfiFreqHz, p_params->Vhfi, mag);
         SetNext(p_params, PARAMID_STEP_COMMIT);
     }
 }
@@ -244,9 +247,11 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
 }
 
 /* COMMIT: copy results into Motor_Config_T, recompute decoupling K's. */
-static void CommitResults(ElectricalCalibration_T * p_params, Motor_ElectricalParams_T * p_storage)
+static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
 {
-    *p_storage = p_params->Results;
+    p_storage->Ld = p_params->Results.Ld;
+    p_storage->Lq = p_params->Results.Lq;
+    p_storage->Rs = p_params->Results.Rs;
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
 

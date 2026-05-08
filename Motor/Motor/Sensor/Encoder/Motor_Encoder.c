@@ -30,7 +30,7 @@
 #include "Motor_Encoder.h"
 #include "Encoder_Sensor.h"
 
-#include "../../Motor_StateMachine.h"
+#include "../../StateMachine/Motor_StateMachine.h"
 #include "../../Motor.h"
 #include "../../Motor_Var.h"
 #include "../../Motor_FOC.h"

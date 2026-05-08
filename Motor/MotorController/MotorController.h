@@ -38,7 +38,7 @@
 #include "Motor/Motor/Motor_Table.h"
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
-#include "Motor/Motor/Motor_StateMachine.h"
+#include "Motor/Motor/StateMachine/Motor_StateMachine.h"
 // #include "Motor/Motor/Motor_Include.h"
 
 #include "Motor/Motor/VBus/VBus.h"

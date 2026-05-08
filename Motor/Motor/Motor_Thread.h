@@ -33,7 +33,7 @@
 
 #include "Analog/Motor_Analog.h"
 
-#include "Motor_StateMachine.h"
+#include "StateMachine/Motor_StateMachine.h"
 #include "Motor.h"
 
 #include "Transducer/Encoder/Encoder_ISR.h"

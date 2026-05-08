@@ -29,7 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../Motor_StateMachine.h"
+#include "Motor_StateMachine.h"
 
 extern const State_T CALIBRATION_STATE_ANGLE_ALIGN;
 

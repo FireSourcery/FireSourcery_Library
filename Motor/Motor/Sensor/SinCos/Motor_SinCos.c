@@ -22,7 +22,7 @@
 #include "Motor_SinCos.h"
 #include "SinCos_Sensor.h"
 
-#include "../../Motor_StateMachine.h"
+#include "../../StateMachine/Motor_StateMachine.h"
 
 
 /******************************************************************************/

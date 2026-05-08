@@ -27,8 +27,8 @@
     @brief  Motor module conventional function definitions.
 */
 /******************************************************************************/
-// #include "_Motor_Config.h"
 #include "Motor.h"
+#include "Motor_Config.h"
 #include <string.h>
 
 

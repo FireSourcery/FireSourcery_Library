@@ -30,7 +30,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#include "../Motor_StateMachine.h"
+#include "Motor_StateMachine.h"
 
 /*
 

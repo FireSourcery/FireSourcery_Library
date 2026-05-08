@@ -92,6 +92,30 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, f
     FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
+
+
+/******************************************************************************/
+// deprecate
+/*
+    TorqueRampV
+    TorqueRampOpenLoop
+*/
+/* I/V rate mismatch, okay if voltage mode is for testing only */
+/* Reads stored target; anti-plug applied per tick without persisting on Target. */
+static inline fract16_t Motor_VRamp(Motor_State_T * p_motor)
+{
+    interval_t v = interval_of_sign((sign_t)p_motor->Direction, Phase_VBus_GetVRefSvpwm());
+    return _Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, math_clamp(Ramp_GetTarget(&p_motor->TorqueRamp), v.low, v.high));
+    // return _Ramp_ProcNextOnInputOf(&p_motor->VRamp, math_clamp(Ramp_GetTarget(&p_motor->VRamp), v.low, v.high));
+}
+
+/*
+    Openloop by user cmd
+*/
+/* absorb  into process loop */
+static inline fract16_t Motor_OpenLoopTorqueRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(&p_motor->Config, req)); }
+
+
 /******************************************************************************/
 /*
     Feedback Control Loop
