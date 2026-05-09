@@ -47,9 +47,9 @@ typedef enum UserDIn_Mode
 {
     USER_DIN_MODE_DISABLED,
     USER_DIN_MODE_NORMAL,           /* Standard debounced input */
-    USER_DIN_MODE_TOGGLE,           /* Toggle on each press */
-    USER_DIN_MODE_MOMENTARY,        /* Active only while pressed */
-    USER_DIN_MODE_HOLD,             /* Requires hold time */
+    // USER_DIN_MODE_TOGGLE,           /* Toggle on each press */
+    // USER_DIN_MODE_MOMENTARY,        /* Active only while pressed */
+    // USER_DIN_MODE_HOLD,             /* Requires hold time */
 }
 UserDIn_Mode_T;
 

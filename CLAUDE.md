@@ -49,6 +49,7 @@
 - **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states
 - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
+- **Stateless pure functions layer**: function parameter contain the entire state
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 
 ### Important Rules
@@ -62,12 +63,13 @@
 - **PascalCase** for types, structs, enums, and function names: `Motor_FOC_ProcAngle()`, `MotorController_Init()`
 - **UPPER_SNAKE_CASE** for macros, enum values, and constants: `MOTOR_STATE_RUN`, `HAL_ADC_CHANNEL_COUNT`
 - **camelCase** for local variables and struct fields
+- **snake_case** for pure functions on primitives
+- **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
+- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
 - Keep short functions on one line
 - Prefix functions with module name: `Motor_`, `Phase_`, `Encoder_`, `Serial_`, etc.
 - Files prefixed with `_` (e.g., `_Motor_Config.h`) are internal/private headers not intended for external inclusion
 - Public API headers match the module directory name: `Motor.h`, `StateMachine.h`, `Protocol.h`
-- **Declarative functions**. Favor less local variables, particularly in cases that do not impact optimization.
-- **Function parameters order**: most "constant" first. The parameter least likely to change or is constant at call site goes first.
 
 ## API Design
 - **Minimize forwarders.** When a wrapper function is a single-line pass-through to a peer module (`Outer_Foo(p) { return Inner_Foo(&p->inner); }`), it duplicates API surface without adding value. Prefer:

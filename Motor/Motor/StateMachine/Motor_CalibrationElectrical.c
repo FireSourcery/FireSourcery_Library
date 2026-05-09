@@ -295,11 +295,11 @@ static void Electrical_Proc(Motor_T * p_motor)
     switch (p_params->Step)
     {
         case PARAMID_STEP_ALIGN:
-            Motor_FOC_ProcAngleAlignOf(p_context, 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlignOf(p_context, Phase_VBus_Fract16(), 0, p_params->IdBias);
             ProcAlign(p_params);
             break;
         case PARAMID_STEP_RS_MEASURE:
-            Motor_FOC_ProcAngleAlignOf(p_context, 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlignOf(p_context, Phase_VBus_Fract16(), 0, p_params->IdBias);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LD_INJECT:
@@ -319,13 +319,13 @@ static void Electrical_Proc(Motor_T * p_motor)
             Motor_ResolveDecouplingCoeffs(&p_context->Config);
             break;
         case PARAMID_STEP_RAMPDOWN:
-            Motor_FOC_ProcAngleAlignOf(p_context, 0, 0);
+            Motor_FOC_ProcAngleAlignOf(p_context, Phase_VBus_Fract16(), 0, 0);
             ProcRampDown(p_params);
             break;
         case PARAMID_STEP_DONE:
         default:
             /* Hold zero Vd/Vq until parent promotes back to CALIBRATION root */
-            Motor_FOC_ProcAngleAlignOf(p_context, 0, 0);
+            Motor_FOC_ProcAngleAlignOf(p_context, Phase_VBus_Fract16(),0, 0);
             break;
     }
 

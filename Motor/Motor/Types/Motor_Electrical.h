@@ -30,10 +30,9 @@
 */
 /******************************************************************************/
 #include "../Math/motor_params_math.h"
+#include "Math/Angle/angle_speed_math.h"
 #include "../Motor_ControlFreq.h"
 #include "../Phase_Input/Phase_Calibration.h"
-
-
 
 
 /* Ke/Psi/SpeedMax */
@@ -56,6 +55,7 @@ typedef struct
 Motor_ElectricalSpeedRef_T;
 
 
+
 /*  optionally replace with primitive layer */
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
 static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_degPerCycle); }
@@ -64,9 +64,32 @@ static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_
     Speed/V relation based on Kv.
     Rpm of Kv * V
 */
-static inline uint16_t Motor_RpmOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return fract16_mul(v_fract16, (int32_t)p_config->Kv * Phase_Calibration_GetVMaxVolts()); }
-static inline uint16_t Motor_VFract16OfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t rpm) { return fract16_div(rpm, (int32_t)p_config->Kv * Phase_Calibration_GetVMaxVolts()); }
-static inline uint16_t Motor_AngleDeltaOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return _Motor_AngleOfRpm(p_config, Motor_RpmOfKv(p_config, v_fract16)); }
+static inline uint16_t Motor_RpmOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return rpm_of_kv_vfract16(Phase_Calibration_GetVMaxVolts(), p_config->Kv, v_fract16); }
+static inline uint16_t Motor_VFract16OfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t rpm) { return vfract16_of_kv_rpm(Phase_Calibration_GetVMaxVolts(), p_config->Kv, rpm); }
+static inline uint16_t Motor_AngleSpeedOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return _Motor_AngleOfRpm(p_config, Motor_RpmOfKv(p_config, v_fract16)); }
+
+
+/******************************************************************************/
+/*
+    [SpeedRated] via direct Parameter
+    Simplify user set and decouples TypeMax from VBus module
+    alternatively user calibration speedtypemax determine from user set vnomial
+    Config set Kv mediates
+*/
+/******************************************************************************/
+// static inline uint16_t Motor_ResolveSpeedRated_Rpm(Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { p_config->SpeedRated_Rpm = Motor_RpmOfKv(p_config, vNominal_fract16); }
+static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
+// static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
+
+/* alternatively kv subsitutes VSpeedScalar_Fract16 for electrical */
+// static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
+// static inline uint16_t Motor_EffectiveSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
+//
+static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return rpm_of_kv_vfract16(Phase_Calibration_GetVMaxVolts(), p_config->Kv, volts); }
+static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return p_config->SpeedRated_Rpm; }
+
+// static inline uint16_t Motor_GetSpeedVMatch_(const Motor_ElectricalSpeedRating_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
 
 /******************************************************************************/
 /*
@@ -100,32 +123,11 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_ElectricalSpeedRating
 static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { (void)p_config; return INT16_MAX / 2; }
 
 
+/******************************************************************************/
 /*
-    Speed VBus Ref
-    Generally [SpeedRated] via Kv * V
+
 */
-
-
-/*
-    [SpeedRated] via direct Parameter
-    Simplify user set and decouples TypeMax from VBus module
-    alternatively user calibration speedtypemax determine from user set vnomial
-    Config set Kv mediates
-*/
-static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
-// static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config, volts)); }
-
-/* alternatively kv subsitutes VSpeedScalar_Fract16 for electrical */
-// static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
-// static inline uint16_t Motor_EffectiveSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
-
-//
-static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return rpm_of_kv_vfract16(Phase_Calibration_GetVMaxVolts(), p_config->Kv, volts); }
-static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return p_config->SpeedRated_Rpm; }
-
-// static inline uint16_t Motor_GetSpeedVMatch_(const Motor_ElectricalSpeedRating_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
-
+/******************************************************************************/
 /* [V / (rad/s)] */
 static inline accum32_t Motor_GetKe_SiFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vrads_fract16(p_config->Kv); }
 
@@ -172,15 +174,11 @@ static inline Motor_ElectricalSpeedRef_T Motor_ElectricalSpeedRef_FromSpeedRatin
     when SpeedTypeMax = Kv * VNominal * 2
     VSpeed  = VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_config)
 */
-static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_ElectricalSpeedRef_T * p_speedRef, accum32_t speed_fract16) { return fract16_mul(p_speedRef->Ke_SpeedFract16, speed_fract16); }
-static inline accum32_t Motor_SpeedOfVPhase_Fract16(const Motor_ElectricalSpeedRef_T * p_speedRef, accum32_t v_fract16) { return fract16_div(v_fract16, p_speedRef->Ke_SpeedFract16); }
 // static inline accum32_t Motor_VBusOfSpeed_Fract16(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_fract16) { return Phase_VBus_GetVNominal() * speed_fract16 / Motor_GetSpeedRated_Fract16(p_config); }
 // static inline accum32_t Motor_SpeedOfVBus_Fract16(const Motor_ElectricalSpeedRating_T * p_config, accum32_t v_fract16) { return v_fract16 * Motor_GetSpeedRated_Fract16(p_config) / Phase_VBus_GetVNominal(); }
 
 // /* Phase peak. */
 // static inline accum32_t Motor_VPhaseOfSpeed_Fract16(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_fract16) { (void)p_config; return fract16_mul(Phase_VBus_GetVNominal(), speed_fract16); }
-
-
 
 
 /*
@@ -206,3 +204,12 @@ static inline accum32_t Motor_SpeedOfVPhase_Fract16(const Motor_ElectricalSpeedR
 // 2048 37500 erpm
 // 1024 18750 erpm, 8 pole pairs 2344 rpm
 
+// typedef union
+// {
+//     uint32_t Kv;
+//     uint32_t Ke;
+//     uint32_t Psi;
+// }
+// Motor_Kv_T;
+
+// static inline Motor_Kv_T Motor_Kv_FromPsi(Motor_Kv_T psi_fract16) { return (Motor_Kv_T) { .Psi = psi_fract16 }; }

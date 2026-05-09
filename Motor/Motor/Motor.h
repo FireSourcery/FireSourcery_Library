@@ -430,10 +430,14 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 
 
 /* Motor_GetKvVBus_Rpm */
-// static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_RpmOfKv(&Motor_Config(p_motor)->SpeedRating, Phase_V_Fract16OfVolts(p_motor->P_VBUS->Config.VSupplyNominal_V)); }
-// static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_RpmOfKv(&Motor_Config(p_motor)->SpeedRating, Phase_V_Fract16OfVolts(p_motor->P_VBUS->Config.VSupplyNominal_V)); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
-// static inline void Motor_Config_ResolveSpeedRated(Motor_T * p_motor) { Motor_Config(p_motor)->SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
+/*
+    Speed VBus Ref
+    Generally [SpeedRated] via Kv * V
+*/
+static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
 
 
 /* Virtual getters. submodule apply policy on resolve */

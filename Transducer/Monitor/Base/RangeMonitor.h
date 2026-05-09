@@ -165,33 +165,17 @@ static inline bool RangeMonitor_IsDirectionCrossing(const RangeMonitor_T * p_mon
             (p_monitor->Status != RANGE_MONITOR_STATUS_NORMAL) && (p_monitor->StatusPrev != RANGE_MONITOR_STATUS_NORMAL);
 }
 
+/* On Full context in case implementation changes */
+static inline void RangeMonitor_Enable(RangeMonitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; }
+static inline void RangeMonitor_Disable(RangeMonitor_T * p_monitor) { p_monitor->Config.IsEnabled = false; }
+static inline bool RangeMonitor_IsEnabled(const RangeMonitor_T * p_monitor) { return p_monitor->Config.IsEnabled; }
 
 /******************************************************************************/
 /*
     Config
 */
 /******************************************************************************/
-/* Check if monitor is enabled */
-static inline bool RangeMonitor_IsEnabled(const RangeMonitor_Config_T * p_config) { return p_config->IsEnabled; }
-static inline void RangeMonitor_SetEnabled(RangeMonitor_Config_T * p_config, bool isEnabled) { p_config->IsEnabled = isEnabled; }
-static inline void RangeMonitor_Enable(RangeMonitor_Config_T * p_config) { RangeMonitor_SetEnabled(p_config, true); }
-static inline void RangeMonitor_Disable(RangeMonitor_Config_T * p_config) { RangeMonitor_SetEnabled(p_config, false); }
 
-// /* Getters format */
-// static inline int32_t RangeMonitor_GetFaultOverLimit(const RangeMonitor_Config_T * p_config) { return p_config->FaultOverLimit.Limit; }
-// static inline int32_t RangeMonitor_GetFaultUnderLimit(const RangeMonitor_Config_T * p_config) { return p_config->FaultUnderLimit.Limit; }
-// static inline int32_t RangeMonitor_GetWarningLimitHigh(const RangeMonitor_Config_T * p_config) { return p_config->Warning.LimitHigh; }
-// static inline int32_t RangeMonitor_GetWarningLimitLow(const RangeMonitor_Config_T * p_config) { return p_config->Warning.LimitLow; }
-// static inline int32_t RangeMonitor_GetWarningDeadband(const RangeMonitor_Config_T * p_config) { return p_config->Warning.Hysteresis; }
-// static inline int32_t RangeMonitor_GetNominal(const RangeMonitor_Config_T * p_config) { return p_config->Nominal; }
-
-// /* Setters without propagating reset */
-// static inline void _RangeMonitor_SetFaultOverLimit(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->FaultOverLimit.Limit = limit; }
-// static inline void _RangeMonitor_SetFaultUnderLimit(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->FaultUnderLimit.Limit = limit; }
-// static inline void _RangeMonitor_SetWarningLimitHigh(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->Warning.LimitHigh = limit; }
-// static inline void _RangeMonitor_SetWarningLimitLow(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->Warning.LimitLow = limit; }
-// static inline void _RangeMonitor_SetWarningDeadband(RangeMonitor_Config_T * p_config, int32_t deadband) { p_config->Warning.Hysteresis = deadband; }
-// static inline void _RangeMonitor_SetNominal(RangeMonitor_Config_T * p_config, int32_t nominal) { p_config->Nominal = nominal; }
 
 
 /******************************************************************************/
@@ -206,12 +190,13 @@ extern RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, i
 extern RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input);
 
 extern void RangeMonitor_Reset(RangeMonitor_T * p_monitor);
-extern void RangeMonitor_SetFaultOverLimit(RangeMonitor_T * p_monitor, int32_t limit);
-extern void RangeMonitor_SetFaultUnderLimit(RangeMonitor_T * p_monitor, int32_t limit);
-extern void RangeMonitor_SetWarningLimitHigh(RangeMonitor_T * p_monitor, int32_t limit);
-extern void RangeMonitor_SetWarningLimitLow(RangeMonitor_T * p_monitor, int32_t limit);
-extern void RangeMonitor_SetWarningDeadband(RangeMonitor_T * p_monitor, int32_t deadband);
-extern void RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t nominal);
+
+// extern void RangeMonitor_SetFaultOverLimit(RangeMonitor_T * p_monitor, int32_t limit);
+// extern void RangeMonitor_SetFaultUnderLimit(RangeMonitor_T * p_monitor, int32_t limit);
+// extern void RangeMonitor_SetWarningLimitHigh(RangeMonitor_T * p_monitor, int32_t limit);
+// extern void RangeMonitor_SetWarningLimitLow(RangeMonitor_T * p_monitor, int32_t limit);
+// extern void RangeMonitor_SetWarningDeadband(RangeMonitor_T * p_monitor, int32_t deadband);
+// extern void RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t nominal);
 
 
 /******************************************************************************/

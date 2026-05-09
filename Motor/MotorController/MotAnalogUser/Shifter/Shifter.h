@@ -30,9 +30,27 @@
 #include <stdbool.h>
 
 #if !defined(SHIFTER_PINS_AVAILABLE_FNR) && !defined(SHIFTER_PINS_AVAILABLE_FR) && !defined(SHIFTER_PINS_AVAILABLE_R)
-#define SHIFTER_PINS_AVAILABLE_FNR
+#define SHIFTER_PINS_AVAILABLE_FR
 #endif
 
+/*
+    Set convienience
+    Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
+        FNR — three pins, one per gear, mutually exclusive
+        FR  — two pins (forward + reverse). Neutral = neither pressed
+        R   — one pin (reverse). Forward = not reverse. Neutral never emitted
+*/
+typedef enum Shifter_PinMode
+{
+    SHIFTER_PIN_MODE_FNR = 0b111,
+    SHIFTER_PIN_MODE_FR = 0b011,
+    SHIFTER_PIN_MODE_R = 0b001,
+}
+Shifter_PinMode_T;
+
+// static const Shifter_Pins_T SHIFTER_PIN_MODE_FNR    = { .Value = 0b111 };
+// static const Shifter_Pins_T SHIFTER_PIN_MODE_FR     = { .Value = 0b011 };
+// static const Shifter_Pins_T SHIFTER_PIN_MODE_R      = { .Value = 0b001 };
 
 /******************************************************************************/
 /*
@@ -73,19 +91,6 @@ typedef union Shifter_Pins
 }
 Shifter_Pins_T;
 
-/*
-    Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
-        FNR — three pins, one per gear, mutually exclusive
-        FR  — two pins (forward + reverse). Neutral = neither pressed
-        R   — one pin (reverse). Forward = not reverse. Neutral never emitted
-*/
-typedef enum Shifter_PinMode
-{
-    SHIFTER_PIN_MODE_FNR = 0b111,
-    SHIFTER_PIN_MODE_FR  = 0b011,
-    SHIFTER_PIN_MODE_R   = 0b001,
-}
-Shifter_PinMode_T;
 
 
 /******************************************************************************/
@@ -145,22 +150,36 @@ Shifter_T;
     Capture
 */
 /******************************************************************************/
+static inline Shifter_Direction_T _Shifter_Decode_R(Shifter_Pins_T pins)
+{
+#define _F SHIFTER_DIRECTION_FORWARD
+#define _R SHIFTER_DIRECTION_REVERSE
+    static const Shifter_Direction_T DECODE_TABLE[8] = { _F, _F, _R, _R, _F, _F, _R, _R };
+    return DECODE_TABLE[pins.Value];
+}
+static inline Shifter_Direction_T _Shifter_Decode_FR(Shifter_Pins_T pins)
+{
+#define _N SHIFTER_DIRECTION_NEUTRAL
+#define _F SHIFTER_DIRECTION_FORWARD
+#define _R SHIFTER_DIRECTION_REVERSE
+    static const Shifter_Direction_T DECODE_TABLE[8] = { _N, _R, _F, _N, _N, _N, _N, _N };
+    return DECODE_TABLE[pins.Value];
+}
+
 static inline Shifter_Direction_T Shifter_Decode(Shifter_T * p_shifter, Shifter_Pins_T pins)
 {
-    #define _N SHIFTER_DIRECTION_NEUTRAL
-    #define _F SHIFTER_DIRECTION_FORWARD
-    #define _R SHIFTER_DIRECTION_REVERSE
-
     (void)p_shifter; /* in case decode table is fully static */
 
-#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR) // && !RUN_TIME_SWITCHABLE
-    static const Shifter_Direction_T DECODE_TABLE[8] = { _N, _F, _R, _N, _N, _N, _N, _N };
+#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
+// && !RUN_TIME_SELECTABLE
+    return _Shifter_Decode_FR(pins);
+// RUN_TIME_SELECTABLE
+// return p_shifter->P_STATE->p_DecodeTable[pins.Value];
 #elif defined(SHIFTER_PINS_AVAILABLE_R)
-    static const Shifter_Direction_T DECODE_TABLE[8] = { _F, _F, _R, _R, _F, _F, _R, _R };
+   return _Shifter_Decode_R(pins);
 #endif
 
-    return DECODE_TABLE[pins.Value];
-    // return p_shifter->P_STATE->p_DecodeTable[pins.Value];
+
 }
 
 static inline void Shifter_Poll(Shifter_T * p_shifter)
@@ -223,27 +242,27 @@ extern void Shifter_Init(Shifter_T * p_shifter);
 extern void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_config);
 extern void Shifter_SetPinMode(Shifter_T * p_shifter, Shifter_PinMode_T mode);
 
-// /******************************************************************************/
-// /*
-//     VarId / ConfigId
-// */
-// /******************************************************************************/
-// typedef enum Shifter_VarId
-// {
-//     SHIFTER_VAR_DIRECTION,
-//     SHIFTER_VAR_FORWARD_PIN,
-//     SHIFTER_VAR_REVERSE_PIN,
-//     SHIFTER_VAR_NEUTRAL_PIN,
-// }
-// Shifter_VarId_T;
+/******************************************************************************/
+/*
+    VarId / ConfigId
+*/
+/******************************************************************************/
+typedef enum Shifter_VarId
+{
+    SHIFTER_VAR_DIRECTION,
+    SHIFTER_VAR_FORWARD_PIN,
+    SHIFTER_VAR_REVERSE_PIN,
+    SHIFTER_VAR_NEUTRAL_PIN,
+}
+Shifter_VarId_T;
 
-// typedef enum Shifter_ConfigId
-// {
-//     SHIFTER_CONFIG_PIN_MODE,
-// }
-// Shifter_ConfigId_T;
+typedef enum Shifter_ConfigId
+{
+    SHIFTER_CONFIG_PIN_MODE,
+}
+Shifter_ConfigId_T;
 
-// extern int32_t Shifter_VarId_Get(Shifter_T * p_shifter, Shifter_VarId_T id);
-// extern int32_t Shifter_ConfigId_Get(Shifter_T * p_shifter, Shifter_ConfigId_T id);
-// extern void Shifter_ConfigId_Set(Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value);
+extern int32_t Shifter_VarId_Get(Shifter_T * p_shifter, Shifter_VarId_T id);
+extern int32_t Shifter_ConfigId_Get(Shifter_T * p_shifter, Shifter_ConfigId_T id);
+extern void Shifter_ConfigId_Set(Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value);
 

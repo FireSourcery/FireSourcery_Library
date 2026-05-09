@@ -324,7 +324,7 @@ static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc
 
 /******************************************************************************/
 /*
-
+    Expose components interface
 */
 /******************************************************************************/
 static inline Socket_T * MotorController_GetMainSocket(MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
@@ -336,16 +336,14 @@ static inline bool MotorController_PollRxLost(MotorController_T * p_dev)
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
+
+static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
+// static inline VBus_T * MotorController_VBus(MotorController_T * p_dev) { return p_dev->P_VBUS; }
+// static inline VMonitor_T * MotorController_VMonitorAccessories(MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
+
+
 /* Common Buffered Input */
 // static inline Motor_Input_T * MotorController_GetMotorInput(MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
-
-/******************************************************************************/
-/*
-    MotBuzzer
-*/
-/******************************************************************************/
-static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
-
 
 /******************************************************************************/
 /*

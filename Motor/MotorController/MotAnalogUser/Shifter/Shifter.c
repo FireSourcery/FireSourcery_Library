@@ -48,16 +48,6 @@
 //     return pins.Forward ? DECODE_TABLE_FNR : DECODE_TABLE_R_ONLY;
 // }
 
-
-static void Apply(const Shifter_T * p_shifter, Shifter_Pins_T pins)
-{
-    // p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
-    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); }
-    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); }
-    if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); }
-}
-
-
 /******************************************************************************/
 /*
     Public
@@ -66,7 +56,7 @@ static void Apply(const Shifter_T * p_shifter, Shifter_Pins_T pins)
 void Shifter_InitFrom(const Shifter_T * p_shifter, const Shifter_Config_T * p_config)
 {
     if (p_config != NULL) { p_shifter->P_STATE->Config = *p_config; }
-    Apply(p_shifter, p_shifter->P_STATE->Config.PinMode);
+    Shifter_SetPinMode(p_shifter, p_shifter->P_STATE->Config.PinMode.Value);
     p_shifter->P_STATE->LastDirection = SHIFTER_DIRECTION_NEUTRAL;
 }
 
@@ -79,43 +69,51 @@ void Shifter_SetPinMode(const Shifter_T * p_shifter, Shifter_PinMode_T mode)
 {
     Shifter_Pins_T pins = { .Value = (uint8_t)mode };
     p_shifter->P_STATE->Config.PinMode = pins;
-    Apply(p_shifter, pins);
+    // p_shifter->P_STATE->p_DecodeTable = SelectDecodeTable(pins);
+
+    if (pins.Reverse) { UserDIn_Init(&p_shifter->REVERSE_DIN); }
+#if defined(SHIFTER_PINS_AVAILABLE_FNR) || defined(SHIFTER_PINS_AVAILABLE_FR)
+    if (pins.Forward) { UserDIn_Init(&p_shifter->FORWARD_DIN); }
+#endif
+#if defined(SHIFTER_PINS_AVAILABLE_FNR)
+    if (pins.Neutral) { UserDIn_Init(&p_shifter->NEUTRAL_DIN); }
+#endif
 }
 
 
 /*
     VarId/ConfigId Get/Set
 */
-// int32_t Shifter_VarId_Get(const Shifter_T * p_shifter, Shifter_VarId_T id)
-// {
-//     int32_t value = 0;
-//     switch (id)
-//     {
-//         case SHIFTER_VAR_DIRECTION:    value = Shifter_ResolveDirection(p_shifter);                   break;
-//         case SHIFTER_VAR_FORWARD_PIN:  value = UserDIn_GetState(&p_shifter->FORWARD_DIN);         break;
-//         case SHIFTER_VAR_REVERSE_PIN:  value = UserDIn_GetState(&p_shifter->REVERSE_DIN);         break;
-//         case SHIFTER_VAR_NEUTRAL_PIN:  value = UserDIn_GetState(&p_shifter->NEUTRAL_DIN);         break;
-//         default: break;
-//     }
-//     return value;
-// }
+int32_t Shifter_VarId_Get(const Shifter_T * p_shifter, Shifter_VarId_T id)
+{
+    int32_t value = 0;
+    switch (id)
+    {
+        case SHIFTER_VAR_DIRECTION:    value = Shifter_ResolveDirection(p_shifter);               break;
+        case SHIFTER_VAR_FORWARD_PIN:  value = UserDIn_GetState(&p_shifter->FORWARD_DIN);         break;
+        case SHIFTER_VAR_REVERSE_PIN:  value = UserDIn_GetState(&p_shifter->REVERSE_DIN);         break;
+        case SHIFTER_VAR_NEUTRAL_PIN:  value = UserDIn_GetState(&p_shifter->NEUTRAL_DIN);         break;
+        default: break;
+    }
+    return value;
+}
 
-// int32_t Shifter_ConfigId_Get(const Shifter_T * p_shifter, Shifter_ConfigId_T id)
-// {
-//     int32_t value = 0;
-//     switch (id)
-//     {
-//         case SHIFTER_CONFIG_PIN_MODE: value = p_shifter->P_STATE->Config.PinMode.Value; break;
-//         default: break;
-//     }
-//     return value;
-// }
+int32_t Shifter_ConfigId_Get(const Shifter_T * p_shifter, Shifter_ConfigId_T id)
+{
+    int32_t value = 0;
+    switch (id)
+    {
+        case SHIFTER_CONFIG_PIN_MODE: value = p_shifter->P_STATE->Config.PinMode.Value; break;
+        default: break;
+    }
+    return value;
+}
 
-// void Shifter_ConfigId_Set(const Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value)
-// {
-//     switch (id)
-//     {
-//         case SHIFTER_CONFIG_PIN_MODE: Shifter_SetPinMode(p_shifter, (Shifter_PinMode_T)value); break;
-//         default: break;
-//     }
-// }
+void Shifter_ConfigId_Set(const Shifter_T * p_shifter, Shifter_ConfigId_T id, int32_t value)
+{
+    switch (id)
+    {
+        case SHIFTER_CONFIG_PIN_MODE: Shifter_SetPinMode(p_shifter, (Shifter_PinMode_T)value); break;
+        default: break;
+    }
+}

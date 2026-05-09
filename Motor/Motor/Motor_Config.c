@@ -110,19 +110,19 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 
 void Motor_Config_ValidateFw(Motor_Config_T * p_config)
 {
-    uint16_t speedCeiling = (p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config);
+    uint16_t speedCeiling = (p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config);
 
     p_config->SpeedLimitForward_Fract16             = math_min(speedCeiling, p_config->SpeedLimitForward_Fract16);
     p_config->SpeedLimitReverse_Fract16             = math_min(speedCeiling, p_config->SpeedLimitReverse_Fract16);
-    p_config->FieldWeakening.IdFwMax                = Motor_IRatedLimitOf(p_config->FieldWeakening.IdFwMax);
+    p_config->FieldWeakening.IdFwLimit                = Motor_IRatedLimitOf(p_config->FieldWeakening.IdFwLimit);
 }
 
 bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
 {
     return
     (
-        (p_config->SpeedLimitForward_Fract16 <= ((p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
-        && (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FieldWeakening.IdFwMax > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+        (p_config->SpeedLimitForward_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+        && (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
     );
 }
 

@@ -103,11 +103,10 @@ static inline int16_t   Phase_V_VoltsOfFract16(accum32_t fract16) { return fract
 static inline accum32_t Phase_Power_VAOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() * Phase_Calibration_GetVMaxVolts() / 32768; }
 
 /*
-    Resistance / Inductance conversions
+    Resistance Ref
     R_REF = V_MAX_VOLTS / I_MAX_AMPS [Ohm]
     Rs_Fract16 represents (R_Ohm / R_REF) in fract16.
     Rs_MilliOhms = Rs_Fract16 * V_MAX_VOLTS * 1000 / (I_MAX_AMPS * 32768)
-    L conversions not fract16-based; inductance lives in uH directly. See KL*_Fract16 in Motor_Config_T for in-loop use.
 */
 static inline accum32_t Phase_R_Fract16OfMilliOhms(uint16_t milliOhms)
 {

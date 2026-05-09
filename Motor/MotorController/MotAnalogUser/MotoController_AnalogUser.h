@@ -103,11 +103,11 @@ static inline int32_t MotAnalogUser_VarId_Get(MotorController_T * p_mc, MotAnalo
         case MOT_ANALOG_USER_THROTTLE_DIN:       value = UserAIn_IsOn(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                                break;
         case MOT_ANALOG_USER_BRAKE_DIN:          value = UserAIn_IsOn(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                                   break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:
-        {
-            UserDIn_T * p_pin = OptDin_SwitchBrake((UserDIn_T *)&p_mc->DINS[0U], &p_mc->P_MC->OptDinState);
-            value = (p_pin != NULL) ? UserDIn_GetState(p_pin) : 0;
-            break;
-        }
+            {
+                UserDIn_T * p_pin = OptDin_SwitchBrake(&p_mc->DINS[0U], &p_mc->P_MC->OptDinState);
+                value = (p_pin != NULL) ? UserDIn_GetState(p_pin) : 0;
+                break;
+            }
         case MOT_ANALOG_USER_FORWARD_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.FORWARD_DIN);                                   break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.REVERSE_DIN);                                   break;
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = UserDIn_GetState(&p_mc->SHIFTER.NEUTRAL_DIN);                                   break;
@@ -126,11 +126,11 @@ static inline int32_t MotAnalogUser_VarId_GetAsInput(MotorController_T * p_mc, M
         case MOT_ANALOG_USER_THROTTLE_DIN:       value = _UserAIn_IsEdgePinOn(p_mc->AINS[MOT_AIN_THROTTLE].PIN.P_EDGE_PIN);              break;
         case MOT_ANALOG_USER_BRAKE_DIN:          value = _UserAIn_IsEdgePinOn(p_mc->AINS[MOT_AIN_BRAKE].PIN.P_EDGE_PIN);                 break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_DIN:
-        {
-            UserDIn_T * p_pin = OptDin_SwitchBrake((UserDIn_T *)&p_mc->DINS[0U], &p_mc->P_MC->OptDinState);
-            value = (p_pin != NULL) ? Pin_Input_ReadPhysical(&p_pin->PIN) : 0;
-            break;
-        }
+            {
+                UserDIn_T * p_pin = OptDin_SwitchBrake((UserDIn_T *)&p_mc->DINS[0U], &p_mc->P_MC->OptDinState);
+                value = (p_pin != NULL) ? Pin_Input_ReadPhysical(&p_pin->PIN) : 0;
+                break;
+            }
         case MOT_ANALOG_USER_FORWARD_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.FORWARD_DIN.PIN);                         break;
         case MOT_ANALOG_USER_REVERSE_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.REVERSE_DIN.PIN);                         break;
         case MOT_ANALOG_USER_NEUTRAL_DIN:        value = Pin_Input_ReadPhysical(&p_mc->SHIFTER.NEUTRAL_DIN.PIN);                         break;
@@ -162,21 +162,21 @@ static inline int32_t MotAnalogUser_ConfigId_Get(MotorController_T * p_mc, MotAn
     return value;
 }
 
-//todo mc reset replace UserAIn_Init(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);
+
 static inline void MotAnalogUser_ConfigId_Set(MotorController_T * p_mc, MotAnalogUser_ConfigId_T id, int32_t value)
 {
     MotorController_Config_T * p_config = &p_mc->P_MC->Config;
     switch (id)
     {
-        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:           p_config->AInConfigs[MOT_AIN_THROTTLE].AdcZero    = (uint16_t)value;
-                                                           UserAIn_Init(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
-        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:            p_config->AInConfigs[MOT_AIN_THROTTLE].AdcMax     = (uint16_t)value;
-                                                           UserAIn_Init(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
+        case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:           p_config->AInConfigs[MOT_AIN_THROTTLE].AdcZero    = (uint16_t)value; break;
+                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
+        case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:            p_config->AInConfigs[MOT_AIN_THROTTLE].AdcMax     = (uint16_t)value; break;
+                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
         case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:  p_config->AInConfigs[MOT_AIN_THROTTLE].UseEdgePin = (bool)value;        break;
-        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:              p_config->AInConfigs[MOT_AIN_BRAKE].AdcZero       = (uint16_t)value;
-                                                           UserAIn_Init(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
-        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               p_config->AInConfigs[MOT_AIN_BRAKE].AdcMax        = (uint16_t)value;
-                                                           UserAIn_Init(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
+        case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:              p_config->AInConfigs[MOT_AIN_BRAKE].AdcZero       = (uint16_t)value; break;
+                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
+        case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               p_config->AInConfigs[MOT_AIN_BRAKE].AdcMax        = (uint16_t)value; break;
+                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:     p_config->AInConfigs[MOT_AIN_BRAKE].UseEdgePin    = (bool)value;        break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:           p_config->OptDinConfig.SwitchBrakeFloor_Percent16 = (uint16_t)value;   break;
         default: break;

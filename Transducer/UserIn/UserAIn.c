@@ -49,8 +49,11 @@ static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, u
 void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config)
 {
     if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_STATE->Config = *p_config; }
-    if (p_dev->P_EDGE_PIN != NULL && p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Init(p_dev->P_EDGE_PIN); }
-    else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
+    if (p_dev->P_EDGE_PIN != NULL)
+    {
+        if (p_dev->P_STATE->Config.UseEdgePin) { UserDIn_Init(p_dev->P_EDGE_PIN); }
+        else { UserDIn_Modal_Disable(p_dev->P_EDGE_PIN); }
+    }
 
     /* Initialize linear conversion */
     Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
@@ -64,6 +67,11 @@ void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config
 void UserAIn_Init(const UserAIn_T * p_dev)
 {
     UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG);
+}
+
+void UserAIn_ResetScale(const UserAIn_T * p_dev)
+{
+    Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
 }
 
 /******************************************************************************/

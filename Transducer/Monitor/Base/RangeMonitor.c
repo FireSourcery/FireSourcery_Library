@@ -37,6 +37,7 @@
     For High-Side Monitoring: Nominal < Warning < Fault
     For Low-Side Monitoring: Fault < Warning < Nominal
 */
+// todo move to config
 static inline Monitor_Config_T HighConfigOf(const RangeMonitor_Config_T * p_config)
 {
     /* Validate high-side thresholds are properly configured */
@@ -153,6 +154,11 @@ void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
     Hysteresis_Reset(&p_monitor->MonitorLow.Warning);
 }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 // void RangeMonitor_SetFaultOverLimit(RangeMonitor_T * p_monitor, int32_t limit) { _RangeMonitor_SetFaultOverLimit(&p_monitor->Config, limit); RangeMonitor_InitFrom(p_monitor, NULL); }
 // void RangeMonitor_SetFaultUnderLimit(RangeMonitor_T * p_monitor, int32_t limit) { _RangeMonitor_SetFaultUnderLimit(&p_monitor->Config, limit); RangeMonitor_InitFrom(p_monitor, NULL); }
 // void RangeMonitor_SetWarningLimitHigh(RangeMonitor_T * p_monitor, int32_t limit) { _RangeMonitor_SetWarningLimitHigh(&p_monitor->Config, limit); RangeMonitor_InitFrom(p_monitor, NULL); }
@@ -160,6 +166,25 @@ void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
 // void RangeMonitor_SetWarningDeadband(RangeMonitor_T * p_monitor, int32_t deadband) { _RangeMonitor_SetWarningDeadband(&p_monitor->Config, deadband); RangeMonitor_InitFrom(p_monitor, NULL); }
 // void RangeMonitor_SetNominal(RangeMonitor_T * p_monitor, int32_t nominal) { _RangeMonitor_SetNominal(&p_monitor->Config, nominal); RangeMonitor_InitFrom(p_monitor, NULL); }
 
+/* Check if monitor is enabled */
+// static inline bool RangeMonitor_IsEnabled(const RangeMonitor_Config_T * p_config) { return p_config->IsEnabled; }
+// static inline void RangeMonitor_SetEnabled(RangeMonitor_Config_T * p_config, bool isEnabled) { p_config->IsEnabled = isEnabled; }
+
+// /* Getters format */
+// static inline int32_t RangeMonitor_GetFaultOverLimit(const RangeMonitor_Config_T * p_config) { return p_config->FaultOverLimit.Limit; }
+// static inline int32_t RangeMonitor_GetFaultUnderLimit(const RangeMonitor_Config_T * p_config) { return p_config->FaultUnderLimit.Limit; }
+// static inline int32_t RangeMonitor_GetWarningLimitHigh(const RangeMonitor_Config_T * p_config) { return p_config->Warning.LimitHigh; }
+// static inline int32_t RangeMonitor_GetWarningLimitLow(const RangeMonitor_Config_T * p_config) { return p_config->Warning.LimitLow; }
+// static inline int32_t RangeMonitor_GetWarningDeadband(const RangeMonitor_Config_T * p_config) { return p_config->Warning.Hysteresis; }
+// static inline int32_t RangeMonitor_GetNominal(const RangeMonitor_Config_T * p_config) { return p_config->Nominal; }
+
+// /* Setters without propagating reset */
+// static inline void _RangeMonitor_SetFaultOverLimit(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->FaultOverLimit.Limit = limit; }
+// static inline void _RangeMonitor_SetFaultUnderLimit(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->FaultUnderLimit.Limit = limit; }
+// static inline void _RangeMonitor_SetWarningLimitHigh(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->Warning.LimitHigh = limit; }
+// static inline void _RangeMonitor_SetWarningLimitLow(RangeMonitor_Config_T * p_config, int32_t limit) { p_config->Warning.LimitLow = limit; }
+// static inline void _RangeMonitor_SetWarningDeadband(RangeMonitor_Config_T * p_config, int32_t deadband) { p_config->Warning.Hysteresis = deadband; }
+// static inline void _RangeMonitor_SetNominal(RangeMonitor_Config_T * p_config, int32_t nominal) { p_config->Nominal = nominal; }
 
 /******************************************************************************/
 /*

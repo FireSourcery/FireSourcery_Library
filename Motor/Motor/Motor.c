@@ -106,7 +106,7 @@ void Motor_Reset(Motor_State_T * p_motor)
     */
     FOC_Init(&p_motor->Foc);
     p_motor->Foc.IdFwGain = p_motor->Config.FieldWeakening.IdFwGain;
-    p_motor->Foc.IdFwMax = p_motor->Config.FieldWeakening.IdFwMax;
+    p_motor->Foc.IdFwLimit = p_motor->Config.FieldWeakening.IdFwLimit;
 
     p_motor->ControlTimerBase = 0U;
 

@@ -18,11 +18,6 @@ A **General Embedded C Library** and **Motor Control Library**
   - Layered implementation of control behaviors with code reuse.
   - Standard protocol for GUI side. Arduino-compatible wrapper.
 
-* TODO
-  - Encoder HFI align
-  - Sensorless
-  - Input Devices: 1-D, 2-D, Joystick.
-  - Misra compliance
 
 ### Directory Contents Overview
 

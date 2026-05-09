@@ -96,6 +96,15 @@ static inline struct foc_abc foc_inv_clarke_park(fract16_t d, fract16_t q, fract
 static inline fract16_t foc_vd_ff(fract16_t iq, fract16_t omega_Lq) { return -fract16_mul(omega_Lq, iq); }
 static inline fract16_t foc_vq_ff(fract16_t id, fract16_t omega_Ld, fract16_t omega_psi) { return fract16_sat((accum32_t)fract16_mul(omega_Ld, id) + omega_psi); }
 
+static inline struct foc_dq foc_vdq_ff(fract16_t Ld, fract16_t  Lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq)
+{
+    fract16_t omega_Ld = fract16_mul(omega, Ld);
+    fract16_t omega_Lq = fract16_mul(omega, Lq);
+    fract16_t omega_psi = fract16_mul(omega, psi);
+
+    return (struct foc_dq) { .d = foc_vd_ff(iq, omega_Lq), .q = foc_vq_ff(id, omega_Ld, omega_psi) };
+}
+
 static inline fract16_t foc_decouple_vd(fract16_t vd, fract16_t iq, fract16_t omega_Lq) { return fract16_sat((accum32_t)vd - fract16_mul(omega_Lq, iq)); }
 static inline fract16_t foc_decouple_vq(fract16_t vq, fract16_t id, fract16_t omega_Ld, fract16_t omega_psi) { return fract16_sat((accum32_t)vq + fract16_mul(omega_Ld, id) + omega_psi); }
 

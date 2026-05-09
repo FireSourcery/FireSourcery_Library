@@ -153,7 +153,7 @@ static void Rs_Proc(Motor_T * p_motor)
     Motor_ElectricalParams_T * p_results;
     Motor_ParamsBuffer_T * p_buffer; /* temp */
 
-    Motor_FOC_AngleControl(p_motor, 0, Motor_GetIAlign(p_motor), 0);
+    Motor_FOC_AngleAlign(p_runtime, 0); /* align to d-axis, angle = 0 */
 
     Accumulator_Add(&p_runtime->Accumulators[0], FOC_Vd(&p_runtime->Foc));
     Accumulator_Add(&p_runtime->Accumulators[1], FOC_Id(&p_runtime->Foc));

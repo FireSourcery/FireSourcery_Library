@@ -67,9 +67,12 @@ static inline VMonitor_Status_T VBus_Status(const VBus_T * p_vbus) { return (VMo
 // static inline bool VBus_IsUnderNominal(const VBus_T * p_vbus) { return RangeMonitor_IsUnderNominal(&p_vbus->MonitorState); }
 // static inline bool VBus_IsOverNominal(const VBus_T * p_vbus) { return RangeMonitor_IsOverNominal(&p_vbus->MonitorState); }
 
+static inline void VBus_DisableMonitor(VBus_T * p_vbus) { RangeMonitor_Disable(&p_vbus->MonitorState); }
+static inline void VBus_EnableMonitor(VBus_T * p_vbus) { RangeMonitor_Enable(&p_vbus->MonitorState); }
+
 static inline bool VBus_IsTriggeringEdge(const VBus_T * p_vbus) { return RangeMonitor_IsTriggeringEdge(&p_vbus->MonitorState); }
 static inline bool VBus_IsClearingEdge(const VBus_T * p_vbus) { return RangeMonitor_IsClearingEdge(&p_vbus->MonitorState); }
 static inline bool VBus_IsAnyFault(const VBus_T * p_vbus) { return RangeMonitor_IsAnyFault(&p_vbus->MonitorState); }
-static inline bool VBus_IsEnabled(const VBus_T * p_vbus) { return RangeMonitor_IsEnabled(&p_vbus->MonitorState.Config); }
+static inline bool VBus_IsEnabled(const VBus_T * p_vbus) { return RangeMonitor_IsEnabled(&p_vbus->MonitorState); }
 
 

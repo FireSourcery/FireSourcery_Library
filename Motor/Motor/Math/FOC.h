@@ -56,8 +56,10 @@ typedef struct FOC
     fract16_t IdFw;   /* field weakening d-axis integrator state */
     // Accumulator_T IdFwIntegrator; /* field weakening d-axis integrator accumulator */
     fract16_t IdFwGain;
-    fract16_t IdFwMax; /*Maximum demagnetizing current. */
+    fract16_t IdFwLimit;    /* Maximum demagnetizing current. */
     // fract16_t IsMax;   /* Current circle radius */
+
+    // FOC_FieldWeakeningConfig_T FieldWeakeningConfig; copy from nvm
 
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
@@ -79,30 +81,21 @@ FOC_T;
 
 typedef struct
 {
-    // fract16_t IsMax;   /* Current circle radius */
-    ufract16_t IdFwMax;               /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    ufract16_t IdFwGain;              /* Field weakening integrator gain per control cycle */
+    // fract16_t IsMax;     /* Current circle radius */
+    ufract16_t IdFwLimit;     /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
+    ufract16_t IdFwGain;    /* Field weakening integrator gain per control cycle */
 }
 FOC_FieldWeakeningConfig_T;
 
+
+/* same shape for SI and PU  */
 typedef struct
 {
-// #if defined(MOTOR_DECOUPLE_ENABLE)
-    fract16_t Ld_Fract16;
-    fract16_t Lq_Fract16;
-    fract16_t Psi_Fract16;
-// #endif
-}
-FOC_DecouplingCoeff_T;
-
-
-/* same shape for uH and PU  */
-typedef struct
-{
-    fract16_t Ld;
-    fract16_t Lq;
-    fract16_t Rs;
-    fract16_t Psi;
+    uint16_t Ld;
+    uint16_t Lq;
+    uint16_t Rs;
+    uint16_t Psi;
+    // union { fract16_t Psi; uint16_t Kv; };
 }
 FOC_Electrical_T;
 
@@ -116,12 +109,13 @@ FOC_Electrical_T;
 
 // typedef struct
 // {
+// // #if defined(MOTOR_DECOUPLE_ENABLE)
 //     fract16_t Ld_Fract16;
 //     fract16_t Lq_Fract16;
-//     fract16_t Rs_Fract16;
 //     fract16_t Psi_Fract16;
+// // #endif
 // }
-// FOC_Electrical_T;
+// FOC_DecouplingCoeff_T;
 
 
 
@@ -238,7 +232,7 @@ static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, i
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
     if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
-    //   if (FOC_ProcVectorLimit(p_foc, vBus)) { if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->Foc.PidIq)) { PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); }}
+    //   if (FOC_ProcVectorLimit(p_foc, vBus)) { if (math_abs(FOC_Vq(p_foc)) > PID_GetIntegral(p_foc.PidIq)) { PID_SetOutputState(p_foc.PidIq, FOC_Vq(p_foc)); }}
 }
 
 static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
@@ -256,14 +250,15 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
 }
 
 
-static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, fract16_t theta, fract16_t vd, fract16_t vq)
+// static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, ufract16_t vBus, fract16_t vd, fract16_t vq)
+static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
 {
     FOC_SetTheta(p_foc, theta);
     FOC_SetVd(p_foc, vd);
     FOC_SetVq(p_foc, vq);
+    //     FOC_ProcVectorLimit(p_foc, vBus);
     FOC_ProcInvClarkePark(p_foc);
 }
-
 
 /******************************************************************************/
 /*!
@@ -330,11 +325,9 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16
 */
 /******************************************************************************/
 /*
-    |V_ref| = √(Vd² + Vq²)
-    error = Vdc_limit - |V_ref|
-    Id_fw += Ki · error   (integrator, Id ≤ 0)
+    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
 */
-/* Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwMax), 0]. */
+/* Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0]. */
 /*
     Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
     Id_fw = (Vs_max/ωe - λ_pm) / Ld
@@ -342,53 +335,55 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 {
     int16_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (int16_t)FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -(int32_t)p_foc->IdFwMax, 0);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -(int32_t)p_foc->IdFwLimit, 0);
     return p_foc->IdFw;
 }
 
 static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 {
-    p_foc->IdFwMax = 0;
+    p_foc->IdFwLimit = 0;
 }
 
+static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
+{
+    FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
+}
 
-
-// // #if defined(MOTOR_DECOUPLE_ENABLE)
-// /*
-//     Cross-coupling decoupling feedforward, limit-first ordering.
-//         Vd_ff = -omega_e * Lq * Iq
-//         Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
-
-//     omega_e source: RotorSensor_GetElectricalDelta (electrical angle16 per control cycle).
-//     K coefficients (fract16) are tuned such that fract16_mul(delta, K_*) yields the decoupling
-//     product in the same fract16 voltage basis as the PI output.
-// */
-// static void ProcIFeedback_(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
+// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningConfig_T * p_fwConfig, ufract16_t vBus, sign_t direction, int16_t iqReq)
 // {
-//     fract16_t id = FOC_Id(&p_motor->Foc);
-//     fract16_t iq = FOC_Iq(&p_motor->Foc);
-//     angle16_t delta = RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
+//     FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
+// }
 
-//     fract16_t omega_Lq = fract16_mul(delta, p_motor->Config.Decoupling.KLq_Fract16);
-//     fract16_t omega_Ld = fract16_mul(delta, p_motor->Config.Decoupling.KLd_Fract16);
-//     fract16_t omega_psi = fract16_mul(delta, p_motor->Config.Decoupling.KPsi_Fract16);
+
+// #if defined(MOTOR_DECOUPLE_ENABLE)
+/*
+    Cross-coupling decoupling feedforward, limit-first ordering.
+        Vd_ff = -omega_e * Lq * Iq
+        Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
+
+*/
+// static void ProcIFeedback_(FOC_T * p_foc, const FOC_Electrical_T * p_k, ufract16_t vbus,  angle16_t angleSpeed, int16_t idReq, int16_t iqReq)
+// {
+//     fract16_t omega_Lq = fract16_mul(angleSpeed, p_k-> Lq );
+//     fract16_t omega_Ld = fract16_mul(angleSpeed, p_k-> Ld );
+//     fract16_t omega_psi = fract16_mul(angleSpeed, p_k-> Psi );
 
 //     /* Vd = PI_Id + Vd_ff, clipped to phase limit so Vq budget is well-defined */
-//     int16_t vPhaseLimit = fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2);
-//     fract16_t vd = foc_decouple_vd(PID_ProcPI(&p_motor->PidId, id, idReq), iq, omega_Lq);
+//     int16_t vPhaseLimit = fract16_mul(vbus, FRACT16_1_DIV_2);
+//     fract16_t vd = foc_decouple_vd(PID_ProcPI(p_foc->PidId, id, idReq), iq, omega_Lq);
 //     vd = math_clamp(vd, -vPhaseLimit, vPhaseLimit);
-//     FOC_SetVd(&p_motor->Foc, vd);
+//     FOC_SetVd(p_foc, vd);
 
 //     /* Vq PI budget = remaining circle after Vd, with room reserved for Vq_ff */
-//     int16_t vqBudget = _FOC_VqCircleLimit(&p_motor->Foc, vPhaseLimit);
+//     int16_t vqBudget = _FOC_VqCircleLimit(p_foc, vPhaseLimit);
 //     fract16_t vq_ff = foc_vq_ff(id, omega_Ld, omega_psi);
 //     int16_t vqPiLimit = vqBudget - math_abs(vq_ff);
 //     if (vqPiLimit < 0) { vqPiLimit = 0; }
 
-//     PID_CaptureOutputLimits(&p_motor->PidIq, (p_motor->Direction == MOTOR_DIRECTION_CW) * -vqPiLimit, (p_motor->Direction == MOTOR_DIRECTION_CCW) * vqPiLimit);
-//     FOC_SetVq(&p_motor->Foc, fract16_sat((accum32_t)PID_ProcPI(&p_motor->PidIq, iq, iqReq) + vq_ff));
+//     PID_CaptureOutputLimits(p_foc->PidIq, (p_foc->Direction == MOTOR_DIRECTION_CW) * -vqPiLimit, (p_foc->Direction == MOTOR_DIRECTION_CCW) * vqPiLimit);
+//     FOC_SetVq(p_foc, fract16_sat((accum32_t)PID_ProcPI(p_foc->PidIq, iq, iqReq) + vq_ff));
 // }
-// // #endif
+// #endif
 
 
 

@@ -170,7 +170,7 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
         case VMONITOR_STATUS_WARNING_LOW:           _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateUnderV(p_dev->P_VBUS));  break;
         case VMONITOR_STATUS_WARNING_HIGH:          _MotorController_SetILimitAll(p_dev, MOT_I_LIMIT_V_BUS, VBus_GetIDerateOverV(p_dev->P_VBUS));   break;
         case VMONITOR_STATUS_NORMAL:
-            if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_V_BUS); } break;
+            if (VBus_IsClearingEdge(p_dev->P_VBUS) == true) { _MotorController_ClearILimitAll(p_dev, MOT_I_LIMIT_V_BUS); } break; /*  */
         default: break;
     }
 
@@ -217,9 +217,9 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         /*
             Med Freq, Low Priority, 1 ms
         */
-        /* SubStates update on proc, at least once Motor_StateMachine will have processed */
+        /* SubStates update on proc, Motor_StateMachine will have processed */
         /* Handle Inputs as they are received */
-        // may be interrupted by enterFault on 1ms thread
+        /* All transition inputs are on the same thread, except enterFault on 1ms thread */
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
@@ -269,7 +269,6 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         */
         if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_MAIN_DIVIDER_1000) == true)
         {
-            // _MotorController_ProcOptDin(p_dev);
             for (uint8_t iDin = 0; iDin < MOT_USER_DIN_COUNT; iDin++) { _UserDIn_Modal_PollEdgeCmd(&p_dev->DINS[iDin], (void *)p_dev); } /* Poll with Cmd */
 
             _MotorController_VMonitorBoard_Thread(p_dev); /* Except VSupply */

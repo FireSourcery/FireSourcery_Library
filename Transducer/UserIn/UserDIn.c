@@ -138,6 +138,13 @@ void _UserDIn_Modal_PollEdgeCmd(UserDIn_T * p_dev, void * p_context)
 }
 
 
+// /*
+//     Array helper
+// */
+// static inline void UserDIn_Array_ResolveCallbacks(UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count, const UserDIn_Fn_T * p_cmdTable)
+// {
+//     for (uint8_t i = 0; i < count; i++) { p_dins[i].P_STATE->OptCmd = p_cmdTable[p_configs[i].CmdId]; }
+// }
 
 
 // /******************************************************************************/

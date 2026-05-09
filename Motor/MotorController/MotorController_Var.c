@@ -114,7 +114,7 @@ int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Co
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V;             break;
+        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V;            break;
         // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
@@ -139,7 +139,7 @@ void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_C
     {
         // case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
         // case MOT_VAR_CONFIG_RESV:
-        case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;               break;
+        case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;              break;
         case MOT_VAR_INPUT_MODE:             p_state->Config.InputMode = (MotorController_InputMode_T)value;            break;
 
         // case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
@@ -313,7 +313,11 @@ static MotVarId_Status_T _HandleVMonitor_Set(MotorController_T * p_dev, MotVarId
     switch ((MotorController_VarType_VMonitor_T)varId.Type)
     {
         case MOT_VAR_TYPE_VBUS_OUT:                         return MOT_VAR_STATUS_ERROR_READ_ONLY;
-        case MOT_VAR_TYPE_VBUS_CONFIG:                      VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); break; /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
+        case MOT_VAR_TYPE_VBUS_CONFIG:
+            VBus_DisableMonitor(p_dev->P_VBUS); /* ensure monitor is disabled while changing config to prevent bad states */
+            VBus_ConfigId_Set(&p_dev->P_VBUS->Config, varId.Base, value); break; /* VBUS_CONFIG_ID_VSUPPLY_NOMINAL_V resets limits */
+            VBus_EnableMonitor(p_dev->P_VBUS);
+            break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_CONFIG:            RangeMonitor_ConfigId_Set(VBus_Monitor(p_dev->P_VBUS), varId.Base, value); break;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_STATE:             return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_V_MONITOR_VBUS_VDIVIDER:          return MOT_VAR_STATUS_ERROR_READ_ONLY;

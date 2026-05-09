@@ -323,6 +323,7 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
             if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { return EnterAppMain(p_dev); } /* Enter app sub-state from Main idle */
             return NULL;
+            // _MotorController_ClearILimitAll
         default:  return NULL;
     }
     return NULL;

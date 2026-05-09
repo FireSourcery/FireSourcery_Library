@@ -212,6 +212,9 @@ static inline bool Monitor_IsStatusEdge(const Monitor_T * p_monitor) { return p_
 */
 static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { return math_sign(p_monitor->Status - p_monitor->StatusPrev); }
 
+static inline void Monitor_Enable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; p_monitor->Direction = _Monitor_DirectionOf(&p_monitor->Config.Warning); }
+static inline void Monitor_Disable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = false; p_monitor->Direction = MONITOR_DISABLED; }
+
 
 /******************************************************************************/
 /*
@@ -224,22 +227,7 @@ static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { retur
 // }
 
 
-/* Getters */
-static inline int32_t Monitor_GetFaultLimit(const Monitor_Config_T * p_config) { return p_config->Fault.Limit; }
-static inline int32_t Monitor_GetWarningSetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Setpoint; }
-static inline int32_t Monitor_GetWarningResetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Resetpoint; }
-static inline int32_t Monitor_GetNominal(const Monitor_Config_T * p_config) { return p_config->Nominal; }
 
-/* Setters */
-static inline void _Monitor_SetFaultLimit(Monitor_Config_T * p_config, int32_t limit) { p_config->Fault.Limit = limit; }
-static inline void _Monitor_SetWarningSetpoint(Monitor_Config_T * p_config, int32_t setpoint) { p_config->Warning.Setpoint = setpoint; }
-static inline void _Monitor_SetWarningResetpoint(Monitor_Config_T * p_config, int32_t resetpoint) { p_config->Warning.Resetpoint = resetpoint; }
-static inline void _Monitor_SetNominal(Monitor_Config_T * p_config, int32_t nominal) { p_config->Nominal = nominal; }
-
-static inline bool Monitor_IsConfigEnabled(const Monitor_Config_T * p_config) { return p_config->IsEnabled; }
-static inline void Monitor_SetEnabled(Monitor_Config_T * p_config, bool isEnabled) { p_config->IsEnabled = isEnabled; }
-static inline void Monitor_Enable(Monitor_Config_T * p_config) { Monitor_SetEnabled(p_config, true); }
-static inline void Monitor_Disable(Monitor_Config_T * p_config) { Monitor_SetEnabled(p_config, false); }
 
 /******************************************************************************/
 /*

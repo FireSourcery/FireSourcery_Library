@@ -479,7 +479,6 @@ void MotorController_Traction_ApplyDirectionCmd(MotorController_T * p_mc, sign_t
     if (MotorController_Traction_GetDirection(p_mc) != direction) { Blinky_Blink(&p_mc->BUZZER, 500U); }
 }
 
-//ceck
 /* polls edge */
 void MotorController_Traction_CaptureDirection(MotorController_T * p_mc, sign_t direction)
 {

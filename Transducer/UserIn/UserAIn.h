@@ -92,6 +92,8 @@ UserAIn_T;
     { .P_EDGE_PIN = p_EdgePin, .P_STATE = p_State, .FILTER_SHIFT = Filter, .P_NVM_CONFIG = p_Config, }
 
 
+/* Handle P_EDGE_PIN->P_HAL_PIN == NULL as empty opject */
+
 /******************************************************************************/
 /*
     Private Helper Functions
@@ -144,6 +146,8 @@ static inline bool UserAIn_IsEdge(const UserAIn_T * p_dev) { return _UserAIn_IsE
 /******************************************************************************/
 extern void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config);
 extern void UserAIn_Init(const UserAIn_T * p_dev);
+
+extern void UserAIn_ResetScale(const UserAIn_T * p_dev);
 
 /* Polling functions */
 extern void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu);
