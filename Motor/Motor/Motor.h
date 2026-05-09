@@ -255,8 +255,8 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-    FOC_Electrical_T ElectricalParams; /* Motor Electrical Parameters. Can be updated with calibration. */
-    FOC_Electrical_T Decoupling; /* optional for decoupling compensation. Requires Ld, Lq, and KPsi. */
+    FOC_Electrical_T ElectricalParams; /* Motor Electrical Parameters. Si units */
+    FOC_Electrical_T Decoupling;        /* Fract16 */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
@@ -763,6 +763,8 @@ extern void Motor_Reinit(Motor_T * p_motor);
 
 extern void Motor_ReinitSensor(Motor_State_T * p_motor);
 extern void Motor_InitUnits(Motor_State_T * p_motor);
+
+void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config);
 
 extern void Motor_InitSpeedRamp(Motor_State_T * p_motor);
 extern void Motor_InitTorqueRamp(Motor_State_T * p_motor);

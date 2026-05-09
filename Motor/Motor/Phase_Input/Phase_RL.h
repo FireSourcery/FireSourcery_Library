@@ -24,28 +24,39 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Phase_Svpwm.h
+    @file   Phase_RL.h
     @author FireSourcery
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "../Math/motor_params_math.h"
+#include "../Phase_Input/Phase_Calibration.h"
 
-#include "Phase_VOut.h"
-#include "Math/Fixed/fract16.h"
-#include "Math/Fixed/fract16.h"
-#include "../Math/svpwm_math.h"
+#include "../Motor_ControlFreq.h"
 
-static inline void Phase_WriteSvpwm(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, fract16_t vA, fract16_t vB, fract16_t vC)
+
+typedef struct
 {
-    struct svpwm_abc duty = svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_fract32, vA), svpwm_norm_vbus_inv(vBusInv_fract32, vB), svpwm_norm_vbus_inv(vBusInv_fract32, vC));
+    uint16_t Rs;
+    uint16_t Ls;
+}
+Phase_RL_T;
 
-    Phase_WriteDuty_Fract16(p_phase, duty.a, duty.b, duty.c);
+/* L requires base time config. alternatively move Motor_ControlFreq */
+static inline Phase_RL_T Phase_RL_Fract16OfSi(uint16_t rs_mOhms, uint16_t ls_uHenries)
+{
+    return (Phase_RL_T)
+    {
+        .Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs_mOhms),
+        .Ls = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries)
+    };
 }
 
-
-
-// static inline void Phase_WriteSvpwm_Vector(Phase_VOut_T * p_phase, uint32_t vBusInv_fract32, Phase_Triplet_T v_abc)
+// static inline Phase_RL_T Phase_RL_SiOfFract16(uint16_t rs, uint16_t ls)
 // {
+//     return (Phase_RL_T)
+//     {
+//         .Rs = rs_mohms_of_fract16(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs),
+//         .Ls = l_uh_of_rs_tau(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls)
+//     };
 // }
-
-

@@ -108,7 +108,7 @@ typedef struct RangeMonitor
     RangeMonitor_Status_T StatusPrev;    /* Previous status for edge detection */
     int32_t LastInput;                   /* Last input value */
 
-    RangeMonitor_Config_T Config;           /* Hold for runtime update */
+    RangeMonitor_Config_T Config;        /* Hold for runtime update */
 }
 RangeMonitor_T;
 

@@ -6,6 +6,7 @@
 */
 /******************************************************************************/
 #include "Monitor.h"
+#include "Monitor_Config.h"
 
 /******************************************************************************/
 /*
@@ -109,11 +110,8 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
 {
     if (p_config != NULL) { p_monitor->Config = *p_config; }
-
     _Monitor_InitFrom(&p_monitor->Base, &p_monitor->Config);
-
-    /* Disable if invalid */
-    if (Monitor_IsConfigValid(&p_monitor->Config) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_Config_IsValid(&p_monitor->Config) == false) { p_monitor->Config.IsEnabled = false; }
 
     if (p_monitor->Config.IsEnabled == false) { p_monitor->Direction = MONITOR_DISABLED; }
     else
@@ -178,31 +176,6 @@ void Monitor_Reset(Monitor_T * p_monitor)
     Config
 */
 /******************************************************************************/
-bool Monitor_IsConfigValid(const Monitor_Config_T * p_config)
-{
-    bool isValid = false;
-    if (p_config != NULL)
-    {
-        bool isHighSide = (p_config->Warning.Setpoint >= p_config->Warning.Resetpoint);
-
-        if (isHighSide)
-        {
-            /* High-side: Fault >= Warning.Setpoint > Warning.Resetpoint >= Nominal */
-            isValid = (p_config->Fault.Limit >= p_config->Warning.Setpoint) &&
-                      (p_config->Warning.Setpoint > p_config->Warning.Resetpoint) &&
-                      (p_config->Warning.Resetpoint >= p_config->Nominal);
-        }
-        else
-        {
-            /* Low-side: Fault <= Warning.Setpoint < Warning.Resetpoint <= Nominal */
-            isValid = (p_config->Fault.Limit <= p_config->Warning.Setpoint) &&
-                      (p_config->Warning.Setpoint < p_config->Warning.Resetpoint) &&
-                      (p_config->Warning.Resetpoint <= p_config->Nominal);
-        }
-    }
-    return isValid;
-}
-
 void Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) { p_monitor->Config.Fault.Limit = limit; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetWarningSetpoint(Monitor_T * p_monitor, int32_t setpoint) { p_monitor->Config.Warning.Setpoint = setpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint) { p_monitor->Config.Warning.Resetpoint = resetpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }

@@ -75,16 +75,15 @@ static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return 
 static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
 
-
-static void Motor_ResolveDecouplingCoeffs(Motor_Config_T * p_config)
+/*  */
+static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 {
-    // #if defined(MOTOR_DECOUPLE_ENABLE)
-    p_config->Decoupling.Ld = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Ld);
-    p_config->Decoupling.Lq = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Lq);
-    p_config->Decoupling.Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
-    p_config->Decoupling.Psi = Motor_GetFluxLinkage_Angle16(&p_config->SpeedRating);
-    // #endif
+    if (!Phase_IsFloat(&p_motor->PHASE))
+    {
+        Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Fract32(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
+    }
 }
+
 
 /******************************************************************************/
 /*!

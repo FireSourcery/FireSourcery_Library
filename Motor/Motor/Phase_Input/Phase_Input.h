@@ -76,7 +76,6 @@ static inline int16_t Phase_Input_GetIc_Fract16(volatile const Phase_Input_T * p
 static void Phase_Input_ClearI(volatile Phase_Input_T * p_phase) { p_phase->I = (Phase_Data_T){ 0 }; }
 static void Phase_Input_ClearV(volatile Phase_Input_T * p_phase) { p_phase->V = (Phase_Data_T){ 0 }; }
 
-
 /******************************************************************************/
 /*!
     Var Interface

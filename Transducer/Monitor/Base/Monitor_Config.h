@@ -89,14 +89,30 @@ static inline Monitor_Config_T Monitor_Config_Disabled(void)
     return Monitor_Config_Create(0, INT32_MAX, INT32_MAX, INT32_MAX);
 }
 
+static inline bool Monitor_Config_IsValidAsHigh(const Monitor_Config_T * p_config)
+{
+    /* High-side: Fault >= Warning.Setpoint > Warning.Resetpoint >= Nominal */
+    return ((p_config->Fault.Limit >= p_config->Warning.Setpoint) &&
+        (p_config->Warning.Setpoint > p_config->Warning.Resetpoint) && (p_config->Warning.Resetpoint >= p_config->Nominal));
+}
 
+static inline bool Monitor_Config_IsValidAsLow(const Monitor_Config_T * p_config)
+{
+    /* Low-side: Fault <= Warning.Setpoint < Warning.Resetpoint <= Nominal */
+    return ((p_config->Fault.Limit <= p_config->Warning.Setpoint) &&
+        (p_config->Warning.Setpoint < p_config->Warning.Resetpoint) && (p_config->Warning.Resetpoint <= p_config->Nominal));
+}
+
+static inline bool Monitor_Config_IsValid(const Monitor_Config_T * p_config)
+{
+    return (p_config->Warning.Setpoint >= p_config->Warning.Resetpoint) ? Monitor_Config_IsValidAsHigh(p_config) : Monitor_Config_IsValidAsLow(p_config);
+}
 
 /******************************************************************************/
 /*
     Range-based Configuration Functions (for RangeMonitor compatibility)
 */
 /******************************************************************************/
-
 /* Create high-side config from RangeMonitor_Config_T */
 static inline Monitor_Config_T Monitor_Config_FromRangeHigh(const RangeMonitor_Config_T * p_config)
 {
@@ -170,3 +186,14 @@ static inline RangeMonitor_Config_T RangeMonitor_Config_SymmetricPercent(int32_t
 }
 
 
+/*
+    For High-Side Monitoring: Nominal < Warning < Fault
+    For Low-Side Monitoring: Fault < Warning < Nominal
+*/
+static inline bool RangeMonitor_Config_IsValid(const RangeMonitor_Config_T * p_config)
+{
+    // remap to two Monitor_Config_T, alternatively implement full check here
+    Monitor_Config_T high = Monitor_Config_FromRangeHigh(p_config);
+    Monitor_Config_T low = Monitor_Config_FromRangeLow(p_config);
+    return Monitor_Config_IsValidAsHigh(&high) && Monitor_Config_IsValidAsLow(&low);
+}

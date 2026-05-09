@@ -213,6 +213,9 @@ typedef const struct State
     */
     const State_Action_T * P_ACTION_TABLE; /* Internal event */
 
+    // const State_Action_T * P_VIRTUAL_INPUTS;
+    // const State_Action_T * P_VIRTUAL_OUTPUTS; /* a seperate space for functions called from within the state machine */
+
     const State_Cmd_T * P_CMD_TABLE; /* Internal Transition with return status */
     const State_Accessor_T * P_ACCESSOR_TABLE; /* Virtual getter setter */
     const State_Data_T * P_DATA_VECTOR; /* Optional data vector. Virtualize access to state data. */ /* user optionally cast struct view */

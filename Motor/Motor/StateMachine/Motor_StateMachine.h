@@ -82,6 +82,11 @@ extern const State_T MOTOR_STATE_FAULT;
     Motor State Machine Inputs
 */
 /******************************************************************************/
+/*
+    [Phase_VOutMode_T]
+    VZ/V0 -> Release
+    VPWM -> Run
+*/
 typedef enum Motor_StateInput
 {
     MOTOR_STATE_INPUT_FAULT,            /* Toggle Fault */
@@ -105,12 +110,20 @@ typedef enum Motor_StateAction
 }
 Motor_StateAction_T;
 
-/*
-    [Phase_VOutMode_T]
-    VZ/V0 -> Release
-    VPWM -> Run
-*/
 
+/*
+*/
+typedef enum Motor_StateOutput
+{
+    MOTOR_STATE_OUTPUT_WRITE_DUTY,
+    MOTOR_STATE_OUTPUT_TABLE_LENGTH,
+}
+Motor_StateOutput_T;
+
+static const State_Action_T MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_OUTPUT_WRITE_DUTY] = (State_Action_T)Motor_FOC_WriteDuty_Thread,
+};
 
 /******************************************************************************/
 /*

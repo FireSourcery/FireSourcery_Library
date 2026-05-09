@@ -117,3 +117,4 @@ static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
 {
     return ((accum32_t)fract16 * Phase_Calibration_GetVMaxVolts() * 1000) / ((accum32_t)Phase_Calibration_GetIMaxAmps() * 32768);
 }
+

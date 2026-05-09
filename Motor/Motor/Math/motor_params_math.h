@@ -56,6 +56,7 @@
 static inline int32_t kv_rpm_per_unit(uint16_t v_max_volts, uint16_t kv) { return (int32_t)kv * v_max_volts; }
 
 /* rpm_of_kv: Speed [RPM] = Kv × V.  v_fract16 in [0, FRACT16_MAX]. */
+/* rpm_of_kv_vunit */
 static inline int32_t rpm_of_kv_vfract16(uint16_t v_max_volts, uint16_t kv, int16_t v_fract16) { return fract16_mul(v_fract16, kv_rpm_per_unit(v_max_volts, kv)); }
 
 /* vfract16_of_kv_rpm: V_fract16 = Speed / Kv.  rpm in [0, kv × v_max]. */
@@ -67,7 +68,9 @@ static inline int32_t vfract16_of_kv_rpm(uint16_t v_max_volts, uint16_t kv, int3
 //     return (fract16_t)math_clamp(vfract16_of_kv_rpm(v_max_volts, kv, rpm), 0, FRACT16_MAX);
 // }
 
-static inline uint32_t motor_kt(uint16_t kv) { return fract16_div(60 * FRACT16_SCALE, kv * 2 * FRACT16_PI); } /* [Nm/A] = 60 / (2π × Kv) */
+static inline accum32_t motor_kt_scaled(uint16_t kv) { return ((uint64_t)60 * FRACT16_MAX * FRACT16_SCALE / kv * 2 * FRACT16_PI); } /* [Nm/A] = 60 / (2π × Kv) */
+
+//todo scaled vs pu convention
 
 /******************************************************************************/
 /*!
@@ -83,7 +86,7 @@ static inline uint32_t motor_kt(uint16_t kv) { return fract16_div(60 * FRACT16_S
 */
 /******************************************************************************/
 /* Ke SI * FRACT16_SCALE */
-static inline uint32_t ke_vrads_fract16(uint16_t kv) { return ((uint64_t)FRACT16_MAX * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
+static inline uint32_t ke_vrads_scaled(uint16_t kv) { return ((uint64_t)FRACT16_MAX * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
 
 /* Ke_SI in millivolts per rad/s from Kv [RPM/V]: Ke_SI = 60000 / (2π × Kv) [mV/(rad/s)]. */
 static inline uint32_t ke_mvrads(uint16_t kv) { return ((uint32_t)60 * 1000 * FRACT16_SCALE / (2 * FRACT16_PI)) / kv; }
@@ -114,7 +117,7 @@ static inline uint32_t ke_vfract16_per_angle16(uint32_t polling_freq, uint16_t v
 /******************************************************************************/
 /* [V / (Rad/s)] * FRACT16_SCALE */
 /* SI Ref */
-static inline uint32_t psi_rads_fract16(uint16_t kv, uint8_t polePairs) { return ke_vrads_fract16(kv) / polePairs; }
+static inline uint32_t psi_vrads_scaled(uint16_t kv, uint8_t polePairs) { return ke_vrads_scaled(kv) / polePairs; }
 
 /* = ke_SI × FRACT16_SCALE × Fs / (V_max × P) = ψ_f × Fs × 32768 / V_max */
 // static inline uint32_t psi_vfract16_per_rads(uint32_t polling_freq, uint16_t v_max_volts, uint16_t kv, uint8_t polePairs)
@@ -272,5 +275,6 @@ static inline uint32_t kl_fract16_of_uh(uint32_t polling_freq, uint16_t v_max_vo
 //     return (fract16_t)math_min(kl_fract16_of_uh(polling_freq, v_max_volts, i_max_amps, l_uH), (uint32_t)FRACT16_MAX);
 // }
 
-
-
+// static inline uint32_t kl_fract16(uint32_t polling_freq, uint16_t rs_mOhm, uint32_t tau_cycles)
+// {
+// }

@@ -38,10 +38,8 @@
 #include <stdint.h>
 #include <assert.h>
 
-#if     defined(LINEAR_DIVIDE_SHIFT)
-#elif   defined(LINEAR_DIVIDE_NUMERICAL)
-#else
-    #define LINEAR_DIVIDE_SHIFT
+#if !defined(LINEAR_DIVIDE_SHIFT) && !defined(LINEAR_DIVIDE_NUMERICAL)
+#define LINEAR_DIVIDE_SHIFT
 #endif
 
 
@@ -69,17 +67,7 @@ typedef struct Linear
 }
 Linear_T;
 
-#if defined(LINEAR_DIVIDE_SHIFT)
-#define LINEAR_INIT(factor, divisor, y0, yRef)  \
-{                                               \
-    .Slope              = ,                     \
-    .SlopeShift         = ,                     \
-    .InvSlope           = ,                     \
-    .InvSlopeShift      = ,                     \
-    .X0                 = ,                     \
-    .Y0                 = ,                     \
-}
-#endif
+
 
 // static inline fixed_factor_t Linear_Coefficient(const Linear_T * p_linear) { return (fixed_factor_t) { p_linear->Slope, p_linear->SlopeShift }; }
 

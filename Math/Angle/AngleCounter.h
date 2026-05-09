@@ -223,7 +223,7 @@ static inline void AngleCounter_InitFrom(AngleCounter_T * p_angle, const AngleCo
 //     int32_t FreqD;          /* Pulse frequency [Hz]. DeltaD over 1 second */
 //     AngleCounter_Ref_T Ref; /* Runtime unit conversion */
 // }
-// Angle_Counter_T;
+// CounterFreq_T;
 
 // static inline void Angle_Counter_Capture(Angle_T * p_angle, Angle_Counter_T * p_counter, int sign)
 // {

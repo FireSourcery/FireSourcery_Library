@@ -43,6 +43,7 @@ typedef struct
     uint16_t SpeedRated_Rpm;
 }
 Motor_ElectricalSpeedRating_T;
+// Motor_KSpeed_T;
 // Motor_Electrical_T;
 // Motor_Kv_T;
 
@@ -129,7 +130,7 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_ElectricalSpeedRa
 */
 /******************************************************************************/
 /* [V / (rad/s)] */
-static inline accum32_t Motor_GetKe_SiFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vrads_fract16(p_config->Kv); }
+static inline accum32_t Motor_GetKe_SiFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vrads_scaled(p_config->Kv); }
 
 /* [VFract16 / (Angle16/ControlCycle)] */
 static inline accum32_t Motor_GetKe_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vfract16_per_angle16(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv); }

@@ -110,7 +110,7 @@ static FOC_Electrical_T FOC_Electrical_Fract16OfSi(const FOC_Electrical_T * p_si
 
 */
 /******************************************************************************/
-// static inline FOC_DecouplingCoeff_T Motor_ResolveDecouplingCoeffs(ld, lq, kv)
+// static inline FOC_DecouplingCoeff_T Motor_InitDecouplingCoeffs(ld, lq, kv)
 // {
 //     return (FOC_DecouplingCoeff_T)
 //     {

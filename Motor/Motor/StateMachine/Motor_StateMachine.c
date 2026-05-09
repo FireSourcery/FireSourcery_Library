@@ -374,7 +374,8 @@ static void Run_Proc(Motor_T * p_motor)
 // #endif
     Motor_ProcOuterFeedback(p_motor->P_MOTOR);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-    Motor_FOC_WriteDuty(p_motor);
+    // Motor_FOC_WriteDuty(p_motor);
+    MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_WRITE_DUTY]((void *)p_motor);
 }
 
 static State_T * Run_InputRelease(Motor_T * p_motor)

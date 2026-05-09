@@ -28,51 +28,13 @@
 */
 /******************************************************************************/
 #include "RangeMonitor.h"
+#include "Monitor_Config.h"
 
 
 /*
     Intermediate expand RangeMonitor_Config_T to two Monitor_Config_T for high and low sides
 */
-/*
-    For High-Side Monitoring: Nominal < Warning < Fault
-    For Low-Side Monitoring: Fault < Warning < Nominal
-*/
-// todo move to config
-static inline Monitor_Config_T HighConfigOf(const RangeMonitor_Config_T * p_config)
-{
-    /* Validate high-side thresholds are properly configured */
-    bool isHighSide = (p_config->FaultOverLimit.Limit > p_config->Warning.LimitHigh) && (p_config->Warning.LimitHigh > p_config->Nominal);
 
-    return (Monitor_Config_T)
-    {
-        .Warning = { .Setpoint = p_config->Warning.LimitHigh, .Resetpoint = p_config->Warning.LimitHigh - p_config->Warning.Hysteresis, },
-        .Fault = p_config->FaultOverLimit,
-        .Nominal = p_config->Nominal, /* or disable */
-        .IsEnabled = isHighSide
-    };
-}
-
-static inline Monitor_Config_T LowConfigOf(const RangeMonitor_Config_T * p_config)
-{
-    /* Validate low-side thresholds are properly configured */
-    bool isLowSide = (p_config->FaultUnderLimit.Limit < p_config->Warning.LimitLow) && (p_config->Warning.LimitLow < p_config->Nominal);
-
-    return (Monitor_Config_T)
-    {
-        .Warning = { .Setpoint = p_config->Warning.LimitLow, .Resetpoint = p_config->Warning.LimitLow + p_config->Warning.Hysteresis, },
-        .Fault = p_config->FaultUnderLimit,
-        .Nominal = p_config->Nominal,
-        .IsEnabled = isLowSide
-    };
-}
-
-bool RangeMonitor_IsConfigValid(const RangeMonitor_Config_T * p_config)
-{
-    // remap to two Monitor_Config_T, alternatively implement full check here
-    Monitor_Config_T high = HighConfigOf(p_config);
-    Monitor_Config_T low = LowConfigOf(p_config);
-    return Monitor_IsConfigValid(&high) && Monitor_IsConfigValid(&low);
-}
 
 /*
     Always init both monitors. Single Direction use case directly use Monitor_T instead.
@@ -81,13 +43,13 @@ void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config
 {
     if (p_config != NULL) { p_monitor->Config = *p_config; }
 
-    Monitor_Config_T high = HighConfigOf(&p_monitor->Config);
-    Monitor_Config_T low = LowConfigOf(&p_monitor->Config);
+    Monitor_Config_T high = Monitor_Config_FromRangeHigh(&p_monitor->Config);
+    Monitor_Config_T low = Monitor_Config_FromRangeLow(&p_monitor->Config);
     _Monitor_InitFrom(&p_monitor->MonitorHigh, &high);
     _Monitor_InitFrom(&p_monitor->MonitorLow, &low);
 
-    if (Monitor_IsConfigValid(&high) == false) { p_monitor->Config.IsEnabled = false; }
-    if (Monitor_IsConfigValid(&low) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_Config_IsValidAsHigh(&high) == false) { p_monitor->Config.IsEnabled = false; }
+    if (Monitor_Config_IsValidAsLow(&low) == false) { p_monitor->Config.IsEnabled = false; }
     /* always with both sides. single sided operation use Monitor_T */
     if (high.IsEnabled == false || low.IsEnabled == false) { p_monitor->Config.IsEnabled = false; }
 
@@ -153,6 +115,7 @@ void RangeMonitor_Reset(RangeMonitor_T * p_monitor)
     Hysteresis_Reset(&p_monitor->MonitorHigh.Warning);
     Hysteresis_Reset(&p_monitor->MonitorLow.Warning);
 }
+
 
 /******************************************************************************/
 /*

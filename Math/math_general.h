@@ -36,6 +36,12 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+/* require user config, that would otherwise not be explicit with int */
+#ifndef MATH_INT_T
+#define MATH_INT_T int
+#endif
+
+typedef MATH_INT_T int_t;
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
@@ -79,17 +85,19 @@ static inline bool math_is_sign_diff(int32_t value1, int32_t value2) { return ((
 static inline bool math_sign_bit(sign_t value) { return (value < 0); } /* reduce sign to bool */
 static inline int32_t math_sign_mask(int32_t value) { return (value >> 31); } /* 0xFFFFFFFF for negative, 0x00000000 for positive */
 
+
+/******************************************************************************/
 /*
     interval
 */
+/******************************************************************************/
+/* signed alsigned interval, defined as [low:high] */
 typedef struct { int32_t low; int32_t high; } interval_t;
 
-/* smallest interval containing 0 and `value` */
+/* [0:value] or [value:0] keyed by value sign */
 static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
 
-/* topological pair: magnitudes laid out as [-lowMag, +highMag] */
-static inline interval_t interval_of_pair(int32_t lowMag, int32_t highMag) { return (interval_t) { .low = -lowMag, .high = +highMag }; }
-
+/* interval_of_magnitude */
 /* sign-keyed half-plane: magnitude on the matching side, zero on the other */
 static inline interval_t interval_of_sign(sign_t sign, uint32_t magnitude)
 {
@@ -101,6 +109,7 @@ static inline interval_t interval_of_sign(sign_t sign, uint32_t magnitude)
     }
 }
 
+/* interval_of_magnitude_pair */
 /* sign-keyed asymmetric pair: aligned magnitude goes with the sign, opposed goes against */
 static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, int32_t opposedMag)
 {
@@ -123,7 +132,7 @@ static inline interval_t interval_intersect(interval_t a, interval_t b) { return
 /*
     define around 2 register return
 */
-typedef struct { int32_t a; int32_t b; } pair_t;
+// typedef struct { int32_t a; int32_t b; } pair_t;
 
 
 /*

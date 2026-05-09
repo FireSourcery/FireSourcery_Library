@@ -83,7 +83,9 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */
     // if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_FOC_WriteDuty(p_dev); } /* all substate must write to interface */
-    // Phase_WriteDuty_Thread(&p_dev->PHASE, motor->dutytriplet);
+    /* state machine handles write gate state */
+    // Motor_FOC_WriteDuty_Thread(p_dev);
+    /* alternatively state machine calls functions mapped to compiled in this layer */
 
     p_fields->ControlTimerBase++;
 }

@@ -235,19 +235,6 @@ static inline Phase_Bitmask_T _Phase_ReadDutyAlign(Phase_VOut_T * p_phase)
     };
 }
 
-/******************************************************************************/
-/*  */
-/******************************************************************************/
-/* Using Register State */
-static inline void Phase_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
-{
-    Phase_Bitmask_T state = _Phase_ReadGates(p_phase);
-
-    if (state.A == 1U) { PWM_WriteDuty(&p_phase->PWM_A, pwmA); }
-    if (state.B == 1U) { PWM_WriteDuty(&p_phase->PWM_B, pwmB); }
-    if (state.C == 1U) { PWM_WriteDuty(&p_phase->PWM_C, pwmC); }
-    if (state.Bits != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Bits); }
-}
 
 /******************************************************************************/
 /*!
@@ -315,6 +302,9 @@ static inline bool Phase_IsFloat(Phase_VOut_T * p_phase) { return (_Phase_ReadGa
 static inline bool Phase_IsVDuty(Phase_VOut_T * p_phase) { return !Phase_IsFloat(p_phase) && (_Phase_ReadDutyAlign(p_phase).Bits != PHASE_ID_0); }
 static inline bool Phase_IsV0(Phase_VOut_T * p_phase) { return (!Phase_IsFloat(p_phase) && (_Phase_ReadDutyAlign(p_phase).Bits == PHASE_ID_0)); }
 
+/* 3 phase only */
+static inline bool Phase_IsVabc(Phase_VOut_T * p_phase) { return (_Phase_ReadGates(p_phase).Bits == PHASE_ID_ABC); }
+
 /*
 
 */
@@ -338,6 +328,25 @@ static inline void Phase_ActivateVOut(Phase_VOut_T * p_phase, Phase_VOutMode_T s
     }
 }
 
+/******************************************************************************/
+/*  */
+/******************************************************************************/
+/* Using Register State */
+static inline void Phase_Polar_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
+{
+    Phase_Bitmask_T state = _Phase_ReadGates(p_phase);
+
+    if (state.A == 1U) { PWM_WriteDuty(&p_phase->PWM_A, pwmA); }
+    if (state.B == 1U) { PWM_WriteDuty(&p_phase->PWM_B, pwmB); }
+    if (state.C == 1U) { PWM_WriteDuty(&p_phase->PWM_C, pwmC); }
+    if (state.Bits != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Bits); }
+}
+
+/* without polar logic */
+static inline void Phase_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
+{
+    if (_Phase_ReadGates(p_phase).Bits != PHASE_ID_0) { Phase_WriteDuty(p_phase, pwmA, pwmB, pwmC); }
+}
 
 /******************************************************************************/
 /*!

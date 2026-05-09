@@ -180,13 +180,14 @@ void Thermistor_Init(const Thermistor_T * p_therm)
 /******************************************************************************/
 /*
     Derive linear runtime
-    // T_Adcu/T;
-    // uint16_t LinearT0_Adcu;
-    // uint16_t DeltaT_Adcu;
-    // V/T;
-    // uint16_t LinearV0;
-    // uint32_t DeltaV;
     Linear T0 may select a different T0 than the Coefficients T0.
+    alternatively
+    T_Adcu/T;
+    uint16_t LinearT0_Adcu;
+    uint16_t DeltaT_Adcu;
+    V/T;
+    uint16_t LinearV0;
+    uint32_t DeltaV;
 */
 
 void Thermistor_ToLinear_ROhmsPerAdcu(const Thermistor_T * p_therm, Linear_T * p_result)
