@@ -65,7 +65,7 @@ static void ProcHoming(Motor_T * p_motor)
         angle16_t angle = Encoder_GetHomingAngle(GetEncoderState(p_motor)) * p_state->Config.SpeedRating.PolePairs;
         Angle_Integrate(&p_state->OpenLoopAngle, angle);
         Motor_FOC_ProcAngleFeedforwardV(p_state, Angle_Value(&p_state->OpenLoopAngle), Motor_GetVAlign_Duty(&p_state->Config), 0);
-        Motor_FOC_WriteDuty(p_motor);
+        //Motor_FOC_WriteDuty(p_motor);
     }
 }
 
@@ -129,7 +129,7 @@ static void AlignEntry(Motor_T * p_motor)
 static void AlignLoop(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * AlignZeroNext(Motor_T * p_motor)
@@ -182,7 +182,7 @@ static void ValidateAlign(Motor_T * p_motor)
 static void ProcOpenLoop(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * ValidateAlignNext(Motor_T * p_motor)
@@ -228,7 +228,7 @@ static void ValidateClosedLoopEntry(Motor_T * p_motor)
 static void ProcAngleControl(Motor_T * p_motor)
 {
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * ValidateClosedLoopTransition(Motor_T * p_motor)

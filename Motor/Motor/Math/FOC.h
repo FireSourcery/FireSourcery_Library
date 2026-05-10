@@ -515,7 +515,7 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
     MOTOR_VAR_FOC_REQ_D,
-    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req */
+    MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req sign unadjusted */
     // MOTOR_VAR_FOC_ID_REQ, /* return I or 0 */
     // MOTOR_VAR_FOC_IQ_REQ,
     MOTOR_VAR_FOC_INTEGRAL_D,

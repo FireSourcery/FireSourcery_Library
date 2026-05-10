@@ -49,12 +49,19 @@
 /******************************************************************************/
 static void TorqueZero_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-    p_state->ControlTimerBase = 0U;
-    Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+    p_context->ControlTimerBase = 0U;
+    // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
+    p_context->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Torque control mode for active braking */
+
+    FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc));
+    // Ramp_SetOutputLimit(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context));
+    // Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc));
+    // Ramp_SetTarget(&p_context->TorqueRamp, 0); /* also set by user */
+
     // Motor_FOC_MatchIVState(p_state);
     // Ramp_SetOutputState(&p_state->TorqueRamp, 0);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
+    // Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
 
     /* seed Target to a small generating bias */
     // Ramp_SetTarget(&p_state->TorqueRamp, -1 * p_state->Direction * fract16_mul(Motor_ILimitGenerating(p_motor), 32768 / 20));
@@ -65,17 +72,27 @@ static void TorqueZero_Proc(Motor_T * p_motor)
     Motor_State_T * p_state = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only;
        motoring-side requests are zeroed. Output ramps from 0 (set in Entry) toward the filtered value. */
-    Motor_FOC_ProcTorqueReq(p_state, 0);
-    // user cmd to resume
+    Motor_FOC_ProcTorqueReq(p_state, 0);    // user cmd to resume only
     // Motor_FOC_ProcTorqueReq(p_state, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
-    Motor_FOC_WriteDuty(p_motor);
+    /* optionally speed mod c */
 }
+
+// static State_T * TorqueZero_VOut(Motor_T * p_motor, state_value_t phaseOutput)
+// {
+//     switch ((Phase_VOutMode_T)phaseOutput)
+//     {
+//         case PHASE_VOUT_Z:
+//         case PHASE_VOUT_0: return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+//         case PHASE_VOUT_PWM: return Motor_IsFeedbackAvailable(p_motor->P_MOTOR) ? //same as parent
+//         default: return NULL;
+//     }
+//     return NULL;
+// }
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
-
-    if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
+    // if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
     if (p_state->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
     return NULL;
 }
@@ -121,8 +138,8 @@ static void RampSafe_Proc(Motor_T * p_motor)
         Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
     }
 
-    Motor_FOC_ProcTorqueReq(p_state, PID_GetOutput(&p_state->PidSpeed));
-    Motor_FOC_WriteDuty(p_motor);
+    Motor_FOC_ProcTorqueReq(p_state, PID_GetOutput(&p_state->PidSpeed)); /* bypassing user torque ramp */
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * RampSafe_Next(Motor_T * p_motor)
@@ -136,6 +153,24 @@ static State_T * RampSafe_Next(Motor_T * p_motor)
     return NULL;
 }
 
+
+static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
+{
+    switch ((Phase_VOutMode_T)phaseOutput)
+    {
+        case PHASE_VOUT_Z:
+        case PHASE_VOUT_0: return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;  /* same as parent */
+        case PHASE_VOUT_PWM: return NULL; /* Reject */
+        default: return NULL;
+    }
+    return NULL;
+}
+
+static const State_Input_T RAMP_SAFE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_PHASE_OUTPUT]    = (State_Input_T)Intervention_InputControl, /* override */
+};
+
 const State_T INTERVENTION_STATE_RAMP_SAFE =
 {
     .P_TOP      = &MOTOR_STATE_INTERVENTION,
@@ -144,4 +179,5 @@ const State_T INTERVENTION_STATE_RAMP_SAFE =
     .ENTRY      = (State_Action_T)RampSafe_Entry,
     .LOOP       = (State_Action_T)RampSafe_Proc,
     .NEXT       = (State_Input0_T)RampSafe_Next,
+    .P_TRANSITION_TABLE = &RAMP_SAFE_TRANSITION_TABLE[0U],
 };

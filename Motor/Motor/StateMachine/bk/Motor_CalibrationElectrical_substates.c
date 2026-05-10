@@ -159,7 +159,7 @@ static void Rs_Proc(Motor_T * p_motor)
     Accumulator_Add(&p_runtime->Accumulators[1], FOC_Id(&p_runtime->Foc));
     // p_runtime->ParamId.AccumN++;
     p_runtime->CalibrationTimer++;
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 
     // inherit by substates
     if (p_runtime->CalibrationTimer >= MOTOR_CONTROL_CYCLES(PARAMID_RS_WINDOW_MS))
@@ -322,7 +322,7 @@ static void Ld_Proc(Motor_T * p_motor)
     }
 
     p_runtime->CalibrationTimer++;
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * Ld_Next(Motor_T * p_motor)
@@ -437,7 +437,7 @@ static void Lq_Proc(Motor_T * p_motor)
 
     p_buffer->HfiPhase += PARAMID_HFI_PHASE_DELTA;
 
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 static State_T * Lq_Next(Motor_T * p_motor)

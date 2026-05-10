@@ -257,6 +257,7 @@ typedef struct Motor_Config
 
     FOC_Electrical_T ElectricalParams; /* Motor Electrical Parameters. Si units */
     FOC_Electrical_T Decoupling;        /* Fract16 */
+    bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
@@ -702,7 +703,7 @@ static inline bool Motor_IsDirectionStopped(const Motor_State_T * p_motor) { ret
 /******************************************************************************/
 /* symetrical limit */
 static inline uint16_t Motor_OpenLoopILimit(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->OpenLoopLimitScalar_Fract16, p_motor->ILimitMotoring_Fract16); }
-static inline int16_t Motor_OpenLoopILimitOf(const Motor_Config_T * p_motor, int16_t iReq) { return math_clamp(iReq, (int32_t)0 - Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor)); }
+// static inline int16_t Motor_OpenLoopILimitOf(const Motor_Config_T * p_motor, int16_t iReq) { return math_clamp(iReq, (int32_t)0 - Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor)); }
 
 /* alternatively seperate IAlign and Vduty */
 static inline uint16_t _Motor_GetIAlign(const Motor_Config_T * p_motor) { return math_min(p_motor->IAlign_Fract16, Motor_OpenLoopILimit(p_motor)); } /* or resolve against active motoring */
@@ -727,25 +728,6 @@ static inline uint16_t Motor_GetVAlign_Duty(const Motor_Config_T * p_motor) { re
 // static inline uint16_t Motor_GetVAlign_Duty(const Motor_Config_T * p_motor) { return (uint32_t) _motor->VAlign_Fract16 * VBus_Inv_Fract32  * 3 / 4; }
 
 
-
-/*
-    TorqueRampV
-    TorqueRampOpenLoop
-*/
-/* I/V rate mismatch, okay if voltage mode is for testing only */
-/* Reads stored target; anti-plug applied per tick without persisting on Target. */
-static inline fract16_t Motor_VRamp(Motor_State_T * p_motor)
-{
-    interval_t v = interval_of_sign((sign_t)p_motor->Direction, Phase_VBus_GetVRefSvpwm());
-    return _Ramp_ProcNextOnInputOf(&p_motor->TorqueRamp, math_clamp(Ramp_GetTarget(&p_motor->TorqueRamp), v.low, v.high));
-    // return _Ramp_ProcNextOnInputOf(&p_motor->VRamp, math_clamp(Ramp_GetTarget(&p_motor->VRamp), v.low, v.high));
-}
-
-/*
-    Openloop by user cmd
-*/
-/* absorb  into process loop */
-static inline fract16_t Motor_OpenLoopTorqueRampOf(Motor_State_T * p_motor, int16_t req) { return Ramp_ProcNextOf(&p_motor->TorqueRamp, Motor_OpenLoopILimitOf(&p_motor->Config, req)); }
 
 
 

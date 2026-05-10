@@ -113,17 +113,17 @@ Motor_StateAction_T;
 
 /*
 */
-typedef enum Motor_StateOutput
-{
-    MOTOR_STATE_OUTPUT_WRITE_DUTY,
-    MOTOR_STATE_OUTPUT_TABLE_LENGTH,
-}
-Motor_StateOutput_T;
+// typedef enum Motor_StateOutput
+// {
+//     MOTOR_STATE_OUTPUT_WRITE_DUTY,
+//     MOTOR_STATE_OUTPUT_TABLE_LENGTH,
+// }
+// Motor_StateOutput_T;
 
-static const State_Action_T MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_TABLE_LENGTH] =
-{
-    [MOTOR_STATE_OUTPUT_WRITE_DUTY] = (State_Action_T)Motor_FOC_WriteDuty_Thread,
-};
+// static const State_Action_T MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_TABLE_LENGTH] =
+// {
+//     [MOTOR_STATE_OUTPUT_WRITE_DUTY] = (State_Action_T)Motor_FOC_WriteDuty_Thread,
+// };
 
 /******************************************************************************/
 /*

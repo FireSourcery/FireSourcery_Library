@@ -69,8 +69,8 @@ void Motor_Config_Validate(Motor_Config_T * p_config)
     p_config->SpeedRating.SpeedRated_Rpm  = math_min(p_config->SpeedRating.SpeedRated_Rpm, Motor_RpmOfKv(&p_config->SpeedRating, Phase_Calibration_GetVRated_Fract16()));
     p_config->VSpeedScalar_Fract16        = math_min(p_config->VSpeedScalar_Fract16, INT16_MAX);
 
-    p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);
-    p_config->SpeedLimitReverse_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitReverse_Fract16);
+    // p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);
+    // p_config->SpeedLimitReverse_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitReverse_Fract16);
     p_config->ILimitMotoring_Fract16      = Motor_IRatedLimitOf(p_config->ILimitMotoring_Fract16);
     p_config->ILimitGenerating_Fract16    = Motor_IRatedLimitOf(p_config->ILimitGenerating_Fract16);
 
@@ -96,8 +96,8 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
         && (p_config->SpeedRating.SpeedRated_Rpm != 0U)
         // && (p_config->SpeedRating.SpeedRated_Rpm  <= Motor_GetSpeedVNominalRef_Rpm(p_config) * 2)
         && (p_config->VSpeedScalar_Fract16        <= INT16_MAX)
-        && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config))
-        && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
+        // && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config))
+        // && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
         && (p_config->ILimitMotoring_Fract16      <= Phase_Calibration_GetIRatedPeak_Fract16())
         && (p_config->ILimitGenerating_Fract16    <= Phase_Calibration_GetIRatedPeak_Fract16())
         && (p_config->OpenLoopLimitScalar_Fract16 <= MOTOR_OPEN_LOOP_CEILING)
@@ -161,7 +161,8 @@ void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 /* allow independent set */
 void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
 {
-    // p_config->SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVNominalRef_Rpm(p_config) * 2);
+    // p_config->SpeedRating.SpeedRated_Rpm = math_min(rpm, Motor_GetSpeedVNominalRef_Rpm(p_config) * 2);
+    p_config->SpeedRating.SpeedRated_Rpm = math_min(rpm, p_config->SpeedRating.Kv * Phase_Calibration_GetVRated_Fract16());
 }
 
 // void Motor_Config_ResolveSpeedRated(Motor_Config_T * p_config, uint16_t vNominal) { p_config->SpeedRated_Rpm = Motor_SpeedVRef_Rpm(p_config, vNominal); }
@@ -176,6 +177,12 @@ void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t s
 void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating))); }
 static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
 
+
+/*
+    1. Kv determines SpeedTypeMax, VSpeedMatchScalar/VBemfRatio determine VMatch.
+    2. Kv adjusts VMatch. SpeedRated_Rpm determines SpeedTypeMax.
+    3. Kv determines SpeedTypeMax, SpeedRated_Rpm / SpeedVMatch_Rpm stored as speed.
+*/
 
 /******************************************************************************/
 /*

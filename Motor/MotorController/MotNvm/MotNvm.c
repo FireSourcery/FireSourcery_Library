@@ -29,6 +29,7 @@
 */
 /******************************************************************************/
 #include "MotNvm.h"
+#include "System/Critical/Critical.h"
 
 #include <string.h>
 
@@ -144,6 +145,7 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
 {
     NvMemory_Status_T status;
 
+//    Critical_DisableIrq();
 #if defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
     /* Flash Erase Full block */
     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, p_motNvm->MAIN_CONFIG_ADDRESS, p_motNvm->MAIN_CONFIG_SIZE);
@@ -155,7 +157,7 @@ NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm)
         status = SaveEntry_Blocking(p_motNvm, &p_motNvm->P_PARTITIONS[i]);
         if (status != NV_MEMORY_STATUS_SUCCESS) { break; }
     }
-
+//   Critical_EnableIrq();
     return status;
 }
 

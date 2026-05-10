@@ -67,6 +67,7 @@ static inline void MotBuzzer_Periodic(MotBuzzer_T * p_dev) { Blinky_StartPeriodi
 static inline void MotBuzzer_Double(MotBuzzer_T * p_dev) { Blinky_BlinkN(p_dev, 250U, 250U, 2U); }
 
 /* Domain mapped */
+static inline void MotBuzzer_ParkError(MotBuzzer_T * p_dev) { Blinky_Blink(p_dev, 1000U); }
 static inline void MotBuzzer_MonitorTrigger(MotBuzzer_T * p_dev) { Blinky_BlinkN(p_dev, 250U, 250U, 1U); }
 
 static inline void MotBuzzer_Stop(MotBuzzer_T * p_dev) { Blinky_Stop(p_dev); }

@@ -42,7 +42,7 @@
 static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_FREQ) - 1U), "PHASE_ANALOG_DIVIDER_MASK is not correct");
 
 /*  */
-static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
+static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
 /* VBus_Analog_Capture in VBus.h */
 static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
@@ -65,7 +65,7 @@ static inline void _Motor_Analog_Thread(Motor_T * p_dev)
 {
     // RotorSensor_MarkAnalog(&p_dev->Sensor);
     /* foc return on first 1. alternatively handle per phase */
-    if (_Phase_ReadGates(&p_dev->PHASE).Bits != PHASE_ID_0) { Motor_Analog_MarkIabc(p_dev); }
+    if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_Analog_MarkIabc(p_dev); }
     else { Motor_Analog_MarkVabc(p_dev); }
 }
 
@@ -73,7 +73,6 @@ static inline void _Motor_Analog_ByPhase_Thread(Motor_T * p_dev)
 {
     (void)p_dev;
 }
-
 
 /*
 */

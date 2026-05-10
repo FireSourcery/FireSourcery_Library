@@ -97,7 +97,7 @@ static void AngleAlign_Entry(Motor_T * p_motor)
 static void AngleAlign_Loop(Motor_T * p_motor)
 {
     Motor_FOC_ProcAlignCmd(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -145,7 +145,7 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Loop(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -175,7 +175,7 @@ static void StartUp_Entry(Motor_T * p_motor)
 static void StartUp_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
-    Motor_FOC_WriteDuty(p_motor);
+    //Motor_FOC_WriteDuty(p_motor);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
@@ -263,7 +263,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 // static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 // {
 //     Motor_FOC_ProcAngleAlignOf(p_motor->P_MOTOR, Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
-//     Motor_FOC_WriteDuty(p_motor);
+//     //Motor_FOC_WriteDuty(p_motor);
 // }
 
 // static void PhaseAlign_Loop(Motor_T * p_motor)

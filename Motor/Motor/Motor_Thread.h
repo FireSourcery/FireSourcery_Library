@@ -51,18 +51,6 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
 
-
-
-// static inline void Phase_WriteDuty_Thread(Phase_VOut_T * p_phase, uint16_t pwmA, uint16_t pwmB, uint16_t pwmC)
-// {
-//     Phase_Bitmask_T state = _Phase_ReadGates(p_phase);
-
-//     if (state.A == 1U) { PWM_WriteDuty(&p_phase->PWM_A, pwmA); }
-//     if (state.B == 1U) { PWM_WriteDuty(&p_phase->PWM_B, pwmB); }
-//     if (state.C == 1U) { PWM_WriteDuty(&p_phase->PWM_C, pwmC); }
-//     if (state.Bits != PHASE_ID_0) { _Phase_SyncPwmDuty(p_phase, state.Bits); }
-// }
-
 /******************************************************************************/
 /*
     Motor_PWM_Thread
@@ -80,12 +68,9 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
 
-    /* Inline Phase Out, use common buffered values.. */
     /* Directly read register state */
-    // if (!Phase_IsFloat(&p_dev->PHASE)) { Motor_FOC_WriteDuty(p_dev); } /* all substate must write to interface */
     /* state machine handles write gate state */
-    // Motor_FOC_WriteDuty_Thread(p_dev);
-    /* alternatively state machine calls functions mapped to compiled in this layer */
+    Motor_FOC_WriteDuty_Thread(p_dev);
 
     p_fields->ControlTimerBase++;
 }

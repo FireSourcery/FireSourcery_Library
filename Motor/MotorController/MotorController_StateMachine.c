@@ -306,9 +306,20 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
     // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
     /* Guard applies for both Async and Sync Motor handling transitions */
     if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED)) { p_nextState = &MC_STATE_PARK; }
-    /* If caller buffers input. Caller includes knowedge of whether callee is in an accepting state. */
-    else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_PARK; } /* Applies stop on enter */
-    else { MotBuzzer_Short(MotorController_Buzzer(p_dev)); }
+    /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
+    /* Applies Disable on enter */
+    else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
+    {
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_PARK; }
+        /* normalize on park. or  */
+        // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION))
+        // {
+        //     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);
+        //     p_nextState = &MC_STATE_PARK;
+        // }
+    }
+    // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_PARK; }
+    else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
     return p_nextState;
 }
 
@@ -525,7 +536,9 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_NVM_SAVE_CONFIG:
+                VBus_DisableMonitor(p_dev->P_VBUS);
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
+                VBus_EnableMonitor(p_dev->P_VBUS);
                 Motor_Table_ForEach(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
                 opStatus = 0;
                 break;
@@ -597,6 +610,8 @@ static void Fault_Entry(MotorController_T * p_dev)
     MotorController_State_T * p_mc = p_dev->P_MC;
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
+    Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
+    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_Disable);
 // #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE)
 //     memcpy((void *)&p_mc->FaultAnalogRecord, (void *)&p_mc->AnalogResults, sizeof(MotAnalog_Results_T));
 // #endif
@@ -629,10 +644,9 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
     if (cmd.FaultClear != 0U)
     {
         p_mc->FaultFlags.Value &= ~cmd.FaultClear;
-        if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* or remove from clear */
-        // for (uint8_t iMotor = 0U; iMotor < p_dev->MOTORS.LENGTH; iMotor++) { Motor_StateMachine_TryClearFaultAll(&p_dev->MOTORS.P_DEVS[iMotor]); }
-        Motor_Table_ForEvery(&p_dev->MOTORS, Motor_StateMachine_TryClearFaultAll); /* if any remain, stay in fault */
+        if (Phase_Calibration_IsValid() == false) { p_mc->FaultFlags.InitCheck = 1U; } /* clear on reset only */
         MotorController_PollFaultFlags(p_dev); /* Re-verify conditions resolved before allowing exit */
+        p_mc->FaultFlags.Motors = !Motor_Table_ForEvery(&p_dev->MOTORS, Motor_StateMachine_TryClearFaultAll); /* if any remain, stay in fault */
         Blinky_Stop(&p_dev->BUZZER);
     }
     if (cmd.FaultSet != 0U)

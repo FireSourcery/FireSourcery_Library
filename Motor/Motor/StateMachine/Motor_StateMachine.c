@@ -363,7 +363,6 @@ static void Run_Entry(Motor_T * p_motor)
     // RotorSensor_ZeroInitial(p_motor->P_MOTOR->p_ActiveSensor); not needed if capture sensor runs in thread
 
     // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
-    // Motor_FOC_WriteDuty(p_motor);
     // Phase_ActivateOutput(p_motor->P_MOTOR);
 }
 
@@ -374,8 +373,6 @@ static void Run_Proc(Motor_T * p_motor)
 // #endif
     Motor_ProcOuterFeedback(p_motor->P_MOTOR);
     Motor_FOC_ProcAngleControl(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-    // Motor_FOC_WriteDuty(p_motor);
-    MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_WRITE_DUTY]((void *)p_motor);
 }
 
 static State_T * Run_InputRelease(Motor_T * p_motor)
@@ -470,36 +467,17 @@ static void Intervention_Entry(Motor_T * p_motor)
 
 static void Intervention_Proc(Motor_T * p_motor) { (void)p_motor; }
 
-static inline State_T * Intervention_InputRelease(Motor_T * p_motor)
-{
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; }
-    return NULL;
-}
-
-static inline State_T * Intervention_InputResume(Motor_T * p_motor)
-{
-    if (StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &INTERVENTION_STATE_TORQUE_ZERO)
-        && RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true)
-    // if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true)
-    {
-        return &MOTOR_STATE_RUN;
-    }
-    return NULL;
-}
-
 /*
     Resume to Run only from TorqueZero substate.
-    RampSafe substate rejects resume — committed to safe stop.
+    RampSafe substate override to reject resume — committed to safe stop.
 */
 static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0:
-            return Intervention_InputRelease(p_motor);
-        case PHASE_VOUT_PWM:
-            return Intervention_InputResume(p_motor);
+        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;
+        case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
         default: return NULL;
     }
 }
@@ -507,7 +485,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
 /* Store only */
 static State_T * Intervention_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
-    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
+    _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode); /* transition from speed to i mode does not need match */
     return NULL;
 }
 

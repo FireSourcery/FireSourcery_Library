@@ -93,17 +93,15 @@ static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 }
 
 /*
-    Current-mode align: PID Id -> Vd, projected onto vector angle via FOC chain.
-    Must run every tick to close the current loop. Torque ramp ramps Id from 0
-    up to IAlign across the settle window, avoiding a current step at each new
-    vector; ramp is reset to 0 at every vector boundary.
+    Current-mode align: PID Id -> Vd,  Must run every tick to close the current loop.
+    ramp is reset to 0 at every Step boundary.
 */
 static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
     // const fract16_t idReq = Motor_OpenLoopTorqueRampOf(p_motor->P_MOTOR, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
     // Motor_FOC_AngleControl(p_motor->P_MOTOR, Phase_AngleOf(id), idReq, 0);
     Motor_FOC_ProcAngleAlignOf(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
-    Motor_FOC_WriteDuty(p_motor);
+    // //Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
