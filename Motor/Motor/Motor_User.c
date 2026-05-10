@@ -217,11 +217,13 @@ void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqu
 /*  Per-unit of limit reference Config.Limit - maintain same proportion through runtime. set by user. */
 void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
 
-/* Call handles 0 cmd values. alternatively intervention state */
+#include "StateMachine/Motor_Intervention.h"
+static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &INTERVENTION_STATE_TORQUE_ZERO; }
+
 void Motor_ApplyTorque0(Motor_T * p_motor)
 {
-    Motor_ApplyFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
-    _Motor_SetTorqueMotoringCmd(p_motor->P_MOTOR, 0);
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
 }
 
 

@@ -108,6 +108,19 @@ static inline struct foc_dq foc_vdq_ff(fract16_t Ld, fract16_t  Lq, fract16_t ps
 static inline fract16_t foc_decouple_vd(fract16_t vd, fract16_t iq, fract16_t omega_Lq) { return fract16_sat((accum32_t)vd - fract16_mul(omega_Lq, iq)); }
 static inline fract16_t foc_decouple_vq(fract16_t vq, fract16_t id, fract16_t omega_Ld, fract16_t omega_psi) { return fract16_sat((accum32_t)vq + fract16_mul(omega_Ld, id) + omega_psi); }
 
+// static inline struct foc_dq foc_vdq_decouple(fract16_t Ld, fract16_t Lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq)
+// {
+
+// }
+
+/******************************************************************************/
+/*!
+
+*/
+/******************************************************************************/
+
+
+
 /******************************************************************************/
 /*!
 

@@ -216,15 +216,15 @@ static inline int32_t rs_fract16(int32_t vd_fract16, int32_t id_fract16)
 /*!
     L — Inductance Normalization
         SI storage: L_uH [µH]
-        In-loop form: KL_fract16 — dq cross-coupling decoupling coefficient.
+        In-loop form: L_fract16 — dq cross-coupling decoupling coefficient.
 
-        Applied as: omega_L_fract16 = fract16_mul(el_delta_angle16, KL_fract16)
+        Applied as: omega_L_fract16 = fract16_mul(el_delta_angle16, L_fract16)
             where el_delta_angle16 is the electrical angle step per control cycle [angle16/poll].
 
         Derivation:
             v_cross [V] = ω_e [rad/s] × L [H] × I [A]
             ω_e = el_delta × 2π × Fs / ANGLE16_PER_REVOLUTION
-            KL = π × L [H] × I_max [A] × Fs [Hz] / V_max [V]     (dimensionless)
+            L = π × L [H] × I_max [A] × Fs [Hz] / V_max [V]     (dimensionless)
 
         L from RL time-constant:  τ = L/R  →  L_uH = Rs_mOhm × τ_cycles × 1000 / Fs
         L from HFI:               L_uH = V_hf / (2π × f_hf × I_hf) × 1e6
@@ -258,21 +258,21 @@ static inline uint32_t l_uh_of_hfi(uint16_t v_max_volts, uint16_t i_max_amps, ui
 
 /*
     Decouple coefficients from Ld/Lq [uH]:
-        KL_Fract16 = π × L[H] × I_max × Fs / V_max
+        L_Fract16 = π × L[H] × I_max × Fs / V_max
 
-    where fract16_mul(delta_angle16, KL) yields omega_e * L * I_MAX / V_MAX in fract16 voltage basis.
+    where fract16_mul(delta_angle16, L) yields omega_e * L * I_MAX / V_MAX in fract16 voltage basis.
 
-    KL_fract16 from inductance in µH. KL = π × L_uH × 1e-6 × I_max × Fs / V_max  = π×10^6 × L_uH × I_max × Fs / (V_max × 10^12)
+    L_fract16 from inductance in µH. L = π × L_uH × 1e-6 × I_max × Fs / V_max  = π×10^6 × L_uH × I_max × Fs / (V_max × 10^12)
 */
-static inline uint32_t kl_fract16_of_uh(uint32_t polling_freq, uint16_t v_max_volts, uint16_t i_max_amps, uint16_t l_uH)
+static inline uint32_t l_fract16_of_uh(uint32_t polling_freq, uint16_t v_max_volts, uint16_t i_max_amps, uint16_t l_uH)
 {
     return (uint32_t)((uint64_t)3141593ULL * l_uH * i_max_amps * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_volts * 1000000ULL * 1000000ULL));
 }
 
-// static inline fract16_t kl_fract16_of_uh_sat(uint32_t polling_freq, uint16_t v_max_volts, uint16_t i_max_amps, uint16_t l_uH)
+// static inline fract16_t l_fract16_of_uh_sat(uint32_t polling_freq, uint16_t v_max_volts, uint16_t i_max_amps, uint16_t l_uH)
 // {
 //     assert(v_max_volts != 0U);
-//     return (fract16_t)math_min(kl_fract16_of_uh(polling_freq, v_max_volts, i_max_amps, l_uH), (uint32_t)FRACT16_MAX);
+//     return (fract16_t)math_min(l_fract16_of_uh(polling_freq, v_max_volts, i_max_amps, l_uH), (uint32_t)FRACT16_MAX);
 // }
 
 // static inline uint32_t kl_fract16(uint32_t polling_freq, uint16_t rs_mOhm, uint32_t tau_cycles)

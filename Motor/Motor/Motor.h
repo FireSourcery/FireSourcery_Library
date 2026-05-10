@@ -588,8 +588,7 @@ static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Mo
 */
 /******************************************************************************/
 /*
-    Stateless cascade override: run SpeedPID against an alternate per-tick speedReq
-    without touching SpeedRamp.Target. Used by intervention state.
+    Map an alternative request, while User/Drive still controls RampTarget
 */
 static inline fract16_t Motor_ProcSpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
 {

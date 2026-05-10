@@ -48,7 +48,7 @@ static inline Phase_RL_T Phase_RL_Fract16OfSi(uint16_t rs_mOhms, uint16_t ls_uHe
     return (Phase_RL_T)
     {
         .Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs_mOhms),
-        .Ls = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries)
+        .Ls = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries)
     };
 }
 

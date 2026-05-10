@@ -377,7 +377,7 @@ static void Run_Proc(Motor_T * p_motor)
 
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
-    if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { return &MOTOR_STATE_PASSIVE; } else { return &INTERVENTION_STATE_TORQUE_ZERO; }
+    return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -451,20 +451,20 @@ const State_T MOTOR_STATE_RUN =
 /*!
     @brief State Intervention - Motor-level safety supervisor
     Active control with an alternative control variable path.
-
-    SubStates (in SubStates/Motor_Intervention.c):
-      TORQUE_ZERO (SS0) - Coast with zero torque, user may resume
+      TORQUE_ZERO (ZTC) - Coast with zero torque, user may resume
       RAMP_SAFE   (SS1) - Active deceleration to zero, no resume
 */
 /******************************************************************************/
 static void Intervention_Entry(Motor_T * p_motor)
 {
-    (void)p_motor;
-    // Motor_FOC_MatchIVState(p_motor->P_MOTOR);
-    // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    // p_motor->P_MOTOR->UserTorqueReq = 0;
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+    FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc));
+    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc));
+
 }
 
+// min(GeneratingOnly, _Motor_GeneratingOnly PID_GetOutput(&p_state->PidSpeed));  substates inherit
+// Motor_FOC_ProcTorqueReq(p_motor, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
 static void Intervention_Proc(Motor_T * p_motor) { (void)p_motor; }
 
 /*
@@ -476,7 +476,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;
+        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
         case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
         default: return NULL;
     }

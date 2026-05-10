@@ -109,11 +109,9 @@ FOC_Electrical_T;
 
 // typedef struct
 // {
-// // #if defined(MOTOR_DECOUPLE_ENABLE)
 //     fract16_t Ld_Fract16;
 //     fract16_t Lq_Fract16;
 //     fract16_t Psi_Fract16;
-// // #endif
 // }
 // FOC_DecouplingCoeff_T;
 
@@ -326,8 +324,8 @@ static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16
 /******************************************************************************/
 /*
     Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
+    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
 */
-/* Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0]. */
 /*
     Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
     Id_fw = (Vs_max/ωe - λ_pm) / Ld
@@ -348,6 +346,11 @@ static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vB
 {
     FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
 }
+
+// static inline void FOC_ProcITorque(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
+// {
+//     FOC_ProcIFeedback(p_foc, vBus, direction, 0, iqReq);
+// }
 
 // static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningConfig_T * p_fwConfig, ufract16_t vBus, sign_t direction, int16_t iqReq)
 // {

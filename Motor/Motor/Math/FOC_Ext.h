@@ -95,8 +95,8 @@ static FOC_Electrical_T FOC_Electrical_Fract16OfSi(const FOC_Electrical_T * p_si
 {
     return (FOC_Electrical_T)
     {
-        .Ld = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Ld),
-        .Lq = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Lq),
+        .Ld = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Ld),
+        .Lq = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Lq),
         .Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Rs),
         .Psi = psi_vfract16_of_ke_mvrads(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_si->Psi),
         // .Psi = psi_vfract16_of_ke_mvrads(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), kv, poleParis),
@@ -114,8 +114,8 @@ static FOC_Electrical_T FOC_Electrical_Fract16OfSi(const FOC_Electrical_T * p_si
 // {
 //     return (FOC_DecouplingCoeff_T)
 //     {
-//         .Ld_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Ld_MicroHenries),
-//         .Lq_Fract16 = kl_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Lq_MicroHenries),
+//         .Ld_Fract16 = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Ld_MicroHenries),
+//         .Lq_Fract16 = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Lq_MicroHenries),
 //         .Psi_Fract16 =   ke_vfract16_per_angle16(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv)
 //     };
 // }
@@ -192,43 +192,6 @@ Id_opt = -λ_pm/(2*Ld) + sqrt((λ_pm/(2*Ld))² + Iq²)
 // }
 
 
-
-/* Direct DQ0 Transform - replaces Clarke + Park */
-// static inline void FOC_ProcDQ0Transform(FOC_T * p_foc)
-// {
-//     foc_dq_transform(&p_foc->Id, &p_foc->Iq, p_foc->Ia, p_foc->Ib, p_foc->Ic, p_foc->Sine, p_foc->Cosine);
-// }
-
-// /* Direct DQ0 Transform for two-phase sensing (assumes Ic = -(Ia + Ib)) */
-// static inline void FOC_ProcDQ0Transform_AB(FOC_T * p_foc)
-// {
-//     fract16_t ic = -(p_foc->Ia + p_foc->Ib);  /* Calculate third phase */
-//     foc_dq_transform(&p_foc->Id, &p_foc->Iq, p_foc->Ia, p_foc->Ib, ic, p_foc->Sine, p_foc->Cosine);
-// }
-
-// /* Inverse DQ0 Transform - replaces Inverse Park + Inverse Clarke */
-// static inline void FOC_ProcInvDQ0Transform(FOC_T * p_foc)
-// {
-//     foc_inv_dq_transform(&p_foc->Va, &p_foc->Vb, &p_foc->Vc, p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
-// }
-
-// /* Updated output processing using direct DQ0 transform */
-// static inline void FOC_ProcOutputV_VBusInv_DQ0(FOC_T * p_foc, uint32_t vBusInv_fract32)
-// {
-//     FOC_ProcInvDQ0Transform(p_foc);
-//     FOC_ProcSvpwm(p_foc, vBusInv_fract32);
-// }
-
-// static inline void FOC_ProcOutputV_VBus_DQ0(FOC_T * p_foc, ufract16_t vBus_fract16)
-// {
-//     FOC_ProcOutputV_VBusInv_DQ0(p_foc, ((uint32_t)FRACT16_MAX * 65536U / vBus_fract16));
-// }
-
-// /* VBemf processing using direct DQ0 transform */
-// static inline void FOC_ProcVBemfDQ0Transform(FOC_T * p_foc)
-// {
-//     foc_dq_transform(&p_foc->Vd, &p_foc->Vq, p_foc->Va, p_foc->Vb, p_foc->Vc, p_foc->Sine, p_foc->Cosine);
-// }
 
 
 // // Add motor health monitoring
