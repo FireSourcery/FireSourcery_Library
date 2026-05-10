@@ -46,7 +46,6 @@ static State_T * OpenLoop_PhaseOutput(Motor_T * p_motor, state_value_t phaseStat
 {
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
     Phase_ActivateVOut(&p_motor->PHASE, (Phase_VOutMode_T)phaseState); // clear outputState V, or enable last duty
-    // return &MOTOR_STATE_OPEN_LOOP;
     return NULL; /* remain in MOTOR_STATE_OPEN_LOOP*/
 }
 
@@ -63,9 +62,12 @@ void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_VOutMode_T phase)
 static State_T * OpenLoop_Jog(Motor_T * p_motor, state_value_t direction)
 {
     (void)direction;
-    if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
+    // if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
     if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config)); }
-    Angle_CaptureAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
+    else
+    {
+        Angle_CaptureAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
+    }
     return NULL;
 }
 
@@ -80,8 +82,6 @@ void Motor_OpenLoop_SetJog(Motor_T * p_motor, int8_t direction)
     Open Loop SubStates/Cmds
 */
 /******************************************************************************/
-
-
 /******************************************************************************/
 /*
     Angle Align Cmd
@@ -142,10 +142,9 @@ static void Run_Entry(Motor_T * p_motor)
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
 }
 
-static void Run_Loop(Motor_T * p_motor)
+static void Run_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
-    //Motor_FOC_WriteDuty(p_motor);
 }
 
 /*
@@ -157,13 +156,39 @@ static const State_T OPEN_LOOP_STATE_RUN =
     .P_PARENT = &MOTOR_STATE_OPEN_LOOP,
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)Run_Entry,
-    .LOOP = (State_Action_T)Run_Loop,
+    .LOOP = (State_Action_T)Run_Proc,
     .NEXT = NULL,
+};
+
+
+#include "../Math/FOC_Sensorless.h"
+/*
+    move to Sensorless_Sensor
+*/
+static void RunSensorless_Proc(Motor_T * p_motor)
+{
+    // FOC_Sensorless_Step(&p_motor->P_MOTOR->FocSensorless);
+}
+
+State_T * RunSensorless_Next(Motor_T * p_motor)
+{
+    // return (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) ? &MOTOR_STATE_RUN : NULL;
+    return NULL; // debug
+}
+
+static const State_T OPEN_LOOP_STATE_RUN_START_UP =
+{
+    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .P_PARENT = &OPEN_LOOP_STATE_RUN,
+    .DEPTH      = 2U,
+    // .ENTRY      = (State_Action_T)Run_Entry,
+    .LOOP       = (State_Action_T)RunSensorless_Proc,
+    .NEXT       = (State_Input0_T)RunSensorless_Next,
 };
 
 /******************************************************************************/
 /*
-    Run Chain
+    StartUp Align
 */
 /******************************************************************************/
 static void StartUp_Entry(Motor_T * p_motor)
@@ -175,7 +200,6 @@ static void StartUp_Entry(Motor_T * p_motor)
 static void StartUp_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
-    //Motor_FOC_WriteDuty(p_motor);
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
@@ -195,6 +219,11 @@ static void StartUp_Proc(Motor_T * p_motor)
     }
 }
 
+State_T * StartUpAlign_Next(Motor_T * p_motor, state_value_t null)
+{
+    // &OPEN_LOOP_STATE_RUN or &OPEN_LOOP_STATE_RUN_START_UP
+    return NULL; // debug
+}
 
 /* Align with Aux Ramp */
 static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
@@ -205,15 +234,8 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartUp_Entry,
     .LOOP = (State_Action_T)StartUp_Proc,
+    // .NEXT = (State_Input0_T)StartUpAlign_Next,
 };
-
-// test branch
-// static const State_T OPEN_LOOP_STATE_RUN_START_UP =
-// {
-//     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
-//     .P_PARENT   = &OPEN_LOOP_STATE_START_UP_ALIGN,
-//     .DEPTH      = 2U,
-// };
 
 static State_T * OpenLoop_StartUpRun(Motor_T * p_motor, state_value_t null)
 {

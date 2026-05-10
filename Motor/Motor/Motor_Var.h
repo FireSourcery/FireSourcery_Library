@@ -250,6 +250,8 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,
     MOTOR_VAR_TYPE_PID_TUNING_IO,       /* Non polling. PID tunning with non-Config state access permissions */
+    MOTOR_VAR_TYPE_FOC_SENSORLESS,
+    MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG,
 }
 Motor_VarType_SubModule_T;
 

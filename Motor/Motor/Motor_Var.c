@@ -322,6 +322,9 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
     [VarType_SubModule]
 */
 /******************************************************************************/
+
+#include "Math/FOC_Sensorless.h"
+
 int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
@@ -333,6 +336,8 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor, varId);
+        case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(&p_motor->P_MOTOR->FocSensorless, varId);
+        // case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return Sensorless_Sensor_ConfigId_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
         default: break;
     }
     return 0;

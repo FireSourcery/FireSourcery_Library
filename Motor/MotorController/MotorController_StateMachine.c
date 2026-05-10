@@ -189,7 +189,7 @@ static State_T * Init_Next(MotorController_T * p_dev)
         /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED) == false) { p_mc->FaultFlags.Motors = 1U; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED) == false) { p_mc->FaultFlags.Motors = 1U; }
 
         /* In the case of boot into motor spinning state. Go to fault state disable output */
         if (p_mc->FaultFlags.Value == 0U) { p_nextState = AppParkState(p_dev); } else { p_nextState = &MC_STATE_FAULT; }
@@ -254,7 +254,7 @@ static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
 {
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED) == true) { return &MC_STATE_LOCK; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED) == true) { return &MC_STATE_LOCK; }
     }
     return NULL;
 }
@@ -305,7 +305,7 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
     State_T * p_nextState = NULL;
     // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
     /* Guard applies for both Async and Sync Motor handling transitions */
-    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED)) { p_nextState = &MC_STATE_PARK; }
+    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_PARK; }
     /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
     /* Applies Disable on enter */
     else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
@@ -523,11 +523,12 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DISABLED)))
+                if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)))
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = AppParkState(p_dev);  /* if no transition to lock without serial, just use park */
+                    // p_nextState = &MC_STATE_PARK; /*  host side handle */
                 }
                 else
                 {

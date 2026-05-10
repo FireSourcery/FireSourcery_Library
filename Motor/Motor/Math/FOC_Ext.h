@@ -120,6 +120,25 @@ static FOC_Electrical_T FOC_Electrical_Fract16OfSi(const FOC_Electrical_T * p_si
 //     };
 // }
 
+
+// typedef enum FOC_Quadrant
+// {
+//     FOC_QUADRANT_0 = 0,    /* Zero / Idle */
+//     FOC_QUADRANT_FORWARD_MOTORING   = 1,    /* Q1: +Vq, +Iq */
+//     FOC_QUADRANT_FORWARD_GENERATING = 2,    /* Q2: +Vq, -Iq */
+//     FOC_QUADRANT_REVERSE_MOTORING   = 3,    /* Q3: -Vq, -Iq */
+//     FOC_QUADRANT_REVERSE_GENERATING = 4,    /* Q4: -Vq, +Iq */
+// }
+// FOC_Quadrant_T;
+
+// static inline FOC_Quadrant_T FOC_GetQuadrant(const FOC_T * p_foc)
+// {
+//     if (p_foc->Iq == 0 && p_foc->Vq == 0) { return FOC_QUADRANT_0; }
+//     if (p_foc->Iq > 0)  { return (p_foc->Vq >= 0) ? FOC_QUADRANT_FORWARD_MOTORING : FOC_QUADRANT_REVERSE_GENERATING; }
+//     else                { return (p_foc->Vq <= 0) ? FOC_QUADRANT_REVERSE_MOTORING : FOC_QUADRANT_FORWARD_GENERATING; }
+// }
+
+
 /******************************************************************************/
 /*!
 

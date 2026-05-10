@@ -92,12 +92,6 @@ void Motor_FOC_AngleControl(Motor_State_T * p_motor, fract16_t vBus, angle16_t t
 {
     FOC_SetTheta(&p_motor->Foc, theta);
     ProcInnerFeedback(p_motor, vBus, dReq, qReq);
-
-    // if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I) == true)
-    // {
-    //     FOC_ProcIFeedback(&p_motor->Foc, vBus, (sign_t)p_motor->Direction, dReq, qReq);
-    // }
-    // FOC_ProcInvClarkePark(&p_motor->Foc);
 }
 
 /*
@@ -331,8 +325,6 @@ void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor)
 
 void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor)
 {
-    // Motor_FOC_AngleControl(p_motor, Angle_Value(&p_motor->OpenLoopAngle), Motor_OpenLoopTorqueRampOf(p_motor, Motor_GetIAlign(&p_motor->Config)), 0); /*  */
-    // Motor_FOC_ProcAngleAlign(p_motor, Phase_VBus_Fract16(), Angle_Value(&p_motor->OpenLoopAngle));
     Motor_FOC_ProcAngleAlignOf(p_motor, Phase_VBus_Fract16(), Angle_Value(&p_motor->OpenLoopAngle), Motor_GetIAlign(&p_motor->Config));
 }
 
@@ -371,26 +363,4 @@ void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor)
 // }
 
 
-
-
-// static void ProcIFeedback(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
-// {
-//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
-//     int16_t vqLimit = _FOC_VqCircleLimit(&p_motor->Foc, fract16_mul(Phase_VBus_Fract16(), FRACT16_1_DIV_2));
-//     interval_t band = interval_of_sign((sign_t)p_motor->Direction, vqLimit);
-//     PID_CaptureOutputLimits(&p_motor->Foc.PidIq, band.low, band.high);
-//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
-// }
-
-// static void ProcIFeedback_BackLimit(Motor_State_T * p_motor, int16_t idReq, int16_t iqReq)
-// {
-//     FOC_SetVd(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidId, FOC_Id(&p_motor->Foc), idReq));
-//     FOC_SetVq(&p_motor->Foc, PID_ProcPI(&p_motor->Foc.PidIq, FOC_Iq(&p_motor->Foc), iqReq));
-//     /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
-//     if (FOC_ProcVectorLimit(&p_motor->Foc, Phase_VBus_Fract16()) == true)
-//     {
-//         _PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); // immediately saturates on input anamoly
-//         // if (math_abs(FOC_Vq(&p_motor->Foc)) > PID_GetIntegral(&p_motor->Foc.PidIq)) { PID_SetOutputState(&p_motor->Foc.PidIq, FOC_Vq(&p_motor->Foc)); }
-//     }
-// }
 

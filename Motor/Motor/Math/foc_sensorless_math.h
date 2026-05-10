@@ -68,6 +68,11 @@ struct foc_alphabeta { fract16_t alpha, beta; };
     starting near ω_e = 0.
 */
 /******************************************************************************/
+// static inline fract16_t foc_emf_axis(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t v, fract16_t i_prev, fract16_t i)
+// {
+//     return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i) - fract16_mul(Ls_pu, i_prev - i));
+// }
+
 static inline fract16_t foc_emf_axis(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t v, fract16_t i, fract16_t di)
 {
     return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i) - fract16_mul(Ls_pu, di));
@@ -102,6 +107,18 @@ static inline struct foc_alphabeta foc_emf_alphabeta
 static inline fract16_t foc_smo_sat(fract16_t x, fract16_t thr)
 {
     return fract16_sat(fract16_div(x, thr));
+}
+
+
+static inline fract16_t foc_smo_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas)
+{
+    return fract16_mul(K_smo, fract16_sat(fract16_div(i_est - i_meas, thr)));
+}
+
+static inline fract16_t foc_smo_i(fract16_t G_int_pu, fract16_t Rs_pu, fract16_t v, fract16_t i_est, fract16_t i_meas, fract16_t z)
+{
+    fract16_t v_eff = fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i_est) - z);
+    return fract16_sat((accum32_t)i_est + fract16_mul(G_int_pu, v_eff));
 }
 
 

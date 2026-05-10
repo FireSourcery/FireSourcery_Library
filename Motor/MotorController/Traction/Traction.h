@@ -187,13 +187,3 @@ extern void Traction_ConfigId_Set(Traction_Config_T * p_this, Traction_ConfigId_
 // extern void _Traction_VarId_Set(Traction_Input_T * p_vehicle, Traction_VarId_T id, int value);
 
 
-// extern void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t value);
-// extern void Traction_StartBrakeMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t value);
-// extern void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_ProcDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_ProcInputCmd(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_StartCmdMode(const Traction_T * p_vehicle, Motor_Table_T * p_motors, Traction_Cmd_T mode);
-// extern void Traction_ProcThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors);
-// extern void Traction_ProcBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors);

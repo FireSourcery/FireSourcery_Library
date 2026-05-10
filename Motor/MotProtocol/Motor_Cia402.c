@@ -99,7 +99,7 @@ static inline Cia402_Status_T Motor_Cia402_ReadStatus(Motor_T * p_motor)
     switch (id)
     {
         case MOTOR_STATE_ID_INIT:           status.Word = CIA402_STATE_NOT_READY_TO_SWITCH_ON;  break;
-        case MOTOR_STATE_ID_DISABLED:       status.Word = CIA402_STATE_SWITCH_ON_DISABLED;      break;
+        case MOTOR_STATE_ID_DEACTIVATED:       status.Word = CIA402_STATE_SWITCH_ON_DISABLED;      break;
         case MOTOR_STATE_ID_PASSIVE:        status.Word = (Motor_GetPhaseState(p_motor) == PHASE_VOUT_0) ? CIA402_STATE_SWITCHED_ON : CIA402_STATE_READY_TO_SWITCH_ON; break;
         case MOTOR_STATE_ID_RUN:            status.Word = CIA402_STATE_OPERATION_ENABLED;       break;
         case MOTOR_STATE_ID_INTERVENTION:   status.Word = CIA402_STATE_QUICK_STOP_ACTIVE;       break;

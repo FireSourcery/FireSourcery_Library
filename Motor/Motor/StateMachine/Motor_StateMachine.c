@@ -50,7 +50,7 @@ const StateMachine_Machine_T MSM_MACHINE =
     .TRANSITION_TABLE_LENGTH = MOTOR_TRANSITION_TABLE_LENGTH,
     // .P_STATES = [
     //     &MOTOR_STATE_INIT,
-    //     &MOTOR_STATE_DISABLED,
+    //     &MOTOR_STATE_DEACTIVATED,
     //     &MOTOR_STATE_READY,
     //     &MOTOR_STATE_CALIBRATION,
     //     &MOTOR_STATE_STARTUP,
@@ -129,7 +129,7 @@ static State_T * Init_Next(Motor_T * p_motor)
         p_motor->P_MOTOR->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR->p_ActiveSensor);
         Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
 
-        if (p_motor->P_MOTOR->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; } else { p_nextState = &MOTOR_STATE_DISABLED; }
+        if (p_motor->P_MOTOR->FaultFlags.Value != 0U) { p_nextState = &MOTOR_STATE_FAULT; } else { p_nextState = &MOTOR_STATE_DEACTIVATED; }
     }
 
     return p_nextState;
@@ -154,14 +154,14 @@ const State_T MOTOR_STATE_INIT =
 
 /******************************************************************************/
 /*!
-    @brief Disabled State
+    @brief Deactivated State
 
     Quiescent gateway: phases off, direction null. Operation disabled until
     explicitly transitioned. Sole entry to CALIBRATION.
     Reached from INIT (post-init) and from FAULT (after clear).
 */
 /******************************************************************************/
-static void Disabled_Entry(Motor_T * p_motor)
+static void Deactivated_Entry(Motor_T * p_motor)
 {
     Phase_Deactivate(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_ClearFeedbackState, NULL); /* Unobserved values remain 0 for user read */
@@ -169,12 +169,12 @@ static void Disabled_Entry(Motor_T * p_motor)
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
 }
 
-static void Disabled_Proc(Motor_T * p_motor)
+static void Deactivated_Proc(Motor_T * p_motor)
 {
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL);
 }
 
-static State_T * Disabled_InputDirection(Motor_T * p_motor, state_value_t direction)
+static State_T * Deactivated_InputDirection(Motor_T * p_motor, state_value_t direction)
 {
     switch ((Motor_Direction_T)direction)
     {
@@ -187,47 +187,47 @@ static State_T * Disabled_InputDirection(Motor_T * p_motor, state_value_t direct
     return NULL;
 }
 
-static State_T * Disabled_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
+static State_T * Deactivated_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
     return NULL;
 }
 
 /* Transition for user req */
-static State_T * Disabled_InputOpenLoop(Motor_T * p_motor, state_value_t state)
+static State_T * Deactivated_InputOpenLoop(Motor_T * p_motor, state_value_t state)
 {
     (void)state;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
 }
 
 /* Calibration go directly to SubState */
-static State_T * Disabled_InputCalibration(Motor_T * p_motor, state_value_t statePtr)
+static State_T * Deactivated_InputCalibration(Motor_T * p_motor, state_value_t statePtr)
 {
     (void)statePtr;
     if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_CALIBRATION; } else { return NULL; }
 }
 
-static const State_Input_T DISABLED_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T DEACTIVATED_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 {
     [MOTOR_STATE_INPUT_FAULT]           = (State_Input_T)TransitionFault,
-    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Disabled_InputFeedbackMode,
-    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Disabled_InputDirection,
-    [MOTOR_STATE_INPUT_CALIBRATION]     = (State_Input_T)Disabled_InputCalibration,
-    [MOTOR_STATE_INPUT_OPEN_LOOP]       = (State_Input_T)Disabled_InputOpenLoop,
+    [MOTOR_STATE_INPUT_FEEDBACK_MODE]   = (State_Input_T)Deactivated_InputFeedbackMode,
+    [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Deactivated_InputDirection,
+    [MOTOR_STATE_INPUT_CALIBRATION]     = (State_Input_T)Deactivated_InputCalibration,
+    [MOTOR_STATE_INPUT_OPEN_LOOP]       = (State_Input_T)Deactivated_InputOpenLoop,
 };
 
-const State_T MOTOR_STATE_DISABLED =
+const State_T MOTOR_STATE_DEACTIVATED =
 {
-    .ID                 = MOTOR_STATE_ID_DISABLED,
-    .ENTRY              = (State_Action_T)Disabled_Entry,
-    .LOOP               = (State_Action_T)Disabled_Proc,
-    .P_TRANSITION_TABLE = &DISABLED_TRANSITION_TABLE[0U],
+    .ID                 = MOTOR_STATE_ID_DEACTIVATED,
+    .ENTRY              = (State_Action_T)Deactivated_Entry,
+    .LOOP               = (State_Action_T)Deactivated_Proc,
+    .P_TRANSITION_TABLE = &DEACTIVATED_TRANSITION_TABLE[0U],
 };
 
 
 /******************************************************************************/
 /*!
-    @brief Passive State - Freewheel or Hold
+    @brief Passive State - Freewheel or V0
 */
 /******************************************************************************/
 /*
@@ -246,12 +246,12 @@ static void Passive_Proc(Motor_T * p_motor)
 {
     /* Match Feedback to ProcAngleBemf on Resume */
     Motor_FOC_ProcCaptureAngleVBemf(p_motor->P_MOTOR);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcCaptureAngleVBemf, NULL /* Motor_SixStep_ProcPhaseObserve */);
-    switch (Phase_ReadVOut(&p_motor->PHASE))
-    {
-        case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }    break;
-            // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
-        default: break;
-    }
+    // switch (Phase_ReadVOut(&p_motor->PHASE))
+    // {
+    //     case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }    break;
+    //     // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
+    //     default: break;
+    // }
 }
 
 static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
@@ -269,7 +269,6 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR->Direction != MOTOR_DIRECTION_NULL)
             {
-                // if (p_motor->P_MOTOR->Foc.Vq == 0) { Debug_Beep(); }
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) /* OpenLoop start at 0 speed */
                 // {
@@ -308,7 +307,7 @@ static State_T * Passive_InputDirection(Motor_T * p_motor, state_value_t directi
             default: break; /* Invalid direction */
         }
         /* Null direction can function as disable while other directions not function as enable. */
-        // if (direction == MOTOR_DIRECTION_NULL) { p_nextState = &MOTOR_STATE_DISABLED; }
+        // if (direction == MOTOR_DIRECTION_NULL) { p_nextState = &MOTOR_STATE_DEACTIVATED; }
     }
 
     return p_nextState;
@@ -600,7 +599,7 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 /******************************************************************************/
 static void Calibration_Entry(Motor_T * p_motor)
 {
-    Phase_ActivateV0(&p_motor->PHASE); /* Transition from Disabled or Substates */
+    Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
     p_motor->P_MOTOR->ControlTimerBase = 0U;
     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 }
@@ -611,7 +610,7 @@ static void Calibration_Proc(Motor_T * p_motor)
 }
 
 
-/* Calibration State and InputCalibration(DISABLED) */
+/* Calibration State and InputCalibration(DEACTIVATED) */
 static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
     switch ((Phase_VOutMode_T)phaseOutput)
@@ -647,7 +646,7 @@ static State_T * Calibration_InputCalibration(Motor_T * p_motor, state_value_t s
 {
     State_T * p_state = (State_T *)statePtr;
 
-    assert(p_state == NULL || p_state == &MOTOR_STATE_DISABLED || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
+    assert(p_state == NULL || p_state == &MOTOR_STATE_DEACTIVATED || p_state == &MOTOR_STATE_CALIBRATION || p_state->P_TOP == &MOTOR_STATE_CALIBRATION);
 
     if (p_state == NULL) { return &MOTOR_STATE_PASSIVE; }
     if (p_state == &MOTOR_STATE_CALIBRATION) { return &MOTOR_STATE_CALIBRATION; }
@@ -696,7 +695,7 @@ static State_T * Fault_InputFault(Motor_T * p_motor, state_value_t faultCmd)
         p_motor->P_MOTOR->FaultFlags.Value &= ~cmd.FaultClear;
         Motor_PollFaultFlags(p_motor); /* Re-verify conditions resolved before allowing exit */
     }
-    return (p_motor->P_MOTOR->FaultFlags.Value == 0U) ? &MOTOR_STATE_DISABLED : NULL;
+    return (p_motor->P_MOTOR->FaultFlags.Value == 0U) ? &MOTOR_STATE_DEACTIVATED : NULL;
 }
 
 static State_T * Fault_InputCalibration(Motor_T * p_motor, state_value_t state)

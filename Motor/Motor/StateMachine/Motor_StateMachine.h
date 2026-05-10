@@ -56,7 +56,7 @@
 typedef enum Motor_StateId
 {
     MOTOR_STATE_ID_INIT,
-    MOTOR_STATE_ID_DISABLED,      /* Quiescent gateway: phases off, direction null. Operation disabled until explicit transition. Sole entry to CALIBRATION  */
+    MOTOR_STATE_ID_DEACTIVATED,      /* Quiescent gateway: phases off, direction null. Operation disabled until explicit transition. Sole entry to CALIBRATION  */
     MOTOR_STATE_ID_PASSIVE,       /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
     MOTOR_STATE_ID_RUN,           /* Feedback Loop + Ouput VPWM */
     MOTOR_STATE_ID_INTERVENTION,
@@ -69,7 +69,7 @@ Motor_StateId_T;
 
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;
-extern const State_T MOTOR_STATE_DISABLED;
+extern const State_T MOTOR_STATE_DEACTIVATED;
 extern const State_T MOTOR_STATE_PASSIVE;
 extern const State_T MOTOR_STATE_RUN;
 extern const State_T MOTOR_STATE_INTERVENTION;
@@ -110,20 +110,6 @@ typedef enum Motor_StateAction
 }
 Motor_StateAction_T;
 
-
-/*
-*/
-// typedef enum Motor_StateOutput
-// {
-//     MOTOR_STATE_OUTPUT_WRITE_DUTY,
-//     MOTOR_STATE_OUTPUT_TABLE_LENGTH,
-// }
-// Motor_StateOutput_T;
-
-// static const State_Action_T MOTOR_STATE_VIRTUAL_OUTPUTS[MOTOR_STATE_OUTPUT_TABLE_LENGTH] =
-// {
-//     [MOTOR_STATE_OUTPUT_WRITE_DUTY] = (State_Action_T)Motor_FOC_WriteDuty_Thread,
-// };
 
 /******************************************************************************/
 /*
@@ -192,7 +178,7 @@ static inline bool Motor_IsFault(Motor_T * p_motor) { return Motor_IsState(p_mot
 */
 static inline bool Motor_IsConfig(Motor_T * p_motor)
 {
-    return (Motor_IsState(p_motor, &MOTOR_STATE_DISABLED) || Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION) || Motor_IsState(p_motor, &MOTOR_STATE_FAULT));
+    return (Motor_IsState(p_motor, &MOTOR_STATE_DEACTIVATED) || Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION) || Motor_IsState(p_motor, &MOTOR_STATE_FAULT));
 }
 
 // static inline bool Motor_IsDisableReady(Motor_T * p_motor) { return StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_PASSIVE); }
@@ -207,7 +193,7 @@ static inline bool Motor_IsConfig(Motor_T * p_motor)
 static State_T * _Motor_InputDisable(Motor_T * p_motor, state_value_t value)
 {
     (void)value;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_DISABLED; }
+    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_DEACTIVATED; }
     return NULL;
 }
 
@@ -226,7 +212,7 @@ static State_T * _Motor_InputEnable(Motor_T * p_motor, state_value_t value)
 
 static void Motor_Enable(Motor_T * p_motor)
 {
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_DISABLED, .NEXT = (State_Input_T)_Motor_InputEnable };
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_DEACTIVATED, .NEXT = (State_Input_T)_Motor_InputEnable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
     // { StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_STATE_CMD, MOTOR_STATE_INPUT_STATE_START); }
 }

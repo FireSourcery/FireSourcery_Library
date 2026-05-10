@@ -458,6 +458,7 @@ void MotorController_Traction_SetThrottleBrake(MotorController_T * p_mc, uint16_
     TractionAdapter(p_mc)->Input.ThrottleValue = throttle;
     TractionAdapter(p_mc)->Input.BrakeValue = brake;
     MotorController_Traction_PollStartCmd(p_mc);
+    // if (Traction_Input_PollCmdEdge(&TractionAdapter(p_mc)->Input)) { _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_DRIVE_CMD); }
     switch (TractionAdapter(p_mc)->Input.DriveCmd)
     {
         case TRACTION_CMD_BRAKE:     _MotorController_Traction_ApplyCmd(p_mc, TRACTION_STATE_INPUT_BRAKE_VALUE);         break;

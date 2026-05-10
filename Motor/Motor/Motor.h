@@ -42,6 +42,8 @@
 #include "Sensor/RotorSensor.h"
 
 #include "Math/FOC.h"
+// #ifdef
+#include "Math/FOC_Sensorless.h"
 
 #include "Peripheral/Analog/Analog.h"
 #include "Peripheral/Analog/Linear_ADC.h"
@@ -268,8 +270,6 @@ typedef struct Motor_Config
 }
 Motor_Config_T;
 
-// #include "_Motor_Config.h"   /* migrated to Types/Motor_Electrical.h — kept on disk for reference */
-
 
 /*
     Moto Runtime variable state.
@@ -295,6 +295,7 @@ typedef struct Motor_State
     */
     const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
+    FOC_Sensorless_T FocSensorless; /* Sensorless Observer State */
 
     /*
         Ramp -> Feedback State

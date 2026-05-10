@@ -42,13 +42,12 @@
 ## Key Conventions
 
 ### Architecture Patterns
-- **Opaque struct pattern**: Modules expose a struct type and operate on pointers to it
-- **Config struct pattern**: Modules use `const` config structs (`CONFIG` / `CONST`) separated from mutable state
 - **HAL abstraction**: Hardware access through `HAL_*.h` headers with platform-specific implementations
 - **Thread/ISR separation**: `_Thread.h` files define periodic processing functions; ISR-safe boundaries are explicit
 - **State machines**: Hierarchical state machine framework in `Framework/StateMachine/` used extensively for motor control states
 - **Fixed-point math**: 16-bit fractional (`fract16`) and Q16 fixed-point arithmetic — no floating point at runtime
 - **Const struct descriptors pattern**:  "Static Polymorphism Pattern". Const struct handle, holds pointer to runtime state in RAM.
+    This pattern is only for hardware descriptors and static polymorphism. Do not use it for what could be mutable only structs.
 - **Stateless pure functions layer**: function parameter contain the entire state
 <!-- - **NvMemory pattern**: Configuration stored in Flash/EEPROM with structured read/write abstraction -->
 

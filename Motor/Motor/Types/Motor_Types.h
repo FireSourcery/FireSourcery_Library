@@ -157,11 +157,3 @@ typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;
 //     uint16_t VAlign_Fract16;
 // }
 // Motor_OpenLoopAlign_T;
-// typedef struct
-// {
-//     uint16_t SpeedFinal_Fract16;
-//     uint32_t SpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
-//     uint16_t IFinal_Fract16;
-//     uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
-// }
-// Motor_OpenLoopRun_T;
