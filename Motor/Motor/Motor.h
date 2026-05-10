@@ -194,6 +194,20 @@ static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
 
+/******************************************************************************/
+/*
+    Number formats
+
+    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
+    [UFract16]          [0:2) <=> [0:65535] in Q1.15
+    [Accum32]           [-2:2] <=> [-65536:65536] in Q17.15     Max [INT32_MIN:INT32_MAX]
+    [UQ16]              [0:1) <=> [0:65535] in Q0.16
+    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
+    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
+*/
+/******************************************************************************/
+// typedef fract16_t quantity_t;
+// typedef fract16_t magnitude_t;
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -424,8 +438,11 @@ static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
     return &p_motor->P_MOTOR->Config;
 #endif
 }
-
-/* virtualized getters */
+/******************************************************************************/
+/*
+    virtualized getters
+*/
+/******************************************************************************/
 static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
 static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
 static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
@@ -448,20 +465,6 @@ static inline uint16_t Motor_VAlign(Motor_T * p_motor) { return p_motor->P_MOTOR
 
 
 
-/******************************************************************************/
-/*
-    Number formats
-
-    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
-    [UFract16]          [0:2) <=> [0:65535] in Q1.15
-    [Accum32]           [-2:2] <=> [-65536:65536] in Q17.15     Max [INT32_MIN:INT32_MAX]
-    [UQ16]              [0:1) <=> [0:65535] in Q0.16
-    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
-    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
-*/
-/******************************************************************************/
-// typedef fract16_t quantity_t;
-// typedef fract16_t magnitude_t;
 
 /******************************************************************************/
 /*
@@ -477,8 +480,10 @@ static inline ufract16_t Motor_GetILocalDerate(Motor_T * p_motor) { return FRACT
 /* No per-motor speed derate sources currently. Identity = no constraint. */
 static inline ufract16_t Motor_GetSpeedLocalDerate(Motor_T * p_motor) { (void)p_motor; return FRACT16_MAX; }
 
-/* with system derate */
-/* Handle remaining comparison not handled by arbitration array */
+/*
+    Single source of Derate owned by system. System is the writer. No additional cached state in Motor_State_T.
+    Handle remaining comparison not handled by system arbitration array
+*/
 static inline ufract16_t Motor_GetIDerate(Motor_T * p_motor) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_I_LIMIT)); }
 static inline ufract16_t Motor_GetSpeedDerate(Motor_T * p_motor) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_SPEED_LIMIT)); }
 
@@ -584,8 +589,7 @@ static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Mo
 
 /******************************************************************************/
 /*
-   Proc FeedbackMode Flags
-   check onces per execution path
+
 */
 /******************************************************************************/
 /*
@@ -611,6 +615,9 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
     Ramp input ~100Hz,
     SpeedFeedback update 1000Hz - SpeedRamp, SpeedPid
     Cascade: SpeedPID output drives TorqueRamp target.
+*/
+/*
+    Proc FeedbackMode Flags
 */
 static inline void Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
 {

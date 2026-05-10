@@ -66,6 +66,7 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
     Motor_CaptureSensor(p_dev);
 
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);
+    // _Motor_StateMachine(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
     // StateMachine_Synchronous_RootFirst_Thread(&p_dev->STATE_MACHINE);
 
     /* Directly read register state */

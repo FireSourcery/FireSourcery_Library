@@ -93,6 +93,11 @@ void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_Table_T * p_
     Motor_Table_ApplyControl(p_motors, PHASE_VOUT_PWM);
 }
 
+// void Traction_ApplyThrottleSpeedValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t userCmdThrottle)
+// {
+//     Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedMotoringCmdScalar, (int32_t)userCmdThrottle / 2);
+// }
+
 /* if handle each value update with statemachine on input */
 void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t userCmdThrottle)
 {
@@ -148,7 +153,7 @@ void Traction_StartDriveZero(const Traction_T * p_vehicle, Motor_Table_T * p_mot
     {
         case TRACTION_ZERO_MODE_FLOAT:   Motor_Table_ApplyControl(p_motors, PHASE_VOUT_Z);         break;
         case TRACTION_ZERO_MODE_IZERO:   Motor_Table_ForEach(p_motors, Motor_ApplyTorque0);   break;
-        case TRACTION_ZERO_MODE_REGEN:       /* Traction_SetRegenMotorAll(p_this); */ break;
+        case TRACTION_ZERO_MODE_REGEN:       /* Traction_SetRegenMotorAll(p_this); */           break;
         default: break;
     }
 }
@@ -240,10 +245,10 @@ static State_T * Drive_InputAppUser(MotorController_T * p_mc, state_value_t appC
     Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
     {
-        case TRACTION_STATE_INPUT_DIRECTION: return Drive_InputDirection(p_mc, p_input->Direction);
-        case TRACTION_STATE_INPUT_DRIVE_CMD: return Drive_InputCmdStart(p_mc, p_input->DriveCmd);
-        case TRACTION_STATE_INPUT_THROTTLE_VALUE: return Drive_InputThrottleValue(p_mc, p_input->ThrottleValue);
-        case TRACTION_STATE_INPUT_BRAKE_VALUE: return Drive_InputBrakeValue(p_mc, p_input->BrakeValue);
+        case TRACTION_STATE_INPUT_DIRECTION:        return Drive_InputDirection(p_mc, p_input->Direction);
+        case TRACTION_STATE_INPUT_DRIVE_CMD:        return Drive_InputCmdStart(p_mc, p_input->DriveCmd);
+        case TRACTION_STATE_INPUT_THROTTLE_VALUE:   return Drive_InputThrottleValue(p_mc, p_input->ThrottleValue);
+        case TRACTION_STATE_INPUT_BRAKE_VALUE:      return Drive_InputBrakeValue(p_mc, p_input->BrakeValue);
         default: return NULL;
     }
 
@@ -339,10 +344,10 @@ static State_T * Neutral_InputAppUser(MotorController_T * p_mc, state_value_t ap
     Traction_Input_T * p_input = &TractionAdapter(p_mc)->Input;
     switch (appCmd)
     {
-        case TRACTION_STATE_INPUT_DIRECTION: return Neutral_InputDirection(p_mc, p_input->Direction);
-        case TRACTION_STATE_INPUT_DRIVE_CMD: return Neutral_InputCmdStart(p_mc, p_input->DriveCmd);
-        case TRACTION_STATE_INPUT_BRAKE_VALUE: return Neutral_InputBrakeValue(p_mc, p_input->BrakeValue);
-        case TRACTION_STATE_INPUT_THROTTLE_VALUE: return NULL; /* Throttle has no effect in Neutral */
+        case TRACTION_STATE_INPUT_DIRECTION:        return Neutral_InputDirection(p_mc, p_input->Direction);
+        case TRACTION_STATE_INPUT_DRIVE_CMD:        return Neutral_InputCmdStart(p_mc, p_input->DriveCmd);
+        case TRACTION_STATE_INPUT_BRAKE_VALUE:      return Neutral_InputBrakeValue(p_mc, p_input->BrakeValue);
+        case TRACTION_STATE_INPUT_THROTTLE_VALUE:   return NULL; /* Throttle has no effect in Neutral */
         default: return NULL;
     }
 }

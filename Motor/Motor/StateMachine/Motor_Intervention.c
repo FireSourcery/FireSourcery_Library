@@ -146,7 +146,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     {
         case PHASE_VOUT_Z:
         case PHASE_VOUT_0: return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL;
-        case PHASE_VOUT_PWM: return NULL; /* Reject */
+        case PHASE_VOUT_PWM: return NULL; /* Reject */ /* brake call after release */
         default: return NULL;
     }
     return NULL;
@@ -167,3 +167,14 @@ const State_T INTERVENTION_STATE_RAMP_SAFE =
     .NEXT       = (State_Input0_T)RampSafe_Next,
     .P_TRANSITION_TABLE = &RAMP_SAFE_TRANSITION_TABLE[0U],
 };
+
+// const State_T INTERVENTION_STATE_RAMP_SAFE_COMMIT =
+// {
+//     .P_TOP      = &MOTOR_STATE_INTERVENTION,
+//     .P_PARENT   = &INTERVENTION_STATE_RAMP_SAFE,
+//     .DEPTH      = 1U,
+//     .ENTRY      = (State_Action_T)RampSafe_Entry,
+//     .LOOP       = (State_Action_T)RampSafe_Proc,
+//     .NEXT       = (State_Input0_T)RampSafe_Next,
+//     .P_TRANSITION_TABLE = &RAMP_SAFE_TRANSITION_TABLE[0U],
+// };

@@ -140,6 +140,7 @@ static inline bool RangeMonitor_IsLowSideCondition(const RangeMonitor_T * p_moni
 // static inline bool RangeMonitor_IsOverWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_HIGH; }
 // static inline bool RangeMonitor_IsUnderWarning(const RangeMonitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_WARNING_LOW; }
 
+static inline int32_t RangeMonitor_LastInput(const RangeMonitor_T * p_monitor) { return p_monitor->LastInput; }
 /* RangeMonitor always configured Low to High */
 static inline bool RangeMonitor_IsUnderNominal(const RangeMonitor_T * p_monitor) { return  p_monitor->LastInput < p_monitor->Config.Nominal; }
 static inline bool RangeMonitor_IsOverNominal(const RangeMonitor_T * p_monitor) { return p_monitor->LastInput > p_monitor->Config.Nominal; }

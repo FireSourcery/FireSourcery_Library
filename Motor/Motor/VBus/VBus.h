@@ -99,7 +99,8 @@ static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 */
 static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 {
-    _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
+    // _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
+    _VBus_Capture(p_vbus, fract16);
 }
 
 
@@ -197,12 +198,14 @@ static inline ufract16_t _VBus_IDerateOverV(uint16_t vBus_f16, ufract16_t vFull_
 
 static inline ufract16_t VBus_IDerateUnderVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return _VBus_IDerateUnderV(p_vbus->VBus_Fract16, p_config->Warning.LimitLow, p_config->Nominal, p_vbus->Config.IDerateUnderVFloor_Fract16);
+    // return _VBus_IDerateUnderV(p_vbus->VBus_Fract16, p_config->FaultUnderLimit.Limit,  p_config->Warning.LimitLow,  p_vbus->Config.IDerateUnderVFloor_Fract16);
+    return (ufract16_t)linear_map_sat(p_config->FaultUnderLimit.Limit, p_config->Warning.LimitLow, p_vbus->Config.IDerateUnderVFloor_Fract16, FRACT16_MAX, p_vbus->VBus_Fract16);
 }
 
 static inline ufract16_t VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return _VBus_IDerateOverV(p_vbus->VBus_Fract16, p_config->Nominal, p_config->Warning.LimitHigh, p_vbus->Config.IDerateOverVFloor_Fract16);
+    // return _VBus_IDerateOverV(p_vbus->VBus_Fract16, p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, p_vbus->Config.IDerateOverVFloor_Fract16);
+    return (ufract16_t)linear_map_sat(p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, FRACT16_MAX, p_vbus->Config.IDerateOverVFloor_Fract16, p_vbus->VBus_Fract16);
 }
 
 /******************************************************************************/

@@ -218,6 +218,7 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, sign_t dire
 {
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
     int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
+    // int16_t vqLimit = _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
     interval_t band = interval_of_sign(direction, vqLimit); /* sign-keying  needs direction */
     PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
@@ -366,7 +367,7 @@ static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC
 */
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 {
-    int16_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (int16_t)FOC_GetVMagnitude(p_foc);
+    int16_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (accum32_t)FOC_GetVMagnitude(p_foc);
     p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -(int32_t)p_foc->IdFwLimit, 0);
     return p_foc->IdFw;
 }

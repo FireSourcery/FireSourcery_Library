@@ -78,7 +78,6 @@ typedef enum Traction_StateId
 }
 Traction_StateId_T;
 
-// extern State_T MC_STATE_MAIN_TRACTION;
 
 extern const MotorController_App_T MC_APP_TRACTION;
 
