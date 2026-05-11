@@ -74,11 +74,11 @@ VBus_Config_T;
 #define _VBUS_VMONITOR_CONFIG_LIION(VNominal, VMax) (VMonitor_Config_T) \
 {                                                                                                               \
     .Nominal                = ((VNominal) * ACCUM32(1.000F) / (VMax)),  /* 100% — 37 V VSupplyRef */              \
-    .FaultOverLimit.Limit   = ((VNominal) * ACCUM32(1.220F) / (VMax)),  /* 122% — 45 V — FET/cap margin */        \
+    .Fault.LimitHigh        = ((VNominal) * ACCUM32(1.220F) / (VMax)),  /* 122% — 45 V — FET/cap margin */        \
     .Warning.LimitHigh      = ((VNominal) * ACCUM32(1.135F) / (VMax)),  /* 114% — 42 V — fresh, regen chop */     \
     .Warning.LimitLow       = ((VNominal) * ACCUM32(0.890F) / (VMax)),  /*  89% — 33 V — I-derate start */        \
-    .FaultUnderLimit.Limit  = ((VNominal) * ACCUM32(0.810F) / (VMax)),  /*  81% — 30 V — BMS cutoff */            \
-    .Warning.Hysteresis     = ((VNominal) * ACCUM32(0.030F) / (VMax)),  /*   3% — ~1 V at 37 V */                 \
+    .Fault.LimitLow         = ((VNominal) * ACCUM32(0.810F) / (VMax)),  /*  81% — 30 V — BMS cutoff */            \
+    .Warning.Deadband       = ((VNominal) * ACCUM32(0.030F) / (VMax)),  /*   3% — ~1 V at 37 V */                 \
     .IsEnabled              = true,                                                                             \
 }
 
@@ -147,8 +147,8 @@ static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
         && (p_config->SpeedDerateFloor_Fract16   <= INT16_MAX)
         && (p_config->MonitorConfig.Warning.LimitLow  < p_config->MonitorConfig.Nominal)
         && (p_config->MonitorConfig.Warning.LimitHigh > p_config->MonitorConfig.Nominal)
-        && (p_config->MonitorConfig.FaultUnderLimit.Limit < p_config->MonitorConfig.Warning.LimitLow)
-        && (p_config->MonitorConfig.FaultOverLimit.Limit  > p_config->MonitorConfig.Warning.LimitHigh);
+        && (p_config->MonitorConfig.Fault.LimitLow  < p_config->MonitorConfig.Warning.LimitLow)
+        && (p_config->MonitorConfig.Fault.LimitHigh > p_config->MonitorConfig.Warning.LimitHigh);
 }
 
 

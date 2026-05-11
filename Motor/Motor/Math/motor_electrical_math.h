@@ -286,4 +286,3 @@ static inline uint32_t v_ll_peak_of_phase_peak(uint32_t v_phase_peak) { return (
 static inline uint32_t v_peak_of_rms(uint32_t v_rms) { return (uint64_t)v_rms * MOTOR_PARAMS_SQRT2_uX / 1000000UL; }
 static inline uint32_t v_rms_of_peak(uint32_t v_peak) { return (uint64_t)v_peak * 1000000UL / MOTOR_PARAMS_SQRT2_uX; }
 
-

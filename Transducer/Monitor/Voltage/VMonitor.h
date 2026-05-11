@@ -70,7 +70,7 @@ VMonitor_T;
 /* Voltage-specific calculations */
 static inline uint32_t VMonitor_ChargeLevelOfInput_Percent16(const VMonitor_State_T * p_voltage, int32_t input)
 {
-    return ((uint32_t)(input - p_voltage->Config.FaultUnderLimit.Limit) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.FaultUnderLimit.Limit);
+    return ((uint32_t)(input - p_voltage->Config.Fault.LimitLow) * UINT16_MAX) / (p_voltage->Config.Nominal - p_voltage->Config.Fault.LimitLow);
 }
 
 // static inline void VMonitor_ToChargeLevel(const VDivider_T * p_voltage, Linear_T * p_linear)

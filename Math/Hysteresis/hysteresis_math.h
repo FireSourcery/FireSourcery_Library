@@ -49,7 +49,7 @@
 
     Note: setpoint > resetpoint for normal operation
 */
-static inline bool hysteresis_output_state(int32_t setpoint, int32_t resetpoint, bool prev_state, int32_t process_value)
+static inline bool hysteresis_output_state_active_high(int32_t setpoint, int32_t resetpoint, bool prev_state, int32_t process_value)
 {
     if (process_value <= resetpoint) { return false; }      /* Below reset - deactivate */
     if (process_value >= setpoint) { return true; }         /* Above setpoint - activate */
@@ -61,12 +61,25 @@ static inline bool hysteresis_output_state(int32_t setpoint, int32_t resetpoint,
 
     Note: setpoint < resetpoint for inverted operation (low alarms)
 */
-static inline bool hysteresis_output_state_inverted(int32_t setpoint, int32_t resetpoint, bool prev_state, int32_t process_value)
+static inline bool hysteresis_output_state_active_low(int32_t setpoint, int32_t resetpoint, bool prev_state, int32_t process_value)
 {
     if (process_value >= resetpoint) { return false; }      /* Above reset - deactivate */
     if (process_value <= setpoint) { return true; }         /* Below setpoint - activate */
     return prev_state; /* Maintain state in hysteresis band */
 }
+
+
+/*
+    Unified hysteresis function with direction handling
+    Caller can determine direction by ordering of setpoint/resetpoint or by sign of process_value
+    setpoint - resetpoint => disabled
+*/
+static inline bool hysteresis_output_state(int32_t setpoint, int32_t resetpoint, bool prev_state, int32_t process_value)
+{
+    int d = math_sign(setpoint - resetpoint);
+    return hysteresis_output_state_active_high(d * setpoint, d * resetpoint, prev_state, d * process_value);
+}
+
 
 /* 3 state */
 // static inline int hysteresis_output_region(int32_t setpoint, int32_t resetpoint, int32_t process_value)
@@ -91,7 +104,7 @@ static inline bool hysteresis_output_state_inverted(int32_t setpoint, int32_t re
 /*!
     @brief  Sticky threshold filter - "sticks" to threshold when triggered
 
-    can substitute hysteresis_output_state, offering direct output scaling
+    can substitute hysteresis_output_state_active_high, offering direct output scaling
     hysteresis deadband effective in reset direction only
     maintain state on falling/reset
 */
@@ -100,6 +113,12 @@ static inline int32_t hysteresis_on_falling(int32_t setpoint, int32_t resetpoint
     if (input <= resetpoint || input >= setpoint) { return input; }
     return (prev_output >= setpoint) ? setpoint : input;    /* In hysteresis band - check if previously triggered */
 }
+
+// static inline int32_t hysteresis_on_falling(int32_t setpoint, int32_t resetpoint, int32_t prev_output, int32_t input)
+// {
+//     int d = math_sign(setpoint - resetpoint);
+//     return d * hysteresis_on_falling(d * setpoint, d * resetpoint, d * prev_output, d * input);
+// }
 
 static inline int32_t hysteresis_on_rising(int32_t setpoint, int32_t resetpoint, int32_t prev_output, int32_t input)
 {

@@ -15,19 +15,15 @@
 /******************************************************************************/
 void _Monitor_InitFrom(Monitor_Base_T * p_monitor, const Monitor_Config_T * p_config)
 {
-    Hysteresis_InitThresholds(&p_monitor->Warning, p_config->Warning.Setpoint, p_config->Warning.Resetpoint);
-    p_monitor->FaultLimit = p_config->Fault.Limit;
+    Hysteresis_Init(&p_monitor->Warning, p_config->Warning.Setpoint, p_config->Warning.Resetpoint);
+    p_monitor->FaultLimit = p_config->Fault.Setpoint;
 }
 
 /******************************************************************************/
 /*
-    Core Monitoring Logic - Simplified Industry Standard
-    Common with RangeMonitor
+    Core Monitoring Logic
 */
 /******************************************************************************/
-/*!
-    @brief  Check fault condition (hard limit, no hysteresis)
-*/
 static bool _Monitor_CheckFaultAsHigh(const Monitor_Base_T * p_monitor, int32_t input) { return (input >= p_monitor->FaultLimit); }
 
 Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t input)
@@ -57,7 +53,6 @@ Monitor_Status_T _Monitor_EvaluateAsHigh(Monitor_Base_T * p_monitor, int32_t inp
     return status;
 }
 
-// _Monitor_ActiveLow_CheckFault
 static bool _Monitor_CheckFaultAsLow(const Monitor_Base_T * p_monitor, int32_t input) { return (input <= p_monitor->FaultLimit); }
 
 Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t input)
@@ -88,7 +83,6 @@ Monitor_Status_T _Monitor_EvaluateAsLow(Monitor_Base_T * p_monitor, int32_t inpu
 //     return status;
 // }
 
-
 /* Poll without hysteresis */
 // VMonitor_Status_T VMonitor_Poll_OnInput(VMonitor_State_T * p_vMonitor, uint16_t adcu)
 // {
@@ -116,7 +110,7 @@ void Monitor_InitFrom(Monitor_T * p_monitor, const Monitor_Config_T * p_config)
     if (p_monitor->Config.IsEnabled == false) { p_monitor->Direction = MONITOR_DISABLED; }
     else
     {
-        p_monitor->Direction = (p_monitor->Config.Fault.Limit >= p_monitor->Config.Warning.Setpoint) ? MONITOR_THRESHOLD_HIGH : MONITOR_THRESHOLD_LOW;
+        p_monitor->Direction = (p_monitor->Config.Fault.Setpoint >= p_monitor->Config.Warning.Setpoint) ? MONITOR_THRESHOLD_HIGH : MONITOR_THRESHOLD_LOW;
     }
 
     Monitor_Reset(p_monitor);
@@ -176,7 +170,7 @@ void Monitor_Reset(Monitor_T * p_monitor)
     Config
 */
 /******************************************************************************/
-void Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) { p_monitor->Config.Fault.Limit = limit; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
+void Monitor_SetFaultLimit(Monitor_T * p_monitor, int32_t limit) { p_monitor->Config.Fault.Setpoint = limit; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetWarningSetpoint(Monitor_T * p_monitor, int32_t setpoint) { p_monitor->Config.Warning.Setpoint = setpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetWarningResetpoint(Monitor_T * p_monitor, int32_t resetpoint) { p_monitor->Config.Warning.Resetpoint = resetpoint; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
 void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Config.Nominal = nominal; Monitor_InitFrom(p_monitor, &p_monitor->Config); }
@@ -188,13 +182,13 @@ void Monitor_SetNominal(Monitor_T * p_monitor, int32_t nominal) { p_monitor->Con
 */
 /******************************************************************************/
 /* Getters */
-static inline int32_t Monitor_GetFaultLimit(const Monitor_Config_T * p_config) { return p_config->Fault.Limit; }
+static inline int32_t Monitor_GetFaultLimit(const Monitor_Config_T * p_config) { return p_config->Fault.Setpoint; }
 static inline int32_t Monitor_GetWarningSetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Setpoint; }
 static inline int32_t Monitor_GetWarningResetpoint(const Monitor_Config_T * p_config) { return p_config->Warning.Resetpoint; }
 static inline int32_t Monitor_GetNominal(const Monitor_Config_T * p_config) { return p_config->Nominal; }
 
 /* Setters */
-static inline void _Monitor_SetFaultLimit(Monitor_Config_T * p_config, int32_t limit) { p_config->Fault.Limit = limit; }
+static inline void _Monitor_SetFaultLimit(Monitor_Config_T * p_config, int32_t limit) { p_config->Fault.Setpoint = limit; }
 static inline void _Monitor_SetWarningSetpoint(Monitor_Config_T * p_config, int32_t setpoint) { p_config->Warning.Setpoint = setpoint; }
 static inline void _Monitor_SetWarningResetpoint(Monitor_Config_T * p_config, int32_t resetpoint) { p_config->Warning.Resetpoint = resetpoint; }
 static inline void _Monitor_SetNominal(Monitor_Config_T * p_config, int32_t nominal) { p_config->Nominal = nominal; }
@@ -229,7 +223,7 @@ int _Monitor_ConfigId_Get(const Monitor_Config_T * p_monitor, Monitor_ConfigId_T
 {
     switch (id)
     {
-        case MONITOR_CONFIG_FAULT_LIMIT:        return p_monitor->Fault.Limit;
+        case MONITOR_CONFIG_FAULT_LIMIT:        return p_monitor->Fault.Setpoint;
         case MONITOR_CONFIG_WARNING_SETPOINT:   return p_monitor->Warning.Setpoint;
         case MONITOR_CONFIG_WARNING_RESETPOINT: return p_monitor->Warning.Resetpoint;
         case MONITOR_CONFIG_NOMINAL:            return p_monitor->Nominal;
@@ -242,7 +236,7 @@ void _Monitor_ConfigId_Set(Monitor_Config_T * p_monitor, Monitor_ConfigId_T id, 
 {
     switch (id)
     {
-        case MONITOR_CONFIG_FAULT_LIMIT:         p_monitor->Fault.Limit = value;           break;
+        case MONITOR_CONFIG_FAULT_LIMIT:         p_monitor->Fault.Setpoint = value;        break;
         case MONITOR_CONFIG_WARNING_SETPOINT:    p_monitor->Warning.Setpoint = value;      break;
         case MONITOR_CONFIG_WARNING_RESETPOINT:  p_monitor->Warning.Resetpoint = value;    break;
         case MONITOR_CONFIG_NOMINAL:             p_monitor->Nominal = value;               break;

@@ -37,7 +37,7 @@
 /******************************************************************************/
 static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
 {
-    FOC_Sensorless_Init(p_sensor->P_OBSERVER);
+    // FOC_Sensorless_Init(p_sensor->P_OBSERVER);
 }
 
 /* Idempotent publish. The actual observer step is driven by Sensorless_Sensor_Step. */

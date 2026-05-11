@@ -168,11 +168,11 @@ int32_t _RangeMonitor_ConfigId_Get(const RangeMonitor_Config_T * p_config, Range
 {
     switch (configId)
     {
-        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         return p_config->FaultOverLimit.Limit;
-        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        return p_config->FaultUnderLimit.Limit;
+        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         return p_config->Fault.LimitHigh;
+        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        return p_config->Fault.LimitLow;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:       return p_config->Warning.LimitHigh;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:        return p_config->Warning.LimitLow;
-        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  return p_config->Warning.Hysteresis;
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  return p_config->Warning.Deadband;
         case RANGE_MONITOR_CONFIG_NOMINAL:                  return p_config->Nominal;
         case RANGE_MONITOR_CONFIG_IS_ENABLED:               return p_config->IsEnabled;
         default: return 0;
@@ -183,11 +183,11 @@ void _RangeMonitor_ConfigId_Set(RangeMonitor_Config_T * p_config, RangeMonitor_C
 {
     switch (configId)
     {
-        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         p_config->FaultOverLimit.Limit = value;     break;
-        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        p_config->FaultUnderLimit.Limit = value;    break;
+        case RANGE_MONITOR_CONFIG_FAULT_OVER_LIMIT:         p_config->Fault.LimitHigh = value;          break;
+        case RANGE_MONITOR_CONFIG_FAULT_UNDER_LIMIT:        p_config->Fault.LimitLow = value;           break;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_HIGH:       p_config->Warning.LimitHigh = value;        break;
         case RANGE_MONITOR_CONFIG_WARNING_LIMIT_LOW:        p_config->Warning.LimitLow = value;         break;
-        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  p_config->Warning.Hysteresis = value;       break;
+        case RANGE_MONITOR_CONFIG_WARNING_HYSTERESIS_BAND:  p_config->Warning.Deadband = value;         break;
         case RANGE_MONITOR_CONFIG_NOMINAL:                  p_config->Nominal = value;                  break;
         case RANGE_MONITOR_CONFIG_IS_ENABLED:               p_config->IsEnabled = (value != 0);         break;
         default: break;

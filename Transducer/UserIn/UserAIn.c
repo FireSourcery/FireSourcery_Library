@@ -30,15 +30,6 @@
 #include "UserAIn.h"
 
 
-/******************************************************************************/
-/*
-    Private Helper Functions
-*/
-/******************************************************************************/
-static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, uint16_t value)
-{
-    return (value + (filteredPrev << filterShift)) >> (filterShift + 1U);
-}
 
 
 /******************************************************************************/
@@ -56,7 +47,7 @@ void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config
     }
 
     /* Initialize linear conversion */
-    Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
+    UserAIn_ReinitScale(p_dev);
 
     /* Initialize state */
     p_dev->P_STATE->RawValue_Adcu = p_dev->P_STATE->Config.AdcZero;
@@ -64,28 +55,28 @@ void UserAIn_InitFrom(const UserAIn_T * p_dev, const UserAIn_Config_T * p_config
     p_dev->P_STATE->ValuePrev = p_dev->P_STATE->Value;
 }
 
-void UserAIn_Init(const UserAIn_T * p_dev)
-{
-    UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG);
-}
+void UserAIn_Init(const UserAIn_T * p_dev) { UserAIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }
 
-void UserAIn_ResetScale(const UserAIn_T * p_dev)
-{
-    Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax);
-}
+void UserAIn_ReinitScale(const UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_STATE->Units, p_dev->P_STATE->Config.AdcZero, p_dev->P_STATE->Config.AdcMax); }
 
 /******************************************************************************/
 /*
     Main Polling Function
 */
 /******************************************************************************/
-static inline void _UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
+static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, uint16_t value)
 {
-    UserAIn_State_T * p_state = p_dev->P_STATE;
+    return (value + (filteredPrev << filterShift)) >> (filterShift + 1U);
+}
+
+static inline void CaptureValue(UserAIn_State_T * p_state, uint16_t filter, uint16_t value_adcu)
+{
     p_state->RawValue_Adcu = value_adcu;
     p_state->ValuePrev = p_state->Value;
-    p_state->Value = FilterValue(p_dev->FILTER_SHIFT, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
+    p_state->Value = FilterValue(filter, p_state->Value, Linear_Q16_Percent(&p_state->Units, value_adcu));
 }
+
+// static inline void _UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
 
 void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
 {
@@ -95,7 +86,7 @@ void UserAIn_CaptureValue(const UserAIn_T * p_dev, uint16_t value_adcu)
     /* Note: When edge pin blocks, analog value persists (not cleared to 0) */
     /* This preserves the last valid reading for when pin is re-enabled */
     /* Gating is handled in the getter functions instead */
-    if (_UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) == true) { _UserAIn_CaptureValue(p_dev, value_adcu); }
+    if (_UserAIn_IsEdgePinPassthrough(p_dev->P_EDGE_PIN) == true) { CaptureValue(p_dev->P_STATE, p_dev->FILTER_SHIFT, value_adcu); }
 }
 
 /******************************************************************************/

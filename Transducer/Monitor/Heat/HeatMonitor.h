@@ -98,7 +98,7 @@ HeatMonitor_T;
 /******************************************************************************/
 static inline void HeatMonitor_ToLimitScalar(const HeatMonitor_Config_T * p_heat, Linear_T * p_limitScalar)
 {
-    Linear_Q16_Init(p_limitScalar, p_heat->Fault.Limit, p_heat->Warning.Setpoint);
+    Linear_Q16_Init(p_limitScalar, p_heat->Fault.Setpoint, p_heat->Warning.Setpoint);
 }
 
 /******************************************************************************/
@@ -142,19 +142,6 @@ extern void HeatMonitor_Init(const HeatMonitor_T * p_context);
     Group Context
 */
 /******************************************************************************/
-// typedef struct HeatMonitor_GroupState
-// {
-//     /* Group Management */
-//     uint8_t ActiveSensorIndex;          /* Currently active/monitored sensor */
-//     uint8_t LastProcessedIndex;         /* Last sensor that was processed */
-//     uint32_t GroupPollCounter;          /* Group polling cycle counter */
-//     /* Group State Tracking */
-//     HeatMonitor_Status_T GroupStatus;   /* Overall group status */
-//     uint8_t FaultCount;                 /* Number of sensors in fault */
-//     uint8_t WarningCount;               /* Number of sensors in warning */
-// }
-// HeatMonitor_GroupState_T;
-
 typedef const struct HeatMonitor_Group
 {
     /* Array of HeatMonitor_T */

@@ -67,45 +67,15 @@ typedef enum RangeMonitor_Status
 }
 RangeMonitor_Status_T;
 
-/*
-    Shared hysteresis
-*/
-typedef struct RangeMonitor_Zone
-{
-    int32_t LimitHigh;
-    int32_t LimitLow;
-    uint32_t Hysteresis;     /* Hysteresis band. Applies to both directions */
-}
-RangeMonitor_Zone_T;
 
-/*
-    Simplified config with shared hysteresis offset for each level
-*/
 typedef struct RangeMonitor_Config
 {
-    /* Fault thresholds (no hysteresis) */
-    Monitor_FaultLimit_T FaultOverLimit;     /* Fault level (hard limit, no hysteresis) */
-    Monitor_FaultLimit_T FaultUnderLimit;    /* Fault level (hard limit, no hysteresis) */
-    // RangeMonitor_FaultLimit_T Fault; /* more consistent ergonomically */
-    /* Warning thresholds with hysteresis */
-    RangeMonitor_Zone_T Warning;   /* Warning level with hysteresis */
-
-    // Threshold_Range_T Fault;
-    // Threshold_Range_T Warning;   /* Warning level with hysteresis, shared band */
-
+    Threshold_Range_T Fault;
+    Threshold_Range_T Warning;   /* Warning level with hysteresis, shared band */
     int32_t Nominal;
     bool IsEnabled;
 }
 RangeMonitor_Config_T;
-
-// typedef struct RangeMonitor_Config
-// {
-//     Threshold_Range_T Fault;
-//     Threshold_Range_T Warning;   /* Warning level with hysteresis, shared band */
-//     int32_t Nominal;
-//     bool IsEnabled;
-// }
-// RangeMonitor_Config_T;
 
 typedef struct RangeMonitor
 {
@@ -187,15 +157,11 @@ static inline bool RangeMonitor_IsEnabled(const RangeMonitor_T * p_monitor) { re
 */
 /******************************************************************************/
 
-
-
 /******************************************************************************/
 /*
     Extern
 */
 /******************************************************************************/
-extern bool RangeMonitor_IsConfigValid(const RangeMonitor_Config_T * p_config);
-
 extern void RangeMonitor_InitFrom(RangeMonitor_T * p_monitor, const RangeMonitor_Config_T * p_config);
 extern RangeMonitor_Status_T RangeMonitor_Evaluate(RangeMonitor_T * p_monitor, int32_t input);
 extern RangeMonitor_Status_T RangeMonitor_Poll(RangeMonitor_T * p_monitor, int32_t input);

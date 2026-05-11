@@ -38,14 +38,6 @@
     Base Configuration Function
 */
 /******************************************************************************/
-/* Base parameter instantiation macros */
-#define MONITOR_CONFIG_INIT(nominal, warnSet, warnReset, faultLimit, enabled) (Monitor_Config_T) \
-{                                                                             \
-    .Nominal = (nominal),                                                     \
-    .Warning = { .Setpoint = (warnSet), .Resetpoint = (warnReset) },          \
-    .Fault = { .Limit = (faultLimit) },                                       \
-    .IsEnabled = (enabled),                                                   \
-}
 
 static inline Monitor_Config_T Monitor_Config_Create(int32_t nominal, int32_t warnSet, int32_t warnReset, int32_t faultLimit)
 {
@@ -53,12 +45,10 @@ static inline Monitor_Config_T Monitor_Config_Create(int32_t nominal, int32_t wa
     {
         .Nominal = nominal,
         .Warning = { .Setpoint = warnSet, .Resetpoint = warnReset },
-        .Fault = { .Limit = faultLimit }
+        .Fault = { .Setpoint = faultLimit, .Resetpoint = warnReset }
         // .IsEnabled = enabled,
     };
-    // return (Monitor_Config_T)(MONITOR_CONFIG_INIT(nominal, warnSet, warnReset, faultLimit, true));
 }
-
 
 /* Generic percentage-based monitoring */
 static inline Monitor_Config_T Monitor_Config_OverLimit(int32_t nominal, uint8_t warnPercent, uint8_t faultPercent)
@@ -77,35 +67,31 @@ static inline Monitor_Config_T Monitor_Config_UnderLimit(int32_t nominal, uint8_
     return Monitor_Config_Create(nominal, warnSet, warnReset, faultLimit);
 }
 
-static inline Monitor_Config_T Monitor_Config_AbsoluteOverLimit(int32_t nominal, int32_t warnThreshold, int32_t faultThreshold)
-{
-    int32_t hysteresis = (warnThreshold - nominal) / 10;
-    int32_t warnReset = warnThreshold - hysteresis;
-    return Monitor_Config_Create(nominal, warnThreshold, warnReset, faultThreshold);
-}
-
 static inline Monitor_Config_T Monitor_Config_Disabled(void)
 {
     return Monitor_Config_Create(0, INT32_MAX, INT32_MAX, INT32_MAX);
 }
 
+/******************************************************************************/
+/*
+    Validation Functions
+*/
+/******************************************************************************/
 static inline bool Monitor_Config_IsValidAsHigh(const Monitor_Config_T * p_config)
 {
-    /* High-side: Fault >= Warning.Setpoint > Warning.Resetpoint >= Nominal */
-    return ((p_config->Fault.Limit >= p_config->Warning.Setpoint) &&
+    return ((p_config->Fault.Setpoint >= p_config->Warning.Setpoint) &&
         (p_config->Warning.Setpoint > p_config->Warning.Resetpoint) && (p_config->Warning.Resetpoint >= p_config->Nominal));
 }
 
 static inline bool Monitor_Config_IsValidAsLow(const Monitor_Config_T * p_config)
 {
-    /* Low-side: Fault <= Warning.Setpoint < Warning.Resetpoint <= Nominal */
-    return ((p_config->Fault.Limit <= p_config->Warning.Setpoint) &&
+    return ((p_config->Fault.Setpoint <= p_config->Warning.Setpoint) &&
         (p_config->Warning.Setpoint < p_config->Warning.Resetpoint) && (p_config->Warning.Resetpoint <= p_config->Nominal));
 }
 
 static inline bool Monitor_Config_IsValid(const Monitor_Config_T * p_config)
 {
-    return (p_config->Warning.Setpoint >= p_config->Warning.Resetpoint) ? Monitor_Config_IsValidAsHigh(p_config) : Monitor_Config_IsValidAsLow(p_config);
+    return (p_config->Fault.Setpoint >= p_config->Warning.Setpoint) ? Monitor_Config_IsValidAsHigh(p_config) : Monitor_Config_IsValidAsLow(p_config);
 }
 
 /******************************************************************************/
@@ -116,28 +102,28 @@ static inline bool Monitor_Config_IsValid(const Monitor_Config_T * p_config)
 /* Create high-side config from RangeMonitor_Config_T */
 static inline Monitor_Config_T Monitor_Config_FromRangeHigh(const RangeMonitor_Config_T * p_config)
 {
-    bool isValid = (p_config->FaultOverLimit.Limit > p_config->Warning.LimitHigh) && (p_config->Warning.LimitHigh > p_config->Nominal);
+    bool isValid = (p_config->Fault.LimitHigh > p_config->Warning.LimitHigh) && (p_config->Warning.LimitHigh > p_config->Nominal);
 
     return (Monitor_Config_T)
     {
         .IsEnabled = isValid && p_config->IsEnabled,
         .Nominal = p_config->Nominal,
-        .Warning = { .Setpoint = p_config->Warning.LimitHigh, .Resetpoint = p_config->Warning.LimitHigh - p_config->Warning.Hysteresis },
-        .Fault = p_config->FaultOverLimit
+        .Warning = { .Setpoint = p_config->Warning.LimitHigh, .Resetpoint = p_config->Warning.LimitHigh - p_config->Warning.Deadband },
+        .Fault   = { .Setpoint = p_config->Fault.LimitHigh,   .Resetpoint = p_config->Fault.LimitHigh   - p_config->Fault.Deadband   },
     };
 }
 
 /* Create low-side config from RangeMonitor_Config_T */
 static inline Monitor_Config_T Monitor_Config_FromRangeLow(const RangeMonitor_Config_T * p_config)
 {
-    bool isValid = (p_config->FaultUnderLimit.Limit < p_config->Warning.LimitLow) && (p_config->Warning.LimitLow < p_config->Nominal);
+    bool isValid = (p_config->Fault.LimitLow < p_config->Warning.LimitLow) && (p_config->Warning.LimitLow < p_config->Nominal);
 
     return (Monitor_Config_T)
     {
         .IsEnabled = isValid && p_config->IsEnabled,
         .Nominal = p_config->Nominal,
-        .Warning = { .Setpoint = p_config->Warning.LimitLow, .Resetpoint = p_config->Warning.LimitLow + p_config->Warning.Hysteresis },
-        .Fault = p_config->FaultUnderLimit
+        .Warning = { .Setpoint = p_config->Warning.LimitLow, .Resetpoint = p_config->Warning.LimitLow + p_config->Warning.Deadband },
+        .Fault   = { .Setpoint = p_config->Fault.LimitLow,   .Resetpoint = p_config->Fault.LimitLow   + p_config->Fault.Deadband   },
     };
 }
 
@@ -153,15 +139,9 @@ static inline RangeMonitor_Config_T RangeMonitor_Config_Create(int32_t nominal, 
     return (RangeMonitor_Config_T)
     {
         .Nominal = nominal,
-        .FaultOverLimit = { .Limit = faultOverLimit },
-        .FaultUnderLimit = { .Limit = faultUnderLimit },
-        .Warning =
-        {
-            .LimitHigh = warnLimitHigh,
-            .LimitLow = warnLimitLow,
-            .Hysteresis = hysteresis
+        .Fault   = { .LimitHigh = faultOverLimit, .LimitLow = faultUnderLimit, .Deadband = 0U        },
+        .Warning = { .LimitHigh = warnLimitHigh,  .LimitLow = warnLimitLow,    .Deadband = hysteresis },
         // .IsEnabled = enabled,
-        }
     };
 }
 

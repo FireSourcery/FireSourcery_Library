@@ -46,7 +46,6 @@ extern void Motor_Config_ValidateFw(Motor_Config_T * p_config);
 extern bool Motor_Config_IsValidFw(const Motor_Config_T * p_config);
 
 
-
 /******************************************************************************/
 /*
     Config

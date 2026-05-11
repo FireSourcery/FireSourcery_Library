@@ -169,14 +169,14 @@ static inline void MotAnalogUser_ConfigId_Set(MotorController_T * p_mc, MotAnalo
     switch (id)
     {
         case MOT_ANALOG_USER_THROTTLE_ZERO_ADCU:           p_config->AInConfigs[MOT_AIN_THROTTLE].AdcZero    = (uint16_t)value; break;
-                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
+                                                           UserAIn_ReinitScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
         case MOT_ANALOG_USER_THROTTLE_MAX_ADCU:            p_config->AInConfigs[MOT_AIN_THROTTLE].AdcMax     = (uint16_t)value; break;
-                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
+                                                           UserAIn_ReinitScale(&p_mc->AINS[MOT_AIN_THROTTLE].PIN);                       break;
         case MOT_ANALOG_USER_THROTTLE_EDGE_PIN_IS_ENABLE:  p_config->AInConfigs[MOT_AIN_THROTTLE].UseEdgePin = (bool)value;        break;
         case MOT_ANALOG_USER_BRAKE_ZERO_ADCU:              p_config->AInConfigs[MOT_AIN_BRAKE].AdcZero       = (uint16_t)value; break;
-                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
+                                                           UserAIn_ReinitScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
         case MOT_ANALOG_USER_BRAKE_MAX_ADCU:               p_config->AInConfigs[MOT_AIN_BRAKE].AdcMax        = (uint16_t)value; break;
-                                                           UserAIn_ResetScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
+                                                           UserAIn_ReinitScale(&p_mc->AINS[MOT_AIN_BRAKE].PIN);                          break;
         case MOT_ANALOG_USER_BRAKE_EDGE_PIN_IS_ENABLE:     p_config->AInConfigs[MOT_AIN_BRAKE].UseEdgePin    = (bool)value;        break;
         case MOT_ANALOG_USER_SWITCH_BRAKE_VALUE:           p_config->OptDinConfig.SwitchBrakeFloor_Percent16 = (uint16_t)value;   break;
         default: break;

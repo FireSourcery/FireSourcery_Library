@@ -35,6 +35,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 typedef enum UserDIn_Edge
 {
     USER_DIN_EDGE_FALLING = -1,
@@ -52,7 +57,6 @@ typedef enum UserDIn_Mode
     // USER_DIN_MODE_HOLD,             /* Requires hold time */
 }
 UserDIn_Mode_T;
-
 
 typedef struct UserDIn_Config
 {
@@ -85,7 +89,8 @@ UserDIn_State_T;
 
 /******************************************************************************/
 /*
-    Context as compile time constant
+    [UserDIn_T]
+    Add debounce and callback to Pin_T
 */
 /******************************************************************************/
 typedef const struct UserDIn
@@ -138,7 +143,6 @@ static inline bool UserDIn_Modal_IsDisable(UserDIn_T * p_dev) { return p_dev->P_
 
 
 
-
 /******************************************************************************/
 /*
 
@@ -175,6 +179,16 @@ typedef enum UserDIn_ConfigId
     USER_DIN_CONFIG_MODE,
 }
 UserDIn_ConfigId_T;
+
+static inline int UserDIn_Var_Get(UserDIn_T * p_dev, int varId)
+{
+    switch (varId)
+    {
+        case USER_DIN_OUTPUT:       return UserDIn_GetState(p_dev);
+        case USER_DIN_PIN_STATE:    return Pin_Output_ReadPhysical(&p_dev->PIN);
+        default:  return 0;
+    }
+}
 
 static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int varId)
 {

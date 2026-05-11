@@ -37,7 +37,6 @@
     Interface for configuration types
     Handle Configs. Bridge to Hysteresis with Setpoint/Resetpoint pairs
 */
-// typedef int32_t threshold_t;
 
 /*
     2-value active at run time
@@ -50,11 +49,22 @@ typedef struct Threshold
 }
 Threshold_T;
 
+// static inline int Threshold_Direction(Threshold_T threshold) { return math_sign(threshold.Setpoint - threshold.Resetpoint); }
+// static bool Threshold_AsHigh(const Threshold_T threshold, int32_t input) { return (input >= threshold.Setpoint); }
+// static bool Threshold_AsLow(const Threshold_T threshold, int32_t input) { return (input <= threshold.Setpoint); }
+
+static inline Threshold_T Threshold_InitSymmetric(int32_t center_point, uint32_t deadband_width)
+{
+    int32_t half_band = deadband_width / 2;
+    return (Threshold_T) { .Setpoint = center_point + half_band, .Resetpoint = center_point - half_band };
+}
+
+
 /*
     Config formats
 */
 /*
-    Hysteresis band for this level
+    Band / Level
     Setpoint +/- Deadband
 */
 typedef struct Threshold_Level
@@ -63,6 +73,10 @@ typedef struct Threshold_Level
     uint32_t Deadband;
 }
 Threshold_Level_T;
+
+static inline Threshold_T Threshold_LevelAsHigh(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint - level.Deadband }; }
+static inline Threshold_T Threshold_LevelAsLow(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint + level.Deadband }; }
+static inline Threshold_T Threshold_LevelSymmetric(Threshold_Level_T level) { return Threshold_InitSymmetric(level.Setpoint, level.Deadband); }
 
 /* { Magnitude, Deadband } Threshold_Symmetric_T */
 
@@ -87,9 +101,3 @@ static inline Threshold_T Threshold_FromRangeLow(Threshold_Range_T range) { retu
 static inline Threshold_T Threshold_FromLevelHigh(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint - level.Deadband }; }
 static inline Threshold_T Threshold_FromLevelLow(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint + level.Deadband }; }
 
-
-static inline Threshold_T Threshold_InitSymmetric(int32_t center_point, uint32_t deadband_width)
-{
-    int32_t half_band = deadband_width / 2;
-    return (Threshold_T) { .Setpoint = center_point + half_band, .Resetpoint = center_point - half_band };
-}

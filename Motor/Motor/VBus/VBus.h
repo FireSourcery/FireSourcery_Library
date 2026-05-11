@@ -114,8 +114,8 @@ static inline void VBus_InitLive(VBus_T * p_vbus)
 /* Precompute rising/falling slopes from config thresholds + floor values. Shift=15 is safe for fract16 range (max 32767<<15 = 1.07B < INT32_MAX). */
 static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
 {
-    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.FaultUnderLimit.Limit;
-    int32_t overSpan  = (int32_t)p_vbus->Config.MonitorConfig.FaultOverLimit.Limit - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
+    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
+    int32_t overSpan  = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
     p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
     p_vbus->IDerateOverVSlope  = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
 }
@@ -190,7 +190,7 @@ static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t d
 */
 static inline ufract16_t _VBus_IDerateUnderVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateUnderVSlope, 15, p_config->FaultUnderLimit.Limit, p_config->Warning.LimitLow, p_vbus->Config.IDerateUnderVFloor_Fract16, FRACT16_MAX, p_vbus->VBus_Fract16);
+    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateUnderVSlope, 15, p_config->Fault.LimitLow, p_config->Warning.LimitLow, p_vbus->Config.IDerateUnderVFloor_Fract16, FRACT16_MAX, p_vbus->VBus_Fract16);
 }
 
 /*
@@ -201,7 +201,7 @@ static inline ufract16_t _VBus_IDerateUnderVOf(const VBus_T * p_vbus, const VMon
 */
 static inline ufract16_t _VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateOverVSlope, 15, p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, FRACT16_MAX, p_vbus->Config.IDerateOverVFloor_Fract16, p_vbus->VBus_Fract16);
+    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateOverVSlope, 15, p_config->Warning.LimitHigh, p_config->Fault.LimitHigh, FRACT16_MAX, p_vbus->Config.IDerateOverVFloor_Fract16, p_vbus->VBus_Fract16);
 }
 
 /* UV rising:  floor + (slope * (vBus - vCutoff) >> 15) */
@@ -237,12 +237,12 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 
 /******************************************************************************/
 /*!
-    Charge-level estimator — % of (Nominal - FaultUnderLimit) span. Rough gauge for UI.
+    Charge-level estimator — % of (Nominal - Fault.LimitLow) span. Rough gauge for UI.
 */
 /******************************************************************************/
 static inline uint32_t VBus_GetChargeLevel_Fract16(const VBus_T * p_vbus)
 {
-    return fract16_normalize_sat(p_vbus->Config.MonitorConfig.FaultUnderLimit.Limit, p_vbus->Config.MonitorConfig.Warning.LimitHigh, p_vbus->VBus_Fract16);
+    return fract16_normalize_sat(p_vbus->Config.MonitorConfig.Fault.LimitLow, p_vbus->Config.MonitorConfig.Warning.LimitHigh, p_vbus->VBus_Fract16);
 }
 
 

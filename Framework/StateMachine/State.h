@@ -174,6 +174,7 @@ typedef const struct State
     /* no external input. "clock only" Transition. */
     /* Separate from LOOP for overriding transition control. Child States can inherit LOOP action while overriding NEXT.  */
     /* Child States transition stop walking up the tree.  */
+    /* Convience implementation of P_TRANSITION_TABLE[timer] */
     State_Input0_T NEXT; /* SYNC_TRANSITION */
 
 

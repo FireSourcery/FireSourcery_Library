@@ -69,6 +69,7 @@ Hysteresis_T;
     Core Functions - Simplified with Unified Region
 */
 /******************************************************************************/
+
 /******************************************************************************/
 /*
     High-acting: setpoint > resetpoint
@@ -85,7 +86,7 @@ static inline int32_t Hysteresis_OutputOf(const Hysteresis_T * p_hyst, int32_t i
 /* Alternative implementation */
 static inline bool Hysteresis_OutputStateOf(const Hysteresis_T * p_hyst, int32_t input)
 {
-    return hysteresis_output_state(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
+    return hysteresis_output_state_active_high(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
 }
 
 /* Determine region of any value - works for both input analysis and output state */
@@ -139,7 +140,7 @@ static inline bool Hysteresis_GetOutputState(const Hysteresis_T * p_hyst) { retu
 /******************************************************************************/
 static inline bool Hysteresis_Inverted_OutputStateOf(const Hysteresis_T * p_hyst, int32_t input)
 {
-    return hysteresis_output_state_inverted(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
+    return hysteresis_output_state_active_low(p_hyst->Setpoint, p_hyst->Resetpoint, p_hyst->OutputState, input);
 }
 
 static inline int32_t Hysteresis_Inverted_OutputOf(const Hysteresis_T * p_hyst, int32_t input)
@@ -166,7 +167,6 @@ static inline bool Hysteresis_Inverted_Poll(Hysteresis_T * p_hyst, int32_t input
     p_hyst->OutputState = (Hysteresis_Inverted_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON);
     return p_hyst->OutputState;
 }
-
 
 /******************************************************************************/
 /*
@@ -262,7 +262,7 @@ static inline void Hysteresis_Reset(Hysteresis_T * p_hyst)
     @brief  Initialize hysteresis with explicit setpoint and resetpoint
             (setpoint == resetpoint) => Hysteresis region is skipped.
 */
-static void Hysteresis_InitThresholds(Hysteresis_T * p_hyst, int32_t setpoint, int32_t resetpoint)
+static void Hysteresis_Init(Hysteresis_T * p_hyst, int32_t setpoint, int32_t resetpoint)
 {
     p_hyst->Setpoint = setpoint;
     p_hyst->Resetpoint = resetpoint;

@@ -29,6 +29,7 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "Math/Threshold/Threshold.h"
 #include "Math/Hysteresis/Hysteresis.h"
 
 #include <stdint.h>
@@ -47,7 +48,7 @@ typedef enum Monitor_Status
     MONITOR_STATUS_NORMAL = 0,          /* Normal operating condition */
     MONITOR_STATUS_WARNING,             /* Warning condition - operator response required */
     MONITOR_STATUS_FAULT,               /* System fault - automatic protection active */
-    /* expandable to 6 level status */
+    /* expandable status */
 }
 Monitor_Status_T;
 
@@ -77,10 +78,6 @@ typedef struct Monitor_Base
     // Hysteresis_T Levels[] // correspond with status for fast access evaluted output
 }
 Monitor_Base_T;
-
-/*
-    Cache derived values
-*/
 // typedef struct Monitor_Result
 // {
 //     int Status;            /* Current status for this direction */
@@ -89,35 +86,6 @@ Monitor_Base_T;
 // }
 // Monitor_Result_T;
 
-/*
-    Base Config
-    formats process to runtime
-*/
-typedef struct Monitor_Setpoint
-{
-    int32_t Setpoint;
-    int32_t Resetpoint; /* single direction use resetpoint. Dual direction derive from band width */
-    // bool IsEnabled; /* Per level disable */
-}
-Monitor_Setpoint_T;
-
-typedef struct Monitor_FaultLimit
-{
-    int32_t Limit;
-    int32_t RecoveryThreshold;
-    // uint32_t CooldownTime;      /* Required cooldown before restart */
-    // bool AutoRestartEnabled;    /* Allow automatic restart */
-}
-Monitor_FaultLimit_T;
-
-// typedef struct Monitor_Level
-// {
-//     int32_t Setpoint;
-//     int32_t Resetpoint; /* single direction use resetpoint. Dual direction derive from band width */
-//     // bool IsEnabled; /* Per level disable */
-// }
-// Monitor_Level_T;
-
 /******************************************************************************/
 /*
 
@@ -125,33 +93,12 @@ Monitor_FaultLimit_T;
 /******************************************************************************/
 typedef struct Monitor_Config
 {
-    Monitor_FaultLimit_T Fault;     /* Fault level (hard limit, no hysteresis) */
-    Monitor_Setpoint_T Warning;     /* Warning level with hysteresis */
-
-    // Threshold_T Fault;
-    // Threshold_T Warning;
+    Threshold_T Fault;
+    Threshold_T Warning;
     int32_t Nominal;
     bool IsEnabled;
-
-    /* alternatively */
-    // Threshold_T Levels[];
-    // Monitor_Setpoint_T Thresholds[]
-    // Monitor_Setpoint_T Alarm;           /* Alarm level with hysteresis */
-    // Monitor_Setpoint_T Advisory;        /* Advisory level with hysteresis */
 }
 Monitor_Config_T;
-
-
-// typedef struct Monitor_Config
-// {
-//     Threshold_T Fault;
-//     Threshold_T Warning;
-//     int32_t Nominal;
-//     bool IsEnabled;
-//     /* alternatively */
-//     // Threshold_T Levels[];
-// }
-// Monitor_Config_T;
 
 /*
     Single direction monitoring side
@@ -176,12 +123,24 @@ Monitor_T;
 */
 /******************************************************************************/
 /* -1 for low-acting, 1 for high-acting, 0 for disable */
-static inline int _Monitor_DirectionOf(Monitor_Setpoint_T * p_setpoint) { return (p_setpoint->Setpoint - p_setpoint->Resetpoint); }
+static inline int _Monitor_DirectionOf(const Threshold_T * p_threshold) { return (p_threshold->Setpoint - p_threshold->Resetpoint); }
 
 static inline int32_t Monitor_GetValue(const Monitor_T * p_monitor) { return p_monitor->LastInput; }
 /* Direction normalized compare value. Invert if lower value is higher severity */
 static inline int32_t Monitor_GetLastInputComparable(const Monitor_T * p_monitor) { return p_monitor->LastInput * p_monitor->Direction; }
 static inline bool Monitor_IsEnabled(const Monitor_T * p_monitor) { return p_monitor->Direction != MONITOR_DISABLED; }
+
+static inline int32_t Monitor_GetOutputValue(const Monitor_T * p_monitor)
+{
+    switch (p_monitor->Status)
+    {
+        case MONITOR_STATUS_FAULT:   return p_monitor->Base.FaultLimit;
+        case MONITOR_STATUS_WARNING: return p_monitor->Base.Warning.Output;
+        case MONITOR_STATUS_NORMAL:
+        default:                    return p_monitor->LastInput;
+    }
+}
+
 
 /*  */
 static inline int32_t Monitor_IsUnderNominal(const Monitor_T * p_monitor) { return Monitor_GetLastInputComparable(p_monitor) < p_monitor->Config.Nominal; }
@@ -191,20 +150,13 @@ static inline int32_t Monitor_IsOverNominal(const Monitor_T * p_monitor) { retur
 
 /******************************************************************************/
 /*
-    Industry Standard Query Functions
+    Query Functions
 */
 /******************************************************************************/
 /*
     Status
 */
 static inline Monitor_Status_T Monitor_GetStatus(const Monitor_T * p_monitor) { return p_monitor->Status; }
-
-// static inline bool Monitor_IsNormal(const Monitor_T * p_monitor) { return p_monitor->Status == MONITOR_STATUS_NORMAL; }
-// static inline bool Monitor_IsAbnormal(const Monitor_T * p_monitor) { return p_monitor->Status != MONITOR_STATUS_NORMAL; }
-// static inline bool Monitor_RequiresOperatorAttention(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_WARNING; }
-// static inline bool Monitor_RequiresImmediateAction(const Monitor_T * p_monitor) { return p_monitor->Status >= MONITOR_STATUS_ALARM; }
-// static inline bool Monitor_IsInEmergencyState(const Monitor_T * p_monitor) { return (p_monitor->Status == MONITOR_STATUS_CRITICAL) || (p_monitor->Status == MONITOR_STATUS_FAULT); }
-
 
 /*
     Event detection
@@ -229,20 +181,6 @@ static inline int32_t Monitor_GetStatusEdge(const Monitor_T * p_monitor) { retur
 
 static inline void Monitor_Enable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = true; p_monitor->Direction = _Monitor_DirectionOf(&p_monitor->Config.Warning); }
 static inline void Monitor_Disable(Monitor_T * p_monitor) { p_monitor->Config.IsEnabled = false; p_monitor->Direction = MONITOR_DISABLED; }
-
-
-/******************************************************************************/
-/*
-    Config
-*/
-/******************************************************************************/
-// static inline ufract16_t Monitor_WarningDerateScale(const Monitor_Config_T * p_config, int32_t input)
-// {
-//     return linear_map_sat(p_config->Warning.Setpoint, p_config->Fault.Limit, FRACT16_MAX, 0, input);
-// }
-
-
-
 
 /******************************************************************************/
 /*

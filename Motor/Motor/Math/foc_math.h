@@ -48,6 +48,7 @@
 /* module returns */
 struct foc_abc { fract16_t a, b, c; };
 struct foc_dq { fract16_t d, q; };
+struct foc_alphabeta { fract16_t alpha, beta; };
 
 static inline struct foc_dq foc_clarke_park(fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t cos)
 {

@@ -371,8 +371,9 @@ static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
     p_obs->IsLocked = false;
 }
 
-static void FOC_Sensorless_q_Init(FOC_Sensorless_T * p_obs)
+static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T * p_config)
 {
+    p_obs->Config = *p_config;
     PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
     FOC_Sensorless_ResetState(p_obs);
 }
@@ -398,20 +399,19 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t id, fract16_
     fract16_t omega_Lq = fract16_mul(Angle_Delta(&p_obs->AngleSpeed), p_obs->Config.Lq_KL_pu);
 
     /* 1. EEMF SMO step — predicts (îd, îq) and produces switching variables (zd, zq). */
-    struct foc_eemf_dq r = foc_eemf_dq_step
-    (
-        p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, omega_Lq,
-        p_obs->Config.K_smo, p_obs->Config.SmoSat,
-        p_obs->SmoId, p_obs->SmoIq,
-        id, iq,
-        p_obs->VdPrev, p_obs->VqPrev
-    );
-    p_obs->SmoId = r.id_est;  p_obs->SmoIq = r.iq_est;
-    p_obs->SmoZd = r.zd;      p_obs->SmoZq = r.zq;
+    fract16_t vd_ff = foc_vd_ff(omega_Lq, p_obs->SmoIq);     /* −ω·Lq·îq */
+    fract16_t vq_ff = foc_vq_ff(omega_Lq, 0,  p_obs->SmoId); /* +ω·Lq·îd, ψ absorbed into EEMF */
+    fract16_t zd = foc_eemf_zd(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoId, id);
+    fract16_t zq = foc_eemf_zq(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIq, iq);
+
+    p_obs->SmoId = foc_eemf_id(p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, p_obs->VdPrev, p_obs->SmoId, id, zd, vd_ff);
+    p_obs->SmoIq = foc_eemf_iq(p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, p_obs->VqPrev, p_obs->SmoIq, iq, zq, vq_ff);
+    p_obs->SmoZd = zd;
+    p_obs->SmoZq = zq;
 
     /* 2. LPF to extract equivalent-control EMF (DC at lock). */
-    p_obs->EmfD = foc_lpf_step(p_obs->EmfD, r.zd, p_obs->Config.LpfCoef);
-    p_obs->EmfQ = foc_lpf_step(p_obs->EmfQ, r.zq, p_obs->Config.LpfCoef);
+    p_obs->EmfD = foc_lpf_step(p_obs->EmfD, zd, p_obs->Config.LpfCoef);
+    p_obs->EmfQ = foc_lpf_step(p_obs->EmfQ, zq, p_obs->Config.LpfCoef);
     p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfD, p_obs->EmfQ);
 
     /* 3. Phase error from EEMF — d-axis at lock = 0, normalised by |E|. */
@@ -427,6 +427,8 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t id, fract16_
     bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
     p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
     p_obs->IsLocked = (p_obs->LockCount >= p_obs->Config.LockHoldCount);
+
+
 }
 
 /* Store (vd, vq) commanded this cycle — read by next Step. */
@@ -472,6 +474,8 @@ static inline int32_t FOC_Sensorless_GetVar(const FOC_Sensorless_T * p_obs, FOC_
         case FOC_SENSORLESS_VAR_DELTA: return FOC_Sensorless_GetDelta(p_obs);
         // case FOC_SENSORLESS_VAR_EMF_ALPHA: return FOC_Sensorless_GetEmfAlpha(p_obs);
         // case FOC_SENSORLESS_VAR_EMF_BETA: return FOC_Sensorless_GetEmfBeta(p_obs);
+        case FOC_SENSORLESS_VAR_EMF_ALPHA: return FOC_Sensorless_GetEmfD(p_obs); /* temp */
+        case FOC_SENSORLESS_VAR_EMF_BETA: return FOC_Sensorless_GetEmfQ(p_obs);
         case FOC_SENSORLESS_VAR_EMF_MAG: return FOC_Sensorless_GetEmfMag(p_obs);
         default: return 0;
     }
