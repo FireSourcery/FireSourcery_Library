@@ -44,7 +44,7 @@ static void AngleAlign_Entry(Motor_T * p_motor)
 
 static void AngleAlign_Loop(Motor_T * p_motor)
 {
-    Motor_FOC_ProcAlignCmd(p_motor->P_MOTOR);
+    Motor_FOC_ProcAlignCmd(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -222,7 +222,7 @@ static void AutoTuning_Proc(Motor_T * p_motor)
     }
 
     Motor_ProcOuterFeedback(p_state);
-    Motor_FOC_ProcAngleControl(p_state);
+    Motor_FOC_ProcAngleControl(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 

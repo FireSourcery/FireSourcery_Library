@@ -128,7 +128,7 @@ static void AlignEntry(Motor_T * p_motor)
 
 static void AlignLoop(Motor_T * p_motor)
 {
-    Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
+    Motor_FOC_ProcStartUpAlign(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -174,14 +174,14 @@ static void ValidateAlign(Motor_T * p_motor)
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_state->Config.AlignTime_Cycles * 2U);
     Encoder_ModeDT_SetInitial(GetEncoder(p_motor));
     FOC_SetVd(&p_state->Foc, 0);
-    Motor_FOC_MatchFeedbackState(p_state);
+    Motor_FOC_MatchFeedbackState(p_motor);
     Motor_FOC_StartOpenLoop(p_state);
     p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoderState(p_motor));
 }
 
 static void ProcOpenLoop(Motor_T * p_motor)
 {
-    Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
+    Motor_FOC_ProcOpenLoop(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -222,12 +222,12 @@ static const State_T VALIDATE_ALIGN =
 static void ValidateClosedLoopEntry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles * 2U);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
+    Motor_FOC_MatchFeedbackState(p_motor);
 }
 
 static void ProcAngleControl(Motor_T * p_motor)
 {
-    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
+    Motor_FOC_ProcAngleControl(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 

@@ -32,6 +32,9 @@
 /******************************************************************************/
 #include "Motor_StateMachine.h"
 
+extern State_T OPEN_LOOP_STATE_RUN;
+extern State_T OPEN_LOOP_STATE_START_UP_ALIGN;
+
 /*
 
 */

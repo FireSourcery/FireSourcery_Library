@@ -58,6 +58,7 @@ void Motor_OpenLoop_SetPhaseOutput(Motor_T * p_motor, Phase_VOutMode_T phase)
 
 /*
     alternatively use substate to retain is active and ensure exit other open loop state
+    //todo chack again
 */
 static State_T * OpenLoop_Jog(Motor_T * p_motor, state_value_t direction)
 {
@@ -96,7 +97,7 @@ static void AngleAlign_Entry(Motor_T * p_motor)
 
 static void AngleAlign_Loop(Motor_T * p_motor)
 {
-    Motor_FOC_ProcAlignCmd(p_motor->P_MOTOR);
+    Motor_FOC_ProcAlignCmd(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }
 
@@ -137,6 +138,7 @@ void Motor_OpenLoop_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
     Run Chain
 */
 /******************************************************************************/
+
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
@@ -144,12 +146,20 @@ static void Run_Entry(Motor_T * p_motor)
 
 static void Run_Proc(Motor_T * p_motor)
 {
-    Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
+    Motor_FOC_ProcOpenLoop(p_motor);
+    // capture for dbugging
+    Motor_State_T * p_state = p_motor->P_MOTOR;
+    if (FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I) == true)
+    {
+        FOC_Sensorless_Step(&p_state->FocSensorless, p_state->Foc.Id, p_state->Foc.Iq);
+    }
+    FOC_ProcInvClarkePark(&p_state->Foc);
+    FOC_Sensorless_CaptureVoltage(&p_state->FocSensorless, p_state->Foc.Vd, p_state->Foc.Vq);
 }
 
 /*
 */
-static const State_T OPEN_LOOP_STATE_RUN =
+State_T OPEN_LOOP_STATE_RUN =
 {
     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
@@ -161,30 +171,7 @@ static const State_T OPEN_LOOP_STATE_RUN =
 };
 
 
-#include "../Math/FOC_Sensorless.h"
-/*
-    move to Sensorless_Sensor
-*/
-static void RunSensorless_Proc(Motor_T * p_motor)
-{
-    // FOC_Sensorless_Step(&p_motor->P_MOTOR->FocSensorless);
-}
 
-State_T * RunSensorless_Next(Motor_T * p_motor)
-{
-    // return (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) ? &MOTOR_STATE_RUN : NULL;
-    return NULL; // debug
-}
-
-static const State_T OPEN_LOOP_STATE_RUN_START_UP =
-{
-    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
-    .P_PARENT = &OPEN_LOOP_STATE_RUN,
-    .DEPTH      = 2U,
-    // .ENTRY      = (State_Action_T)Run_Entry,
-    .LOOP       = (State_Action_T)RunSensorless_Proc,
-    .NEXT       = (State_Input0_T)RunSensorless_Next,
-};
 
 /******************************************************************************/
 /*
@@ -199,34 +186,37 @@ static void StartUp_Entry(Motor_T * p_motor)
 
 static void StartUp_Proc(Motor_T * p_motor)
 {
-    Motor_FOC_ProcStartUpAlign(p_motor->P_MOTOR);
+    Motor_FOC_ProcStartUpAlign(p_motor);
 
-    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
-    {
-        _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN);
-        // switch (_Phase_ReadDutyAlign(&p_motor->PHASE).Bits)
-        // {
-        //     case PHASE_ID_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
-        //     case PHASE_ID_INV_C: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-        //     case PHASE_ID_B: _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN); break;
-        //     default: _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &MOTOR_STATE_FAULT); break;
+//     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+//     {
+//         _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN);
+//         // switch (_Phase_ReadDutyAlign(&p_motor->PHASE).Bits)
+//         // {
+//         //     case PHASE_ID_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+//         //     case PHASE_ID_INV_C: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+//         //     case PHASE_ID_B: _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &OPEN_LOOP_STATE_RUN); break;
+//         //     default: _StateMachine_TransitionTo(&p_motor->P_MOTOR->StateMachine, (void *)p_motor, &MOTOR_STATE_FAULT); break;
 
-        //     // case PHASE_ID_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-        //     // case PHASE_ID_INV_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
-        //     // case PHASE_ID_C: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_B); break;
-        //     // case PHASE_ID_INV_B: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
-        // }
-    }
+//         //     // case PHASE_ID_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+//         //     // case PHASE_ID_INV_A: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_B); break;
+//         //     // case PHASE_ID_C: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_B); break;
+//         //     // case PHASE_ID_INV_B: p_motor->P_MOTOR->OpenLoopAngle.Angle = Phase_AngleOf(PHASE_ID_INV_C); break;
+//         // }
+//     }
 }
 
-State_T * StartUpAlign_Next(Motor_T * p_motor, state_value_t null)
+State_T * StartUpAlign_Next(Motor_T * p_motor)
 {
     // &OPEN_LOOP_STATE_RUN or &OPEN_LOOP_STATE_RUN_START_UP
-    return NULL; // debug
+    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
+    {
+        return &OPEN_LOOP_STATE_RUN;
+    }
+    return NULL;
 }
 
-/* Align with Aux Ramp */
-static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
+State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 {
     // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
     .P_TOP = &MOTOR_STATE_OPEN_LOOP,
@@ -234,7 +224,7 @@ static const State_T OPEN_LOOP_STATE_START_UP_ALIGN =
     .DEPTH = 1U,
     .ENTRY = (State_Action_T)StartUp_Entry,
     .LOOP = (State_Action_T)StartUp_Proc,
-    // .NEXT = (State_Input0_T)StartUpAlign_Next,
+    .NEXT = (State_Input0_T)StartUpAlign_Next,
 };
 
 static State_T * OpenLoop_StartUpRun(Motor_T * p_motor, state_value_t null)

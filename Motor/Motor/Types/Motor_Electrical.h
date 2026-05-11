@@ -144,7 +144,7 @@ static inline accum32_t Motor_GetKe_Angle16(const Motor_ElectricalSpeedRating_T 
     Ke = VNominal * 2
 */
 static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_speed_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
-// static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
+// static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
 
 
 // FluxLinkage [Wb] = Ke_mech / PolePairs
@@ -205,12 +205,3 @@ static inline Motor_ElectricalSpeedRef_T Motor_ElectricalSpeedRef_FromSpeedRatin
 // 2048 37500 erpm
 // 1024 18750 erpm, 8 pole pairs 2344 rpm
 
-// typedef union
-// {
-//     uint32_t Kv;
-//     uint32_t Ke;
-//     uint32_t Psi;
-// }
-// Motor_Kv_T;
-
-// static inline Motor_Kv_T Motor_Kv_FromPsi(Motor_Kv_T psi_fract16) { return (Motor_Kv_T) { .Psi = psi_fract16 }; }

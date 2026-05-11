@@ -70,8 +70,8 @@ static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
 {
     /* Calibrated params are well-formed if Ls_pu and Psi_pu are non-zero
        (Rs_pu may legitimately be zero on perfectly-superconducting stators). */
-    const FOC_SensorlessConfig_T * c = &p_sensor->P_OBSERVER->Config;
-    return (c->Ls_pu != 0) && (c->Psi_pu != 0);
+    // const FOC_SensorlessConfig_T * c = &p_sensor->P_OBSERVER->Config;
+    // return (c->Ls_pu != 0) && (c->Psi_pu != 0);
 }
 
 static void Sensorless_Sensor_InitFrom(Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)

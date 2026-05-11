@@ -98,28 +98,33 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
 // extern void Motor_FOC_WriteDuty(Motor_T * p_motor);
 extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
 
+extern void Motor_FOC_ProcVControl(Motor_T * p_motor);
+
 
 // extern void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
 extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
 
 extern void Motor_FOC_ProcAngleAlignOf(Motor_State_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
 
-extern void Motor_FOC_ProcAngleControl(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
 
 
 extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
 extern void Motor_FOC_MatchIVState(Motor_State_T * p_motor);
-extern void Motor_FOC_MatchFeedbackState(Motor_State_T * p_motor);
+
+extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
 
 extern void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor);
-extern void Motor_FOC_ProcAlignCmd(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
+
 extern void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor);
-extern void Motor_FOC_ProcStartUpAlign(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor);
+
 extern void Motor_FOC_StartAlignValidate(Motor_State_T * p_motor);
 
 extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);
-extern void Motor_FOC_ProcOpenLoop(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
 extern void Motor_ExternControl(Motor_State_T * p_motor);

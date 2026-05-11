@@ -59,7 +59,7 @@
 // }
 // FOC_Sensorless_Mode_T;
 
-
+#ifdef FOC_SENSORLESS_ALPHA_BETA
 /*
     Calibrated motor params + observer tuning. Holds no live state.
     Compute the *_pu fields with motor_params_math.h.
@@ -257,7 +257,6 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t i_alpha, fra
     Updates ê, θ̂, ω̂, and the lock state internally.
 */
 /******************************************************************************/
-
 /* Store v_αβ that was applied this cycle (post-SVPWM). Read by next Step. */
 static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract16_t v_alpha, fract16_t v_beta)
 {
@@ -278,8 +277,183 @@ static inline fract16_t  FOC_Sensorless_GetEmfBeta(const FOC_Sensorless_T * p_ob
 static inline ufract16_t FOC_Sensorless_GetEmfMag(const FOC_Sensorless_T * p_obs)   { return p_obs->EmfMag; }
 static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs)    { return p_obs->IsLocked; }
 
+#endif
 
 
+/******************************************************************************/
+/*!
+    DQ-frame variant — EEMF sliding-mode observer in the estimated dq frame.
+
+    Composes foc_sensorless_math primitives:
+        prev (vd, vq) + (id, iq) → EEMF SMO step → LPF → PLL → θ̂, ω̂
+
+    Integration with the FOC chain:
+        1. Sample i_abc; Park with previous θ̂ → (id, iq).
+        2. FOC_Sensorless_dq_Step(p, id, iq) — observer reads (vd, vq) saved
+           by previous cycle's CaptureVoltage. Updates θ̂, ω̂.
+        3. Read θ̂ via FOC_Sensorless_dq_GetAngle(); (optional re-Park).
+        4. PI current loop → (vd, vq).
+        5. FOC_Sensorless_dq_CaptureVoltage(p, vd, vq) — store for next cycle.
+
+    Signals are DC at lock — the LPF cleans noise without the bandwidth tradeoff
+    of the sinusoidal αβ case. Native IPM handling (Lq on both axes, saliency
+    absorbed into the EEMF disturbance). The observer is closed-loop in θ̂:
+    requires reasonable startup alignment (open-loop ramp or HFI handoff).
+*/
+/******************************************************************************/
+typedef struct FOC_SensorlessConfig
+{
+    /* Motor electrical params, per-unit basis. */
+    fract16_t Rs_pu;        /* Rs · I_max / V_max */
+    fract16_t G_int_pu;     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
+    fract16_t Lq_KL_pu;     /* π · Lq · I_max · Fs / V_max — cross-coupling (kl_fract16_of_uh) */
+    fract16_t Psi_pu;       /* π · Fs · ψ_f · 32768 / V_max — for diagnostics / speed-from-Emf */
+
+    /* EEMF SMO tuning. */
+    fract16_t K_smo;
+    fract16_t SmoSat;
+    fract16_t LpfCoef;      /* dt / (τ + dt) — applied to (zd, zq) → (EmfD, EmfQ) */
+
+    /* Lock detector — uses |Emf_dq|, which is DC at lock and ≈ ω·(ψ + (Ld−Lq)·id). */
+    ufract16_t LockEmfMin;
+    ufract16_t LockErrTol;
+    uint16_t   LockHoldCount;
+
+    /* PLL loop filter — output is ω̂ in angle16/poll units. */
+    PID_Config_T PllPid;
+}
+FOC_SensorlessConfig_T;
+
+
+typedef struct FOC_Sensorless
+{
+    /* Voltage captured at end of previous control tick (commanded vd, vq). */
+    fract16_t VdPrev, VqPrev;
+
+    /* EEMF SMO state — current estimator î and switching variable z. */
+    fract16_t SmoId, SmoIq;
+    fract16_t SmoZd, SmoZq;
+
+    /* Smoothed EEMF in estimated dq — observer output (DC at lock). */
+    fract16_t EmfD, EmfQ;
+    ufract16_t EmfMag;
+    fract16_t  PllErr;
+
+    /* Angle tracker. AngleSpeed.Angle = θ̂; AngleSpeed.Delta = ω̂ (angle16/poll). */
+    Angle_T AngleSpeed;
+    PID_T   PllPid;
+
+    /* Lock detector. */
+    uint16_t LockCount;
+    bool     IsLocked;
+
+    FOC_SensorlessConfig_T Config;
+}
+FOC_Sensorless_T;
+
+
+/******************************************************************************/
+/*!  Lifecycle  */
+/******************************************************************************/
+static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
+{
+    p_obs->VdPrev = 0;  p_obs->VqPrev = 0;
+    p_obs->SmoId = 0;   p_obs->SmoIq = 0;
+    p_obs->SmoZd = 0;   p_obs->SmoZq = 0;
+    p_obs->EmfD = 0;    p_obs->EmfQ = 0;
+    p_obs->EmfMag = 0;
+    p_obs->PllErr = 0;
+
+    Angle_ZeroCaptureState(&p_obs->AngleSpeed);
+    PID_Reset(&p_obs->PllPid);
+
+    p_obs->LockCount = 0;
+    p_obs->IsLocked = false;
+}
+
+static void FOC_Sensorless_q_Init(FOC_Sensorless_T * p_obs)
+{
+    PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
+    FOC_Sensorless_ResetState(p_obs);
+}
+
+/* Bumpless seed: align θ̂ and ω̂ to a known reference (open-loop ramp / handoff).
+   Resets PLL integrator to delta so it doesn't fight the seeded value. */
+static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, angle16_t delta)
+{
+    Angle_CaptureAngle(&p_obs->AngleSpeed, theta);
+    Angle_CaptureDelta(&p_obs->AngleSpeed, delta);
+    PID_Reset(&p_obs->PllPid);
+    _PID_SetOutputState(&p_obs->PllPid, delta);
+}
+
+
+/******************************************************************************/
+/*!  Per-tick step  */
+/******************************************************************************/
+/* (id, iq) come from Park applied with previous θ̂. */
+static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t id, fract16_t iq)
+{
+    /* 0. Cross-coupling: ω̂·Lq evaluated with the current ω̂ estimate. */
+    fract16_t omega_Lq = fract16_mul(Angle_Delta(&p_obs->AngleSpeed), p_obs->Config.Lq_KL_pu);
+
+    /* 1. EEMF SMO step — predicts (îd, îq) and produces switching variables (zd, zq). */
+    struct foc_eemf_dq r = foc_eemf_dq_step
+    (
+        p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, omega_Lq,
+        p_obs->Config.K_smo, p_obs->Config.SmoSat,
+        p_obs->SmoId, p_obs->SmoIq,
+        id, iq,
+        p_obs->VdPrev, p_obs->VqPrev
+    );
+    p_obs->SmoId = r.id_est;  p_obs->SmoIq = r.iq_est;
+    p_obs->SmoZd = r.zd;      p_obs->SmoZq = r.zq;
+
+    /* 2. LPF to extract equivalent-control EMF (DC at lock). */
+    p_obs->EmfD = foc_lpf_step(p_obs->EmfD, r.zd, p_obs->Config.LpfCoef);
+    p_obs->EmfQ = foc_lpf_step(p_obs->EmfQ, r.zq, p_obs->Config.LpfCoef);
+    p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfD, p_obs->EmfQ);
+
+    /* 3. Phase error from EEMF — d-axis at lock = 0, normalised by |E|. */
+    p_obs->PllErr = foc_eemf_dq_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfD, p_obs->EmfQ);
+
+    /* 4. PI loop filter → ω̂ in angle16/poll. */
+    int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
+
+    /* 5. Integrate ω̂ → θ̂. */
+    Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega);
+
+    /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
+    bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
+    p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
+    p_obs->IsLocked = (p_obs->LockCount >= p_obs->Config.LockHoldCount);
+}
+
+/* Store (vd, vq) commanded this cycle — read by next Step. */
+static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract16_t vd, fract16_t vq)
+{
+    p_obs->VdPrev = vd;
+    p_obs->VqPrev = vq;
+}
+
+
+/******************************************************************************/
+/*!  Observer outputs  */
+/******************************************************************************/
+static inline angle16_t  FOC_Sensorless_GetAngle(const FOC_Sensorless_T * p_obs)  { return Angle_Value(&p_obs->AngleSpeed); }
+static inline angle16_t  FOC_Sensorless_GetDelta(const FOC_Sensorless_T * p_obs)  { return Angle_Delta(&p_obs->AngleSpeed); }
+static inline fract16_t  FOC_Sensorless_GetEmfD(const FOC_Sensorless_T * p_obs)   { return p_obs->EmfD; }
+static inline fract16_t  FOC_Sensorless_GetEmfQ(const FOC_Sensorless_T * p_obs)   { return p_obs->EmfQ; }
+static inline ufract16_t FOC_Sensorless_GetEmfMag(const FOC_Sensorless_T * p_obs) { return p_obs->EmfMag; }
+static inline fract16_t  FOC_Sensorless_GetPllErr(const FOC_Sensorless_T * p_obs) { return p_obs->PllErr; }
+static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs)  { return p_obs->IsLocked; }
+
+
+
+
+/******************************************************************************/
+/*!  */
+/******************************************************************************/
 typedef enum FOC_SensorlessVar
 {
     FOC_SENSORLESS_VAR_ANGLE,
@@ -296,8 +470,8 @@ static inline int32_t FOC_Sensorless_GetVar(const FOC_Sensorless_T * p_obs, FOC_
     {
         case FOC_SENSORLESS_VAR_ANGLE: return FOC_Sensorless_GetAngle(p_obs);
         case FOC_SENSORLESS_VAR_DELTA: return FOC_Sensorless_GetDelta(p_obs);
-        case FOC_SENSORLESS_VAR_EMF_ALPHA: return FOC_Sensorless_GetEmfAlpha(p_obs);
-        case FOC_SENSORLESS_VAR_EMF_BETA: return FOC_Sensorless_GetEmfBeta(p_obs);
+        // case FOC_SENSORLESS_VAR_EMF_ALPHA: return FOC_Sensorless_GetEmfAlpha(p_obs);
+        // case FOC_SENSORLESS_VAR_EMF_BETA: return FOC_Sensorless_GetEmfBeta(p_obs);
         case FOC_SENSORLESS_VAR_EMF_MAG: return FOC_Sensorless_GetEmfMag(p_obs);
         default: return 0;
     }
@@ -322,7 +496,7 @@ static inline int32_t FOC_SensorlessConfig_Get(const FOC_SensorlessConfig_T * p_
     switch (var)
     {
         case FOC_SENSORLESS_CONFIG_VAR_RS_PU: return p_obs->Rs_pu;
-        case FOC_SENSORLESS_CONFIG_VAR_LS_PU: return p_obs->Ls_pu;
+        // case FOC_SENSORLESS_CONFIG_VAR_LS_PU: return p_obs->Ls_pu;
         case FOC_SENSORLESS_CONFIG_VAR_G_INT_PU: return p_obs->G_int_pu;
         case FOC_SENSORLESS_CONFIG_VAR_PSI_PU: return p_obs->Psi_pu;
         case FOC_SENSORLESS_CONFIG_VAR_K_SMO: return p_obs->K_smo;

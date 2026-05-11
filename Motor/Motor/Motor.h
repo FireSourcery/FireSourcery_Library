@@ -309,7 +309,7 @@ typedef struct Motor_State
     */
     const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
-    FOC_Sensorless_T FocSensorless; /* Sensorless Observer State */
+    FOC_Sensorless_T FocSensorless;         /* Debug Sensorless Observer State */
 
     /*
         Ramp -> Feedback State
@@ -587,6 +587,17 @@ static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_State_T *
 
 static inline bool Motor_IsSpeedZero(const Motor_State_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 
+static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return Motor_GetSpeedRated_Fract16(&p_config->SpeedRating); }
+static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(&p_motor->Config)); }
+
+/*!
+    VPhase approximation via Speed
+*/
+/* when SPEED_MAX = Kv * VNominal * 2 */
+static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
+static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.VSpeedScalar_Fract16); }
+// collapse vspeed
+// static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16); }
 
 /******************************************************************************/
 /*
@@ -645,31 +656,6 @@ static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t 
         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
     }
 }
-
-/******************************************************************************/
-/*
-    From Config
-*/
-/******************************************************************************/
-// static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return fract16_mul(Motor_GetSpeedRated_Fract16(p_config), FRACT16_2_DIV_SQRT3); }
-// deprecate
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return Motor_GetSpeedRated_Fract16(&p_config->SpeedRating); }
-static inline bool Motor_IsSpeedFreewheelLimit(const Motor_Config_T * p_config, accum32_t speed_fract16) { return (math_abs(speed_fract16) < Motor_GetSpeedFreewheelLimit_UFract16(p_config)); }
-
-static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return Motor_IsSpeedFreewheelLimit(&p_motor->Config, Motor_GetSpeedFeedback(p_motor)); }
-
-/*!
-    VPhase approximation via Speed
-*/
-/* when SPEED_MAX = Kv * VNominal * 2 */
-static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Phase_VBus_GetVNominal(), Motor_GetSpeedFeedback(p_motor)); }
-// static inline int32_t _Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return Phase_VBus_GetVNominal() * Motor_GetSpeedFeedback(p_motor) / Motor_GetSpeedRated_Fract16(&p_motor->Config) / 2; }
-
-static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->Config.VSpeedScalar_Fract16); }
-
-// collapse vspeed
-// static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16); }
-
 
 
 /******************************************************************************/

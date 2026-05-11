@@ -38,12 +38,9 @@
 #include <stdint.h>
 
 
-extern VBus_T VBus_Instance;
-
-
-
-static inline ufract16_t Phase_VBus_Fract16(void)         { return VBus_Fract16(&VBus_Instance); }
-static inline uint32_t   Phase_VBus_Inv_Fract32(void)     { return VBus_Inv_Fract32(&VBus_Instance); }
-static inline ufract16_t Phase_VBus_GetVNominal(void)     { return VBus_VNominal_Fract16(&VBus_Instance.Config); }
-static inline ufract16_t Phase_VBus_GetVRef(void)         { return VBus_GetVPhaseRef(&VBus_Instance); }
-static inline ufract16_t Phase_VBus_GetVRefSvpwm(void)    { return VBus_GetVPhaseRefSvpwm(&VBus_Instance); }
+// extern VBus_T VBus_Instance;
+// static inline ufract16_t Phase_VBus_Fract16(const VBus_T * p_vbus)         { return VBus_Fract16(p_vbus); }
+// static inline uint32_t   Phase_VBus_Inv_Fract32(const VBus_T * p_vbus)     { return VBus_Inv_Fract32(p_vbus); }
+// static inline ufract16_t Phase_VBus_GetVNominal(const VBus_T * p_vbus)     { return VBus_VNominal_Fract16(&p_vbus->Config); }
+// static inline ufract16_t Phase_VBus_GetVRef(const VBus_T * p_vbus)         { return VBus_GetVPhaseRef(p_vbus); }
+// static inline ufract16_t Phase_VBus_GetVRefSvpwm(const VBus_T * p_vbus)   { return VBus_GetVPhaseRefSvpwm(p_vbus); }

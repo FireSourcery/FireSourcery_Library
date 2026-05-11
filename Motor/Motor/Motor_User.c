@@ -195,7 +195,7 @@ void Motor_StartVoltageMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor
 /* Reverse voltage set direction, no plugging */
 // _Motor_SetTorqueMotoringCmd(p_motor, math_clamp(volts_fract16, 0, Phase_VBus_GetVRef()));
 void Motor_SetVoltageCmd(Motor_State_T * p_motor, int16_t volts_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, volts_fract16); }
-void Motor_SetVoltageCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetVoltageCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRef())); }
+void Motor_SetVoltageCmdScalar(Motor_T * p_motor, int16_t scalar_fract16) { Motor_SetVoltageCmd(p_motor->P_MOTOR, fract16_mul(scalar_fract16, VBus_GetVPhaseRef(p_motor->P_VBUS))); }
 // void _Motor_SetVFreqCmd(Motor_State_T * p_motor, int16_t scalar_fract16) {   Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4); }
 
 /******************************************************************************/
@@ -247,7 +247,7 @@ void Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_Set
 void Motor_SetTorqueCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
 
 void Motor_SetTorqueVCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
-void Motor_SetTorqueVCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueVCmd(p_motor, fract16_mul(scalar_fract16, Phase_VBus_GetVRefSvpwm())); }
+void Motor_SetTorqueVCmdScalar(Motor_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueVCmd(p_motor->P_MOTOR, fract16_mul(scalar_fract16, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS))); }
 
 /******************************************************************************/
 /*!
@@ -297,23 +297,23 @@ void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fra
     Unitless scalar as Motoring Direction
     Scalar to Config value for consistent user handling
 */
-void _Motor_SetMotoringCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetMotoringCmdScalar(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
-    if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmdScalar(p_motor, userCmd); }
-    else if (mode.Current == 1U)   { Motor_SetICmdScalar(p_motor, userCmd); }
+    if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmdScalar(p_motor->P_MOTOR, userCmd); }
+    else if (mode.Current == 1U)   { Motor_SetICmdScalar(p_motor->P_MOTOR, userCmd); }
     else                           { Motor_SetVoltageCmdScalar(p_motor, userCmd); }
 }
 
-void _Motor_SetUserCmdScalar(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetUserCmdScalar(Motor_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
-    if (mode.Speed == 1U)          { Motor_SetSpeedCmdScalar(p_motor, userCmd); }
-    else if (mode.Current == 1U)   { Motor_SetTorqueCmdScalar(p_motor, userCmd); }
+    if (mode.Speed == 1U)          { Motor_SetSpeedCmdScalar(p_motor->P_MOTOR, userCmd); }
+    else if (mode.Current == 1U)   { Motor_SetTorqueCmdScalar(p_motor->P_MOTOR, userCmd); }
     else                           { Motor_SetTorqueVCmdScalar(p_motor, userCmd); }
 }
 
-void Motor_SetActiveCmdScalar(Motor_State_T * p_motor, int16_t userCmd)
+void Motor_SetActiveCmdScalar(Motor_T * p_motor, int16_t userCmd)
 {
-    _Motor_SetUserCmdScalar(p_motor, p_motor->FeedbackMode, userCmd);
+    _Motor_SetUserCmdScalar(p_motor, p_motor->P_MOTOR->FeedbackMode, userCmd);
 }
 
 

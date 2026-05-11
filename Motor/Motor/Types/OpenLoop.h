@@ -37,7 +37,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 typedef struct
 {
     uint16_t SpeedFinal_Fract16;
@@ -46,7 +45,7 @@ typedef struct
     uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
     angle16_t SpeedHandover;        /* min ω̂_e in angle16/poll for handover */
 }
-Motor_OpenLoopProfile_T;
+OpenLoo_Config_T;
 
 typedef struct Motor_OpenLoopRun
 {
@@ -54,20 +53,7 @@ typedef struct Motor_OpenLoopRun
     Ramp_T  SpeedRamp;      /* output: ω in angle16/poll */
     Ramp_T  IRamp;          /* output: I_ref in fract16 */
 }
-Motor_OpenLoopRun_T;
-
-/******************************************************************************/
-/*!
-    Lifecycle
-*/
-/******************************************************************************/
-extern void Motor_OpenLoopStart_Init(const Motor_OpenLoopRun_T * p_open);
-extern void Motor_OpenLoopStart_Reset(const Motor_OpenLoopRun_T * p_open);
-
-/* Phase configuration — switch ramp targets without resetting accumulated state. */
-extern void Motor_OpenLoopStart_EnterAlign(const Motor_OpenLoopRun_T * p_open);
-extern void Motor_OpenLoopStart_EnterRamp(const Motor_OpenLoopRun_T * p_open);
-
+OpenLoop_T;
 
 /******************************************************************************/
 /*!

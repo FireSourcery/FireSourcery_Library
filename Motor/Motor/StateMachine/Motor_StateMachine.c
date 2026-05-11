@@ -355,10 +355,10 @@ const State_T MOTOR_STATE_PASSIVE =
 static void Run_Entry(Motor_T * p_motor)
 {
     p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
+    Motor_FOC_MatchFeedbackState(p_motor);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-
     // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR, Motor_ILimitCw(p_motor->P_MOTOR), Motor_ILimitCcw(p_motor->P_MOTOR));
+
     // RotorSensor_ZeroInitial(p_motor->P_MOTOR->p_ActiveSensor); not needed if capture sensor runs in thread
 
     // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
@@ -371,7 +371,17 @@ static void Run_Proc(Motor_T * p_motor)
 //     Motor_ExternControl(p_motor);
 // #endif
     Motor_ProcOuterFeedback(p_motor->P_MOTOR);
-    Motor_FOC_ProcAngleControl(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
+    Motor_FOC_ProcAngleControl(p_motor); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
+
+
+    // if (p_motor->SpeedUpdateFlag == true)
+    // {
+    //     p_motor->SpeedUpdateFlag = false;
+    //     if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
+    // }
+
+    // if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
+    // else { Motor_FOC_ProcVControl(p_motor->P_MOTOR); }
 }
 
 static State_T * Run_InputRelease(Motor_T * p_motor)
@@ -411,7 +421,7 @@ static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
 static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-    Motor_FOC_MatchFeedbackState(p_motor->P_MOTOR);
+    Motor_FOC_MatchFeedbackState(p_motor);
     return NULL;
 }
 
