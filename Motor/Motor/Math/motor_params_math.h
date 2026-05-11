@@ -68,9 +68,8 @@ static inline int32_t vfract16_of_kv_rpm(uint16_t v_max_volts, uint16_t kv, int3
 //     return (fract16_t)math_clamp(vfract16_of_kv_rpm(v_max_volts, kv, rpm), 0, FRACT16_MAX);
 // }
 
-static inline accum32_t motor_kt_scaled(uint16_t kv) { return ((uint64_t)60 * FRACT16_MAX * FRACT16_SCALE / kv * 2 * FRACT16_PI); } /* [Nm/A] = 60 / (2π × Kv) */
+static inline accum32_t motor_kt_scaled(uint16_t kv) { return ((uint64_t)60 * FRACT16_SQRT3_DIV_2 * FRACT16_SCALE / kv * 2 * FRACT16_PI); }
 
-//todo scaled vs pu convention
 
 /******************************************************************************/
 /*!
@@ -85,11 +84,13 @@ static inline accum32_t motor_kt_scaled(uint16_t kv) { return ((uint64_t)60 * FR
         Applied as: v_emf_fract16 = fract16_mul(speed_fract16, Ke_SF)
 */
 /******************************************************************************/
+static inline uint32_t ke_vrads_of(uint16_t kv, uint32_t scale) { return ((uint64_t)scale * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
+
 /* Ke SI * FRACT16_SCALE */
-static inline uint32_t ke_vrads_scaled(uint16_t kv) { return ((uint64_t)FRACT16_MAX * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
+static inline uint32_t ke_vrads_scaled(uint16_t kv) { return ke_vrads_of(kv, FRACT16_MAX); }
 
 /* Ke_SI in millivolts per rad/s from Kv [RPM/V]: Ke_SI = 60000 / (2π × Kv) [mV/(rad/s)]. */
-static inline uint32_t ke_mvrads(uint16_t kv) { return ((uint32_t)60 * 1000 * FRACT16_SCALE / (2 * FRACT16_PI)) / kv; }
+static inline uint32_t ke_mvrads(uint16_t kv) { return ke_vrads_of(kv, 1000); }
 
 static inline uint32_t ke_v_per_angle16(uint16_t kv) { return ((uint64_t)FRACT16_MAX * FRACT16_SCALE * 60 / ANGLE16_PER_REVOLUTION) / (kv); }
 

@@ -42,6 +42,7 @@
 /*!
     @note overflow vPhase_fract16 < vBus_fract16, assuming consistent VBus
     vBusInv_fract32 * vBus_fract16 = INT32_MAX
+    //todo potential overflow on vbus decrease
 */
 /* phase_norm_of_v */
 static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_fract32, fract16_t v_fract16) { return (int32_t)v_fract16 * vBusInv_fract32 / 65536; }
@@ -88,11 +89,11 @@ static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_fract32, fra
 */
 static inline struct svpwm_abc svpwm_midclamp_transform(fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    // # Find the maximum and minimum of the three phase voltages
+    // Find the maximum and minimum of the three phase voltages
     int32_t vMax = math_max(math_max(vA, vB), vC);
     int32_t vMin = math_min(math_min(vA, vB), vC);
 
-    // # Calculate the zero - sequence voltage(midclamp adjustment)
+    // Calculate the zero - sequence voltage(midclamp adjustment)
     int32_t vZero = (vMax + vMin) / 2;
 
     return (struct svpwm_abc) { .a = fract16_sat_positive(vA - vZero), .b = fract16_sat_positive(vB - vZero), .c = fract16_sat_positive(vC - vZero) };

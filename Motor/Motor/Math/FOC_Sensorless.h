@@ -302,3 +302,32 @@ static inline int32_t FOC_Sensorless_GetVar(const FOC_Sensorless_T * p_obs, FOC_
         default: return 0;
     }
 }
+
+
+
+typedef enum FOC_SensorlessConfigVar
+{
+    FOC_SENSORLESS_CONFIG_VAR_RS_PU,
+    FOC_SENSORLESS_CONFIG_VAR_LS_PU,
+    FOC_SENSORLESS_CONFIG_VAR_G_INT_PU,
+    FOC_SENSORLESS_CONFIG_VAR_PSI_PU,
+    FOC_SENSORLESS_CONFIG_VAR_K_SMO,
+    FOC_SENSORLESS_CONFIG_VAR_SMO_SAT,
+    FOC_SENSORLESS_CONFIG_VAR_LPF_COEF,
+}
+FOC_SensorlessConfigVar_T;
+
+static inline int32_t FOC_SensorlessConfig_Get(const FOC_SensorlessConfig_T * p_obs, FOC_SensorlessVar_T var)
+{
+    switch (var)
+    {
+        case FOC_SENSORLESS_CONFIG_VAR_RS_PU: return p_obs->Rs_pu;
+        case FOC_SENSORLESS_CONFIG_VAR_LS_PU: return p_obs->Ls_pu;
+        case FOC_SENSORLESS_CONFIG_VAR_G_INT_PU: return p_obs->G_int_pu;
+        case FOC_SENSORLESS_CONFIG_VAR_PSI_PU: return p_obs->Psi_pu;
+        case FOC_SENSORLESS_CONFIG_VAR_K_SMO: return p_obs->K_smo;
+        case FOC_SENSORLESS_CONFIG_VAR_SMO_SAT: return p_obs->SmoSat;
+        case FOC_SENSORLESS_CONFIG_VAR_LPF_COEF: return p_obs->LpfCoef;
+        default: return 0;
+    }
+}

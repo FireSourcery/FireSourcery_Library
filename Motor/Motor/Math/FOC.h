@@ -57,17 +57,17 @@ typedef struct FOC
     // Accumulator_T IdFwIntegrator; /* field weakening d-axis integrator accumulator */
     fract16_t IdFwGain;
     fract16_t IdFwLimit;    /* Maximum demagnetizing current. */
-    // fract16_t IsMax;   /* Current circle radius */
 
     // FOC_FieldWeakeningConfig_T FieldWeakeningConfig; copy from nvm
 
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
 
+#ifdef FOC_SENSORLESS_ENABLED
     /* Intermediate values */
-    // fract16_t Ialpha, Ibeta;
-    // fract16_t Valpha, Vbeta;
-
+    fract16_t Ialpha, Ibeta;
+    fract16_t Valpha, Vbeta;
+#endif
     // ufract16_t Modulation;
 }
 FOC_T;
@@ -137,6 +137,10 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
     struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
     p_foc->Id = i.d;
     p_foc->Iq = i.q;
+
+#ifdef FOC_SENSORLESS_ENABLED
+    struct foc_alphabeta foc_clarke = foc_clarke(ia, ib, ic);
+#endif
 }
 
 
@@ -487,9 +491,6 @@ static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
 */
 typedef enum Motor_Var_Foc
 {
-    // MOTOR_VAR_FOC_IA,
-    // MOTOR_VAR_FOC_IB,
-    // MOTOR_VAR_FOC_IC, /* move to phase input */
     MOTOR_VAR_FOC_ID,
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,
@@ -499,8 +500,6 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_VC,
     MOTOR_VAR_FOC_REQ_D,
     MOTOR_VAR_FOC_REQ_Q, /* Iq or Vq Req sign unadjusted */
-    // MOTOR_VAR_FOC_ID_REQ, /* return I or 0 */
-    // MOTOR_VAR_FOC_IQ_REQ,
     MOTOR_VAR_FOC_INTEGRAL_D,
     MOTOR_VAR_FOC_INTEGRAL_Q,
 }
@@ -511,16 +510,10 @@ static int _Motor_Var_Foc_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
     int value = 0;
     switch (varId)
     {
-        // case MOTOR_VAR_FOC_IA:      value = p_state->PhaseInput.I.Values.A;   break;
-        // case MOTOR_VAR_FOC_IB:      value = p_state->PhaseInput.I.Values.B;   break;
-        // case MOTOR_VAR_FOC_IC:      value = p_state->PhaseInput.I.Values.C;   break;
         case MOTOR_VAR_FOC_ID:      value = p_foc->Id;                  break;
         case MOTOR_VAR_FOC_IQ:      value = p_foc->Iq;                  break;
         case MOTOR_VAR_FOC_VD:      value = p_foc->Vd;                  break;
         case MOTOR_VAR_FOC_VQ:      value = p_foc->Vq;                  break;
-        // case MOTOR_VAR_FOC_VA:      value = p_foc->Va;                  break;
-        // case MOTOR_VAR_FOC_VB:      value = p_foc->Vb;                  break;
-        // case MOTOR_VAR_FOC_VC:      value = p_foc->Vc;                  break;
         case MOTOR_VAR_FOC_INTEGRAL_D:    value = PID_GetIntegral(&p_foc->PidId);   break;
         case MOTOR_VAR_FOC_INTEGRAL_Q:    value = PID_GetIntegral(&p_foc->PidIq);   break;
     }

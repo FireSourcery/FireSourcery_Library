@@ -114,8 +114,6 @@ int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Co
     int value = 0;
     switch (id)
     {
-        case MOT_VAR_V_SUPPLY_VOLTS:           value = p_dev->P_VBUS->Config.VSupplyNominal_V;            break;
-        // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
 
@@ -137,8 +135,6 @@ void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_C
     MotorController_State_T * p_state = p_dev->P_MC;
     switch (id)
     {
-        // case MOT_VAR_V_SUPPLY_VOLTS:        MotorController_SetVSupply_V(p_dev, value);                                         break; /* can deprciate  */
-        // case MOT_VAR_CONFIG_RESV:
         case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;              break;
         case MOT_VAR_INPUT_MODE:             p_state->Config.InputMode = (MotorController_InputMode_T)value;            break;
 
@@ -256,6 +252,8 @@ static int _HandleGeneral_Get(MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_OPT_DIN_CONFIG:        return OptDin_ConfigId_Get(&p_dev->P_MC->Config.OptDinConfig, varId.Base);
         case MOT_VAR_TYPE_USER_DIN_STATE:        return UserDIn_Var_GetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
         case MOT_VAR_TYPE_USER_DIN_CONFIG:       return UserDIn_Config_GetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
+        // case MOT_VAR_TYPE_USER_AIN_STATE:        return UserAIn_Var_GetInstance(p_dev->AINS, MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
+        // case MOT_VAR_TYPE_USER_AIN_CONFIG:       return UserAIn_Config_GetInstance(&p_dev->P_MC->Config.AInConfigs[0], MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
         default: return 0;
     }
 }
@@ -275,10 +273,12 @@ static MotVarId_Status_T _HandleGeneral_Set(MotorController_T * p_dev, MotVarId_
         case MOT_VAR_TYPE_GENERAL_USER_IN:          MotorController_Var_Input_Set(p_dev, varId.Base, value);                           break;
         case MOT_VAR_TYPE_GENERAL_CONFIG:           MotorController_Config_Set(p_dev, varId.Base, value);                              break;
         case MOT_VAR_TYPE_ANALOG_USER_CONFIG:       MotAnalogUser_ConfigId_Set(p_dev, varId.Base, value);                              break;
-        case MOT_VAR_TYPE_OPT_DIN_CONFIG:           OptDin_ConfigId_Set(&p_dev->P_MC->Config.OptDinConfig, varId.Base, value);         break;
         /* Pin function [OptDin_T] */
+        case MOT_VAR_TYPE_OPT_DIN_CONFIG:           OptDin_ConfigId_Set(&p_dev->P_MC->Config.OptDinConfig, varId.Base, value);         break;
+        case MOT_VAR_TYPE_USER_DIN_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
         case MOT_VAR_TYPE_USER_DIN_CONFIG:          UserDIn_Config_SetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base, value);                        break;
-
+        case MOT_VAR_TYPE_USER_AIN_STATE:           return MOT_VAR_STATUS_ERROR_READ_ONLY;
+        // case MOT_VAR_TYPE_USER_AIN_CONFIG:
         default: return MOT_VAR_STATUS_ERROR_INVALID_ID;
     }
     return MOT_VAR_STATUS_OK;

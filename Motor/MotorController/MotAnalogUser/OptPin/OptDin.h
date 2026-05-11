@@ -53,7 +53,7 @@ typedef struct OptDin_Config
     uint16_t       SpeedLimit_Fract16;
     uint16_t       TorqueLimit_Fract16;
     uint16_t       SwitchBrakeFloor_Percent16;
-    bool           AutoParkOnStop;
+    // bool           AutoParkOnStop;
 }
 OptDin_Config_T;
 
@@ -143,7 +143,7 @@ static inline int OptDin_ConfigId_Get(const OptDin_Config_T * p_config, OptDin_C
         case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     value = p_config->SpeedLimit_Fract16;  break;
         case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    value = p_config->TorqueLimit_Fract16; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     value = p_config->SwitchBrakeFloor_Percent16;   break;
-        case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       value = p_config->AutoParkOnStop;      break;
+        // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       value = p_config->AutoParkOnStop;      break;
         default: break;
     }
     return value;
@@ -157,7 +157,7 @@ static inline void OptDin_ConfigId_Set(OptDin_Config_T * p_config, OptDin_Config
         case OPT_DIN_CONFIG_ID_SPEED_LIMIT_FRACT16:     p_config->SpeedLimit_Fract16  = value; break;
         case OPT_DIN_CONFIG_ID_TORQUE_LIMIT_FRACT16:    p_config->TorqueLimit_Fract16 = value; break;
         case OPT_DIN_CONFIG_ID_SWITCH_BRAKE_SCALAR:     p_config->SwitchBrakeFloor_Percent16   = value; break;
-        case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       p_config->AutoParkOnStop      = value; break;
+        // case OPT_DIN_CONFIG_ID_AUTO_PARK_ON_STOP:       p_config->AutoParkOnStop      = value; break;
         default: break;
     }
 }
