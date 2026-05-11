@@ -184,11 +184,16 @@ static inline int32_t Hysteresis_OutputFilter(const Hysteresis_T * p_hyst, int32
 
 static inline int32_t Hysteresis_PollOutputFilter(Hysteresis_T * p_hyst, int32_t input)
 {
-    // p_hyst->OutputPrev = p_hyst->Output; /* Save previous state for edge detection */
     p_hyst->Output = Hysteresis_OutputFilter(p_hyst, input);
     return p_hyst->Output;
 }
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 /* Bidirectional delta filter */
 // static inline int32_t Hysteresis_OutputFilter_Delta(const Hysteresis_T * p_hyst, int32_t input)
 // {
@@ -197,13 +202,15 @@ static inline int32_t Hysteresis_PollOutputFilter(Hysteresis_T * p_hyst, int32_t
 
 // static inline int32_t Hysteresis_PollOutputFilter_Delta(Hysteresis_T * p_hyst, int32_t input)
 // {
-//     // p_hyst->OutputPrev = p_hyst->Output; /* Save previous state for edge detection */
 //     p_hyst->Output = Hysteresis_OutputFilter_Delta(p_hyst, input);
 //     return p_hyst->Output;
 // }
 
+
+/******************************************************************************/
 /* Boolean interpretations */
 /* via OutputValue without OutputState */
+/******************************************************************************/
 // static inline bool Hysteresis_OutputState(const Hysteresis_T * p_hyst) { return (Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON); }
 // static inline bool Hysteresis_IsOutputOn(const Hysteresis_T * p_hyst) { return (Hysteresis_RegionOf(p_hyst, p_hyst->Output) == HYSTERESIS_REGION_ON); }
 // static inline bool Hysteresis_IsOutputOff(const Hysteresis_T * p_hyst) { return (Hysteresis_RegionOf(p_hyst, p_hyst->Output) != HYSTERESIS_REGION_DEADBAND); }
@@ -229,11 +236,6 @@ static inline bool Hysteresis_IsActiveLow(const Hysteresis_T * p_hyst) { return 
 
 static inline int32_t Hysteresis_GetOutputValue(const Hysteresis_T * p_hyst) { return p_hyst->Output; }
 
-/* On captured On/Off State */
-// static inline bool Hysteresis_IsEdge(const Hysteresis_T * p_hyst) { return is_edge(p_hyst->OutputStatePrev, p_hyst->OutputState); }
-// static inline bool Hysteresis_IsSetpointEdge(const Hysteresis_T * p_hyst) { return is_rising_edge(p_hyst->OutputStatePrev, p_hyst->OutputState); }
-// static inline bool Hysteresis_IsResetpointEdge(const Hysteresis_T * p_hyst) { return is_falling_edge(p_hyst->OutputStatePrev, p_hyst->OutputState); }
-
 /*
     Config
 */
@@ -246,7 +248,6 @@ static inline int32_t Hysteresis_GetDeadbandWidth(const Hysteresis_T * p_hyst) {
 static inline void Hysteresis_Reset(Hysteresis_T * p_hyst)
 {
     p_hyst->Output = p_hyst->Resetpoint;  /* Reset to inactive state */
-    // p_hyst->OutputStatePrev = false;
     p_hyst->OutputState = false; /* Reset state */
 }
 
@@ -254,17 +255,9 @@ static inline void Hysteresis_Reset(Hysteresis_T * p_hyst)
 /******************************************************************************/
 /*
     Init
+    Additional inits bridge through Threshold_T
 */
 /******************************************************************************/
-/* Init form config types. Setpoint/Resetpoint as default. */
-// void Hysteresis_InitFromThresholdLevel(Hysteresis_T * p_hyst, Threshold_Level_T * p_level)
-// {
-// }
-
-// void Hysteresis_InitFromRangeAsHigh(Hysteresis_T * p_hyst, Threshold_Range_T * p_range)
-// {
-// }
-
 /*!
     @brief  Initialize hysteresis with explicit setpoint and resetpoint
             (setpoint == resetpoint) => Hysteresis region is skipped.
@@ -276,39 +269,7 @@ static void Hysteresis_InitThresholds(Hysteresis_T * p_hyst, int32_t setpoint, i
 
     p_hyst->Output = resetpoint;  /* Start at inactive state (resetpoint is always inactive) */
     p_hyst->OutputState = false;
-    // p_hyst->OutputStatePrev = false;`
 }
-
-
-/*
-
-*/
-static void Hysteresis_InitBand(Hysteresis_T * p_hyst, int32_t setpoint, int32_t deadband_width)
-{
-    Hysteresis_InitThresholds(p_hyst, setpoint, setpoint - deadband_width);
-}
-
-/*!
-    @brief  Initialize symmetric hysteresis around a center point
-            Active high
-*/
-// void Hysteresis_InitSymmetric(Hysteresis_T * p_hyst, int32_t center_point, uint32_t deadband_width)
-// {
-//     int32_t half_band = deadband_width / 2;
-//     Hysteresis_InitThresholds(p_hyst, center_point + half_band, center_point - half_band);
-// }
-
-/* Low alarm: setpoint is below reset */
-static void Hysteresis_Inverted_InitBand(Hysteresis_T * p_hyst, int32_t setpoint, int32_t deadband_width)
-{
-    Hysteresis_InitThresholds(p_hyst, setpoint, setpoint + deadband_width);
-}
-
-// static void Hysteresis_Inverted_InitSymmetric(Hysteresis_T * p_hyst, int32_t center_point, uint32_t deadband_width)
-// {
-//     int32_t half_band = deadband_width / 2;
-//     Hysteresis_InitThresholds(p_hyst, center_point - half_band, center_point + half_band);
-// }
 
 /******************************************************************************/
 /*

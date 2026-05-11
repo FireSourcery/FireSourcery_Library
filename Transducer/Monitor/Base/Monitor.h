@@ -126,17 +126,32 @@ Monitor_FaultLimit_T;
 typedef struct Monitor_Config
 {
     Monitor_FaultLimit_T Fault;     /* Fault level (hard limit, no hysteresis) */
-    // Monitor_Setpoint_T Fault;
     Monitor_Setpoint_T Warning;     /* Warning level with hysteresis */
+
+    // Threshold_T Fault;
+    // Threshold_T Warning;
     int32_t Nominal;
     bool IsEnabled;
 
     /* alternatively */
+    // Threshold_T Levels[];
     // Monitor_Setpoint_T Thresholds[]
     // Monitor_Setpoint_T Alarm;           /* Alarm level with hysteresis */
     // Monitor_Setpoint_T Advisory;        /* Advisory level with hysteresis */
 }
 Monitor_Config_T;
+
+
+// typedef struct Monitor_Config
+// {
+//     Threshold_T Fault;
+//     Threshold_T Warning;
+//     int32_t Nominal;
+//     bool IsEnabled;
+//     /* alternatively */
+//     // Threshold_T Levels[];
+// }
+// Monitor_Config_T;
 
 /*
     Single direction monitoring side

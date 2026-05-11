@@ -86,16 +86,26 @@ typedef struct RangeMonitor_Config
     /* Fault thresholds (no hysteresis) */
     Monitor_FaultLimit_T FaultOverLimit;     /* Fault level (hard limit, no hysteresis) */
     Monitor_FaultLimit_T FaultUnderLimit;    /* Fault level (hard limit, no hysteresis) */
-
     // RangeMonitor_FaultLimit_T Fault; /* more consistent ergonomically */
     /* Warning thresholds with hysteresis */
     RangeMonitor_Zone_T Warning;   /* Warning level with hysteresis */
+
+    // Threshold_Range_T Fault;
+    // Threshold_Range_T Warning;   /* Warning level with hysteresis, shared band */
 
     int32_t Nominal;
     bool IsEnabled;
 }
 RangeMonitor_Config_T;
 
+// typedef struct RangeMonitor_Config
+// {
+//     Threshold_Range_T Fault;
+//     Threshold_Range_T Warning;   /* Warning level with hysteresis, shared band */
+//     int32_t Nominal;
+//     bool IsEnabled;
+// }
+// RangeMonitor_Config_T;
 
 typedef struct RangeMonitor
 {

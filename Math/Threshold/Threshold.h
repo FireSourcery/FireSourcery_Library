@@ -37,19 +37,18 @@
     Interface for configuration types
     Handle Configs. Bridge to Hysteresis with Setpoint/Resetpoint pairs
 */
+// typedef int32_t threshold_t;
 
 /*
     2-value active at run time
 */
-// typedef struct Threshold_Band
-typedef struct Threshold_Setpoint
+typedef struct Threshold
 {
     int32_t Setpoint;    /* Activation threshold (trip point) */
     int32_t Resetpoint;  /* Deactivation threshold (reset point) */
-    // optionally
     // bool IsEnabled; /* Per level disable */
 }
-Threshold_Setpoint_T;
+Threshold_T;
 
 /*
     Config formats
@@ -64,6 +63,8 @@ typedef struct Threshold_Level
     uint32_t Deadband;
 }
 Threshold_Level_T;
+
+/* { Magnitude, Deadband } Threshold_Symmetric_T */
 
 /* simplified Dual direction init using band */
 /*
@@ -81,6 +82,14 @@ typedef struct Threshold_Range
 }
 Threshold_Range_T;
 
-static inline Threshold_Setpoint_T Threshold_Setpoint_FromHigh(Threshold_Range_T * p_zone) { return (Threshold_Setpoint_T) { .Setpoint = p_zone->LimitHigh, .Resetpoint = p_zone->LimitHigh - p_zone->Deadband }; }
-static inline Threshold_Setpoint_T Threshold_Setpoint_FromLow(Threshold_Range_T * p_zone) { return (Threshold_Setpoint_T) { .Setpoint = p_zone->LimitLow, .Resetpoint = p_zone->LimitLow + p_zone->Deadband }; }
+static inline Threshold_T Threshold_FromRangeHigh(Threshold_Range_T range) { return (Threshold_T) { .Setpoint = range.LimitHigh, .Resetpoint = range.LimitHigh - range.Deadband }; }
+static inline Threshold_T Threshold_FromRangeLow(Threshold_Range_T range) { return (Threshold_T) { .Setpoint = range.LimitLow, .Resetpoint = range.LimitLow + range.Deadband }; }
+static inline Threshold_T Threshold_FromLevelHigh(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint - level.Deadband }; }
+static inline Threshold_T Threshold_FromLevelLow(Threshold_Level_T level) { return (Threshold_T) { .Setpoint = level.Setpoint, .Resetpoint = level.Setpoint + level.Deadband }; }
 
+
+static inline Threshold_T Threshold_InitSymmetric(int32_t center_point, uint32_t deadband_width)
+{
+    int32_t half_band = deadband_width / 2;
+    return (Threshold_T) { .Setpoint = center_point + half_band, .Resetpoint = center_point - half_band };
+}

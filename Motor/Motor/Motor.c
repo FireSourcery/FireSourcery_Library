@@ -146,10 +146,11 @@ void Motor_InitUnits(Motor_State_T * p_motor)
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 {
     // #if defined(MOTOR_DECOUPLE_ENABLE)
-    p_config->Decoupling.Ld = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Ld);
-    p_config->Decoupling.Lq = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Lq);
-    p_config->Decoupling.Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
-    p_config->Decoupling.Psi = Motor_GetFluxLinkage_Angle16(&p_config->SpeedRating);
+    p_config->Decoupling.Ld = l_pu_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Ld);
+    p_config->Decoupling.Lq = l_pu_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Lq);
+    p_config->Decoupling.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
+    p_config->Decoupling.Psi = psi_pu_of_kv(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->SpeedRating.Kv, p_config->SpeedRating.PolePairs);
+    // p_config->Decoupling.Psi = Motor_GetFluxLinkage_Angle16(&p_config->SpeedRating);
     // #endif
 }
 

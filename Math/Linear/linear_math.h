@@ -63,6 +63,24 @@ static inline int32_t linear_shift_invf_y0(int32_t invm_shifted, uint8_t shift, 
 /* (((invm_shifted * (y - y0) + (1 << (shift-1))) >> shift) + x0) */
 static inline int32_t linear_shift_invf_round(int32_t invm_shifted, uint8_t shift, int32_t x0, int32_t y0, int32_t y) { return linear_shift_f_round(invm_shifted, shift, y0, x0, y); }
 
+/*
+    slope_shifted = ((out_high - out_low) << shift) / (in_high - in_low)
+    Overflow bound: |slope_shifted * (x - in_low)| <= out_range << shift <= INT32_MAX.
+*/
+/* [in_low:*] -> [out_low:*], unsaturated */
+static inline int32_t linear_map_slope(int32_t slope_shifted, uint8_t shift, int32_t in_low, int32_t out_low, int32_t x)
+{
+    return linear_shift_f(slope_shifted, shift, in_low, out_low, x);
+}
+
+/* [in_low:in_high] -> [out_low:out_high], saturated */
+static inline int32_t linear_map_slope_sat(int32_t slope_shifted, uint8_t shift, int32_t in_low, int32_t in_high, int32_t out_low, int32_t out_high, int32_t x)
+{
+    if (x >= in_high) { return out_high; }
+    if (x <= in_low) { return out_low; }
+    return linear_map_slope(slope_shifted, shift, in_low, out_low, x);
+}
+
 
 /******************************************************************************/
 /*
@@ -87,10 +105,11 @@ static inline int32_t linear_invf_full(int32_t m_factor, int32_t m_divisor, int3
 /******************************************************************************/
 /* */
 /******************************************************************************/
-/* [in_low:in_high] -> [out_low:out_high], linear, unsaturated */
+/* [in_low:in_high] -> [out_low:out_high] */
+/* out_low + ((out_high - out_low) * (x - in_low) / (in_high - in_low)) */
 static inline int32_t linear_map(int32_t in_low, int32_t in_high, int32_t out_low, int32_t out_high, int32_t x)
 {
-    return out_low + ((out_high - out_low) * (x - in_low) / (in_high - in_low));
+    return linear_f_full(out_high - out_low, in_high - in_low, in_low, out_low, x);
 }
 
 /* Saturated: input clamped to [in_low, in_high] */

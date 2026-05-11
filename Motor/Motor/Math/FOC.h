@@ -101,6 +101,13 @@ FOC_Electrical_T;
 
 // typedef struct
 // {
+//     uint16_t Ld;
+//     uint16_t Lq;
+// }
+// FOC_Ldq_T;
+
+// typedef struct
+// {
 //     uint16_t Ld_MicroHenries;
 //     uint16_t Lq_MicroHenries;
 //     uint16_t Rs_MilliOhms;

@@ -271,7 +271,7 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-    FOC_Electrical_T ElectricalParams; /* Motor Electrical Parameters. Si units */
+    FOC_Electrical_T ElectricalParams;  /* Motor Electrical Parameters. Si units */
     FOC_Electrical_T Decoupling;        /* Fract16 */
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
@@ -501,6 +501,7 @@ static inline ufract16_t Motor_GetSpeedDerate(Motor_T * p_motor) { return math_m
         => Motor_Get*Limits() => Motor_Resolve*Limits() => *Ramp.Limits
         Ramp.Limits is enforced by saturation on every Ramp_ProcNext()
 */
+// static inline ufract16_t Motor_ILimitMotoring(Motor_T * p_motor) { return math_min(fract16_mul(Motor_GetIDerate(p_motor), Phase_Calibration_GetIRatedPeak_Fract16()), p_motor->P_MOTOR->Config.ILimitMotoring_Fract16); }
 static inline ufract16_t Motor_ILimitMotoring(Motor_T * p_motor) { return fract16_mul(Motor_GetIDerate(p_motor), p_motor->P_MOTOR->Config.ILimitMotoring_Fract16); }
 static inline ufract16_t Motor_ILimitGenerating(Motor_T * p_motor) { return fract16_mul(Motor_GetIDerate(p_motor), p_motor->P_MOTOR->Config.ILimitGenerating_Fract16); }
 static inline ufract16_t Motor_SpeedLimitForward(Motor_T * p_motor) { return fract16_mul(Motor_GetSpeedDerate(p_motor), p_motor->P_MOTOR->Config.SpeedLimitForward_Fract16); }

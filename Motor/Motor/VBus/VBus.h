@@ -71,9 +71,9 @@ typedef struct VBus
     uint16_t VBus_Fract16;          /* Filtered live ratio — canonical FOC input */
     uint32_t PerV_Fract32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
 
-    // uint32_t PerVNominal_Fract32;
-    // Linear_T IDerateUnderVLinear; /* Precomputed from VLowDerate, VSupplyNominal, and IDerateUnderVFloor_Fract16. */
-    // Linear_T IDerateOverVLinear;
+    /* Precomputed derate slopes */
+    int32_t IDerateUnderVSlope;     /* ((FRACT16_MAX - floor) << 15) / (WarnLow - FaultUnder), positive, rising  */
+    int32_t IDerateOverVSlope;      /* ((floor - FRACT16_MAX) << 15) / (FaultOver - WarnHigh), negative, falling */
 
     VMonitor_State_T MonitorState;
     VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
@@ -95,12 +95,10 @@ static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 
 /*
     Rolling two-sample filter; matches the prior Phase_VBus single-pole behavior.
-    Callers (typically MotorController's VBus thread) pass fract16 derived from ADCU.
 */
 static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 {
-    // _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
-    _VBus_Capture(p_vbus, fract16);
+    _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
 }
 
 
@@ -109,8 +107,17 @@ static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
 */
 static inline void VBus_InitLive(VBus_T * p_vbus)
 {
-    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V)); /* alternatively VBus use its own ratio corresponding to board */
+    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V));
     // p_vbus->PerVNominal_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
+}
+
+/* Precompute rising/falling slopes from config thresholds + floor values. Shift=15 is safe for fract16 range (max 32767<<15 = 1.07B < INT32_MAX). */
+static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
+{
+    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.FaultUnderLimit.Limit;
+    int32_t overSpan  = (int32_t)p_vbus->Config.MonitorConfig.FaultOverLimit.Limit - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
+    p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
+    p_vbus->IDerateOverVSlope  = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
 }
 
 static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
@@ -118,6 +125,7 @@ static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config
     if (p_config != NULL) { p_vbus->Config = *p_config; }
     p_vbus->Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V); /* keep in sync */
     RangeMonitor_InitFrom(&p_vbus->MonitorState, &p_vbus->Config.MonitorConfig);
+    VBus_InitDerateSlopes(p_vbus);
     VBus_InitLive(p_vbus);
 }
 
@@ -180,9 +188,9 @@ static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t d
       VBus <= vCut_f16  → floor       (minimum I)
     [VCut_Under:VFull] => [floor, 1]
 */
-static inline ufract16_t _VBus_IDerateUnderV(uint16_t vBus_f16, ufract16_t vCut_f16, ufract16_t vFull_f16, ufract16_t floor)
+static inline ufract16_t _VBus_IDerateUnderVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return (ufract16_t)linear_map_sat(vCut_f16, vFull_f16, floor, FRACT16_MAX, vBus_f16);
+    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateUnderVSlope, 15, p_config->FaultUnderLimit.Limit, p_config->Warning.LimitLow, p_vbus->Config.IDerateUnderVFloor_Fract16, FRACT16_MAX, p_vbus->VBus_Fract16);
 }
 
 /*
@@ -191,31 +199,16 @@ static inline ufract16_t _VBus_IDerateUnderV(uint16_t vBus_f16, ufract16_t vCut_
       VBus >= vCut_f16  → floor       (minimum regen)
     [VFull_Regen:VCut_Over] => [1, floor]
 */
-static inline ufract16_t _VBus_IDerateOverV(uint16_t vBus_f16, ufract16_t vFull_f16, ufract16_t vCut_f16, ufract16_t floor)
+static inline ufract16_t _VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
 {
-    return (ufract16_t)linear_map_sat(vFull_f16, vCut_f16, FRACT16_MAX, floor, vBus_f16);
+    return (ufract16_t)linear_map_slope_sat(p_vbus->IDerateOverVSlope, 15, p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, FRACT16_MAX, p_vbus->Config.IDerateOverVFloor_Fract16, p_vbus->VBus_Fract16);
 }
 
-static inline ufract16_t VBus_IDerateUnderVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
-{
-    // return _VBus_IDerateUnderV(p_vbus->VBus_Fract16, p_config->FaultUnderLimit.Limit,  p_config->Warning.LimitLow,  p_vbus->Config.IDerateUnderVFloor_Fract16);
-    return (ufract16_t)linear_map_sat(p_config->FaultUnderLimit.Limit, p_config->Warning.LimitLow, p_vbus->Config.IDerateUnderVFloor_Fract16, FRACT16_MAX, p_vbus->VBus_Fract16);
-}
+/* UV rising:  floor + (slope * (vBus - vCutoff) >> 15) */
+static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return _VBus_IDerateUnderVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
 
-static inline ufract16_t VBus_IDerateOverVOf(const VBus_T * p_vbus, const VMonitor_Config_T * p_config)
-{
-    // return _VBus_IDerateOverV(p_vbus->VBus_Fract16, p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, p_vbus->Config.IDerateOverVFloor_Fract16);
-    return (ufract16_t)linear_map_sat(p_config->Warning.LimitHigh, p_config->FaultOverLimit.Limit, FRACT16_MAX, p_vbus->Config.IDerateOverVFloor_Fract16, p_vbus->VBus_Fract16);
-}
-
-/******************************************************************************/
-/*!
-    Config-bound derate — threshold args pulled from Config.
-*/
-/******************************************************************************/
-/* DerateScale unitless */
-static inline ufract16_t VBus_GetIDerateUnderV(const VBus_T * p_vbus) { return VBus_IDerateUnderVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
-static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return VBus_IDerateOverVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
+/* OV falling: FRACT16_MAX - (slope * (vBus - vWarnHigh) >> 15) */
+static inline ufract16_t VBus_GetIDerateOverV(const VBus_T * p_vbus) { return _VBus_IDerateOverVOf(p_vbus, &p_vbus->Config.MonitorConfig); }
 
 /*
     Speed-limit derate — back-EMF constraint.

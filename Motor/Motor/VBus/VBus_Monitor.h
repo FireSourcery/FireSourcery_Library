@@ -52,8 +52,8 @@
 static inline VMonitor_State_T * VBus_Monitor(VBus_T * p_vbus) { return &p_vbus->MonitorState; }
 
 /* Poll Monitor Only */
-// static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16); }
-static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (p_vbus->VBus_Fract16 + RangeMonitor_LastInput(&p_vbus->MonitorState)) / 2); }
+static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16); }
+// static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (p_vbus->VBus_Fract16 + RangeMonitor_LastInput(&p_vbus->MonitorState)) / 2); }
 
 static inline VMonitor_Status_T VBus_PollCaptureMonitor(VBus_T * p_vbus, uint16_t fract16) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (fract16 + p_vbus->VBus_Fract16) / 2); }
 
@@ -61,10 +61,6 @@ static inline VMonitor_Status_T VBus_PollCaptureMonitor(VBus_T * p_vbus, uint16_
 
 */
 static inline VMonitor_Status_T VBus_Status(const VBus_T * p_vbus) { return (VMonitor_Status_T)p_vbus->MonitorState.Status; }
-// static inline bool VBus_IsUnderWarning(const VBus_T * p_vbus) { return RangeMonitor_IsUnderWarning(&p_vbus->MonitorState); }
-// static inline bool VBus_IsOverWarning(const VBus_T * p_vbus) { return RangeMonitor_IsOverWarning(&p_vbus->MonitorState); }
-// static inline bool VBus_IsUnderFault(const VBus_T * p_vbus) { return RangeMonitor_IsUnderFault(&p_vbus->MonitorState); }
-// static inline bool VBus_IsOverFault(const VBus_T * p_vbus) { return RangeMonitor_IsOverFault(&p_vbus->MonitorState); }
 // static inline bool VBus_IsUnderNominal(const VBus_T * p_vbus) { return RangeMonitor_IsUnderNominal(&p_vbus->MonitorState); }
 // static inline bool VBus_IsOverNominal(const VBus_T * p_vbus) { return RangeMonitor_IsOverNominal(&p_vbus->MonitorState); }
 
