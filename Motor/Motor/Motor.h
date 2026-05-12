@@ -222,6 +222,7 @@ typedef struct Motor_Config
 
     /* PolePairs, Kv, SpeedRated_Rpm — owned component, see Types/Motor_Electrical.h */
     Motor_ElectricalSpeedRating_T SpeedRating;
+    Motor_RL_T ElectricalRsLs;
 
     uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
     // Motor_ResumeMode_T ResumeMode;   // option Scale to VSpeed or VBemf on resume
@@ -271,8 +272,11 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-    FOC_Electrical_T ElectricalParams;  /* Motor Electrical Parameters. Si units */
-    FOC_Electrical_T Decoupling;        /* Fract16 */
+    FOC_Electrical_T ElectricalParams;  /* optional Motor Electrical Parameters. Si units */
+    FOC_Electrical_T Decoupling;        /* VdqDecoupling */
+
+    // FOC_Config_T FocConfig;              /* FOC control parameters, limits. */
+
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
 

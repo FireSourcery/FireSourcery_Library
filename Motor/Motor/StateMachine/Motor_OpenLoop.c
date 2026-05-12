@@ -145,16 +145,10 @@ static void Run_Entry(Motor_T * p_motor)
 
 static void Run_Proc(Motor_T * p_motor)
 {
+    Motor_State_T * p_state = p_motor->P_MOTOR;
+    FOC_Sensorless_Step(&p_state->Foc, &p_state->FocSensorless);
     Motor_FOC_ProcOpenLoop(p_motor);
     // capture for dbugging
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-    FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I);
-    p_state->FocSensorless.AngleSpeed.Delta = p_state->OpenLoopAngle.Delta;
-    // p_state->FocSensorless.AngleSpeed.Angle = p_state->OpenLoopAngle.Angle;
-    FOC_Sensorless_Step(&p_state->FocSensorless, p_state->Foc.Id, p_state->Foc.Iq);
-
-    FOC_ProcInvClarkePark(&p_state->Foc);
-    FOC_Sensorless_CaptureVoltage(&p_state->FocSensorless, p_state->Foc.Vd, p_state->Foc.Vq);
 }
 
 /*

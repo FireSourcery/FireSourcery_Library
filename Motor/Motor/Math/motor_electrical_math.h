@@ -254,6 +254,8 @@ static inline fract16_t rs_pu_of_vd_id(fract16_t vd_pu, fract16_t id_pu) { retur
         The π factor absorbs the 2π·Fs/65536 angle16-step → rad/s conversion.
 */
 /******************************************************************************/
+#define MOTOR_L_FRACT16(Fs, v_max_V, i_max_A, L_Henries, SI_Scale) ((float)L_Henries * i_max_A * Fs * FRACT16_PI / ((uint64_t)v_max_V * SI_Scale))
+
 /* l_pu < UINT64_MAX / (v_max_V × scale) */
 static inline uint32_t l_h_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * i_max_A * polling_freq); }
 static inline uint32_t l_pu_of_h(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_max_A * polling_freq * FRACT16_PI / ((uint64_t)v_max_V * scale); }

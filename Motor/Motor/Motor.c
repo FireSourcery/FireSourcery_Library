@@ -73,48 +73,8 @@ void Motor_Reset(Motor_State_T * p_motor)
 {
     // Motor_Config_Validate(&p_motor->Config);
     p_motor->ElectricalSpeedRef = Motor_ElectricalSpeedRef_FromSpeedRating(&p_motor->Config.SpeedRating);
-    Motor_InitDecouplingCoeffs(&p_motor->Config);
 
-    /*
-        Sensorless observer — debug defaults.
-        Bench motor: 150 Kv, 4 pole pairs (20 V bus).
-        Rs/Lq pulled from Decoupling populated by InitDecouplingCoeffs above; will be
-        zero until ElectricalParams is calibrated. Psi is recomputed from (Kv, P) so
-        ψ̂ is always non-zero. G_int = 1/Ls_pu in fract16 ≈ π·32768 / Lq_KL_pu (the
-        Lq_KL form carries the π factor consumed by the cross-coupling stage).
-        Tuning knobs (K_smo, SmoSat, LpfCoef, PLL gains) are coarse debug defaults —
-        expect bench retune once the open-loop ramp has the rotor spinning.
-    */
-    const fract16_t Lq_KL = p_motor->Config.Decoupling.Lq;
-    FOC_SensorlessConfig_T sensorless_default =
-    {
-        .Rs_pu    = p_motor->Config.Decoupling.Rs,
-        .Lq_KL_pu = p_motor->Config.Decoupling.Lq,
-        .G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / Lq_KL), (int32_t)FRACT16_MAX),
-        .Psi_pu   = psi_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), 150U /*Kv*/, 4U /*P*/),
 
-        /* SMO. */
-        .K_smo   = FRACT16_MAX / 4,    /* ~0.25 pu sliding gain */
-        .SmoSat  = FRACT16_MAX / 16,   /* ~0.06 pu boundary layer */
-        .LpfCoef = FRACT16_MAX / 32,   /* α ≈ 0.03  →  τ ≈ 1.5 ms */
-
-        /* Lock detector. */
-        .LockEmfMin    = FRACT16_MAX / 32,
-        .LockErrTol    = FRACT16_MAX / 8,    /* ≈ sin(7°) */
-        .LockHoldCount = 200,                /* 10 ms at 20 kHz */
-
-        /* PLL loop filter — conservative debug gains. */
-        .PllPid =
-        {
-            .Mode       = PID_MODE_PI,
-            .SampleFreq = MOTOR_CONTROL_FREQ,
-            .Kp_Fixed32 = 1L << 10,    /* ≈ 0.031 in Q17.15 */
-            .Ki_Fixed32 = 1L << 4,
-            .Kd_Fixed32 = 0,
-        },
-    };
-
-    FOC_Sensorless_Init(&p_motor->FocSensorless, &sensorless_default);
 
     Motor_InitUnits(p_motor);
 
@@ -143,10 +103,12 @@ void Motor_Reset(Motor_State_T * p_motor)
 
     Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
-    /*
-        Feedback State
-    */
+    Motor_InitDecouplingCoeffs(&p_motor->Config);
+
     FOC_Init(&p_motor->Foc);
+    FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.Decoupling);
+    FOC_Sensorless_Init(&p_motor->FocSensorless, NULL);
+    FOC_Sensorless_InitG(&p_motor->Foc, &p_motor->FocSensorless);
     p_motor->Foc.IdFwGain = p_motor->Config.FieldWeakening.IdFwGain;
     p_motor->Foc.IdFwLimit = p_motor->Config.FieldWeakening.IdFwLimit;
 
@@ -183,7 +145,7 @@ void Motor_InitUnits(Motor_State_T * p_motor)
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
 
-
+// #ifdef LOCAL_UNIT_CONVERSION_ENABLE
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 {
     // #if defined(MOTOR_DECOUPLE_ENABLE)
@@ -191,8 +153,8 @@ void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
     p_config->Decoupling.Lq = l_pu_of_h(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Lq, 1000000UL);
     p_config->Decoupling.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
     p_config->Decoupling.Psi = psi_pu_of_kv(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->SpeedRating.Kv, p_config->SpeedRating.PolePairs);
-    // p_config->Decoupling.Psi = Motor_GetFluxLinkage_Angle16(&p_config->SpeedRating);
     // #endif
+
 }
 
 /******************************************************************************/

@@ -322,7 +322,6 @@ static void Electrical_Proc(Motor_T * p_motor)
         case PARAMID_STEP_COMMIT:
             CommitResultsSi(p_params, &p_context->Config.ElectricalParams);
             CommitResults(p_params, &p_context->Config.Decoupling);
-            Motor_InitDecouplingCoeffs(&p_context->Config);
             break;
         case PARAMID_STEP_RAMPDOWN:
             Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);

@@ -35,28 +35,28 @@
 #include "../Motor_ControlFreq.h"
 
 
-typedef struct
-{
-    uint16_t Rs;
-    uint16_t Ls;
-}
-Phase_RL_T;
+// typedef struct
+// {
+//     uint16_t Rs;
+//     uint16_t Ls;
+// }
+// Phase_RL_T;
 
-/* L requires base time config. alternatively move Motor_ControlFreq */
-static inline Phase_RL_T Phase_RL_Fract16OfSi(uint16_t rs_mOhms, uint16_t ls_uHenries)
-{
-    return (Phase_RL_T)
-    {
-        .Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs_mOhms),
-        .Ls = l_pu_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries)
-    };
-}
+// /* L requires base time config. alternatively move Motor_ControlFreq */
+// static inline Phase_RL_T Phase_RL_Fract16OfSi(uint16_t rs_mOhms, uint16_t ls_uHenries)
+// {
+//     return (Phase_RL_T)
+//     {
+//         .Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs_mOhms),
+//         .Ls = l_pu_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries)
+//     };
+// }
 
-static inline Phase_RL_T Phase_RL_SiOfFract16(uint16_t rs, uint16_t ls)
-{
-    return (Phase_RL_T)
-    {
-        .Rs = rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs),
-        .Ls = l_uh_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls)
-    };
-}
+// static inline Phase_RL_T Phase_RL_SiOfFract16(uint16_t rs, uint16_t ls)
+// {
+//     return (Phase_RL_T)
+//     {
+//         .Rs = rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), rs),
+//         .Ls = l_uh_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls)
+//     };
+// }

@@ -303,11 +303,11 @@ static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs)
 /******************************************************************************/
 typedef struct FOC_SensorlessConfig
 {
-    /* Motor electrical params, per-unit basis. */
-    fract16_t Rs_pu;        /* Rs · I_max / V_max */
-    fract16_t G_int_pu;     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
-    fract16_t Lq_KL_pu;     /* π · Lq · I_max · Fs / V_max — cross-coupling (kl_fract16_of_uh) */
-    fract16_t Psi_pu;       /* π · Fs · ψ_f · 32768 / V_max — for diagnostics / speed-from-Emf */
+    // /* Motor electrical params, per-unit basis. */
+    // fract16_t Rs_pu;        /* Rs · I_max / V_max */
+    // fract16_t G_int_pu;     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
+    // fract16_t Lq_KL_pu;     /* π · Lq · I_max · Fs / V_max — cross-coupling (kl_fract16_of_uh) */
+    // fract16_t Psi_pu;       /* π · Fs · ψ_f · 32768 / V_max — for diagnostics / speed-from-Emf */
 
     /* EEMF SMO tuning. */
     fract16_t K_smo;
@@ -327,8 +327,10 @@ FOC_SensorlessConfig_T;
 
 typedef struct FOC_Sensorless
 {
+    fract16_t G_int_pu;     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
+
     /* Voltage captured at end of previous control tick (commanded vd, vq). */
-    fract16_t VdPrev, VqPrev;
+    // fract16_t VdPrev, VqPrev;
 
     /* EEMF SMO state — current estimator î and switching variable z. */
     fract16_t SmoId, SmoIq;
@@ -345,7 +347,7 @@ typedef struct FOC_Sensorless
 
     /* Lock detector. */
     uint16_t LockCount;
-    bool     IsLocked;
+    // bool IsLocked;
 
     FOC_SensorlessConfig_T Config;
 }
@@ -357,7 +359,7 @@ FOC_Sensorless_T;
 /******************************************************************************/
 static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
 {
-    p_obs->VdPrev = 0;  p_obs->VqPrev = 0;
+    // p_obs->VdPrev = 0;  p_obs->VqPrev = 0;
     p_obs->SmoId = 0;   p_obs->SmoIq = 0;
     p_obs->SmoZd = 0;   p_obs->SmoZq = 0;
     p_obs->EmfD = 0;    p_obs->EmfQ = 0;
@@ -368,14 +370,54 @@ static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
     PID_Reset(&p_obs->PllPid);
 
     p_obs->LockCount = 0;
-    p_obs->IsLocked = false;
+    // p_obs->IsLocked = false;
 }
 
 static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T * p_config)
 {
-    p_obs->Config = *p_config;
+    if (p_config != NULL)
+    {
+        p_obs->Config = *p_config;
+    }
+    else
+    {
+        FOC_SensorlessConfig_T sensorless_default =
+        {
+            // .Rs_pu = p_motor->Config.Decoupling.Rs,
+            // .Lq_KL_pu = p_motor->Config.Decoupling.Lq,
+            // .Psi_pu = psi_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), 150U /*Kv*/, 4U /*P*/),
+            // .G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / Lq_KL), (int32_t)FRACT16_MAX),
+
+            /* SMO. */
+            .K_smo = FRACT16_MAX / 4,    /* ~0.25 pu sliding gain */
+            .SmoSat = FRACT16_MAX / 16,   /* ~0.06 pu boundary layer */
+            .LpfCoef = FRACT16_MAX / 32,   /* α ≈ 0.03  →  τ ≈ 1.5 ms */
+
+            /* Lock detector. */
+            .LockEmfMin = FRACT16_MAX / 32,
+            .LockErrTol = FRACT16_MAX / 8,    /* ≈ sin(7°) */
+            .LockHoldCount = 200,                /* 10 ms at 20 kHz */
+
+            /* PLL loop filter — conservative debug gains. */
+            .PllPid =
+            {
+                .Mode = PID_MODE_PI,
+                .SampleFreq = 20000U,
+                .Kp_Fixed32 = 1L << 10,    /* ≈ 0.031 in Q17.15 */
+                .Ki_Fixed32 = 1L << 4,
+                .Kd_Fixed32 = 0,
+            },
+        };
+        p_obs->Config = sensorless_default;
+    }
+    // p_obs->G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / p_foc->Electrical.Lq), FRACT16_MAX);
     PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
     FOC_Sensorless_ResetState(p_obs);
+}
+
+static void FOC_Sensorless_InitG(FOC_T * p_foc, FOC_Sensorless_T * p_obs)
+{
+    p_obs->G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / p_foc->Electrical.Lq), FRACT16_MAX);
 }
 
 /* Bumpless seed: align θ̂ and ω̂ to a known reference (open-loop ramp / handoff).
@@ -393,25 +435,23 @@ static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, 
 /*!  Per-tick step  */
 /******************************************************************************/
 /* (id, iq) come from Park applied with previous θ̂. */
-static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t id, fract16_t iq)
+static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
 {
     /* 0. Cross-coupling: ω̂·Lq evaluated with the current ω̂ estimate. */
-    fract16_t omega_Lq = fract16_mul(Angle_Delta(&p_obs->AngleSpeed), p_obs->Config.Lq_KL_pu);
+    fract16_t omega_Lq = fract16_mul(Angle_Delta(&p_obs->AngleSpeed), p_foc->Electrical.Lq);
 
     /* 1. EEMF SMO step — predicts (îd, îq) and produces switching variables (zd, zq). */
     fract16_t vd_ff = foc_vd_ff(omega_Lq, p_obs->SmoIq);     /* −ω·Lq·îq */
-    fract16_t vq_ff = foc_vq_ff(omega_Lq, 0,  p_obs->SmoId); /* +ω·Lq·îd, ψ absorbed into EEMF */
-    fract16_t zd = foc_eemf_zd(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoId, id);
-    fract16_t zq = foc_eemf_zq(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIq, iq);
+    fract16_t vq_ff = foc_vq_ff(omega_Lq, 0, p_obs->SmoId); /* +ω·Lq·îd, ψ absorbed into EEMF */
 
-    p_obs->SmoId = foc_eemf_id(p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, p_obs->VdPrev, p_obs->SmoId, id, zd, vd_ff);
-    p_obs->SmoIq = foc_eemf_iq(p_obs->Config.Rs_pu, p_obs->Config.G_int_pu, p_obs->VqPrev, p_obs->SmoIq, iq, zq, vq_ff);
-    p_obs->SmoZd = zd;
-    p_obs->SmoZq = zq;
+    p_obs->SmoZd = foc_eemf_zd(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoId, p_foc->Id);
+    p_obs->SmoZq = foc_eemf_zq(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIq, p_foc->Iq);
+    p_obs->SmoId = foc_eemf_id(p_foc->Electrical.Rs, p_obs->G_int_pu, p_foc->Vd, p_obs->SmoId, p_foc->Id, p_obs->SmoZd, vd_ff);
+    p_obs->SmoIq = foc_eemf_iq(p_foc->Electrical.Rs, p_obs->G_int_pu, p_foc->Vq, p_obs->SmoIq, p_foc->Iq, p_obs->SmoZq, vq_ff);
 
     /* 2. LPF to extract equivalent-control EMF (DC at lock). */
-    p_obs->EmfD = foc_lpf_step(p_obs->EmfD, zd, p_obs->Config.LpfCoef);
-    p_obs->EmfQ = foc_lpf_step(p_obs->EmfQ, zq, p_obs->Config.LpfCoef);
+    p_obs->EmfD = foc_lpf_step(p_obs->Config.LpfCoef, p_obs->EmfD, p_obs->SmoZd);
+    p_obs->EmfQ = foc_lpf_step(p_obs->Config.LpfCoef, p_obs->EmfQ, p_obs->SmoZq);
     p_obs->EmfMag = fract16_vector_magnitude(p_obs->EmfD, p_obs->EmfQ);
 
     /* 3. Phase error from EEMF — d-axis at lock = 0, normalised by |E|. */
@@ -426,17 +466,14 @@ static void FOC_Sensorless_Step(FOC_Sensorless_T * p_obs, fract16_t id, fract16_
     /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
     bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
     p_obs->LockCount = stable ? (uint16_t)math_min(p_obs->LockCount + 1, p_obs->Config.LockHoldCount) : 0;
-    p_obs->IsLocked = (p_obs->LockCount >= p_obs->Config.LockHoldCount);
-
-
 }
 
 /* Store (vd, vq) commanded this cycle — read by next Step. */
-static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract16_t vd, fract16_t vq)
-{
-    p_obs->VdPrev = vd;
-    p_obs->VqPrev = vq;
-}
+// static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract16_t vd, fract16_t vq)
+// {
+//     // p_obs->VdPrev = vd;
+//     // p_obs->VqPrev = vq;
+// }
 
 
 /******************************************************************************/
@@ -448,7 +485,8 @@ static inline fract16_t  FOC_Sensorless_GetEmfD(const FOC_Sensorless_T * p_obs) 
 static inline fract16_t  FOC_Sensorless_GetEmfQ(const FOC_Sensorless_T * p_obs)   { return p_obs->EmfQ; }
 static inline ufract16_t FOC_Sensorless_GetEmfMag(const FOC_Sensorless_T * p_obs) { return p_obs->EmfMag; }
 static inline fract16_t  FOC_Sensorless_GetPllErr(const FOC_Sensorless_T * p_obs) { return p_obs->PllErr; }
-static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs)  { return p_obs->IsLocked; }
+// static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs)  { return p_obs->IsLocked; }
+static inline bool       FOC_Sensorless_IsLocked(const FOC_Sensorless_T * p_obs) { return  (p_obs->LockCount >= p_obs->Config.LockHoldCount); }
 
 
 
@@ -463,6 +501,7 @@ typedef enum FOC_SensorlessVar
     FOC_SENSORLESS_VAR_EMF_ALPHA,
     FOC_SENSORLESS_VAR_EMF_BETA,
     FOC_SENSORLESS_VAR_EMF_MAG,
+    FOC_SENSORLESS_VAR_PLL_ERR,
 }
 FOC_SensorlessVar_T;
 
@@ -477,6 +516,7 @@ static inline int32_t FOC_Sensorless_GetVar(const FOC_Sensorless_T * p_obs, FOC_
         case FOC_SENSORLESS_VAR_EMF_ALPHA: return FOC_Sensorless_GetEmfD(p_obs); /* temp */
         case FOC_SENSORLESS_VAR_EMF_BETA: return FOC_Sensorless_GetEmfQ(p_obs);
         case FOC_SENSORLESS_VAR_EMF_MAG: return FOC_Sensorless_GetEmfMag(p_obs);
+        case FOC_SENSORLESS_VAR_PLL_ERR: return FOC_Sensorless_GetPllErr(p_obs);
         default: return 0;
     }
 }
@@ -499,10 +539,10 @@ static inline int32_t FOC_SensorlessConfig_Get(const FOC_SensorlessConfig_T * p_
 {
     switch (var)
     {
-        case FOC_SENSORLESS_CONFIG_VAR_RS_PU: return p_obs->Rs_pu;
-        // case FOC_SENSORLESS_CONFIG_VAR_LS_PU: return p_obs->Ls_pu;
-        case FOC_SENSORLESS_CONFIG_VAR_G_INT_PU: return p_obs->G_int_pu;
-        case FOC_SENSORLESS_CONFIG_VAR_PSI_PU: return p_obs->Psi_pu;
+        // case FOC_SENSORLESS_CONFIG_VAR_RS_PU: return p_obs->Rs_pu;
+        // // case FOC_SENSORLESS_CONFIG_VAR_LS_PU: return p_obs->Ls_pu;
+        // case FOC_SENSORLESS_CONFIG_VAR_G_INT_PU: return p_obs->G_int_pu;
+        // case FOC_SENSORLESS_CONFIG_VAR_PSI_PU: return p_obs->Psi_pu;
         case FOC_SENSORLESS_CONFIG_VAR_K_SMO: return p_obs->K_smo;
         case FOC_SENSORLESS_CONFIG_VAR_SMO_SAT: return p_obs->SmoSat;
         case FOC_SENSORLESS_CONFIG_VAR_LPF_COEF: return p_obs->LpfCoef;
