@@ -220,11 +220,9 @@ typedef struct Motor_Config
     RotorSensor_Id_T SensorMode;
     Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
 
-    /* PolePairs, Kv, SpeedRated_Rpm — owned component, see Types/Motor_Electrical.h */
-    Motor_ElectricalSpeedRating_T SpeedRating;
+    Motor_ElectricalSpeedRating_T SpeedRating;    /* PolePairs, Kv, SpeedRated_Rpm */
     Motor_RL_T ElectricalRsLs;
 
-    uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
     // Motor_ResumeMode_T ResumeMode;   // option Scale to VSpeed or VBemf on resume
 
     Phase_Triplet_T IabcZeroRef_Adcu;
@@ -239,7 +237,6 @@ typedef struct Motor_Config
     uint16_t SpeedLimitReverse_Fract16;
     uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_TYPE_MAX_AMPS. */
     uint16_t ILimitGenerating_Fract16;
-
 
     //todo,
     // uint32_t SpeedRampSlope_Accum32; /* Fract16 per tick << 15 */
@@ -275,10 +272,10 @@ typedef struct Motor_Config
     FOC_Electrical_T ElectricalParams;  /* optional Motor Electrical Parameters. Si units */
     FOC_Electrical_T Decoupling;        /* VdqDecoupling */
 
-    // FOC_Config_T FocConfig;              /* FOC control parameters, limits. */
-
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
+    // FOC_Config_T FocConfig;              /* FOC control parameters, limits. */
+    FOC_SensorlessConfig_T SensorlessConfig; /* Sensorless Observer parameters. */
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 
@@ -600,7 +597,7 @@ static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_moto
 */
 /* when SPEED_MAX = Kv * VNominal * 2 */
 static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
-static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.VSpeedScalar_Fract16); }
+static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedScalar_Fract16); }
 // collapse vspeed
 // static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16); }
 

@@ -324,6 +324,29 @@ typedef struct FOC_SensorlessConfig
 }
 FOC_SensorlessConfig_T;
 
+/*
+    Conservative starting point; K_smo and PllPid will need tuning per motor.
+    G_int_pu is not in config — computed at runtime by FOC_Sensorless_InitG from Lq.
+    LpfCoef: ~100 Hz at 20 kHz (k_lp = dt/(τ+dt), τ = 1/(2π·100) = 1592 µs, dt = 50 µs).
+    PLL gains: normalised PllErr (fract16 ±1) → ω̂ (angle16/poll). Kp ≈ 0.01, Ki ≈ 0.001.
+*/
+#define FOC_SENSORLESS_CONFIG_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T)     \
+{                                                                                   \
+    .K_smo         = (fract16_t)FRACT16(.0F * VBus / v_max),    /* 50 % of VMax — must exceed peak EEMF at max speed */ \
+    .SmoSat        = (fract16_t)FRACT16(.15F * I / i_max),    /* 15 % of IMax boundary layer */                       \
+    .LpfCoef       = 998,                                           /* ~100 Hz LPF at 20 kHz */                             \
+    .LockEmfMin    = (ufract16_t)FRACT16(.05F * VBus / v_max),   /* 5 % of VMax */                                        \
+    .LockErrTol    = (ufract16_t)FRACT16(.05F), /* 5 % normalised PLL error */                           \
+    .LockHoldCount = 200U,                                          /* 10 ms at 20 kHz */                                   \
+    .PllPid =                                                                       \
+    {                                                                               \
+        .Mode       = PID_MODE_PI,                                                  \
+        .SampleFreq = 20000U,                                                       \
+        .Kp_Fixed32 = 328,      /* ≈ 0.01 Q17.15 */                                 \
+        .Ki_Fixed32 = 33,       /* ≈ 0.001 Q17.15 */                                \
+        .Kd_Fixed32 = 0,                                                            \
+    },                                                                              \
+}
 
 typedef struct FOC_Sensorless
 {
@@ -375,41 +398,7 @@ static void FOC_Sensorless_ResetState(FOC_Sensorless_T * p_obs)
 
 static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T * p_config)
 {
-    if (p_config != NULL)
-    {
-        p_obs->Config = *p_config;
-    }
-    else
-    {
-        FOC_SensorlessConfig_T sensorless_default =
-        {
-            // .Rs_pu = p_motor->Config.Decoupling.Rs,
-            // .Lq_KL_pu = p_motor->Config.Decoupling.Lq,
-            // .Psi_pu = psi_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), 150U /*Kv*/, 4U /*P*/),
-            // .G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / Lq_KL), (int32_t)FRACT16_MAX),
-
-            /* SMO. */
-            .K_smo = FRACT16_MAX / 4,    /* ~0.25 pu sliding gain */
-            .SmoSat = FRACT16_MAX / 16,   /* ~0.06 pu boundary layer */
-            .LpfCoef = FRACT16_MAX / 32,   /* α ≈ 0.03  →  τ ≈ 1.5 ms */
-
-            /* Lock detector. */
-            .LockEmfMin = 500,
-            .LockErrTol = FRACT16_MAX / 8,    /* ≈ sin(7°) */
-            .LockHoldCount = 200,                /* 10 ms at 20 kHz */
-
-            /* PLL loop filter — conservative debug gains. */
-            .PllPid =
-            {
-                .Mode = PID_MODE_PI,
-                .SampleFreq = 20000U,
-                .Kp_Fixed32 = 1L << 10,    /* ≈ 0.031 in Q17.15 */
-                .Ki_Fixed32 = 1L << 4,
-                .Kd_Fixed32 = 0,
-            },
-        };
-        p_obs->Config = sensorless_default;
-    }
+    if (p_config != NULL) { p_obs->Config = *p_config; }
     // p_obs->G_int_pu = math_min((int32_t)((uint64_t)FRACT16_PI * FRACT16_SCALE / p_foc->Electrical.Lq), FRACT16_MAX);
     PID_InitFrom(&p_obs->PllPid, &p_obs->Config.PllPid);
     FOC_Sensorless_ResetState(p_obs);

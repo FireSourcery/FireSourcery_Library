@@ -48,7 +48,6 @@ typedef struct
     uint32_t Lq;
     uint32_t Rs;
     uint32_t Psi;
-    // union { fract16_t Psi; uint16_t Kv; };
 }
 FOC_Electrical_T;
 
@@ -248,7 +247,6 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vbus, an
     uint32_t vqLimit = math_max((int32_t)_FOC_VqCircleLimit(p_foc, vPhaseLimit) - math_abs(vq_ff), 0);
     interval_t band = interval_of_sign(math_sign(angleSpeed), vqLimit);
     PID_CaptureOutputLimits(&p_foc->PidIq, band.low, band.high);
-
     p_foc->Vq = fract16_sat((accum32_t)PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff);
 }
 // #endif
@@ -398,7 +396,7 @@ static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 
 static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
 {
-    FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
+    FOC_ProcIFeedback_Decouple(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
 }
 
 // static inline void FOC_ProcITorque(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)

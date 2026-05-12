@@ -71,11 +71,8 @@ void Motor_Init(Motor_T * p_dev)
 */
 void Motor_Reset(Motor_State_T * p_motor)
 {
-    // Motor_Config_Validate(&p_motor->Config);
+    // Motor_Config_Validate(&p_motor->Config); /* State Machine Enter Fault on invalid config */
     p_motor->ElectricalSpeedRef = Motor_ElectricalSpeedRef_FromSpeedRating(&p_motor->Config.SpeedRating);
-
-
-
     Motor_InitUnits(p_motor);
 
     /* Output Limits Set later depending on commutation mode, feedback mode, direction */
@@ -103,9 +100,10 @@ void Motor_Reset(Motor_State_T * p_motor)
 
     Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
-    Motor_InitDecouplingCoeffs(&p_motor->Config);
 
     FOC_Init(&p_motor->Foc);
+    Motor_InitDecouplingCoeffs(&p_motor->Config); //todo
+    // FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.ElectricalRsLs);
     FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.Decoupling);
     FOC_Sensorless_Init(&p_motor->FocSensorless, NULL);
     FOC_Sensorless_InitG(&p_motor->Foc, &p_motor->FocSensorless);
@@ -154,7 +152,6 @@ void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
     p_config->Decoupling.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
     p_config->Decoupling.Psi = psi_pu_of_kv(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->SpeedRating.Kv, p_config->SpeedRating.PolePairs);
     // #endif
-
 }
 
 /******************************************************************************/

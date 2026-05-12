@@ -187,6 +187,8 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     int16_t qReq = (p_state->FeedbackMode.Current == 1U) ? Ramp_ProcNext(&p_state->TorqueRamp) : Motor_VRamp(p_state, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS));
     int16_t dReq = (p_state->FeedbackMode.Current == 1U) ? FOC_ProcIdFieldWeakening(&p_state->Foc, vbus) : 0;
     Motor_FOC_AngleControl(p_state, vbus, Angle_Value(&p_state->SensorState.AngleSpeed), dReq, qReq);
+
+    // seperate, current only
 }
 
 /* applicable on batch callback */

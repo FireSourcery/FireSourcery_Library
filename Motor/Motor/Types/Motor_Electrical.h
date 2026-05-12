@@ -41,6 +41,8 @@ typedef struct
     uint8_t  PolePairs;
     uint16_t Kv;
     uint16_t SpeedRated_Rpm;
+    uint16_t VSpeedScalar_Fract16;      /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
+    /* collapse one */
 }
 Motor_ElectricalSpeedRating_T;
 // Motor_KSpeed_T;

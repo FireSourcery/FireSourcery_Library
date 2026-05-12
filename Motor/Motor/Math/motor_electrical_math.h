@@ -230,6 +230,9 @@ static inline uint32_t kt_unm_per_a_of_psi(uint32_t psi_uWb, uint8_t polePairs) 
     PU encoding:  Rs_pu × FRACT16_SCALE = Rs · I_max / V_max
 */
 /******************************************************************************/
+#define MOTOR_R_FRACT16(V_Scale, I_Scale, R_Ohm, SI_Scale) ((float)(R_Ohm) * I_Scale * FRACT16_SCALE / ((uint64_t)V_Scale * SI_Scale))
+#define MOTOR_R_FRACT16_OF_MOHM(V_Scale, I_Scale, R_mOhm) MOTOR_R_FRACT16(V_Scale, I_Scale, R_mOhm, 1000UL)
+
 // static inline uint32_t rs_mohm_of_vi(uint32_t v_mV, uint32_t i_mA) { return (uint64_t)v_mV * 1000UL / i_mA; }
 static inline uint32_t rs_mohm_of_vi_ll_y(uint32_t v_mV_ll, uint32_t i_mA) { return (uint64_t)v_mV_ll * 1000UL / (2UL * i_mA); }
 
@@ -254,7 +257,8 @@ static inline fract16_t rs_pu_of_vd_id(fract16_t vd_pu, fract16_t id_pu) { retur
         The π factor absorbs the 2π·Fs/65536 angle16-step → rad/s conversion.
 */
 /******************************************************************************/
-#define MOTOR_L_FRACT16(Fs, v_max_V, i_max_A, L_Henries, SI_Scale) ((float)L_Henries * i_max_A * Fs * FRACT16_PI / ((uint64_t)v_max_V * SI_Scale))
+#define MOTOR_L_FRACT16(Fs, V_Scale, I_Scale, L_Henries, SI_Scale) ((float)(L_Henries) * I_Scale * Fs * FRACT16_PI / ((uint64_t)V_Scale * SI_Scale))
+#define MOTOR_L_FRACT16_OF_UH(Fs, V_Scale, I_Scale, L_uHenries) MOTOR_L_FRACT16(Fs, V_Scale, I_Scale, L_uHenries, 1000000UL)
 
 /* l_pu < UINT64_MAX / (v_max_V × scale) */
 static inline uint32_t l_h_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * i_max_A * polling_freq); }
