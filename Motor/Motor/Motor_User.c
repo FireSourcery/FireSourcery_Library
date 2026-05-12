@@ -288,6 +288,9 @@ void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) {
 /* select higher value as consistent reference */
 void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetSpeedMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16)); }
 
+// user lyaer handle
+// if (sign(ω_actual) != sign(Iq_ref) && | ω_actual | > ω_threshold) :
+    // Iq_ref = clamp(Iq_ref, −Iq_plug_limit, 0)  // or hold = 0 until speed crosses
 /******************************************************************************/
 /*!
     Generic Mode
