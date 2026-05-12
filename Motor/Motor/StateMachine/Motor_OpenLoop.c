@@ -221,8 +221,12 @@ State_T OPEN_LOOP_STATE_START_UP_ALIGN =
 static State_T * OpenLoop_StartUpRun(Motor_T * p_motor, state_value_t null)
 {
     (void)null;
-    Phase_ActivateT0(&p_motor->PHASE);
-    return &OPEN_LOOP_STATE_START_UP_ALIGN;
+    if (p_motor->P_MOTOR->Direction != MOTOR_DIRECTION_NULL)
+    {
+        Phase_ActivateV0(&p_motor->PHASE);
+        return &OPEN_LOOP_STATE_START_UP_ALIGN;
+    }
+    return NULL;
 }
 
 void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)

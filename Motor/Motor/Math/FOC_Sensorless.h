@@ -394,7 +394,7 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T
             .LpfCoef = FRACT16_MAX / 32,   /* α ≈ 0.03  →  τ ≈ 1.5 ms */
 
             /* Lock detector. */
-            .LockEmfMin = FRACT16_MAX / 32,
+            .LockEmfMin = 500,
             .LockErrTol = FRACT16_MAX / 8,    /* ≈ sin(7°) */
             .LockHoldCount = 200,                /* 10 ms at 20 kHz */
 
