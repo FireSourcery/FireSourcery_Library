@@ -46,16 +46,16 @@
 /******************************************************************************/
 
 /* Durations in control cycles (20 kHz => 1 ms = 20 cycles) */
-#define PARAMID_ALIGN_SETTLE_MS     (1000U)  /* rotor pull-in + damping */
-#define PARAMID_RS_WINDOW_MS        (500U)  /* averaging window */
+#define PARAMID_ALIGN_SETTLE_MS     (500U)  /* rotor pull-in + damping */
+#define PARAMID_RS_WINDOW_MS        (200U)  /* averaging window */
 // #define PARAMID_LD_HALFPERIOD_MS    (2U)    /* Vd square-wave half period */
 // #define PARAMID_LD_SETTLE_CYCLES    (8U)    /* samples skipped at start of each half */
-#define PARAMID_LD_WINDOW_MS        (20U)   /* step-response observation window */
-#define PARAMID_LQ_WINDOW_MS        (32U)   /* HFI integration window */
+#define PARAMID_LD_WINDOW_MS        (50U)   /* step-response observation window */
+#define PARAMID_LQ_WINDOW_MS        (50U)   /* 48 full HFI cycles */
 #define PARAMID_RAMPDOWN_MS         (100U)
 
-// #define PARAMID_VHFI_FRACT16         (3277)  /* ~10% of V_MAX injection amplitude */
-// #define PARAMID_LD_VSTEP_FRACT16     (1638)  /* ~5% of V_MAX step amplitude */
+// #define PARAMID_VHFI_FRACT16         (3277)  /* ~10% of V_BUS injection amplitude */
+// #define PARAMID_LD_VSTEP_FRACT16     (1638)  /* ~5% of V_BUS step amplitude */
 
 /* Phase advance per PWM cycle for HFI sinusoid = fh * 2^16 / Fs (angle16) */
 #define PARAMID_HFI_FREQ_HZ         (1000U) /* HFI frequency */
@@ -81,14 +81,12 @@ typedef struct ElectricalCalibration
 {
     ElectricalCalibraton_Stage_T  Step;              /* ElectricalCalibraton_Stage_T */
     uint32_t CycleCount;        /* cycles within current step */
+    uint32_t AccumN;
 
     fract16_t IdBias;           /* aligned Id setpoint */
 
     int64_t  VdAccum;
     int64_t  IdAccum;
-    int32_t  VdAccum1;
-    int32_t  IdAccum1;
-    uint32_t AccumN;
 
     /* Ld step */
     fract16_t VdStep;
@@ -107,10 +105,10 @@ typedef struct ElectricalCalibration
     int64_t   IqSumI;
     int64_t   IqSumQ;
 
+    int TauSet;
+
     FOC_Electrical_T Results;
     FOC_Electrical_T ResultsSi;
-    // FOC_Electrical_T ResultsPu;
-    // fract16_t Rs_Fract16;
 }
 ElectricalCalibration_T;
 
@@ -130,21 +128,11 @@ static ElectricalCalibration_T * ElectricalCalibrationBuffer(Motor_State_T * p_m
     RAMPDOWN      : ramp Id back to zero, exit to parent
 */
 /******************************************************************************/
-
-// static void paramid_reset_accumulators(ElectricalCalibration_T * p_params)
-// {
-//     p_params->VdAccum = 0;
-//     p_params->IdAccum = 0;
-//     p_params->AccumN  = 0U;
-//     p_params->IqSumI  = 0;
-//     p_params->IqSumQ  = 0;
-// }
-
 static void SetNext(ElectricalCalibration_T * p_params, ElectricalCalibraton_Stage_T next)
 {
     p_params->Step = next;
     p_params->CycleCount = 0U;
-    // p_params->AccumN = 0U;
+    p_params->AccumN = 0U;
 }
 
 
@@ -171,14 +159,10 @@ static void ProcRs(ElectricalCalibration_T * p_params, fract16_t vd, fract16_t i
         p_params->ResultsSi.Rs = rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Rs);
 
         /* Precompute steady-state Vd bias so Ld step averages to Id_bias. */
-        // p_params->VdStep               = PARAMID_LD_VSTEP_FRACT16;
-        p_params->VdStep               = (fract16_t)vd_avg;
         p_params->VdBias               = (fract16_t)vd_avg;
-        p_params->VdAccum1 = vd;
-        p_params->IdAccum1 = id;
         p_params->IdSteady             = (fract16_t)id_avg;
-        p_params->IdTauCycles          = 0U;
         p_params->IdTau                = GetIdTau(p_params);
+        p_params->IdTauCycles          = 0U;
         SetNext(p_params, PARAMID_STEP_LD_INJECT);
     }
     // else
@@ -206,7 +190,7 @@ static void ProcLd(ElectricalCalibration_T * p_params, fract16_t id)
     {
         if (p_params->IdTauCycles == 0U) { p_params->IdTauCycles = p_params->CycleCount; }
         p_params->Results.Ld = l_pu_of_rs_tau_cycles(p_params->Results.Rs, p_params->IdTauCycles);
-        p_params->ResultsSi.Ld = l_uh_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Ld);
+        p_params->ResultsSi.Ld = l_h_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Ld, 1000000UL);
         SetNext(p_params, PARAMID_STEP_LQ_HFI);
     }
 }
@@ -232,9 +216,9 @@ static void ProcLq(ElectricalCalibration_T * p_params, fract16_t iq)
     {
         int32_t i_norm = (int32_t)((p_params->IqSumI * 2) / p_params->AccumN / 32768);
         int32_t q_norm = (int32_t)((p_params->IqSumQ * 2) / p_params->AccumN / 32768);
-        uint32_t i_mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
+        uint16_t i_mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
         p_params->Results.Lq = l_pu_of_hfi(MOTOR_CONTROL_FREQ, p_params->HfiFreqHz, p_params->Vhfi, i_mag);
-        p_params->ResultsSi.Lq = l_uh_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Lq);
+        p_params->ResultsSi.Lq = l_h_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Lq, 1000000UL);
         SetNext(p_params, PARAMID_STEP_COMMIT);
     }
 }
@@ -263,6 +247,14 @@ static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T *
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
 
+static void CommitResultsSi(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
+{
+    p_storage->Ld = p_params->ResultsSi.Ld;
+    p_storage->Lq = p_params->ResultsSi.Lq;
+    p_storage->Rs = p_params->ResultsSi.Rs;
+    SetNext(p_params, PARAMID_STEP_RAMPDOWN);
+}
+
 
 /******************************************************************************/
 /*!
@@ -280,19 +272,24 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_context->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_context);
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
+    // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    Ramp_SetOutputLimit(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
 
     p_context->ControlTimerBase = 0U;
 
     /* Clear full scratch, then set bias */
     *p_params = (ElectricalCalibration_T){ 0 };
     p_params->Step = PARAMID_STEP_ALIGN;
-    p_params->IdBias = Motor_GetIAlign(&p_context->Config) * 2;
-    // p_params->VdStep = PARAMID_LD_VSTEP_FRACT16;
+    p_params->CycleCount = 0U;
+
+    p_params->IdBias = Motor_GetIAlign(&p_context->Config);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
     p_params->HfiDelta = PARAMID_HFI_PHASE_DELTA;
-    p_params->Vhfi = Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS);
-    // p_params->Vhfi = PARAMID_VHFI_FRACT16;
+    p_params->Vhfi = VBus_Fract16(p_motor->P_VBUS) / 10;
+    p_params->VdStep = VBus_Fract16(p_motor->P_VBUS) / 20;
     // p_params->VdStep = Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
+    // p_params->Vhfi = Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
 }
 
 static void Electrical_Proc(Motor_T * p_motor)
@@ -310,20 +307,20 @@ static void Electrical_Proc(Motor_T * p_motor)
             Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
-        // case PARAMID_STEP_LD_INJECT:
-        //     fract16_t vd = p_params->VdBias + p_params->VdStep;
-        //     FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-        //     Motor_FOC_ProcAngleFeedforwardV(p_context, 0, vd, 0);
-        //     ProcLd(p_params, FOC_Id(&p_context->Foc));
-        //     break;
-        // case PARAMID_STEP_LQ_HFI:
-        //     fract16_t vq_inject = fract16_mul(p_params->Vhfi, fract16_sin(p_params->HfiPhase));
-        //     FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-        //     Motor_FOC_ProcAngleFeedforwardV(p_context, 0, p_params->VdBias, vq_inject);
-        //     ProcLq(p_params, FOC_Iq(&p_context->Foc));
-        //     break;
+        case PARAMID_STEP_LD_INJECT:
+            fract16_t vd = p_params->VdBias + p_params->VdStep;
+            FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
+            Motor_FOC_ProcAngleFeedforwardV(p_context, 0, vd, 0);
+            ProcLd(p_params, FOC_Id(&p_context->Foc));
+            break;
+        case PARAMID_STEP_LQ_HFI:
+            fract16_t vq = fract16_mul(p_params->Vhfi, fract16_sin(p_params->HfiPhase));
+            FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
+            Motor_FOC_ProcAngleFeedforwardV(p_context, 0, p_params->VdBias, vq);
+            ProcLq(p_params, FOC_Iq(&p_context->Foc));
+            break;
         case PARAMID_STEP_COMMIT:
-            CommitResults(p_params, &p_context->Config.ElectricalParams);
+            CommitResultsSi(p_params, &p_context->Config.ElectricalParams);
             CommitResults(p_params, &p_context->Config.Decoupling);
             Motor_InitDecouplingCoeffs(&p_context->Config);
             break;
@@ -333,12 +330,9 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
         case PARAMID_STEP_DONE:
         default:
-            /* Hold zero Vd/Vq until parent promotes back to CALIBRATION root */
-            Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
+            Phase_ActivateV0(&p_motor->PHASE);
             break;
     }
-
-    //Motor_FOC_WriteDuty(p_motor);
 }
 
 State_T * Electrical_Next(Motor_T * p_motor)

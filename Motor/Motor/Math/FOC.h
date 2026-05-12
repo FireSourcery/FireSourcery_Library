@@ -91,10 +91,10 @@ FOC_FieldWeakeningConfig_T;
 /* same shape for SI and PU  */
 typedef struct
 {
-    uint16_t Ld;
-    uint16_t Lq;
-    uint16_t Rs;
-    uint16_t Psi;
+    uint32_t Ld;
+    uint32_t Lq;
+    uint32_t Rs;
+    uint32_t Psi;
     // union { fract16_t Psi; uint16_t Kv; };
 }
 FOC_Electrical_T;

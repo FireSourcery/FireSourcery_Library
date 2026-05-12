@@ -178,10 +178,9 @@ static inline int32_t   rpm_of_kv_v_pu(uint16_t v_max_V, uint16_t kv, fract16_t 
 /* [V / (Rad/s)] base. generic for caller compose  */
 static inline uint32_t ke_vrads_of(uint16_t kv, uint32_t scale) { return ((uint64_t)scale * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
 static inline uint32_t psi_vrads_of(uint16_t kv, uint8_t polePairs, uint32_t scale) { return ke_vrads_of(kv, scale) / polePairs; }
-
 static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return ke_vrads_of(kv, 1000); }
-static inline uint32_t ke_mech_uvsrad_of_kv(uint16_t kv_rpm_per_V) { return (uint64_t)60UL * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_2PI_uX * kv_rpm_per_V); }
-static inline uint32_t ke_elec_uvsrad_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V) / polePairs; }
+// static inline uint32_t ke_mech_uvsrad_of_kv(uint16_t kv_rpm_per_V) { return (uint64_t)60UL * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_2PI_uX * kv_rpm_per_V); }
+// static inline uint32_t ke_elec_uvsrad_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V) / polePairs; }
 
 static inline ufract16_t ke_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
 
@@ -199,11 +198,11 @@ static inline ufract16_t ke_pu_speed_of_kv(uint16_t v_max_V, uint32_t speed_max_
 static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv, uint8_t polePairs) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * polePairs * v_max_V); }
 static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint32_t psi_pu, uint8_t polePairs) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_V * polePairs * psi_pu); }
 
-// static inline accum32_t kt_scaled(uint16_t kv, scale) { return ((uint64_t)60 * FRACT16_SQRT3_DIV_2 * FRACT16_SCALE / kv * 2 * FRACT16_PI); }
+// static inline accum32_t kt_nm_per_amp_of(uint16_t kv, scale) { return ((uint64_t)60 * FRACT16_SQRT3_DIV_2 * FRACT16_SCALE / kv * 2 * FRACT16_PI); }
 
 /* FOC directly from Kv — pole pairs cancel: Kt = 1.5·P·ψ_f = 1.5·P·60/(2π·Kv·P) = 1.5·Ke_mech. */
-static inline uint32_t kt_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return 3UL * ke_mech_uvsrad_of_kv(kv_rpm_per_V) / 2UL; }
-static inline uint32_t kt_rms_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V); }
+// static inline uint32_t kt_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return 3UL * ke_mech_uvsrad_of_kv(kv_rpm_per_V) / 2UL; }
+// static inline uint32_t kt_rms_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V); }
 
 /******************************************************************************/
 /*!
@@ -231,7 +230,7 @@ static inline uint32_t kt_unm_per_a_of_psi(uint32_t psi_uWb, uint8_t polePairs) 
     PU encoding:  Rs_pu × FRACT16_SCALE = Rs · I_max / V_max
 */
 /******************************************************************************/
-static inline uint32_t rs_mohm_of_vi(uint32_t v_mV, uint32_t i_mA) { return (uint64_t)v_mV * 1000UL / i_mA; }
+// static inline uint32_t rs_mohm_of_vi(uint32_t v_mV, uint32_t i_mA) { return (uint64_t)v_mV * 1000UL / i_mA; }
 static inline uint32_t rs_mohm_of_vi_ll_y(uint32_t v_mV_ll, uint32_t i_mA) { return (uint64_t)v_mV_ll * 1000UL / (2UL * i_mA); }
 
 static inline uint32_t rs_pu_of_mohm(uint16_t v_max_V, uint16_t i_max_A, uint32_t rs_mOhm) { return (uint64_t)rs_mOhm * i_max_A * FRACT16_SCALE / ((uint32_t)v_max_V * 1000UL); }
@@ -255,19 +254,23 @@ static inline fract16_t rs_pu_of_vd_id(fract16_t vd_pu, fract16_t id_pu) { retur
         The π factor absorbs the 2π·Fs/65536 angle16-step → rad/s conversion.
 */
 /******************************************************************************/
-static inline uint32_t l_pu_of_uh(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_uH) { return (uint64_t)MOTOR_PARAMS_PI_uX * l_uH * i_max_A * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_V * 1000000UL * 1000000UL); }
-static inline uint32_t l_uh_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu) { return (uint64_t)l_pu * v_max_V * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_PI_uX * i_max_A * polling_freq * FRACT16_SCALE); }
+/* l_pu < UINT64_MAX / (v_max_V × scale) */
+static inline uint32_t l_h_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * i_max_A * polling_freq); }
+static inline uint32_t l_pu_of_h(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_max_A * polling_freq * FRACT16_PI / ((uint64_t)v_max_V * scale); }
 
-static inline uint32_t l_uh_of_hfi(uint32_t f_Hz, uint32_t v_mV_pk, uint32_t i_mA_pk) { return (uint64_t)v_mV_pk * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_2PI_uX * f_Hz * i_mA_pk); }
-static inline uint32_t l_uh_of_rs_tau_us(uint32_t rs_mOhm, uint32_t tau_us) { return (uint64_t)rs_mOhm * tau_us / 1000UL; }
-static inline uint32_t l_uh_of_rs_tau_cycles(uint32_t polling_freq, uint32_t rs_mOhm, uint32_t tau_cycles) { return (uint64_t)rs_mOhm * tau_cycles * 1000UL / polling_freq; }
-static inline uint32_t l_uh_of_step(uint32_t v_mV, uint32_t di_mA, uint32_t dt_us) { return (uint64_t)v_mV * dt_us / di_mA; }
+// static inline uint32_t l_uh_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu) { return (uint64_t)l_pu * v_max_V * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_PI_uX * i_max_A * polling_freq * FRACT16_SCALE); }
+// static inline uint32_t l_pu_of_uh(uint32_t polling_freq, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_uH) { return (uint64_t)MOTOR_PARAMS_PI_uX * l_uH * i_max_A * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_V * 1000000UL * 1000000UL); }
+
+// static inline uint32_t l_uh_of_hfi(uint32_t f_Hz, uint32_t v_mV_pk, uint32_t i_mA_pk) { return (uint64_t)v_mV_pk * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_2PI_uX * f_Hz * i_mA_pk); }
+// static inline uint32_t l_uh_of_rs_tau_us(uint32_t rs_mOhm, uint32_t tau_us) { return (uint64_t)rs_mOhm * tau_us / 1000UL; }
+// static inline uint32_t l_uh_of_rs_tau_cycles(uint32_t polling_freq, uint32_t rs_mOhm, uint32_t tau_cycles) { return (uint64_t)rs_mOhm * tau_cycles * 1000UL / polling_freq; }
+// static inline uint32_t l_uh_of_step(uint32_t v_mV, uint32_t di_mA, uint32_t dt_us) { return (uint64_t)v_mV * dt_us / di_mA; }
 
 /* PU identification — direct from FOC-loop quantities. Output uint32 (may exceed FRACT16_MAX).
        L_pu = (v/i)·Fs/(2f)·32768  =  fract16_div(v, i) · Fs/(2f)               [HFI]
        L_pu = Rs_pu · π · τ_cycles =  fract16_mul(Rs_pu, FRACT16_PI) · τ_cyc    [RL τ]
        L_pu = (v/di)·π·n_cycles·32768                                           [step] */
-static inline uint32_t l_pu_of_hfi(uint32_t polling_freq, uint32_t f_Hz, fract16_t v_pk_pu, fract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * polling_freq / (2UL * f_Hz); }
+static inline uint32_t l_pu_of_hfi(uint32_t polling_freq, uint32_t f_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * polling_freq / (2UL * f_Hz); }
 static inline uint32_t l_pu_of_rs_tau_cycles(fract16_t rs_pu, uint32_t tau_cycles) { return (uint64_t)fract16_mul(rs_pu, FRACT16_PI) * tau_cycles; }
 static inline uint32_t l_pu_of_step(fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return (uint64_t)fract16_mul(fract16_div(v_pu, di_pu), FRACT16_PI) * dt_cycles; }
 

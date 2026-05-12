@@ -393,6 +393,7 @@ typedef struct Motor_State
     // volatile uint32_t MicrosRef;
     volatile uint32_t DebugCounter;
 #endif
+    volatile uint32_t DebugBuffer[16];
 }
 Motor_State_T;
 
