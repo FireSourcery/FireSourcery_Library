@@ -60,6 +60,13 @@ static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_phas
 //     FOC_SetTheta(p_foc, angle);
 //     FOC_CaptureIabc(p_foc, p_phaseData);
 // }
+// static inline void  _FOC_ProcIFeedbackLoop(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle, ufract16_t vBus,  int16_t dReq, int16_t qReq)
+// {
+//     FOC_SetTheta(p_foc, angle);
+//     FOC_CaptureIabc(p_foc, p_phaseData);
+//     FOC_ProcIFeedback(p_foc, vBus, direction, dReq, qReq);
+//     FOC_ProcOutputDuty(p_foc, Phase_VBus_Inv_Fract32());
+// }
 
 static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_input)
 {
@@ -90,18 +97,6 @@ static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
 }
 
 
-
-// static FOC_Electrical_T FOC_Electrical_Fract16OfSi(const FOC_Electrical_T * p_si, kv, )
-// {
-//     // return (FOC_Electrical_T)
-//     // {
-//     //     .Ld = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Ld),
-//     //     .Lq = l_fract16_of_uh(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Lq),
-//     //     .Rs = rs_fract16_of_mohms(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_si->Rs),
-//     //     .Psi = psi_vfract16_of_ke_mvrads(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_si->Psi),
-//     //     // .Psi = psi_vfract16_of_ke_mvrads(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), kv, poleParis),
-//     // };
-// }
 
 
 

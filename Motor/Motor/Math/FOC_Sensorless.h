@@ -47,6 +47,7 @@
 #include "Math/Fixed/fract16.h"
 #include "Math/Angle/Angle.h"
 #include "Math/PID/PID.h"
+#include "FOC.h"
 
 #include <stdint.h>
 #include <stdbool.h>

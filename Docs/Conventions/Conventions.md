@@ -212,3 +212,5 @@ ownership vs pointer reference determined by thread of operation
 #
 Adding indirection without adding concept vs enforcing pair correctness
 
+#
+Parameterize vs seperate function / call path vs super function anti pattern

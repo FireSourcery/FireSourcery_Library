@@ -78,7 +78,8 @@ PID_T;
 static inline int16_t PID_GetOutput(const PID_T * p_pid) { return p_pid->Output; }
 static inline int16_t PID_GetIntegral(const PID_T * p_pid) { return (p_pid->IntegralAccum >> 15); }
 
-static inline bool PID_IsLimited(const PID_T * p_pid) { return (p_pid->Output == p_pid->OutputMin) || (p_pid->Output == p_pid->OutputMax); }
+static inline bool PID_IsSaturated(const PID_T * p_pid) { return (p_pid->Output == p_pid->OutputMin) || (p_pid->Output == p_pid->OutputMax); }
+// static inline bool PID_IsSaturated(const PID_T * p_pid) { return math_clamp(p_pid->Output, p_pid->OutputMin, p_pid->OutputMax) != p_pid->Output; }
 
 
 /******************************************************************************/

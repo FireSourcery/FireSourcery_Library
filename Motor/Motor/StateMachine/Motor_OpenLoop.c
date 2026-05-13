@@ -98,7 +98,6 @@ static void AngleAlign_Entry(Motor_T * p_motor)
 static void AngleAlign_Loop(Motor_T * p_motor)
 {
     Motor_FOC_ProcAlignCmd(p_motor);
-    //Motor_FOC_WriteDuty(p_motor);
 }
 
 /*

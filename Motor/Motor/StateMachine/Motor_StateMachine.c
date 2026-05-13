@@ -481,9 +481,12 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_State_T * p_context = p_motor->P_MOTOR;
-    FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc));
+    if (p_context->FeedbackMode.Current == 0U)
+    {
+        Ramp_SetOutputLimit(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); //switch to i limits or use vramp for voltage
+    }
+    FOC_MatchIVState(&p_context->Foc);
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc));
-
 }
 
 // min(GeneratingOnly, _Motor_GeneratingOnly PID_GetOutput(&p_state->PidSpeed));  substates inherit

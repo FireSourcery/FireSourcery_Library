@@ -97,6 +97,7 @@ typedef struct { int32_t low; int32_t high; } interval_t;
 /* [0:value] or [value:0] keyed by value sign */
 static inline interval_t interval_of(int32_t value) { return (interval_t) { .low = math_min(0, value), .high = math_max(0, value) }; }
 static inline interval_t interval_symmetric(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center + magnitude }; }
+static inline interval_t interval_offset(int32_t center, uint32_t magnitude) { return (interval_t) { .low = center - magnitude, .high = center - magnitude }; }
 
 /* interval_of_magnitude */
 /* sign-keyed half-plane: magnitude on the matching side, zero on the other */

@@ -1,0 +1,2 @@
+- Keep FOC interfaces in FOC vocabulary by passing resolved electrical constraints or FOC-side policies, not supervisor terms.
+- Separate static policy from dynamic authority: store static V bands, resolve speed or EEMF keyed overlays inside FOC each control cycle.

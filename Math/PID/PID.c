@@ -51,6 +51,26 @@ void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
 static inline int16_t GetIntegral(const PID_T * p_pid) { return (int16_t)(p_pid->IntegralAccum >> 15); }
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
 
+/* passing limits for internal state */
+int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh, int16_t error)
+{
+    int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
+
+    /* Dynamic Clamp */
+    int32_t integralMin = math_min(limitLow - proportional, 0);
+    int32_t integralMax = math_max(limitHigh - proportional, 0);
+
+    int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
+    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
+    int32_t integral = p_pid->IntegralAccum >> 15;
+
+    p_pid->ErrorPrev = error;
+
+    /* Optionally output limits as persistent saturation limits */
+    p_pid->Output = math_clamp(proportional + integral, p_pid->OutputMin, p_pid->OutputMax);
+    return p_pid->Output;
+}
+
 /*!
     Conventional parallel PID calculation
     @return control = (Kp * error) + (Ki * error * SampleTime + IntegralPrev) + (Kd * (error - ErrorPrev) / SampleTime)
@@ -87,7 +107,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
 */
 void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
-    if (max > min)
+    assert(max >= min);
+    if (max >= min) /* allow 0 width band */
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;
@@ -101,28 +122,10 @@ void PID_CaptureOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 int16_t PID_ProcPI(PID_T * p_pid, int16_t feedback, int16_t setpoint)
 {
     p_pid->Output = math_clamp(CalcPI(p_pid, (int32_t)setpoint - (int32_t)feedback), p_pid->OutputMin, p_pid->OutputMax);
+    // p_pid->Output = PID_ProcAntiWindupPI(p_pid, p_pid->OutputMin, p_pid->OutputMax, (int32_t)setpoint - feedback);
     return p_pid->Output;
 }
 
-/* passing limits for internal state */
-int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh, int16_t error)
-{
-    int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
-
-    /* Dynamic Clamp */
-    int32_t integralMin = math_min(limitLow - proportional, 0);
-    int32_t integralMax = math_max(limitHigh - proportional, 0);
-
-    int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
-    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
-    int32_t integral = p_pid->IntegralAccum >> 15;
-
-    p_pid->ErrorPrev = error;
-
-    /* Optionally output limits as persistent saturation limits */
-    p_pid->Output = math_clamp(proportional + integral, p_pid->OutputMin, p_pid->OutputMax);
-    return p_pid->Output;
-}
 
 // int32_t PID_ProcPID(PID_T * p_pid, int32_t feedback, int32_t setpoint)
 // {
@@ -160,7 +163,7 @@ void PID_SetOutputState(PID_T * p_pid, int16_t output)
 
 void PID_SetOutputLimits(PID_T * p_pid, int16_t min, int16_t max)
 {
-    if (max > min)
+    if (max >= min) /* allow 0 width band */
     {
         p_pid->OutputMin = min;
         p_pid->OutputMax = max;

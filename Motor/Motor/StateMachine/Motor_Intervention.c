@@ -107,11 +107,10 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
 static void RampSafe_Entry(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
-
+    /* Intervention_Entry calls MatchIVState */
     /* Match speed ramp to current speed for bumpless transfer */
     Ramp_SetOutputState(&p_state->SpeedRamp, Motor_GetSpeedFeedback(p_state));
     PID_SetOutputState(&p_state->PidSpeed, Ramp_GetOutput(&p_state->TorqueRamp));
-
     p_state->ControlTimerBase = 0U;
 }
 

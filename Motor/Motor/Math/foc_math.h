@@ -97,17 +97,17 @@ static inline struct foc_abc foc_inv_clarke_park(fract16_t d, fract16_t q, fract
 static inline accum32_t foc_vd_ff(fract16_t omega_Lq, fract16_t iq) { return -fract16_mul(omega_Lq, iq); }
 static inline accum32_t foc_vq_ff(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id) { return fract16_mul(omega_Ld, id) + omega_psi; }
 
-// static inline struct foc_dq foc_vdq_ff(fract16_t Ld, fract16_t  Lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq)
-// {
-//     fract16_t omega_Ld = fract16_mul(omega, Ld);
-//     fract16_t omega_Lq = fract16_mul(omega, Lq);
-//     fract16_t omega_psi = fract16_mul(omega, psi);
+static inline struct foc_dq foc_vdq_ff(fract16_t ld, fract16_t lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq)
+{
+    return (struct foc_dq)
+    {
+        .d = fract16_sat(foc_vd_ff(fract16_mul(omega, lq), iq)),
+        .q = fract16_sat(foc_vq_ff(fract16_mul(omega, ld), fract16_mul(omega, psi), id))
+    };
+}
 
-//     return (struct foc_dq) { .d = foc_vd_ff(omega_Lq, iq), .q = foc_vq_ff(id, omega_Ld, omega_psi) };
-// }
-
-static inline fract16_t foc_vd_decouple(fract16_t omega_Lq, fract16_t iq, fract16_t vd) { return fract16_sat((accum32_t)vd + foc_vd_ff(omega_Lq, iq)); }
-static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id, fract16_t vq) { return fract16_sat((accum32_t)vq + foc_vq_ff(omega_Ld, omega_psi, id)); }
+// static inline fract16_t foc_vd_decouple(fract16_t omega_Lq, fract16_t iq, fract16_t vd) { return fract16_sat((accum32_t)vd + foc_vd_ff(omega_Lq, iq)); }
+// static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id, fract16_t vq) { return fract16_sat((accum32_t)vq + foc_vq_ff(omega_Ld, omega_psi, id)); }
 
 // static inline struct foc_dq foc_vdq_decouple(fract16_t Ld, fract16_t Lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq, fract16_t vd, fract16_t vq)
 // {
@@ -116,13 +116,6 @@ static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi,
 //     fract16_t omega_psi = fract16_mul(omega, psi);
 //     return (struct foc_dq) { .d = foc_vd_decouple(vd, iq, omega_Lq), .q = foc_vq_decouple(vq, id, omega_Ld, omega_psi) };
 // }
-
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
-
 
 
 /******************************************************************************/
@@ -134,45 +127,35 @@ static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi,
     limit around d
     mag_limit^2 - d^2 = q^2
 */
-static inline bool foc_circle_limit(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
+// struct foc_dq_limit { fract16_t d, q; bool is_limited; };
+static inline struct foc_dq foc_circle_limit(fract16_t d, fract16_t q, ufract16_t magnitude_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-    uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
-    uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-    bool is_limited = false;
+    uint32_t d_squared = (int32_t)d * d;
+    uint32_t q_squared = (int32_t)q * q;
 
-    if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
-    {
-        if (d_squared > mag_limit_squared)  /* abs(d) > d_limit */
-        {
-            *p_d = math_sign(*p_d) * magnitude_limit;
-            *p_q = 0;
-        }
-        else
-        {
-            *p_q = math_sign(*p_q) * fixed_sqrt(mag_limit_squared - d_squared);
-        }
-        is_limited = true;
-    }
-
-    return is_limited;
+    /* abs(d) > d_limit */
+    if (d_squared > mag_limit_squared) { return (struct foc_dq) { .d = math_sign(d) * magnitude_limit, .q = 0 }; }
+    /* |Vdq| > magnitude_limit */
+    if (d_squared + q_squared > mag_limit_squared) { return (struct foc_dq) { .d = d, .q = math_sign(q) * fixed_sqrt(mag_limit_squared - d_squared) }; }
+    return (struct foc_dq) { .d = d, .q = q };
 }
 
 /*  */
-static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16_t magnitude_limit)
+static inline struct foc_dq foc_circle_limit_q(fract16_t d, fract16_t q, ufract16_t magnitude_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-    uint32_t d_squared = (int32_t)(*p_d) * (*p_d);
-    uint32_t q_squared = (int32_t)(*p_q) * (*p_q);
-    bool is_limited = false;
+    uint32_t d_squared = (int32_t)d * d;
+    uint32_t q_squared = (int32_t)q * q;
 
-    if (d_squared + q_squared > mag_limit_squared)  /* |Vdq| > magnitude_limit */
-    {
-        *p_q = math_sign(*p_q) * fixed_sqrt(mag_limit_squared - d_squared);
-        is_limited = true;
-    }
+    if (d_squared + q_squared > mag_limit_squared) { return (struct foc_dq) { .d = d, .q = math_sign(q) * fixed_sqrt(mag_limit_squared - d_squared) }; }
+    return (struct foc_dq) { .d = d, .q = q };
+}
 
-    return is_limited; /* or (d_squared + q_squared - mag_limit_squared)  */
+static inline ufract16_t foc_vq_circle_limit(ufract16_t magnitude_limit, fract16_t d)
+{
+    assert(abs(d) <= magnitude_limit); /* set by feedback output */
+    return fixed_sqrt((uint32_t)magnitude_limit * magnitude_limit - (int32_t)d * d);
 }
 
 /******************************************************************************/
@@ -184,29 +167,26 @@ static inline bool foc_circle_limit_q(fract16_t * p_d, fract16_t * p_q, ufract16
     Ialpha = (2*Ia - Ib - Ic)/3
     Ibeta = sqrt3/3*(Ib - Ic) = (Ib - Ic)/sqrt3
 
-    @param[out] p_alpha, p_beta
     @param[in]  a, b, c
  */
  /******************************************************************************/
-static inline void foc_clarke(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
+static inline struct foc_alphabeta foc_clarke(fract16_t a, fract16_t b, fract16_t c)
 {
     int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
     int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
 
-    *p_alpha = fract16_sat(alpha);
-    *p_beta = fract16_sat(beta);
+    return (struct foc_alphabeta) { .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
 }
 
 /*
     Ialpha = Ia
     Ibeta = (Ib - Ic)/sqrt(3)
 */
-static inline void foc_clarke_align(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b, fract16_t c)
+static inline struct foc_alphabeta foc_clarke_align(fract16_t a, fract16_t b, fract16_t c)
 {
     int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
 
-    *p_alpha = a;
-    *p_beta = fract16_sat(beta);
+    return (struct foc_alphabeta) { .alpha = a, .beta = fract16_sat(beta) };
 }
 
 /*!
@@ -215,12 +195,11 @@ static inline void foc_clarke_align(fract16_t * p_alpha, fract16_t * p_beta, fra
     Ialpha = Ia
     Ibeta = (Ia + 2*Ib)/sqrt3
 */
-static inline void foc_clarke_ab(fract16_t * p_alpha, fract16_t * p_beta, fract16_t a, fract16_t b)
+static inline struct foc_alphabeta foc_clarke_ab(fract16_t a, fract16_t b)
 {
     int32_t beta = fract16_mul((int32_t)a + (int32_t)b * 2, FRACT16_1_DIV_SQRT3);
 
-    *p_alpha = a;
-    *p_beta = fract16_sat(beta);
+    return (struct foc_alphabeta) { .alpha = a, .beta = fract16_sat(beta) };
 }
 
 /******************************************************************************/
@@ -232,7 +211,7 @@ static inline void foc_clarke_ab(fract16_t * p_alpha, fract16_t * p_beta, fract1
     c = (-alpha - sqrt3*beta)/2
 */
 /******************************************************************************/
-static inline void foc_inv_clarke(fract16_t * p_a, fract16_t * p_b, fract16_t * p_c, fract16_t alpha, fract16_t beta)
+static inline struct foc_abc foc_inv_clarke(fract16_t alpha, fract16_t beta)
 {
     int32_t alpha_div2 = fract16_mul(alpha, FRACT16_1_DIV_2);
     int32_t beta_sqrt3_div2 = fract16_mul(beta, FRACT16_SQRT3_DIV_2);
@@ -240,9 +219,7 @@ static inline void foc_inv_clarke(fract16_t * p_a, fract16_t * p_b, fract16_t * 
     int32_t b = -alpha_div2 + beta_sqrt3_div2;
     int32_t c = -alpha_div2 - beta_sqrt3_div2;
 
-    *p_a = fract16_sat(alpha);
-    *p_b = fract16_sat(b);
-    *p_c = fract16_sat(c);
+    return (struct foc_abc) { .a = fract16_sat(alpha), .b = fract16_sat(b), .c = fract16_sat(c) };
 }
 
 /******************************************************************************/
@@ -254,21 +231,17 @@ static inline void foc_inv_clarke(fract16_t * p_a, fract16_t * p_b, fract16_t * 
     Id = alpha*cos(theta) + beta*sin(theta)
     Iq = -alpha*sin(theta) + beta*cos(theta)
 
-    @param[out] p_d, p_q
     @param[in]  Ialpha, Ibeta
     @param[in]  theta - rotating frame angle in q1.15 format
 */
 /******************************************************************************/
-static inline void foc_park_vector(fract16_t * p_d, fract16_t * p_q, fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
+static inline struct foc_dq foc_park_vector(fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
 {
     int32_t d = fract16_mul(alpha, cos) + fract16_mul(beta, sin);
     int32_t q = -fract16_mul(alpha, sin) + fract16_mul(beta, cos);
 
-    *p_d = fract16_sat(d);
-    *p_q = fract16_sat(q);
+    return (struct foc_dq) { .d = fract16_sat(d), .q = fract16_sat(q) };
 }
-
-
 
 /******************************************************************************/
 /*!
@@ -278,13 +251,12 @@ static inline void foc_park_vector(fract16_t * p_d, fract16_t * p_q, fract16_t a
     beta = d*sin(theta) + q*cos(theta)
 */
 /******************************************************************************/
-static inline void foc_inv_park_vector(fract16_t * p_alpha, fract16_t * p_beta, fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
+static inline struct foc_alphabeta foc_inv_park_vector(fract16_t d, fract16_t q, fract16_t sin, fract16_t cos)
 {
     int32_t alpha = fract16_mul(d, cos) - fract16_mul(q, sin);
     int32_t beta = fract16_mul(d, sin) + fract16_mul(q, cos);
 
-    *p_alpha = fract16_sat(alpha);
-    *p_beta = fract16_sat(beta);
+    return (struct foc_alphabeta) { .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
 }
 
 /******************************************************************************/
@@ -292,111 +264,8 @@ static inline void foc_inv_park_vector(fract16_t * p_alpha, fract16_t * p_beta, 
     @brief
 */
 /******************************************************************************/
-/*!
-    Direct DQ0 Transform - converts 3-phase (a, b, c) directly to rotor reference frame (d, q, 0)
-    Combines Clarke and Park transforms in one operation
-
-    @param[out] p_d - Direct axis component
-    @param[out] p_q - Quadrature axis component
-    @param[out] p_0 - Zero sequence component (optional, can be NULL)
-    @param[in] a, b, c - Three phase values
-    @param[in] sine, cosine - Rotor angle sin/cos values
-*/
-/*
-    DQ0 transformation matrix multiplication:
-    [d]         [cos(θ)     cos(θ-2π/3)  cos(θ+2π/3)] [a]
-    [q] = 2/3 * [-sin(θ)   -sin(θ-2π/3) -sin(θ+2π/3)] [b]
-    [0]         [1/2       1/2          1/2         ] [c]
-*/
-/* park_dq */
-static inline void foc_abc_dq_transform
-(
-    fract16_t * p_d, fract16_t * p_q,
-    fract16_t a, fract16_t b, fract16_t c,
-    fract16_t cos, fract16_t sin,
-    fract16_t cos_120, fract16_t sin_120,
-    fract16_t cos_240, fract16_t sin_240
-)
-{
-    int32_t d = fract16_mul(a, cos) + fract16_mul(b, cos_120) + fract16_mul(c, cos_240);
-    int32_t q = -fract16_mul(a, sin) - fract16_mul(b, sin_120) - fract16_mul(c, sin_240);
-
-    *p_d = fract16_sat(fract16_mul(d, FRACT16_2_DIV_3));
-    *p_q = fract16_sat(fract16_mul(q, FRACT16_2_DIV_3));
-}
-
-static inline void foc_abc_dq0_transform(fract16_t * p_d, fract16_t * p_q, fract16_t * p_0, fract16_t a, fract16_t b, fract16_t c, fract16_t sine, fract16_t cosine)
-{
-    /* Pre-calculate angle shifts for 120° and 240° */
-    fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
-    fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
-    fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
-    fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
-
-    /* Calculate d-axis component */
-    /* Calculate q-axis component (negative sine for proper orientation) */
-    accum32_t d = fract16_mul(a, cosine) + fract16_mul(b, cos120) + fract16_mul(c, cos240);
-    accum32_t q = -fract16_mul(a, sine) - fract16_mul(b, sin120) - fract16_mul(c, sin240);
-
-    *p_d = fract16_mul(d, FRACT16_2_DIV_3);
-    *p_q = fract16_mul(q, FRACT16_2_DIV_3);
-
-    /* Calculate zero sequence component if requested */
-    if (p_0 != NULL)
-    {
-        accum32_t zero = (accum32_t)a + (accum32_t)b + (accum32_t)c;
-        *p_0 = fract16_mul(zero, FRACT16_1_DIV_3);
-    }
-}
-
-
-
-/*!
-    Inverse DQ0 Transform - converts rotor reference frame (d, q, 0) directly to 3-phase (a, b, c)
-    Combines inverse Park and inverse Clarke transforms in one operation
-
-    @param[out] p_a, p_b, p_c - Three phase output values
-    @param[in] d, q - Direct and quadrature axis components
-    @param[in] zero - Zero sequence component (typically 0 for balanced systems)
-    @param[in] sine, cosine - Rotor angle sin/cos values
-*/
-/*
-    Inverse DQ0 transformation matrix multiplication:
-    [a]   [cos(θ)      -sin(θ)      1] [d]
-    [b] = [cos(θ-2π/3) -sin(θ-2π/3) 1] [q]
-    [c]   [cos(θ+2π/3) -sin(θ+2π/3) 1] [0]
-*/
-static inline void foc_inv_abc_dq_transform
-(
-    fract16_t * p_a, fract16_t * p_b, fract16_t * p_c,
-    fract16_t d, fract16_t q,
-    fract16_t cos, fract16_t sin,
-    fract16_t cos_120, fract16_t sin_120,
-    fract16_t cos_240, fract16_t sin_240
-)
-{
-    int32_t a = fract16_mul(d, cos) - fract16_mul(q, sin);
-    int32_t b = fract16_mul(d, cos_120) - fract16_mul(q, sin_120);
-    int32_t c = fract16_mul(d, cos_240) - fract16_mul(q, sin_240);
-
-    *p_a = fract16_sat(a);
-    *p_b = fract16_sat(b);
-    *p_c = fract16_sat(c);
-}
-
-static inline void foc_inv_abc_dq0_transform(fract16_t * p_a, fract16_t * p_b, fract16_t * p_c, fract16_t d, fract16_t q, fract16_t zero, fract16_t sine, fract16_t cosine)
-{
-    /* Pre-calculate angle shifts for 120° and 240° */
-    fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
-    fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
-    fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
-    fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
-
-    /* Calculate three-phase components */
-    *p_a = fract16_mul(d, cosine) - fract16_mul(q, sine) + zero;
-    *p_b = fract16_mul(d, cos120) - fract16_mul(q, sin120) + zero;
-    *p_c = fract16_mul(d, cos240) - fract16_mul(q, sin240) + zero;
-}
+struct foc_dq0 { fract16_t d, q, zero; };
+struct foc_sincos6 { fract16_t cos, sin, cos_120, sin_120, cos_240, sin_240; };
 
 // static inline fract16_t foc_d_of_abc(fract16_t a, fract16_t b, fract16_t c, fract16_t cos, fract16_t cos_120, fract16_t cos_240)
 // {
@@ -408,26 +277,121 @@ static inline void foc_inv_abc_dq0_transform(fract16_t * p_a, fract16_t * p_b, f
 //     return -fract16_mul(a, sin) - fract16_mul(b, sin_120) - fract16_mul(c, sin_240);
 // }
 
+/*!
+    Direct DQ0 Transform - converts 3-phase (a, b, c) directly to rotor reference frame (d, q, 0)
+    Combines Clarke and Park transforms in one operation
+
+    @param[in] a, b, c - Three phase values
+    @param[in] sine, cosine - Rotor angle sin/cos values
+*/
+/*
+    DQ0 transformation matrix multiplication:
+    [d]         [cos(θ)     cos(θ-2π/3)  cos(θ+2π/3)] [a]
+    [q] = 2/3 * [-sin(θ)   -sin(θ-2π/3) -sin(θ+2π/3)] [b]
+    [0]         [1/2       1/2          1/2         ] [c]
+*/
+/* park_dq */
+static inline struct foc_dq foc_abc_dq_transform
+(
+    fract16_t a, fract16_t b, fract16_t c,
+    fract16_t cos, fract16_t sin,
+    fract16_t cos_120, fract16_t sin_120,
+    fract16_t cos_240, fract16_t sin_240
+)
+{
+    int32_t d = fract16_mul(a, cos) + fract16_mul(b, cos_120) + fract16_mul(c, cos_240);
+    int32_t q = -fract16_mul(a, sin) - fract16_mul(b, sin_120) - fract16_mul(c, sin_240);
+
+    return (struct foc_dq) { .d = fract16_sat(fract16_mul(d, FRACT16_2_DIV_3)), .q = fract16_sat(fract16_mul(q, FRACT16_2_DIV_3)) };
+}
+
+
+// static inline struct foc_dq0 foc_abc_dq0_transform(fract16_t a, fract16_t b, fract16_t c, fract16_t sine, fract16_t cosine)
+// {
+//     /* Pre-calculate angle shifts for 120° and 240° */
+//     fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
+//     fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
+//     fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
+//     fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
+
+//     /* Calculate d-axis component */
+//     /* Calculate q-axis component (negative sine for proper orientation) */
+//     accum32_t d = fract16_mul(a, cosine) + fract16_mul(b, cos120) + fract16_mul(c, cos240);
+//     accum32_t q = -fract16_mul(a, sine) - fract16_mul(b, sin120) - fract16_mul(c, sin240);
+
+//     /* Calculate zero sequence component */
+//     accum32_t zero = (accum32_t)a + (accum32_t)b + (accum32_t)c;
+
+//     return (struct foc_dq0)
+//     {
+//         .d = fract16_mul(d, FRACT16_2_DIV_3),
+//         .q = fract16_mul(q, FRACT16_2_DIV_3),
+//         .zero = fract16_mul(zero, FRACT16_1_DIV_3)
+//     };
+// }
+
+
+
+/*!
+    Inverse DQ0 Transform - converts rotor reference frame (d, q, 0) directly to 3-phase (a, b, c)
+    Combines inverse Park and inverse Clarke transforms in one operation
+
+    @param[in] d, q - Direct and quadrature axis components
+    @param[in] zero - Zero sequence component (typically 0 for balanced systems)
+    @param[in] sine, cosine - Rotor angle sin/cos values
+*/
+/*
+    Inverse DQ0 transformation matrix multiplication:
+    [a]   [cos(θ)      -sin(θ)      1] [d]
+    [b] = [cos(θ-2π/3) -sin(θ-2π/3) 1] [q]
+    [c]   [cos(θ+2π/3) -sin(θ+2π/3) 1] [0]
+*/
+static inline struct foc_abc foc_inv_abc_dq_transform
+(
+    fract16_t d, fract16_t q,
+    fract16_t cos, fract16_t sin,
+    fract16_t cos_120, fract16_t sin_120,
+    fract16_t cos_240, fract16_t sin_240
+)
+{
+    int32_t a = fract16_mul(d, cos) - fract16_mul(q, sin);
+    int32_t b = fract16_mul(d, cos_120) - fract16_mul(q, sin_120);
+    int32_t c = fract16_mul(d, cos_240) - fract16_mul(q, sin_240);
+
+    return (struct foc_abc) { .a = fract16_sat(a), .b = fract16_sat(b), .c = fract16_sat(c) };
+}
+
+// static inline struct foc_abc foc_inv_abc_dq0_transform(fract16_t d, fract16_t q, fract16_t zero, fract16_t sine, fract16_t cosine)
+// {
+//     /* Pre-calculate angle shifts for 120° and 240° */
+//     fract16_t cos120 = fract16_mul(cosine, FRACT16_COS_120) - fract16_mul(sine, FRACT16_SIN_120);  /* cos(θ-120°) */
+//     fract16_t sin120 = fract16_mul(sine, FRACT16_COS_120) + fract16_mul(cosine, FRACT16_SIN_120);  /* sin(θ-120°) */
+//     fract16_t cos240 = fract16_mul(cosine, FRACT16_COS_240) - fract16_mul(sine, FRACT16_SIN_240);  /* cos(θ+120°) */
+//     fract16_t sin240 = fract16_mul(sine, FRACT16_COS_240) + fract16_mul(cosine, FRACT16_SIN_240);  /* sin(θ+120°) */
+
+//     /* Calculate three-phase components */
+//     return (struct foc_abc)
+//     {
+//         .a = fract16_mul(d, cosine) - fract16_mul(q, sine) + zero,
+//         .b = fract16_mul(d, cos120) - fract16_mul(q, sin120) + zero,
+//         .c = fract16_mul(d, cos240) - fract16_mul(q, sin240) + zero
+//     };
+// }
+
 
 /******************************************************************************/
 /*!
     optimized versions with precomputed sin/cos for 120 and 240 degree shifts
 */
 /******************************************************************************/
-static inline void foc_abc_dq_angle
-(
-    fract16_t * p_cos, fract16_t * p_sin,
-    fract16_t * p_cos_120, fract16_t * p_sin_120, /* (θ-120°) */
-    fract16_t * p_cos_240, fract16_t * p_sin_240, /* (θ+120°) */
-    angle16_t theta
-)
+static inline struct foc_sincos6 foc_abc_dq_angle(angle16_t theta)
 {
-    *p_cos = fract16_cos(theta);
-    *p_sin = fract16_sin(theta);
-    *p_cos_120 = fract16_mul(*p_cos, FRACT16_COS_120) - fract16_mul(*p_sin, FRACT16_SIN_120);  /* cos(θ-120°) */
-    *p_sin_120 = fract16_mul(*p_sin, FRACT16_COS_120) + fract16_mul(*p_cos, FRACT16_SIN_120);  /* sin(θ-120°) */
-    *p_cos_240 = *p_cos_120;
-    *p_sin_240 = -*p_sin_120;
+    fract16_t cos = fract16_cos(theta);
+    fract16_t sin = fract16_sin(theta);
+    fract16_t cos_120 = fract16_mul(cos, FRACT16_COS_120) - fract16_mul(sin, FRACT16_SIN_120);  /* cos(θ-120°) */
+    fract16_t sin_120 = fract16_mul(sin, FRACT16_COS_120) + fract16_mul(cos, FRACT16_SIN_120);  /* sin(θ-120°) */
+
+    return (struct foc_sincos6) { .cos = cos, .sin = sin, .cos_120 = cos_120, .sin_120 = sin_120, .cos_240 = cos_120, .sin_240 = -sin_120 };
 }
 
 
