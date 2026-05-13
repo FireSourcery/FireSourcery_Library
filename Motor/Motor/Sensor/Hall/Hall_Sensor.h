@@ -99,6 +99,7 @@ static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
     AngleCounter_ResolveAngleDelta(p_counter);
     /* Write speed to output interface */
     p_sensor->BASE.P_STATE->Speed_Fract16 = (AngleCounter_GetSpeed_Fract16(p_counter) + p_sensor->BASE.P_STATE->Speed_Fract16) / 2;
+    p_sensor->BASE.P_STATE->AngleSpeed.Delta = p_counter->Base.Delta;
 }
 
 
