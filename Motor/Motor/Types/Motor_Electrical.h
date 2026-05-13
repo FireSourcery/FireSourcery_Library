@@ -70,36 +70,6 @@ Motor_RL_T;
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
 static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_degPerCycle); }
 
-/*
-    Speed/V relation based on Kv.
-    Rpm of Kv * V
-*/
-static inline uint16_t Motor_RpmOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return rpm_of_kv_v_pu(Phase_Calibration_GetVMaxVolts(), p_config->Kv, v_fract16); }
-static inline uint16_t Motor_VFract16OfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t rpm) { return v_pu_of_kv_rpm(Phase_Calibration_GetVMaxVolts(), p_config->Kv, rpm); }
-static inline uint16_t Motor_AngleSpeedOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return _Motor_AngleOfRpm(p_config, Motor_RpmOfKv(p_config, v_fract16)); }
-
-
-/******************************************************************************/
-/*
-    [SpeedRated] via direct Parameter
-    Simplify user set and decouples TypeMax from VBus module
-    alternatively user calibration speedtypemax determine from user set vnomial
-    Config set Kv mediates
-*/
-/******************************************************************************/
-// static inline uint16_t Motor_ResolveSpeedRated_Rpm(Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { p_config->SpeedRated_Rpm = Motor_RpmOfKv(p_config, vNominal_fract16); }
-static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
-// static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
-
-/* alternatively kv subsitutes VSpeedScalar_Fract16 for electrical */
-// static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
-// static inline uint16_t Motor_EffectiveSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
-//
-static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return rpm_of_kv_v_pu(Phase_Calibration_GetVMaxVolts(), p_config->Kv, volts); }
-static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return p_config->SpeedRated_Rpm; }
-
-// static inline uint16_t Motor_GetSpeedVMatch_(const Motor_ElectricalSpeedRating_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
 
 /******************************************************************************/
 /*
@@ -131,6 +101,35 @@ static inline int16_t Motor_Speed_RpmOfFract16(const Motor_ElectricalSpeedRating
 /* [SpeedRated_Rpm] = [KvVBusNominal] = [SpeedTypeMax_Rpm] / 2  */
 /* Keep instanced */
 static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { (void)p_config; return INT16_MAX / 2; }
+
+/******************************************************************************/
+/*
+    [SpeedRated] via direct Parameter
+    Simplify user set and decouples TypeMax from VBus module
+    alternatively user calibration speedtypemax determine from user set vnomial
+    Config set Kv mediates
+*/
+/******************************************************************************/
+// static inline uint16_t Motor_ResolveSpeedRated_Rpm(Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { p_config->SpeedRated_Rpm = Motor_RpmOfKv(p_config, vNominal_fract16); }
+static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
+// static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
+
+/* alternatively kv subsitutes VSpeedScalar_Fract16 for electrical */
+// static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
+// static inline uint16_t Motor_EffectiveSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
+//
+// static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return rpm_of_kv_v(p_config->Kv, volts); }
+// static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return p_config->SpeedRated_Rpm; }
+
+// static inline uint16_t Motor_GetSpeedVMatch_(const Motor_ElectricalSpeedRating_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
+/*
+    Speed/V relation based on Kv.
+    Rpm of Kv * V
+*/
+/* keep cross domain to one interface */
+// static inline uint16_t Motor_RpmOfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t v_fract16) { return rpm_of_kv_v_pu(Phase_Calibration_GetVMaxVolts(), p_config->Kv, v_fract16); }
+// static inline uint16_t Motor_VFract16OfKv(const Motor_ElectricalSpeedRating_T * p_config, uint16_t rpm) { return v_pu_of_kv_rpm(Phase_Calibration_GetVMaxVolts(), p_config->Kv, rpm); }
 
 
 /******************************************************************************/

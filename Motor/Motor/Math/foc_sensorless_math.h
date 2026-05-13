@@ -70,9 +70,6 @@
     starting near ω_e = 0.
 */
 /******************************************************************************/
-static inline accum32_t motor_v_stator(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t i_prev, fract16_t i) { return fract16_mul(Rs_pu, i) + fract16_mul(Ls_pu, i_prev - i); }
-static inline accum32_t motor_emf(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t i_prev, fract16_t i, fract16_t v) { return v - motor_v_stator(Rs_pu, Ls_pu, i_prev, i); }
-
 static inline fract16_t foc_emf_axis(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t v, fract16_t i, fract16_t di)
 {
     return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i) - fract16_mul(Ls_pu, di));

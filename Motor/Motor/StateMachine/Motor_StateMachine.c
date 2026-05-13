@@ -380,6 +380,20 @@ static void Run_Proc(Motor_T * p_motor)
     //     if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
     // }
 
+    // if (p_motor->FeedbackMode.Speed == 1U)
+    // {
+    //     Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor));
+    // }
+
+    // if (p_motor->FeedbackMode.Current == 1U)
+    // {
+    //     Motor_FOC_ProcTorqueReq(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp));
+    // }
+    // else
+    // {
+        // Motor_FOC_ProcVControl
+    // }
+
     // if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
     // else { Motor_FOC_ProcVControl(p_motor->P_MOTOR); }
 }

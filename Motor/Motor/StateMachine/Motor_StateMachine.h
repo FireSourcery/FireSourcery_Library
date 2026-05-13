@@ -225,7 +225,6 @@ static void Motor_Enable(Motor_T * p_motor)
 // }
 
 
-/* todo add user init ramp down */
 
 /******************************************************************************/
 /*

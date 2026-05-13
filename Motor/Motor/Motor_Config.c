@@ -249,7 +249,7 @@ void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_Config_T * p_config, uin
 /******************************************************************************/
 void Motor_Config_Validate(Motor_Config_T * p_config)
 {
-    p_config->SpeedRating.SpeedRated_Rpm  = math_min(p_config->SpeedRating.SpeedRated_Rpm, Motor_RpmOfKv(&p_config->SpeedRating, Phase_Calibration_GetVRated_Fract16()));
+    p_config->SpeedRating.SpeedRated_Rpm = math_min(p_config->SpeedRating.SpeedRated_Rpm, (p_config->SpeedRating.Kv * Phase_Calibration_GetVRated_V()));
     p_config->SpeedRating.VSpeedScalar_Fract16        = math_min(p_config->SpeedRating.VSpeedScalar_Fract16, INT16_MAX);
 
     // p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);

@@ -128,6 +128,21 @@ void Motor_ApplyVirtualDirection(Motor_T * p_motor, Motor_Direction_T direction)
 void Motor_ApplyUserDirection(Motor_T * p_motor, Motor_Direction_T direction) { Motor_ApplyVirtualDirection(p_motor, p_motor->P_MOTOR->Config.DirectionForward * direction); }
 
 
+/******************************************************************************/
+/*
+   User Request Torque 0,
+   User Rquest Ramp down
+*/
+/******************************************************************************/
+/* todo add user init ramp down */
+#include "StateMachine/Motor_Intervention.h"
+static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &INTERVENTION_STATE_TORQUE_ZERO; }
+
+void Motor_ApplyTorque0(Motor_T * p_motor)
+{
+    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
+    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+}
 
 /******************************************************************************/
 /*
@@ -217,14 +232,6 @@ void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqu
 /*  Per-unit of limit reference Config.Limit - maintain same proportion through runtime. set by user. */
 void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
 
-#include "StateMachine/Motor_Intervention.h"
-static State_T * _Motor_ApplyTorque0(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &INTERVENTION_STATE_TORQUE_ZERO; }
-
-void Motor_ApplyTorque0(Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_RUN, .NEXT = (State_Input_T)_Motor_ApplyTorque0 };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-}
 
 
 /******************************************************************************/

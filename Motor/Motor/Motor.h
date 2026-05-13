@@ -451,7 +451,7 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 
 
 /* Motor_GetKvVBus_Rpm */
-static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_RpmOfKv(&Motor_Config(p_motor)->SpeedRating, Phase_V_Fract16OfVolts(p_motor->P_VBUS->Config.VSupplyNominal_V)); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * p_motor->P_VBUS->Config.VSupplyNominal_V; }
 static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
 /*

@@ -348,6 +348,24 @@ FOC_SensorlessConfig_T;
     },                                                                              \
 }
 
+// #define FOC_SENSORLESS_CONFIG_PRODUCTION_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T) \
+// {                                                                                                  \
+//     .K_smo         = (fract16_t)FRACT16(.50F * VBus / v_max),  /* 50 % of VMax */                 \
+//     .SmoSat        = (fract16_t)FRACT16(.10F * I / i_max),     /* 10 % of IMax */                 \
+//     .LpfCoef       = 1475,                                     /* ~150 Hz LPF at 20 kHz */        \
+//     .LockEmfMin    = (ufract16_t)FRACT16(.04F * VBus / v_max), /* 4 % of VMax */                  \
+//     .LockErrTol    = (ufract16_t)FRACT16(.03F),                /* 3 % normalised PLL error */     \
+//     .LockHoldCount = 300U,                                     /* 15 ms at 20 kHz */              \
+//     .PllPid =                                                                                       \
+//     {                                                                                                \
+//         .Mode       = PID_MODE_PI,                                                                   \
+//         .SampleFreq = 20000U,                                                                        \
+//         .Kp_Fixed32 = 492,      /* ≈ 0.0150 Q17.15 */                                               \
+//         .Ki_Fixed32 = 41,       /* ≈ 0.00125 Q17.15 */                                              \
+//         .Kd_Fixed32 = 0,                                                                         \
+//     },                                                                                               \
+// }
+
 typedef struct FOC_Sensorless
 {
     fract16_t G_int_pu;     /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
