@@ -52,8 +52,9 @@ Motor_ElectricalSpeedRating_T;
 typedef struct
 {
     // uint16_t SpeedRated_Angle16;
-    uint16_t Ke_Angle16;
-    uint16_t Ke_SpeedFract16;
+    int32_t Psi_Angle16;
+    int32_t Ke_SpeedFract16Test;
+    int32_t Ke_SpeedFract16;
 }
 Motor_ElectricalSpeedRef_T;
 
@@ -137,16 +138,10 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating
 
 */
 /******************************************************************************/
-/* [V / (rad/s)] */
-// static inline accum32_t Motor_GetKe_SiFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vrads_scaled(p_config->Kv); }
-
-/* [VFract16 / (Angle16/ControlCycle)] */
-static inline accum32_t Motor_GetKe_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv); }
-
 /*
     [VFract16 / SpeedFract16]
     V_fract16 = fract16_mul(Ke_SpeedFract, Speed_fract16)
-        where omega_fract16 = ω / ω_max × FRACT16_MAX
+        where Speed_fract16 = Speed_Rpm / SpeedTypeMax_Rpm × FRACT16_MAX
 
     when SpeedTypeMax = Kv * VNominal * 2
     Ke = VNominal * 2
@@ -154,20 +149,27 @@ static inline accum32_t Motor_GetKe_Angle16(const Motor_ElectricalSpeedRating_T 
 static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_speed_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 // static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
 
+// V_fract16 = fract16_mul(FluxLinkage_SpeedFract16, speedElec_fract16)
+static inline accum32_t Motor_GetFluxLinkage_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return Motor_GetKe_SpeedFract16(p_config); }
 
+/* [V / (rad/s)] */
+// static inline accum32_t Motor_GetKe_SiFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_vrads_scaled(p_config->Kv); }
+
+/* [VFract16 / (Angle16/ControlCycle)] */
+static inline accum32_t Motor_GetMechKe_MechAngle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv); }
+
+/* [VFract16 / (Angle16/ControlCycle)] */
 // FluxLinkage [Wb] = Ke_mech / PolePairs
 // λm = 60 / (2π · Kv · pp · VMax)
-static inline accum32_t Motor_GetFluxLinkage_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return Motor_GetKe_Angle16(p_config) / p_config->PolePairs; }
-
-// V_fract16 = fract16_mul(FluxLinkage_SpeedFract16, speedElec_fract16)
-static inline accum32_t Motor_GetFluxLinkage_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return Motor_GetKe_SpeedFract16(p_config) / p_config->PolePairs; }
+static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->Kv, p_config->PolePairs); }
+static inline accum32_t Motor_GetFluxLinkage_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return Motor_GetMechKe_MechAngle16(p_config) / p_config->PolePairs; }
 
 
 static inline Motor_ElectricalSpeedRef_T Motor_ElectricalSpeedRef_FromSpeedRating(const Motor_ElectricalSpeedRating_T * p_speedRating)
 {
     return (Motor_ElectricalSpeedRef_T)
     {
-        .Ke_Angle16 = Motor_GetKe_Angle16(p_speedRating),
+        .Psi_Angle16 = Motor_GetPsi_Angle16(p_speedRating),
         .Ke_SpeedFract16 = Motor_GetKe_SpeedFract16(p_speedRating),
     };
 }

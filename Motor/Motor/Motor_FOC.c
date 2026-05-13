@@ -43,8 +43,8 @@ static inline void ProcInnerFeedback(Motor_State_T * p_motor, int16_t vBus, int1
     {
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
-            // FOC_ProcIFeedback(&p_motor->Foc, vBus, (sign_t)p_motor->Direction, dReq, qReq);
-            FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Angle_Delta(&p_motor->SensorState.AngleSpeed), dReq, qReq);
+            FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
+            // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Angle_Delta(&p_motor->SensorState.AngleSpeed), dReq, qReq);
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
@@ -106,7 +106,7 @@ void _Motor_FOC_ProcTorqueReq(Motor_State_T * p_state, ufract16_t vbus, fract16_
     FOC_SetTheta(&p_state->Foc, Angle_Value(&p_state->SensorState.AngleSpeed));
     if (FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I) == true)
     {
-        FOC_ProcIFeedback(&p_state->Foc, vbus, (sign_t)p_state->Direction, FOC_ProcIdFieldWeakening(&p_state->Foc, vbus), Ramp_ProcNextOnInputOf(&p_state->TorqueRamp, req));
+        FOC_ProcIFeedback(&p_state->Foc, vbus, FOC_ProcIdFieldWeakening(&p_state->Foc, vbus), Ramp_ProcNextOnInputOf(&p_state->TorqueRamp, req));
     }
     FOC_ProcInvClarkePark(&p_state->Foc);
 }

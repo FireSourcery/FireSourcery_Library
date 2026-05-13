@@ -136,7 +136,7 @@ static void Hall_RotorSensor_InitUnits_MechSpeed(const Hall_RotorSensor_T * p_se
     p_counter->Ref.AngleSpeed32PerCount = angle32_speed_per_count_cpr(p_sensor->POLLING_FREQ, 6U);
 }
 
-static void Hall_RotorSensor_InitUnits_Elpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Hall_RotorSensor_InitUnits_ElSpeed(const Hall_RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
     AngleCounter_Config_T config =
     {

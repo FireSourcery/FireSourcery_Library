@@ -94,17 +94,30 @@ static inline struct foc_abc foc_inv_clarke_park(fract16_t d, fract16_t q, fract
     Sign of omega_* follows electrical rotation (CCW positive).
 */
 /******************************************************************************/
-static inline accum32_t foc_vd_ff(fract16_t omega_Lq, fract16_t iq) { return -fract16_mul(omega_Lq, iq); }
-static inline accum32_t foc_vq_ff(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id) { return fract16_mul(omega_Ld, id) + omega_psi; }
+static inline accum32_t foc_vd_ff(accum32_t omega_Lq, fract16_t iq) { return -fract16_mul(omega_Lq, iq); }
+static inline accum32_t foc_vq_ff(accum32_t omega_Ld, accum32_t omega_psi, fract16_t id) { return fract16_mul(omega_Ld, id) + omega_psi; }
 
-static inline struct foc_dq foc_vdq_ff(fract16_t ld, fract16_t lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq)
+// static inline accum32_t foc_vd_ff(accum32_t omega_Lq, fract16_t iq) { return (-((int64_t)omega_Lq * iq) / FRACT16_SCALE); }
+// static inline accum32_t foc_vq_ff(accum32_t omega_Ld, accum32_t omega_psi, fract16_t id) { return ((int64_t)omega_Ld * id) / FRACT16_SCALE + omega_psi; }
+
+static inline accum32_t foc_vd_ff64(accum32_t L_pu, fract16_t omega, fract16_t iq)
 {
-    return (struct foc_dq)
-    {
-        .d = fract16_sat(foc_vd_ff(fract16_mul(omega, lq), iq)),
-        .q = fract16_sat(foc_vq_ff(fract16_mul(omega, ld), fract16_mul(omega, psi), id))
-    };
+    return -((int64_t)omega * L_pu * iq) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE);
 }
+static inline accum32_t foc_vq_ff64(accum32_t Ld_pu, accum32_t psi_pu, fract16_t omega, fract16_t id)
+{
+    return ((int64_t)omega * Ld_pu * id) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE) + ((int64_t)omega * psi_pu) / FRACT16_SCALE;
+}
+
+
+// static inline struct foc_dq foc_vdq_ff(accum32_t ld, accum32_t lq, accum32_t psi, fract16_t omega, fract16_t id, fract16_t iq)
+// {
+//     return (struct foc_dq)
+//     {
+//         .d = fract16_sat(foc_vd_ff(fract16_mul(omega, lq), iq)),
+//         .q = fract16_sat(foc_vq_ff(fract16_mul(omega, ld), fract16_mul(omega, psi), id))
+//     };
+// }
 
 // static inline fract16_t foc_vd_decouple(fract16_t omega_Lq, fract16_t iq, fract16_t vd) { return fract16_sat((accum32_t)vd + foc_vd_ff(omega_Lq, iq)); }
 // static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id, fract16_t vq) { return fract16_sat((accum32_t)vq + foc_vq_ff(omega_Ld, omega_psi, id)); }

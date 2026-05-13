@@ -167,11 +167,6 @@ static inline uint32_t psi_pu_of_running(fract16_t rs_pu, fract16_t ld_pu, fract
 static inline uint32_t rpm_of_kv_v(uint16_t kv, uint32_t v_V) { return (uint32_t)kv * v_V; }
 static inline uint32_t v_of_kv_rpm(uint16_t kv, uint32_t rpm) { return rpm / kv; }
 
-/* depreciate */
-/* v_pu ↔ RPM via Kv (no-load BEMF basis). v_pu = RPM / (Kv·V_max). */
-static inline fract16_t v_pu_of_kv_rpm(uint16_t v_max_V, uint16_t kv, uint32_t rpm) { return fract16_div_sat(rpm, rpm_of_kv_v(kv, v_max_V)); }
-static inline int32_t   rpm_of_kv_v_pu(uint16_t v_max_V, uint16_t kv, fract16_t v_pu) { return fract16_mul(v_pu, rpm_of_kv_v(kv, v_max_V)); }
-
 /* Kv basis conversions — parse vendor specs into internal phase-peak. */
 // static inline uint16_t kv_phase_pk_of_kv_ll_pk(uint16_t kv_ll_pk) { return (uint64_t)kv_ll_pk * MOTOR_PARAMS_SQRT3_uX / 1000000UL; }
 // static inline uint16_t kv_ll_pk_of_kv_phase_pk(uint16_t kv_phase_pk) { return (uint64_t)kv_phase_pk * 1000000UL / MOTOR_PARAMS_SQRT3_uX; }
@@ -185,12 +180,12 @@ static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return ke_vrads_of(kv, 100
 // static inline uint32_t ke_mech_uvsrad_of_kv(uint16_t kv_rpm_per_V) { return (uint64_t)60UL * 1000000UL * 1000000UL / ((uint64_t)MOTOR_PARAMS_2PI_uX * kv_rpm_per_V); }
 // static inline uint32_t ke_elec_uvsrad_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V) / polePairs; }
 
-static inline ufract16_t ke_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
+static inline uint32_t ke_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
 
 /* Ke_pu when speed full-scale is set independently of Kv·V_max:
        Ke_pu = v_emf_pu / speed_pu = speed_max / (Kv·V_max)
    Returns 1.0 (FRACT16_MAX) when speed_max = Kv·V_max (natural basis). */
-static inline ufract16_t ke_pu_speed_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return fract16_div_sat(speed_max_rpm, rpm_of_kv_v(kv, v_max_V)); }
+static inline uint32_t ke_pu_speed_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return fract16_div(speed_max_rpm, rpm_of_kv_v(kv, v_max_V)); }
 
 /*!
     The direct Kv→PU forms below are exact-integer (π cancels), so they are

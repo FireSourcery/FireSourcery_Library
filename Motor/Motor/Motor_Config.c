@@ -84,6 +84,7 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
         // && (p_config->AlignScalar_Fract16         <= MOTOR_OPEN_LOOP_CEILING)
         && (p_config->OpenLoopRampIFinal_Fract16  <= _Motor_GetOpenLoopILimit_Fract16(p_config))
         && Motor_Config_IsValidFw(p_config)
+        && Motor_Config_IsValidElectrical(p_config)
     );
 }
 
@@ -97,6 +98,17 @@ bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
     (
         (p_config->SpeedLimitForward_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config))) &&
         (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+    );
+}
+
+bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config)
+{
+    uint16_t speedTypeMax_Angle = Motor_GetSpeedTypeMax_Angle(&p_config->SpeedRating);
+    return
+    (
+        ((uint64_t)p_config->Decoupling.Lq * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+        ((uint64_t)p_config->Decoupling.Ld * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+        ((uint64_t)p_config->Decoupling.Psi * speedTypeMax_Angle < (uint64_t)INT32_MAX)
     );
 }
 

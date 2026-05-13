@@ -453,6 +453,7 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 /* Motor_GetKvVBus_Rpm */
 static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * p_motor->P_VBUS->Config.VSupplyNominal_V; }
 static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Motor_Speed_Fract16OfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
 /*
     Speed VBus Ref
@@ -594,12 +595,19 @@ static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_moto
 
 /*!
     VPhase approximation via Speed
+    1/2 VBus Nominal at SpeedRated
 */
-/* when SPEED_MAX = Kv * VNominal * 2 */
+/* when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2 */
 static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
 static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedScalar_Fract16); }
 // collapse vspeed
-// static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16); }
+// static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16) / 2; }
+
+
+
+//Motor_GetKe_SpeedFract16 = 12549  // Motor_GetSpeedVNominalRef_Fract16 = 16383
+// fract16_mul(Ke_SpeedFract, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
+
 
 /******************************************************************************/
 /*

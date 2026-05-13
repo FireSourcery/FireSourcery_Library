@@ -87,6 +87,7 @@ static void Motor_PollFaultFlags(Motor_T * p_motor)
 static void _Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 {
     Motor_SetDirection(p_dev, direction);
+    // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
     FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS)); /* overwritten on loop */
 }
 

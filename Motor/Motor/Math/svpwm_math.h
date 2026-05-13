@@ -40,12 +40,13 @@
     @return [-1/sqrt3:1/sqrt3]
 */
 /*!
-    @note overflow vPhase_fract16 < vBus_fract16, assuming consistent VBus
+    @note overflow
+    vPhase_fract16 < vBus_fract16 * .57
     vBusInv_fract32 * vBus_fract16 = INT32_MAX
-    //todo potential overflow on vbus decrease
+    overflow when VBus drops more than 42% before v_fract16 updates
+    VBus fault detection should trigger before this point
 */
-/* phase_norm_of_v */
-static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_fract32, fract16_t v_fract16) { return (int32_t)v_fract16 * vBusInv_fract32 / 65536; }
+static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_fract32, fract16_t v_fract16) { return (int32_t)v_fract16 * (int32_t)vBusInv_fract32 / 65536; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
 /*  */
 static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
