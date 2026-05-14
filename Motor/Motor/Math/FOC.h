@@ -660,6 +660,9 @@ static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
     PID_Reset(&p_foc->PidIq);
     PID_Reset(&p_foc->PidId);
     p_foc->IdFw = 0;
+    p_foc->ElectricalSpeed.OmegaLd = 0;
+    p_foc->ElectricalSpeed.OmegaLq = 0;
+    p_foc->ElectricalSpeed.OmegaPsi = 0;
 }
 
 

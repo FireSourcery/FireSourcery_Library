@@ -44,7 +44,9 @@ static inline void ProcInnerFeedback(Motor_State_T * p_motor, int16_t vBus, int1
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
             FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-            // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(&p_motor->SensorState), dReq, qReq);
+            // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(p_motor), dReq, qReq);
+            // FOC_ProcIFeedback_BackLimitDecouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(p_motor), dReq, qReq);
+
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
