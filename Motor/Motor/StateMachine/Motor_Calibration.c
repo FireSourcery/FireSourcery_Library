@@ -220,7 +220,7 @@ static void AutoTuning_Proc(Motor_T * p_motor)
         s_TuningTick++;
     }
 
-    Motor_ProcOuterFeedback(p_state);
+    // Motor_ProcOuterFeedback(p_state);
     Motor_FOC_ProcAngleControl(p_motor);
     //Motor_FOC_WriteDuty(p_motor);
 }

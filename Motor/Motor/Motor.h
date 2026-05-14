@@ -303,7 +303,7 @@ typedef struct Motor_State
     Motor_FeedbackMode_T FeedbackMode;      /* Active FeedbackMode, Control/Run SubState Flags */
     Motor_FaultFlags_T FaultFlags;          /* Fault SubState */
 
-    Motor_ElectricalSpeedRef_T ElectricalSpeedRef; /* Derived from SpeedRated and Ke. Cached for runtime access. */
+    // Motor_ElectricalSpeedRef_T ElectricalSpeedRef; /* Derived from SpeedRated and Ke. Cached for runtime access. */
 
     /*
         Position Sensor
@@ -461,11 +461,24 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { re
 */
 static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
 
+/*
+    Skip resolving SpeedRated_Rpm
+*/
+static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
+static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv / 2; }
+
+/*
+    when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2
+    1/2 VBus Nominal at SpeedRated
+*/
+static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
+// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
+
+/* altneraitvely, foc loop use accum32_t for 1.0 +, PI use angle16 or 1/2 */
 
 /* Virtual getters. submodule apply policy on resolve */
 static inline uint16_t Motor_IAlign(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.IAlign_Fract16; }
 static inline uint16_t Motor_VAlign(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.VAlign_Fract16; }
-
 
 
 
@@ -603,11 +616,8 @@ static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract1
 // collapse vspeed
 // static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16) / 2; }
 
-
-
-//Motor_GetKe_SpeedFract16 = 12549  // Motor_GetSpeedVNominalRef_Fract16 = 16383
+// Motor_GetKe_SpeedFract16 = 12549  // Motor_GetSpeedVNominalRef_Fract16 = 16383
 // fract16_mul(Ke_SpeedFract, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
-
 
 /******************************************************************************/
 /*
@@ -641,19 +651,19 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
 /*
     Proc FeedbackMode Flags
 */
-static inline void Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
-{
-    if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
-}
+// static inline void Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
+// {
+//     if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
+// }
 
-static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
-{
-    if (p_motor->SpeedUpdateFlag == true)
-    {
-        p_motor->SpeedUpdateFlag = false; // todo  , adc state machine inputs
-        Motor_ProcSpeedFeedback(p_motor);
-    }
-}
+// static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
+// {
+//     if (p_motor->SpeedUpdateFlag == true)
+//     {
+//         p_motor->SpeedUpdateFlag = false; // todo  , adc state machine inputs
+//         Motor_ProcSpeedFeedback(p_motor);
+//     }
+// }
 
 /*
     Pid State on FeedbackMode/Resume

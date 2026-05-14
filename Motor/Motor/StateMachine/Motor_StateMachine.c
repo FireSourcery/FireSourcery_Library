@@ -371,20 +371,17 @@ static void Run_Proc(Motor_T * p_motor)
 // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
 //     Motor_ExternControl(p_motor);
 // #endif
-    Motor_ProcOuterFeedback(p_motor->P_MOTOR);
+
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+
+    if (p_context->SpeedUpdateFlag == true)
+    {
+        p_context->SpeedUpdateFlag = false;
+        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+        if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+    }
+
     Motor_FOC_ProcAngleControl(p_motor); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-
-
-    // if (p_motor->SpeedUpdateFlag == true)
-    // {
-    //     p_motor->SpeedUpdateFlag = false;
-    //     if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
-    // }
-
-    // if (p_motor->FeedbackMode.Speed == 1U)
-    // {
-    //     Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor));
-    // }
 
     // if (p_motor->FeedbackMode.Current == 1U)
     // {
@@ -394,7 +391,6 @@ static void Run_Proc(Motor_T * p_motor)
     // {
         // Motor_FOC_ProcVControl
     // }
-
     // if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
     // else { Motor_FOC_ProcVControl(p_motor->P_MOTOR); }
 }
@@ -452,7 +448,9 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
 
 static void Run_OnSpeed(Motor_T * p_motor)
 {
-    Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
+    // Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
+    // FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    // if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
 }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =

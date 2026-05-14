@@ -138,8 +138,8 @@ static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { retu
     ANGLE16_PER_RADIAN ~= PollingFreq / 2 ~= [angle16/poll]
 */
 /* from scaled storage */
-static inline int32_t angle_of_rads_fract16(uint32_t pollingFreq, accum32_t rads_fract16) { return ((int64_t)rads_fract16 * ANGLE16_PER_RADIAN) / pollingFreq / FRACT16_SCALE; }
-static inline int32_t rads_fract16_of_angle(uint32_t pollingFreq, int16_t angle16) { return ((int64_t)angle16 * pollingFreq * FRACT16_SCALE) / ANGLE16_PER_RADIAN; }
+static inline int32_t angle_of_rads(uint32_t pollingFreq, accum32_t rads, uint16_t scale) { return ((int64_t)rads * ANGLE16_PER_RADIAN) / pollingFreq / scale; }
+static inline int32_t rads_of_angle(uint32_t pollingFreq, int16_t angle16, uint16_t scale) { return ((int64_t)angle16 * pollingFreq * scale) / ANGLE16_PER_RADIAN; }
 
 /******************************************************************************/
 /*
@@ -160,3 +160,8 @@ static inline int16_t rpm_fract16_of_angle(uint32_t pollingFreq, uint32_t speedR
     return ((int64_t)angle16 * ((SECONDS_PER_MINUTE / 2) * pollingFreq)) / speedRef_Rpm;
 }
 
+static inline fract16_t rads_pu_of_angle(uint32_t polling_freq, uint32_t omega_base_rads_e, uint16_t el_delta_angle16)
+{
+    /* ω_pu_fract16 = el_delta · π · Fs / ω_base  ≈ el_delta · 37.5 for the example motor, so promote to 64-bit. */
+    return (uint64_t)el_delta_angle16 * FRACT16_PI * polling_freq / omega_base_rads_e;
+}

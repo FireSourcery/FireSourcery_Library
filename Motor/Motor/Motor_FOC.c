@@ -44,11 +44,11 @@ static inline void ProcInnerFeedback(Motor_State_T * p_motor, int16_t vBus, int1
         if (p_motor->FeedbackMode.Current == 1U)  /* Current Control mode */
         {
             FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-            // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Angle_Delta(&p_motor->SensorState.AngleSpeed), dReq, qReq);
+            // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(&p_motor->SensorState), dReq, qReq);
         }
         else /* if (p_motor->FeedbackMode.Current == 0U)  Voltage Control mode - Apply limits only */
         {
-            FOC_ProcVControl(&p_motor->Foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3), Angle_Delta(&p_motor->SensorState.AngleSpeed), dReq, qReq);
+            FOC_ProcVControl(&p_motor->Foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3), Motor_GetSpeedFeedback(p_motor), dReq, qReq);
             /* Still check CaptureIabc for overcurrent */
         }
     }
@@ -139,7 +139,7 @@ void Motor_FOC_ProcVControl(Motor_T * p_motor)
     // int16_t vReq = math_clamp(Ramp_ProcNext(&p_state->TorqueRamp), v.low, v.high);
     int16_t vReq = _Ramp_ProcNextOnInputOf(&p_state->TorqueRamp, math_clamp(Ramp_GetTarget(&p_state->TorqueRamp), v.low, v.high));
     FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I);
-    FOC_ProcVControl(&p_state->Foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3), Angle_Delta(&p_state->SensorState.AngleSpeed), 0, vReq);
+    FOC_ProcVControl(&p_state->Foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3), Motor_GetSpeedFeedback(p_state), 0, vReq);
     FOC_ProcInvClarkePark(&p_state->Foc);
 }
 
