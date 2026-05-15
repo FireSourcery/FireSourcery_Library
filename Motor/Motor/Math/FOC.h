@@ -399,7 +399,6 @@ static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16
     FOC_SetTheta(p_foc, theta);
     FOC_SetVd(p_foc, vd);
     FOC_SetVq(p_foc, vq);
-    //     FOC_ProcVectorLimit(p_foc, vBus);
     FOC_ProcInvClarkePark(p_foc);
 }
 
@@ -418,19 +417,17 @@ static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 
 static inline void _FOC_MatchIVState_Decouple(FOC_T * p_foc, int16_t vd, int16_t vq)
 {
-    int32_t vd_ff = FOC_VdFeedforward(p_foc);
-    int32_t vq_ff = FOC_VqFeedforward(p_foc);
-    p_foc->Vd = vd;
-    p_foc->Vq = vq;
-    PID_SetOutputState(&p_foc->PidId, fract16_sat(vd - vd_ff));
-    PID_SetOutputState(&p_foc->PidIq, fract16_sat(vq - vq_ff));
+    PID_SetOutputState(&p_foc->PidId, fract16_sat(vd - FOC_VdFeedforward(p_foc)));
+    PID_SetOutputState(&p_foc->PidIq, fract16_sat(vq - FOC_VqFeedforward(p_foc)));
+    p_foc->Vd = PID_GetOutput(&p_foc->PidId);
+    p_foc->Vq = PID_GetOutput(&p_foc->PidIq);
 }
 
-static inline void FOC_MatchIVState(FOC_T * p_foc)
-{
-    PID_SetOutputState(&p_foc->PidId, p_foc->Vd);
-    PID_SetOutputState(&p_foc->PidIq, p_foc->Vq);
-}
+// static inline void FOC_MatchIVState(FOC_T * p_foc)
+// {
+//     PID_SetOutputState(&p_foc->PidId, p_foc->Vd);
+//     PID_SetOutputState(&p_foc->PidIq, p_foc->Vq);
+// }
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
