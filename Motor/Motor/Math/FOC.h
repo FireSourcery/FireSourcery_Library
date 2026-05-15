@@ -158,7 +158,7 @@ static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 /* vPhaseLimit as modulation [0:1/sqrt3] */
 static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t vdReq, int32_t vqReq)
 {
-    struct foc_dq vdq = foc_circle_limit(vdReq, vqReq, vCircle);
+    struct foc_dq vdq = foc_circle_limit_ff(vdReq, vqReq, vCircle);
     p_foc->Vd = vdq.d;
     p_foc->Vq = vdq.q;
     return ((accum32_t)p_foc->Vd != vdReq) || ((accum32_t)p_foc->Vq != vqReq);
@@ -252,15 +252,12 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus,  int16_t id
 //     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 //     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
 //     // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
-//      _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
-//     if (PID_IsSaturated(&p_foc->PidId)) { PID_SetOutputState(&p_foc->PidId, p_foc->Vd); }
-//     if (PID_IsSaturated(&p_foc->PidIq)) { PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }
 // }
 
 /*
 
 */
-static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, accum32_t speed, fract16_t vdReq, fract16_t vqReq)
+static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
 {
     int32_t vq = interval_clamp(p_foc->VLimit, vqReq);
     return _FOC_ProcVCircle(p_foc, vCircle, vdReq, vq);
@@ -314,7 +311,7 @@ static inline bool FOC_ProcVControl_Decouple(FOC_T * p_foc, ufract16_t vCircle, 
     int32_t vd_ff = FOC_VdFeedforward(p_foc); /* May exceeed INT16_MAX range */
     int32_t vq_ff = FOC_VqFeedforward(p_foc);
     int32_t vq = interval_clamp(p_foc->VLimit, vqReq); /* policy limit still applies on top of circle limit */
-    return _FOC_ProcVCircle(p_foc, vCircle, fract16_sat(vdReq + vd_ff), fract16_sat(vq + vq_ff));
+    return _FOC_ProcVCircle(p_foc, vCircle, fract16_sat(vdReq + vd_ff), fract16_sat(vqReq + vq_ff));
 }
 
 
@@ -494,8 +491,8 @@ static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (
 */
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 {
-    int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - (accum32_t)FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -(int32_t)p_foc->IdFwLimit, 0);
+    int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - FOC_GetVMagnitude(p_foc);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -p_foc->IdFwLimit, 0);
     return p_foc->IdFw;
 }
 

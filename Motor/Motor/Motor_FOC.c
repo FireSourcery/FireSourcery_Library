@@ -42,11 +42,12 @@
 void Motor_FOC_AngleControl(Motor_State_T * p_motor, fract16_t vBus, angle16_t theta, fract16_t dReq, fract16_t qReq)
 {
     FOC_SetTheta(&p_motor->Foc, theta);
-    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I) == true)    /* else update angle only for voutput, until next cycle */
-    {
-        // FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-        FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus,  dReq, qReq);
-    }
+#if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)  /* update angle only for voutput, until divider from adc is set */
+    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, dReq, qReq); }
+#else
+    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)
+    FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, dReq, qReq);
+#endif
     FOC_ProcInvClarkePark(&p_motor->Foc);
 }
 
@@ -61,6 +62,7 @@ void Motor_FOC_ProcAngleAlign(Motor_State_T * p_motor, fract16_t vBus, angle16_t
 void _Motor_FOC_ProcTorqueReq(Motor_State_T * p_context, ufract16_t vbus, fract16_t req)
 {
     Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), FOC_ProcIdFieldWeakening(&p_context->Foc, vbus), Ramp_ProcNextOf(&p_context->TorqueRamp, req));
+    // FOC_ProcIFeedback_FieldWeakening(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), Ramp_ProcNext(&p_context->TorqueRamp));
 }
 
 void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
@@ -92,11 +94,10 @@ void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t theta, f
 void Motor_FOC_ProcVControl(Motor_T * p_motor)
 {
     Motor_State_T * p_context = p_motor->P_MOTOR;
-    ufract16_t vBus = VBus_Fract16(p_motor->P_VBUS);
     fract16_t vReq = _Ramp_ProcNextOf(&p_context->TorqueRamp, Ramp_GetTarget(&p_context->TorqueRamp)); /* inner loop clips with VLimit */
     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
     FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I); /* Still capture I for overcurrent */
-    FOC_ProcVControl(&p_context->Foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3), Motor_GetSpeedFeedback(p_context), 0, vReq);
+    FOC_ProcVControl(&p_context->Foc, fract16_mul(VBus_Fract16(p_motor->P_VBUS), FRACT16_1_DIV_SQRT3), 0, vReq);
     FOC_ProcInvClarkePark(&p_context->Foc);
 }
 
@@ -112,20 +113,6 @@ void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
     Motor_FOC_ProcTorqueReq(p_motor, Ramp_GetTarget(&p_context->TorqueRamp));
 }
 
-/* On adc batch complete */
-// void _Motor_FOC_ProcAngleControl(Motor_T * p_motor)
-// {
-//     Motor_State_T * p_context = p_motor->P_MOTOR;
-//     ufract16_t vBus = VBus_Fract16(p_motor->P_VBUS);
-//     FOC_SetTheta(&p_context->Foc, Angle_Value(&p_context->SensorState.AngleSpeed));
-// // #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)
-// //     if (Motor_Analog_IsDivider(p_motor)) {}
-// // #endif
-//     FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-//     FOC_ProcIFeedback(&p_context->Foc, vBus, FOC_ProcIdFieldWeakening(&p_context->Foc, vBus), Ramp_ProcNext(&p_context->TorqueRamp));
-//     // FOC_ProcIFeedback_FieldWeakening(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), Ramp_ProcNext(&p_context->TorqueRamp));
-//     FOC_ProcInvClarkePark(&p_context->Foc);
-// }
 
 /*
     ProcAngleObserve
@@ -267,7 +254,14 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Fract16 * p_context->Direction);
     angle16_t angle = Angle_IntegrateSpeed_Fract16(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
     fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Fract16 * p_context->Direction);
-    Motor_FOC_AngleControl(p_context, VBus_Fract16(p_motor->P_VBUS), angle, 0, iq);
+    // Motor_FOC_AngleControl(p_context, VBus_Fract16(p_motor->P_VBUS), angle, 0, iq);
+
+    FOC_SetTheta(&p_context->Foc, angle);
+    if (FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I) == true)    /* else update angle only for voutput, until next cycle */
+    {
+        FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
+    }
+    FOC_ProcInvClarkePark(&p_context->Foc);
 }
 
 
