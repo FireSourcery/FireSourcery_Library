@@ -45,28 +45,24 @@ static inline int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
     return p_ramp->Accumulator.Accumulator + math_clamp(target32 - p_ramp->Accumulator.Accumulator, -p_ramp->Accumulator.Coefficient, p_ramp->Accumulator.Coefficient);
 }
 
-/* caller hold input limits */
-int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
-{
-    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, target << RAMP_SHIFT);
-    return Ramp_GetOutput(p_ramp);
-}
-
 int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {
-    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp((int32_t)target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));
     return Ramp_GetOutput(p_ramp);
 }
 
-/*
-
-*/
 int32_t Ramp_ProcNext(Ramp_T * p_ramp)
 {
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, p_ramp->Target);
     return Ramp_GetOutput(p_ramp);
 }
 
+/* caller hold input limits */
+int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
+{
+    p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, (int32_t)target << RAMP_SHIFT);
+    return Ramp_GetOutput(p_ramp);
+}
 
 // /*
 //     Clamp output
@@ -79,9 +75,10 @@ int32_t Ramp_ProcNext(Ramp_T * p_ramp)
 
 // int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 // {
-//     p_ramp->Accumulator.Accumulator = NextOf(p_ramp, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper, target << RAMP_SHIFT);
+//     p_ramp->Accumulator.Accumulator = NextOf(p_ramp, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper, (int32_t)target << RAMP_SHIFT);
 //     return Ramp_GetOutput(p_ramp);
 // }
+
 /*  clamp: if step overshoots, saturate at target */
 // static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
 // {

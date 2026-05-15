@@ -64,10 +64,11 @@ typedef struct
 }
 Motor_RL_T;
 
-/*  optionally replace with primitive layer */
+
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
 static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_degPerCycle); }
 
+/* todo config layer handle si units. pu selection moves to motor.h */
 
 /******************************************************************************/
 /*

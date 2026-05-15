@@ -437,11 +437,11 @@ static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, 
 static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
 {
     /* 0. Cross-coupling: ω̂·Lq evaluated with the current ω̂ estimate. */
-    fract16_t omega_Lq = fract16_mul(Angle_ResolveSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef), p_foc->Electrical.Lq);
+    int32_t omega_Lq = fract16_mul(Angle_ResolveSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef), p_foc->Electrical.Lq);
 
     /* 1. EEMF SMO step — predicts (îd, îq) and produces switching variables (zd, zq). */
-    fract16_t vd_ff = foc_vd_ff(omega_Lq, p_obs->SmoIq);     /* −ω·Lq·îq */
-    fract16_t vq_ff = foc_vq_ff(omega_Lq, 0, p_obs->SmoId); /* +ω·Lq·îd, ψ absorbed into EEMF */
+    int32_t vd_ff = foc_vd_ff(omega_Lq, p_obs->SmoIq);     /* −ω·Lq·îq */
+    int32_t vq_ff = foc_vq_ff(omega_Lq, 0, p_obs->SmoId); /* +ω·Lq·îd, ψ absorbed into EEMF */
 
     p_obs->SmoZd = foc_eemf_zd(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoId, p_foc->Id);
     p_obs->SmoZq = foc_eemf_zq(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIq, p_foc->Iq);

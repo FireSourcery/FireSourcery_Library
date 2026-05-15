@@ -56,10 +56,8 @@
     CW +Vq +Iq => Reverse Plugging Q4
 */
 /******************************************************************************/
-
-
-static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) > 0); }
-static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
+static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) > 0); }
+static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
 static inline bool _Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0); }
 
 /*
@@ -67,7 +65,7 @@ static inline bool _Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (F
     Speed sign gives true rotor direction regardless of Vq/Iq
 */
 /* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
-static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * (int32_t)Motor_GetSpeedFeedback(p_motor) < 0); }
+static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
 /*
     Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
 */
@@ -95,35 +93,23 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
     Extern
 */
 /******************************************************************************/
-// extern void Motor_FOC_WriteDuty(Motor_T * p_motor);
+extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
+extern void _Motor_FOC_ProcAngleAlign(Motor_State_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
 
 extern void Motor_FOC_ProcVControl(Motor_T * p_motor);
-
-
-// extern void Motor_FOC_AngleControl(Motor_State_T * p_motor, angle16_t angle, fract16_t dReq, fract16_t qReq);
-extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
-
-extern void Motor_FOC_ProcAngleAlign(Motor_State_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
-
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
 
-
 extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
-extern void Motor_FOC_MatchIVState(Motor_State_T * p_motor);
-
-void Motor_FOC_MatchTorqueVState(Motor_State_T * p_state);
-void Motor_FOC_MatchTorqueIState(Motor_State_T * p_state);
-
-extern void Motor_FOC_MatchFeedbackState(Motor_T * p_motor);
+extern void Motor_FOC_MatchTorqueVState(Motor_State_T * p_state);
+extern void Motor_FOC_MatchTorqueIState(Motor_State_T * p_state);
 
 extern void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
 
 extern void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor);
 extern void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor);
-
 extern void Motor_FOC_StartAlignValidate(Motor_State_T * p_motor);
 
 extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);

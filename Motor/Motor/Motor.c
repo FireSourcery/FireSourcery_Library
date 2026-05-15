@@ -270,12 +270,6 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     RotorSensor_ZeroInitial(p_dev->P_MOTOR->p_ActiveSensor);
     Motor_ResolveSpeedLimits(p_dev);
     Motor_ResolveILimits(p_dev);
-
-
-    // if (p_state->FeedbackMode.Current == 0)
-    // {interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)p_dev->P_MOTOR->Direction);
-    //     Ramp_SetLimits(&p_state->TorqueRamp, iLimits.low, iLimits.high);
-    // }
 }
 
 

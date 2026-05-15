@@ -58,7 +58,7 @@
 typedef struct Angle
 {
     int32_t Angle;  /* Shifted Q16.16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
-    int32_t Delta;  /* Shifted Q16.16 DegPerPollingCycle */
+    int32_t Delta;  /* Shifted Q16.16 DegPerPoll */
     int32_t LimitUpper;
     int32_t LimitLower;
 }
@@ -171,6 +171,18 @@ static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t
     p_angle->LimitUpper = (int32_t)upper << ANGLE32_SHIFT;
 }
 
+// static inline void Angle_SetLimitsWindow(Angle_T * p_angle, angle16_t angle, angle16_t width)
+// {
+//     if (width >= 0)
+//     {
+//         Angle_SetLimits(p_angle, angle, angle + width);
+//     }
+//     else
+//     {
+//         Angle_SetLimits(p_angle, angle + width, angle);
+//     }
+// }
+
 /*
     Set bounds as a one-sided sector window: width ahead in sign(Delta), 0 behind.
     Called after snapping Angle to a sensor boundary (e.g. Hall edge).
@@ -251,6 +263,7 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 /******************************************************************************/
 /*
     Angle_SpeedFractRef_T
+    Digital Angle to Per Unit Reference
 */
 /******************************************************************************/
 /*
@@ -258,8 +271,8 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 */
 typedef struct Angle_SpeedFractRef
 {
-    angle16_t SpeedMax_Angle16; /* DegPerCycle */
-    uint32_t InvSpeedMax_Fract32; /* CyclesPerDeg */
+    angle16_t SpeedMax_Angle16; /* DegPerPoll */
+    uint32_t InvSpeedMax_Fract32; /* PollsPerDeg */
     // uint32_t PollingFreq; /* keep for per second conversions if needed */
 }
 Angle_SpeedFractRef_T;

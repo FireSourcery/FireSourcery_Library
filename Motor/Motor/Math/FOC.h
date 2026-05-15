@@ -385,6 +385,7 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
 //     _FOC_MatchIVState (p_foc, vd, vq);
 // #endif
 // }
+
 /******************************************************************************/
 /*!
     Query
@@ -403,12 +404,9 @@ static inline fract16_t FOC_Va(const FOC_T * p_foc) { return p_foc->Va; }
 static inline fract16_t FOC_Vb(const FOC_T * p_foc) { return p_foc->Vb; }
 static inline fract16_t FOC_Vc(const FOC_T * p_foc) { return p_foc->Vc; }
 
-
-
 /*
     Run-time derived
 */
-
 /* [0:32767] <=> [0:1]AnalogRefMax */
 static inline ufract16_t FOC_GetIMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Id, p_foc->Iq); }
 static inline ufract16_t FOC_GetVMagnitude(const FOC_T * p_foc) { return fract16_vector_magnitude(p_foc->Vd, p_foc->Vq); }

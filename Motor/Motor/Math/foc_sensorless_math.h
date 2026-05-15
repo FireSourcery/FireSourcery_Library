@@ -322,14 +322,14 @@ static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_p
     to prove and requires reasonable startup alignment.
 */
 /******************************************************************************/
-static inline fract16_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return foc_smo_z(K_smo, thr, id_est, id); }
-static inline fract16_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return foc_smo_z(K_smo, thr, iq_est, iq); }
+static inline accum32_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return foc_smo_z(K_smo, thr, id_est, id); }
+static inline accum32_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return foc_smo_z(K_smo, thr, iq_est, iq); }
 
-static inline fract16_t foc_smo_i_decouple(fract16_t G, fract16_t Rs, fract16_t v, fract16_t v_ff, fract16_t i_est, fract16_t i_m, fract16_t z) { return foc_smo_i(G, Rs, fract16_sat((accum32_t)v - v_ff), i_est, i_m, z); }
+static inline accum32_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t i_m, fract16_t z) { return foc_smo_i(G, Rs, fract16_sat((accum32_t)v - v_ff), i_est, i_m, z); }
 /* vd_ff on iq_est */
-static inline fract16_t foc_eemf_id(fract16_t Rs_pu, fract16_t G_int_pu, fract16_t vd, fract16_t id_est, fract16_t id, fract16_t zd, fract16_t vd_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vd, vd_ff, id_est, id, zd); }
+static inline accum32_t foc_eemf_id(fract16_t Rs_pu, accum32_t G_int_pu, fract16_t vd, fract16_t id_est, fract16_t id, fract16_t zd, accum32_t vd_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vd, vd_ff, id_est, id, zd); }
 /* vq_ff on id_est */
-static inline fract16_t foc_eemf_iq(fract16_t Rs_pu, fract16_t G_int_pu, fract16_t vq, fract16_t iq_est, fract16_t iq, fract16_t zq, fract16_t vq_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vq, vq_ff, iq_est, iq, zq); }
+static inline accum32_t foc_eemf_iq(fract16_t Rs_pu, accum32_t G_int_pu, fract16_t vq, fract16_t iq_est, fract16_t iq, fract16_t zq, accum32_t vq_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vq, vq_ff, iq_est, iq, zq); }
 
 /******************************************************************************/
 /*!

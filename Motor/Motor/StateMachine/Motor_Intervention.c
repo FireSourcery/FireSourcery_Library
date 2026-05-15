@@ -116,28 +116,8 @@ static void RampSafe_Entry(Motor_T * p_motor)
 static void RampSafe_Proc(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
-
-    // if (p_state->SpeedUpdateFlag == true)
-    // {
-    //     p_state->SpeedUpdateFlag = false;
-    //     Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
-    // }
-
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_state->PidSpeed));
 }
-
-static void RampSafe_CaptureSpeed(Motor_T * p_motor)
-{
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-    Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
-}
-
-static const State_Action_T RAMP_SAFE_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
-{
-    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampSafe_CaptureSpeed,
-    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
-};
-
 
 static State_T * RampSafe_Next(Motor_T * p_motor)
 {
@@ -150,6 +130,20 @@ static State_T * RampSafe_Next(Motor_T * p_motor)
     return NULL;
 }
 
+/*
+
+*/
+static void RampSafe_CaptureSpeed(Motor_T * p_motor)
+{
+    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
+}
+
+static const State_Action_T RAMP_SAFE_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)RampSafe_CaptureSpeed,
+    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+};
 
 static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 {
