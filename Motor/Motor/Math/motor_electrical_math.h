@@ -400,7 +400,8 @@ static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_max_rpm, uint8_t polePairs
 static inline uint32_t l_pu_rpm_of_rs_tau_cycles(uint32_t polling_freq, uint32_t speed_max_rpm, uint8_t polePairs, fract16_t rs_pu, uint32_t tau_cycles) { return l_pu_rads_of_rs_tau_cycles(polling_freq, mrads_of_rpm(speed_max_rpm, polePairs), 1000UL, rs_pu, tau_cycles); }
 static inline uint32_t l_pu_rpm_of_step(uint32_t polling_freq, uint32_t speed_max_rpm, uint8_t polePairs, fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return l_pu_rads_of_step(polling_freq, mrads_of_rpm(speed_max_rpm, polePairs), 1000UL, v_pu, di_pu, dt_cycles); }
 
-
+/* from result of l_pu_of_rs_tau_cycles */
+// static inline uint32_t l_pu_rpm_of_l_angle16(uint32_t polling_freq, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t l_a16) { return (uint64_t)l_a16 * mrads_of_rpm(speed_max_rpm, polePairs) * FRACT16_SCALE / ((uint64_t)FRACT16_PI * polling_freq * 1000UL); }
 
 
 /******************************************************************************/

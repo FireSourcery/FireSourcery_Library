@@ -361,47 +361,47 @@ static inline void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 }
 
 
-// static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, accum32_t speed, int16_t idReq, int16_t iqReq)
+static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, accum32_t speed, int16_t idReq, int16_t iqReq)
+{
+    ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_2);
+    int32_t vd_ff = fract16_sat(foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq)); /* may exceeed INT16_MAX range */
+    int32_t vq_ff = fract16_sat(foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id));
+
+    /* Vd_PI ∈ [−Vlim − Vd_ff, Vlim​ − Vd_ff] */
+    PID_CaptureOutputLimits(&p_foc->PidId, fract16_sat(-vPhaseLimit - vd_ff), fract16_sat(vPhaseLimit - vd_ff)); /* vPhaseLimit < (INT16_MAX / 2) */
+    p_foc->Vd = math_clamp(PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq) + vd_ff, -vPhaseLimit, vPhaseLimit);
+
+    /* Vq_PI ∈ [−Vcircle − Vq_ff, Vcircle − Vq_ff] */
+    ufract16_t vqCircleLimit = foc_vq_circle_limit(vPhaseLimit, p_foc->Vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
+    interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* static policy band */
+    // interval_t vqLimit = interval_intersect(vqBand, FOC_VBemfWindow(p_foc, p_foc->ElectricalSpeed.OmegaPsi));
+    PID_CaptureOutputLimits(&p_foc->PidIq, fract16_sat(vqBand.low - vq_ff), fract16_sat(vqBand.high - vq_ff));
+    p_foc->Vq = math_clamp(PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff, vqBand.low, vqBand.high); /* lands back in vqBand */
+}
+
+// static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 // {
-//     ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_2);
-//     int32_t vd_ff = fract16_sat(foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq)); /* may exceeed INT16_MAX range */
-//     int32_t vq_ff = fract16_sat(foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id));
+//     int32_t vPhaseLim = fract16_mul(vBus, FRACT16_1_DIV_2);
+//     accum32_t vd_ff = foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq);
+//     accum32_t vq_ff = foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id);
 
-//     /* Vd_PI ∈ [−Vlim − Vd_ff, Vlim​ − Vd_ff] */
-//     PID_CaptureOutputLimits(&p_foc->PidId, fract16_sat(-vPhaseLimit - vd_ff), fract16_sat(vPhaseLimit - vd_ff)); /* vPhaseLimit < (INT16_MAX / 2) */
-//     p_foc->Vd = math_clamp(PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq) + vd_ff, -vPhaseLimit, vPhaseLimit);
+//     /* d-axis: PI sees ±vPhaseLim. clip total, back-calc residual */
+//     PID_CaptureOutputLimits(&p_foc->PidId, -vPhaseLim, vPhaseLim);
+//     int32_t vd_pi = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+//     int32_t vd_cmd = math_clamp(vd_pi + vd_ff, -vPhaseLim, vPhaseLim);
+//     PID_SetOutputState(&p_foc->PidId, fract16_sat(vd_cmd - vd_ff));
+//     p_foc->Vd = vd_cmd;
 
-//     /* Vq_PI ∈ [−Vcircle − Vq_ff, Vcircle − Vq_ff] */
-//     ufract16_t vqCircleLimit = foc_vq_circle_limit(vPhaseLimit, p_foc->Vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
-//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* static policy band */
-//     // interval_t vqLimit = interval_intersect(vqBand, FOC_VBemfWindow(p_foc, p_foc->ElectricalSpeed.OmegaPsi));
-//     PID_CaptureOutputLimits(&p_foc->PidIq, fract16_sat(vqBand.low - vq_ff), fract16_sat(vqBand.high - vq_ff));
-//     p_foc->Vq = math_clamp(PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff, vqBand.low, vqBand.high); /* lands back in vqBand */
-// }
-
-
-// static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, accum32_t speed, int16_t idReq, int16_t iqReq)
-// {
-//     ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_2);
-//     int32_t vd_ff = foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); /* may exceeed INT16_MAX range */
-//     int32_t vq_ff = foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id);
-
-//     PID_CaptureOutputLimits(&p_foc->PidId, -vPhaseLimit, vPhaseLimit);
-//     int32_t vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
-
-//     ufract16_t vqCircleLimit = foc_vq_circle_limit(vPhaseLimit, vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
-//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* static policy band */
-//     // interval_t vqLimit = interval_intersect(vqBand, FOC_VBemfWindow(p_foc, p_foc->ElectricalSpeed.OmegaPsi));
+//     /* q-axis: budget = remaining circle ∩ policy band */
+//     ufract16_t vqCircle = foc_vq_circle_limit(vPhaseLim, p_foc->Vd);
+//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircle), p_foc->VLimit);
 //     PID_CaptureOutputLimits(&p_foc->PidIq, vqBand.low, vqBand.high);
-//     int32_t vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-
-//     /* handle ff terms which may exceed PI's static range */
-//     if (_FOC_ProcVCircle(p_foc, vPhaseLimit, vd + vd_ff, vq + vq_ff))
-//     {
-//         PID_SetOutputState(&p_foc->PidId, fract16_sat(p_foc->Vd - vd_ff));
-//         PID_SetOutputState(&p_foc->PidIq, fract16_sat(p_foc->Vq - vq_ff));
-//     }
+//     int32_t vq_pi = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+//     int32_t vq_cmd = math_clamp(vq_pi + vq_ff, vqBand.low, vqBand.high);
+//     PID_SetOutputState(&p_foc->PidIq, fract16_sat(vq_cmd - vq_ff));
+//     p_foc->Vq = vq_cmd;
 // }
+
 
 /*
 */
@@ -415,10 +415,8 @@ static inline void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 
 //     if (_FOC_ProcVCircle(p_foc, vPhaseLimit, fract16_sat(vd + vd_ff), fract16_sat(vq + vq_ff)))
 //     {
-//         PID_SetOutputState(&p_foc->PidId, (p_foc->Vd));
-//         PID_SetOutputState(&p_foc->PidIq, (p_foc->Vq));
-//         // PID_SetOutputState(&p_foc->PidId, fract16_sat(p_foc->Vd - vd_ff));
-//         // PID_SetOutputState(&p_foc->PidIq, fract16_sat(p_foc->Vq - vq_ff));
+//         PID_SetOutputState(&p_foc->PidId, fract16_sat(p_foc->Vd - vd_ff));
+//         PID_SetOutputState(&p_foc->PidIq, fract16_sat(p_foc->Vq - vq_ff));
 //     }
 // }
 
@@ -456,6 +454,8 @@ static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16
 /******************************************************************************/
 static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 {
+    p_foc->Vd = vd;
+    p_foc->Vq = vq;
     PID_SetOutputState(&p_foc->PidId, vd);
     PID_SetOutputState(&p_foc->PidIq, vq);
 }

@@ -98,7 +98,7 @@ static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 */
 static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
-    Motor_FOC_ProcAngleAlignOf(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 }
 
 /*

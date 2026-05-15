@@ -460,7 +460,7 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
 
     /* 5. Integrate ω̂ → θ̂. */
-    Angle_IntegrateSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef, (angle16_t)omega);
+    Angle_IntegrateSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef, omega);
 
     /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
     bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);

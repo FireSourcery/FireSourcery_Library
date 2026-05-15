@@ -147,7 +147,7 @@ static void Run_Proc(Motor_T * p_motor)
     Motor_State_T * p_context = p_motor->P_MOTOR;
     FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
     Motor_FOC_ProcOpenLoop(p_motor);
-    // capture for dbugging
+    // capture for debugging
 }
 
 /*
@@ -268,7 +268,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 
 // static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 // {
-//     Motor_FOC_ProcAngleAlignOf(p_motor->P_MOTOR, Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 //     //Motor_FOC_WriteDuty(p_motor);
 // }
 

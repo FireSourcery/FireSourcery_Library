@@ -300,11 +300,11 @@ static void Electrical_Proc(Motor_T * p_motor)
     switch (p_params->Step)
     {
         case PARAMID_STEP_ALIGN:
-            Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
             ProcAlign(p_params);
             break;
         case PARAMID_STEP_RS_MEASURE:
-            Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LD_INJECT:
@@ -324,7 +324,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             CommitResults(p_params, &p_context->Config.Decoupling);
             break;
         case PARAMID_STEP_RAMPDOWN:
-            Motor_FOC_ProcAngleAlignOf(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
+            Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
             ProcRampDown(p_params);
             break;
         case PARAMID_STEP_DONE:

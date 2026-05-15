@@ -80,12 +80,12 @@ static inline struct foc_abc foc_inv_clarke_park(fract16_t d, fract16_t q, fract
     @brief  Cross-coupling decoupling feedforward for PMSM.
 
     Cancels the speed-induced cross terms in the dq voltage equations:
-        Vd = R*Id + Ld*dId/dt  - omega_e*Lq*Iq
-        Vq = R*Iq + Lq*dIq/dt  + omega_e*Ld*Id + omega_e*psi_f
+        vd = R·id + Ld·d(id)/dt − ω·Lq·iq
+        vq = R·iq + Lq·d(iq)/dt + ω·Ld·id + ω·ψf
 
     Feedforward to add to the PI output (before circle limit):
-        Vd_ff = -omega_e * Lq * Iq
-        Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
+        Vd_ff = −ω·Lq·iq          → vd_PI = R·id + Ld·d(id)/dt
+        Vq_ff = +ω·Ld·id + ω·ψf   → vq_PI = R·iq + Lq·d(iq)/dt
 
     Caller precomputes the products as fract16 in the same per-unit basis as Vd/Vq:
         omega_Ld  = omega_e * Ld

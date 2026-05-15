@@ -321,7 +321,7 @@ typedef struct Motor_State
     /*
         Speed Feedback
     */
-    volatile bool SpeedUpdateFlag;      /* Speed capture sync Feedback update */
+    // volatile bool SpeedUpdateFlag;      /* Speed capture sync Feedback update */
     Ramp_T SpeedRamp;                   /* { Target, Output, Limit, Coefficient } — full speed setpoint contract */
     PID_T PidSpeed;                     /* Input PidSpeed(RampCmd - Speed_Fract16), Output => VPwm, Vq, Iq. */
     // PID_T PidPosition;
@@ -582,21 +582,6 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_State_T * p_motor) { retu
     Outer Control Feedback State
 */
 /******************************************************************************/
-/*
-    Capture State
-*/
-static inline void Motor_CaptureSensor(Motor_T * p_motor)
-{
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-
-    RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
-    if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
-    {
-        RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
-        // StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, p_motor, MOTOR_STATE_INPUT_ON_SPEED);
-        p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
-    }
-}
 
 /* Result of Capture */
 /* Feedback Speed interface getter */
@@ -629,7 +614,8 @@ static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract1
 */
 /******************************************************************************/
 /*
-    Map an alternative request, while User/Drive still controls RampTarget
+    Map an alternative input, while User/Drive still controls RampTarget
+    alternatively StateMachine guards Ramp_SetTarget(&p_motor->SpeedRamp, speedReq)
 */
 static inline fract16_t Motor_ProcSpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
 {
@@ -674,14 +660,14 @@ static inline void _Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t
 /*
     Pid State on FeedbackMode/Resume
 */
-static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
-{
-    if (p_motor->FeedbackMode.Speed == 1U)
-    {
-        Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
-        PID_SetOutputState(&p_motor->PidSpeed, torqueState);
-    }
-}
+// static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
+// {
+//     if (p_motor->FeedbackMode.Speed == 1U)
+//     {
+//         Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
+//         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
+//     }
+// }
 
 
 /******************************************************************************/

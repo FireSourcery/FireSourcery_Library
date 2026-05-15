@@ -174,7 +174,7 @@ static void ValidateAlign(Motor_T * p_motor)
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_state->Config.AlignTime_Cycles * 2U);
     Encoder_ModeDT_SetInitial(GetEncoder(p_motor));
     FOC_SetVd(&p_state->Foc, 0);
-    Motor_FOC_MatchFeedbackState(p_motor);
+    // Motor_FOC_MatchFeedbackState(p_motor);
     Motor_FOC_StartOpenLoop(p_state);
     p_state->SensorState.MechanicalAngle = Encoder_GetAngle(GetEncoderState(p_motor));
 }

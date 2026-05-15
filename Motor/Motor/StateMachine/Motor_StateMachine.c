@@ -355,46 +355,44 @@ const State_T MOTOR_STATE_PASSIVE =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-    p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
-    Motor_FOC_MatchFeedbackState(p_motor);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
-    // Motor_MatchSpeedTorqueState(p_state, Ramp_GetOutput(&p_state->TorqueRamp)); // or let state machine handle
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+    // p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
+    // Motor_FOC_MatchFeedbackState(p_motor);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
+
+    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); }
+    else { Motor_FOC_MatchTorqueVState(p_context); }
+
+    if (p_context->FeedbackMode.Speed == 1U) { _Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
 
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR, Motor_ILimitCw(p_motor->P_MOTOR), Motor_ILimitCcw(p_motor->P_MOTOR));
-
-    // RotorSensor_ZeroInitial(p_motor->P_MOTOR->p_ActiveSensor); not needed if capture sensor runs in thread
-
-    // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR);
+    // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR); update abc out once if run_proc is not scheduled to run after
     // Phase_ActivateOutput(p_motor->P_MOTOR);
 }
 
 static void Run_Proc(Motor_T * p_motor)
 {
-// #ifdef MOTOR_EXTERN_CONTROL_ENABLE
-//     Motor_ExternControl(p_motor);
-// #endif
+    // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
+    //     Motor_ExternControl(p_motor);
+    // #endif
 
     Motor_State_T * p_context = p_motor->P_MOTOR;
 
-    if (p_context->SpeedUpdateFlag == true)
-    {
-        p_context->SpeedUpdateFlag = false;
-        if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
-        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
-    }
-    Motor_FOC_ProcAngleControl(p_motor); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-    // if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
-    // else { Motor_FOC_ProcVControl(p_motor->P_MOTOR); }
-    // ufract16_t vbus = VBus_Fract16(p_motor->P_VBUS);
+    // if (p_context->SpeedUpdateFlag == true)
+    // {
+    //     p_context->SpeedUpdateFlag = false;
+    //     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+    //     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    // }
 
-
+    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
+    else { Motor_FOC_ProcVControl(p_motor); }
 }
 
 static void Run_OnSpeed(Motor_T * p_motor)
 {
-    // Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
-    // FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
-    // if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
 }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
@@ -438,9 +436,9 @@ static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
 static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-    // return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
-    Motor_FOC_MatchFeedbackState(p_motor); //  Match inline without self-transition
-    return NULL;
+    return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
+    // Motor_FOC_MatchFeedbackState(p_motor); //  Match inline without self-transition
+    // return NULL;
 }
 
 static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =

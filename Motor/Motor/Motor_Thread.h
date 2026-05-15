@@ -51,11 +51,29 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
 
+
+
 /******************************************************************************/
 /*
     Motor_PWM_Thread
 */
 /******************************************************************************/
+/*
+    Capture State
+*/
+static inline void Motor_CaptureSensor(Motor_T * p_motor)
+{
+    Motor_State_T * p_state = p_motor->P_MOTOR;
+
+    RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
+    if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
+    {
+        RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
+        _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_SPEED);
+        // p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
+    }
+}
+
 /*
     ~50us
     Calling function clears interrupt flag

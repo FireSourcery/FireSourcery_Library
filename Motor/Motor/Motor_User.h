@@ -54,9 +54,7 @@ static inline accum32_t Motor_GetSpeed_Fract16(const Motor_State_T * p_motor) { 
 
 static inline angle16_t Motor_GetSpeed_DegPerCycle(const Motor_State_T * p_motor) { return  RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
 
-static inline fract16_t _Motor_GetVSpeedEffective_Fract16(Motor_T * p_motor) { return Motor_GetVSpeed_Fract16(p_motor); }
 static inline fract16_t Motor_GetVSpeedEffective_Fract16(Motor_T * p_motor) { return  Motor_GetVSpeed_Fract16(p_motor) * p_motor->P_MOTOR->Config.DirectionForward; }
-static inline ufract16_t Motor_GetVSpeedEffective_UFract16(Motor_T * p_motor) { return math_abs(Motor_GetVSpeed_Fract16(p_motor)); }
 
 /*
     Conversion functions only on user call. No periodic proc.

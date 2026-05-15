@@ -57,8 +57,8 @@ int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh,
     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
     /* Dynamic Clamp */
-    int32_t integralMin = math_min(limitLow - proportional, 0);
-    int32_t integralMax = math_max(limitHigh - proportional, 0);
+    int32_t integralMin = p_pid->OutputMin - proportional;
+    int32_t integralMax = p_pid->OutputMax - proportional;
 
     int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
@@ -83,8 +83,8 @@ static inline int32_t CalcPI(PID_T * p_pid, int32_t error)
     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
     /* Dynamic Clamp */
-    int32_t integralMin = math_min(p_pid->OutputMin - proportional, 0);
-    int32_t integralMax = math_max(p_pid->OutputMax - proportional, 0);
+    int32_t integralMin = p_pid->OutputMin - proportional;
+    int32_t integralMax = p_pid->OutputMax - proportional;
 
     /*
         Store as Integral ("integrate" then sum). Allows compute time gain adjustment.
