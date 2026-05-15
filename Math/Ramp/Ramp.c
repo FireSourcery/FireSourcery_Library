@@ -39,11 +39,10 @@
     Hard clamp output on SetLimits
     Limits are applied to the target. Ramp smoothing applies on limit update
     an out of bounds output state is gradually brough back into bounds.
-
 */
 static inline int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
 {
-    return p_ramp->Accumulator.Accumulator + math_clamp(target32 - p_ramp->Accumulator.Accumulator, -(int32_t)p_ramp->Accumulator.Coefficient, p_ramp->Accumulator.Coefficient);
+    return p_ramp->Accumulator.Accumulator + math_clamp(target32 - p_ramp->Accumulator.Accumulator, -p_ramp->Accumulator.Coefficient, p_ramp->Accumulator.Coefficient);
 }
 
 /* caller hold input limits */
@@ -52,7 +51,6 @@ int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, target << RAMP_SHIFT);
     return Ramp_GetOutput(p_ramp);
 }
-
 
 int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {

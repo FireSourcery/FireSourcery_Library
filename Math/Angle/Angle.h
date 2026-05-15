@@ -128,25 +128,41 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 */
 /******************************************************************************/
 /*
+    Step Delta: [down_room, up_room]
+    which when both are negative (Angle above LimitUpper) forces any Delta back toward the window.
+    Angle next = clamp(Angle + Delta, LimitLower, LimitUpper)
+*/
+static inline angle16_t _Angle_DeltaSat(const Angle_T * p_angle)
+{
+    return math_clamp(p_angle->Delta, (uint32_t)p_angle->LimitLower - p_angle->Angle, (uint32_t)p_angle->LimitUpper - p_angle->Angle);
+}
+
+static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
+{
+    p_angle->Angle += _Angle_DeltaSat(p_angle);
+    return Angle_Value(p_angle);
+}
+
+/*
     Integrate Saturated
     Bounded step — wrapping-aware clamp.
     Unsigned subtraction recovers the correct span/offset even when limits
 */
-static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
-{
-    /*  assert(math_abs(p_angle->Delta >> ANGLE32_SHIFT) < ANGLE16_PER_REVOLUTION / 2); */
-    /* (x − low) > (high − low) */
-    if ((uint32_t)(p_angle->Angle + p_angle->Delta - p_angle->LimitLower) > (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower))
-    {
-        p_angle->Angle = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
-    }
-    else
-    {
-        p_angle->Angle += p_angle->Delta;
-    }
+// static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
+// {
+//     /*  assert(math_abs(p_angle->Delta >> ANGLE32_SHIFT) < ANGLE16_PER_REVOLUTION / 2); */
+//     /* (x − low) > (high − low) */
+//     if ((uint32_t)(p_angle->Angle + p_angle->Delta - p_angle->LimitLower) > (uint32_t)(p_angle->LimitUpper - p_angle->LimitLower))
+//     {
+//         p_angle->Angle = (p_angle->Delta >= 0) ? p_angle->LimitUpper : p_angle->LimitLower;
+//     }
+//     else
+//     {
+//         p_angle->Angle += p_angle->Delta;
+//     }
 
-    return Angle_Value(p_angle);
-}
+//     return Angle_Value(p_angle);
+// }
 
 /* Set bounds as an angle window [lower, upper] from angle16 inputs. */
 static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t upper)
@@ -203,24 +219,15 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 /*
     Step is pinned in [−room, 0] or [0, +room]
     no auto-correction, 0 on overshoot.
+    e.g. Already above upper : Angle = 110, Upper = 100, Lower = 0, Delta = +5
+    returns 0, stay at 110.
 */
-static inline angle16_t _Angle_GetDeltaSat(const Angle_T * p_angle)
-{
-    int32_t upper = math_max((uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle, 0);
-    int32_t lower = math_min((uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle, 0);
-    return math_clamp(p_angle->Delta, lower, upper);
-}
-
-/*
-    Step Delta: [down_room, up_room]
-    which when both are negative (Angle above LimitUpper) forces any Delta back toward the window.
-*/
-static inline angle16_t _Angle_GetDeltaComp(const Angle_T * p_angle)
-{
-    int32_t upper = (uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle;
-    int32_t lower = (uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle;
-    return math_clamp(p_angle->Delta, lower, upper);
-}
+// static inline angle16_t _Angle_GetDeltaSat(const Angle_T * p_angle)
+// {
+//     int32_t upper = math_max((uint32_t)p_angle->LimitUpper - (uint32_t)p_angle->Angle, 0);
+//     int32_t lower = math_min((uint32_t)p_angle->LimitLower - (uint32_t)p_angle->Angle, 0);
+//     return math_clamp(p_angle->Delta, lower, upper);
+// }
 
 /******************************************************************************/
 /*
