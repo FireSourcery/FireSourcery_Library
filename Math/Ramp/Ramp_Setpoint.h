@@ -32,19 +32,18 @@
 #include "Ramp.h"
 #include "../PID/PID.h"
 
-static inline int32_t Ramp_Setpoint_ProcControl(Ramp_T * p_ramp, PID_T * p_pid, int16_t feedback) { return PID_ProcPI(p_pid, feedback, Ramp_ProcNext(p_ramp)); }
-static inline int32_t Ramp_Setpoint_ProcControlSource(Ramp_T * p_ramp, PID_T * p_pid, int16_t feedback, int16_t target) { return PID_ProcPI(p_pid, feedback, Ramp_ProcNextOnInputOf(p_ramp, target)); }
+
+// ramp contains setpoint state single surface for limits
+static inline int32_t Ramp_Setpoint_ProcControl(Ramp_T * p_ramp, PID_T * p_pid, int16_t feedback)
+{
+    return PID_ProcPI_AntiWindup(p_pid, Ramp_GetLimitLower(p_ramp), Ramp_GetLimitUpper(p_ramp), Ramp_ProcNext(p_ramp));
+}
+
+static inline int32_t Ramp_Setpoint_ProcControlSource(Ramp_T * p_ramp, PID_T * p_pid, int16_t feedback, int16_t target) { return PID_ProcPI(p_pid, feedback, Ramp_ProcNextOf(p_ramp, target)); }
 
 /* clamp internal state */
 static inline void Ramp_Setpoint_SetOutputLimits(Ramp_T * p_ramp, PID_T * p_pid, int32_t min, int32_t max)
 {
-    Ramp_SetOutputLimit(p_ramp, min, max);
+    Ramp_SetLimits(p_ramp, min, max);
     PID_SetOutputLimits(p_pid, min, max);
 }
-
-// ramp contains setpoint state single surface for limits
-// static inline int32_t Ramp_Setpoint_ProcControl_(Ramp_T * p_ramp, PID_T * p_pid, int16_t feedback)
-// {
-//     PID_CaptureOutputLimits(p_pid, Ramp_GetLimitLower(p_ramp), Ramp_GetLimitUpper(p_ramp));
-//     return Ramp_Setpoint_ProcControl(p_ramp, p_pid, feedback);
-// }

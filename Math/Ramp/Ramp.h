@@ -101,7 +101,7 @@ static inline int32_t Ramp_GetLimitUpper(const Ramp_T * p_ramp) { return (p_ramp
 
 /* OnInput Limits */
 /* Set Target Window */
-static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t upper)
+static inline void Ramp_SetLimits(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {
     p_ramp->Accumulator.LimitLower = (int32_t)lower << RAMP_SHIFT;
     p_ramp->Accumulator.LimitUpper = (int32_t)upper << RAMP_SHIFT;
@@ -109,11 +109,10 @@ static inline void Ramp_SetOutputLimit(Ramp_T * p_ramp, int32_t lower, int32_t u
     p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
 }
 
-/* ClampOutput */
-/* Snap the output */
-static inline void Ramp_SetOutputLimit_Snap(Ramp_T * p_ramp, int32_t lower, int32_t upper)
+/* Clamp Output immediately */
+static inline void Ramp_SetOutputLimits(Ramp_T * p_ramp, int32_t lower, int32_t upper)
 {
-    Ramp_SetOutputLimit(p_ramp, lower, upper);
+    Ramp_SetLimits(p_ramp, lower, upper);
     p_ramp->Accumulator.Accumulator = math_clamp(p_ramp->Accumulator.Accumulator, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper);
 
 }
@@ -130,8 +129,8 @@ static inline void _Ramp_Disable(Ramp_T * p_ramp) { p_ramp->Accumulator.Coeffici
 /******************************************************************************/
 extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 
-extern int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
-extern int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
+extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 
 extern int32_t Ramp_ProcNext(Ramp_T * p_ramp);
 

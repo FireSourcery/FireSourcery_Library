@@ -86,9 +86,10 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating
 #define SPEED_FRACT16_OF_RPM(Rpm)      (Rpm * INT16_MAX / MOTOR_SPEED_TYPE_MAX_RPM())
 #define SPEED_RPM_OF_FRACT16(Fract16)  (Fract16 * MOTOR_SPEED_TYPE_MAX_RPM() / 32768)
 #endif
+//selection between phase_max or vnominal
+// #define MOTOR_SPEED_TYPE_MAX_RPM(Kv, VBase)
 
-
-static inline uint16_t Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return MOTOR_SPEED_TYPE_MAX_RPM(p_config); }
+static inline uint16_t Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return Motor_GetSpeedRated_Rpm(p_config) * 2; }
 static inline uint16_t Motor_GetSpeedTypeMax_Angle(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedTypeMax_Rpm(p_config)); }
 
 /* Local Unit Conversion */

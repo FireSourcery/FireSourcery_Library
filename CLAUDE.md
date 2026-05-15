@@ -33,7 +33,7 @@
 ## Build & Toolchain
 
 - **Compiler:** ARM GCC (`arm-none-eabi-gcc` 15.2.1)
-- **Target Architecture:** ARM Cortex-M4 (S32K142, KE0x)
+- **Target Architecture:** ARM Cortex-M4/M0+
 - **Build System:** Makefile / IDE project-based (MCUXpresso / VS Code)
 - **C Standard:** C11 (gnu11)
 - **No dynamic allocation** — all memory is statically allocated

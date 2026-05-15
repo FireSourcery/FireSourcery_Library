@@ -253,7 +253,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 //     // Phase_ActivateV0(&p_motor->PHASE);
 //     // PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
 //     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-//     // Ramp_SetOutputLimit(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 //     // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 //     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 // }

@@ -37,7 +37,7 @@
 */
 void Motor_Init(Motor_T * p_dev)
 {
-    // assert(Phase_VBus_GetVNominal() != 0U); /* set by caller init */
+    assert(VBus_GetVNominal(p_dev->P_VBUS) != 0U); /* set by caller init */
 
     /* Config including selected angle sensor init */
     if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_MOTOR->Config = *p_dev->P_NVM_CONFIG; }
@@ -62,7 +62,6 @@ void Motor_Init(Motor_T * p_dev)
     // Motor_Config_ResolveSpeedRated
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
-    // p_dev->P_MOTOR->ElectricalSpeedRef.Ke_SpeedFract16Test = Motor_GetSpeedVNominalRef_Fract16(p_dev);
 }
 
 /*
@@ -85,25 +84,24 @@ void Motor_Reset(Motor_State_T * p_motor)
     BEMF_Init(&p_motor->Bemf);
 #endif
 
-    Motor_ResetSpeedLimit(p_motor);
-    Motor_ResetILimit(p_motor);
-
     Motor_InitSpeedRamp(p_motor);
     Motor_InitTorqueRamp(p_motor);
+    // Motor_ResetSpeedLimit(p_motor);
+    // Motor_ResetILimit(p_motor);
     Ramp_Init(&p_motor->VRamp, p_motor->Config.SpeedRampTime_Cycles, Phase_Calibration_GetVRated_Fract16());
 
     /* Preset rate ramps do not need output limits */
     /* Start at 0 speed in FOC mode for continuous angle displacements */
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
-    // Ramp_SetOutputLimit(&p_motor->OpenLoopSpeedRamp, -Motor_GetSpeedRated_Fract16(p_motor), Motor_GetSpeedRated_Fract16(p_motor));
-    // Ramp_SetOutputLimit(&p_motor->OpenLoopIRamp, -Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor));
+    // Ramp_SetLimits(&p_motor->OpenLoopSpeedRamp, -Motor_GetSpeedRated_Fract16(p_motor), Motor_GetSpeedRated_Fract16(p_motor));
+    // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor));
 
     Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
 
     FOC_Init(&p_motor->Foc);
-    Motor_InitDecouplingCoeffs(&p_motor->Config); //todo
+    Motor_InitDecouplingCoeffs(&p_motor->Config); // todo
     // FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.ElectricalRsLs);
     FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.Decoupling);
     FOC_Sensorless_Init(&p_motor->FocSensorless, NULL);
@@ -155,7 +153,6 @@ void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
     // p_config->Decoupling.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
     // p_config->Decoupling.Psi = psi_pu_of_kv(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), p_config->SpeedRating.Kv, p_config->SpeedRating.PolePairs);
 
-
     p_config->Decoupling.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams.Ld, 1000000UL);
     p_config->Decoupling.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams.Lq, 1000000UL);
     p_config->Decoupling.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams.Rs);
@@ -193,19 +190,19 @@ void Motor_InitTorqueRamp(Motor_State_T * p_motor)
 // void Motor_DisableTorqueRamp(Motor_State_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
 
 /* use wider config window before direction are known */
-void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
-{
-    // p_motor->SpeedLimitCcw_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
-    // p_motor->SpeedLimitCw_Fract16 = -p_motor->Config.SpeedLimitForward_Fract16;
-    Ramp_SetOutputLimit(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
-}
+// void Motor_ResetSpeedLimit(Motor_State_T * p_motor)
+// {
+//     // p_motor->SpeedLimitCcw_Fract16 = p_motor->Config.SpeedLimitForward_Fract16;
+//     // p_motor->SpeedLimitCw_Fract16 = -p_motor->Config.SpeedLimitForward_Fract16;
+//     Ramp_SetLimits(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
+// }
 
-void Motor_ResetILimit(Motor_State_T * p_motor)
-{
-    // p_motor->ILimitCcw_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
-    // p_motor->ILimitCw_Fract16 = -p_motor->Config.ILimitMotoring_Fract16;
-    Ramp_SetOutputLimit(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
-}
+// void Motor_ResetILimit(Motor_State_T * p_motor)
+// {
+//     // p_motor->ILimitCcw_Fract16 = p_motor->Config.ILimitMotoring_Fract16;
+//     // p_motor->ILimitCw_Fract16 = -p_motor->Config.ILimitMotoring_Fract16;
+//     Ramp_SetLimits(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+// }
 
 void Motor_ResetSpeedPid(Motor_State_T * p_motor)
 {
@@ -227,6 +224,16 @@ void _Motor_ResetTuning(Motor_T * p_motor)
     Motor_ResetIPid(p_motor->P_MOTOR);
 }
 
+void Motor_ClearFeedbackState(Motor_State_T * p_motor)
+{
+    PID_Reset(&p_motor->PidSpeed);
+    Phase_Input_ClearI(&p_motor->PhaseInput);
+    Phase_Input_ClearV(&p_motor->PhaseInput);
+    Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
+    Ramp_SetOutputState(&p_motor->TorqueRamp, 0);
+    Ramp_SetTarget(&p_motor->TorqueRamp, 0);
+    Ramp_SetTarget(&p_motor->SpeedRamp, 0);
+}
 
 /******************************************************************************/
 /*
@@ -246,9 +253,9 @@ void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
         else                                     { PID_SetOutputLimits(&p_motor->PidSpeed, v.low, v.high); } /* SpeedPid Output is V */
     }
 
-    if (p_motor->FeedbackMode.Current == 1U)    { Ramp_SetOutputLimit(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
-    else                                        { Ramp_SetOutputLimit(&p_motor->TorqueRamp, v.low, v.high); } /* alternatively use Vramp */
-    // else                                        { Ramp_SetOutputLimit(&p_motor->VRamp, v.low, v.high); }
+    if (p_motor->FeedbackMode.Current == 1U)    { Ramp_SetLimits(&p_motor->TorqueRamp, Motor_ILimitCw(p_motor), Motor_ILimitCcw(p_motor)); }
+    else                                        { Ramp_SetLimits(&p_motor->TorqueRamp, v.low, v.high); } /* alternatively use Vramp */
+    // else                                        { Ramp_SetLimits(&p_motor->VRamp, v.low, v.high); }
 }
 
 
@@ -267,7 +274,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
     // if (p_state->FeedbackMode.Current == 0)
     // {interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)p_dev->P_MOTOR->Direction);
-    //     Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+    //     Ramp_SetLimits(&p_state->TorqueRamp, iLimits.low, iLimits.high);
     // }
 }
 

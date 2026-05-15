@@ -88,12 +88,6 @@ typedef struct FOC
     fract16_t IdFwLimit;    /* Maximum demagnetizing current. */
     // FOC_FieldWeakeningConfig_T FieldWeakeningConfig; copy from nvm
 
-    /* Inputs - Capture by ADC */
-    // fract16_t Ia, Ib, Ic;
-
-//     /* Intermediate values */
-//     fract16_t Ialpha, Ibeta;
-//     fract16_t Valpha, Vbeta;
 
     /* Cache on speed loop */
     FOC_ElectricalSpeed_T ElectricalSpeed; /* pre-compute for feedforward and decoupling */
@@ -102,6 +96,13 @@ typedef struct FOC
     interval_t VLimit;
     fract16_t VWindow;
     // fract16_t VqLimit; 1 value encodes direction and magnitude.
+
+    /* Inputs - Capture by ADC */
+    // fract16_t Ia, Ib, Ic;
+
+//     /* Intermediate values */
+//     fract16_t Ialpha, Ibeta;
+//     fract16_t Valpha, Vbeta;
 }
 FOC_T;
 
@@ -644,6 +645,7 @@ static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
     p_foc->Id = 0;
     p_foc->Iq = 0;
+    FOC_CaptureSpeed(p_foc, 0);
 }
 
 static void FOC_ClearOutputState(FOC_T * p_foc)
@@ -663,6 +665,13 @@ static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
     p_foc->ElectricalSpeed.OmegaLd = 0;
     p_foc->ElectricalSpeed.OmegaLq = 0;
     p_foc->ElectricalSpeed.OmegaPsi = 0;
+}
+
+
+static inline void FOC_Reset(FOC_T * p_foc)
+{
+
+
 }
 
 

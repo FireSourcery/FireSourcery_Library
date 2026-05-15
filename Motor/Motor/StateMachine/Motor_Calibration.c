@@ -149,155 +149,155 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 // bool Motor_Calibration_IsTuning(Motor_T * p_motor) { return (StateMachine_IsActiveBranch(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_TUNING)); }
 
 
-/******************************************************************************/
-/*!
-    @brief
-*/
-/******************************************************************************/
-/*
-    Excite + Capture state. Single owner — only one motor tunes at a time.
-    File-scope keeps Motor_State_T unchanged; ownership pointer guards cross-motor access.
-*/
-static Motor_Tuning_Config_T  s_TuningConfig = { .Shape = MOTOR_TUNING_EXCITE_TRACK };
-static Motor_Tuning_Capture_T s_TuningCapture;
-static const Motor_State_T *  sp_TuningOwner;
-static uint32_t               s_TuningTick;
+// /******************************************************************************/
+// /*!
+//     @brief
+// */
+// /******************************************************************************/
+// /*
+//     Excite + Capture state. Single owner — only one motor tunes at a time.
+//     File-scope keeps Motor_State_T unchanged; ownership pointer guards cross-motor access.
+// */
+// static Motor_Tuning_Config_T  s_TuningConfig = { .Shape = MOTOR_TUNING_EXCITE_TRACK };
+// static Motor_Tuning_Capture_T s_TuningCapture;
+// static const Motor_State_T *  sp_TuningOwner;
+// static uint32_t               s_TuningTick;
 
-static int16_t Excite_Eval(Motor_Tuning_Config_T * p_cfg, uint32_t tick)
-{
-    switch (p_cfg->Shape)
-    {
-        case MOTOR_TUNING_EXCITE_STEP:   return (tick < p_cfg->StepDelay) ? 0 : p_cfg->Amplitude;
-        case MOTOR_TUNING_EXCITE_SQUARE: return ((tick / p_cfg->HalfPeriod) & 1U) ? -p_cfg->Amplitude : p_cfg->Amplitude;
-        default:                         return 0;
-    }
-}
-
-static int16_t Capture_Feedback(const Motor_State_T * p_motor, Motor_Tuning_Channel_T ch)
-{
-    return (ch == MOTOR_TUNING_CHANNEL_IQ) ? FOC_Iq(&p_motor->Foc) : (int16_t)Motor_GetSpeedFeedback(p_motor);
-}
-
-static void Capture_Sample(Motor_Tuning_Capture_T * p_cap, int16_t sp, int16_t fb)
-{
-    if (p_cap->Full == true) { return; }
-    p_cap->Setpoint[p_cap->Index] = sp;
-    p_cap->Feedback[p_cap->Index] = fb;
-    p_cap->Index++;
-    if (p_cap->Index >= MOTOR_TUNING_CAPTURE_LEN) { p_cap->Full = true; }
-}
-
-/*
-    Same loop as Run; if armed for Excite, override the active loop's setpoint and capture (sp, fb).
-*/
-static void AutoTuning_Entry(Motor_T * p_motor)
-{
-    Phase_ActivateT0(&p_motor->PHASE);
-
-    /* reload from NVM so live edits are discarded on (re)entry */
-    _Motor_ResetTuning(p_motor);
-
-    s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
-    s_TuningCapture.Index = 0U;
-    s_TuningCapture.Full = false;
-    s_TuningTick = 0U;
-    sp_TuningOwner = p_motor->P_MOTOR;
-}
-
-static void AutoTuning_Proc(Motor_T * p_motor)
-{
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-
-    if ((s_TuningConfig.Shape != MOTOR_TUNING_EXCITE_TRACK) && (sp_TuningOwner == p_state))
-    {
-        int16_t sp = Excite_Eval(&s_TuningConfig, s_TuningTick);
-        int16_t fb = Capture_Feedback(p_state, s_TuningConfig.Channel);
-
-        if (s_TuningConfig.Channel == MOTOR_TUNING_CHANNEL_SPEED) { Ramp_SetTarget(&p_state->SpeedRamp, sp); }
-        else                                                      { Ramp_SetTarget(&p_state->TorqueRamp, sp); }
-
-        Capture_Sample(&s_TuningCapture, sp, fb);
-        s_TuningTick++;
-    }
-
-    // Motor_ProcOuterFeedback(p_state);
-    Motor_FOC_ProcAngleControl(p_motor);
-    //Motor_FOC_WriteDuty(p_motor);
-}
-
-
-// static State_T * Tuning_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
+// static int16_t Excite_Eval(Motor_Tuning_Config_T * p_cfg, uint32_t tick)
 // {
-//     State_T * p_nextState = NULL;
-//     switch ((Phase_VOutMode_T)phaseOutput)
+//     switch (p_cfg->Shape)
 //     {
-//         // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
-//         case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
-//         case PHASE_VOUT_0: Phase_ActivateV0(&p_motor->PHASE); break;
-//         case PHASE_VOUT_PWM: Phase_ActivateT0(&p_motor->PHASE); break;
-//         default: break;
+//         case MOTOR_TUNING_EXCITE_STEP:   return (tick < p_cfg->StepDelay) ? 0 : p_cfg->Amplitude;
+//         case MOTOR_TUNING_EXCITE_SQUARE: return ((tick / p_cfg->HalfPeriod) & 1U) ? -p_cfg->Amplitude : p_cfg->Amplitude;
+//         default:                         return 0;
 //     }
-//     return p_nextState;
-//     // return &MOTOR_STATE_CALIBRATION;
 // }
 
-const State_T CALIBRATION_STATE_AUTO_TUNING =
-{
-    // .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, MOTOR_CALIBRATION_STATE_TUNING),
-    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
-    .P_TOP      = &MOTOR_STATE_CALIBRATION,
-    .DEPTH      = 1U,
-    .ENTRY      = (State_Action_T)AutoTuning_Entry,
-    .LOOP       = (State_Action_T)AutoTuning_Proc,
-};
-
-
-
-// void Motor_Calibration_EnterTuning(Motor_T * p_motor)
+// static int16_t Capture_Feedback(const Motor_State_T * p_motor, Motor_Tuning_Channel_T ch)
 // {
-//     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNING);
+//     return (ch == MOTOR_TUNING_CHANNEL_IQ) ? FOC_Iq(&p_motor->Foc) : (int16_t)Motor_GetSpeedFeedback(p_motor);
 // }
 
-static State_T * AutoTuning_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_AUTO_TUNING; }
+// static void Capture_Sample(Motor_Tuning_Capture_T * p_cap, int16_t sp, int16_t fb)
+// {
+//     if (p_cap->Full == true) { return; }
+//     p_cap->Setpoint[p_cap->Index] = sp;
+//     p_cap->Feedback[p_cap->Index] = fb;
+//     p_cap->Index++;
+//     if (p_cap->Index >= MOTOR_TUNING_CAPTURE_LEN) { p_cap->Full = true; }
+// }
 
-void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor)
-{
-    static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)AutoTuning_Start };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
-}
+// /*
+//     Same loop as Run; if armed for Excite, override the active loop's setpoint and capture (sp, fb).
+// */
+// static void AutoTuning_Entry(Motor_T * p_motor)
+// {
+//     Phase_ActivateT0(&p_motor->PHASE);
+
+//     /* reload from NVM so live edits are discarded on (re)entry */
+//     _Motor_ResetTuning(p_motor);
+
+//     s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
+//     s_TuningCapture.Index = 0U;
+//     s_TuningCapture.Full = false;
+//     s_TuningTick = 0U;
+//     sp_TuningOwner = p_motor->P_MOTOR;
+// }
+
+// static void AutoTuning_Proc(Motor_T * p_motor)
+// {
+//     Motor_State_T * p_state = p_motor->P_MOTOR;
+
+//     if ((s_TuningConfig.Shape != MOTOR_TUNING_EXCITE_TRACK) && (sp_TuningOwner == p_state))
+//     {
+//         int16_t sp = Excite_Eval(&s_TuningConfig, s_TuningTick);
+//         int16_t fb = Capture_Feedback(p_state, s_TuningConfig.Channel);
+
+//         if (s_TuningConfig.Channel == MOTOR_TUNING_CHANNEL_SPEED) { Ramp_SetTarget(&p_state->SpeedRamp, sp); }
+//         else                                                      { Ramp_SetTarget(&p_state->TorqueRamp, sp); }
+
+//         Capture_Sample(&s_TuningCapture, sp, fb);
+//         s_TuningTick++;
+//     }
+
+//     // Motor_ProcOuterFeedback(p_state);
+//     // Motor_FOC_ProcAngleControl(p_motor);
+//     //Motor_FOC_WriteDuty(p_motor);
+// }
 
 
-/*
-    Arm an excite + capture run. No-op if motor isn't currently in TUNING.
-    Re-arming during a run resets the capture buffer and tick counter.
-*/
-void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config)
-{
-    if (Motor_Calibration_IsTuning(p_motor) == false) { return; }
-    s_TuningConfig = *p_config;
-    s_TuningCapture.Index = 0U;
-    s_TuningCapture.Full = false;
-    s_TuningTick = 0U;
-    sp_TuningOwner = p_motor->P_MOTOR;
-}
+// // static State_T * Tuning_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
+// // {
+// //     State_T * p_nextState = NULL;
+// //     switch ((Phase_VOutMode_T)phaseOutput)
+// //     {
+// //         // case PHASE_VOUT_Z: p_nextState = &MOTOR_STATE_PASSIVE; break;
+// //         case PHASE_VOUT_Z: Phase_Deactivate(&p_motor->PHASE); break;
+// //         case PHASE_VOUT_0: Phase_ActivateV0(&p_motor->PHASE); break;
+// //         case PHASE_VOUT_PWM: Phase_ActivateT0(&p_motor->PHASE); break;
+// //         default: break;
+// //     }
+// //     return p_nextState;
+// //     // return &MOTOR_STATE_CALIBRATION;
+// // }
 
-void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor)
-{
-    if (sp_TuningOwner != p_motor->P_MOTOR) { return; }
-    s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
-    Ramp_SetTarget(&p_motor->P_MOTOR->SpeedRamp, 0);
-    Ramp_SetTarget(&p_motor->P_MOTOR->TorqueRamp, 0);
-}
+// const State_T CALIBRATION_STATE_AUTO_TUNING =
+// {
+//     // .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, MOTOR_CALIBRATION_STATE_TUNING),
+//     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+//     .P_TOP      = &MOTOR_STATE_CALIBRATION,
+//     .DEPTH      = 1U,
+//     .ENTRY      = (State_Action_T)AutoTuning_Entry,
+//     .LOOP       = (State_Action_T)AutoTuning_Proc,
+// };
 
-bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor)
-{
-    return (sp_TuningOwner == p_motor->P_MOTOR) && s_TuningCapture.Full;
-}
 
-Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor)
-{
-    return (sp_TuningOwner == p_motor->P_MOTOR) ? &s_TuningCapture : NULL;
-}
+
+// // void Motor_Calibration_EnterTuning(Motor_T * p_motor)
+// // {
+// //     StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_TUNING);
+// // }
+
+// static State_T * AutoTuning_Start(Motor_T * p_motor, state_value_t value) { (void)p_motor; (void)value; return &CALIBRATION_STATE_AUTO_TUNING; }
+
+// void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor)
+// {
+//     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)AutoTuning_Start };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+// }
+
+
+// /*
+//     Arm an excite + capture run. No-op if motor isn't currently in TUNING.
+//     Re-arming during a run resets the capture buffer and tick counter.
+// */
+// void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config)
+// {
+//     if (Motor_Calibration_IsTuning(p_motor) == false) { return; }
+//     s_TuningConfig = *p_config;
+//     s_TuningCapture.Index = 0U;
+//     s_TuningCapture.Full = false;
+//     s_TuningTick = 0U;
+//     sp_TuningOwner = p_motor->P_MOTOR;
+// }
+
+// void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor)
+// {
+//     if (sp_TuningOwner != p_motor->P_MOTOR) { return; }
+//     s_TuningConfig.Shape = MOTOR_TUNING_EXCITE_TRACK;
+//     Ramp_SetTarget(&p_motor->P_MOTOR->SpeedRamp, 0);
+//     Ramp_SetTarget(&p_motor->P_MOTOR->TorqueRamp, 0);
+// }
+
+// bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor)
+// {
+//     return (sp_TuningOwner == p_motor->P_MOTOR) && s_TuningCapture.Full;
+// }
+
+// Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor)
+// {
+//     return (sp_TuningOwner == p_motor->P_MOTOR) ? &s_TuningCapture : NULL;
+// }
 
 /******************************************************************************/
 /*!

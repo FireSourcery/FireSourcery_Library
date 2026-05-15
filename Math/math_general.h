@@ -123,6 +123,16 @@ static inline interval_t interval_of_sign_pair(sign_t sign, int32_t alignedMag, 
     }
 }
 
+static inline interval_t interval_of_half_plane(sign_t sign, int32_t alignedMag, int32_t opposedMag)
+{
+    switch (sign)
+    {
+        case SIGN_POSITIVE: return (interval_t) { .low = 0, .high = +alignedMag };
+        case SIGN_NEGATIVE: return (interval_t) { .low = -alignedMag, .high = 0 };
+        default:            return (interval_t) { .low = 0, .high = 0 };
+    }
+}
+
 
 static inline int32_t interval_clamp(interval_t b, int32_t v) { return math_clamp(v, b.low, b.high); }
 static inline bool interval_contains(interval_t b, int32_t v) { return v >= b.low && v <= b.high; }

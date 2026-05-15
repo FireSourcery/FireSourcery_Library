@@ -357,6 +357,8 @@ static void Run_Entry(Motor_T * p_motor)
 {
     p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
     Motor_FOC_MatchFeedbackState(p_motor);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
+    // Motor_MatchSpeedTorqueState(p_state, Ramp_GetOutput(&p_state->TorqueRamp)); // or let state machine handle
+
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
     // Motor_UpdateSpeedTorqueLimits(p_motor->P_MOTOR, Motor_ILimitCw(p_motor->P_MOTOR), Motor_ILimitCcw(p_motor->P_MOTOR));
 
@@ -377,23 +379,29 @@ static void Run_Proc(Motor_T * p_motor)
     if (p_context->SpeedUpdateFlag == true)
     {
         p_context->SpeedUpdateFlag = false;
-        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
         if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
     }
-
     Motor_FOC_ProcAngleControl(p_motor); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ProcAngleControl, NULL/* Motor_SixStep_ProcPhaseControl */);
-
-    // if (p_motor->FeedbackMode.Current == 1U)
-    // {
-    //     Motor_FOC_ProcTorqueReq(p_motor, Ramp_GetTarget(&p_motor->TorqueRamp));
-    // }
-    // else
-    // {
-        // Motor_FOC_ProcVControl
-    // }
     // if (p_motor->P_MOTOR->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
     // else { Motor_FOC_ProcVControl(p_motor->P_MOTOR); }
+    // ufract16_t vbus = VBus_Fract16(p_motor->P_VBUS);
+
+
 }
+
+static void Run_OnSpeed(Motor_T * p_motor)
+{
+    // Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
+    // FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    // if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+}
+
+static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
+{
+    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
+    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
+};
 
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
@@ -425,14 +433,13 @@ static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
 }
 
 /*
-    Process [Motor_FOC_MatchFeedbackState] before [Motor_FOC_ProcAngleControl]
-    Match inline without self-transition to avoid Phase_ActivateT0 zero-voltage glitch in Run_Entry
+
 */
-// return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
 static State_T * Run_InputFeedbackMode(Motor_T * p_motor, state_value_t feedbackMode)
 {
     _Motor_SetFeedbackMode_Cast(p_motor, feedbackMode);
-    Motor_FOC_MatchFeedbackState(p_motor);
+    // return &MOTOR_STATE_RUN;  /* Run_Entry Procs synchronous  Alternatively, transition through Freewheel */
+    Motor_FOC_MatchFeedbackState(p_motor); //  Match inline without self-transition
     return NULL;
 }
 
@@ -444,19 +451,6 @@ static const State_Input_T RUN_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =
     // [MOTOR_STATE_INPUT_DIRECTION]       = (State_Input_T)Run_InputStop,
     [MOTOR_STATE_INPUT_CALIBRATION]     = NULL,
     [MOTOR_STATE_INPUT_OPEN_LOOP]       = NULL,
-};
-
-static void Run_OnSpeed(Motor_T * p_motor)
-{
-    // Motor_ProcSpeedFeedback(p_motor->P_MOTOR);
-    // FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
-    // if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
-}
-
-static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
-{
-    [MOTOR_STATE_INPUT_ON_SPEED] = (State_Action_T)Run_OnSpeed,
-    [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
 };
 
 const State_T MOTOR_STATE_RUN =
@@ -482,7 +476,7 @@ static void Intervention_Entry(Motor_T * p_motor)
     Motor_State_T * p_context = p_motor->P_MOTOR;
     if (p_context->FeedbackMode.Current == 0U)
     {
-        Ramp_SetOutputLimit(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); //switch to i limits or use vramp for voltage
+        Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); //switch to i limits or use vramp for voltage
     }
     FOC_MatchIVState(&p_context->Foc);
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc));
