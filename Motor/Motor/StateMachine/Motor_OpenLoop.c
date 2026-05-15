@@ -144,8 +144,8 @@ static void Run_Entry(Motor_T * p_motor)
 
 static void Run_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
-    FOC_Sensorless_Step(&p_state->Foc, &p_state->FocSensorless);
+    Motor_State_T * p_context = p_motor->P_MOTOR;
+    FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
     Motor_FOC_ProcOpenLoop(p_motor);
     // capture for dbugging
 }
