@@ -102,7 +102,7 @@ static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
 //     p_config->Decoupling.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.Kv);
 // }
 
-FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t eRadsBase)
+static inline FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t eRadsBase)
 {
     return (FOC_Electrical_T)
     {
@@ -111,7 +111,6 @@ FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t
         .Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_electrical->Rs),
         .Psi = psi_pu_rads_of_wb(Phase_Calibration_GetVMaxVolts(), eRadsBase, p_electrical->Psi, 1000000UL),
     };
-
 }
 
 

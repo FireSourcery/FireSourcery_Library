@@ -410,7 +410,7 @@ static void FOC_Sensorless_InitG(FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     // p_obs->G_pu = ((uint64_t)FRACT16_PI * FRACT16_SCALE / p_foc->Electrical.Lq);
 }
 
-static void FOC_Sensorless_InitAngleUnits(FOC_T * p_foc, FOC_Sensorless_T * p_obs, Angle_SpeedFractCalib_T * p_speed_calib)
+static void FOC_Sensorless_InitAngleUnits(FOC_Sensorless_T * p_obs, Angle_SpeedFractCalib_T * p_speed_calib)
 {
     Angle_SpeedRef_Init_Rpm(&p_obs->SpeedFractRef, p_speed_calib->PollingFreq, p_speed_calib->SpeedMax_Rpm);
 }

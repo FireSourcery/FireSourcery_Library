@@ -106,7 +106,8 @@ void Motor_Reset(Motor_State_T * p_motor)
     FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.Decoupling);
     FOC_Sensorless_Init(&p_motor->FocSensorless, NULL);
     FOC_Sensorless_InitG(&p_motor->Foc, &p_motor->FocSensorless);
-    FOC_Sensorless_InitAngleUnits(&p_motor->Foc, &p_motor->FocSensorless, &p_motor->Config.SpeedRating);
+    Angle_SpeedFractCalib_T speed_calib = { .PollingFreq = MOTOR_CONTROL_FREQ, .SpeedMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating) };
+    FOC_Sensorless_InitAngleUnits(&p_motor->FocSensorless, &speed_calib);
 
     p_motor->Foc.IdFwGain = p_motor->Config.FieldWeakening.IdFwGain;
     p_motor->Foc.IdFwLimit = p_motor->Config.FieldWeakening.IdFwLimit;
