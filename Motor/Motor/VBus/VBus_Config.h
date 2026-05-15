@@ -108,6 +108,11 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V
     VMonitor alias
 */
 /******************************************************************************/
+static inline uint16_t VBus_VSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
+static inline uint16_t VBus_VFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
+static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
+static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
+
 static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
 
@@ -117,12 +122,6 @@ static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) {
 */
 static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
 static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
-
-/*  */
-static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
-static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
-static inline uint16_t VBus_GetVSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
-static inline uint16_t VBus_GetVFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 
 
 /******************************************************************************/

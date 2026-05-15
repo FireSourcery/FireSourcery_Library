@@ -52,8 +52,8 @@ struct foc_alphabeta { fract16_t alpha, beta; };
 
 static inline struct foc_dq foc_clarke_park(fract16_t a, fract16_t b, fract16_t c, fract16_t sin, fract16_t cos)
 {
-    int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
-    int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
+    int32_t alpha = fract16_mul((int32_t)a * 2 - b - c, FRACT16_1_DIV_3);
+    int32_t beta = fract16_mul((int32_t)b - c, FRACT16_1_DIV_SQRT3);
 
     int32_t d = fract16_mul(alpha, cos) + fract16_mul(beta, sin);
     int32_t q = -fract16_mul(alpha, sin) + fract16_mul(beta, cos);
@@ -101,28 +101,6 @@ static inline accum32_t _foc_vd_ff_direct(accum32_t L_pu, fract16_t omega, fract
 static inline accum32_t _foc_vq_ff_direct(accum32_t Ld_pu, accum32_t psi_pu, fract16_t omega, fract16_t id) { return ((int64_t)omega * Ld_pu * id) / ((int64_t)FRACT16_SCALE * FRACT16_SCALE) + ((int64_t)omega * psi_pu) / FRACT16_SCALE; }
 
 
-
-// static inline struct foc_dq foc_vdq_ff(accum32_t ld, accum32_t lq, accum32_t psi, fract16_t omega, fract16_t id, fract16_t iq)
-// {
-//     return (struct foc_dq)
-//     {
-//         .d = fract16_sat(foc_vd_ff(fract16_mul(omega, lq), iq)),
-//         .q = fract16_sat(foc_vq_ff(fract16_mul(omega, ld), fract16_mul(omega, psi), id))
-//     };
-// }
-
-// static inline fract16_t foc_vd_decouple(fract16_t omega_Lq, fract16_t iq, fract16_t vd) { return fract16_sat((accum32_t)vd + foc_vd_ff(omega_Lq, iq)); }
-// static inline fract16_t foc_vq_decouple(fract16_t omega_Ld, fract16_t omega_psi, fract16_t id, fract16_t vq) { return fract16_sat((accum32_t)vq + foc_vq_ff(omega_Ld, omega_psi, id)); }
-
-// static inline struct foc_dq foc_vdq_decouple(fract16_t Ld, fract16_t Lq, fract16_t psi, fract16_t omega, fract16_t id, fract16_t iq, fract16_t vd, fract16_t vq)
-// {
-//     fract16_t omega_Ld = fract16_mul(omega, Ld);
-//     fract16_t omega_Lq = fract16_mul(omega, Lq);
-//     fract16_t omega_psi = fract16_mul(omega, psi);
-//     return (struct foc_dq) { .d = foc_vd_decouple(vd, iq, omega_Lq), .q = foc_vq_decouple(vq, id, omega_Ld, omega_psi) };
-// }
-
-
 /******************************************************************************/
 /*!
 
@@ -152,7 +130,7 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
     if (d < -(int32_t)magnitude_limit) return (struct foc_dq) { .d = -(fract16_t)magnitude_limit, .q = 0 };
 
     /* d now fits int16 and |d| ≤ magnitude_limit, so d*d ≤ magnitude_limit² fits uint32. */
-    uint32_t q_max = fixed_sqrt((uint32_t)magnitude_limit * magnitude_limit - (d * d));   /* uint32 → uint16, exactly the existing primitive */
+    uint32_t q_max = fixed_sqrt((uint32_t)magnitude_limit * magnitude_limit - (d * d));
 
     if (q > (int32_t)q_max) return (struct foc_dq) { .d = (fract16_t)d, .q = (fract16_t)q_max };
     if (q < -(int32_t)q_max) return (struct foc_dq) { .d = (fract16_t)d, .q = -(fract16_t)q_max };
@@ -160,16 +138,6 @@ static inline struct foc_dq foc_circle_limit_ff(int32_t d, int32_t q, ufract16_t
     return (struct foc_dq) { .d = (fract16_t)d, .q = (fract16_t)q };
 }
 
-/*  */
-// static inline struct foc_dq foc_circle_limit_q(fract16_t d, fract16_t q, ufract16_t magnitude_limit)
-// {
-//     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;
-//     uint32_t d_squared = (int32_t)d * d;
-//     uint32_t q_squared = (int32_t)q * q;
-
-//     if (d_squared + q_squared > mag_limit_squared) { return (struct foc_dq) { .d = d, .q = math_sign(q) * fixed_sqrt(mag_limit_squared - d_squared) }; }
-//     return (struct foc_dq) { .d = d, .q = q };
-// }
 
 static inline ufract16_t foc_vq_circle_limit(ufract16_t magnitude_limit, fract16_t d)
 {

@@ -44,10 +44,10 @@ FOC_FieldWeakeningConfig_T;
 /* same shape for SI and PU  */
 typedef struct
 {
-    uint32_t Ld;
+    uint32_t Ld;    /* L · π · ψ_base / I_base  */
     uint32_t Lq;
-    uint32_t Rs;
-    uint32_t Psi;
+    uint32_t Rs;    /* Rs · I_max / V_max */
+    uint32_t Psi;   /* V_max / ω_base */
 }
 FOC_Electrical_T;
 

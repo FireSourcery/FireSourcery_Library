@@ -450,11 +450,17 @@ static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_moto
 static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
 static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
 
+/* Motor_GetKvVBus_Rpm */
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Motor_Speed_Fract16OfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
+
+
 /*
     Skip resolving SpeedRated_Rpm
 */
-static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
-static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv / 2; }
+static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
+static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv / 2; }
 // static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm * 2; }
 // static inline uint16_t _Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
 
@@ -466,10 +472,6 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VNo
 static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
 
-/* Motor_GetKvVBus_Rpm */
-static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * p_motor->P_VBUS->Config.VSupplyNominal_V; }
-static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
-static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Motor_Speed_Fract16OfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
 /*
     Speed VBus Ref
@@ -482,10 +484,9 @@ static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
 /* altneraitvely, foc loop use accum32_t for 1.0 +, PI use angle16 or 1/2 */
 
-/* Virtual getters. submodule apply policy on resolve */
+/* Virtual getters. config applies policy on set */
 static inline uint16_t Motor_IAlign(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.IAlign_Fract16; }
 static inline uint16_t Motor_VAlign(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.VAlign_Fract16; }
-
 
 
 /******************************************************************************/

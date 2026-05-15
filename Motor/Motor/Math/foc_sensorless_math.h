@@ -70,7 +70,7 @@
     starting near ω_e = 0.
 */
 /******************************************************************************/
-static inline fract16_t foc_emf_axis(fract16_t Rs_pu, fract16_t Ls_pu, fract16_t v, fract16_t i, fract16_t di)
+static inline fract16_t foc_emf_axis(fract16_t Rs_pu, accum32_t Ls_pu, fract16_t v, fract16_t i, fract16_t di)
 {
     return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i) - fract16_mul(Ls_pu, di));
 }
@@ -104,21 +104,23 @@ static inline fract16_t foc_smo_sat(fract16_t thr, fract16_t x) { return fract16
     (extracted by foc_lpf_step) is the back-EMF estimate ê used by the
     angle tracker.
 
-    @param  G_int_pu  observer integrator gain = 1 / Ls_pu
+    @param  G_pu    observer integrator gain = 1 / Ls_pu
     @param  K_smo     sliding gain; > peak EMF in pu so z dominates ê
     @param  thr       boundary-layer width (foc_smo_sat); typ. 0.05..0.2 of i_max
 */
 /******************************************************************************/
 static inline fract16_t foc_smo_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return fract16_mul(K_smo, foc_smo_sat(thr, i_est - i_meas)); }
-static inline fract16_t foc_smo_v_eff(fract16_t Rs_pu, fract16_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i_est) - z); }
-static inline fract16_t foc_smo_i(fract16_t G_int_pu, fract16_t Rs_pu, fract16_t v, fract16_t i_est, fract16_t i_meas, fract16_t z) { return fract16_sat((accum32_t)i_est + fract16_mul(G_int_pu, foc_smo_v_eff(Rs_pu, v, i_est, z))); }
+static inline accum32_t foc_smo_v_eff(fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return ((accum32_t)v - fract16_mul(Rs_pu, i_est) - z); }
+// /* if G_pu > 1.0 */
+// static inline accum32_t _foc_smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return (int64_t)G_pu * foc_smo_v_eff(Rs_pu, v, i_est, z) / FRACT16_SCALE; }
+static inline fract16_t foc_smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + fract16_mul(G_pu, foc_smo_v_eff(Rs_pu, v, i_est, z))); }
 
 struct foc_smo_axis { fract16_t i_est, z; };
 
-static inline struct foc_smo_axis foc_smo_axis_step(fract16_t K_smo, fract16_t thr, fract16_t Rs_pu, fract16_t G_int_pu, fract16_t v, fract16_t i_est, fract16_t i_meas)
+static inline struct foc_smo_axis foc_smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t i_meas)
 {
     fract16_t z = foc_smo_z(K_smo, thr, i_est, i_meas);
-    return (struct foc_smo_axis) { .i_est = foc_smo_i(G_int_pu, Rs_pu, v, i_est, i_meas, z), .z = z, };
+    return (struct foc_smo_axis) { .i_est = foc_smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
 }
 
 
@@ -142,14 +144,14 @@ static inline struct foc_smo_axis foc_smo_axis_step(fract16_t K_smo, fract16_t t
 
 // static inline struct foc_smo_alphabeta foc_smo_alphabeta_step
 // (
-//     fract16_t Rs_pu, fract16_t G_int_pu, fract16_t K_smo, fract16_t thr,
+//     fract16_t Rs_pu, fract16_t G_pu, fract16_t K_smo, fract16_t thr,
 //     fract16_t i_alpha_est, fract16_t i_beta_est,
 //     fract16_t i_alpha, fract16_t i_beta,
 //     fract16_t v_alpha, fract16_t v_beta
 // )
 // {
-//     struct foc_smo_axis a = foc_smo_axis_step(Rs_pu, G_int_pu, K_smo, thr, i_alpha_est, i_alpha, v_alpha);
-//     struct foc_smo_axis b = foc_smo_axis_step(Rs_pu, G_int_pu, K_smo, thr, i_beta_est,  i_beta,  v_beta);
+//     struct foc_smo_axis a = foc_smo_axis_step(Rs_pu, G_pu, K_smo, thr, i_alpha_est, i_alpha, v_alpha);
+//     struct foc_smo_axis b = foc_smo_axis_step(Rs_pu, G_pu, K_smo, thr, i_beta_est,  i_beta,  v_beta);
 //     return (struct foc_smo_alphabeta) { .i_alpha = a.i_est, .i_beta = b.i_est, .z_alpha = a.z, .z_beta = b.z };
 // }
 
@@ -303,10 +305,10 @@ static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_p
     Discrete SMO step:
         zd = K_smo · sat( îd − id, thr )
         zq = K_smo · sat( îq − iq, thr )
-        îd[k+1] = îd[k] + G_int_pu · ( vd − Rs·îd + ω·Lq·îq − zd )
-        îq[k+1] = îq[k] + G_int_pu · ( vq − Rs·îq − ω·Lq·îd − zq )
+        îd[k+1] = îd[k] + G_pu · ( vd − Rs·îd + ω·Lq·îq − zd )
+        îq[k+1] = îq[k] + G_pu · ( vq − Rs·îq − ω·Lq·îd − zq )
 
-        G_int_pu = dt · V_max / (Lq · I_max) = 1 / Lq_pu
+        G_pu = dt · V_max / (Lq · I_max) = 1 / Lq_pu
 
     (zd, zq) drive (î − i) → 0; their LPF'd values (foc_lpf_step) are (ê_d, ê_q):
         ê_d → 0      at lock
@@ -322,14 +324,14 @@ static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_p
     to prove and requires reasonable startup alignment.
 */
 /******************************************************************************/
-static inline accum32_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return foc_smo_z(K_smo, thr, id_est, id); }
-static inline accum32_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return foc_smo_z(K_smo, thr, iq_est, iq); }
+static inline fract16_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return foc_smo_z(K_smo, thr, id_est, id); }
+static inline fract16_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return foc_smo_z(K_smo, thr, iq_est, iq); }
 
-static inline accum32_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t i_m, fract16_t z) { return foc_smo_i(G, Rs, fract16_sat((accum32_t)v - v_ff), i_est, i_m, z); }
+static inline fract16_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return foc_smo_i(G, Rs, ((accum32_t)v - v_ff), i_est, z); }
 /* vd_ff on iq_est */
-static inline accum32_t foc_eemf_id(fract16_t Rs_pu, accum32_t G_int_pu, fract16_t vd, fract16_t id_est, fract16_t id, fract16_t zd, accum32_t vd_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vd, vd_ff, id_est, id, zd); }
+static inline fract16_t foc_eemf_id(accum32_t G_pu, fract16_t Rs_pu, fract16_t vd, accum32_t vd_ff, fract16_t id_est, fract16_t zd) { return foc_smo_i_decouple(G_pu, Rs_pu, vd, vd_ff, id_est, zd); }
 /* vq_ff on id_est */
-static inline accum32_t foc_eemf_iq(fract16_t Rs_pu, accum32_t G_int_pu, fract16_t vq, fract16_t iq_est, fract16_t iq, fract16_t zq, accum32_t vq_ff) { return foc_smo_i_decouple(G_int_pu, Rs_pu, vq, vq_ff, iq_est, iq, zq); }
+static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t vq, accum32_t vq_ff, fract16_t iq_est, fract16_t zq) { return foc_smo_i_decouple(G_pu, Rs_pu, vq, vq_ff, iq_est, zq); }
 
 /******************************************************************************/
 /*!
@@ -365,9 +367,9 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
 // struct foc_eemf_dq { fract16_t id_est, iq_est, zd, zq; };
 // static inline struct foc_eemf_dq foc_eemf_dq_step
 // (
-//     fract16_t Rs_pu, fract16_t G_int_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
+//     fract16_t Rs_pu, fract16_t G_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
 //     fract16_t id_est, fract16_t iq_est,
-//     fract16_t id, fract16_t iq,
+//     fract16_t fract16_t iq,
 //     fract16_t vd, fract16_t vq
 // )
 // {
@@ -377,8 +379,8 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
 //     fract16_t vq_eff = fract16_sat((accum32_t)vq - fract16_mul(Rs_pu, iq_est) - fract16_mul(omega_Lq_pu, id_est) - zq);
 //     return (struct foc_eemf_dq)
 //     {
-//         .id_est = fract16_sat((accum32_t)id_est + fract16_mul(G_int_pu, vd_eff)),
-//         .iq_est = fract16_sat((accum32_t)iq_est + fract16_mul(G_int_pu, vq_eff)),
+//         .id_est = fract16_sat((accum32_t)id_est + fract16_mul(G_pu, vd_eff)),
+//         .iq_est = fract16_sat((accum32_t)iq_est + fract16_mul(G_pu, vq_eff)),
 //         .zd = zd,
 //         .zq = zq,
 //     };
@@ -389,13 +391,13 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
    Without v_cross this collapses to foc_smo_axis_step. */
 // static inline struct foc_smo_axis foc_eemf_axis_step
 // (
-//     fract16_t K_smo, fract16_t thr, fract16_t Rs_pu, fract16_t G_int_pu,
+//     fract16_t K_smo, fract16_t thr, fract16_t Rs_pu, fract16_t G_pu,
 //     fract16_t i_est, fract16_t i_meas, fract16_t v, fract16_t v_cross
 // )
 // {
 //     fract16_t z = foc_smo_z(K_smo, thr, i_est, i_meas);
 //     fract16_t v_eff = fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i_est) - v_cross - z);
-//     return (struct foc_smo_axis) { .i_est = fract16_sat((accum32_t)i_est + fract16_mul(G_int_pu, v_eff)), .z = z, };
+//     return (struct foc_smo_axis) { .i_est = fract16_sat((accum32_t)i_est + fract16_mul(G_pu, v_eff)), .z = z, };
 // }
 
 // /*
@@ -407,14 +409,14 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
 
 // static inline struct foc_eemf_dq foc_eemf_dq_step
 // (
-//     fract16_t Rs_pu, fract16_t G_int_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
+//     fract16_t Rs_pu, fract16_t G_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
 //     fract16_t id_est, fract16_t iq_est,
 //     fract16_t id, fract16_t iq,
 //     fract16_t vd, fract16_t vq
 // )
 // {
-//     struct foc_smo_axis d = foc_eemf_axis_step(K_smo, thr, Rs_pu, G_int_pu, id_est, id, vd, -fract16_mul(omega_Lq_pu, iq_est));
-//     struct foc_smo_axis q = foc_eemf_axis_step(K_smo, thr, Rs_pu, G_int_pu, iq_est, iq, vq, fract16_mul(omega_Lq_pu, id_est));
+//     struct foc_smo_axis d = foc_eemf_axis_step(K_smo, thr, Rs_pu, G_pu, id_est, id, vd, -fract16_mul(omega_Lq_pu, iq_est));
+//     struct foc_smo_axis q = foc_eemf_axis_step(K_smo, thr, Rs_pu, G_pu, iq_est, iq, vq, fract16_mul(omega_Lq_pu, id_est));
 //     return (struct foc_eemf_dq) { .id_est = d.i_est, .iq_est = q.i_est, .zd = d.z, .zq = q.z };
 // }
 
@@ -428,7 +430,7 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
    ψ absorbed into the disturbance) so each axis reduces to the αβ SMO i-step. */
 // static inline struct foc_dq foc_eemf_dq_i
 // (
-//     fract16_t Rs_pu, fract16_t G_int_pu, fract16_t omega_Lq_pu,
+//     fract16_t Rs_pu, fract16_t G_pu, fract16_t omega_Lq_pu,
 //     fract16_t id_est, fract16_t iq_est,
 //     fract16_t vd, fract16_t vq,
 //     fract16_t id, fract16_t iq,
@@ -439,20 +441,20 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
 //     fract16_t vq_c = fract16_sat((accum32_t)vq - foc_vq_ff(omega_Lq_pu, 0, id_est));
 //     return (struct foc_dq)
 //     {
-//         .d = foc_smo_i(G_int_pu, Rs_pu, id_est, vd_c, id, zd),
-//         .q = foc_smo_i(G_int_pu, Rs_pu, iq_est, vq_c, iq, zq),
+//         .d = foc_smo_i(G_pu, Rs_pu, id_est, vd_c, id, zd),
+//         .q = foc_smo_i(G_pu, Rs_pu, iq_est, vq_c, iq, zq),
 //     };
 // }
 
 // static inline struct foc_eemf_dq foc_eemf_dq_step
 // (
-//     fract16_t Rs_pu, fract16_t G_int_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
+//     fract16_t Rs_pu, fract16_t G_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
 //     fract16_t id_est, fract16_t iq_est,
 //     fract16_t vd, fract16_t vq,
 //     fract16_t id, fract16_t iq
 // )
 // {
 //     struct foc_dq z = foc_eemf_dq_z(K_smo, thr, id_est, iq_est, id, iq);
-//     struct foc_dq i_next = foc_eemf_dq_i(Rs_pu, G_int_pu, omega_Lq_pu, id_est, iq_est, vd, vq, id, iq, z.d, z.q);
+//     struct foc_dq i_next = foc_eemf_dq_i(Rs_pu, G_pu, omega_Lq_pu, id_est, iq_est, vd, vq, id, iq, z.d, z.q);
 //     return (struct foc_eemf_dq) { .id_est = i_next.d, .iq_est = i_next.q, .zd = z.d, .zq = z.q };
 // }

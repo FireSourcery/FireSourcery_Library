@@ -49,20 +49,20 @@ Motor_ElectricalSpeedRating_T;
 // Motor_Electrical_T;
 // Motor_Kv_T;
 
-typedef struct
-{
-    int32_t Ke_SpeedFract16;
-}
-Motor_ElectricalSpeedRef_T;
+// typedef struct
+// {
+//     int32_t Ke_SpeedFract16;
+// }
+// Motor_ElectricalSpeedRef_T;
 
-typedef struct
-{
-    uint32_t Rs;
-    // uint32_t Ls;
-    uint32_t Ld; /* store the foc version   */
-    uint32_t Lq;
-}
-Motor_RL_T;
+// typedef struct
+// {
+//     uint32_t Rs;
+//     // uint32_t Ls;
+//     uint32_t Ld; /* store the foc version   */
+//     uint32_t Lq;
+// }
+// Motor_RL_T;
 
 
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
