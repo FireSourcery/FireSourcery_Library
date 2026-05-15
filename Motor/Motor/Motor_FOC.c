@@ -188,8 +188,7 @@ void Motor_FOC_MatchTorqueVState(Motor_State_T * p_context)
     Ramp_SetOutputState(&p_context->TorqueRamp, vqMatch); //different units for now
     Ramp_SetTarget(&p_context->TorqueRamp, vqMatch);
     FOC_SetVq(&p_context->Foc, vqMatch);/* repeat set is ok */
-
-    FOC_CaptureSpeed(&p_context->Foc,0); /* update speed for feedforward and decouple */
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
 }
 
 
@@ -223,7 +222,9 @@ void Motor_FOC_ProcAlignCmd(Motor_T * p_motor)
 }
 
 
-
+/******************************************************************************/
+/*  */
+/******************************************************************************/
 /*
     Ramp towards Preset AlignScalar_Fract16 * IRatedPeak
     Caller sets time
@@ -241,6 +242,10 @@ void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
     Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), Angle_Value(&p_context->OpenLoopAngle), Motor_GetIAlign(&p_context->Config));
 }
 
+
+/******************************************************************************/
+/*  */
+/******************************************************************************/
 /*
     OpenLoop Spin - Feed forward input angle, enable/disable current feedback
     ElectricalAngle => integrate speed to angle

@@ -631,43 +631,14 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
     return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNext(&p_motor->SpeedRamp));
 }
 
-// fract16_t Motor_ProcSpeedControl(  Motor_T * p_motor) { return _Motor_ProcSpeedControl(p_motor->P_MOTOR);}
-
-
 /*
-    Proc FeedbackMode Flags
+    Pid State on FeedbackMode/Resume
 */
-// static inline void Motor_ProcSpeedFeedback(Motor_State_T * p_motor)
-// {
-//     if (p_motor->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_ProcSpeedControl(p_motor)); }
-// }
-
-// static inline void Motor_ProcOuterFeedback(Motor_State_T * p_motor)
-// {
-//     if (p_motor->SpeedUpdateFlag == true)
-//     {
-//         p_motor->SpeedUpdateFlag = false; // todo  , adc state machine inputs
-//         Motor_ProcSpeedFeedback(p_motor);
-//     }
-// }
-
 static inline void _Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
 {
     Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
     PID_SetOutputState(&p_motor->PidSpeed, torqueState);
 }
-
-/*
-    Pid State on FeedbackMode/Resume
-*/
-// static inline void Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
-// {
-//     if (p_motor->FeedbackMode.Speed == 1U)
-//     {
-//         Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
-//         PID_SetOutputState(&p_motor->PidSpeed, torqueState);
-//     }
-// }
 
 
 /******************************************************************************/
