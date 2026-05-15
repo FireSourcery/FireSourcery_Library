@@ -46,7 +46,7 @@ void Motor_FOC_AngleControl(Motor_State_T * p_motor, fract16_t vBus, angle16_t t
     if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I) == true)    /* else update angle only for voutput, until next cycle */
     {
         FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
-        // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(p_motor), dReq, qReq);
+        // FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus,  dReq, qReq);
         // FOC_ProcIFeedback_BackLimitDecouple(&p_motor->Foc, vBus, Motor_GetSpeedFeedback(p_motor), dReq, qReq);
     }
     FOC_ProcInvClarkePark(&p_motor->Foc);
@@ -138,6 +138,7 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor)
 {
     FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
+    // FOC_CaptureSpeed(&p_motor->Foc, Motor_GetSpeedFeedback(p_motor));
 }
 
 
@@ -178,7 +179,10 @@ void Motor_FOC_MatchTorqueIState(Motor_State_T * p_context)
     int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
     Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
-    _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch);
+    // _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch);
+    _FOC_MatchIVState(&p_context->Foc, 0, vqMatch);
+    FOC_CaptureSpeed(&p_context->Foc, 0); /* update speed for feedforward and decouple */
+    // FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
 }
 
 void Motor_FOC_MatchTorqueVState(Motor_State_T * p_context)
@@ -187,6 +191,8 @@ void Motor_FOC_MatchTorqueVState(Motor_State_T * p_context)
     Ramp_SetOutputState(&p_context->TorqueRamp, vqMatch); //different units for now
     Ramp_SetTarget(&p_context->TorqueRamp, vqMatch);
     FOC_SetVq(&p_context->Foc, vqMatch);/* repeat set is ok */
+
+    FOC_CaptureSpeed(&p_context->Foc,0); /* update speed for feedforward and decouple */
 }
 
 // void Motor_FOC_MatchTorqueState(Motor_State_T * p_context, int16_t torqueState)

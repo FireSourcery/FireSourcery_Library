@@ -358,15 +358,13 @@ static void Run_Entry(Motor_T * p_motor)
     Motor_State_T * p_context = p_motor->P_MOTOR;
     // p_motor->P_MOTOR->SpeedUpdateFlag = false; /* Clear pending speed update to avoid glitch on resume */
     // Motor_FOC_MatchFeedbackState(p_motor);    // Motor_CommutationModeFn_Call(p_motor->P_MOTOR, Motor_FOC_MatchFeedbackState, NULL);
-
+    /* Vabc is either bemf or 0 on entryy */
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); }
     else { Motor_FOC_MatchTorqueVState(p_context); }
 
     if (p_context->FeedbackMode.Speed == 1U) { _Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
 
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
-    // Motor_FOC_ProcAngleControl(p_motor->P_MOTOR); update abc out once if run_proc is not scheduled to run after
-    // Phase_ActivateOutput(p_motor->P_MOTOR);
 }
 
 static void Run_Proc(Motor_T * p_motor)
@@ -376,14 +374,6 @@ static void Run_Proc(Motor_T * p_motor)
     // #endif
 
     Motor_State_T * p_context = p_motor->P_MOTOR;
-
-    // if (p_context->SpeedUpdateFlag == true)
-    // {
-    //     p_context->SpeedUpdateFlag = false;
-    //     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
-    //     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
-    // }
-
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
     else { Motor_FOC_ProcVControl(p_motor); }
 }

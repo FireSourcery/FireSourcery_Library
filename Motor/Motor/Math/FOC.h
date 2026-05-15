@@ -158,7 +158,6 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
 static inline void FOC_SetVd(FOC_T * p_foc, fract16_t vd) { p_foc->Vd = vd; }
 static inline void FOC_SetVq(FOC_T * p_foc, fract16_t vq) { p_foc->Vq = vq; }
 
-
 /* vPhaseLimit as modulation [0:1/sqrt3] */
 static inline bool _FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vPhaseLimit)
 {
@@ -167,10 +166,12 @@ static inline bool _FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vPhaseLimit)
     p_foc->Vq = limited.q;
 }
 
-// assert(abs(p_foc->Vd) <= vPhaseLimit); /* set by feedback output */
-static inline bool FOC_ProcVectorLimit(FOC_T * p_foc, ufract16_t vBus)
+static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t vdReq, int32_t vqReq)
 {
-    _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
+    struct foc_dq vdq = foc_circle_limit(vdReq, vqReq, vCircle);
+    p_foc->Vd = vdq.d;
+    p_foc->Vq = vdq.q;
+    return ((accum32_t)p_foc->Vd != vdReq) || ((accum32_t)p_foc->Vq != vqReq);
 }
 
 static inline ufract16_t _FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vPhaseLimit)
@@ -184,14 +185,6 @@ static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
     return _FOC_VqCircleLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_SQRT3));
 }
 
-static inline bool _FOC_ProcVCircle(FOC_T * p_foc, ufract16_t vCircle, int32_t vdReq, int32_t vqReq)
-{
-    // struct foc_dq vdq = foc_circle_limit(fract16_sat(vdReq), fract16_sat(vqReq), vCircle);
-    struct foc_dq vdq = foc_circle_limit_ff(vdReq, vqReq, vCircle);
-    p_foc->Vd = vdq.d;
-    p_foc->Vq = vdq.q;
-    return ((accum32_t)p_foc->Vd != vdReq) || ((accum32_t)p_foc->Vq != vqReq);
-}
 
 // static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
@@ -335,16 +328,15 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus,  int16_t id
 /* Post-proc circle limit — windup correction after both PIDs run. */
 /* the combine output state can still grow outside of circle limit. limit after proc may still have windup. propagate if limited. */
 /* no sqrt during common case  */
-static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
-{
-    p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
-    p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-    // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
-    //   if (FOC_ProcVectorLimit(p_foc, vBus)) { if (math_abs(FOC_Vq(p_foc)) > math_abs(PID_GetIntegral(p_foc.PidIq))) { PID_SetOutputState(p_foc.PidIq, FOC_Vq(p_foc)); }}
-    _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
-    if (PID_IsSaturated(&p_foc->PidId)) { PID_SetOutputState(&p_foc->PidId, p_foc->Vd); }
-    if (PID_IsSaturated(&p_foc->PidIq)) { PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }
-}
+// static inline void FOC_ProcIFeedback_BackLimit(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
+// {
+//     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
+//     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
+//     // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+//      _FOC_ProcVectorLimit(p_foc, fract16_mul(vBus, FRACT16_1_DIV_2));
+//     if (PID_IsSaturated(&p_foc->PidId)) { PID_SetOutputState(&p_foc->PidId, p_foc->Vd); }
+//     if (PID_IsSaturated(&p_foc->PidIq)) { PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }
+// }
 
 /******************************************************************************/
 /*
@@ -361,7 +353,7 @@ static inline void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 }
 
 
-static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, accum32_t speed, int16_t idReq, int16_t iqReq)
+static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
 {
     ufract16_t vPhaseLimit = fract16_mul(vBus, FRACT16_1_DIV_2);
     int32_t vd_ff = fract16_sat(foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq)); /* may exceeed INT16_MAX range */
