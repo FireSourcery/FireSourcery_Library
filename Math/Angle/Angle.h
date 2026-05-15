@@ -297,7 +297,7 @@ static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_Spe
     Angle_CaptureDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
 }
 
-static inline fract16_t Angle_ResolveSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref)
+static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref)
 {
     return speed_fract16_of_angle(p_ref->InvSpeedMax_Fract32, p_angle->Delta >> ANGLE32_SHIFT);
 }

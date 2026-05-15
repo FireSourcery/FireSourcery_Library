@@ -66,7 +66,7 @@ void UserAIn_ReinitScale(const UserAIn_T * p_dev) { Linear_Q16_Init(&p_dev->P_ST
 /******************************************************************************/
 static inline uint16_t FilterValue(uint8_t filterShift, uint16_t filteredPrev, uint16_t value)
 {
-    return (value + (filteredPrev << filterShift)) >> (filterShift + 1U);
+    return ((uint32_t)value + ((uint32_t)filteredPrev << filterShift)) >> (filterShift + 1U);
 }
 
 static inline void CaptureValue(UserAIn_State_T * p_state, uint16_t filter, uint16_t value_adcu)

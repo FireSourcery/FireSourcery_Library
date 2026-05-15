@@ -32,52 +32,29 @@
 #include <assert.h>
 
 
-/*
-    Clamp output
-*/
-static int32_t NextOf(const Ramp_T * p_ramp, int32_t cw32, int32_t ccw32, int32_t target32)
-{
-    int32_t output32 = p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient;
-    return math_clamp(output32, cw32, ccw32);
-    // return accumulator(p_ramp->Accumulator.Coefficient, cw32, ccw32, p_ramp->Accumulator.Accumulator, math_sign(target32 - p_ramp->Accumulator.Accumulator));
-}
-
-int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
-{
-    p_ramp->Accumulator.Accumulator = NextOf(p_ramp, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper, target << RAMP_SHIFT);
-    return Ramp_GetOutput(p_ramp);
-}
 
 
 /*
+    Unified Ramp_ProcNextOf
+    Hard clamp output on SetLimits
     Limits are applied to the target. Ramp smoothing applies on limit update
     an out of bounds output state is gradually brough back into bounds.
 
-    clamp: if step overshoots, saturate at target
 */
-static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
+static inline int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
 {
-    int32_t diff = target32 - p_ramp->Accumulator.Accumulator;
-    return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + math_sign(diff) * p_ramp->Accumulator.Coefficient);
+    return p_ramp->Accumulator.Accumulator + math_clamp(target32 - p_ramp->Accumulator.Accumulator, -(int32_t)p_ramp->Accumulator.Coefficient, p_ramp->Accumulator.Coefficient);
 }
 
-// static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
-// {
-//     interval_t interval = (interval_t){ .low = math_min(0, target32), .high = math_max(0, target32) };
-//     math_clamp((p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient), interval.low, interval.high);
-// }
-
-// caller hold input limits
-int32_t _Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
+/* caller hold input limits */
+int32_t _Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, target << RAMP_SHIFT);
     return Ramp_GetOutput(p_ramp);
 }
 
 
-/*  replace when Ramp_ProcNext's Target clamps on limtis update */
-/* unitifed Ramp_ProcNextOf */
-int32_t Ramp_ProcNextOnInputOf(Ramp_T * p_ramp, int16_t target)
+int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
 {
     p_ramp->Accumulator.Accumulator = NextOnInputOf(p_ramp, math_clamp(target << RAMP_SHIFT, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper));
     return Ramp_GetOutput(p_ramp);
@@ -92,6 +69,28 @@ int32_t Ramp_ProcNext(Ramp_T * p_ramp)
     return Ramp_GetOutput(p_ramp);
 }
 
+
+// /*
+//     Clamp output
+// */
+// static inline int32_t NextOf(const Ramp_T * p_ramp, int32_t cw32, int32_t ccw32, int32_t target32)
+// {
+//     return math_clamp(p_ramp->Accumulator.Accumulator + math_sign(target32 - p_ramp->Accumulator.Accumulator) * p_ramp->Accumulator.Coefficient, cw32, ccw32);
+//     // return accumulator(p_ramp->Accumulator.Coefficient, cw32, ccw32, p_ramp->Accumulator.Accumulator, math_sign(target32 - p_ramp->Accumulator.Accumulator));
+// }
+
+// int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target)
+// {
+//     p_ramp->Accumulator.Accumulator = NextOf(p_ramp, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper, target << RAMP_SHIFT);
+//     return Ramp_GetOutput(p_ramp);
+// }
+/*  clamp: if step overshoots, saturate at target */
+// static int32_t NextOnInputOf(const Ramp_T * p_ramp, int32_t target32)
+// {
+//     int32_t diff = target32 - p_ramp->Accumulator.Accumulator;
+//     return (math_abs(diff) <= (uint32_t)p_ramp->Accumulator.Coefficient) ? target32 : (p_ramp->Accumulator.Accumulator + math_sign(diff) * p_ramp->Accumulator.Coefficient);
+// }
+
 /******************************************************************************/
 /*
     Ramp
@@ -104,7 +103,7 @@ void _Ramp_Init(Ramp_T * p_ramp, uint16_t coeff)
 {
     p_ramp->Accumulator.Shift = RAMP_SHIFT;
     p_ramp->Accumulator.Coefficient = coeff << RAMP_SHIFT;
-    Ramp_SetOutputLimit(p_ramp, INT16_MIN, INT16_MAX);
+    Ramp_SetLimits(p_ramp, INT16_MIN, INT16_MAX);
     p_ramp->Accumulator.Accumulator = 0;
     p_ramp->Target = 0;
 }
@@ -114,7 +113,7 @@ void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range)
 {
     p_ramp->Accumulator.Shift = RAMP_SHIFT;
     Ramp_SetSlope(p_ramp, duration_Ticks, range);
-    Ramp_SetOutputLimit(p_ramp, -(int32_t)range, range);
+    Ramp_SetLimits(p_ramp, -(int32_t)range, range);
     p_ramp->Accumulator.Accumulator = 0;
     p_ramp->Target = 0;
 }

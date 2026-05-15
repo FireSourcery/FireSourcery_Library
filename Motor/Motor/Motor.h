@@ -470,6 +470,7 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VNo
 /*
     when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2
     1/2 VBus Nominal at SpeedRated
+    fract16_mul(Ke, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16 * 2, Speed_fract16)
 */
 static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
@@ -534,6 +535,8 @@ static inline interval_t Motor_SpeedLimitsAs(Motor_T * p_motor, Motor_Direction_
 static inline interval_t Motor_GetILimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)); }
 static inline interval_t Motor_GetSpeedLimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
 
+// static inline interval_t Motor_GetVLimits(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
+
 /*
     Resolve = re-pull canonical (LimitArray + Config + Direction) → write Ccw/Cw → flush PID/Ramp.
     Idempotent under steady state; safe to call after any direction or arbitration change.
@@ -542,7 +545,7 @@ static void Motor_ResolveILimits(Motor_T * p_motor)
 {
     Motor_State_T * p_state = p_motor->P_MOTOR;
     interval_t iLimits = Motor_GetILimits(p_motor);
-    Ramp_SetOutputLimit(&p_state->TorqueRamp, iLimits.low, iLimits.high);
+    Ramp_SetLimits(&p_state->TorqueRamp, iLimits.low, iLimits.high);
 
     /* Optionally handle on pull instead. */
     if ((p_state->FeedbackMode.Speed == 1) && (p_state->FeedbackMode.Current == 1))  /* SpeedPid Output is I */
@@ -554,7 +557,7 @@ static void Motor_ResolveILimits(Motor_T * p_motor)
 static void Motor_ResolveSpeedLimits(Motor_T * p_motor)
 {
     interval_t sLimits = Motor_GetSpeedLimits(p_motor);
-    Ramp_SetOutputLimit(&p_motor->P_MOTOR->SpeedRamp, sLimits.low, sLimits.high);
+    Ramp_SetLimits(&p_motor->P_MOTOR->SpeedRamp, sLimits.low, sLimits.high);
 }
 
 /*
@@ -607,7 +610,7 @@ static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_
 static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_State_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(&p_motor->Config)); }
 
 /*!
-    VPhase approximation via Speed
+    V [Phase] approximation via Speed
     1/2 VBus Nominal at SpeedRated
 */
 /* when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2 */
@@ -616,12 +619,13 @@ static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract1
 // collapse vspeed
 // static inline int32_t Motor_GetVSpeed_Fract16(const Motor_State_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16) / 2; }
 
-// Motor_GetKe_SpeedFract16 = 12549  // Motor_GetSpeedVNominalRef_Fract16 = 16383
-// fract16_mul(Ke_SpeedFract, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
 
 /******************************************************************************/
 /*
-
+    Speed Feedback Loop
+    Ramp input ~100Hz,
+    SpeedFeedback update 1000Hz - SpeedRamp, SpeedPid
+    Cascade: SpeedPID output drives TorqueRamp target.
 */
 /******************************************************************************/
 /*
@@ -629,7 +633,8 @@ static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract1
 */
 static inline fract16_t Motor_ProcSpeedControlOf(Motor_State_T * p_motor, int16_t speedReq)
 {
-    return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNextOnInputOf(&p_motor->SpeedRamp, speedReq));
+    // PID_CaptureOutputLimits(&p_motor->PidSpeed, Ramp_GetLimitLower(&p_motor->SpeedRamp), Ramp_GetLimitUpper(&p_motor->SpeedRamp));
+    return PID_ProcPI(&p_motor->PidSpeed, Motor_GetSpeedFeedback(p_motor), Ramp_ProcNextOf(&p_motor->SpeedRamp, speedReq));
 }
 
 /*
@@ -642,12 +647,7 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
 
 // fract16_t Motor_ProcSpeedControl(  Motor_T * p_motor) { return _Motor_ProcSpeedControl(p_motor->P_MOTOR);}
 
-/*
-    Speed Feedback Loop
-    Ramp input ~100Hz,
-    SpeedFeedback update 1000Hz - SpeedRamp, SpeedPid
-    Cascade: SpeedPID output drives TorqueRamp target.
-*/
+
 /*
     Proc FeedbackMode Flags
 */
@@ -664,6 +664,12 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_State_T * p_motor)
 //         Motor_ProcSpeedFeedback(p_motor);
 //     }
 // }
+
+static inline void _Motor_MatchSpeedTorqueState(Motor_State_T * p_motor, int16_t torqueState)
+{
+    Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
+    PID_SetOutputState(&p_motor->PidSpeed, torqueState);
+}
 
 /*
     Pid State on FeedbackMode/Resume
