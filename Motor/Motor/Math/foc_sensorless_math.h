@@ -361,6 +361,61 @@ static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_
 }
 
 
+/******************************************************************************/
+/*!
+    @brief  Super-Twisting Algorithm (STA) — 2nd-order sliding-mode observer.
+
+    Continuous-output alternative to the classical foc_smo_z(K·sat) — replaces
+    the discontinuous switching variable with one produced by integrating
+    sign(σ). The output z is continuous, so no equivalent-control LPF is
+    needed downstream.
+
+    Per axis, with σ = î − i_meas:
+        z[k]   = w[k] + λ · √|σ| · sign(σ)        (continuous correction)
+        w[k+1] = w[k] + (α·dt) · sign(σ)          (integrator state)
+
+    The current-observer update is identical to the classical SMO; only z
+    changes:
+        î[k+1] = î[k] + G_pu · ( v − Rs·î − z )
+
+    At σ → 0 (sliding), the √|σ| term vanishes and z → w; both converge to
+    the disturbance ê. Feed w (cleaner) into the PLL discriminator.
+
+    Tuning (Moreno 2008), L = Lipschitz bound on dê/dt in pu:
+        λ      > √L                practical: 1.5 · √L
+        α · dt > L · dt            practical: 1.1 · L · dt
+    Caller supplies α already multiplied by dt.
+*/
+/******************************************************************************/
+/* sqrt(|x|) · sign(x) — STA forcing primitive. Guards x = INT16_MIN. */
+static inline fract16_t foc_sta_sqrt_signed(fract16_t x)
+{
+    fract16_t mag_sqrt = (fract16_t)fract16_sqrt(fract16_abs_sat(x));
+    return (x >= 0) ? mag_sqrt : -mag_sqrt;
+}
+
+/* STA continuous switching output. w is the current integrator state. */
+static inline fract16_t foc_sta_z(fract16_t lambda, fract16_t w, fract16_t sigma)
+{
+    return fract16_sat((accum32_t)w + fract16_mul(lambda, foc_sta_sqrt_signed(sigma)));
+}
+
+/* STA integrator update: w[k+1] = w[k] + (α·dt) · sign(σ). */
+static inline fract16_t foc_sta_w_step(fract16_t alpha_dt, fract16_t w, fract16_t sigma)
+{
+    return fract16_sat((accum32_t)w + (accum32_t)alpha_dt * math_sign(sigma));
+}
+
+struct foc_sta_axis { fract16_t z, w; };
+
+/* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
+static inline struct foc_sta_axis foc_sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
+{
+    fract16_t sigma = fract16_sat((accum32_t)i_est - i_meas);
+    return (struct foc_sta_axis) { .z = foc_sta_z(lambda, w, sigma), .w = foc_sta_w_step(alpha_dt, w, sigma), };
+}
+
+
 
 
 
