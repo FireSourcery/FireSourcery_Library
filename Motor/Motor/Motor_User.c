@@ -183,17 +183,17 @@ void Motor_ForceDisableControl(Motor_T * p_motor)
     Convert between a user reference direction to virtual CCW/CW direction
     @param[in] userCmd  fract16 or percent16. positive as the direction set at config
 */
-static inline int32_t Motor_UserForwardOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
+static inline int32_t Motor_UserForwardOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (p_motor->Config.DirectionForward * userCmd); }
 /* Positive as the active appliedV/motoring direction. */
-static inline int32_t Motor_UserMotoringOf(const Motor_State_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
+static inline int32_t Motor_UserMotoringOf(const Motor_Context_T * p_motor, int32_t userCmd) { return (p_motor->Direction * userCmd); }
 
 /* Input from scalar always != INT16_MIN */
 // assert(math_clamp(userCmd, -Phase_Calibration_GetIRatedPeak_Fract16(), Phase_Calibration_GetIRatedPeak_Fract16()));
-static inline void _Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserForwardOf(p_motor, userCmd)); }
-static inline void _Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserMotoringOf(p_motor, userCmd)); }
+static inline void _Motor_SetTorqueCmd(Motor_Context_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserForwardOf(p_motor, userCmd)); }
+static inline void _Motor_SetTorqueMotoringCmd(Motor_Context_T * p_motor, int16_t userCmd) { Ramp_SetTarget(&p_motor->TorqueRamp, Motor_UserMotoringOf(p_motor, userCmd)); }
 // assert(math_clamp(userCmd, -Motor_SpeedType, 32767)); Motor_SpeedTypeMax
-static inline void _Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserForwardOf(p_motor, speed_fract16)); }
-static inline void _Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserMotoringOf(p_motor, speed_fract16)); }
+static inline void _Motor_SetSpeedCmd(Motor_Context_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserForwardOf(p_motor, speed_fract16)); }
+static inline void _Motor_SetSpeedMotoringCmd(Motor_Context_T * p_motor, int16_t speed_fract16) { Ramp_SetTarget(&p_motor->SpeedRamp, Motor_UserMotoringOf(p_motor, speed_fract16)); }
 
 
 /******************************************************************************/
@@ -209,9 +209,9 @@ void Motor_StartVoltageMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor
 /* Aligned to applied direction */
 /* Reverse voltage set direction, no plugging */
 // _Motor_SetTorqueMotoringCmd(p_motor, math_clamp(volts_fract16, 0, Phase_VBus_GetVRef()));
-void Motor_SetVoltageCmd(Motor_State_T * p_motor, int16_t volts_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, volts_fract16); }
+void Motor_SetVoltageCmd(Motor_Context_T * p_motor, int16_t volts_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, volts_fract16); }
 void Motor_SetVoltageCmdScalar(Motor_T * p_motor, int16_t scalar_fract16) { Motor_SetVoltageCmd(p_motor->P_MOTOR, fract16_mul(scalar_fract16, VBus_GetVPhaseRef(p_motor->P_VBUS))); }
-// void _Motor_SetVFreqCmd(Motor_State_T * p_motor, int16_t scalar_fract16) {   Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4); }
+// void _Motor_SetVFreqCmd(Motor_Context_T * p_motor, int16_t scalar_fract16) {   Motor_SetVoltageCmd(p_motor, Motor_GetVSpeed_Fract16(p_motor) / 4); }
 
 /******************************************************************************/
 /*!
@@ -227,10 +227,10 @@ void Motor_StartIMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, MOTO
     Per-unit of calibration reference (I_CALIB_AMPS)
 */
 // _Motor_SetTorqueMotoringCmd(p_motor, math_clamp(i_fract16, (int32_t)0 - Motor_ILimitGenerating(p_motor), Motor_ILimitMotoring(p_motor)));
-void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, i_fract16); }
+void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, i_fract16); }
 
 /*  Per-unit of limit reference Config.Limit - maintain same proportion through runtime. set by user. */
-void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
+void Motor_SetICmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetICmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.ILimitMotoring_Fract16 : p_motor->Config.ILimitGenerating_Fract16)); }
 
 
 
@@ -248,12 +248,12 @@ void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Moto
     +/- Aligned to velocity also configured forward
 */
 // _Motor_SetTorqueCmd(p_motor, math_clamp(i_fract16, (int32_t)0 - Motor_ILimitReverse(p_motor), Motor_ILimitForward(p_motor)));
-void Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
+void Motor_SetTorqueCmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
 
 /* scale to motoring limit, larger of motoring/generating in most cases */
-void Motor_SetTorqueCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
+void Motor_SetTorqueCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
 
-void Motor_SetTorqueVCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
+void Motor_SetTorqueVCmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueCmd(p_motor, i_fract16); }
 void Motor_SetTorqueVCmdScalar(Motor_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueVCmd(p_motor->P_MOTOR, fract16_mul(scalar_fract16, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS))); }
 
 /******************************************************************************/
@@ -269,12 +269,12 @@ void Motor_StartSpeedMode(Motor_T * p_motor) { Motor_ApplyFeedbackMode(p_motor, 
 /*!
     @param[in] speed [-32768:32767] - Rpm Fract16
 */
-void Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedCmd(p_motor, speed_fract16); }
+void Motor_SetSpeedCmd(Motor_Context_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedCmd(p_motor, speed_fract16); }
 /* Optionally only allow selected direction, reverse direction set Direction first */
 // _Motor_SetSpeedCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - p_motor->SpeedLimitReverse_Fract16, p_motor->SpeedLimitForward_Fract16));
 
 /* ofLimit / Percent */
-void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
+void Motor_SetSpeedCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16)
 {
     Motor_SetSpeedCmd(p_motor, fract16_mul(scalar_fract16, (scalar_fract16 > 0) ? p_motor->Config.SpeedLimitForward_Fract16 : p_motor->Config.SpeedLimitReverse_Fract16));
 }
@@ -285,15 +285,15 @@ void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16)
     Motoring
 */
 /******************************************************************************/
-void Motor_SetTorqueMotoringCmd(Motor_State_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, i_fract16); }
-void Motor_SetTorqueMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
+void Motor_SetTorqueMotoringCmd(Motor_Context_T * p_motor, int16_t i_fract16) { _Motor_SetTorqueMotoringCmd(p_motor, i_fract16); }
+void Motor_SetTorqueMotoringCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetTorqueMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.ILimitMotoring_Fract16)); }
 
 /* + as selected motoring direction. Speed reduce to 0 only. clamped by anti-plugging in feedback loop */
 // _Motor_SetSpeedMotoringCmd(p_motor, math_clamp(speed_fract16, (int32_t)0 - Motor_SpeedLimitGenerating(p_motor), Motor_SpeedLimitMotoring(p_motor)));
-void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedMotoringCmd(p_motor, speed_fract16); }
+void Motor_SetSpeedMotoringCmd(Motor_Context_T * p_motor, int16_t speed_fract16) { _Motor_SetSpeedMotoringCmd(p_motor, speed_fract16); }
 
 /* select higher value as consistent reference */
-void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16) { Motor_SetSpeedMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16)); }
+void Motor_SetSpeedMotoringCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16) { Motor_SetSpeedMotoringCmd(p_motor, fract16_mul(scalar_fract16, p_motor->Config.SpeedLimitForward_Fract16)); }
 
 // user lyaer handle
 // if (sign(ω_actual) != sign(Iq_ref) && | ω_actual | > ω_threshold) :
@@ -330,14 +330,14 @@ void Motor_SetActiveCmdScalar(Motor_T * p_motor, int16_t userCmd)
 /*
     mixed units
 */
-void _Motor_SetMotoringCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetMotoringCmdUnits(Motor_Context_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Speed == 1U)          { Motor_SetSpeedMotoringCmd(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetICmd(p_motor, userCmd); }
     else                           { Motor_SetVoltageCmd(p_motor, userCmd); }
 }
 
-void _Motor_SetUserCmdUnits(Motor_State_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
+void _Motor_SetUserCmdUnits(Motor_Context_T * p_motor, Motor_FeedbackMode_T mode, int16_t userCmd)
 {
     if (mode.Speed == 1U)          { Motor_SetSpeedCmd(p_motor, userCmd); }
     else if (mode.Current == 1U)   { Motor_SetTorqueCmd(p_motor, userCmd); }
@@ -368,7 +368,7 @@ Motor_DriveCmd_T;
     Open Loop Start Up
     Preset Ramp
 */
-// void Motor_SetOpenLoopSpeed(Motor_State_T * p_motor, int16_t speed)
+// void Motor_SetOpenLoopSpeed(Motor_Context_T * p_motor, int16_t speed)
 // {
 //     int32_t limitedCmd = math_clamp(speed, 0 - p_motor->Config.OpenLoopRampSpeedFinal_Fract16, p_motor->Config.OpenLoopRampSpeedFinal_Fract16) * p_motor->Direction;
 // }

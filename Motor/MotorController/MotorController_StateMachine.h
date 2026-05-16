@@ -100,15 +100,15 @@ extern const StateMachine_Machine_T MCSM_MACHINE;
 
 */
 /******************************************************************************/
-static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_State_T * p_data) { return StateMachine_GetRootStateId(&p_data->StateMachine); }
+static inline MotorController_StateId_T MotorController_GetStateId(const MotorController_Context_T * p_data) { return StateMachine_GetRootStateId(&p_data->StateMachine); }
 
 /* Host side checks Root state to parse id */
 /* handle with unique handler per type */
-static inline state_t _MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
-// static inline State_PathId_T MotorController_GetSubStateId(const MotorController_State_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
+static inline state_t _MotorController_GetSubStateId(const MotorController_Context_T * p_data) { return StateMachine_GetLeafStateId(&p_data->StateMachine); }
+// static inline State_PathId_T MotorController_GetSubStateId(const MotorController_Context_T * p_data) { return StateMachine_GetPathId(&p_data->StateMachine); }
 
 
-static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_State_T * p_data) { return p_data->FaultFlags; }
+static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const MotorController_Context_T * p_data) { return p_data->FaultFlags; }
 
 /******************************************************************************/
 /*

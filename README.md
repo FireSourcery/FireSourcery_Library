@@ -1,39 +1,63 @@
-# FireSourcery_Library
+# FireSourcery Library
 
-A **General Embedded C Library** and **Motor Control Library**
+A general-purpose **Embedded C library** with a **Motor Control** stack for bare-metal MCU targets.
 
-## Overview and Features
+## Highlights
 
-* Modular Design
-  - Independently functional modules. Minimized dependencies/coupling of modules.
-  - Hardware independent structure, using abstraction layers.
-  - Generalized reusable C code.
-  - OOP principles via encapsulation in C.
-  - Follows good coding practices. E.g strong naming conventions, minimal code duplication, design principles/patterns, const correctness.
+- **Modular** — independently functional modules with minimized coupling.
+- **Portable** — hardware-independent core; chip specifics live behind a HAL.
+- **Reusable** — generic C primitives composed into higher-level behaviors.
+- **OOP in C** — encapsulation, const correctness, clear ownership of state.
+- **Disciplined** — strong naming conventions, layered design, minimal duplication.
 
-* Motor Library Features
-  - FOC.
-  - Sensors: Hall, Quadrature Encoder, Sine Cosine.
-  - Speed and current feedback loop.
-  - Layered implementation of control behaviors with code reuse.
-  - Standard protocol for GUI side. Arduino-compatible wrapper.
+## Toolchain & Language
 
+- **Language**: C23.
+- **Compiler**: GCC ARM Embedded (`arm-none-eabi-gcc`).
+- **Build**: GNU Make; PlatformIO supported via `library.json`.
+- **Runtime**: bare metal, no RTOS required.
+- **Constraints**: no dynamic allocation after init (`malloc`/`free` forbidden); no `stdio` (`printf` etc.); no blocking in the main loop.
 
-### Directory Contents Overview
+## Architecture
 
+App → Motor → Transducer → Peripheral → HAL → Hardware
 
-* Motor - Motor Control Library
-  - Motor - Functions and state information for the operation of a single unique motor.
-  - MotorController - Functions and state information common to all motors, e.g. handling of communication, and user input/outputs.
+## Motor Control Features
 
-* Peripheral - Peripheral abstraction layer. A common peripheral interface called by upper layers.
-  - HAL - Hardware abstraction layer. Handling of hardware registers, per chip implementation.
+- Field-Oriented Control (FOC).
+- Sensor support: Hall, Quadrature Encoder, Sine/Cosine.
+- Speed and current feedback loops.
+- Layered control behaviors built up from shared primitives.
+- Standard wire protocol for GUI / host tooling, with an Arduino-compatible wrapper.
 
-* System - Common interface for system functions. Abstraction layer over some hardware dependencies.
+## Layout
 
-* Transducers - Sensors and Actuators algorithms layer. Utilizes Peripheral layer.
+### Motor — Motor control stack
 
-Generic layers
-* Math - Numerical value. General math functions
-* Type - Shape of memory.
-* Framework - Software tools and algorithms independent of hardware.
+- `Motor/Motor` — per-motor functions and state for operating a single motor.
+- `Motor/MotorController` — multi-motor coordination, user I/O, communication.
+- `Motor/MotProtocol` — wire protocol for host/GUI integration.
+
+### Peripheral — Peripheral abstraction
+
+Common peripheral interface called by upper layers: `Analog`, `CanBus`, `ClockTimer`, `NvMemory`, `PWM`, `Pin`, `SPI`, `Serial`, `Xcvr`.
+
+- `Peripheral/HAL` — hardware abstraction layer; register-level code per chip.
+
+### System
+
+Common interface for system-level functions; thin abstraction over remaining hardware dependencies.
+
+### Transducer — Sensor & actuator algorithms
+
+`Encoder`, `Monitor`, `Pulse`, `UserIn`, `Blinky`. Sits on top of `Peripheral`.
+
+### Generic layers
+
+- `Math` — numerical value: `Fixed`, `Linear`, `PID`, `Ramp`, `Filter`, `Angle`, `Accumulator`, `Hysteresis`, `Threshold`.
+- `Type` — shape of memory; type definitions and containers.
+- `Framework` — software tools and algorithms independent of hardware (e.g. `StateMachine`, `Protocol`).
+
+## License
+
+GNU — see [LICENSE](LICENSE).

@@ -43,7 +43,7 @@
 /* dependent part of Motor_Var   */
 
 /*
-    Init with Motor_State_T
+    Init with Motor_Context_T
     Init using shared State
 */
 #define MOTOR_SENSOR_TABLE_INIT_EMPTY(MotorStateStruct) ROTOR_SENSOR_INIT_AS_EMPTY(&((MotorStateStruct).SensorState))

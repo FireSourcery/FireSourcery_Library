@@ -156,11 +156,11 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 // /******************************************************************************/
 // /*
 //     Excite + Capture state. Single owner — only one motor tunes at a time.
-//     File-scope keeps Motor_State_T unchanged; ownership pointer guards cross-motor access.
+//     File-scope keeps Motor_Context_T unchanged; ownership pointer guards cross-motor access.
 // */
 // static Motor_Tuning_Config_T  s_TuningConfig = { .Shape = MOTOR_TUNING_EXCITE_TRACK };
 // static Motor_Tuning_Capture_T s_TuningCapture;
-// static const Motor_State_T *  sp_TuningOwner;
+// static const Motor_Context_T *  sp_TuningOwner;
 // static uint32_t               s_TuningTick;
 
 // static int16_t Excite_Eval(Motor_Tuning_Config_T * p_cfg, uint32_t tick)
@@ -173,7 +173,7 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 //     }
 // }
 
-// static int16_t Capture_Feedback(const Motor_State_T * p_motor, Motor_Tuning_Channel_T ch)
+// static int16_t Capture_Feedback(const Motor_Context_T * p_motor, Motor_Tuning_Channel_T ch)
 // {
 //     return (ch == MOTOR_TUNING_CHANNEL_IQ) ? FOC_Iq(&p_motor->Foc) : (int16_t)Motor_GetSpeedFeedback(p_motor);
 // }
@@ -206,7 +206,7 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 
 // static void AutoTuning_Proc(Motor_T * p_motor)
 // {
-//     Motor_State_T * p_state = p_motor->P_MOTOR;
+//     Motor_Context_T * p_state = p_motor->P_MOTOR;
 
 //     if ((s_TuningConfig.Shape != MOTOR_TUNING_EXCITE_TRACK) && (sp_TuningOwner == p_state))
 //     {

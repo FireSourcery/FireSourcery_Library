@@ -179,7 +179,7 @@ MotorController_Config_T;
 /*!
 */
 /******************************************************************************/
-typedef struct MotorController_State
+typedef struct MotorController_Context
 {
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
@@ -221,14 +221,14 @@ typedef struct MotorController_State
     // CanBus_Service_T * p_CanBus_Service; /* optional runtime disable */
 #endif
 }
-MotorController_State_T;
+MotorController_Context_T;
 
 /*
     Allocated memory context
 */
 typedef const struct MotorController
 {
-    MotorController_State_T * P_MC; /* Pointer to the Runtime buffer */
+    MotorController_Context_T * P_MC; /* Pointer to the Runtime buffer */
 
     /*
         Peripheral Init
@@ -300,7 +300,7 @@ MotorController_T;
 
 /*
     Per-slot UserAIn_T initializer for AINS[Index].PIN.
-    Maps state into the contiguous MotorController_State_T-side AInStates[]/AInPinStates[] arrays.
+    Maps state into the contiguous MotorController_Context_T-side AInStates[]/AInPinStates[] arrays.
     Caller pairs this with .CONVERSION = ANALOG_CONVERSION_INIT_FROM(...) at the same slot.
 */
 #define MOT_AIN_INIT(Index, PinHal, PinId, IsInvert, p_Timer, p_McState, p_Config) (UserAIn_T) \
@@ -352,7 +352,7 @@ static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { 
 /******************************************************************************/
 extern void MotorController_Init(MotorController_T * p_dev);
 
-extern void MotorController_ResetBootDefault(MotorController_State_T * p_mc);
+extern void MotorController_ResetBootDefault(MotorController_Context_T * p_mc);
 
 extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);

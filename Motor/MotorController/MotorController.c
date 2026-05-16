@@ -35,7 +35,7 @@
 
 void MotorController_Init(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     MotNvm_Init(&p_dev->MOT_NVM);
 
@@ -106,7 +106,7 @@ void MotorController_Init(MotorController_T * p_dev)
     Runtime only
 */
 /******************************************************************************/
-void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
+void MotorController_ResetBootDefault(MotorController_Context_T * p_mc)
 {
     static const BootRef_T BOOT_REF_DEFAULT = { .IsValid = BOOT_REF_IS_VALID_01, .FastBoot = 0U, .Beep = 1U, .Blink = 1U, }; /* Overwrite after first time boot */
     p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
@@ -120,7 +120,7 @@ void MotorController_ResetBootDefault(MotorController_State_T * p_mc)
 */
 /******************************************************************************/
 /*
-    System-side setters operate directly on MotorController_State_T.Limits (embedded MotLimits_T).
+    System-side setters operate directly on MotorController_Context_T.Limits (embedded MotLimits_T).
     Use _LimitArray_* underscore form (augments + values + length explicit) since there's no
     LimitArray_T descriptor to wrap them. MotLimits typed wrappers may come later — see notes
     in MotLimits.h on Motor_Table coupling.

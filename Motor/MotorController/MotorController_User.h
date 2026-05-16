@@ -158,8 +158,8 @@ extern bool MotorController_CheckDirection(MotorController_T * p_dev, sign_t dir
 /*
     Boot Buffer
 */
-// static inline BootRef_T MotorController_GetBootReg(const MotorController_State_T * p_mcState) { return p_mcState->BootRef; }
-// static inline void MotorController_SetBootReg(MotorController_State_T * p_mcState, BootRef_T bootReg) { p_mcState->BootRef.Word = bootReg.Word; }
-// static inline void MotorController_SetFastBoot(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.FastBoot = isEnable; }
-// static inline void MotorController_SetBeep(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.Beep = isEnable; }
-// static inline void MotorController_SetBlink(MotorController_State_T * p_mcState, bool isEnable) { p_mcState->BootRef.Blink = isEnable; }
+// static inline BootRef_T MotorController_GetBootReg(const MotorController_Context_T * p_mcState) { return p_mcState->BootRef; }
+// static inline void MotorController_SetBootReg(MotorController_Context_T * p_mcState, BootRef_T bootReg) { p_mcState->BootRef.Word = bootReg.Word; }
+// static inline void MotorController_SetFastBoot(MotorController_Context_T * p_mcState, bool isEnable) { p_mcState->BootRef.FastBoot = isEnable; }
+// static inline void MotorController_SetBeep(MotorController_Context_T * p_mcState, bool isEnable) { p_mcState->BootRef.Beep = isEnable; }
+// static inline void MotorController_SetBlink(MotorController_Context_T * p_mcState, bool isEnable) { p_mcState->BootRef.Blink = isEnable; }

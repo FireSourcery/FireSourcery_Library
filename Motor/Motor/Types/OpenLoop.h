@@ -90,7 +90,6 @@ OpenLoop_T;
 // /* Hold rotor at θ frozen, ramp current up to alignment level. */
 // void Motor_OpenLoopStart_EnterAlign(Motor_OpenLoopRun_T * p_open)
 // {
-
 //     Ramp_SetTarget(&p->SpeedRamp, 0);
 //     Ramp_SetTarget(&p->CurrentRamp, p_open->P_CONFIG->IAlign);
 // }
@@ -98,7 +97,6 @@ OpenLoop_T;
 // /* Begin spinning — ramp ω up to handover speed, current to open-loop level. */
 // void Motor_OpenLoopStart_EnterRamp(Motor_OpenLoopRun_T * p_open)
 // {
-
 //     Ramp_SetTarget(&p->SpeedRamp, p_open->P_CONFIG->SpeedHandover);
 //     Ramp_SetTarget(&p->CurrentRamp, p_open->P_CONFIG->IOpen);
 // }

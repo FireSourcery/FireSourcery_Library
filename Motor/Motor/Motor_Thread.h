@@ -63,7 +63,7 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
 */
 static inline void Motor_CaptureSensor(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
 
     RotorSensor_CaptureAngle(p_state->p_ActiveSensor);
     if (TimerT_Periodic_Poll(&p_motor->SPEED_TIMER) == true)
@@ -80,7 +80,7 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
 */
 static inline void Motor_PWM_Thread(Motor_T * p_dev)
 {
-    Motor_State_T * p_fields = p_dev->P_MOTOR;
+    Motor_Context_T * p_fields = p_dev->P_MOTOR;
     Motor_CaptureSensor(p_dev);
 
     _Motor_StateMachine_Thread(&p_dev->STATE_MACHINE);

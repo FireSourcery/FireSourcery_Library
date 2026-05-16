@@ -101,7 +101,7 @@ const StateMachine_Machine_T MCSM_MACHINE =
 /* Main thread only sets [FaultFlags]. call to check clear. via results of Monitor State */
 void MotorController_PollFaultFlags(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     p_mc->FaultFlags.VBusLimit = VBus_IsAnyFault(p_dev->P_VBUS);
     p_mc->FaultFlags.VAccsLimit = RangeMonitor_IsAnyFault(p_dev->V_ACCESSORIES.P_STATE);
@@ -176,7 +176,7 @@ static void Init_Proc(MotorController_T * p_dev)
 static State_T * Init_Next(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     /* Wait for initial ADC readings */
     // wait for every motor exit init
@@ -509,7 +509,7 @@ static void Lock_Proc(MotorController_T * p_dev)
 /* alternatively StateMachine_TransitionCmd_T replace lockId */
 static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_value_t lockId)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     State_T * p_nextState = NULL;
     MotorController_LockOpStatus_T opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
 
@@ -608,7 +608,7 @@ const State_T MC_STATE_LOCK =
 /******************************************************************************/
 static void Fault_Entry(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit); /* exit on fault and exit lock. or implement input id */
@@ -621,7 +621,7 @@ static void Fault_Entry(MotorController_T * p_dev)
 
 static void Fault_Proc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
 
@@ -639,7 +639,7 @@ static void Fault_Proc(MotorController_T * p_dev)
 /* Fault State: Set accumulates (latches), Clear side-effects then removes flags */
 static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t faultCmd)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     MotorController_FaultCmd_T cmd = { .Value = faultCmd };
 
     if (cmd.FaultClear != 0U)
@@ -660,7 +660,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, state_value_t lockId)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     switch ((MotorController_LockId_T)lockId)
     {

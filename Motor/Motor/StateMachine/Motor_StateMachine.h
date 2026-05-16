@@ -33,7 +33,7 @@
 #include "../Motor.h"
 
 #include "Framework/StateMachine/StateMachine.h"
-#include "Framework/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_State_T */
+#include "Framework/StateMachine/_StateMachine.h" /* Include the private header to allocate within Motor_Context_T */
 
 #include "System/Critical/Critical.h"
 #include "System/SysTime/SysTime.h"
@@ -56,7 +56,7 @@
 typedef enum Motor_StateId
 {
     MOTOR_STATE_ID_INIT,
-    MOTOR_STATE_ID_DEACTIVATED,      /* Quiescent gateway: phases off, direction null. Operation disabled until explicit transition. Sole entry to CALIBRATION  */
+    MOTOR_STATE_ID_DEACTIVATED,   /* Quiescent gateway: phases off, direction null. Operation disabled until explicit transition. Sole entry to CALIBRATION  */
     MOTOR_STATE_ID_PASSIVE,       /* Freewheel or Hold. Feedback Off + Ouput V0/VZ. */
     MOTOR_STATE_ID_RUN,           /* Feedback Loop + Ouput VPWM */
     MOTOR_STATE_ID_INTERVENTION,
@@ -65,7 +65,6 @@ typedef enum Motor_StateId
     MOTOR_STATE_ID_FAULT,
 }
 Motor_StateId_T;
-
 
 /* extern for extension */
 extern const State_T MOTOR_STATE_INIT;
@@ -120,7 +119,7 @@ extern const StateMachine_Machine_T MSM_MACHINE;
 
 /*!
     @param p_MotorDev [Motor_T *]
-    @param MotorRuntime [Motor_State_T]
+    @param MotorRuntime [Motor_Context_T]
 */
 #define MOTOR_STATE_MACHINE_INIT(p_MotorDev, MotorRuntime) STATE_MACHINE_INIT((p_MotorDev), &MSM_MACHINE, &((MotorRuntime).StateMachine))
 
@@ -143,25 +142,25 @@ static inline void _Motor_StateMachine_Thread(StateMachine_T * p_stateMachine)
 /*
 */
 /******************************************************************************/
-static inline Motor_StateId_T Motor_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
+static inline Motor_StateId_T Motor_GetStateId(const Motor_Context_T * p_motor) { return StateMachine_GetRootState(&p_motor->StateMachine)->ID; }
 
 /* Host side checks Root state to parse id */
 /* handle with unique handler per type */
-static inline state_t _Motor_GetSubStateId(const Motor_State_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
+static inline state_t _Motor_GetSubStateId(const Motor_Context_T * p_motor) { return StateMachine_GetLeafState(&p_motor->StateMachine)->ID; }
 
 
 /*
     StateMachine controlled values
     Set via interface functions
 */
-static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_State_T * p_motor) { return p_motor->FeedbackMode; }
-static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_State_T * p_motor) { return p_motor->FaultFlags; }
+static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_Context_T * p_motor) { return p_motor->FeedbackMode; }
+static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_Context_T * p_motor) { return p_motor->FaultFlags; }
 
 /* SubStates */
-// static inline uint32_t Motor_GetControlTimer(const Motor_State_T * p_motor)                      { return p_motor->ControlTimerBase; }
-// static inline Motor_OpenLoopState_T Motor_GetOpenLoopState(const Motor_State_T * p_motor)        { return p_motor->OpenLoopState; }
-// static inline Motor_CalibrationState_T Motor_GetCalibrationState(const Motor_State_T * p_motor)  { return p_motor->CalibrationState; }
-// static inline uint8_t Motor_GetCalibrationStateIndex(const Motor_State_T * p_motor)              { return p_motor->CalibrationStateIndex; }
+// static inline uint32_t Motor_GetControlTimer(const Motor_Context_T * p_motor)                      { return p_motor->ControlTimerBase; }
+// static inline Motor_OpenLoopState_T Motor_GetOpenLoopState(const Motor_Context_T * p_motor)        { return p_motor->OpenLoopState; }
+// static inline Motor_CalibrationState_T Motor_GetCalibrationState(const Motor_Context_T * p_motor)  { return p_motor->CalibrationState; }
+// static inline uint8_t Motor_GetCalibrationStateIndex(const Motor_Context_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
 /******************************************************************************/
 /*
@@ -247,17 +246,17 @@ Motor_FaultCmd_T;
 
 static void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultSet = faultFlags.Value }.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
 }
 
 static void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
-    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T){ .FaultClear = faultFlags.Value }.Value);
+    StateMachine_Tree_InputAsyncTransition(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_FAULT, (Motor_FaultCmd_T) { .FaultClear = faultFlags.Value }.Value);
 }
 
 static bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor)
 {
-    Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T){ .Value = UINT16_MAX });
+    Motor_StateMachine_ClearFault(p_motor, (Motor_FaultFlags_T) { .Value = UINT16_MAX });
     return !StateMachine_IsRootState(p_motor->STATE_MACHINE.P_ACTIVE, &MOTOR_STATE_FAULT);
 }
 

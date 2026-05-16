@@ -40,7 +40,7 @@
 /******************************************************************************/
 int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     int status = 0; // MotorController_GenericStatus_T
     bool isSuccess = true;

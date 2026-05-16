@@ -56,21 +56,21 @@
     CW +Vq +Iq => Reverse Plugging Q4
 */
 /******************************************************************************/
-static inline bool Motor_FOC_IsMotoring(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) > 0); }
-static inline bool Motor_FOC_IsGenerating(const Motor_State_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
-static inline bool _Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0); }
+static inline bool Motor_FOC_IsMotoring(const Motor_Context_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) > 0); }
+static inline bool Motor_FOC_IsGenerating(const Motor_Context_T * p_motor) { return (FOC_Iq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
+static inline bool _Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * FOC_Iq(&p_motor->Foc) < 0); }
 
 /*
     Plugging: applied Vq opposes back-EMF direction (speed sign)
     Speed sign gives true rotor direction regardless of Vq/Iq
 */
 /* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
-static inline bool Motor_FOC_IsPlugging(const Motor_State_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
+static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
 /*
     Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
 */
 /* Generating  AND Vq aligns with speed - true regeneration */
-static inline bool Motor_FOC_IsRegen(const Motor_State_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
+static inline bool Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return (Motor_FOC_IsGenerating(p_motor) && !Motor_FOC_IsPlugging(p_motor)); }
 
 
 /*  */
@@ -93,30 +93,30 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
     Extern
 */
 /******************************************************************************/
-extern void Motor_FOC_ProcAngleFeedforwardV(Motor_State_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
-extern void _Motor_FOC_ProcAngleAlign(Motor_State_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
+extern void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t angle, fract16_t vd, fract16_t vq);
+extern void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq);
 extern void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t qReq);
 
 extern void Motor_FOC_ProcVControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
-extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_State_T * p_motor);
+extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor);
 
-extern void Motor_FOC_ClearFeedbackState(Motor_State_T * p_motor);
-extern void Motor_FOC_MatchTorqueVState(Motor_State_T * p_state);
-extern void Motor_FOC_MatchTorqueIState(Motor_State_T * p_state);
+extern void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor);
+extern void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_state);
+extern void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_state);
 
-extern void Motor_FOC_StartAlignCmd(Motor_State_T * p_motor);
+extern void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor);
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
 
-extern void Motor_FOC_StartStartUpAlign(Motor_State_T * p_motor);
+extern void Motor_FOC_StartStartUpAlign(Motor_Context_T * p_motor);
 extern void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor);
-extern void Motor_FOC_StartAlignValidate(Motor_State_T * p_motor);
+extern void Motor_FOC_StartAlignValidate(Motor_Context_T * p_motor);
 
-extern void Motor_FOC_StartOpenLoop(Motor_State_T * p_motor);
+extern void Motor_FOC_StartOpenLoop(Motor_Context_T * p_motor);
 extern void Motor_FOC_ProcOpenLoop(Motor_T * p_motor);
 
 #ifdef MOTOR_EXTERN_CONTROL_ENABLE
-extern void Motor_ExternControl(Motor_State_T * p_motor);
+extern void Motor_ExternControl(Motor_Context_T * p_motor);
 #endif
 
 

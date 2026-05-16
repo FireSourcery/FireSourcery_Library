@@ -86,7 +86,7 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
     int value = 0;
     // #ifndef NDEBUG
     Motor_T * p_motor = Motor_Table_At(&p_dev->MOTORS, 0) ;
-    Motor_State_T * p_motorState = Motor_Table_At(&p_dev->MOTORS, 0)->P_MOTOR;
+    Motor_Context_T * p_motorState = Motor_Table_At(&p_dev->MOTORS, 0)->P_MOTOR;
     switch (id)
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
@@ -110,7 +110,7 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
 /******************************************************************************/
 int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Config_T id)
 {
-    MotorController_State_T * p_state = p_dev->P_MC;
+    MotorController_Context_T * p_state = p_dev->P_MC;
     int value = 0;
     switch (id)
     {
@@ -132,7 +132,7 @@ int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Co
 
 void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_Config_T id, int value)
 {
-    MotorController_State_T * p_state = p_dev->P_MC;
+    MotorController_Context_T * p_state = p_dev->P_MC;
     switch (id)
     {
         case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;              break;

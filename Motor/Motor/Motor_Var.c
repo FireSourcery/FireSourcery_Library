@@ -40,11 +40,11 @@
     Var Runtime telemetry
 */
 /******************************************************************************/
-static inline int32_t VSpeed_Fract16(const Motor_State_T * p_context) { return fract16_mul(Motor_GetSpeedFeedback(p_context), p_context->Foc.Electrical.Psi); }
+static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return fract16_mul(Motor_GetSpeedFeedback(p_context), p_context->Foc.Electrical.Psi); }
 
 int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
 {
-    const Motor_State_T * p_state = p_motor->P_MOTOR;
+    const Motor_Context_T * p_state = p_motor->P_MOTOR;
     int value = 0;
     switch (varId)
     {
@@ -81,7 +81,7 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
 /******************************************************************************/
 int _Motor_Var_UserControl_Get(Motor_T * p_motor, Motor_Var_UserControl_T varId)
 {
-    const Motor_State_T * p_state = p_motor->P_MOTOR;
+    const Motor_Context_T * p_state = p_motor->P_MOTOR;
     int value = 0;
     switch (varId)
     {
@@ -182,27 +182,27 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
 /******************************************************************************/
 
 /* Maintain consistency for save Nvm */
-void _Motor_Tuning_SetSpeedKp(Motor_State_T * p_state, uint32_t value)
+void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
 {
     _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
     PID_SetKp_Fixed16(&p_state->PidSpeed, value);
 }
 
-void _Motor_Tuning_SetSpeedKi(Motor_State_T * p_state, uint32_t value)
+void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
 {
     _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
     PID_SetKi_Fixed16(&p_state->PidSpeed, value);
 }
 
 // optionally switch on commutation mode
-void _Motor_Tuning_SetIKp(Motor_State_T * p_state, uint32_t value)
+void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
 {
     _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
     PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
     PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
 }
 
-void _Motor_Tuning_SetIKi(Motor_State_T * p_state, uint32_t value)
+void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
 {
     _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
     PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
@@ -211,7 +211,7 @@ void _Motor_Tuning_SetIKi(Motor_State_T * p_state, uint32_t value)
 
 int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
 {
-    const Motor_State_T * p_state = p_motor->P_MOTOR;
+    const Motor_Context_T * p_state = p_motor->P_MOTOR;
     int value = 0;
     switch (varId)
     {
@@ -228,7 +228,7 @@ int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
 /* Sets runtime only */
 void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;

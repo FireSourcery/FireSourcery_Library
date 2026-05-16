@@ -198,7 +198,7 @@ static State_T * Deactivated_InputFeedbackMode(Motor_T * p_motor, state_value_t 
 static State_T * Deactivated_InputOpenLoop(Motor_T * p_motor, state_value_t state)
 {
     (void)state;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
+    // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; } else { return NULL; }
 }
 
 /* Calibration go directly to SubState */
@@ -355,7 +355,7 @@ const State_T MOTOR_STATE_PASSIVE =
 /******************************************************************************/
 static void Run_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Vabc is either bemf or 0 on entryy */
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
     if (p_context->FeedbackMode.Speed == 1U) { _Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
@@ -369,14 +369,14 @@ static void Run_Proc(Motor_T * p_motor)
     //     Motor_ExternControl(p_motor);
     // #endif
 
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
     else { Motor_FOC_ProcVControl(p_motor); }
 }
 
 static void Run_OnSpeed(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
 }
@@ -457,7 +457,7 @@ const State_T MOTOR_STATE_RUN =
 /******************************************************************************/
 static void Intervention_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     // if (p_context->FeedbackMode.Current == 0U)
     // {
     // }
@@ -860,19 +860,19 @@ const State_T MOTOR_STATE_FAULT =
 //     State_T BASE;
 //     struct
 //     {
-//         // state_value_t(*Condition)(const Motor_State_T *);
-//         state_value_t(*REQ_OVERRIDE) (const Motor_State_T *);
+//         // state_value_t(*Condition)(const Motor_Context_T *);
+//         state_value_t(*REQ_OVERRIDE) (const Motor_Context_T *);
 //     };
 // }
 // Motor_StateIntervention_T;
 
 // pass top state return?
-// static void Torque0_Proc(Motor_State_T * p_motor)
+// static void Torque0_Proc(Motor_Context_T * p_motor)
 // {
 
 // }
 
-// static state_value_t Torque0_Ramp(const Motor_State_T * p_motor) { return 0; }
+// static state_value_t Torque0_Ramp(const Motor_Context_T * p_motor) { return 0; }
 
 // Motor_StateIntervention_T MOTOR_STATE_TORQUE_ZERO =
 // {
@@ -889,7 +889,7 @@ const State_T MOTOR_STATE_FAULT =
 //     .REQ_OVERRIDE =  Torque0_Ramp,
 // };
 
-// static void ProcTorque0(Motor_State_T * p_motor)
+// static void ProcTorque0(Motor_Context_T * p_motor)
 // {
 //  int a =   MOTOR_STATE_TORQUE_ZERO.DataVector[1](p_motor);
 //     // Motor_FOC_ProcInnerFeedback(p_motor, p_motor->SensorState.AngleSpeed.Angle, 0, Motor_IRampOf(p_motor, 0));

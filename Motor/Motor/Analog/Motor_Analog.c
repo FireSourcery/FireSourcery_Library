@@ -58,7 +58,7 @@ static Accumulator_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor
 /******************************************************************************/
 static void StartCalibration(Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     *p_buffer = (CalibrationBuffer_T){ 0 };
 
@@ -80,7 +80,7 @@ static void StartCalibration(Motor_T * p_motor)
 
 static void ProcCalibration(Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
 
     if (p_fields->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
@@ -95,7 +95,7 @@ static void ProcCalibration(Motor_T * p_motor)
 
 static State_T * EndCalibration(Motor_T * p_motor)
 {
-    Motor_State_T * const p_fields = p_motor->P_MOTOR;
+    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
 
     State_T * p_nextState = NULL;

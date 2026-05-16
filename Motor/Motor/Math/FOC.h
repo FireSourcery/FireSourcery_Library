@@ -251,7 +251,7 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus,  int16_t id
 // {
 //     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
 //     p_foc->Vq = PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq);
-//     // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
+    // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
 // }
 
 /*
@@ -426,14 +426,14 @@ static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return fr
 static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq); }
 static inline accum32_t _FOC_GetReactivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vq, p_foc->Id) - fract16_mul(p_foc->Vd, p_foc->Iq)); }
 /* keep sign withing fract16 */
-static inline accum32_t _FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return (int32_t)fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16); }
+static inline accum32_t _FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16); }
 
 /* [0:49150] */
 static inline accum32_t FOC_GetActivePower(const FOC_T * p_foc) { return _FOC_GetActivePower(p_foc) * 3 / 2; }
 static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return _FOC_GetReactivePower(p_foc) * 3 / 2; }
 static inline accum32_t FOC_GetApparentPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc)) * 3 / 2; }
 static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div(_FOC_GetActivePower(p_foc), fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc))); }
-static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return (int32_t)fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
+static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
 
 /******************************************************************************/
 /*!

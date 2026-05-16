@@ -91,7 +91,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
 /******************************************************************************/
 static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     HeatMonitor_Status_T status;
 
 // #ifndef NDEBUG
@@ -186,7 +186,7 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
 /******************************************************************************/
 static inline void _MotorController_VMonitorBoard_Thread(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     RangeMonitor_Poll(p_dev->V_ACCESSORIES.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ACCESSORIES_CONVERSION));
     RangeMonitor_Poll(p_dev->V_ANALOG.P_STATE, Analog_Conversion_GetResult(&p_dev->V_ANALOG_CONVERSION));
@@ -209,7 +209,7 @@ static inline void _MotorController_VMonitorBoard_Thread(MotorController_T * p_d
 /******************************************************************************/
 static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     /* High Freq, Low Priority */
     if (TimerT_Counter_Poll(&p_dev->MILLIS_TIMER) == true)
@@ -296,7 +296,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 */
 static inline void MotorController_Timer1Ms_Thread(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     _MotorController_VBus_Thread(p_dev);
 #if defined(MOTOR_CONTROLLER_DEBUG_ENABLE) || defined(MOTOR_DEBUG_ENABLE)
     // _Blinky_Toggle(&p_mc->Meter);

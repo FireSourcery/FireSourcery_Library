@@ -140,11 +140,13 @@ void Motor_OpenLoop_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
+    FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
 }
 
 static void Run_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
     FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
     Motor_FOC_ProcOpenLoop(p_motor);
     // capture for debugging
@@ -177,7 +179,7 @@ static void StartUp_Entry(Motor_T * p_motor)
 
 static void StartUp_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     Motor_FOC_ProcStartUpAlign(p_motor);
 }
 
@@ -274,7 +276,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 
 // static void PhaseAlign_Loop(Motor_T * p_motor)
 // {
-//     Motor_State_T * const p_values = p_motor->P_MOTOR;
+//     Motor_Context_T * const p_values = p_motor->P_MOTOR;
 //     Phase_Id_T alignPhase = Phase_ReadAlign(&p_motor->PHASE);
 
 //     Motor_ProcTorqueRampOpenLoop(p_values);

@@ -55,7 +55,7 @@
     This function should optimize away select if only 1 mode is enabled
 */
 /******************************************************************************/
-// static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_motor, const void * focFunction, const void * sixStepFunction)
+// static inline const void * _Motor_CommutationModeFn(const Motor_Context_T * p_motor, const void * focFunction, const void * sixStepFunction)
 // {
 //     const void * fn;
 //     switch (p_motor->Config.CommutationMode)
@@ -72,7 +72,7 @@
 // }
 
 /* compile time config only */
-static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_motor, const void * focFunction, const void * sixStepFunction)
+static inline const void * _Motor_CommutationModeFn(const Motor_Context_T * p_motor, const void * focFunction, const void * sixStepFunction)
 {
 #if defined(MOTOR_FOC_ENABLE)
     return focFunction;
@@ -96,11 +96,11 @@ static inline const void * _Motor_CommutationModeFn(const Motor_State_T * p_moto
 
 
 
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction)
+// static inline void Motor_Commutation_SetDirection(Motor_Context_T * p_motor, int direction)
 // {
 //     ((typeof(Motor_FOC_SetDirection) *)(_Motor_CommutationModeFn(p_motor, Motor_FOC_SetDirection, Motor_SetDirection)))(p_motor, direction);
 // }
 
 /* alternatively separate 3 sets of functions as abstraction layer */
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, direction); }
-// static inline void Motor_Commutation_SetDirection(Motor_State_T * p_motor, int direction) { Motor_SixStep_SetDirection(p_motor, direction); }
+// static inline void Motor_Commutation_SetDirection(Motor_Context_T * p_motor, int direction) { Motor_FOC_SetDirection(p_motor, direction); }
+// static inline void Motor_Commutation_SetDirection(Motor_Context_T * p_motor, int direction) { Motor_SixStep_SetDirection(p_motor, direction); }

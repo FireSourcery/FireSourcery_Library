@@ -325,10 +325,10 @@ static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_Config_
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.A; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.B; }
 static inline uint16_t Motor_Config_GetIcZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.C; }
-// static inline uint16_t Motor_Config_GetIPeakRef_Adcu(const Motor_State_T * p_motor)                   { return Phase_Calibration_GetIRatedPeak_Adcu(); }
+// static inline uint16_t Motor_Config_GetIPeakRef_Adcu(const Motor_Context_T * p_motor)                   { return Phase_Calibration_GetIRatedPeak_Adcu(); }
 
-// static inline Motor_AlignMode_T Motor_Config_GetAlignMode(const Motor_State_T * p_motor, Motor_AlignMode_T mode)    { return p_motor->Config.AlignMode; }
-// static inline void Motor_Config_SetAlignMode( Motor_State_T * p_motor, Motor_AlignMode_T mode)     { p_motor->Config.AlignMode = mode; }
+// static inline Motor_AlignMode_T Motor_Config_GetAlignMode(const Motor_Context_T * p_motor, Motor_AlignMode_T mode)    { return p_motor->Config.AlignMode; }
+// static inline void Motor_Config_SetAlignMode( Motor_Context_T * p_motor, Motor_AlignMode_T mode)     { p_motor->Config.AlignMode = mode; }
 
 /******************************************************************************/
 /*

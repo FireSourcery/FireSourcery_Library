@@ -27,7 +27,7 @@
     @file   Motor_Analog.h
     @author FireSourcery
     @brief  ADC Conversions
-            - callbacks on Motor_State_T
+            - callbacks on Motor_Context_T
             Keep interface on Motor for StateMachine, RotorSensor
 */
 /******************************************************************************/
@@ -45,13 +45,13 @@ static_assert(PHASE_ANALOG_DIVIDER_MASK == ((MOTOR_CONTROL_FREQ / MOTOR_I_LOOP_F
 static inline bool _Motor_IsAnalogCycle(uint32_t timerCounter) { return ((timerCounter & (uint32_t)PHASE_ANALOG_DIVIDER_MASK) == 0UL); }
 
 /* VBus_Analog_Capture in VBus.h */
-static inline void Motor_Analog_CaptureVa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
-static inline void Motor_Analog_CaptureVb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
-static inline void Motor_Analog_CaptureVc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVc(&p_motor->PhaseInput, adcu); }
+static inline void Motor_Analog_CaptureVa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVa(&p_motor->PhaseInput, adcu); }
+static inline void Motor_Analog_CaptureVb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVb(&p_motor->PhaseInput, adcu); }
+static inline void Motor_Analog_CaptureVc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureVc(&p_motor->PhaseInput, adcu); }
 /* Motor holds context of IZeroRef */
-static inline void Motor_Analog_CaptureIa(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIa(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
-static inline void Motor_Analog_CaptureIb(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
-static inline void Motor_Analog_CaptureIc(Motor_State_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_Analog_CaptureIa(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIa(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_Analog_CaptureIb(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIb(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
+static inline void Motor_Analog_CaptureIc(Motor_Context_T * p_motor, adc_result_t adcu) { Phase_Analog_CaptureIc(&p_motor->PhaseInput, &p_motor->Config.IabcZeroRef_Adcu, adcu); }
 
 /* Without checking for previous completion. Conversions must complete within the analog cycle */
 static inline void Motor_Analog_MarkVabc(Motor_T * p_motor) { Phase_Analog_MarkVabc(&p_motor->PHASE_ANALOG); }

@@ -70,7 +70,7 @@ typedef enum Motor_OpenLoop_StateId
 }
 Motor_OpenLoop_StateId_T;
 
-static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_State_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP); }
+static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Context_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP); }
 
 /*
     Access by Id - directly correspond to VarId

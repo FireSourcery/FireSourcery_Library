@@ -113,7 +113,7 @@ Motor_ParamsBuffer_T;
 
 static void Electrical_Common(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ParamsBuffer_T * p_params; // temp
 
     p_runtime->FeedbackMode.Current = 1U;
@@ -138,7 +138,7 @@ static void Electrical_Common(Motor_T * p_motor)
 /******************************************************************************/
 static void Rs_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Phase_ActivateV0(&p_motor->PHASE);
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(PARAMID_RS_WINDOW_MS));
     Accumulator_Init(&p_runtime->Accumulators[0]);
@@ -149,7 +149,7 @@ static void Rs_Entry(Motor_T * p_motor)
 
 static void Rs_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ElectricalParams_T * p_results;
     Motor_ParamsBuffer_T * p_buffer; /* temp */
 
@@ -182,7 +182,7 @@ static void Rs_Proc(Motor_T * p_motor)
 
 static State_T * Rs_Next(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ElectricalParams_T * p_results;
     Motor_ParamsBuffer_T * p_buffer; /* temp */
 
@@ -284,7 +284,7 @@ bool Motor_Calibration_IsRs(Motor_T * p_motor)
 // uint32_t GetIdTau(Motor_ParamsBuffer_T * p_params) { return p_params->IdSteady + ((uint64_t)fract16_div(p_params->VdStep, p_params->Results.Rs_Fract16) * 20724) / 32768; }
 static void Ld_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ParamsBuffer_T * p_params; /* temp */
     Motor_ElectricalParams_T * p_results;
     Phase_ActivateV0(&p_motor->PHASE);
@@ -308,7 +308,7 @@ static void Ld_Entry(Motor_T * p_motor)
 
 static void Ld_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ParamsBuffer_T * p_params; /* temp */
     Motor_ElectricalParams_T * p_results;
 
@@ -327,7 +327,7 @@ static void Ld_Proc(Motor_T * p_motor)
 
 static State_T * Ld_Next(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ElectricalParams_T * p_results;/*  = &p_motor->ParamId.Results; */
     Motor_ParamsBuffer_T * p_buffer;
 
@@ -402,7 +402,7 @@ bool Motor_Calibration_IsLd(Motor_T * p_motor)
 /******************************************************************************/
 static void Lq_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ParamsBuffer_T * p_buffer;
     Phase_ActivateV0(&p_motor->PHASE);
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(PARAMID_LQ_WINDOW_MS));
@@ -418,7 +418,7 @@ static void Lq_Entry(Motor_T * p_motor)
 
 static void Lq_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ElectricalParams_T * p_results;/*  = &p_motor->ParamId.Results; */
     Motor_ParamsBuffer_T * p_buffer;
 
@@ -442,7 +442,7 @@ static void Lq_Proc(Motor_T * p_motor)
 
 static State_T * Lq_Next(Motor_T * p_motor)
 {
-    Motor_State_T * p_runtime = p_motor->P_MOTOR;
+    Motor_Context_T * p_runtime = p_motor->P_MOTOR;
     Motor_ElectricalParams_T * p_results;/*  = &p_buffer->Results; */
     Motor_ParamsBuffer_T * p_buffer;
 

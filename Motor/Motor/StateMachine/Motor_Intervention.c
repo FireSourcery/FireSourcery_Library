@@ -60,7 +60,7 @@
 /******************************************************************************/
 static void TorqueZero_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     p_context->ControlTimerBase = 0U;
     // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT); /* in case of voltage mode */
     // p_context->FeedbackMode = MOTOR_FEEDBACK_MODE_CURRENT; /* Torque control mode for active braking */
@@ -70,7 +70,7 @@ static void TorqueZero_Entry(Motor_T * p_motor)
 
 static void TorqueZero_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     /* Filter the (Entry-seeded or user-updated) Target: pass generating-side magnitude only */
     Motor_FOC_ProcTorqueReq(p_motor, _Motor_GeneratingOnly(p_state, Ramp_GetTarget(&p_state->TorqueRamp)));
 }
@@ -78,7 +78,7 @@ static void TorqueZero_Proc(Motor_T * p_motor)
 
 static State_T * TorqueZero_Next(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     // if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
     // if (p_state->ControlTimerBase > MOTOR_INTERVENTION_COAST_TIMEOUT) { return &INTERVENTION_STATE_RAMP_SAFE; }
     return NULL;
@@ -106,7 +106,7 @@ const State_T INTERVENTION_STATE_TORQUE_ZERO =
 /******************************************************************************/
 static void RampSafe_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     /* Intervention_Entry calls MatchIVState */
     /* Match speed ramp to current speed for bumpless transfer */
     _Motor_MatchSpeedTorqueState(p_state, Ramp_GetOutput(&p_state->TorqueRamp));
@@ -115,13 +115,13 @@ static void RampSafe_Entry(Motor_T * p_motor)
 
 static void RampSafe_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     Motor_FOC_ProcTorqueReq(p_motor, PID_GetOutput(&p_state->PidSpeed));
 }
 
 static State_T * RampSafe_Next(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
 
     if (Motor_IsSpeedFreewheelLimitRange(p_state)) { return &MOTOR_STATE_PASSIVE; }
     /* Watchdog: if speed not decreasing after timeout, escalate to fault */
@@ -135,7 +135,7 @@ static State_T * RampSafe_Next(Motor_T * p_motor)
 */
 static void RampSafe_CaptureSpeed(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     Motor_ProcSpeedControlOf(p_state, 0); /* drive to zero speed */
 }
 

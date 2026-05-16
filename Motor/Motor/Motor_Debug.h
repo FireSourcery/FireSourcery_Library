@@ -36,7 +36,7 @@
 #include "Motor.h"
 
 
-// static inline void Motor_Debug_CaptureRefTime(Motor_State_T * p_motor)
+// static inline void Motor_Debug_CaptureRefTime(Motor_Context_T * p_motor)
 // {
 // #ifndef NDEBUG
 //     p_motor->MicrosRef = SysTime_GetMicros();
@@ -45,7 +45,7 @@
 // #endif
 // }
 
-// static inline void Motor_Debug_CaptureTime(Motor_State_T * p_motor, uint8_t index)
+// static inline void Motor_Debug_CaptureTime(Motor_Context_T * p_motor, uint8_t index)
 // {
 // #ifndef NDEBUG
 //     p_motor->DebugTime[index] = SysTime_GetMicros() - p_motor->MicrosRef;
@@ -54,7 +54,7 @@
 // #endif
 // }
 
-// static inline void Motor_Debug_CapturePeriod(Motor_State_T * p_motor, uint8_t index)
+// static inline void Motor_Debug_CapturePeriod(Motor_Context_T * p_motor, uint8_t index)
 // {
 // #ifndef NDEBUG
 //     p_motor->DebugTime[index + 1] = SysTime_GetMicros() - p_motor->DebugTime[index];

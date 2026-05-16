@@ -114,7 +114,7 @@ ElectricalCalibration_T;
 
 static_assert(sizeof(ElectricalCalibration_T) <= MOTOR_CALIBRATION_BUFFER_SIZE, "ElectricalCalibration_T must fit within MOTOR_CALIBRATION_BUFFER_SIZE");
 
-static ElectricalCalibration_T * ElectricalCalibrationBuffer(Motor_State_T * p_motor) { return (ElectricalCalibration_T *)(p_motor->CalibrationBuffer); }
+static ElectricalCalibration_T * ElectricalCalibrationBuffer(Motor_Context_T * p_motor) { return (ElectricalCalibration_T *)(p_motor->CalibrationBuffer); }
 
 
 /******************************************************************************/
@@ -265,7 +265,7 @@ extern const State_T MOTOR_STATE_CALIBRATION;
 
 static void Electrical_Entry(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     ElectricalCalibration_T * p_params = ElectricalCalibrationBuffer(p_context);
 
     Phase_ActivateV0(&p_motor->PHASE);
@@ -294,7 +294,7 @@ static void Electrical_Entry(Motor_T * p_motor)
 
 static void Electrical_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_context = p_motor->P_MOTOR;
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
     ElectricalCalibration_T * p_params = ElectricalCalibrationBuffer(p_context);
 
     switch (p_params->Step)

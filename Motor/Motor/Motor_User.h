@@ -48,11 +48,11 @@
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
 /*! @return [-32767/2:32767/2] <=> [-1:1) */
-static inline accum32_t Motor_GetSpeed_Fract16(const Motor_State_T * p_motor) { return Motor_GetSpeedFeedback(p_motor) * p_motor->Config.DirectionForward; }
+static inline accum32_t Motor_GetSpeed_Fract16(const Motor_Context_T * p_motor) { return Motor_GetSpeedFeedback(p_motor) * p_motor->Config.DirectionForward; }
 // /*! @return [0:65535] <=> [0:4) */
-// static inline ufract16_t Motor_GetSpeed_UFract16(const Motor_State_T * p_motor) { return math_abs(Motor_GetSpeedFeedback(p_motor)); }
+// static inline ufract16_t Motor_GetSpeed_UFract16(const Motor_Context_T * p_motor) { return math_abs(Motor_GetSpeedFeedback(p_motor)); }
 
-static inline angle16_t Motor_GetSpeed_DegPerCycle(const Motor_State_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
+static inline angle16_t Motor_GetSpeed_DegPerCycle(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor) * p_motor->Config.DirectionForward; }
 
 static inline fract16_t Motor_GetVSpeedEffective_Fract16(Motor_T * p_motor) { return Motor_GetVSpeed_Fract16(p_motor) * p_motor->P_MOTOR->Config.DirectionForward; }
 
@@ -64,35 +64,35 @@ static inline fract16_t Motor_GetVSpeedEffective_Fract16(Motor_T * p_motor) { re
 /*!
     @return IPhase Zero to Peak.
 */
-static inline ufract16_t Motor_GetIPhase_UFract16(const Motor_State_T * p_motor) { return FOC_GetIMagnitude(&p_motor->Foc); }
+static inline ufract16_t Motor_GetIPhase_UFract16(const Motor_Context_T * p_motor) { return FOC_GetIMagnitude(&p_motor->Foc); }
 /* iPhase motoring as positive. generating as negative. */
-static inline fract16_t Motor_GetIPhase_Fract16(const Motor_State_T * p_motor) { return Motor_GetIPhase_UFract16(p_motor) * p_motor->Direction; ; }
+static inline fract16_t Motor_GetIPhase_Fract16(const Motor_Context_T * p_motor) { return Motor_GetIPhase_UFract16(p_motor) * p_motor->Direction; ; }
 
 /*
     Sampled BEMF during freewheel or VOut during active control
 */
-static inline ufract16_t Motor_GetVPhase_UFract16(const Motor_State_T * p_motor) { return FOC_GetVMagnitude(&p_motor->Foc); }
-static inline fract16_t Motor_GetVPhase_Fract16(const Motor_State_T * p_motor) { return Motor_GetVPhase_UFract16(p_motor) * p_motor->Direction; ; }
+static inline ufract16_t Motor_GetVPhase_UFract16(const Motor_Context_T * p_motor) { return FOC_GetVMagnitude(&p_motor->Foc); }
+static inline fract16_t Motor_GetVPhase_Fract16(const Motor_Context_T * p_motor) { return Motor_GetVPhase_UFract16(p_motor) * p_motor->Direction; ; }
 
 /*
     Ideal electrical power physical VA
 */
 /* [1:1.5] */
-static inline ufract16_t Motor_GetElectricalPower_UFract16(const Motor_State_T * p_motor) { return FOC_GetActivePower(&p_motor->Foc); }
+static inline ufract16_t Motor_GetElectricalPower_UFract16(const Motor_Context_T * p_motor) { return FOC_GetActivePower(&p_motor->Foc); }
 static inline ufract16_t Motor_GetIBus_UFract16(Motor_T * p_motor) { return FOC_GetIBus(&p_motor->P_MOTOR->Foc, VBus_Fract16(p_motor->P_VBUS)); }
 
-static inline fract16_t Motor_GetElectricalPower_Fract16(const Motor_State_T * p_motor) { return _FOC_GetActivePower(&p_motor->Foc); }
+static inline fract16_t Motor_GetElectricalPower_Fract16(const Motor_Context_T * p_motor) { return _FOC_GetActivePower(&p_motor->Foc); }
 static inline fract16_t Motor_GetIBus_Fract16(Motor_T * p_motor) { return _FOC_GetIBus(&p_motor->P_MOTOR->Foc, VBus_Fract16(p_motor->P_VBUS)); }
 
 /*  */
-static inline uint16_t Motor_GetHeat_Adcu(const Motor_State_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
+static inline uint16_t Motor_GetHeat_Adcu(const Motor_Context_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
 #ifdef MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_GetSpeed_Rpm(const Motor_State_T * p_motor)             { return  (p_motor, Motor_GetSpeed_Fract16(p_motor)); }
-static inline int16_t Motor_GetIPhase_Amps(const Motor_State_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
-static inline int16_t Motor_GetVPhase_Volts(const Motor_State_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
-static inline int32_t Motor_GetElectricalPower_VA(const Motor_State_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
-static inline thermal_t Motor_GetHeat_DegC(const Motor_State_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+static inline int16_t Motor_GetSpeed_Rpm(const Motor_Context_T * p_motor)             { return  (p_motor, Motor_GetSpeed_Fract16(p_motor)); }
+static inline int16_t Motor_GetIPhase_Amps(const Motor_Context_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
+static inline int16_t Motor_GetVPhase_Volts(const Motor_Context_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
+static inline int32_t Motor_GetElectricalPower_VA(const Motor_Context_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
+static inline thermal_t Motor_GetHeat_DegC(const Motor_Context_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
 #endif
 
 /******************************************************************************/
@@ -103,30 +103,30 @@ static inline thermal_t Motor_GetHeat_DegC(const Motor_State_T * p_motor)       
 /*
     Caller maintain feedback state to determine units
 */
-static inline int16_t _Motor_GetIVSetpoint(const Motor_State_T * p_motor)               { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
-static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_State_T * p_motor)    { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
+static inline int16_t _Motor_GetIVSetpoint(const Motor_Context_T * p_motor)               { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
+static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_Context_T * p_motor)    { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
 
-static inline int16_t _Motor_GetTorqueSetpoint(const Motor_State_T * p_motor)           { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
-static inline int16_t _Motor_GetSpeedSetpoint(const Motor_State_T * p_motor)            { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
+static inline int16_t _Motor_GetTorqueSetpoint(const Motor_Context_T * p_motor)           { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
+static inline int16_t _Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor)            { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
 
-static inline fract16_t Motor_GetVSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
-static inline fract16_t Motor_GetISetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
-static inline fract16_t Motor_GetSpeedSetpoint(const Motor_State_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
-// static inline bool Motor_IsSpeedRampEnabled(const Motor_State_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
+static inline fract16_t Motor_GetVSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
+static inline fract16_t Motor_GetISetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
+static inline fract16_t Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }
+// static inline bool Motor_IsSpeedRampEnabled(const Motor_Context_T * p_motor) { return !_Ramp_IsDisabled(&p_motor->SpeedRamp); }
 
 /* quick derive view */
-static inline ufract16_t Motor_User_ILimitMotoring(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_ILimitCcw(p_motor) : -Motor_ILimitCw(p_motor); }
-static inline ufract16_t Motor_User_ILimitGenerating(const Motor_State_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? -Motor_ILimitCw(p_motor) : Motor_ILimitCcw(p_motor); }
-static inline ufract16_t Motor_User_SpeedLimit(const Motor_State_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? (ufract16_t)Motor_SpeedLimitCcw(p_motor) : (ufract16_t)(-Motor_SpeedLimitCw(p_motor)); }
+static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? Motor_ILimitCcw(p_motor) : -Motor_ILimitCw(p_motor); }
+static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? -Motor_ILimitCw(p_motor) : Motor_ILimitCcw(p_motor); }
+static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? (ufract16_t)Motor_SpeedLimitCcw(p_motor) : (ufract16_t)(-Motor_SpeedLimitCw(p_motor)); }
 
 /*
 
 */
-// static inline bool Motor_IsILimitSet(const Motor_State_T * p_motor)
+// static inline bool Motor_IsILimitSet(const Motor_Context_T * p_motor)
 // {
 //     return (Motor_User_ILimitMotoring(p_motor) != p_motor->Config.ILimitMotoring_Fract16) || (Motor_User_ILimitGenerating(p_motor) != p_motor->Config.ILimitGenerating_Fract16);
 // }
-// static inline bool Motor_IsSpeedLimitSet(const Motor_State_T * p_motor)
+// static inline bool Motor_IsSpeedLimitSet(const Motor_Context_T * p_motor)
 // {
 //     return (Motor_SpeedLimitForward(p_motor) != p_motor->Config.SpeedLimitForward_Fract16) || (Motor_SpeedLimitReverse(p_motor) != p_motor->Config.SpeedLimitReverse_Fract16);
 // }
@@ -187,24 +187,24 @@ extern void Motor_StartSpeedMode(Motor_T * p_const);
 /*
     Ramp Values
 */
-extern void Motor_SetVoltageCmd(Motor_State_T * p_motor, int16_t volts_fract16);
+extern void Motor_SetVoltageCmd(Motor_Context_T * p_motor, int16_t volts_fract16);
 extern void Motor_SetVoltageCmdScalar(Motor_T * p_motor, int16_t scalar_fract16);
-extern void Motor_SetVSpeedScalarCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
-extern void Motor_SetRegenCmd(Motor_State_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetVSpeedScalarCmd(Motor_Context_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetRegenCmd(Motor_Context_T * p_motor, int16_t scalar_fract16);
 
-extern void Motor_SetICmd(Motor_State_T * p_motor, int16_t i_fract16);
-extern void Motor_SetICmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetICmd(Motor_Context_T * p_motor, int16_t i_fract16);
+extern void Motor_SetICmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16);
 
 extern void Motor_ApplyTorque0(Motor_T * p_motor);
 
-extern void Motor_SetTorqueCmd(Motor_State_T * p_motor, int16_t torque);
-extern void Motor_SetTorqueCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetTorqueCmd(Motor_Context_T * p_motor, int16_t torque);
+extern void Motor_SetTorqueCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16);
 
-extern void Motor_SetSpeedMotoringCmd(Motor_State_T * p_motor, int16_t speed_fract16);
-extern void Motor_SetSpeedMotoringCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
-extern void Motor_SetSpeedCmd(Motor_State_T * p_motor, int16_t speed_fract16);
-extern void Motor_SetSpeedCmdScalar(Motor_State_T * p_motor, int16_t scalar_fract16);
-extern void Motor_SetPositionCmd(Motor_State_T * p_motor, uint16_t angle);
+extern void Motor_SetSpeedMotoringCmd(Motor_Context_T * p_motor, int16_t speed_fract16);
+extern void Motor_SetSpeedMotoringCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetSpeedCmd(Motor_Context_T * p_motor, int16_t speed_fract16);
+extern void Motor_SetSpeedCmdScalar(Motor_Context_T * p_motor, int16_t scalar_fract16);
+extern void Motor_SetPositionCmd(Motor_Context_T * p_motor, uint16_t angle);
 
 extern void Motor_SetActiveCmdScalar(Motor_T * p_motor, int16_t userCmd);
 

@@ -40,14 +40,14 @@
 // split as 2 array spans
 typedef const struct Motor_Table
 {
-    Motor_State_T * const P_STATES; /* optionally */
+    Motor_Context_T * const P_STATES; /* optionally */
     Motor_T * const P_DEVS;
     const size_t LENGTH;
 }
 Motor_Table_T;
 
 
-static inline Motor_State_T * Motor_Table_StateAt(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_STATES[motorIndex]); }
+static inline Motor_Context_T * Motor_Table_StateAt(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_STATES[motorIndex]); }
 static inline Motor_T * Motor_Table_At(Motor_Table_T * p_table, uint8_t motorIndex) { return &(p_table->P_DEVS[motorIndex]); }
 
 /******************************************************************************/
@@ -58,31 +58,31 @@ static inline Motor_T * Motor_Table_At(Motor_Table_T * p_table, uint8_t motorInd
 typedef int motor_value_t;
 // typedef register_t motor_value_t;
 
-typedef void(*Motor_Proc_T)(Motor_State_T * p_motor);
+typedef void(*Motor_Proc_T)(Motor_Context_T * p_motor);
 
-typedef motor_value_t(*Motor_Get_T)(const Motor_State_T * p_motor);
-typedef void(*Motor_Set_T)(Motor_State_T * p_motor, motor_value_t value);
+typedef motor_value_t(*Motor_Get_T)(const Motor_Context_T * p_motor);
+typedef void(*Motor_Set_T)(Motor_Context_T * p_motor, motor_value_t value);
 
-typedef bool(*Motor_State_Test_T)(const Motor_State_T * p_motor);
-typedef bool(*Motor_State_TryProc_T)(Motor_State_T * p_motor);
-typedef bool(*Motor_State_TrySet_T)(Motor_State_T * p_motor, motor_value_t value);
-typedef bool(*Motor_State_TryValue_T)(const Motor_State_T * p_motor, motor_value_t value);
+typedef bool(*Motor_State_Test_T)(const Motor_Context_T * p_motor);
+typedef bool(*Motor_State_TryProc_T)(Motor_Context_T * p_motor);
+typedef bool(*Motor_State_TrySet_T)(Motor_Context_T * p_motor, motor_value_t value);
+typedef bool(*Motor_State_TryValue_T)(const Motor_Context_T * p_motor, motor_value_t value);
 
-static inline void _Motor_Table_ForEach(Motor_Table_T * p_table, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (proc_t)function); }
+static inline void _Motor_Table_ForEach(Motor_Table_T * p_table, Motor_Proc_T function) { void_array_foreach(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (proc_t)function); }
 
-static inline void _Motor_Table_ForEachSet(Motor_Table_T * p_table, Motor_Set_T function, motor_value_t value) { void_array_foreach_set(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (set_t)function, value); }
-static inline bool _Motor_Table_ForEvery(Motor_Table_T * p_table, Motor_State_TryProc_T function) { return void_array_for_every(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (try_proc_t)function); }
+static inline void _Motor_Table_ForEachSet(Motor_Table_T * p_table, Motor_Set_T function, motor_value_t value) { void_array_foreach_set(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (set_t)function, value); }
+static inline bool _Motor_Table_ForEvery(Motor_Table_T * p_table, Motor_State_TryProc_T function) { return void_array_for_every(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (try_proc_t)function); }
 
-static inline bool _Motor_Table_IsEverySet(Motor_Table_T * p_table, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_every_set(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (try_set_t)test, value); }
-static inline bool _Motor_Table_IsAnySet(Motor_Table_T * p_table, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_any_set(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (try_set_t)test, value); }
+static inline bool _Motor_Table_IsEverySet(Motor_Table_T * p_table, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_every_set(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (try_set_t)test, value); }
+static inline bool _Motor_Table_IsAnySet(Motor_Table_T * p_table, Motor_State_TrySet_T test, motor_value_t value) { return void_array_for_any_set(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (try_set_t)test, value); }
 
 /* Const State  */
-static inline bool _Motor_Table_IsEvery(Motor_Table_T * p_table, Motor_State_Test_T test) { return void_array_is_every(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (test_t)test); }
-static inline bool _Motor_Table_IsAny(Motor_Table_T * p_table, Motor_State_Test_T test) { return void_array_is_any(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (test_t)test); }
+static inline bool _Motor_Table_IsEvery(Motor_Table_T * p_table, Motor_State_Test_T test) { return void_array_is_every(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (test_t)test); }
+static inline bool _Motor_Table_IsAny(Motor_Table_T * p_table, Motor_State_Test_T test) { return void_array_is_any(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (test_t)test); }
 
 /* Test value only, cast function pointer for now */
-static inline bool _Motor_Table_IsEveryValue(Motor_Table_T * p_table, Motor_State_TryValue_T test, int value) { return void_array_is_every_value(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (test_value_t)test, value); }
-static inline bool _Motor_Table_IsAnyValue(Motor_Table_T * p_table, Motor_State_TryValue_T test, int value) { return void_array_is_any_value(sizeof(Motor_State_T), p_table->P_STATES, p_table->LENGTH, (test_value_t)test, value); }
+static inline bool _Motor_Table_IsEveryValue(Motor_Table_T * p_table, Motor_State_TryValue_T test, int value) { return void_array_is_every_value(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (test_value_t)test, value); }
+static inline bool _Motor_Table_IsAnyValue(Motor_Table_T * p_table, Motor_State_TryValue_T test, int value) { return void_array_is_any_value(sizeof(Motor_Context_T), p_table->P_STATES, p_table->LENGTH, (test_value_t)test, value); }
 
 
 /******************************************************************************/
@@ -94,7 +94,7 @@ static inline bool _Motor_Table_IsAnyValue(Motor_Table_T * p_table, Motor_State_
 /*
     Feedback Mode Set first
 */
-typedef void (*Motor_SetCmdValue_T)(Motor_State_T * p_motor, int16_t userCmd); /* alternatively as cmd struct */
+typedef void (*Motor_SetCmdValue_T)(Motor_Context_T * p_motor, int16_t userCmd); /* alternatively as cmd struct */
 
 /* selected mode using function */
 static inline void Motor_Table_SetCmdWith(Motor_Table_T * p_table, Motor_SetCmdValue_T function, int16_t value) { for (uint8_t iMotor = 0U; iMotor < p_table->LENGTH; iMotor++) { function(&p_table->P_STATES[iMotor], value); } }

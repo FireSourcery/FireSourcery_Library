@@ -57,7 +57,7 @@ static void StartHoming(Motor_T * p_motor)
 
 static void ProcHoming(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
 
     /* alternatively openloop speed/angle ramp */
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
@@ -170,7 +170,7 @@ static const State_T ALIGN =
 */
 static void ValidateAlign(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_state->Config.AlignTime_Cycles * 2U);
     Encoder_ModeDT_SetInitial(GetEncoder(p_motor));
     FOC_SetVd(&p_state->Foc, 0);
@@ -234,7 +234,7 @@ static void ProcAngleControl(Motor_T * p_motor)
 static State_T * ValidateClosedLoopTransition(Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {
@@ -401,7 +401,7 @@ static State_T * StartUpValidateAlignTransition(Motor_T * p_motor)
 static State_T * StartUpValidateClosedLoopTransition(Motor_T * p_motor)
 {
     State_T * p_nextState = NULL;
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
 
     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
     {

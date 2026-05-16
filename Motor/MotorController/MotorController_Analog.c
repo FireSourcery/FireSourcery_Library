@@ -44,7 +44,7 @@ static inline void SetAdcZero(MotorController_T * p_dev, MotAnalogUser_AinId_T i
 
 void StartCalibrateAdc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     p_mc->StateCounter = 0U;
     Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
     Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
@@ -59,7 +59,7 @@ void StartCalibrateAdc(MotorController_T * p_dev)
 /* Proc Per ms */
 void ProcCalibrateAdc(MotorController_T * p_dev)
 {
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
 
     if (p_mc->StateCounter != 0U) /* skip first time */
     {
@@ -76,7 +76,7 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 {
     const uint32_t TIME = 2000U; /* > Motor calibrate adc time */
 
-    MotorController_State_T * p_mc = p_dev->P_MC;
+    MotorController_Context_T * p_mc = p_dev->P_MC;
     State_T * p_nextState = NULL;
 
     if (p_mc->StateCounter > TIME)

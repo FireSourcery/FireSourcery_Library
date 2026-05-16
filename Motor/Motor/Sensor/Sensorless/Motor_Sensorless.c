@@ -38,7 +38,7 @@
 
 static void RunSensorless_Proc(Motor_T * p_motor)
 {
-    Motor_State_T * p_state = p_motor->P_MOTOR;
+    Motor_Context_T * p_state = p_motor->P_MOTOR;
     if (FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I) == true)
     {
         FOC_Sensorless_Step(&p_state->FocSensorless, p_state->Foc.Id, p_state->Foc.Iq);
