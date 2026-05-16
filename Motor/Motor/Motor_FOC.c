@@ -163,10 +163,10 @@ static inline int32_t Motor_FOC_VSpeed_Fract16(const Motor_Context_T * p_context
 /* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
 void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 {
-    int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
     Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
     // _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch);
+    int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
     _FOC_MatchIVState_Decouple(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
 }

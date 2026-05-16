@@ -221,7 +221,7 @@ typedef struct Motor_Config
     Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
 
     Motor_ElectricalSpeedRating_T SpeedRating;    /* PolePairs, Kv, SpeedRated_Rpm */
-    Motor_RL_T ElectricalRsLs;
+    // Motor_RL_T ElectricalRsLs;
 
     // Motor_ResumeMode_T ResumeMode;   // option Scale to VSpeed or VBemf on resume
 

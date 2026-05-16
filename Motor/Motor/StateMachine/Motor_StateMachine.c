@@ -270,6 +270,7 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
         case PHASE_VOUT_PWM:
             if (p_motor->P_MOTOR->Direction != MOTOR_DIRECTION_NULL)
             {
+                //optionally substate for wait bemf capture
                 if (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) { p_nextState = &MOTOR_STATE_RUN; }
                 // else if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) /* OpenLoop start at 0 speed */
                 // {
@@ -370,10 +371,11 @@ static void Run_Proc(Motor_T * p_motor)
     // #endif
 
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); }
-    else { Motor_FOC_ProcVControl(p_motor); }
+    if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcVControl(p_motor); }
 }
 
+/*
+*/
 static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
@@ -387,6 +389,8 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
     [MOTOR_STATE_INPUT_ON_PHASE] = NULL,
 };
 
+/*
+*/
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
     return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
@@ -405,16 +409,16 @@ static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
 }
 
 // depreciate
-static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
-{
-    switch ((Motor_Direction_T)direction)
-    {
-        case MOTOR_DIRECTION_NULL:  return Run_InputRelease(p_motor);
-        case MOTOR_DIRECTION_CW:    return NULL;
-        case MOTOR_DIRECTION_CCW:   return NULL;
-        default: return NULL; /* Invalid direction */
-    }
-}
+// static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
+// {
+//     switch ((Motor_Direction_T)direction)
+//     {
+//         case MOTOR_DIRECTION_NULL:  return Run_InputRelease(p_motor);
+//         case MOTOR_DIRECTION_CW:    return NULL;
+//         case MOTOR_DIRECTION_CCW:   return NULL;
+//         default: return NULL; /* Invalid direction */
+//     }
+// }
 
 /*
 
@@ -458,13 +462,18 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    // if (p_context->FeedbackMode.Current == 0U)
-    // {
-    // }
+    if (p_context->FeedbackMode.Current == 0U)
+    {
+        Ramp_SetOutputState(&p_context->TorqueRamp, 0);
+        Ramp_SetTarget(&p_context->TorqueRamp, 0);
+        _FOC_MatchIVState_Decouple(&p_context->Foc, FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc));
+        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    }
+    else
+    {
+        Motor_FOC_MatchTorqueIState(p_context);
+    }
     Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); //switch to i limits or use vramp for voltage
-    Motor_FOC_MatchTorqueIState(p_context);
-    // FOC_MatchIVState(&p_context->Foc);
-    // Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc));
 }
 
 // min(GeneratingOnly, _Motor_GeneratingOnly PID_GetOutput(&p_state->PidSpeed));  substates inherit

@@ -33,7 +33,6 @@
 
 
 
-
 /*
     Unified Ramp_ProcNextOf
     Hard clamp output on SetLimits
@@ -165,3 +164,4 @@ void Ramp_SetInterpolate_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_
 {
     Ramp_SetSlope_Millis(p_ramp, updateFreq_Hz, duration_Ms, math_abs(final - Ramp_GetOutput(p_ramp)));
 }
+

@@ -303,16 +303,7 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, in
     p_foc->Vq = math_clamp(PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff, vqBand.low, vqBand.high); /* lands back in vqBand */
 }
 
-/*
 
-*/
-static inline bool FOC_ProcVControl_Decouple(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
-{
-    int32_t vd_ff = FOC_VdFeedforward(p_foc); /* May exceeed INT16_MAX range */
-    int32_t vq_ff = FOC_VqFeedforward(p_foc);
-    int32_t vq = interval_clamp(p_foc->VLimit, vqReq); /* policy limit still applies on top of circle limit */
-    return _FOC_ProcVCircle(p_foc, vCircle, fract16_sat(vdReq + vd_ff), fract16_sat(vqReq + vq_ff));
-}
 
 
 /*

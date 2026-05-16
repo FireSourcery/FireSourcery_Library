@@ -62,6 +62,7 @@ static void StartCalibration(Motor_T * p_motor)
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     *p_buffer = (CalibrationBuffer_T){ 0 };
 
+    // p_motor->P_MOTOR->ControlTimerBase = 0U;
     TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(2000U));
 
     Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
@@ -102,6 +103,7 @@ static State_T * EndCalibration(Motor_T * p_motor)
 
     if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
+        // p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(GetFilterA(p_motor), p_motor->P_MOTOR->ControlTimerBase, AdcuOf(p_fields->PhaseInput.I.Values.A));
         p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(GetFilterA(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.A));
         p_fields->Config.IabcZeroRef_Adcu.B = Accumulator_Avg(GetFilterB(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.B));
         p_fields->Config.IabcZeroRef_Adcu.C = Accumulator_Avg(GetFilterC(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.C));
