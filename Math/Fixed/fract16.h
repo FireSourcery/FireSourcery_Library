@@ -258,6 +258,7 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 */
 /******************************************************************************/
 struct fract16_xy { fract16_t x; fract16_t y; };
+// struct xy16_t { fract16_t x; fract16_t y; };
 // struct phasor { fract16_t re; fract16_t im; };
 extern struct fract16_xy fract16_vector(angle16_t theta);
 

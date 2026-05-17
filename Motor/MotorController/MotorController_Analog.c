@@ -50,8 +50,8 @@ void StartCalibrateAdc(MotorController_T * p_dev)
     Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
     Analog_Conversion_ClearResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
     Analog_Conversion_ClearResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
-    Accumulator_Init(&p_mc->AvgBuffer0);
-    Accumulator_Init(&p_mc->AvgBuffer1);
+    p_mc->AvgBuffer0 = (MovAvg_T){ 0 };
+    p_mc->AvgBuffer1 = (MovAvg_T){ 0 };
     // Motor_Table_EnterCalibrateAdc(&p_dev->MOTORS); /* Motor handles it own state */
     // p_mc->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING;
 }
@@ -63,8 +63,8 @@ void ProcCalibrateAdc(MotorController_T * p_dev)
 
     if (p_mc->StateCounter != 0U) /* skip first time */
     {
-        Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION));
-        Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION));
+        MovAvg_Running(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION));
+        MovAvg_Running(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION));
         Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION);
         Analog_Conversion_Mark(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION);
     }
@@ -81,8 +81,8 @@ static State_T * EndCalibrateAdc(MotorController_T * p_dev)
 
     if (p_mc->StateCounter > TIME)
     {
-        SetAdcZero(p_dev, MOT_AIN_THROTTLE, Accumulator_Avg(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION)));
-        SetAdcZero(p_dev, MOT_AIN_BRAKE,    Accumulator_Avg(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION)));
+        SetAdcZero(p_dev, MOT_AIN_THROTTLE, MovAvg_Running(&p_mc->AvgBuffer0, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_THROTTLE].CONVERSION)));
+        SetAdcZero(p_dev, MOT_AIN_BRAKE,    MovAvg_Running(&p_mc->AvgBuffer1, Analog_Conversion_GetResult(&p_dev->AINS[MOT_AIN_BRAKE].CONVERSION)));
         p_mc->LockOpStatus = 0; /* success */
 
         p_nextState = &MC_STATE_LOCK; /* return to lock state */

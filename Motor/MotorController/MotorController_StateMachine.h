@@ -42,6 +42,28 @@
     State Machine Definitions
 */
 /******************************************************************************/
+typedef enum MotorController_StateId
+{
+    MC_STATE_ID_INIT,
+    MC_STATE_ID_STANDBY,         /* includes standby */
+    MC_STATE_ID_MAIN,
+    MC_STATE_ID_MOTOR_CMD,    /* Substate under main, for motor control command handling. let it be the only substate using a top level id for simplicity */
+    MC_STATE_ID_MOTOR_TUNING,
+    MC_STATE_ID_LOCK,         /* includes calibration */
+    MC_STATE_ID_FAULT,        /* includes error handling */
+    _MC_STATE_ID_END,
+}
+MotorController_StateId_T;
+
+extern const State_T MC_STATE_INIT;
+extern const State_T MC_STATE_STANDBY;
+extern const State_T MC_STATE_MAIN;
+extern const State_T MC_STATE_MAIN_MOTOR_CMD;
+extern const State_T MC_STATE_MAIN_TUNING;
+extern const State_T MC_STATE_LOCK;
+extern const State_T MC_STATE_FAULT;
+/* add P_VAR_ACCESS table this layer only  */
+
 /*
     state_input_t
     Input Id
@@ -65,28 +87,6 @@ typedef enum MotorController_StateInput
     MC_TRANSITION_TABLE_LENGTH,
 }
 MotorController_StateInput_T;
-
-typedef enum MotorController_StateId
-{
-    MC_STATE_ID_INIT,
-    MC_STATE_ID_PARK,         /* includes standby */
-    MC_STATE_ID_MAIN,
-    MC_STATE_ID_MOTOR_CMD,    /* Substate under main, for motor control command handling. let it be the only substate using a top level id for simplicity */
-    MC_STATE_ID_MOTOR_TUNING,
-    MC_STATE_ID_LOCK,         /* includes calibration */
-    MC_STATE_ID_FAULT,        /* includes error handling */
-    _MC_STATE_ID_END,
-}
-MotorController_StateId_T;
-
-extern const State_T MC_STATE_INIT;
-extern const State_T MC_STATE_PARK;
-extern const State_T MC_STATE_MAIN;
-extern const State_T MC_STATE_MAIN_TUNING;
-extern const State_T MC_STATE_MAIN_MOTOR_CMD;
-extern const State_T MC_STATE_LOCK;
-extern const State_T MC_STATE_FAULT;
-/* add P_VAR_ACCESS table this layer only  */
 
 /*
     extern for Init
@@ -117,7 +117,7 @@ static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const M
 /* Top State only */
 // static inline bool MotorController_IsState(MotorController_T * p_dev, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_dev->STATE_MACHINE.P_ACTIVE, stateId); }
 
-static inline bool MotorController_IsPark(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_PARK); }
+static inline bool MotorController_IsPark(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_STANDBY); }
 static inline bool MotorController_IsFault(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_FAULT); }
 static inline bool MotorController_IsLock(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK); }
 

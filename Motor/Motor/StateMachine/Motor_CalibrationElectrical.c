@@ -320,8 +320,8 @@ static void Electrical_Proc(Motor_T * p_motor)
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
         case PARAMID_STEP_COMMIT:
-            CommitResultsSi(p_params, &p_context->Config.ElectricalParams);
-            CommitResults(p_params, &p_context->Config.Decoupling);
+            CommitResultsSi(p_params, &p_context->Config.ElectricalParams_Si);
+            CommitResults(p_params, &p_context->Config.ElectricalParams_Pu);
             break;
         case PARAMID_STEP_RAMPDOWN:
             _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);

@@ -140,15 +140,25 @@ void Motor_OpenLoop_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
+    FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);
     FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
+    // FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 }
+
+// static void Run_Proc(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//     FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
+//     Motor_FOC_ProcOpenLoop(p_motor);
+//     // capture for debugging
+// }
 
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
-    FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
     Motor_FOC_ProcOpenLoop(p_motor);
+    FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
+    FOC_Sensorless_CaptureVoltage(&p_context->FocSensorless, p_context->Foc.Valpha, p_context->Foc.Vbeta);
     // capture for debugging
 }
 

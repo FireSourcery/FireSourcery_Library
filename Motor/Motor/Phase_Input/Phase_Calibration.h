@@ -41,7 +41,7 @@
 typedef const struct Phase_Calibration
 {
     /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. Optionally allow runtime overwrite */
-    volatile uint16_t V_MAX_VOLTS;
+    volatile uint16_t V_MAX_VOLTS; /* V_SAT_VOLTS */
     volatile uint16_t I_MAX_AMPS;
 
     /* Optionally include units */

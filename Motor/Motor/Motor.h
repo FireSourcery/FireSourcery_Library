@@ -269,8 +269,8 @@ typedef struct Motor_Config
     // uint16_t OpenLoopGain_VHz;
 // #endif
 
-    FOC_Electrical_T ElectricalParams;  /* optional Motor Electrical Parameters. Si units */
-    FOC_Electrical_T Decoupling;        /* VdqDecoupling */
+    FOC_Electrical_T ElectricalParams_Si;  /* optional Motor Electrical Parameters. Si units */
+    FOC_Electrical_T ElectricalParams_Pu;  /* VdqDecoupling */
 
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
@@ -471,6 +471,8 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSu
 */
 static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
+
+
 
 
 /*
@@ -754,3 +756,11 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 
 // static inline ufract16_t _Motor_GetIDerate(Motor_Context_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
 // static inline ufract16_t _Motor_GetSpeedDerate(Motor_Context_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
+
+/* Alternate base selection */
+/* ω_base => 2 * Kv * v_nominal = 1.0f */
+/* L_base = V_base / (ω_base * I_base) */
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
+// static inline uint16_t Motor_VTypeMax_Volts(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) or Phase_Calibration_GetVMaxVolts(); }
+// static inline uint16_t Motor_ITypeMax_Amps(Motor_T * p_motor) { return Phase_Calibration_GetIRatedPeak_Fract16(); }
+// static inline uint16_t Motor_LTypeMax_Henries(Motor_T * p_motor) { return  Motor_VTypeMax_Volts(p_motor) / (2 * M_PI * Motor_SpeedTypeMax_Rpm(p_motor) / 60 * Motor_ITypeMax_Amps(p_motor)); }

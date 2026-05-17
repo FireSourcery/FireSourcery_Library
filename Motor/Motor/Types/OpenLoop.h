@@ -50,8 +50,8 @@ OpenLoo_Config_T;
 typedef struct Motor_OpenLoopRun
 {
     Angle_T Angle;          /* synthesised θ; .Angle high 16b is the angle16 */
-    Ramp_T  SpeedRamp;      /* output: ω in angle16/poll */
-    Ramp_T  IRamp;          /* output: I_ref in fract16 */
+    Ramp_T SpeedRamp;      /* output: ω in angle16/poll */
+    Ramp_T IRamp;          /* output: I_ref in fract16 */
 }
 OpenLoop_T;
 

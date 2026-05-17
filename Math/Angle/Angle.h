@@ -39,9 +39,7 @@
 /*!
     Angle State — 32-bit shifted tracker.
 
-    Internal storage is Q16.16: the high 16 bits are the angle16 projection
-    (directly usable for sin/cos LUT, Park/Clarke), the low 16 bits are
-    sub-degree precision preserved for integration at low speeds.
+    Angle accumulator shifts 16 for wrap.
 
     Three integration modes share one struct:
         - wrap     : Angle_Integrate      (position tracker, free wrap)
@@ -106,11 +104,11 @@ static inline angle16_t Angle_Integrate(Angle_T * p_angle, angle16_t delta)
     Wrap-mode step using the already-resolved shifted Delta.
     For sensor paths that set Delta out-of-band (e.g. AngleCounter_ResolveAngleDelta).
 */
-static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
-{
-    p_angle->Angle += p_angle->Delta;
-    return Angle_Value(p_angle);
-}
+// static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
+// {
+//     p_angle->Angle += p_angle->Delta;
+//     return Angle_Value(p_angle);
+// }
 
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 {
@@ -269,6 +267,7 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 /*
     Runtime Precomputed Ref
 */
+// typedef struct Angle_SpeedScale
 typedef struct Angle_SpeedFractRef
 {
     angle16_t SpeedMax_Angle16; /* DegPerPoll */

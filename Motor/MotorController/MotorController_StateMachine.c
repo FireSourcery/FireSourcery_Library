@@ -122,14 +122,14 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
     MotorController AppTable
 */
 static State_T * EnterAppMain(MotorController_T * p_dev) { Motor_Table_EnableAll(&p_dev->MOTORS); return MotorController_App_EnterMain(p_dev); }
-static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &MC_STATE_PARK : EnterAppMain(p_dev)); }
+static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &MC_STATE_STANDBY : EnterAppMain(p_dev)); }
 
 // State_T * MotorController_ResolveInitialParkState(MotorController_T * p_dev)
 // {
-//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return &MC_STATE_PARK; }
+//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return &MC_STATE_STANDBY; }
 //     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
 //     {
-//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return &MC_STATE_PARK; }
+//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return &MC_STATE_STANDBY; }
 //     }
 //     return MotorController_App_EnterMain(p_dev);
 // }
@@ -241,8 +241,8 @@ static State_T * Park_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
 {
     switch ((MotorController_StateCmd_T)cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &MC_STATE_PARK;
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &MC_STATE_PARK;
+        case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &MC_STATE_STANDBY;
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &MC_STATE_STANDBY;
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterAppMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
         default: break;
@@ -268,9 +268,9 @@ static const State_Input_T PARK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
     [MC_STATE_INPUT_APP_USER]       = NULL, /* Sink: app-specific commands buffered by caller, not applied in Park */
 };
 
-const State_T MC_STATE_PARK =
+const State_T MC_STATE_STANDBY =
 {
-    .ID                 = MC_STATE_ID_PARK,
+    .ID                 = MC_STATE_ID_STANDBY,
     .ENTRY              = (State_Action_T)Park_Entry,
     .LOOP               = (State_Action_T)Park_Proc,
     .P_TRANSITION_TABLE = &PARK_TRANSITION_TABLE[0U],
@@ -305,20 +305,20 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
     State_T * p_nextState = NULL;
     // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
     /* Guard applies for both Async and Sync Motor handling transitions */
-    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_PARK; }
+    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_STANDBY; }
     /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
     /* Applies Disable on enter */
     else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
     {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_PARK; }
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_STANDBY; }
         /* normalize on park. or  */
         // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION))
         // {
         //     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);
-        //     p_nextState = &MC_STATE_PARK;
+        //     p_nextState = &MC_STATE_STANDBY;
         // }
     }
-    // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_PARK; }
+    // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_STANDBY; }
     else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
     return p_nextState;
 }
@@ -528,7 +528,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                     p_nextState = AppParkState(p_dev);  /* if no transition to lock without serial, just use park */
-                    // p_nextState = &MC_STATE_PARK; /*  host side handle */
+                    // p_nextState = &MC_STATE_STANDBY; /*  host side handle */
                 }
                 else
                 {

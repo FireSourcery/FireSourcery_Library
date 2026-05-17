@@ -159,8 +159,8 @@ static inline ufract16_t foc_vq_circle_limit(ufract16_t magnitude_limit, fract16
  /******************************************************************************/
 static inline struct foc_alphabeta foc_clarke(fract16_t a, fract16_t b, fract16_t c)
 {
-    int32_t alpha = fract16_mul((int32_t)a * 2 - (int32_t)b - (int32_t)c, FRACT16_1_DIV_3);
-    int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
+    int32_t alpha = fract16_mul((int32_t)a * 2 - b - c, FRACT16_1_DIV_3);
+    int32_t beta = fract16_mul((int32_t)b - c, FRACT16_1_DIV_SQRT3);
 
     return (struct foc_alphabeta) { .alpha = fract16_sat(alpha), .beta = fract16_sat(beta) };
 }
@@ -171,7 +171,7 @@ static inline struct foc_alphabeta foc_clarke(fract16_t a, fract16_t b, fract16_
 */
 static inline struct foc_alphabeta foc_clarke_align(fract16_t a, fract16_t b, fract16_t c)
 {
-    int32_t beta = fract16_mul((int32_t)b - (int32_t)c, FRACT16_1_DIV_SQRT3);
+    int32_t beta = fract16_mul((int32_t)b - c, FRACT16_1_DIV_SQRT3);
 
     return (struct foc_alphabeta) { .alpha = a, .beta = fract16_sat(beta) };
 }
@@ -184,7 +184,7 @@ static inline struct foc_alphabeta foc_clarke_align(fract16_t a, fract16_t b, fr
 */
 static inline struct foc_alphabeta foc_clarke_ab(fract16_t a, fract16_t b)
 {
-    int32_t beta = fract16_mul((int32_t)a + (int32_t)b * 2, FRACT16_1_DIV_SQRT3);
+    int32_t beta = fract16_mul((int32_t)a + b * 2, FRACT16_1_DIV_SQRT3);
 
     return (struct foc_alphabeta) { .alpha = a, .beta = fract16_sat(beta) };
 }

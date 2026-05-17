@@ -29,13 +29,13 @@
 /******************************************************************************/
 #include "Motor_Analog.h"
 #include "../StateMachine/Motor_StateMachine.h"
-
+#include "Math/Filter/MovAvg.h"
 
 typedef struct CalibrationBuffer
 {
-    Accumulator_T FilterA;
-    Accumulator_T FilterB;
-    Accumulator_T FilterC;
+    MovAvg_T FilterA;
+    MovAvg_T FilterB;
+    MovAvg_T FilterC;
 }
 CalibrationBuffer_T;
 
@@ -46,10 +46,9 @@ static_assert(sizeof(CalibrationBuffer_T) <= MOTOR_CALIBRATION_BUFFER_SIZE, "Cal
 static uint16_t AdcuOf(int16_t value) { return (uint16_t)(value / (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY)); }
 
 static CalibrationBuffer_T * GetBuffer(Motor_T * p_motor) { return (CalibrationBuffer_T *)p_motor->P_MOTOR->CalibrationBuffer; }
-
-static Accumulator_T * GetFilterA(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterA; }
-static Accumulator_T * GetFilterB(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterB; }
-static Accumulator_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterC; }
+static MovAvg_T * GetFilterA(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterA; }
+static MovAvg_T * GetFilterB(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterB; }
+static MovAvg_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor)->FilterC; }
 
 /******************************************************************************/
 /*!
@@ -58,55 +57,46 @@ static Accumulator_T * GetFilterC(Motor_T * p_motor) { return &GetBuffer(p_motor
 /******************************************************************************/
 static void StartCalibration(Motor_T * p_motor)
 {
-    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
+    Motor_Context_T * const p_context = p_motor->P_MOTOR;
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     *p_buffer = (CalibrationBuffer_T){ 0 };
 
-    // p_motor->P_MOTOR->ControlTimerBase = 0U;
     TimerT_OneShot_Start(&p_motor->CONTROL_TIMER, MOTOR_CONTROL_CYCLES(2000U));
+    Phase_ActivateT0(&p_motor->PHASE);
 
-    Phase_WriteDuty_Fract16(&p_motor->PHASE, INT16_MAX / 2U, INT16_MAX / 2U, INT16_MAX / 2U);
-    Phase_ActivateOutput(&p_motor->PHASE);
-
-    Accumulator_Init(GetFilterA(p_motor));
-    Accumulator_Init(GetFilterB(p_motor));
-    Accumulator_Init(GetFilterC(p_motor));
-    p_fields->Config.IabcZeroRef_Adcu.A = 0U;
-    p_fields->Config.IabcZeroRef_Adcu.B = 0U;
-    p_fields->Config.IabcZeroRef_Adcu.C = 0U;
-    p_fields->PhaseInput.I.Flags.Bits = PHASE_ID_0;
+    p_context->Config.IabcZeroRef_Adcu.A = 0U;
+    p_context->Config.IabcZeroRef_Adcu.B = 0U;
+    p_context->Config.IabcZeroRef_Adcu.C = 0U;
+    p_context->PhaseInput.I.Flags.Bits = PHASE_ID_0;
     Motor_Analog_MarkIabc(p_motor);
 }
 
 
 static void ProcCalibration(Motor_T * p_motor)
 {
-    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
-    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
+    Motor_Context_T * const p_context = p_motor->P_MOTOR;
 
-    if (p_fields->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
+    if (p_context->PhaseInput.I.Flags.Bits == PHASE_ID_ABC)
     {
-        Accumulator_Avg(GetFilterA(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.A));
-        Accumulator_Avg(GetFilterB(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.B));
-        Accumulator_Avg(GetFilterC(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.C));
-        p_fields->PhaseInput.I.Flags.Bits = PHASE_ID_0;
+        MovAvg_Running(GetFilterA(p_motor), AdcuOf(p_context->PhaseInput.I.Values.A));
+        MovAvg_Running(GetFilterB(p_motor), AdcuOf(p_context->PhaseInput.I.Values.B));
+        MovAvg_Running(GetFilterC(p_motor), AdcuOf(p_context->PhaseInput.I.Values.C));
+        p_context->PhaseInput.I.Flags.Bits = PHASE_ID_0;
         Motor_Analog_MarkIabc(p_motor);
     }
 }
 
 static State_T * EndCalibration(Motor_T * p_motor)
 {
-    Motor_Context_T * const p_fields = p_motor->P_MOTOR;
-    CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
+    Motor_Context_T * const p_context = p_motor->P_MOTOR;
 
     State_T * p_nextState = NULL;
 
     if (TimerT_IsElapsed(&p_motor->CONTROL_TIMER) == true)
     {
-        // p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(GetFilterA(p_motor), p_motor->P_MOTOR->ControlTimerBase, AdcuOf(p_fields->PhaseInput.I.Values.A));
-        p_fields->Config.IabcZeroRef_Adcu.A = Accumulator_Avg(GetFilterA(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.A));
-        p_fields->Config.IabcZeroRef_Adcu.B = Accumulator_Avg(GetFilterB(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.B));
-        p_fields->Config.IabcZeroRef_Adcu.C = Accumulator_Avg(GetFilterC(p_motor), AdcuOf(p_fields->PhaseInput.I.Values.C));
+        p_context->Config.IabcZeroRef_Adcu.A = MovAvg_Running(GetFilterA(p_motor), AdcuOf(p_context->PhaseInput.I.Values.A));
+        p_context->Config.IabcZeroRef_Adcu.B = MovAvg_Running(GetFilterB(p_motor), AdcuOf(p_context->PhaseInput.I.Values.B));
+        p_context->Config.IabcZeroRef_Adcu.C = MovAvg_Running(GetFilterC(p_motor), AdcuOf(p_context->PhaseInput.I.Values.C));
         Phase_Deactivate(&p_motor->PHASE);
         p_nextState = &MOTOR_STATE_CALIBRATION; /* return to parent state, idle state */
     }

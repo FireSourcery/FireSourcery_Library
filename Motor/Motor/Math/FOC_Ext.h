@@ -99,7 +99,7 @@ static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
 
 // // FOC_Electrical_T FOC_Electrical_FromSi_Kv(FOC_Electrical_T * p_electrical, Motor_ElectricalSpeedRating_T kv, uint16_t vBus_V)
 // {
-//     p_config->Decoupling.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.Kv);
+//     p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.Kv);
 // }
 
 static inline FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t eRadsBase)

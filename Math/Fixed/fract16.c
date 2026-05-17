@@ -190,11 +190,13 @@ ufract16_t fract16_vector_norm(fract16_t x, fract16_t y, ufract16_t mag_limit)
     Vector Circle Limit
     @return max/|Vxy|
 */
+// struct fract16_xy
 void fract16_vector_limit(fract16_t * p_x, fract16_t * p_y, ufract16_t mag_limit)
 {
     fract16_vector_scale(p_x, p_y, fract16_vector_norm(*p_x, *p_y, mag_limit));
 }
 
+// struct fract16_xy
 void fract16_vector_normalize(fract16_t * p_x, fract16_t * p_y)
 {
     fract16_vector_limit(p_x, p_y, FRACT16_MAX);

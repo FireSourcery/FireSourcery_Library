@@ -106,9 +106,9 @@ bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config)
     uint16_t speedTypeMax_Angle = Motor_GetSpeedTypeMax_Angle(&p_config->SpeedRating);
     return
     (
-        ((uint64_t)p_config->Decoupling.Lq * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
-        ((uint64_t)p_config->Decoupling.Ld * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
-        ((uint64_t)p_config->Decoupling.Psi * speedTypeMax_Angle < (uint64_t)INT32_MAX)
+        ((uint64_t)p_config->ElectricalParams_Pu.Lq * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+        ((uint64_t)p_config->ElectricalParams_Pu.Ld * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+        ((uint64_t)p_config->ElectricalParams_Pu.Psi * speedTypeMax_Angle < (uint64_t)INT32_MAX)
     );
 }
 

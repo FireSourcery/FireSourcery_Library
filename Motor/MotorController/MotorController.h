@@ -71,6 +71,7 @@
 #include "Type/Word/Version.h"
 
 #include "Math/Linear/Linear.h"
+#include "Math/Filter/MovAvg.h"
 #include "Math/Accumulator/Accumulator.h"
 
 #include <stdint.h>
@@ -206,8 +207,9 @@ typedef struct MotorController_Context
     MotorController_Config_T Config;
     BootRef_T BootRef; /* Buffer */
 
-    Accumulator_T AvgBuffer0;
-    Accumulator_T AvgBuffer1;
+    // uint8_t CalibrationBuffer[32];
+    MovAvg_T AvgBuffer0;
+    MovAvg_T AvgBuffer1;
 
     uint32_t MicrosRef;
     uint32_t ControlLoopProfile;

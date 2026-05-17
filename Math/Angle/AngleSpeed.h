@@ -4,7 +4,7 @@
 /*!
     @section LICENSE
 
-    Copyright (C) 2025 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -24,30 +24,9 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   Accumulator.h
+    @file   AngleSpeed.h
     @author FireSourcery
     @brief  [Brief description of the file]
-    @note   Stores internal state as shifted for precision, provides unshifted interface
 */
 /******************************************************************************/
-#include "../math_general.h"
-#include <stdint.h>
-#include <stdbool.h>
 
-#include "Accumulator.h"
-
-
-/*
-    Fixed version. Ignore Shift field.
-*/
-#define ACCUM32_SHIFT 15
-
-static void Accumulator32_Init(Accumulator_T * p_accum, int16_t coefficient) { p_accum->Coefficient = (coefficient << ACCUM32_SHIFT); }
-
-static inline int32_t Accumulator32_Output(Accumulator_T * p_accum) { return (p_accum->Accumulator >> ACCUM32_SHIFT); }
-
-static inline int32_t Accumulator32_Step(Accumulator_T * p_accum, int16_t input)
-{
-    p_accum->Accumulator = accumulator(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, input);
-    return Accumulator32_Output(p_accum);
-}

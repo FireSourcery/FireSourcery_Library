@@ -55,14 +55,14 @@ Motor_ElectricalSpeedRating_T;
 // }
 // Motor_ElectricalSpeedRef_T;
 
-typedef struct
-{
-    uint32_t Rs;
-    // uint32_t Ls;
-    uint32_t Ld; /* store the foc version   */
-    uint32_t Lq;
-}
-Motor_RL_T;
+// typedef struct
+// {
+//     uint32_t Rs;
+//     // uint32_t Ls;
+//     uint32_t Ld; /* store the foc version   */
+//     uint32_t Lq;
+// }
+// Motor_RL_T;
 
 
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
@@ -152,9 +152,36 @@ static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRati
 */
 /* Config stored in Electrical Degrees need to sync with pole pairs */
 
+/* e.g.
+    l_h: 80 uH
+    i_max_A: 600 A
+    Fs: 20 kHz
+    v_max_V: 94 V
+    ω_base_e:2094.4 (5000 rpm, 4 pole pairs)
+
+    _l_pu_of_h       L_pu_a16 = 32 (real value 32.083, integer-truncated)
+        1000 rpm => ω = 54  =>  ω * L_pu = 1728
+
+    l_pu_rads_of_h   L_pu_rads = 35,045 (Q15 of real value 1.0695)
+        1000 rpm => ω = 6553 => ω * L_pu = 7009
+
+n_rpm	ω_e	F1 el_Δ	F1 product	F2 ω_pu	F2 product	true Q15·Z_L	F1 err	F2 err
+100	    42	22	704	655	700	701	+0.4 %	−0.1 %
+500	    209	109	3488	3277	3504	3504	−0.5 %	0.00 %
+1000	419	218	6976	6554	7010	7009	−0.5 %	+0.01 %
+2000	838	437	13984	13107	14017	14018	−0.24 %	0.00 %
+5000	2094	1092	34944	32767†	35043	35044	−0.29 %	0.00 %
+7500	3142	1639	52448	49152‡	52564	52566	−0.22 %	0.00 %
+10000	4189	2185	69920	65535‡	70089	70089	−0.24 %	0.00
+*/
+
+/*
+    store as angle, fixed to controller, norm bit shift
+*/
 // #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
 // #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
-// #define MOTOR_SPEED_MAX_DIGITAL
+// #define MOTOR_DIGITAL_SPEED_NORM 2
+// #define MOTOR_DIGITAL_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
 // 32767 600000 erpm
 // 16383 300000 erpm
 // 8192 150000 erpm

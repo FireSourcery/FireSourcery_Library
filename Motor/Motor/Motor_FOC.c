@@ -43,10 +43,10 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t
 {
     FOC_SetTheta(&p_motor->Foc, theta);
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)  /* update angle only for voutput, until divider from adc is set */
-    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, dReq, qReq); }
+    if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
 #else
     FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)
-    FOC_ProcIFeedback_Decouple(&p_motor->Foc, vBus, dReq, qReq);
+    FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
 #endif
     FOC_ProcInvClarkePark(&p_motor->Foc);
 }
@@ -167,7 +167,7 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
     Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
     // _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch);
     int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
-    _FOC_MatchIVState_Decouple(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
+    FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
 }
 
@@ -264,6 +264,18 @@ void Motor_FOC_ProcOpenLoop(Motor_T * p_motor)
     }
     FOC_ProcInvClarkePark(&p_context->Foc);
 }
+
+// void Motor_FOC_ProcSensorless(Motor_T * p_motor)
+// {
+//     Motor_Context_T * p_context = p_motor->P_MOTOR;
+//     FOC_SetTheta(&p_context->Foc, angle);
+//     if (FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I) == true)
+//     {
+//         FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
+//     }
+//     // Step
+//     FOC_ProcInvClarkePark(&p_context->Foc);
+// }
 
 
 

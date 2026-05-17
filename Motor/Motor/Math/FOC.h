@@ -100,9 +100,9 @@ typedef struct FOC
     /* Inputs - Capture by ADC */
     // fract16_t Ia, Ib, Ic;
 
-//     /* Intermediate values */
-//     fract16_t Ialpha, Ibeta;
-//     fract16_t Valpha, Vbeta;
+    /* Intermediate values */
+    fract16_t Ialpha, Ibeta;
+    fract16_t Valpha, Vbeta;
 }
 FOC_T;
 
@@ -134,12 +134,23 @@ static inline void FOC_SetTheta(FOC_T * p_foc, angle16_t theta)
 /*
     InputI
 */
+// static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
+// {
+//     struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
+//     p_foc->Id = i.d;
+//     p_foc->Iq = i.q;
+// }
+
 static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib, fract16_t ic)
 {
-    struct foc_dq i = foc_clarke_park(ia, ib, ic, p_foc->Sine, p_foc->Cosine);
-    p_foc->Id = i.d;
-    p_foc->Iq = i.q;
+    struct foc_alphabeta iab = foc_clarke(ia, ib, ic);
+    struct foc_dq idq = foc_park_vector(iab.alpha, iab.beta, p_foc->Sine, p_foc->Cosine);
+    p_foc->Ialpha = iab.alpha;
+    p_foc->Ibeta = iab.beta;
+    p_foc->Id = idq.d;
+    p_foc->Iq = idq.q;
 }
+
 
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
@@ -176,10 +187,20 @@ static inline ufract16_t FOC_VqCircleLimit(const FOC_T * p_foc, ufract16_t vBus)
 }
 
 
-// static inline void FOC_ProcInvClarkePark(FOC_T * p_foc, fract16_t vd, fract16_t vq)
+// static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
+// {
+//     struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+//     p_foc->Va = v.a;
+//     p_foc->Vb = v.b;
+//     p_foc->Vc = v.c;
+// }
+
 static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 {
-    struct foc_abc v = foc_inv_clarke_park(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    struct foc_alphabeta vab = foc_inv_park_vector(p_foc->Vd, p_foc->Vq, p_foc->Sine, p_foc->Cosine);
+    struct foc_abc v = foc_inv_clarke(vab.alpha, vab.beta);
+    p_foc->Valpha = vab.alpha;
+    p_foc->Vbeta = vab.beta;
     p_foc->Va = v.a;
     p_foc->Vb = v.b;
     p_foc->Vc = v.c;
@@ -196,6 +217,13 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vd = v.d;
     p_foc->Vq = v.q;
 }
+
+// static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
+// {
+//     struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
+//     p_foc->Vd = v.d;
+//     p_foc->Vq = v.q;
+// }
 
 
 /******************************************************************************/
@@ -226,6 +254,26 @@ static inline interval_t FOC_VBemfWindow(const FOC_T * p_foc, accum32_t omega_ps
 static inline void FOC_SetVWindow(FOC_T * p_foc, int32_t window) { p_foc->VWindow = window; }
 
 
+/*
+
+*/
+static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
+{
+    int32_t vq = interval_clamp(p_foc->VLimit, vqReq);
+    return _FOC_ProcVCircle(p_foc, vCircle, vdReq, vq);
+}
+
+/*
+    e.g. OpenLoop Align
+*/
+static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
+{
+    FOC_SetTheta(p_foc, theta);
+    FOC_SetVd(p_foc, vd);
+    FOC_SetVq(p_foc, vq);
+    FOC_ProcInvClarkePark(p_foc);
+}
+
 /******************************************************************************/
 /*!
     Inner current loop — d-q PID pair operations.
@@ -235,7 +283,7 @@ static inline void FOC_SetVWindow(FOC_T * p_foc, int32_t window) { p_foc->VWindo
 /*
     Limit-first: compute Vq budget from voltage circle after Vd, set PidIq limits before proc
 */
-static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus,  int16_t idReq, int16_t iqReq)
+static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus,  int16_t idReq, int16_t iqReq)
 {
     p_foc->Vd = PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq);
     ufract16_t vqCircleLimit = foc_vq_circle_limit(fract16_mul(vBus, FRACT16_1_DIV_2), p_foc->Vd);
@@ -254,14 +302,6 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus,  int16_t id
     // if (FOC_ProcVectorLimit(p_foc, vBus)) { _PID_SetOutputState(&p_foc->PidIq, p_foc->Vq); }  // immediately snaps integral
 // }
 
-/*
-
-*/
-static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
-{
-    int32_t vq = interval_clamp(p_foc->VLimit, vqReq);
-    return _FOC_ProcVCircle(p_foc, vCircle, vdReq, vq);
-}
 
 /******************************************************************************/
 /*
@@ -277,8 +317,8 @@ static inline void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
     p_foc->ElectricalSpeed.OmegaPsi = fract16_mul_sat(p_foc->Electrical.Psi, speed);
 }
 
-static inline int32_t FOC_VdFeedforward(FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
-static inline int32_t FOC_VqFeedforward(FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
+static inline int32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
+static inline int32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 
 /*
     Vd_cmd = Vd_PI + Vd_ff,
@@ -302,21 +342,6 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, in
     PID_CaptureOutputLimits(&p_foc->PidIq, fract16_sat(vqBand.low - vq_ff), fract16_sat(vqBand.high - vq_ff));
     p_foc->Vq = math_clamp(PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff, vqBand.low, vqBand.high); /* lands back in vqBand */
 }
-
-
-
-
-/*
-    e.g. OpenLoop Align
-*/
-static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
-{
-    FOC_SetTheta(p_foc, theta);
-    FOC_SetVd(p_foc, vd);
-    FOC_SetVq(p_foc, vq);
-    FOC_ProcInvClarkePark(p_foc);
-}
-
 
 
 /******************************************************************************/
@@ -345,6 +370,10 @@ static inline void _FOC_MatchIVState_Decouple(FOC_T * p_foc, int16_t vd, int16_t
 //     PID_SetOutputState(&p_foc->PidId, p_foc->Vd);
 //     PID_SetOutputState(&p_foc->PidIq, (p_foc->Vq == 0) ? p_foc->ElectricalSpeed.OmegaPsi : p_foc->Vq);
 // }
+// static inline void FOC_MatchIVState_Decouple(FOC_T * p_foc)
+// {
+
+// }
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
@@ -359,23 +388,23 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
 
 */
 /******************************************************************************/
-// static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t idReq, int16_t iqReq)
-// {
-// #if defined(MOTOR_DECOUPLE_ENABLE)
-//     FOC_ProcIFeedback_Decouple(p_foc, vBus, direction, p_foc->Electrical.Psi, idReq, iqReq);
-// #else
-//     FOC_ProcIFeedback_Base(p_foc, vBus, direction, idReq, iqReq);
-// #endif
-// }
+static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idReq, int16_t iqReq)
+{
+#if defined(FOC_DECOUPLE_ENABLE)
+    FOC_ProcIFeedback_Decouple(p_foc, vBus, idReq, iqReq);
+#else
+    FOC_ProcIFeedback_Base(p_foc, vBus, idReq, iqReq);
+#endif
+}
 
-// static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
-// {
-// #if defined(MOTOR_DECOUPLE_ENABLE)
-//     _FOC_MatchIVState_Decouple(p_foc, vd, vq);
-// #else
-//     _FOC_MatchIVState (p_foc, vd, vq);
-// #endif
-// }
+static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+{
+#if defined(FOC_DECOUPLE_ENABLE)
+    _FOC_MatchIVState_Decouple(p_foc, vd, vq);
+#else
+    _FOC_MatchIVState(p_foc, vd, vq);
+#endif
+}
 
 /******************************************************************************/
 /*!

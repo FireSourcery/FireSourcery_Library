@@ -81,6 +81,7 @@ typedef const struct Phase_AnalogCalibration
 
     volatile uint16_t I_PHASE_R_BASE;      /* mOhm*1000 */
     volatile uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
+    // volatile uint16_t I_PHASE_R_SHUNT;   /* mOhm*1000 */
     volatile uint16_t I_PHASE_GAIN;        /* x10 */
 
     volatile uint16_t V_RATED;             /* VSource Limit */

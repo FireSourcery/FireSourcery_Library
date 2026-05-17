@@ -57,124 +57,6 @@
 
 /******************************************************************************/
 /*!
-    @brief  Voltage-Model Back-EMF Estimator
-
-        e = v - Rs·i - Ls·di/dt
-
-    Discrete one-step form, caller supplies the precomputed Δi = i[k] - i[k-1]:
-        ê[k] = v[k] - Rs_pu·i[k] - Ls_pu·Δi[k]
-
-    Output ê is in v_pu units. Recover angle via foc_pll_error + integrator,
-    or foc_emf_to_angle (atan2). Accuracy degrades at low speed because |e| → 0;
-    use SMO + LPF for noisier low-speed regimes, and switch to open-loop / HFI
-    starting near ω_e = 0.
-*/
-/******************************************************************************/
-static inline fract16_t foc_emf_axis(fract16_t Rs_pu, accum32_t Ls_pu, fract16_t v, fract16_t i, fract16_t di)
-{
-    return fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i) - fract16_mul(Ls_pu, di));
-}
-
-/******************************************************************************/
-/*!
-    @brief  Sliding-Mode switching function — bounded sign with linear region.
-
-        sat(x, thr) = clamp(x / thr, -1, +1)
-
-    Replaces hard sign() inside the SMO to suppress chatter; thr is the
-    boundary-layer width in the same per-unit basis as x. thr > 0.
-*/
-/******************************************************************************/
-static inline fract16_t foc_smo_sat(fract16_t thr, fract16_t x) { return fract16_sat(fract16_div(x, thr)); }
-
-/******************************************************************************/
-/*!
-    @brief  Sliding-Mode Current Observer — single-axis step (αβ frame).
-
-    Plant (per axis):
-        di/dt = (Ls)⁻¹ · ( v - Rs·i - e )
-
-    Discrete observer:
-        z[k]    = K_smo · sat( î[k] - i_meas[k], thr )
-        î[k+1]  = î[k] + G_int · ( v[k] - Rs_pu·î[k] - z[k] )
-
-        G_int = dt · V_max / (Ls · I_max) = 1 / Ls_pu
-
-    The switching variable z drives (î - i) → 0; its slow component
-    (extracted by foc_lpf_step) is the back-EMF estimate ê used by the
-    angle tracker.
-
-    @param  G_pu    observer integrator gain = 1 / Ls_pu
-    @param  K_smo     sliding gain; > peak EMF in pu so z dominates ê
-    @param  thr       boundary-layer width (foc_smo_sat); typ. 0.05..0.2 of i_max
-*/
-/******************************************************************************/
-static inline fract16_t foc_smo_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return fract16_mul(K_smo, foc_smo_sat(thr, i_est - i_meas)); }
-static inline accum32_t foc_smo_v_eff(fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return ((accum32_t)v - fract16_mul(Rs_pu, i_est) - z); }
-// /* if G_pu > 1.0 */
-// static inline accum32_t _foc_smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return (int64_t)G_pu * foc_smo_v_eff(Rs_pu, v, i_est, z) / FRACT16_SCALE; }
-static inline fract16_t foc_smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + fract16_mul(G_pu, foc_smo_v_eff(Rs_pu, v, i_est, z))); }
-
-struct foc_smo_axis { fract16_t i_est, z; };
-
-static inline struct foc_smo_axis foc_smo_axis_step(fract16_t K_smo, fract16_t thr, accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t i_meas)
-{
-    fract16_t z = foc_smo_z(K_smo, thr, i_est, i_meas);
-    return (struct foc_smo_axis) { .i_est = foc_smo_i(G_pu, Rs_pu, v, i_est, z), .z = z, };
-}
-
-
-// static inline struct foc_alphabeta foc_emf_alphabeta
-// (
-//     fract16_t Rs_pu, fract16_t Ls_pu,
-//     fract16_t v_alpha, fract16_t v_beta,
-//     fract16_t i_alpha, fract16_t i_beta,
-//     fract16_t di_alpha, fract16_t di_beta
-// )
-// {
-//     return (struct foc_alphabeta)
-//     {
-//         .alpha = foc_emf_axis(Rs_pu, Ls_pu, v_alpha, i_alpha, di_alpha),
-//         .beta = foc_emf_axis(Rs_pu, Ls_pu, v_beta, i_beta, di_beta),
-//     };
-// }
-
-// /* αβ-vector form of the SMO step. */
-// struct foc_smo_alphabeta { fract16_t i_alpha, i_beta, z_alpha, z_beta; };
-
-// static inline struct foc_smo_alphabeta foc_smo_alphabeta_step
-// (
-//     fract16_t Rs_pu, fract16_t G_pu, fract16_t K_smo, fract16_t thr,
-//     fract16_t i_alpha_est, fract16_t i_beta_est,
-//     fract16_t i_alpha, fract16_t i_beta,
-//     fract16_t v_alpha, fract16_t v_beta
-// )
-// {
-//     struct foc_smo_axis a = foc_smo_axis_step(Rs_pu, G_pu, K_smo, thr, i_alpha_est, i_alpha, v_alpha);
-//     struct foc_smo_axis b = foc_smo_axis_step(Rs_pu, G_pu, K_smo, thr, i_beta_est,  i_beta,  v_beta);
-//     return (struct foc_smo_alphabeta) { .i_alpha = a.i_est, .i_beta = b.i_est, .z_alpha = a.z, .z_beta = b.z };
-// }
-
-
-/******************************************************************************/
-/*!
-    @brief  First-order discrete low-pass step.
-
-        y[k+1] = y[k] + k_lp · ( x[k] - y[k] ),       k_lp = dt / (τ + dt)
-
-    Used to extract the equivalent control of z (≈ ê) from the SMO output and
-    to smooth ê before the angle tracker. Choose τ such that the cutoff sits
-    above the maximum tracked electrical frequency yet below the SMO chatter band.
-*/
-/******************************************************************************/
-static inline fract16_t foc_lpf_step(fract16_t k_lp, fract16_t y, fract16_t x)
-{
-    return fract16_sat((accum32_t)y + fract16_mul(k_lp, x - y));
-}
-
-
-/******************************************************************************/
-/*!
     @brief  PLL Phase Detector — d-axis projection of estimated EMF.
 
     With d aligned to rotor flux ψ_f, back-EMF lies on the q-axis, so:
@@ -187,10 +69,7 @@ static inline fract16_t foc_lpf_step(fract16_t k_lp, fract16_t y, fract16_t x)
     foc_pll_error_normalized which strips |e|.
 */
 /******************************************************************************/
-static inline fract16_t foc_pll_error(fract16_t e_alpha, fract16_t e_beta, fract16_t sin, fract16_t cos)
-{
-    return fract16_sat(fract16_mul(e_alpha, cos) + fract16_mul(e_beta, sin));
-}
+static inline fract16_t foc_pll_error(fract16_t e_alpha, fract16_t e_beta, fract16_t sin, fract16_t cos) { return fract16_sat(fract16_mul(e_alpha, cos) + fract16_mul(e_beta, sin)); }
 
 /*!
     Speed-normalized phase error ≈ sin(Δθ), independent of |e|.
@@ -201,7 +80,6 @@ static inline fract16_t foc_pll_error_normalized(ufract16_t e_floor, fract16_t e
     ufract16_t mag = fract16_vector_magnitude(e_alpha, e_beta);
     return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(foc_pll_error(e_alpha, e_beta, sin, cos), mag);
 }
-
 
 /******************************************************************************/
 /*!
@@ -221,11 +99,7 @@ static inline fract16_t foc_pll_error_normalized(ufract16_t e_floor, fract16_t e
     SMO output.
 */
 /******************************************************************************/
-static inline angle16_t foc_emf_to_angle(sign_t sign, fract16_t e_alpha, fract16_t e_beta)
-{
-    return (sign >= 0) ? fract16_atan2(e_alpha, -e_beta) : fract16_atan2(-e_alpha, e_beta);
-}
-
+static inline angle16_t foc_theta_of_emf(sign_t sign, fract16_t e_alpha, fract16_t e_beta) { return (sign >= 0) ? fract16_atan2(e_alpha, -e_beta) : fract16_atan2(-e_alpha, e_beta); }
 
 /******************************************************************************/
 /*!
@@ -242,10 +116,10 @@ static inline angle16_t foc_emf_to_angle(sign_t sign, fract16_t e_alpha, fract16
     or the open-loop reference. Returns 0 when Psi_pu is zero (uninitialised).
 */
 /******************************************************************************/
-static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag)
-{
-    return (Psi_pu == 0) ? 0 : (angle16_t)fract16_div(e_mag, Psi_pu);
-}
+static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag) { return (angle16_t)fract16_div(e_mag, Psi_pu); }
+
+
+
 
 
 /******************************************************************************/
@@ -273,15 +147,15 @@ static inline angle16_t foc_speed_of_emf(fract16_t Psi_pu, ufract16_t e_mag)
     relies on steady-state assumption and full parameter knowledge (Rs, Ld, Lq, ψ).
 */
 /******************************************************************************/
-static inline fract16_t foc_dq_pll_error_d(fract16_t Rs_pu, fract16_t omega_Lq_pu, fract16_t vd, fract16_t id, fract16_t iq)
-{
-    return fract16_sat((accum32_t)vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq_pu, iq));
-}
+// static inline fract16_t foc_dq_pll_error_d(fract16_t Rs_pu, fract16_t omega_Lq_pu, fract16_t vd, fract16_t id, fract16_t iq)
+// {
+//     return fract16_sat((accum32_t)vd - fract16_mul(Rs_pu, id) - foc_vd_ff(omega_Lq_pu, iq));
+// }
 
-static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_pu, fract16_t omega_psi_pu, fract16_t vq, fract16_t id, fract16_t iq)
-{
-    return fract16_sat((accum32_t)vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Ld_pu, omega_psi_pu, id));
-}
+// static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_pu, fract16_t omega_psi_pu, fract16_t vq, fract16_t id, fract16_t iq)
+// {
+//     return fract16_sat((accum32_t)vq - fract16_mul(Rs_pu, iq) - foc_vq_ff(omega_Ld_pu, omega_psi_pu, id));
+// }
 
 
 /******************************************************************************/
@@ -324,44 +198,14 @@ static inline fract16_t foc_dq_pll_error_q(fract16_t Rs_pu, fract16_t omega_Ld_p
     to prove and requires reasonable startup alignment.
 */
 /******************************************************************************/
-static inline fract16_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return foc_smo_z(K_smo, thr, id_est, id); }
-static inline fract16_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return foc_smo_z(K_smo, thr, iq_est, iq); }
+// static inline fract16_t foc_eemf_zd(fract16_t K_smo, fract16_t thr, fract16_t id_est, fract16_t id) { return  smo_z(K_smo, thr, id_est, id); }
+// static inline fract16_t foc_eemf_zq(fract16_t K_smo, fract16_t thr, fract16_t iq_est, fract16_t iq) { return  smo_z(K_smo, thr, iq_est, iq); }
 
-static inline fract16_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return foc_smo_i(G, Rs, ((accum32_t)v - v_ff), i_est, z); }
-/* vd_ff on iq_est */
-static inline fract16_t foc_eemf_id(accum32_t G_pu, fract16_t Rs_pu, fract16_t vd, accum32_t vd_ff, fract16_t id_est, fract16_t zd) { return foc_smo_i_decouple(G_pu, Rs_pu, vd, vd_ff, id_est, zd); }
-/* vq_ff on id_est */
-static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t vq, accum32_t vq_ff, fract16_t iq_est, fract16_t zq) { return foc_smo_i_decouple(G_pu, Rs_pu, vq, vq_ff, iq_est, zq); }
-
-// /*
-//     Per-axis EEMF observer step. v_cross is the model voltage contribution from
-//     the opposite axis's current — caller signs it per axis (see foc_eemf_dq_step).
-//     Without v_cross this collapses to foc_smo_axis_step.
-// */
-// static inline struct foc_smo_axis foc_eemf_axis_step(fract16_t K_smo, fract16_t thr, fract16_t G_pu, fract16_t Rs_pu, fract16_t i_est, fract16_t i_meas, fract16_t v, fract16_t v_cross)
-// {
-//     fract16_t z = foc_smo_z(K_smo, thr, i_est, i_meas);
-//     fract16_t v_eff = fract16_sat((accum32_t)v - fract16_mul(Rs_pu, i_est) - v_cross - z);
-//     return (struct foc_smo_axis) { .i_est = fract16_sat((accum32_t)i_est + fract16_mul(G_pu, v_eff)), .z = z, };
-// }
-
-// /*
-//     Coupled dq step. EEMF cross-coupling (Lq on BOTH axes — saliency absorbed into the EEMF disturbance):
-//     v_cross_d = −ω·Lq·îq
-//     v_cross_q = +ω·Lq·îd
-// */
-// struct foc_eemf_dq { fract16_t id_est, iq_est, zd, zq; };
-
-// static inline struct foc_eemf_dq foc_eemf_dq_step
-// (
-//     fract16_t G_pu, fract16_t Rs_pu, fract16_t omega_Lq_pu, fract16_t K_smo, fract16_t thr,
-//     fract16_t id_est, fract16_t iq_est, fract16_t id, fract16_t iq, fract16_t vd, fract16_t vq
-// )
-// {
-//     struct foc_smo_axis d = foc_eemf_axis_step(K_smo, thr, G_pu, Rs_pu, id_est, id, vd, -fract16_mul(omega_Lq_pu, iq_est));
-//     struct foc_smo_axis q = foc_eemf_axis_step(K_smo, thr, G_pu, Rs_pu, iq_est, iq, vq, fract16_mul(omega_Lq_pu, id_est));
-//     return (struct foc_eemf_dq) { .id_est = d.i_est, .iq_est = q.i_est, .zd = d.z, .zq = q.z };
-// }
+// static inline fract16_t foc_smo_i_decouple(accum32_t G, fract16_t Rs, fract16_t v, accum32_t v_ff, fract16_t i_est, fract16_t z) { return  smo_i(G, Rs, ((accum32_t)v - v_ff), i_est, z); }
+// /* vd_ff on iq_est */
+// static inline fract16_t foc_eemf_id(accum32_t G_pu, fract16_t Rs_pu, fract16_t vd, accum32_t vd_ff, fract16_t id_est, fract16_t zd) { return smo_i_decouple(G_pu, Rs_pu, vd, vd_ff, id_est, zd); }
+// /* vq_ff on id_est */
+// static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t vq, accum32_t vq_ff, fract16_t iq_est, fract16_t zq) { return  smo_i_decouple(G_pu, Rs_pu, vq, vq_ff, iq_est, zq); }
 
 
 /******************************************************************************/
@@ -379,67 +223,14 @@ static inline fract16_t foc_eemf_iq(accum32_t G_pu, fract16_t Rs_pu, fract16_t v
 /******************************************************************************/
 /* Normalized phase error ≈ sin(Δθ), independent of |E|.
    Returns 0 when |ê| is below the noise floor (lock indeterminate). */
-static inline fract16_t foc_eemf_dq_error_normalized(ufract16_t e_floor, fract16_t ed, fract16_t eq)
-{
-    ufract16_t mag = fract16_vector_magnitude(ed, eq);
-    return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(ed, mag);
-}
+// static inline fract16_t foc_eemf_dq_error_normalized(ufract16_t e_floor, fract16_t ed, fract16_t eq)
+// {
+//     ufract16_t mag = fract16_vector_magnitude(ed, eq);
+//     return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(ed, mag);
+// }
 
 /* Full angle correction Δθ to add to θ̂. Large-signal, no small-Δθ assumption. */
-static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_t eq)
-{
-    return (sign >= 0) ? fract16_atan2(ed, eq) : fract16_atan2(-ed, -eq);
-}
-
-
-/******************************************************************************/
-/*!
-    @brief  Super-Twisting Algorithm (STA) — 2nd-order sliding-mode observer.
-
-    Continuous-output alternative to the classical foc_smo_z(K·sat) — replaces
-    the discontinuous switching variable with one produced by integrating
-    sign(σ). The output z is continuous, so no equivalent-control LPF is
-    needed downstream.
-
-    Per axis, with σ = î − i_meas:
-        z[k]   = w[k] + λ · √|σ| · sign(σ)        (continuous correction)
-        w[k+1] = w[k] + (α·dt) · sign(σ)          (integrator state)
-
-    The current-observer update is identical to the classical SMO; only z
-    changes:
-        î[k+1] = î[k] + G_pu · ( v − Rs·î − z )
-
-    At σ → 0 (sliding), the √|σ| term vanishes and z → w; both converge to
-    the disturbance ê. Feed w (cleaner) into the PLL discriminator.
-
-    Tuning (Moreno 2008), L = Lipschitz bound on dê/dt in pu:
-        λ      > √L                practical: 1.5 · √L
-        α · dt > L · dt            practical: 1.1 · L · dt
-    Caller supplies α already multiplied by dt.
-*/
-/******************************************************************************/
-/* sqrt(|x|) · sign(x) — STA forcing primitive. Guards x = INT16_MIN. */
-static inline fract16_t foc_sta_sqrt_signed(fract16_t x)
-{
-    fract16_t mag_sqrt = (fract16_t)fract16_sqrt(fract16_abs_sat(x));
-    return (x >= 0) ? mag_sqrt : -mag_sqrt;
-}
-
-/* STA continuous switching output. w is the current integrator state. */
-static inline fract16_t foc_sta_z(fract16_t lambda, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + fract16_mul(lambda, foc_sta_sqrt_signed(sigma))); }
-
-/* STA integrator update: w[k+1] = w[k] + (α·dt) · sign(σ). */
-static inline fract16_t foc_sta_w_step(fract16_t alpha_dt, fract16_t w, fract16_t sigma) { return fract16_sat((accum32_t)w + (accum32_t)alpha_dt * math_sign(sigma)); }
-
-struct foc_sta_axis { fract16_t z, w; };
-
-/* Combined STA single-axis step — yields (z, w_next) from (w, î, i_meas). */
-static inline struct foc_sta_axis foc_sta_axis_step(fract16_t lambda, fract16_t alpha_dt, fract16_t w, fract16_t i_est, fract16_t i_meas)
-{
-    fract16_t sigma = fract16_sat((accum32_t)i_est - i_meas);
-    return (struct foc_sta_axis) { .z = foc_sta_z(lambda, w, sigma), .w = foc_sta_w_step(alpha_dt, w, sigma), };
-}
-
-
-
-
+// static inline angle16_t foc_eemf_dq_to_angle(sign_t sign, fract16_t ed, fract16_t eq)
+// {
+//     return (sign >= 0) ? fract16_atan2(ed, eq) : fract16_atan2(-ed, -eq);
+// }
