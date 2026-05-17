@@ -638,7 +638,7 @@ static inline fract16_t Motor_ProcSpeedControl(Motor_Context_T * p_motor)
 /*
     Pid State on FeedbackMode/Resume
 */
-static inline void _Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_t torqueState)
+static inline void Motor_MatchSpeedTorqueState(Motor_Context_T * p_motor, int16_t torqueState)
 {
     Ramp_SetOutputState(&p_motor->SpeedRamp, Motor_GetSpeedFeedback(p_motor));
     PID_SetOutputState(&p_motor->PidSpeed, torqueState);

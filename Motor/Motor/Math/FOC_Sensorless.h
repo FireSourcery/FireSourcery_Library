@@ -96,7 +96,7 @@ FOC_SensorlessConfig_T;
 */
 #define FOC_SENSORLESS_CONFIG_DEFAULT(VBus, v_max, I, i_max) (FOC_SensorlessConfig_T)     \
 {                                                                                   \
-    .K_smo         = (fract16_t)FRACT16(.75F * VBus / v_max),                       \
+    .K_smo         = (fract16_t)FRACT16(.50F * VBus / v_max),                       \
     .SmoSat        = (fract16_t)FRACT16(.15F * I / i_max),          /* 15 % of IMax boundary layer */                       \
     .LpfCoef       = 998,                                           /* ~100 Hz LPF at 20 kHz */                             \
     .LockEmfMin    = (ufract16_t)FRACT16(.05F * VBus / v_max),      /* 5 % of VMax */                                        \

@@ -109,7 +109,7 @@ static void RampSafe_Entry(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Intervention_Entry calls MatchIVState */
     /* Match speed ramp to current speed for bumpless transfer */
-    _Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp));
+    Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp));
     p_context->ControlTimerBase = 0U;
 }
 

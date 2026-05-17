@@ -359,7 +359,7 @@ static void Run_Entry(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     /* Vabc is either bemf or 0 on entryy */
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
-    if (p_context->FeedbackMode.Speed == 1U) { _Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
+    if (p_context->FeedbackMode.Speed == 1U) { Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
 
     Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
 }
@@ -462,18 +462,8 @@ const State_T MOTOR_STATE_RUN =
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    if (p_context->FeedbackMode.Current == 0U)
-    {
-        Ramp_SetOutputState(&p_context->TorqueRamp, 0);
-        Ramp_SetTarget(&p_context->TorqueRamp, 0);
-        _FOC_MatchIVState_Decouple(&p_context->Foc, FOC_Vd(&p_context->Foc), FOC_Vq(&p_context->Foc));
-        FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
-    }
-    else
-    {
-        Motor_FOC_MatchTorqueIState(p_context);
-    }
-    Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); //switch to i limits or use vramp for voltage
+    Motor_FOC_MatchTorqueIState(p_context);
+    Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); // ensure switch to i limits or use vramp for voltage
 }
 
 // min(GeneratingOnly, _Motor_GeneratingOnly PID_GetOutput(&p_state->PidSpeed));  substates inherit
