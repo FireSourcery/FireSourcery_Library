@@ -35,46 +35,51 @@
     Vtable methods
 */
 /******************************************************************************/
-static void Sensorless_Sensor_Init(Sensorless_Sensor_T * p_sensor)
+/* PID/lifecycle init. Config is owned by FocSensorless and populated by
+   Motor.c::Init via FOC_Sensorless_Init(&FocSensorless, &Config.SensorlessConfig);
+   here we only (re)bind the PID and reset per-tick state. */
+static void Sensorless_Sensor_Init(const Sensorless_Sensor_T * p_sensor)
 {
-    // FOC_Sensorless_Init(p_sensor->P_OBSERVER);
+    FOC_Sensorless_Init(p_sensor->P_OBSERVER, NULL);
 }
 
-/* Idempotent publish. The actual observer step is driven by Sensorless_Sensor_Step. */
-static void Sensorless_Sensor_CaptureAngle(Sensorless_Sensor_T * p_sensor)
+/* Idempotent publish — Step already mirrors observer state into the FOC_Sensorless
+   AngleSpeed; here we forward it to the RotorSensor common interface state. */
+static void Sensorless_Sensor_CaptureAngle(const Sensorless_Sensor_T * p_sensor)
 {
-    // RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    // Angle_CaptureAngle(&p_rotor->AngleSpeed, FOC_Sensorless_GetAngle(p_sensor->P_OBSERVER));
-    // Angle_CaptureDelta(&p_rotor->AngleSpeed, FOC_Sensorless_GetDelta(p_sensor->P_OBSERVER));
+    RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
+    p_rotor->AngleSpeed.Angle = FOC_Sensorless_GetAngle(p_sensor->P_OBSERVER);
+    p_rotor->AngleSpeed.Delta = FOC_Sensorless_GetDelta(p_sensor->P_OBSERVER);
 }
 
 /* Project observer ω̂ → fract16 speed via the configured SpeedFractRef.
    Assumes CAPTURE_ANGLE already published Delta into AngleSpeed this tick. */
-static void Sensorless_Sensor_CaptureSpeed(Sensorless_Sensor_T * p_sensor)
+static void Sensorless_Sensor_CaptureSpeed(const Sensorless_Sensor_T * p_sensor)
 {
     RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
     p_rotor->Speed_Fract16 = Angle_ResolveSpeed_Fract16(&p_rotor->AngleSpeed, &p_rotor->SpeedFractRef);
 }
 
-static bool Sensorless_Sensor_IsFeedbackAvailable(Sensorless_Sensor_T * p_sensor)
+static bool Sensorless_Sensor_IsFeedbackAvailable(const Sensorless_Sensor_T * p_sensor)
 {
     return FOC_Sensorless_IsLocked(p_sensor->P_OBSERVER);
 }
 
-static void Sensorless_Sensor_ZeroInitial(Sensorless_Sensor_T * p_sensor)
+static void Sensorless_Sensor_ZeroInitial(const Sensorless_Sensor_T * p_sensor)
 {
     FOC_Sensorless_ResetState(p_sensor->P_OBSERVER);
 }
 
-static bool Sensorless_Sensor_VerifyCalibration(Sensorless_Sensor_T * p_sensor)
+/* Observer is "calibrated" if the tuning gains are populated. K_smo == 0
+   means K·sat(·) produces no forcing, and LpfCoef == 0 freezes the EMF
+   estimate — either alone leaves the observer non-functional. */
+static bool Sensorless_Sensor_VerifyCalibration(const Sensorless_Sensor_T * p_sensor)
 {
-    /* Calibrated params are well-formed if Ls_pu and Psi_pu are non-zero
-       (Rs_pu may legitimately be zero on perfectly-superconducting stators). */
-    // const FOC_SensorlessConfig_T * c = &p_sensor->P_OBSERVER->Config;
-    // return (c->Ls_pu != 0) && (c->Psi_pu != 0);
+    const FOC_SensorlessConfig_T * c = &p_sensor->P_OBSERVER->Config;
+    return (c->K_smo != 0) && (c->LpfCoef != 0);
 }
 
-static void Sensorless_Sensor_InitFrom(Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)
+static void Sensorless_Sensor_InitFrom(const Sensorless_Sensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
     (void)p_sensor;
     (void)p_config;

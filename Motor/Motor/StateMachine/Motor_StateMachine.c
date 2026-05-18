@@ -321,10 +321,15 @@ static State_T * Passive_InputFeedbackMode(Motor_T * p_motor, state_value_t feed
     return NULL;
 }
 
-static State_T * Passive_InputOpenLoop(Motor_T * p_motor, state_value_t state)
+
+static State_T * Passive_InputOpenLoop(Motor_T * p_motor, state_value_t statePtr)
 {
-    (void)state;
-    if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) == 0U) { return &MOTOR_STATE_OPEN_LOOP; }  else { return NULL; }
+    // if (Motor_GetSpeedFeedback(p_motor->P_MOTOR) != 0U) { return NULL; }
+    // State_T * p_state = (State_T *)statePtr;
+    // if (p_state == NULL) { return &MOTOR_STATE_OPEN_LOOP; }
+    // if (p_state == &MOTOR_STATE_OPEN_LOOP) { return &MOTOR_STATE_OPEN_LOOP; }
+    // if (p_state->P_TOP == &MOTOR_STATE_OPEN_LOOP) { return p_state; }
+    // return &MOTOR_STATE_OPEN_LOOP;
 }
 
 static const State_Input_T PASSIVE_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =

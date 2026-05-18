@@ -143,6 +143,7 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating
 static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 // static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
 
+// static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
 
 

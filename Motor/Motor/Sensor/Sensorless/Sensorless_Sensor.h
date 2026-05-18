@@ -29,14 +29,16 @@
     @brief  RotorSensor adapter wrapping FOC_Sensorless as the angle source.
 
     Differs from Hall/Encoder/SinCos: the underlying engine is push-driven (it
-    needs i_αβ from FOC, not a peripheral). The integration layer therefore
-    invokes Sensorless_Sensor_Step(p, i_α, i_β) explicitly each control tick;
-    the vtable's CAPTURE_ANGLE/CAPTURE_SPEED only publish already-computed
-    observer state into RotorSensor_State.
+    needs i_αβ and v_αβ from FOC, not a peripheral). The integration layer
+    invokes Sensorless_Sensor_Step(p, p_foc) once per control tick (reads
+    Iαβ from FOC, observer's own VαβPrev) and Sensorless_Sensor_CaptureVoltage
+    after InvPark. The vtable's CAPTURE_ANGLE/CAPTURE_SPEED publish observer
+    state into RotorSensor_State idempotently.
 */
 /******************************************************************************/
 #include "../RotorSensor.h"
 #include "../../Math/FOC_Sensorless.h"
+#include "../../Math/FOC.h"
 
 
 typedef const struct Sensorless_Sensor
@@ -48,45 +50,41 @@ Sensorless_Sensor_T;
 
 extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 
-#define SENSORLESS_SENSOR_INIT(p_RotorState, p_ObserverState, p_ObserverConfig) (Sensorless_Sensor_T) \
+#define SENSORLESS_SENSOR_INIT(p_RotorState, p_Observer) (Sensorless_Sensor_T) \
 {                                                                           \
     .BASE = ROTOR_SENSOR_INIT(&SENSORLESS_SENSOR_VTABLE, (p_RotorState)),   \
-    .P_OBSERVER = &(FOC_Sensorless_T){0}, \
+    .P_OBSERVER = (p_Observer),                                             \
 }
 
 
 /******************************************************************************/
 /*!
-    Push-driven entrypoint — call once per control tick after Clarke on i_abc.
-    Runs the observer step, then publishes θ̂ and ω̂
+    Push-driven entrypoint — call once per control tick after Clarke on i_abc
+    (i.e. after FOC_CaptureIabc / FOC_ProcClarkePark populates p_foc->Iαβ).
+    Observer reads i from FOC and v from its own VαβPrev (stored last tick).
 
     Caller pushes v_αβ for next cycle via Sensorless_Sensor_CaptureVoltage
-    (typically right after foc_inv_clarke_park / SVPWM).
+    (after FOC_ProcInvClarkePark / SVPWM commit).
 */
 /******************************************************************************/
 /* Push-driven step. */
-static inline void Sensorless_Sensor_Step(Sensorless_Sensor_T * p_sensor, fract16_t i_alpha, fract16_t i_beta)
+static inline void Sensorless_Sensor_Step(const Sensorless_Sensor_T * p_sensor, const FOC_T * p_foc)
 {
-    RotorSensor_State_T * p_rotor = p_sensor->BASE.P_STATE;
-    FOC_Sensorless_Step(p_sensor->P_OBSERVER, i_alpha, i_beta);
-    /* push to common interface state */
-    p_rotor->AngleSpeed.Angle = p_sensor->P_OBSERVER->AngleSpeed.Angle;
-    p_rotor->AngleSpeed.Delta = p_sensor->P_OBSERVER->AngleSpeed.Delta;
-    // FOC_Sensorless_Step(p_sensor->P_OBSERVER, &p_rotor->AngleSpeed.Angle, i_alpha, i_beta);
+    FOC_Sensorless_Step(p_foc, p_sensor->P_OBSERVER);
 }
 
-static inline void Sensorless_Sensor_CaptureVoltage(Sensorless_Sensor_T * p_sensor, fract16_t v_alpha, fract16_t v_beta)
+static inline void Sensorless_Sensor_CaptureVoltage(const Sensorless_Sensor_T * p_sensor, fract16_t v_alpha, fract16_t v_beta)
 {
     FOC_Sensorless_CaptureVoltage(p_sensor->P_OBSERVER, v_alpha, v_beta);
 }
 
 /* Bumpless transfer from open-loop ramp into closed-loop observer tracking. */
-static inline void Sensorless_Sensor_SeedAngle(Sensorless_Sensor_T * p_sensor, angle16_t theta, angle16_t delta)
+static inline void Sensorless_Sensor_SeedAngle(const Sensorless_Sensor_T * p_sensor, angle16_t theta, angle16_t delta)
 {
     FOC_Sensorless_SeedAngle(p_sensor->P_OBSERVER, theta, delta);
 }
 
-static inline const FOC_Sensorless_T * Sensorless_Sensor_GetObserver(Sensorless_Sensor_T * p_sensor)
+static inline const FOC_Sensorless_T * Sensorless_Sensor_GetObserver(const Sensorless_Sensor_T * p_sensor)
 {
     return p_sensor->P_OBSERVER;
 }

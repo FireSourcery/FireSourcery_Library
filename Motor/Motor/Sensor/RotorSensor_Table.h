@@ -34,6 +34,9 @@
 #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 #include "SinCos/SinCos_Sensor.h"
 #endif
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+#include "Sensorless/Sensorless_Sensor.h"
+#endif
 #include "RotorSensor.h"
 
 
@@ -88,6 +91,9 @@ typedef const struct RotorSensor_Table
 #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
     const SinCos_RotorSensor_T SIN_COS;
 #endif
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+    const Sensorless_Sensor_T SENSORLESS;
+#endif
 }
 RotorSensor_Table_T;
 
@@ -110,6 +116,9 @@ static inline RotorSensor_T * RotorSensor_Of(const RotorSensor_Table_T * p_table
         #endif
         #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
         case ROTOR_SENSOR_ID_SIN_COS: return &p_table->SIN_COS.BASE;
+        #endif
+        #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+        case ROTOR_SENSOR_ID_SENSORLESS: return &p_table->SENSORLESS.BASE;
         #endif
         default: return &p_table->EMPTY;
     }

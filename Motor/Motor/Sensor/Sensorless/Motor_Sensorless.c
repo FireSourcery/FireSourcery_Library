@@ -1,5 +1,3 @@
-#pragma once
-
 /******************************************************************************/
 /*!
     @section LICENSE
@@ -26,7 +24,13 @@
 /*!
     @file   Motor_Sensorless.c
     @author FireSourcery
-    @brief  [Brief description of the file]
+    @brief  Sensorless start-up substate tree under MOTOR_STATE_OPEN_LOOP.
+
+    Parent OPEN_LOOP states own the actuation (align, ramp) and the observer
+    drive. These substates only override the lifecycle decisions:
+      SENSORLESS_ALIGN     — on align-timer expiry → SENSORLESS_START_UP
+                             (parent would otherwise go to OPEN_LOOP_STATE_RUN).
+      SENSORLESS_START_UP  — on observer lock     → MOTOR_STATE_RUN.
 */
 /******************************************************************************/
 #include "Sensorless_Sensor.h"
@@ -34,53 +38,48 @@
 #include "../../StateMachine/Motor_OpenLoop.h"
 #include "../RotorSensor.h"
 
-// #include "../Math/FOC_Sensorless.h"
 
-static void RunSensorless_Proc(Motor_T * p_motor)
+/* Hand off to closed-loop once the observer reports lock. Parent
+   OPEN_LOOP_STATE_RUN.LOOP (Motor_OpenLoop::Run_Proc) drives the observer. */
+static State_T * RunSensorless_Next(Motor_T * p_motor)
 {
-    Motor_Context_T * p_state = p_motor->P_MOTOR;
-    if (FOC_CaptureIabc(&p_state->Foc, &p_state->PhaseInput.I) == true)
-    {
-        FOC_Sensorless_Step(&p_state->FocSensorless, p_state->Foc.Id, p_state->Foc.Iq);
-    }
-    FOC_ProcInvClarkePark(&p_state->Foc);
-    FOC_Sensorless_CaptureVoltage(&p_state->FocSensorless, p_state->Foc.Vd, p_state->Foc.Vq);
-}
-
-State_T * RunSensorless_Next(Motor_T * p_motor)
-{
-    // return (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) == true) ? &MOTOR_STATE_RUN : NULL;
-    return NULL; // debug
+    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
 }
 
 static State_T SENSORLESS_START_UP =
 {
-    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .P_TOP    = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &OPEN_LOOP_STATE_RUN,
-    .DEPTH = 2U,
-    // .ENTRY      = (State_Action_T)Run_Entry,
-    .LOOP = (State_Action_T)RunSensorless_Proc,
-    .NEXT = (State_Input0_T)RunSensorless_Next,
+    .DEPTH    = 2U,
+    .NEXT     = (State_Input0_T)RunSensorless_Next,
 };
 
 
-
-State_T * SensorlessAlign_Next(Motor_T * p_motor)
+/* Override parent StartUpAlign_Next so timer expiry routes into the
+   sensorless start-up substate instead of plain OPEN_LOOP_STATE_RUN. */
+static State_T * SensorlessAlign_Next(Motor_T * p_motor)
 {
-    if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true)
-    {
-        return &SENSORLESS_START_UP;
-    }
-    return NULL;
+    return (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) == true) ? &SENSORLESS_START_UP : NULL;
 }
-
 
 static State_T SENSORLESS_ALIGN =
 {
-    // .ID         = MOTOR_STATE_ID_OPEN_LOOP,
+    .P_TOP    = &MOTOR_STATE_OPEN_LOOP,
     .P_PARENT = &OPEN_LOOP_STATE_START_UP_ALIGN,
-    .DEPTH = 2U,
-    // .ENTRY      = (State_Action_T)Run_Entry,
-    // .LOOP = (State_Action_T)RunSensorless_Proc,
-    .NEXT = (State_Input0_T)SensorlessAlign_Next,
+    .DEPTH    = 2U,
+    .NEXT     = (State_Input0_T)SensorlessAlign_Next,
 };
+
+
+/******************************************************************************/
+/*
+    Entry points
+*/
+/******************************************************************************/
+/* Start the sensorless align → run-up → closed-loop chain. */
+void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
+{
+    if (p_motor->P_MOTOR->Direction == MOTOR_DIRECTION_NULL) { return; }
+    Phase_ActivateV0(&p_motor->PHASE);
+    Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
+}

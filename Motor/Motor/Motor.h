@@ -310,7 +310,7 @@ typedef struct Motor_Context
     */
     const RotorSensor_T * p_ActiveSensor;   /* Pointer to entry in SENSOR_TABLE */
     RotorSensor_State_T SensorState;        /* Compile time configured address. Sensor State includes [Angle_T] */
-    FOC_Sensorless_T FocSensorless;         /* Debug Sensorless Observer State */
+    FOC_Sensorless_T FocSensorless;         /* Sensorless observer state. Single instance shared by Sensorless_Sensor adapter (when active) and debug Var readers. */
 
     /*
         Ramp -> Feedback State
