@@ -90,8 +90,8 @@ VBus_T;
 static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     p_vbus->VBus_Fract16 = fract16;
-    p_vbus->PerV_Fract32 = ((uint32_t)FRACT16_SCALE << 16) / p_vbus->VBus_Fract16;
-    // p_vbus->PerV_Fract32 = fract16_div(FRACT16_SCALE, p_vbus->VBus_Fract16);
+    // p_vbus->PerV_Fract32 = ((uint32_t)FRACT16_SCALE << 16) / p_vbus->VBus_Fract16;
+    p_vbus->PerV_Fract32 = fract16_div(FRACT16_SCALE, p_vbus->VBus_Fract16);
 }
 
 /*
@@ -155,7 +155,7 @@ static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbu
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
 
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
-static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Fract32 / 65536; }
+static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Fract32 / FRACT16_SCALE; }
 static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 
