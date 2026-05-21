@@ -90,7 +90,8 @@ VBus_T;
 static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     p_vbus->VBus_Fract16 = fract16;
-    p_vbus->PerV_Fract32 = (uint32_t)FRACT16_MAX * 65536U / p_vbus->VBus_Fract16;
+    // p_vbus->PerV_Fract32 = ((uint32_t)FRACT16_SCALE << 16) / p_vbus->VBus_Fract16;
+    // p_vbus->PerV_Fract32 = fract16_div(FRACT16_SCALE, p_vbus->VBus_Fract16);
 }
 
 /*

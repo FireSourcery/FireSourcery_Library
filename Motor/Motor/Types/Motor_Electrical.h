@@ -35,7 +35,9 @@
 #include "../Phase_Input/Phase_Calibration.h"
 
 
-/* Ke/Psi/SpeedMax */
+/*
+    config via Kv
+*/
 typedef struct
 {
     uint8_t  PolePairs;
@@ -49,16 +51,10 @@ Motor_ElectricalSpeedRating_T;
 // Motor_Electrical_T;
 // Motor_Kv_T;
 
-// typedef struct
-// {
-//     int32_t Ke_SpeedFract16;
-// }
-// Motor_ElectricalSpeedRef_T;
 
 // typedef struct
 // {
 //     uint32_t Rs;
-//     // uint32_t Ls;
 //     uint32_t Ld; /* store the foc version   */
 //     uint32_t Lq;
 // }
@@ -135,14 +131,13 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating
 /*
     [V_Fract16 / Speed_Fract16]
     V_fract16 = fract16_mul(Ke_SpeedFract, Speed_fract16)
-        where Speed_fract16 = Speed_Rpm / SpeedTypeMax_Rpm × FRACT16_MAX
-
     when SpeedTypeMax = Kv * VNominal * 2
     Ke = VNominal * 2
 */
-static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
-// static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
+// static inline accum32_t _Motor_Ke_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
+static inline accum32_t _Motor_Psi_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config)/2, p_config->Kv); }
 
+// static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
 
@@ -151,42 +146,15 @@ static inline accum32_t Motor_GetKe_SpeedFract16(const Motor_ElectricalSpeedRati
     Derived Parameters during initialization or from Host
     alternatively store as control domain units
 */
-/* Config stored in Electrical Degrees need to sync with pole pairs */
 
-/* e.g.
-    l_h: 80 uH
-    i_max_A: 600 A
-    Fs: 20 kHz
-    v_max_V: 94 V
-    ω_base_e:2094.4 (5000 rpm, 4 pole pairs)
-
-    _l_pu_of_h       L_pu_a16 = 32 (real value 32.083, integer-truncated)
-        1000 rpm => ω = 54  =>  ω * L_pu = 1728
-
-    l_pu_rads_of_h   L_pu_rads = 35,045 (Q15 of real value 1.0695)
-        1000 rpm => ω = 6553 => ω * L_pu = 7009
-
-n_rpm	ω_e	F1 el_Δ	F1 product	F2 ω_pu	F2 product	true Q15·Z_L	F1 err	F2 err
-100	    42	22	704	655	700	701	+0.4 %	−0.1 %
-500	    209	109	3488	3277	3504	3504	−0.5 %	0.00 %
-1000	419	218	6976	6554	7010	7009	−0.5 %	+0.01 %
-2000	838	437	13984	13107	14017	14018	−0.24 %	0.00 %
-5000	2094	1092	34944	32767†	35043	35044	−0.29 %	0.00 %
-7500	3142	1639	52448	49152‡	52564	52566	−0.22 %	0.00 %
-10000	4189	2185	69920	65535‡	70089	70089	−0.24 %	0.00
-*/
-
-/*
-    store as angle, fixed to controller, norm bit shift
-*/
-// #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
-// #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
-// #define MOTOR_DIGITAL_SPEED_NORM 2
-// #define MOTOR_DIGITAL_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
-// 32767 600000 erpm
-// 16383 300000 erpm
-// 8192 150000 erpm
-// 4096 75000 erpm
-// 2048 37500 erpm
-// 1024 18750 erpm, 8 pole pairs 2344 rpm
-
+/* si units for per motor base */
+// struct Motor_ElectricalBase
+// {
+//     int32_t V_base;
+//     int32_t I_base;
+//     int32_t w_base;
+//     int32_t psi_base;
+//     int32_t L_base;
+//     int32_t R_base;
+//     int32_t T_base;
+// };

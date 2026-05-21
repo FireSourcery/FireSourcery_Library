@@ -42,6 +42,7 @@
 // }
 // Phase_RL_T;
 
+/* ω_base = 2π · Fs version */
 // /* L requires base time config. alternatively move Motor_ControlFreq */
 // static inline Phase_RL_T Phase_RL_Fract16OfSi(uint16_t rs_mOhms, uint16_t ls_uHenries)
 // {

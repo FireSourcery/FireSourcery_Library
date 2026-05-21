@@ -44,6 +44,7 @@
 #define FRACT32_SCALE (2147483648)
 
 #define ACCUM32_SAT (0x3FFFFFFF) /* Soft max for ACCUM32_SAT * 2 without overflow */
+#define ACCUM32_SCALE (FRACT16_SCALE * FRACT16_SCALE)
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
@@ -51,7 +52,6 @@ typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] extended integer bits. */
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
 typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */ // percent16
-
 
 static const fract16_t FRACT16_MAX = INT16_MAX; /*!< (32767) */
 static const fract16_t FRACT16_MIN = INT16_MIN; /*!< (-32768) */
@@ -204,17 +204,23 @@ static const angle16_t ANGLE16_90 = 0x4000U;   /*! 16384 */
 static const angle16_t ANGLE16_120 = 0x5555U;  /*! 21845 */
 static const angle16_t ANGLE16_150 = 0x6AAAU;  /*! 27306 */
 static const angle16_t ANGLE16_180 = 0x8000U;  /*! 32768, -32768, 180 == -180 */
+static const angle16_t ANGLE16_PI = 0x8000U;
 static const angle16_t ANGLE16_210 = 0x9555U;  /*! 38229 */
 static const angle16_t ANGLE16_240 = 0xAAAAU;  /*! 43690, -21845 */
 static const angle16_t ANGLE16_270 = 0xC000U;  /*! 49152, -16384, 270 == -90 */
 static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
-// static inline angle16_t angle16_of_fract16(fract16_t fract16) { return fract16 * 2; } /* [0, 1) => [0, 2pi) */
 
+/* PER_RADIAN_SI */
 static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
 
-/* [0:1.0f/2pi] ~0.16 of rev */
+#define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
+
+/*
+    radian si scaled
+    [0:1.0f/2pi] ~0.16 of rev
+*/
 static inline angle16_t angle16_of_rad_fract16(fract16_t rad) { return (angle16_t)fract16_mul(rad, ANGLE16_PER_RADIAN); }
 /*  */
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }

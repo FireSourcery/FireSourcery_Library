@@ -307,6 +307,7 @@ static void Angle_SpeedRef_Init_Rpm(Angle_SpeedFractRef_T * p_ref, uint32_t poll
 /* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
 static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
 static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
+/* ω_pu_fract16 = el_delta · π · Fs / ω_base */
 static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
 
 

@@ -67,7 +67,7 @@ typedef struct Linear
 }
 Linear_T;
 
-
+// typedef struct { scale_t Scale; int32_t Offset; } linear_t;
 
 // static inline fixed_factor_t Linear_Coefficient(const Linear_T * p_linear) { return (fixed_factor_t) { p_linear->Slope, p_linear->SlopeShift }; }
 

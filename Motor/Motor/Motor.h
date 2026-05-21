@@ -459,19 +459,22 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { re
 /*
     Skip resolving SpeedRated_Rpm
 */
-static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
-static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv / 2; }
+static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
+static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
 // static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm * 2; }
 // static inline uint16_t _Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
 
 /*
     when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2
+    SpeedRated_Rpm = Kv * VBus_Nominal
+    SpeedRated_pu = .5
     1/2 VBus Nominal at SpeedRated
-    fract16_mul(Ke, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16 * 2, Speed_fract16)
+    fract16_mul(psi, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
 */
-static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
+/* Motor_GetSpeedTypeMax_Rpm / 2 / (kv * Phase_Calibration_GetVMaxVolts) */
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
 
+// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2;
 
 
 
@@ -758,6 +761,14 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 // static inline ufract16_t _Motor_GetSpeedDerate(Motor_Context_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
 
 /* Alternate base selection */
+/*
+
+typedef struct
+{
+    int32_t Ke_SpeedFract16;
+}
+Motor_ElectricalSpeedRef_T;
+*/
 /* ω_base => 2 * Kv * v_nominal = 1.0f */
 /* L_base = V_base / (ω_base * I_base) */
 // static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
