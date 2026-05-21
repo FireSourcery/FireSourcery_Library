@@ -108,18 +108,12 @@ static inline uint16_t Motor_GetSpeedRated_Fract16(const Motor_ElectricalSpeedRa
     Config set Kv mediates
 */
 /******************************************************************************/
-// static inline uint16_t Motor_ResolveSpeedRated_Rpm(Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { p_config->SpeedRated_Rpm = Motor_RpmOfKv(p_config, vNominal_fract16); }
 static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
-// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
+// static inline uint32_t Motor_GetSpeedRated_ERpm(const Motor_ElectricalSpeedRating_T * p_config) { return (uint32_t)p_config->SpeedRated_Rpm * p_config->PolePairs; }
 // static inline uint16_t Motor_GetSpeedRated_Angle(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_AngleOfRpm(p_config, Motor_GetSpeedRated_Rpm(p_config)); }
 
-/* alternatively kv subsitutes VSpeedScalar_Fract16 for electrical */
-// static inline uint16_t Motor_SpeedVRef_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return Motor_RpmOfKv(p_config, vNominal_fract16); }
-// static inline uint16_t Motor_EffectiveSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_motor, uint16_t volts) { return fract16_mul(p_motor->VSpeedScalar_Fract16, (int32_t)p_motor->Kv * volts); }
-//
-// static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return rpm_of_kv_v(p_config->Kv, volts); }
-// static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config, uint16_t volts) { return p_config->SpeedRated_Rpm; }
-
+// static inline uint16_t Motor_SpeedBase_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return rpm_of_kv_v(p_config->Kv, volts); }
+// static inline uint16_t Motor_SpeedVMatch_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
 // static inline uint16_t Motor_GetSpeedVMatch_(const Motor_ElectricalSpeedRating_T * p_motor) { return fract16_mul(p_motor->VSpeedScalar_Fract16, Motor_GetSpeedRated_Fract16(p_motor)); }
 
 
@@ -134,10 +128,9 @@ static inline uint16_t Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating
     when SpeedTypeMax = Kv * VNominal * 2
     Ke = VNominal * 2
 */
-// static inline accum32_t _Motor_Ke_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
-static inline accum32_t _Motor_Psi_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config)/2, p_config->Kv); }
+static inline accum32_t _Motor_Ke_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
+static inline accum32_t _Motor_Psi_Fract16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
-// static inline accum32_t Motor_GetKe_ByVNominal(const Motor_ElectricalSpeedRating_T * p_config, uint16_t vNominal_fract16) { return fract16_div(vNominal_fract16, Motor_GetSpeedRated_Fract16(p_config)); }
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
 

@@ -473,21 +473,18 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSu
 */
 /* Motor_GetSpeedTypeMax_Rpm / 2 / (kv * Phase_Calibration_GetVMaxVolts) */
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
-
+// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), FRACT16_2_DIV_SQRT3); }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2;
 
-
+/* alternatively inverter max as 1.0 */
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv; }
+// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
 
 /*
     Speed VBus Ref
     Generally [SpeedRated] via Kv * V
 */
 static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
-
-/* inverter max as 1.0 */
-// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv; }
-// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
-/* altneraitvely, foc loop use accum32_t for 1.0 +, PI use angle16 or 1/2 */
 
 /* Virtual getters. config applies policy on set */
 static inline uint16_t Motor_IAlign(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.IAlign_Fract16; }

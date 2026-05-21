@@ -136,7 +136,7 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     RotorSensor_Config_T config =
     {
         .PolePairs = p_motor->Config.SpeedRating.PolePairs,
-        .SpeedTypeMax_DegPerCycle = Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),  /* allow up to 2x the rated speed for unit conversion */
+        .SpeedTypeMax_DegPerCycle = Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),
         .SpeedTypeMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating),
     };
 
@@ -146,10 +146,10 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 /* alternatively convert kv to psi_wb then call FOC_Convert */
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 {
+    p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams_Si.Rs);
     p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Ld, 1000000UL);
     p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Lq, 1000000UL);
-    p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams_Si.Rs);
-    p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.Kv); // div 2 for neutral to peak, when kv is given in vbus
+    p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.Kv);
 }
 
 // void Motor_InitDecouplingCoeffs_Angle16(Motor_Config_T * p_config)
