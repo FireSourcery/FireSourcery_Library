@@ -139,6 +139,12 @@ static inline accum32_t _Motor_Psi_Fract16(const Motor_ElectricalSpeedRating_T *
     Derived Parameters during initialization or from Host
     alternatively store as control domain units
 */
+// typedef struct
+// {
+//     uint16_t SpeedRated;
+//     uint16_t VSpeedRatio;
+// }
+// Motor_ElectricalSpeedRating_T;
 
 /* si units for per motor base */
 // struct Motor_ElectricalBase

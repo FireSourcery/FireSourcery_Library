@@ -147,8 +147,8 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 {
     p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams_Si.Rs);
-    p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Ld, 1000000UL);
-    p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Lq, 1000000UL);
+    p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Ld, 1000000UL);
+    p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating) / 2, p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Lq, 1000000UL);
     p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.Kv);
 }
 

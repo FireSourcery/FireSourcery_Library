@@ -67,30 +67,30 @@ bool Motor_Config_IsValid(const Motor_Config_T * p_config)
     return
     (
         (p_config->DirectionForward != MOTOR_DIRECTION_NULL) &&
-        (p_config->IabcZeroRef_Adcu.A != 0U) &&
-        (p_config->IabcZeroRef_Adcu.B != 0U) &&
-        (p_config->IabcZeroRef_Adcu.C != 0U) &&
-        (p_config->SpeedRating.PolePairs != 0U)
-        && (p_config->SpeedRating.Kv != 0U)
-        && (p_config->SpeedRating.SpeedRated_Rpm != 0U)
+        (p_config->IabcZeroRef_Adcu.A != 0U) && (p_config->IabcZeroRef_Adcu.B != 0U) && (p_config->IabcZeroRef_Adcu.C != 0U) &&
+        (p_config->SpeedRating.PolePairs != 0U) && (p_config->SpeedRating.Kv != 0U) && (p_config->SpeedRating.SpeedRated_Rpm != 0U) && (p_config->SpeedRating.VSpeedScalar_Fract16 <= INT16_MAX)
         // && (p_config->SpeedRating.SpeedRated_Rpm  <= Motor_GetSpeedVNominalRef_Rpm(p_config) * 2)
-        && (p_config->SpeedRating.VSpeedScalar_Fract16        <= INT16_MAX)
-        // && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config))
-        // && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
-        && (p_config->ILimitMotoring_Fract16      <= Phase_Calibration_GetIRatedPeak_Fract16())
-        && (p_config->ILimitGenerating_Fract16    <= Phase_Calibration_GetIRatedPeak_Fract16())
+        // && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
+        && (p_config->ILimitMotoring_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16()) && (p_config->ILimitGenerating_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16())
         && (p_config->OpenLoopLimitScalar_Fract16 <= MOTOR_OPEN_LOOP_CEILING)
-        && (p_config->IAlign_Fract16              <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()))
-        && (p_config->VAlign_Fract16              <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetVRated_Fract16()))
+        && (p_config->IAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()))
+        && (p_config->VAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetVRated_Fract16()))
         // && (p_config->AlignScalar_Fract16         <= MOTOR_OPEN_LOOP_CEILING)
         && (p_config->OpenLoopRampIFinal_Fract16  <= _Motor_GetOpenLoopILimit_Fract16(p_config))
         && Motor_Config_IsValidFw(p_config)
-        && Motor_Config_IsValidElectrical(p_config)
+        // && Motor_Config_IsValidElectrical(p_config)
     );
 }
 
 
 // #define MOTOR_CONFIG_FW_SPEED_LIMIT FRACT16(0.75F)
+
+bool Motor_Config_IsFwEnabled(const Motor_Config_T * p_config) { return (p_config->FieldWeakening.IdFwLimit > 0U); }
+
+bool Motor_Config_IsSpeedBandValid(const Motor_Config_T * p_config)
+{
+    return ((p_config->SpeedLimitForward_Fract16 <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16 <= _Motor_SpeedRatedLimit(p_config)));
+}
 
 bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
 {

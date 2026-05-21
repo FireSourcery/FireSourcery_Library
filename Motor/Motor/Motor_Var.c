@@ -60,8 +60,8 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
         case MOTOR_VAR_TORQUE_I_REQ:                value = Motor_GetISetpoint(p_state);                    break;
         case MOTOR_VAR_TORQUE_V_REQ:                value = Motor_GetVSetpoint(p_state);                    break;
 
-        // case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeed_Fract16(p_motor);     break;
         case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = VSpeed_Fract16(p_state);     break;
+        // case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = VSpeed_Fract16(p_state);     break;
         // case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_Fract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_Fract16(p_state);     break;
         case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_Fract16(p_motor);                break;

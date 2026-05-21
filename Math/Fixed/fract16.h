@@ -149,6 +149,7 @@ static inline int16_t fract16_norm_scalar(int16_t value) { return (1 << fract16_
 
 static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
 
+// typedef struct { int32_t Factor; uint8_t Shift; } scale_t;
 // static inline int16_t fract16_norm_factor(int16_t value, int16_t maxRef)
 // typedef struct fixed_factor { int32_t Factor; uint8_t Shift; } fixed_factor_t;
 

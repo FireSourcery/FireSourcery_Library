@@ -206,8 +206,13 @@ static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck     
     [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
 */
 /******************************************************************************/
+#ifndef MOTOR_FLOATING_POINT
 // typedef fract16_t quantity_t;
 // typedef fract16_t magnitude_t;
+typedef fract16_t scalar_t;
+#else
+typedef float scalar_t;
+#endif
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -473,8 +478,7 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSu
 */
 /* Motor_GetSpeedTypeMax_Rpm / 2 / (kv * Phase_Calibration_GetVMaxVolts) */
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
-// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), FRACT16_2_DIV_SQRT3); }
-// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2;
+static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 
 /* alternatively inverter max as 1.0 */
 // static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv; }
@@ -603,10 +607,8 @@ static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Context_T * p_mo
     1/2 VBus Nominal at SpeedRated
 */
 /* when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2 */
-static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(VBus_VNominal_Fract16(&p_motor->P_VBUS->Config), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
+static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_Psi_Fract16(p_motor), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
 static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedScalar_Fract16); }
-// collapse vspeed
-// static inline int32_t Motor_GetVSpeed_Fract16(const Motor_Context_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor), p_motor->ElectricalSpeedRef.Ke_SpeedFract16)  ; }
 
 
 /******************************************************************************/
