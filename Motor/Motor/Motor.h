@@ -215,6 +215,22 @@ typedef float scalar_t;
 #endif
 
 
+// typedef union scalar
+// {
+//     struct { int16_t fract16; int8_t shift; };
+//     accum32_t accum32;
+//     float float32;
+// }
+// scalar_t;
+
+#ifndef MOTOR_FLOATING_POINT
+typedef struct { int16_t fract16; int8_t shift; } fpoint16_t;
+typedef struct { int16_t fract16; int8_t shift; } scalar_usat_t;
+typedef fract16_t scalar_t;
+#else
+typedef float scalar_usat_t;
+typedef float scalar_t;
+#endif
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -278,8 +294,8 @@ typedef struct Motor_Config
 
     FOC_Electrical_T ElectricalParams_Si;  /* optional Motor Electrical Parameters. Si units */
     FOC_Electrical_T ElectricalParams_Pu;  /* VdqDecoupling */
-    // FOC_Electrical_T ElectricalParams_Si_Test;
-    // FOC_Electrical_T ElectricalParams_Pu_Test;
+    FOC_Electrical_T ElectricalParams_Si_Test;
+    FOC_Electrical_T ElectricalParams_Pu_Test;
 
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
@@ -472,8 +488,8 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { re
 
     fract16_mul(psi, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
 */
-static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
-static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
+// static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
 // static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 
