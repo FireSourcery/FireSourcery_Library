@@ -136,7 +136,7 @@ static State_T * RampSafe_Next(Motor_T * p_motor)
 static void RampSafe_CaptureSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     Motor_ProcSpeedControlOf(p_context, 0); /* drive to zero speed */
 }
 

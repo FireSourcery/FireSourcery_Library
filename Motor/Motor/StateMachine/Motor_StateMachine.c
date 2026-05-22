@@ -387,7 +387,7 @@ static void Run_Proc(Motor_T * p_motor)
 static void Run_OnSpeed(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
 
     // p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);

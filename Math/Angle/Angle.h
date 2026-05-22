@@ -311,11 +311,11 @@ static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, 
 static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
 
 
-/* Directly set the speed if available; updates Delta in shifted form */
+/* */
 static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref, accum32_t speed_fract16)
 {
-    Angle_CaptureDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
-    // p_angle->Delta = speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
+    p_angle->Delta = (int32_t)speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
+    // Angle_CaptureDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
 }
 
 static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref)

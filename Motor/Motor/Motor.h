@@ -214,6 +214,8 @@ typedef fract16_t scalar_t;
 typedef float scalar_t;
 #endif
 
+
+
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
 */
@@ -594,6 +596,18 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 /* move to Motor_T in case of compile time single sensor defined. atlernatively, sensor state is always mapped into Motor_Context_T */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T * p_motor) { return (Motor_Direction_T)RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor); }
+
+/*
+    Decoupling-basis ω input for FOC_CaptureSpeed.
+        rpm/Q15      ω_pu (fract16, 32768 = ω_base)
+        angle16 dir  el_delta_angle16 (raw step, implicit Q15 of ω_max = π·Fs)
+    Pairs with the L_pu / ψ_pu encoding selected by MOTOR_PU_BASIS_ANGLE16.
+*/
+#if defined(MOTOR_PU_BASIS_ANGLE16)
+static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
+#else
+static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+#endif
 
 static inline bool Motor_IsSpeedZero(const Motor_Context_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 

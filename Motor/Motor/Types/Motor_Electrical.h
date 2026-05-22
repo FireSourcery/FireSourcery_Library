@@ -36,6 +36,24 @@
 
 
 /*
+    PU encoding basis for ψ_pu / L_pu in ElectricalParams_Pu.
+
+        RPM     ω_base = π·P·n_max/30   (motor anchor — Fs-independent)
+                L_pu = L · I_max · ω_base / V_max
+                ψ_pu = ψ_f · ω_base / V_max
+
+        ANGLE16 ω_base = π·Fs           (controller anchor — Fs-locked)
+                L_pu = L · I_max · π · Fs / V_max
+                ψ_pu = ψ_f · π · Fs / V_max
+
+    The FOC engine multiplies L_pu·ω_pu and ψ_pu·ω_pu without basis awareness —
+    the caller MUST supply ω_pu in the matching basis (the angle16 form consumes el_delta_angle16 directly; the rpm form needs an explicit normalize step).
+*/
+#if !defined(MOTOR_PU_BASIS_RPM) && !defined(MOTOR_PU_BASIS_ANGLE16)
+#define MOTOR_PU_BASIS_RPM
+#endif
+
+/*
     config via Kv
 */
 typedef struct
@@ -64,7 +82,6 @@ Motor_ElectricalSpeedRating_T;
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
 static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_degPerCycle) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_degPerCycle); }
 
-/* todo config layer handle si units. pu selection moves to motor.h */
 
 /******************************************************************************/
 /*

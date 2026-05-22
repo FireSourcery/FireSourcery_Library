@@ -494,66 +494,6 @@ static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_max_rpm, uint8_t polePairs
     ω_pu·L_pu = ω · L · I_base / V_base,    at I_max, ω_max => 30.0f
     ω_pu·L_pu·I_pu = ω · L · I / V_base
 
-    ω_pu·ψ_pu =
-    ω_pu·L_pu =
-    ω_pu·L_pu·I_pu =
-
-
-
-    //
-    store L and ψ as factor, shift
-    L_pu  = L_q15  · 2^L_shift
-    ψ_pu  = ψ_q15  · 2^ψ_shift
-
-    ψ_q15 = ψ_si · π·Fs / (V_base · k_ψ) · 32768
-    L_q15 = L_si · π·Fs · I_base / (V_base · k_L) · 32768
-    n_ψ   = log2(k_ψ)
-    n_L   = log2(k_L)
-
-
-
-/// ω_base = V_max / (L·I_max)
-ω_char  = 94 / (80e-6 · 600)     = 1 958.3 rad/s_e
-ω_base  = ω_char
-ψ_base  = V_max / ω_char         = 94 / 1958.3 = 48.0 mWb
-L_pu    = 1.0           (Q15: 32767)            ← collapses
-ψ_pu    = 5 / 48        = 0.104    (Q15: 3410)
-
-
-    //
-    split multiply to Fs 1000:
-        ω_base_1000 = π · 1000  = 3141.6 [rad/s electrical]
-        ψ_base_1000 = V_base / ω_base_1000 = 30 [mWb]
-        L_base_1000 = V_base / (ω_base_1000 · I_base) = 50 [uH]
-
-    Fs_base = π·1000  →  ω_base = 3141.6 rad/s    L_base = 50 µH    ψ_base = 30 mWb
-    Fs_base = π·625   →  ω_base = 1963 rad/s      L_base = 80 µH    ψ_base = 48 mWb
-    Fs_base = π·312.5 →  ω_base = 981 rad/s       L_base = 159 µH   ψ_base = 95 mWb
-
-        1000 mechrpm * 4p => ω_F1000_du ~= 4360
-
-    //
-    ω_base with k
-    ( π·Fs/k to extend precision, k=2, 4..):
-        ψ_du  = ψ · π · Fs / V_max / k
-        L_du  = L · π · I_max · Fs / V_max / k
-
-int16_t  angle_step = omega_pu >> LOG2_N;
-theta += angle_step;
-
-    L_base = V_base / (ω_base / k · I_base)
-        k = 1 => 2.49 [uH]
-        k = 2 => 4.98 [uH]
-        k = 4 => 9.95 [uH]
-        k = 8 => 19.9 [uH]
-        k = 16 => 39.8 [uH]
-        k = 32 => 79.6 [uH]
-        k = 64 => 159.2 [uH]
-        k = 128 => 318.4 [uH]
-*/
-
-
-/*
     Direct multiply, without q15 scale:
         ψ_du  = ψ · (π · Fs / V_base)
         L_du  = L · (π · I_base · Fs / V_base)
@@ -577,34 +517,75 @@ theta += angle_step;
     l_pu_rads_of_h   L_pu_rads = 35,045 (Q15 of real value 1.0695)
         1000 rpm => ω = 6553 => ω * L_pu = 7009
 
-n_rpm	ω_e	F1 el_Δ	F1 product	F2 ω_pu	F2 product	true Q15·Z_L	F1 err	F2 err
-100	    42	22	704	655	700	701	+0.4 %	−0.1 %
-500	    209	109	3488	3277	3504	3504	−0.5 %	0.00 %
-1000	419	218	6976	6554	7010	7009	−0.5 %	+0.01 %
-2000	838	437	13984	13107	14017	14018	−0.24 %	0.00 %
-5000	2094	1092	34944	32767†	35043	35044	−0.29 %	0.00 %
-7500	3142	1639	52448	49152‡	52564	52566	−0.22 %	0.00 %
-10000	4189	2185	69920	65535‡	70089	70089	−0.24 %	0.00
+    n_rpm	ω_e	F1 el_Δ	F1 product	F2 ω_pu	F2 product	true Q15·Z_L	F1 err	F2 err
+    100	    42	22	704	655	700	701	+0.4 %	−0.1 %
+    500	    209	109	3488	3277	3504	3504	−0.5 %	0.00 %
+    1000	419	218	6976	6554	7010	7009	−0.5 %	+0.01 %
+    2000	838	437	13984	13107	14017	14018	−0.24 %	0.00 %
+    5000	2094	1092	34944	32767†	35043	35044	−0.29 %	0.00 %
+    7500	3142	1639	52448	49152‡	52564	52566	−0.22 %	0.00 %
+    10000	4189	2185	69920	65535‡	70089	70089	−0.24 %	0.00
+
+
+    //
+    ω_base with k
+    ( π·Fs/k to extend precision, k=2, 4..):
+        ψ_du  = ψ · π · Fs / V_max / k
+        L_du  = L · π · I_max · Fs / V_max / k
+
+    theta += omega_pu >> LOG2_N
+
+    L_base = V_base / (ω_base / k · I_base)
+        k = 1 => 2.49 [uH]
+        k = 2 => 4.98 [uH]
+        k = 4 => 9.95 [uH]
+        k = 8 => 19.9 [uH]
+        k = 16 => 39.8 [uH]
+        k = 32 => 79.6 [uH]
+        k = 64 => 159.2 [uH]
+        k = 128 => 318.4 [uH]
+
+    #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
+    #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
+    #define MOTOR_DIGITAL_SPEED_NORM 2
+    #define MOTOR_DIGITAL_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
+
+    Angle Speed max in digital units / S
+    #define ANGLE_SPEED_MAX(pollingFreq) (32768 * pollingFreq)
+    #define MOTOR_ANG_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
+
+    32767 600000 erpm, 10000 erps, 150000 mech rpm
+    16383 300000 erpm
+    8192 150000 erpm
+    4096 75000 erpm
+    2048 37500 erpm
+    1024 18750 erpm, 8 pole pairs 2344 rpm
+
+
+    //
+    store L and ψ as(factor, shift)
+    L_pu = L_q15  · 2 ^ L_shift
+    ψ_pu = ψ_q15  · 2 ^ ψ_shift
+
+    ψ_q15 = ψ_si · π·Fs / (V_base · k_ψ) · 32768
+    L_q15 = L_si · π·Fs · I_base / (V_base · k_L) · 32768
+    n_ψ = log2(k_ψ)
+    n_L = log2(k_L)
+
+    //
+    split multiply to Fs 1000:
+    ω_base_1000 = π · 1000 = 3141.6[rad / s electrical]
+    ψ_base_1000 = V_base / ω_base_1000 = 30[mWb]
+    L_base_1000 = V_base / (ω_base_1000 · I_base) = 50[uH]
+
+    Fs_base = π·1000  →  ω_base = 3141.6 rad / s    L_base = 50 µH    ψ_base = 30 mWb
+    Fs_base = π·625   →  ω_base = 1963 rad / s      L_base = 80 µH    ψ_base = 48 mWb
+    Fs_base = π·312.5 →  ω_base = 981 rad / s       L_base = 159 µH   ψ_base = 95 mWb
+
+    1000 mechrpm * 4p = > ω_F1000_du ~= 4360
 */
 
-/*
-    store as angle, fixed to controller, norm bit shift
-*/
-// #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
-// #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
-// #define MOTOR_DIGITAL_SPEED_NORM 2
-// #define MOTOR_DIGITAL_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
 
-/* Angle Speed max in digital units / S */
-// #define ANGLE_SPEED_MAX(pollingFreq) (32768 * pollingFreq)
-// #define MOTOR_ANG_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
-
-// 32767 600000 erpm, 10000 erps, 150000 mech rpm
-// 16383 300000 erpm
-// 8192 150000 erpm
-// 4096 75000 erpm
-// 2048 37500 erpm
-// 1024 18750 erpm, 8 pole pairs 2344 rpm
 
 /******************************************************************************/
 /*!
@@ -629,28 +610,24 @@ static inline uint32_t psi_pu_of_mvrads(uint32_t polling_freq, uint16_t v_max_vo
 static inline uint32_t _psi_pu_of_wb(uint32_t polling_freq, uint16_t v_max_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)FRACT16_PI * psi_Wb * polling_freq / ((uint64_t)v_max_V * scale * FRACT16_SCALE); }
 // static inline uint32_t _psi_wb_of_pu(uint32_t polling_freq, uint16_t v_max_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_max_V * scale * FRACT16_SCALE / ((uint64_t)FRACT16_PI * polling_freq); }
 
+/*
+    Direct Kv→PU shortcut.
+    Mechanical Ke (no √3, no P) is the convenient intermediate
+*/
+static inline uint32_t ke_pu_angle16_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
+static inline uint16_t kv_of_ke_pu_angle16(uint32_t polling_freq, uint16_t v_max_V, uint32_t ke_pu) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_V * ke_pu); }
 
 /*
-    ψ_pu_stored = 30 · Fs · 32768 / (V_max · Kv · P)
-    ψ_pu    = π · ψ_f · Fs / V_max
-            = 30 · Fs / (Kv · P · V_max)                 (× FRACT16_SCALE; π cancels)
+    ψ_pu directly from Kv — phase-electrical, √3
+    Kv is vendor-spec line-to-line, so √3 converts to ψ_f_phase. π cancels:
 
-    Direct PU shortcuts collapse the µWb intermediate and (for ψ_pu) cancel π:
-        ψ_pu × FRACT16_SCALE = π·ψ_f·Fs/V_max   = 30·Fs / (Kv·P·V_max) × FRACT16_SCALE
+    ψ_f_phase [Wb] = 60 / (2π·P·Kv·√3)
+    ψ_pu × 32768   = π·ψ_f·Fs/V_max·3276 = 30·Fs·32768 / (Kv·P·V_max·√3)
 */
-// static inline uint32_t ke_pu_angle16_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
+static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(polling_freq, v_max_V, kv) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
+static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(polling_freq, v_max_V, psi_pu * polePairs * FRACT16_SCALE / FRACT16_1_DIV_SQRT3); }
 
-// /*!
-//     The direct Kv→PU forms below are exact-integer (π cancels), so they are
-//     both cheaper and slightly more accurate than chaining through ψ_uWb.
-// */
-// /* ψ_pu × FRACT16_SCALE directly from (Kv, P) — π cancels, no µWb intermediate. */
-// /* ψ_pu directly from Kv. ψ_pu = π·ψ_f·Fs/V_max·32768 with ψ_f = 60/(2π·Kv·P) reduces to 30·Fs·32768/(V·Kv·P). */
-// static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint16_t kv, uint8_t polePairs) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint32_t)kv * polePairs * v_max_V); }
-// static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return (uint64_t)30UL * polling_freq * FRACT16_SCALE / ((uint64_t)v_max_V * polePairs * psi_pu); }
-
-
-
+static inline uint32_t _psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return (uint64_t)30UL * polling_freq / ((uint32_t)kv * v_max_V) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
 
 /******************************************************************************/
 /*!

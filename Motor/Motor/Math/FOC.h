@@ -308,14 +308,35 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus,  int16
     Cross-coupling decoupling feedforward, limit-first ordering.
         Vd_ff = -omega_e * Lq * Iq
         Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
+
+    Both forms produce Omega* in Q15 v_pu scale (consumed by foc_v*_ff via
+    fract16_mul). Differ only in how the Q15 normalization is distributed:
+
+        rpm/Q15      Ld, Psi are Q15-scaled; speed = ω_pu (Q15). Product needs
+                     /FRACT16_SCALE to land in Q15 v_pu.
+
+        angle16 dir  Ld, Psi are direct-multiply form (no Q15 scale, ~30 typ.);
+                     speed = el_delta_angle16 (raw step, implicit Q15 of ω_max).
+                     Product is already Q15 v_pu — no division.
+
+    Caller MUST supply `speed` in the basis matching MOTOR_PU_BASIS_ANGLE16.
 */
 /******************************************************************************/
+#if defined(MOTOR_PU_BASIS_ANGLE16)
+static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
+{
+    p_foc->ElectricalSpeed.OmegaLd = (p_foc->Electrical.Ld * speed);
+    p_foc->ElectricalSpeed.OmegaLq = (p_foc->Electrical.Lq * speed);
+    p_foc->ElectricalSpeed.OmegaPsi = (p_foc->Electrical.Psi * speed);
+}
+#else
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
     p_foc->ElectricalSpeed.OmegaLd = fract16_sat((int64_t)p_foc->Electrical.Ld * speed / FRACT16_SCALE);
     p_foc->ElectricalSpeed.OmegaLq = fract16_sat((int64_t)p_foc->Electrical.Lq * speed / FRACT16_SCALE);
     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((int64_t)p_foc->Electrical.Psi * speed / FRACT16_SCALE);
 }
+#endif
 
 static inline int32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline int32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }

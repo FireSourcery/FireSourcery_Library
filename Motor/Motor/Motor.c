@@ -143,14 +143,41 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
 
-/* alternatively convert kv to psi_wb then call FOC_Convert */
+/*
+    Encode (Rs, Ld, Lq, ψ_f) in the PU basis selected by MOTOR_PU_BASIS.
+    Rs is basis-independent (no ω, no Fs). L and ψ pick up the basis anchor.
+    Caller MUST feed ω_pu in the matching basis to FOC's decoupling multiplies.
+*/
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 {
-    p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams_Si.Rs);
-    p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Ld, 1000000UL);
-    p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Lq, 1000000UL);
-    p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.Kv);
+    uint16_t v_max = Phase_Calibration_GetVMaxVolts();
+    uint16_t i_max = Phase_Calibration_GetIMaxAmps();
+
+    p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(v_max, i_max, p_config->ElectricalParams_Si.Rs);
+
+#ifdef MOTOR_PU_BASIS_ANGLE16
+    /* Fs-anchored, direct-multiply (no Q15 scaling): el_delta_angle16 * L_pu → v_pu without /32768.
+       ~0.5% resolution loss vs Q15 form; products stay within int32 across the full ω range. */
+    p_config->ElectricalParams_Pu.Ld = _l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Ld);
+    p_config->ElectricalParams_Pu.Lq = _l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Lq);
+    p_config->ElectricalParams_Pu.Psi = _psi_pu_of_kv(MOTOR_CONTROL_FREQ, v_max, p_config->SpeedRating.PolePairs, p_config->SpeedRating.Kv);
+#else
+    /* n_max-anchored: ω_pu = ω_e / (π·P·n_max/30). Motor-portable across Fs. */
+    uint32_t n_max = Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating);
+    uint8_t  pp = p_config->SpeedRating.PolePairs;
+    p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(v_max, i_max, n_max, pp, p_config->ElectricalParams_Si.Ld, 1000000UL);
+    p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(v_max, i_max, n_max, pp, p_config->ElectricalParams_Si.Lq, 1000000UL);
+    p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(v_max, n_max, p_config->SpeedRating.Kv);
+#endif
 }
+
+// void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
+// {
+//     p_config->ElectricalParams_Pu.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->ElectricalParams_Si.Rs);
+//     p_config->ElectricalParams_Pu.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Ld, 1000000UL);
+//     p_config->ElectricalParams_Pu.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.PolePairs, p_config->ElectricalParams_Si.Lq, 1000000UL);
+//     p_config->ElectricalParams_Pu.Psi = psi_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.Kv);
+// }
 
 // void Motor_InitDecouplingCoeffs_Angle16(Motor_Config_T * p_config)
 // {
