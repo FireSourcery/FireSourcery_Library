@@ -52,8 +52,8 @@
     V_base [V]
     I_base [A]
     ω_base [rad/S electrical]
-        ω_base [eRPM] = ω_base [rad/S] · 60 / 2π
-        ω_base [rad/S] = (2π · p · Kv · V_base) / 60
+    ω_base [eRPM] = ω_base [rad/S] · 60 / 2π
+    ω_base(kv) [rad/S] = (2π · p · Kv · V_base) / 60
 
     Derived (PU conditionally > 1.0):
     R_base [Ω]   = V_base / I_base
@@ -67,12 +67,22 @@
     L_base [H]  = ψ_base / I_base = V_base / (ω_base · I_base)
 
     ω_pu = ω / ω_base
-    ψ_pu = ψ / ψ_base = ψ · ω_base / V_base
-    L_pu = L / L_base = L · ω_base · I_base / V_base
+    ψ_pu = ψ / ψ_base   = ψ · ω_base / V_base
+    L_pu = L / L_base   = L · I_base / ψ_base    = L · ω_base · I_base / V_base
 
+    ψ == v_emf/ω:
+    ψ_pu = (v_emf / ω) · (ω_base / V_base)
+    ψ_pu = (v_emf / V_base) / (ω / ω_base)
+
+    L == v_L / (ω · I):
+    L_pu = (v_L / (ω · I)) · (ω_base · I_base / V_base)
+
+    ff terms:
     ω_pu·ψ_pu = ω · ψ / V_base
     ω_pu·L_pu = ω · L · I_base / V_base
     ω_pu·L_pu·I_pu = ω · L · I / V_base
+
+
 
     ω_pu => ω_base anchor:
         1/2 motor rated => ω_pu = 0.5 at rated speed, 1.0 at max field weakening
@@ -106,19 +116,16 @@
 */
 /******************************************************************************/
 /*
-    ψ_base = V_base / ω_base
-    ψ_pu > 1.0 => V output saturated, field weakening boundry.
+    PU identification — direct from FOC-loop quantities.
+    Spin-test form is the literal inverse of the runtime BEMF computation fract16_mul(omega_step, psi_pu).
+       ψ_pu = v_emf_pu · 32768 / omega_step  =  fract16_div(v_emf_pu, omega_step)   [spin test]
+       ψ_pu = residual_v_pu / omega_step,  residual = vq − Rs·iq − ω·Ld·id          [online]
 */
 static inline uint32_t psi_pu_of_emf(fract16_t v_emf_pu, fract16_t omega_step) { return fract16_div(v_emf_pu, omega_step); }
 
-/* PU identification — direct from FOC-loop quantities. Spin-test form is the
-   literal inverse of the runtime BEMF computation fract16_mul(omega_step, psi_pu).
-       ψ_pu = v_emf_pu · 32768 / omega_step  =  fract16_div(v_emf_pu, omega_step)   [spin test]
-       ψ_pu = residual_v_pu / omega_step,  residual = vq − Rs·iq − ω·Ld·id          [online] */
-
 /* ψ_f[µWb] = V[mV]·1e6 / ω[mrad/s]      (mV·s/mrad ≡ Wb; ×1e6 → µWb) */
-static inline uint32_t psi_uwb_of_emf_peak(uint32_t omega_elec_mrads, uint32_t v_phase_mV_pk) { return (uint64_t)v_phase_mV_pk * 1000000UL / omega_elec_mrads; }
-static inline uint32_t psi_uwb_of_emf_ll(uint32_t omega_elec_mrads, uint32_t v_ll_mV_pk) { return (uint64_t)v_ll_mV_pk * 1000000UL * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * omega_elec_mrads); }
+static inline uint32_t psi_uwb_of_emf(uint32_t omega_elec_mrads, uint32_t v_phase_mV_pk) { return (uint64_t)v_phase_mV_pk * 1000000UL / omega_elec_mrads; }
+// static inline uint32_t psi_uwb_of_emf_ll(uint32_t omega_elec_mrads, uint32_t v_ll_mV_pk) { return (uint64_t)v_ll_mV_pk * 1000000UL * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * omega_elec_mrads); }
 
 static inline uint32_t psi_pu_of_running(fract16_t rs_pu, fract16_t ld_pu, fract16_t omega_step, fract16_t vq_pu, fract16_t id_pu, fract16_t iq_pu)
 {
@@ -136,6 +143,16 @@ static inline uint32_t psi_uwb_of_running(uint32_t rs_mOhm, uint32_t ld_uH, uint
     return ((uint64_t)vq_mV * 1000UL - v_r - v_l) * 1000UL / omega_e_mrads;      /* µWb */
 }
 
+/*
+    from a defined ratio
+    ψ_pu = (v_emf / ω) · (ω_base / V_base)
+    ψ_pu = (V_rated · ω_base) / (ω_rated · V_base)
+    rads or rpm cancel
+*/
+static inline uint32_t psi_pu_of_linear(uint16_t v_base_V, uint32_t omega_base, uint16_t v_emf, uint32_t omega_emf)
+{
+    return (uint64_t)v_emf * omega_base * FRACT16_SCALE / ((uint64_t)omega_emf * v_base_V);
+}
 
 /*
     PU identification — direct from FOC-loop quantities. Output uint32 (may exceed FRACT16_MAX).
@@ -170,7 +187,6 @@ static inline uint32_t kt_unm_per_a_of_psi(uint32_t psi_uWb, uint8_t polePairs) 
 // static inline uint32_t kt_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return 3UL * ke_mech_uvsrad_of_kv(kv_rpm_per_V) / 2UL; }
 // static inline uint32_t kt_rms_unm_per_a_of_kv(uint16_t kv_rpm_per_V) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V); }
 
-/* T_base = (3/2)·p·ψ_base·I_base  */
 
 /******************************************************************************/
 /*!
@@ -301,8 +317,7 @@ static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rp
 
 /******************************************************************************/
 /*
-    Kv [RPM/V]
-    Kv [RPM/V, peak per-phase] is the most commonly published rotor parameter.
+    Kv [RPM/V] is the most commonly published rotor parameter.
     Storing (Kv, P) instead of (ψ_uWb, P) or (ψ_pu, P) avoids µ-unit redundancy and matches how datasheets list motors —
     Storing {Kv, V_max, I_max, Fs, P} fully determines the rotor half of the model; only Rs and Ld/Lq need independent storage.
 */
@@ -312,9 +327,10 @@ static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rp
     @brief  Kv-based storage — {Kv, polePairs} as the canonical motor parameter.
 
     Identities derived from (Kv, P):
-        Kv = 60 / (2π · Ke_mech)
-        Ke_mech = 1 / Kv = 60 / (2π · Kv)                    [V·s/rad_mech]
-        ψ_f = Ke_mech / P / √3                               [V·s/rad_elec = Wb]
+        Kv [RPM/V]
+        Ke_mech [V·s/rad mech]  = (1 / Kv) · (60 / 2π)
+        ψ_f [Wb = V·s/rad elec] = Ke_mech / P / √3  = 1 / (Kv·2π·P/60) / √3
+
         Kt_FOC  = (3/2) · P · ψ_f = 45 / (π · Kv)            [Nm/A]   (P cancels)
         Kt_mtr  = 60 / (2π · Kv) = Ke_mech                   [Nm/A_rms]
 
@@ -331,14 +347,15 @@ static inline uint32_t rpm_of_kv_v(uint16_t kv, uint32_t v_V) { return (uint32_t
 static inline uint32_t v_of_kv_rpm(uint16_t kv, uint32_t rpm) { return rpm / kv; }
 
 /* [V / (Rad/s)] base. generic for caller compose  */
-static inline uint32_t ke_vrads_of(uint16_t kv, uint32_t scale) { return ((uint64_t)scale * FRACT16_SCALE * 60 / (2 * FRACT16_PI)) / (kv); }
-static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return ke_vrads_of(kv, 1000); }
-/* psi as phase electtrical */
-static inline uint32_t psi_vrads_of(uint16_t kv, uint8_t polePairs, uint32_t scale) { return ke_vrads_of(kv, scale) / polePairs * FRACT16_SCALE / FRACT16_SQRT3; }
+/* V·s/rad */
+static inline uint32_t ke_vrads_of(uint16_t kv, uint32_t scale) { return ((uint64_t)scale * FRACT16_SCALE * 60U / (2 * FRACT16_PI)) / (kv); }
+static inline uint32_t ke_mvrads_of_kv(uint16_t kv) { return ke_vrads_of(kv, 1000U); }
+static inline uint32_t ke_uvsrad_of_kv(uint16_t kv_rpm_per_V) { return ke_vrads_of(kv_rpm_per_V, 1000000U); }
 
-// static inline uint32_t ke_mech_uvsrad_of_kv(uint16_t kv_rpm_per_V) { return (uint64_t)60UL * 1000000UL * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * kv_rpm_per_V); }
-// static inline uint32_t ke_elec_uvsrad_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return ke_mech_uvsrad_of_kv(kv_rpm_per_V) / polePairs; }
-// static inline uint32_t psi_uwb_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return (uint64_t)60UL * 1000000UL * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * kv_rpm_per_V * polePairs); }
+/* psi as phase electtrical */
+static inline uint32_t psi_wb_of_kv(uint16_t kv, uint8_t polePairs, uint32_t scale) { return ke_vrads_of(kv, scale) / polePairs * FRACT16_SCALE / FRACT16_SQRT3; }
+// static inline uint32_t psi_wb_of_kv(uint16_t kv, uint8_t polePairs, uint32_t scale) { return (uint64_t)60UL * scale * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * kv * polePairs); }
+static inline uint32_t psi_uwb_of_kv(uint16_t kv_rpm_per_V, uint8_t polePairs) { return psi_wb_of_kv(kv_rpm_per_V, polePairs, 1000000UL); }
 // static inline uint16_t kv_of_psi_uwb(uint32_t psi_uWb, uint8_t polePairs) { return (uint64_t)60UL * 1000000UL * FRACT16_SCALE / ((uint64_t)FRACT16_SQRT3 * psi_uWb * polePairs); }
 
 /* Kv basis conversions — parse vendor specs into internal phase-peak. */
@@ -347,31 +364,24 @@ static inline uint16_t kv_ll_of_kv_phase_pk(uint16_t kv_phase_pk) { return (uint
 static inline uint16_t kv_pk_of_kv_rms(uint16_t kv_rms) { return (uint64_t)kv_rms * FRACT16_SCALE / FRACT16_SQRT2; }
 static inline uint16_t kv_rms_of_kv_pk(uint16_t kv_pk) { return (uint64_t)kv_pk * FRACT16_SQRT2 / FRACT16_SCALE; }
 
-/*
-    ψ_f = 60 / (2π · Kv · p · M) [Wb]
-
-    With ω_base in rpm_mech and ψ_f from Kv, the 60/(2π·p) factors cancel:
-    ψ_pu = ψ_f / ψ_base = [60/(2π·Kv·p)] · ω_base / V_base
-        = [60/(2π·Kv·p)] · [base_rpm · (2π/60) · p] / V_max
-        = base_rpm / (Kv · V_max)
-
-
-    speed_max_rpm: Kv·V_max => ψ_pu = 1.0
-        At speed_max_rpm BEMF = V_max, rpm scale for ui use only
-    speed_max_rpm: Kv·V_bus => ψ_pu = V_bus/V_max
-        At speed_max_rpm BEMF = V_bus => vphase = vbus/2
-    speed_max_rpm: Kv·V_bus·2 => ψ_pu = V_bus * 2/V_max
-        At speed_max_rpm BEMF = 2 * V_bus => vphase field weakening
-*/
+/* v_pu / omega_pu */
 static inline uint32_t ke_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return speed_max_rpm * FRACT16_SCALE / (kv * v_max_V); }
 static inline uint16_t kv_of_ke_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t ke_pu) { return (uint64_t)speed_max_rpm * FRACT16_SCALE / ((uint64_t)ke_pu * v_max_V); }
 
 /*
-    optionally M_max
-    ψ_base   =  V_bus_max · M_max / ω_base = ψ_f
+    ψ_f [Wb] = (1 / Kv) · (60 / 2π) / P / M = 60 / (2π · Kv · P · M)
+
+    With ω_base in rpm_mech and ψ_f from Kv, the 60/(2π·p) factors cancel:
+    ψ_pu = ψ_f · ω_base / V_base
+        = [60/(2π·Kv·P) / √3] · [ω_base_rpm·(2π/60)·P] / V_base
+        = base_rpm / (Kv · V_max)
+
+    ψ_pu = v_emf_pu / ω_pu = (v_emf / ω) · (ω_base / V_base)
+    kv = ω_rpm / (v * √3)
 */
-static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) / 2; }
-static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * 2; }
+static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_1_DIV_SQRT3 / FRACT16_SCALE; }
+static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }
+// static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return psi_pu_of_linear(v_max_V, speed_max_rpm, 1, kv) / sqrt3; }
 // static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_SCALE / FRACT16_SQRT3; }
 // static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }
 
