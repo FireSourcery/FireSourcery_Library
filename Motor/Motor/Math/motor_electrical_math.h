@@ -379,8 +379,9 @@ static inline uint16_t kv_of_ke_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm,
     ψ_pu = v_emf_pu / ω_pu = (v_emf / ω) · (ω_base / V_base)
     kv = ω_rpm / (v * √3)
 */
-static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_1_DIV_SQRT3 / FRACT16_SCALE; }
-static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }
+// static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_1_DIV_SQRT3 / FRACT16_SCALE; }
+static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) / 2; }
+static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * 2; }
 // static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return psi_pu_of_linear(v_max_V, speed_max_rpm, 1, kv) / sqrt3; }
 // static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_SCALE / FRACT16_SQRT3; }
 // static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }

@@ -253,6 +253,10 @@ static void Passive_Proc(Motor_T * p_motor)
     //     // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
     //     default: break;
     // }
+    // Motor_Context_T * p_context = p_motor->P_MOTOR;
+    // p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_emf(FOC_GetVPhase(&p_context->Foc), Motor_GetSpeedFeedback(p_context));
+    // p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+
 }
 
 static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
@@ -374,7 +378,6 @@ static void Run_Proc(Motor_T * p_motor)
     // #ifdef MOTOR_EXTERN_CONTROL_ENABLE
     //     Motor_ExternControl(p_motor);
     // #endif
-
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_ProcAngleControl(p_motor); } else { Motor_FOC_ProcVControl(p_motor); }
 }
@@ -386,6 +389,9 @@ static void Run_OnSpeed(Motor_T * p_motor)
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetSpeedFeedback(p_context));
     if (p_context->FeedbackMode.Speed == 1U) { Ramp_SetTarget(&p_context->TorqueRamp, Motor_ProcSpeedControl(p_context)); }
+
+    // p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);
+    // p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
 }
 
 static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
