@@ -315,6 +315,7 @@ static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, ang
 static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref, accum32_t speed_fract16)
 {
     Angle_CaptureDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
+    // p_angle->Delta = speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
 }
 
 static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref)
