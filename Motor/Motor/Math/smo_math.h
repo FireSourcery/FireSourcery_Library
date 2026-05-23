@@ -42,6 +42,11 @@ static inline accum32_t smo_g_pu_of_erads(uint32_t polling_freq, uint32_t erads,
     return (uint64_t)erads * FRACT16_SCALE * FRACT16_SCALE / (polling_freq * l_pu);
 }
 
+static inline accum32_t smo_g_pu_of_angle(uint32_t polling_freq, uint32_t angle, uint32_t l_pu)
+{
+    return (uint64_t)angle * FRACT16_SCALE * FRACT16_SCALE / (l_pu);
+}
+
 /******************************************************************************/
 /*!
     @brief  Sliding-Mode switching function — bounded sign with linear region.
@@ -79,7 +84,7 @@ static inline fract16_t smo_sat(fract16_t thr, fract16_t x) { return fract16_sat
 static inline fract16_t smo_z(fract16_t K_smo, fract16_t thr, fract16_t i_est, fract16_t i_meas) { return fract16_mul(K_smo, smo_sat(thr, i_est - i_meas)); }
 static inline accum32_t smo_v_eff(fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return ((accum32_t)v - fract16_mul(Rs_pu, i_est) - z); }
 // /* if G_pu > 1.0 */
-static inline accum32_t _smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return (int64_t)G_pu * smo_v_eff(Rs_pu, v, i_est, z) / FRACT16_SCALE; }
+static inline accum32_t _smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return accum32_mul(G_pu, smo_v_eff(Rs_pu, v, i_est, z)); }
 // static inline fract16_t smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + fract16_mul(G_pu, smo_v_eff(Rs_pu, v, i_est, z))); }
 static inline fract16_t smo_i(accum32_t G_pu, fract16_t Rs_pu, accum32_t v, fract16_t i_est, fract16_t z) { return fract16_sat((accum32_t)i_est + _smo_i(G_pu, Rs_pu, v, i_est, z)); }
 

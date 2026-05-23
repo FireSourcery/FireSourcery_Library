@@ -624,8 +624,10 @@ static inline uint16_t kv_of_ke_pu_angle16(uint32_t polling_freq, uint16_t v_max
 
     ψ_pu × 32768 = 30·Fs / (Kv·P·V_max·√3) · 32768
 */
-static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(polling_freq, v_max_V, kv) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
-static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(polling_freq, v_max_V, psi_pu * polePairs * FRACT16_SCALE / FRACT16_1_DIV_SQRT3); }
+// static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(polling_freq, v_max_V, kv) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
+// static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(polling_freq, v_max_V, psi_pu * polePairs * FRACT16_SCALE / FRACT16_1_DIV_SQRT3); }
+static inline uint32_t psi_pu_of_kv(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(polling_freq, v_max_V, kv) / ((uint32_t)polePairs * 2); }
+static inline uint16_t kv_of_psi_pu(uint32_t polling_freq, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(polling_freq, v_max_V, psi_pu * polePairs * 2); }
 
 
 /*

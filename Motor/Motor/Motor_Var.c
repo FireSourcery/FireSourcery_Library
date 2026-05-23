@@ -40,7 +40,8 @@
     Var Runtime telemetry
 */
 /******************************************************************************/
-static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return fract16_mul(Motor_GetSpeedFeedback(p_context), p_context->Foc.Electrical.Psi); }
+// static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return fract16_mul(Motor_GetDecouplingOmega(p_context), p_context->Foc.Electrical.Psi); }
+static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return  (p_context->Foc.ElectricalSpeed.OmegaPsi); }
 // static inline int32_t VSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor->P_MOTOR), Motor_Psi_Fract16(p_motor)); }
 
 int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)

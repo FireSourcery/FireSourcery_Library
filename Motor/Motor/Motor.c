@@ -104,7 +104,8 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Motor_InitDecouplingCoeffs(&p_motor->Config); // todo
     FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.ElectricalParams_Pu);
     FOC_Sensorless_Init(&p_motor->FocSensorless, &p_motor->Config.SensorlessConfig);
-    FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_rpm(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.PolePairs, (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
+    // FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_rpm(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.PolePairs, (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
+    FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_of_angle(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating), (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
     Angle_SpeedFractCalib_T speed_calib = { .PollingFreq = MOTOR_CONTROL_FREQ, .SpeedMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating) };
     FOC_Sensorless_InitAngleUnits(&p_motor->FocSensorless, &speed_calib);
 

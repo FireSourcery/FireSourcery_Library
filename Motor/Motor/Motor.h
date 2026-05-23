@@ -276,8 +276,8 @@ typedef struct Motor_Config
 
     FOC_Electrical_T ElectricalParams_Si;  /* optional Motor Electrical Parameters. Si units */
     FOC_Electrical_T ElectricalParams_Pu;  /* VdqDecoupling */
-    FOC_Electrical_T ElectricalParams_Si_Test;
-    FOC_Electrical_T ElectricalParams_Pu_Test;
+    // FOC_Electrical_T ElectricalParams_Si_Test;
+    // FOC_Electrical_T ElectricalParams_Pu_Test;
 
     bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
     FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
