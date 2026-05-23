@@ -206,31 +206,13 @@ static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck     
     [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
 */
 /******************************************************************************/
-#ifndef MOTOR_FLOATING_POINT
-// typedef fract16_t quantity_t;
-// typedef fract16_t magnitude_t;
-typedef fract16_t scalar_t;
-#else
-typedef float scalar_t;
-#endif
-
-
-// typedef union scalar
-// {
-//     struct { int16_t fract16; int8_t shift; };
-//     accum32_t accum32;
-//     float float32;
-// }
-// scalar_t;
-
-#ifndef MOTOR_FLOATING_POINT
-typedef struct { int16_t fract16; int8_t shift; } fpoint16_t;
-typedef struct { int16_t fract16; int8_t shift; } scalar_usat_t;
-typedef fract16_t scalar_t;
-#else
-typedef float scalar_usat_t;
-typedef float scalar_t;
-#endif
+// #ifndef MOTOR_FLOATING_POINT
+// // typedef fract16_t quantity_t;
+// // typedef fract16_t magnitude_t;
+// typedef fract16_t scalar_t;
+// #else
+// typedef float scalar_t;
+// #endif
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.

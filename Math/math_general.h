@@ -37,11 +37,18 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 /* require user config, that would otherwise not be explicit with int */
-#ifndef MATH_INT_T
-#define MATH_INT_T int
+// #ifndef MATH_INT_T
+// #define MATH_INT_T int
+// #endif
+
+// typedef MATH_INT_T int_t;
+#ifdef MATH_FLOAT
+#define MATH_TYPE_T float
+#else
+#define MATH_TYPE_T int32_t
 #endif
 
-typedef MATH_INT_T int_t;
+typedef MATH_TYPE_T num_t;
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 

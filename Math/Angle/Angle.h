@@ -55,8 +55,8 @@
 */
 typedef struct Angle
 {
-    int32_t Angle;  /* Shifted Q16.16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
-    int32_t Delta;  /* Shifted Q16.16 DegPerPoll */
+    int32_t Angle;  /* Shifted 16 position/accumulator. GetAngle16 projects via >> ANGLE32_SHIFT */
+    int32_t Delta;  /* Shifted 16 DegPerPoll */
     int32_t LimitUpper;
     int32_t LimitLower;
 }
@@ -306,8 +306,11 @@ static void Angle_SpeedRef_Init_Rpm(Angle_SpeedFractRef_T * p_ref, uint32_t poll
 */
 /* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
 static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
+static inline angle32_t angle32_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return (int32_t)speed_fract16 * angleSpeedMax << 1; }
 static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
+
 /* ω_pu_fract16 = el_delta · π · Fs / ω_base */
+/*  π · Fs / ω_base = 32768 / ω_base_angle */
 static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
 
 
