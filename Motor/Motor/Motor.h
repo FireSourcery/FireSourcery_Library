@@ -597,13 +597,16 @@ static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed.
-        rpm/Q15      ω_pu (fract16, 32768 = ω_base)
-        angle16 dir  el_delta_angle16 (raw step, implicit Q15 of ω_max = π·Fs)
+    angle16      ω_max = π·Fs
+    rpm/Q15      ω_pu (fract16, 32768 = ω_base)
+        optionally  ω_vpu * psi_pu => v_pu
+                    ω_ipu max * l_pu * i_pu max => v_pu max
     Pairs with the L_pu / ψ_pu encoding selected by MOTOR_PU_BASIS_ANGLE16.
 */
 #if defined(MOTOR_PU_BASIS_ANGLE16)
 static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
 #else
+/* angle use unified omega, speed motor pu optionally use seperate omega, bemf, omega, inducttance, i scaling. */
 static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 #endif
 

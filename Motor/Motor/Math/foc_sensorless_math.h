@@ -69,8 +69,6 @@
     foc_pll_error_normalized which strips |e|.
 */
 /******************************************************************************/
-static inline fract16_t foc_pll_error(fract16_t e_alpha, fract16_t e_beta, fract16_t sin, fract16_t cos) { return fract16_sat(fract16_mul(e_alpha, cos) + fract16_mul(e_beta, sin)); }
-
 /*!
     Speed-normalized phase error ≈ sin(Δθ), independent of |e|.
     Returns 0 when |e| is below the noise floor (lock indeterminate).
@@ -78,7 +76,7 @@ static inline fract16_t foc_pll_error(fract16_t e_alpha, fract16_t e_beta, fract
 static inline fract16_t foc_pll_error_normalized(ufract16_t e_floor, fract16_t e_alpha, fract16_t e_beta, fract16_t sin, fract16_t cos)
 {
     ufract16_t mag = fract16_vector_magnitude(e_alpha, e_beta);
-    return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(foc_pll_error(e_alpha, e_beta, sin, cos), mag);
+    return (mag <= e_floor) ? 0 : (fract16_t)fract16_div(foc_park_axis_d(e_alpha, e_beta, sin, cos), mag);
 }
 
 /******************************************************************************/

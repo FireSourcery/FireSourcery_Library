@@ -176,6 +176,7 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     p_obs->SmoZBeta = smo_z(p_obs->Config.K_smo, p_obs->Config.SmoSat, p_obs->SmoIBeta, p_foc->Ibeta);
     // p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Valpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
     // p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Vbeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    /*  p_foc->Electrical.Rs < FRACT16_MAX */
     p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
     p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
 
@@ -189,11 +190,10 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     p_obs->PllErr = foc_pll_error_normalized(p_obs->Config.LockEmfMin, p_obs->EmfAlpha, p_obs->EmfBeta, uv.y, uv.x);
 
     /* 4. PID loop filter → ω̂ in angle16/poll. setpoint=err, feedback=0: PID error = err, output = Kp·err + Ki·∫err. Positive err (θ̂ lags) → +ω̂. */
-    int16_t omega = PID_ProcPI(&p_obs->PllPid, p_obs->PllErr, 0);
+    int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
 
     /* 5. Integrate ω̂ → θ̂ (free-wrap). */
     Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega);
-    // Angle_IntegrateSpeed_Fract16(&p_obs->AngleSpeed, &p_obs->SpeedFractRef, omega);
 
     /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
     bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);

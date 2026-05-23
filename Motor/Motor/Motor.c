@@ -157,15 +157,15 @@ void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
 
 #ifdef MOTOR_PU_BASIS_ANGLE16
     /*
-        Fs-anchored, motor independent ω_pu
+        Fs-anchored (speed per unit base π · Fs => Fs 32768 / π), motor independent ω_pu
 
         accept int64 intermediary or
         direct-multiply (no Q15 scaling), el_delta_angle16 * L_pu → v_pu without /32768 => ~0.5% resolution loss
     */
-    p_config->ElectricalParams_Pu.Ld = _l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Ld);
-    p_config->ElectricalParams_Pu.Lq = _l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Lq);
-    // p_config->ElectricalParams_Pu.Psi = _psi_pu_of_wb(MOTOR_CONTROL_FREQ, v_max, p_config->ElectricalParams_Si.Psi, 1000);
-    p_config->ElectricalParams_Pu.Psi = _psi_pu_of_kv(MOTOR_CONTROL_FREQ, v_max, p_config->SpeedRating.PolePairs, p_config->SpeedRating.Kv);
+    p_config->ElectricalParams_Pu.Ld = l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Ld);
+    p_config->ElectricalParams_Pu.Lq = l_pu_of_uh(MOTOR_CONTROL_FREQ, v_max, i_max, p_config->ElectricalParams_Si.Lq);
+    // p_config->ElectricalParams_Pu.Psi = psi_pu_of_wb(MOTOR_CONTROL_FREQ, v_max, p_config->ElectricalParams_Si.Psi, 1000);
+    p_config->ElectricalParams_Pu.Psi = psi_pu_of_kv(MOTOR_CONTROL_FREQ, v_max, p_config->SpeedRating.PolePairs, p_config->SpeedRating.Kv);
 #else
     /*
         motor speed  anchored:

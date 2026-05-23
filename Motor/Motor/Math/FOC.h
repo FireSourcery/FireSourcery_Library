@@ -44,10 +44,10 @@ FOC_FieldWeakeningConfig_T;
 /* same shape for SI and PU  */
 typedef struct
 {
-    uint32_t Ld;    /* L · π · ψ_base / I_base  */
+    uint32_t Ld;
     uint32_t Lq;
-    uint32_t Rs;    /* Rs · I_max / V_max */
-    uint32_t Psi;   /* V_max / ω_base */
+    uint32_t Rs;
+    uint32_t Psi;
 }
 FOC_Electrical_T;
 
@@ -314,23 +314,22 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus,  int16
     Caller MUST supply `speed` in the basis matching MOTOR_PU_BASIS_ANGLE16.
 */
 /******************************************************************************/
-#if defined(MOTOR_PU_BASIS_ANGLE16)
-static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
-{
-    p_foc->ElectricalSpeed.OmegaLd = fract16_sat((int32_t)p_foc->Electrical.Ld * speed);
-    p_foc->ElectricalSpeed.OmegaLq = fract16_sat((int32_t)p_foc->Electrical.Lq * speed);
-    p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((int32_t)p_foc->Electrical.Psi * speed);
-}
-#else
+// #if defined(MOTOR_PU_BASIS_ANGLE16)
 // static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 // {
-//     p_foc->ElectricalSpeed.OmegaLd = fract16_sat((accum32_t)(p_foc->Electrical.Ld >> 8) * speed >> 8);
-//     p_foc->ElectricalSpeed.OmegaLq = fract16_sat((accum32_t)(p_foc->Electrical.Lq >> 8) * speed >> 8);
-//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((accum32_t)p_foc->Electrical.Psi * speed / FRACT16_SCALE);
-//     // p_foc->ElectricalSpeed.OmegaLd = fract16_sat((int64_t)p_foc->Electrical.Ld * speed / FRACT16_SCALE);
-//     // p_foc->ElectricalSpeed.OmegaLq = fract16_sat((int64_t)p_foc->Electrical.Lq * speed / FRACT16_SCALE);
-//     // p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((int64_t)p_foc->Electrical.Psi * speed / FRACT16_SCALE);
+//     p_foc->ElectricalSpeed.OmegaLd = fract16_sat((int32_t)p_foc->Electrical.Ld * speed);
+//     p_foc->ElectricalSpeed.OmegaLq = fract16_sat((int32_t)p_foc->Electrical.Lq * speed);
+//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((int32_t)p_foc->Electrical.Psi * speed);
 // }
+// #else
+// // static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
+// // {
+// //     p_foc->ElectricalSpeed.OmegaLd = fract16_sat((accum32_t)(p_foc->Electrical.Ld >> 8) * speed >> 8);
+// //     p_foc->ElectricalSpeed.OmegaLq = fract16_sat((accum32_t)(p_foc->Electrical.Lq >> 8) * speed >> 8);
+// //     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat((accum32_t)p_foc->Electrical.Psi * speed / FRACT16_SCALE);
+// // }
+// #endif
+
 /*
     accept the wide multiply by default
     Only M0 benefits from micro-optimizing.
@@ -341,11 +340,9 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
     p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Electrical.Lq, speed));
     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Electrical.Psi, speed));
 }
-#endif
 
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
-
 
 
 // static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
