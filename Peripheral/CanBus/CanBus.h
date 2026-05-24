@@ -111,19 +111,21 @@ CanBus_T;
 /*
     returns >0 on rx data available. copy directly to user provided buffer
 */
-static inline size_t CanBus_PollRxData(CanBus_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
-{
-    if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
-    {
-        *p_rxId = HAL_CAN_ReadRxId(p_can->P_HAL);
-        return HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData);
-    }
-    return 0;
-}
+// static inline size_t CanBus_PollRxData(CanBus_T * p_can, can_id_t * p_rxId, uint8_t * p_rxData)
+// {
+//     if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
+//     {
+//         *p_rxId = HAL_CAN_ReadRxId(p_can->P_HAL);
+//          HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData);
+//         // HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
+//         return HAL_CAN_ReadRxLength(p_can->P_HAL);
+//     }
+//     return 0;
+// }
 
-// caller directly switch on id version
-static inline can_id_t CanBus_PollRxId(CanBus_T * p_can) { return HAL_CAN_ReadRxFullFlag(p_can->P_HAL) ? HAL_CAN_ReadRxId(p_can->P_HAL) : (can_id_t) { 0 }; }
-static inline size_t CanBus_ReadRxData(CanBus_T * p_can, uint8_t * p_rxData) { return HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData); }
+// // caller directly switch on id version
+// static inline can_id_t CanBus_PollRxId(CanBus_T * p_can) { return HAL_CAN_ReadRxFullFlag(p_can->P_HAL) ? HAL_CAN_ReadRxId(p_can->P_HAL) : (can_id_t) { 0 }; }
+// static inline size_t CanBus_ReadRxData(CanBus_T * p_can, uint8_t * p_rxData) { return HAL_CAN_ReadRxData(p_can->P_HAL, p_rxData); }
 
 /* return null for empty buffer */
 static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
@@ -137,6 +139,7 @@ static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
             HAL_CAN_UnlockRx(p_can->P_HAL, 0);
             return p_buffer;
         }
+        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
     }
     return NULL;
 }
@@ -154,7 +157,6 @@ static inline void CanBus_RxData_ISR(CanBus_T * p_can)
     if (p_buffer != NULL)
     {
         p_can->REQ_CALLBACK(p_can->P_CONTEXT, p_buffer->CanId.Id, &p_buffer->Data[0U]);
-        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
     }
 }
 

@@ -48,17 +48,18 @@ static inline void HAL_CAN_WriteTxStandardId(HAL_CAN_T * p_hal, uint32_t id);
 static inline void HAL_CAN_WriteTxRemote(HAL_CAN_T * p_hal, bool isRemote);
 static inline void HAL_CAN_WriteTxData(HAL_CAN_T * p_hal, const uint8_t * p_data, uint8_t length);
 
-static inline bool HAL_CAN_ReadRxExtendedFlag(HAL_CAN_T * p_hal);
-static inline uint32_t HAL_CAN_ReadRxStandardId(HAL_CAN_T * p_hal);
-static inline uint32_t HAL_CAN_ReadRxExtendedId(HAL_CAN_T * p_hal);
-static inline bool HAL_CAN_ReadRxRemoteFlag(HAL_CAN_T * p_hal);
+static inline bool HAL_CAN_ReadRxExtendedFlag(const HAL_CAN_T * p_hal);
+static inline uint32_t HAL_CAN_ReadRxStandardId(const HAL_CAN_T * p_hal);
+static inline uint32_t HAL_CAN_ReadRxExtendedId(const HAL_CAN_T * p_hal);
+static inline bool HAL_CAN_ReadRxRemoteFlag(const HAL_CAN_T * p_hal);
 static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data);
 
-static inline bool HAL_CAN_ReadTxEmptyFlag(HAL_CAN_T * p_hal);
+static inline bool HAL_CAN_ReadTxEmptyFlag(const HAL_CAN_T * p_hal);
 static inline void HAL_CAN_EnableTxEmptyInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_DisableTxEmptyInterrupt(HAL_CAN_T * p_hal);
+// static inline void HAL_CAN_ClearTxEmptyFlag(HAL_CAN_T * p_hal) ;
 
-static inline bool HAL_CAN_ReadRxFullFlag(HAL_CAN_T * p_hal);
+static inline bool HAL_CAN_ReadRxFullFlag(const HAL_CAN_T * p_hal);
 static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_DisableRxFullInterrupt(HAL_CAN_T * p_hal);
 static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal);
@@ -89,6 +90,13 @@ static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex);
 static inline void HAL_CAN_InitBaudRate(HAL_CAN_T * p_hal, uint32_t baudRate);
 static inline void HAL_CAN_Init(HAL_CAN_T * p_hal);
 
+
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
+#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
+
 /* unmap status at hal layer if needed */
 typedef enum
 {
@@ -105,13 +113,6 @@ HAL_CAN_DriverStatus_T;
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadTxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadRxStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
 // static inline HAL_CAN_DriverStatus_T HAL_CAN_ReadErrorStatus(HAL_CAN_T * p_hal, uint8_t hwIndex);
-
-
-/******************************************************************************/
-/*
-*/
-/******************************************************************************/
-#include HAL_PERIPHERAL_PATH(HAL_CAN.h)
 
 
 /* using data interface */

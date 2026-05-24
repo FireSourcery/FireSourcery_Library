@@ -42,6 +42,11 @@
 #define HAL_CAN_CLOCK_SOURCE_FREQ CPU_FREQ
 #endif
 
+/* For handling within init mode */
+#ifndef HAL_CAN_CLOCK_SOURCE_DEFAULT
+#define HAL_CAN_CLOCK_SOURCE_DEFAULT MSCAN_CANCTL1_CLKSRC_MASK /* select the oscillator clock */
+#endif
+
 #ifndef HAL_CAN_INIT_BAUD_RATE
 #define HAL_CAN_INIT_BAUD_RATE 250000U
 #endif
@@ -188,6 +193,7 @@ static inline void HAL_CAN_WriteTxRemote(HAL_CAN_T * p_hal, bool isRemote)
 
 static inline void HAL_CAN_WriteTxData(HAL_CAN_T * p_hal, const uint8_t * p_data, uint8_t length)
 {
+    assert(length <= 8U);
     for (uint8_t i = 0U; i < length; i++) { p_hal->TEDSR[i] = p_data[i]; }
     p_hal->TDLR = length;
     p_hal->TBPR = 0U;
@@ -195,32 +201,32 @@ static inline void HAL_CAN_WriteTxData(HAL_CAN_T * p_hal, const uint8_t * p_data
     p_hal->CANTFLG = (p_hal->CANTBSEL & MSCAN_CANTBSEL_TX_MASK) & MSCAN_CANTFLG_TXE_MASK;
 }
 
-static inline bool HAL_CAN_ReadRxExtendedFlag(HAL_CAN_T * p_hal)
+static inline bool HAL_CAN_ReadRxExtendedFlag(const HAL_CAN_T * p_hal)
 {
     IDR1_3_UNION idr1 = { .Bytes = p_hal->REIDR1 };
     return idr1.IDR1.R_TEIDE;
 }
 
-static inline uint32_t HAL_CAN_ReadRxStandardId(HAL_CAN_T * p_hal)
+static inline uint32_t HAL_CAN_ReadRxStandardId(const HAL_CAN_T * p_hal)
 {
     return _HAL_CAN_DecodeStdId(p_hal->RSIDR0, p_hal->RSIDR1);
 }
 
-static inline uint32_t HAL_CAN_ReadRxExtendedId(HAL_CAN_T * p_hal)
+static inline uint32_t HAL_CAN_ReadRxExtendedId(const HAL_CAN_T * p_hal)
 {
     return _HAL_CAN_DecodeExtId(p_hal->REIDR0, p_hal->REIDR1, p_hal->REIDR2, p_hal->REIDR3);
 }
 
-static inline uint8_t HAL_CAN_ReadRxLength(HAL_CAN_T * p_hal) { return p_hal->RDLR & 0x0FU; }
+static inline uint8_t HAL_CAN_ReadRxLength(const HAL_CAN_T * p_hal) { return p_hal->RDLR & 0x0FU; }
 
-static inline bool HAL_CAN_ReadRxRemoteFlag(HAL_CAN_T * p_hal)
+static inline bool HAL_CAN_ReadRxRemoteFlag(const HAL_CAN_T * p_hal)
 {
     IDR1_3_UNION idr1 = { .Bytes = p_hal->REIDR1 };
     IDR1_3_UNION idr3 = { .Bytes = p_hal->REIDR3 };
     return (idr1.IDR1.R_TEIDE) ? idr3.IDR3.ERTR : idr1.IDR1.R_TSRR;
 }
 
-static inline uint32_t HAL_CAN_ReadRxTimeStamp(HAL_CAN_T * p_hal)
+static inline uint32_t HAL_CAN_ReadRxTimeStamp(const HAL_CAN_T * p_hal)
 {
     return (p_hal->RTSRH << 8) | p_hal->RTSRL;
 }
@@ -229,7 +235,7 @@ static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data)
 {
     uint8_t length = p_hal->RDLR & 0x0FU;
     for (uint8_t i = 0U; i < length; i++) { p_data[i] = p_hal->REDSR[i]; }
-    p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK;
+    // p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK;
     return length;
 }
 
@@ -245,13 +251,13 @@ static inline uint8_t HAL_CAN_ReadRxData(HAL_CAN_T * p_hal, uint8_t * p_data)
 /******************************************************************************/
 /*! Convenience flag accessors (MSCAN-specific, flat — no hwIndex) */
 /******************************************************************************/
-static inline bool HAL_CAN_ReadTxEmptyFlag(HAL_CAN_T * p_hal) { return (p_hal->CANTFLG & MSCAN_CANTFLG_TXE_MASK) != 0U; }
-static inline void HAL_CAN_ClearTxEmptyFlag(HAL_CAN_T * p_hal) { p_hal->CANTFLG |= MSCAN_CANTFLG_TXE_MASK; }
+static inline bool HAL_CAN_ReadTxEmptyFlag(const HAL_CAN_T * p_hal) { return (p_hal->CANTFLG & MSCAN_CANTFLG_TXE_MASK) != 0U; }
+static inline void HAL_CAN_ClearTxEmptyFlag(HAL_CAN_T * p_hal) { /* p_hal->CANTFLG = MSCAN_CANTFLG_TXE_MASK; */ }
 static inline void HAL_CAN_EnableTxEmptyInterrupt(HAL_CAN_T * p_hal) { p_hal->CANTIER |= MSCAN_CANTIER_TXEIE_MASK; }
 static inline void HAL_CAN_DisableTxEmptyInterrupt(HAL_CAN_T * p_hal) { p_hal->CANTIER &= ~MSCAN_CANTIER_TXEIE_MASK; }
 
-static inline bool HAL_CAN_ReadRxFullFlag(HAL_CAN_T * p_hal) { return (p_hal->CANRFLG & MSCAN_CANRFLG_RXF_MASK) != 0U; }
-static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal) { p_hal->CANRFLG |= MSCAN_CANRFLG_RXF_MASK; }
+static inline bool HAL_CAN_ReadRxFullFlag(const HAL_CAN_T * p_hal) { return (p_hal->CANRFLG & MSCAN_CANRFLG_RXF_MASK) != 0U; }
+static inline void HAL_CAN_ClearRxFullFlag(HAL_CAN_T * p_hal) { p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
 static inline void HAL_CAN_EnableRxFullInterrupt(HAL_CAN_T * p_hal) { p_hal->CANRIER |= MSCAN_CANRIER_RXFIE_MASK; }
 static inline void HAL_CAN_DisableRxFullInterrupt(HAL_CAN_T * p_hal) { p_hal->CANRIER &= ~MSCAN_CANRIER_RXFIE_MASK; }
 
@@ -328,25 +334,6 @@ static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)
     MSCAN bit time = sync(1) + TSEG1+1 + TSEG2+1 TQ.
 */
 /******************************************************************************/
-#ifndef HAL_CAN_TIME_QUANTA_PER_BIT
-#define HAL_CAN_TIME_QUANTA_PER_BIT     8U
-#endif
-#ifndef HAL_CAN_TSEG1
-#define HAL_CAN_TSEG1                   3U      /* TSEG1 = 3 → 4 TQ */
-#endif
-#ifndef HAL_CAN_TSEG2
-#define HAL_CAN_TSEG2                   2U      /* TSEG2 = 2 → 3 TQ */
-#endif
-#ifndef HAL_CAN_SJW
-#define HAL_CAN_SJW                     0U      /* SJW = 0 → 1 TQ */
-#endif
-#ifndef HAL_CAN_SAMP
-#define HAL_CAN_SAMP                    0U      /* single sample */
-#endif
-
-#ifndef HAL_CAN_CLK_SRC_BUS
-#define HAL_CAN_CLK_SRC_BUS             0U      /* 1 = bus clock, 0 = oscillator */
-#endif
 
 
 static inline void _HAL_CAN_EnterInitMode(HAL_CAN_T * p_hal)
@@ -369,7 +356,29 @@ static inline void _HAL_CAN_Enable(HAL_CAN_T * p_hal, bool enable)
 
 static inline void HAL_CAN_InitBaudRate(HAL_CAN_T * p_hal, uint32_t baudRate)
 {
+    #ifndef HAL_CAN_TIME_QUANTA_PER_BIT
+    #define HAL_CAN_TIME_QUANTA_PER_BIT     8U
+    #endif
+
+    #ifndef HAL_CAN_TSEG1
+    #define HAL_CAN_TSEG1                   3U      /* TSEG1 = 3 → 4 TQ */
+    #endif
+
+    #ifndef HAL_CAN_TSEG2
+    #define HAL_CAN_TSEG2                   2U      /* TSEG2 = 2 → 3 TQ */
+    #endif
+
+    #ifndef HAL_CAN_SJW
+    #define HAL_CAN_SJW                     0U      /* SJW = 0 → 1 TQ */
+    #endif
+
+    #ifndef HAL_CAN_SAMP
+    #define HAL_CAN_SAMP                    0U      /* single sample */
+    #endif
+
+    #ifndef HAL_CAN_BRP_MAX
     #define HAL_CAN_BRP_MAX                 0x3FU
+    #endif
 
     uint32_t tqClk = baudRate * HAL_CAN_TIME_QUANTA_PER_BIT;
     uint32_t brp = (tqClk != 0U && tqClk <= HAL_CAN_CLOCK_SOURCE_FREQ) ? (HAL_CAN_CLOCK_SOURCE_FREQ / tqClk) - 1U : 0U;
@@ -396,8 +405,7 @@ static inline void HAL_CAN_Init(HAL_CAN_T * p_hal)
 
     /* CTL1: select clock source, disable loopback/listen */
     uint8_t ctl1 = p_hal->CANCTL1 & (uint8_t)~(MSCAN_CANCTL1_LOOPB_MASK | MSCAN_CANCTL1_LISTEN_MASK | MSCAN_CANCTL1_CLKSRC_MASK);
-    if (HAL_CAN_CLK_SRC_BUS != 0U) { ctl1 |= MSCAN_CANCTL1_CLKSRC_MASK; }
-    p_hal->CANCTL1 = ctl1;
+    p_hal->CANCTL1 = ctl1 | HAL_CAN_CLOCK_SOURCE_DEFAULT;
 
     /* Acceptance filters: open (accept all) — 32-bit filter mode with mask = all-don't-care */
     p_hal->CANIDAC = (uint8_t)MSCAN_CANIDAC_IDAM(0U); /* 32-bit filter mode */
@@ -434,29 +442,7 @@ static inline void HAL_CAN_Init(HAL_CAN_T * p_hal)
 //     DisableIRQ((IRQn_Type)HAL_CAN_MSCAN_TX_IRQ_NUMBER);
 // }
 
-// static inline void _HAL_CAN_EncodeExtId(uint32_t id29, bool rtr, volatile uint8_t * p_idr0, volatile uint8_t * p_idr1, volatile uint8_t * p_idr2, volatile uint8_t * p_idr3)
-// {
-//     *p_idr0 = (uint8_t)(id29 >> 21);
-//     *p_idr1 = (uint8_t)(((id29 >> 18) & 0x07U) << 5) | (1U << 4) | (1U << 3) | (uint8_t)((id29 >> 15) & 0x07U);
-//     *p_idr2 = (uint8_t)(id29 >> 7);
-//     *p_idr3 = (uint8_t)((id29 & 0x7FU) << 1) | (rtr ? 1U : 0U);
-// }
 
-// static inline void _HAL_CAN_EncodeStdId(uint32_t id11, bool rtr, volatile uint8_t * p_idr0, volatile uint8_t * p_idr1)
-// {
-//     *p_idr0 = (uint8_t)(id11 >> 3);
-//     *p_idr1 = (uint8_t)((id11 & 0x07U) << 5) | (rtr ? (1U << 4) : 0U);
-// }
-
-// static inline uint32_t _HAL_CAN_DecodeExtId(uint8_t idr0, uint8_t idr1, uint8_t idr2, uint8_t idr3)
-// {
-//     return ((uint32_t)idr0 << 21) | (((uint32_t)(idr1 >> 5) & 0x07U) << 18) | (((uint32_t)idr1 & 0x07U) << 15) | ((uint32_t)idr2 << 7) | ((uint32_t)(idr3 >> 1) & 0x7FU);
-// }
-
-// static inline uint32_t _HAL_CAN_DecodeStdId(uint8_t idr0, uint8_t idr1)
-// {
-//     return ((uint32_t)idr0 << 3) | ((uint32_t)(idr1 >> 5) & 0x07U);
-// }
 // static inline void HAL_CAN_WriteTxMessage(HAL_CAN_T * p_hal, const CAN_Frame_T * p_txMessage)
 // {
 //     bool rtr = (p_txMessage->CanId & CAN_ID_FLAG_RTR) != 0U;
