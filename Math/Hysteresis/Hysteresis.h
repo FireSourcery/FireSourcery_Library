@@ -117,7 +117,8 @@ static inline bool Hysteresis_Poll(Hysteresis_T * p_hyst, int32_t input)
 
 static inline bool Hysteresis_PollEdge(Hysteresis_T * p_hyst, int32_t input)
 {
-    return (p_hyst->OutputState != Hysteresis_Poll(p_hyst, input));
+    bool prev = p_hyst->OutputState;
+    return (prev != Hysteresis_Poll(p_hyst, input));
 }
 
 /* Getters for output state */

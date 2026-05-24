@@ -141,7 +141,7 @@ void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor)
 {
     FOC_ClearCaptureState(&p_motor->Foc); /* Clear for view, updated again on enter control */
     FOC_ClearOutputState(&p_motor->Foc); /* Emergency stop, capture bemf subsitute */
-    FOC_ResetFeedbackLoop(&p_motor->Foc);
+    FOC_ResetFeedbackState(&p_motor->Foc);
     PID_Reset(&p_motor->PidSpeed);
     Ramp_SetOutputState(&p_motor->SpeedRamp, 0);
     Ramp_SetOutputState(&p_motor->TorqueRamp, 0);

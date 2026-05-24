@@ -284,7 +284,6 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 // typedef struct Angle_SpeedScale
 typedef struct Angle_SpeedFractRef
 {
-    /* OmegaBaseDeltaT  */
     angle16_t SpeedMax_Angle16;    /* (ω_base · Δt) in angle16/tick — angle step at ω_pu = 1.0 */
     uint32_t InvSpeedMax_Fract32;   /* Fs / ω_base (Q32) — inverse for angle → ω_pu */
     // uint32_t PollingFreq; /* keep for per second conversions if needed */

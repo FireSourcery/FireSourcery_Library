@@ -74,7 +74,11 @@ static inline Traction_Cmd_T Traction_Input_PollCmd(Traction_Input_T * p_input)
     return p_input->DriveCmd;
 }
 
-static inline bool Traction_Input_PollCmdEdge(Traction_Input_T * p_input) { return (p_input->DriveCmd != Traction_Input_PollCmd(p_input)); }
+static inline bool Traction_Input_PollCmdEdge(Traction_Input_T * p_input)
+{
+    Traction_Cmd_T prev = p_input->DriveCmd;
+    return (prev != Traction_Input_PollCmd(p_input));
+}
 
 /*
     Individually set inputs

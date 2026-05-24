@@ -51,6 +51,7 @@
 typedef struct PulseTimer_State
 {
     /* Timer Capture */
+    uint32_t Timer;
     uint32_t DeltaT;        /* Timer counts between 2 pulse edges. Units in raw timer ticks */
     uint32_t SampleTh;       /* Ts timer value at last sample */
     // uint32_t SampleTk;
@@ -107,27 +108,6 @@ PulseTimer_T;
 
 
 /******************************************************************************/
-/*
-
-*/
-/******************************************************************************/
-// static inline uint32_t _PulseTimer_BaseFreq(PulseTimer_T * p_timer)
-// {
-// #ifdef PULSE_DYNAMIC_TIMER
-//     return p_timer->P_STATE->UnitTime_Freq;
-// #else
-//     return p_timer->TIMER_FREQ;
-// #endif
-// }
-
-// simplify init mem maping
-// static inline uint32_t _PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer, PulseTimer_State_T * p_state)
-// {
-//     p_state->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_state->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-//     return p_state->SampleTh;
-// }
-
-/******************************************************************************/
 /*!
     @brief  Capture Sample Time - Pulse Edge Polling/ISR
 */
@@ -153,43 +133,41 @@ static inline uint32_t PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
     return p_state->SampleTh;
 }
 
-static inline uint32_t _PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
-{
-    p_timer->P_STATE->SampleTh = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-    return p_timer->P_STATE->SampleTh;
-}
-
-/* PulsePeriod * count */
 /* T spanning M pulses in the sample window. Returns 0 while accumulating. */
+/* updates SampleTh and returns 0 on overflow */
+/* PulsePeriod * count */
 static inline uint32_t PulseTimer_CaptureSampleTk(PulseTimer_T * p_timer)
 {
     PulseTimer_State_T * p_state = p_timer->P_STATE;
-
-    if (HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER))
-    {
-        p_state->SampleTh = (p_state->SampleTh + p_timer->SAMPLE_TIME); /* Accumulate DeltaTh on overflow */
-        // p_state->SampleT = 0;
-        return 0;
-    }
-    else
-    {
-        // p_state->SampleT = p_timer->SAMPLE_TIME + p_state->SampleTh - HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-        return p_timer->SAMPLE_TIME + p_state->SampleTh - _PulseTimer_CaptureSampleTh(p_timer);
-    }
-
-    /* updates SampleTh and returns 0 on overflow */
-    // return p_timer->SAMPLE_TIME + p_state->SampleTh - PulseTimer_CaptureSampleTh(p_timer);
+    uint32_t prev = p_state->SampleTh;
+    return p_timer->SAMPLE_TIME + prev - PulseTimer_CaptureSampleTh(p_timer);
 }
 
 /* PulseCount/s/count */
+/* sampleTk > SAMPLE_TIME holds unless decelerating */
 static inline uint32_t PulseTimer_CaptureSampleTk_Freq(PulseTimer_T * p_timer)
 {
     uint32_t sampleTk = PulseTimer_CaptureSampleTk(p_timer);
     return (sampleTk > p_timer->SAMPLE_TIME / 2) ? (p_timer->TIMER_FREQ / sampleTk) : 0;
 }
 
-
 static inline bool PulseTimer_IsStop(PulseTimer_T * p_timer) { return (p_timer->P_STATE->DeltaT >= PULSE_TIMER_MAX); }
+
+
+// static inline uint32_t PulseTimer_CaptureDeltaT(PulseTimer_T * p_timer)
+// {
+//     uint32_t time = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+//     p_timer->P_STATE->DeltaT = time - p_timer->P_STATE->Timer;
+//     p_timer->P_STATE->Timer = time;
+//     return p_timer->P_STATE->DeltaT;
+// }
+
+// static inline uint32_t PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer)
+// {
+//     PulseTimer_State_T * p_state = p_timer->P_STATE;
+//     p_state->SampleTh = HAL_ClockTimer_Read(p_timer->P_HAL_TIMER) - p_timer->P_STATE->Timer;
+//     return p_state->SampleTh;
+// }
 
 /******************************************************************************/
 /*!
@@ -215,10 +193,12 @@ static inline uint32_t PulseTimer_CaptureExtendedDeltaT(PulseTimer_T * p_timer)
     return p_timer->P_STATE->DeltaT;
 }
 
+
 /*
     Use Extended Timer to check 0 speed.
 */
 static inline bool PulseTimer_IsExtendedStop(PulseTimer_T * p_timer) { return (_PulseTimer_GetExtendedDelta(p_timer) > p_timer->P_STATE->ExtendedTimerStop); }
+
 
 /*
     Set stop detection threshold from milliseconds.
@@ -231,7 +211,7 @@ static inline void PulseTimer_SetExtendedWatchStop_Millis(PulseTimer_T * p_timer
 
 
 
-/* Alias for Hall edge capture — captures DeltaT and resets timer */
+/* Alias for edge capture — captures DeltaT and resets timer */
 static inline uint32_t PulseTimer_CaptureEdge(PulseTimer_T * p_timer) { return PulseTimer_CaptureExtendedDeltaT(p_timer); }
 
 
@@ -265,6 +245,7 @@ static inline void PulseTimer_SetInitial(PulseTimer_T * p_timer)
 }
 
 
+
 /*
     Capture with overflow
 */
@@ -289,6 +270,44 @@ static inline void PulseTimer_SetInitial(PulseTimer_T * p_timer)
 //     return (elapsed > p_timer->P_STATE->Config.DeltaTStop);
 // }
 
+
+
+
+// static inline uint32_t _PulseTimer_ExtendCapture(PulseTimer_T * p_timer, uint16_t captured, uint16_t now)
+// {
+//     uint32_t high = p_timer->P_STATE->TimerHigh;
+
+//     if (HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) && (captured <= now))
+//     {
+//         high += 0x10000UL;
+//     }
+
+//     return high | captured;
+// }
+
+// static inline void PulseTimer_ISR(PulseTimer_T * p_timer, uint32_t channel)
+// {
+//     PulseTimer_State_T * p_state = p_timer->P_STATE;
+//     bool overflowPending = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER);
+
+//     if (HAL_ClockTimer_ReadCaptureFlag(p_timer->P_HAL_TIMER, channel))
+//     {
+//         uint16_t now = (uint16_t)HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+//         uint16_t captured = HAL_ClockTimer_ReadCapture(p_timer->P_HAL_TIMER, channel);
+//         uint32_t stamp = _PulseTimer_ExtendCapture(p_timer, captured, now);
+
+//         p_state->DeltaT = stamp - p_state->LastEdgeStamp;
+//         p_state->LastEdgeStamp = stamp;
+
+//         HAL_ClockTimer_ClearCaptureFlag(p_timer->P_HAL_TIMER, channel);
+//     }
+
+//     if (overflowPending)
+//     {
+//         p_state->TimerHigh += 0x10000UL;
+//         HAL_ClockTimer_ClearOverflow(p_timer->P_HAL_TIMER);
+//     }
+// }
 
 
 

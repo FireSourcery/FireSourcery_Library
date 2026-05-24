@@ -29,4 +29,27 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
+#include "angle_speed_math.h"
+#include "../Fixed/fract16.h"
 
+#include <stdint.h>
+#include <stdbool.h>
+
+// typedef struct
+// {
+//     angle16_t SpeedMax_Angle16;    /* (ω_base · Δt) in angle16/tick — angle step at ω_pu = 1.0 */
+//     uint32_t InvSpeedMax_Fract32;   /* Fs / ω_base (Q32) — inverse for angle → ω_pu */
+//     // uint32_t PollingFreq; /* keep for per second conversions if needed */
+// }
+// Angle_SpeedUnit_T;
+
+// /* Config Options in RPM */
+// typedef struct
+// {
+//     uint32_t PollingFreq;
+//     uint32_t SpeedMax_Rpm;  /* ω_base as mechanical RPM (~2x rated) */
+// }
+// Angle_SpeedUnit_Rpm_T;
+
+// static inline Angle_SpeedUnit_T Angle_SpeedUnit(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
+// static inline Angle_SpeedUnit_T Angle_SpeedUnit_OfRpm(Angle_SpeedUnit_Rpm_T rpmConfig) { return ANGLE_SPEED_FRACT_REF_FROM_CALIB(rpmConfig.PollingFreq, rpmConfig.SpeedMax_Rpm); }

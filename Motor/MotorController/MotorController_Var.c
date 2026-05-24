@@ -252,6 +252,7 @@ static int _HandleGeneral_Get(MotorController_T * p_dev, MotVarId_T varId)
         case MOT_VAR_TYPE_OPT_DIN_CONFIG:        return OptDin_ConfigId_Get(&p_dev->P_MC->Config.OptDinConfig, varId.Base);
         case MOT_VAR_TYPE_USER_DIN_STATE:        return UserDIn_Var_GetInstance(p_dev->DINS, MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
         case MOT_VAR_TYPE_USER_DIN_CONFIG:       return UserDIn_Config_GetInstance(&p_dev->P_MC->Config.DInConfigs[0], MOT_USER_DIN_COUNT, varId.Instance, varId.Base);
+        // todowrap with analg user for now
         // case MOT_VAR_TYPE_USER_AIN_STATE:        return UserAIn_Var_GetInstance(p_dev->AINS, MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
         // case MOT_VAR_TYPE_USER_AIN_CONFIG:       return UserAIn_Config_GetInstance(&p_dev->P_MC->Config.AInConfigs[0], MOT_USER_AIN_COUNT, varId.Instance, varId.Base);
         default: return 0;

@@ -151,61 +151,65 @@ static inline int32_t mech_rpm_of_el_angle(uint32_t pollingFreq, uint8_t polePai
 */
 /* cps [0:POLLING_FREQ/2] */
 static inline int32_t angle_of_cps(uint32_t pollingFreq, int16_t cps) { return angle_speed_of(pollingFreq, cps); }
-// static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return _angle_freq_of(pollingFreq, angle16); }
 static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return angle16 * (int32_t)RPS_PER_ANGLE_SPEED(pollingFreq) / FRACT16_SCALE; }
+// static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { return _angle_freq_of(pollingFreq, angle16); }
 
 
 /******************************************************************************/
 /*!
-    @brief  Boundary: el_delta_angle16  ↔  ω_pu (ω_base-anchored, fract16-scaled)
+    @brief  Boundary: delta_angle16  ↔  ω_pu (ω_base-anchored, fract16-scaled)
 
-        ω_pu × FRACT16_SCALE = el_delta · 30 · Fs / (P · n_rated_rpm)
-                             = el_delta · 2π·Fs/(65536·ω_base) · FRACT16_SCALE     [π cancels]
+        ω_pu × FRACT16_SCALE = delta · 30 · Fs / (P · n_rated_rpm)
+                             = delta · 2π·Fs/(65536·ω_base) · FRACT16_SCALE     [π cancels]
 */
 /******************************************************************************/
 /*
     angle16_of_speed_pu_rpm
     RPM Ref
 */
-// return angle_of_rpm(pollingFreq, fract16_mul(speedRef_Rpm, rpm_fract16));
-static inline int16_t angle_of_rpm_fract16(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t rpm_fract16)
+// return angle_of_rpm(polling_freq, fract16_mul(base_rpm, rpm_fract16));
+static inline int16_t angle_of_rpm_fract16(uint32_t polling_freq, uint32_t base_rpm, int16_t pu_fract16)
 {
-    return ((int32_t)rpm_fract16 * speedRef_Rpm) / ((SECONDS_PER_MINUTE / 2) * pollingFreq);
+    return ((int32_t)pu_fract16 * base_rpm) / ((SECONDS_PER_MINUTE / 2) * polling_freq);
 }
 
-static inline int16_t rpm_fract16_of_angle(uint32_t pollingFreq, uint32_t speedRef_Rpm, int16_t angle16)
+static inline int16_t rpm_fract16_of_angle(uint32_t polling_freq, uint32_t base_rpm, int16_t delta)
 {
-    return ((int64_t)angle16 * ((SECONDS_PER_MINUTE / 2) * pollingFreq)) / speedRef_Rpm;
+    return ((int64_t)delta * ((SECONDS_PER_MINUTE / 2) * polling_freq)) / base_rpm;
 }
 
 /*
     angle16_of_speed_pu_rads
+*/
+/* delta = ω_pu_fract16 · (ω_base / (π · Fs)) */
+static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, int16_t pu_fract16)
+{
+    return ((int64_t)pu_fract16 * base_rads * FRACT16_SCALE) / ((int64_t)FRACT16_PI * polling_freq);
+}
+
+/* ω_pu_fract16 = delta · π · Fs / ω_base */
+static inline int32_t rads_fract16_of_angle(uint32_t polling_freq, uint32_t base_rads, int16_t delta)
+{
+    return (int64_t)delta * FRACT16_PI * polling_freq / (base_rads * FRACT16_SCALE);
+}
+
+/*
     optional include rads scaling
     // static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, int16_t rads_pu, rads_scale)
 */
-/* el_delta = ω_pu_fract16 · (ω_base / (π · Fs)) */
-static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, int16_t rads_pu)
-{
-    return ((int64_t)rads_pu * base_rads * FRACT16_SCALE) / ((int64_t)FRACT16_PI * polling_freq);
-}
-
-/* ω_pu_fract16 = el_delta · π · Fs / ω_base */
-static inline int32_t rads_fract16_of_angle(uint32_t polling_freq, uint32_t base_rads, int16_t el_delta_angle16)
-{
-    return (int64_t)el_delta_angle16 * FRACT16_PI * polling_freq / (base_rads * FRACT16_SCALE);
-}
-
 
 /******************************************************************************/
 /*
     si to si
 */
 /******************************************************************************/
-static inline uint32_t rads_of_rpm(uint32_t rpm, uint32_t scale) { return (uint64_t)FRACT16_PI * rpm * scale / (30U * FRACT16_SCALE); }
+static inline uint32_t rads_of_rpm(uint32_t rpm, uint32_t scale) { return (uint64_t)rpm * FRACT16_PI * scale / (30U * FRACT16_SCALE); }
 static inline uint32_t rpm_of_rads(uint32_t rads, uint32_t scale) { return (uint64_t)rads * 30U * FRACT16_SCALE / ((uint64_t)FRACT16_PI * scale); }
+static inline uint32_t mrads_of_rpm(uint32_t rpm) { return rads_of_rpm(rpm, 1000U); }
+static inline uint32_t rpm_of_mrads(uint32_t mrads) { return rpm_of_rads(mrads, 1000U); }
+
 
 static inline uint32_t el_rads_of_mech_rpm(uint32_t mech_rpm, uint8_t pole_pairs) { return rads_of_rpm(mech_rpm, pole_pairs); }
 static inline uint32_t mech_rpm_of_el_rads(uint32_t el_rads, uint8_t pole_pairs) { return rpm_of_rads(el_rads, pole_pairs); }
-
-static inline uint32_t mrads_of_rpm(uint32_t speed_rpm, uint8_t polePairs) { return (uint64_t)FRACT16_PI * speed_rpm * polePairs * 1000UL / (30UL * FRACT16_SCALE); }
-static inline uint32_t rpm_of_mrads(uint32_t speed_base_mrads_e, uint8_t polePairs) { return (uint64_t)speed_base_mrads_e * 30UL * FRACT16_SCALE / ((uint64_t)FRACT16_PI * polePairs * 1000UL); }
+// static inline uint32_t mrads_of_rpm(uint32_t speed_rpm, uint8_t polePairs) { return rads_of_rpm(speed_rpm, polePairs * 1000U); }
+// static inline uint32_t rpm_of_mrads(uint32_t speed_base_mrads_e, uint8_t polePairs) { return rpm_of_rads(speed_base_mrads_e, polePairs * 1000U); }

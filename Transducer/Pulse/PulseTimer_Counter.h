@@ -40,20 +40,36 @@
 */
 /******************************************************************************/
 /* Count only. Angle supplied externally (sector LUT, Hall snap, etc.) */
-static inline void PulseTimer_Counter_CaptureEdge(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
-{
-    PulseTimer_CaptureEdge(p_timer);
-    AngleCounter_CaptureCount(p_counter, sign);
-}
+// static inline void PulseTimer_Counter_CaptureEdge(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+// {
+//     PulseTimer_CaptureEdge(p_timer);
+//     AngleCounter_CaptureCount(p_counter, sign);
+// }
 
-/* Count + wrap angle. Angle derived from counter (Timer-style) */
-static inline void PulseTimer_Counter_CaptureEdgeWrap(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
-{
-    PulseTimer_CaptureEdge(p_timer);
-    AngleCounter_CaptureCountAngle(p_counter, sign);
-}
+// /* Count + wrap angle. Angle derived from counter (Timer-style) */
+// static inline void PulseTimer_Counter_CaptureEdgeWrap(PulseTimer_T * p_timer, AngleCounter_T * p_counter, int sign)
+// {
+//     PulseTimer_CaptureEdge(p_timer);
+//     AngleCounter_CaptureCountAngle(p_counter, sign);
+// }
 
-static inline void PulseTimer_Counter_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)
-{
-    AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(p_timer));
-}
+// static inline void PulseTimer_Counter_CaptureFreq(PulseTimer_T * p_timer, AngleCounter_T * p_counter)
+// {
+//     AngleCounter_CaptureFreq(p_counter, PulseTimer_CaptureSampleTk_Freq(p_timer));
+// }
+
+
+// typedef struct
+// {
+//     uint32_t DeltaT;        /* Timer counts between 2 pulse edges. Units in raw timer ticks */
+//     uint32_t SampleTh;       /* Ts timer value at last sample */
+//     // uint32_t SampleTk;
+// }
+// PulseTimer_Freq_T;
+
+// // simplify init mem maping
+// static inline uint32_t _PulseTimer_CaptureSampleTh(PulseTimer_T * p_timer, PulseTimer_Freq_T * p_state)
+// {
+//     p_state->SampleTh = HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (p_state->SampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
+//     return p_state->SampleTh;
+// }

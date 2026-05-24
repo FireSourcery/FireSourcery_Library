@@ -60,6 +60,7 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
     Hall_Init(&p_sensor->HALL);
     PulseTimer_Init(&p_sensor->PULSE.TIMER);
     PulseTimer_SetExtendedWatchStop_Millis(PulseEncoder_Timer(&p_sensor->PULSE), 1000U);
+    // PulseTimer_SetExtendedWatchStop_Millis(PulseEncoder_Timer(&p_sensor->PULSE), 100U);
 }
 
 /*
@@ -73,7 +74,7 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 
     if (Hall_PollCaptureSensors(&p_sensor->HALL) == true) /* 1/6 Electrical Cycle, typically > 1ms */
     {
-        PulseEncoder_CaptureEdge(&p_sensor->PULSE, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
+        PulseEncoder_CaptureCount(&p_sensor->PULSE, Hall_ResolveDirection(p_sensor->HALL.P_STATE));
         AngleCounter_SetAngle(p_counter, Hall_ResolveAngle(p_sensor->HALL.P_STATE)); /* Snap Base.Angle to exact sector boundary — self-corrects interpolation drift each edge */
         AngleCounter_SetLimitWindow(p_counter, ANGLE16_PER_REVOLUTION / 6); /* Clamp interpolation to the next sector endpoint (60° ahead in sign(Delta)) */
     }
@@ -91,17 +92,13 @@ static void Hall_RotorSensor_CaptureAngle(const Hall_RotorSensor_T * p_sensor)
 static void Hall_RotorSensor_CaptureSpeed(const Hall_RotorSensor_T * p_sensor)
 {
     AngleCounter_T * p_counter = PulseEncoder_Counter(&p_sensor->PULSE);
-
-    if (PulseTimer_IsExtendedStop(PulseEncoder_Timer(&p_sensor->PULSE)) == false) { PulseEncoder_CaptureFreq(&p_sensor->PULSE); }
-    else { p_counter->FreqD = 0; }
-
+    PulseEncoder_CaptureFreq(&p_sensor->PULSE); /* Gradual decay when no pulses */
     /* Propagate FreqD for interpolation */
     AngleCounter_ResolveAngleDelta(p_counter);
     /* Write speed to output interface */
     p_sensor->BASE.P_STATE->Speed_Fract16 = (AngleCounter_GetSpeed_Fract16(p_counter) + p_sensor->BASE.P_STATE->Speed_Fract16) / 2;
-    p_sensor->BASE.P_STATE->AngleSpeed.Delta = p_counter->Base.Delta;
+    p_sensor->BASE.P_STATE->AngleSpeed.Delta = p_counter->Base.Delta / 2 + p_sensor->BASE.P_STATE->AngleSpeed.Delta / 2;
 }
-
 
 static bool Hall_RotorSensor_IsFeedbackAvailable(const Hall_RotorSensor_T * p_sensor) { (void)p_sensor; return true; }
 

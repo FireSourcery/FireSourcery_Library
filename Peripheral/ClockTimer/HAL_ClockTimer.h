@@ -49,12 +49,16 @@ static inline void HAL_ClockTimer_Init(HAL_ClockTimer_T * p_timer);
 */
 #include HAL_PERIPHERAL_PATH(HAL_ClockTimer.h)
 
+/*
+    handle overflow that may occur between checking HAL_ClockTimer_ReadOverflow and reading HAL_ClockTimer_Read
+*/
 static inline uint32_t HAL_ClockTimer_CapturePeriod(HAL_ClockTimer_T * p_hal)
 {
-    uint32_t timerValue = HAL_ClockTimer_ReadOverflow(p_hal) ? HAL_CLOCK_TIMER_MAX : HAL_ClockTimer_Read(p_hal);
+    uint32_t timerValue = HAL_ClockTimer_Read(p_hal);
+    uint32_t effectiveValue = HAL_ClockTimer_ReadOverflow(p_hal) ? HAL_CLOCK_TIMER_MAX : timerValue;
     HAL_ClockTimer_ClearOverflow(p_hal);
     HAL_ClockTimer_Write(p_hal, 0U);
-    return timerValue;
+    return effectiveValue;
 }
 
 

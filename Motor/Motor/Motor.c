@@ -104,10 +104,10 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Motor_InitDecouplingCoeffs(&p_motor->Config); // todo
     FOC_InitElectrical(&p_motor->Foc, &p_motor->Config.ElectricalParams_Pu);
     FOC_Sensorless_Init(&p_motor->FocSensorless, &p_motor->Config.SensorlessConfig);
-    // FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_rpm(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.PolePairs, (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
-    FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_of_angle(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating), (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
-    Angle_SpeedFractCalib_T speed_calib = { .PollingFreq = MOTOR_CONTROL_FREQ, .SpeedMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating) };
-    FOC_Sensorless_InitAngleUnits(&p_motor->FocSensorless, &speed_calib);
+    FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_rpm(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.PolePairs, (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
+    // FOC_Sensorless_InitG(&p_motor->FocSensorless, smo_g_pu_of_angle(MOTOR_I_LOOP_FREQ, Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating), (p_motor->Config.ElectricalParams_Pu.Ld + p_motor->Config.ElectricalParams_Pu.Lq) / 2));
+    // Angle_SpeedFractCalib_T speed_calib = { .PollingFreq = MOTOR_CONTROL_FREQ, .SpeedMax_Rpm = Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating) };
+    // FOC_Sensorless_InitAngleUnits(&p_motor->FocSensorless, &speed_calib);
 
     p_motor->Foc.IdFwGain = p_motor->Config.FieldWeakening.IdFwGain;
     p_motor->Foc.IdFwLimit = p_motor->Config.FieldWeakening.IdFwLimit;
@@ -169,7 +169,7 @@ void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config)
     p_config->ElectricalParams_Pu.Psi = psi_pu_of_kv(MOTOR_CONTROL_FREQ, v_max, p_config->SpeedRating.PolePairs, p_config->SpeedRating.Kv);
 #else
     /*
-        motor speed  anchored:
+        motor speed anchored:
         Fs independent
         ω_mech_pu = ω_elec_pu
         θ_increment = ω_pu · (ω_base / Fs)

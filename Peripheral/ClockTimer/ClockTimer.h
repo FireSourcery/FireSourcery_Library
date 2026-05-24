@@ -63,13 +63,6 @@ ClockTimer_T;
 */
 static inline uint32_t ClockTimer_CaptureDeltaT(ClockTimer_T * p_timer) { return HAL_ClockTimer_CapturePeriod(p_timer->P_HAL_TIMER); }
 
-/*
-    Per SAMPLE_TIME
-*/
-// static inline uint32_t ClockTimer_CaptureSampleTh(ClockTimer_T * p_timer, uint32_t prevSampleTh)
-// {
-//     return HAL_ClockTimer_ReadOverflow(p_timer->P_HAL_TIMER) ? (prevSampleTh + p_timer->SAMPLE_TIME) : HAL_ClockTimer_Read(p_timer->P_HAL_TIMER);
-// }
 
 
 /******************************************************************************/

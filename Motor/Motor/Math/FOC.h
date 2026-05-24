@@ -320,6 +320,13 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus,  int16
 */
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
+    // if (math_abs(speed) < SPEED_FF_THRESHOLD)
+    // {
+    //     p_foc->ElectricalSpeed.OmegaLd = 0;
+    //     p_foc->ElectricalSpeed.OmegaLq = 0;
+    //     p_foc->ElectricalSpeed.OmegaPsi = 0;
+    //     return;
+    // }
     p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Electrical.Ld, speed));
     p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Electrical.Lq, speed));
     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Electrical.Psi, speed));
@@ -598,7 +605,7 @@ static void FOC_ClearOutputState(FOC_T * p_foc)
     p_foc->Vc = 0;
 }
 
-static inline void FOC_ResetFeedbackLoop(FOC_T * p_foc)
+static inline void FOC_ResetFeedbackState(FOC_T * p_foc)
 {
     PID_Reset(&p_foc->PidIq);
     PID_Reset(&p_foc->PidId);

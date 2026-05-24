@@ -225,10 +225,10 @@ static inline struct foc_abc foc_inv_clarke(fract16_t alpha, fract16_t beta)
     @param[in]  theta - rotating frame angle in q1.15 format
 */
 /******************************************************************************/
-static inline fract16_t foc_park_axis_d(fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
-{
-    return fract16_sat(fract16_mul(alpha, cos) + fract16_mul(beta, sin));
-}
+// static inline fract16_t foc_park_axis_d(fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
+// {
+//     return fract16_sat(fract16_mul(alpha, cos) + fract16_mul(beta, sin));
+// }
 
 static inline struct foc_dq foc_park_vector(fract16_t alpha, fract16_t beta, fract16_t sin, fract16_t cos)
 {

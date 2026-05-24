@@ -115,7 +115,7 @@ static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t a
 static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
 
 /* Optional seperate ResolveCounterDelta */
-static inline int32_t AngleCounter_ResolveDeltaD(AngleCounter_T * p_counter)
+static inline int32_t AngleCounter_CaptureDeltaD(AngleCounter_T * p_counter)
 {
     int32_t deltaD = p_counter->CounterD;
     p_counter->CounterD = 0;
@@ -127,6 +127,7 @@ static inline int32_t AngleCounter_ResolveDeltaD(AngleCounter_T * p_counter)
     ModeDT Frequency Estimation - call at SampleFreq (~1kHz)
     Samples DeltaD from CounterD, computes PeriodT from DeltaTh, runs ModeDT.
 
+
     @param[in] periodTk  Timer reading from PulseTimer
 */
 /******************************************************************************/
@@ -135,13 +136,17 @@ static inline void AngleCounter_CaptureFreq(AngleCounter_T * p_counter, uint32_t
     int32_t deltaD = p_counter->CounterD;
     p_counter->CounterD = 0;
 
-    if ((deltaD != 0) && (sampleTkFreq != 0)) { p_counter->FreqD = deltaD * (int32_t)(sampleTkFreq); }
+    if (sampleTkFreq != 0) /* else bad sample */
+    {
+        /* sampleTkFreq is DeltaT Freq or accumulating SampleT Freq, returns 0 when < 1 pulse per second */
+        p_counter->FreqD = ((deltaD != 0) ? deltaD : math_sign(p_counter->FreqD)) * (int32_t)sampleTkFreq;
+    }
 }
 
 /*
     Query — FreqD conversions
 */
-static inline angle16_t AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _angle_speed_of_counter_freq(p_counter->Ref.AngleSpeed32PerCount, p_counter->FreqD); }
+// static inline angle16_t AngleCounter_GetDelta(AngleCounter_T * p_counter) { return _angle_speed_of_counter_freq(p_counter->Ref.AngleSpeed32PerCount, p_counter->FreqD); }
 static inline int32_t AngleCounter_GetSpeed_Fract16(AngleCounter_T * p_counter) { return _speed_fract16_of_counter_freq(p_counter->Ref.SpeedFractPerCount, p_counter->FreqD); }
 
 /******************************************************************************/

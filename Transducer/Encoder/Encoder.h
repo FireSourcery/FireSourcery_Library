@@ -274,7 +274,7 @@ static inline void _Encoder_CaptureDeltaD(const Encoder_T * p_encoder, Encoder_S
     /* Do not clear the counter as it is also the angle in this case */
 #else
     (void)p_encoder; (void)p_state;
-    // p_state->DeltaD = AngleCounter_ResolveDeltaD(&p_state->AngleCounter);
+    // p_state->DeltaD = AngleCounter_CaptureDeltaD(&p_state->AngleCounter);
 #endif
 }
 
