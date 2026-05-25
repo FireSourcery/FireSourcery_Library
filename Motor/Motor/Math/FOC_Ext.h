@@ -54,6 +54,11 @@ static inline bool FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_phas
     }
 }
 
+static inline bool _FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_phaseData)
+{
+    FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
+}
+
 /* FeedbackState */
 // static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
 // {

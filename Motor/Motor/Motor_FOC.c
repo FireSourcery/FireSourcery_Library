@@ -45,7 +45,7 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t
 #if (MOTOR_CONTROL_FREQ != MOTOR_I_LOOP_FREQ)  /* update angle only for voutput, until divider from adc is set */
     if (FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I)) { FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq); }
 #else
-    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I);
+    _FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I);
     FOC_ProcIFeedback(&p_motor->Foc, vBus, dReq, qReq);
 #endif
     FOC_ProcInvClarkePark(&p_motor->Foc);
@@ -58,7 +58,7 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t
 */
 void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
-    // FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update  but ignore I feedback */
+    FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
     FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
 }
 

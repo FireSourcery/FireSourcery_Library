@@ -59,8 +59,7 @@ static void Hall_RotorSensor_Init(const Hall_RotorSensor_T * p_sensor)
 {
     Hall_Init(&p_sensor->HALL);
     PulseTimer_Init(&p_sensor->PULSE.TIMER);
-    PulseTimer_SetExtendedWatchStop_Millis(PulseEncoder_Timer(&p_sensor->PULSE), 1000U);
-    // PulseTimer_SetExtendedWatchStop_Millis(PulseEncoder_Timer(&p_sensor->PULSE), 100U);
+    PulseTimer_SetExtendedWatchStop_Millis(PulseEncoder_Timer(&p_sensor->PULSE), 500U);
 }
 
 /*

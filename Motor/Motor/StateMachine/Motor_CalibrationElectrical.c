@@ -309,13 +309,11 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
         case PARAMID_STEP_LD_INJECT:
             fract16_t vd = p_params->VdBias + p_params->VdStep;
-            FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
             Motor_FOC_ProcAngleFeedforwardV(p_context, 0, vd, 0);
             ProcLd(p_params, FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LQ_HFI:
             fract16_t vq = fract16_mul(p_params->Vhfi, fract16_sin(p_params->HfiPhase));
-            FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
             Motor_FOC_ProcAngleFeedforwardV(p_context, 0, p_params->VdBias, vq);
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
