@@ -658,6 +658,9 @@ static int _Motor_Var_Foc_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
         case MOTOR_VAR_FOC_IQ:      value = p_foc->Iq;                  break;
         case MOTOR_VAR_FOC_VD:      value = p_foc->Vd;                  break;
         case MOTOR_VAR_FOC_VQ:      value = p_foc->Vq;                  break;
+        case MOTOR_VAR_FOC_VA:      value = p_foc->Va;                  break;
+        case MOTOR_VAR_FOC_VB:      value = p_foc->Vb;                  break;
+        case MOTOR_VAR_FOC_VC:      value = p_foc->Vc;                  break;
         case MOTOR_VAR_FOC_INTEGRAL_D:    value = PID_GetIntegral(&p_foc->PidId);   break;
         case MOTOR_VAR_FOC_INTEGRAL_Q:    value = PID_GetIntegral(&p_foc->PidIq);   break;
     }

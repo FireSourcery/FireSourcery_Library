@@ -40,10 +40,6 @@
     Var Runtime telemetry
 */
 /******************************************************************************/
-// static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return fract16_mul(Motor_GetDecouplingOmega(p_context), p_context->Foc.Electrical.Psi); }
-static inline int32_t VSpeed_Fract16(const Motor_Context_T * p_context) { return  (p_context->Foc.ElectricalSpeed.OmegaPsi); }
-// static inline int32_t VSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_GetSpeedFeedback(p_motor->P_MOTOR), Motor_Psi_Fract16(p_motor)); }
-
 int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
 {
     const Motor_Context_T * p_state = p_motor->P_MOTOR;
@@ -61,9 +57,7 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
         case MOTOR_VAR_TORQUE_I_REQ:                value = Motor_GetISetpoint(p_state);                    break;
         case MOTOR_VAR_TORQUE_V_REQ:                value = Motor_GetVSetpoint(p_state);                    break;
 
-        case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = VSpeed_Fract16(p_state);     break;
-        // case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = VSpeed_Fract16(p_state);     break;
-        // case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_Fract16(p_motor);     break;
+        case MOTOR_VAR_V_SPEED_EFFECTIVE:           value = Motor_GetVSpeedEffective_Fract16(p_motor);     break;
         case MOTOR_VAR_POWER:                       value = Motor_GetElectricalPower_Fract16(p_state);     break;
         case MOTOR_VAR_I_BUS:                       value = Motor_GetIBus_Fract16(p_motor);                break;
     }

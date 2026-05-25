@@ -194,7 +194,7 @@ typedef struct MotorController_Context
     // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
 
-    // /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
+    /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
     UserAIn_State_T AInStates[MOT_USER_AIN_COUNT];
     UserDIn_State_T AInGateStates[MOT_USER_AIN_COUNT];
 
