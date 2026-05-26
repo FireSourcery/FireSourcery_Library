@@ -39,23 +39,13 @@
 */
 #ifndef PHASE_ANALOG_V_MAX_ADCU
 #define PHASE_ANALOG_V_MAX_ADCU (4096U)
-#define PHASE_ANALOG_V_FRACT16_SHIFT (3U)
-#define PHASE_ANALOG_V_FRACT16_FACTOR (1L << PHASE_ANALOG_V_FRACT16_SHIFT)
+#define PHASE_ANALOG_V_FRACT16_PER_ADCU (1L << 3U)
 #endif
 
 #ifndef PHASE_ANALOG_I_MAX_ADCU
 #define PHASE_ANALOG_I_MAX_ADCU (2048U)
-#define PHASE_ANALOG_I_FRACT16_SHIFT (4U)
-#define PHASE_ANALOG_I_FRACT16_FACTOR (1L << PHASE_ANALOG_I_FRACT16_SHIFT)
+#define PHASE_ANALOG_I_FRACT16_PER_ADCU (1L << 4U)
 #endif
-
-// #ifndef PHASE_ANALOG_V_FRACT16_PER_ADCU
-// #define PHASE_ANALOG_V_FRACT16_PER_ADCU (1L << 3U)
-// #endif
-
-// #ifndef PHASE_ANALOG_I_FRACT16_PER_ADCU
-// #define PHASE_ANALOG_I_FRACT16_PER_ADCU (1L << 4U)
-// #endif
 
 #ifndef PHASE_ANALOG_I_POLARITY
 #ifdef PHASE_ANALOG_I_SENSOR_INVERT
@@ -65,8 +55,8 @@
 #endif
 #endif
 
-static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_FACTOR; }
-static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_FACTOR * PHASE_ANALOG_I_POLARITY); }
+static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_PER_ADCU; }
+static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
 /******************************************************************************/
 /*
@@ -79,11 +69,12 @@ typedef const struct Phase_AnalogCalibration
     volatile uint32_t V_PHASE_R1;
     volatile uint32_t V_PHASE_R2;
 
-    volatile uint16_t I_PHASE_R_BASE;      /* mOhm*1000 */
-    volatile uint16_t I_PHASE_R_MOSFETS;   /* mOhm*1000 */
-    // volatile uint16_t I_PHASE_R_SHUNT;   /* mOhm*1000 */
-    volatile uint16_t I_PHASE_GAIN;        /* x10 */
+    volatile uint16_t I_PHASE_R_BASE;
+    volatile uint16_t I_PHASE_R_MOSFETS;
+    volatile uint16_t I_PHASE_R_SHUNT;      /* uOhm */
+    volatile uint16_t I_PHASE_GAIN;         /* x10 */
 
+    /*  */
     volatile uint16_t V_RATED;             /* VSource Limit */
     volatile uint16_t I_RATED_RMS;         /* */
 }

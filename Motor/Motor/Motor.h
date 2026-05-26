@@ -32,7 +32,6 @@
 
 #include "Phase/Phase_VOut.h"
 #include "Phase_Input/Phase_Input.h"
-#include "Phase_Input/Phase_VBus.h"
 #include "Phase_Input/Phase_Analog.h"
 #include "Phase_Input/Phase_Calibration.h"
 #include "VBus/VBus.h"
@@ -142,6 +141,7 @@ static inline Motor_Direction_T Motor_Direction_Cast(int direction)
         default: return MOTOR_DIRECTION_NULL; /* Invalid direction */
     }
 }
+
 
 /******************************************************************************/
 /*
@@ -542,7 +542,7 @@ static inline interval_t Motor_SpeedLimitsAs(Motor_T * p_motor, Motor_Direction_
 */
 static inline interval_t Motor_GetILimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)); }
 static inline interval_t Motor_GetSpeedLimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
-// static inline interval_t Motor_GetVLimits(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
+// static inline interval_t Motor_GetVLimits(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_(p_motor), Motor_SpeedLimitReverse(p_motor)); }
 
 /*
     Resolve = re-pull canonical (LimitArray + Config + Direction) → write Ccw/Cw → flush PID/Ramp.
@@ -755,28 +755,7 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 #endif
 
 
-/******************************************************************************/
-/*!
-    Angle Speed Wrap
-*/
-/******************************************************************************/
-// static inline void Motor_SetElAngleFeedforward(Motor_Context_T * p_motor, angle16_t angle)
-// {
-//     _Motor_SetFeedforwardDelta(p_motor, angle - p_motor->SensorState.ElectricalAngle);
-// }
 
-// static inline void Motor_SetElSpeedFeedforward(Motor_Context_T * p_motor, angle16_t elSpeed_degPerCycle)
-// {
-//     _Motor_SetFeedforwardDelta(p_motor, elSpeed_degPerCycle);
-// }
-
-// static inline void Motor_SetMechAngleFeedforward(Motor_Context_T * p_motor, angle16_t angle)
-// {
-//     Motor_SetElAngleFeedforward(p_motor, angle * p_motor->Config.PolePairs);
-// }
-
-// static inline ufract16_t _Motor_GetIDerate(Motor_Context_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
-// static inline ufract16_t _Motor_GetSpeedDerate(Motor_Context_T * p_motor, LimitArray_Augments_T * p_limits) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_limits)); }
 
 /* Alternate base selection */
 /*

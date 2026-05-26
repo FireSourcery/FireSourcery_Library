@@ -72,27 +72,27 @@
 // }
 
 /* compile time config only */
-static inline const void * _Motor_CommutationModeFn(const Motor_Context_T * p_motor, const void * focFunction, const void * sixStepFunction)
-{
-#if defined(MOTOR_FOC_ENABLE)
-    return focFunction;
-#endif
-#if defined(MOTOR_SIX_STEP_ENABLE)
-    return sixStepFunction;
-#endif
-}
+// static inline const void * _Motor_CommutationModeFn(const Motor_Context_T * p_motor, const void * focFunction, const void * sixStepFunction)
+// {
+// #if defined(MOTOR_FOC_ENABLE)
+//     return focFunction;
+// #endif
+// #if defined(MOTOR_SIX_STEP_ENABLE)
+//     return sixStepFunction;
+// #endif
+// }
 
-// c23
-// #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction) *)(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
+// // c23
+// // #define Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction) ((typeof(focFunction) *)(_Motor_CommutationModeFn(p_motor, focFunction, sixStepFunction)))
 
-#define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
-    _Generic((focSet), \
-        Motor_Set_T:    (Motor_Set_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)), \
-        Motor_Get_T:    (Motor_Get_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
-        Motor_Proc_T:   (Motor_Proc_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))   \
-    )
+// #define Motor_CommutationModeFn(p_motor, focSet, sixStepSet) \
+//     _Generic((focSet), \
+//         Motor_Set_T:    (Motor_Set_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)), \
+//         Motor_Get_T:    (Motor_Get_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet)),  \
+//         Motor_Proc_T:   (Motor_Proc_T)(_Motor_CommutationModeFn(p_motor, focSet, sixStepSet))   \
+//     )
 
-#define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) ((Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor __VA_OPT__(,) __VA_ARGS__))
+// #define Motor_CommutationModeFn_Call(p_motor, focSet, sixStepSet, ...) ((Motor_CommutationModeFn(p_motor, focSet, sixStepSet))(p_motor __VA_OPT__(,) __VA_ARGS__))
 
 
 

@@ -31,7 +31,6 @@
 #include "../Motor_FOC.h"
 #include "../Motor_ControlFreq.h"
 #include "../Phase_Input/Phase_Calibration.h"
-#include "../Phase_Input/Phase_VBus.h"
 
 #include "Math/Fixed/fract16.h"
 #include "Math/math_general.h"
@@ -331,7 +330,11 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
     }
 }
-
+// Motor_Context_T * p_context = p_motor->P_MOTOR;
+// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_emf(FOC_GetVPhase(&p_context->Foc), Motor_GetSpeedFeedback(p_context));
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
 State_T * Electrical_Next(Motor_T * p_motor)
 {
     if (ElectricalCalibrationBuffer(p_motor->P_MOTOR)->Step == PARAMID_STEP_DONE) { return &MOTOR_STATE_CALIBRATION; }

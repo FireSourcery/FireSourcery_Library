@@ -44,7 +44,7 @@ typedef const struct Phase_Calibration
     volatile uint16_t V_MAX_VOLTS; /* V_SAT_VOLTS */
     volatile uint16_t I_MAX_AMPS;
 
-    /* Optionally include units */
+    /* Optionally include si units */
     volatile uint16_t V_RATED_FRACT16;
     volatile uint16_t I_RATED_PEAK_FRACT16;
 }
@@ -118,3 +118,7 @@ static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
     return ((accum32_t)fract16 * Phase_Calibration_GetVMaxVolts() * 1000) / ((accum32_t)Phase_Calibration_GetIMaxAmps() * 32768);
 }
 
+// static inline uint32_t Phase_L_Fract16OfSi(uint32_t fs_hz, uint16_t rs_mOhms, uint16_t ls_uHenries)
+// {
+//   l_pu_of_uh(fs_hz, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries);
+// }

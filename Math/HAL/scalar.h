@@ -38,6 +38,8 @@
     wrap semantics over storage.
 */
 #ifndef FLOATING_POINT
+typedef accum32_t scalar_wide_t; /*  */
+typedef fract16_t scalar_unit_t; /* < 1.0 */
 typedef fract16e_t scalar_ext_t;
 typedef fract16_t scalar_t;
 #else

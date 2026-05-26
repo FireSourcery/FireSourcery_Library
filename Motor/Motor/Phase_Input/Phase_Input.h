@@ -93,7 +93,7 @@ typedef enum Phase_InputVar
 Phase_InputVar_T;
 
 
-static inline int Phase_InputVar_Get(const Phase_Input_T * p_phase, Phase_InputVar_T var)
+static inline int Phase_Input_Var_Get(const Phase_Input_T * p_phase, Phase_InputVar_T var)
 {
     switch (var)
     {

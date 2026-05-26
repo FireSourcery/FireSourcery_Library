@@ -51,8 +51,6 @@ static inline void Motor_MarkAnalog_Thread(Motor_T * p_dev)
     if (Motor_IsAnalogCycle(p_dev) == true) { _Motor_Analog_Thread(p_dev); }
 }
 
-
-
 /******************************************************************************/
 /*
     Motor_PWM_Thread
@@ -70,7 +68,6 @@ static inline void Motor_CaptureSensor(Motor_T * p_motor)
     {
         RotorSensor_CaptureSpeed(p_state->p_ActiveSensor);
         _StateMachine_ActionInput(p_motor->STATE_MACHINE.P_ACTIVE, (void *)p_motor, MOTOR_STATE_INPUT_ON_SPEED);
-        // p_state->SpeedUpdateFlag = true; /* Set flag to forward to statemachine proc. alternatively call StateMachine input directly */
     }
 }
 

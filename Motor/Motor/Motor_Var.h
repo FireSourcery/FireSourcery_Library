@@ -246,6 +246,7 @@ typedef enum Motor_VarType_SubModule
     MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
     MOTOR_VAR_TYPE_SUBMODULE_RESV0,
     MOTOR_VAR_TYPE_PHASE,
+    MOTOR_VAR_TYPE_PHASE_INPUT,
     MOTOR_VAR_TYPE_HEAT_MONITOR_OUT,    /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG, /* Handle by HeatMonitor.c/h */
     MOTOR_VAR_TYPE_THERMISTOR_CONFIG,

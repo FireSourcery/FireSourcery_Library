@@ -44,7 +44,7 @@
 #define FRACT32_SCALE (2147483648)
 
 #define ACCUM32_SAT (0x3FFFFFFF) /* Soft max for ACCUM32_SAT * 2 without overflow */
-#define ACCUM32_SCALE (FRACT16_SCALE * FRACT16_SCALE)
+#define ACCUM32_SCALE ((int32_t)FRACT16_SCALE * FRACT16_SCALE)
 
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
@@ -68,9 +68,9 @@ static const fract16_t FRACT16_SQRT3_DIV_4 = 0x376D;
 static const fract16_t FRACT16_SQRT2_DIV_2 = 0x5A82;
 static const fract16_t FRACT16_PI_DIV_4 = 0x6487;
 
-static const fract16_t FRACT16_COS_120 = -FRACT16_1_DIV_2;  /* cos(120°) = -0.5 */
+static const fract16_t FRACT16_COS_120 = -FRACT16_1_DIV_2;      /* cos(120°) = -0.5 */
 static const fract16_t FRACT16_SIN_120 = FRACT16_SQRT3_DIV_2;   /* sin(120°) = sqrt(3)/2 */
-static const fract16_t FRACT16_COS_240 = -FRACT16_1_DIV_2;  /* cos(240°) = -0.5 */
+static const fract16_t FRACT16_COS_240 = -FRACT16_1_DIV_2;      /* cos(240°) = -0.5 */
 static const fract16_t FRACT16_SIN_240 = -FRACT16_SQRT3_DIV_2;  /* sin(240°) = -sqrt(3)/2 */
 
 /* Calculation with over saturation */

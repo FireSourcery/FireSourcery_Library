@@ -331,7 +331,8 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
     switch (typeId)
     {
         case MOTOR_VAR_TYPE_BOARD_CONST:                return Motor_Var_Board_Get(varId);
-        case MOTOR_VAR_TYPE_PHASE:                      return 0;
+        // case MOTOR_VAR_TYPE_PHASE:                      return Phase_VOutVar_Get((Phase_VOut_T *)&p_motor->PHASE, varId);
+        case MOTOR_VAR_TYPE_PHASE_INPUT:                return Phase_Input_Var_Get((Phase_Input_T *)&p_motor->P_MOTOR->PhaseInput, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);

@@ -74,11 +74,16 @@ typedef struct FOC
     /* VOut */
     alignas(4) fract16_t Va, Vb, Vc;
 
-    /* Inner current loop — pair has no semantic life outside the d-q frame.
-       Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object. */
+    /*
+        Inner current loop — pair has no semantic life outside the d-q frame.
+        Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object.
+    */
     PID_T PidIq;
     PID_T PidId;
 
+    /*
+
+    */
     FOC_Electrical_T Electrical; /* Electrical parameters in control PU for feedback/feedforward calculation */
     // accum32_t LqInv; /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
 
@@ -97,8 +102,6 @@ typedef struct FOC
     fract16_t VWindow;
     // fract16_t VqLimit; 1 value encodes direction and magnitude.
 
-    /* Inputs - Capture by ADC */
-    // fract16_t Ia, Ib, Ic;
 
     /* Intermediate values */
     fract16_t Ialpha, Ibeta;
@@ -114,8 +117,8 @@ typedef struct
     // fract16_t IsLimit;     /* Current circle radius */
     ufract16_t IdFwLimit;   /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
     ufract16_t IdFwGain;    /* Field weakening integrator gain per control cycle */
-    uint32_t Ld;
-    uint32_t Lq;
+    // uint32_t Ld;
+    // uint32_t Lq;
 }
 FOC_Config_T;
 
@@ -639,7 +642,7 @@ typedef enum Motor_Var_Foc
     MOTOR_VAR_FOC_IQ,
     MOTOR_VAR_FOC_VD,
     MOTOR_VAR_FOC_VQ,
-    MOTOR_VAR_FOC_VA,
+    MOTOR_VAR_FOC_VA, /* VOutput only */
     MOTOR_VAR_FOC_VB,
     MOTOR_VAR_FOC_VC,
     MOTOR_VAR_FOC_REQ_D,

@@ -214,3 +214,7 @@ Adding indirection without adding concept vs enforcing pair correctness
 
 #
 Parameterize vs seperate function / call path vs super function anti pattern
+
+#
+VarId ruintime virtual fields
+ConfigId config data fields
