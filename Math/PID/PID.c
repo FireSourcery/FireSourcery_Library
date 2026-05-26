@@ -32,17 +32,19 @@
 #include <string.h>
 #include <assert.h>
 
-static void ResetGains(PID_T * p_pid)
-{
-    PID_SetKp_Fixed32(p_pid, p_pid->Config.Kp_Fixed32);
-    PID_SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32);
-    PID_SetKd_Fixed32(p_pid, p_pid->Config.Kd_Fixed32);
-}
+// static void ResetGains(PID_T * p_pid)
+// {
+//     PID_SetKp_Fixed32(p_pid, p_pid->Config.Kp_Fixed32);
+//     PID_SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32);
+//     PID_SetKd_Fixed32(p_pid, p_pid->Config.Kd_Fixed32);
+// }
 
 void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
 {
-    if (p_config != NULL) { memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T)); }
-    ResetGains(p_pid);
+    // if (p_config != NULL) { memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T)); }
+    PID_SetKp_Fixed32(p_pid, p_pid->Config.Kp_Fixed32);
+    PID_SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32);
+    PID_SetKd_Fixed32(p_pid, p_pid->Config.Kd_Fixed32);
     PID_SetOutputLimits(p_pid, INT16_MIN, INT16_MAX);
     PID_Reset(p_pid);
 }

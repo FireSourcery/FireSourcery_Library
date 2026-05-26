@@ -226,7 +226,6 @@ typedef struct Motor_Config
     Motor_Direction_T DirectionForward; /* CCW/CW Assigned positive direction */
 
     Motor_ElectricalSpeedRating_T SpeedRating;    /* PolePairs, Kv, SpeedRated_Rpm */
-    // Motor_RL_T ElectricalRsLs;
 
     // Motor_ResumeMode_T ResumeMode;   // option Scale to VSpeed or VBemf on resume
 
@@ -253,6 +252,9 @@ typedef struct Motor_Config
 
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
+    FOC_Config_T FocConfig;              /* FOC control parameters, limits. Duplicates state stored in Foc in this case, alternatively foc needs its own nvm map */
+    /* move to sensor */
+    FOC_SensorlessConfig_T SensorlessConfig; /* Sensorless Observer parameters. */
 
     /*
         OpenLoop
@@ -273,16 +275,6 @@ typedef struct Motor_Config
     uint32_t OpenLoopRampITime_Cycles;          /* Time to reach OpenLoopI */
     // uint16_t OpenLoopGain_VHz;
 // #endif
-
-    FOC_Electrical_T ElectricalParams_Si;  /* optional Motor Electrical Parameters. Si units */
-    FOC_Electrical_T ElectricalParams_Pu;  /* VdqDecoupling */
-    // FOC_Electrical_T ElectricalParams_Si_Test;
-    // FOC_Electrical_T ElectricalParams_Pu_Test;
-
-    bool IsFieldWeakeningEnabled; /* Optional Field Weakening Enable, otherwise handled with limits. enfoce id = 0 when disabled. */
-    FOC_FieldWeakeningConfig_T FieldWeakening; /* Field Weakening Parameters. Tune for max speed or voltage match. */
-    // FOC_Config_T FocConfig;              /* FOC control parameters, limits. */
-    FOC_SensorlessConfig_T SensorlessConfig; /* Sensorless Observer parameters. */
 
     Motor_CommutationMode_T CommutationMode; /* optional for runtime selection */
 
@@ -344,7 +336,7 @@ typedef struct Motor_Context
     volatile Phase_Input_T PhaseInput;
     FOC_T Foc;                              /* d-q vectors AND inner-loop PIDs (Foc.PidIq, Foc.PidId) */
     // PID_T PidIPhase;         /* Align, or use getter */
-    Ramp_T VRamp; /* Optional VRamp */
+    // Ramp_T VRamp; /* Optional VRamp */
 
     // Phase_Triplet_T VOut; /* output buffer */
 
@@ -462,6 +454,13 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return
 static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Motor_Speed_Fract16OfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
 
+/*
+    Speed VBus Ref
+    Generally [SpeedRated] via Kv * V
+*/
+static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
+
+
 
 /*
     when SpeedRated is derived from V_Nominal, and SpeedTypeMax is derived from 2x SpeedRated
@@ -470,6 +469,7 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { re
 
     fract16_mul(psi, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
 */
+/* e.g. 2700*2=5400, psi = 18/.008 */
 // static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
 // static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
 // static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
@@ -480,18 +480,14 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { re
 */
 // static inline uint16_t _Motor_GetSpeedTypeMax_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm * 2; }
 // static inline uint16_t _Motor_GetSpeedRated_Rpm(const Motor_ElectricalSpeedRating_T * p_config) { return p_config->SpeedRated_Rpm; }
-static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.ElectricalParams_Pu.Psi; }
+// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return p_motor->P_MOTOR->Config.ElectricalParams_Pu.Psi; }
+static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return p_motor->P_MOTOR->Foc.Config.Electrical.Psi; }
 
 /* alternatively inverter max as 1.0, high end limited field weakening */
-// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv; }
+/* 14,100 rpm including fw range*/
+/* 14,100 rpm *2 = 28,200 rpm  =  V_base / ψ_f */
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv *2/sqt3; }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
-
-/*
-    Speed VBus Ref
-    Generally [SpeedRated] via Kv * V
-*/
-static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
-
 
 
 /******************************************************************************/
@@ -621,7 +617,7 @@ static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Context_T * p_mo
 */
 /* when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2 */
 static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_Psi_Fract16(p_motor), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
-static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedScalar_Fract16); }
+static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedAdjustment); }
 
 
 /******************************************************************************/
@@ -728,6 +724,8 @@ extern void Motor_Reinit(Motor_T * p_motor);
 
 extern void Motor_ReinitSensor(Motor_Context_T * p_motor);
 extern void Motor_InitUnits(Motor_Context_T * p_motor);
+
+void Motor_InitPsi(Motor_Context_T * p_motor);
 
 void Motor_InitDecouplingCoeffs(Motor_Config_T * p_config);
 

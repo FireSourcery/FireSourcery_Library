@@ -177,8 +177,8 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     // p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Valpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
     // p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_foc->Vbeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
     /* p_foc->Electrical.Rs < FRACT16_MAX */
-    p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
-    p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
+    p_obs->SmoIAlpha = smo_i(p_obs->G_pu, p_foc->Config.Electrical.Rs, p_obs->VAlpha, p_obs->SmoIAlpha, p_obs->SmoZAlpha);
+    p_obs->SmoIBeta = smo_i(p_obs->G_pu, p_foc->Config.Electrical.Rs, p_obs->VBeta, p_obs->SmoIBeta, p_obs->SmoZBeta);
 
     /* 2. LPF to extract equivalent control / smooth measurement noise. */
     p_obs->EmfAlpha = lpf_step(p_obs->Config.LpfCoef, p_obs->EmfAlpha, p_obs->SmoZAlpha);
@@ -193,7 +193,7 @@ static void FOC_Sensorless_Step(const FOC_T * p_foc, FOC_Sensorless_T * p_obs)
     int16_t omega = PID_ProcPI(&p_obs->PllPid, 0, p_obs->PllErr);
 
     /* 5. Integrate ω̂ → θ̂ (free-wrap). */
-    Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega); // 2x openloop
+    Angle_Integrate(&p_obs->AngleSpeed, (angle16_t)omega);
 
     /* 6. Lock detector — strong EMF AND tight PLL error, sustained. */
     bool stable = (p_obs->EmfMag > p_obs->Config.LockEmfMin) && (fract16_abs(p_obs->PllErr) < p_obs->Config.LockErrTol);
@@ -224,8 +224,8 @@ static inline void FOC_Sensorless_CaptureVoltage(FOC_Sensorless_T * p_obs, fract
    Resets the PLL integrator so it doesn't fight the pre-seeded value. */
 static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, angle16_t delta)
 {
-    Angle_CaptureAngle(&p_obs->AngleSpeed, theta);
-    Angle_CaptureDelta(&p_obs->AngleSpeed, delta);
+    Angle_SetAngle(&p_obs->AngleSpeed, theta);
+    Angle_SetDelta(&p_obs->AngleSpeed, delta);
     PID_Reset(&p_obs->PllPid);
     _PID_SetOutputState(&p_obs->PllPid, delta);
 }

@@ -49,6 +49,8 @@
 */
 typedef int16_t accumulator_t;      /* user-scale value */
 typedef int32_t accumulator_raw_t;  /* internal Q-format state */
+
+
 #define ACCUMULATOR_SHIFT 15
 #define ACCUMULATOR_SCALE (1L << ACCUMULATOR_SHIFT)
 #define _ACCUM_TO_RAW(x)        ((accumulator_raw_t)((x) * ACCUMULATOR_SCALE))
@@ -61,6 +63,10 @@ typedef float accumulator_raw_t;
 #define _ACCUM_FROM_RAW(x)      ((accumulator_t)(x))
 // #define math_clamp(v, lo, hi) fmaxf((lo), fminf((hi), (v))) //todo
 #endif
+
+//
+// typedef scalar_wide_t accumulator_t; /* using hal for state */
+
 
 /******************************************************************************/
 /*

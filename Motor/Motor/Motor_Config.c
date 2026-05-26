@@ -29,6 +29,8 @@
 /******************************************************************************/
 #include "Motor_Config.h"
 
+#include "Math/FOC_Ext.h"
+
 
 /******************************************************************************/
 /*
@@ -61,67 +63,57 @@ static inline uint16_t Motor_SpeedRatedLimitOf(const Motor_Config_T * p_config, 
 static inline uint16_t _Motor_OpenLoopIRatedLimitOf(const Motor_Config_T * p_config, uint16_t fract16) { return math_min(fract16, _Motor_GetOpenLoopILimit_Fract16(p_config)); }
 static inline uint16_t _Motor_OpenLoopSpeedRatedLimitOf(const Motor_Config_T * p_config, uint16_t fract16) { return math_min(fract16, _Motor_SpeedRatedLimit(p_config) / 2); }
 
-
 bool Motor_Config_IsValid(const Motor_Config_T * p_config)
 {
     return
     (
         (p_config->DirectionForward != MOTOR_DIRECTION_NULL) &&
         (p_config->IabcZeroRef_Adcu.A != 0U) && (p_config->IabcZeroRef_Adcu.B != 0U) && (p_config->IabcZeroRef_Adcu.C != 0U) &&
-        (p_config->SpeedRating.PolePairs != 0U) && (p_config->SpeedRating.Kv != 0U) && (p_config->SpeedRating.SpeedRated_Rpm != 0U) && (p_config->SpeedRating.VSpeedScalar_Fract16 <= INT16_MAX)
-        // && (p_config->SpeedRating.SpeedRated_Rpm  <= Motor_GetSpeedVNominalRef_Rpm(p_config) * 2)
-        // && (p_config->SpeedLimitForward_Fract16   <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16   <= _Motor_SpeedRatedLimit(p_config))
+        (p_config->SpeedRating.PolePairs != 0U) && (p_config->SpeedRating.Kv != 0U) && (p_config->SpeedRating.SpeedRated_Rpm != 0U) && (p_config->SpeedRating.VSpeedAdjustment <= INT16_MAX)
         && (p_config->ILimitMotoring_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16()) && (p_config->ILimitGenerating_Fract16 <= Phase_Calibration_GetIRatedPeak_Fract16())
         && (p_config->OpenLoopLimitScalar_Fract16 <= MOTOR_OPEN_LOOP_CEILING)
         && (p_config->IAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetIRatedPeak_Fract16()))
         && (p_config->VAlign_Fract16 <= fract16_mul(p_config->OpenLoopLimitScalar_Fract16, Phase_Calibration_GetVRated_Fract16()))
-        // && (p_config->AlignScalar_Fract16         <= MOTOR_OPEN_LOOP_CEILING)
         && (p_config->OpenLoopRampIFinal_Fract16  <= _Motor_GetOpenLoopILimit_Fract16(p_config))
         && Motor_Config_IsValidFw(p_config)
         // && Motor_Config_IsValidElectrical(p_config)
     );
 }
 
-
 // #define MOTOR_CONFIG_FW_SPEED_LIMIT FRACT16(0.75F)
 
-bool Motor_Config_IsFwEnabled(const Motor_Config_T * p_config) { return (p_config->FieldWeakening.IdFwLimit > 0U); }
-
-bool Motor_Config_IsSpeedBandValid(const Motor_Config_T * p_config)
-{
-    return ((p_config->SpeedLimitForward_Fract16 <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16 <= _Motor_SpeedRatedLimit(p_config)));
-}
 
 bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
 {
     return
     (
-        (p_config->SpeedLimitForward_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config))) &&
-        (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
+        (p_config->SpeedLimitForward_Fract16 <= ((p_config->FocConfig.FieldWeakening.IdLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config))) &&
+        (p_config->SpeedLimitReverse_Fract16 <= ((p_config->FocConfig.FieldWeakening.IdLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config)))
     );
 }
 
-bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config)
+bool Motor_Config_IsFwEnabled(const Motor_Config_T * p_config) { return (p_config->FocConfig.FieldWeakening.IdLimit > 0U); }
+
+bool Motor_Config_IsValidSpeedLimits_Fw(const Motor_Config_T * p_config)
 {
-    uint16_t speedTypeMax_Angle = Motor_GetSpeedTypeMax_Angle(&p_config->SpeedRating);
-    return
-    (
-        ((uint64_t)p_config->ElectricalParams_Pu.Lq * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
-        ((uint64_t)p_config->ElectricalParams_Pu.Ld * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
-        ((uint64_t)p_config->ElectricalParams_Pu.Psi * speedTypeMax_Angle < (uint64_t)INT32_MAX)
-    );
+    return ((p_config->SpeedLimitForward_Fract16 <= INT16_MAX) && (p_config->SpeedLimitReverse_Fract16 <= INT16_MAX));
 }
 
-// bool Motor_Config_IsValidFw(const Motor_Config_T * p_config)
-// {
-//     return ((p_config->SpeedLimitForward_Fract16 <= INT16_MAX) && (p_config->SpeedLimitReverse_Fract16 <= INT16_MAX));
-// }
+bool Motor_Config_IsValidSpeedLimits_Rated(const Motor_Config_T * p_config)
+{
+    return ((p_config->SpeedLimitForward_Fract16 <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16 <= _Motor_SpeedRatedLimit(p_config)));
+}
 
-// bool Motor_Config_IsValidSpeedRated(const Motor_Config_T * p_config)
+// bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config)
 // {
-//     return ((p_config->SpeedLimitForward_Fract16 <= _Motor_SpeedRatedLimit(p_config)) && (p_config->SpeedLimitReverse_Fract16 <= _Motor_SpeedRatedLimit(p_config)));
+//     uint16_t speedTypeMax_Angle = Motor_GetSpeedTypeMax_Angle(&p_config->SpeedRating);
+//     return
+//     (
+//         ((uint64_t)p_config->ElectricalParams_Pu.Lq * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+//         ((uint64_t)p_config->ElectricalParams_Pu.Ld * speedTypeMax_Angle < (uint64_t)INT32_MAX) &&
+//         ((uint64_t)p_config->ElectricalParams_Pu.Psi * speedTypeMax_Angle < (uint64_t)INT32_MAX)
+//     );
 // }
-
 
 /******************************************************************************/
 /*
@@ -134,13 +126,15 @@ bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config)
     Speed Position Calibration
 */
 /******************************************************************************/
-
 /* Reboot unless deinit is implemented in HAL */
 void Motor_Config_SetSensorMode(Motor_Config_T * p_config, RotorSensor_Id_T mode)
 {
     p_config->SensorMode = mode;
 }
 
+/*
+
+*/
 void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs)
 {
     p_config->SpeedRating.PolePairs = polePairs;
@@ -150,6 +144,7 @@ void Motor_Config_SetPolePairs(Motor_Config_T * p_config, uint8_t polePairs)
 void Motor_Config_SetKv(Motor_Config_T * p_config, uint16_t kv)
 {
     p_config->SpeedRating.Kv = kv;
+    FOC_Electrical_SetPsi_Kv(&p_config->FocConfig.Electrical, Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_config->SpeedRating), p_config->SpeedRating.Kv);
     // p_config->SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_config);
     /* alternatively kv determines scalar */
 }
@@ -168,10 +163,10 @@ void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
     SpeedVRef =< SpeedFeedbackRef to ensure not match to higher speed
     [0:32767] unitless Fract16
 */
-void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->SpeedRating.VSpeedScalar_Fract16 = math_min(scalar, INT16_MAX); }
+void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->SpeedRating.VSpeedAdjustment = math_min(scalar, INT16_MAX); }
 
 void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating))); }
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->SpeedRating.VSpeedScalar_Fract16, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->SpeedRating.VSpeedAdjustment, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
 
 
 /*
@@ -262,7 +257,7 @@ void Motor_Config_SetOpenLoopRampSpeedTime_Millis(Motor_Config_T * p_config, uin
 void Motor_Config_Validate(Motor_Config_T * p_config)
 {
     p_config->SpeedRating.SpeedRated_Rpm = math_min(p_config->SpeedRating.SpeedRated_Rpm, (p_config->SpeedRating.Kv * Phase_Calibration_GetVRated_V()));
-    p_config->SpeedRating.VSpeedScalar_Fract16        = math_min(p_config->SpeedRating.VSpeedScalar_Fract16, INT16_MAX);
+    p_config->SpeedRating.VSpeedAdjustment        = math_min(p_config->SpeedRating.VSpeedAdjustment, INT16_MAX);
 
     // p_config->SpeedLimitForward_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitForward_Fract16);
     // p_config->SpeedLimitReverse_Fract16   = Motor_SpeedRatedLimitOf(p_config, p_config->SpeedLimitReverse_Fract16);
@@ -280,11 +275,11 @@ void Motor_Config_Validate(Motor_Config_T * p_config)
 
 void Motor_Config_ValidateFw(Motor_Config_T * p_config)
 {
-    uint16_t speedCeiling = (p_config->FieldWeakening.IdFwLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config);
+    uint16_t speedCeiling = (p_config->FocConfig.FieldWeakening.IdLimit > 0U) ? (uint16_t)INT16_MAX : _Motor_SpeedRatedLimit(p_config);
 
     p_config->SpeedLimitForward_Fract16             = math_min(speedCeiling, p_config->SpeedLimitForward_Fract16);
     p_config->SpeedLimitReverse_Fract16             = math_min(speedCeiling, p_config->SpeedLimitReverse_Fract16);
-    p_config->FieldWeakening.IdFwLimit              = Motor_IRatedLimitOf(p_config->FieldWeakening.IdFwLimit);
+    p_config->FocConfig.FieldWeakening.IdLimit      = Motor_IRatedLimitOf(p_config->FocConfig.FieldWeakening.IdLimit);
 }
 
 
@@ -320,7 +315,7 @@ static inline RotorSensor_Id_T Motor_Config_GetSensorMode(const Motor_Config_T *
 static inline uint8_t Motor_Config_GetPolePairs(const Motor_Config_T * p_config) { return p_config->SpeedRating.PolePairs; }
 static inline uint16_t Motor_Config_GetKv(const Motor_Config_T * p_config) { return p_config->SpeedRating.Kv; }
 static inline uint16_t Motor_Config_GetSpeedRated(const Motor_Config_T * p_config) { return p_config->SpeedRating.SpeedRated_Rpm; }
-static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_Config_T * p_config) { return p_config->SpeedRating.VSpeedScalar_Fract16; }
+static inline uint16_t Motor_Config_GetVSpeedScalar_UFract16(const Motor_Config_T * p_config) { return p_config->SpeedRating.VSpeedAdjustment; }
 
 static inline uint16_t Motor_Config_GetIaZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.A; }
 static inline uint16_t Motor_Config_GetIbZero_Adcu(const Motor_Config_T * p_config) { return p_config->IabcZeroRef_Adcu.B; }
@@ -386,7 +381,7 @@ int _Motor_Var_ConfigCalibration_Get(const Motor_Config_T * p_motor, Motor_Var_C
         case MOTOR_VAR_POLE_PAIRS:              value = Motor_Config_GetPolePairs(p_motor);                 break;
         case MOTOR_VAR_KV:                      value = Motor_Config_GetKv(p_motor);                        break;
         case MOTOR_VAR_SPEED_RATED:             value = Motor_Config_GetSpeedRated(p_motor);                break;
-        case MOTOR_VAR_V_SPEED_SCALAR:          value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
+        case MOTOR_VAR_V_SPEED_TUNING:          value = Motor_Config_GetVSpeedScalar_UFract16(p_motor);     break;
         case MOTOR_VAR_IA_ZERO_ADCU:            value = Motor_Config_GetIaZero_Adcu(p_motor);               break;
         case MOTOR_VAR_IB_ZERO_ADCU:            value = Motor_Config_GetIbZero_Adcu(p_motor);               break;
         case MOTOR_VAR_IC_ZERO_ADCU:            value = Motor_Config_GetIcZero_Adcu(p_motor);               break;
@@ -405,7 +400,7 @@ void _Motor_Var_ConfigCalibration_Set(Motor_Config_T * p_motor, Motor_Var_Config
         case MOTOR_VAR_POLE_PAIRS:                    Motor_Config_SetPolePairs(p_motor, varValue);                 break;
         case MOTOR_VAR_KV:                            Motor_Config_SetKv(p_motor, varValue);                        break;
         case MOTOR_VAR_SPEED_RATED:                   Motor_Config_SetSpeedRated(p_motor, varValue);                break;
-        case MOTOR_VAR_V_SPEED_SCALAR:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);     break;
+        case MOTOR_VAR_V_SPEED_TUNING:                Motor_Config_SetVSpeedScalar_UFract16(p_motor, varValue);     break;
         case MOTOR_VAR_IA_ZERO_ADCU:                  Motor_Config_SetIaZero_Adcu(p_motor, varValue);               break;
         case MOTOR_VAR_IB_ZERO_ADCU:                  Motor_Config_SetIbZero_Adcu(p_motor, varValue);               break;
         case MOTOR_VAR_IC_ZERO_ADCU:                  Motor_Config_SetIcZero_Adcu(p_motor, varValue);               break;

@@ -33,13 +33,40 @@
 #include "Math/Fixed/fract16.h"
 #include "Math/PID/PID.h"
 
+
+#if !defined(FOC_DECOUPLE_ENABLE) && !defined(FOC_DECOUPLE_DISABLE)
+#define FOC_DECOUPLE_DISABLE
+#endif
+
+#if !defined(FOC_V_MATCH_BEMF) && !defined(FOC_V_MATCH_SPEED)
+#define FOC_V_MATCH_BEMF
+#endif
+
+#if !defined(FOC_CLARKE_AB) && !defined(FOC_CLARKE_ABC)
+#define FOC_CLARKE_ABC
+#endif
+
+/*
+    Runtime
+*/
+typedef struct
+{
+    accum32_t OmegaLd;
+    accum32_t OmegaLq;
+    accum32_t OmegaPsi;
+}
+FOC_ElectricalSpeed_T;
+
+/*
+    Config
+*/
 typedef struct
 {
     // fract16_t IsMax;     /* Current circle radius */
-    ufract16_t IdFwLimit;     /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    ufract16_t IdFwGain;    /* Field weakening integrator gain per control cycle */
+    ufract16_t IdLimit;     /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
+    ufract16_t IdGain;      /* Field weakening integrator gain per control cycle */
 }
-FOC_FieldWeakeningConfig_T;
+FOC_FieldWeakeningTuning_T;
 
 /* same shape for SI and PU  */
 typedef struct
@@ -51,13 +78,18 @@ typedef struct
 }
 FOC_Electrical_T;
 
+/*
+    Nvm Storage. caller owns Config nvm mapping
+*/
 typedef struct
 {
-    accum32_t OmegaLd;
-    accum32_t OmegaLq;
-    accum32_t OmegaPsi;
+    // PID_Config_T PidIqConfig;
+    // PID_Config_T PidIdConfig;
+    FOC_FieldWeakeningTuning_T FieldWeakening;
+    FOC_Electrical_T Electrical; /* Electrical parameters in control PU for feedback/feedforward calculation */
+    // ufract16_t Modulation;
 }
-FOC_ElectricalSpeed_T;
+FOC_Config_T;
 
 typedef struct FOC
 {
@@ -74,6 +106,10 @@ typedef struct FOC
     /* VOut */
     alignas(4) fract16_t Va, Vb, Vc;
 
+    /* Intermediate values */
+    fract16_t Ialpha, Ibeta;
+    fract16_t Valpha, Vbeta;
+
     /*
         Inner current loop — pair has no semantic life outside the d-q frame.
         Inputs (Iq/Id) and outputs (Vq/Vd) live in this same object.
@@ -81,46 +117,21 @@ typedef struct FOC
     PID_T PidIq;
     PID_T PidId;
 
-    /*
-
-    */
-    FOC_Electrical_T Electrical; /* Electrical parameters in control PU for feedback/feedforward calculation */
-    // accum32_t LqInv; /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
-
-    fract16_t IdFw;   /* field weakening d-axis integrator state */
-    // Accumulator_T IdFwIntegrator; /* field weakening d-axis integrator accumulator */
-    fract16_t IdFwGain;
-    fract16_t IdFwLimit;    /* Maximum demagnetizing current. */
-    // FOC_FieldWeakeningConfig_T FieldWeakeningConfig; copy from nvm
-
-
-    /* Cache on speed loop */
-    FOC_ElectricalSpeed_T ElectricalSpeed; /* pre-compute for feedforward and decoupling */
-
     // ufract16_t Modulation;
     interval_t VLimit;
     fract16_t VWindow;
     // fract16_t VqLimit; 1 value encodes direction and magnitude.
 
+    FOC_ElectricalSpeed_T ElectricalSpeed; /*  Cache on speed loop for feedforward and decoupling */
+    // accum32_t LqInv; /* 1 / (Lq · I_max · Fs / V_max) — EEMF integrator gain */
 
-    /* Intermediate values */
-    fract16_t Ialpha, Ibeta;
-    fract16_t Valpha, Vbeta;
+    fract16_t IdFw;   /* field weakening d-axis integrator state */
+    // Accumulator_T IdFwIntegrator; /* field weakening d-axis integrator accumulator */
+
+    FOC_Config_T Config;
 }
 FOC_T;
 
-/* Store to Nvm */
-typedef struct
-{
-    // PID_Config_T PidIqConfig;
-    // PID_Config_T PidIdConfig;
-    // fract16_t IsLimit;     /* Current circle radius */
-    ufract16_t IdFwLimit;   /* [0:32767] max demagnetizing I magnitude; 0 = FW disabled */
-    ufract16_t IdFwGain;    /* Field weakening integrator gain per control cycle */
-    // uint32_t Ld;
-    // uint32_t Lq;
-}
-FOC_Config_T;
 
 /******************************************************************************/
 /*
@@ -153,7 +164,6 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
     p_foc->Id = idq.d;
     p_foc->Iq = idq.q;
 }
-
 
 
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
@@ -221,27 +231,12 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vq = v.q;
 }
 
-// static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
-// {
-//     struct foc_dq v = foc_clarke_park(va, vb, vc, p_foc->Sine, p_foc->Cosine);
-//     p_foc->Vd = v.d;
-//     p_foc->Vq = v.q;
-// }
-
 
 /******************************************************************************/
 /*!
     V Policy config
 */
 /******************************************************************************/
-/*
-    Mostly static base
-    set VLimit directly
-*/
-/* Symmetric */
-static inline void FOC_SetVSymmetric(FOC_T * p_foc, int32_t vq) { p_foc->VLimit = interval_symmetric(0, vq); }
-/* Half-plane anti-plugging */
-static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, int32_t sign, int32_t vq) { p_foc->VLimit = interval_of_sign(sign, vq); }
 
 /*
     Dynamic limits
@@ -257,9 +252,11 @@ static inline interval_t FOC_VBemfWindow(const FOC_T * p_foc, accum32_t omega_ps
 static inline void FOC_SetVWindow(FOC_T * p_foc, int32_t window) { p_foc->VWindow = window; }
 
 
-/*
-
+/******************************************************************************/
+/*!
+    Direct V control
 */
+/******************************************************************************/
 static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t vdReq, fract16_t vqReq)
 {
     int32_t vq = interval_clamp(p_foc->VLimit, vqReq);
@@ -272,8 +269,8 @@ static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t
 static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
 {
     FOC_SetTheta(p_foc, theta);
-    FOC_SetVd(p_foc, vd);
-    FOC_SetVq(p_foc, vq);
+    p_foc->Vd = vd;
+    p_foc->Vq = vq;
     FOC_ProcInvClarkePark(p_foc);
 }
 
@@ -311,10 +308,6 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus,  int16
     Cross-coupling decoupling feedforward, limit-first ordering.
         Vd_ff = -omega_e * Lq * Iq
         Vq_ff = +omega_e * Ld * Id + omega_e * psi_f
-
-    Both forms produce Omega* in Q15 v_pu scale (consumed by foc_v*_ff via fract16_mul).
-
-    Caller MUST supply `speed` in the basis matching MOTOR_PU_BASIS_ANGLE16.
 */
 /******************************************************************************/
 /*
@@ -330,9 +323,9 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
     //     p_foc->ElectricalSpeed.OmegaPsi = 0;
     //     return;
     // }
-    p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Electrical.Ld, speed));
-    p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Electrical.Lq, speed));
-    p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Electrical.Psi, speed));
+    p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Config.Electrical.Ld, speed));
+    p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Config.Electrical.Lq, speed));
+    p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
 }
 
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
@@ -377,7 +370,7 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, in
 
 */
 /******************************************************************************/
-static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+static inline void _FOC_MatchIVState_Base(FOC_T * p_foc, int16_t vd, int16_t vq)
 {
     p_foc->Vd = vd;
     p_foc->Vq = vq;
@@ -393,11 +386,15 @@ static inline void _FOC_MatchIVState_Decouple(FOC_T * p_foc, int16_t vd, int16_t
     PID_SetOutputState(&p_foc->PidIq, fract16_sat(vq - FOC_VqFeedforward(p_foc)));
 }
 
-// static inline void FOC_MatchIVState(FOC_T * p_foc)
-// {
-//     PID_SetOutputState(&p_foc->PidId, p_foc->Vd);
-//     PID_SetOutputState(&p_foc->PidIq, (p_foc->Vq == 0) ? p_foc->ElectricalSpeed.OmegaPsi : p_foc->Vq);
-// }
+/*
+    Mostly static base, update on direction change
+    set VLimit directly
+*/
+/* Symmetric */
+static inline void FOC_SetVSymmetric(FOC_T * p_foc, int32_t vq) { p_foc->VLimit = interval_symmetric(0, vq); }
+
+/* Half-plane anti-plugging */
+static inline void FOC_SetVAntiPlugging(FOC_T * p_foc, int32_t sign, int32_t vq) { p_foc->VLimit = interval_of_sign(sign, vq); }
 
 static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPhaseLimit)
 {
@@ -406,6 +403,7 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
     PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);
     PID_SetOutputLimits(&p_foc->PidId, 0 - vPhaseLimit, vPhaseLimit);
 }
+
 
 /******************************************************************************/
 /*!
@@ -421,12 +419,21 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idR
 #endif
 }
 
-static inline void FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 {
 #if defined(FOC_DECOUPLE_ENABLE)
     _FOC_MatchIVState_Decouple(p_foc, vd, vq);
 #else
-    _FOC_MatchIVState(p_foc, vd, vq);
+    _FOC_MatchIVState_Base(p_foc, vd, vq);
+#endif
+}
+
+static inline void  FOC_MatchIVState(FOC_T * p_foc)
+{
+#ifdef FOC_V_MATCH_BEMF
+    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->Vq);
+#else
+    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->ElectricalSpeed.OmegaPsi);
 #endif
 }
 
@@ -469,7 +476,7 @@ static inline accum32_t FOC_GetMagnetizingPower(const FOC_T * p_foc) { return fr
 /* [0:32767] */
 static inline accum32_t _FOC_GetActivePower(const FOC_T * p_foc) { return fract16_mul(p_foc->Vd, p_foc->Id) + fract16_mul(p_foc->Vq, p_foc->Iq); }
 static inline accum32_t _FOC_GetReactivePower(const FOC_T * p_foc) { return (fract16_mul(p_foc->Vq, p_foc->Id) - fract16_mul(p_foc->Vd, p_foc->Iq)); }
-/* keep sign withing fract16 */
+/* keep sign within fract16 */
 static inline accum32_t _FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16); }
 
 /* [0:49150] */
@@ -478,6 +485,7 @@ static inline accum32_t FOC_GetReactivePower(const FOC_T * p_foc) { return _FOC_
 static inline accum32_t FOC_GetApparentPower(const FOC_T * p_foc) { return fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc)) * 3 / 2; }
 static inline accum32_t FOC_GetPowerFactor(const FOC_T * p_foc) { return fract16_div(_FOC_GetActivePower(p_foc), fract16_mul(FOC_GetIMagnitude(p_foc), FOC_GetVMagnitude(p_foc))); }
 static inline accum32_t FOC_GetIBus(const FOC_T * p_foc, ufract16_t vBus_fract16) { return fract16_div(_FOC_GetActivePower(p_foc), vBus_fract16) * 3 / 2; }
+
 
 /******************************************************************************/
 /*!
@@ -524,24 +532,23 @@ static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (
 */
 /******************************************************************************/
 /*
-    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
-    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
-*/
-/*
     Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
     Id_fw = (Vs_max/ωe - λ_pm) / Ld
+
+    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
+    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
 */
 static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 {
     int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->IdFwGain), -p_foc->IdFwLimit, 0);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -p_foc->Config.FieldWeakening.IdLimit, 0);
     return p_foc->IdFw;
 }
 
 
 static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 {
-    p_foc->IdFwLimit = 0;
+    p_foc->Config.FieldWeakening.IdLimit = 0;
 }
 
 
@@ -555,7 +562,7 @@ static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 //     FOC_ProcIFeedback(p_foc, vBus, direction, 0, iqReq);
 // }
 
-// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningConfig_T * p_fwConfig, ufract16_t vBus, sign_t direction, int16_t iqReq)
+// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwConfig, ufract16_t vBus, sign_t direction, int16_t iqReq)
 // {
 //     FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
 // }
@@ -567,15 +574,21 @@ static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 
 */
 /******************************************************************************/
-static void FOC_Init(FOC_T * p_foc)
-{
-    (void)p_foc;
-}
-
 static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electrical)
 {
-    p_foc->Electrical = *p_electrical;
+    p_foc->Config.Electrical = *p_electrical;
 }
+
+static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwTuning)
+{
+    p_foc->Config.FieldWeakening = *p_fwTuning;
+}
+
+static void FOC_Init(FOC_T * p_foc, const FOC_Config_T * p_config)
+{
+    p_foc->Config = *p_config;
+}
+
 
 // void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)
 // {
@@ -590,7 +603,6 @@ static void FOC_SetAlign(FOC_T * p_foc, fract16_t vd)
     p_foc->Sine = 0;
     p_foc->Cosine = FRACT16_MAX;
 }
-
 
 static void FOC_ClearCaptureState(FOC_T * p_foc)
 {
@@ -652,7 +664,7 @@ typedef enum Motor_Var_Foc
 }
 Motor_Var_Foc_T;
 
-static int _Motor_Var_Foc_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
+static int Foc_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
 {
     int value = 0;
     switch (varId)
@@ -669,5 +681,56 @@ static int _Motor_Var_Foc_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
     }
     return value;
 }
-// int _Motor_Var_Foc_Get(Motor_T * p_motor, Motor_Var_Foc_T varId);
 
+/* Optional runtime tuning */
+// static int Foc_Var_SetTuning(FOC_T * p_foc,  Motor_Var_Foc_T varId, int value)
+// {
+//     int value = 0;
+//     switch (varId)
+//     {
+
+//     }
+//     return value;
+// }
+
+/*
+    Call holds struct
+*/
+typedef enum FOC_ConfigVar
+{
+    FOC_CONFIG_VAR_ID_FW_LIMIT,
+    FOC_CONFIG_VAR_ID_FW_GAIN,
+    FOC_CONFIG_VAR_ELECTRICAL_LD,
+    FOC_CONFIG_VAR_ELECTRICAL_LQ,
+    FOC_CONFIG_VAR_ELECTRICAL_RS,
+    FOC_CONFIG_VAR_ELECTRICAL_PSI,
+}
+FOC_ConfigVar_T;
+
+static inline int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T var)
+{
+    switch (var)
+    {
+        case FOC_CONFIG_VAR_ID_FW_LIMIT:    return p_config->FieldWeakening.IdLimit;
+        case FOC_CONFIG_VAR_ID_FW_GAIN:     return p_config->FieldWeakening.IdGain;
+        case FOC_CONFIG_VAR_ELECTRICAL_LD:  return p_config->Electrical.Ld;
+        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  return p_config->Electrical.Lq;
+        case FOC_CONFIG_VAR_ELECTRICAL_RS:  return p_config->Electrical.Rs;
+        case FOC_CONFIG_VAR_ELECTRICAL_PSI: return p_config->Electrical.Psi;
+        default: return 0;
+    }
+}
+
+static inline void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, int value)
+{
+    switch (var)
+    {
+        case FOC_CONFIG_VAR_ID_FW_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
+        case FOC_CONFIG_VAR_ID_FW_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
+        case FOC_CONFIG_VAR_ELECTRICAL_LD:  p_config->Electrical.Ld = value;    break;
+        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  p_config->Electrical.Lq = value;    break;
+        case FOC_CONFIG_VAR_ELECTRICAL_RS:  p_config->Electrical.Rs = value;    break;
+        case FOC_CONFIG_VAR_ELECTRICAL_PSI: p_config->Electrical.Psi = value;   break;
+        default: break;
+    }
+}

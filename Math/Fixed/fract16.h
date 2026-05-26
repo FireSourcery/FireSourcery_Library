@@ -219,6 +219,7 @@ typedef uint32_t angle32_t; /* fract32 */
 // typedef int32_t turn32_t;
 
 #define ANGLE16_PER_REVOLUTION (65536UL)
+#define PI_FLOAT (3.14159265358979323846F)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -236,7 +237,7 @@ static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 
 /* PER_RADIAN_SI */
-static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* = 65536 / (2 * PI) */
+static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
 
 #define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
 

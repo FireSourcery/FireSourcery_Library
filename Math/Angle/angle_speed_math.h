@@ -46,6 +46,12 @@
         provides both a of_x conversion function, as well as a per_x conversion factor
 */
 
+#define ANGLE_SPEED_MAX (32767)
+#define ANGLE_SPEED_MAX_RADS(pollingFreq) (pollingFreq * FRACT16_PI / FRACT16_SCALE)
+#define ANGLE_SPEED_MAX_RPS(pollingFreq) (pollingFreq / 2) /* Nyquist Equivalent */
+#define ANGLE_SPEED_MAX_RPM(pollingFreq) (pollingFreq * 30)
+
+
 /******************************************************************************/
 /*
     Generic base - args scaled by caller
@@ -97,17 +103,17 @@ static inline int32_t angle_freq_of(uint32_t polling_freq, int32_t angle_per_pol
 #define ANGLE_SPEED_PER_RADIAN(pollingFreq) ((float)ANGLE16_PER_RADIAN / pollingFreq)
 #define RADIAN_PER_ANGLE_SPEED(pollingFreq) ((float)pollingFreq / ANGLE16_PER_RADIAN) /* Fs * π / 32768 */
 
-#define ANGLE_SPEED(pollingFreq, radian) (ANGLE16_PER_RADIAN * (float)(radian) / pollingFreq)
+#define ANGLE_SPEED(pollingFreq, RadPerSecond) ((float)(RadPerSecond) * ANGLE16_PER_RADIAN / pollingFreq)
 
 /*
     from scaled SI units
-    Radians
-    ANGLE16_PER_RADIAN == 10430 == 65536 / (2*PI)
-
-    ANGLE16_PER_RADIAN ~= PollingFreq / 2 ~= [angle16/poll]
+    ANGLE16_PER_RADIAN ~= PollingFreq / 2 => [rad/s] ~= [angle16/poll]
 */
 static inline int32_t angle_of_rads(uint32_t pollingFreq, int32_t rads, uint16_t scale) { return ((int64_t)rads * ANGLE16_PER_RADIAN) / pollingFreq / scale; }
 static inline int32_t rads_of_angle(uint32_t pollingFreq, int16_t angle16, uint16_t scale) { return ((int64_t)angle16 * pollingFreq * scale) / ANGLE16_PER_RADIAN; }
+
+
+
 
 
 /******************************************************************************/
@@ -157,7 +163,7 @@ static inline int32_t cps_of_angle(uint32_t pollingFreq, int16_t angle16) { retu
 
 /******************************************************************************/
 /*!
-    @brief  Boundary: delta_angle16  ↔  ω_pu (ω_base-anchored, fract16-scaled)
+    @brief  Per Unit conversion Boundary: delta_angle16  ↔  ω_pu (ω_base-anchored, fract16-scaled)
 
         ω_pu × FRACT16_SCALE = delta · 30 · Fs / (P · n_rated_rpm)
                              = delta · 2π·Fs/(65536·ω_base) · FRACT16_SCALE     [π cancels]
@@ -185,6 +191,7 @@ static inline int16_t rpm_fract16_of_angle(uint32_t polling_freq, uint32_t base_
 static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, int16_t pu_fract16)
 {
     return ((int64_t)pu_fract16 * base_rads * FRACT16_SCALE) / ((int64_t)FRACT16_PI * polling_freq);
+    // return ((int64_t)pu_fract16 * base_rads) / ((int64_t)FRACT16_PI * polling_freq / FRACT16_SCALE);
 }
 
 /* ω_pu_fract16 = delta · π · Fs / ω_base */
@@ -195,7 +202,7 @@ static inline int32_t rads_fract16_of_angle(uint32_t polling_freq, uint32_t base
 
 /*
     optional include rads scaling
-    // static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, int16_t rads_pu, rads_scale)
+    // static inline int16_t angle_of_rads_fract16(uint32_t polling_freq, uint32_t base_rads, rads_scale, int16_t rads_pu)
 */
 
 /******************************************************************************/
@@ -203,6 +210,8 @@ static inline int32_t rads_fract16_of_angle(uint32_t polling_freq, uint32_t base
     si to si
 */
 /******************************************************************************/
+#define RADS_OF_RPM(rpm) ((uint64_t)rpm * FRACT16_PI / (30U * FRACT16_SCALE))
+
 static inline uint32_t rads_of_rpm(uint32_t rpm, uint32_t scale) { return (uint64_t)rpm * FRACT16_PI * scale / (30U * FRACT16_SCALE); }
 static inline uint32_t rpm_of_rads(uint32_t rads, uint32_t scale) { return (uint64_t)rads * 30U * FRACT16_SCALE / ((uint64_t)FRACT16_PI * scale); }
 static inline uint32_t mrads_of_rpm(uint32_t rpm) { return rads_of_rpm(rpm, 1000U); }

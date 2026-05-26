@@ -95,7 +95,7 @@ void Traction_StartThrottleMode(const Traction_T * p_vehicle, Motor_Table_T * p_
 
 // void Traction_ApplyThrottleSpeedValue(const Traction_T * p_vehicle, Motor_Table_T * p_motors, uint16_t userCmdThrottle)
 // {
-//     Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedMotoringCmdScalar, (int32_t)userCmdThrottle / 2);
+//     Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedMotoringCmd_Norm, (int32_t)userCmdThrottle / 2);
 // }
 
 /* if handle each value update with statemachine on input */
@@ -105,8 +105,8 @@ void Traction_ApplyThrottleValue(const Traction_T * p_vehicle, Motor_Table_T * p
 
     switch (p_vehicle->Config.ThrottleMode)
     {
-        case TRACTION_THROTTLE_MODE_SPEED:  Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedMotoringCmdScalar, (int32_t)cmdValue);     break;
-        case TRACTION_THROTTLE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetICmdScalar, (int32_t)cmdValue);         break;
+        case TRACTION_THROTTLE_MODE_SPEED:  Motor_Table_SetCmdWith(p_motors, Motor_SetSpeedMotoringCmd_Norm, (int32_t)cmdValue);     break;
+        case TRACTION_THROTTLE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetICmd_Norm, (int32_t)cmdValue);         break;
         default: break;
     }
 }
@@ -139,7 +139,7 @@ void Traction_ApplyBrakeValue(const Traction_T * p_vehicle, Motor_Table_T * p_mo
 
     switch (p_vehicle->Config.BrakeMode)
     {
-        case TRACTION_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetICmdScalar, cmdValue); break; /* note: torqueRamp also written in voltage mode */
+        case TRACTION_BRAKE_MODE_TORQUE: Motor_Table_SetCmdWith(p_motors, Motor_SetICmd_Norm, cmdValue); break; /* note: torqueRamp also written in voltage mode */
             // case TRACTION_BRAKE_MODE_VOLTAGE: Motor_Table_SetCmdWith(p_motors, Motor_SetRegenCmd, 0); break;
         default: break;
     }

@@ -206,8 +206,8 @@ static void FOC_Sensorless_InitAngleUnits(FOC_Sensorless_T * p_obs, Angle_SpeedF
    Resets PLL integrator to delta so it doesn't fight the seeded value. */
 static void FOC_Sensorless_SeedAngle(FOC_Sensorless_T * p_obs, angle16_t theta, angle16_t delta)
 {
-    Angle_CaptureAngle(&p_obs->AngleSpeed, theta);
-    Angle_CaptureDelta(&p_obs->AngleSpeed, delta);
+    Angle_SetAngle(&p_obs->AngleSpeed, theta);
+    Angle_SetDelta(&p_obs->AngleSpeed, delta);
     PID_Reset(&p_obs->PllPid);
     _PID_SetOutputState(&p_obs->PllPid, delta);
 }

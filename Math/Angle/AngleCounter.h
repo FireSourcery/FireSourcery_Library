@@ -110,7 +110,7 @@ static inline void AngleCounter_Zero(AngleCounter_T * p_counter) { p_counter->Co
 /*
     Directly set angle on sensor snapshot.
 */
-static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t angle) { Angle_CaptureAngle(&p_counter->Base, angle); }
+static inline void AngleCounter_SetAngle(AngleCounter_T * p_counter, angle16_t angle) { Angle_SetAngle(&p_counter->Base, angle); }
 
 static inline void AngleCounter_ZeroAngle(AngleCounter_T * p_counter) { Angle_ZeroAngle(&p_counter->Base); }
 

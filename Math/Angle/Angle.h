@@ -44,7 +44,7 @@
     Three integration modes share one struct:
         - wrap     : Angle_Integrate      (position tracker, free wrap)
         - clamp    : Angle_Interpolate         (bounded step; Limit is signed remaining-allowance)
-        - none     : Angle_CaptureAngle        (direct sensor snapshot)
+        - none     : Angle_SetAngle        (direct sensor snapshot)
 */
 /******************************************************************************/
 #define ANGLE32_SHIFT (16U)
@@ -79,10 +79,10 @@ static inline struct fract16_xy Angle_UnitVector(const Angle_T * p_angle) { retu
 */
 /******************************************************************************/
 /* Direct sensor snapshot — shifts into internal representation */
-static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16) { p_angle->Angle = (int32_t)angle16 << ANGLE32_SHIFT; }
+static inline void Angle_SetAngle(Angle_T * p_angle, angle16_t angle16) { p_angle->Angle = (int32_t)angle16 << ANGLE32_SHIFT; }
 
 /* Capture per-cycle delta from angle16 source */
-static inline void Angle_CaptureDelta(Angle_T * p_angle, angle16_t delta) { p_angle->Delta = (int32_t)delta << ANGLE32_SHIFT; }
+static inline void Angle_SetDelta(Angle_T * p_angle, angle16_t delta) { p_angle->Delta = (int32_t)delta << ANGLE32_SHIFT; }
 
 /******************************************************************************/
 /*
@@ -118,8 +118,8 @@ static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 
 /******************************************************************************/
 /*
-    Interpolation / bounded integration — estimate angle between sensor edges
-    or drive a clamped ramp.
+    Interpolation / bounded integration —
+    estimate angle between sensor edges or drive a clamped ramp.
 
     Angle_Interpolate clamps Angle + Delta to [LimitLower, LimitUpper].
     Bounds are independent: direction-agnostic, re-targetable per edge.
@@ -142,7 +142,6 @@ static inline angle16_t Angle_Interpolate(Angle_T * p_angle)
 }
 
 /*
-    Integrate Saturated
     Bounded step — wrapping-aware clamp.
     Unsigned subtraction recovers the correct span/offset even when limits
 */
@@ -335,7 +334,7 @@ static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, ang
 static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref, accum32_t speed_fract16)
 {
     p_angle->Delta = (int32_t)speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
-    // Angle_CaptureDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
+    // Angle_SetDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
 }
 
 static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedFractRef_T * p_ref)

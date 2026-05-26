@@ -63,7 +63,7 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 
 // static State_T * Calibration_AngleAlign(Motor_T * p_motor, state_value_t angle)
 // {
-//     Angle_CaptureAngle(&p_motor->P_MOTOR->OpenLoopAngle, angle);
+//     Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, angle);
 //     return &CALIBRATION_STATE_ANGLE_ALIGN;
 // }
 

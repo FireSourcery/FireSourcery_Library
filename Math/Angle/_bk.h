@@ -109,7 +109,7 @@ static inline int16_t angle_of_speed_fract16(angle16_t angle_speed_max, int16_t 
     Capture On Feedback
 */
 /******************************************************************************/
-static inline void Angle_CaptureAngle(Angle_T * p_angle, angle16_t angle16)
+static inline void Angle_SetAngle(Angle_T * p_angle, angle16_t angle16)
 {
     p_angle->Angle = angle16;
 }

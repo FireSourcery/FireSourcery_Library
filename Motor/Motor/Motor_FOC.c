@@ -94,6 +94,31 @@ void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idRe
 */
 /******************************************************************************/
 /*
+    Current-mode pipeline. Sensor theta, TorqueRamp on Iq, Id from field weakening.
+*/
+void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
+{
+    Motor_FOC_ProcTorqueReq(p_motor, Ramp_GetTarget(&p_motor->P_MOTOR->TorqueRamp));
+}
+
+/*!
+    Match Feedback State/Output to Output Voltage
+    On FeedbackMode update and Freewheel to Run
+    StateMachine blocks feedback proc
+*/
+/* vq == 0 from passive before bemf sample completes */
+/* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
+void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
+{
+    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
+    Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
+    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
+    // _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    FOC_MatchIVState(&p_context->Foc);
+}
+
+/*
     Voltage-mode on a seperate path
 */
 void Motor_FOC_ProcVControl(Motor_T * p_motor)
@@ -106,28 +131,15 @@ void Motor_FOC_ProcVControl(Motor_T * p_motor)
     FOC_ProcInvClarkePark(&p_context->Foc);
 }
 
-/*
-    Current-mode pipeline. Sensor theta, TorqueRamp on Iq, Id from field weakening.
-*/
-void Motor_FOC_ProcAngleControl(Motor_T * p_motor)
-{
-    Motor_FOC_ProcTorqueReq(p_motor, Ramp_GetTarget(&p_motor->P_MOTOR->TorqueRamp));
-}
 
-/******************************************************************************/
-/*
-    Passive State
-    ProcAngleObserve
-    Angle Observe VBemf FreeWheel and Stop State
-    Updates Vabc, Valpha, Vbeta, Vd, Vq
-*/
-/******************************************************************************/
-void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
+void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_context)
 {
-    FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
-    FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
+    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
+    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    FOC_MatchIVState(&p_context->Foc);
+    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Vq(&p_context->Foc)); //different units for now
+    Ramp_SetTarget(&p_context->TorqueRamp, FOC_Vq(&p_context->Foc));
 }
-
 
 /******************************************************************************/
 /*!
@@ -151,35 +163,20 @@ void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor)
     Ramp_SetTarget(&p_motor->SpeedRamp, 0);
 }
 
-static inline int32_t Motor_FOC_VSpeed_Fract16(const Motor_Context_T * p_context) { return fract16_mul(Motor_GetSpeedFeedback(p_context), p_context->Foc.Electrical.Psi); }
 
-/*!
-    Match Feedback State/Output to Output Voltage
-    On FeedbackMode update and Freewheel to Run
-    StateMachine blocks feedback proc
+/******************************************************************************/
+/*
+    Passive State
+    ProcAngleObserve
+    Angle Observe VBemf FreeWheel and Stop State
+    Updates Vabc, Valpha, Vbeta, Vd, Vq
 */
-/* vq == 0 from passive before bemf sample completes */
-/* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
-void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
+/******************************************************************************/
+void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
 {
-    Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
-    Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
-    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
-    int16_t vqMatch = Motor_FOC_VSpeed_Fract16(p_context);
-    FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
+    FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
+    FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
 }
-
-void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_context)
-{
-    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
-    int16_t vqMatch = Motor_FOC_VSpeed_Fract16(p_context);
-    Ramp_SetOutputState(&p_context->TorqueRamp, vqMatch); //different units for now
-    Ramp_SetTarget(&p_context->TorqueRamp, vqMatch);
-    FOC_SetVq(&p_context->Foc, vqMatch);/* repeat set is ok */
-    FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
-}
-
 
 
 /******************************************************************************/
@@ -194,7 +191,7 @@ void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_context)
 /* ElectricalAngle set by caller. Does not Angle_ZeroCaptureState */
 void Motor_FOC_SetAlignCmdAngle(Motor_Context_T * p_motor, angle16_t angle)
 {
-    Angle_CaptureAngle(&p_motor->OpenLoopAngle, angle);
+    Angle_SetAngle(&p_motor->OpenLoopAngle, angle);
 }
 
 void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor)

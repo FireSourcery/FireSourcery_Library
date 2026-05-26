@@ -38,8 +38,8 @@ static void SinCos_RotorSensor_CaptureAngle(const SinCos_RotorSensor_T * p_senso
     angle16_t electrical = SinCos_GetElectricalAngle(p_sinCosState);
     angle16_t delta = (angle16_t)(electrical - Angle_Value(&p_state->AngleSpeed));
 
-    Angle_CaptureAngle(&p_state->AngleSpeed, electrical);
-    Angle_CaptureDelta(&p_state->AngleSpeed, delta);
+    Angle_SetAngle(&p_state->AngleSpeed, electrical);
+    Angle_SetDelta(&p_state->AngleSpeed, delta);
 
     p_state->MechanicalAngle = SinCos_GetMechanicalAngle(p_sinCosState);
 }
@@ -61,7 +61,7 @@ static void SinCos_RotorSensor_ZeroInitial(const SinCos_RotorSensor_T * p_sensor
 {
     SinCos_State_T * p_sinCosState = p_sensor->SIN_COS.P_STATE;
     SinCos_CaptureAngle(p_sinCosState, SinCos_Analog_GetSin(&p_sensor->ANALOG), SinCos_Analog_GetCos(&p_sensor->ANALOG));
-    Angle_CaptureAngle(&p_sensor->BASE.P_STATE->AngleSpeed, SinCos_GetElectricalAngle(p_sinCosState));
+    Angle_SetAngle(&p_sensor->BASE.P_STATE->AngleSpeed, SinCos_GetElectricalAngle(p_sinCosState));
     Angle_StopDelta(&p_sensor->BASE.P_STATE->AngleSpeed);
     p_sensor->BASE.P_STATE->Speed_Fract16 = 0;
 }
