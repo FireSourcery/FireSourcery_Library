@@ -431,7 +431,7 @@ static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 static inline void  FOC_MatchIVState(FOC_T * p_foc)
 {
 #ifdef FOC_V_MATCH_BEMF
-    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->Vq);
+    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->Vq); /* Keep Vd for resume while Field Weakening */
 #else
     _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->ElectricalSpeed.OmegaPsi);
 #endif

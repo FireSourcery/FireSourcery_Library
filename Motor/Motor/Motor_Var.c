@@ -184,7 +184,7 @@ void Motor_Var_FocConfig_Set(Motor_T * p_motor, FOC_ConfigVar_T varId, int varVa
 {
     Motor_Context_T * p_state = p_motor->P_MOTOR;
     FOC_Config_Set(&p_state->Config.FocConfig, varId, varValue); /* sets storage */
-    FOC_Config_Set(&p_state->Foc.Config, varId, varValue); /* Sets runtime */
+    FOC_Config_Set(&p_state->Foc.Config, varId, varValue); /* Sets runtime. or call handles reset */
 }
 
 

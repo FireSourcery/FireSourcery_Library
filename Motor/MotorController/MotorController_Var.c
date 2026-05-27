@@ -91,14 +91,13 @@ int MotorController_Var_OutputDebug_Get(MotorController_T * p_dev, MotorControll
     {
         case MOT_VAR_CONTROL_LOOP_PROFILE:  value = p_dev->P_MC->ControlLoopProfile;            break;
         case MOT_VAR_DEBUG0: value = Angle_Value(&p_motorState->OpenLoopAngle) - Angle_Value(&p_motorState->FocSensorless.AngleSpeed);             break;
-        // case MOT_VAR_DEBUG1: value = Angle_Delta(&p_motorState->OpenLoopAngle);             break;
-        // case MOT_VAR_DEBUG2: value = Angle_Delta(&p_motorState->FocSensorless.AngleSpeed);      break;
-        case MOT_VAR_DEBUG2: value = p_motorState->PhaseInput.I.Values.A;             break;
-        case MOT_VAR_DEBUG3: value = p_motorState->PhaseInput.I.Values.B;             break;
-        case MOT_VAR_DEBUG4: value = p_motorState->PhaseInput.I.Values.C;             break;
-        case MOT_VAR_DEBUG5: value = p_motorState->PhaseInput.V.Values.A;             break;
-        case MOT_VAR_DEBUG6: value = p_motorState->PhaseInput.V.Values.B;             break;
-        case MOT_VAR_DEBUG7: value = p_motorState->PhaseInput.V.Values.C;             break;
+        case MOT_VAR_DEBUG1: value = Angle_Delta(&p_motorState->OpenLoopAngle);             break;
+        case MOT_VAR_DEBUG2: value = Angle_Delta(&p_motorState->FocSensorless.AngleSpeed);      break;
+        case MOT_VAR_DEBUG3: value = 0;             break;
+        case MOT_VAR_DEBUG4: value = 0;             break;
+        case MOT_VAR_DEBUG5: value = 0;             break;
+        case MOT_VAR_DEBUG6: value = 0;             break;
+        case MOT_VAR_DEBUG7: value = 0;             break;
     }
     // #endif
     return value;

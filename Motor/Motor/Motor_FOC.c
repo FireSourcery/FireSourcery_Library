@@ -112,8 +112,6 @@ void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 {
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
     Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
-    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
-    // _FOC_MatchIVState(&p_context->Foc, FOC_Vd(&p_context->Foc), vqMatch); /* Keep Vd for resume while Field Weakening */
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     FOC_MatchIVState(&p_context->Foc);
 }
@@ -134,7 +132,6 @@ void Motor_FOC_ProcVControl(Motor_T * p_motor)
 
 void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_context)
 {
-    // int16_t vqMatch = (FOC_Vq(&p_context->Foc) == 0) ? Motor_FOC_VSpeed_Fract16(p_context) : FOC_Vq(&p_context->Foc);
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
     FOC_MatchIVState(&p_context->Foc);
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Vq(&p_context->Foc)); //different units for now
@@ -237,8 +234,8 @@ void Motor_FOC_ProcStartUpAlign(Motor_T * p_motor)
 */
 void Motor_FOC_StartOpenLoop(Motor_Context_T * p_motor)
 {
-    Ramp_SetOutputState(&p_motor->OpenLoopIRamp, Motor_GetIAlign(&p_motor->Config) * p_motor->Direction);  /* continue from align current */
-    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, 0);
+    // Ramp_SetOutputState(&p_motor->OpenLoopIRamp, Motor_GetIAlign(&p_motor->Config) * p_motor->Direction);  /* continue from align current */
+    Ramp_SetOutputState(&p_motor->OpenLoopIRamp, 0);
     Ramp_SetOutputState(&p_motor->OpenLoopSpeedRamp, 0);
     /* continue from OpenLoopAngle */
 }

@@ -105,9 +105,9 @@ FOC_SensorlessConfig_T;
     .PllPid =                                                                       \
     {                                                                               \
         .Mode       = PID_MODE_PI,                                                  \
-        .SampleFreq = 10000U,                                                       \
-        .Kp_Fixed32 = 328,      /* ≈ 0.01 Q17.15 */                                 \
-        .Ki_Fixed32 = 33,       /* ≈ 0.001 Q17.15 */                                \
+        .SampleFreq = 20000U,                                                       \
+        .Kp_Fixed32 = 3280,      /* ≈ 0.01 Q17.15 */                                 \
+        .Ki_Fixed32 = 330,       /* ≈ 0.001 Q17.15 */                                \
         .Kd_Fixed32 = 0,                                                            \
     },                                                                              \
 }
@@ -265,8 +265,8 @@ static void FOC_Sensorless_Init(FOC_Sensorless_T * p_obs, FOC_SensorlessConfig_T
 */
 static void FOC_Sensorless_InitG(FOC_Sensorless_T * p_obs, uint32_t g)
 {
-    p_obs->G_pu = math_min(g, FRACT16_MAX);
-    // p_obs->G_pu = g;
+    // p_obs->G_pu = math_min(g, FRACT16_MAX);
+    p_obs->G_pu = g;
 }
 
 /* angle16 */

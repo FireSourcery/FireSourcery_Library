@@ -41,7 +41,7 @@
 
 void PID_InitFrom(PID_T * p_pid, const PID_Config_T * p_config)
 {
-    // if (p_config != NULL) { memcpy(&p_pid->Config, p_config, sizeof(PID_Config_T)); }
+    if (p_config != NULL) { p_pid->Config = *p_config; }
     PID_SetKp_Fixed32(p_pid, p_pid->Config.Kp_Fixed32);
     PID_SetKi_Fixed32(p_pid, p_pid->Config.Ki_Fixed32);
     PID_SetKd_Fixed32(p_pid, p_pid->Config.Kd_Fixed32);
