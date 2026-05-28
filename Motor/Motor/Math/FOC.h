@@ -165,7 +165,6 @@ static inline void FOC_ProcClarkePark(FOC_T * p_foc, fract16_t ia, fract16_t ib,
     p_foc->Iq = idq.q;
 }
 
-
 // static inline void FOC_ProcClarkePark_AB(FOC_T * p_foc)
 // {
 //     foc_clarke_ab(&p_foc->Ialpha, &p_foc->Ibeta, p_foc->Ia, p_foc->Ib);
@@ -237,7 +236,6 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     V Policy config
 */
 /******************************************************************************/
-
 /*
     Dynamic limits
     dynamic overlay to intersect with base
@@ -431,8 +429,8 @@ static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 static inline void  FOC_MatchIVState(FOC_T * p_foc)
 {
 #ifdef FOC_V_MATCH_BEMF
-    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->Vq); /* Keep Vd for resume while Field Weakening */
-#else
+    _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->Vq);
+#elif defined(FOC_V_MATCH_SPEED)
     _FOC_MatchIVState(p_foc, p_foc->Vd, p_foc->ElectricalSpeed.OmegaPsi);
 #endif
 }

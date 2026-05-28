@@ -44,7 +44,8 @@
 
 /* For handling within init mode */
 #ifndef HAL_CAN_CLOCK_SOURCE_DEFAULT
-#define HAL_CAN_CLOCK_SOURCE_DEFAULT MSCAN_CANCTL1_CLKSRC_MASK /* select the oscillator clock */
+// #define HAL_CAN_CLOCK_SOURCE_DEFAULT MSCAN_CANCTL1_CLKSRC_MASK /* select the oscillator clock */
+#define HAL_CAN_CLOCK_SOURCE_DEFAULT 0U /* MSCAN CLKSRC=0 selects the oscillator clock */
 #endif
 
 #ifndef HAL_CAN_INIT_BAUD_RATE
@@ -312,8 +313,9 @@ static inline uint8_t HAL_CAN_MapRxMessageBufferIndex(HAL_CAN_T * p_hal, uint8_t
 /******************************************************************************/
 /* Foreground buffer auto-locks on first register read */
 static inline bool HAL_CAN_LockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)p_hal; (void)hwIndex; return true; }
-/* Cleared on Read */
-static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
+static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; p_hal->CANRFLG = MSCAN_CANRFLG_RXF_MASK; }
+// /* Cleared on Read */
+// static inline void HAL_CAN_UnlockRx(HAL_CAN_T * p_hal, uint8_t hwIndex) { (void)hwIndex; }
 
 
 /******************************************************************************/

@@ -34,17 +34,17 @@
 
 static inline accum32_t smo_g_pu_rpm(uint32_t polling_freq, uint32_t speed_max_rpm, uint32_t polePairs, uint32_t l_pu)
 {
-    return (uint64_t)FRACT16_PI * polePairs * speed_max_rpm  / ((uint64_t)30UL * polling_freq * l_pu);
+    return (uint64_t)FRACT16_PI * polePairs * speed_max_rpm * FRACT16_SCALE / ((uint64_t)30UL * polling_freq * l_pu);
 }
 
 static inline accum32_t smo_g_pu_of_erads(uint32_t polling_freq, uint32_t erads, uint32_t l_pu)
 {
-    return (uint64_t)erads * FRACT16_SCALE / (polling_freq * l_pu);
+    return (uint64_t)erads * FRACT16_SCALE * FRACT16_SCALE / (polling_freq * l_pu);
 }
 
 static inline accum32_t smo_g_pu_of_angle(uint32_t polling_freq, uint32_t angle, uint32_t l_pu)
 {
-    return (uint64_t)angle * FRACT16_SCALE / (l_pu);
+    return (uint64_t)angle * FRACT16_SCALE * FRACT16_SCALE / (l_pu);
 }
 
 /******************************************************************************/

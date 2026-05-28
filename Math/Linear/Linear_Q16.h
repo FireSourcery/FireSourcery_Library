@@ -52,8 +52,10 @@
 /******************************************************************************/
 static inline int16_t _Linear_SatSigned16(int32_t value16) { return ((int16_t)math_clamp(value16, INT16_MIN, INT16_MAX)); }
 static inline int16_t _Linear_SatSigned16_Abs(int32_t value16) { return _Linear_SatSigned16(math_abs(value16)); }
-static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, INT16_MAX)); }
+static inline uint16_t _Linear_SatUnsigned16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, INT16_MAX)); }   /* Q1.15 UFract: [0, 32767] */
 static inline uint16_t _Linear_SatUnsigned16_Abs(int32_t value16) { return _Linear_SatUnsigned16(math_abs(value16)); }
+static inline uint16_t _Linear_SatPercent16(int32_t value16) { return ((uint16_t)math_clamp(value16, 0, UINT16_MAX)); }   /* Q0.16 Percent: [0, 65535] */
+static inline uint16_t _Linear_SatPercent16_Abs(int32_t value16) { return _Linear_SatPercent16(math_abs(value16)); }
 
 
 /******************************************************************************/
@@ -99,8 +101,8 @@ static inline int32_t Linear_Q16_InvFract(const Linear_T * p_linear, int16_t y_f
 */
 /******************************************************************************/
 static inline int32_t _Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return Linear_Q16_Of(p_linear, x); }
-static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16(Linear_Q16_Of(p_linear, x)); }
-static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x) { return _Linear_SatUnsigned16_Abs(Linear_Q16_Of(p_linear, x)); }
+static inline uint16_t Linear_Q16_Percent(const Linear_T * p_linear, int32_t x) { return _Linear_SatPercent16(Linear_Q16_Of(p_linear, x)); }
+static inline uint16_t Linear_Q16_Percent_Abs(const Linear_T * p_linear, int32_t x) { return _Linear_SatPercent16_Abs(Linear_Q16_Of(p_linear, x)); }
 
 /* Input interval units */
 static inline int32_t Linear_Q16_InvPercent(const Linear_T * p_linear, uint16_t y_percent16) { return Linear_Q16_InvOf(p_linear, y_percent16); }

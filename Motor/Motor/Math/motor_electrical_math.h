@@ -224,8 +224,8 @@ static inline accum32_t rs_pu_of_vd_id(fract16_t vd_pu, fract16_t id_pu) { retur
 static inline uint32_t rs_mohm_of_vi(uint32_t v_mV, uint32_t i_mA) { return (uint64_t)v_mV * 1000UL / i_mA; }
 static inline uint32_t rs_mohm_of_vi_ll_y(uint32_t v_mV_ll, uint32_t i_mA) { return (uint64_t)v_mV_ll * 1000UL / (2UL * i_mA); }
 
-static inline uint32_t rs_pu_of_mohm(uint16_t v_max_V, uint16_t i_max_A, uint32_t rs_mOhm) { return (uint64_t)rs_mOhm * i_max_A * FRACT16_SCALE / ((uint32_t)v_max_V * 1000UL); }
-static inline uint32_t rs_mohm_of_pu(uint16_t v_max_V, uint16_t i_max_A, uint32_t rs_pu) { return (uint64_t)rs_pu * v_max_V * 1000UL / ((uint32_t)i_max_A * FRACT16_SCALE); }
+static inline uint32_t rs_pu_of_mohm(uint16_t v_base_V, uint16_t i_base_A, uint32_t rs_mOhm) { return (uint64_t)rs_mOhm * i_base_A * FRACT16_SCALE / ((uint32_t)v_base_V * 1000UL); }
+static inline uint32_t rs_mohm_of_pu(uint16_t v_base_V, uint16_t i_base_A, uint32_t rs_pu) { return (uint64_t)rs_pu * v_base_V * 1000UL / ((uint32_t)i_base_A * FRACT16_SCALE); }
 
 
 
@@ -311,24 +311,24 @@ static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu, fract16_t i_
 #define MOTOR_PSI_PU(V_Base, Omega_Base_RadPerSecond, Psi_Webers, SI_Scale) ((uint64_t)Psi_Webers * Omega_Base_RadPerSecond * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_PSI_PU_RPM(V_Base, Speed_Base_RPM, polePairs, Psi_Webers, SI_Scale) ((uint64_t)Psi_Webers * Speed_Base_RPM * polePairs * FRACT16_PI / (30UL * V_Base * SI_Scale))
 
-static inline uint32_t psi_pu_rads_of_wb(uint16_t v_max_V, uint32_t el_rads_base, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * el_rads_base * FRACT16_SCALE / ((uint64_t)v_max_V * scale); }
-static inline uint32_t psi_wb_of_pu_rads(uint16_t v_max_V, uint32_t el_rads_base, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_max_V * scale / ((uint64_t)el_rads_base * FRACT16_SCALE); }
+static inline uint32_t psi_pu_rads_of_wb(uint16_t v_base_V, uint32_t omega_base_el_rads, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * omega_base_el_rads * FRACT16_SCALE / ((uint64_t)v_base_V * scale); }
+static inline uint32_t psi_wb_of_pu_rads(uint16_t v_base_V, uint32_t omega_base_el_rads, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_base_V * scale / ((uint64_t)omega_base_el_rads * FRACT16_SCALE); }
 
-static inline uint32_t psi_pu_mrads_of_uwb(uint16_t v_max_V, uint32_t el_rads_base, uint32_t psi_uWb) { return psi_pu_rads_of_wb(v_max_V, el_rads_base, psi_uWb, 1000UL * 1000000UL); }
-static inline uint32_t psi_uwb_of_pu_mrads(uint16_t v_max_V, uint32_t el_rads_base, uint32_t psi_pu) { return psi_wb_of_pu_rads(v_max_V, el_rads_base, psi_pu, 1000UL * 1000000UL); }
+static inline uint32_t psi_pu_mrads_of_uwb(uint16_t v_base_V, uint32_t omega_base_el_rads, uint32_t psi_uWb) { return psi_pu_rads_of_wb(v_base_V, omega_base_el_rads, psi_uWb, 1000UL * 1000000UL); }
+static inline uint32_t psi_uwb_of_pu_mrads(uint16_t v_base_V, uint32_t omega_base_el_rads, uint32_t psi_pu) { return psi_wb_of_pu_rads(v_base_V, omega_base_el_rads, psi_pu, 1000UL * 1000000UL); }
 
 /*
-    ψ_pu × FRACT16_SCALE = π · P · ψ_f · speed_max_rpm / (30 · V_max)
+    ψ_pu × FRACT16_SCALE = π · P · ψ_f · speed_base_rpm / (30 · V_max)
     ψ_pu in speed_pu_rpm basis — numerically equals Ke_pu_rpm
-    V_emf_pu = ψ_pu · speed_pu, speed_pu = rpm / speed_max_rpm.
+    V_emf_pu = ψ_pu · speed_pu, speed_pu = rpm / speed_base_rpm.
 
     (speed_pu carries no mech/elec distinction; P appears in SI conversion, cancels via Kv).
 */
-static inline uint32_t psi_pu_rpm_of_wb(uint16_t v_max_V, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)FRACT16_PI * polePairs * speed_max_rpm * psi_Wb / ((uint64_t)30UL * v_max_V * scale); }
-static inline uint32_t psi_wb_of_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t psi_pu, uint32_t scale) { return (uint64_t)30UL * psi_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * polePairs * speed_max_rpm); }
+static inline uint32_t psi_pu_rpm_of_wb(uint16_t v_base_V, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)FRACT16_PI * polePairs * speed_base_rpm * psi_Wb / ((uint64_t)30UL * v_base_V * scale); }
+static inline uint32_t psi_wb_of_pu_rpm(uint16_t v_base_V, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t psi_pu, uint32_t scale) { return (uint64_t)30UL * psi_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * polePairs * speed_base_rpm); }
 
-static inline uint32_t psi_pu_rpm_of_uwb(uint16_t v_max_V, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t psi_uWb) { return psi_pu_rpm_of_wb(v_max_V, speed_max_rpm, polePairs, psi_uWb, 1000000UL); }
-static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t psi_pu) { return psi_wb_of_pu_rpm(v_max_V, speed_max_rpm, polePairs, psi_pu, 1000000UL); }
+static inline uint32_t psi_pu_rpm_of_uwb(uint16_t v_base_V, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t psi_uWb) { return psi_pu_rpm_of_wb(v_base_V, speed_base_rpm, polePairs, psi_uWb, 1000000UL); }
+static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_base_V, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t psi_pu) { return psi_wb_of_pu_rpm(v_base_V, speed_base_rpm, polePairs, psi_pu, 1000000UL); }
 
 
 /******************************************************************************/
@@ -347,15 +347,15 @@ static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rp
     L_pu — scale absorbs both L unit (1/scale_L H) and ω_base unit (1/scale_ω rad/s_e):
     scale = scale_L · scale_ω        e.g. (µH, mrad/s_e) → 1000 · 1e6 = 1e9
 */
-static inline uint32_t l_pu_rads_of_h(uint16_t v_max_V, uint16_t i_max_A, uint32_t base_rads_e, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_max_A * base_rads_e * FRACT16_SCALE / ((uint64_t)v_max_V * scale); }
-static inline uint32_t l_h_of_pu_rads(uint16_t v_max_V, uint16_t i_max_A, uint32_t base_rads_e, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_max_V * scale / ((uint64_t)i_max_A * base_rads_e * FRACT16_SCALE); }
-static inline uint32_t l_pu_mrads_of_uh(uint16_t v_max_V, uint16_t i_max_A, uint32_t base_mrads_e, uint32_t l_uH) { return l_pu_rads_of_h(v_max_V, i_max_A, base_mrads_e, l_uH, 1000UL * 1000000UL); }
-static inline uint32_t l_uh_of_pu_mrads(uint16_t v_max_V, uint16_t i_max_A, uint32_t base_mrads_e, uint32_t l_pu) { return l_h_of_pu_rads(v_max_V, i_max_A, base_mrads_e, l_pu, 1000UL * 1000000UL); }
+static inline uint32_t l_pu_rads_of_h(uint16_t v_base_V, uint16_t i_base_A, uint32_t omega_base_e_rads, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_base_A * omega_base_e_rads * FRACT16_SCALE / ((uint64_t)v_base_V * scale); }
+static inline uint32_t l_h_of_pu_rads(uint16_t v_base_V, uint16_t i_base_A, uint32_t omega_base_e_rads, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / ((uint64_t)i_base_A * omega_base_e_rads * FRACT16_SCALE); }
+static inline uint32_t l_pu_mrads_of_uh(uint16_t v_base_V, uint16_t i_base_A, uint32_t omega_base_e_mrads, uint32_t l_uH) { return l_pu_rads_of_h(v_base_V, i_base_A, omega_base_e_mrads, l_uH, 1000UL * 1000000UL); }
+static inline uint32_t l_uh_of_pu_mrads(uint16_t v_base_V, uint16_t i_base_A, uint32_t omega_base_e_mrads, uint32_t l_pu) { return l_h_of_pu_rads(v_base_V, i_base_A, omega_base_e_mrads, l_pu, 1000UL * 1000000UL); }
 
-static inline uint32_t l_pu_rpm_of_h(uint16_t v_max_V, uint16_t i_max_A, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t l_h, uint32_t scale) { return (uint64_t)FRACT16_PI * polePairs * speed_max_rpm * l_h * i_max_A / ((uint64_t)30UL * v_max_V * scale); }
-static inline uint32_t l_h_of_pu_rpm(uint16_t v_max_V, uint16_t i_max_A, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t l_pu, uint32_t scale) { return (uint64_t)30UL * l_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * polePairs * speed_max_rpm * i_max_A); }
-static inline uint32_t l_pu_rpm_of_uh(uint16_t v_max_V, uint16_t i_max_A, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t l_uH) { return l_pu_rpm_of_h(v_max_V, i_max_A, speed_max_rpm, polePairs, l_uH, 1000000UL); }
-static inline uint32_t l_uh_of_pu_rpm(uint16_t v_max_V, uint16_t i_max_A, uint32_t speed_max_rpm, uint8_t polePairs, uint32_t l_pu) { return l_h_of_pu_rpm(v_max_V, i_max_A, speed_max_rpm, polePairs, l_pu, 1000000UL); }
+static inline uint32_t l_pu_rpm_of_h(uint16_t v_base_V, uint16_t i_base_A, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t l_h, uint32_t scale) { return (uint64_t)FRACT16_PI * polePairs * speed_base_rpm * l_h * i_base_A / ((uint64_t)30UL * v_base_V * scale); }
+static inline uint32_t l_h_of_pu_rpm(uint16_t v_base_V, uint16_t i_base_A, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t l_pu, uint32_t scale) { return (uint64_t)30UL * l_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * polePairs * speed_base_rpm * i_base_A); }
+static inline uint32_t l_pu_rpm_of_uh(uint16_t v_base_V, uint16_t i_base_A, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t l_uH) { return l_pu_rpm_of_h(v_base_V, i_base_A, speed_base_rpm, polePairs, l_uH, 1000000UL); }
+static inline uint32_t l_uh_of_pu_rpm(uint16_t v_base_V, uint16_t i_base_A, uint32_t speed_base_rpm, uint8_t polePairs, uint32_t l_pu) { return l_h_of_pu_rpm(v_base_V, i_base_A, speed_base_rpm, polePairs, l_pu, 1000000UL); }
 
 /*
     ω_base-anchored basis —  Fs appears only for time-domain measurements (τ_cycles, dt_cycles); HFI is Fs-free.
@@ -374,9 +374,9 @@ static inline uint32_t l_pu_rads_of_hfi(uint32_t omega_base_e, uint32_t scale, u
     L_pu = (v/di) · π·P·n · dt_cycles / (30 · Fs)                [step]
     L_pu = (v/i) · P·n / (60 · f)                                [HFI, π and FRACT16_SCALE cancel]
 */
-static inline uint32_t l_pu_rpm_of_step(uint32_t fs_hz, uint32_t speed_max_rpm, uint8_t polePairs, fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return (uint64_t)fract16_div(v_pu, di_pu) * FRACT16_PI * polePairs * speed_max_rpm * dt_cycles / ((uint64_t)30UL * FRACT16_SCALE * fs_hz); }
-static inline uint32_t l_pu_rpm_of_rs_tau_cycles(uint32_t fs_hz, uint32_t speed_max_rpm, uint8_t polePairs, fract16_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * FRACT16_PI * polePairs * speed_max_rpm * tau_cycles / ((uint64_t)30UL * FRACT16_SCALE * fs_hz); }
-static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_max_rpm, uint8_t polePairs, uint32_t fhfi_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * polePairs * speed_max_rpm / (60UL * fhfi_Hz); }
+static inline uint32_t l_pu_rpm_of_step(uint32_t fs_hz, uint32_t speed_base_rpm, uint8_t polePairs, fract16_t v_pu, fract16_t di_pu, uint32_t dt_cycles) { return (uint64_t)fract16_div(v_pu, di_pu) * FRACT16_PI * polePairs * speed_base_rpm * dt_cycles / ((uint64_t)30UL * FRACT16_SCALE * fs_hz); }
+static inline uint32_t l_pu_rpm_of_rs_tau_cycles(uint32_t fs_hz, uint32_t speed_base_rpm, uint8_t polePairs, fract16_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * FRACT16_PI * polePairs * speed_base_rpm * tau_cycles / ((uint64_t)30UL * FRACT16_SCALE * fs_hz); }
+static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_base_rpm, uint8_t polePairs, uint32_t fhfi_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * polePairs * speed_base_rpm / (60UL * fhfi_Hz); }
 
 /******************************************************************************/
 /*
@@ -429,8 +429,8 @@ static inline uint16_t kv_pk_of_kv_rms(uint16_t kv_rms) { return (uint64_t)kv_rm
 static inline uint16_t kv_rms_of_kv_pk(uint16_t kv_pk) { return (uint64_t)kv_pk * FRACT16_SQRT2 / FRACT16_SCALE; }
 
 /* v_pu / omega_pu */
-static inline uint32_t ke_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return speed_max_rpm * FRACT16_SCALE / (kv * v_max_V); }
-static inline uint16_t kv_of_ke_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t ke_pu) { return (uint64_t)speed_max_rpm * FRACT16_SCALE / ((uint64_t)ke_pu * v_max_V); }
+static inline uint32_t ke_pu_rpm_of_kv(uint16_t v_base_V, uint32_t speed_base_rpm, uint16_t kv) { return speed_base_rpm * FRACT16_SCALE / (kv * v_base_V); }
+static inline uint16_t kv_of_ke_pu_rpm(uint16_t v_base_V, uint32_t speed_base_rpm, uint32_t ke_pu) { return (uint64_t)speed_base_rpm * FRACT16_SCALE / ((uint64_t)ke_pu * v_base_V); }
 
 /*
     ψ_f [Wb] = (1 / Kv) · (60 / 2π) / P / M
@@ -450,12 +450,12 @@ static inline uint16_t kv_of_ke_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm,
 /* alternatively, psi of ke use √3, psi of kv use /2 since kv is rpm observation at bus voltage */
 #define MOTOR_PSI_PU_OF_KV(V_Max, Speed_Max_Rpm, Kv) ((Speed_Max_Rpm) * FRACT16_SCALE / ((Kv) * (V_Max)) / 2)
 
-static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) / 2; }
-static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * 2; }
-// static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_max_V, speed_max_rpm, kv) * FRACT16_SCALE / FRACT16_SQRT3; }
-// static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_max_V, uint32_t speed_max_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_max_V, speed_max_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }
+static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_base_V, uint32_t speed_base_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_base_V, speed_base_rpm, kv) / 2; }
+static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_base_V, uint32_t speed_base_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_base_V, speed_base_rpm, psi_pu) * 2; }
+// static inline uint32_t psi_pu_rpm_of_kv(uint16_t v_base_V, uint32_t speed_base_rpm, uint16_t kv) { return ke_pu_rpm_of_kv(v_base_V, speed_base_rpm, kv) * FRACT16_SCALE / FRACT16_SQRT3; }
+// static inline uint16_t kv_of_psi_pu_rpm(uint16_t v_base_V, uint32_t speed_base_rpm, uint32_t psi_pu) { return kv_of_ke_pu_rpm(v_base_V, speed_base_rpm, psi_pu) * FRACT16_SQRT3 / FRACT16_SCALE; }
 
-static inline uint32_t psi_pu_rpm_of_ke(uint16_t v_max_V, uint32_t speed_max_rpm, uint16_t ke_voltPerRpm, uint32_t scale) { return (uint64_t)ke_voltPerRpm * FRACT16_SCALE / FRACT16_SQRT3 / scale; }
+static inline uint32_t psi_pu_rpm_of_ke(uint16_t v_base_V, uint32_t speed_base_rpm, uint16_t ke_voltPerRpm, uint32_t scale) { return (uint64_t)ke_voltPerRpm * FRACT16_SCALE / FRACT16_SQRT3 / scale; }
 
 
 
@@ -542,9 +542,9 @@ static inline uint32_t psi_pu_rpm_of_ke(uint16_t v_max_V, uint32_t speed_max_rpm
             ω_du * L_du = 6976
 
     l_h: 80 uH
-    i_max_A: 600 A
+    i_base_A: 600 A
     Fs: 20 kHz
-    v_max_V: 94 V
+    v_base_V: 94 V
     ω_base_e:2094.4 (5000 mech rpm, 4 pole pairs)
 
     _l_pu_of_h       L_pu_a16 = 32 (real value 32.083, integer-truncated)
@@ -633,11 +633,11 @@ static inline uint32_t psi_pu_rpm_of_ke(uint16_t v_max_V, uint32_t speed_max_rpm
     where delta_angle16 is the msb16 of the angle accumulator.
 */
 /******************************************************************************/
-static inline uint32_t psi_pu_of_wb(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)FRACT16_PI * psi_Wb * fs_hz / ((uint64_t)v_max_V * scale); }
-static inline uint32_t psi_wb_of_pu(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * fs_hz); }
+static inline uint32_t psi_pu_of_wb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)FRACT16_PI * psi_Wb * fs_hz / ((uint64_t)v_base_V * scale); }
+static inline uint32_t psi_wb_of_pu(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * fs_hz); }
 
-static inline uint32_t psi_pu_of_uwb(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_uWb) { return psi_pu_of_wb(fs_hz, v_max_V, psi_uWb, 1000000UL); }
-static inline uint32_t psi_uwb_of_pu(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_pu) { return psi_wb_of_pu(fs_hz, v_max_V, psi_pu, 1000000UL); }
+static inline uint32_t psi_pu_of_uwb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_uWb) { return psi_pu_of_wb(fs_hz, v_base_V, psi_uWb, 1000000UL); }
+static inline uint32_t psi_uwb_of_pu(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu) { return psi_wb_of_pu(fs_hz, v_base_V, psi_pu, 1000000UL); }
 
 static inline uint32_t psi_pu_of_mvrads(uint32_t fs_hz, uint16_t v_max_volts, uint32_t mV_per_rads) { return psi_pu_of_wb(fs_hz, v_max_volts, mV_per_rads, 1000UL); }
 
@@ -646,8 +646,8 @@ static inline uint32_t psi_pu_of_mvrads(uint32_t fs_hz, uint16_t v_max_volts, ui
     Mechanical Ke (no √3, no P) is the convenient intermediate
     60 / (2π·Kv)
 */
-static inline uint32_t ke_pu_angle16_of_kv(uint32_t fs_hz, uint16_t v_max_V, uint16_t kv) { return (uint64_t)30UL * fs_hz * FRACT16_SCALE / ((uint32_t)kv * v_max_V); }
-static inline uint16_t kv_of_ke_pu_angle16(uint32_t fs_hz, uint16_t v_max_V, uint32_t ke_pu) { return (uint64_t)30UL * fs_hz * FRACT16_SCALE / ((uint64_t)v_max_V * ke_pu); }
+static inline uint32_t ke_pu_angle16_of_kv(uint32_t fs_hz, uint16_t v_base_V, uint16_t kv) { return (uint64_t)30UL * fs_hz * FRACT16_SCALE / ((uint32_t)kv * v_base_V); }
+static inline uint16_t kv_of_ke_pu_angle16(uint32_t fs_hz, uint16_t v_base_V, uint32_t ke_pu) { return (uint64_t)30UL * fs_hz * FRACT16_SCALE / ((uint64_t)v_base_V * ke_pu); }
 
 /*
     ψ_pu directly from Kv — phase-electrical, √3
@@ -659,19 +659,19 @@ static inline uint16_t kv_of_ke_pu_angle16(uint32_t fs_hz, uint16_t v_max_V, uin
 
     ψ_pu × 32768 = 30·Fs / (Kv·P·V_max·√3) · 32768
 */
-// static inline uint32_t psi_pu_of_kv(uint32_t fs_hz, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(fs_hz, v_max_V, kv) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
-// static inline uint16_t kv_of_psi_pu(uint32_t fs_hz, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(fs_hz, v_max_V, psi_pu * polePairs * FRACT16_SCALE / FRACT16_1_DIV_SQRT3); }
-static inline uint32_t psi_pu_of_kv(uint32_t fs_hz, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(fs_hz, v_max_V, kv) / ((uint32_t)polePairs * 2); }
-static inline uint16_t kv_of_psi_pu(uint32_t fs_hz, uint16_t v_max_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(fs_hz, v_max_V, psi_pu * polePairs * 2); }
+// static inline uint32_t psi_pu_of_kv(uint32_t fs_hz, uint16_t v_base_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(fs_hz, v_base_V, kv) * FRACT16_1_DIV_SQRT3 / ((uint32_t)polePairs * FRACT16_SCALE); }
+// static inline uint16_t kv_of_psi_pu(uint32_t fs_hz, uint16_t v_base_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(fs_hz, v_base_V, psi_pu * polePairs * FRACT16_SCALE / FRACT16_1_DIV_SQRT3); }
+static inline uint32_t psi_pu_of_kv(uint32_t fs_hz, uint16_t v_base_V, uint8_t polePairs, uint16_t kv) { return ke_pu_angle16_of_kv(fs_hz, v_base_V, kv) / ((uint32_t)polePairs * 2); }
+static inline uint16_t kv_of_psi_pu(uint32_t fs_hz, uint16_t v_base_V, uint8_t polePairs, uint32_t psi_pu) { return kv_of_ke_pu_angle16(fs_hz, v_base_V, psi_pu * polePairs * 2); }
 
 
 /*
     PU encoding: ψ_pu = ψ_f · π · Fs / V_max
         el_delta_angle16 * ψ_pu  → BEMF in v_pu.
 */
-// static inline uint32_t _psi_pu_of_wb(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * FRACT16_PI * fs_hz / ((uint64_t)v_max_V * scale * FRACT16_SCALE); }
-// // static inline uint32_t _psi_wb_of_pu(uint32_t fs_hz, uint16_t v_max_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_max_V * scale * FRACT16_SCALE / ((uint64_t)FRACT16_PI * fs_hz); }
-// static inline uint32_t _psi_pu_of_kv(uint32_t fs_hz, uint16_t v_max_V, uint8_t polePairs, uint16_t kv) { return (uint64_t)30UL * fs_hz / ((uint32_t)kv * v_max_V * polePairs * 2); }
+// static inline uint32_t _psi_pu_of_wb(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_Wb, uint32_t scale) { return (uint64_t)psi_Wb * FRACT16_PI * fs_hz / ((uint64_t)v_base_V * scale * FRACT16_SCALE); }
+// // static inline uint32_t _psi_wb_of_pu(uint32_t fs_hz, uint16_t v_base_V, uint32_t psi_pu, uint32_t scale) { return (uint64_t)psi_pu * v_base_V * scale * FRACT16_SCALE / ((uint64_t)FRACT16_PI * fs_hz); }
+// static inline uint32_t _psi_pu_of_kv(uint32_t fs_hz, uint16_t v_base_V, uint8_t polePairs, uint16_t kv) { return (uint64_t)30UL * fs_hz / ((uint32_t)kv * v_base_V * polePairs * 2); }
 
 /******************************************************************************/
 /*!
@@ -694,11 +694,11 @@ static inline uint16_t kv_of_psi_pu(uint32_t fs_hz, uint16_t v_max_V, uint8_t po
 #define MOTOR_L_ANGLE16_OF_UH(Fs, V_Base, I_Base, L_uH) MOTOR_L_ANGLE16(Fs, V_Base, I_Base, L_uH, 1000000UL)
 
 
-static inline uint32_t l_pu_of_h(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_max_A * fs_hz * FRACT16_PI / ((uint64_t)v_max_V * scale); }
-static inline uint32_t l_h_of_pu(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_max_V * scale / ((uint64_t)FRACT16_PI * i_max_A * fs_hz); }
+static inline uint32_t l_pu_of_h(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_h, uint32_t scale) { return (uint64_t)l_h * i_base_A * fs_hz * FRACT16_PI / ((uint64_t)v_base_V * scale); }
+static inline uint32_t l_h_of_pu(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu, uint32_t scale) { return (uint64_t)l_pu * v_base_V * scale / ((uint64_t)FRACT16_PI * i_base_A * fs_hz); }
 
-static inline uint32_t l_pu_of_uh(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_uH) { return l_pu_of_h(fs_hz, v_max_V, i_max_A, l_uH, 1000000UL); }
-static inline uint32_t l_uh_of_pu(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_pu) { return l_h_of_pu(fs_hz, v_max_V, i_max_A, l_pu, 1000000UL); }
+static inline uint32_t l_pu_of_uh(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_uH) { return l_pu_of_h(fs_hz, v_base_V, i_base_A, l_uH, 1000000UL); }
+static inline uint32_t l_uh_of_pu(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_pu) { return l_h_of_pu(fs_hz, v_base_V, i_base_A, l_pu, 1000000UL); }
 
 
 /*
@@ -719,7 +719,7 @@ static inline uint32_t l_pu_of_hfi(uint32_t fs_hz, uint32_t fhfi_Hz, ufract16_t 
         el_delta_angle16 * fs_hz / 10430 => electrical radians/second
 */
 /* el_delta_angle16 * L_pu → ω_e·L·i_pu term in v_pu. */
-// static inline uint32_t _l_pu_of_h(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_h, uint32_t scale) { return l_h * i_max_A * (fs_hz * FRACT16_PI / FRACT16_SCALE) / v_max_V / scale; }
-// static inline uint32_t _l_pu_of_uh(uint32_t fs_hz, uint16_t v_max_V, uint16_t i_max_A, uint32_t l_uH) { return _l_pu_of_h(fs_hz, v_max_V, i_max_A, l_uH, 1000000UL); }
+// static inline uint32_t _l_pu_of_h(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_h, uint32_t scale) { return l_h * i_base_A * (fs_hz * FRACT16_PI / FRACT16_SCALE) / v_base_V / scale; }
+// static inline uint32_t _l_pu_of_uh(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_uH) { return _l_pu_of_h(fs_hz, v_base_V, i_base_A, l_uH, 1000000UL); }
 
 
