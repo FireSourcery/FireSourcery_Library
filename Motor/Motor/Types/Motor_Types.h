@@ -72,7 +72,7 @@
 //     return (Motor_Axis_T) { speed, torque };
 // }
 
-typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;
+// typedef struct { int16_t Speed; int16_t Torque; } Motor_Axis_T;
 // typedef struct { int16_t Speed; int16_t Torque; } Motor_Operating_T;
 // static inline int32_t _Motor_InstantPower(Motor_Axis_T feedback) { return (int32_t)feedback.Speed * feedback.Torque; }
 // static inline int32_t _Motor_IsMotoring(Motor_Axis_T feedback) { return _Motor_InstantPower(feedback) > 0; }

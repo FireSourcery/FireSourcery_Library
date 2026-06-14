@@ -38,19 +38,6 @@
 // #define PHASE_V_SENSORS_ANALOG
 // #endif
 
-// #if     defined(MOTOR_I_SENSORS_AB)
-// #elif   defined(MOTOR_I_SENSORS_ABC)
-// #else
-//     #define MOTOR_I_SENSORS_ABC
-// #endif
-
-// #if     defined(MOTOR_V_SENSORS_ISOLATED)
-// #elif   defined(MOTOR_V_SENSORS_ANALOG)
-// #else
-//     #define MOTOR_V_SENSORS_ANALOG
-// #endif
-
-
 /*
     Transport Data Interface
     Interface for Capture Results, compile time selection between capture

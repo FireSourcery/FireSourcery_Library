@@ -43,7 +43,7 @@ static inline accumulator_raw_t ramp_target(accumulator_raw_t rate, accumulator_
 }
 
 /*  Bounded step toward an explicit target; Coefficient acts as max step magnitude. */
-// accumulator_t Accumulator_Ramp(Accumulator_T * p_accum, accumulator_t target)
+// accumulator_io_t Accumulator_Ramp(Accumulator_T * p_accum, accumulator_io_t target)
 // {
 //     p_accum->Accumulator = ramp_target(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, _ACCUM_TO_RAW(target));
 //     return Accumulator_Output(p_accum);

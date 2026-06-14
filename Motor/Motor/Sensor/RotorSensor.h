@@ -108,7 +108,7 @@ RotorSensor_Config_T;
 typedef struct RotorSensor_State
 {
     Angle_T AngleSpeed;     /* Electrical angle and speed state. */
-    Angle_SpeedFractRef_T SpeedFractRef;
+    Angle_SpeedUnitRef_T SpeedFractRef;
     accum32_t Speed_Fract16;
     angle16_t MechanicalAngle;
     // RotorSensor_Config_T Config;

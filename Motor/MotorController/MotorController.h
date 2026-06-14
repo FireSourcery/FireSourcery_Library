@@ -294,6 +294,7 @@ typedef const struct MotorController
     /* directly map sub app components. same as implementing within MotorController_T, minus the type coupling. */
     void * P_APP_STATE;             /* Adapter state — cast to app's concrete type (Traction_T, Servo_T, ...) */
     const void * P_APP_NVM_CONFIG;  /* Adapter NVM config — cast to app's concrete config type */
+
     const MotorController_Config_T * P_NVM_CONFIG;
     Version_T MAIN_VERSION;
 }

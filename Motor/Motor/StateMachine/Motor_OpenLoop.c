@@ -140,8 +140,8 @@ void Motor_OpenLoop_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
-    FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);
-    FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
+    // FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);
+    // FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
     // FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 }
 
@@ -156,17 +156,17 @@ static void Run_Entry(Motor_T * p_motor)
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    // Motor_FOC_ProcOpenLoop(p_motor);
-    fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Fract16 * p_context->Direction);
-    angle16_t angle = Angle_IntegrateSpeed_Fract16(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
-    fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Fract16 * p_context->Direction);
-    FOC_SetTheta(&p_context->Foc, angle);
-    FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-    FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
-    FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
-    FOC_ProcInvClarkePark(&p_context->Foc);
-    FOC_Sensorless_CaptureVoltage(&p_context->FocSensorless, p_context->Foc.Valpha, p_context->Foc.Vbeta);
-    // capture for debugging
+    Motor_FOC_ProcOpenLoop(p_motor);
+    // fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Fract16 * p_context->Direction);
+    // angle16_t angle = Angle_IntegrateSpeed_Fract16(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
+    // fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Fract16 * p_context->Direction);
+    // FOC_SetTheta(&p_context->Foc, angle);
+    // FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
+    // FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
+    // // FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
+    // FOC_ProcInvClarkePark(&p_context->Foc);
+    // // FOC_Sensorless_CaptureVoltage(&p_context->FocSensorless, p_context->Foc.Valpha, p_context->Foc.Vbeta);
+    // // capture for debugging
 }
 
 /*
@@ -191,7 +191,7 @@ static void StartUp_Entry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR);
-    FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
+    // FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
 }
 
 static void StartUp_Proc(Motor_T * p_motor)

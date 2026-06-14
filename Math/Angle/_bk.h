@@ -47,7 +47,7 @@ typedef struct Angle_SpeedFractRef
     angle16_t SpeedMax_Angle16; /* DegPerCycle */
     uint32_t InvSpeedMax_Fract32; /* CyclesPerDeg */
 }
-Angle_SpeedFractRef_T;
+Angle_SpeedUnitRef_T;
 
 #define ANGLE32_SHIFT (16U)
 
@@ -77,7 +77,7 @@ typedef struct Angle
     Angle_InterpolationState_T Interpolation;
 
     /* results from config */
-    Angle_SpeedFractRef_T SpeedFractRef; /* Params */
+    Angle_SpeedUnitRef_T SpeedFractRef; /* Params */
 }
 Angle_T;
 
@@ -233,10 +233,10 @@ static inline void Angle_InitInterpolation(Angle_T * p_angle, angle16_t limit_an
     Init Runtime
 */
 /******************************************************************************/
-#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedFractRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
+#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedUnitRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
 #define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
-// static inline Angle_SpeedFractRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
-// static inline Angle_SpeedFractRef_T Angle_SpeedFractRef_FromCalib(uint32_t pollingFreq, uint32_t maxRpm) { return Angle_SpeedFractRef(angle_of_rpm(pollingFreq, maxRpm)); }
+// static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
+// static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef_FromCalib(uint32_t pollingFreq, uint32_t maxRpm) { return Angle_SpeedFractRef(angle_of_rpm(pollingFreq, maxRpm)); }
 
 /* Caller pass Ref ~ 2x for overflow range */
 static void Angle_InitSpeedRef(Angle_T * p_angle, angle16_t maxAngle16)
@@ -252,7 +252,7 @@ static void Angle_InitSpeedRef_Rpm(Angle_T * p_angle, uint32_t pollingFreq, uint
 
 // typedef struct Angle_Config_T
 // {
-//     Angle_SpeedFractRef_T SpeedFractRef;
+//     Angle_SpeedUnitRef_T SpeedFractRef;
 // }
 // Angle_Config_T;
 

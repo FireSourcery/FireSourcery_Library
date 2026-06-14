@@ -45,15 +45,17 @@ typedef const struct Sensorless_Sensor
 {
     const RotorSensor_T BASE;
     FOC_Sensorless_T * P_OBSERVER;
+    FOC_SensorlessConfig_T * P_NVM_CONFIG;
 }
 Sensorless_Sensor_T;
 
 extern const RotorSensor_VTable_T SENSORLESS_SENSOR_VTABLE;
 
-#define SENSORLESS_SENSOR_INIT(p_RotorState, p_Observer) (Sensorless_Sensor_T) \
+#define SENSORLESS_SENSOR_INIT(p_RotorState, p_Observer, p_NvmConfig) (Sensorless_Sensor_T) \
 {                                                                           \
     .BASE = ROTOR_SENSOR_INIT(&SENSORLESS_SENSOR_VTABLE, (p_RotorState)),   \
     .P_OBSERVER = (p_Observer),                                             \
+    .P_NVM_CONFIG = (p_NvmConfig),                                          \
 }
 
 

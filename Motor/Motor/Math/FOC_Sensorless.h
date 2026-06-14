@@ -131,7 +131,7 @@ typedef struct FOC_Sensorless
 
     /* Angle tracker (PLL). AngleSpeed.Angle is θ̂; AngleSpeed.Delta is ω̂ (angle16/poll). */
     Angle_T AngleSpeed;
-    // Angle_SpeedFractRef_T SpeedFractRef;
+    // Angle_SpeedUnitRef_T SpeedFractRef;
 
     PID_T PllPid;
     fract16_t PllErr;                  /* last normalised PLL phase error */

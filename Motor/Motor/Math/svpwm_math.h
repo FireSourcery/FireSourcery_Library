@@ -42,11 +42,11 @@
 /*!
     @note overflow
     vPhase_fract16 < vBus_fract16 * .57
-    vBusInv_accumt32 * vBus_fract16 = INT32_MAX
+    vBusInv_accum32 * vBus_fract16 = INT32_MAX
     overflow when VBus drops more than 42% before v_fract16 updates
     VBus fault detection should trigger before this point
 */
-static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_accumt32, fract16_t v_fract16) { return (int32_t)v_fract16 * (int32_t)vBusInv_accumt32 / FRACT16_SCALE; }
+static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_accum32, fract16_t v_fract16) { return (int32_t)v_fract16 * (int32_t)vBusInv_accum32 / FRACT16_SCALE; }
 static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
 /*  */
 static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
@@ -78,9 +78,9 @@ static inline struct svpwm_abc svpwm_midclamp(fract16_t vA, fract16_t vB, fract1
 }
 
 
-static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_accumt32, fract16_t vA, fract16_t vB, fract16_t vC)
+static inline struct svpwm_abc svpwm_midclamp_vbus(uint32_t vBusInv_accum32, fract16_t vA, fract16_t vB, fract16_t vC)
 {
-    return svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_accumt32, vA), svpwm_norm_vbus_inv(vBusInv_accumt32, vB), svpwm_norm_vbus_inv(vBusInv_accumt32, vC));
+    return svpwm_midclamp(svpwm_norm_vbus_inv(vBusInv_accum32, vA), svpwm_norm_vbus_inv(vBusInv_accum32, vB), svpwm_norm_vbus_inv(vBusInv_accum32, vC));
 }
 
 

@@ -105,6 +105,9 @@ extern void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor);
 extern void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_state);
 extern void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_state);
 
+void Motor_FOC_MatchVOutput(Motor_Context_T * p_context);
+void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context);
+
 extern void Motor_FOC_StartAlignCmd(Motor_Context_T * p_motor);
 extern void Motor_FOC_ProcAlignCmd(Motor_T * p_motor);
 

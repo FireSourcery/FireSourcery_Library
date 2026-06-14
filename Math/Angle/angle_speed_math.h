@@ -218,7 +218,5 @@ static inline uint32_t mrads_of_rpm(uint32_t rpm) { return rads_of_rpm(rpm, 1000
 static inline uint32_t rpm_of_mrads(uint32_t mrads) { return rpm_of_rads(mrads, 1000U); }
 
 
-static inline uint32_t el_rads_of_mech_rpm(uint32_t mech_rpm, uint8_t pole_pairs) { return rads_of_rpm(mech_rpm, pole_pairs); }
-static inline uint32_t mech_rpm_of_el_rads(uint32_t el_rads, uint8_t pole_pairs) { return rpm_of_rads(el_rads, pole_pairs); }
-// static inline uint32_t mrads_of_rpm(uint32_t speed_rpm, uint8_t polePairs) { return rads_of_rpm(speed_rpm, polePairs * 1000U); }
-// static inline uint32_t rpm_of_mrads(uint32_t speed_base_mrads_e, uint8_t polePairs) { return rpm_of_rads(speed_base_mrads_e, polePairs * 1000U); }
+static inline uint32_t el_rads_of_mech_rpm(uint8_t pole_pairs, uint32_t mech_rpm) { return rads_of_rpm(mech_rpm, pole_pairs); }
+static inline uint32_t mech_rpm_of_el_rads(uint8_t pole_pairs, uint32_t el_rads) { return rpm_of_rads(el_rads, pole_pairs); }

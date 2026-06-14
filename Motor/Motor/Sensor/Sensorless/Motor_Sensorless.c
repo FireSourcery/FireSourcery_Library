@@ -38,6 +38,7 @@
 #include "../../StateMachine/Motor_OpenLoop.h"
 #include "../RotorSensor.h"
 
+// #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 
 /* Hand off to closed-loop once the observer reports lock. Parent
    OPEN_LOOP_STATE_RUN.LOOP (Motor_OpenLoop::Run_Proc) drives the observer. */
@@ -83,3 +84,5 @@ void Motor_Sensorless_StartRunChain(Motor_T * p_motor)
     Phase_ActivateV0(&p_motor->PHASE);
     Motor_OpenLoop_EnterBranch(p_motor, &SENSORLESS_ALIGN);
 }
+
+// #endif

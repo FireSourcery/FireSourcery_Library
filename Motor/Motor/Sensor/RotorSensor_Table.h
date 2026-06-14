@@ -29,30 +29,25 @@
     @brief  Sensor Abstraction/Selection Interface
 */
 /******************************************************************************/
+
+#include "RotorSensor.h"
+
+#if !defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+#define MOTOR_SENSOR_SIN_COS_DISABLE
+#endif
+
+#if !defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+#define MOTOR_SENSOR_SENSORLESS_DISABLE
+#endif
+
 #include "Hall/Hall_Sensor.h"
 #include "Encoder/Encoder_Sensor.h"
+
 #if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
 #include "SinCos/SinCos_Sensor.h"
 #endif
 #if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
 #include "Sensorless/Sensorless_Sensor.h"
-#endif
-#include "RotorSensor.h"
-
-
-
-
-
-#if     defined(MOTOR_SENSOR_SIN_COS_ENABLE)
-#elif   defined(MOTOR_SENSOR_SIN_COS_DISABLE)
-#else
-#define MOTOR_SENSOR_SIN_COS_DISABLE
-#endif
-
-#if     defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
-#elif   defined(MOTOR_SENSOR_SENSORLESS_DISABLE)
-#else
-#define MOTOR_SENSOR_SENSORLESS_DISABLE
 #endif
 
 /*

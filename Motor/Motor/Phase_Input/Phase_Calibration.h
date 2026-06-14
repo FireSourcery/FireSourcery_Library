@@ -41,7 +41,8 @@
 typedef const struct Phase_Calibration
 {
     /* Sensor/Type/Calibration Max. Unit conversion reference. Compile time defined. Optionally allow runtime overwrite */
-    volatile uint16_t V_MAX_VOLTS; /* V_SAT_VOLTS */
+    /* Type max using sensor saturation. alternatively runtime select */
+    volatile uint16_t V_MAX_VOLTS;
     volatile uint16_t I_MAX_AMPS;
 
     /* Optionally include si units */
@@ -57,8 +58,8 @@ extern const Phase_Calibration_T PHASE_CALIBRATION;
 #if !defined(PHASE_V_TYPE_MAX_VOLTS) && !defined(PHASE_I_TYPE_MAX_AMPS)
 #define PHASE_V_TYPE_MAX_VOLTS PHASE_CALIBRATION.V_MAX_VOLTS
 #define PHASE_I_TYPE_MAX_AMPS PHASE_CALIBRATION.I_MAX_AMPS
-#define PHASE_V_FRACT16(volts, Max) FRACT16((float)volts / Max)
-#define PHASE_I_FRACT16(amps, Max) FRACT16((float)amps / Max)
+// #define PHASE_V_FRACT16(volts, Max) FRACT16((float)volts / Max)
+// #define PHASE_I_FRACT16(amps, Max) FRACT16((float)amps / Max)
 #else /* Compile time def only */
 #define PHASE_V_FRACT16(volts) FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
 #define PHASE_I_FRACT16(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
@@ -100,7 +101,7 @@ static inline accum32_t Phase_I_Fract16OfAmps(int16_t amps) { return amps * INT1
 static inline int16_t   Phase_I_AmpsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() / 32768; }
 static inline accum32_t Phase_V_Fract16OfVolts(int16_t volts) { return volts * INT16_MAX / Phase_Calibration_GetVMaxVolts(); }
 static inline int16_t   Phase_V_VoltsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetVMaxVolts() / 32768; }
-static inline accum32_t Phase_Power_VAOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() * Phase_Calibration_GetVMaxVolts() / 32768; }
+static inline accum32_t Phase_Power_VoltAmpsOfFract16(accum32_t fract16) { return fract16 * Phase_Calibration_GetIMaxAmps() * Phase_Calibration_GetVMaxVolts() / 32768; }
 
 /*
     Resistance Ref
@@ -118,7 +119,7 @@ static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
     return ((accum32_t)fract16 * Phase_Calibration_GetVMaxVolts() * 1000) / ((accum32_t)Phase_Calibration_GetIMaxAmps() * 32768);
 }
 
-// static inline uint32_t Phase_L_Fract16OfSi(uint32_t fs_hz, uint16_t rs_mOhms, uint16_t ls_uHenries)
+// static inline uint32_t Phase_L_Fract16OfSi(uint32_t fs_hz, uint16_t ls_uHenries)
 // {
 //   l_pu_of_uh(fs_hz, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries);
 // }

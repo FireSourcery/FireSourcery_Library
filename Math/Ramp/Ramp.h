@@ -86,30 +86,30 @@ Ramp_T;
 
 */
 /******************************************************************************/
-static inline accumulator_t Ramp_GetOutput(const Ramp_T * p_ramp) { return Accumulator_Output(&p_ramp->Accumulator); }
-static inline void Ramp_SetOutputState(Ramp_T * p_ramp, accumulator_t match) { Accumulator_SetOutput(&p_ramp->Accumulator, match); }
+static inline accumulator_io_t Ramp_GetOutput(const Ramp_T * p_ramp) { return Accumulator_Output(&p_ramp->Accumulator); }
+static inline void Ramp_SetOutputState(Ramp_T * p_ramp, accumulator_io_t match) { Accumulator_SetOutput(&p_ramp->Accumulator, match); }
 
-static inline accumulator_t Ramp_GetTarget(const Ramp_T * p_ramp) { return _ACCUM_FROM_RAW(p_ramp->Target); }
-static inline void Ramp_SetTarget(Ramp_T * p_ramp, accumulator_t target) { p_ramp->Target = math_clamp(_ACCUM_TO_RAW(target), p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); }
+static inline accumulator_io_t Ramp_GetTarget(const Ramp_T * p_ramp) { return _ACCUM_FROM_RAW(p_ramp->Target); }
+static inline void Ramp_SetTarget(Ramp_T * p_ramp, accumulator_io_t target) { p_ramp->Target = math_clamp(_ACCUM_TO_RAW(target), p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); }
 
 /******************************************************************************/
 /*
 
 */
 /******************************************************************************/
-static inline accumulator_t Ramp_GetLimitLower(const Ramp_T * p_ramp){ return Accumulator_LimitLower(&p_ramp->Accumulator); }
-static inline accumulator_t Ramp_GetLimitUpper(const Ramp_T * p_ramp){ return Accumulator_LimitUpper(&p_ramp->Accumulator); }
+static inline accumulator_io_t Ramp_GetLimitLower(const Ramp_T * p_ramp){ return Accumulator_LimitLower(&p_ramp->Accumulator); }
+static inline accumulator_io_t Ramp_GetLimitUpper(const Ramp_T * p_ramp){ return Accumulator_LimitUpper(&p_ramp->Accumulator); }
 
 /* OnInput Limits */
 /* Set Target Window */
-static inline void Ramp_SetLimits(Ramp_T * p_ramp, accumulator_t lower, accumulator_t upper)
+static inline void Ramp_SetLimits(Ramp_T * p_ramp, accumulator_io_t lower, accumulator_io_t upper)
 {
     Accumulator_SetLimits(&p_ramp->Accumulator, lower, upper);
     p_ramp->Target = math_clamp(p_ramp->Target, p_ramp->Accumulator.LimitLower, p_ramp->Accumulator.LimitUpper); /* Limit setter re-clamps the stored target alongside the accumulator. */
 }
 
 /* Clamp Output immediately */
-static inline void Ramp_SetOutputLimits(Ramp_T * p_ramp, accumulator_t lower, accumulator_t upper)
+static inline void Ramp_SetOutputLimits(Ramp_T * p_ramp, accumulator_io_t lower, accumulator_io_t upper)
 {
     Ramp_SetLimits(p_ramp, lower, upper);
     Ramp_SetOutputState(p_ramp, Ramp_GetOutput(p_ramp));  /* re-clamps */

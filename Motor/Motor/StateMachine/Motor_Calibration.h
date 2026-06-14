@@ -80,45 +80,45 @@ extern bool Motor_Calibration_IsElectrical(Motor_T * p_motor);
     (CAN/serial) for identification; gains are written back via Motor_Config.
 */
 /******************************************************************************/
-typedef enum Motor_Tuning_Excite
-{
-    MOTOR_TUNING_EXCITE_TRACK,      /* Manual: pass SpeedRamp/TorqueRamp Target through unchanged */
-    MOTOR_TUNING_EXCITE_STEP,       /* Hold zero StepDelay ticks, then jump to Amplitude */
-    MOTOR_TUNING_EXCITE_SQUARE,     /* +Amplitude / -Amplitude every HalfPeriod ticks */
-}
-Motor_Tuning_Excite_T;
+// typedef enum Motor_Tuning_Excite
+// {
+//     MOTOR_TUNING_EXCITE_TRACK,      /* Manual: pass SpeedRamp/TorqueRamp Target through unchanged */
+//     MOTOR_TUNING_EXCITE_STEP,       /* Hold zero StepDelay ticks, then jump to Amplitude */
+//     MOTOR_TUNING_EXCITE_SQUARE,     /* +Amplitude / -Amplitude every HalfPeriod ticks */
+// }
+// Motor_Tuning_Excite_T;
 
-typedef enum Motor_Tuning_Channel
-{
-    MOTOR_TUNING_CHANNEL_SPEED,     /* Drive SpeedRamp.Target, capture Speed_Fract16 */
-    MOTOR_TUNING_CHANNEL_IQ,        /* Drive TorqueRamp.Target, capture FOC_Iq */
-}
-Motor_Tuning_Channel_T;
+// typedef enum Motor_Tuning_Channel
+// {
+//     MOTOR_TUNING_CHANNEL_SPEED,     /* Drive SpeedRamp.Target, capture Speed_Fract16 */
+//     MOTOR_TUNING_CHANNEL_IQ,        /* Drive TorqueRamp.Target, capture FOC_Iq */
+// }
+// Motor_Tuning_Channel_T;
 
-typedef struct Motor_Tuning_Config
-{
-    Motor_Tuning_Excite_T  Shape;
-    Motor_Tuning_Channel_T Channel;
-    int16_t                Amplitude;       /* fract16 setpoint amplitude */
-    uint16_t               HalfPeriod;      /* control ticks per half-period (SQUARE) */
-    uint16_t               StepDelay;       /* idle ticks before edge (STEP) */
-}
-Motor_Tuning_Config_T;
+// typedef struct Motor_Tuning_Config
+// {
+//     Motor_Tuning_Excite_T  Shape;
+//     Motor_Tuning_Channel_T Channel;
+//     int16_t                Amplitude;       /* fract16 setpoint amplitude */
+//     uint16_t               HalfPeriod;      /* control ticks per half-period (SQUARE) */
+//     uint16_t               StepDelay;       /* idle ticks before edge (STEP) */
+// }
+// Motor_Tuning_Config_T;
 
-#define MOTOR_TUNING_CAPTURE_LEN 128U       /* @20kHz: 6.4ms window */
+// #define MOTOR_TUNING_CAPTURE_LEN 128U       /* @20kHz: 6.4ms window */
 
-typedef struct Motor_Tuning_Capture
-{
-    int16_t  Setpoint[MOTOR_TUNING_CAPTURE_LEN];
-    int16_t  Feedback[MOTOR_TUNING_CAPTURE_LEN];
-    uint16_t Index;
-    bool     Full;
-}
-Motor_Tuning_Capture_T;
+// typedef struct Motor_Tuning_Capture
+// {
+//     int16_t  Setpoint[MOTOR_TUNING_CAPTURE_LEN];
+//     int16_t  Feedback[MOTOR_TUNING_CAPTURE_LEN];
+//     uint16_t Index;
+//     bool     Full;
+// }
+// Motor_Tuning_Capture_T;
 
-extern void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor);
-extern void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config);
-extern void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor);
-extern bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor);
-extern Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor);
+// extern void Motor_Calibration_EnterAutoTuning(Motor_T * p_motor);
+// extern void Motor_Calibration_Tuning_ArmExcite(Motor_T * p_motor, Motor_Tuning_Config_T * p_config);
+// extern void Motor_Calibration_Tuning_Disarm(Motor_T * p_motor);
+// extern bool Motor_Calibration_Tuning_IsCaptureDone(Motor_T * p_motor);
+// extern Motor_Tuning_Capture_T * Motor_Calibration_Tuning_GetCapture(Motor_T * p_motor);
 

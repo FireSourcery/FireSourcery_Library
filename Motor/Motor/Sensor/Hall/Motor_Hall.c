@@ -57,7 +57,6 @@ static_assert(HALL_SENSORS_VIRTUAL_INV_A == PHASE_ID_INV_A);
 static_assert(HALL_SENSORS_VIRTUAL_C     == PHASE_ID_C);
 static_assert(HALL_SENSORS_VIRTUAL_INV_B == PHASE_ID_INV_B);
 
-
 #define CAL_STEP_COUNT    (6U)
 
 typedef struct CalibrationBuffer
@@ -74,14 +73,14 @@ static void Calibration_Entry(Motor_T * p_motor)
 {
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     *p_buffer = (CalibrationBuffer_T){ 0 };
+    p_buffer->Step = 0U;
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Phase_ActivateV0(&p_motor->PHASE);
     Hall_StartCalibrate(GetHall(p_motor));
     PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
-    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
-    p_buffer->Step = 0U;
 }
 
 /*

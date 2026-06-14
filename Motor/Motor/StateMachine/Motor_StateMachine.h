@@ -138,6 +138,8 @@ static inline void _Motor_StateMachine_Thread(StateMachine_T * p_stateMachine)
     _Motor_StateMachine(p_stateMachine->P_ACTIVE, p_stateMachine->P_CONTEXT);
 }
 
+// static inline void Motor_StateMachine_Input(Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }
+
 /******************************************************************************/
 /*
 */
@@ -156,11 +158,6 @@ static inline state_t _Motor_GetSubStateId(const Motor_Context_T * p_motor) { re
 static inline Motor_FeedbackMode_T Motor_GetFeedbackMode(const Motor_Context_T * p_motor) { return p_motor->FeedbackMode; }
 static inline Motor_FaultFlags_T Motor_GetFaultFlags(const Motor_Context_T * p_motor) { return p_motor->FaultFlags; }
 
-/* SubStates */
-// static inline uint32_t Motor_GetControlTimer(const Motor_Context_T * p_motor)                      { return p_motor->ControlTimerBase; }
-// static inline Motor_OpenLoopState_T Motor_GetOpenLoopState(const Motor_Context_T * p_motor)        { return p_motor->OpenLoopState; }
-// static inline Motor_CalibrationState_T Motor_GetCalibrationState(const Motor_Context_T * p_motor)  { return p_motor->CalibrationState; }
-// static inline uint8_t Motor_GetCalibrationStateIndex(const Motor_Context_T * p_motor)              { return p_motor->CalibrationStateIndex; }
 
 /******************************************************************************/
 /*
@@ -261,4 +258,3 @@ static bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor)
 }
 
 
-// static inline void Motor_StateMachine_Input(Motor_T * p_motor, Motor_StateInput_T input, uintptr_t value) { StateMachine_ApplyInput(&p_motor->STATE_MACHINE, input, value); }

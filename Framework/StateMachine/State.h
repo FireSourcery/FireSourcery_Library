@@ -213,7 +213,6 @@ typedef const struct State
         mapped input without state transition, no critical section
     */
     const State_Action_T * P_ACTION_TABLE; /* Internal event */
-
     // const State_Action_T * P_VIRTUAL_INPUTS;
     // const State_Action_T * P_VIRTUAL_OUTPUTS; /* a seperate space for functions called from within the state machine */
 

@@ -250,7 +250,7 @@ static void Passive_Proc(Motor_T * p_motor)
     // switch (Phase_ReadVOut(&p_motor->PHASE))
     // {
     //     case PHASE_VOUT_0:  if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }    break;
-    //     // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
+        // case PHASE_VOUT_Z:  if (!Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_ActivateV0(&p_motor->PHASE); }   break;
     //     default: break;
     // }
 }
@@ -362,11 +362,22 @@ const State_T MOTOR_STATE_PASSIVE =
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    /* Vabc is either bemf or 0 on entryy */
+
+    if (Phase_ReadVOut(&p_motor->PHASE) == PHASE_VOUT_Z) /* prev state is freewheel */
+    {
+        /* Vabc maybe 0 on entry, if capture vbemf did not complete */
+        Motor_FOC_MatchVFreewheel(p_context);
+        Phase_ActivateT0(&p_motor->PHASE);
+    }
+    else  /* else previous state is run/intervention */
+    {
+        Motor_FOC_MatchVOutput(p_context);
+    }
+
     if (p_context->FeedbackMode.Current == 1U) { Motor_FOC_MatchTorqueIState(p_context); } else { Motor_FOC_MatchTorqueVState(p_context); }
     if (p_context->FeedbackMode.Speed == 1U) { Motor_MatchSpeedTorqueState(p_context, Ramp_GetOutput(&p_context->TorqueRamp)); }
 
-    Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
+    // Phase_ActivateT0(&p_motor->PHASE);    // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ActivateOutput, NULL);
 }
 
 static void Run_Proc(Motor_T * p_motor)
@@ -397,7 +408,7 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 */
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
-    return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+    return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -461,13 +472,17 @@ const State_T MOTOR_STATE_RUN =
     Active control with an alternative control variable path.
       TORQUE_ZERO (ZTC) - Coast with zero torque, user may resume
       RAMP_SAFE   (SS1) - Active deceleration to zero, no resume
+
+    FeedbackMode flags ignored, userCmd augmented.
 */
 /******************************************************************************/
 static void Intervention_Entry(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
-    Motor_FOC_MatchTorqueIState(p_context);
+    // if (p_context->FeedbackMode.Current == 0U)
     Ramp_SetLimits(&p_context->TorqueRamp, Motor_ILimitCw(p_context), Motor_ILimitCcw(p_context)); // ensure switch to i limits or use vramp for voltage
+    Motor_FOC_MatchTorqueIState(p_context);
+    Motor_FOC_MatchVOutput(p_context);
 }
 
 // min(GeneratingOnly, _Motor_GeneratingOnly PID_GetOutput(&p_state->PidSpeed));  substates inherit
@@ -610,6 +625,15 @@ static void Calibration_Entry(Motor_T * p_motor)
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
     p_motor->P_MOTOR->ControlTimerBase = 0U;
     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+
+    // Phase_ActivateV0(&p_motor->PHASE);
+    // p_context->ControlTimerBase = 0U;
+    // p_context->FeedbackMode.Current = 1U;
+    // Motor_FOC_ClearFeedbackState(p_context);
+    // // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
+    // // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
 }
 
 static void Calibration_Proc(Motor_T * p_motor)
@@ -626,7 +650,7 @@ static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phase
         case PHASE_VOUT_Z:     Phase_Deactivate(&p_motor->PHASE); break;
         case PHASE_VOUT_0:     Phase_ActivateV0(&p_motor->PHASE); break;
         case PHASE_VOUT_PWM:   Phase_ActivateV0(&p_motor->PHASE); break; /* stay in calibration, user cmd to step through substates */
-        default:               return NULL;
+        default:    return NULL;
     }
     return NULL;
 }

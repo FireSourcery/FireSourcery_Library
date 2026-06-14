@@ -34,6 +34,12 @@
 #include "../Phase/Phase_Types.h"
 #include "Peripheral/Analog/Analog.h"
 
+
+/******************************************************************************/
+/*
+    ADC Sensor Calibration
+*/
+/******************************************************************************/
 /*
     Common Calibration Max as preprocessor macros
 */
@@ -58,46 +64,28 @@
 static inline fract16_t Phase_Analog_VFract16Of(uint16_t adcu) { return adcu * PHASE_ANALOG_V_FRACT16_PER_ADCU; }
 static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { return ((int16_t)adcu - zero) * (PHASE_ANALOG_I_FRACT16_PER_ADCU * PHASE_ANALOG_I_POLARITY); }
 
-/******************************************************************************/
-/*
-    ADC Sensor Calibration
-    optionally store as base ref
-*/
-/******************************************************************************/
-typedef const struct Phase_AnalogCalibration
-{
-    volatile uint32_t V_PHASE_R1;
-    volatile uint32_t V_PHASE_R2;
-
-    volatile uint16_t I_PHASE_R_BASE;
-    volatile uint16_t I_PHASE_R_MOSFETS;
-    volatile uint16_t I_PHASE_R_SHUNT;      /* uOhm */
-    volatile uint16_t I_PHASE_GAIN;         /* x10 */
-
-    /*  */
-    volatile uint16_t V_RATED;             /* VSource Limit */
-    volatile uint16_t I_RATED_RMS;         /* */
-}
-Phase_AnalogCalibration_T;
-
-extern const Phase_AnalogCalibration_T PHASE_ANALOG_CALIBRATION;
-
 #define PHASE_ANALOG_V_MAX_VOLTS(VRef_mV, R1, R2) (((VRef_mV) * ((R1) + (R2))) + ((R2)*1000U/2U) / ((R2) * 1000U))
 /* (VRef_mV/2 * 1/1000) / (R_shunt_uOhm * 1/1000000 * Gain) */
 #define PHASE_ANALOG_I_MAX_AMPS(VRef_mV, Shunt_uOhm, Gain) ((500U * (VRef_mV)) + ((Shunt_uOhm)*(Gain)/2U) / ((Shunt_uOhm) * (Gain)))
 // #define I_MAX_AMPS_(VRef_mV, Shunt_uOhm, Gain)  ((1000U * (VRef_mV)) / ((Shunt_uOhm) * (Gain)))
 
-// static inline uint16_t Phase_AnalogCalibration_GetVMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.V_PHASE_R1, PHASE_ANALOG_CALIBRATION.V_PHASE_R2); }
-
-// handled in calibration
-static inline uint16_t Phase_AnalogCalibration_GetVRated(void) { return PHASE_ANALOG_CALIBRATION.V_RATED; }
-static inline uint16_t Phase_AnalogCalibration_GetIRatedRms(void) { return PHASE_ANALOG_CALIBRATION.I_RATED_RMS; }
-
 /*
-    Run-time conversion
+    optionally store as base ref
 */
-static inline uint16_t Phase_AnalogCalibration_GetVRated_Fract16(void) { return fract16(Phase_AnalogCalibration_GetVRated(), Phase_Calibration_GetVMaxVolts()); }
-static inline uint16_t Phase_AnalogCalibration_GetIRatedPeak_Fract16(void) { return (uint32_t)Phase_AnalogCalibration_GetIRatedRms() * FRACT16_SQRT2 / Phase_Calibration_GetIMaxAmps(); }
+typedef const struct Phase_AnalogCalibration
+{
+    volatile uint32_t V_PHASE_R1;
+    volatile uint32_t V_PHASE_R2;
+    volatile uint16_t I_PHASE_R_BASE;
+    volatile uint16_t I_PHASE_R_MOSFETS;
+    volatile uint16_t I_PHASE_R_SHUNT;      /* uOhm */
+    volatile uint16_t I_PHASE_GAIN;         /* x10 */
+}
+Phase_AnalogCalibration_T;
+
+extern const Phase_AnalogCalibration_T PHASE_ANALOG_CALIBRATION;
+
+// static inline uint16_t Phase_AnalogCalibration_GetVMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.V_PHASE_R1, PHASE_ANALOG_CALIBRATION.V_PHASE_R2); }
 
 
 /******************************************************************************/
@@ -105,6 +93,12 @@ static inline uint16_t Phase_AnalogCalibration_GetIRatedPeak_Fract16(void) { ret
 
 */
 /******************************************************************************/
+// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
+// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
+// #else
+// #define PHASE_ANALOG_I_SENSORS_ABC
+// #endif
+
 typedef const struct Phase_Analog
 {
     Analog_Conversion_T VA;
@@ -195,8 +189,3 @@ static inline void Phase_Analog_CaptureIc(volatile Phase_Input_T * p_phase, cons
 // }
 // Phase_AnalogChannel_T;
 
-// #if     defined(PHASE_ANALOG_I_SENSORS_AB)
-// #elif   defined(PHASE_ANALOG_I_SENSORS_ABC)
-// #else
-// #define PHASE_ANALOG_I_SENSORS_ABC
-// #endif

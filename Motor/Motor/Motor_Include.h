@@ -34,7 +34,17 @@
 #include "Motor_Table.h"
 #include "Motor_Thread.h"
 #include "Motor_User.h"
+#include "Motor_Var.h"
 #include "Motor_Config.h"
 #include "Motor.h"
 #include "Sensor/Motor_Sensor.h" /* TABLE INIT */
 #include "Analog/Motor_Analog.h" /* For Callbacks */
+
+/*
+    Parts - with dependency on Motor_T forward declared
+    This way sub modules contain handling details
+*/
+// #include "Motor_Var.h"
+// #include "Analog/Motor_Analog.h"
+// #include "Sensor/Motor_Sensor.h"
+// #include "Motor_Config.h"

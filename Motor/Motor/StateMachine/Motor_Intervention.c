@@ -84,6 +84,7 @@ static State_T * TorqueZero_Next(Motor_T * p_motor)
     return NULL;
 }
 
+/* alternatively substate passive */
 const State_T INTERVENTION_STATE_TORQUE_ZERO =
 {
     .P_TOP      = &MOTOR_STATE_INTERVENTION,

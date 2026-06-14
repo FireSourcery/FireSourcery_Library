@@ -45,8 +45,6 @@
     Inline Getters/Setters
 */
 /******************************************************************************/
-static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
-
 /*! @return [-32767/2:32767/2] <=> [-1:1) */
 static inline accum32_t Motor_User_GetSpeed_Fract16(const Motor_Context_T * p_motor) { return Motor_GetSpeedFeedback(p_motor) * p_motor->Config.DirectionForward; }
 // /*! @return [0:65535] <=> [0:4) */
@@ -103,12 +101,13 @@ static inline thermal_t Motor_GetHeat_DegC(const Motor_Context_T * p_motor)     
 /*
     Caller maintain feedback state to determine units
 */
-static inline int16_t _Motor_GetIVSetpoint(const Motor_Context_T * p_motor)               { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
-static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_Context_T * p_motor)    { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
+static inline int16_t _Motor_GetIVSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Direction; }
+static inline int16_t _Motor_GetSpeedMotoringSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Direction; }
 
-static inline int16_t _Motor_GetTorqueSetpoint(const Motor_Context_T * p_motor)           { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
-static inline int16_t _Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor)            { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
+static inline int16_t _Motor_GetTorqueSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->TorqueRamp) * p_motor->Config.DirectionForward; }
+static inline int16_t _Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return Ramp_GetOutput(&p_motor->SpeedRamp) * p_motor->Config.DirectionForward; }
 
+/* 0 for view */
 static inline fract16_t Motor_GetVSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Current == 0U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
 static inline fract16_t Motor_GetISetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Current == 1U) ? _Motor_GetTorqueSetpoint(p_motor) : 0; }
 static inline fract16_t Motor_GetSpeedSetpoint(const Motor_Context_T * p_motor) { return (p_motor->FeedbackMode.Speed == 1U) ? _Motor_GetSpeedSetpoint(p_motor) : 0; }

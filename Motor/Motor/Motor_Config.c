@@ -165,8 +165,8 @@ void Motor_Config_SetSpeedRated(Motor_Config_T * p_config, uint16_t rpm)
 */
 void Motor_Config_SetVSpeedScalar_UFract16(Motor_Config_T * p_config, uint16_t scalar) { p_config->SpeedRating.VSpeedAdjustment = math_min(scalar, INT16_MAX); }
 
-void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating))); }
-static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->SpeedRating.VSpeedAdjustment, Motor_GetSpeedRated_Rpm(&p_motor->SpeedRating)); }
+void Motor_Config_SetSpeedVMatchRef_Rpm(Motor_Config_T * p_motor, uint16_t rpm) { Motor_Config_SetVSpeedScalar_UFract16(p_motor, fract16_div(rpm, _Motor_SpeedRated_Rpm(&p_motor->SpeedRating))); }
+static inline uint16_t Motor_Config_GetSpeedVMatchRef_Rpm(const Motor_Config_T * p_motor) { return fract16_mul(p_motor->SpeedRating.VSpeedAdjustment, _Motor_SpeedRated_Rpm(&p_motor->SpeedRating)); }
 
 
 /*

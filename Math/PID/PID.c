@@ -54,24 +54,24 @@ static inline int16_t GetIntegral(const PID_T * p_pid) { return (int16_t)(p_pid-
 static inline void SetIntegral(PID_T * p_pid, int16_t integral) { p_pid->IntegralAccum = ((int32_t)integral << 15); }
 
 /* passing limits for internal state */
-int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh, int16_t error)
-{
-    int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
+// int16_t PID_ProcAntiWindupPI(PID_T * p_pid, int16_t limitLow, int16_t limitHigh, int16_t error)
+// {
+//     int32_t proportional = ((int32_t)p_pid->PropGain * error) >> p_pid->PropGainShift; /* Includes 15 shift */
 
-    /* Dynamic Clamp */
-    int32_t integralMin = limitLow - proportional;
-    int32_t integralMax = limitHigh - proportional;
+//     /* Dynamic Clamp */
+//     int32_t integralMin = limitLow - proportional;
+//     int32_t integralMax = limitHigh - proportional;
 
-    int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
-    p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
-    int32_t integral = p_pid->IntegralAccum >> 15;
+//     int32_t integralAccum = p_pid->IntegralAccum + (((int32_t)p_pid->IntegralGain * error) >> p_pid->IntegralGainShift); /* Excludes 15 shift */
+//     p_pid->IntegralAccum = math_clamp(integralAccum, integralMin << 15, integralMax << 15);
+//     int32_t integral = p_pid->IntegralAccum >> 15;
 
-    p_pid->ErrorPrev = error;
+//     p_pid->ErrorPrev = error;
 
-    /* Optionally output limits as persistent saturation limits */
-    p_pid->Output = math_clamp(proportional + integral, p_pid->OutputMin, p_pid->OutputMax);
-    return p_pid->Output;
-}
+//     /* Optionally output limits as persistent saturation limits */
+//     p_pid->Output = math_clamp(proportional + integral, p_pid->OutputMin, p_pid->OutputMax);
+//     return p_pid->Output;
+// }
 
 /*!
     Conventional parallel PID calculation

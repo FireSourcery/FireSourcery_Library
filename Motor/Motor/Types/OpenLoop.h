@@ -37,23 +37,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct
-{
-    uint16_t SpeedFinal_Fract16;
-    uint32_t SpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
-    uint16_t IFinal_Fract16;
-    uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
-    angle16_t SpeedHandover;        /* min ω̂_e in angle16/poll for handover */
-}
-OpenLoo_Config_T;
+// typedef struct
+// {
+//     uint16_t SpeedFinal_Fract16;
+//     uint32_t SpeedTime_Cycles;      /* Time to reach OpenLoopSpeed */
+//     uint16_t IFinal_Fract16;
+//     uint32_t ITime_Cycles;          /* Time to reach OpenLoopI */
+//     angle16_t SpeedHandover;        /* min ω̂_e in angle16/poll for handover */
+// }
+// OpenLoo_Config_T;
 
-typedef struct Motor_OpenLoopRun
-{
-    Angle_T Angle;          /* synthesised θ; .Angle high 16b is the angle16 */
-    Ramp_T SpeedRamp;      /* output: ω in angle16/poll */
-    Ramp_T IRamp;          /* output: I_ref in fract16 */
-}
-OpenLoop_T;
+// typedef struct Motor_OpenLoopRun
+// {
+//     Angle_T Angle;          /* synthesised θ; .Angle high 16b is the angle16 */
+//     Ramp_T SpeedRamp;      /* output: ω in angle16/poll */
+//     Ramp_T IRamp;          /* output: I_ref in fract16 */
+// }
+// OpenLoop_T;
 
 /******************************************************************************/
 /*!
@@ -71,7 +71,6 @@ OpenLoop_T;
 
 // void Motor_OpenLoopStart_Reset(Motor_OpenLoopRun_T * p_open)
 // {
-
 //     Angle_ZeroCaptureState(&p->Angle);
 //     Ramp_SetOutputState(&p->SpeedRamp, 0);
 //     Ramp_SetOutputState(&p->CurrentRamp, 0);

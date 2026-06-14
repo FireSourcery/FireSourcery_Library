@@ -37,7 +37,7 @@ void Accumulator_Init(Accumulator_T * p_accum)
     p_accum->LimitUpper = _ACCUM_TO_RAW(INT16_MAX);
 }
 
-void Accumulator_InitSat(Accumulator_T * p_accum, accumulator_t coefficient, accumulator_t lower, accumulator_t upper)
+void Accumulator_InitSat(Accumulator_T * p_accum, accumulator_io_t coefficient, accumulator_io_t lower, accumulator_io_t upper)
 {
     p_accum->Coefficient = _ACCUM_TO_RAW(coefficient);
     p_accum->LimitLower = _ACCUM_TO_RAW(lower);

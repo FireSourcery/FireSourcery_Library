@@ -78,6 +78,13 @@ ElectricalCalibraton_Stage_T;
 */
 typedef struct ElectricalCalibration
 {
+
+    /* PU base captured at entry — rpm-anchored ω_base, matches the FOC runtime config basis. */
+    uint16_t VBase;             /* V_max [V] */
+    uint16_t IBase;             /* I_max [A] */
+    uint16_t SpeedBaseRpm;      /* mechanical rpm at ω_base */
+    uint8_t  PolePairs;
+
     ElectricalCalibraton_Stage_T  Step;              /* ElectricalCalibraton_Stage_T */
     uint32_t CycleCount;        /* cycles within current step */
     uint32_t AccumN;
@@ -149,13 +156,16 @@ static void ProcRs(ElectricalCalibration_T * p_params, fract16_t vd, fract16_t i
     p_params->IdAccum += id;
     p_params->AccumN++;
 
+    p_params->CycleCount++;
+
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_RS_WINDOW_MS))
     {
         int32_t vd_avg = (int32_t)(p_params->VdAccum / p_params->AccumN);
         int32_t id_avg = (int32_t)(p_params->IdAccum / p_params->AccumN);
 
+        /* Rs = Vd/Id — PU derived directly from the PU averages; SI from their mV/mA equivalents, independently. */
         p_params->Results.Rs = rs_pu_of_vd_id(vd_avg, id_avg);
-        p_params->ResultsSi.Rs = rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Rs);
+        p_params->ResultsSi.Rs = rs_mohm_of_vi((uint64_t)vd_avg * p_params->VBase / 32768UL, (uint64_t)id_avg * p_params->IBase / 32768UL);
 
         /* Precompute steady-state Vd bias so Ld step averages to Id_bias. */
         p_params->VdBias               = (fract16_t)vd_avg;
@@ -163,10 +173,6 @@ static void ProcRs(ElectricalCalibration_T * p_params, fract16_t vd, fract16_t i
         p_params->IdTau                = GetIdTau(p_params);
         p_params->IdTauCycles          = 0U;
         SetNext(p_params, PARAMID_STEP_LD_INJECT);
-    }
-    // else
-    {
-        p_params->CycleCount++;
     }
 }
 
@@ -188,8 +194,9 @@ static void ProcLd(ElectricalCalibration_T * p_params, fract16_t id)
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_LD_WINDOW_MS))
     {
         if (p_params->IdTauCycles == 0U) { p_params->IdTauCycles = p_params->CycleCount; }
-        p_params->Results.Ld = l_pu_of_rs_tau_cycles(p_params->Results.Rs, p_params->IdTauCycles);
-        p_params->ResultsSi.Ld = l_h_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Ld, 1000000UL);
+        /* Ld = Rs·τ — PU and SI each derived directly from the measurement (Rs, τ), independently. */
+        p_params->Results.Ld   = l_pu_rpm_of_rs_tau_cycles(MOTOR_CONTROL_FREQ, p_params->SpeedBaseRpm, p_params->PolePairs, p_params->Results.Rs, p_params->IdTauCycles);
+        p_params->ResultsSi.Ld = l_uh_of_rs_tau_cycles(MOTOR_CONTROL_FREQ, p_params->ResultsSi.Rs, p_params->IdTauCycles);
         SetNext(p_params, PARAMID_STEP_LQ_HFI);
     }
 }
@@ -216,8 +223,9 @@ static void ProcLq(ElectricalCalibration_T * p_params, fract16_t iq)
         int32_t i_norm = (int32_t)((p_params->IqSumI * 2) / p_params->AccumN / 32768);
         int32_t q_norm = (int32_t)((p_params->IqSumQ * 2) / p_params->AccumN / 32768);
         uint16_t i_mag = fixed_sqrt(i_norm * i_norm + q_norm * q_norm);
-        p_params->Results.Lq = l_pu_of_hfi(MOTOR_CONTROL_FREQ, p_params->HfiFreqHz, p_params->Vhfi, i_mag);
-        p_params->ResultsSi.Lq = l_h_of_pu(MOTOR_CONTROL_FREQ, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_params->Results.Lq, 1000000UL);
+        /* Lq = V_pk / (2π·f·I_pk) — PU derived directly from the PU amplitudes; SI from their mV/mA equivalents, independently. */
+        p_params->Results.Lq   = l_pu_rpm_of_hfi(p_params->SpeedBaseRpm, p_params->PolePairs, p_params->HfiFreqHz, p_params->Vhfi, i_mag);
+        p_params->ResultsSi.Lq = l_uh_of_hfi(p_params->HfiFreqHz, (uint64_t)p_params->Vhfi * p_params->VBase / 32768UL, (uint64_t)i_mag * p_params->IBase / 32768UL);
         SetNext(p_params, PARAMID_STEP_COMMIT);
     }
 }
@@ -237,7 +245,7 @@ static void ProcRampDown(ElectricalCalibration_T * p_params)
     if (p_params->CycleCount >= MOTOR_CONTROL_CYCLES(PARAMID_RAMPDOWN_MS)) { SetNext(p_params, PARAMID_STEP_DONE); }
 }
 
-/* COMMIT: copy results into Motor_Config_T, recompute decoupling K's. */
+/* Results in rpm-anchored PU, matching FOC runtime basis */
 static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
 {
     p_storage->Ld = p_params->Results.Ld;
@@ -246,13 +254,13 @@ static void CommitResults(ElectricalCalibration_T * p_params, FOC_Electrical_T *
     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
 }
 
-static void CommitResultsSi(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
-{
-    p_storage->Ld = p_params->ResultsSi.Ld;
-    p_storage->Lq = p_params->ResultsSi.Lq;
-    p_storage->Rs = p_params->ResultsSi.Rs;
-    SetNext(p_params, PARAMID_STEP_RAMPDOWN);
-}
+// static void CommitResultsSi(ElectricalCalibration_T * p_params, FOC_Electrical_T * p_storage)
+// {
+//     p_storage->Ld = p_params->ResultsSi.Ld;
+//     p_storage->Lq = p_params->ResultsSi.Lq;
+//     p_storage->Rs = p_params->ResultsSi.Rs;
+//     SetNext(p_params, PARAMID_STEP_RAMPDOWN);
+// }
 
 
 /******************************************************************************/
@@ -268,19 +276,24 @@ static void Electrical_Entry(Motor_T * p_motor)
     ElectricalCalibration_T * p_params = ElectricalCalibrationBuffer(p_context);
 
     Phase_ActivateV0(&p_motor->PHASE);
+    p_context->ControlTimerBase = 0U;
     p_context->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_context);
-    // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
-    // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
-
-    p_context->ControlTimerBase = 0U;
+    // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
+    // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
 
     /* Clear full scratch, then set bias */
     *p_params = (ElectricalCalibration_T){ 0 };
     p_params->Step = PARAMID_STEP_ALIGN;
     p_params->CycleCount = 0U;
+
+    /* Capture PU base — rpm-anchored ω_base, identical to the FOC runtime electrical config basis. */
+    p_params->VBase        = Phase_Calibration_GetVMaxVolts();
+    p_params->IBase        = Phase_Calibration_GetIMaxAmps();
+    p_params->SpeedBaseRpm = Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
+    p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
 
     p_params->IdBias = Motor_GetIAlign(&p_context->Config);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
@@ -317,9 +330,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
         case PARAMID_STEP_COMMIT:
-            // CommitResultsSi(p_params, &p_context->Config.Electrical.ElectricalParams_Si);
-            // CommitResults(p_params, &p_context->Config.FocConfig.Electrical);  /* todo after update to omega base  */
-            // CommitResults(p_params, &p_context->Foc.Config.Electrical);
+            CommitResults(p_params, &p_context->Config.FocConfig.Electrical);
             break;
         case PARAMID_STEP_RAMPDOWN:
             _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
@@ -331,11 +342,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             break;
     }
 }
-// Motor_Context_T * p_context = p_motor->P_MOTOR;
-// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_emf(FOC_GetVPhase(&p_context->Foc), Motor_GetSpeedFeedback(p_context));
-// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
-// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);
-// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+
 State_T * Electrical_Next(Motor_T * p_motor)
 {
     if (ElectricalCalibrationBuffer(p_motor->P_MOTOR)->Step == PARAMID_STEP_DONE) { return &MOTOR_STATE_CALIBRATION; }
@@ -367,3 +374,9 @@ bool Motor_Calibration_IsElectrical(Motor_T * p_motor)
     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_ELECTRICAL);
 }
 
+// psi spin test
+// Motor_Context_T * p_context = p_motor->P_MOTOR;
+// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_emf(FOC_GetVPhase(&p_context->Foc), Motor_GetSpeedFeedback(p_context));
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
+// p_context->Config.ElectricalParams_Pu_Test.Psi = psi_pu_of_running(p_context->Config.ElectricalParams_Pu.Rs, p_context->Config.ElectricalParams_Pu.Ld, Motor_GetSpeedFeedback(p_context), p_context->Foc.Vq, p_context->Foc.Id, p_context->Foc.Iq);
+// p_context->Config.ElectricalParams_Si_Test.Psi = psi_uwb_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_context->Config.SpeedRating.PolePairs, p_context->Config.ElectricalParams_Pu_Test.Psi);
