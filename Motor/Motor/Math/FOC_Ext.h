@@ -59,20 +59,6 @@ static inline bool _FOC_CaptureIabc(FOC_T * p_foc, volatile Phase_Data_T * p_pha
     FOC_ProcClarkePark(p_foc, p_phaseData->Values.A, p_phaseData->Values.B, p_phaseData->Values.C);
 }
 
-/* FeedbackState */
-// static inline void  _FOC_CaptureFeedback(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle)
-// {
-//     FOC_SetTheta(p_foc, angle);
-//     FOC_CaptureIabc(p_foc, p_phaseData);
-// }
-// static inline void  _FOC_ProcIFeedbackLoop(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle, ufract16_t vBus,  int16_t dReq, int16_t qReq)
-// {
-//     FOC_SetTheta(p_foc, angle);
-//     FOC_CaptureIabc(p_foc, p_phaseData);
-//     FOC_ProcIFeedback(p_foc, vBus, direction, dReq, qReq);
-//     FOC_ProcOutputDuty(p_foc, Phase_VBus_Inv_Fract32());
-// }
-
 static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_input)
 {
     if (p_input->Flags.Bits == PHASE_ID_ABC)
@@ -82,18 +68,16 @@ static inline void FOC_CaptureVBemf(FOC_T * p_foc, volatile Phase_Data_T * p_inp
     }
 }
 
-// static inline void FOC_ProcCaptureVBemf(FOC_T * p_foc, Phase_Data_T * p_input, angle16_t theta)
+/* FeedbackState */
+// static inline void  _FOC_ProcIFeedbackLoop(FOC_T * p_foc, Phase_Data_T * p_phaseData, angle16_t angle, ufract16_t vBus,  int16_t dReq, int16_t qReq)
 // {
-//     FOC_SetTheta(p_foc, theta);
-//     if (p_input->Flags.Bits == PHASE_ID_ABC)
-//     {
-//         FOC_ProcVBemfClarkePark(p_foc, p_input->Values.A, p_input->Values.B, p_input->Values.C);
-//         p_input->Flags.Bits = PHASE_ID_0;
-//     }
+//     FOC_SetTheta(p_foc, angle);
+//     FOC_CaptureIabc(p_foc, p_phaseData);
+//     FOC_ProcIFeedback(p_foc, vBus, direction, dReq, qReq);
+//     FOC_ProcOutputDuty(p_foc, Phase_VBus_Inv_Fract32());
 // }
 
 static inline Phase_Triplet_T FOC_Vabc(const FOC_T * p_foc) { return (Phase_Triplet_T) { .A = p_foc->Va, .B = p_foc->Vb, .C = p_foc->Vc, }; }
-
 
 static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
 {

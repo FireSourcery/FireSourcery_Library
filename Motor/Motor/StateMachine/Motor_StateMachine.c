@@ -262,7 +262,7 @@ static State_T * Passive_InputControl(Motor_T * p_motor, state_value_t phaseOutp
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-            if (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR)) { Phase_Deactivate(&p_motor->PHASE); }
+            if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { Phase_Deactivate(&p_motor->PHASE); }
             break;
         case PHASE_VOUT_0:
             Phase_ActivateV0(&p_motor->PHASE);
@@ -408,7 +408,7 @@ static const State_Action_T RUN_ACTION_TABLE[MOTOR_STATE_ACTION_TABLE_LENGTH] =
 */
 static State_T * Run_InputRelease(Motor_T * p_motor)
 {
-    return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+    return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
 }
 
 /* App layer handle conditional release for now. substate for passive torque 0. change input from user cmd */
@@ -498,7 +498,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
+        case PHASE_VOUT_0:      return Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : &INTERVENTION_STATE_RAMP_SAFE;
         case PHASE_VOUT_PWM:    return RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL;
         default: return NULL;
     }

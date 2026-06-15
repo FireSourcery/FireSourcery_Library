@@ -292,7 +292,7 @@ static void Electrical_Entry(Motor_T * p_motor)
     /* Capture PU base — rpm-anchored ω_base, identical to the FOC runtime electrical config basis. */
     p_params->VBase        = Phase_Calibration_GetVMaxVolts();
     p_params->IBase        = Phase_Calibration_GetIMaxAmps();
-    p_params->SpeedBaseRpm = Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
+    p_params->SpeedBaseRpm = _Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
     p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
 
     p_params->IdBias = Motor_GetIAlign(&p_context->Config);
@@ -330,7 +330,7 @@ static void Electrical_Proc(Motor_T * p_motor)
             ProcLq(p_params, FOC_Iq(&p_context->Foc));
             break;
         case PARAMID_STEP_COMMIT:
-            CommitResults(p_params, &p_context->Config.FocConfig.Electrical);
+            CommitResults(p_params, &p_context->Foc.Config.Electrical);
             break;
         case PARAMID_STEP_RAMPDOWN:
             _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);

@@ -31,6 +31,7 @@
 /******************************************************************************/
 #include "Math/Fixed/fract16.h"
 #include "Math/Angle/Angle.h"
+#include "Math/Angle/Angle_SpeedPu.h"
 
 #include <stdint.h>
 #include <stdbool.h>

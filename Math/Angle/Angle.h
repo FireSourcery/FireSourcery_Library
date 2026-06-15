@@ -168,18 +168,6 @@ static inline void Angle_SetLimits(Angle_T * p_angle, angle16_t lower, angle16_t
     p_angle->LimitUpper = (int32_t)upper << ANGLE32_SHIFT;
 }
 
-// static inline void Angle_SetLimitsWindow(Angle_T * p_angle, angle16_t angle, angle16_t width)
-// {
-//     if (width >= 0)
-//     {
-//         Angle_SetLimits(p_angle, angle, angle + width);
-//     }
-//     else
-//     {
-//         Angle_SetLimits(p_angle, angle + width, angle);
-//     }
-// }
-
 /*
     Set bounds as a one-sided sector window: width ahead in sign(Delta), 0 behind.
     Called after snapping Angle to a sensor boundary (e.g. Hall edge).
@@ -200,6 +188,17 @@ static inline void Angle_SetLimitWindow(Angle_T * p_angle, uangle16_t width_angl
         p_angle->LimitLower = p_angle->Angle - width_shifted;
     }
 }
+// static inline void Angle_SetLimitsWindow(Angle_T * p_angle, angle16_t angle, angle16_t width)
+// {
+//     if (width >= 0)
+//     {
+//         Angle_SetLimits(p_angle, angle, angle + width);
+//     }
+//     else
+//     {
+//         Angle_SetLimits(p_angle, angle + width, angle);
+//     }
+// }
 
 /*
     Init: zero state + set symmetric bounds ±limit_angle16 around zero.
@@ -221,10 +220,7 @@ static inline void Angle_ZeroAngle(Angle_T * p_angle) { p_angle->Angle = 0; }
 static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 
 
-/*
-    Clamp on Delta (which does not need wrap check)
-    p_angle->Angle += Angle_GetInterpolationDelta(p_angle);
-*/
+
 /*
     Step is pinned in [−room, 0] or [0, +room]
     no auto-correction, 0 on overshoot.
@@ -255,97 +251,6 @@ static inline void Angle_StopDelta(Angle_T * p_angle) { p_angle->Delta = 0; }
 //     int32_t width_shifted = (int32_t)width_angle16 << ANGLE32_SHIFT;
 //     p_angle->LimitUpper = p_angle->Angle + math_sign(p_angle->Delta) * width_shifted;
 // }
-
-
-/******************************************************************************/
-/*
-    Angle_SpeedUnitRef_T
-    Digital Angle to Per Unit Reference
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
-    Angle_SpeedUnitRef_T — precomputed (ω_base · Δt) anchor.
-
-        θ̇      = ω_pu · ω_base                            [definition of ω_pu]
-        θ_step = θ̇ · Δt = ω_pu · (ω_base / Fs)            [per-tick step]
-
-    Precompute (ω_base · Δt) once in angle16/tick so the hot path is a single
-    multiply with no division. Numerically:
-
-        OmegaBase_dT = (ω_base / Fs) · (65536 / 2π)
-                     = ω_base_RPM · 65536 / (60 · Fs)
-                     = ANGLE16_OF_RPM(Fs, ω_base_RPM)
-
-    Inverse stores Fs / ω_base (Q32) for the angle → ω_pu direction.
-*/
-/******************************************************************************/
-// typedef struct Angle_SpeedScale
-typedef struct Angle_SpeedFractRef
-{
-    angle16_t SpeedMax_Angle16;    /* (ω_base · Δt) in angle16/tick — angle step at ω_pu = 1.0 */
-    uint32_t InvSpeedMax_Fract32;   /* Fs / ω_base (Q32) — inverse for angle → ω_pu */
-    // uint32_t PollingFreq; /* keep for per second conversions if needed */
-}
-Angle_SpeedUnitRef_T;
-
-/* Config Options in RPM */
-// typedef struct Angle_SpeedFractRef_Rpm
-typedef struct Angle_SpeedFractCalib
-{
-    uint32_t PollingFreq;
-    uint32_t SpeedMax_Rpm;  /* ω_base as mechanical RPM (~2x rated) */
-}
-Angle_SpeedFractCalib_T;
-
-#define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedUnitRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
-#define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
-
-// #if defined(ANGLE_POLLING_FREQ) && defined(ANGLE_SPEED_MAX_RPM)
-// static const Angle_SpeedUnitRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_CALIB(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
-// #endif
-
-static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
-static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef_FromCalib(uint32_t pollingFreq, uint32_t maxRpm) { return ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
-
-/* Caller pass Ref ~ 2x for overflow range */
-static void Angle_SpeedRef_Init(Angle_SpeedUnitRef_T * p_ref, angle16_t maxAngle16) { *p_ref = ANGLE_SPEED_FRACT_REF(maxAngle16); }
-static void Angle_SpeedRef_Init_Rpm(Angle_SpeedUnitRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
-
-/*
-    Precomputed unit conversions — operate on shifted (Q16.16) delta.
-    All hot-path consumers keep Delta in shifted form; the helpers below
-    read/write from that representation directly.
-*/
-/* ANGLE_PER_REVOLUTION / FRACT16_MAX == 2 */
-/*
-    effectively θ_step = ω_pu · (ω_base / Fs)
-*/
-static inline angle16_t angle_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return fract16_mul(speed_fract16, angleSpeedMax); }
-static inline angle32_t angle32_of_speed_fract16(angle16_t angleSpeedMax, int16_t speed_fract16) { return (int32_t)speed_fract16 * angleSpeedMax << 1; }
-static inline int16_t speed_fract16_of_angle(uint32_t angleSpeedMaxInv_fract32, angle16_t angle16) { return ((int32_t)angle16 * angleSpeedMaxInv_fract32) >> 16U; }
-
-/* ω_pu_fract16 = el_delta · π · Fs / ω_base */
-/*  π · Fs / ω_base = 32768 / ω_base_angle */
-static inline int16_t speed_fract16_of_angle_direct(angle16_t angleSpeedMax, angle16_t angle16) { return ((int32_t)angle16 * FRACT16_MAX) / angleSpeedMax; }
-
-
-
-static inline void Angle_CaptureSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedUnitRef_T * p_ref, accum32_t speed_fract16)
-{
-    p_angle->Delta = (int32_t)speed_fract16 * p_ref->SpeedMax_Angle16 << 1;
-    // Angle_SetDelta(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
-}
-
-static inline fract16_t Angle_ResolveSpeed_Fract16(const Angle_T * p_angle, const Angle_SpeedUnitRef_T * p_ref)
-{
-    return speed_fract16_of_angle(p_ref->InvSpeedMax_Fract32, p_angle->Delta >> ANGLE32_SHIFT);
-}
-
-static inline angle16_t Angle_IntegrateSpeed_Fract16(Angle_T * p_angle, const Angle_SpeedUnitRef_T * p_ref, fract16_t speed_fract16)
-{
-    return Angle_Integrate(p_angle, angle_of_speed_fract16(p_ref->SpeedMax_Angle16, speed_fract16));
-}
 
 
 

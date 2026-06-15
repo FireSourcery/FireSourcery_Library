@@ -58,6 +58,7 @@
 
 #include "Math/Fixed/fixed.h"
 #include "Math/Angle/Angle.h"
+#include "Math/Angle/Angle_SpeedPu.h"
 #include "Math/Linear/Linear.h"
 #include "Math/Accumulator/Accumulator.h"
 #include "Math/Ramp/Ramp.h"
@@ -230,17 +231,15 @@ typedef struct Motor_Config
     uint16_t ILimitMotoring_Fract16;        /* [0:32767] = [0:100%] of I_TYPE_MAX_AMPS. */
     uint16_t ILimitGenerating_Fract16;
 
-    /* Acceleration as time */
-    uint32_t SpeedRampTime_Cycles;      /* Time to reach SpeedRated */
-    uint32_t TorqueRampTime_Cycles;     /* Time to reach I_RATED */
-    // uint32_t SpeedRampSlope_Accum32; /* Fract16 per tick << 15 */   // todo
-    // uint32_t TorqueRampSlope_Accum32;
+    /* Acceleration as slope: Fract16 per tick << ACCUMULATOR_SHIFT(15). Full-scale (INT16_MAX) traversal in the configured time. */
+    uint32_t SpeedRampSlope_Accum32;
+    uint32_t TorqueRampSlope_Accum32;
 
     PID_Config_T PidSpeed;  /* Speed Control */
     PID_Config_T PidI;      /* Idq Control */
 
     // move
-    FOC_Config_T FocConfig;
+    // FOC_Config_T FocConfig;
 
     /*
         OpenLoop
@@ -422,38 +421,38 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
-/* Motor_GetKvVBus_Rpm */
-static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config); }
-static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
-static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Motor_Speed_Fract16OfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
-
 /*
     Speed VBus Ref
     Generally [SpeedRated] via Kv * V
 */
-// static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Rpm(p_motor); }
-static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config); }
+static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
+
+/*
+    when SpeedTypeMax = Kv * V_Max
+    speedRated_pu = VNominal_pu
+    ke_pu = 1.0
+    ψ_pu = .5
+*/
+static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return Phase_V_Fract16OfVolts(VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config)); }
+
+
+static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Rpm(p_motor); }
+static inline uint16_t Motor_SpeedRated_Fract16(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Fract16(p_motor); }
+// static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
+/*
+    bus ratio IS the no-FW speed ceiling
+*/
+static inline ufract16_t Motor_SpeedVLimit_Fract16(Motor_T * p_motor) { return VBus_Fract16(p_motor->P_VBUS); }
 
 /*
     Uniform interface for parameter variations.
 */
+static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
+static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return _Motor_GetKe_Fract16(&Motor_Config(p_motor)->SpeedRating); }
+// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return _Motor_GetPsi_Fract16(&Motor_Config(p_motor)->SpeedRating); }
 static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return p_motor->P_MOTOR->Foc.Config.Electrical.Psi; }
 
-/*
-    when SpeedRated is derived from V_Nominal, and SpeedTypeMax is derived from 2x SpeedRated
-    SpeedTypeMax = SpeedRated * 2 = Kv * V_Nominal * 2
-    ψ_pu = Kv * V_Nominal * 2 / (Kv * 2 * V_max) = V_Nominal / V_max  = V_Nominal_pu
-
-    fract16_mul(psi, Speed_fract16) == fract16_mul(VBus_VNominal_Fract16, Speed_fract16)
-*/
-/* e.g. 2700*2=5400, psi = 18/.008 */
-// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
-// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
-// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
-
-/* alternatively inverter max as 1.0, high end limited field weakening */
-// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return Phase_Calibration_GetVMaxVolts() * Motor_Config(p_motor)->SpeedRating.Kv  ; }
-// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return ke_pu_rpm_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), Motor_Config(p_motor)->SpeedRating.Kv); }
 
 
 /******************************************************************************/
@@ -567,6 +566,13 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
 static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T * p_motor) { return (Motor_Direction_T)RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor); }
 
+/*!
+    V [Phase] approximation via Speed
+    1/2 VBus Nominal at SpeedRated
+*/
+static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_Psi_Fract16(p_motor), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
+static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedAdjustment); }
+
 
 
 /*
@@ -586,16 +592,11 @@ static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 
 static inline bool Motor_IsSpeedZero(const Motor_Context_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 
-static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(const Motor_Config_T * p_config) { return _Motor_SpeedRated_Fract16(&p_config->SpeedRating); }
-static inline bool Motor_IsSpeedFreewheelLimitRange(const Motor_Context_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor)) < Motor_GetSpeedFreewheelLimit_UFract16(&p_motor->Config)); }
+static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(Motor_T * p_motor) { return Motor_SpeedRated_Fract16(p_motor); }
+static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }
 
-/*!
-    V [Phase] approximation via Speed
-    1/2 VBus Nominal at SpeedRated
-*/
-/* when SPEED_MAX = SpeedRated * 2 = Kv * VNominal * 2 */
-static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(Motor_Psi_Fract16(p_motor), Motor_GetSpeedFeedback(p_motor->P_MOTOR)); }
-static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedAdjustment); }
+/* fw check */
+static inline bool Motor_IsVoltageLimited(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) >= Motor_SpeedVLimit_Fract16(p_motor)); }
 
 
 /******************************************************************************/
@@ -735,3 +736,18 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 // static inline uint16_t Motor_VTypeMax_Volts(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) or Phase_Calibration_GetVMaxVolts(); }
 // static inline uint16_t Motor_ITypeMax_Amps(Motor_T * p_motor) { return Phase_Calibration_GetIRatedPeak_Fract16(); }
 // static inline uint16_t Motor_LTypeMax_Henries(Motor_T * p_motor) { return  Motor_VTypeMax_Volts(p_motor) / (2 * M_PI * Motor_SpeedTypeMax_Rpm(p_motor) / 60 * Motor_ITypeMax_Amps(p_motor)); }
+
+
+
+/*
+    when SpeedTypeMax = SpeedRated * 2 = Kv * V_Nominal * 2
+    Ke = VNominal * 2
+    Numerical max as ~2x kv*VBus
+    account for 1.15 factor and field weakening range.
+
+    ψ_pu = V_Nominal / V_max  = V_Nominal_pu
+*/
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv * 2; }
+// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
+// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
+

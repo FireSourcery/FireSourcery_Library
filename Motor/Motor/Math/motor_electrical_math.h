@@ -405,10 +405,10 @@ static inline uint32_t l_pu_rpm_of_hfi(uint32_t speed_base_rpm, uint8_t polePair
     dervives base when V is Vbase
     selection between interter max or vnominal
 */
-#define MOTOR_RPM_OF_KV(Kv, PolePairs, V_Volts) (Kv * PolePairs * V_Volts)
-#define MOTOR_RADS_OF_KV(Kv, PolePairs, V_Volts, SI_Scale)  ((uint64_t)MOTOR_RPM_OF_KV(Kv, PolePairs, V_Volts) * 2 * FRACT16_PI / 60UL / FRACT16_SCALE)
+#define MOTOR_EL_RPM_OF_KV(Kv, PolePairs, V_Volts) (Kv * PolePairs * V_Volts)
+#define MOTOR_EL_RADS_OF_KV(Kv, PolePairs, V_Volts, SI_Scale)  ((uint64_t)MOTOR_EL_RPM_OF_KV(Kv, PolePairs, V_Volts) * 2 * FRACT16_PI / 60UL / FRACT16_SCALE)
 
-#define MOTOR_SPEED_PU_OF_KV_RPM(VBase, Kv, PolePairs, Rpm) (Rpm * INT16_MAX / MOTOR_RPM_OF_KV(VBase, Kv, PolePairs))
+#define MOTOR_SPEED_PU_OF_KV_RPM(VBase, Kv, Rpm) (Rpm * INT16_MAX / (Kv * VBase))
 
 /* Speed envelope from Kv. */
 static inline uint32_t rpm_of_kv_v(uint16_t kv, uint32_t v_V) { return (uint32_t)kv * v_V; }
@@ -620,6 +620,38 @@ static inline uint32_t l_pu_of_step(fract16_t v_pu, fract16_t di_pu, uint32_t dt
 static inline uint32_t l_pu_of_rs_tau_cycles(fract16_t rs_pu, uint32_t tau_cycles) { return (uint64_t)rs_pu * FRACT16_PI * tau_cycles / FRACT16_SCALE; }
 static inline uint32_t l_pu_of_hfi(uint32_t fs_hz, uint32_t fhfi_Hz, ufract16_t v_pk_pu, ufract16_t i_pk_pu) { return (uint64_t)fract16_div(v_pk_pu, i_pk_pu) * fs_hz / (2UL * fhfi_Hz); }
 
+/*
+    ω_base with k
+
+    32767 600000 erpm, 10000 erps, 150000 mech rpm
+    16383 300000 erpm
+    8192 150000 erpm
+    4096 75000 erpm
+    2048 37500 erpm, 625,  9375 RPM at 4 pole pairs
+    1024 18750 erpm, 8 pole pairs 2344 rpm
+
+    ( π·Fs/k to extend precision, k=2, 4..):
+        ψ_du  = ψ · π · Fs / V_max / k
+        L_du  = L · π · I_max · Fs / V_max / k
+
+    theta += omega_pu >> LOG2_N
+
+
+    L_base = V_base / (ω_base / k · I_base)
+        k = 1 => 2.49 [uH]
+        k = 2 => 4.98 [uH]
+        k = 4 => 9.95 [uH]
+        k = 8 => 19.9 [uH]
+        k = 16 => 39.8 [uH]
+        k = 32 => 79.6 [uH]
+        k = 64 => 159.2 [uH]
+        k = 128 => 318.4 [uH]
+
+    #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
+    #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
+
+
+*/
 
 /*
     Direct multiply, without q15 scale:
@@ -672,40 +704,6 @@ static inline uint32_t l_pu_of_hfi(uint32_t fs_hz, uint32_t fhfi_Hz, ufract16_t 
 // static inline uint32_t _l_pu_of_uh(uint32_t fs_hz, uint16_t v_base_V, uint16_t i_base_A, uint32_t l_uH) { return _l_pu_of_h(fs_hz, v_base_V, i_base_A, l_uH, 1000000UL); }
 
 
-/*
-    ω_base with k
-    ( π·Fs/k to extend precision, k=2, 4..):
-        ψ_du  = ψ · π · Fs / V_max / k
-        L_du  = L · π · I_max · Fs / V_max / k
-
-    theta += omega_pu >> LOG2_N
-
-    L_base = V_base / (ω_base / k · I_base)
-        k = 1 => 2.49 [uH]
-        k = 2 => 4.98 [uH]
-        k = 4 => 9.95 [uH]
-        k = 8 => 19.9 [uH]
-        k = 16 => 39.8 [uH]
-        k = 32 => 79.6 [uH]
-        k = 64 => 159.2 [uH]
-        k = 128 => 318.4 [uH]
-
-    #define _MOTOR_SPEED_TYPE_MAX_ERPM(PolePairs) ((uint32_t)(PolePairs) * MOTOR_SPEED_TYPE_MAX_RPM())
-    #define _MOTOR_SPEED_TYPE_MAX_DIGIT(erpm)  ANGLE16_OF_RPM(MOTOR_CONTROL_FREQ, erpm)
-    #define MOTOR_DIGITAL_SPEED_NORM 2
-    #define MOTOR_DIGITAL_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
-
-    Angle Speed max in digital units / S
-    #define ANGLE_SPEED_MAX(pollingFreq) (32768 * pollingFreq)
-    #define MOTOR_ANG_SPEED_MAX (1 < (MOTOR_DIGITAL_SPEED_BITS - 1))
-
-    32767 600000 erpm, 10000 erps, 150000 mech rpm
-    16383 300000 erpm
-    8192 150000 erpm
-    4096 75000 erpm
-    2048 37500 erpm
-    1024 18750 erpm, 8 pole pairs 2344 rpm
-*/
 
 /*
     store L and ψ as(factor, shift)

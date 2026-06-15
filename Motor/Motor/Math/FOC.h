@@ -602,7 +602,6 @@ static void FOC_Init(FOC_T * p_foc, const FOC_Config_T * p_config)
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI); */
 }
 
-
 // void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)
 // {
 //     p_foc->VModulation = fract16_mul(modulation, FRACT16_1_DIV_SQRT3);
@@ -648,6 +647,11 @@ static inline void FOC_ResetFeedbackState(FOC_T * p_foc)
 static inline void FOC_Reset(FOC_T * p_foc)
 {
 
+
+}
+
+static inline int FOC_Config_IsValid(const FOC_Config_T * p_config)
+{
 
 }
 

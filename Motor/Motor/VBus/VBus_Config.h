@@ -109,6 +109,12 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V
 */
 /******************************************************************************/
 static inline uint16_t VBus_VSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
+static inline void VBus_SetVSupplyNominal_V(VBus_Config_T * p_vbus, uint16_t vSupplyNominal_V)
+{
+    p_vbus->VSupplyNominal_V = math_min(vSupplyNominal_V, Phase_Calibration_GetVRated_V());
+    p_vbus->MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->VSupplyNominal_V);
+}
+
 static inline uint16_t VBus_VFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
 static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }

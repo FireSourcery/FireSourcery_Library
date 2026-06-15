@@ -124,7 +124,7 @@ static State_T * RampSafe_Next(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
 
-    if (Motor_IsSpeedFreewheelLimitRange(p_context)) { return &MOTOR_STATE_PASSIVE; }
+    if (Motor_IsSpeedFreewheelLimitRange(p_motor)) { return &MOTOR_STATE_PASSIVE; }
     /* Watchdog: if speed not decreasing after timeout, escalate to fault */
     if (p_context->ControlTimerBase > MOTOR_INTERVENTION_RAMP_WATCHDOG) { return &MOTOR_STATE_FAULT; }
 
@@ -152,7 +152,7 @@ static State_T * Intervention_InputControl(Motor_T * p_motor, state_value_t phas
     switch ((Phase_VOutMode_T)phaseOutput)
     {
         case PHASE_VOUT_Z:
-        case PHASE_VOUT_0: return (Motor_IsSpeedFreewheelLimitRange(p_motor->P_MOTOR) ? &MOTOR_STATE_PASSIVE : NULL);
+        case PHASE_VOUT_0: return (Motor_IsSpeedFreewheelLimitRange(p_motor) ? &MOTOR_STATE_PASSIVE : NULL);
         case PHASE_VOUT_PWM: return (RotorSensor_IsFeedbackAvailable(p_motor->P_MOTOR->p_ActiveSensor) ? &MOTOR_STATE_RUN : NULL);
         default: return NULL;
     }

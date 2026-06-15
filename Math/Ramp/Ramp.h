@@ -41,8 +41,10 @@
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Range, UnitsPerSecond) ((UpdateFreq_Hz) * (Range) / (UnitsPerSecond))
 
 /* SLOPE_OF_S */
-#define RAMP_COEF_OF_SLOPE(UpdateFreq_Hz, SlopePerSecond) (((int32_t)(SlopePerSecond) << ACCUMULATOR_SHIFT) / (UpdateFreq_Hz))
+#define RAMP_COEF_OF_SLOPE(UpdateFreq_Hz, SlopePerSecond) (((int64_t)(SlopePerSecond) << ACCUMULATOR_SHIFT) / (UpdateFreq_Hz))
+// #define RAMP_COEF_OF_SLOPE_PU(UpdateFreq_Hz, FullScaleUnits, UnitsPerSecond) ((accumulator_raw_t)(((int64_t)(UnitsPerSecond) * 32768 << ACCUMULATOR_SHIFT) / ((int64_t)(FullScaleUnits) * (UpdateFreq_Hz))))
 #define RAMP_COEF_OF_DURATION_TICKS(Range, DurationTicks) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (DurationTicks))
+#define RAMP_DURATION_TICKS_OF_COEF(Range, Coef) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Coef)) /* inverse of RAMP_COEF_OF_DURATION_TICKS */
 #define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (((int64_t)(Range) << ACCUMULATOR_SHIFT) * 1000U / ((UpdateFreq_Hz) * (DurationMs)))
 // #define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (RAMP_COEF_OF_DURATION_TICKS(Range, RAMP_TICKS_OF_MILLIS((float)UpdateFreq_Hz, DurationMs)) )
 
@@ -131,7 +133,9 @@ extern int32_t Ramp_ProcNextOf(Ramp_T * p_ramp, int16_t target);
 extern int32_t Ramp_ProcNext(Ramp_T * p_ramp);
 
 extern void Ramp_Init(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
+extern void Ramp_Init_Slope(Ramp_T * p_ramp, uint32_t coeff);
 extern void Ramp_SetCoefficient(Ramp_T * p_ramp, uint32_t rate_accum32);
 extern void Ramp_SetSlope_Ticks(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t range);
 extern void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range);
+extern void Ramp_SetSlope_PerSecond(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint32_t rate_PerS);
 

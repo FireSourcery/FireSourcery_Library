@@ -119,6 +119,7 @@ typedef enum Motor_Var_ConfigPid
 }
 Motor_Var_ConfigPid_T;
 
+
 /* Debug */
 typedef enum Motor_Var_ConfigDebug
 {

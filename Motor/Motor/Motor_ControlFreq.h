@@ -105,6 +105,9 @@
 #define MOTOR_TORQUE_RAMP_COEF_OF_MS(RangeFract16, DurationMs)  RAMP_COEF_OF_DURATION_MS(MOTOR_CONTROL_FREQ, RangeFract16, DurationMs)
 #define MOTOR_TORQUE_RAMP_COEF_OF_SLOPE(Fract16PerS)            RAMP_COEF_OF_SLOPE(MOTOR_CONTROL_FREQ, Fract16PerS)
 
+// #define MOTOR_SPEED_RAMP_COEF_OF_RPM(SpeedMax_Rpm, RpmPerS)     RAMP_COEF_OF_RATE(MOTOR_SPEED_LOOP_FREQ, SpeedMax_Rpm, RpmPerS)
+// #define MOTOR_TORQUE_RAMP_COEF_OF_AMP(IMax_Amps, AmpsPerS)      RAMP_COEF_OF_RATE(MOTOR_CONTROL_FREQ, IMax_Amps, AmpsPerS)
+
 /*
     Local Conversion Units
 */

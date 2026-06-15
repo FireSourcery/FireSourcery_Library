@@ -116,7 +116,7 @@ int32_t Ramp_ProcNext(Ramp_T * p_ramp)
 /*
     range as positive only [0:UINT16_MAX]
 */
-void _Ramp_Init(Ramp_T * p_ramp, uint32_t coeff)
+void Ramp_Init_Slope(Ramp_T * p_ramp, uint32_t coeff)
 {
     p_ramp->Accumulator.Coefficient = coeff;
     Ramp_SetLimits(p_ramp, INT16_MIN, INT16_MAX);
@@ -169,7 +169,8 @@ void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t dura
     Ramp_SetSlope_Ticks(p_ramp, ticks, range);
 }
 
-void Ramp_SetSlope_PerSecond(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t rate_PerS)
+/* rate_PerS in fract16-output-units/sec, ACCUM32-scaled (e.g. ACCUM32(4.0) = 4x full-scale/sec); 32-bit to hold rates above 1.0 full-scale/sec */
+void Ramp_SetSlope_PerSecond(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint32_t rate_PerS)
 {
     p_ramp->Accumulator.Coefficient = RAMP_COEF_OF_SLOPE(updateFreq_Hz, rate_PerS);
 }
