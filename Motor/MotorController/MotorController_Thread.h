@@ -174,7 +174,7 @@ static inline void _MotorController_VBus_Thread(MotorController_T * p_dev)
         default: break;
     }
 
-    if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
+    // if (VBus_IsTriggeringEdge(p_dev->P_VBUS) == true) { MotBuzzer_MonitorTrigger(MotorController_Buzzer(p_dev)); }
 
     Analog_Conversion_Mark(&p_dev->VBUS_CONVERSION);
 }
