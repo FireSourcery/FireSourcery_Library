@@ -124,6 +124,7 @@ typedef enum Motor_Var_StateCmd
     MOTOR_VAR_FORCE_DISABLE_CONTROL,    // No value arg. Force Disable control Non StateMachine checked, also handled via Call/Packet
     MOTOR_VAR_USER_ENABLE,
     MOTOR_VAR_USER_DISABLE,
+    // MOTOR_VAR_USER_ZTC,
     // alternatively, main enter/exit only
     // MOTOR_VAR_CMD_EXIT_FAULT,
     // MOTOR_VAR_CMD_ENTER_CALIBRATION,

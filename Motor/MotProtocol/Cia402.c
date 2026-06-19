@@ -183,7 +183,7 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
     {
         case CIA402_COB_RXPDO1_BASE: /* Controlword only */
             {
-                const Cia402_RxPdo_Cw_T * p_map = (const Cia402_RxPdo_Cw_T *)p_pdo->Bytes;
+                const Cia402_RxPdo_Control_T * p_map = (const Cia402_RxPdo_Control_T *)p_pdo->Bytes;
                 (void)p_od->Set(p_od->p_Context, CIA402_OD_CONTROLWORD, 0U, (int32_t)p_map->Controlword.Word);
                 break;
             }
@@ -194,7 +194,7 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
                 case CIA402_MODE_PROFILE_TORQUE:
                 case CIA402_MODE_CYCLIC_SYNC_TORQUE:
                     {
-                        const Cia402_RxPdo_CwTorque_T * p_map = (const Cia402_RxPdo_CwTorque_T *)p_pdo->Bytes;
+                        const Cia402_RxPdo_ControlTorque_T * p_map = (const Cia402_RxPdo_ControlTorque_T *)p_pdo->Bytes;
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_TARGET_TORQUE, 0U, (int32_t)p_map->TargetTorque);
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_CONTROLWORD, 0U, (int32_t)p_map->Controlword.Word);
                         break;
@@ -204,7 +204,7 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
                 case CIA402_MODE_PROFILE_VELOCITY:
                 case CIA402_MODE_CYCLIC_SYNC_VELOCITY:
                     {
-                        const Cia402_RxPdo_CwVelocity_T * p_map = (const Cia402_RxPdo_CwVelocity_T *)p_pdo->Bytes;
+                        const Cia402_RxPdo_ControlVelocity_T * p_map = (const Cia402_RxPdo_ControlVelocity_T *)p_pdo->Bytes;
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_TARGET_VELOCITY, 0U, p_map->TargetVelocity);
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_CONTROLWORD, 0U, (int32_t)p_map->Controlword.Word);
                         break;
@@ -213,7 +213,7 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
                 case CIA402_MODE_PROFILE_POSITION:
                 case CIA402_MODE_CYCLIC_SYNC_POSITION:
                     {
-                        const Cia402_RxPdo_CwPosition_T * p_map = (const Cia402_RxPdo_CwPosition_T *)p_pdo->Bytes;
+                        const Cia402_RxPdo_ControlPosition_T * p_map = (const Cia402_RxPdo_ControlPosition_T *)p_pdo->Bytes;
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_TARGET_POSITION, 0U, p_map->TargetPosition);
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_CONTROLWORD, 0U, (int32_t)p_map->Controlword.Word);
                         break;
@@ -222,7 +222,7 @@ void Cia402_Pdo_HandleRx(const Cia402_OdInterface_T * p_od, const Cia402_Adapter
                 default:
                     {
                         /* Unknown / NONE mode — Controlword only, drop setpoint */
-                        const Cia402_RxPdo_Cw_T * p_map = (const Cia402_RxPdo_Cw_T *)p_pdo->Bytes;
+                        const Cia402_RxPdo_Control_T * p_map = (const Cia402_RxPdo_Control_T *)p_pdo->Bytes;
                         (void)p_od->Set(p_od->p_Context, CIA402_OD_CONTROLWORD, 0U, (int32_t)p_map->Controlword.Word);
                         break;
                     }

@@ -29,7 +29,6 @@
     @brief  [Brief description of the file]
 */
 /******************************************************************************/
-
 #include "Motor/MotorController/MotorController_Var.h"
 
 

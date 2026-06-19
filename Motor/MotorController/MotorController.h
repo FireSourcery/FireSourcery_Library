@@ -157,7 +157,7 @@ MotorController_InitFlags_T;
 typedef struct MotorController_Config
 {
     // MotorController_MainMode_T InitMode;
-    int InitMode; /* enum stand in */
+    int InitMode; /* enum stand in. Def in AppTable */
     MotorController_InputMode_T InputMode;
     bool IsParkStateEnabled;
 
@@ -195,6 +195,7 @@ typedef struct MotorController_Context
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
 
     /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
+    /* alternatively ain wraper handle */
     UserAIn_State_T AInStates[MOT_USER_AIN_COUNT];
     UserDIn_State_T AInGateStates[MOT_USER_AIN_COUNT];
 
@@ -244,8 +245,8 @@ typedef const struct MotorController
     CanBus_T * P_CAN_BUS;
     uint8_t CAN_BUS_COUNT;
     // CanBus_Service_T CAN_BUS_SERVICE;
-    CanBus_Broadcast_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
-    CanBus_Broadcast_T CAN_BUS_BROADCAST_1000;
+    CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_20; /* Broadcast function callback, e.g. for periodic Tx */
+    CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_1000;
 #endif
 
     /*

@@ -112,7 +112,7 @@ static void Hall_RotorSensor_ZeroInitial(const Hall_RotorSensor_T * p_sensor)
     PulseTimer_SetInitial(&p_sensor->PULSE.TIMER);
 }
 
-static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sensor) { return Hall_IsTableValid(p_sensor->HALL.P_STATE); }
+static bool Hall_RotorSensor_VerifyCalibration(const Hall_RotorSensor_T * p_sensor) { return Hall_IsCalibrationTableValid(p_sensor->HALL.P_STATE); }
 
 /*!
     Hall sensors as speed encoder.

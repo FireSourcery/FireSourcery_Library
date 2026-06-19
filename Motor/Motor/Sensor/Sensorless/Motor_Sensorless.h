@@ -31,7 +31,9 @@
 
 #include "../../Motor.h"
 
-/* Start the sensorless align → ramp → closed-loop handoff chain.
-   Enters MOTOR_STATE_OPEN_LOOP at the SENSORLESS_ALIGN substate; the substate
-   chain transitions to MOTOR_STATE_RUN once the observer reports lock. */
+/*
+    Start the sensorless align → ramp → closed-loop handoff chain.
+    Enters MOTOR_STATE_OPEN_LOOP at the SENSORLESS_ALIGN substate; the substate
+    chain transitions to MOTOR_STATE_RUN once the observer reports lock.
+*/
 extern void Motor_Sensorless_StartRunChain(Motor_T * p_motor);

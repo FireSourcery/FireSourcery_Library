@@ -216,7 +216,7 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
 
 /******************************************************************************/
 /*
-    VBemf
+    VBemf of Freewheel
 */
 /******************************************************************************/
 static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_t vb, fract16_t vc)
@@ -226,6 +226,13 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vq = v.q;
 }
 
+// static inline void FOC_ProcVBemf_Speed(FOC_T * p_foc, accum32_t speed)
+// {
+//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
+//     p_foc->Vd = 0;
+//     p_foc->Vq = p_foc->ElectricalSpeed.OmegaPsi;
+//     // FOC_ProcInvClarkePark(p_foc);
+// }
 
 /******************************************************************************/
 /*!
@@ -310,13 +317,6 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_
 */
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
-    // if (math_abs(speed) < SPEED_FF_THRESHOLD)
-    // {
-    //     p_foc->ElectricalSpeed.OmegaLd = 0;
-    //     p_foc->ElectricalSpeed.OmegaLq = 0;
-    //     p_foc->ElectricalSpeed.OmegaPsi = 0;
-    //     return;
-    // }
     p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Config.Electrical.Ld, speed));
     p_foc->ElectricalSpeed.OmegaLq = fract16_sat(accum32_mul(p_foc->Config.Electrical.Lq, speed));
     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
@@ -325,12 +325,11 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
 
-
 // static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 // {
-//     p_foc->ElectricalSpeed.OmegaLd = (accum32_mul(p_foc->Electrical.Ld, speed));
-//     p_foc->ElectricalSpeed.OmegaLq = (accum32_mul(p_foc->Electrical.Lq, speed));
-//     p_foc->ElectricalSpeed.OmegaPsi = (accum32_mul(p_foc->Electrical.Psi, speed));
+//     p_foc->ElectricalSpeed.OmegaLd = (accum32_mul(p_foc->Config.Electrical.Ld, speed));
+//     p_foc->ElectricalSpeed.OmegaLq = (accum32_mul(p_foc->Config.Electrical.Lq, speed));
+//     p_foc->ElectricalSpeed.OmegaPsi = (accum32_mul(p_foc->Config.Electrical.Psi, speed));
 // }
 // static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 // static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_wide(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
@@ -353,7 +352,7 @@ static inline void FOC_ProcIFeedback_Decouple(FOC_T * p_foc, ufract16_t vBus, in
     p_foc->Vd = math_clamp(PID_ProcPI(&p_foc->PidId, p_foc->Id, idReq) + vd_ff, -vPhaseLimit, vPhaseLimit);
 
     ufract16_t vqCircleLimit = foc_vq_circle_limit(vPhaseLimit, p_foc->Vd);  /* VqCircleLimit < vPhaseLimit < (INT16_MAX / 2) */
-    interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* static policy band */
+    interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), p_foc->VLimit);  /* policy band */
     // interval_t vqLimit = interval_intersect(vqBand, FOC_VBemfWindow(p_foc, p_foc->ElectricalSpeed.OmegaPsi));
     PID_CaptureOutputLimits(&p_foc->PidIq, fract16_sat(vqBand.low - vq_ff), fract16_sat(vqBand.high - vq_ff));
     p_foc->Vq = math_clamp(PID_ProcPI(&p_foc->PidIq, p_foc->Iq, iqReq) + vq_ff, vqBand.low, vqBand.high); /* lands back in vqBand */
@@ -385,7 +384,6 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idR
 //     PID_SetOutputState(&p_foc->PidIq, vq);
 // #endif
 // }
-
 
 /* Seed integrators so the next ProcIFeedback reproduces (vd, vq) at the present current. */
 /* From an actively-driven state (loaded / field-weakening) and FOC_ProcVBemfClarkePark capture */
@@ -420,6 +418,11 @@ static inline void FOC_MatchIVFreewheel(FOC_T * p_foc)
     FOC_MatchIVEstimate(p_foc);
 #endif
 }
+
+
+
+
+
 
 
 /******************************************************************************/
@@ -553,10 +556,9 @@ static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
 }
 
 
-static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
-{
-    p_foc->Config.FieldWeakening.IdLimit = 0;
-}
+static inline void FOC_DisableFieldWeakening(FOC_T * p_foc) { p_foc->Config.FieldWeakening.IdLimit = 0; }
+
+// static inline bool FOC_IsFieldWeakeningEnabled(FOC_T * p_foc) { return (p_foc->Config.FieldWeakening.IdLimit > 0); }
 
 
 // static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)
@@ -569,10 +571,6 @@ static inline void FOC_DisableFieldWeakening(FOC_T * p_foc)
 //     FOC_ProcIFeedback(p_foc, vBus, direction, 0, iqReq);
 // }
 
-// static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning_T * p_fwConfig, ufract16_t vBus, sign_t direction, int16_t iqReq)
-// {
-//     FOC_ProcIFeedback(p_foc, vBus, direction, FOC_ProcIdFieldWeakening(p_foc, vBus), iqReq);
-// }
 
 // static inline uint16_t FOC_GetLqInv(FOC_T * p_foc)
 // {
@@ -636,7 +634,7 @@ static inline void FOC_ResetFeedbackState(FOC_T * p_foc)
 {
     PID_Reset(&p_foc->PidIq);
     PID_Reset(&p_foc->PidId);
-    PID_CaptureOutputLimits(&p_foc->PidId, p_foc->VLimit.low, p_foc->VLimit.high);
+    PID_CaptureOutputLimits(&p_foc->PidId, -math_abs(p_foc->VLimit.high), math_abs(p_foc->VLimit.high));
     PID_CaptureOutputLimits(&p_foc->PidIq, p_foc->VLimit.low, p_foc->VLimit.high);
     p_foc->IdFw = 0;
     // p_foc->ElectricalSpeed.OmegaLd = 0;
@@ -649,6 +647,9 @@ static inline void FOC_Reset(FOC_T * p_foc)
 
 
 }
+
+
+static inline bool FOC_Config_IsFwEnabled(const FOC_Config_T * p_config) { return (p_config->FieldWeakening.IdLimit > 0U); }
 
 static inline int FOC_Config_IsValid(const FOC_Config_T * p_config)
 {
@@ -713,6 +714,7 @@ typedef enum FOC_ConfigVar
     FOC_CONFIG_VAR_ELECTRICAL_PSI,
 }
 FOC_ConfigVar_T;
+
 
 static inline int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T var)
 {

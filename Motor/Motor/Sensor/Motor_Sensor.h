@@ -134,20 +134,3 @@ extern int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T ty
 extern void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
 extern bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
 
-
-/******************************************************************************/
-/*!
-    Calibration State Access
-*/
-/******************************************************************************/
-// extern void Motor_Sensor_CalibrationCmd_Call(Motor_T * p_motor, RotorSensor_Id_T varId, int varValue);
-// typedef enum Motor_Sensor_CalibrationStatus
-// {
-// }
-// Motor_Sensor_CalibrationStatus_T;
-
-// static bool Motor_Sensor_Validate(Motor_T * p_motor, RotorSensor_Id_T id, int varValue)
-// {
-//     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, id)) return;
-//     if (p_motor->P_MOTOR->Config.SensorMode != id) return;
-// }

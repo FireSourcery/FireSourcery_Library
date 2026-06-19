@@ -36,9 +36,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// #ifndef ROTOR_SENSOR_POLLING_FREQ
-// #define ROTOR_SENSOR_POLLING_FREQ (20000U)
-// #endif
 
 /*
     Rotor Angle Sensor
@@ -53,15 +50,6 @@ typedef int (*RotorSensor_Get_T)(const struct RotorSensor * p_sensor);
 typedef void(*RotorSensor_Set_T)(const struct RotorSensor * p_sensor, int value);
 typedef void(*RotorSensor_InitFrom_T)(const struct RotorSensor * p_sensor, const struct RotorSensor_Config * p_config);
 
-/* Assign virtual sign convention */
-/* A -> B as positive/CCW */
-// typedef enum RotorSensor_Direction
-// {
-//     MOTOR_DIRECTION_CW = -1,
-//     MOTOR_DIRECTION_NULL = 0,
-//     MOTOR_DIRECTION_CCW = 1,
-// }
-// RotorSensor_Direction_T;
 
 /*
     Interface/Operations
@@ -91,7 +79,7 @@ typedef struct RotorSensor_Config
 
     /* Config scalar speed. Caller derive  */
     uint16_t SpeedTypeMax_Rpm; /* mechanical */
-    uint16_t SpeedTypeMax_DegPerCycle; /* electrical */
+    uint16_t SpeedTypeMax_Angle16; /* electrical */
 
     // uint16_t MismatchLimit;
 
@@ -193,7 +181,7 @@ static inline bool RotorSensor_VerifyCalibration(const RotorSensor_T * p_sensor)
 
 static inline void RotorSensor_InitUnitsFrom(const RotorSensor_T * p_sensor, const RotorSensor_Config_T * p_config)
 {
-    p_sensor->P_STATE->SpeedFractRef = ANGLE_SPEED_FRACT_REF(p_config->SpeedTypeMax_DegPerCycle);
+    p_sensor->P_STATE->SpeedFractRef = ANGLE_SPEED_FRACT_REF(p_config->SpeedTypeMax_Angle16);
     p_sensor->P_VTABLE->INIT_UNITS_FROM(p_sensor, p_config);
 }
 
@@ -259,3 +247,17 @@ static int _Motor_Var_Rotor_Get(RotorSensor_T * p_sensor, Motor_Var_Rotor_T varI
 }
 
 // int _Motor_Var_Rotor_Get(Motor_T * p_motor, Motor_Var_Rotor_T varId);
+
+// #ifndef ROTOR_SENSOR_POLLING_FREQ
+// #define ROTOR_SENSOR_POLLING_FREQ (20000U)
+// #endif
+
+/* Assign virtual sign convention */
+/* A -> B as positive/CCW */
+// typedef enum RotorSensor_Direction
+// {
+//     MOTOR_DIRECTION_CW = -1,
+//     MOTOR_DIRECTION_NULL = 0,
+//     MOTOR_DIRECTION_CCW = 1,
+// }
+// RotorSensor_Direction_T;

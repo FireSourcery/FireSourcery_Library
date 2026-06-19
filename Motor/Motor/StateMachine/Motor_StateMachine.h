@@ -90,6 +90,7 @@ typedef enum Motor_StateInput
 {
     MOTOR_STATE_INPUT_FAULT,            /* Toggle Fault */
     MOTOR_STATE_INPUT_PHASE_OUTPUT,     /* [Phase_VOutMode_T] Map to Run/Release */
+    // MOTOR_STATE_INPUT_CONTROL_MODE, /* split form inverter state, unify enable disable,   openloop phase out */
     MOTOR_STATE_INPUT_FEEDBACK_MODE,    /* [FeedbackMode_T]  */
     MOTOR_STATE_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MOTOR_STATE_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
@@ -197,6 +198,8 @@ static void Motor_Disable(Motor_T * p_motor)
 {
     static StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_PASSIVE, .NEXT = (State_Input_T)_Motor_InputDisable };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+
+    // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CONTROL_MODE, 0U);
 }
 
 static State_T * _Motor_InputEnable(Motor_T * p_motor, state_value_t value)

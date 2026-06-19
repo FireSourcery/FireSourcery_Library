@@ -52,8 +52,8 @@
 /*
     Unified VBus concept for cohesion across MotorController and Motor layers.
     This keeps all bus voltage concepts together in one place, instead of scattering them across multiple layers.
-    - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Fract32 for voltage normalization and derating calculations.
-    - Controller layer calls VBus_CaptureFract16 / VBus_PollMonitor:
+    - Motor's FOC/SVPWM code reads VBus_Fract16 and PerV_Accum32 for voltage normalization and derating calculations.
+    - Controller layer calls VBus_Capture / VBus_PollMonitor:
 */
 /*
     PHASE_CALIBRATION.V_MAX -> ADC Saturation
@@ -69,7 +69,7 @@
 typedef struct VBus
 {
     uint16_t VBus_Fract16;          /* Filtered live ratio — canonical FOC input */
-    uint32_t PerV_Fract32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
+    uint32_t PerV_Accum32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
 
     /* Precomputed derate slopes */
     int32_t IDerateUnderVSlope;     /* ((FRACT16_MAX - floor) << 15) / (WarnLow - FaultUnder), positive, rising  */
@@ -90,14 +90,13 @@ VBus_T;
 static inline void _VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     p_vbus->VBus_Fract16 = fract16;
-    // p_vbus->PerV_Fract32 = ((uint32_t)FRACT16_SCALE << 16) / p_vbus->VBus_Fract16;
-    p_vbus->PerV_Fract32 = fract16_div(FRACT16_SCALE, p_vbus->VBus_Fract16);
+    p_vbus->PerV_Accum32 = fract16_div(FRACT16_SCALE, p_vbus->VBus_Fract16);
 }
 
 /*
     Rolling two-sample filter; matches the prior Phase_VBus single-pole behavior.
 */
-static inline void VBus_CaptureFract16(VBus_T * p_vbus, uint16_t fract16)
+static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
 }
@@ -117,8 +116,10 @@ static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
 {
     int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
     int32_t overSpan  = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
-    p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
-    p_vbus->IDerateOverVSlope  = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
+    // p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
+    // p_vbus->IDerateOverVSlope  = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
+    p_vbus->IDerateUnderVSlope = fract16_div((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16, underSpan);
+    p_vbus->IDerateOverVSlope  = fract16_div((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX, overSpan);
 }
 
 static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
@@ -135,7 +136,7 @@ static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config
     Optionally as Adc callback, per control cycle
 */
 #include "../Phase_Input/Phase_Analog.h" /* for Phase_Analog_VFract16Of() */
-static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_CaptureFract16(p_vbus, Phase_Analog_VFract16Of(adcu)); }
+static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
 /* optionally  */
 // static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { _VBus_Capture(p_vbus, Phase_Analog_VFract16Of(adcu)); }
 
@@ -147,7 +148,7 @@ static inline void VBus_Analog_Capture(VBus_T * p_vbus, adc_result_t adcu) { VBu
 */
 /******************************************************************************/
 static inline ufract16_t VBus_Fract16(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16; }
-static inline uint32_t VBus_Inv_Fract32(const VBus_T * p_vbus) { return p_vbus->PerV_Fract32; }
+static inline uint32_t VBus_Inv_Fract32(const VBus_T * p_vbus) { return p_vbus->PerV_Accum32; }
 static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, Phase_Calibration_GetVMaxVolts()); }
 
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
@@ -155,7 +156,7 @@ static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbu
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
 
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
-static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Fract32 / FRACT16_SCALE; }
+static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Accum32 / FRACT16_SCALE; }
 static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 
@@ -266,7 +267,7 @@ static inline uint32_t VBus_VarId_Get(const VBus_T * p_vbus, VBus_VarId_T var_id
     switch (var_id)
     {
         case VBUS_VAR_ID_VBUS_FRACT16: return p_vbus->VBus_Fract16;
-        case VBUS_VAR_ID_PER_V_FRACT32: return p_vbus->PerV_Fract32;
+        case VBUS_VAR_ID_PER_V_FRACT32: return p_vbus->PerV_Accum32;
         case VBUS_VAR_ID_CHARGE_LEVEL_FRACT16: return VBus_GetChargeLevel_Fract16(p_vbus);
         default: return 0U;
     }

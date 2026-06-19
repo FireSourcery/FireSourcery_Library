@@ -84,6 +84,7 @@ typedef struct
     uint8_t  PolePairs;
     uint16_t Kv;
     uint16_t VSpeedAdjustment; /* Additional adjustment for VBemf match. ensure resume control at lower speed. */
+    /* alternatively store speedRated_Rpm, with depedency on VBus. SpeedTypeMax = VMaxVolts * speedRated_Rpm / Vbus  */
 }
 Motor_ElectricalSpeedRating_T;
 

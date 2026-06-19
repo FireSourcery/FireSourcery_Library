@@ -91,7 +91,7 @@ bool Hall_IsStateValid(const Hall_T * p_hall)
     return Hall_Verify(Hall_ReadSensors(p_hall).Value);
 }
 
-bool Hall_IsTableValid(const Hall_State_T * p_hall)
+bool Hall_IsCalibrationTableValid(const Hall_State_T * p_hall)
 {
     bool valid = true;
     bool once[HALL_SENSORS_TABLE_LENGTH] = { false };

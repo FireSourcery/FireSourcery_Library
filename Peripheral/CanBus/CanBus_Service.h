@@ -52,10 +52,10 @@ typedef const struct
     CanBus_BuildData_T BROADCAST;
     uint32_t ID; /* with fields */
     uint32_t INTERVAL; /* Caller handle */
-    CanBus_BroadcastState_T * P_STATE;  /* allocate per entry */
+    CanBus_BroadcastState_T * P_STATE;  /* allocate per entry, alternatively collective handle */
     // CanBus_ServiceInit_T INIT;
 }
-CanBus_Broadcast_T;
+CanBus_BroadcastEntry_T;
 
 /*!
     Frame-based broadcast — caller fills a full CAN_Frame_T (ID, DLC, data).
@@ -67,8 +67,16 @@ CanBus_Broadcast_T;
 // }
 // CanBus_FrameBroadcast_T;
 
-static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_Broadcast_T * p_broadcast)
+/*
+    Disabled
+*/
+static void  CanBus_BuildEmpty(void * p_context, uint8_t * p_txData) { (void)p_context; (void)p_txData; }
+static const CanBus_BroadcastEntry_T CAN_BUS_BROADCAST_EMPTY = { .BROADCAST = CanBus_BuildEmpty, .ID = 0U, .INTERVAL = 0U, .P_STATE = NULL };
+
+
+static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_BroadcastEntry_T * p_broadcast)
 {
+    // if ((p_broadcast == NULL)) { return; } /* empty/disabled service is a no-op */
     uint8_t data[8U];
     p_broadcast->BROADCAST(p_can->P_CONTEXT, &data[0U]);
     CanBus_TxData(p_can, ((can_id_t) {.CanId = p_broadcast->ID }), &data[0U], 8U);
@@ -76,24 +84,25 @@ static inline void CanBus_ProcBroadcast(CanBus_T * p_can, CanBus_Broadcast_T * p
 
 // typedef const struct
 // {
-//     CanBus_Broadcast_T * P_BROADCASTS;
+//     CanBus_BroadcastEntry_T * P_BROADCASTS;
 //     // CanBus_BroadcastState_T * P_STATE;
 //     uint8_t COUNT;
+// P_TIMER;
 // }
-// CanBus_BroadcastTable_T;
+// CanBus_BroadcastService_T;
 
-static inline void CanBus_ProcBroadcastTable(CanBus_T * p_can, CanBus_Broadcast_T * p_broadcasts, uint8_t count, uint32_t dt_us)
-{
-    for (uint8_t i = 0U; i < count; i++)
-    {
-        p_broadcasts[i].P_STATE->Elapsed += dt_us;
-        if (p_broadcasts[i].P_STATE->Elapsed >= p_broadcasts[i].INTERVAL)
-        {
-            CanBus_ProcBroadcast(p_can, &p_broadcasts[i]);
-            p_broadcasts[i].P_STATE->Elapsed = 0U;
-        }
-    }
-}
+// static inline void CanBus_ProcBroadcastService(CanBus_T * p_can, CanBus_BroadcastService_T * p_service)
+// {
+//     for (uint8_t i = 0U; i < count; i++)
+//     {
+//         p_broadcasts[i].P_STATE->Elapsed += dt_us;
+//         if (p_broadcasts[i].P_STATE->Elapsed >= p_broadcasts[i].INTERVAL)
+//         {
+//             CanBus_ProcBroadcast(p_can, &p_broadcasts[i]);
+//             p_broadcasts[i].P_STATE->Elapsed = 0U;
+//         }
+//     }
+// }
 
 
 /******************************************************************************/

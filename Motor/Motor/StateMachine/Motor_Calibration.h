@@ -31,7 +31,7 @@
 /******************************************************************************/
 #include "Motor_StateMachine.h"
 
-extern const State_T CALIBRATION_STATE_ANGLE_ALIGN;
+// extern const State_T CALIBRATION_STATE_ANGLE_ALIGN;
 
 
 /*
@@ -50,15 +50,15 @@ static inline bool Motor_Calibration_IsComplete(Motor_T * p_motor) { return Stat
 /*
     Calibration SubState
 */
-typedef enum Motor_Calibration_StateId
-{
-    MOTOR_CALIBRATION_STATE_DISABLE,
-    // MOTOR_CALIBRATION_STATE_SENSOR,
-    MOTOR_CALIBRATION_STATE_TUNING,
-    MOTOR_CALIBRATION_STATE_HOMING,
-    MOTOR_CALIBRATION_STATE_ELECTRICAL,
-}
-Motor_Calibration_StateId_T;
+// typedef enum Motor_Calibration_StateId
+// {
+//     MOTOR_CALIBRATION_STATE_DISABLE,
+//     // MOTOR_CALIBRATION_STATE_SENSOR,
+//     MOTOR_CALIBRATION_STATE_TUNING,
+//     MOTOR_CALIBRATION_STATE_HOMING,
+//     MOTOR_CALIBRATION_STATE_ELECTRICAL,
+// }
+// Motor_Calibration_StateId_T;
 
 
 /*

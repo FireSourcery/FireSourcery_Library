@@ -62,13 +62,12 @@ CanBus_Buffer_T;
 /******************************************************************************/
 /*! Rx Callbacks */
 /******************************************************************************/
-typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data);
-// typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data, uint32_t length);
+typedef void (*CanBus_RxRequest_T)(void * p_dev, uint32_t id, const uint8_t * p_data); //, uint32_t length);
 
 /*
     Full-frame Rx callback — preserves DLC, RTR, and ID metadata.
 */
-typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
+// typedef void (*CanBus_RxFrame_T)(void * p_dev, const CAN_Frame_T * p_frame);
 
 /******************************************************************************/
 /*! Runtime state */
@@ -133,13 +132,13 @@ static inline CAN_Frame_T * CanBus_PollRx(CanBus_T * p_can)
     CAN_Frame_T * p_buffer = &p_can->P_STATE->Channel[0U].Frame;
     if (HAL_CAN_ReadRxFullFlag(p_can->P_HAL))
     {
+        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
         if (HAL_CAN_LockRx(p_can->P_HAL, 0))
         {
             HAL_CAN_ReadRxMessage(p_can->P_HAL, p_buffer);
             HAL_CAN_UnlockRx(p_can->P_HAL, 0);
             return p_buffer;
         }
-        HAL_CAN_ClearRxFullFlag(p_can->P_HAL);
     }
     return NULL;
 }

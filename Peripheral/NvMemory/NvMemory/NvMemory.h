@@ -174,6 +174,8 @@ typedef struct NvMemory_State
     // const NvMemory_Partition_T * p_OpPartition; /* Op Dest boundary check */
     size_t OpSizeAligned;       /* Cached calculation. alternatively use getter */
 
+    // NvMemory_Status_T OpStatus;       /* last status. Updated by HAL, read by caller. Updated on complete or error. */
+
     /* Config Options, todo as bits */
     bool IsOpBuffered;          /* copy to buffer first or use pointer to source */
     bool IsVerifyEnable;        /* Auto call verify, alternatively user call */

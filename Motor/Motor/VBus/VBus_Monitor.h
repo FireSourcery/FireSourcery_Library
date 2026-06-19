@@ -45,7 +45,7 @@
 // typedef VMonitor_State_T VBus_Monitor_T;
 // static inline VMonitor_Status_T VBus_CaptureAndPoll(VBus_T * p_vbus, VMonitor_State_T * p_monitorState, uint16_t fract16)
 // {
-//     VBus_CaptureFract16(p_vbus, fract16);
+//     VBus_Capture(p_vbus, fract16);
 //     return (VMonitor_Status_T)RangeMonitor_Poll(p_monitorState, p_vbus->VBus_Fract16);
 // }
 

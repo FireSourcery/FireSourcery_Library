@@ -124,8 +124,8 @@ static State_T * Init_Next(Motor_T * p_motor)
 
     if (SysTime_GetMillis() > MOTOR_STATE_MACHINE_INIT_WAIT) /* wait for Speed and Heat sensors */
     {
-        if (Phase_Calibration_IsValid() == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
-        if (Motor_Config_IsValid(&p_motor->P_MOTOR->Config) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
+        // if (Phase_Calibration_IsValid() == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; } /* alternatively go to fault, outer module parse */
+        if (Motor_IsConfigValid(p_motor) == false) { p_motor->P_MOTOR->FaultFlags.InitCheck = 1U; }
 
         p_motor->P_MOTOR->FaultFlags.PositionSensor = !RotorSensor_VerifyCalibration(p_motor->P_MOTOR->p_ActiveSensor);
         Motor_PollFaultFlags(p_motor); /* Clear the fault flags once */
@@ -241,6 +241,7 @@ static void Passive_Entry(Motor_T * p_motor)
     Phase_Deactivate(&p_motor->PHASE);
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR); // Motor_CommutationModeFn_Call(p_motor, Motor_FOC_ClearFeedbackState, NULL);
     p_motor->P_MOTOR->ControlTimerBase = 0U; /* ok to reset timer */
+ //optionally set backup vspeed
 }
 
 static void Passive_Proc(Motor_T * p_motor)
@@ -371,6 +372,7 @@ static void Run_Entry(Motor_T * p_motor)
     }
     else  /* else previous state is run/intervention */
     {
+        // if (p_context->FeedbackMode.Current == 0U)
         Motor_FOC_MatchVOutput(p_context);
     }
 
@@ -423,17 +425,6 @@ static State_T * Run_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
     }
 }
 
-// depreciate
-// static State_T * Run_InputStop(Motor_T * p_motor, state_value_t direction)
-// {
-//     switch ((Motor_Direction_T)direction)
-//     {
-//         case MOTOR_DIRECTION_NULL:  return Run_InputRelease(p_motor);
-//         case MOTOR_DIRECTION_CW:    return NULL;
-//         case MOTOR_DIRECTION_CCW:   return NULL;
-//         default: return NULL; /* Invalid direction */
-//     }
-// }
 
 /*
 
@@ -537,7 +528,7 @@ const State_T MOTOR_STATE_INTERVENTION =
 static void OpenLoop_Entry(Motor_T * p_motor)
 {
     Phase_ActivateV0(&p_motor->PHASE);
-    FOC_ClearCaptureState(&p_motor->P_MOTOR->Foc);
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
 }
 
 /*
@@ -556,6 +547,7 @@ static State_T * OpenLoop_InputControl(Motor_T * p_motor, state_value_t phaseOut
         case PHASE_VOUT_PWM:    return NULL;
         default:                return NULL;
     }
+    // Phase_ActivateVOut(&p_motor->PHASE, (Phase_VOutMode_T)phaseState);
 }
 
 static State_T * OpenLoop_InputDirection(Motor_T * p_motor, state_value_t direction)
@@ -623,24 +615,14 @@ const State_T MOTOR_STATE_OPEN_LOOP =
 static void Calibration_Entry(Motor_T * p_motor)
 {
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
+    Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
     p_motor->P_MOTOR->ControlTimerBase = 0U;
-    // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
-
-    // Phase_ActivateV0(&p_motor->PHASE);
-    // p_context->ControlTimerBase = 0U;
-    // p_context->FeedbackMode.Current = 1U;
-    // Motor_FOC_ClearFeedbackState(p_context);
-    // // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
-    // // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-    // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
 }
 
 static void Calibration_Proc(Motor_T * p_motor)
 {
-    // p_motor->P_MOTOR->CalibrationTimer++;
-}
 
+}
 
 /* Calibration State and InputCalibration(DEACTIVATED) */
 static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phaseOutput)
@@ -685,8 +667,6 @@ static State_T * Calibration_InputCalibration(Motor_T * p_motor, state_value_t s
     if (p_state->P_TOP == &MOTOR_STATE_CALIBRATION) { return p_state; }
 
     return &MOTOR_STATE_PASSIVE;
-
-    // return p_state;
 }
 
 static const State_Input_T CALIBRATION_TRANSITION_TABLE[MOTOR_TRANSITION_TABLE_LENGTH] =

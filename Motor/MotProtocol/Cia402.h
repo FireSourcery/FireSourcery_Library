@@ -572,60 +572,60 @@ static inline Cia402_Sdo_T Cia402_Sdo_EncodeUploadResponse(uint16_t index, uint8
 
     RxPDO (master → drive)
 */
-typedef struct __attribute__((packed)) Cia402_RxPdo_Cw
+typedef struct __attribute__((packed)) Cia402_RxPdo_Control
 {
     Cia402_Control_T Controlword;
 }
-Cia402_RxPdo_Cw_T;
+Cia402_RxPdo_Control_T;
 
-typedef struct __attribute__((packed)) Cia402_RxPdo_CwTorque
+typedef struct __attribute__((packed)) Cia402_RxPdo_ControlTorque
 {
     Cia402_Control_T Controlword;
     int16_t          TargetTorque;
 }
-Cia402_RxPdo_CwTorque_T;
+Cia402_RxPdo_ControlTorque_T;
 
-typedef struct __attribute__((packed)) Cia402_RxPdo_CwVelocity
+typedef struct __attribute__((packed)) Cia402_RxPdo_ControlVelocity
 {
     Cia402_Control_T Controlword;
     int32_t          TargetVelocity;
 }
-Cia402_RxPdo_CwVelocity_T;
+Cia402_RxPdo_ControlVelocity_T;
 
-typedef struct __attribute__((packed)) Cia402_RxPdo_CwPosition
+typedef struct __attribute__((packed)) Cia402_RxPdo_ControlPosition
 {
     Cia402_Control_T Controlword;
     int32_t          TargetPosition;
 }
-Cia402_RxPdo_CwPosition_T;
+Cia402_RxPdo_ControlPosition_T;
 
 /*  TxPDO (drive → master) */
-typedef struct __attribute__((packed)) Cia402_TxPdo_Sw
+typedef struct __attribute__((packed)) Cia402_TxPdo_Status
 {
     Cia402_Status_T Statusword;
 }
-Cia402_TxPdo_Sw_T;
+Cia402_TxPdo_Status_T;
 
-typedef struct __attribute__((packed)) Cia402_TxPdo_SwTorque
+typedef struct __attribute__((packed)) Cia402_TxPdo_StatusTorque
 {
     Cia402_Status_T Statusword;
     int16_t         TorqueActual;
 }
-Cia402_TxPdo_SwTorque_T;
+Cia402_TxPdo_StatusTorque_T;
 
-typedef struct __attribute__((packed)) Cia402_TxPdo_SwVelocity
+typedef struct __attribute__((packed)) Cia402_TxPdo_StatusVelocity
 {
     Cia402_Status_T Statusword;
     int32_t         VelocityActual;
 }
-Cia402_TxPdo_SwVelocity_T;
+Cia402_TxPdo_StatusVelocity_T;
 
-typedef struct __attribute__((packed)) Cia402_TxPdo_SwPosition
+typedef struct __attribute__((packed)) Cia402_TxPdo_StatusPosition
 {
     Cia402_Status_T Statusword;
     int32_t         PositionActual;
 }
-Cia402_TxPdo_SwPosition_T;
+Cia402_TxPdo_StatusPosition_T;
 
 
 /*

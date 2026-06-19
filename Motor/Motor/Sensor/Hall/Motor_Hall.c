@@ -75,11 +75,11 @@ static void Calibration_Entry(Motor_T * p_motor)
     *p_buffer = (CalibrationBuffer_T){ 0 };
     p_buffer->Step = 0U;
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
-    Phase_ActivateV0(&p_motor->PHASE);
+    // Phase_ActivateV0(&p_motor->PHASE);
     Hall_StartCalibrate(GetHall(p_motor));
-    PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
-    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    // PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
+    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
     Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 }
 
@@ -88,7 +88,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 */
 static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 {
-    Phase_Align(&p_motor->PHASE, id, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
+    Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
 }
 
 /*
@@ -97,7 +97,8 @@ static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 */
 static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 {
-    _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    // _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, VBus_Fract16(p_motor->P_VBUS), Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+    Motor_FOC_ProcAngleAlign(p_motor, Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 }
 
 /*
@@ -128,7 +129,7 @@ static State_T * Calibration_End(Motor_T * p_motor)
     if (p_buffer->Step >= CAL_STEP_COUNT)
     {
         Phase_Deactivate(&p_motor->PHASE);
-        p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsTableValid(GetHall(p_motor)->P_STATE);
+        p_motor->P_MOTOR->FaultFlags.PositionSensor = !Hall_IsCalibrationTableValid(GetHall(p_motor)->P_STATE);
         return &MOTOR_STATE_CALIBRATION;
     }
     return NULL;
@@ -190,7 +191,7 @@ void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
 // {
 //     if (TimerT_Periodic_Poll(&p_motor->CONTROL_TIMER) != true) return;
 
-//     const uint16_t duty = Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
+//     const uint16_t duty = _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config);
 
 //     switch (p_buffer->Step)
 //     {

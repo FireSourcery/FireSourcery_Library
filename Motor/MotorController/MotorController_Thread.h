@@ -223,7 +223,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         _StateMachine_Branch_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
         // _StateMachine_RootFirst_ProcSyncOutput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev);
 
-        // VBus_CaptureFract16(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
+        // VBus_Capture(p_dev->P_VBUS, Phase_Analog_VFract16Of(Analog_Conversion_GetResult(&p_dev->VBUS_CONVERSION))); /* update vout ratios. alternativel in isr */
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
@@ -261,6 +261,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
         {
             // todo as empty service struct
             if (p_mc->Config.IsCanEnable == true) { CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_20); }
+            // CanBus_ProcBroadcast(p_dev->P_CAN_BUS, p_mc->Config.IsCanEnable ? &p_dev->CAN_BUS_BROADCAST_20 : NULL);
         }
     #endif
 
@@ -283,6 +284,7 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
             if (p_mc->FaultFlags.Value != 0U) { MotorController_SetFault(p_dev, (MotorController_FaultFlags_T) { .Value = p_mc->FaultFlags.Value }); }
 
         #ifdef MOTOR_CONTROLLER_CAN_BUS_ENABLE
+            // CanBus_ProcBroadcast(p_dev->P_CAN_BUS, p_mc->Config.IsCanEnable ? &p_dev->CAN_BUS_BROADCAST_1000 : NULL);
             if (p_mc->Config.IsCanEnable == true) { CanBus_ProcBroadcast(p_dev->P_CAN_BUS, &p_dev->CAN_BUS_BROADCAST_1000); }
         #endif
             /* In case of Serial Rx Overflow Timeout */

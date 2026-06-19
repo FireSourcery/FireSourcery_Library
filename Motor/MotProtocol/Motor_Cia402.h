@@ -51,7 +51,6 @@
 */
 /******************************************************************************/
 #include "Cia402.h"
-#include "Motor/Motor/Motor_StateMachine.h"
 #include "Motor/Motor/Motor_User.h"
 
 
@@ -89,10 +88,10 @@ extern bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapt
     Caller dispatches by COB-ID per the configured PDO mapping.
 */
 /******************************************************************************/
-extern void Motor_Cia402_HandleRxPdo_Cw(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_Cw_T * p_pdo);
-extern void Motor_Cia402_HandleRxPdo_CwTorque(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwTorque_T * p_pdo);
-extern void Motor_Cia402_HandleRxPdo_CwVelocity(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwVelocity_T * p_pdo);
-extern void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_CwPosition_T * p_pdo);
+extern void Motor_Cia402_HandleRxPdo_Cw(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_Control_T * p_pdo);
+extern void Motor_Cia402_HandleRxPdo_CwTorque(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_ControlTorque_T * p_pdo);
+extern void Motor_Cia402_HandleRxPdo_CwVelocity(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_ControlVelocity_T * p_pdo);
+extern void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_RxPdo_ControlPosition_T * p_pdo);
 
 
 /******************************************************************************/
@@ -101,10 +100,10 @@ extern void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapte
     Caller dispatches by COB-ID per the configured PDO mapping.
 */
 /******************************************************************************/
-extern void Motor_Cia402_BuildTxPdo_Sw(Motor_T * p_motor, Cia402_TxPdo_Sw_T * p_pdo);
-extern void Motor_Cia402_BuildTxPdo_SwTorque(Motor_T * p_motor, Cia402_TxPdo_SwTorque_T * p_pdo);
-extern void Motor_Cia402_BuildTxPdo_SwVelocity(Motor_T * p_motor, Cia402_TxPdo_SwVelocity_T * p_pdo);
-extern void Motor_Cia402_BuildTxPdo_SwPosition(Motor_T * p_motor, Cia402_TxPdo_SwPosition_T * p_pdo);
+extern void Motor_Cia402_BuildTxPdo_Sw(Motor_T * p_motor, Cia402_TxPdo_Status_T * p_pdo);
+extern void Motor_Cia402_BuildTxPdo_SwTorque(Motor_T * p_motor, Cia402_TxPdo_StatusTorque_T * p_pdo);
+extern void Motor_Cia402_BuildTxPdo_SwVelocity(Motor_T * p_motor, Cia402_TxPdo_StatusVelocity_T * p_pdo);
+extern void Motor_Cia402_BuildTxPdo_SwPosition(Motor_T * p_motor, Cia402_TxPdo_StatusPosition_T * p_pdo);
 
 
 

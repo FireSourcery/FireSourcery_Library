@@ -104,11 +104,11 @@ static inline angle16_t Angle_Integrate(Angle_T * p_angle, angle16_t delta)
     Wrap-mode step using the already-resolved shifted Delta.
     For sensor paths that set Delta out-of-band (e.g. AngleCounter_ResolveAngleDelta).
 */
-// static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
-// {
-//     p_angle->Angle += p_angle->Delta;
-//     return Angle_Value(p_angle);
-// }
+static inline angle16_t Angle_IntegrateStep(Angle_T * p_angle)
+{
+    p_angle->Angle += p_angle->Delta;
+    return Angle_Value(p_angle);
+}
 
 static inline void Angle_ZeroCaptureState(Angle_T * p_angle)
 {
@@ -188,17 +188,7 @@ static inline void Angle_SetLimitWindow(Angle_T * p_angle, uangle16_t width_angl
         p_angle->LimitLower = p_angle->Angle - width_shifted;
     }
 }
-// static inline void Angle_SetLimitsWindow(Angle_T * p_angle, angle16_t angle, angle16_t width)
-// {
-//     if (width >= 0)
-//     {
-//         Angle_SetLimits(p_angle, angle, angle + width);
-//     }
-//     else
-//     {
-//         Angle_SetLimits(p_angle, angle + width, angle);
-//     }
-// }
+
 
 /*
     Init: zero state + set symmetric bounds ±limit_angle16 around zero.

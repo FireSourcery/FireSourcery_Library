@@ -42,6 +42,7 @@ void Motor_Init(Motor_T * p_dev)
 
     /* Config including selected angle sensor init */
     if (p_dev->P_NVM_CONFIG != NULL) { p_dev->P_MOTOR->Config = *p_dev->P_NVM_CONFIG; }
+    if (p_dev->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_dev->P_MOTOR->Foc, p_dev->P_FOC_NVM_CONFIG); }
 
     /*
         HW Modules Init
@@ -62,7 +63,6 @@ void Motor_Init(Motor_T * p_dev)
 
     // Motor_Config_ResolveSpeedRated
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
-    if (p_dev->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_dev->P_MOTOR->Foc, p_dev->P_FOC_NVM_CONFIG); }
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
@@ -90,13 +90,15 @@ void Motor_Reset(Motor_Context_T * p_motor)
     Ramp_Init(&p_motor->OpenLoopSpeedRamp, p_motor->Config.OpenLoopRampSpeedTime_Cycles, p_motor->Config.OpenLoopRampSpeedFinal_Fract16); /* direction updated on set */
     Ramp_Init(&p_motor->OpenLoopIRamp, p_motor->Config.OpenLoopRampITime_Cycles, p_motor->Config.OpenLoopRampIFinal_Fract16);
     // Ramp_SetLimits(&p_motor->OpenLoopSpeedRamp, -_Motor_SpeedRated_Fract16(p_motor), _Motor_SpeedRated_Fract16(p_motor));
-    // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -Motor_OpenLoopILimit(p_motor), Motor_OpenLoopILimit(p_motor));
+    // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -_Motor_OpenLoopILimit(p_motor), _Motor_OpenLoopILimit(p_motor));
     Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
     // FOC_Init(&p_motor->Foc, &p_motor->Config.FocConfig);
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
     p_motor->ControlTimerBase = 0U;
+
+    p_motor->Direction = MOTOR_DIRECTION_NULL;
 
     /* Keep for physical units and external reading */
     // Motor_ResetUnitsVabc(p_motor);
@@ -111,6 +113,7 @@ void Motor_Reset(Motor_Context_T * p_motor)
 void Motor_Reinit(Motor_T * p_motor)
 {
     if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
+    if (p_motor->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_motor->P_MOTOR->Foc, p_motor->P_FOC_NVM_CONFIG); }
     Motor_Reset(p_motor->P_MOTOR);
 }
 
@@ -127,25 +130,30 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
     RotorSensor_Config_T config =
     {
         .PolePairs = p_motor->Config.SpeedRating.PolePairs,
-        .SpeedTypeMax_DegPerCycle = _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),
+        .SpeedTypeMax_Angle16 = _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),
         .SpeedTypeMax_Rpm = _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating),
     };
 
     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
 }
 
-/* propagate kv config */
-// void Motor_InitPsi(Motor_Context_T * p_motor)
-// {
-//     // FOC_Electrical_SetPsi_Kv(&p_motor->Config.FocConfig.Electrical, Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
-//     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
+
+/* propagate kv config — re-derive FOC Psi from Kv (FOC config is now a separate NVM blob) */
+void Motor_InitPsi(Motor_Context_T * p_motor)
+{
+    FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
 // #ifdef MOTOR_PU_BASIS_ANGLE16
 //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
 // #endif
-// }
+}
 
-
-
+/* Validate config across modules: base Motor config + FOC field-weakening speed-limit consistency */
+bool Motor_IsConfigValid(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Fract16(p_motor);
+    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
+}
 
 /******************************************************************************/
 /*
@@ -153,6 +161,7 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 */
 /******************************************************************************/
 /* Ramp slope set independent of user Config.limits. By characteristics. */
+/* Limits update on direction set */
 void Motor_InitSpeedRamp(Motor_Context_T * p_motor)
 {
     Ramp_Init_Slope(&p_motor->SpeedRamp, p_motor->Config.SpeedRampSlope_Accum32);
@@ -164,23 +173,6 @@ void Motor_InitTorqueRamp(Motor_Context_T * p_motor)
     Ramp_Init_Slope(&p_motor->TorqueRamp, p_motor->Config.TorqueRampSlope_Accum32);
     // Motor_ResolveILimits(p_motor);
 }
-
-// void Motor_EnableSpeedRamp(Motor_Context_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
-// void Motor_DisableSpeedRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
-// void Motor_EnableTorqueRamp(Motor_Context_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
-// void Motor_DisableTorqueRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
-
-/* Reset from Derating */
-/* use wider config window before direction are known */
-// void Motor_ResetSpeedLimit(Motor_Context_T * p_motor)
-// {
-//     Ramp_SetLimits(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
-// }
-
-// void Motor_ResetILimit(Motor_Context_T * p_motor)
-// {
-//     Ramp_SetLimits(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
-// }
 
 void Motor_ResetSpeedPid(Motor_Context_T * p_motor)
 {
@@ -195,7 +187,7 @@ void Motor_ResetIPid(Motor_Context_T * p_motor)
 
 void _Motor_ResetTuning(Motor_T * p_motor)
 {
-    /* load from nvm to main consistency for save */
+    /* load from nvm to maintain consistency for save */
     p_motor->P_MOTOR->Config.PidSpeed = p_motor->P_NVM_CONFIG->PidSpeed;
     p_motor->P_MOTOR->Config.PidI = p_motor->P_NVM_CONFIG->PidI;
     Motor_ResetSpeedPid(p_motor->P_MOTOR);
@@ -212,6 +204,23 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
     Ramp_SetTarget(&p_motor->TorqueRamp, 0);
     Ramp_SetTarget(&p_motor->SpeedRamp, 0);
 }
+
+/* Reset from Derating */
+/* use wider config window before direction are known */
+// void Motor_ResetSpeedLimit(Motor_Context_T * p_motor)
+// {
+//     Ramp_SetLimits(&p_motor->SpeedRamp, -p_motor->Config.SpeedLimitForward_Fract16, p_motor->Config.SpeedLimitForward_Fract16);
+// }
+
+// void Motor_ResetILimit(Motor_Context_T * p_motor)
+// {
+//     Ramp_SetLimits(&p_motor->TorqueRamp, -p_motor->Config.ILimitMotoring_Fract16, p_motor->Config.ILimitMotoring_Fract16);
+// }
+
+// void Motor_EnableSpeedRamp(Motor_Context_T * p_motor) { Motor_InitSpeedRamp(p_motor); }
+// void Motor_DisableSpeedRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->SpeedRamp); }
+// void Motor_EnableTorqueRamp(Motor_Context_T * p_motor) { Motor_InitTorqueRamp(p_motor); }
+// void Motor_DisableTorqueRamp(Motor_Context_T * p_motor) { _Ramp_Disable(&p_motor->TorqueRamp); }
 
 /******************************************************************************/
 /*

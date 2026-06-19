@@ -78,7 +78,6 @@ ElectricalCalibraton_Stage_T;
 */
 typedef struct ElectricalCalibration
 {
-
     /* PU base captured at entry — rpm-anchored ω_base, matches the FOC runtime config basis. */
     uint16_t VBase;             /* V_max [V] */
     uint16_t IBase;             /* I_max [A] */
@@ -279,8 +278,8 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_context->ControlTimerBase = 0U;
     p_context->FeedbackMode.Current = 1U;
     Motor_FOC_ClearFeedbackState(p_context);
-    Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
+    // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config)); // v inject will surpass
     // Angle_ZeroCaptureState(&p_context->OpenLoopAngle);
     // TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
 
@@ -295,13 +294,13 @@ static void Electrical_Entry(Motor_T * p_motor)
     p_params->SpeedBaseRpm = _Motor_GetSpeedTypeMax_Rpm(&p_context->Config.SpeedRating);
     p_params->PolePairs    = p_context->Config.SpeedRating.PolePairs;
 
-    p_params->IdBias = Motor_GetIAlign(&p_context->Config);
+    p_params->IdBias = _Motor_GetIAlign(&p_context->Config);
     p_params->HfiFreqHz = PARAMID_HFI_FREQ_HZ;
     p_params->HfiDelta = PARAMID_HFI_PHASE_DELTA;
     p_params->Vhfi = VBus_Fract16(p_motor->P_VBUS) / 10;
     p_params->VdStep = VBus_Fract16(p_motor->P_VBUS) / 20;
-    // p_params->VdStep = Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
-    // p_params->Vhfi = Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
+    // p_params->VdStep = _Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
+    // p_params->Vhfi = _Motor_GetVAlign(&p_context->Config, p_motor->P_VBUS) / 2;
 }
 
 static void Electrical_Proc(Motor_T * p_motor)
@@ -312,11 +311,13 @@ static void Electrical_Proc(Motor_T * p_motor)
     switch (p_params->Step)
     {
         case PARAMID_STEP_ALIGN:
-            _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
             ProcAlign(p_params);
             break;
         case PARAMID_STEP_RS_MEASURE:
-            _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, p_params->IdBias);
+            Motor_FOC_ProcAngleAlign(p_motor, 0, p_params->IdBias);
             ProcRs(p_params, FOC_Vd(&p_context->Foc), FOC_Id(&p_context->Foc));
             break;
         case PARAMID_STEP_LD_INJECT:
@@ -333,7 +334,8 @@ static void Electrical_Proc(Motor_T * p_motor)
             CommitResults(p_params, &p_context->Foc.Config.Electrical);
             break;
         case PARAMID_STEP_RAMPDOWN:
-            _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
+            // _Motor_FOC_ProcAngleAlign(p_context, VBus_Fract16(p_motor->P_VBUS), 0, 0);
+            Motor_FOC_ProcAngleAlign(p_motor, 0, 0);
             ProcRampDown(p_params);
             break;
         case PARAMID_STEP_DONE:
@@ -365,14 +367,22 @@ static State_T * Electrical_Start(Motor_T * p_motor, state_value_t value) { (voi
 
 void Motor_Calibration_StartElectrical(Motor_T * p_motor)
 {
+#if defined(MOTOR_CALIBRATION_ELECTRICAL_ENABLE) || !defined(NDEBUG)
     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Electrical_Start, };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, 0U);
+#else
+    (void)p_motor;
+#endif
 }
 
-bool Motor_Calibration_IsElectrical(Motor_T * p_motor)
-{
-    return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_ELECTRICAL);
-}
+// bool Motor_Calibration_IsElectrical(Motor_T * p_motor)
+// {
+// #if defined(MOTOR_CALIBRATION_ELECTRICAL_ENABLE) || !defined(NDEBUG)
+//     return StateMachine_IsLeafState(p_motor->STATE_MACHINE.P_ACTIVE, &CALIBRATION_STATE_ELECTRICAL);
+// #else
+//     return false;
+// #endif
+// }
 
 // psi spin test
 // Motor_Context_T * p_context = p_motor->P_MOTOR;

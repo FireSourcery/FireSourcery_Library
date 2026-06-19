@@ -49,8 +49,9 @@
 /******************************************************************************/
 extern void Motor_Config_Validate(Motor_Config_T * p_config);
 extern bool Motor_Config_IsValid(const Motor_Config_T * p_config);
-extern void Motor_Config_ValidateFw(Motor_Config_T * p_config);
-extern bool Motor_Config_IsValidFw(const Motor_Config_T * p_config);
+bool _Motor_Config_IsValidSpeed(const Motor_Config_T * p_config, uint16_t speedCeiling);
+extern void Motor_Config_ValidateFw(Motor_Config_T * p_config, bool isFwEnabled);
+extern bool Motor_Config_IsValidFw(const Motor_Config_T * p_config, bool isFwEnabled);
 
 extern bool Motor_Config_IsValidElectrical(const Motor_Config_T * p_config);
 

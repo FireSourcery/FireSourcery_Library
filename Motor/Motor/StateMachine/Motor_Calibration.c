@@ -29,54 +29,7 @@
 /******************************************************************************/
 #include "Motor_Calibration.h"
 
-/******************************************************************************/
-/*!
-    Same as open loop align under Calibration branch
-    Caller set angle
-*/
-/******************************************************************************/
-static void AngleAlign_Entry(Motor_T * p_motor)
-{
-    Phase_ActivateV0(&p_motor->PHASE);
-    // Motor_FOC_SetAlignCmdAngle(p_motor->P_MOTOR, 0);
-    Motor_FOC_StartAlignCmd(p_motor->P_MOTOR);
-}
 
-static void AngleAlign_Loop(Motor_T * p_motor)
-{
-    Motor_FOC_ProcAlignCmd(p_motor);
-}
-
-/*
-    Angle Cmd and User Current/Voltage Cmd
-*/
-const State_T CALIBRATION_STATE_ANGLE_ALIGN =
-{
-    // .ID         = MOTOR_STATE_ID_CALIBRATION,
-    .P_TOP = &MOTOR_STATE_CALIBRATION,
-    .P_PARENT = &MOTOR_STATE_CALIBRATION,
-    .DEPTH = 1U,
-    .ENTRY = (State_Action_T)AngleAlign_Entry,
-    .LOOP = (State_Action_T)AngleAlign_Loop,
-    .NEXT = NULL,
-};
-
-// static State_T * Calibration_AngleAlign(Motor_T * p_motor, state_value_t angle)
-// {
-//     Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, angle);
-//     return &CALIBRATION_STATE_ANGLE_ALIGN;
-// }
-
-// void Motor_Calibration_StartAngleAlign(Motor_T * p_motor, angle16_t angle)
-// {
-//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_AngleAlign, };
-//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, angle);
-// }
-
-// void Motor_Calibration_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
-// {
-//     Motor_Calibration_StartAngleAlign(p_motor, Phase_AngleOf(align));
-// }
 
 
 /******************************************************************************/
@@ -308,78 +261,132 @@ const State_T CALIBRATION_STATE_ANGLE_ALIGN =
 /*
     with position sensor without position feedback loop
 */
-static void Homing_Entry(Motor_T * p_motor)
-{
-    // for now
-    p_motor->P_MOTOR->ControlTimerBase = 0U;
-    // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
-    p_motor->P_MOTOR->FeedbackMode.Current = 0U;
+// static void Homing_Entry(Motor_T * p_motor)
+// {
+//     // for now
+//     p_motor->P_MOTOR->ControlTimerBase = 0U;
+//     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
+//     p_motor->P_MOTOR->FeedbackMode.Current = 0U;
 
-    // Phase_ActivateV0(&p_motor->PHASE);
-    // Timer_StartPeriod_Millis(&p_motor->P_MOTOR->ControlTimer, 20); // ~1rpm
+//     // Phase_ActivateV0(&p_motor->PHASE);
+//     // Timer_StartPeriod_Millis(&p_motor->P_MOTOR->ControlTimer, 20); // ~1rpm
 
-    // p_motor->P_MOTOR->ElectricalAngle = Motor_PollSensorAngle(p_motor);
-    // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+//     // p_motor->P_MOTOR->ElectricalAngle = Motor_PollSensorAngle(p_motor);
+//     // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
-    Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
-}
+//     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
+// }
 
-/*
+// /*
 
-*/
-static void Homing_Proc(Motor_T * p_motor)
-{
-    (void)p_motor;
-    // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
-    /* alternatively use openloop speed */
-    // uint16_t angleDelta = 65536/1000;
+// */
+// static void Homing_Proc(Motor_T * p_motor)
+// {
+//     (void)p_motor;
+//     // uint16_t angleDelta = Encoder_GetHomingAngle(&p_motor->Encoder); // * direction
+//     /* alternatively use openloop speed */
+//     // uint16_t angleDelta = 65536/1000;
 
-    // RotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
+//     // RotorSensor_GetMechanicalAngle(p_motor->Sensor) get direction
 
-    // if (Timer_Periodic_Poll(&p_motor->P_MOTOR->ControlTimer) == true)
-    // {
-    //     Motor_PollSensorAngle(p_motor); /*  */
-        // RotorSensor_CaptureAngle(p_motor->P_MOTOR->p_ActiveSensor);
+//     // if (Timer_Periodic_Poll(&p_motor->P_MOTOR->ControlTimer) == true)
+//     // {
+//     //     Motor_PollSensorAngle(p_motor); /*  */
+//         // RotorSensor_CaptureAngle(p_motor->P_MOTOR->p_ActiveSensor);
 
-        // p_motor->P_MOTOR->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR->Config.PolePairs;
-        // p_motor->P_MOTOR->ElectricalAngle += (angleDelta * p_motor->P_MOTOR->Config.PolePairs);
-        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
-        // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, p_motor->P_MOTOR->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
-        // Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
-    // }
+//         // p_motor->P_MOTOR->ElectricalAngle = (Motor_GetMechanicalAngle(p_motor) + angleDelta) * p_motor->P_MOTOR->Config.PolePairs;
+//         // p_motor->P_MOTOR->ElectricalAngle += (angleDelta * p_motor->P_MOTOR->Config.PolePairs);
+//         // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, Ramp_ProcOutput(&p_motor->AuxRamp), 0);
+//         // Motor_FOC_AngleControl(p_motor, p_motor->P_MOTOR->ElectricalAngle, p_motor->P_MOTOR->Config.OpenLoopRampIFinal_Fract16 * 2, 0);
+//         // Motor_FOC_ProcOpenLoop(p_motor->P_MOTOR);
+//     // }
 
-    // /* error on full rev todo */
-    // if ( Home(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta,
+//     // /* error on full rev todo */
+//     // if ( Home(p_motor), Motor_GetMechanicalAngle(p_motor) + angleDelta,
 
-    // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
+//     // p_motor->P_MOTOR->MechanicalAngle = Motor_GetMechanicalAngle(p_motor);
 
-}
+// }
 
 
 
-static const State_T CALIBRATION_STATE_HOMING =
-{
-    // .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, MOTOR_CALIBRATION_STATE_HOMING),
-    .P_PARENT   = &MOTOR_STATE_CALIBRATION,
-    .P_TOP      = &MOTOR_STATE_CALIBRATION,
-    .DEPTH      = 1U,
-    .ENTRY      = (State_Action_T)Homing_Entry,
-    .LOOP       = (State_Action_T)Homing_Proc,
-};
+// static const State_T CALIBRATION_STATE_HOMING =
+// {
+//     // .ID         = STATE_PATH_ID(MOTOR_STATE_ID_CALIBRATION, MOTOR_CALIBRATION_STATE_HOMING),
+//     .P_PARENT   = &MOTOR_STATE_CALIBRATION,
+//     .P_TOP      = &MOTOR_STATE_CALIBRATION,
+//     .DEPTH      = 1U,
+//     .ENTRY      = (State_Action_T)Homing_Entry,
+//     .LOOP       = (State_Action_T)Homing_Proc,
+// };
 
-static State_T * Homing_Start(Motor_T * p_motor, state_value_t null)
-{
-    (void)p_motor; (void)null;
-    // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
-    return &CALIBRATION_STATE_HOMING;
-}
+// static State_T * Homing_Start(Motor_T * p_motor, state_value_t null)
+// {
+//     (void)p_motor; (void)null;
+//     // if (RotorSensor_IsAngleHomeSet(p_motor->Sensor) == false) { return &MOTOR_STATE_CALIBRATION; }
+//     return &CALIBRATION_STATE_HOMING;
+// }
 
 /* Transition from any Calibration State */
 void Motor_Calibration_StartHome(Motor_T * p_motor)
 {
-    static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Homing_Start, };
-    StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
+#if defined(MOTOR_CALIBRATION_HOMING_ENABLE) || !defined(NDEBUG)
+    // static const StateMachine_TransitionCmd_T CALIBRATION_STATE_HOMING_TRANSITION = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Homing_Start, };
+    // StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CALIBRATION_STATE_HOMING_TRANSITION, 0U);
 
     // StateMachine_Tree_Input(&p_motor->STATE_MACHINE, MOTOR_STATE_INPUT_CALIBRATION, (uintptr_t)&CALIBRATION_STATE_HOMING);
+#else
+    (void)p_motor;
+#endif
 }
 
+
+
+/******************************************************************************/
+/*!
+    Same as open loop align under Calibration branch
+    Caller set angle
+*/
+/******************************************************************************/
+// static void AngleAlign_Entry(Motor_T * p_motor)
+// {
+//     Phase_ActivateV0(&p_motor->PHASE);
+//     // Motor_FOC_SetAlignCmdAngle(p_motor->P_MOTOR, 0);
+//     Motor_FOC_StartAlignCmd(p_motor->P_MOTOR);
+// }
+
+// static void AngleAlign_Loop(Motor_T * p_motor)
+// {
+//     Motor_FOC_ProcAlignCmd(p_motor);
+// }
+
+// /*
+//     Angle Cmd and User Current/Voltage Cmd
+// */
+// const State_T CALIBRATION_STATE_ANGLE_ALIGN =
+// {
+//     // .ID         = MOTOR_STATE_ID_CALIBRATION,
+//     .P_TOP = &MOTOR_STATE_CALIBRATION,
+//     .P_PARENT = &MOTOR_STATE_CALIBRATION,
+//     .DEPTH = 1U,
+//     .ENTRY = (State_Action_T)AngleAlign_Entry,
+//     .LOOP = (State_Action_T)AngleAlign_Loop,
+//     .NEXT = NULL,
+// };
+
+// static State_T * Calibration_AngleAlign(Motor_T * p_motor, state_value_t angle)
+// {
+//     Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, angle);
+//     return &CALIBRATION_STATE_ANGLE_ALIGN;
+// }
+
+// void Motor_Calibration_StartAngleAlign(Motor_T * p_motor, angle16_t angle)
+// {
+//     static const StateMachine_TransitionCmd_T CMD = { .P_START = &MOTOR_STATE_CALIBRATION, .NEXT = (State_Input_T)Calibration_AngleAlign, };
+//     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &CMD, angle);
+// }
+
+// void Motor_Calibration_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
+// {
+//     Motor_Calibration_StartAngleAlign(p_motor, Phase_AngleOf(align));
+// }

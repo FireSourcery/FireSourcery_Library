@@ -46,23 +46,6 @@
     [VarType_Sensor]
 */
 /******************************************************************************/
-// #include "Sensor/Motor_Sensor.h" /* for calibration cmd */
-
-// int RotorSensor_Table_Get(RotorSensor_Table_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
-// {
-//     if (p_motor == NULL) { return 0; }
-//     switch (typeId)
-//     {
-//         case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->HALL.HALL, varId);
-//         case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(&p_motor->HALL.HALL.P_STATE->Config, varId);
-//         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
-//         case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->ENCODER.ENCODER.P_STATE, varId);
-//         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->ENCODER.ENCODER.P_STATE->Config, varId);
-//         #endif
-//         default: return 0;
-//     }
-// }
-
 int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
@@ -94,17 +77,19 @@ void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, 
     }
 }
 
-bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId)
-{
-    if (p_motor == NULL) { return false; }
-    switch (typeId)
-    {
-        case MOTOR_VAR_TYPE_HALL_STATE:     return false;
-        case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_HALL_CMD:       return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
-        case MOTOR_VAR_TYPE_ENCODER_STATE:  return false;
-        case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_IsConfig(p_motor);
-        case MOTOR_VAR_TYPE_ENCODER_CMD:    return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
-        default: return false;
-    }
-}
+// bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId)
+// {
+//     if (p_motor == NULL) { return false; }
+//     switch (typeId)
+//     {
+//         case MOTOR_VAR_TYPE_HALL_STATE:     return false;
+//         case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_HALL_CMD:       return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
+//         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+//         case MOTOR_VAR_TYPE_ENCODER_STATE:  return false;
+//         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_ENCODER_CMD:    return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
+//         #endif
+//         default: return false;
+//     }
+// }

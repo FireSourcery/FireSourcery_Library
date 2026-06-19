@@ -64,10 +64,10 @@ static State_T * OpenLoop_Jog(Motor_T * p_motor, state_value_t direction)
 {
     (void)direction;
     // if (Phase_IsFloat(&p_motor->PHASE) == 0) Phase_ActivateV0(&p_motor->PHASE);
-    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config)); }
+    if (Phase_ReadAlign(&p_motor->PHASE) == 0) { Phase_Align(&p_motor->PHASE, PHASE_ID_A, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config)); }
     else
     {
-        Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
+        Angle_SetAngle(&p_motor->P_MOTOR->OpenLoopAngle, Phase_AngleOf(Phase_JogNext(&p_motor->PHASE, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config))));
     }
     return NULL;
 }
@@ -140,33 +140,12 @@ void Motor_OpenLoop_SetAngleAlign_Phase(Motor_T * p_motor, Phase_Id_T align)
 static void Run_Entry(Motor_T * p_motor)
 {
     Motor_FOC_StartOpenLoop(p_motor->P_MOTOR);
-    // FOC_Sensorless_ResetState(&p_motor->P_MOTOR->FocSensorless);
-    // FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
-    // FOC_Sensorless_SeedAngle(&p_context->FocSensorless, Angle_Value(&p_context->OpenLoopAngle), Angle_Delta(&p_context->OpenLoopAngle));
 }
-
-// static void Run_Proc(Motor_T * p_motor)
-// {
-//     Motor_Context_T * p_context = p_motor->P_MOTOR;
-//     FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
-//     Motor_FOC_ProcOpenLoop(p_motor);
-//     // capture for debugging
-// }
 
 static void Run_Proc(Motor_T * p_motor)
 {
     Motor_Context_T * p_context = p_motor->P_MOTOR;
     Motor_FOC_ProcOpenLoop(p_motor);
-    // fract16_t speed = Ramp_ProcNextOf(&p_context->OpenLoopSpeedRamp, (int32_t)p_context->Config.OpenLoopRampSpeedFinal_Fract16 * p_context->Direction);
-    // angle16_t angle = Angle_IntegrateSpeed_Fract16(&p_context->OpenLoopAngle, &p_context->OpenLoopSpeedRef, speed);
-    // fract16_t iq = Ramp_ProcNextOf(&p_context->OpenLoopIRamp, (int32_t)p_context->Config.OpenLoopRampIFinal_Fract16 * p_context->Direction);
-    // FOC_SetTheta(&p_context->Foc, angle);
-    // FOC_CaptureIabc(&p_context->Foc, &p_context->PhaseInput.I);
-    // FOC_ProcIFeedback(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), 0, iq);
-    // // FOC_Sensorless_Step(&p_context->Foc, &p_context->FocSensorless);
-    // FOC_ProcInvClarkePark(&p_context->Foc);
-    // // FOC_Sensorless_CaptureVoltage(&p_context->FocSensorless, p_context->Foc.Valpha, p_context->Foc.Vbeta);
-    // // capture for debugging
 }
 
 /*
@@ -191,7 +170,6 @@ static void StartUp_Entry(Motor_T * p_motor)
 {
     TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     Motor_FOC_StartStartUpAlign(p_motor->P_MOTOR);
-    // FOC_Sensorless_SeedAngle(&p_motor->P_MOTOR->FocSensorless, 0, 0);
 }
 
 static void StartUp_Proc(Motor_T * p_motor)
@@ -249,8 +227,10 @@ static State_T * OpenLoop_StartUpRun(Motor_T * p_motor, state_value_t null)
 
 void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 {
+#if defined(MOTOR_OPEN_LOOP_RUN_ENABLE) || !defined(NDEBUG)
     static const StateMachine_TransitionCmd_T OPEN_LOOP_CMD_RUN = { .P_START = &MOTOR_STATE_OPEN_LOOP, .NEXT = (State_Input_T)OpenLoop_StartUpRun, };
     StateMachine_Tree_InvokeTransition(&p_motor->STATE_MACHINE, &OPEN_LOOP_CMD_RUN, 0);
+#endif
 }
 
 
@@ -272,7 +252,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 //     // Phase_ActivateV0(&p_motor->PHASE);
 //     // PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
 //     Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
-//     // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     // Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 //     // Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
 //     // p_motor->P_MOTOR->CalibrationStateIndex = 0U;
 // }
@@ -282,12 +262,12 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 // */
 // static void Calibration_Align_V(Motor_T * p_motor, Phase_Id_T id)
 // {
-//     Phase_Align(&p_motor->PHASE, id, Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
+//     Phase_Align(&p_motor->PHASE, id, _Motor_GetVAlign_Duty(&p_motor->P_MOTOR->Config));
 // }
 
 // static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 // {
-//     _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, Phase_AngleOf(id), Motor_GetIAlign(&p_motor->P_MOTOR->Config));
+//     _Motor_FOC_ProcAngleAlign(p_motor->P_MOTOR, Phase_AngleOf(id), _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
 //     //Motor_FOC_WriteDuty(p_motor);
 // }
 
@@ -305,7 +285,7 @@ void Motor_OpenLoop_StartRunChain(Motor_T * p_motor)
 //     }
 //     else
 //     {
-//         // Phase_Align(&p_motor->PHASE, alignPhase, Motor_GetVAlign_Duty(p_motor->P_MOTOR));
+//         // Phase_Align(&p_motor->PHASE, alignPhase, _Motor_GetVAlign_Duty(p_motor->P_MOTOR));
 //         Phase_Align(&p_motor->PHASE, alignPhase, Ramp_GetOutput(&p_values->TorqueRamp));
 //     }
 // }
