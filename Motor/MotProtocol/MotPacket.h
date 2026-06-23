@@ -236,6 +236,8 @@ typedef struct MOT_PACKET_PACKED MotPacket_CallResp { uint32_t Id; uint16_t Stat
 typedef struct MOT_PACKET_PACKED MotPacket_VarReadReq { uint16_t MotVarIds[16U]; } MotPacket_VarReadReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_VarReadResp { uint16_t Value16[16U]; } MotPacket_VarReadResp_T;
 
+// typedef struct MOT_PACKET_PACKED MotPacket_Var32ReadResp { uint32_t Value32[8U]; } MotPacket_Var32ReadResp_T;
+
 /******************************************************************************/
 /*!
     Write Vars - extensible flex Up to 8 uint16_t, 4 uint32_t
@@ -249,6 +251,9 @@ typedef struct MOT_PACKET_PACKED MotPacket_VarReadResp { uint16_t Value16[16U]; 
 /******************************************************************************/
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteReq { struct { uint16_t MotVarId; uint16_t Value16; } Pairs[8U]; }  MotPacket_VarWriteReq_T;
 typedef struct MOT_PACKET_PACKED MotPacket_VarWriteResp { uint8_t VarStatus[8U]; }                                     MotPacket_VarWriteResp_T;
+
+// typedef struct MOT_PACKET_PACKED MotPacket_VarWriteReq { struct { uint16_t MotVarId; uint32_t Value32; } Pairs[4U]; }  MotPacket_VarWriteReq_T;
+// typedef struct MOT_PACKET_PACKED MotPacket_VarWriteResp { uint8_t VarStatus[4U]; }                                     MotPacket_VarWriteResp_T;
 
 
 /******************************************************************************/

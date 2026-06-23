@@ -267,7 +267,7 @@ static inline bool FOC_ProcVControl(FOC_T * p_foc, ufract16_t vCircle, fract16_t
 /*
     e.g. OpenLoop Align
 */
-static inline void FOC_FeedforwardAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
+static inline void FOC_SetAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, fract16_t vq)
 {
     FOC_SetTheta(p_foc, theta);
     p_foc->Vd = vd;
@@ -418,9 +418,6 @@ static inline void FOC_MatchIVFreewheel(FOC_T * p_foc)
     FOC_MatchIVEstimate(p_foc);
 #endif
 }
-
-
-
 
 
 
@@ -583,6 +580,9 @@ static inline void FOC_DisableFieldWeakening(FOC_T * p_foc) { p_foc->Config.Fiel
 
 */
 /******************************************************************************/
+/*
+    alternatively if runtime functions are implemented with collaborator pattern, caller must handled var config segment
+*/
 static void FOC_InitElectrical(FOC_T * p_foc, const FOC_Electrical_T * p_electrical)
 {
     p_foc->Config.Electrical = *p_electrical;
@@ -722,8 +722,9 @@ static inline int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T 
     {
         case FOC_CONFIG_VAR_ID_FW_LIMIT:    return p_config->FieldWeakening.IdLimit;
         case FOC_CONFIG_VAR_ID_FW_GAIN:     return p_config->FieldWeakening.IdGain;
-        case FOC_CONFIG_VAR_ELECTRICAL_LD:  return p_config->Electrical.Ld;
-        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  return p_config->Electrical.Lq;
+        // temporarily
+        case FOC_CONFIG_VAR_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;
+        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
         case FOC_CONFIG_VAR_ELECTRICAL_RS:  return p_config->Electrical.Rs;
         case FOC_CONFIG_VAR_ELECTRICAL_PSI: return p_config->Electrical.Psi;
         default: return 0;
@@ -736,8 +737,8 @@ static inline void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, 
     {
         case FOC_CONFIG_VAR_ID_FW_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
         case FOC_CONFIG_VAR_ID_FW_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
-        case FOC_CONFIG_VAR_ELECTRICAL_LD:  p_config->Electrical.Ld = value;    break;
-        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  p_config->Electrical.Lq = value;    break;
+        case FOC_CONFIG_VAR_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
+        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
         case FOC_CONFIG_VAR_ELECTRICAL_RS:  p_config->Electrical.Rs = value;    break;
         case FOC_CONFIG_VAR_ELECTRICAL_PSI: p_config->Electrical.Psi = value;   break;
         default: break;

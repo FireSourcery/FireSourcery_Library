@@ -27,7 +27,8 @@
 /*!
     @file   AngleCounter.h
     @author FireSourcery
-    @brief  Stateful counter/pulse math for angle and speed estimation.
+    @brief  Wrapping counter for Angle
+            Stateful counter/pulse math for angle and speed estimation.
             Companion to Angle_T — using square wave encoders,
             Soft counter accumulation + mixed DeltaD/DeltaT (ModeDT) frequency estimation.
 */

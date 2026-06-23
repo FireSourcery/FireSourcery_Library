@@ -41,6 +41,20 @@
 /******************************************************************************/
 // static inline RotorSensor_T * Sensor(Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->Config.SensorMode); }
 
+
+// void Motor_Sensor_InitUnits(Motor_Context_T * p_motor)
+// {
+//     RotorSensor_Config_T config =
+//     {
+//         .PolePairs = p_motor->Config.SpeedRating.PolePairs,
+//         .SpeedTypeMax_Angle16 = _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating),
+//         .SpeedTypeMax_Rpm = _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating),
+//     };
+
+//     RotorSensor_InitUnitsFrom(p_motor->p_ActiveSensor, &config);
+// }
+
+
 /******************************************************************************/
 /*
     [VarType_Sensor]

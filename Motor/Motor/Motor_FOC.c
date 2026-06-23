@@ -84,7 +84,7 @@ void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idRe
 void Motor_FOC_ProcAngleFeedforwardV(Motor_Context_T * p_motor, angle16_t theta, fract16_t vd, fract16_t vq)
 {
     FOC_CaptureIabc(&p_motor->Foc, &p_motor->PhaseInput.I); /* Update for measurements */
-    FOC_FeedforwardAngleV(&p_motor->Foc, theta, vd, vq);
+    FOC_SetAngleV(&p_motor->Foc, theta, vd, vq);
 }
 
 /******************************************************************************/
@@ -126,7 +126,7 @@ void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context)
 void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 {
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */
-    Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /*  may be ~1-50ms before next user input */
+    Ramp_SetTarget(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* may be ~1-50ms before next user input */
 }
 
 

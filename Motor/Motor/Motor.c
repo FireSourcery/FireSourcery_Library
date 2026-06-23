@@ -66,6 +66,14 @@ void Motor_Init(Motor_T * p_dev)
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
+// void Motor_InitFrom(Motor_T * p_dev, const Motor_Config_T * p_config)
+// {
+// }
+
+// void Motor_InitFocFrom(Motor_T * p_dev, const FOC_Config_T * p_foc_config)
+// {
+// }
+
 /*
     Reset derived reference and state variables
     alt handle in state machine after validate config
@@ -110,11 +118,20 @@ void Motor_Reset(Motor_Context_T * p_motor)
 // #endif
 }
 
+/* common reinit. without hw registers. reload flash. */
 void Motor_Reinit(Motor_T * p_motor)
 {
     if (p_motor->P_NVM_CONFIG != NULL) { p_motor->P_MOTOR->Config = *p_motor->P_NVM_CONFIG; }
     if (p_motor->P_FOC_NVM_CONFIG != NULL) { FOC_Init(&p_motor->P_MOTOR->Foc, p_motor->P_FOC_NVM_CONFIG); }
     Motor_Reset(p_motor->P_MOTOR);
+}
+
+/* Validate config across modules: base Motor config + FOC field-weakening speed-limit consistency */
+bool Motor_IsConfigValid(Motor_T * p_motor)
+{
+    Motor_Context_T * p_context = p_motor->P_MOTOR;
+    uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Fract16(p_motor);
+    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
 }
 
 /******************************************************************************/
@@ -145,14 +162,6 @@ void Motor_InitPsi(Motor_Context_T * p_motor)
 // #ifdef MOTOR_PU_BASIS_ANGLE16
 //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
 // #endif
-}
-
-/* Validate config across modules: base Motor config + FOC field-weakening speed-limit consistency */
-bool Motor_IsConfigValid(Motor_T * p_motor)
-{
-    Motor_Context_T * p_context = p_motor->P_MOTOR;
-    uint16_t speedCeiling = FOC_Config_IsFwEnabled(&p_context->Foc.Config) ? INT16_MAX : Motor_SpeedRated_Fract16(p_motor);
-    return Motor_Config_IsValid(&p_context->Config) && _Motor_Config_IsValidSpeed(&p_context->Config, speedCeiling);
 }
 
 /******************************************************************************/
@@ -193,6 +202,7 @@ void _Motor_ResetTuning(Motor_T * p_motor)
     Motor_ResetSpeedPid(p_motor->P_MOTOR);
     Motor_ResetIPid(p_motor->P_MOTOR);
 }
+
 
 void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 {
@@ -265,11 +275,9 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
     Active Limits
 */
 /******************************************************************************/
-// static inline void _Motor_SetILimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitUpper(&p_motor->TorqueRamp); }
-// static inline void _Motor_SetILimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->TorqueRamp); }
-// static inline void _Motor_SetSpeedLimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitUpper(&p_motor->SpeedRamp); }
-// static inline void _Motor_SetSpeedLimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->SpeedRamp); }
-
+/*
+    Private setters, pre derate
+*/
 // /*
 //     effective when system ResolveLimits is disabled.
 //     Virtual fields resolved to ccw/cw limits on se

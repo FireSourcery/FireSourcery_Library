@@ -190,6 +190,26 @@ typedef enum Motor_Var_Board
 }
 Motor_Var_Board_T;
 
+
+/******************************************************************************/
+/* Debug */
+/******************************************************************************/
+typedef enum Motor_Var_ConfigDebug
+{
+    MOTOR_VAR_SPEED_RATED_RPM,
+    MOTOR_VAR_SPEED_V_REF_RPM,
+    MOTOR_VAR_SPEED_V_SVPWM_REF_RPM,
+    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
+    MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE,
+    MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE,
+    MOTOR_VAR_V_SPEED_RATED_FRACT16,
+    // MOTOR_VAR_V_SPEED_REF_VOLTS,
+}
+Motor_Var_ConfigDebug_T;
+
+int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T varId);
+
+
 /******************************************************************************/
 /*
    Base Id Access
@@ -213,7 +233,6 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
 
 /* static */
 extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);
-
 
 
 /******************************************************************************/

@@ -38,15 +38,15 @@
 
 /* storage in range, ticks */
 #define RAMP_TICKS_OF_MILLIS(updateFreq_Hz, duration_Ms) (updateFreq_Hz * duration_Ms / 1000U)
+/* for storage in ticks */
 #define RAMP_TICKS_OF_RATE(UpdateFreq_Hz, Range, UnitsPerSecond) ((UpdateFreq_Hz) * (Range) / (UnitsPerSecond))
 
 /* SLOPE_OF_S */
 #define RAMP_COEF_OF_SLOPE(UpdateFreq_Hz, SlopePerSecond) (((int64_t)(SlopePerSecond) << ACCUMULATOR_SHIFT) / (UpdateFreq_Hz))
-// #define RAMP_COEF_OF_SLOPE_PU(UpdateFreq_Hz, FullScaleUnits, UnitsPerSecond) ((accumulator_raw_t)(((int64_t)(UnitsPerSecond) * 32768 << ACCUMULATOR_SHIFT) / ((int64_t)(FullScaleUnits) * (UpdateFreq_Hz))))
-#define RAMP_COEF_OF_DURATION_TICKS(Range, DurationTicks) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (DurationTicks))
-#define RAMP_DURATION_TICKS_OF_COEF(Range, Coef) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Coef)) /* inverse of RAMP_COEF_OF_DURATION_TICKS */
-#define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (((int64_t)(Range) << ACCUMULATOR_SHIFT) * 1000U / ((UpdateFreq_Hz) * (DurationMs)))
-// #define RAMP_COEF_OF_DURATION_MS(UpdateFreq_Hz, Range, DurationMs) (RAMP_COEF_OF_DURATION_TICKS(Range, RAMP_TICKS_OF_MILLIS((float)UpdateFreq_Hz, DurationMs)) )
+#define RAMP_COEF_OF_TICKS(Range, Ticks) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Ticks))
+#define RAMP_TICKS_OF_COEF(Range, Coef) (((int32_t)(Range) << ACCUMULATOR_SHIFT) / (Coef)) /* inverse of RAMP_COEF_OF_TICKS */
+#define RAMP_COEF_OF_MS(UpdateFreq_Hz, Range, Ms) (((int64_t)(Range) << ACCUMULATOR_SHIFT) * 1000U / ((UpdateFreq_Hz) * (Ms)))
+// #define RAMP_COEF_OF_MS(UpdateFreq_Hz, Range, Ms) (RAMP_COEF_OF_TICKS(Range, RAMP_TICKS_OF_MILLIS((float)UpdateFreq_Hz, Ms)) )
 
 /*
     Compile time full init
@@ -63,7 +63,7 @@
 }
 
 /* convenience: full-fract16 saturating ramp from a duration */
-#define RAMP_INIT_FRACT16_MS(UpdateFreq_Hz, DurationMs) RAMP_INIT(RAMP_COEF_OF_DURATION_MS((UpdateFreq_Hz), INT16_MAX, (DurationMs)), INT16_MIN, INT16_MAX, 0)
+#define RAMP_INIT_FRACT16_MS(UpdateFreq_Hz, Ms) RAMP_INIT(RAMP_COEF_OF_MS((UpdateFreq_Hz), INT16_MAX, (Ms)), INT16_MIN, INT16_MAX, 0)
 
 
 /******************************************************************************/

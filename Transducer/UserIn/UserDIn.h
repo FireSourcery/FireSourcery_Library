@@ -130,8 +130,10 @@ static inline bool UserDIn_IsRisingEdge(UserDIn_T * p_dev) { return is_rising_ed
 static inline bool UserDIn_IsFallingEdge(UserDIn_T * p_dev) { return is_falling_edge(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 static inline UserDIn_Edge_T UserDIn_GetEdge(UserDIn_T * p_dev) { return (UserDIn_Edge_T)edge_sign(p_dev->P_STATE->OutputPrev, UserDIn_GetState(p_dev)); }
 
+/*
+    Utility functions
+*/
 static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return UserDIn_GetState(p_din) ? value : 0; }
-
 // static inline int UserDIn_ApplyGate(UserDIn_T * p_din, int value) { return ((p_din != NULL) && UserDIn_GetState(p_din)) ? value : 0U; }
 
 /*

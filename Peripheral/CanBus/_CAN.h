@@ -45,32 +45,32 @@
     ESI 1       | Error state indicator
     DLC 9-15    | 12/16/20/24/32/48/64 bytes
 */
-typedef struct
-{
-    uint32_t Id  : 11;
-    uint32_t Rtr : 1;
-    uint32_t Ide : 1;
-    uint32_t R0 : 1;
-}
-CAN_StandardWireId_T;
+// typedef struct
+// {
+//     uint32_t Id  : 11;
+//     uint32_t Rtr : 1;
+//     uint32_t Ide : 1;
+//     uint32_t R0 : 1;
+// }
+// CAN_StandardWireId_T;
 
-typedef struct
-{
-    uint32_t Id_A   : 11;
-    uint32_t Srr   : 1;
-    uint32_t Ide   : 1;
-    uint32_t Id_B   : 18;
-    uint32_t Rtr   : 1;
-    uint32_t R0    : 1;
-    uint32_t R1    : 1;
-}
-CAN_ExtendedWireId_T;
+// typedef struct
+// {
+//     uint32_t Id_A   : 11;
+//     uint32_t Srr   : 1;
+//     uint32_t Ide   : 1;
+//     uint32_t Id_B   : 18;
+//     uint32_t Rtr   : 1;
+//     uint32_t R0    : 1;
+//     uint32_t R1    : 1;
+// }
+// CAN_ExtendedWireId_T;
 
-typedef enum
-{
-    CAN_FRAME_TYPE_DATA,        //    Data frame: a frame containing node data for transmission
-    CAN_FRAME_TYPE_REMOTE,      //    Remote frame: a frame requesting the transmission of a specific identifier
-    CAN_FRAME_TYPE_ERROR,       //    Error frame: a frame transmitted by any node detecting an error
-    CAN_FRAME_TYPE_OVERLOAD,    //    Overload frame: a frame to inject a delay between data or remote frame
-}
-CAN_FrameType_T;
+// typedef enum
+// {
+//     CAN_FRAME_TYPE_DATA,        //    Data frame: a frame containing node data for transmission
+//     CAN_FRAME_TYPE_REMOTE,      //    Remote frame: a frame requesting the transmission of a specific identifier
+//     CAN_FRAME_TYPE_ERROR,       //    Error frame: a frame transmitted by any node detecting an error
+//     CAN_FRAME_TYPE_OVERLOAD,    //    Overload frame: a frame to inject a delay between data or remote frame
+// }
+// CAN_FrameType_T;

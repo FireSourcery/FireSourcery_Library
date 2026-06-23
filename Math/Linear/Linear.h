@@ -48,6 +48,10 @@
 
 */
 /******************************************************************************/
+/*
+    symetric including inverse version stores 4 additonal fields, 8 total fields for both irections
+    alternatively implement as seperate one sided function, two seperate structs 4 to 6 fields each, depending on min/max storage
+*/
 typedef struct Linear
 {
 #if defined(LINEAR_DIVIDE_SHIFT)

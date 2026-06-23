@@ -45,6 +45,9 @@ typedef fract16_t scalar_t;
 #else
 typedef float scalar_ext_t;
 typedef float scalar_t;
+
+typedef float fract_t;
+typedef float accum_t;
 #endif
 
 

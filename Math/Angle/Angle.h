@@ -26,7 +26,8 @@
 /*!
     @file   Angle.h
     @author FireSourcery
-    @brief  Common Interface for Angle and Speed state
+    @brief  Angle IIntegrator in digitized form, conversion math
+            Common Interface for Angle and Speed state
 */
 /******************************************************************************/
 #include "angle_speed_math.h"

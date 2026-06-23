@@ -300,6 +300,7 @@ typedef enum Cia402_OdIndex
     CIA402_OD_TARGET_VELOCITY           = (0x60FFU), /* RW  I32  Velocity setpoint */
     CIA402_OD_QUICK_STOP_DECELERATION   = (0x6085U), /* RW  U32  Quick-stop ramp rate */
     CIA402_OD_SUPPORTED_DRIVE_MODES     = (0x6502U), /* RO  U32  Bitmask of supported modes */
+
 }
 Cia402_OdIndex_T;
 

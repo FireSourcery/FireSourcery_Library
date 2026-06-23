@@ -165,8 +165,8 @@ void Ramp_SetSlope_Ticks(Ramp_T * p_ramp, uint32_t duration_Ticks, uint16_t rang
 */
 void Ramp_SetSlope_Millis(Ramp_T * p_ramp, uint32_t updateFreq_Hz, uint16_t duration_Ms, uint16_t range)
 {
-    uint32_t ticks = (duration_Ms != 0U) ? (updateFreq_Hz * duration_Ms / 1000U) : 1U;
-    Ramp_SetSlope_Ticks(p_ramp, ticks, range);
+    assert(duration_Ms != 0U);
+    Ramp_SetSlope_Ticks(p_ramp, (updateFreq_Hz * duration_Ms / 1000U), range);
 }
 
 /* rate_PerS in fract16-output-units/sec, ACCUM32-scaled (e.g. ACCUM32(4.0) = 4x full-scale/sec); 32-bit to hold rates above 1.0 full-scale/sec */

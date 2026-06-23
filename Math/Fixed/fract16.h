@@ -144,8 +144,7 @@ static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x
 /* shift without divisor on max ref */
 /* right shift as positive */
 // static inline int8_t fract16_norm_shift(accum32_t value) { return (int8_t)(fixed_bit_width_signed(value) - FRACT16_N_BITS); }
-
-// static inline int16_t fract16_norm_scalar(int16_t value) { return (1 << fract16_norm_shift(value)); }
+// static inline int16_t fract16_norm_factor(int16_t value) { return (1 << fract16_norm_shift(value)); }
 
 // static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
 
@@ -162,6 +161,7 @@ static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x
 
 // static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.shift)); }
 
+// typedef struct { int16_t value; int8_t n; } fixed16_t;
 typedef struct { int16_t factor; int8_t shift; } fract16e_t;
 /* value = factor / 2^exp */
 static inline fract16e_t fract16e(accum32_t value)
@@ -211,15 +211,15 @@ static inline ufract16_t fract16_normalize_sat(int32_t lo, int32_t hi, int32_t x
     angle16
 */
 /******************************************************************************/
+#define PI_FLOAT (3.14159265358979323846F)
+#define ANGLE16_PER_REVOLUTION (65536UL)
+
 typedef int16_t angle16_t;      /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. base as signed for int32_t cast arithmetic */
 typedef uint16_t uangle16_t;    /*!< [-pi, pi) signed or [0, 2pi) unsigned, angle wraps. */
 
 typedef uint32_t angle32_t; /* fract32 */
 // typedef int32_t nangle32_t; /* rev.angle */
 // typedef int32_t turn32_t;
-
-#define ANGLE16_PER_REVOLUTION (65536UL)
-#define PI_FLOAT (3.14159265358979323846F)
 
 static const angle16_t ANGLE16_0 = 0U;         /*! 0 */
 static const angle16_t ANGLE16_30 = 0x1555U;   /*! 5461 */
@@ -236,19 +236,22 @@ static const angle16_t ANGLE16_300 = 0xD555U;  /*! 54613 */
 static const angle16_t ANGLE16_330 = 0xEAAAU;  /*! 60074 */
 
 
-/* PER_RADIAN_SI */
-static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
-
-#define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
-
 /*
     radian si scaled
     [0:1.0f/2pi] ~0.16 of rev
 */
+static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
+
+// #define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
+// #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
+
 static inline angle16_t angle16_of_rad_fract16(fract16_t rad) { return (angle16_t)fract16_mul(rad, ANGLE16_PER_RADIAN); }
 /*  */
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
 
+/*
+
+*/
 #define ANGLE16_QUADRANT_MASK (0xC000U)
 
 typedef enum angle16_quadrant

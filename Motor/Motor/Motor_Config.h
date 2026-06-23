@@ -91,7 +91,7 @@ typedef enum Motor_Var_ConfigActuation
     MOTOR_VAR_BASE_I_LIMIT_GENERATING,
     MOTOR_VAR_SPEED_RAMP_TIME,     // MOTOR_VAR_SPEED_RAMP_RATE,
     MOTOR_VAR_TORQUE_RAMP_TIME,     // MOTOR_VAR_TORQUE_RAMP_RATE,
-    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT,
+    MOTOR_VAR_OPEN_LOOP_POWER_LIMIT, //split
     MOTOR_VAR_I_ALIGN,
     MOTOR_VAR_V_ALIGN,
     MOTOR_VAR_ALIGN_TIME,
@@ -121,22 +121,6 @@ typedef enum Motor_Var_ConfigPid
 Motor_Var_ConfigPid_T;
 
 
-/* Debug */
-typedef enum Motor_Var_ConfigDebug
-{
-    MOTOR_VAR_SPEED_RATED_RPM,
-    MOTOR_VAR_SPEED_V_REF_RPM,
-    MOTOR_VAR_SPEED_V_SVPWM_REF_RPM,
-    MOTOR_VAR_SPEED_V_MATCH_REF_RPM,
-    MOTOR_VAR_SPEED_V_REF_DEG_PER_CYCLE,
-    MOTOR_VAR_SPEED_V_SVPWM_REF_DEG_PER_CYCLE,
-    MOTOR_VAR_V_SPEED_RATED_FRACT16,
-    MOTOR_VAR_SPEED_RAMP_RATE,
-    MOTOR_VAR_TORQUE_RAMP_RATE,
-    // MOTOR_VAR_V_SPEED_REF_VOLTS,
-}
-Motor_Var_ConfigDebug_T;
-
 
 
 /******************************************************************************/
@@ -153,7 +137,7 @@ void _Motor_Var_ConfigActuation_Set(Motor_Config_T * p_motor, Motor_Var_ConfigAc
 int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId);
 void _Motor_Var_ConfigPid_Set(Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue);
 
-int _Motor_Var_ConfigDebug_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigDebug_T varId);
+
 
 
 

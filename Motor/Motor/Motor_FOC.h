@@ -66,6 +66,7 @@ static inline bool _Motor_FOC_IsRegen(const Motor_Context_T * p_motor) { return 
 */
 /* Vq and Speed have opposite signs - applied voltage opposes rotor back-EMF */
 static inline bool Motor_FOC_IsPlugging(const Motor_Context_T * p_motor) { return (FOC_Vq(&p_motor->Foc) * Motor_GetSpeedFeedback(p_motor) < 0); }
+
 /*
     Regen: Iq opposes Vq direction (generating), but Vq aligns with speed
 */

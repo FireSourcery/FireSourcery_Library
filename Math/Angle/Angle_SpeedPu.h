@@ -73,7 +73,14 @@ Angle_SpeedUnitRef_T;
 // typedef struct Angle_SpeedFractCalib
 // {
 //     uint32_t PollingFreq;
-//     uint32_t SpeedMax_Rpm;  /* ω_base as mechanical RPM (~2x rated) */
+//     uint32_t SpeedMax_Rpm;  /* ω_base as   RPM (~2x rated) */
+// }
+// Angle_SpeedFractCalib_T;
+
+// typedef struct Angle_SpeedFractCalib
+// {
+//     uint32_t PollingFreq;
+//     uint32_t K; from shift
 // }
 // Angle_SpeedFractCalib_T;
 
