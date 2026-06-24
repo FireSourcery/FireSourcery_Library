@@ -716,7 +716,7 @@ typedef enum FOC_ConfigVar
 FOC_ConfigVar_T;
 
 
-static inline int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T var)
+static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T var)
 {
     switch (var)
     {
@@ -731,7 +731,7 @@ static inline int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T 
     }
 }
 
-static inline void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, int value)
+static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, int value)
 {
     switch (var)
     {
@@ -739,8 +739,8 @@ static inline void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, 
         case FOC_CONFIG_VAR_ID_FW_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
         case FOC_CONFIG_VAR_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
         case FOC_CONFIG_VAR_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
-        case FOC_CONFIG_VAR_ELECTRICAL_RS:  p_config->Electrical.Rs = value;    break;
-        case FOC_CONFIG_VAR_ELECTRICAL_PSI: p_config->Electrical.Psi = value;   break;
+        case FOC_CONFIG_VAR_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
+        case FOC_CONFIG_VAR_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
         default: break;
     }
 }
