@@ -70,7 +70,7 @@ typedef uint16_t checksum_t;
 typedef enum MotPacket_Id ENUM8_T
 {
     /*
-        2-Byte Id Packets
+        4-Byte Id Packets
         Response Packet must use different ID - Length compare determined by Id
     */
     MOT_PACKET_PING = 0xA0U,            /* */
@@ -80,6 +80,7 @@ typedef enum MotPacket_Id ENUM8_T
     MOT_PACKET_SYNC_ABORT = 0xA4U,
     MOT_PACKET_SYNC_RESV = MOT_PACKET_START_BYTE,
     // MOT_PACKET_FLOW_ = ,
+    // alternatively as byte[2]
     MOT_PACKET_PING_ALT = 0xAAU,
     MOT_PACKET_PING_BOOT = 0xABU,
     // MOT_PACKET_PING_WATCHDOG = 0xAAU,
@@ -145,6 +146,17 @@ typedef struct MOT_PACKET_PACKED MotPacket_Header
     uint16_t Flags;     /* Source/Dest */
 }
 MotPacket_Header_T;
+
+// typedef struct MOT_PACKET_PACKED MotPacket_Header
+// {
+//     uint8_t Start;      /* MOT_PACKET_START_BYTE */
+//     uint8_t Id;         /* MotPacket_Id_T */
+//     uint8_t Length;
+//     uint8_t Sequence;
+//     uint16_t Flags;     /* Flex/Source/Dest */
+//     uint16_t Checksum;
+// }
+// MotPacket_Header_T;
 
 typedef union MOT_PACKET_PACKED MotPacket
 {

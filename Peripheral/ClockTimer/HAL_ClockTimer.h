@@ -56,8 +56,8 @@ static inline uint32_t HAL_ClockTimer_CapturePeriod(HAL_ClockTimer_T * p_hal)
 {
     uint32_t timerValue = HAL_ClockTimer_Read(p_hal);
     uint32_t effectiveValue = HAL_ClockTimer_ReadOverflow(p_hal) ? HAL_CLOCK_TIMER_MAX : timerValue;
-    HAL_ClockTimer_ClearOverflow(p_hal);
     HAL_ClockTimer_Write(p_hal, 0U);
+    HAL_ClockTimer_ClearOverflow(p_hal);
     return effectiveValue;
 }
 

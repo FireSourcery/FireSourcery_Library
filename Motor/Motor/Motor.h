@@ -183,18 +183,8 @@ static const Motor_FaultFlags_T MOTOR_FAULT_POSITION_SENSOR  = { .PositionSensor
 static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck      = 1U };
 
 
-/******************************************************************************/
-/*
-    Number formats
 
-    [Fract16]           [-1:1) <=> [-32768:32767] in Q1.15
-    [UFract16]          [0:2) <=> [0:65535] in Q1.15
-    [Accum32]           [-2:2] <=> [-65536:65536] in Q17.15     Max [INT32_MIN:INT32_MAX]
-    [UQ16]              [0:1) <=> [0:65535] in Q0.16
-    [Fixed16]           [-1:1] <=> [-256:256] in Q8.8           Max [-32768:32767]
-    [Fixed32]           [-1:1] <=> [-65536:65536] in Q16.16     Max [INT32_MIN:INT32_MAX]
-*/
-/******************************************************************************/
+//todo
 // #ifndef MOTOR_FLOATING_POINT
 // // typedef fract16_t quantity_t;
 // // typedef fract16_t magnitude_t;
@@ -241,6 +231,7 @@ typedef struct Motor_Config
         OpenLoop
     */
     /* All OpenLoop Modes - UserCmd, Align */
+    // optionally depreciate, keep precompile limit only
     uint16_t OpenLoopLimitScalar_Fract16;    /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitScalar_Fract16 * V/I RATED */
 
     /* Calibration and Jog Align */

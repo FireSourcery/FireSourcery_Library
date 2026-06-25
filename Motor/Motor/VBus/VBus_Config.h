@@ -108,6 +108,16 @@ static void VBus_Config_Init_LiIon(VBus_Config_T * p_config, uint16_t vNominal_V
     VMonitor alias
 */
 /******************************************************************************/
+static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
+
+/*
+    - Regen-derate uses [VFullPower:VHighDerate] (OV ramp). Full regen below VFullPower, floor regen above VHighDerate.
+    - I-derate uses [VLowDerate:VFullPower] (UV ramp). Full I above VFullPower, floor I below VLowDerate.
+*/
+static inline ufract16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
+static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
+static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
+
 static inline uint16_t VBus_VSupplyNominal_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline void VBus_SetVSupplyNominal_V(VBus_Config_T * p_vbus, uint16_t vSupplyNominal_V)
 {
@@ -118,17 +128,6 @@ static inline void VBus_SetVSupplyNominal_V(VBus_Config_T * p_vbus, uint16_t vSu
 static inline uint16_t VBus_VFullPower_V(const VBus_Config_T * p_vbus) { return p_vbus->VSupplyNominal_V; }
 static inline uint16_t VBus_GetVLowDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitLow); }
 static inline uint16_t VBus_GetVHighDerate_V(const VBus_Config_T * p_vbus) { return Phase_V_VoltsOfFract16(p_vbus->MonitorConfig.Warning.LimitHigh); }
-
-static inline uint16_t VBus_VNominal_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
-static inline uint16_t VBus_VFullPower_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Nominal; }
-
-/*
-    - Regen-derate uses [VFullPower:VHighDerate] (OV ramp). Full regen below VFullPower, floor regen above VHighDerate.
-    - I-derate uses [VLowDerate:VFullPower] (UV ramp). Full I above VFullPower, floor I below VLowDerate.
-*/
-static inline ufract16_t VBus_VHighDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitHigh; }
-static inline ufract16_t VBus_VLowDerate_Fract16(const VBus_Config_T * p_config) { return p_config->MonitorConfig.Warning.LimitLow; }
-
 
 /******************************************************************************/
 /*!
@@ -155,6 +154,7 @@ static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
         && (p_config->MonitorConfig.Fault.LimitLow  < p_config->MonitorConfig.Warning.LimitLow)
         && (p_config->MonitorConfig.Fault.LimitHigh > p_config->MonitorConfig.Warning.LimitHigh);
 }
+
 
 
 /******************************************************************************/
@@ -196,5 +196,19 @@ static void VBus_ConfigId_Set(VBus_Config_T * p_config, VBus_ConfigId_T id, int 
         case VBUS_CONFIG_ID_IDERATE_OVER_V_FLOOR:     p_config->IDerateOverVFloor_Fract16 = value; break;
         case VBUS_CONFIG_ID_SPEED_DERATE_FLOOR:       p_config->SpeedDerateFloor_Fract16 = value; break;
         default: break;
+    }
+}
+
+/* interface for alternate value */
+// static inline uint16_t VBus_PerUnitRef( ) { return Phase_Calibration_GetVMaxVolts(); }
+
+/*  */
+static inline uint32_t VBus_BoardId_Get(VDivider_ConfigId_T var_id)
+{
+    switch (var_id)
+    {
+        case VDIVIDER_BOARD_R1: return PHASE_ANALOG_CALIBRATION.V_PHASE_R1;
+        case VDIVIDER_BOARD_R2: return PHASE_ANALOG_CALIBRATION.V_PHASE_R2;
+        default: return 0U;
     }
 }

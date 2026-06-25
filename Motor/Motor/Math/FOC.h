@@ -38,12 +38,13 @@
 #define FOC_DECOUPLE_DISABLE
 #endif
 
-#if !defined(FOC_V_MATCH_BEMF) && !defined(FOC_V_MATCH_SPEED)
-#define FOC_V_MATCH_BEMF
-#endif
-
 #if !defined(FOC_CLARKE_AB) && !defined(FOC_CLARKE_ABC)
 #define FOC_CLARKE_ABC
+#endif
+
+// move to caller
+#if !defined(FOC_V_MATCH_BEMF) && !defined(FOC_V_MATCH_SPEED)
+#define FOC_V_MATCH_BEMF
 #endif
 
 /*
@@ -117,8 +118,12 @@ typedef struct FOC
     PID_T PidIq;
     PID_T PidId;
 
+    /*
+        Runtime V parameters directly visible in the FOC object, rather than passed per call.
+    */
     // ufract16_t Modulation;
-    interval_t VLimit; // fract16_t VqLimit; a single value encodes direction and magnitude.
+    interval_t VLimit;
+    // fract16_t VqLimit; a single value encodes direction and magnitude. derives cw and ccw
     fract16_t VWindow;
 
     FOC_ElectricalSpeed_T ElectricalSpeed; /*  Cache on speed loop for feedforward and decoupling */
@@ -704,43 +709,43 @@ static int Foc_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
 /*
     Call holds struct
 */
-typedef enum FOC_ConfigVar
+typedef enum FOC_ConfigId
 {
-    FOC_CONFIG_VAR_ID_FW_LIMIT,
-    FOC_CONFIG_VAR_ID_FW_GAIN,
-    FOC_CONFIG_VAR_ELECTRICAL_LD,
-    FOC_CONFIG_VAR_ELECTRICAL_LQ,
-    FOC_CONFIG_VAR_ELECTRICAL_RS,
-    FOC_CONFIG_VAR_ELECTRICAL_PSI,
+    FOC_CONFIG_FW_ID_LIMIT,
+    FOC_CONFIG_FW_ID_GAIN,
+    FOC_CONFIG_ELECTRICAL_LD,
+    FOC_CONFIG_ELECTRICAL_LQ,
+    FOC_CONFIG_ELECTRICAL_RS,
+    FOC_CONFIG_ELECTRICAL_PSI,
 }
-FOC_ConfigVar_T;
+FOC_ConfigId_T;
 
 
-static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigVar_T var)
+static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
 {
     switch (var)
     {
-        case FOC_CONFIG_VAR_ID_FW_LIMIT:    return p_config->FieldWeakening.IdLimit;
-        case FOC_CONFIG_VAR_ID_FW_GAIN:     return p_config->FieldWeakening.IdGain;
+        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
+        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
         // temporarily
-        case FOC_CONFIG_VAR_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;
-        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
-        case FOC_CONFIG_VAR_ELECTRICAL_RS:  return p_config->Electrical.Rs;
-        case FOC_CONFIG_VAR_ELECTRICAL_PSI: return p_config->Electrical.Psi;
+        case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;
+        case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
+        case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
+        case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;
         default: return 0;
     }
 }
 
-static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigVar_T var, int value)
+static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int value)
 {
     switch (var)
     {
-        case FOC_CONFIG_VAR_ID_FW_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
-        case FOC_CONFIG_VAR_ID_FW_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
-        case FOC_CONFIG_VAR_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
-        case FOC_CONFIG_VAR_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
-        case FOC_CONFIG_VAR_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
-        case FOC_CONFIG_VAR_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
+        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
+        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
+        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
+        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
+        case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
+        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
         default: break;
     }
 }

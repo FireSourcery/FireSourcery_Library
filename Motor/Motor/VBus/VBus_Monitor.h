@@ -55,6 +55,7 @@ static inline VMonitor_State_T * VBus_Monitor(VBus_T * p_vbus) { return &p_vbus-
 static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, p_vbus->VBus_Fract16); }
 // static inline VMonitor_Status_T VBus_PollMonitor(VBus_T * p_vbus) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (p_vbus->VBus_Fract16 + RangeMonitor_LastInput(&p_vbus->MonitorState)) / 2); }
 
+// for separate monitor filter
 static inline VMonitor_Status_T VBus_PollCaptureMonitor(VBus_T * p_vbus, uint16_t fract16) { return (VMonitor_Status_T)RangeMonitor_Poll(&p_vbus->MonitorState, (fract16 + p_vbus->VBus_Fract16) / 2); }
 
 /*

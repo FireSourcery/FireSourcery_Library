@@ -69,21 +69,24 @@
 typedef struct VBus
 {
     uint16_t VBus_Fract16;          /* Filtered live ratio — canonical FOC input */
-    uint32_t PerV_Accum32;          /* 1 / VBus, fract32-shifted — cached for Vout normalization */
+    uint32_t PerV_Accum32;          /* 1 / VBus, accum32-shifted — cached for Vout normalization */
 
     /* Precomputed derate slopes */
     int32_t IDerateUnderVSlope;     /* ((FRACT16_MAX - floor) << 15) / (WarnLow - FaultUnder), positive, rising  */
     int32_t IDerateOverVSlope;      /* ((floor - FRACT16_MAX) << 15) / (FaultOver - WarnHigh), negative, falling */
 
+    /* Specialized composition of VMonitor */
     VMonitor_State_T MonitorState;
     VBus_Config_T Config;           /* Battery profile + derate shape. Loaded from NVM at init. */
     /* Caller holds Nvm Address */
 }
 VBus_T;
 
+
+
 /******************************************************************************/
 /*!
-    Capture / Init
+    Capture
 */
 /******************************************************************************/
 /* Phase scaling without filter */
@@ -100,37 +103,6 @@ static inline void VBus_Capture(VBus_T * p_vbus, uint16_t fract16)
 {
     _VBus_Capture(p_vbus, (fract16 + p_vbus->VBus_Fract16) / 2U);
 }
-
-
-/*
-    Seed live state to VSupplyNominal before the first ADC sample lands.
-*/
-static inline void VBus_InitLive(VBus_T * p_vbus)
-{
-    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V));
-    // p_vbus->PerVNominal_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
-}
-
-/* Precompute rising/falling slopes from config thresholds + floor values. Shift=15 is safe for fract16 range (max 32767<<15 = 1.07B < INT32_MAX). */
-static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
-{
-    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
-    int32_t overSpan  = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
-    // p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
-    // p_vbus->IDerateOverVSlope  = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
-    p_vbus->IDerateUnderVSlope = fract16_div((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16, underSpan);
-    p_vbus->IDerateOverVSlope  = fract16_div((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX, overSpan);
-}
-
-static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
-{
-    if (p_config != NULL) { p_vbus->Config = *p_config; }
-    p_vbus->Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V); /* keep in sync */
-    RangeMonitor_InitFrom(&p_vbus->MonitorState, &p_vbus->Config.MonitorConfig);
-    VBus_InitDerateSlopes(p_vbus);
-    VBus_InitLive(p_vbus);
-}
-
 
 /*
     Optionally as Adc callback, per control cycle
@@ -164,6 +136,7 @@ static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t d
 /******************************************************************************/
 /*!
     Derating — battery droop (UV ramp) and regen chopping (OV ramp).
+    as fraction of 1.0 independent of physical I/Speed units
     MotorController owns the arbitration array
 
     Battery VBus spans a wide range: peak (freshly charged, no load),
@@ -229,13 +202,6 @@ static inline ufract16_t VBus_GetSpeedDerate(const VBus_T * p_vbus)
 }
 
 
-/*
-    Physical scale fract16
-*/
-// static inline ufract16_t VBus_GetILimitUnderV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateUnderV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
-// static inline ufract16_t VBus_GetILimitOverV_Fract16(const VBus_T * p_vbus) { return fract16_mul(VBus_GetIDerateOverV(p_vbus), Phase_Calibration_GetIRatedPeak_Fract16()); }
-/* May move to per motor calculation */
-// static inline ufract16_t _VBus_GetSpeedLimit_Fract16(const VBus_T * p_vbus) { return VBus_GetSpeedDerate(p_vbus) / 2; } /* Speed rated = SpeedTypeMax / 2 = 32768/2 for all cases for now */
 
 /******************************************************************************/
 /*!
@@ -248,6 +214,39 @@ static inline uint32_t VBus_GetChargeLevel_Fract16(const VBus_T * p_vbus)
 }
 
 
+/******************************************************************************/
+/*!
+    Init
+*/
+/******************************************************************************/
+/*
+    Seed live state to VSupplyNominal before the first ADC sample lands.
+*/
+static inline void VBus_InitLive(VBus_T * p_vbus)
+{
+    _VBus_Capture(p_vbus, Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V));
+    // p_vbus->PerVNominal_Fract32 = (uint32_t)FRACT16_MAX * 65536U / Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V);
+}
+
+/* Precompute rising/falling slopes from config thresholds + floor values. Shift=15 is safe for fract16 range (max 32767<<15 = 1.07B < INT32_MAX). */
+static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
+{
+    int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
+    int32_t overSpan = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
+    // p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
+    // p_vbus->IDerateOverVSlope = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
+    p_vbus->IDerateUnderVSlope = fract16_div((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16, underSpan);
+    p_vbus->IDerateOverVSlope = fract16_div((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX, overSpan);
+}
+
+static inline void VBus_InitFrom(VBus_T * p_vbus, const VBus_Config_T * p_config)
+{
+    if (p_config != NULL) { p_vbus->Config = *p_config; }
+    p_vbus->Config.MonitorConfig.Nominal = Phase_V_Fract16OfVolts(p_vbus->Config.VSupplyNominal_V); /* keep in sync */
+    RangeMonitor_InitFrom(&p_vbus->MonitorState, &p_vbus->Config.MonitorConfig);
+    VBus_InitDerateSlopes(p_vbus);
+    VBus_InitLive(p_vbus);
+}
 
 /******************************************************************************/
 /*!
@@ -274,13 +273,3 @@ static inline uint32_t VBus_VarId_Get(const VBus_T * p_vbus, VBus_VarId_T var_id
 }
 
 
-/*  */
-static inline uint32_t VBus_BoardId_Get(VDivider_ConfigId_T var_id)
-{
-    switch (var_id)
-    {
-        case VDIVIDER_BOARD_R1: return PHASE_ANALOG_CALIBRATION.V_PHASE_R1;
-        case VDIVIDER_BOARD_R2: return PHASE_ANALOG_CALIBRATION.V_PHASE_R2;
-        default: return 0U;
-    }
-}

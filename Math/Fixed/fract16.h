@@ -94,6 +94,7 @@ static inline ufract16_t fract16_sat_positive(accum32_t value) { return math_cla
 /*!
     @brief Unsaturated Multiply
 
+    One parameter may be 2x
     @param[in] factor [-65536:65535] <=> [-2:2]
     @param[in] frac   [-32768:32767] <=> [-1:1]
         input max factor1 * factor2 < INT32_MAX
@@ -141,13 +142,19 @@ static inline fract16_t fract16_abs_sat(fract16_t x) { return (x == INT16_MIN) ?
 
 static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x << FRACT16_N_BITS); }
 
+/* using intermediate 64-bit multiplication */
+static inline accum32_t accum32_mul(accum32_t a, accum32_t b) { return ((int64_t)a * b) >> FRACT16_N_BITS; }
+
+
+/*
+
+*/
 /* shift without divisor on max ref */
 /* right shift as positive */
 // static inline int8_t fract16_norm_shift(accum32_t value) { return (int8_t)(fixed_bit_width_signed(value) - FRACT16_N_BITS); }
 // static inline int16_t fract16_norm_factor(int16_t value) { return (1 << fract16_norm_shift(value)); }
 
 // static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
-
 
 // typedef struct { int16_t mantissa; int8_t exp; } fract16e_t;
 
@@ -161,7 +168,7 @@ static inline fract16_t fract16_sqrt(fract16_t x) { return fixed_sqrt((int32_t)x
 
 // static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.mantissa * b >> (FRACT16_N_BITS - a.shift)); }
 
-// typedef struct { int16_t value; int8_t n; } fixed16_t;
+// typedef struct { int16_t value; int8_t n; } exp16_t;
 typedef struct { int16_t factor; int8_t shift; } fract16e_t;
 /* value = factor / 2^exp */
 static inline fract16e_t fract16e(accum32_t value)
@@ -172,8 +179,6 @@ static inline fract16e_t fract16e(accum32_t value)
 }
 
 static inline accum32_t fract16e_mul(fract16e_t a, accum32_t b) { return ((int32_t)a.factor * b >> a.shift); }
-
-static inline accum32_t accum32_mul(accum32_t a, accum32_t b) { return ((int64_t)a * b) >> FRACT16_N_BITS; }
 
 
 /******************************************************************************/

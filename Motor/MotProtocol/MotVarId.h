@@ -44,8 +44,8 @@ typedef union MotVarId
     struct
     {
         uint16_t Base           : 4U; /* Name - corresponds with enum index value. Struct member */
-        uint16_t Type           : 4U; /* enum type literal / struct type. some cases n:1, as TypeObject */
-        uint16_t Prefix         : 4U; /*  */
+        uint16_t Type           : 4U; /* enum type literal / struct type / handler / table. some cases n:1 TypeObject */
+        uint16_t Prefix         : 4U; /* Namespace */
         uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
         uint16_t Resv           : 2U;
     };

@@ -160,6 +160,14 @@ ufract16_t fract16_vector_component(fract16_t x, ufract16_t mag_limit)
     return fixed_sqrt((int32_t)mag_limit * mag_limit - (int32_t)x * x);
 }
 
+// struct fract16_xy fract16_vector_scale(fract16_t x, fract16_t y, ufract16_t magnitude)
+// {
+//     if (magnitude < FRACT16_MAX)
+//     {
+//         return (struct fract16_xy) { .x = (fract16_t)fract16_mul(x, magnitude), .y = (fract16_t)fract16_mul(y, magnitude) };
+//     }
+// }
+
 void fract16_vector_scale(fract16_t * p_x, fract16_t * p_y, ufract16_t magnitude)
 {
     if (magnitude < FRACT16_MAX)
