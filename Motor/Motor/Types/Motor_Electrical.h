@@ -54,8 +54,6 @@
 #endif
 
 
-
-
 /******************************************************************************/
 /*
     Store as Kv
@@ -108,6 +106,9 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_angle_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
 
+
+
+
 /* Seperate segment outside of config, resolve at runtime */
 /* common for use. per motor pi gains absorb per motor max */
 // typedef struct
@@ -146,3 +147,14 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 // Motor_ElectricalBase Motor_ElectricalBaseOfConfig(const Motor_ElectricalSpeedRating_T * p_config)
 
 // static inline accum32_t _Motor_GetPsiBase_Wb(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_GetSpeedTypeMax_Rads(p_config) / Phase_Calibration_GetVMaxVolts(); }
+
+
+
+/* Alternate base selection */
+/* ω_base => 2 * Kv * v_nominal = 1.0f */
+/* L_base = V_base / (ω_base * I_base) */
+// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
+// static inline uint16_t Motor_VTypeMax_Volts(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) or Phase_Calibration_GetVMaxVolts(); }
+// static inline uint16_t Motor_ITypeMax_Amps(Motor_T * p_motor) { return Phase_Calibration_GetIRatedPeak_Fract16(); }
+// static inline uint16_t Motor_LTypeMax_Henries(Motor_T * p_motor,) { return  Motor_VTypeMax_Volts(p_motor) / (2 * M_PI * Motor_SpeedTypeMax_ERpm(p_motor) / 60 * Motor_ITypeMax_Amps(p_motor) * sibase ); }
+

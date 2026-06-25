@@ -99,22 +99,22 @@ static inline Phase_Triplet_T FOC_ProcVOut(const FOC_T * p_foc)
     .Psi = MOTOR_PSI_PU(V_Base, ERads_Base, Psi_uWb, 1000000UL), \
 }
 
-static inline FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t iBase, uint32_t eRadsBase)
-{
-    return (FOC_Electrical_T)
-    {
-        .Ld = l_pu_rads_of_h(vBase, iBase, eRadsBase, p_electrical->Ld, 1000000UL),
-        .Lq = l_pu_rads_of_h(vBase, iBase, eRadsBase, p_electrical->Lq, 1000000UL),
-        .Rs = rs_pu_of_mohm(vBase, iBase, p_electrical->Rs),
-        .Psi = psi_pu_rads_of_wb(vBase, eRadsBase, p_electrical->Psi, 1000000UL),
-    };
-}
-
 static inline void FOC_Electrical_SetPsi_Kv(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t rpmBase, uint16_t kv)
 {
     p_electrical->Psi = psi_pu_rpm_of_kv(vBase, rpmBase, kv);
 }
 
+
+// static inline FOC_Electrical_T FOC_Electrical_FromSi(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t iBase, uint32_t eRadsBase)
+// {
+//     return (FOC_Electrical_T)
+//     {
+//         .Ld = l_pu_rads_of_h(vBase, iBase, eRadsBase, p_electrical->Ld, 1000000UL),
+//             .Lq = l_pu_rads_of_h(vBase, iBase, eRadsBase, p_electrical->Lq, 1000000UL),
+//             .Rs = rs_pu_of_mohm(vBase, iBase, p_electrical->Rs),
+//             .Psi = psi_pu_rads_of_wb(vBase, eRadsBase, p_electrical->Psi, 1000000UL),
+//     };
+// }
 // static inline FOC_Electrical_T FOC_Electrical_Angle16FromSi(FOC_Electrical_T * p_electrical, uint32_t vBase, uint32_t iBase, uint32_t eRadsBase)
 // {
 //     return (FOC_Electrical_T)

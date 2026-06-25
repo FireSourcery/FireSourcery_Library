@@ -43,8 +43,8 @@
 #endif
 
 // move to caller
-#if !defined(FOC_V_MATCH_BEMF) && !defined(FOC_V_MATCH_SPEED)
-#define FOC_V_MATCH_BEMF
+#if !defined(FOC_V_MATCH_SENSOR) && !defined(FOC_V_MATCH_SPEED)
+#define FOC_V_MATCH_SENSOR
 #endif
 
 /*
@@ -231,23 +231,13 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vq = v.q;
 }
 
-// static inline void FOC_ProcVBemf_Speed(FOC_T * p_foc, accum32_t speed)
-// {
-//     p_foc->ElectricalSpeed.OmegaPsi = fract16_sat(accum32_mul(p_foc->Config.Electrical.Psi, speed));
-//     p_foc->Vd = 0;
-//     p_foc->Vq = p_foc->ElectricalSpeed.OmegaPsi;
-//     // FOC_ProcInvClarkePark(p_foc);
-// }
+
 
 /******************************************************************************/
 /*!
     V Policy config
 */
 /******************************************************************************/
-/*
-    Dynamic limits
-    dynamic overlay to intersect with base
-*/
 /*
     window centered on the BEMF estimate:
     applied Vq must stay near omega_psi, not just on the same side
@@ -377,7 +367,7 @@ static inline void FOC_ProcIFeedback(FOC_T * p_foc, ufract16_t vBus, int16_t idR
 
 */
 /******************************************************************************/
-// static inline void _FOC_MatchIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
+// static inline void _FOC_SetIVState(FOC_T * p_foc, int16_t vd, int16_t vq)
 // {
 //     p_foc->Vd = vd;
 //     p_foc->Vq = vq;
@@ -404,11 +394,17 @@ static inline void FOC_MatchIVState(FOC_T * p_foc)
 #endif
 }
 
-static inline void FOC_MatchIVEstimate(FOC_T * p_foc)
+static inline void FOC_MatchIVSpeed(FOC_T * p_foc)
 {
     p_foc->Vd = 0;
     p_foc->Vq = p_foc->ElectricalSpeed.OmegaPsi;    /* Caller handle FOC_CaptureSpeed */
     FOC_MatchIVState(p_foc);
+}
+
+static inline void FOC_MatchIVSensor(FOC_T * p_foc)
+{
+    if (p_foc->Vq == 0) { FOC_MatchIVSpeed(p_foc); } /* if no Vq, sensor capture not yet complete, fallback to speed estimate */
+    else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
 }
 
 /* From open terminals, freewheel-no-sense, (I≈0, ≤ base speed) */
@@ -416,11 +412,10 @@ static inline void FOC_MatchIVEstimate(FOC_T * p_foc)
 /* Outputlimits updated prior to calling */
 static inline void FOC_MatchIVFreewheel(FOC_T * p_foc)
 {
-#if defined(FOC_V_MATCH_BEMF)
-    if (p_foc->Vq == 0) { FOC_MatchIVEstimate(p_foc); } /* if no Vq, fallback to speed estimate */
-    else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
+#if defined(FOC_V_MATCH_SENSOR)
+    FOC_MatchIVSensor(p_foc);
 #elif defined(FOC_V_MATCH_SPEED)
-    FOC_MatchIVEstimate(p_foc);
+    FOC_MatchIVSpeed(p_foc);
 #endif
 }
 
@@ -760,3 +755,74 @@ static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int valu
 //     }
 //     return value;
 // }
+
+
+
+/*
+    Dynamic limits
+    dynamic overlay to intersect with base
+*/
+/* he controller to pick up the requested direction through zero */
+// static inline sign_t _FOC_VMotionSignOf(accum32_t omega_psi, int32_t iqReq)
+// {
+//     sign_t motionSign = math_sign(omega_psi);
+//     return (motionSign != SIGN_ZERO) ? motionSign : math_sign(iqReq);
+// }
+
+// static inline interval_t _FOC_VBrakeOverlay(accum32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// {
+//     sign_t motionSign = _FOC_VMotionSignOf(omega_psi, iqReq);
+//     /* Only narrow the band when the request is braking/generating. */
+//     if (motionSign * iqReq < 0) { return interval_of_sign(motionSign, vqLimit); }
+//     return interval_symmetric(0, vqLimit);
+// }
+
+// /* symmetric by default. dynamic half-plane anti-plugging derived per cycle */
+// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vqLimit)
+// {
+//     if (omega_psi * iqReq <= 0) { return interval_of_sign(omega_psi * iqReq, vqLimit); }
+//     return interval_symmetric(0, vqLimit);
+// }
+
+// static inline interval_t _FOC_VRegenOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_of_sign(_FOC_VMotionSignOf(omega_psi, iqReq), vq); }
+/* Applied Vq is forced opposite to EEMF for explicit plugging behavior. */
+// static inline interval_t _FOC_VPluggingOnly(int32_t omega_psi, int32_t iqReq, int32_t vq) { return interval_of_sign((sign_t)(0 - _FOC_VMotionSignOf(omega_psi, iqReq)), vq); }
+
+// static inline interval_t _FOC_VDynamicBand(const FOC_T * p_foc, accum32_t omega_psi, int32_t iqReq, ufract16_t vqCircleLimit)
+// {
+//     interval_t band = interval_symmetric(0, vqCircleLimit);
+
+//     band = interval_intersect(band, _FOC_VRegenOnly(omega_psi, iqReq, vqCircleLimit));
+
+//     if (p_foc->VWindow > 0)
+//     {
+//         band = interval_intersect(band, _FOC_VBemfWindow(vqCircleLimit, omega_psi, p_foc->VWindow));
+//     }
+
+//     return band;
+// }
+
+// /*
+//     VqCircleLimit = 50
+//     omega_psi = 80
+//     window = 10
+//     desired window = [70, 90]
+//     feasible slice = [-50, 50]
+//     intersection = [70, 50], invalid
+// */
+// static inline interval_t _FOC_VqBandOf(ufract16_t vqCircleLimit, accum32_t omega_psi, int32_t window)
+// {
+//     interval_t vqBand = interval_intersect(interval_symmetric(0, vqCircleLimit), interval_symmetric(omega_psi, window));
+
+//     if (vqBand.high < vqBand.low)
+//     {
+//         int32_t vqEdge = math_clamp(omega_psi, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+//         return (interval_t) { .low = vqEdge, .high = vqEdge };
+//     }
+//     return vqBand;
+//     // low = math_clamp(omega_psi - window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+//     // high = math_clamp(omega_psi + window, -(int32_t)vqCircleLimit, (int32_t)vqCircleLimit);
+
+//     // center = clamp(omega_psi, -VqCircleLimit, +VqCircleLimit)
+//     // band = intersect([-VqCircleLimit, +VqCircleLimit], [center - window, center + window])
+//

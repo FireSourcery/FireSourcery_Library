@@ -38,8 +38,7 @@
     [VBus/sqrt3] => [1/sqrt3]
     Svpwm input as VPhase/VBus
     @return [-1/sqrt3:1/sqrt3]
-*/
-/*!
+
     @note overflow
     vPhase_fract16 < vBus_fract16 * .57
     vBusInv_accum32 * vBus_fract16 = INT32_MAX

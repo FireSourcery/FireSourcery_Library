@@ -186,8 +186,6 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
 {
     FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
-
-    // FOC_CaptureVBemf_Speed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
 }
 
 
