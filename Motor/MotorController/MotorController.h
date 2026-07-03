@@ -192,7 +192,7 @@ typedef struct MotorController_Context
     MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
 
     // MotorController_InputMode_T ActiveInput;
-    Motor_Input_T CmdInput; /* Buffered Input for StateMachine */
+    Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
 
     /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
     /* alternatively ain wraper handle */
@@ -284,6 +284,7 @@ typedef const struct MotorController
     VMonitor_T V_ACCESSORIES;   /* ~12V */
     Analog_Conversion_T V_ACCESSORIES_CONVERSION;
 
+    // handle with AINS
     VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V */
     Analog_Conversion_T V_ANALOG_CONVERSION;
 

@@ -239,6 +239,7 @@ extern int Motor_Var_Board_Get(Motor_Var_Board_T varId);
 /******************************************************************************/
 /*
     [Motor_VarType]
+    Identifies the struct, object, or interface segment.
     VarType directly corresponds to base enum type literal
     partition by Prefix. Each sub-enum indexes within its Prefix group.
 */
@@ -262,6 +263,10 @@ typedef enum Motor_VarType_Base
 }
 Motor_VarType_Base_T;
 
+extern int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
+extern void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
+extern bool Motor_VarType_Base_CheckSet(Motor_T * p_motor, Motor_VarType_Base_T typeId);
+
 typedef enum Motor_VarType_SubModule
 {
     MOTOR_VAR_TYPE_BOARD_CONST,    /* Not instanced */
@@ -281,11 +286,27 @@ typedef enum Motor_VarType_SubModule
 }
 Motor_VarType_SubModule_T;
 
-extern int Motor_VarType_Base_Get(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId);
-extern void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int varId, int varValue);
-extern bool Motor_VarType_Base_CheckSet(Motor_T * p_motor, Motor_VarType_Base_T typeId);
-
 extern int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId);
 extern void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId, int varValue);
 extern bool Motor_VarType_SubModule_CheckSet(Motor_T * p_motor, Motor_VarType_SubModule_T typeId);
+
+/******************************************************************************/
+/*
+    Instead of using SensorTable Ids, This way it takes only one field to associate properties.
+*/
+/******************************************************************************/
+typedef enum Motor_VarType_Sensor
+{
+    MOTOR_VAR_TYPE_HALL_STATE,
+    MOTOR_VAR_TYPE_HALL_CONFIG,
+    MOTOR_VAR_TYPE_HALL_CMD,
+    MOTOR_VAR_TYPE_ENCODER_STATE,
+    MOTOR_VAR_TYPE_ENCODER_CONFIG,
+    MOTOR_VAR_TYPE_ENCODER_CMD,
+}
+Motor_VarType_Sensor_T;
+
+extern int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId);
+extern void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue);
+extern bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId);
 

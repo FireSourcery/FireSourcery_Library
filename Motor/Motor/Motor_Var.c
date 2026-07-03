@@ -68,11 +68,6 @@ int _Motor_Var_UserOut_Get(Motor_T * p_motor, Motor_Var_UserOut_T varId)
 
 /******************************************************************************/
 /*
-    IO
-*/
-/******************************************************************************/
-/******************************************************************************/
-/*
     Input/Cmds
     Full context
 */
@@ -96,8 +91,6 @@ int _Motor_Var_UserControl_Get(Motor_T * p_motor, Motor_Var_UserControl_T varId)
     return value;
 }
 
-// alternatively user calls use Motor_Input buffer
-/* Calls to StateMachine use full context */
 void _Motor_Var_UserControl_Set(Motor_T * p_motor, Motor_Var_UserControl_T varId, int varValue)
 {
     switch (varId)
@@ -245,6 +238,12 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
     }
 }
 
+
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 /*
     const
     Alternate access to board reference values
@@ -288,6 +287,37 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
         // case MOTOR_VAR_V_SPEED_RATED_FRACT16:           value = _Motor_GetVSpeedRated_Fract16(p_motor);               break;
     }
     return value;
+}
+
+static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
+{
+    FOC_Config_T * p_config = &p_motor->P_MOTOR->Foc.Config;
+    switch (var)
+    {
+        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
+        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
+        case FOC_CONFIG_ELECTRICAL_LD:  return l_h_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Ld, 1000000UL);
+        case FOC_CONFIG_ELECTRICAL_LQ:  return l_h_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Lq, 1000000UL);
+        case FOC_CONFIG_ELECTRICAL_RS:  return rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Electrical.Rs);
+        case FOC_CONFIG_ELECTRICAL_PSI: return psi_wb_of_pu_rads(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_config->Electrical.Psi, 1000000UL);
+        default: return 0;
+    }
+}
+
+static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, int value)
+{
+    FOC_Config_T * p_config = &p_motor->P_MOTOR->Foc.Config;
+
+    switch (var)
+    {
+        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
+        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
+        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
+        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
+        case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), value);    break;
+        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = psi_pu_rads_of_wb(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), value, 1000000UL);   break;
+        default: break;
+    }
 }
 
 
@@ -348,38 +378,6 @@ void Motor_VarType_Base_Set(Motor_T * p_motor, Motor_VarType_Base_T typeId, int 
 #include "Math/FOC_Sensorless.h"
 
 
-static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
-{
-    FOC_Config_T * p_config = &p_motor->P_MOTOR->Foc.Config;
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
-        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-        case FOC_CONFIG_ELECTRICAL_LD:  return l_h_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Ld, 1000000UL);
-        case FOC_CONFIG_ELECTRICAL_LQ:  return l_h_of_pu_rpm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, p_config->Electrical.Lq, 1000000UL);
-        case FOC_CONFIG_ELECTRICAL_RS:  return rs_mohm_of_pu(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), p_config->Electrical.Rs);
-        case FOC_CONFIG_ELECTRICAL_PSI: return psi_wb_of_pu_rads(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), p_config->Electrical.Psi, 1000000UL);
-        default: return 0;
-    }
-}
-
-static inline void Motor_FocConfig_SetSi(Motor_T * p_motor,  FOC_ConfigId_T var, int value)
-{
-    FOC_Config_T * p_config = &p_motor->P_MOTOR->Foc.Config;
-
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
-        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
-        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
-        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = l_pu_rpm_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), Motor_SpeedTypeMax_Rpm(p_motor), p_motor->P_MOTOR->Config.SpeedRating.PolePairs, value, 1000000UL);    break;
-        case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = rs_pu_of_mohm(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), value);    break;
-        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = psi_pu_rads_of_wb(Phase_Calibration_GetVMaxVolts(), Motor_SpeedTypeMax_Rpm(p_motor), value, 1000000UL);   break;
-        default: break;
-    }
-}
-
-
 int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typeId, int varId)
 {
     if (p_motor == NULL) { return 0; }
@@ -417,6 +415,74 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
         default: break;
     }
 }
+
+
+
+/******************************************************************************/
+/*
+    [VarType_Sensor]
+*/
+/******************************************************************************/
+/*
+    Include all compile time sensor options
+*/
+// #if defined(MOTOR_SENSOR_HALL_ENABLE)
+#include "Hall/Motor_Hall.h"
+// #endif
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+#include "Encoder/Motor_Encoder.h"
+#endif
+
+#include "RotorSensor_Table.h"
+
+int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
+{
+    if (p_motor == NULL) { return 0; }
+    switch (typeId)
+    {
+        case MOTOR_VAR_TYPE_HALL_STATE:     return Hall_VarId_Get(&p_motor->SENSOR_TABLE.HALL.HALL, varId);
+        case MOTOR_VAR_TYPE_HALL_CONFIG:    return _Hall_ConfigId_Get(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId);
+        #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+        case MOTOR_VAR_TYPE_ENCODER_STATE:  return Encoder_ModeDT_VarId_Get(p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE, varId);
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG: return _Encoder_ConfigId_Get(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId);
+        #endif
+        default: return 0;
+    }
+}
+
+void Motor_VarType_Sensor_Set(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId, int varValue)
+{
+    switch (typeId)
+    {
+        case MOTOR_VAR_TYPE_HALL_CONFIG:      _Hall_ConfigId_Set(&p_motor->SENSOR_TABLE.HALL.HALL.P_STATE->Config, varId, varValue);            break;
+        case MOTOR_VAR_TYPE_HALL_CMD:         Motor_Hall_Cmd(p_motor, varId, varValue); break;
+        case MOTOR_VAR_TYPE_HALL_STATE:                  break;
+        #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+        case MOTOR_VAR_TYPE_ENCODER_CONFIG:   _Encoder_ConfigId_Set(&p_motor->SENSOR_TABLE.ENCODER.ENCODER.P_STATE->Config, varId, varValue);   break;
+        case MOTOR_VAR_TYPE_ENCODER_CMD:                 break;
+        case MOTOR_VAR_TYPE_ENCODER_STATE:               break;
+        #endif
+        default: break;
+    }
+}
+
+// bool Motor_VarType_Sensor_CheckSet(Motor_T * p_motor, Motor_VarType_Sensor_T typeId)
+// {
+//     if (p_motor == NULL) { return false; }
+//     switch (typeId)
+//     {
+//         case MOTOR_VAR_TYPE_HALL_STATE:     return false;
+//         case MOTOR_VAR_TYPE_HALL_CONFIG:    return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_HALL_CMD:       return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
+//         #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+//         case MOTOR_VAR_TYPE_ENCODER_STATE:  return false;
+//         case MOTOR_VAR_TYPE_ENCODER_CONFIG: return Motor_IsConfig(p_motor);
+//         case MOTOR_VAR_TYPE_ENCODER_CMD:    return Motor_IsState(p_motor, &MOTOR_STATE_CALIBRATION);
+//         #endif
+//         default: return false;
+//     }
+// }
+
 
 /******************************************************************************/
 /*

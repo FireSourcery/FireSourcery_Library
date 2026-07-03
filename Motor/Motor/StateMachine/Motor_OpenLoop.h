@@ -57,20 +57,20 @@ extern void Motor_OpenLoop_StartRunChain(Motor_T * p_motor);
 /*
     Open Loop SubState
 */
-typedef enum Motor_OpenLoop_StateId
-{
-    MOTOR_OPEN_LOOP_STATE_ENTER,
-    MOTOR_OPEN_LOOP_STATE_PASSIVE,
-    // MOTOR_OPEN_LOOP_STATE_CMD,
-    MOTOR_OPEN_LOOP_STATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_RUN,
-    // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
-    MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
-}
-Motor_OpenLoop_StateId_T;
+// typedef enum Motor_OpenLoop_StateId
+// {
+//     MOTOR_OPEN_LOOP_STATE_ENTER,
+//     MOTOR_OPEN_LOOP_STATE_PASSIVE,
+//     // MOTOR_OPEN_LOOP_STATE_CMD,
+//     MOTOR_OPEN_LOOP_STATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_RUN,
+//     // MOTOR_OPEN_LOOP_STATE_VALIDATE_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_ALIGN,
+//     MOTOR_OPEN_LOOP_STATE_START_UP_RUN,
+// }
+// Motor_OpenLoop_StateId_T;
 
-static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Context_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP); }
+// static inline Motor_OpenLoop_StateId_T Motor_OpenLoop_GetStateId(const Motor_Context_T * p_motor) { return StateMachine_GetActiveSubStateId(&p_motor->StateMachine, &MOTOR_STATE_OPEN_LOOP); }
 
 /*
     Access by Id - directly correspond to VarId

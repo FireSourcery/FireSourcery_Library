@@ -42,3 +42,4 @@ extern void Motor_Hall_Calibrate(Motor_T * p_motor);
 
 extern void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue);
 
+
