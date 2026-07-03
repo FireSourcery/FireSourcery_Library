@@ -427,13 +427,13 @@ void Motor_VarType_SubModule_Set(Motor_T * p_motor, Motor_VarType_SubModule_T ty
     Include all compile time sensor options
 */
 // #if defined(MOTOR_SENSOR_HALL_ENABLE)
-#include "Hall/Motor_Hall.h"
+#include "Sensor/Hall/Motor_Hall.h"
 // #endif
 #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
-#include "Encoder/Motor_Encoder.h"
+#include "Sensor/Encoder/Motor_Encoder.h"
 #endif
 
-#include "RotorSensor_Table.h"
+#include "Sensor/RotorSensor_Table.h"
 
 int Motor_VarType_Sensor_Get(Motor_T * p_motor, Motor_VarType_Sensor_T typeId, int varId)
 {

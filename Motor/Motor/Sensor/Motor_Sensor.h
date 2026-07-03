@@ -33,6 +33,7 @@
 
 // #if defined(MOTOR_SENSOR_HALL_ENABLE)
 #include "Hall/Motor_Hall.h"
+#include "Hall/Motor_HallEncoder.h"
 // #endif
 #if defined(MOTOR_SENSOR_ENCODER_ENABLE)
 #include "Encoder/Motor_Encoder.h"
