@@ -72,6 +72,7 @@ static inline fract16_t Phase_Analog_IFract16Of(uint16_t zero, uint16_t adcu) { 
 /*
     optionally store as base ref
 */
+// typedef const struct Phase_AnalogBoard
 typedef const struct Phase_AnalogCalibration
 {
     volatile uint32_t V_PHASE_R1;
