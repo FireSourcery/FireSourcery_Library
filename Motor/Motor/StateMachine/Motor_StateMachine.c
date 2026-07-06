@@ -630,7 +630,7 @@ static State_T * Calibration_InputControl(Motor_T * p_motor, state_value_t phase
 {
     switch ((Phase_VOutMode_T)phaseOutput)
     {
-        case PHASE_VOUT_Z:     Phase_Deactivate(&p_motor->PHASE); break;
+        case PHASE_VOUT_Z:     Phase_Deactivate(&p_motor->PHASE); return &MOTOR_STATE_PASSIVE;
         case PHASE_VOUT_0:     Phase_ActivateV0(&p_motor->PHASE); break;
         case PHASE_VOUT_PWM:   Phase_ActivateV0(&p_motor->PHASE); break; /* stay in calibration, user cmd to step through substates */
         default:    return NULL;

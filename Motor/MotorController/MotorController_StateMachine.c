@@ -134,6 +134,26 @@ static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->C
 //     return MotorController_App_EnterMain(p_dev);
 // }
 
+/*
+    Entry guard for Park
+    Note: Motor_OpenLoop exits on VOut 0/Z
+    Motor_Calibration needs Calibration_Exit
+*/
+static State_T * Common_InputPark(MotorController_T * p_dev)
+{
+    State_T * p_nextState = NULL;
+    // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
+    /* Guard applies for both Async and Sync Motor handling transitions */
+    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_STANDBY; }
+    /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
+    /* Applies Disable on enter */
+    else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
+    {
+        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_STANDBY; }
+    }
+    else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
+    return p_nextState;
+}
 
 /******************************************************************************/
 /*!
@@ -295,33 +315,6 @@ static void Main_Entry(MotorController_T * p_dev)
 /* App State common background proc */
 static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
-/*
-    Entry guard for Park
-    Note: Motor_OpenLoop exits on VOut 0/Z
-    Motor_Calibration needs Calibration_Exit
-*/
-static State_T * Common_InputPark(MotorController_T * p_dev)
-{
-    State_T * p_nextState = NULL;
-    // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
-    /* Guard applies for both Async and Sync Motor handling transitions */
-    if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_STANDBY; }
-    /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
-    /* Applies Disable on enter */
-    else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
-    {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_STANDBY; }
-        /* normalize on park. or  */
-        else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION))
-        {
-            Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);
-            p_nextState = &MC_STATE_STANDBY;
-        }
-        //todo   motor deactive
-    }
-    else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
-    return p_nextState;
-}
 
 /* App State defaults transitions — propagated from sub-states via HSM */
 static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
@@ -531,6 +524,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 }
                 else
                 {
+                    p_nextState = &MC_STATE_FAULT;
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR;
                 }
                 break;

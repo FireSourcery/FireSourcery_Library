@@ -147,7 +147,7 @@ typedef enum MotorController_StateCmd
 {
     MOTOR_CONTROLLER_STATE_CMD_PARK, /* Enter Park */
     MOTOR_CONTROLLER_STATE_CMD_E_STOP,
-    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App to Main-Idle */
+    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App to Main-Idle. Disable substate inputs. */
     MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit park. Enter Configured */
 }
 MotorController_StateCmd_T;

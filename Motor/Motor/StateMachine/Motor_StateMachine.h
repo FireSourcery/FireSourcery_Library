@@ -95,7 +95,7 @@ typedef enum Motor_StateInput
     MOTOR_STATE_INPUT_DIRECTION,        /* [Motor_Direction_T] */
     MOTOR_STATE_INPUT_OPEN_LOOP,        /* OpenLoop Cmd */
     MOTOR_STATE_INPUT_CALIBRATION,      /* Calibration Cmd */
-    // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start, Timer, etc */
+    // MOTOR_STATE_INPUT_STATE_CMD,     /* Transition Cmd, common entry for Stop, Start */
     // MOTOR_STATE_INPUT_USER_BUFFER,
     MOTOR_TRANSITION_TABLE_LENGTH,
 }
@@ -239,10 +239,6 @@ typedef union Motor_FaultCmd
     uint32_t Value;
 }
 Motor_FaultCmd_T;
-
-// extern void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
-// extern void Motor_StateMachine_ClearFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags);
-// extern bool Motor_StateMachine_TryClearFaultAll(Motor_T * p_motor);
 
 static void Motor_StateMachine_SetFault(Motor_T * p_motor, Motor_FaultFlags_T faultFlags)
 {
