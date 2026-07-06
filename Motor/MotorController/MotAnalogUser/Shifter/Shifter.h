@@ -33,37 +33,6 @@
 #define SHIFTER_PINS_AVAILABLE_FR
 #endif
 
-/*
-    Set convienience
-    Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
-        FNR — three pins, one per gear, mutually exclusive
-        FR  — two pins (forward + reverse). Neutral = neither pressed
-        R   — one pin (reverse). Forward = not reverse. Neutral never emitted
-*/
-typedef enum Shifter_PinMode
-{
-    SHIFTER_PIN_MODE_FNR = 0b111,
-    SHIFTER_PIN_MODE_FR = 0b011,
-    SHIFTER_PIN_MODE_R = 0b001,
-}
-Shifter_PinMode_T;
-
-// static const Shifter_Pins_T SHIFTER_PIN_MODE_FNR    = { .Value = 0b111 };
-// static const Shifter_Pins_T SHIFTER_PIN_MODE_FR     = { .Value = 0b011 };
-// static const Shifter_Pins_T SHIFTER_PIN_MODE_R      = { .Value = 0b001 };
-
-/******************************************************************************/
-/*
-    Direction — level only. Edge queried separately.
-*/
-/******************************************************************************/
-typedef enum Shifter_Direction
-{
-    SHIFTER_DIRECTION_NEUTRAL,
-    SHIFTER_DIRECTION_FORWARD,
-    SHIFTER_DIRECTION_REVERSE,
-}
-Shifter_Direction_T;
 
 /******************************************************************************/
 /*
@@ -91,7 +60,34 @@ typedef union Shifter_Pins
 }
 Shifter_Pins_T;
 
+/*
+    Set convienience
+    Wiring variants. (Neutral<<2 | Forward<<1 | Reverse<<0) — assignable directly to Config.PinMode.Value.
+        FNR — three pins, one per gear, mutually exclusive
+        FR  — two pins (forward + reverse). Neutral = neither pressed
+        R   — one pin (reverse). Forward = not reverse. Neutral never emitted
+*/
+typedef enum Shifter_PinMode
+{
+    SHIFTER_PIN_MODE_FNR = 0b111,
+    SHIFTER_PIN_MODE_FR = 0b011,
+    SHIFTER_PIN_MODE_R = 0b001,
+}
+Shifter_PinMode_T;
 
+
+/******************************************************************************/
+/*
+    Direction — level only. Edge queried separately.
+*/
+/******************************************************************************/
+typedef enum Shifter_Direction
+{
+    SHIFTER_DIRECTION_REVERSE = -1,
+    SHIFTER_DIRECTION_NEUTRAL = 0,
+    SHIFTER_DIRECTION_FORWARD = 1,
+}
+Shifter_Direction_T;
 
 /******************************************************************************/
 /*
@@ -137,7 +133,7 @@ Shifter_T;
 
 #define SHIFTER_STATE_ALLOC() (&(Shifter_State_T){0})
 
-#define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, NeutralHal, NeutralId, IsInvert, p_Timer ) (Shifter_T) \
+#define SHIFTER_INIT_FROM(p_State, ForwardHal, ForwardId, ReverseHal, ReverseId, NeutralHal, NeutralId, IsInvert, p_Timer) (Shifter_T) \
 {                                                                                                                                                 \
     .P_STATE = (p_State),                                                                                                                         \
     .FORWARD_DIN = USER_DIN_INIT_FROM((ForwardHal), (ForwardId), (IsInvert), &(p_State)->ForwardState, (p_Timer), 10U),                          \
@@ -157,6 +153,7 @@ static inline Shifter_Direction_T _Shifter_Decode_R(Shifter_Pins_T pins)
     static const Shifter_Direction_T DECODE_TABLE[8] = { _F, _F, _R, _R, _F, _F, _R, _R };
     return DECODE_TABLE[pins.Value];
 }
+
 static inline Shifter_Direction_T _Shifter_Decode_FR(Shifter_Pins_T pins)
 {
 #define _N SHIFTER_DIRECTION_NEUTRAL

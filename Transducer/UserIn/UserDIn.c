@@ -53,33 +53,36 @@ static inline uint32_t GetTime(UserDIn_T * p_dev) { return *p_dev->P_TIMER; }
 */
 void UserDIn_InitFrom(UserDIn_T * p_dev, UserDIn_Config_T * p_config)
 {
-    // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
-    if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; return; } /* runtime config for no pin connected. read as 0 */
-    Pin_Input_Init(&p_dev->PIN);
-
-    if (p_config != NULL)
-    {
-        p_dev->P_STATE->Mode = p_config->Mode;
-    #ifdef USER_DIN_CMD_TABLE_ENABLE
-        p_dev->P_STATE->OptCmd = p_dev->P_CMD_TABLE[p_config->CmdId];
-    #else
-        p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
-    #endif
-    }
+    if (p_dev->PIN.P_HAL_PIN == NULL) { p_dev->P_STATE->Mode = USER_DIN_MODE_DISABLED; } /* runtime config for no pin connected. read as 0 */
     else
     {
+        Pin_Input_Init(&p_dev->PIN);
+
+        // if (p_config != NULL) { p_dev->P_STATE->Config = *p_config; }
+        if (p_config != NULL)
+        {
+            p_dev->P_STATE->Mode = p_config->Mode;
+        #ifdef USER_DIN_CMD_TABLE_ENABLE
+            p_dev->P_STATE->OptCmd = p_dev->P_CMD_TABLE[p_config->CmdId];
+        #else
+            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        #endif
+        }
+        else
+        {
+            p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
+            p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        }
+
+        Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
+
         p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
-        p_dev->P_STATE->OptCmd = UserDIn_CmdNull;
+        /* Initialize debounce state to current pin reading */
+        p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
+        p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
+        p_dev->P_STATE->Debounce.Output = p_dev->P_STATE->Debounce.State0;
+        p_dev->P_STATE->OutputPrev = p_dev->P_STATE->Debounce.State0;
     }
-
-    Debounce_Init(&p_dev->P_STATE->Debounce, p_dev->DEBOUNCE_TIME);
-
-    p_dev->P_STATE->Mode = USER_DIN_MODE_NORMAL;
-    /* Initialize debounce state to current pin reading */
-    p_dev->P_STATE->Debounce.Time0 = GetTime(p_dev);
-    p_dev->P_STATE->Debounce.State0 = ReadPin(p_dev);
-    p_dev->P_STATE->Debounce.Output = p_dev->P_STATE->Debounce.State0;
-    p_dev->P_STATE->OutputPrev = p_dev->P_STATE->Debounce.State0;
 }
 
 void UserDIn_Init(UserDIn_T * p_dev) { UserDIn_InitFrom(p_dev, p_dev->P_NVM_CONFIG); }

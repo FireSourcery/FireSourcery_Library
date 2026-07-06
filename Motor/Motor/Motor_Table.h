@@ -125,12 +125,12 @@ static inline bool Motor_Table_IsEverySpeedZero(Motor_Table_T * p_table)
 }
 
 /*  */
-static int _Motor_Table_GetDirectionAll(Motor_Table_T * p_table)
+static Motor_Direction_T _Motor_Table_GetDirectionAll(Motor_Table_T * p_table)
 {
-    volatile int direction;
-    if (_Motor_Table_IsEvery(p_table, Motor_IsDirectionForward) == true) { direction = 1; }
-    else if (_Motor_Table_IsEvery(p_table, Motor_IsDirectionReverse) == true) { direction = -1; }
-    else { direction = 0; } /* overload stop and Error */
+    volatile Motor_Direction_T direction;
+    if (_Motor_Table_IsEvery(p_table, Motor_IsDirectionForward) == true) { direction = MOTOR_DIRECTION_FORWARD; }
+    else if (_Motor_Table_IsEvery(p_table, Motor_IsDirectionReverse) == true) { direction = MOTOR_DIRECTION_REVERSE; }
+    else { direction = MOTOR_DIRECTION_NULL; } /* overload stop and Error */
     return direction;
 }
 

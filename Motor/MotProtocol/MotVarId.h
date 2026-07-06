@@ -49,13 +49,6 @@ typedef union MotVarId
         uint16_t Instance       : 2U; /* Instance. instance > 4 can use Prefix or Resv */
         uint16_t Resv           : 2U;
     };
-    // struct
-    // {
-    //     uint16_t _Base           : 4U;
-    //     uint16_t FullType        : 8U; /* Combines Type and Prefix */
-    //     uint16_t _Instance       : 2U;
-    //     uint16_t _Resv           : 2U;
-    // };
     uint16_t Value;
 }
 MotVarId_T;

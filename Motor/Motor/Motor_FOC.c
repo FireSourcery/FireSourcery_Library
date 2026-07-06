@@ -30,6 +30,9 @@
 /******************************************************************************/
 #include "Motor_FOC.h"
 
+#if !defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE) && !defined(MOTOR_FOC_FIELD_WEAKENING_DISABLE)
+#define MOTOR_FOC_FIELD_WEAKENING_ENABLE
+#endif
 
 /******************************************************************************/
 /*!
@@ -55,8 +58,13 @@ void Motor_FOC_AngleControl(Motor_Context_T * p_motor, fract16_t vBus, angle16_t
 /* Common state machine call for torque */
 void _Motor_FOC_ProcTorqueReq(Motor_Context_T * p_context, ufract16_t vbus, fract16_t req)
 {
-    Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), FOC_ProcIdFieldWeakening(&p_context->Foc, vbus), Ramp_ProcNextOf(&p_context->TorqueRamp, req));
+#if defined(MOTOR_FOC_FIELD_WEAKENING_ENABLE)
+    fract16_t id = FOC_ProcIdFieldWeakening(&p_context->Foc, vbus);
     // FOC_ProcIFeedback_FieldWeakening(&p_context->Foc, VBus_Fract16(p_motor->P_VBUS), Ramp_ProcNext(&p_context->TorqueRamp));
+#else
+    fract16_t id = 0;
+#endif
+    Motor_FOC_AngleControl(p_context, vbus, Angle_Value(&p_context->SensorState.AngleSpeed), id, Ramp_ProcNextOf(&p_context->TorqueRamp, req));
 }
 
 void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
@@ -69,6 +77,7 @@ void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle1
 {
     Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_OpenLoopILimit(&p_motor->Config))), 0);
     // Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_GetIAlign(&p_motor->Config))), 0);
+    // optionally split to non deboupled.
 }
 
 void Motor_FOC_ProcAngleAlign(Motor_T * p_motor, angle16_t angle, fract16_t idReq)
@@ -113,16 +122,22 @@ void Motor_FOC_MatchVOutput(Motor_Context_T * p_context)
     On FeedbackMode update and Freewheel to Run
     StateMachine blocks feedback proc
 */
-/* alternatively handle on capture */
+/* From open terminals, (I≈0, ≤ base speed) */
+/* Id, Iq cleared on freewheel entry */
+/* vq == 0 from passive before bemf sample completes */
+/* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
+/* Outputlimits updated prior to calling */
 void Motor_FOC_MatchVFreewheel(Motor_Context_T * p_context)
 {
     FOC_CaptureSpeed(&p_context->Foc, Motor_GetDecouplingOmega(p_context));
-    // if (FOC_Vq(&p_context->Foc) == 0) {  }
-    FOC_MatchIVFreewheel(&p_context->Foc);
+#if defined(MOTOR_V_MATCH_SENSOR)
+    FOC_MatchIVSensor(&p_context->Foc);
+#elif defined(MOTOR_V_MATCH_SPEED)
+    FOC_MatchIVSpeed(&p_context->Foc);
+#endif
 }
 
-/* vq == 0 from passive before bemf sample completes */
-/* Vabc is either 0 from clear on entry to PASSIVE or set by CaptureAngleVBemf */
+
 void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_context)
 {
     Ramp_SetOutputState(&p_context->TorqueRamp, FOC_Iq(&p_context->Foc)); /* transitioning without release into freewheel, math iq */

@@ -36,6 +36,7 @@
 /*
     Call State/SubStates Cmds
     vars not stored in host view cache
+    returns a generic union status
 */
 /******************************************************************************/
 int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_SystemCmd_T id, int value)
@@ -58,6 +59,8 @@ int MotorController_CallSystemCmd(MotorController_T * p_dev, MotorController_Sys
             MotorController_InputLock(p_dev, (MotorController_LockId_T)value);
             if (MotorController_IsEnterLockError(p_dev, (MotorController_LockId_T)value) == true) { MotBuzzer_Short(MotorController_Buzzer(p_dev)); }
             status = MotorController_GetLockOpStatus(p_dev);
+            // status = MotorController_InputLock(p_dev, (MotorController_LockId_T)value);
+            // if (status != MOTOR_CONTROLLER_LOCK_OP_STATUS_OK) { MotBuzzer_Short(MotorController_Buzzer(p_dev)); }
             break;
 
         case MOT_USER_SYSTEM_LOCK_STATE_STATUS:     status = MotorController_IsLockOpComplete(p_dev);               break;

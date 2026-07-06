@@ -207,12 +207,12 @@ static inline sign_t RotorSensor_GetFeedbackDirection(const RotorSensor_T * p_se
 static inline angle16_t RotorSensor_GetMechanicalAngle(const RotorSensor_T * p_sensor) { return p_sensor->P_STATE->MechanicalAngle; }
 
 
-#ifndef ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16
-#define ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16 (((int32_t)INT16_MAX * 2) / 64) /* ~2% */
-#endif
-static inline bool RotorSensor_IsSpeedReliable(const RotorSensor_T * p_sensor) { return math_abs(RotorSensor_GetSpeed_Fract16(p_sensor)) > ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16; }
+// #ifndef ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16
+// #define ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16 (((int32_t)INT16_MAX * 2) / 64) /* ~2% */
+// #endif
+// static inline bool RotorSensor_IsSpeedReliable(const RotorSensor_T * p_sensor) { return math_abs(RotorSensor_GetSpeed_Fract16(p_sensor)) > ROTOR_DIRECTION_SPEED_THRESHOLD_FRACT16; }
 
-static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(const RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
+// static inline sign_t RotorSensor_GetEffectiveFeedbackDirection(const RotorSensor_T * p_sensor) { return (RotorSensor_IsSpeedReliable(p_sensor) ? RotorSensor_GetFeedbackDirection(p_sensor) : 0); }
 
 /******************************************************************************/
 /*!

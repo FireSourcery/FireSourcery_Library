@@ -78,6 +78,11 @@
 #define MOTOR_OPEN_LOOP_RUN_DISABLE
 #endif
 
+#if !defined(MOTOR_V_MATCH_SENSOR) && !defined(MOTOR_V_MATCH_SPEED)
+#define MOTOR_V_MATCH_SENSOR
+#endif
+
+
 #if     defined(MOTOR_UNIT_CONVERSION_LOCAL)
 #if defined(MOTOR_SURFACE_SPEED_ENABLE)
 #endif
@@ -380,6 +385,7 @@ typedef const struct Motor
     const FOC_Config_T * P_FOC_NVM_CONFIG; /* avoid loading a duplicate copy into ram */
     /*
         System-scope arbitration handles. Pointers to LimitArray_Augments_T (cached aggregate) only — Motor reads derate state.
+        Handle the system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.
     */
     const LimitArray_Augments_T * P_SYSTEM_I_LIMIT;
     const LimitArray_Augments_T * P_SYSTEM_SPEED_LIMIT;

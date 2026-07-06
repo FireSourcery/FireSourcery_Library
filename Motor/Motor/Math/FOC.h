@@ -42,11 +42,6 @@
 #define FOC_CLARKE_ABC
 #endif
 
-// move to caller
-#if !defined(FOC_V_MATCH_SENSOR) && !defined(FOC_V_MATCH_SPEED)
-#define FOC_V_MATCH_SENSOR
-#endif
-
 /*
     Runtime
 */
@@ -407,18 +402,6 @@ static inline void FOC_MatchIVSensor(FOC_T * p_foc)
     else { FOC_MatchIVState(p_foc); } /* FOC_ProcVBemfClarkePark */
 }
 
-/* From open terminals, freewheel-no-sense, (I≈0, ≤ base speed) */
-/* Id, Iq cleared on freewheel entry */
-/* Outputlimits updated prior to calling */
-static inline void FOC_MatchIVFreewheel(FOC_T * p_foc)
-{
-#if defined(FOC_V_MATCH_SENSOR)
-    FOC_MatchIVSensor(p_foc);
-#elif defined(FOC_V_MATCH_SPEED)
-    FOC_MatchIVSpeed(p_foc);
-#endif
-}
-
 
 
 
@@ -648,7 +631,11 @@ static inline void FOC_Reset(FOC_T * p_foc)
 
 }
 
+/******************************************************************************/
+/*!
 
+*/
+/******************************************************************************/
 static inline bool FOC_Config_IsFwEnabled(const FOC_Config_T * p_config) { return (p_config->FieldWeakening.IdLimit > 0U); }
 
 static inline int FOC_Config_IsValid(const FOC_Config_T * p_config)
@@ -682,7 +669,7 @@ typedef enum Motor_Var_Foc
 }
 Motor_Var_Foc_T;
 
-static int Foc_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
+static int FOC_Var_Get(FOC_T * p_foc, Motor_Var_Foc_T varId)
 {
     int value = 0;
     switch (varId)
@@ -722,8 +709,7 @@ static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
     {
         case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
         case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-        // temporarily
-        case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;
+        case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;         // temporarily
         case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
         case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
         case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;

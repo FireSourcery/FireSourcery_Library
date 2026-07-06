@@ -51,6 +51,9 @@ typedef void (*MotorController_App_Proc_T)(MotorController_T * p_mc);
     - Owns an HSM subtree under MC_STATE_MAIN  (State / Mode pattern)
     - Registers behavior via a fixed vtable    (Microkernel / Plugin)
     - Internally selects Strategy tables for input motor mappings
+
+    if only one app is used, alternatively, code as wrapper
+    this way optionally exapands to runtime selection
 */
 /******************************************************************************/
 typedef const struct MotorController_App

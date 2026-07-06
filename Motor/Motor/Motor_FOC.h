@@ -83,20 +83,11 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
     }
 }
 
-
 // void Motor_FOC_WriteDuty(Motor_T * p_motor)
 // {
 //     Phase_WriteSvpwm(&p_motor->PHASE, VBus_Inv_Fract32(p_motor->P_VBUS), FOC_Va(&p_motor->P_MOTOR->Foc), FOC_Vb(&p_motor->P_MOTOR->Foc), FOC_Vc(&p_motor->P_MOTOR->Foc));
 // }
 
-/// static inline void Motor_FOC_CaptureSpeed(Motor_T * p_motor)
-// {
-// #if defined(MOTOR_PU_BASIS_ANGLE16)
-//     FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor));
-// #else
-//     FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, RotorSensor_GetSpeed_Fract16(p_motor->P_MOTOR->p_ActiveSensor));
-// #endif
-// }
 
 /*
     Decoupling-basis ω input for FOC_CaptureSpeed.
@@ -104,11 +95,18 @@ static inline void Motor_FOC_WriteDuty_Thread(Motor_T * p_motor)
     rpm/Q15      ω_pu (fract16, 32768 = ω_base)
     Pairs with the L_pu / ψ_pu encoding selected by MOTOR_PU_BASIS_ANGLE16.
 */
+static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor)
+{
 #if defined(MOTOR_PU_BASIS_ANGLE16)
-static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor); }
+    return RotorSensor_GetElectricalDelta(p_motor->p_ActiveSensor);
 #else
-static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+    return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor);
 #endif
+}
+/// static inline void Motor_FOC_CaptureSpeed(Motor_T * p_motor)
+// {
+// FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor));
+// }
 
 /******************************************************************************/
 /*!

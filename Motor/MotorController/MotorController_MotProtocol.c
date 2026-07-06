@@ -62,43 +62,6 @@ static packet_size_t Ping(MotorController_T * p_dev, MotPacket_PingResp_T * p_tx
 /******************************************************************************/
 /*! Version */
 /******************************************************************************/
-// typedef struct PACKET_PACKED MotorController_Version
-// {
-//     Version_T MainVersion;
-//     Version_T LibraryVersion;
-//     Version_T ProtocolVersion;
-//     // Version_T HardwareVersion;
-//     // Version_T BootloaderVersion;
-//     uint8_t MotorCount;
-//     uint8_t VMonitorCount;
-//     uint8_t ThermistorMosfetsCount;
-//     uint8_t ProtocolSocketCount;
-//     uint8_t CanSocketCount;
-// }
-// MotorController_Version_T;
-
-// static packet_size_t Version(MotorController_T * p_dev, MotPacket_VersionResp_T * p_txPayload, const MotPacket_VersionReq_T * p_rxPayload)
-// {
-//     (void)p_rxPayload;
-//     MotorController_Version_T * p_payload = (MotorController_Version_T *)p_txPayload;
-
-//     p_payload->MainVersion.Value = p_dev->MAIN_VERSION.Value;
-//     p_payload->LibraryVersion.Value = MOTOR_LIBRARY_VERSION;
-//     p_payload->ProtocolVersion.Value = MOT_PACKET_VERSION_WORD32;
-//     // p_payload->HardwareVersion.Value = p_dev->HARDWARE_VERSION.Value;
-//     // p_payload->BootloaderVersion.Value = p_dev->BOOTLOADER_VERSION.Value;
-//     p_payload->MotorCount = p_dev->MOTORS.LENGTH;
-//     p_payload->VMonitorCount = 3U;
-//     p_payload->ThermistorMosfetsCount = p_dev->HEAT_MOSFETS.COUNT;
-//     p_payload->ProtocolSocketCount = p_dev->PROTOCOL_COUNT;
-// #if defined(MOTOR_CONTROLLER_CAN_BUS_ENABLE)
-//     p_payload->CanSocketCount = p_dev->CAN_SOCKET_COUNT;
-// #else
-//     p_payload->CanSocketCount = 0U;
-// #endif
-// return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
-//     return sizeof(MotorController_Version_T);
-// }
 
 static packet_size_t Version(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
@@ -253,14 +216,15 @@ static Protocol_ReqCode_T WriteData_Blocking(MotorController_T * p_dev, Protocol
 // /******************************************************************************/
 // /*! Read Single Var */
 // /******************************************************************************/
-// static uint8_t ReadVar(MotorController_T * p_dev, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
+// static uint8_t ReadVar32(MotorController_T * p_dev, MotPacket_ReadVarResp_T * p_txPacket, const MotPacket_ReadVarReq_T * p_rxPacket)
 // {
 //     return MotPacket_ReadVarResp_Build(p_txPacket, MotorController_Var_Get(p_dev, (MotVarId_T)MotPacket_ReadVarReq_ParseVarId(p_rxPacket)));
 // }
+
 // /******************************************************************************/
 // /*! Write Single Var */
 // /******************************************************************************/
-// static uint8_t WriteVar(MotorController_T * p_dev, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
+// static uint8_t WriteVar32(MotorController_T * p_dev, MotPacket_WriteVarResp_T * p_txPacket, const MotPacket_WriteVarReq_T * p_rxPacket)
 // {
 //     MotPacket_Status_T status = MOT_VAR_STATUS_OK;
 //     if(MotorController_Var_Set(p_dev, (MotVarId_T)MotPacket_WriteVarReq_ParseVarId(p_rxPacket), MotPacket_WriteVarReq_ParseVarValue(p_rxPacket)) == 0U)

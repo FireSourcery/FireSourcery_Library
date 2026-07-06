@@ -74,13 +74,14 @@ static void Calibration_Entry(Motor_T * p_motor)
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     *p_buffer = (CalibrationBuffer_T){ 0 };
     p_buffer->Step = 0U;
-    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
     // Phase_ActivateV0(&p_motor->PHASE);
-    Hall_StartCalibrate(GetHall(p_motor));
     // PID_Reset(&p_motor->P_MOTOR->Foc.PidId);
-    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
     // Ramp_SetOutputState(&p_motor->P_MOTOR->TorqueRamp, 0);
+    TimerT_Periodic_Init(&p_motor->CONTROL_TIMER, p_motor->P_MOTOR->Config.AlignTime_Cycles);
+    Hall_StartCalibrate(GetHall(p_motor));
+    Ramp_SetLimits(&p_motor->P_MOTOR->TorqueRamp, 0, _Motor_GetIAlign(&p_motor->P_MOTOR->Config));
     Motor_SetFeedbackMode(p_motor, MOTOR_FEEDBACK_MODE_CURRENT);
+    // caller Set Direction to reset PidId limits.
 }
 
 /*

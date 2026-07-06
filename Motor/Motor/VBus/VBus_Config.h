@@ -149,6 +149,7 @@ static inline bool VBus_Config_IsValid(const VBus_Config_T * p_config)
         && (p_config->IDerateUnderVFloor_Fract16 <= INT16_MAX)
         && (p_config->IDerateOverVFloor_Fract16  <= INT16_MAX)
         && (p_config->SpeedDerateFloor_Fract16   <= INT16_MAX)
+        // optionally passthrough
         && (p_config->MonitorConfig.Warning.LimitLow  < p_config->MonitorConfig.Nominal)
         && (p_config->MonitorConfig.Warning.LimitHigh > p_config->MonitorConfig.Nominal)
         && (p_config->MonitorConfig.Fault.LimitLow  < p_config->MonitorConfig.Warning.LimitLow)

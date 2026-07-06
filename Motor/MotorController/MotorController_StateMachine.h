@@ -45,10 +45,10 @@
 typedef enum MotorController_StateId
 {
     MC_STATE_ID_INIT,
-    MC_STATE_ID_STANDBY,         /* includes standby */
+    MC_STATE_ID_STANDBY,
     MC_STATE_ID_MAIN,
     MC_STATE_ID_MOTOR_CMD,    /* Substate under main, for motor control command handling. let it be the only substate using a top level id for simplicity */
-    MC_STATE_ID_MOTOR_TUNING,
+    MC_STATE_ID_MOTOR_TUNING, /*  */
     MC_STATE_ID_LOCK,         /* includes calibration */
     MC_STATE_ID_FAULT,        /* includes error handling */
     _MC_STATE_ID_END,
@@ -59,10 +59,11 @@ extern const State_T MC_STATE_INIT;
 extern const State_T MC_STATE_STANDBY;
 extern const State_T MC_STATE_MAIN;
 extern const State_T MC_STATE_MAIN_MOTOR_CMD;
-extern const State_T MC_STATE_MAIN_TUNING;
+extern const State_T MC_STATE_MOTOR_TUNING;
 extern const State_T MC_STATE_LOCK;
 extern const State_T MC_STATE_FAULT;
-/* add P_VAR_ACCESS table this layer only  */
+
+/* optionally add P_VAR_ACCESS table this layer only. handle var acces via var access structs interface only, caller def access structs */
 
 /*
     state_input_t
@@ -123,7 +124,7 @@ static inline bool MotorController_IsLock(MotorController_T * p_dev) { return St
 
 static inline bool MotorController_IsConfig(MotorController_T * p_dev) { return (MotorController_IsLock(p_dev) || MotorController_IsFault(p_dev)); }
 
-static inline bool MotorController_IsTuning(MotorController_T * p_dev) { return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_TUNING); }
+static inline bool MotorController_IsTuning(MotorController_T * p_dev) { return StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MOTOR_TUNING); }
 
 static inline bool MotorController_IsMotorCmdState(MotorController_T * p_dev) { return StateMachine_IsActiveBranch(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN_MOTOR_CMD); }
 
@@ -181,9 +182,9 @@ static inline state_t MotorController_GetMainSubstateId(MotorController_T * p_de
 
 /*
     General Direction
-    App may overwrite.
+    App may use alternative implementation
 */
-static int MotorController_GetDirection(MotorController_T * p_dev) { return _Motor_Table_GetDirectionAll(&p_dev->MOTORS); }
+static Motor_Direction_T MotorController_GetDirection(MotorController_T * p_dev) { return _Motor_Table_GetDirectionAll(&p_dev->MOTORS); }
 
 /******************************************************************************/
 /*!
@@ -265,9 +266,9 @@ typedef enum MotorController_LockOpStatus
     MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
     // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* optionally check state instead */
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_ENTER_ERROR, /* invalid enter, e.g. not in park, or motor running */
-    MOTOR_CONTROLLER_LOCK_OP_STATUS_CMD_ERROR, /* invalid cmd, e.g. not support cmd or exit cmd when not in lock */
+    // MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
+    // MOTOR_CONTROLLER_LOCK_OP_STATUS_ENTER_ERROR, /* invalid enter, e.g. not in park, or motor running */
+    // MOTOR_CONTROLLER_LOCK_OP_STATUS_CMD_ERROR, /* invalid cmd, e.g. not support cmd or exit cmd when not in lock */
 }
 MotorController_LockOpStatus_T;
 

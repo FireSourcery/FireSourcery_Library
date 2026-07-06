@@ -368,7 +368,7 @@ extern uint8_t MotPacket_ByteData_ParseSize(const MotPacket_T * p_packet);
             [MotVarId, Status16], [Value16]
 */
 /******************************************************************************/
-// typedef struct MotPacket_FixedVarReadReq { uint16_t MotVarId; }                                                         MotPacket_FixedVarReadReq_T;
+// typedef struct MotPacket_FixedVarReadReq { uint16_t MotVarId; uint16_t Flags; }                                         MotPacket_FixedVarReadReq_T;
 // typedef struct MotPacket_FixedVarReadResp { uint16_t MotVarId; uint16_t Status; uint32_t Value32; }                     MotPacket_FixedVarReadResp_T;
 
 /******************************************************************************/

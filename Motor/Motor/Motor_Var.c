@@ -263,6 +263,7 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
         case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
+        case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;               break;
         default: break;
     }
     return value;
@@ -386,12 +387,13 @@ int Motor_VarType_SubModule_Get(Motor_T * p_motor, Motor_VarType_SubModule_T typ
         case MOTOR_VAR_TYPE_BOARD_CONST:                return Motor_Var_Board_Get(varId);
         // case MOTOR_VAR_TYPE_PHASE:                      return Phase_VOutVar_Get( &p_motor->PHASE, varId);
         case MOTOR_VAR_TYPE_PHASE_INPUT:                return Phase_Input_Var_Get((Phase_Input_T *)&p_motor->P_MOTOR->PhaseInput, varId);
+        // case MOTOR_VAR_TYPE_ROTOR_OUT:              return _Motor_Var_Rotor_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_OUT:           return HeatMonitor_VarId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_HEAT_MONITOR_CONFIG:        return HeatMonitor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_THERMISTOR_CONFIG:          return HeatMonitor_Thermistor_ConfigId_Get(&p_motor->HEAT_MONITOR, varId);
         case MOTOR_VAR_TYPE_PID_TUNING_IO:              return _Motor_Var_PidTuning_Get(p_motor, varId);
 
-        case MOTOR_VAR_TYPE_FOC_OUT:                    return Foc_Var_Get(&p_motor->P_MOTOR->Foc, varId);
+        case MOTOR_VAR_TYPE_FOC_OUT:                    return FOC_Var_Get(&p_motor->P_MOTOR->Foc, varId);
         case MOTOR_VAR_TYPE_FOC_CONFIG:                 return FOC_Config_Get(&p_motor->P_MOTOR->Foc.Config, varId);
         // case MOTOR_VAR_TYPE_FOC_SENSORLESS:             return FOC_Sensorless_GetVar(&p_motor->P_MOTOR->FocSensorless, varId);
         // case MOTOR_VAR_TYPE_FOC_SENSORLESS_CONFIG:      return Sensorless_Sensor_ConfigId_Get(p_motor->P_MOTOR->p_ActiveSensor, varId);

@@ -616,6 +616,7 @@ static void Calibration_Entry(Motor_T * p_motor)
 {
     Phase_ActivateV0(&p_motor->PHASE); /* Transition from Deactivated or Substates */
     Motor_FOC_ClearFeedbackState(p_motor->P_MOTOR);
+    // _Motor_SetDirection(p_motor, Motor_GetDirectionForward(p_motor->P_MOTOR)); /* reset direction limits */
     p_motor->P_MOTOR->ControlTimerBase = 0U;
 }
 

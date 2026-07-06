@@ -128,7 +128,7 @@ typedef enum Traction_ZeroMode
 {
     TRACTION_ZERO_MODE_FLOAT,       /* "Coast". MOSFETS non conducting. Same as Neutral. */
     TRACTION_ZERO_MODE_REGEN,       /* Regen Brake */
-    TRACTION_ZERO_MODE_IZERO,      /* Zero current/torque */
+    TRACTION_ZERO_MODE_IZERO,       /* Zero current/torque */
     TRACTION_ZERO_MODE_ZERO,        /* Setpoint Zero. No cmd overwrite */
 }
 Traction_ZeroMode_T;

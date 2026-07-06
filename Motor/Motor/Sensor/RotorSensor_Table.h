@@ -67,9 +67,8 @@ typedef enum RotorSensor_Id
 }
 RotorSensor_Id_T;
 
-
 /*
-    [RotorSensor_Table_T] Repo
+    [RotorSensor_Table_T] Repo/Registry
     Holds all selectable sensors. Map common AngleSpeed State
     include all using preprocessor conditions
     There can only be 1 sensor of each type per motor, with fixed corresponding Id
@@ -91,6 +90,34 @@ typedef const struct RotorSensor_Table
 #endif
 }
 RotorSensor_Table_T;
+
+
+typedef union RotorSensor_Enabled
+{
+    uint8_t ALL;
+    struct
+    {
+        uint8_t HALL        : 1;
+        uint8_t ENCODER     : 1;
+        uint8_t SIN_COS     : 1;
+        uint8_t SENSORLESS  : 1;
+    };
+}
+RotorSensor_Enabled_T;
+
+static const RotorSensor_Enabled_T ROTOR_SENSOR_ENABLED =
+{
+    .HALL = true,
+#if defined(MOTOR_SENSOR_ENCODER_ENABLE)
+    .ENCODER = true,
+#endif
+#if defined(MOTOR_SENSOR_SIN_COS_ENABLE)
+    .SIN_COS = true,
+#endif
+#if defined(MOTOR_SENSOR_SENSORLESS_ENABLE)
+    .SENSORLESS = true,
+#endif
+};
 
 
 // #define ROTOR_SENSOR_TABLE_INIT_EMPTY(p_State) ROTOR_SENSOR_INIT_AS_EMPTY(p_State)

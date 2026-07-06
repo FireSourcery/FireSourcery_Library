@@ -174,47 +174,48 @@ typedef enum UserDIn_VarId
 }
 UserDIn_VarId_T;
 
+static inline int UserDIn_Var_Get(UserDIn_T * p_dev, UserDIn_VarId_T varId)
+{
+    switch (varId)
+    {
+        case USER_DIN_OUTPUT:       return UserDIn_GetState(p_dev);
+        case USER_DIN_PIN_STATE:    return Pin_Output_ReadPhysical(&p_dev->PIN);
+        default:  return 0;
+    }
+}
+
 typedef enum UserDIn_ConfigId
 {
-    USER_DIN_CONFIG_CMD_FN,
-    USER_DIN_CONFIG_IS_ENABLED,
+    USER_DIN_CONFIG_CMD_FN, /* Id */
+    USER_DIN_CONFIG_IS_ENABLED, // depreciate
     USER_DIN_CONFIG_MODE,
 }
 UserDIn_ConfigId_T;
 
-static inline int UserDIn_Var_Get(UserDIn_T * p_dev, int varId)
+static inline int UserDIn_Config_Get(UserDIn_Config_T * p_config, UserDIn_ConfigId_T configId)
 {
-    switch (varId)
+    switch (configId)
     {
-        case USER_DIN_OUTPUT:       return UserDIn_GetState(p_dev);
-        case USER_DIN_PIN_STATE:    return Pin_Output_ReadPhysical(&p_dev->PIN);
-        default:  return 0;
+        case USER_DIN_CONFIG_CMD_FN:        return p_config->CmdId;
+        case USER_DIN_CONFIG_MODE:          return p_config->Mode;
+        case USER_DIN_CONFIG_IS_ENABLED:    return (p_config->Mode != USER_DIN_MODE_DISABLED);
+        default: return 0;
     }
 }
 
+/*
+
+*/
 static inline int UserDIn_Var_GetInstance(UserDIn_T * p_array, uint8_t length, uint8_t instance, int varId)
 {
     if (instance >= length) { return 0; }
-    UserDIn_T * p_dev = &p_array[instance];
-    switch (varId)
-    {
-        case USER_DIN_OUTPUT:       return UserDIn_GetState(p_dev);
-        case USER_DIN_PIN_STATE:    return Pin_Output_ReadPhysical(&p_dev->PIN);
-        default:  return 0;
-    }
+    return UserDIn_Var_Get(&p_array[instance], varId);
 }
 
 static inline int UserDIn_Config_GetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId)
 {
     if (instance >= length) { return 0; }
-    UserDIn_Config_T * p_config = &p_array[instance];
-    switch (configId)
-    {
-        case USER_DIN_CONFIG_CMD_FN:        return p_config->CmdId;
-        case USER_DIN_CONFIG_IS_ENABLED:    return (p_config->Mode != USER_DIN_MODE_DISABLED);
-        case USER_DIN_CONFIG_MODE:          return p_config->Mode;
-        default: return 0;
-    }
+    return UserDIn_Config_Get(&p_array[instance], configId);
 }
 
 static inline void UserDIn_Config_SetInstance(UserDIn_Config_T * p_array, uint8_t length, uint8_t instance, int configId, int value)

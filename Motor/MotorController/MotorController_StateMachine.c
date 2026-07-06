@@ -312,13 +312,13 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
     {
         if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_STANDBY; }
         /* normalize on park. or  */
-        // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION))
-        // {
-        //     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);
-        //     p_nextState = &MC_STATE_STANDBY;
-        // }
+        else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION))
+        {
+            Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);
+            p_nextState = &MC_STATE_STANDBY;
+        }
+        //todo   motor deactive
     }
-    // else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_STANDBY; }
     else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
     return p_nextState;
 }
@@ -441,7 +441,7 @@ static State_T * MotorTuning_InputTuning(MotorController_T * p_dev, state_value_
     switch ((MotorController_LockId_T)lockId)
     {
         case MOTOR_CONTROLLER_LOCK_ENTER: return &MC_STATE_LOCK;
-        case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE: return &MC_STATE_MAIN_TUNING;
+        case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE: return &MC_STATE_MOTOR_TUNING;
         // case MOTOR_CONTROLLER_LOCK_EXIT: return
     }
     return NULL;
@@ -471,7 +471,7 @@ static const State_Input_T TUNING_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
     [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)MotorTuning_InputStateCmd,
 };
 
-const State_T MC_STATE_MAIN_TUNING =
+const State_T MC_STATE_MOTOR_TUNING =
 {
     .ID         = MC_STATE_ID_MOTOR_TUNING,
     .DEPTH      = 0U,
@@ -495,7 +495,7 @@ static void Lock_Entry(MotorController_T * p_dev)
     Motor_Table_DisableAll(&p_dev->MOTORS);
     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Enter); /* Enter Calibration State for all motors */
 
-    p_dev->P_MC->LockOpStatus = 0U;
+    p_dev->P_MC->LockOpStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
 
     MotBuzzer_Short(MotorController_Buzzer(p_dev));
 }
@@ -527,8 +527,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = AppParkState(p_dev);  /* if no transition to lock without serial, just use park */
-                    // p_nextState = &MC_STATE_STANDBY; /*  host side handle */
+                    p_nextState = AppParkState(p_dev);
                 }
                 else
                 {
@@ -541,7 +540,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 p_mc->NvmStatus = MotNvm_SaveConfigAll_Blocking(&p_dev->MOT_NVM); /* NvM function will block + disable interrupts */
                 VBus_EnableMonitor(p_dev->P_VBUS);
                 Motor_Table_ForEach(&p_dev->MOTORS, Motor_Reinit); /* Reinit from config, which may have been updated by NvM save */
-                opStatus = 0;
+                opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
                 break;
 
             case MOTOR_CONTROLLER_LOCK_NVM_RESTORE_CONFIG:
@@ -570,7 +569,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
             case MOTOR_CONTROLLER_LOCK_MOTOR_TUNING_MODE: /* keep available for pid tunning */
                 Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                 opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                p_nextState = &MC_STATE_MAIN_TUNING; /* */
+                p_nextState = &MC_STATE_MOTOR_TUNING; /* */
                 break;
         }
     }
