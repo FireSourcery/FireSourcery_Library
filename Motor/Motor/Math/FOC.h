@@ -424,7 +424,7 @@ static inline void FOC_SetVLimits(FOC_T * p_foc, sign_t direction, uint16_t vPha
 {
     interval_t v = interval_of_sign(direction, vPhaseLimit);
     FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
-    PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);
+    PID_SetOutputLimits(&p_foc->PidIq, v.low, v.high);  /* overwritten on loop */
     PID_SetOutputLimits(&p_foc->PidId, 0 - vPhaseLimit, vPhaseLimit);
 }
 
@@ -620,9 +620,9 @@ static inline void FOC_ResetFeedbackState(FOC_T * p_foc)
     PID_CaptureOutputLimits(&p_foc->PidId, -math_abs(p_foc->VLimit.high), math_abs(p_foc->VLimit.high));
     PID_CaptureOutputLimits(&p_foc->PidIq, p_foc->VLimit.low, p_foc->VLimit.high);
     p_foc->IdFw = 0;
-    // p_foc->ElectricalSpeed.OmegaLd = 0;
-    // p_foc->ElectricalSpeed.OmegaLq = 0;
-    // p_foc->ElectricalSpeed.OmegaPsi = 0;
+    p_foc->ElectricalSpeed.OmegaLd = 0;
+    p_foc->ElectricalSpeed.OmegaLq = 0;
+    p_foc->ElectricalSpeed.OmegaPsi = 0;
 }
 
 static inline void FOC_Reset(FOC_T * p_foc)

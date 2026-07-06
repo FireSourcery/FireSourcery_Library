@@ -149,6 +149,7 @@ NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p
     return status;
 }
 
+/* Host handle reboot */
 NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
 {
     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;

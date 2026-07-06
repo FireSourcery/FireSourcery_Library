@@ -122,6 +122,8 @@ extern void Motor_FOC_ProcVControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcAngleControl(Motor_T * p_motor);
 extern void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor);
 
+void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction);
+
 extern void Motor_FOC_ClearFeedbackState(Motor_Context_T * p_motor);
 extern void Motor_FOC_MatchTorqueVState(Motor_Context_T * p_state);
 extern void Motor_FOC_MatchTorqueIState(Motor_Context_T * p_state);

@@ -73,6 +73,7 @@ void Motor_FOC_ProcTorqueReq(Motor_T * p_motor, fract16_t req)
 }
 
 /* Common state machine call for align */
+/* id limits update with FOC_DECOUPLE_ENABLE. id set at direction only when FOC_DECOUPLE disabled */
 void _Motor_FOC_ProcAngleAlign(Motor_Context_T * p_motor, fract16_t vBus, angle16_t angle, fract16_t idReq)
 {
     Motor_FOC_AngleControl(p_motor, vBus, angle, Ramp_ProcNextOf(&p_motor->TorqueRamp, math_clamp(idReq, 0, _Motor_OpenLoopILimit(&p_motor->Config))), 0);
@@ -201,6 +202,14 @@ void Motor_FOC_ProcCaptureAngleVBemf(Motor_Context_T * p_motor)
 {
     FOC_SetTheta(&p_motor->Foc, Angle_Value(&p_motor->SensorState.AngleSpeed));
     FOC_CaptureVBemf(&p_motor->Foc, &p_motor->PhaseInput.V);
+}
+
+
+void Motor_FOC_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
+{
+    Motor_SetDirection(p_dev, direction);
+    // FOC_SetVAntiPlugging(p_foc, direction, vPhaseLimit);
+    FOC_SetVLimits(&p_dev->P_MOTOR->Foc, (sign_t)direction, VBus_GetVPhaseRefSvpwm(p_dev->P_VBUS));
 }
 
 
