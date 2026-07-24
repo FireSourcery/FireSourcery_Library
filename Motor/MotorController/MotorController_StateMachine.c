@@ -82,9 +82,14 @@
     └────────────────────────────────────────────────────────────┘
 */
 /*
-    Top layer handles Park State
+    Top layer handles Standby State
 */
 /******************************************************************************/
+
+#define MC_STATE_MACHINE_INIT_WAIT (1500U + 50U) /* Let 1000ms ADC sampling process once */
+
+static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
+
 const StateMachine_Machine_T MCSM_MACHINE =
 {
     .P_STATE_INITIAL = &MC_STATE_INIT,
@@ -122,9 +127,8 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
     MotorController AppTable
 */
 static State_T * EnterAppMain(MotorController_T * p_dev) { Motor_Table_EnableAll(&p_dev->MOTORS); return MotorController_App_EnterMain(p_dev); }
-static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->Config.IsParkStateEnabled ? &MC_STATE_STANDBY : EnterAppMain(p_dev)); }
 
-// State_T * MotorController_ResolveInitialParkState(MotorController_T * p_dev)
+// State_T * MotorController_ResolveInitialStandbyState(MotorController_T * p_dev)
 // {
 //     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return &MC_STATE_STANDBY; }
 //     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
@@ -135,11 +139,11 @@ static State_T * AppParkState(MotorController_T * p_dev) { return(p_dev->P_MC->C
 // }
 
 /*
-    Entry guard for Park
+    Entry guard for Standby
     Note: Motor_OpenLoop exits on VOut 0/Z
     Motor_Calibration needs Calibration_Exit
 */
-static State_T * Common_InputPark(MotorController_T * p_dev)
+static State_T * Common_InputStandby(MotorController_T * p_dev)
 {
     State_T * p_nextState = NULL;
     // Motor_Table_DisableAll(&p_dev->MOTORS); /* simplifies caller side, when Motor set to Async transition */
@@ -159,10 +163,10 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
 /*!
     @brief MotorController State Constraints
     Each MotorController State constrains the range of Motor States
-    INIT            INIT or already DISABLED)
-    PARK            DISABLED
-    MAIN            PASSIVE / RUN / OPEN_LOOP / DISABLED?
-    LOCK            DISABLED / CALIBRATION
+    INIT            INIT / DEACTIVATED
+    STANDBY         DEACTIVATED
+    MAIN            PASSIVE / RUN / OPEN_LOOP
+    LOCK            DEACTIVATED / CALIBRATION
     FAULT           FAULT
 */
 /******************************************************************************/
@@ -170,13 +174,11 @@ static State_T * Common_InputPark(MotorController_T * p_dev)
 /*!
     @brief Init State
 
-    Init State does not transistion to fault, wait for ADC
+    Init State does not transistion to fault,
+        Wait for initial ADC readings
+        wait for motor exit Init
 */
 /******************************************************************************/
-#define MC_STATE_MACHINE_INIT_WAIT (1500U + 50U) /* Let 1000ms ADC sampling process once */
-
-static_assert(MC_STATE_MACHINE_INIT_WAIT > MOTOR_STATE_MACHINE_INIT_WAIT);
-
 static void Init_Entry(MotorController_T * p_dev)
 {
     SysTime_Millis = 0U; /* Reset SysTime in case of reboot */
@@ -198,8 +200,6 @@ static State_T * Init_Next(MotorController_T * p_dev)
     State_T * p_nextState = NULL;
     MotorController_Context_T * p_mc = p_dev->P_MC;
 
-    /* Wait for initial ADC readings */
-    // wait for every motor exit init
     if (SysTime_GetMillis() > MC_STATE_MACHINE_INIT_WAIT)
     {
         MotorController_PollFaultFlags(p_dev); /* Clear latching fault flags set by sensor polling in Main thread */
@@ -212,7 +212,8 @@ static State_T * Init_Next(MotorController_T * p_dev)
         if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED) == false) { p_mc->FaultFlags.Motors = 1U; }
 
         /* In the case of boot into motor spinning state. Go to fault state disable output */
-        if (p_mc->FaultFlags.Value == 0U) { p_nextState = AppParkState(p_dev); } else { p_nextState = &MC_STATE_FAULT; }
+        if (p_mc->FaultFlags.Value == 0U) { p_nextState = &MC_STATE_STANDBY; }
+        else { p_nextState = &MC_STATE_FAULT; }
     }
 
     return p_nextState;
@@ -235,33 +236,33 @@ const State_T MC_STATE_INIT =
 
 /******************************************************************************/
 /*!
-    @brief [Park] Top-level safe state for stationary operation
+    @brief [Standby] Top-level safe state for stationary operation
     Motor State: Stop.
 
     May enter from Neutral State or Drive State
 */
 /******************************************************************************/
-static void Park_Entry(MotorController_T * p_dev)
+static void Standby_Entry(MotorController_T * p_dev)
 {
     Motor_Table_ApplyControl(&p_dev->MOTORS, PHASE_VOUT_Z); /* */
     Motor_Table_DisableAll(&p_dev->MOTORS);
 }
 
-static void Park_Proc(MotorController_T * p_dev)
+static void Standby_Proc(MotorController_T * p_dev)
 {
     (void)p_dev;
 }
 
 /*
-    Park accepts state commands only. Motor-generic and app-specific inputs are
+    Standby accepts state commands only. Motor-generic and app-specific inputs are
     buffered by the caller (via CmdInput / Traction.Input) and sink here (NULL table slots).
     Buffered values persist and are consumed when Main/sub-state is entered.
 */
-static State_T * Park_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
+static State_T * Standby_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
 {
     switch ((MotorController_StateCmd_T)cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &MC_STATE_STANDBY;
+        // case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &MC_STATE_STANDBY;
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &MC_STATE_STANDBY;
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterAppMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
@@ -270,7 +271,7 @@ static State_T * Park_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
     return NULL;
 }
 
-static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
+static State_T * Standby_InputLock(MotorController_T * p_dev, state_value_t lockId)
 {
     if ((MotorController_LockId_T)lockId == MOTOR_CONTROLLER_LOCK_ENTER)
     {
@@ -279,21 +280,21 @@ static State_T * Park_InputLock(MotorController_T * p_dev, state_value_t lockId)
     return NULL;
 }
 
-static const State_Input_T PARK_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
+static const State_Input_T STANDBY_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
     [MC_STATE_INPUT_FAULT]          = (State_Input_T)TransitionFault,
-    [MC_STATE_INPUT_LOCK]           = (State_Input_T)Park_InputLock,
-    [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Park_InputStateCmd,
-    [MC_STATE_INPUT_MOTOR_CMD]      = NULL, /* Sink: motor-generic commands buffered by caller, not applied in Park */
-    [MC_STATE_INPUT_APP_USER]       = NULL, /* Sink: app-specific commands buffered by caller, not applied in Park */
+    [MC_STATE_INPUT_LOCK]           = (State_Input_T)Standby_InputLock,
+    [MC_STATE_INPUT_STATE_CMD]      = (State_Input_T)Standby_InputStateCmd,
+    [MC_STATE_INPUT_MOTOR_CMD]      = NULL, /* Sink: motor-generic commands buffered by caller, not applied in Standby */
+    [MC_STATE_INPUT_APP_USER]       = NULL, /* Sink: app-specific commands buffered by caller, not applied in Standby */
 };
 
 const State_T MC_STATE_STANDBY =
 {
     .ID                 = MC_STATE_ID_STANDBY,
-    .ENTRY              = (State_Action_T)Park_Entry,
-    .LOOP               = (State_Action_T)Park_Proc,
-    .P_TRANSITION_TABLE = &PARK_TRANSITION_TABLE[0U],
+    .ENTRY              = (State_Action_T)Standby_Entry,
+    .LOOP               = (State_Action_T)Standby_Proc,
+    .P_TRANSITION_TABLE = &STANDBY_TRANSITION_TABLE[0U],
 };
 
 
@@ -321,7 +322,7 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputPark(p_dev); /* Motors in Stop first */
+        // case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputStandby(p_dev); /* Motors in Stop first */
         // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:      return NULL;
         // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:   return &MC_STATE_MAIN; /* todo V0 thrshold, return MAIN to  Exit sub-state, disable inputs */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
@@ -444,9 +445,9 @@ static State_T * MotorTuning_InputStateCmd(MotorController_T * p_dev, state_valu
 {
     switch (cmd)
     {
-        case MOTOR_CONTROLLER_STATE_CMD_PARK:
+        // case MOTOR_CONTROLLER_STATE_CMD_PARK:
             {
-                State_T * p_nextState = Common_InputPark(p_dev);
+                State_T * p_nextState = Common_InputStandby(p_dev);
                 if (p_nextState != NULL) { Motor_Table_ForEach(&p_dev->MOTORS, _Motor_ResetTuning); }
                 return p_nextState;
             }
@@ -520,7 +521,7 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = AppParkState(p_dev);
+                    p_nextState = AppStandbyState(p_dev);
                 }
                 else
                 {
@@ -648,7 +649,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
         p_mc->FaultFlags.Value |= cmd.FaultSet;
     }
 
-    return (p_mc->FaultFlags.Value == 0U) ? AppParkState(p_dev) : NULL;
+    return (p_mc->FaultFlags.Value == 0U) ? AppStandbyState(p_dev) : NULL;
 }
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, state_value_t lockId)

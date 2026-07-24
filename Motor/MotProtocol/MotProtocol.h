@@ -55,14 +55,19 @@ MotProtocol_StatusCode_T;
 /* expandable to bitfields */
 typedef enum MotProtocol_MemConfig
 {
-    MOT_MEM_CONFIG_RAM = 0x00U,
-    MOT_MEM_CONFIG_FLASH = 0x01U,
-    MOT_MEM_CONFIG_EEPROM = 0x02U,
-    MOT_MEM_CONFIG_ONCE = 0x03U,
-    MOT_MEM_CONFIG_RESERVED = 0xFFU,
+    MOT_PROTOCOL_MEM_CONFIG_RAM = 0x00U,
+    MOT_PROTOCOL_MEM_CONFIG_FLASH = 0x01U,
+    MOT_PROTOCOL_MEM_CONFIG_EEPROM = 0x02U,
+    MOT_PROTOCOL_MEM_CONFIG_ONCE = 0x03U,
+    MOT_PROTOCOL_MEM_CONFIG_BOARD_REF = 0x04U,
+    MOT_PROTOCOL_MEM_CONFIG_RESERVED = 0xFFU,
 }
 MotProtocol_MemConfig_T;
 
+
+/*
+
+*/
 typedef enum MotProtocol_DataModeConfig
 {
     MOT_PROTOCOL_DATA_MODE_CONFIG_NONE = 0x00U,

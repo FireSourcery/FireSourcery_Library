@@ -86,24 +86,6 @@
 */
 /******************************************************************************/
 /*
-    User InputMux
-*/
-// DriveUserSource
-typedef enum MotorController_InputMode
-{
-    MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
-    MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
-    MOTOR_CONTROLLER_INPUT_MODE_CAN,
-}
-MotorController_InputMode_T;
-
-
-
-/******************************************************************************/
-/*!
-*/
-/******************************************************************************/
-/*
     Fault SubState flags
     Faults flags latch state until user clears
 */
@@ -138,28 +120,48 @@ static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_RX_LOST        
 static const MotorController_FaultFlags_T MOTOR_CONTROLLER_FAULT_INIT_CHECK       = { .InitCheck       = 1U };
 
 
+
+/******************************************************************************/
+/*!
+*/
+/******************************************************************************/
+/*
+    User Input Mux
+*/
+typedef enum MotorController_InputMode
+{
+    MOTOR_CONTROLLER_INPUT_MODE_SERIAL,
+    MOTOR_CONTROLLER_INPUT_MODE_ANALOG,
+    MOTOR_CONTROLLER_INPUT_MODE_CAN,
+}
+MotorController_InputMode_T;
+
+// typedef enum { MC_STANDBY_EXIT_MANUAL, MC_STANDBY_EXIT_ON_THROTTLE, MC_STANDBY_EXIT_AUTO } MotorController_StandbyExitMode_T;
+
+
 /*
     Init SubState
+    Configurable checks on init
 */
-typedef union MotorController_InitFlags
-{
-    struct
-    {
-        uint16_t ThrottleZero : 1U;
-        uint16_t DirectionSet : 1U;
-        // uint16_t IsConfigLoaded : 1U;
-    };
-    uint16_t Value;
-}
-MotorController_InitFlags_T;
+// typedef union MotorController_InitFlags
+// {
+//     struct
+//     {
+//         uint16_t ThrottleZero : 1U;
+//         uint16_t DirectionSet : 1U;
+//         // uint16_t IsConfigLoaded : 1U;
+//     };
+//     uint16_t Value;
+// }
+// MotorController_InitFlags_T;
 
 
 typedef struct MotorController_Config
 {
     // MotorController_MainMode_T InitMode;
-    int InitMode; /* enum stand in. Def in AppTable */
+    int InitMode; /* Sub app on init. enum stand in. Def in AppTable */
     MotorController_InputMode_T InputMode;
-    bool IsParkStateEnabled;
+
 
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
@@ -185,7 +187,7 @@ typedef struct MotorController_Context
     /* State and SubState */
     StateMachine_Active_T StateMachine; /* Data */
     MotorController_FaultFlags_T FaultFlags; /* Fault SubState */
-    MotorController_InitFlags_T InitFlags;
+    // MotorController_InitFlags_T InitFlags;
     uint32_t StateCounter; /* Calibration */
     uint32_t ControlCounter; /* PWM */
 

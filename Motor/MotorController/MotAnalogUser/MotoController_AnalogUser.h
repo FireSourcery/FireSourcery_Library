@@ -82,10 +82,6 @@ typedef enum MotAnalogUser_ConfigId
 }
 MotAnalogUser_ConfigId_T;
 
-#include "Transducer/UserIn/UserDIn.h"
-
-
-
 
 /******************************************************************************/
 /*

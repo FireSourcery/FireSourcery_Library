@@ -157,6 +157,13 @@ NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * 
     return status;
 }
 
+// NvMemory_Status_T MotorController_WriteBoardRef_Blocking(MotorController_T * p_dev,   const uint8_t * p_source  )
+// {
+//     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
+//     if (MotorController_IsConfig(p_dev) == true) { status = MotNvm_WritePhaseCalibration(&p_dev->MOT_NVM, (const Phase_Calibration_T *)p_source); }
+//     return status;
+// }
+
 /*
 */
 static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
@@ -169,10 +176,10 @@ static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p
 
     switch ((MotProtocol_MemConfig_T)p_req->Config)
     {
-        case MOT_MEM_CONFIG_RAM:  memcpy(p_buffer, (void *)p_req->Address, p_req->Size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_MEM_CONFIG_ONCE: status = MotorController_ReadManufacture_Blocking(p_dev, p_req->Address, p_req->Size, p_buffer); break;
+        case MOT_PROTOCOL_MEM_CONFIG_RAM:  memcpy(p_buffer, (void *)p_req->Address, p_req->Size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotorController_ReadManufacture_Blocking(p_dev, p_req->Address, p_req->Size, p_buffer); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
-            // case MOT_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        // case MOT_PROTOCOL_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
     }
 
     return MotPacket_MemReadResp_BuildHeader(p_txPacket, p_req->Size, status);
@@ -185,10 +192,11 @@ static packet_size_t WriteMem_Blocking(MotorController_T * p_dev, MotPacket_T * 
 
     switch ((MotProtocol_MemConfig_T)p_req->Config)
     {
-        case MOT_MEM_CONFIG_ONCE: status = MotorController_WriteManufacture_Blocking(p_dev, p_req->Address, p_req->ByteData, p_req->Size); break;
+        case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotorController_WriteManufacture_Blocking(p_dev, p_req->Address, p_req->ByteData, p_req->Size); break;
+        // case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF: status = MotorController_WriteBoardRef_Blocking(p_dev, p_req->ByteData); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
-        // case MOT_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        // case MOT_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
+        // case MOT_PROTOCOL_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
+        // case MOT_PROTOCOL_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
     }
 
     return MotPacket_MemWriteResp_Build(p_txPacket, status);

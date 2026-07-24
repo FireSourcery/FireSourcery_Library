@@ -233,8 +233,6 @@ static inline void VBus_InitDerateSlopes(VBus_T * p_vbus)
 {
     int32_t underSpan = (int32_t)p_vbus->Config.MonitorConfig.Warning.LimitLow - p_vbus->Config.MonitorConfig.Fault.LimitLow;
     int32_t overSpan = (int32_t)p_vbus->Config.MonitorConfig.Fault.LimitHigh - p_vbus->Config.MonitorConfig.Warning.LimitHigh;
-    // p_vbus->IDerateUnderVSlope = (underSpan > 0) ? (((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16) << 15) / underSpan : 0;
-    // p_vbus->IDerateOverVSlope = (overSpan  > 0) ? (((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX)  << 15) / overSpan  : 0;
     p_vbus->IDerateUnderVSlope = fract16_div((int32_t)FRACT16_MAX - p_vbus->Config.IDerateUnderVFloor_Fract16, underSpan);
     p_vbus->IDerateOverVSlope = fract16_div((int32_t)p_vbus->Config.IDerateOverVFloor_Fract16 - FRACT16_MAX, overSpan);
 }

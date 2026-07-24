@@ -133,7 +133,6 @@ typedef packet_size_t(*Packet_BuildTxSync_T)(void * p_txPacket, packet_id_t txId
 /******************************************************************************/
 /*!
     Packet Class Variables / Meta/Format Specs
-    Protocol_Transport
 */
 /******************************************************************************/
 typedef const struct Packet_Format

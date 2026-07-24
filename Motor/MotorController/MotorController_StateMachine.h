@@ -76,16 +76,15 @@ typedef enum MotorController_StateInput
     MC_STATE_INPUT_STATE_CMD,       /* System state commands (Park/Stop/Start) with per State Mapping */
     MC_STATE_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MC_STATE_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
+    MC_TRANSITION_TABLE_LENGTH,
 
-    /* App extends the input alphabet. keep as one list.  */
+    /* Alternatively: App extends the input alphabet. keep as one list.  */
     // MC_STATE_INPUT_APP_USER_1,   /* Reserve table space, or use mapper, or buffer */
     // App wraps motor generic
     // MC_STATE_INPUT_SETPOINT,
     // MC_STATE_INPUT_PHASE,
     // MC_STATE_INPUT_FEEDBACK,
     // MC_STATE_INPUT_DIRECTION,
-
-    MC_TRANSITION_TABLE_LENGTH,
 }
 MotorController_StateInput_T;
 
@@ -145,7 +144,7 @@ static inline bool MotorController_IsMotorCmdAccess(MotorController_T * p_dev) {
 /******************************************************************************/
 typedef enum MotorController_StateCmd
 {
-    MOTOR_CONTROLLER_STATE_CMD_PARK, /* Enter Park */
+    // MOTOR_CONTROLLER_STATE_CMD_PARK, /* Enter Park */
     MOTOR_CONTROLLER_STATE_CMD_E_STOP,
     MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App to Main-Idle. Disable substate inputs. */
     MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit park. Enter Configured */
