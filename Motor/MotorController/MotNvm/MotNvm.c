@@ -84,33 +84,33 @@ static bool IsManufactureWritable(uint8_t * p_image, const uint8_t * p_source, u
 }
 
 // Skip Empty
-static bool IsEmpty(const uint8_t * p_source, uint8_t size)
+static bool IsSourceEmpty(const uint8_t * p_source, uint8_t size)
 {
     for (uint8_t i = 0U; i < size; i++) { if (p_source[i] != FLASH_UNIT_ERASE_PATTERN && p_source[i] != 0U) { return false; } }
     return true;
 }
 
+/* may be called over partial address ranges */
 NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_motNvm, uintptr_t address, const void * p_source, uint8_t size)
 {
     uint8_t read[64U] = { 0 };
     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, address, size, &read[0U]);
 
     if (memcmp(&read[0U], p_source, size) == 0U) { status = NV_MEMORY_STATUS_SUCCESS; } /* Already matches. */
-    else if (IsEmpty((const uint8_t *)p_source, size)) { status = NV_MEMORY_STATUS_SUCCESS; }  /* p_source is erased or 0, skip */
+    else if (IsSourceEmpty((const uint8_t *)p_source, size)) { status = NV_MEMORY_STATUS_SUCCESS; }  /* p_source is erased or 0, skip */
     // else if (IsManufactureWritable(read, (const uint8_t *)p_source, size))
     else
     {
         status = _MotNvm_WriteManufacture_Blocking(p_motNvm, address, p_source, size);
     }
 
-    /* WriteManufacture may be called over partial address ranges */
     /* Assume sequential write, propagate on last */
-    if (address + size == p_motNvm->MANUFACTURE_ADDRESS + p_motNvm->MANUFACTURE_SIZE)
-    {
-        /* read its entirety */
-        status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, &read[0U]);
-        if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WriteConstFrom(p_motNvm, (Nvm_Manufacturer_T *)&read[0U]); }
-    }
+    // if (address + size == p_motNvm->MANUFACTURE_ADDRESS + p_motNvm->MANUFACTURE_SIZE)
+    // {
+    //     /* read its entirety */
+    //     status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, &read[0U]);
+    //     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WriteConstFrom(p_motNvm, (Nvm_Manufacturer_T *)&read[0U]); }
+    // }
 
     return status;
 }
@@ -183,7 +183,7 @@ NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const 
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)p_source, sizeof(Phase_Calibration_T));
 }
 
-NvMemory_Status_T MotNvm_WritePhaseSensor(const MotNvm_T * p_motNvm, const Phase_AnalogCalibration_T * p_source)
+NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogCalibration_T * p_source)
 {
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_CALIBRATION, (const void *)&p_source, sizeof(Phase_AnalogCalibration_T));
 }
@@ -195,47 +195,41 @@ NvMemory_Status_T MotNvm_WritePhaseSensor(const MotNvm_T * p_motNvm, const Phase
 
 */
 /******************************************************************************/
-NvMemory_Status_T MotNvm_WritePhaseCalibrationFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
-{
-    Phase_Calibration_T buffer = { 0 };
-    HAL_Nvm_MapPhaseCalibration(p_source, &buffer);
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)&buffer, sizeof(Phase_Calibration_T));
-}
+// NvMemory_Status_T MotNvm_WritePhaseCalibrationFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
+// {
+//     Phase_Calibration_T buffer = { 0 };
+//     HAL_Nvm_MapPhaseCalibration(p_source, &buffer);
+//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)&buffer, sizeof(Phase_Calibration_T));
+// }
 
-NvMemory_Status_T MotNvm_WritePhaseSensorRefFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
-{
-    Phase_AnalogCalibration_T buffer = { 0 };
-    HAL_Nvm_MapPhaseAnalogCalibration(p_source, &buffer); // callee cast away const
-    return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_CALIBRATION, (const void *)&buffer, sizeof(Phase_AnalogCalibration_T));
-}
+// NvMemory_Status_T MotNvm_WritePhaseSensorRefFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
+// {
+//     Phase_AnalogCalibration_T buffer = { 0 };
+//     HAL_Nvm_MapPhaseAnalogCalibration(p_source, &buffer); // callee cast away const
+//     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_ANALOG_CALIBRATION, (const void *)&buffer, sizeof(Phase_AnalogCalibration_T));
+// }
 
-/*  */
-NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
-{
-    NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE); /* assume contigous start from PHASE_CALIBRATION  */
+// /*  */
+// NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source)
+// {
+//     NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE); /* assume contigous start from PHASE_CALIBRATION  */
 
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, p_source); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, p_source); }
-    return status;
-}
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, p_source); }
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, p_source); }
+//     return status;
+// }
+// NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm)
+// {
+//     // NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
+//     uint8_t buffer[64U] = { 0 };
+//     NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, (void *)&buffer[0U]);
 
-/******************************************************************************/
-/*!
-    with defined parameters
-*/
-/******************************************************************************/
-NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm)
-{
-    // NvMemory_Status_T status = NV_MEMORY_STATUS_SUCCESS;
-    uint8_t buffer[64U] = { 0 };
-    NvMemory_Status_T status = MotNvm_ReadManufacture_Blocking(p_motNvm, p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE, (void *)&buffer[0U]);
+//     // if (HAL_Nvm_IsValidManufacture(p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE) == true)
 
-    // if (HAL_Nvm_IsValidManufacture(p_motNvm->MANUFACTURE_ADDRESS, p_motNvm->MANUFACTURE_SIZE) == true)
+//     status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE);
 
-    status = Flash_Erase_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, FLASH_UNIT_ERASE_SIZE);
-
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }
-    if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }
-    return status;
-}
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseSensorRefFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }
+//     if (status == NV_MEMORY_STATUS_SUCCESS) { status = MotNvm_WritePhaseCalibrationFrom(p_motNvm, (Nvm_Manufacturer_T *)&buffer[0U]); }
+//     return status;
+// }

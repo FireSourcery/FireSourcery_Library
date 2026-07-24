@@ -91,8 +91,7 @@ typedef const struct RotorSensor_Table
 }
 RotorSensor_Table_T;
 
-
-typedef union RotorSensor_Enabled
+typedef union __attribute__((packed)) RotorSensor_Enabled
 {
     uint8_t ALL;
     struct

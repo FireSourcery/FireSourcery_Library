@@ -136,7 +136,7 @@ typedef enum MotorController_InputMode
 }
 MotorController_InputMode_T;
 
-// typedef enum { MC_STANDBY_EXIT_MANUAL, MC_STANDBY_EXIT_ON_THROTTLE, MC_STANDBY_EXIT_AUTO } MotorController_StandbyExitMode_T;
+// typedef enum { MC_STANDBY_EXIT_MANUAL, MC_STANDBY_EXIT_AUTO, MC_STANDBY_EXIT_ON_THROTTLE } MotorController_StandbyExitMode_T;
 
 
 /*

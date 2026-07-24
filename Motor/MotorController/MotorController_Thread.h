@@ -72,7 +72,7 @@ static inline void _MotorController_ProcAnalogUser(MotorController_T * p_dev)
     for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; i++) { UserAIn_CaptureValue(&p_dev->AINS[i].PIN, Analog_Conversion_GetResult(&p_dev->AINS[i].CONVERSION)); }
 
     Shifter_Poll(&p_dev->SHIFTER); /* optionally move to app */
-
+    // MotorController_ProcParkPin(p_dev);
     MotorController_App_ProcAnalogUser(p_dev);
 
     if (TimerT_Counter_IsAligned(&p_dev->MILLIS_TIMER, MOTOR_CONTROLLER_ANALOG_USER_DIVIDER) == true)

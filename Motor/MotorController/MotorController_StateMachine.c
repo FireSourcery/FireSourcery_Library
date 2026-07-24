@@ -133,16 +133,7 @@ static State_T * Common_InputStandby(MotorController_T * p_dev)
     return p_nextState;
 }
 
-/* auto check input  */
-// State_T * MotorController_ResolveInitial(MotorController_T * p_dev)
-// {
-//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return & ; }
-//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
-//     {
-//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return & ; }
-//     }
-//     return MotorController_App_EnterMain(p_dev);
-// }
+
 
 /******************************************************************************/
 /*!
@@ -300,9 +291,8 @@ static void Main_Entry(MotorController_T * p_dev)
     Motor_Table_ApplyControl(&p_dev->MOTORS, PHASE_VOUT_0); /* */
 }
 
-/* Handle Motor cmd arbitration if needed */
+/* Handle multi source inputs if needed */
 /* App State common background proc */
-/* optionally poll Park switch level */
 static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 
@@ -316,7 +306,6 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
             if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN)) { return MotorController_App_EnterMain(p_dev); } /* Enter app sub-state from Main idle */
             return NULL;
-            // _MotorController_ClearILimitAll
         default:  return NULL;
     }
     return NULL;

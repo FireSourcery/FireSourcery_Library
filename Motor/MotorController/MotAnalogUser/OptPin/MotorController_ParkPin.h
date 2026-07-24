@@ -58,3 +58,13 @@ static inline void MotorController_ProcParkPin(MotorController_T * p_dev) { (voi
 
 #endif
 
+/* auto check input  */
+// State_T * MotorController_ResolveInitial(MotorController_T * p_dev)
+// {
+//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return & ; }
+//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
+//     {
+//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return & ; }
+//     }
+//     return MotorController_App_EnterMain(p_dev);
+// }

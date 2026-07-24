@@ -141,30 +141,7 @@ static packet_size_t VarWrite(MotorController_T * p_dev, MotPacket_T * p_txPacke
 /*
     Multi variable StateMachine call
     Use outer layer StateMachine check, simplifies handling of signature type.
-*/
-NvMemory_Status_T MotorController_ReadManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, uint8_t size, uint8_t * p_destBuffer)
-{
-    NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_IsConfig(p_dev) == true) { status = MotNvm_ReadManufacture_Blocking(&p_dev->MOT_NVM, onceAddress, size, p_destBuffer); }
-    return status;
-}
-
-/* Host handle reboot */
-NvMemory_Status_T MotorController_WriteManufacture_Blocking(MotorController_T * p_dev, uintptr_t onceAddress, const uint8_t * p_source, uint8_t size)
-{
-    NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-    if (MotorController_IsConfig(p_dev) == true) { status = MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, onceAddress, p_source, size); }
-    return status;
-}
-
-// NvMemory_Status_T MotorController_WriteBoardRef_Blocking(MotorController_T * p_dev,   const uint8_t * p_source  )
-// {
-//     NvMemory_Status_T status = NV_MEMORY_STATUS_ERROR_OTHER;
-//     if (MotorController_IsConfig(p_dev) == true) { status = MotNvm_WritePhaseCalibration(&p_dev->MOT_NVM, (const Phase_Calibration_T *)p_source); }
-//     return status;
-// }
-
-/*
+    NvMemory access gated by a single MotorController_IsConfig check per request.
 */
 static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
@@ -174,10 +151,11 @@ static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p
 
     memset(p_buffer, 0U, p_req->Size);
 
-    switch ((MotProtocol_MemConfig_T)p_req->Config)
+    if (MotorController_IsConfig(p_dev) == false) { status = NV_MEMORY_STATUS_ERROR_OTHER; }
+    else switch ((MotProtocol_MemConfig_T)p_req->Config)
     {
         case MOT_PROTOCOL_MEM_CONFIG_RAM:  memcpy(p_buffer, (void *)p_req->Address, p_req->Size); status = NV_MEMORY_STATUS_SUCCESS; break;
-        case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotorController_ReadManufacture_Blocking(p_dev, p_req->Address, p_req->Size, p_buffer); break;
+        case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotNvm_ReadManufacture_Blocking(&p_dev->MOT_NVM, p_req->Address, p_req->Size, p_buffer); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
         // case MOT_PROTOCOL_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
     }
@@ -185,15 +163,17 @@ static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p
     return MotPacket_MemReadResp_BuildHeader(p_txPacket, p_req->Size, status);
 }
 
+/* Host handle reboot */
 static packet_size_t WriteMem_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     const MotPacket_MemWriteReq_T * p_req = (const MotPacket_MemWriteReq_T *)p_rxPacket->Payload;
     NvMemory_Status_T status;
 
-    switch ((MotProtocol_MemConfig_T)p_req->Config)
+    if (MotorController_IsConfig(p_dev) == false) { status = NV_MEMORY_STATUS_ERROR_OTHER; }
+    else switch ((MotProtocol_MemConfig_T)p_req->Config)
     {
-        case MOT_PROTOCOL_MEM_CONFIG_ONCE: status = MotorController_WriteManufacture_Blocking(p_dev, p_req->Address, p_req->ByteData, p_req->Size); break;
-        // case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF: status = MotorController_WriteBoardRef_Blocking(p_dev, p_req->ByteData); break;
+        case MOT_PROTOCOL_MEM_CONFIG_ONCE:          status = MotNvm_WriteManufacture_Blocking(&p_dev->MOT_NVM, p_req->Address, p_req->ByteData, p_req->Size); break;
+        case MOT_PROTOCOL_MEM_CONFIG_BOARD_REF:     status = MotNvm_WritePhaseCalibration(&p_dev->MOT_NVM, (const Phase_Calibration_T *)p_req->ByteData); break;
         default: status = NV_MEMORY_STATUS_ERROR_NOT_IMPLEMENTED; break;
         // case MOT_PROTOCOL_MEM_CONFIG_RAM: memcpy((void *)address, p_data, size); status = NV_MEMORY_STATUS_SUCCESS; break;
         // case MOT_PROTOCOL_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;

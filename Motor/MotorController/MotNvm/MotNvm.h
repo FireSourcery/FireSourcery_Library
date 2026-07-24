@@ -1,8 +1,10 @@
+#pragma once
+
 /******************************************************************************/
 /*!
     @section LICENSE
 
-    Copyright (C) 2023 FireSourcery
+    Copyright (C) 2026 FireSourcery
 
     This file is part of FireSourcery_Library (https://github.com/FireSourcery/FireSourcery_Library).
 
@@ -22,27 +24,25 @@
 /******************************************************************************/
 /******************************************************************************/
 /*!
-    @file   .h
+    @file   MotNvm.h
     @author FireSourcery
-    @brief
-
+    @brief  [Brief description of the file]
 */
 /******************************************************************************/
-#ifndef MOT_NVM_H
-#define MOT_NVM_H
-
 #include "Motor/Motor/Phase_Input/Phase_Analog.h"
 #include "Motor/Motor/Phase_Input/Phase_Calibration.h"
 #include "Framework/BootRef/BootRef.h"
 #include "Peripheral/NvMemory/Flash/Flash.h"
 #include "Peripheral/NvMemory/EEPROM/EEPROM.h"
 
-// #if     defined(MOT_NVM_USER_EEPROM)
-// #elif   defined(MOT_NVM_USER_FLASH)
-// #else
-//     #define MOT_NVM_USER_FLASH
-// #endif
+/******************************************************************************/
+/*!
+    Notes
+    Wrap compile time selection and mapping
+*/
+/******************************************************************************/
 
+// #if     defined(MOT_NVM_USER_EEPROM)
 #if     defined(MOTOR_CONTROLLER_USER_NVM_EEPROM)
 #elif   defined(MOTOR_CONTROLLER_USER_NVM_FLASH)
 #else
@@ -55,9 +55,9 @@
 #define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
 #endif
 
-#ifndef MOT_NVM_MANUFACTURE_SIZE
-#define MOT_NVM_MANUFACTURE_SIZE (64U)
-#endif
+// #ifndef MOT_NVM_MANUFACTURE_SIZE
+// #define MOT_NVM_MANUFACTURE_SIZE (64U)
+// #endif
 
 /* For Protocol Flash Only */
 #if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)
@@ -106,20 +106,18 @@ extern NvMemory_Status_T MotNvm_WriteManufacture_Blocking(const MotNvm_T * p_mot
 extern NvMemory_Status_T MotNvm_SaveBootReg_Blocking(const MotNvm_T * p_motNvm);
 extern NvMemory_Status_T MotNvm_SaveConfigAll_Blocking(const MotNvm_T * p_motNvm);
 
-NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source);
-NvMemory_Status_T MotNvm_WritePhaseSensor(const MotNvm_T * p_motNvm, const Phase_AnalogCalibration_T * p_source);
+extern NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source);
+extern NvMemory_Status_T MotNvm_WritePhaseAnalogCalibration(const MotNvm_T * p_motNvm, const Phase_AnalogCalibration_T * p_source);
 
 
-extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);
+// extern NvMemory_Status_T MotNvm_WriteConstRef(const MotNvm_T * p_motNvm);
 
 /* externally define */
 // struct HAL_Nvm_Once_T;
-struct Nvm_Manufacturer;
-typedef const struct Nvm_Manufacturer Nvm_Manufacturer_T;
+// struct Nvm_Manufacturer;
+// typedef const struct Nvm_Manufacturer Nvm_Manufacturer_T;
 
-extern void HAL_Nvm_MapPhaseCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
-extern void HAL_Nvm_MapPhaseAnalogCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_AnalogCalibration_T * p_buffer);
+// extern void HAL_Nvm_MapPhaseCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_Calibration_T * p_buffer);
+// extern void HAL_Nvm_MapPhaseAnalogCalibration(const Nvm_Manufacturer_T * p_manufacture, Phase_AnalogCalibration_T * p_buffer);
 
-NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source);
-
-#endif
+// NvMemory_Status_T MotNvm_WriteConstFrom(const MotNvm_T * p_motNvm, Nvm_Manufacturer_T * p_source);

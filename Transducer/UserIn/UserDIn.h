@@ -48,6 +48,7 @@ typedef enum UserDIn_Edge
 }
 UserDIn_Edge_T;
 
+/* Trigger Mode */
 typedef enum UserDIn_Mode
 {
     USER_DIN_MODE_DISABLED,

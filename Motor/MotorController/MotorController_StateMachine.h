@@ -145,8 +145,8 @@ static inline bool MotorController_IsMotorCmdAccess(MotorController_T * p_dev) {
 typedef enum MotorController_StateCmd
 {
     MOTOR_CONTROLLER_STATE_CMD_E_STOP, /* same as Stop Main for now */
-    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App. Disable substate inputs. */
-    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit Standby. Enter Main-App */
+    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* Exit Main-App, Enter Standby. Disable substate inputs. */
+    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* Exit Standby, Enter Main-App */
 }
 MotorController_StateCmd_T;
 
