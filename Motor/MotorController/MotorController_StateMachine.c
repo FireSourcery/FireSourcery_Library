@@ -41,15 +41,6 @@
     Architecture decoupling requirements:
     Main State Machine does not know about App specific states/inputs
 
-    Behavioral requirements:
-    The user sets the direction selector (forward/reverse) while parked. The controller must accept and remember this selection.
-    When the user subsequently releases the park brake / engages the throttle, the system enters drive in the selected direction.
-
-    Implementation options:
-    Buffer user inputs as 'cmd/input state'
-        Direction selection is not an event that causes a state transition.
-        It is a configuration parameter that the user sets independently of the operating state.
-
     - A new state is justified by a different safety envelope, not a different purpose
     - One-shot automated procedures get a state; interactive parameter adjustment does not
     - Orthogonal concerns get orthogonal mechanisms
@@ -123,20 +114,6 @@ static State_T * TransitionFault(MotorController_T * p_dev, state_value_t faultC
 }
 
 
-/*
-    MotorController AppTable
-*/
-static State_T * EnterAppMain(MotorController_T * p_dev) { Motor_Table_EnableAll(&p_dev->MOTORS); return MotorController_App_EnterMain(p_dev); }
-
-// State_T * MotorController_ResolveInitialStandbyState(MotorController_T * p_dev)
-// {
-//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return &MC_STATE_STANDBY; }
-//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
-//     {
-//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return &MC_STATE_STANDBY; }
-//     }
-//     return MotorController_App_EnterMain(p_dev);
-// }
 
 /*
     Entry guard for Standby
@@ -151,13 +128,21 @@ static State_T * Common_InputStandby(MotorController_T * p_dev)
     if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)) { p_nextState = &MC_STATE_STANDBY; }
     /* If Motor configured for sync/buffered input. Caller includes knowedge of whether callee is in an accepting state. */
     /* Applies Disable on enter */
-    else if (Motor_Table_IsEverySpeedZero(&p_dev->MOTORS))
-    {
-        if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE)) { p_nextState = &MC_STATE_STANDBY; }
-    }
+    else if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_PASSIVE) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS)) { p_nextState = &MC_STATE_STANDBY; }
     else { MotBuzzer_ParkError(MotorController_Buzzer(p_dev)); }
     return p_nextState;
 }
+
+/* auto check input  */
+// State_T * MotorController_ResolveInitial(MotorController_T * p_dev)
+// {
+//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return & ; }
+//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
+//     {
+//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return & ; }
+//     }
+//     return MotorController_App_EnterMain(p_dev);
+// }
 
 /******************************************************************************/
 /*!
@@ -236,10 +221,14 @@ const State_T MC_STATE_INIT =
 
 /******************************************************************************/
 /*!
-    @brief [Standby] Top-level safe state for stationary operation
-    Motor State: Stop.
+    @brief [Standby] Top-level safe state
 
     May enter from Neutral State or Drive State
+    The user sets the direction selector (forward/reverse) while parked. The controller must accept and remember this selection.
+    When the user subsequently releases the park brake / engages the throttle, the system enters drive in the selected direction.
+
+    Buffer user inputs as 'cmd/input state'
+        Direction selection is not an event that causes a state transition, stored independently of the operating state.
 */
 /******************************************************************************/
 static void Standby_Entry(MotorController_T * p_dev)
@@ -262,10 +251,9 @@ static State_T * Standby_InputStateCmd(MotorController_T * p_dev, state_value_t 
 {
     switch ((MotorController_StateCmd_T)cmd)
     {
-        // case MOTOR_CONTROLLER_STATE_CMD_PARK:       return &MC_STATE_STANDBY;
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:  return &MC_STATE_STANDBY;
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
-        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN: return EnterAppMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return &MC_STATE_STANDBY;
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return &MC_STATE_STANDBY;
+        case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return MotorController_App_EnterMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
         default: break;
     }
     return NULL;
@@ -314,6 +302,7 @@ static void Main_Entry(MotorController_T * p_dev)
 
 /* Handle Motor cmd arbitration if needed */
 /* App State common background proc */
+/* optionally poll Park switch level */
 static void Main_Proc(MotorController_T * p_dev) { (void)p_dev; }
 
 
@@ -322,11 +311,10 @@ static State_T * Main_InputStateCmd(MotorController_T * p_dev, state_value_t cmd
 {
     switch (cmd)
     {
-        // case MOTOR_CONTROLLER_STATE_CMD_PARK:           return Common_InputStandby(p_dev); /* Motors in Stop first */
-        // case MOTOR_CONTROLLER_STATE_CMD_E_STOP:      return NULL;
-        // case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:   return &MC_STATE_MAIN; /* todo V0 thrshold, return MAIN to  Exit sub-state, disable inputs */
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return Common_InputStandby(p_dev); /* Motors in Stop first */
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:
-            if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK)) { return EnterAppMain(p_dev); } /* Enter app sub-state from Main idle */
+            if (StateMachine_IsLeafState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN)) { return MotorController_App_EnterMain(p_dev); } /* Enter app sub-state from Main idle */
             return NULL;
             // _MotorController_ClearILimitAll
         default:  return NULL;
@@ -445,24 +433,20 @@ static State_T * MotorTuning_InputStateCmd(MotorController_T * p_dev, state_valu
 {
     switch (cmd)
     {
-        // case MOTOR_CONTROLLER_STATE_CMD_PARK:
-            {
-                State_T * p_nextState = Common_InputStandby(p_dev);
-                if (p_nextState != NULL) { Motor_Table_ForEach(&p_dev->MOTORS, _Motor_ResetTuning); }
-                return p_nextState;
-            }
-        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return NULL;
-        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return NULL;
+        case MOTOR_CONTROLLER_STATE_CMD_E_STOP:  // fall through
+        case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:
+            Motor_Table_ForEach(&p_dev->MOTORS, _Motor_ResetTuning);
+            return Common_InputStandby(p_dev);
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return NULL;
-        default:     return NULL;
+        default:    return NULL;
     }
 }
 
 static const State_Input_T TUNING_TRANSITION_TABLE[MC_TRANSITION_TABLE_LENGTH] =
 {
-    [MC_STATE_INPUT_FAULT] = (State_Input_T)TransitionFault,
-    [MC_STATE_INPUT_LOCK] = (State_Input_T)MotorTuning_InputTuning,
-    [MC_STATE_INPUT_STATE_CMD] = (State_Input_T)MotorTuning_InputStateCmd,
+    [MC_STATE_INPUT_FAULT]      = (State_Input_T)TransitionFault,
+    [MC_STATE_INPUT_LOCK]       = (State_Input_T)MotorTuning_InputTuning,
+    [MC_STATE_INPUT_STATE_CMD]  = (State_Input_T)MotorTuning_InputStateCmd,
 };
 
 const State_T MC_STATE_MOTOR_TUNING =
@@ -517,11 +501,11 @@ static State_T * Lock_InputLockOp_Blocking(MotorController_T * p_dev, state_valu
                 break;
 
             case MOTOR_CONTROLLER_LOCK_EXIT:
-                if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION) || (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED)))
+                if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_CALIBRATION) || Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED))
                 {
                     Motor_Table_ForEach(&p_dev->MOTORS, Motor_Calibration_Exit);  /* exit calibration */
                     opStatus = MOTOR_CONTROLLER_LOCK_OP_STATUS_OK;
-                    p_nextState = AppStandbyState(p_dev);
+                    p_nextState = &MC_STATE_STANDBY; /* Lock exit always lands in the safe stationary state */
                 }
                 else
                 {
@@ -649,7 +633,7 @@ static State_T * Fault_InputFault(MotorController_T * p_dev, state_value_t fault
         p_mc->FaultFlags.Value |= cmd.FaultSet;
     }
 
-    return (p_mc->FaultFlags.Value == 0U) ? AppStandbyState(p_dev) : NULL;
+    return (p_mc->FaultFlags.Value == 0U) ? &MC_STATE_STANDBY : NULL; /* Fault clear always re-lands in the safe stationary state, never live Main */
 }
 
 static State_T * Fault_InputLockSaveConfig_Blocking(MotorController_T * p_dev, state_value_t lockId)

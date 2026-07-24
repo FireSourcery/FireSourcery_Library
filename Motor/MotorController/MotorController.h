@@ -318,6 +318,12 @@ MotorController_T;
     .FILTER_SHIFT = 0U,                                                                         \
 }
 
+
+/******************************************************************************/
+/*
+    Expose components interface
+*/
+/******************************************************************************/
 /******************************************************************************/
 /*!
     App Dispatch - delegates to embedded APP vtable in MotorController_T
@@ -329,11 +335,7 @@ static inline State_T * MotorController_App_EnterMain(MotorController_T * p_mc) 
 static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_mc) { p_mc->P_APP->PROC_ANALOG_USER(p_mc); }
 static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc->P_APP->INIT != NULL) { p_mc->P_APP->INIT(p_mc); } }
 
-/******************************************************************************/
-/*
-    Expose components interface
-*/
-/******************************************************************************/
+
 static inline Socket_T * MotorController_GetMainSocket(MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
@@ -346,7 +348,7 @@ static inline bool MotorController_PollRxLost(MotorController_T * p_dev)
 
 static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
 // static inline VBus_T * MotorController_VBus(MotorController_T * p_dev) { return p_dev->P_VBUS; }
-// static inline VMonitor_T * MotorController_VMonitorAccessories(MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
+// static inline VMonitor_T * MotorController_VMonitorAcces (MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
 
 
 /* Common Buffered Input */

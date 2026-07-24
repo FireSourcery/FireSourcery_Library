@@ -117,8 +117,7 @@ static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(Motor
 static inline void MotorController_ForceDisableControl(MotorController_T * p_dev)
 {
     Motor_Table_ForceDisableControl(&p_dev->MOTORS);
-    // MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
-    // MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_E_STOP);
+    MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN);
     p_dev->P_MC->CmdInput.CmdValue = 0;
     p_dev->P_MC->CmdInput.PhaseOutput = PHASE_VOUT_Z;
     p_dev->P_MC->CmdInput.Direction = MOTOR_DIRECTION_NULL;

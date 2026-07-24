@@ -77,16 +77,17 @@ typedef enum MotorController_StateInput
     MC_STATE_INPUT_MOTOR_CMD,       /* User Control vars or analog */
     MC_STATE_INPUT_APP_USER,        /* specialized inputs. no top state handler, substates overload and call from within different handlers */
     MC_TRANSITION_TABLE_LENGTH,
-
-    /* Alternatively: App extends the input alphabet. keep as one list.  */
-    // MC_STATE_INPUT_APP_USER_1,   /* Reserve table space, or use mapper, or buffer */
-    // App wraps motor generic
-    // MC_STATE_INPUT_SETPOINT,
-    // MC_STATE_INPUT_PHASE,
-    // MC_STATE_INPUT_FEEDBACK,
-    // MC_STATE_INPUT_DIRECTION,
 }
 MotorController_StateInput_T;
+
+/* Alternatively: App extends the input alphabet. keep as one list.  */
+// wrap generic naming
+// MC_STATE_INPUT_APP_USER_1, /* Reserve table space, or use mapper, or buffer */
+// App wraps motor generic
+// MC_STATE_INPUT_SETPOINT,
+// MC_STATE_INPUT_PHASE,
+// MC_STATE_INPUT_FEEDBACK,
+// MC_STATE_INPUT_DIRECTION,
 
 /*
     extern for Init
@@ -114,8 +115,7 @@ static inline MotorController_FaultFlags_T MotorController_GetFaultFlags(const M
 /*
 */
 /******************************************************************************/
-/* Top State only */
-// static inline bool MotorController_IsState(MotorController_T * p_dev, MotorController_StateId_T stateId) { return StateMachine_IsRootStateId(p_dev->STATE_MACHINE.P_ACTIVE, stateId); }
+// static inline bool MotorController_IsState(MotorController_T * p_dev, State_T * p_state) { return StateMachine_IsState(p_dev->STATE_MACHINE.P_ACTIVE, p_state); }
 
 static inline bool MotorController_IsPark(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_STANDBY); }
 static inline bool MotorController_IsFault(MotorController_T * p_dev) { return StateMachine_IsRootState(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_FAULT); }
@@ -144,10 +144,9 @@ static inline bool MotorController_IsMotorCmdAccess(MotorController_T * p_dev) {
 /******************************************************************************/
 typedef enum MotorController_StateCmd
 {
-    // MOTOR_CONTROLLER_STATE_CMD_PARK, /* Enter Park */
-    MOTOR_CONTROLLER_STATE_CMD_E_STOP,
-    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App to Main-Idle. Disable substate inputs. */
-    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit park. Enter Configured */
+    MOTOR_CONTROLLER_STATE_CMD_E_STOP, /* same as Stop Main for now */
+    MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN, /* exit Main-App. Disable substate inputs. */
+    MOTOR_CONTROLLER_STATE_CMD_START_MAIN, /* exit Standby. Enter Main-App */
 }
 MotorController_StateCmd_T;
 
@@ -156,10 +155,8 @@ static inline void MotorController_InputStateCommand(MotorController_T * p_dev, 
     _StateMachine_Branch_CallInput(p_dev->STATE_MACHINE.P_ACTIVE, (void *)p_dev, MC_STATE_INPUT_STATE_CMD, cmd);
 }
 
-static inline void MotorController_EnterPark(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_PARK); }
 static inline void MotorController_EnterMain(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_START_MAIN); }
-/* Transition to idle */
-static inline void MotorController_EnterMainIdle(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
+static inline void MotorController_ExitMain(MotorController_T * p_dev) { MotorController_InputStateCommand(p_dev, MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN); }
 
 
 /******************************************************************************/
@@ -180,7 +177,7 @@ static inline void MotorController_EnterMainIdle(MotorController_T * p_dev) { Mo
 static inline state_t MotorController_GetMainSubstateId(MotorController_T * p_dev) { return StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_MAIN); }
 
 /*
-    General Direction
+    Generic Direction
     App may use alternative implementation
 */
 static Motor_Direction_T MotorController_GetDirection(MotorController_T * p_dev) { return _Motor_Table_GetDirectionAll(&p_dev->MOTORS); }
@@ -260,10 +257,11 @@ static inline MotorController_LockId_T MotorController_GetLockSubstateId(MotorCo
     return (MotorController_LockId_T)StateMachine_GetActiveSubStateId(p_dev->STATE_MACHINE.P_ACTIVE, &MC_STATE_LOCK);
 }
 
+/* split completion status and processing/complete/inactive */
 typedef enum MotorController_LockOpStatus
 {
+    // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* handle by state id instead */
     MOTOR_CONTROLLER_LOCK_OP_STATUS_OK,
-    // MOTOR_CONTROLLER_LOCK_OP_STATUS_PROCESSING, /* optionally check state instead */
     MOTOR_CONTROLLER_LOCK_OP_STATUS_ERROR,
     // MOTOR_CONTROLLER_LOCK_OP_STATUS_TIMEOUT,
     // MOTOR_CONTROLLER_LOCK_OP_STATUS_ENTER_ERROR, /* invalid enter, e.g. not in park, or motor running */
