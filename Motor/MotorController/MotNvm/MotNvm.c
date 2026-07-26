@@ -177,9 +177,11 @@ void MotNvm_LoadConfigAll(const MotNvm_T * p_motNvm)
 /******************************************************************************/
 /*
     Caller handle erase, if needed.
+    Phase_Calibration_T is packed, or wrap addtional packet interface
 */
 NvMemory_Status_T MotNvm_WritePhaseCalibration(const MotNvm_T * p_motNvm, const Phase_Calibration_T * p_source)
 {
+    static_assert(sizeof(Phase_Calibration_T) == 8U);
     return Flash_Write_Blocking(p_motNvm->P_FLASH, (uintptr_t)&PHASE_CALIBRATION, (const void *)p_source, sizeof(Phase_Calibration_T));
 }
 

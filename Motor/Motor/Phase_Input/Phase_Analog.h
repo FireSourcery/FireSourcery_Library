@@ -86,7 +86,8 @@ Phase_AnalogCalibration_T;
 
 extern const Phase_AnalogCalibration_T PHASE_ANALOG_CALIBRATION;
 
-// static inline uint16_t Phase_AnalogCalibration_GetVMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.V_PHASE_R1, PHASE_ANALOG_CALIBRATION.V_PHASE_R2); }
+// static inline uint16_t Phase_Analog_VMax(void) { return PHASE_ANALOG_V_MAX_VOLTS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.V_PHASE_R1, PHASE_ANALOG_CALIBRATION.V_PHASE_R2); }
+// static inline uint16_t Phase_Analog_IMax(void) { return PHASE_ANALOG_I_MAX_AMPS(ANALOG_REFERENCE.ADC_VREF_MILLIV, PHASE_ANALOG_CALIBRATION.I_PHASE_R_SHUNT, PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN); }
 
 
 /******************************************************************************/

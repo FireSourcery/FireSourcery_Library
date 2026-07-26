@@ -214,6 +214,7 @@ static inline void FOC_ProcInvClarkePark(FOC_T * p_foc)
     p_foc->Vc = v.c;
 }
 
+
 /******************************************************************************/
 /*
     VBemf of Freewheel
@@ -225,8 +226,6 @@ static inline void FOC_ProcVBemfClarkePark(FOC_T * p_foc, fract16_t va, fract16_
     p_foc->Vd = v.d;
     p_foc->Vq = v.q;
 }
-
-
 
 /******************************************************************************/
 /*!
@@ -264,6 +263,31 @@ static inline void FOC_SetAngleV(FOC_T * p_foc, angle16_t theta, fract16_t vd, f
     p_foc->Vq = vq;
     FOC_ProcInvClarkePark(p_foc);
 }
+
+
+/******************************************************************************/
+/*
+    Field Weakening
+*/
+/******************************************************************************/
+/*
+    Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
+    Id_fw = (Vs_max/ωe - λ_pm) / Ld
+
+    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
+    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
+*/
+static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
+{
+    int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - FOC_GetVMagnitude(p_foc);
+    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -p_foc->Config.FieldWeakening.IdLimit, 0);
+    return p_foc->IdFw;
+}
+
+static inline void FOC_DisableFieldWeakening(FOC_T * p_foc) { p_foc->Config.FieldWeakening.IdLimit = 0; }
+// static inline bool FOC_IsFieldWeakeningEnabled(FOC_T * p_foc) { return (p_foc->Config.FieldWeakening.IdLimit > 0); }
+
+
 
 /******************************************************************************/
 /*!
@@ -516,29 +540,6 @@ static inline bool FOC_IsRegen(const FOC_T * p_foc, int32_t speed) { return (FOC
 static inline bool _FOC_IsGeneratingReq(int32_t speed, int16_t iqReq) { return (speed * iqReq) < 0; }
 
 
-/******************************************************************************/
-/*
-    Fw
-*/
-/******************************************************************************/
-/*
-    Id_fw = -(λ_pm / Ld) + sqrt((Vs_max / (ωe·Ld))² - Iq²)
-    Id_fw = (Vs_max/ωe - λ_pm) / Ld
-
-    Voltage-feedback FW integrator. Returns Id setpoint in [-(IdFwLimit), 0].
-    Id_fw += Ki · (Vbus/2 - √(Vd² + Vq²))   (integrator, Id ≤ 0)
-*/
-static inline fract16_t FOC_ProcIdFieldWeakening(FOC_T * p_foc, fract16_t vBus)
-{
-    int32_t error = fract16_mul(vBus, FRACT16_1_DIV_2) - FOC_GetVMagnitude(p_foc);
-    p_foc->IdFw = math_clamp(p_foc->IdFw + fract16_mul(error, p_foc->Config.FieldWeakening.IdGain), -p_foc->Config.FieldWeakening.IdLimit, 0);
-    return p_foc->IdFw;
-}
-
-
-static inline void FOC_DisableFieldWeakening(FOC_T * p_foc) { p_foc->Config.FieldWeakening.IdLimit = 0; }
-
-// static inline bool FOC_IsFieldWeakeningEnabled(FOC_T * p_foc) { return (p_foc->Config.FieldWeakening.IdLimit > 0); }
 
 
 // static inline void FOC_ProcIFeedback_FieldWeakening(FOC_T * p_foc, ufract16_t vBus, sign_t direction, int16_t iqReq)

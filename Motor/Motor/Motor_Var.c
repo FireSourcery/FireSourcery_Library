@@ -264,6 +264,7 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
         case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;               break;
+            // /* Precompile Options */
         default: break;
     }
     return value;

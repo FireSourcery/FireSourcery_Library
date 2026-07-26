@@ -45,6 +45,7 @@ typedef const struct Phase_Calibration
     volatile uint16_t V_MAX_VOLTS;
     volatile uint16_t I_MAX_AMPS;
 
+    /* Limits for config input */
     /* Optionally include si units */
     volatile uint16_t V_RATED_FRACT16;
     volatile uint16_t I_RATED_PEAK_FRACT16;

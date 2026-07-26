@@ -78,6 +78,8 @@
 #define MOTOR_OPEN_LOOP_RUN_DISABLE
 #endif
 
+// MOTOR_CALIBRATION_ELECTRICAL_ENABLE
+
 #if !defined(MOTOR_V_MATCH_SENSOR) && !defined(MOTOR_V_MATCH_SPEED)
 #define MOTOR_V_MATCH_SENSOR
 #endif
@@ -236,8 +238,8 @@ typedef struct Motor_Config
         OpenLoop
     */
     /* All OpenLoop Modes - UserCmd, Align */
-    // optionally depreciate, keep precompile limit only
     uint16_t OpenLoopLimitScalar_Fract16;    /* Limit of rated. as scalar [0:1.0F] [0:32768]. V/I Align_Fract16 < OpenLoopLimitScalar_Fract16 * V/I RATED */
+    // optionally depreciate, keep precompile limit only
 
     /* Calibration and Jog Align */
     uint16_t IAlign_Fract16;                 /* OpenLoop/Calibration Align Current, as fract16 of I_TYPE_MAX_AMPS. */

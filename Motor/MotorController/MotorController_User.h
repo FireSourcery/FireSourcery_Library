@@ -107,6 +107,8 @@ static inline MotorController_StatusFlags_T MotorController_GetStatusFlags(Motor
     };
 }
 
+
+
 /******************************************************************************/
 /*
     Non StateMachine Checked
