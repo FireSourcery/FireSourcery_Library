@@ -47,18 +47,6 @@
 #if (ADC_FIFO_LENGTH_MAX > 1U)
 #define ADC_FIFO_ENABLED
 #endif
-// #if     defined(ANALOG_ADC_HW_FIFO_DISABLE)
-// #elif   defined(ANALOG_ADC_HW_FIFO_ENABLE)
-// #else
-//     #define ANALOG_ADC_HW_FIFO_DISABLE
-// #endif
-
-// #if     defined(ANALOG_ADC_HW_CONTINUOUS_CONVERSION_ENABLE)
-// #elif   defined(ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE)
-// #else
-//     #define ANALOG_ADC_HW_CONTINUOUS_CONVERSION_DISABLE
-// #endif
-
 
 /******************************************************************************/
 /*
@@ -226,11 +214,11 @@ typedef const struct Analog_ADC
     Analog_ADC_State_T * P_ADC_STATE;   /* State data not retained by registers */
     const Analog_ConversionChannel_T * P_CONVERSION_CHANNELS; /*  In this case, ADC Structs must be defined for each Board HAL. */
     uint8_t CHANNEL_COUNT; /* Number of channels in the ADC */ /* allow repeat pins for different callbacks */
-    /* map by adc_channel_t. handle DMA */
+
+    /* map by adc_channel_t. handle with parallel arrays for DMA compatibility */
     const adc_pin_t * P_CHANNEL_PINS;
     adc_result_t * P_CHANNEL_RESULTS;
-    // const struct { const adc_pin_t PIN; adc_result_t * P_RESULT; } * P_CHANNELS;
-    // const struct { Analog_Capture_T CAPTURE; void * P_CONTEXT; } * P_CHANNEL_CALLBACKS; /* optionally, overrides P_RESULT */
+    // const struct { const adc_pin_t PIN; Analog_Capture_T CAPTURE; void * P_CONTEXT; } * P_CHANNELS;  optionally, overrides P_RESULT */
 }
 Analog_ADC_T;
 

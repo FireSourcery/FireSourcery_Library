@@ -279,6 +279,17 @@ Cia402_FaultReactionOption_T;
     Object Dictionary Indices (CiA 402)
 */
 /******************************************************************************/
+/*
+    Controlword 0x6040 RW with the bit semantics above (master → drive command path)
+    Statusword 0x6041 RO with the state-encoding bits above (drive → master state report)
+    Modes of Operation 0x6060 / 0x6061 pair, with at least one supported mode declared in 0x6502
+    The state machine itself — transitions match the table when control bits are written
+    Quick stop, fault reaction, shutdown, disable, halt option codes (0x605A–E) — at minimum supported, even if only one value each
+    Fault Reset edge detection on Controlword bit 7
+    Cyclic update of Statusword (typ. ≤ PDO cycle time) so master sees state changes within one cycle
+    Mandatory monitoring objects: Position actual (0x6064), Velocity actual (0x606C), Torque actual (0x6077), DC bus voltage (0x6079)
+    EMCY message on fault entry per CiA 301 (CANopen base) with error code mapping per CiA 402
+*/
 typedef enum Cia402_OdIndex
 {
     CIA402_OD_CONTROLWORD               = (0x6040U), /* RW  U16  Master command */
@@ -300,21 +311,8 @@ typedef enum Cia402_OdIndex
     CIA402_OD_TARGET_VELOCITY           = (0x60FFU), /* RW  I32  Velocity setpoint */
     CIA402_OD_QUICK_STOP_DECELERATION   = (0x6085U), /* RW  U32  Quick-stop ramp rate */
     CIA402_OD_SUPPORTED_DRIVE_MODES     = (0x6502U), /* RO  U32  Bitmask of supported modes */
-
 }
 Cia402_OdIndex_T;
-
-/*
-    Controlword 0x6040 RW with the bit semantics above (master → drive command path)
-    Statusword 0x6041 RO with the state-encoding bits above (drive → master state report)
-    Modes of Operation 0x6060 / 0x6061 pair, with at least one supported mode declared in 0x6502
-    The state machine itself — transitions match the table when control bits are written
-    Quick stop, fault reaction, shutdown, disable, halt option codes (0x605A–E) — at minimum supported, even if only one value each
-    Fault Reset edge detection on Controlword bit 7
-    Cyclic update of Statusword (typ. ≤ PDO cycle time) so master sees state changes within one cycle
-    Mandatory monitoring objects: Position actual (0x6064), Velocity actual (0x606C), Torque actual (0x6077), DC bus voltage (0x6079)
-    EMCY message on fault entry per CiA 301 (CANopen base) with error code mapping per CiA 402
-*/
 
 typedef enum Cia402_OdType
 {
@@ -346,7 +344,6 @@ typedef struct Cia402_OdInfo
 Cia402_OdInfo_T;
 
 extern Cia402_OdInfo_T Cia402_Od_GetInfo(uint16_t index, uint8_t subindex);
-
 
 /* SDO abort codes per CiA 301 */
 typedef enum Cia402_OdStatus
@@ -433,6 +430,12 @@ typedef struct Cia402_Cob
 }
 Cia402_Cob_T;
 
+
+/******************************************************************************/
+/*
+    SDO (Service Data Object)
+*/
+/******************************************************************************/
 /*
     SDO Command Specifier — byte 0 of the SDO payload.
     GCC packs first-declared bitfield in LSB; layout below matches
@@ -565,7 +568,11 @@ static inline Cia402_Sdo_T Cia402_Sdo_EncodeUploadResponse(uint16_t index, uint8
 }
 
 
-
+/******************************************************************************/
+/*
+    PDO (Process Data Object)
+*/
+/******************************************************************************/
 /*
     Default PDO mappings per CiA 402 (predefined connection set).
     Each is a packed struct overlay over the PDO byte array.

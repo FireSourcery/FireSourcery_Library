@@ -325,8 +325,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
 // void _Motor_SetILimit(Motor_Context_T * p_motor, uint16_t i_fract16)
 // {
-//     _Motor_SetILimitMotoring(p_motor, i_fract16);
-//     _Motor_SetILimitGenerating(p_motor, i_fract16);
+//     Ramp_SetLimits(&p_motor->TorqueRamp, -i_fract16, i_fract16);
 // }
 
 // /*  Motor_GetILimits */
@@ -350,6 +349,9 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 // }
 
 // static void _Motor_SetILimitDerate(Motor_T * p_motor, ufract16_t derate)
+// {
+    // _Motor_SetILimits
+// }
 
 
 

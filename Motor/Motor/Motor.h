@@ -417,7 +417,7 @@ static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_mo
 
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
 
-
+/* virtual getter for runtime configurable or compile time fixed */
 static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
 static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
 
@@ -540,10 +540,10 @@ static inline fract16_t Motor_ILimitCcw(const Motor_Context_T * p_motor) { retur
 static inline fract16_t Motor_ILimitCw(const Motor_Context_T * p_motor) { return Ramp_GetLimitLower(&p_motor->TorqueRamp); }
 static inline fract16_t Motor_SpeedLimitCcw(const Motor_Context_T * p_motor) { return Ramp_GetLimitUpper(&p_motor->SpeedRamp); }
 static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { return Ramp_GetLimitLower(&p_motor->SpeedRamp); }
-// static inline void _Motor_SetILimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitUpper(&p_motor->TorqueRamp); }
-// static inline void _Motor_SetILimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->TorqueRamp); }
-// static inline void _Motor_SetSpeedLimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitUpper(&p_motor->SpeedRamp); }
-// static inline void _Motor_SetSpeedLimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_GetLimitLower(&p_motor->SpeedRamp); }
+// static inline void _Motor_SetILimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitUpper(&p_motor->TorqueRamp, value); }
+// static inline void _Motor_SetILimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitLower(&p_motor->TorqueRamp, value); }
+// static inline void _Motor_SetSpeedLimitCcw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitUpper(&p_motor->SpeedRamp, value); }
+// static inline void _Motor_SetSpeedLimitCw(const Motor_Context_T * p_motor, int16_t value) { return Ramp_SetLimitLower(&p_motor->SpeedRamp, value); }
 
 // static inline ufract16_t Motor_SpeedLimitMotoring(const Motor_Context_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction); }
 // static inline ufract16_t Motor_SpeedLimitGenerating(const Motor_Context_T * p_motor) { return _Motor_SpeedLimitAs(p_motor, p_motor->Direction * -1); }

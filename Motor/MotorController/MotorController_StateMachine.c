@@ -185,9 +185,9 @@ static State_T * Init_Next(MotorController_T * p_dev)
         /* Enforce VMonitor Enable */
         if (VBus_IsEnabled(p_dev->P_VBUS) == false) { p_mc->FaultFlags.InitCheck = 1U; p_mc->FaultFlags.VBusLimit = 1U; }
 
+        /* In the case of boot into motor spinning state. Go to fault state disable output */
         if (Motor_Table_IsEveryState(&p_dev->MOTORS, &MOTOR_STATE_DEACTIVATED) == false) { p_mc->FaultFlags.Motors = 1U; }
 
-        /* In the case of boot into motor spinning state. Go to fault state disable output */
         if (p_mc->FaultFlags.Value == 0U) { p_nextState = &MC_STATE_STANDBY; }
         else { p_nextState = &MC_STATE_FAULT; }
     }

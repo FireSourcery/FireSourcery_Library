@@ -40,6 +40,8 @@
 //     struct
 //     {
 //         Motor_T DEV;
+// HeatMonitor_T HEAT_MONITOR;
+// Analog_Conversion_T HEAT_MONITOR_CONVERSION;
 //         Cia402_Adapter_T * const P_CIA402_ADAPTER;
 //     }
 //     * const P_DEVS;

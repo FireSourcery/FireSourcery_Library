@@ -140,7 +140,8 @@ typedef CanBus_RxRoute_T * (*CanBus_RxRequestMapper_T)(void * p_dev, uint32_t id
 
 // typedef const struct
 // {
-
+// CanBus_ReqTable_T
+// void Handler(void * p_context, void * adapter,  const CAN_Frame_T * p_rx, CAN_Frame_T * p_tx)
 // }
 // CanBus_Socket_T;
 
