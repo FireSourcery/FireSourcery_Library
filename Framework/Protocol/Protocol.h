@@ -43,9 +43,16 @@
 
 /******************************************************************************/
 /*!
+    Common Layer handling
+        - Frame/Header Parsing
+        - Build Tx Header todo
+        - Sync Ack/Nack
+        - Hook for substate handling
+
     OSI Layer 3,4
 */
 /******************************************************************************/
+
 /******************************************************************************/
 /*!
     Request / Request Table
@@ -53,7 +60,7 @@
     ProcReqResp - interface for Rx and Tx packets
     User provide functions to convert between Packet format and appInterface format
 
-    User may config appInterface as
+    appInterface as
         appInterface => buffer once, unrestricted scope
         packetInterface => parse p_rxPacket to packetInterface, then call proc on buffered data => buffers twice
 */
@@ -62,11 +69,13 @@
 /*
     Stateless Req, fit for simple read write.
     Shared ReqResp function allows function to maintain temporary local state
-    @return txSize
 */
 /******************************************************************************/
-typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_txPacket, const uint8_t * p_rxPacket);
-// typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, void * p_txPayload, const void * p_rxPayload);
+/*!
+    Configurable for p_payload or p_header
+    @return txSize
+*/
+typedef packet_size_t(*Protocol_ProcReqResp_T)(void * p_appContext, uint8_t * p_tx, const uint8_t * p_rx);
 
 /******************************************************************************/
 /*
@@ -136,9 +145,19 @@ Protocol_ReqContext_T;
 //   Return: control code (continue, await rx, complete, ack, nack)
 //   State:  persistent via p_SubState across call
 typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Protocol_ReqContext_T * p_interface);
-// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Packet_RxContext_T, Packet_TxContext_T, );
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt1_T)(void * p_appContext, void * p_SubState, const void const * p_rx, const void * p_tx);
 
 typedef void (*Protocol_ResetReqState_T)(void * p_subState);
+
+//alternatively pointer to max allocation
+// const struct Protocol_ReqContext
+// {
+//     uint8_t  RxPacket[LENTH_MAX];
+//     Protocol_HeaderMeta_T  RxMeta;
+//     uint8_t TxPacket[];
+//     Protocol_HeaderMeta_T  TxMeta;
+//     uint8_t  SubState[];
+// };
 
 /*
     Sync Options - Configure per Req, uses common timeout
@@ -218,6 +237,7 @@ typedef enum Protocol_ReqState
 }
 Protocol_ReqState_T;
 
+
 // typedef struct Protocol
 // {
     // Protocol_ReqMapper_T;
@@ -237,7 +257,6 @@ Protocol_ReqState_T;
 //     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 // }
 // Protocol_Mux_T;
-
 
 
 
@@ -545,7 +564,7 @@ Protocol_SyncStatus_T;
 */
 /******************************************************************************/
 /*
-Stateless (VarRead) — PROC only, SYNC_DISABLE
+Stateless (Var16Read) — PROC only, SYNC_DISABLE
 
 Transport:  bytes arrive → RxIndex advances
 Parse:      PACKET_COMPLETE

@@ -136,7 +136,8 @@ static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) 
 // }
 
 
-
+// static inline Motor_ElectricalBase_T _Motor_GetCalibBase(const Motor _T * p_config
+// static inline Motor_ElectricalBase_T _Motor_GetRatedBase(const Motor * p_config)
 
 /******************************************************************************/
 /*!

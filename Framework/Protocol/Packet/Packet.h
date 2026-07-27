@@ -30,6 +30,7 @@
 */
 /******************************************************************************/
 #include <stdint.h>
+#include <stddef.h>
 
 
 #ifndef PACKET_ID_TYPE
@@ -61,12 +62,15 @@ typedef PACKET_SIZE_TYPE    packet_size_t;
 
 /*
     User functions return status - communicate module handled behaviors
+    Handle status that can be determined by the framing/header alone.
     overload to eliminate need of addtional parser functions
     include sync ids from framing/header
 */
 typedef enum Protocol_RxCode
 {
     PROTOCOL_RX_CODE_AWAIT_PACKET,       /* Wait CaptureRx */
+    // PROTOCOL_RX_CODE_AWAIT_HEADER,
+    // PROTOCOL_RX_CODE_AWAIT_PAYLOAD,
     PROTOCOL_RX_CODE_PACKET_COMPLETE,    /* Success Complete Payload Packet */
 
     PROTOCOL_RX_CODE_ERROR_TIMEOUT,     /* Error Timeout */
@@ -74,12 +78,45 @@ typedef enum Protocol_RxCode
     PROTOCOL_RX_CODE_ERROR_DATA,        /* Error Req Packet Checksum/CRC */
 
     /* Sync packets allocated RxCode */
-    // PROTOCOL_RX_CODE_CONTROL_META, /* Sync type for further parsing */
+    // PROTOCOL_RX_CODE_CONTROL_META, /* Sync type pass to req, share sub id Protocol_TxSyncId_T */
     PROTOCOL_RX_CODE_ACK,
     PROTOCOL_RX_CODE_NACK,
     PROTOCOL_RX_CODE_ABORT,
 }
 Protocol_RxCode_T;
+// typedef enum Protocol_RxCode
+// {
+//     // Success codes
+//     PROTOCOL_RX_CODE_AWAIT_PACKET = 0x00,  /* Continue receiving */
+//     PROTOCOL_RX_CODE_PACKET_COMPLETE = 0x01,  /* Complete packet received */
+//     PROTOCOL_RX_CODE_PACKET_FRAGMENT = 0x02,  /* Fragment received, more expected */
+
+//     // Sync/Control codes
+//     PROTOCOL_RX_CODE_ACK = 0x10,
+//     PROTOCOL_RX_CODE_NACK = 0x11,
+//     PROTOCOL_RX_CODE_ABORT = 0x12,
+//     PROTOCOL_RX_CODE_RESET = 0x13,  /* Protocol reset requested */
+//     PROTOCOL_RX_CODE_HEARTBEAT = 0x14,  /* Keep-alive packet */
+
+//     // Error codes - Header/Meta
+//     PROTOCOL_RX_CODE_ERROR_TIMEOUT = 0x20,
+//     PROTOCOL_RX_CODE_ERROR_INVALID_ID = 0x21,  /* Unknown packet ID */
+//     PROTOCOL_RX_CODE_ERROR_INVALID_LENGTH = 0x22, /* Invalid length field */
+//     PROTOCOL_RX_CODE_ERROR_HEADER_CRC = 0x23,  /* Header checksum error */
+//     PROTOCOL_RX_CODE_ERROR_START_MARKER = 0x24,  /* Missing start delimiter */
+//     PROTOCOL_RX_CODE_ERROR_SEQUENCE = 0x25,  /* Sequence number error */
+
+//     // Error codes - Data/Payload
+//     PROTOCOL_RX_CODE_ERROR_DATA_CRC = 0x30,  /* Payload checksum error */
+//     PROTOCOL_RX_CODE_ERROR_DATA_LENGTH = 0x31,  /* Payload length mismatch */
+//     PROTOCOL_RX_CODE_ERROR_DATA_FORMAT = 0x32,  /* Invalid data format */
+//     PROTOCOL_RX_CODE_ERROR_BUFFER_FULL = 0x33,  /* Receive buffer overflow */
+
+//     // System errors
+//     PROTOCOL_RX_CODE_ERROR_SYSTEM = 0xF0,  /* Generic system error */
+//     PROTOCOL_RX_CODE_ERROR_NOT_READY = 0xF1,  /* System not ready */
+//     PROTOCOL_RX_CODE_ERROR_BUSY = 0xF2,  /* System busy */
+// } Protocol_RxCode_T;
 
 
 /* Framing */
@@ -88,13 +125,8 @@ typedef struct Protocol_HeaderMeta
 {
     packet_id_t Id;                 /* Packet type identifier. Index into P_REQ_TABLE */
     packet_size_t Length;           /* Total packet length */
-
-    // uint32_t Sequence;   /* Sequence number (optional) */
-    // uint32_t Start;
-    // uint32_t Status;
-    // uint8_t SourceId;               /* Source node ID (optional) */
-    // uint8_t DestId;                 /* Destination node ID (optional) */
-    // uint16_t HeaderCrc;             /* Header integrity check (optional) */
+// uint32_t responseId;
+// uint32_t Sequence;   /* Sequence number (optional) */
 }
 Protocol_HeaderMeta_T;
 
@@ -109,6 +141,8 @@ Protocol_HeaderMeta_T;
     Phase 1 control : ACK, NACK, ABORT(sync packets — no Phase 2)
 */
 typedef Protocol_RxCode_T(*Packet_ParseRxFraming_T)(const void * p_buffer, packet_size_t rxCount, Protocol_HeaderMeta_T * p_meta);
+// force lenght first. return 0 for unknown, after min, per byte call.
+// typedef size_t(*Packet_ParseRxLength_T)(const void * p_buffer, packet_size_t rxCount);
 
 /*!
     Phase 2 — Validation / Completion
@@ -118,8 +152,10 @@ typedef Protocol_RxCode_T(*Packet_ParseRxFraming_T)(const void * p_buffer, packe
     Phase 2 errors : ERROR_DATA(checksum failure)
     Phase 2 success : PACKET_COMPLETE
 */
-typedef Protocol_RxCode_T(*Packet_ParseRxHeader_T)(const void * p_buffer, Protocol_HeaderMeta_T * p_meta);
-
+typedef Protocol_RxCode_T(*Packet_ParseRxComplete_T)(const void * p_buffer, Protocol_HeaderMeta_T * p_meta);
+// typedef bool (*Packet_ValidateRx_T)(const void * p_buffer);
+// id or directly return handler
+// typedef Protocol_RxCode_T(*Packet_ParseRx_T)(const void * p_buffer, intptr_t req);
 
 /*!
     Tx — Build Header
@@ -127,6 +163,10 @@ typedef Protocol_RxCode_T(*Packet_ParseRxHeader_T)(const void * p_buffer, Protoc
     Writes all header fields (start, id, length, checksum).
 */
 typedef void (*Packet_BuildTxHeader_T)(void * p_buffer, const Protocol_HeaderMeta_T * p_meta);
+// split essential fields implementation
+// typedef void (*Packet_BuildTxHeader_T)(void * p_buffer, packet_id_t id, packet_size_t length);
+// typedef void (*Packet_BuildTxHeaderExt_T)(void * p_buffer, const Protocol_HeaderMeta_T * p_meta);
+
 typedef packet_size_t(*Packet_BuildTxSync_T)(void * p_txPacket, packet_id_t txId);
 
 
@@ -143,30 +183,46 @@ typedef const struct Packet_Format
     /* Enframe/Deframe */
     /* Rx */
     const Packet_ParseRxFraming_T PARSE_RX_FRAMING;  // Phase 1: Id + Length
-    const Packet_ParseRxHeader_T  PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
+    const Packet_ParseRxComplete_T PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
 
     /* Tx */
-    const Packet_BuildTxHeader_T  BUILD_TX_HEADER;  // symmetric with Phase 2
-    const Packet_BuildTxSync_T    BUILD_TX_SYNC;
+    const Packet_BuildTxHeader_T BUILD_TX_HEADER;  // symmetric with Phase 2
+    const Packet_BuildTxSync_T BUILD_TX_SYNC;
 
     /* Optional */
     const uint32_t RX_START_ID;             /* 0x00 for Rx Parser handle */
-    // const uint32_t RX_END_ID;
-
     const uint32_t RX_TIMEOUT;              /* Reset cumulative per packet */
-    // const uint32_t BAUD_RATE_DEFAULT;
-    // HeaderFormat
 
-    // protocol param
+    // move protocol param
     const uint32_t REQ_TIMEOUT;             /* checked for stateful Req only */
     const uint8_t NACK_COUNT;
 
+    // const uint32_t BAUD_RATE_DEFAULT;
     // const bool ENCODED;                  /* Encoded data, non encoded use TIMEOUT only. No meta chars past first char. */
 }
 Packet_Format_T;
 
 static inline Protocol_RxCode_T Packet_ParseRxHeader(const Packet_Format_T * p_specs, const uint8_t * p_header, Protocol_HeaderMeta_T * p_meta) { return p_specs->PARSE_RX_HEADER(p_header, p_meta); }
 static inline void Packet_BuildTxHeader(const Packet_Format_T * p_specs, uint8_t * p_header, const Protocol_HeaderMeta_T * p_meta) { p_specs->BUILD_TX_HEADER(p_header, p_meta); }
+
+/*
+    Default selection
+*/
+static uint16_t _Packet_Checksum(const uint8_t * p_src, size_t size)
+{
+    uint16_t checksum = 0U;
+    for (size_t index = 0U; index < size; index++) { checksum += p_src[index]; }
+    return checksum;
+}
+
+static uint16_t Packet_Checksum(const uint8_t * p_packet, size_t totalSize, size_t checksumStart, size_t checksumSize)
+{
+    const size_t checksumEnd = checksumStart + checksumSize;
+    uint16_t checksum = 0U;
+    checksum += _Packet_Checksum(&p_packet[0U], checksumStart);
+    checksum += _Packet_Checksum(&p_packet[checksumEnd], totalSize - checksumEnd);
+    return checksum;
+}
 
 /******************************************************************************/
 /*!
@@ -199,9 +255,59 @@ Protocol_TxSyncId_T;
 //     PROTOCOL_TX_TYPE_RESET,             /* Protocol reset */
 // } Protocol_TxType_T;
 
+/*
+    structured def for socket def
+*/
+typedef const struct Packet_Context
+{
+    uint8_t * P_BUFFER;
+    Protocol_HeaderMeta_T * P_META;
+}
+Packet_Context_T;
+
+// typedef const struct
+// {
+//     const Packet_Context_T * P_Rx;
+//     const Packet_Context_T * P_Tx;
+// }
+// Protocol_ReqContext_T;
+
+
+// typedef const struct Packet_Context
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+// }
+// Packet_Context_T;
+
+// typedef const struct
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+//     const Packet_BuildTxHeader_T  BUILD_TX_HEADER;  // symmetric with Phase 2
+//     const Packet_BuildTxSync_T    BUILD_TX_SYNC;
+// }
+// Protocol_TxContext_T;
+
+// typedef const struct
+// {
+//     const Packet_Format_T * P_FORMAT;
+//     uint8_t * P_BUFFER;
+//     Protocol_HeaderMeta_T * P_META;
+//     Packet_RxParserState_T * P_RX_STATE;
+//     const Packet_ParseRxFraming_T PARSE_RX_FRAMING;  // Phase 1: Id + Length
+//     const Packet_ParseRxComplete_T  PARSE_RX_HEADER;   // Phase 2: checksum + fields extraction
+// }
+// Protocol_RxContext_T;
+
+
+
+
 
 /*
-    descriptor
+    by  descriptor
 */
 // typedef const struct Packet_HeaderFormat
 // {

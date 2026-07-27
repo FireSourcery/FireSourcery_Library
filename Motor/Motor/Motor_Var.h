@@ -60,7 +60,6 @@ typedef enum Motor_Var_UserOut
     MOTOR_VAR_V_SPEED_EFFECTIVE,
     MOTOR_VAR_POWER,
     MOTOR_VAR_I_BUS,
-
 }
 Motor_Var_UserOut_T;
 

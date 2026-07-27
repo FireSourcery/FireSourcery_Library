@@ -323,6 +323,7 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
         .p_TxPacket = p_socket->P_TX_PACKET_BUFFER,
         .p_RxMeta = &p_state->RxMeta,
         .p_TxSize = &p_state->TxLength,
+        // .p_TxMeta = &p_state->TxMeta,
         .p_SubStateIndex = &p_state->ReqSubStateIndex,
     };
 
@@ -346,6 +347,7 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
                         {
                             // p_state->TxLength = 0U; /* in case it is not set by the user function */
                             p_state->TxLength = p_state->p_ReqActive->PROC(p_socket->P_APP_CONTEXT, p_socket->P_TX_PACKET_BUFFER, p_socket->P_RX_PACKET_BUFFER);
+                            // p_state->TxMeta.Length = p_state->TxLength;
                         // #if defined(PROTOCOL_REQ_HANDLER_PAYLOAD)
                         //     p_state->TxLength = p_state->p_ReqActive->PROC(p_socket->P_APP_CONTEXT, &p_socket->P_TX_PACKET_BUFFER[p_socket->HEADER_LENGTH], &p_socket->P_RX_PACKET_BUFFER[p_socket->HEADER_LENGTH]);
                         // #endif

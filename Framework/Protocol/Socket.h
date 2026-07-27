@@ -103,6 +103,7 @@ Socket_State_T;
 
 #define SOCKET_STATE_ALLOC() (&(Socket_State_T){0})
 
+
 /*
     Combine:
         Xcvr_T, or selection
@@ -118,10 +119,24 @@ typedef const struct Socket
     uint8_t * P_RX_PACKET_BUFFER;
     uint8_t * P_TX_PACKET_BUFFER;
     uint8_t PACKET_BUFFER_LENGTH;           /* Must be greater than Specs RX_LENGTH_MAX */
-
     /* Protocol_Req_T Context */
     void * P_APP_CONTEXT;                   /* User app context for packet processing */
     void * P_REQ_STATE_BUFFER;              /* Session layer. Child protocol control variables, must be largest enough to hold substate context referred by specs */
+
+    // contigous def pass directly to req handlers
+// pass to handlers
+// Packet_Context_T  RX_PACKET_CONTEXT;
+// Packet_Context_T  TX_PACKET_CONTEXT;
+// const struct Protocol_ReqContext
+// {
+//     void * p_RxPacket;
+//     Protocol_HeaderMeta_T * p_RxMeta;
+//     void * p_TxPacket;
+//     Protocol_HeaderMeta_T * p_TxMeta;  // handler sets Id + Length
+//     void * p_SubState;
+//     uint32_t * p_SubStateIndex;
+// };
+
 
     const Socket_Config_T * P_NVM_CONFIG;   /* Initial Config */
 
@@ -134,6 +149,7 @@ typedef const struct Socket
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
+
     // alternatively fixed or default init
     // const Packet_Format_T * P_PACKET_CLASS;
     const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
@@ -144,11 +160,7 @@ typedef const struct Socket
     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 
-
     const volatile uint32_t * P_TIMER;
-
-    // Packet_Context_T  RX_PACKET_CONTEXT;
-    // Packet_Context_T  TX_PACKET_CONTEXT;
 }
 Socket_T;
 

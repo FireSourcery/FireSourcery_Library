@@ -102,6 +102,7 @@ MotProtocol_DataModeState_T;
 // extern void MotProtocol_ResetSubState(MotProtocol_DataModeState_T * p_subState);
 
 extern const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS;
+extern void MotProtocol_BuildTxHeader(MotPacket_T * p_packet, const Protocol_HeaderMeta_T * p_meta);
 
 extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
 extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
@@ -110,3 +111,4 @@ extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Pr
 // extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
 
 #endif
+

@@ -92,6 +92,7 @@ static inline uint32_t _PID_GetSampleFreq(const PID_Config_T * p_config) { retur
 static inline int32_t _PID_GetKp_Fixed32(const PID_Config_T * p_config) { return p_config->Kp_Fixed32; }
 static inline int32_t _PID_GetKi_Fixed32(const PID_Config_T * p_config) { return p_config->Ki_Fixed32; }
 static inline int32_t _PID_GetKd_Fixed32(const PID_Config_T * p_config) { return p_config->Kd_Fixed32; }
+
 static inline int32_t _PID_GetKp_Fixed16(const PID_Config_T * p_config) { return p_config->Kp_Fixed32 >> 8; }
 static inline int32_t _PID_GetKi_Fixed16(const PID_Config_T * p_config) { return p_config->Ki_Fixed32 >> 8; }
 static inline int32_t _PID_GetKd_Fixed16(const PID_Config_T * p_config) { return p_config->Kd_Fixed32 >> 8; }
@@ -115,6 +116,7 @@ static inline uint16_t PID_GetKp_Fixed16(const PID_T * p_pid) { return PID_GetKp
 static inline uint16_t PID_GetKi_Fixed16(const PID_T * p_pid) { return PID_GetKi_Fixed32(p_pid) >> 8; }
 static inline uint16_t PID_GetKd_Fixed16(const PID_T * p_pid) { return PID_GetKd_Fixed32(p_pid) >> 8; }
 
+/*  */
 static inline int32_t _PID_GetKp_Runtime(const PID_T * p_pid) { return (int32_t)p_pid->PropGain << (15 - p_pid->PropGainShift); }
 static inline int32_t _PID_GetKi_Runtime(const PID_T * p_pid) { return ((int32_t)p_pid->IntegralGain * p_pid->Config.SampleFreq) >> p_pid->IntegralGainShift; }
 

@@ -734,5 +734,3 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 // static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 
-// static inline Motor_ElectricalBase_T _Motor_GetCalibBase(const Motor _T * p_config
-// static inline Motor_ElectricalBase_T _Motor_GetRatedBase(const Motor * p_config)

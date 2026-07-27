@@ -249,6 +249,28 @@ static inline Cia402_OdInterface_T _OdInterface(Motor_Cia402_Ctx_T * p_ctx)
     };
 }
 
+/******************************************************************************/
+/*
+    SDO server — delegate to the protocol-layer engine.
+
+    The generic engine (Cia402_Sdo_HandleRequest) parses the inbound frame,
+    decodes the CCS, looks up OD metadata, and fills the response. It is
+    bound to this drive's OD via three callback functions wrapped in a
+    Cia402_OdInterface_T. The integration layer's only job is to construct
+    that interface and invoke the engine.
+
+    Single-context contract: the engine carries one void* per axis. We pass
+    the Motor_T pointer; the callbacks resolve the adapter via
+    Motor_Cia402_Adapter().
+*/
+/******************************************************************************/
+bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
+{
+    Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
+    const Cia402_OdInterface_T od = _OdInterface(&ctx);
+    return Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U;
+}
+
 
 /******************************************************************************/
 /*
@@ -317,27 +339,6 @@ void Motor_Cia402_HandleRxPdo_CwPosition(Motor_T * p_motor, Cia402_Adapter_T * p
 }
 
 
-/******************************************************************************/
-/*
-    SDO server — delegate to the protocol-layer engine.
-
-    The generic engine (Cia402_Sdo_HandleRequest) parses the inbound frame,
-    decodes the CCS, looks up OD metadata, and fills the response. It is
-    bound to this drive's OD via three callback functions wrapped in a
-    Cia402_OdInterface_T. The integration layer's only job is to construct
-    that interface and invoke the engine.
-
-    Single-context contract: the engine carries one void* per axis. We pass
-    the Motor_T pointer; the callbacks resolve the adapter via
-    Motor_Cia402_Adapter().
-*/
-/******************************************************************************/
-bool Motor_Cia402_HandleSdo(Motor_T * p_motor, Cia402_Adapter_T * p_adapter, const Cia402_Sdo_T * p_req, Cia402_Sdo_T * p_resp)
-{
-    Motor_Cia402_Ctx_T ctx = { .p_Motor = (Motor_T *)p_motor, .p_Adapter = p_adapter };
-    const Cia402_OdInterface_T od = _OdInterface(&ctx);
-    return Cia402_Sdo_HandleRequest(&od, p_req, p_resp) != 0U;
-}
 
 /******************************************************************************/
 /*

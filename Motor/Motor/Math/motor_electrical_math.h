@@ -52,13 +52,13 @@
     V_base [V]
     I_base [A]
 
-    ω_base [rad/S electrical] canonical base
+    ω_base [rad/s electrical] canonical base
     derived by wrappers:
-        ω_base [n/S] = ω_base [rad/S] · 1 / 2π
-        ω_base [eRPM] = ω_base [rad/S] · 60 / 2π
+        ω_base [n/s] = ω_base [rad/s] · 1 / 2π
+        ω_base [eRPM] = ω_base [rad/s] · 60 / 2π
 
     time base from ω_base:
-    τ_base [S] = 1 / ω_base, for time constants τ = L/R, τ_base = L_base / R_base = 1 / ω_base
+    τ_base [s] = 1 / ω_base, for time constants τ = L/R, τ_base = L_base / R_base = 1 / ω_base
 
     Derived (PU conditionally > 1.0):
     R_base [Ω]   = V_base / I_base
@@ -74,8 +74,8 @@
     ω_base from ω in Fs:
     dt [S] = 1 / Fs
     Fs [Hz] = 1 / dt
-    ω [n/dt] = ω [rad/S] · Fs / 2π
-    ω [rad/S] = 2π · ω [n/dt] / Fs
+    ω [n/dt] = ω [rad/s] · Fs / 2π
+    ω [rad/s] = 2π · ω [n/dt] / Fs
 
     Per-unit:
     ψ and L are dependent on ω_base:
@@ -106,8 +106,8 @@
 
 
     Angle16/Fs:
-    ω_base [rad/S] = π · Fs
-    ω_angle16 [angle16 / dt] = ω [rad/S] · 65536 / (2π · Fs)
+    ω_base [rad/s] = π · Fs
+    ω_angle16 [angle16 / dt] = ω [rad/s] · 65536 / (2π · Fs)
     integrator:
     θ[k+1] = θ[k] + ω_du
 */
@@ -271,7 +271,7 @@ static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu, fract16_t i_
     ω_base [rad/s electrical]
     ω_pu   = ω_e / ω_base                               (rated → 1.0)
     ω_base = 2π · p · n_max / 60                        [rad/s electrical]
-    ω_base(kv) [rad/S] = (2π · p · Kv · V_base) / 60
+    ω_base(kv) [rad/s] = (2π · p · Kv · V_base) / 60
 
     integrator: θ += ω_pu · (ω_base / (π · Fs))
 
@@ -501,9 +501,9 @@ static inline uint32_t psi_pu_rpm_of_ke(uint16_t v_base_V, uint32_t speed_base_r
     integrator:   θ_pu += ω_pu [digital]
     ω_base [digital] = 32768 ⇔ π rad at Fs
 
-    ω_du [digital] = ω [rad/S] · 65536 / (2π · Fs)
+    ω_du [digital] = ω [rad/s] · 65536 / (2π · Fs)
         ω_du [digital] = 1 ⇒ 2π/65536 [rad/tick] = Fs · π/32768 [rad/s]
-    ω [rad/S] = ω_du [digital] · Fs / 10430
+    ω [rad/s] = ω_du [digital] · Fs / 10430
 
     corresponds with nyquist by construction, int16 wrap at 2π/2.
 

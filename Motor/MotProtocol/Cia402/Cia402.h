@@ -725,6 +725,7 @@ typedef Cia402_OdStatus_T(*Cia402_OdSetFn_T)  (void * p_context, uint16_t index,
 typedef const struct Cia402_OdInterface
 {
     void * p_Context;
+    // Cia402_Adapter_T * p_Adapter;
     Cia402_OdGetInfoFn_T GetInfo;
     Cia402_OdGetFn_T Get;
     Cia402_OdSetFn_T Set;

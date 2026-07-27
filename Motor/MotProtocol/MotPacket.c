@@ -42,28 +42,9 @@
     Common
 */
 /******************************************************************************/
-static uint16_t Sum(const uint8_t * p_src, size_t size)
+uint16_t MotPacket_Checksum(const MotPacket_T * p_packet, size_t totalSize)
 {
-    uint16_t checksum = 0U;
-    for(size_t iByte = 0U; iByte < size; iByte++) { checksum += p_src[iByte]; }
-    return checksum;
-}
-
-uint16_t Packet_Checksum(const MotPacket_T * p_packet, size_t totalSize)
-{
-    static const uint8_t checksumStart = offsetof(MotPacket_Header_T, Checksum);
-    static const uint8_t checksumSize = sizeof(checksum_t);
-    static const uint8_t checksumEnd = checksumStart + checksumSize;
-
-    uint16_t checkSum = 0U;
-    checkSum += Sum(&(p_packet->Bytes[0U]), checksumStart);
-    checkSum += Sum(&(p_packet->Bytes[checksumEnd]), totalSize - checksumEnd);
-    return checkSum;
-}
-
-bool MotPacket_ProcChecksum(const MotPacket_T * p_packet, size_t totalSize)
-{
-    return (Packet_Checksum(p_packet, totalSize) == p_packet->Header.Checksum);
+    return Packet_Checksum((const uint8_t *)p_packet, totalSize, offsetof(MotPacket_Header_T, Checksum), sizeof(p_packet->Header.Checksum));
 }
 
 uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncId)
@@ -71,8 +52,8 @@ uint8_t MotPacket_Sync_Build(MotPacket_Sync_T * p_txPacket, MotPacket_Id_T syncI
     assert((syncId == MOT_PACKET_PING) || (syncId == MOT_PACKET_SYNC_ACK) || (syncId == MOT_PACKET_SYNC_NACK) || (syncId == MOT_PACKET_SYNC_ABORT));
     p_txPacket->Start = MOT_PACKET_START_BYTE;
     p_txPacket->SyncId = syncId;
-    p_txPacket->Control = 0U; /* reserved */
-    p_txPacket->Checksum = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Control;
+    p_txPacket->Flex = 0U; /* reserved */
+    p_txPacket->Checksum = p_txPacket->Start ^ p_txPacket->SyncId ^ p_txPacket->Flex;
     return sizeof(MotPacket_Sync_T);
 }
 
@@ -94,25 +75,16 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
     p_packet->Header.Id = headerId;
     p_packet->Header.Length = payloadLength + sizeof(MotPacket_Header_T);
     p_packet->Header.Sequence = 0U;
-    // p_packet->Header.Flags = 0U;
-    p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
+    p_packet->Header.Flags = 0U;
+    // p_packet->Header.Checksum = Packet_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
+    p_packet->Header.Checksum = MotPacket_Checksum(p_packet, payloadLength + sizeof(MotPacket_Header_T));
     return p_packet->Header.Length;
 }
 
 
-/******************************************************************************/
-/*!
-    Controller Side - Parse Req In, Build Resp Out
-    Build Packet Functions - pass all parameters
-    Parse Packet Functions - return single value, or double buffer
-    @return size of Packet(TxLength)
-
-    Cmdr side
-    Build Req Out, Parse Resp In
-
+/*
     todo depreciate for build header
 */
-/******************************************************************************/
 /******************************************************************************/
 /*! Fixed Length */
 /******************************************************************************/
@@ -157,23 +129,6 @@ uint8_t MotPacket_CallResp_Build(MotPacket_T * p_packet, uint32_t id, uint16_t s
 }
 
 /******************************************************************************/
-/*! Read Var */
-/******************************************************************************/
-// uint8_t MotPacket_ReadVarResp_Build(MotPacket_ReadVarResp_T * p_respPacket, uint32_t value)
-// {
-//     p_respPacket->ReadVarResp.Value32 = value; /* Upper 2-Bytes is written 0, if uint16 value. */
-//     return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_READ_VAR, sizeof(MotPacket_ReadVarResp_T), MOT_PACKET_STATUS_OK);
-// }
-
-/******************************************************************************/
-/*! Write Var */
-/******************************************************************************/
-// uint8_t MotPacket_WriteVarResp_Build(MotPacket_WriteVarResp_T * p_respPacket, uint16_t status)
-// {
-//     return MotPacket_BuildHeader((MotPacket_T *)p_respPacket, MOT_PACKET_WRITE_VAR, 0U, status);
-// }
-
-/******************************************************************************/
 /*!
     Variable Length
 */
@@ -199,12 +154,7 @@ uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_T * p_packet) { ret
 uint8_t MotPacket_VarReadResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount) { return MotPacket_BuildHeader(p_packet, MOT_PACKET_VAR_READ, varsCount * sizeof(uint16_t)); }
 
 // static uint16_t VarId_Checksum(const MotPacket_T * p_packet, uint8_t varCount) { return Checksum((uint8_t *)&p_packet->Payload[0U], varCount * 2U); }
-// void MotPacket_VarReadResp_BuildVarValue(MotPacket_T * p_packet, uint8_t index, uint16_t value) { ((MotPacket_VarReadResp_T *)p_packet->Payload)->Value16[index] = value; }
-// void MotPacket_VarReadResp_BuildMeta(MotPacket_VarReadResp_T * p_respPacket, uint8_t varsStatus)
-// {
-//     // p_respPacket->Header.Imm16 = idChecksum;
-//     // p_respPacket->VarReadResp.Status16 = status16;
-// }
+
 
 /******************************************************************************/
 /*! WriteVars */
@@ -213,12 +163,7 @@ uint8_t MotPacket_VarWriteReq_ParseVarCount(const MotPacket_T * p_packet) { retu
 
 uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount) { return MotPacket_BuildHeader(p_packet, MOT_PACKET_VAR_WRITE, varsCount * sizeof(uint8_t)); }
 
-// void MotPacket_VarWriteResp_BuildVarStatus(MotPacket_T * p_packet, uint8_t index, uint16_t status) { ((MotPacket_VarWriteResp_T *)p_packet->Payload)->VarStatus[index] = status; }
-// void MotPacket_VarWriteResp_BuildMeta(MotPacket_VarWriteResp_T * p_respPacket, uint16_t status16)
-// {
-//     p_respPacket->Header.Imm16  = idChecksum;
-//     // p_respPacket->VarWriteResp.headerStatus = status16;
-// }
+
 
 /******************************************************************************/
 /*! Mem */

@@ -59,8 +59,6 @@ extern const Phase_Calibration_T PHASE_CALIBRATION;
 #if !defined(PHASE_V_TYPE_MAX_VOLTS) && !defined(PHASE_I_TYPE_MAX_AMPS)
 #define PHASE_V_TYPE_MAX_VOLTS PHASE_CALIBRATION.V_MAX_VOLTS
 #define PHASE_I_TYPE_MAX_AMPS PHASE_CALIBRATION.I_MAX_AMPS
-// #define PHASE_V_FRACT16(volts, Max) FRACT16((float)volts / Max)
-// #define PHASE_I_FRACT16(amps, Max) FRACT16((float)amps / Max)
 #else /* Compile time def only */
 #define PHASE_V_FRACT16(volts) FRACT16((float)volts / PHASE_V_TYPE_MAX_VOLTS)
 #define PHASE_I_FRACT16(amps) FRACT16((float)amps / PHASE_I_TYPE_MAX_AMPS)
@@ -120,7 +118,8 @@ static inline uint16_t Phase_R_MilliOhmsOfFract16(accum32_t fract16)
     return ((accum32_t)fract16 * Phase_Calibration_GetVMaxVolts() * 1000) / ((accum32_t)Phase_Calibration_GetIMaxAmps() * 32768);
 }
 
-// static inline uint32_t Phase_L_Fract16OfSi(uint32_t fs_hz, uint16_t ls_uHenries)
+/* speedBase_rads = 1 / tauBase_Seconds */
+// static inline uint32_t _Phase_L_Fract16OfSi(uint32_t speedBase_rads, uint16_t microHenries)
 // {
-//   l_pu_of_uh(fs_hz, Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), ls_uHenries);
+//     return l_pu_rads_of_h(Phase_Calibration_GetVMaxVolts(), Phase_Calibration_GetIMaxAmps(), speedBase_rads, microHenries, 1000000UL);
 // }
