@@ -59,8 +59,7 @@
     Inverse stores Fs / ω_base (Q32) for the angle → ω_pu direction.
 */
 /******************************************************************************/
-// typedef struct Angle_SpeedScale
-typedef struct Angle_SpeedFractRef
+typedef struct Angle_SpeedUnitRef
 {
     angle16_t SpeedMax_Angle16;    /* (ω_base · Δt) in angle16/tick — angle step at ω_pu = 1.0 */
     uint32_t InvSpeedMax_Fract32;   /* Fs / ω_base (Q32) — inverse for angle → ω_pu */
@@ -69,34 +68,19 @@ typedef struct Angle_SpeedFractRef
 Angle_SpeedUnitRef_T;
 
 /* Config Options in RPM */
-// typedef struct Angle_SpeedFractRef_Rpm
-// typedef struct Angle_SpeedFractCalib
-// {
-//     uint32_t PollingFreq;
-//     uint32_t SpeedMax_Rpm;  /* ω_base as   RPM (~2x rated) */
-// }
-// Angle_SpeedFractCalib_T;
-
-// typedef struct Angle_SpeedFractCalib
-// {
-//     uint32_t PollingFreq;
-//     uint32_t K; from shift
-// }
-// Angle_SpeedFractCalib_T;
-
 #define ANGLE_SPEED_FRACT_REF(maxAngle16) (Angle_SpeedUnitRef_T) { .SpeedMax_Angle16 = (maxAngle16), .InvSpeedMax_Fract32 = INT32_MAX / (maxAngle16) }
-#define ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
+#define ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm) ANGLE_SPEED_FRACT_REF(ANGLE16_OF_RPM(pollingFreq, maxRpm))
 
 // #if defined(ANGLE_POLLING_FREQ) && defined(ANGLE_SPEED_MAX_RPM)
-// static const Angle_SpeedUnitRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_CALIB(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
+// static const Angle_SpeedUnitRef_T ANGLE_SPEED_CALIB = ANGLE_SPEED_FRACT_REF_FROM_RPM(ANGLE_POLLING_FREQ, ANGLE_SPEED_MAX_RPM);
 // #endif
 
 static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef(angle16_t maxAngle16) { return ANGLE_SPEED_FRACT_REF(maxAngle16); }
-static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef_FromRpm(uint32_t pollingFreq, uint32_t maxRpm) { return ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
+static inline Angle_SpeedUnitRef_T Angle_SpeedFractRef_FromRpm(uint32_t pollingFreq, uint32_t maxRpm) { return ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm); }
 
 /* Caller pass Ref ~ 2x for overflow range */
 static void Angle_SpeedRef_Init(Angle_SpeedUnitRef_T * p_ref, angle16_t maxAngle16) { *p_ref = ANGLE_SPEED_FRACT_REF(maxAngle16); }
-static void Angle_SpeedRef_Init_Rpm(Angle_SpeedUnitRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_CALIB(pollingFreq, maxRpm); }
+static void Angle_SpeedRef_Init_Rpm(Angle_SpeedUnitRef_T * p_ref, uint32_t pollingFreq, uint32_t maxRpm) { *p_ref = ANGLE_SPEED_FRACT_REF_FROM_RPM(pollingFreq, maxRpm); }
 
 /*
     Precomputed unit conversions — operate on shifted (Q16.16) delta.

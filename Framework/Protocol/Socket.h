@@ -103,6 +103,12 @@ Socket_State_T;
 
 #define SOCKET_STATE_ALLOC() (&(Socket_State_T){0})
 
+/*
+    Combine:
+        Xcvr_T, or selection
+        Protocol handler, or selection
+
+*/
 typedef const struct Socket
 {
     /*
@@ -128,17 +134,16 @@ typedef const struct Socket
     const Protocol_Req_T * P_REQ_TABLE;
     uint8_t REQ_TABLE_LENGTH;
     // REQ_TIMEOUT
-
+    // alternatively fixed or default init
+    // const Packet_Format_T * P_PACKET_CLASS;
     const Packet_Format_T * const * P_PACKET_CLASS_TABLE;    /* Bound and verify specs selection. Array of pointers, Specs not necessarily in a contiguous array */
     uint8_t PACKET_CLASS_COUNT;
 
     /*  */
+    // const Xcvr_T * P_XCVR;
     const Xcvr_T * const * P_XCVR_TABLE; /* array of struct, or pointers. todo move selection */
     uint8_t XCVR_COUNT; /* number of Xcvr in table */
 
-    // alternatively fixed or default init
-    // const Packet_Format_T * const * P_PACKET_CLASS;
-    // const Xcvr_T * P_XCVR;
 
     const volatile uint32_t * P_TIMER;
 

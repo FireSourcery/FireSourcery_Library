@@ -136,7 +136,7 @@ Protocol_ReqContext_T;
 //   Return: control code (continue, await rx, complete, ack, nack)
 //   State:  persistent via p_SubState across call
 typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Protocol_ReqContext_T * p_interface);
-// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Packet_RxContext_T, Packet_TxConontext_T, );
+// typedef Protocol_ReqCode_T(*Protocol_ProcReqExt_T)(void * p_appContext, Packet_RxContext_T, Packet_TxContext_T, );
 
 typedef void (*Protocol_ResetReqState_T)(void * p_subState);
 
@@ -217,14 +217,14 @@ typedef enum Protocol_ReqState
     PROTOCOL_REQ_STATE_PROCESS_REQ_EXT,         /* Wait for ReqExt process */
 }
 Protocol_ReqState_T;
+
 // typedef struct Protocol
 // {
     // Protocol_ReqMapper_T;
 //     const Protocol_Req_T * P_REQ_TABLE;
 //     uint8_t REQ_TABLE_LENGTH;
 //     // REQ_TIMEOUT
-//     const Packet_Format_T * P_PACKET_FORMAT;
-//     const volatile uint32_t * P_TIMER;
+//     const Packet_Format_T PACKET_FORMAT;
 // }
 // Protocol_T;
 

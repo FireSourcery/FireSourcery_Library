@@ -33,14 +33,14 @@ void Accumulator_Init(Accumulator_T * p_accum)
 {
     p_accum->Accumulator = 0;
     p_accum->Coefficient = 1;
-    p_accum->LimitLower = _ACCUM_TO_RAW(INT16_MIN);
-    p_accum->LimitUpper = _ACCUM_TO_RAW(INT16_MAX);
+    p_accum->LimitLower = _ACCUM_STATE(INT16_MIN);
+    p_accum->LimitUpper = _ACCUM_STATE(INT16_MAX);
 }
 
 void Accumulator_InitSat(Accumulator_T * p_accum, accumulator_io_t coefficient, accumulator_io_t lower, accumulator_io_t upper)
 {
-    p_accum->Coefficient = _ACCUM_TO_RAW(coefficient);
-    p_accum->LimitLower = _ACCUM_TO_RAW(lower);
-    p_accum->LimitUpper = _ACCUM_TO_RAW(upper);
-    p_accum->Accumulator = math_clamp(_ACCUM_TO_RAW(0), p_accum->LimitLower, p_accum->LimitUpper);
+    p_accum->Coefficient = _ACCUM_STATE(coefficient);
+    p_accum->LimitLower = _ACCUM_STATE(lower);
+    p_accum->LimitUpper = _ACCUM_STATE(upper);
+    p_accum->Accumulator = math_clamp(_ACCUM_STATE(0), p_accum->LimitLower, p_accum->LimitUpper);
 }

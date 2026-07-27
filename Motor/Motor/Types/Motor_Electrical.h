@@ -53,6 +53,8 @@
 #define MOTOR_PU_BASIS_RPM
 #endif
 
+//  keep pu base in electrical domain, erads, angle16,
+//  rpm as wrapper layer
 
 /******************************************************************************/
 /*
@@ -70,6 +72,7 @@ typedef struct
     /* alternatively store speedRated_Rpm, with depedency on VBus. SpeedTypeMax = VMaxVolts * speedRated_Rpm / Vbus  */
 }
 Motor_ElectricalSpeedRating_T;
+// Motor_Kv_T;
 
 static inline int16_t _Motor_AngleOfRpm(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_rpm) { return el_angle_of_mech_rpm(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_rpm); }
 static inline int16_t _Motor_RpmOfAngle(const Motor_ElectricalSpeedRating_T * p_config, accum32_t speed_angle16) { return mech_rpm_of_el_angle(MOTOR_CONTROL_FREQ, p_config->PolePairs, speed_angle16); }
@@ -106,15 +109,10 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 // static inline accum32_t Motor_GetPsi_Angle16(const Motor_ElectricalSpeedRating_T * p_config) { return psi_pu_angle_of_kv(Phase_Calibration_GetVMaxVolts(), Motor_GetSpeedTypeMax_Rpm(p_config), p_config->Kv); }
 
 
-
-
-
-/* Seperate segment outside of config, resolve at runtime */
+/* optionally collecitve */
+/* Seperate segment outside of config, resolvable at runtime */
 /* common for use. per motor pi gains absorb per motor max */
-// typedef struct
-// {
-// }
-//  SpeedBase_T;
+// extern MOTOR_SPEED_CALIB_MAX_RADS;
 // as singleton struct
 // static inline uint16_t SpeedTypeMax_Rpm( ) { return }
 
@@ -125,12 +123,13 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 // typedef struct
 // {
 //     uint16_t SpeedRated;
-//     uint16_t VSpeedRatio;
+//     uint16_t SpeedVMatch; uint16_t VSpeedAdjustment;
 // }
 // Motor_ElectricalSpeedRating_T;
 
 /* seperate data obbject for ui */
 /* si units for per motor base */
+/* optionally handle on remote side */
 // struct Motor_ElectricalBase
 // {
 //     int32_t V ;
@@ -140,21 +139,8 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 //     int32_t L ;
 //     int32_t R ;
 //     int32_t T ;
-// };
+// } Motor_ElectricalBase_T;
 
-// seperate common and per motor approach
-// Motor_ElectricalBase Motor_Singleton_ElectricalBase( )
-// Motor_ElectricalBase Motor_ElectricalBaseOfConfig(const Motor_ElectricalSpeedRating_T * p_config)
 
 // static inline accum32_t _Motor_GetPsiBase_Wb(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_GetSpeedTypeMax_Rads(p_config) / Phase_Calibration_GetVMaxVolts(); }
-
-
-
-/* Alternate base selection */
-/* ω_base => 2 * Kv * v_nominal = 1.0f */
-/* L_base = V_base / (ω_base * I_base) */
-// static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) * Motor_Config(p_motor)->SpeedRating.Kv; }
-// static inline uint16_t Motor_VTypeMax_Volts(Motor_T * p_motor) { return VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config) or Phase_Calibration_GetVMaxVolts(); }
-// static inline uint16_t Motor_ITypeMax_Amps(Motor_T * p_motor) { return Phase_Calibration_GetIRatedPeak_Fract16(); }
-// static inline uint16_t Motor_LTypeMax_Henries(Motor_T * p_motor,) { return  Motor_VTypeMax_Volts(p_motor) / (2 * M_PI * Motor_SpeedTypeMax_ERpm(p_motor) / 60 * Motor_ITypeMax_Amps(p_motor) * sibase ); }
 

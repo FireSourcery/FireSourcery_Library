@@ -52,7 +52,8 @@
     V_base [V]
     I_base [A]
 
-    ω_base [rad/S electrical]
+    ω_base [rad/S electrical] canonical base
+    derived by wrappers:
         ω_base [n/S] = ω_base [rad/S] · 1 / 2π
         ω_base [eRPM] = ω_base [rad/S] · 60 / 2π
 
@@ -267,8 +268,9 @@ static inline accum32_t motor_emf(accum32_t Rs_pu, accum32_t Ls_pu, fract16_t i_
 /*
     ω_base motor rated anchored:
     ω_base-anchored (Fs-independent, consumed by fract16_mul with ω_pu):
-    ω_base = 2π · p · n_max / 60                        [rad/s electrical]
+    ω_base [rad/s electrical]
     ω_pu   = ω_e / ω_base                               (rated → 1.0)
+    ω_base = 2π · p · n_max / 60                        [rad/s electrical]
     ω_base(kv) [rad/S] = (2π · p · Kv · V_base) / 60
 
     integrator: θ += ω_pu · (ω_base / (π · Fs))

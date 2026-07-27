@@ -320,7 +320,7 @@ typedef struct Motor_Context
     */
     Motor_Config_T Config;
 
-    uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for calibration procedures. */
+    uint8_t CalibrationBuffer[MOTOR_CALIBRATION_BUFFER_SIZE]; /* Opaque buffer for one-shot calibration procedures. */
 
 #if defined(MOTOR_LOCAL_UNIT_CONVERSION_ENABLE)
     /*
@@ -387,7 +387,8 @@ typedef const struct Motor
     const FOC_Config_T * P_FOC_NVM_CONFIG; /* avoid loading a duplicate copy into ram */
     /*
         System-scope arbitration handles. Pointers to LimitArray_Augments_T (cached aggregate) only — Motor reads derate state.
-        Handle the system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.
+        Handle the combined system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.
+        alternatively _Motor_ResolveILimits(Motor_T * p_motor, ufract16_t derate)
     */
     const LimitArray_Augments_T * P_SYSTEM_I_LIMIT;
     const LimitArray_Augments_T * P_SYSTEM_SPEED_LIMIT;
@@ -398,11 +399,11 @@ Motor_T;
 
 static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 {
-#ifdef MOTOR_CONFIG_NVM_ONLY
-    return p_motor->P_NVM_CONFIG;
-#else
+// #ifdef MOTOR_CONFIG_NVM_ONLY
+//     return p_motor->P_NVM_CONFIG;
+// #else
     return &p_motor->P_MOTOR->Config;
-#endif
+// #endif
 }
 
 /******************************************************************************/
@@ -415,6 +416,10 @@ static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_mo
 static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
 
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
+
+
+static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
+static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rads(&Motor_Config(p_motor)->SpeedRating); }
 
 /*
     Speed VBus Ref
@@ -429,7 +434,6 @@ static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { retu
 static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Rpm(p_motor); }
 // static inline void Motor_ResolveSpeedRated(Motor_T * p_motor) { p_motor->P_MOTOR->Config.SpeedRating.SpeedRated_Rpm = Motor_GetSpeedVNominalRef_Rpm(p_motor); }
 
-static inline uint16_t Motor_SpeedTypeMax_Rpm(Motor_T * p_motor) { return _Motor_GetSpeedTypeMax_Rpm(&Motor_Config(p_motor)->SpeedRating); }
 
 /*
     when SpeedTypeMax = Kv * V_Max
@@ -730,3 +734,5 @@ extern void Motor_SetILimit_Scalar(Motor_Context_T * p_motor, uint16_t scalar_uf
 // static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); }
 // static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config) * 2; }
 
+// static inline Motor_ElectricalBase_T _Motor_GetCalibBase(const Motor _T * p_config
+// static inline Motor_ElectricalBase_T _Motor_GetRatedBase(const Motor * p_config)

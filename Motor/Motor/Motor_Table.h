@@ -34,6 +34,17 @@
 #include "Motor/Motor/Analog/Motor_Analog.h"
 #include "Type/Array/void_array.h"
 
+// handle per instance extensions not required by core logic
+// typedef const struct Motor_Handler
+// {
+//     struct
+//     {
+//         Motor_T DEV;
+//         Cia402_Adapter_T * const P_CIA402_ADAPTER;
+//     }
+//     * const P_DEVS;
+// }
+// Motor_Handler_T;
 
 /* Shorthand Wrappers */
 /* Define with motor runtime state allocated in continuous array */
@@ -43,6 +54,11 @@ typedef const struct Motor_Table
     Motor_Context_T * const P_STATES; /* optionally */
     Motor_T * const P_DEVS;
     const size_t LENGTH;
+    // struct
+    // {
+    //     Motor_T DEV;
+    //     Cia402_Adapter_T * const P_CIA402_ADAPTER;
+    // } * const P_DEVS;
 }
 Motor_Table_T;
 

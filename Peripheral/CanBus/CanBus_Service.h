@@ -136,3 +136,15 @@ typedef uint8_t * (*CanBus_RxDataMapper_T)(void * p_dev, uint32_t id);
 
 // alternative to table
 typedef CanBus_RxRoute_T * (*CanBus_RxRequestMapper_T)(void * p_dev, uint32_t id);
+
+
+// typedef const struct
+// {
+
+// }
+// CanBus_Socket_T;
+
+// replace or redirect the default REQ_CALLBACK handler
+// static inline void CanBus_ProcRx(CanBus_T * p_can, CanBus_ReqTable_T * p_)
+// {
+// }

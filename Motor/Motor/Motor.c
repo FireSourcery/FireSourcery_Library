@@ -156,13 +156,13 @@ void Motor_InitUnits(Motor_Context_T * p_motor)
 
 
 /* propagate kv config — re-derive FOC Psi from Kv (FOC config is now a separate NVM blob) */
-void Motor_InitPsi(Motor_Context_T * p_motor)
-{
-    FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
-// #ifdef MOTOR_PU_BASIS_ANGLE16
-//     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
-// #endif
-}
+// void Motor_InitPsi(Motor_Context_T * p_motor)
+// {
+//     FOC_Electrical_SetPsi_Kv(&p_motor->Foc.Config.Electrical, Phase_Calibration_GetVMaxVolts(), _Motor_GetSpeedTypeMax_Rpm(&p_motor->Config.SpeedRating), p_motor->Config.SpeedRating.Kv);
+// // #ifdef MOTOR_PU_BASIS_ANGLE16
+// //     // FOC_Electrical_SetPsi_Kv(MOTOR_CONTROL_FREQ, &p_motor->Config.ElectricalParams_Pu, Phase_Calibration_GetVMaxVolts(),  p_motor->Config.SpeedRating.Kv);
+// // #endif
+// }
 
 /******************************************************************************/
 /*
@@ -349,6 +349,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 //     }
 // }
 
+// static void _Motor_SetILimitDerate(Motor_T * p_motor, ufract16_t derate)
 
 
 

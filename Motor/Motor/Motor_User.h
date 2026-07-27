@@ -85,13 +85,13 @@ static inline fract16_t Motor_GetIBus_Fract16(Motor_T * p_motor) { return _FOC_G
 /*  */
 static inline uint16_t Motor_GetHeat_Adcu(const Motor_Context_T * p_motor) { return Monitor_GetValue(&p_motor->HeatMonitorState); }
 
-#ifdef MOTOR_UNIT_CONVERSION_LOCAL
-static inline int16_t Motor_GetSpeed_Rpm(const Motor_Context_T * p_motor)             { return  (p_motor, Motor_User_GetSpeed_Fract16(p_motor)); }
-static inline int16_t Motor_GetIPhase_Amps(const Motor_Context_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
-static inline int16_t Motor_GetVPhase_Volts(const Motor_Context_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
-static inline int32_t Motor_GetElectricalPower_VA(const Motor_Context_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
-static inline thermal_t Motor_GetHeat_DegC(const Motor_Context_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
-#endif
+// #ifdef MOTOR_UNIT_CONVERSION_LOCAL
+// static inline int16_t Motor_GetSpeed_Rpm(const Motor_Context_T * p_motor)             { return  (p_motor, Motor_User_GetSpeed_Fract16(p_motor)); }
+// static inline int16_t Motor_GetIPhase_Amps(const Motor_Context_T * p_motor)           { return  (Motor_GetIPhase_UFract16(p_motor)); }
+// static inline int16_t Motor_GetVPhase_Volts(const Motor_Context_T * p_motor)          { return  (Motor_GetVPhase_UFract16(p_motor)); }
+// static inline int32_t Motor_GetElectricalPower_VA(const Motor_Context_T * p_motor)    { return  (Motor_GetElectricalPower_UFract16(p_motor)); }
+// static inline thermal_t Motor_GetHeat_DegC(const Motor_Context_T * p_motor)           { return  (&p_motor->Thermistor, p_motor->AnalogResults.Heat_Adcu); }
+// #endif
 
 /******************************************************************************/
 /*!
@@ -118,7 +118,7 @@ static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_mot
 static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return (p_motor->Direction == MOTOR_DIRECTION_CCW) ? -Motor_ILimitCw(p_motor) : Motor_ILimitCcw(p_motor); }
 static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return (p_motor->Config.DirectionForward == MOTOR_DIRECTION_CCW) ? Motor_SpeedLimitCcw(p_motor) : (-Motor_SpeedLimitCw(p_motor)); }
 
-/* calculate through derate */
+/* recalculate through derate */
 // static inline ufract16_t Motor_User_ILimitMotoring(const Motor_Context_T * p_motor) { return Motor_ILimitMotoring(p_motor); }
 // static inline ufract16_t Motor_User_ILimitGenerating(const Motor_Context_T * p_motor) { return Motor_ILimitGenerating(p_motor); }
 // static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) { return Motor_SpeedLimitForward(p_motor); }
@@ -126,11 +126,11 @@ static inline ufract16_t Motor_User_SpeedLimit(const Motor_Context_T * p_motor) 
 /*
 
 */
-// static inline bool Motor_IsILimitSet(const Motor_Context_T * p_motor)
+// static inline bool Motor_IsILimitSaturate(const Motor_Context_T * p_motor)
 // {
 //     return (Motor_User_ILimitMotoring(p_motor) != p_motor->Config.ILimitMotoring_Fract16) || (Motor_User_ILimitGenerating(p_motor) != p_motor->Config.ILimitGenerating_Fract16);
 // }
-// static inline bool Motor_IsSpeedLimitSet(const Motor_Context_T * p_motor)
+// static inline bool Motor_IsSpeedLimitSaturate(const Motor_Context_T * p_motor)
 // {
 //     return (Motor_SpeedLimitForward(p_motor) != p_motor->Config.SpeedLimitForward_Fract16) || (Motor_SpeedLimitReverse(p_motor) != p_motor->Config.SpeedLimitReverse_Fract16);
 // }

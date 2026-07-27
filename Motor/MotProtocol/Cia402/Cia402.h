@@ -25,8 +25,8 @@
 /*!
     @file   Cia402.h
     @author FireSourcery
-    @brief  CiA 402 (CANopen drive profile) data interface — Controlword,
-            Statusword, Modes of Operation, and standardized object indices.
+    @brief  CiA 402 (CANopen drive profile) data interface
+            — Controlword, Statusword, Modes of Operation, and standardized object indices.
 */
 /******************************************************************************/
 #include <stdint.h>
@@ -405,6 +405,7 @@ Cia402_OdStatus_T;
 #define CIA402_COB_TXPDO1_BASE      (0x180U)
 #define CIA402_COB_TXPDO2_BASE      (0x280U)
 #define CIA402_COB_EMCY_BASE        (0x080U)
+// #define CIA402_COB_AXIS_OFFSET        (0x800U)
 
 #define CIA402_COB_FUNCTION_MASK    (0x780U) /* upper 4 bits */
 #define CIA402_COB_NODE_MASK        (0x07FU) /* lower 7 bits */

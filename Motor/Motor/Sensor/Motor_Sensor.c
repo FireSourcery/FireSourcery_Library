@@ -41,7 +41,6 @@
 /******************************************************************************/
 // static inline RotorSensor_T * Sensor(Motor_T * p_motor) { return RotorSensor_Of(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->Config.SensorMode); }
 
-
 // void Motor_Sensor_InitUnits(Motor_Context_T * p_motor)
 // {
 //     RotorSensor_Config_T config =

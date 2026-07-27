@@ -49,6 +49,15 @@
 
 #define MOTOR_CONTROL_PERIOD_US (1000000U / MOTOR_CONTROL_FREQ) /* us */
 
+#ifndef MOTOR_I_LOOP_FREQ
+#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / ANALOG_DIVIDER) */
+#endif
+
+#ifndef MOTOR_SPEED_LOOP_FREQ
+#define MOTOR_SPEED_LOOP_FREQ (1000U)
+#endif
+
+
 /*
     Max representable speed angle16 base
 
@@ -59,7 +68,6 @@
         4 pole pairs:  150,001 RPM mechanical
         40 pole pairs:  150,00 RPM mechanical
 */
-/* Saturation Max ANGLE16 base only */
 #define MOTOR_EL_ANGLE_SPEED_MAX_RADS  ANGLE_SPEED_MAX_RADS(MOTOR_CONTROL_FREQ)
 #define MOTOR_EL_ANGLE_SPEED_MAX_RPM   ANGLE_SPEED_MAX_RPM(MOTOR_CONTROL_FREQ) /* MOTOR_ERPM_MAX */
 // #define MOTOR_EL_ANGLE_SPEED_MAX        (32768)
@@ -69,17 +77,6 @@
         speed max = 6000 rpm /60 · 4 = 400 Hz
         speed base = anglespeedmax · f_s / 65536 = 2048 · 20000 / 65536 = 625 Hz
 */
-
-
-#ifndef MOTOR_I_LOOP_FREQ
-#define MOTOR_I_LOOP_FREQ MOTOR_CONTROL_FREQ /* CONTROL_FREQ / ANALOG_DIVIDER) */
-#endif
-
-#ifndef MOTOR_SPEED_LOOP_FREQ
-#define MOTOR_SPEED_LOOP_FREQ (1000U)
-#endif
-
-
 
 /*
     Motor_Config   use

@@ -346,7 +346,9 @@ static inline Protocol_ReqCode_T ProcReqState(const Socket_T * p_socket, Socket_
                         {
                             // p_state->TxLength = 0U; /* in case it is not set by the user function */
                             p_state->TxLength = p_state->p_ReqActive->PROC(p_socket->P_APP_CONTEXT, p_socket->P_TX_PACKET_BUFFER, p_socket->P_RX_PACKET_BUFFER);
-
+                        // #if defined(PROTOCOL_REQ_HANDLER_PAYLOAD)
+                        //     p_state->TxLength = p_state->p_ReqActive->PROC(p_socket->P_APP_CONTEXT, &p_socket->P_TX_PACKET_BUFFER[p_socket->HEADER_LENGTH], &p_socket->P_RX_PACKET_BUFFER[p_socket->HEADER_LENGTH]);
+                        // #endif
                             // p_state->TxMeta.Length - Stateless set length only. id use const def in
                             // todo p_state->p_Specs->BUILD_TX_META(p_socket->P_TX_PACKET_BUFFER, &p_state->TxMeta);
 

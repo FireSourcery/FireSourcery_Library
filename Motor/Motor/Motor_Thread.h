@@ -92,8 +92,6 @@ static inline void Motor_PWM_Thread(Motor_T * p_dev)
 }
 
 
-
-
 /* Controls StateMachine Proc. Local Critical */
 // static inline void Motor_ClearInterrupt(Motor_T * p_motor) { Phase_ClearInterrupt(&p_motor->PHASE); }
 // static inline void Motor_DisableInterrupt(Motor_T * p_motor) { Phase_DisableInterrupt(&p_motor->PHASE); }

@@ -37,15 +37,16 @@
     Settles on target when |target - s| <= rate
 */
 static inline int32_t ramp_next(uint32_t ramp_rate, int32_t output, int32_t target) { return output + math_clamp(target - output, -(int32_t)ramp_rate, (int32_t)ramp_rate); }
-static inline accumulator_raw_t ramp_target(accumulator_raw_t rate, accumulator_raw_t min, accumulator_raw_t max, accumulator_raw_t state, accumulator_raw_t target)
-{
-    return ramp_next(rate, state, math_clamp(target, min, max));
-}
+
+// static inline accumulator_state_t ramp_target(accumulator_state_t rate, accumulator_state_t min, accumulator_state_t max, accumulator_state_t state, accumulator_state_t target)
+// {
+//     return ramp_next(rate, state, math_clamp(target, min, max));
+// }
 
 /*  Bounded step toward an explicit target; Coefficient acts as max step magnitude. */
 // accumulator_io_t Accumulator_Ramp(Accumulator_T * p_accum, accumulator_io_t target)
 // {
-//     p_accum->Accumulator = ramp_target(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, _ACCUM_TO_RAW(target));
+//     p_accum->Accumulator = ramp_target(p_accum->Coefficient, p_accum->LimitLower, p_accum->LimitUpper, p_accum->Accumulator, _ACCUM_STATE(target));
 //     return Accumulator_Output(p_accum);
 // }
 

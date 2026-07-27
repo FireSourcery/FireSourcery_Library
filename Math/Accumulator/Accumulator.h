@@ -42,30 +42,25 @@
 */
 /******************************************************************************/
 #ifndef ACCUMULATOR_FLOAT
-/* Accumulator Max [INT32_MAX/2] => Accumulator + Input < INT32_MAX */
+typedef int16_t accumulator_io_t;       /* user-scale value */
+typedef int32_t accumulator_state_t;      /* internal state. include additional scaling for fixed-point representation */
 /*
-    value range [-UINT16_MAX:UINT16_MAX] => 2 * range << 14
+    Accumulator Max [INT32_MAX/2] => Accumulator + Input < INT32_MAX
     value range [-INT16_MAX:INT16_MAX]  => 2 * range << 15
+    value range [-UINT16_MAX:UINT16_MAX] => 2 * range << 14
 */
-typedef int16_t accumulator_io_t;      /* user-scale value */
-typedef int32_t accumulator_raw_t;  /* internal Q-format state */
-
-
 #define ACCUMULATOR_SHIFT 15
 #define ACCUMULATOR_SCALE (1L << ACCUMULATOR_SHIFT)
-#define _ACCUM_TO_RAW(x)        ((accumulator_raw_t)((x) * ACCUMULATOR_SCALE))
-#define _ACCUM_FROM_RAW(x)      ((accumulator_io_t)((x) / ACCUMULATOR_SCALE))
+#define _ACCUM_STATE(io)    ((accumulator_state_t)((io) * ACCUMULATOR_SCALE))
+#define _ACCUM_IO(state)    ((accumulator_io_t)((state) / ACCUMULATOR_SCALE))
 #else
 #include <math.h>
 typedef float accumulator_io_t;
-typedef float accumulator_raw_t;
-#define _ACCUM_TO_RAW(x)        ((accumulator_raw_t)(x))
-#define _ACCUM_FROM_RAW(x)      ((accumulator_io_t)(x))
+typedef float accumulator_state_t;
+#define _ACCUM_STATE(x)        ((accumulator_state_t)(x))
+#define _ACCUM_IO(x)      ((accumulator_io_t)(x))
 // #define math_clamp(v, lo, hi) fmaxf((lo), fminf((hi), (v))) //todo
 #endif
-
-//
-// typedef scalar_wide_t accumulator_io_t; /* using hal for state */
 
 
 /******************************************************************************/
@@ -75,21 +70,18 @@ typedef float accumulator_raw_t;
 /******************************************************************************/
 typedef struct Accumulator
 {
-    accumulator_raw_t Accumulator;  /* integrator output, internal scale */
-    accumulator_raw_t Coefficient;  /* gain K, internal scale */
-    accumulator_raw_t LimitUpper;   /* saturation bound, internal scale */
-    accumulator_raw_t LimitLower;
+    accumulator_state_t Accumulator;  /* integrator output, internal scale */
+    accumulator_state_t Coefficient;  /* gain K, internal scale */
+    accumulator_state_t LimitUpper;   /* saturation bound, internal scale */
+    accumulator_state_t LimitLower;
 }
 Accumulator_T;
 
 /* y(n) = clamp(y(n-1) + K·u(n), LimitLower, LimitUpper)  */
-static inline accumulator_raw_t accumulator(accumulator_raw_t rate, accumulator_raw_t min, accumulator_raw_t max, accumulator_raw_t state, accumulator_raw_t input)
+static inline accumulator_state_t accumulator(accumulator_state_t rate, accumulator_state_t min, accumulator_state_t max, accumulator_state_t state, accumulator_state_t input)
 {
     return math_clamp(state + (rate * input), min, max);
 }
-
-
-
 
 /******************************************************************************/
 /*
@@ -101,18 +93,18 @@ static inline accumulator_raw_t accumulator(accumulator_raw_t rate, accumulator_
     Output / state access (user-scale)
 */
 /******************************************************************************/
-static inline accumulator_io_t Accumulator_Output(const Accumulator_T * p_accum) { return _ACCUM_FROM_RAW(p_accum->Accumulator); }
-static inline void Accumulator_SetOutput(Accumulator_T * p_accum, accumulator_io_t value) { p_accum->Accumulator = math_clamp(_ACCUM_TO_RAW(value), p_accum->LimitLower, p_accum->LimitUpper); }
+static inline accumulator_io_t Accumulator_Output(const Accumulator_T * p_accum) { return _ACCUM_IO(p_accum->Accumulator); }
+static inline void Accumulator_SetOutput(Accumulator_T * p_accum, accumulator_io_t value) { p_accum->Accumulator = math_clamp(_ACCUM_STATE(value), p_accum->LimitLower, p_accum->LimitUpper); }
 
 static inline void Accumulator_Reset(Accumulator_T * p_accum) { p_accum->Accumulator = 0; }
 
-static inline accumulator_io_t Accumulator_LimitUpper(const Accumulator_T * p_accum) { return _ACCUM_FROM_RAW(p_accum->LimitUpper); }
-static inline accumulator_io_t Accumulator_LimitLower(const Accumulator_T * p_accum) { return _ACCUM_FROM_RAW(p_accum->LimitLower); }
+static inline accumulator_io_t Accumulator_LimitUpper(const Accumulator_T * p_accum) { return _ACCUM_IO(p_accum->LimitUpper); }
+static inline accumulator_io_t Accumulator_LimitLower(const Accumulator_T * p_accum) { return _ACCUM_IO(p_accum->LimitLower); }
 
 static inline void Accumulator_SetLimits(Accumulator_T * p_accum, accumulator_io_t lower, accumulator_io_t upper)
 {
-    p_accum->LimitLower = _ACCUM_TO_RAW(lower);
-    p_accum->LimitUpper = _ACCUM_TO_RAW(upper);
+    p_accum->LimitLower = _ACCUM_STATE(lower);
+    p_accum->LimitUpper = _ACCUM_STATE(upper);
 }
 
 /******************************************************************************/
@@ -146,8 +138,8 @@ static inline accumulator_io_t Accumulator_Step(Accumulator_T * p_accum, accumul
     Configuration (user-scale)
 */
 /******************************************************************************/
-static inline accumulator_io_t Accumulator_Coefficient(const Accumulator_T * p_accum) { return _ACCUM_FROM_RAW(p_accum->Coefficient); }
-static inline void Accumulator_SetCoefficient(Accumulator_T * p_accum, accumulator_io_t coefficient) { p_accum->Coefficient = _ACCUM_TO_RAW(coefficient); }
+static inline accumulator_io_t Accumulator_Coefficient(const Accumulator_T * p_accum) { return _ACCUM_IO(p_accum->Coefficient); }
+static inline void Accumulator_SetCoefficient(Accumulator_T * p_accum, accumulator_io_t coefficient) { p_accum->Coefficient = _ACCUM_STATE(coefficient); }
 
 /******************************************************************************/
 /*

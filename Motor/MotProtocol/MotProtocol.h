@@ -75,13 +75,14 @@ typedef enum MotProtocol_DataModeConfig
 }
 MotProtocol_DataModeConfig_T;
 
-typedef enum MotProtocol_DataModeStateId
-{
-    MOT_PROTOCOL_DATA_MODE_INACTIVE,
-    MOT_PROTOCOL_DATA_MODE_READ_ACTIVE,
-    MOT_PROTOCOL_DATA_MODE_WRITE_ACTIVE,
-}
-MotProtocol_DataModeStateId_T;
+// /* Maps to Protocol.SubStateIndex */
+// typedef enum MotProtocol_DataModeStateId
+// {
+//     MOT_PROTOCOL_DATA_MODE_INACTIVE,
+//     MOT_PROTOCOL_DATA_MODE_READ_ACTIVE,
+//     MOT_PROTOCOL_DATA_MODE_WRITE_ACTIVE,
+// }
+// MotProtocol_DataModeStateId_T;
 
 
 /* For Stateful DataMode Read/Write */
@@ -104,8 +105,8 @@ extern const Packet_Format_T MOT_PROTOCOL_PACKET_CLASS;
 
 extern Protocol_ReqCode_T MotProtocol_ReadData(void * p_app, Protocol_ReqContext_T * p_reqContext);
 extern Protocol_ReqCode_T MotProtocol_Flash_WriteData_Blocking(Flash_T * const p_flash, Protocol_ReqContext_T * p_reqContext);
+extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
 // extern packet_size_t MotProtocol_Flash_WriteOnce_Blocking(Flash_T * p_flash, MotPacket_OnceWriteResp_T * p_txPacket, const MotPacket_OnceWriteReq_T * p_rxPacket);
 // extern packet_size_t MotProtocol_Flash_ReadOnce_Blocking(Flash_T * p_flash, MotPacket_OnceReadResp_T * p_txPacket, const MotPacket_OnceReadReq_T * p_rxPacket);
-extern Protocol_ReqCode_T MotProtocol_Flash_Erase_Blocking(Flash_T * p_flash, Protocol_ReqContext_T * p_reqContext);
 
 #endif
