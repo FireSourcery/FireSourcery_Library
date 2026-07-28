@@ -306,7 +306,19 @@ static inline void FOC_ProcIFeedback_Base(FOC_T * p_foc, ufract16_t vBus, int16_
 /*
     accept the wide multiply by default
     Only M0 benefits from micro-optimizing.
+    optionally select additional int64 multiply in fast loop
 */
+
+#if !defined(FOC_DECOUPLE_FF_SAT16)
+static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
+{
+    p_foc->ElectricalSpeed.OmegaLd = accum32_mul(p_foc->Config.Electrical.Ld, speed);
+    p_foc->ElectricalSpeed.OmegaLq = accum32_mul(p_foc->Config.Electrical.Lq, speed);
+    p_foc->ElectricalSpeed.OmegaPsi = accum32_mul(p_foc->Config.Electrical.Psi, speed);
+}
+static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
+static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_wide(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
+#else
 static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 {
     p_foc->ElectricalSpeed.OmegaLd = fract16_sat(accum32_mul(p_foc->Config.Electrical.Ld, speed));
@@ -316,15 +328,7 @@ static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
 
 static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
 static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
-
-// static void FOC_CaptureSpeed(FOC_T * p_foc, accum32_t speed)
-// {
-//     p_foc->ElectricalSpeed.OmegaLd = (accum32_mul(p_foc->Config.Electrical.Ld, speed));
-//     p_foc->ElectricalSpeed.OmegaLq = (accum32_mul(p_foc->Config.Electrical.Lq, speed));
-//     p_foc->ElectricalSpeed.OmegaPsi = (accum32_mul(p_foc->Config.Electrical.Psi, speed));
-// }
-// static inline accum32_t FOC_VdFeedforward(const FOC_T * p_foc) { return foc_vd_ff_wide(p_foc->ElectricalSpeed.OmegaLq, p_foc->Iq); }
-// static inline accum32_t FOC_VqFeedforward(const FOC_T * p_foc) { return foc_vq_ff_wide(p_foc->ElectricalSpeed.OmegaLd, p_foc->ElectricalSpeed.OmegaPsi, p_foc->Id); }
+#endif
 
 /*
     Vd_cmd = Vd_PI + Vd_ff,
@@ -709,42 +713,14 @@ typedef enum FOC_ConfigId
 FOC_ConfigId_T;
 
 
-static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
-{
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
-        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-        case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;         // temporarily
-        case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
-        case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
-        case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;
-        default: return 0;
-    }
-}
-
-static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int value)
-{
-    switch (var)
-    {
-        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
-        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
-        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
-        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
-        case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
-        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
-        default: break;
-    }
-}
-
 // static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
 // {
 //     switch (var)
 //     {
 //         case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
 //         case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
-//         case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld;
-//         case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq;
+//         case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld / 1000;         // temporarily
+//         case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq / 1000;
 //         case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
 //         case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;
 //         default: return 0;
@@ -755,15 +731,43 @@ static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int valu
 // {
 //     switch (var)
 //     {
-//         case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;   break;
-//         case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;    break;
-//         case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value;            break;
-//         case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value;            break;
+//         case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;        break;
+//         case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;         break;
+//         case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value * 1000;    break;
+//         case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value * 1000;    break;
 //         case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
 //         case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
 //         default: break;
 //     }
 // }
+
+static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
+{
+    switch (var)
+    {
+        case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
+        case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
+        case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld;
+        case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq;
+        case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
+        case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;
+        default: return 0;
+    }
+}
+
+static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int value)
+{
+    switch (var)
+    {
+        case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;   break;
+        case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;    break;
+        case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value;            break;
+        case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value;            break;
+        case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
+        case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
+        default: break;
+    }
+}
 
 /* Optional runtime tuning */
 // static int Foc_Var_SetTuning(FOC_T * p_foc,  Motor_Var_Foc_T varId, int value)

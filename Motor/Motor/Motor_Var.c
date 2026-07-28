@@ -180,29 +180,29 @@ void _Motor_Var_CalibrationCmd_Call(Motor_T * p_motor, Motor_Var_CalibrationCmd_
 /* Maintain consistency for save Nvm */
 void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
 {
-    _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
-    PID_SetKp_Fixed16(&p_state->PidSpeed, value);
+    p_state->Config.PidSpeed.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->PidSpeed, value);
 }
 
 void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
 {
-    _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
-    PID_SetKi_Fixed16(&p_state->PidSpeed, value);
+    p_state->Config.PidSpeed.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->PidSpeed, value);
 }
 
 // optionally switch on commutation mode
 void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
 {
-    _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
-    PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
-    PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
+    p_state->Config.PidI.Kp_Fixed32 = value;
+    PID_SetKp_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKp_Fixed32(&p_state->Foc.PidId, value);
 }
 
 void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
 {
-    _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
-    PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
-    PID_SetKi_Fixed16(&p_state->Foc.PidId, value);
+    p_state->Config.PidI.Ki_Fixed32 = value;
+    PID_SetKi_Fixed32(&p_state->Foc.PidIq, value);
+    PID_SetKi_Fixed32(&p_state->Foc.PidId, value);
 }
 
 int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
@@ -212,11 +212,11 @@ int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed32(&p_state->PidSpeed);    break; // alternatively _PID_GetKp_Runtime
+        case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed32(&p_state->PidSpeed);    break;
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KP:          value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KI:          value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed32(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed32(&p_state->Foc.PidIq);   break;
         default: break;
     }
     return value;
@@ -237,6 +237,67 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
         default: break;
     }
 }
+
+// /* Maintain consistency for save Nvm */
+// void _Motor_Tuning_SetSpeedKp(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKp_Fixed16(&p_state->Config.PidSpeed, value);
+//     PID_SetKp_Fixed16(&p_state->PidSpeed, value);
+// }
+
+// void _Motor_Tuning_SetSpeedKi(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKi_Fixed16(&p_state->Config.PidSpeed, value);
+//     PID_SetKi_Fixed16(&p_state->PidSpeed, value);
+// }
+
+// // optionally switch on commutation mode
+// void _Motor_Tuning_SetIKp(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKp_Fixed16(&p_state->Config.PidI, value);
+//     PID_SetKp_Fixed16(&p_state->Foc.PidIq, value);
+//     PID_SetKp_Fixed16(&p_state->Foc.PidId, value);
+// }
+
+// void _Motor_Tuning_SetIKi(Motor_Context_T * p_state, uint32_t value)
+// {
+//     _PID_SetKi_Fixed16(&p_state->Config.PidI, value);
+//     PID_SetKi_Fixed16(&p_state->Foc.PidIq, value);
+//     PID_SetKi_Fixed16(&p_state->Foc.PidId, value);
+// }
+
+// int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
+// {
+//     const Motor_Context_T * p_state = p_motor->P_MOTOR;
+//     int value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
+//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
+//         case MOTOR_VAR_PID_CURRENT_KP:            value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
+//         case MOTOR_VAR_PID_CURRENT_KI:            value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
+//         default: break;
+//     }
+//     return value;
+// }
+
+// /* Sets runtime only */
+// void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, int varValue)
+// {
+//     Motor_Context_T * p_state = p_motor->P_MOTOR;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
+//         case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp(p_state, varValue);    break;
+//         case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi(p_state, varValue);    break;
+//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
+//         case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp(p_state, varValue); break;
+//         case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi(p_state, varValue); break;
+//         default: break;
+//     }
+// }
 
 
 /******************************************************************************/
@@ -326,6 +387,11 @@ static inline void Motor_FocConfig_SetSi(Motor_T * p_motor, FOC_ConfigId_T var, 
 }
 
 
+/******************************************************************************/
+/*
+    Type Dispatchers
+*/
+/******************************************************************************/
 /******************************************************************************/
 /*
     [VarType_Base]
