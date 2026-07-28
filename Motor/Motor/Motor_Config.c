@@ -462,20 +462,20 @@ int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid
     return value;
 }
 
-int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId)
-{
-    int value = 0;
-    switch (varId)
-    {
-        case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = _PID_GetSampleFreq(&p_motor->PidSpeed);   break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = _PID_GetKp_Fixed32(&p_motor->PidSpeed);   break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = _PID_GetKi_Fixed32(&p_motor->PidSpeed);   break;
-        case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:    value = _PID_GetSampleFreq(&p_motor->PidI);     break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16:     value = _PID_GetKp_Fixed32(&p_motor->PidI);     break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16:     value = _PID_GetKi_Fixed32(&p_motor->PidI);     break;
-    }
-    return value;
-}
+// int _Motor_Var_ConfigPid_Get(const Motor_Config_T * p_motor, Motor_Var_ConfigPid_T varId)
+// {
+//     int value = 0;
+//     switch (varId)
+//     {
+//         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = _PID_GetSampleFreq(&p_motor->PidSpeed);   break;
+//         case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = _PID_GetKp_Fixed32(&p_motor->PidSpeed);   break;
+//         case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = _PID_GetKi_Fixed32(&p_motor->PidSpeed);   break;
+//         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:    value = _PID_GetSampleFreq(&p_motor->PidI);     break;
+//         case MOTOR_VAR_PID_CURRENT_KP_FIXED16:     value = _PID_GetKp_Fixed32(&p_motor->PidI);     break;
+//         case MOTOR_VAR_PID_CURRENT_KI_FIXED16:     value = _PID_GetKi_Fixed32(&p_motor->PidI);     break;
+//     }
+//     return value;
+// }
 
 /*  */
 /* Coefficients in 9.7 */
