@@ -116,11 +116,6 @@ int MotorController_Config_Get(MotorController_T * p_dev, MotorController_Var_Co
     {
         case MOT_VAR_MAIN_MODE:                value = p_state->Config.InitMode;                          break;
         case MOT_VAR_INPUT_MODE:               value = p_state->Config.InputMode;                         break;
-
-        // case MOT_VAR_OPT_DIN_FUNCTION:         value = p_state->Config.OptDinMode;                        break;
-        // case MOT_VAR_OPT_SPEED_LIMIT:          value = p_state->Config.OptSpeedLimit_Fract16;             break;
-        // case MOT_VAR_OPT_I_LIMIT:              value = p_state->Config.OptILimit_Fract16;                 break;
-
         case MOT_VAR_BOOT_REF_FAST_BOOT:    value = p_state->BootRef.FastBoot;     break;
         case MOT_VAR_BOOT_REF_BEEP:         value = p_state->BootRef.Beep;         break;
         case MOT_VAR_BOOT_REF_BLINK:        value = p_state->BootRef.Blink;        break;
@@ -137,11 +132,6 @@ void MotorController_Config_Set(MotorController_T * p_dev, MotorController_Var_C
     {
         case MOT_VAR_MAIN_MODE:              p_state->Config.InitMode = (MotorController_MainMode_T)value;              break;
         case MOT_VAR_INPUT_MODE:             p_state->Config.InputMode = (MotorController_InputMode_T)value;            break;
-
-        // case MOT_VAR_OPT_DIN_FUNCTION:      p_state->Config.OptDinMode = value;           break;
-        // case MOT_VAR_OPT_SPEED_LIMIT:       p_state->Config.OptSpeedLimit_Fract16 = value;                              break;
-        // case MOT_VAR_OPT_I_LIMIT:           p_state->Config.OptILimit_Fract16 = value;                                  break;
-
         case MOT_VAR_BOOT_REF_FAST_BOOT:    p_state->BootRef.FastBoot = value;     break;
         case MOT_VAR_BOOT_REF_BEEP:         p_state->BootRef.Beep = value;         break;
         case MOT_VAR_BOOT_REF_BLINK:        p_state->BootRef.Blink = value;        break;

@@ -577,11 +577,16 @@ static void FOC_InitFieldWeakening(FOC_T * p_foc, const FOC_FieldWeakeningTuning
     p_foc->Config.FieldWeakening = *p_fwTuning;
 }
 
+/*  */
 static void FOC_Init(FOC_T * p_foc, const FOC_Config_T * p_config)
 {
     p_foc->Config = *p_config;
-    /*     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
-    PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI); */
+}
+
+static void FOC_InitPid(FOC_T * p_foc, const PID_Config_T * p_configI)
+{
+    PID_InitFrom(&p_foc->PidIq, p_configI);
+    PID_InitFrom(&p_foc->PidId, p_configI);
 }
 
 // void FOC_SetModulation(FOC_T * p_foc, fract16_t modulation)
@@ -731,6 +736,34 @@ static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int valu
         default: break;
     }
 }
+
+// static int FOC_Config_Get(const FOC_Config_T * p_config, FOC_ConfigId_T var)
+// {
+//     switch (var)
+//     {
+//         case FOC_CONFIG_FW_ID_LIMIT:    return p_config->FieldWeakening.IdLimit;
+//         case FOC_CONFIG_FW_ID_GAIN:     return p_config->FieldWeakening.IdGain;
+//         case FOC_CONFIG_ELECTRICAL_LD:  return p_config->Electrical.Ld;
+//         case FOC_CONFIG_ELECTRICAL_LQ:  return p_config->Electrical.Lq;
+//         case FOC_CONFIG_ELECTRICAL_RS:  return p_config->Electrical.Rs;
+//         case FOC_CONFIG_ELECTRICAL_PSI: return p_config->Electrical.Psi;
+//         default: return 0;
+//     }
+// }
+
+// static void FOC_Config_Set(FOC_Config_T * p_config, FOC_ConfigId_T var, int value)
+// {
+//     switch (var)
+//     {
+//         case FOC_CONFIG_FW_ID_LIMIT:    p_config->FieldWeakening.IdLimit = value;   break;
+//         case FOC_CONFIG_FW_ID_GAIN:     p_config->FieldWeakening.IdGain = value;    break;
+//         case FOC_CONFIG_ELECTRICAL_LD:  p_config->Electrical.Ld = value;            break;
+//         case FOC_CONFIG_ELECTRICAL_LQ:  p_config->Electrical.Lq = value;            break;
+//         case FOC_CONFIG_ELECTRICAL_RS:  p_config->Electrical.Rs = value;            break;
+//         case FOC_CONFIG_ELECTRICAL_PSI: p_config->Electrical.Psi = value;           break;
+//         default: break;
+//     }
+// }
 
 /* Optional runtime tuning */
 // static int Foc_Var_SetTuning(FOC_T * p_foc,  Motor_Var_Foc_T varId, int value)

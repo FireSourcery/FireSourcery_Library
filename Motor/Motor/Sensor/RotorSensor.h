@@ -80,6 +80,7 @@ typedef struct RotorSensor_Config
     /* Config scalar speed. Caller derive  */
     uint16_t SpeedTypeMax_Rpm; /* mechanical */
     uint16_t SpeedTypeMax_Angle16; /* electrical */
+    /* uint32_t PollingFreq */
 
     // uint16_t MismatchLimit;
 

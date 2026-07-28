@@ -36,19 +36,19 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+/* handle availability in either float or int, unlike the hal fract */
 /* require user config, that would otherwise not be explicit with int */
 // #ifndef MATH_INT_T
 // #define MATH_INT_T int
 // #endif
-
 // typedef MATH_INT_T int_t;
-#ifdef MATH_FLOAT
-#define MATH_TYPE_T float
-#else
-#define MATH_TYPE_T int32_t
-#endif
+// #ifdef MATH_FLOAT
+// #define MATH_TYPE_T float
+// #else
+// #define MATH_TYPE_T int32_t
+// #endif
 
-typedef MATH_TYPE_T num_t;
+// typedef MATH_TYPE_T num_t;
 
 static inline uint32_t math_abs(int32_t value) { return abs(value); } /* INT32_MIN returns INT32_MAX + 1 */
 
@@ -157,12 +157,12 @@ static inline interval_t interval_intersect(interval_t a, interval_t b) { return
 /*
 
 */
+/* GCC builtin for overflow detection */
+/* https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html */
+/* https://godbolt.org/z/3f8c6f9bM */
+/* https://godbolt.org/z/4a7jvPz9d */
 static inline int32_t math_add_sat(int32_t a, int32_t b)
 {
-    /* GCC builtin for overflow detection */
-    /* https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html */
-    /* https://godbolt.org/z/3f8c6f9bM */
-    /* https://godbolt.org/z/4a7jvPz9d */
 #if defined(__GNUC__)
     int32_t result;
     if (__builtin_add_overflow(a, b, &result) == true)

@@ -82,139 +82,36 @@ uint8_t MotPacket_BuildHeader(MotPacket_T * p_packet, MotPacket_Id_T headerId, u
 }
 
 
-/*
-    todo depreciate for build header
-*/
-/******************************************************************************/
-/*! Fixed Length */
-/******************************************************************************/
-/******************************************************************************/
-/*! Ping */
-/******************************************************************************/
-uint8_t MotPacket_PingResp_Build(MotPacket_PingResp_T * p_respPacket, MotPacket_Id_T syncId)
-{
-    return MotPacket_Sync_Build((MotPacket_Sync_T *)p_respPacket, syncId);
-}
 
-/******************************************************************************/
-/*! Version */
-/******************************************************************************/
-uint8_t MotPacket_VersionResp_Build(MotPacket_T * p_packet, uint32_t firmware)
-{
-    MotPacket_VersionResp_T * p_payload = (MotPacket_VersionResp_T *)p_packet->Payload;
-    p_payload->Protocol = MOT_PACKET_VERSION_WORD32;
-    p_payload->Library  = MOTOR_LIBRARY_VERSION;
-    p_payload->Firmware = firmware;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
-}
+// size_t MotPacket_ParseLength(const MotPacket_T * p_rxPacket, packet_size_t rxCount)
+// {
+//     switch (p_rxPacket->Header.Id)
+//     {
+//         // Sync packets — complete immediately, no checksum verification needed
+//         case MOT_PACKET_SYNC_ACK:   return sizeof(MotPacket_Sync_T);
+//         case MOT_PACKET_SYNC_NACK:  return sizeof(MotPacket_Sync_T);
+//         case MOT_PACKET_SYNC_ABORT: return sizeof(MotPacket_Sync_T);
+//         case MOT_PACKET_PING:       return sizeof(MotPacket_Sync_T);
+//         case MOT_PACKET_PING_BOOT:  return sizeof(MotPacket_Sync_T);
+//         case MOT_PACKET_PING_ALT:   return sizeof(MotPacket_Sync_T);
 
-/******************************************************************************/
-/*! Stop */
-/******************************************************************************/
-uint8_t MotPacket_StopResp_Build(MotPacket_T * p_packet, uint16_t status)
-{
-    ((MotPacket_StopResp_T *)p_packet->Payload)->Status = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_STOP_ALL, sizeof(MotPacket_StopResp_T));
-}
+//             /* fixed length, directly map id */
+//         case MOT_PACKET_STOP_ALL:       return sizeof(MotPacket_StopReq_T);     break;
+//         case MOT_PACKET_VERSION:        return sizeof(MotPacket_VersionReq_T);  break;
+//             // case MOT_PACKET_REBOOT:        return sizeof(MotPacket_CallReq_T);     break;
+//         case MOT_PACKET_CALL:               return sizeof(MotPacket_CallReq_T);     break;
+//         case MOT_PACKET_FIXED_VAR_READ:     return sizeof(MotPacket_VarReadFixedReq_T); break;
+//         case MOT_PACKET_FIXED_VAR_WRITE:    return sizeof(MotPacket_VarWriteFixedReq_T); break;
 
-/******************************************************************************/
-/*! Call */
-/******************************************************************************/
-uint8_t MotPacket_CallResp_Build(MotPacket_T * p_packet, uint32_t id, uint16_t status)
-{
-    MotPacket_CallResp_T * p_payload = (MotPacket_CallResp_T *)p_packet->Payload;
-    p_payload->Id     = id;
-    p_payload->Status = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_CALL, sizeof(MotPacket_CallResp_T));
-}
-
-/******************************************************************************/
-/*!
-    Variable Length
-*/
-/******************************************************************************/
-uint8_t MotPacket_VersionFlexResp_Build(MotPacket_T * p_packet, uint32_t * p_versions, uint8_t count)
-{
-    uint8_t size = count * sizeof(uint32_t);
-    memcpy(p_packet->Payload, p_versions, size);
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_VERSION, size);
-}
-
-/******************************************************************************/
-/*!
-    Read/Write Vars
-*/
-/******************************************************************************/
-
-/******************************************************************************/
-/*! ReadVars */
-/******************************************************************************/
-uint8_t MotPacket_VarReadReq_ParseVarIdCount(const MotPacket_T * p_packet) { return MotPacket_ParsePayloadLength(p_packet) / sizeof(uint16_t); }
-
-uint8_t MotPacket_VarReadResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount) { return MotPacket_BuildHeader(p_packet, MOT_PACKET_VAR_READ, varsCount * sizeof(uint16_t)); }
-
-// static uint16_t VarId_Checksum(const MotPacket_T * p_packet, uint8_t varCount) { return Checksum((uint8_t *)&p_packet->Payload[0U], varCount * 2U); }
-
-
-/******************************************************************************/
-/*! WriteVars */
-/******************************************************************************/
-uint8_t MotPacket_VarWriteReq_ParseVarCount(const MotPacket_T * p_packet) { return MotPacket_ParsePayloadLength(p_packet) / sizeof(uint16_t) / 2U; }
-
-uint8_t MotPacket_VarWriteResp_BuildHeader(MotPacket_T * p_packet, uint8_t varsCount) { return MotPacket_BuildHeader(p_packet, MOT_PACKET_VAR_WRITE, varsCount * sizeof(uint8_t)); }
-
-
-
-/******************************************************************************/
-/*! Mem */
-/******************************************************************************/
-uint8_t MotPacket_MemWriteResp_Build(MotPacket_T * p_packet, uint16_t status)
-{
-    ((MotPacket_MemWriteResp_T *)p_packet->Payload)->Status = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_MEM_WRITE, sizeof(MotPacket_MemWriteResp_T));
-}
-
-/* Data filled by caller. No double buffering */
-uint8_t MotPacket_MemReadResp_BuildHeader(MotPacket_T * p_packet, uint8_t size, uint16_t status)
-{
-    // p_packet->Header.Flags = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_MEM_READ, size);
-}
-
-uint8_t MotPacket_MemReadResp_Build(MotPacket_T * p_packet, const uint8_t * p_data, uint8_t size, uint16_t status)
-{
-    memcpy(p_packet->Payload, p_data, size);
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_MEM_READ, size);
-}
-
-/******************************************************************************/
-/*! Stateful Read/Write */
-/******************************************************************************/
-/******************************************************************************/
-/*! DataModeReq Read/Write Initial Common */
-/******************************************************************************/
-uint8_t MotPacket_DataModeReadResp_Build(MotPacket_T * p_packet, uint16_t status)
-{
-    ((MotPacket_DataModeResp_T *)p_packet->Payload)->Status = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_DATA_MODE_READ, sizeof(MotPacket_DataModeResp_T));
-}
-
-uint8_t MotPacket_DataModeWriteResp_Build(MotPacket_T * p_packet, uint16_t status)
-{
-    ((MotPacket_DataModeResp_T *)p_packet->Payload)->Status = status;
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_DATA_MODE_WRITE, sizeof(MotPacket_DataModeResp_T));
-}
-
-/******************************************************************************/
-/*! Data */
-/******************************************************************************/
-uint8_t MotPacket_ByteData_Build(MotPacket_T * p_packet, const uint8_t * p_data, uint8_t size)
-{
-    memcpy(p_packet->Payload, p_data, size);
-    return MotPacket_BuildHeader(p_packet, MOT_PACKET_DATA_MODE_DATA, size);
-}
-
-uint8_t MotPacket_ByteData_ParseSize(const MotPacket_T * p_packet) { return MotPacket_ParsePayloadLength(p_packet); }
-
-
-
+//         // Data packets — set length, await remaining bytes
+//         default:
+//             if (rxCount < offsetof(MotPacket_Header_T, Length))
+//             {
+//                 return 0;
+//             }
+//             else
+//             {
+//                 return MotPacket_ParsePayloadLength(p_rxPacket);
+//             }
+//     }
+// }

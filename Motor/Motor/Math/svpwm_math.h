@@ -45,8 +45,8 @@
     overflow when VBus drops more than 42% before v_fract16 updates
     VBus fault detection should trigger before this point
 */
-static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_accum32, fract16_t v_fract16) { return (int32_t)v_fract16 * (int32_t)vBusInv_accum32 / FRACT16_SCALE; }
-static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t v_fract16) { return fract16_div(v_fract16, vBus_fract16); }
+static inline fract16_t svpwm_norm_vbus_inv(uint32_t vBusInv_accum32, fract16_t vphase_fract16) { return (int32_t)vphase_fract16 * (int32_t)vBusInv_accum32 / FRACT16_SCALE; }
+static inline fract16_t svpwm_norm_vbus(ufract16_t vBus_fract16, fract16_t vphase_fract16) { return fract16_div(vphase_fract16, vBus_fract16); }
 /*  */
 static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNorm) { return fract16_mul(vNorm, vBus_fract16); }
 
@@ -54,7 +54,7 @@ static inline fract16_t svpwm_vphase_vbus(ufract16_t vBus_fract16, fract16_t vNo
 struct svpwm_abc { ufract16_t a, b, c; };
 
 /*!
-    @param[in] vA, vB, vC - scalars normalized to VBus as 1.0F. range [-1/sqrt3:1/sqrt3].
+    @param[in] vA, vB, vC - normalized to VBus as 1.0F, [-1/sqrt3:1/sqrt3]
                             vA = 1/sqrt3 <=> Phase A voltage output VBus/sqrt3
     @param[out] p_dutyA, p_dutyB, p_dutyC - [0:32767]
 */

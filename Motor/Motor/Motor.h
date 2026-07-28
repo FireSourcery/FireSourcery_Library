@@ -192,13 +192,7 @@ static const Motor_FaultFlags_T MOTOR_FAULT_INIT_CHECK       = { .InitCheck     
 
 
 //todo
-// #ifndef MOTOR_FLOATING_POINT
-// // typedef fract16_t quantity_t;
-// // typedef fract16_t magnitude_t;
-// typedef fract16_t scalar_t;
-// #else
-// typedef float scalar_t;
-// #endif
+// real_t, fract_t
 
 /*!
     @brief Motor Config - Runtime variable configuration, settings. Load from non volatile memory.
@@ -377,6 +371,7 @@ typedef const struct Motor
     const VBus_T * P_VBUS; /* Read-only */
     Phase_VOut_T PHASE;
     Phase_Analog_T PHASE_ANALOG;
+    // RotorSensor_T SENSOR; /* Compile time default */
     RotorSensor_Table_T SENSOR_TABLE; /* Runtime selection. Init macros in Motor_Sensor.h */
     HeatMonitor_T HEAT_MONITOR;
     Analog_Conversion_T HEAT_MONITOR_CONVERSION;
@@ -384,7 +379,7 @@ typedef const struct Motor
     TimerT_T CONTROL_TIMER;     /* State Timer. Map to ControlTimerBase */
     TimerT_T SPEED_TIMER;       /* Outer Speed Loop Timer. Millis */
     const Motor_Config_T * P_NVM_CONFIG;
-    const FOC_Config_T * P_FOC_NVM_CONFIG; /* avoid loading a duplicate copy into ram */
+    const FOC_Config_T * P_FOC_NVM_CONFIG; /* config for the FOC struct with a nested config field, without including a 3rd copy in Motor_Config */
     /*
         System-scope arbitration handles. Pointers to LimitArray_Augments_T (cached aggregate) only — Motor reads derate state.
         Handle the combined system-wide state at the Motor layer. This way a single getter combines the local and system derate sources.
@@ -412,7 +407,9 @@ static inline Motor_Config_T * Motor_Config(Motor_T * p_motor)
 */
 /******************************************************************************/
 static inline Phase_VOut_T * Motor_PhaseVOut(Motor_T * p_motor) { return &p_motor->PHASE; }
+/* handle single selection case */
 static inline RotorSensor_T * Motor_RotorSensor(Motor_T * p_motor) { return p_motor->P_MOTOR->p_ActiveSensor; }
+
 static inline const Angle_T * Motor_AngleSpeed(Motor_T * p_motor) { return &p_motor->P_MOTOR->SensorState.AngleSpeed; }
 
 static inline Phase_VOutMode_T Motor_GetPhaseState(Motor_T * p_const) { return Phase_ReadVOut(&p_const->PHASE); }
@@ -423,7 +420,7 @@ static inline uint16_t Motor_SpeedTypeMax_Rads(Motor_T * p_motor) { return _Moto
 
 /*
     Speed VBus Ref
-    Generally [SpeedRated] via Kv * VBusNominal
+    [SpeedRated] via Kv * VBusNominal
 */
 static inline uint16_t Motor_GetSpeedVNominalRef_Rpm(Motor_T * p_motor) { return Motor_Config(p_motor)->SpeedRating.Kv * VBus_VSupplyNominal_V(&p_motor->P_VBUS->Config); }
 static inline uint16_t Motor_GetSpeedVNominalRef_Angle(Motor_T * p_motor) { return _Motor_AngleOfRpm(&Motor_Config(p_motor)->SpeedRating, Motor_GetSpeedVNominalRef_Rpm(p_motor)); }
@@ -437,16 +434,12 @@ static inline uint16_t Motor_SpeedRated_Rpm(Motor_T * p_motor) { return Motor_Ge
 
 /*
     when SpeedTypeMax = Kv * V_Max
-    SpeedRated_pu = VNominal_pu
+    SpeedRated_pu = VNominal_pu,  SpeedRated_Rpm = Kv * VNominal
     ke_pu = 1.0
     ψ_pu = .5
 */
 static inline uint16_t Motor_GetSpeedVNominalRef_Fract16(Motor_T * p_motor) { return VBus_VNominal_Fract16(&p_motor->P_VBUS->Config); } /* VBus handles sync V / VPu */
 static inline uint16_t Motor_SpeedRated_Fract16(Motor_T * p_motor) { return Motor_GetSpeedVNominalRef_Fract16(p_motor); }
-
-// static inline accum32_t Motor_Ke_Fract16(Motor_T * p_motor) { return _Motor_GetKe_Fract16(&Motor_Config(p_motor)->SpeedRating); }
-// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return _Motor_GetPsi_Fract16(&Motor_Config(p_motor)->SpeedRating); }
-// static inline accum32_t Motor_Psi_Fract16(Motor_T * p_motor) { return p_motor->P_MOTOR->Foc.Config.Electrical.Psi; }
 
 
 /******************************************************************************/
@@ -459,24 +452,23 @@ static inline uint16_t Motor_SpeedRated_Fract16(Motor_T * p_motor) { return Moto
     Ramp as the speed/torque setpoint contract. Hold entire commanded trajectory
     Resolve writes the canonical pair into the Ramp itself.
     Ramp.Target is user input
-*/
-/*
-    System limits derive intermediate Motoring/Generating
     Ramp holds Cached directional limits — single materialized layer for hot-path PID/Ramp clamps
+    System limits derive intermediate Motoring/Generating
 */
+
 /*
     Inline local-derate compose — function IS the spec for which local sources exist.
 */
 // return math_min(HeatMonitor_GetDerate_Fract16(&p_motor->HEAT_MONITOR), Motor_GetILimitStall(p_motor->P_MOTOR));
 // static inline ufract16_t Motor_GetILocalDerate(Motor_T * p_motor) { return HeatMonitor_GetDerate_Fract16(&p_motor->HEAT_MONITOR); }
-static inline ufract16_t Motor_GetILocalDerate(Motor_T * p_motor) { return FRACT16_MAX; } /* temporary placeholder */
-/* No per-motor speed derate sources currently. Identity = no constraint. */
+static inline ufract16_t Motor_GetILocalDerate(Motor_T * p_motor) { (void)p_motor; return FRACT16_MAX; }
 static inline ufract16_t Motor_GetSpeedLocalDerate(Motor_T * p_motor) { (void)p_motor; return FRACT16_MAX; }
 
 /*
     Single source of Derate owned by system. System is the writer. No additional cached state in Motor_Context_T.
     Handle remaining comparison not handled by system arbitration array
 */
+/* alternative SetDerate resolve to ramp */
 static inline ufract16_t Motor_GetIDerate(Motor_T * p_motor) { return math_min(Motor_GetILocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_I_LIMIT)); }
 static inline ufract16_t Motor_GetSpeedDerate(Motor_T * p_motor) { return math_min(Motor_GetSpeedLocalDerate(p_motor), _LimitArray_Upper(p_motor->P_SYSTEM_SPEED_LIMIT)); }
 
@@ -507,7 +499,8 @@ static inline interval_t Motor_SpeedLimitsAs(Motor_T * p_motor, Motor_Direction_
 */
 static inline interval_t Motor_GetILimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Direction, Motor_ILimitMotoring(p_motor), Motor_ILimitGenerating(p_motor)); }
 static inline interval_t Motor_GetSpeedLimits(Motor_T * p_motor) { return interval_of_sign_pair((sign_t)p_motor->P_MOTOR->Config.DirectionForward, Motor_SpeedLimitForward(p_motor), Motor_SpeedLimitReverse(p_motor)); }
-// static inline interval_t Motor_GetVLimits(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_(p_motor), Motor_SpeedLimitReverse(p_motor)); }
+static inline interval_t Motor_GetVLimitsAntiPlugging(Motor_T * p_motor) { return interval_of_half_plane((sign_t)p_motor->P_MOTOR->Direction, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS), 0); }
+static inline interval_t Motor_GetVLimitsSymmetric(Motor_T * p_motor) { return interval_symmetric(0, VBus_GetVPhaseRefSvpwm(p_motor->P_VBUS)); }
 
 /*
     Resolve = re-pull canonical (LimitArray + Config + Direction) → write Ccw/Cw → flush PID/Ramp.
@@ -562,6 +555,9 @@ static inline fract16_t Motor_SpeedLimitCw(const Motor_Context_T * p_motor) { re
 /* Feedback Speed interface getter */
 /* move to Motor_T in case of compile time single sensor defined. atlernatively, sensor state is always mapped into Motor_Context_T */
 static inline accum32_t Motor_GetSpeedFeedback(const Motor_Context_T * p_motor) { return RotorSensor_GetSpeed_Fract16(p_motor->p_ActiveSensor); }
+/* State transition checks */
+static inline bool Motor_IsSpeedZero(const Motor_Context_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
+
 static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T * p_motor) { return (Motor_Direction_T)RotorSensor_GetFeedbackDirection(p_motor->p_ActiveSensor); }
 
 /*!
@@ -578,8 +574,6 @@ static inline Motor_Direction_T Motor_GetDirectionFeedback(const Motor_Context_T
 static inline int32_t _Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return Motor_GetSpeedFeedback(p_motor->P_MOTOR) / 2; }
 static inline int32_t Motor_GetVSpeed_Fract16(Motor_T * p_motor) { return fract16_mul(_Motor_GetVSpeed_Fract16(p_motor), p_motor->P_MOTOR->Config.SpeedRating.VSpeedAdjustment); }
 
-/* State transition checks */
-static inline bool Motor_IsSpeedZero(const Motor_Context_T * p_motor) { return (Motor_GetSpeedFeedback(p_motor) == 0); }
 
 static inline uint16_t Motor_GetSpeedFreewheelLimit_UFract16(Motor_T * p_motor) { return Motor_SpeedRated_Fract16(p_motor); }
 static inline bool Motor_IsSpeedFreewheelLimitRange(Motor_T * p_motor) { return (math_abs(Motor_GetSpeedFeedback(p_motor->P_MOTOR)) < Motor_GetSpeedFreewheelLimit_UFract16(p_motor)); }

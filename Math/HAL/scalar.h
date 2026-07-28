@@ -34,20 +34,25 @@
 
 /*
     HAL for math
-    data abstraction layer for math value type, real_t
+    data abstraction layer for math value type
     wrap semantics over storage.
+    uniform handling in float <=> selective in fixed-point
 */
 #ifndef FLOATING_POINT
-typedef accum32_t scalar_wide_t; /*  */
-typedef fract16_t scalar_unit_t; /* < 1.0 */
-typedef fract16e_t scalar_ext_t;
-typedef fract16_t scalar_t;
+// typedef accum32_t scalar_wide_t; /*  */
+// typedef fract16_t scalar_unit_t; /* < 1.0 */
+// typedef fract16e_t scalar_ext_t;
+// typedef fract16_t scalar_t;
+typedef accum32_t real_t;
+typedef fract16_t fract_t;
+// typedef fract16e_t exp_t;
 #else
-typedef float scalar_ext_t;
-typedef float scalar_t;
-
+// typedef float scalar_ext_t;
+// typedef float scalar_t;
+typedef float real_t;
 typedef float fract_t;
 typedef float accum_t;
+typedef float exp_t;
 #endif
 
 

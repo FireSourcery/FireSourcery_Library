@@ -55,9 +55,6 @@
 #define MOTOR_CONTROLLER_MANUFACTURE_NVM_ONCE
 #endif
 
-// #ifndef MOT_NVM_MANUFACTURE_SIZE
-// #define MOT_NVM_MANUFACTURE_SIZE (64U)
-// #endif
 
 /* For Protocol Flash Only */
 #if     defined(MOTOR_CONTROLLER_FLASH_LOADER_ENABLE)

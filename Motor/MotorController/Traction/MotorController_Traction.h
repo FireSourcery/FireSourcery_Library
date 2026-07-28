@@ -113,12 +113,3 @@ extern int MotorController_Traction_VarId_Get(MotorController_T * p_mc, Traction
 int MotorController_Traction_ConfigId_Get(MotorController_T * p_mc, Traction_ConfigId_T id);
 void MotorController_Traction_ConfigId_Set(MotorController_T * p_mc, Traction_ConfigId_T id, int value);
 
-
-
-
-/* StateMachine Input */
-// extern void MotorController_Traction_ApplyDirection(MotorController_T * p_mc, sign_t direction);
-// extern void MotorController_Traction_ApplyStartCmd(MotorController_T * p_mc, Traction_Cmd_T cmd);
-// extern void MotorController_Traction_StartThrottle(MotorController_T * p_mc);
-// extern void MotorController_Traction_StartBrake(MotorController_T * p_mc);
-// extern void MotorController_Traction_StartRelease(MotorController_T * p_mc);

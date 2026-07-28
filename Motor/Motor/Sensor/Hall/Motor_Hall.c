@@ -110,10 +110,11 @@ static void Calibration_Align_I(Motor_T * p_motor, Phase_Id_T id)
 */
 static void Calibration_Proc(Motor_T * p_motor)
 {
+    static const Phase_Id_T CAL_STEP[CAL_STEP_COUNT] = { PHASE_ID_A, PHASE_ID_INV_C, PHASE_ID_B, PHASE_ID_INV_A, PHASE_ID_C, PHASE_ID_INV_B, };
+
     CalibrationBuffer_T * p_buffer = GetBuffer(p_motor);
     assert(p_buffer->Step < CAL_STEP_COUNT);
 
-    static const Phase_Id_T CAL_STEP[CAL_STEP_COUNT] = { PHASE_ID_A, PHASE_ID_INV_C, PHASE_ID_B, PHASE_ID_INV_A, PHASE_ID_C, PHASE_ID_INV_B, };
     Phase_Id_T id = CAL_STEP[p_buffer->Step];
 
     Calibration_Align_I(p_motor, id);
@@ -177,16 +178,6 @@ void Motor_Hall_Cmd(Motor_T * p_motor, int varId, int varValue)
     }
 }
 
-// void Motor_Hall_GetStateVar(Motor_T * p_motor, int varId, int varValue)
-// {
-//     if (!RotorSensor_Validate(&p_motor->SENSOR_TABLE, p_motor->P_MOTOR->p_ActiveSensor, ROTOR_SENSOR_ID_HALL)) return;
-//     if (p_motor->P_MOTOR->Config.SensorMode != ROTOR_SENSOR_ID_HALL) return;
-
-//     switch (varId)
-//     {
-//         case HALL_PULSE_RPM:   Hall_VarId_Get(p_motor); break;
-//     }
-// }
 
 
 

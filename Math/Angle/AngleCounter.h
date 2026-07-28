@@ -199,6 +199,17 @@ static inline int32_t AngleCounter_GetFreqD(const AngleCounter_T * p_counter) { 
     Counter Ref Init - Compute runtime units from calibration
 */
 /******************************************************************************/
+// static inline AngleCounter_Ref_T AngleCounter_Ref(uint32_t pollingFreq, uint32_t countsPerRevolution, uint32_t fractSpeedRefRpm)
+// {
+//     return (AngleCounter_Ref_T)
+//     {
+//         .Angle32PerCount = angle32_per_count(countsPerRevolution),
+//         .AngleSpeed32PerCount = angle32_speed_per_count(pollingFreq, angle32_per_count(countsPerRevolution)),
+//         .SpeedFractPerCount = rpm_accum32_per_count(pollingFreq, countsPerRevolution, fractSpeedRefRpm),
+//         .CountsPerRevolution = countsPerRevolution,
+//     };
+// }
+
 static inline void AngleCounter_Ref_Init(AngleCounter_Ref_T * p_ref, const AngleCounter_Config_T * p_config)
 {
     // p_ref->AnglePerCount = angle_per_count(p_config->CountsPerRevolution);

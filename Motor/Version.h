@@ -46,6 +46,7 @@
 //         uint16_t FieldWeakening : 1U;
 //         uint16_t OpenLoop : 1U;
 //         uint16_t ElectricalCalibration : 1U;
+//         uint16_t FloatingPoint : 1U;
 //     };
 //     // uint32_t Value;
 // }

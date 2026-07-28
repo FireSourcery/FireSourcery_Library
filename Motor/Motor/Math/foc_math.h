@@ -113,7 +113,6 @@ static inline accum32_t foc_vq_ff_wide(accum32_t omega_Ld, accum32_t omega_psi, 
     limit around d
     mag_limit^2 - d^2 = q^2
 */
-// struct foc_dq_limit { fract16_t d, q; bool is_limited; };
 static inline struct foc_dq foc_circle_limit(fract16_t d, fract16_t q, ufract16_t magnitude_limit)
 {
     uint32_t mag_limit_squared = (int32_t)magnitude_limit * magnitude_limit;

@@ -37,7 +37,7 @@
 #include <stdbool.h>
 #include <stdfix.h>
 
-#define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. 32768. Resolution 1/(2^15) == .000030517578125 */
+#define FRACT16_N_BITS (15)   /*!< Q1.15, 15 fractional bits. Resolution 1/(2^15) == .000030517578125 */
 #define FRACT16_M_BITS (1)
 
 #define FRACT16_SCALE (32768) /* 2^15 */
@@ -49,7 +49,9 @@
 typedef int16_t fract16_t;      /*!< Q1.15 [-1, 1) */
 typedef uint16_t ufract16_t;    /*!< Q1.15 [0, 2) */
 
-typedef int32_t accum32_t;      /*!< Q17.15 2*[INT16_MIN:INT16_MAX] extended integer bits. */
+typedef int32_t accum32_t;      /*!< Q17.15 [-65536.0, 65535.0] extended integer bits. */
+                                /*!< Q2.30 [-1, 1) scaled fract16_t fast saturated add */
+
 typedef int32_t fract32_t;      /*!< Q1.31 [-1, 1) extended fraction bits. */
 typedef uint16_t uq16_t;        /*!< Q0.16 [0, 1) */ // percent16
 
@@ -102,6 +104,8 @@ static inline ufract16_t fract16_sat_positive(accum32_t value) { return math_cla
     @return int32_t [-65536:65535] <=> [-2:2)
 */
 static inline accum32_t fract16_mul(accum32_t factor, accum32_t frac) { return ((factor * frac) >> FRACT16_N_BITS); }
+// drop one parameter 2x case
+// static inline accum32_t fract16_mul(fract16_t factor, fract16_t frac) { return (((int32_t)factor * frac) >> FRACT16_N_BITS); }
 
 /*!
     Saturate to FRACT16_MIN, FRACT16_MAX
@@ -147,13 +151,11 @@ static inline accum32_t accum32_mul(accum32_t a, accum32_t b) { return ((int64_t
 
 
 /*
-
+    alternative to accum32_t, accum32_t multiply without 64-bit intermediate
 */
 /* shift without divisor on max ref */
 /* right shift as positive */
 // static inline int8_t fract16_norm_shift(accum32_t value) { return (int8_t)(fixed_bit_width_signed(value) - FRACT16_N_BITS); }
-// static inline int16_t fract16_norm_factor(int16_t value) { return (1 << fract16_norm_shift(value)); }
-
 // static inline int8_t accum32_norm_shift(int16_t value) { return (int8_t)(fixed_lshift_max_signed(value) - 1); }
 
 // typedef struct { int16_t mantissa; int8_t exp; } fract16e_t;
@@ -174,7 +176,7 @@ typedef struct { int16_t factor; int8_t shift; } fract16e_t;
 static inline fract16e_t fract16e(accum32_t value)
 {
     assert(value <= ACCUM32_SAT);
-    int8_t m = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0);
+    int8_t m = math_max(fixed_bit_width_signed(value) - FRACT16_N_BITS, 0); /* value < 1.0 keep as is */
     return (fract16e_t) { .factor = (int16_t)(value >> m), .shift = FRACT16_N_BITS - m };
 }
 
@@ -250,6 +252,7 @@ static const angle16_t ANGLE16_PER_RADIAN = 10430UL; /* 65536 / (2 * PI) */
 // #define ANGLE16(radians) ((angle16_t)((radians) * ANGLE16_PER_RADIAN))
 // #define ANGLE16_OF_TURNS(turns) ((angle16_t)((turns) * 65536.0F))
 
+/* from scaled storage */
 static inline angle16_t angle16_of_rad_fract16(fract16_t rad) { return (angle16_t)fract16_mul(rad, ANGLE16_PER_RADIAN); }
 /*  */
 static inline angle16_t angle16_of_rad_accum32(accum32_t rad) { return (angle16_t)(((int64_t)rad * ANGLE16_PER_RADIAN) >> FRACT16_N_BITS); }
@@ -280,7 +283,7 @@ static inline bool angle16_cycle(angle16_t theta0, angle16_t theta1, int sign) {
 /* polling freq must be sufficient */
 /* crossing 0 and 180 */
 /* angle16_half_cycle */
- /* ((theta0 ^ theta1) < 0); */
+/* ((theta0 ^ theta1) < 0); */
 static inline bool angle16_cycle2(angle16_t theta0, angle16_t theta1) { return (((theta0 ^ theta1) & 0x8000U) != (uint16_t)0U); }
 /* angle16_quarter_cycle */
 static inline bool angle16_cycle4(angle16_t theta0, angle16_t theta1) { return (((theta0 ^ theta1) & ANGLE16_QUADRANT_MASK) != (uint16_t)0U); }
@@ -296,8 +299,8 @@ extern angle16_t fract16_atan2(fract16_t y, fract16_t x);
 */
 /******************************************************************************/
 struct fract16_xy { fract16_t x; fract16_t y; };
-// struct xy16_t { fract16_t x; fract16_t y; };
 // struct phasor { fract16_t re; fract16_t im; };
+// struct fract16_vec2 { fract16_t vec[2]; } fract16_vec2_t;
 extern struct fract16_xy fract16_vector(angle16_t theta);
 
 extern ufract16_t fract16_vector_magnitude(fract16_t x, fract16_t y);

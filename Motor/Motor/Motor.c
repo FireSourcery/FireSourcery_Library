@@ -61,7 +61,6 @@ void Motor_Init(Motor_T * p_dev)
     TimerT_Periodic_Init(&p_dev->CONTROL_TIMER, 1U);
     TimerT_Periodic_Init(&p_dev->SPEED_TIMER, 1U);
 
-    // Motor_Config_ResolveSpeedRated
     Motor_Reset(p_dev->P_MOTOR); // alternatively move to state machine
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
@@ -101,7 +100,6 @@ void Motor_Reset(Motor_Context_T * p_motor)
     // Ramp_SetLimits(&p_motor->OpenLoopIRamp, -_Motor_OpenLoopILimit(p_motor), _Motor_OpenLoopILimit(p_motor));
     Angle_SpeedRef_Init(&p_motor->OpenLoopSpeedRef, _Motor_GetSpeedTypeMax_Angle(&p_motor->Config.SpeedRating));
 
-    // FOC_Init(&p_motor->Foc, &p_motor->Config.FocConfig);
     PID_InitFrom(&p_motor->Foc.PidIq, &p_motor->Config.PidI);
     PID_InitFrom(&p_motor->Foc.PidId, &p_motor->Config.PidI);
     p_motor->ControlTimerBase = 0U;
@@ -240,7 +238,7 @@ void Motor_ClearFeedbackState(Motor_Context_T * p_motor)
 void Motor_SetFeedbackMode(Motor_T * p_dev, Motor_FeedbackMode_T mode)
 {
     Motor_Context_T * p_motor = p_dev->P_MOTOR;
-    interval_t v = VBus_AntiPluggingLimits(p_dev->P_VBUS, (sign_t)p_dev->P_MOTOR->Direction);
+    interval_t v = Motor_GetVLimitsAntiPlugging(p_dev);
 
     p_dev->P_MOTOR->FeedbackMode.Value = mode.Value;
 
@@ -278,8 +276,9 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 /*
     Private setters, pre derate
 */
+/* alternative to holding pointer to system state, SetDerate resolve to ramp */
 // /*
-//     effective when system ResolveLimits is disabled.
+//
 //     Virtual fields resolved to ccw/cw limits on se
 //     write direction-resolved Ccw/Cw directly.
 // */
@@ -350,7 +349,7 @@ void Motor_SetDirection(Motor_T * p_dev, Motor_Direction_T direction)
 
 // static void _Motor_SetILimitDerate(Motor_T * p_motor, ufract16_t derate)
 // {
-    // _Motor_SetILimits
+    // Ramp_SetLimitUpper(&p_motor->TorqueRamp, derate * Ramp_GetLimitUpper);
 // }
 
 

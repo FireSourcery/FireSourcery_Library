@@ -37,16 +37,17 @@
 
 /*
     PU encoding basis for ψ_pu, L_pu
-    RPM     ω_base = π·P·n_max/30 = π·P·Kv·V/30  (motor anchor — Fs-independent)
+    RPM (motor anchor — Fs-independent)
+        ω_base = π·P·n_max/30 = π·P·Kv·V/30
         ω_mech_pu = ω_elec_pu
         θ_increment = ω_pu · (ω_base / Fs)
-    2x rated or bemf ~ inverter v max
 
-    ANGLE16 ω_base = π·Fs           (controller anchor — Fs-locked, motor independent)
+    ANGLE16 (controller anchor — Fs-locked, motor independent)
+        ω_base = π·Fs
         accept int64 intermediary or
         direct-multiply (no Q15 scaling), delta_angle16 * L_pu → v_pu without /32768 => ~0.5% resolution loss
 
-    ψ_pu·ω_pu => (fract16 * fract16)
+    ψ_pu·ω_pu => (int16_t * int16_t)
     L_pu·ω_pu => (int32_t * int32_t) => int64_t intermediate in both cases
 */
 #if !defined(MOTOR_PU_BASIS_RPM) && !defined(MOTOR_PU_BASIS_ANGLE16)
@@ -140,7 +141,4 @@ static inline accum32_t _Motor_GetPsi_Fract16(const Motor_ElectricalSpeedRating_
 //     int32_t R ;
 //     int32_t T ;
 // } Motor_ElectricalBase_T;
-
-
-// static inline accum32_t _Motor_GetPsiBase_Wb(const Motor_ElectricalSpeedRating_T * p_config) { return _Motor_GetSpeedTypeMax_Rads(p_config) / Phase_Calibration_GetVMaxVolts(); }
 

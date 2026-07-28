@@ -105,7 +105,7 @@ static inline accum32_t Motor_GetDecouplingOmega(const Motor_Context_T * p_motor
 }
 /// static inline void Motor_FOC_CaptureSpeed(Motor_T * p_motor)
 // {
-// FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor));
+//      FOC_CaptureSpeed(&p_motor->P_MOTOR->Foc, Motor_GetDecouplingOmega(p_motor));
 // }
 
 /******************************************************************************/

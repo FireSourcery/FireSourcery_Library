@@ -55,7 +55,7 @@ static packet_size_t Ping(MotorController_T * p_dev, MotPacket_PingResp_T * p_tx
 {
     (void)p_rxPacket;
     MotBuzzer_Short(MotorController_Buzzer(p_dev));
-    return MotPacket_PingResp_Build(p_txPacket, MOT_PACKET_SYNC_ACK);
+    return MotPacket_Sync_Build((MotPacket_Sync_T *)p_txPacket, MOT_PACKET_SYNC_ACK);
 }
 
 /******************************************************************************/
@@ -64,16 +64,11 @@ static packet_size_t Ping(MotorController_T * p_dev, MotPacket_PingResp_T * p_tx
 static packet_size_t Version(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    return MotPacket_VersionResp_Build(p_txPacket, p_dev->MAIN_VERSION.Word32.Value32);
-
-    // MotPacket_VersionResp_T * p_payload = (MotPacket_VersionResp_T *)p_txPacket->Payload;
-    // p_payload->Protocol = MOT_PACKET_VERSION_WORD32;
-    // p_payload->Library = MOTOR_LIBRARY_VERSION;
-    // p_payload->Firmware = p_dev->MAIN_VERSION.Word32.Value32;
-    // return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
-
-    // with variable length
-    // return MotPacket_VersionFlexResp_Build(p_txPacket, MotorController_GetLibraryVersion(), MotorController_GetMainVersion(p_dev), 0);
+    MotPacket_VersionResp_T * p_payload = (MotPacket_VersionResp_T *)p_txPacket->Payload;
+    p_payload->Protocol = MOT_PACKET_VERSION_WORD32;
+    p_payload->Library  = MOTOR_LIBRARY_VERSION;
+    p_payload->Firmware = p_dev->MAIN_VERSION.Word32.Value32;
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
 }
 
 /******************************************************************************/
@@ -83,8 +78,8 @@ static packet_size_t StopAll(MotorController_T * p_dev, MotPacket_T * p_txPacket
 {
     (void)p_rxPacket;
     MotorController_ForceDisableControl(p_dev);
-    // ((MotPacket_StopResp_T *)p_txPacket->Payload)->Status = MOT_STATUS_SUCCESS;
-    return MotPacket_StopResp_Build(p_txPacket, MOT_STATUS_SUCCESS);
+    ((MotPacket_StopResp_T *)p_txPacket->Payload)->Status = MOT_STATUS_SUCCESS;
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_STOP_ALL, sizeof(MotPacket_StopResp_T));
 }
 
 /******************************************************************************/
@@ -94,8 +89,11 @@ static packet_size_t StopAll(MotorController_T * p_dev, MotPacket_T * p_txPacket
 static packet_size_t Call_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     const MotPacket_CallReq_T * p_req = (const MotPacket_CallReq_T *)p_rxPacket->Payload;
+    MotPacket_CallResp_T * p_payload = (MotPacket_CallResp_T *)p_txPacket->Payload;
     uint16_t status = MotorController_CallSystemCmd(p_dev, (MotorController_SystemCmd_T)p_req->Id, p_req->Arg);
-    return MotPacket_CallResp_Build(p_txPacket, p_req->Id, status);
+    p_payload->Id     = p_req->Id;
+    p_payload->Status = status;
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_CALL, sizeof(MotPacket_CallResp_T));
 }
 
 /******************************************************************************/
@@ -134,9 +132,9 @@ static uint8_t WriteVar(MotorController_T * p_dev, MotPacket_T * p_tx, const Mot
 /* Resp Truncates 32-Bit Vars */
 static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    uint8_t varCount = MotPacket_VarReadReq_ParseVarIdCount(p_rxPacket);
+    uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t);
     MotorController_BuildReadVar16s(p_dev, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, (MotPacket_VarReadResp_T *)p_txPacket->Payload, varCount);
-    return MotPacket_VarReadResp_BuildHeader(p_txPacket, varCount);
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_READ, varCount * sizeof(uint16_t));
 }
 
 /******************************************************************************/
@@ -144,9 +142,9 @@ static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPack
 /******************************************************************************/
 static packet_size_t Var16Write(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
-    uint8_t varCount = MotPacket_VarWriteReq_ParseVarCount(p_rxPacket);
+    uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t) / 2U;
     MotorController_BuildWriteVar16s(p_dev, (const MotPacket_VarWriteReq_T *)p_rxPacket->Payload, (MotPacket_VarWriteResp_T *)p_txPacket->Payload, varCount);
-    return MotPacket_VarWriteResp_BuildHeader(p_txPacket, varCount);
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_WRITE, varCount * sizeof(uint8_t));
 }
 
 /******************************************************************************/
@@ -200,7 +198,8 @@ static packet_size_t ReadMem_Blocking(MotorController_T * p_dev, MotPacket_T * p
         // case MOT_PROTOCOL_MEM_CONFIG_FLASH: memcpy(p_buffer, (void *)address, size); status = NV_MEMORY_STATUS_SUCCESS; break;
     }
 
-    return MotPacket_MemReadResp_BuildHeader(p_txPacket, p_req->Size, status);
+    (void)status; /* MemRead header carries size only; status currently unused */
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MEM_READ, p_req->Size);
 }
 
 /* Host handle reboot */
@@ -219,7 +218,8 @@ static packet_size_t WriteMem_Blocking(MotorController_T * p_dev, MotPacket_T * 
         // case MOT_PROTOCOL_MEM_CONFIG_FLASH: status = Flash_Write_Blocking(p_flash, address, p_data, size); break;
     }
 
-    return MotPacket_MemWriteResp_Build(p_txPacket, status);
+    ((MotPacket_MemWriteResp_T *)p_txPacket->Payload)->Status = status;
+    return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_MEM_WRITE, sizeof(MotPacket_MemWriteResp_T));
 }
 
 

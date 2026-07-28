@@ -212,11 +212,11 @@ int _Motor_Var_PidTuning_Get(Motor_T * p_motor, Motor_Var_ConfigPid_T varId)
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ:     value = PID_GetSampleFreq(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:      value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:      value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KP:              value = PID_GetKp_Fixed16(&p_state->PidSpeed);    break;
+        case MOTOR_VAR_PID_SPEED_KI:              value = PID_GetKi_Fixed16(&p_state->PidSpeed);    break;
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ:   value = PID_GetSampleFreq(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16:    value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16:    value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KP:          value = PID_GetKp_Fixed16(&p_state->Foc.PidIq);   break;
+        case MOTOR_VAR_PID_CURRENT_KI:          value = PID_GetKi_Fixed16(&p_state->Foc.PidIq);   break;
         default: break;
     }
     return value;
@@ -229,11 +229,11 @@ void _Motor_Var_PidTuning_Set(Motor_T * p_motor, Motor_Var_ConfigPid_T varId, in
     switch (varId)
     {
         case MOTOR_VAR_PID_SPEED_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_SPEED_KP_FIXED16:  _Motor_Tuning_SetSpeedKp(p_state, varValue);    break;
-        case MOTOR_VAR_PID_SPEED_KI_FIXED16:  _Motor_Tuning_SetSpeedKi(p_state, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KP:          _Motor_Tuning_SetSpeedKp(p_state, varValue);    break;
+        case MOTOR_VAR_PID_SPEED_KI:          _Motor_Tuning_SetSpeedKi(p_state, varValue);    break;
         case MOTOR_VAR_PID_CURRENT_SAMPLE_FREQ: break;
-        case MOTOR_VAR_PID_CURRENT_KP_FIXED16: _Motor_Tuning_SetIKp(p_state, varValue); break;
-        case MOTOR_VAR_PID_CURRENT_KI_FIXED16: _Motor_Tuning_SetIKi(p_state, varValue); break;
+        case MOTOR_VAR_PID_CURRENT_KP:       _Motor_Tuning_SetIKp(p_state, varValue); break;
+        case MOTOR_VAR_PID_CURRENT_KI:       _Motor_Tuning_SetIKi(p_state, varValue); break;
         default: break;
     }
 }
@@ -259,11 +259,14 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
         case MOTOR_VAR_BOARD_I_MAX:                   value = Phase_Calibration_GetIMaxAmps();                       break;
         case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1 / 10;       break;
         case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2 / 10;       break;
+        // case MOTOR_VAR_BOARD_V_PHASE_R1:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R1;       break;
+        // case MOTOR_VAR_BOARD_V_PHASE_R2:              value = PHASE_ANALOG_CALIBRATION.V_PHASE_R2;       break;
         case MOTOR_VAR_BOARD_I_PHASE_R_BASE:          value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_BASE;        break;
         case MOTOR_VAR_BOARD_I_PHASE_R_MOSFETS:       value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_MOSFETS;     break;
+        case MOTOR_VAR_BOARD_I_PHASE_R_SHUNT:         value = PHASE_ANALOG_CALIBRATION.I_PHASE_R_SHUNT;       break;
         case MOTOR_VAR_BOARD_I_PHASE_GAIN:            value = PHASE_ANALOG_CALIBRATION.I_PHASE_GAIN;          break;
         // case MOTOR_VAR_BOARD_CONTROL_FREQ:                 value =                   break;
-        case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;               break;
+        case MOTOR_VAR_BOARD_ROTOR_SENSOR_OPTION:     value = ROTOR_SENSOR_ENABLED.ALL;                        break;
             // /* Precompile Options */
         default: break;
     }

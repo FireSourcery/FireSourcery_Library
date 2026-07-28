@@ -109,11 +109,6 @@ typedef enum MotorController_Var_Config
     MOT_VAR_INPUT_MODE,                 // [MotorController_InputMode_T]
     MOT_VAR_BUZZER_FLAGS_ENABLE,        // [MotorController_BuzzerFlags_T]
 
-    /* OptDin */ /* moved to MOT_VAR_TYPE_OPT_DIN_CONFIG */
-    // MOT_VAR_OPT_DIN_FUNCTION,           //  move
-    // MOT_VAR_OPT_SPEED_LIMIT,            //
-    // MOT_VAR_OPT_I_LIMIT,
-
     MOT_VAR_BOOT_REF_FAST_BOOT,
     MOT_VAR_BOOT_REF_BEEP,
     MOT_VAR_BOOT_REF_BLINK,

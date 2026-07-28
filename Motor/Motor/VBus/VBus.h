@@ -70,6 +70,7 @@ typedef struct VBus
 {
     uint16_t VBus_Fract16;          /* Filtered live ratio — canonical FOC input */
     uint32_t PerV_Accum32;          /* 1 / VBus, accum32-shifted — cached for Vout normalization */
+    /* 1/VBus_pu -> accum32, 1/VBus_V -> fract32 */
 
     /* Precomputed derate slopes */
     int32_t IDerateUnderVSlope;     /* ((FRACT16_MAX - floor) << 15) / (WarnLow - FaultUnder), positive, rising  */
@@ -126,10 +127,10 @@ static inline uint16_t VBus_Volts(const VBus_T * p_vbus) { return fract16_mul(p_
 /* Runtime phase peak references — VBus/2 (sine) and VBus/√3 (SVPWM) */
 static inline ufract16_t VBus_GetVPhaseRef(const VBus_T * p_vbus) { return p_vbus->VBus_Fract16 / 2U; }
 static inline ufract16_t VBus_GetVPhaseRefSvpwm(const VBus_T * p_vbus) { return fract16_mul(p_vbus->VBus_Fract16, FRACT16_1_DIV_SQRT3); }
+// static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 /* Normalize a phase voltage to fraction-of-VBus (duty cycle) */
 static inline ufract16_t VBus_NormOf(const VBus_T * p_vbus, fract16_t phaseV) { return (int32_t)phaseV * p_vbus->PerV_Accum32 / FRACT16_SCALE; }
-static inline interval_t VBus_AntiPluggingLimits(const VBus_T * p_vbus, sign_t direction) { return interval_of_sign(direction, VBus_GetVPhaseRefSvpwm(p_vbus)); }
 
 
 
