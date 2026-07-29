@@ -216,10 +216,7 @@ static inline int32_t rads_fract16_of_angle(uint32_t fs, uint32_t base_rads, int
     si to si
 */
 /******************************************************************************/
-// #define RADS_PER_RPM_FRACT16 (FRACT16_PI / 30)
-// #define RADS_OF_RPM(rpm) ((uint64_t)rpm * FRACT16_PI / (30U * FRACT16_SCALE))
-
-#define RADS_PER_RPM_FLOAT (0.10471975512f) /* π/30, for rpm → rad/s */
+#define RADS_PER_RPM_FLOAT (PI_FLOAT / 30.0F)
 #define RADS_OF_RPM(rpm) ((float)(rpm) * RADS_PER_RPM_FLOAT)
 
 static inline uint32_t rads_of_rpm(uint32_t rpm, uint32_t scale) { return (uint64_t)rpm * FRACT16_PI * scale / (30U * FRACT16_SCALE); }

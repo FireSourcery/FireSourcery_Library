@@ -148,7 +148,6 @@ static inline void _MotorController_HeatMonitor_Thread(MotorController_T * p_dev
     VBus Monitor Thread
 */
 /******************************************************************************/
-
 /*
     if this interrupts a lower priority transition, that transition may overwrite the fault transition, causing exit from fault.
     if overwritten, main will check fault flags and enter, or on next poll.
@@ -227,19 +226,13 @@ static inline void MotorController_Main_Thread(MotorController_T * p_dev)
 
         for (uint8_t iProtocol = 0U; iProtocol < p_dev->PROTOCOL_COUNT; iProtocol++) { Socket_Proc(&p_dev->P_PROTOCOLS[iProtocol]); }
 
-        /* Proc in all State */
+        /* Proc in all States */
         switch (p_mc->Config.InputMode)
         {
             /* AnalogUser is drive functions only */
             case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:                _MotorController_ProcAnalogUser(p_dev);                 break;
-            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:
-                /* Only active when Serial is selected as drive input */
-                // if (MotorController_PollRxLost(p_dev) == true)
-                // {
-                    // Motor_Table_ForEach(&p_dev->MOTORS, Motor_ReleaseVZ);
-                    //     MotorController_ForceDisableControl(p_dev);
-                    //     MotorController_EnterFault(p_dev);
-                // }
+            /* Only active when Serial is selected as drive input */
+            case MOTOR_CONTROLLER_INPUT_MODE_SERIAL: // if (MotorController_PollRxLost(p_dev) == true)     MotorController_SetFault(p_dev, MOTOR_CONTROLLER_FAULT_RX_LOST);
                 break;
             case MOTOR_CONTROLLER_INPUT_MODE_CAN:  break;
         }

@@ -96,6 +96,8 @@ void MotorController_Init(MotorController_T * p_dev)
     MotLimits_ClearIDerate(&p_dev->P_MC->Limits);
     MotLimits_ClearSpeedDerate(&p_dev->P_MC->Limits);
 
+    MotorController_ResolveStandbyExitMode(p_dev);
+
     StateMachine_Init(&p_dev->STATE_MACHINE);
 }
 
@@ -111,7 +113,23 @@ void MotorController_ResetBootDefault(MotorController_Context_T * p_mc)
     p_mc->BootRef.Word = BOOT_REF_DEFAULT.Word;
 }
 
-
+/*
+    Resolve the Standby exit policy from configuration — the single place mapping input topology to behavior
+      - non-ANALOG (serial/CAN) -> MANUAL:      the master issues START_MAIN
+      - ANALOG with a DIN       -> MANUAL:      the edge issues START_MAIN
+      - ANALOG no DIN           -> ON_THROTTLE / AUTO:  the throttle is the enable interface; auto-advance gated on neutral
+*/
+MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev)
+{
+    // if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
+    // if (MotorController_IsParkPinMapped(p_dev)) { return  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL; }
+    // return MOTOR_CONTROLLER_STANDBY_EXIT_ON_THROTTLE;
+    if (p_dev->P_MC->Config.InputMode == MOTOR_CONTROLLER_INPUT_MODE_ANALOG)
+    {
+        if (!MotorController_IsParkPinMapped(p_dev)) { p_dev->P_MC->Config.StandbyExitMode = MOTOR_CONTROLLER_STANDBY_EXIT_AUTO; }
+    }
+    return p_dev->P_MC->Config.StandbyExitMode;
+}
 
 /******************************************************************************/
 /*
@@ -119,10 +137,8 @@ void MotorController_ResetBootDefault(MotorController_Context_T * p_mc)
 */
 /******************************************************************************/
 /*
-    System-side setters operate directly on MotorController_Context_T.Limits (embedded MotLimits_T).
-    Use _LimitArray_* underscore form (augments + values + length explicit) since there's no
-    LimitArray_T descriptor to wrap them. MotLimits typed wrappers may come later — see notes
-    in MotLimits.h on Motor_Table coupling.
+    System-side setters
+    Use _LimitArray parameters form (augments + values + length explicit) since there's no LimitArray_T descriptor to wrap them.
 */
 bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t speed_fract16)
 {

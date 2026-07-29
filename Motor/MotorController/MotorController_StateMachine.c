@@ -134,7 +134,6 @@ static State_T * Common_InputStandby(MotorController_T * p_dev)
 }
 
 
-
 /******************************************************************************/
 /*!
     @brief MotorController State Constraints
@@ -219,7 +218,7 @@ const State_T MC_STATE_INIT =
     When the user subsequently releases the park brake / engages the throttle, the system enters drive in the selected direction.
 
     Buffer user inputs as 'cmd/input state'
-        Direction selection is not an event that causes a state transition, stored independently of the operating state.
+    Direction selection is not an event that causes a state transition, stored independently of the operating state.
 */
 /******************************************************************************/
 static void Standby_Entry(MotorController_T * p_dev)
@@ -233,9 +232,29 @@ static void Standby_Proc(MotorController_T * p_dev)
     (void)p_dev;
 }
 
+static bool Standby_IsStartReady(MotorController_T * p_dev)
+{
+    return (p_dev->P_MC->FaultFlags.Value == 0U) && Motor_Table_IsEverySpeedZero(&p_dev->MOTORS);
+}
+
 /*
-    Standby accepts state commands only. Motor-generic and app-specific inputs are
-    buffered by the caller (via CmdInput / Traction.Input) and sink here (NULL table slots).
+    Automatic exit from STANDBY per the resolved policy —
+    Resolved Config.StandbyExitMode keep InputMode / Park topology out of the state machine.
+*/
+static State_T * Standby_Next(MotorController_T * p_dev)
+{
+    switch (p_dev->P_MC->Config.StandbyExitMode)
+    {
+        case  MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL:        return NULL; /* Await explicit START_MAIN */
+        case  MOTOR_CONTROLLER_STANDBY_EXIT_AUTO:          return Standby_IsStartReady(p_dev) ? MotorController_App_EnterMain(p_dev) : NULL;
+        // case  MOTOR_CONTROLLER_STANDBY_EXIT_ON_THROTTLE:   return Standby_IsStartReady(p_dev) ? MotorController_App_EnterMain(p_dev) : NULL;
+        default:                            return NULL;
+    }
+}
+
+/*
+    Standby accepts state commands only.
+    Motor-generic and app-specific inputs are buffered by the caller (via CmdInput / Traction.Input) and sink here (NULL table slots).
     Buffered values persist and are consumed when Main/sub-state is entered.
 */
 static State_T * Standby_InputStateCmd(MotorController_T * p_dev, state_value_t cmd)
@@ -245,7 +264,7 @@ static State_T * Standby_InputStateCmd(MotorController_T * p_dev, state_value_t 
         case MOTOR_CONTROLLER_STATE_CMD_E_STOP:         return &MC_STATE_STANDBY;
         case MOTOR_CONTROLLER_STATE_CMD_STOP_MAIN:      return &MC_STATE_STANDBY;
         case MOTOR_CONTROLLER_STATE_CMD_START_MAIN:     return MotorController_App_EnterMain(p_dev); /* App resolves initial sub-state, reads buffered direction */
-        default: break;
+        default: return NULL;
     }
     return NULL;
 }
@@ -273,6 +292,7 @@ const State_T MC_STATE_STANDBY =
     .ID                 = MC_STATE_ID_STANDBY,
     .ENTRY              = (State_Action_T)Standby_Entry,
     .LOOP               = (State_Action_T)Standby_Proc,
+    .NEXT               = (State_Input0_T)Standby_Next, /* Headless-analog auto-start; NULL (no-op) for all other configs */
     .P_TRANSITION_TABLE = &STANDBY_TRANSITION_TABLE[0U],
 };
 
@@ -592,13 +612,8 @@ static void Fault_Proc(MotorController_T * p_dev)
 
     Motor_Table_ForceDisableControl(&p_dev->MOTORS); /* Force disable control for all motors */
 
-    // switch (p_mc->Config.InputMode)
-    // {
+    // if (p_mc->FaultFlags.RxLost = MotorController_PollRxLost(p_dev))
     //     /* Protocol Rx Lost use auto recover, without user input */
-    //     case MOTOR_CONTROLLER_INPUT_MODE_SERIAL:    p_mc->FaultFlags.RxLost = MotorController_PollRxLost(p_dev); break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_CAN:       break;
-    //     case MOTOR_CONTROLLER_INPUT_MODE_ANALOG:    break;
-    // }
 
     if (p_mc->FaultFlags.Value == 0U) { Blinky_Stop(&p_dev->BUZZER); }
 }

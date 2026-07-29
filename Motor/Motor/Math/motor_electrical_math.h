@@ -341,6 +341,7 @@ static inline uint32_t psi_uwb_of_pu_rpm(uint16_t v_base_V, uint32_t speed_base_
 // #define MOTOR_L_PU_INT(V_Base, I_Base, Speed_Base_Radians, L_Henries, SI_Scale) MOTOR_L_PU(V_Base, I_Base, Speed_Base_Radians, L_Henries) / SI_Scale
 #define MOTOR_L_PU(V_Base, I_Base, Speed_Base_Radians, L_Henries, SI_Scale) ((uint64_t)L_Henries * I_Base * (Speed_Base_Radians) * FRACT16_SCALE / ((uint64_t)V_Base * SI_Scale))
 #define MOTOR_L_PU_RPM(V_Base, I_Base, Speed_Base_RPM, polePairs, L_Henries, SI_Scale) ((uint64_t)L_Henries * I_Base * (Speed_Base_RPM) * polePairs * FRACT16_PI / (30UL * V_Base * SI_Scale))
+// #define MOTOR_L_PU_RPM(V_Base, I_Base, Speed_Base_RPM, polePairs, L_Henries, SI_Scale) MOTOR_L_PU(V_Base, I_Base, (Speed_Base_RPM) * RADS_PER_RPM_FLOAT, L_Henries, SI_Scale)
 
 /*
     L_pu — scale absorbs both L unit (1/scale_L H) and ω_base unit (1/scale_ω rad/s_e):

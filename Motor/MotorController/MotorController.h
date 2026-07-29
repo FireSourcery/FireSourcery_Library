@@ -34,18 +34,17 @@
 #include "MotAnalogUser/OptPin/OptDin.h"
 #include "MotNvm/MotNvm.h"
 #include "MotLimits/MotLimits.h"
+#include "MotBuzzer/MotBuzzer.h"
 
 #include "Motor/Motor/Motor_Table.h"
 #include "Motor/Motor/Motor_Config.h"
 #include "Motor/Motor/Motor_User.h"
 #include "Motor/Motor/StateMachine/Motor_StateMachine.h"
 // #include "Motor/Motor/Motor_Include.h"
-
 #include "Motor/Motor/VBus/VBus.h"
 #include "Motor/Motor/VBus/VBus_Monitor.h"
 
 #include "Transducer/Blinky/Blinky.h"
-#include "MotBuzzer/MotBuzzer.h"
 #include "Transducer/Monitor/Voltage/VMonitor.h"
 #include "Transducer/Monitor/Heat/HeatMonitor.h"
 #include "Transducer/UserIn/UserDIn_Cmd.h"
@@ -136,7 +135,17 @@ typedef enum MotorController_InputMode
 }
 MotorController_InputMode_T;
 
-// typedef enum { MC_STANDBY_EXIT_MANUAL, MC_STANDBY_EXIT_AUTO, MC_STANDBY_EXIT_ON_THROTTLE } MotorController_StandbyExitMode_T;
+/*
+    Standby exit policy — how the safe stationary state is left.
+    Resolved configuration to decouple input-layer from the state machine.
+*/
+typedef enum MotorController_StandbyExitMode
+{
+    MOTOR_CONTROLLER_STANDBY_EXIT_MANUAL,      /* Await an explicit START_MAIN — serial/CAN master, or a DIN edge */
+    MOTOR_CONTROLLER_STANDBY_EXIT_AUTO,        /* Auto-advance to Main once fault-free and stationary */
+    // MOTOR_CONTROLLER_STANDBY_EXIT_ON_THROTTLE, /* Headless analog — throttle is the enable interface; auto-advance gated on neutral */
+}
+MotorController_StandbyExitMode_T;
 
 
 /*
@@ -161,13 +170,14 @@ typedef struct MotorController_Config
     // MotorController_MainMode_T InitMode;
     int InitMode; /* Sub app on init. enum stand in. Def in AppTable */
     MotorController_InputMode_T InputMode;
-
+    MotorController_StandbyExitMode_T StandbyExitMode;
 
     // MotorController_BuzzerFlags_T BuzzerEnable;
     // MotorController_InitFlags_T InitChecksEnabled;
 
     OptDin_Config_T OptDinConfig;
     Shifter_Config_T ShifterConfig;
+    // optionally move to Din P_VM
     UserDIn_Config_T DInConfigs[MOT_USER_DIN_COUNT]; /* stores cmd id */
     UserAIn_Config_T AInConfigs[MOT_USER_AIN_COUNT];
 
@@ -193,8 +203,8 @@ typedef struct MotorController_Context
 
     MotLimits_T Limits;     /* Q15 unitless derate ratios — contiguous augments + values for I and Speed system arbitration. */
 
-    // MotorController_InputMode_T ActiveInput;
     Motor_Input_T CmdInput; /* Buffered Input for StateMachine. Unused for now */
+    // MotorController_InputMode_T ActiveInput;
 
     /* AIN state — parallel to MotorController_T.AINS[] / .AIN_CONVERSIONS[] */
     /* alternatively ain wraper handle */
@@ -286,7 +296,7 @@ typedef const struct MotorController
     VMonitor_T V_ACCESSORIES;   /* ~12V */
     Analog_Conversion_T V_ACCESSORIES_CONVERSION;
 
-    // handle with AINS
+    // reference for AINS
     VMonitor_T V_ANALOG;        /* V Analog Sensors ~5V */
     Analog_Conversion_T V_ANALOG_CONVERSION;
 
@@ -305,20 +315,6 @@ typedef const struct MotorController
 MotorController_T;
 
 
-/*
-    Per-slot UserAIn_T initializer for AINS[Index].PIN.
-    Maps state into the contiguous MotorController_Context_T-side AInStates[]/AInPinStates[] arrays.
-    Caller pairs this with .CONVERSION = ANALOG_CONVERSION_INIT_FROM(...) at the same slot.
-*/
-#define MOT_AIN_INIT(Index, PinHal, PinId, IsInvert, p_Timer, p_McState, p_Config) (UserAIn_T) \
-{                                                                                              \
-    .P_EDGE_PIN   = &USER_DIN_INIT_FROM(PinHal, PinId, IsInvert, &(p_McState)->AInGateStates[Index], (p_Timer), 10U),   \
-    .P_STATE      = &(p_McState)->AInStates[Index],                                             \
-    .P_NVM_CONFIG = &((p_Config)->AInConfigs[Index]),                                           \
-    .FILTER_SHIFT = 0U,                                                                         \
-}
-
-
 /******************************************************************************/
 /*
     Expose components interface
@@ -335,7 +331,7 @@ static inline State_T * MotorController_App_EnterMain(MotorController_T * p_mc) 
 static inline void MotorController_App_ProcAnalogUser(MotorController_T * p_mc) { p_mc->P_APP->PROC_ANALOG_USER(p_mc); }
 static inline void MotorController_App_Init(MotorController_T * p_mc) { if (p_mc->P_APP->INIT != NULL) { p_mc->P_APP->INIT(p_mc); } }
 
-
+/*  */
 static inline Socket_T * MotorController_GetMainSocket(MotorController_T * p_dev) { assert(p_dev->USER_PROTOCOL_INDEX < p_dev->PROTOCOL_COUNT); return &(p_dev->P_PROTOCOLS[p_dev->USER_PROTOCOL_INDEX]); }
 
 /* check all applicable */
@@ -345,11 +341,9 @@ static inline bool MotorController_PollRxLost(MotorController_T * p_dev)
     return p_dev->P_MC->FaultFlags.RxLost;
 }
 
-
 static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { return &p_dev->BUZZER; }
 // static inline VBus_T * MotorController_VBus(MotorController_T * p_dev) { return p_dev->P_VBUS; }
 // static inline VMonitor_T * MotorController_VMonitorAcces (MotorController_T * p_dev) { return &p_dev->V_ACCESSORIES; }
-
 
 /* Common Buffered Input */
 // static inline Motor_Input_T * MotorController_GetMotorInput(MotorController_T * p_dev) { return &p_dev->P_MC->CmdInput; }
@@ -362,6 +356,8 @@ static inline MotBuzzer_T * MotorController_Buzzer(MotorController_T * p_dev) { 
 extern void MotorController_Init(MotorController_T * p_dev);
 
 extern void MotorController_ResetBootDefault(MotorController_Context_T * p_mc);
+
+extern MotorController_StandbyExitMode_T MotorController_ResolveStandbyExitMode(MotorController_T * p_dev);
 
 extern bool _MotorController_SetSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id, limit_t limit_fract16);
 extern bool _MotorController_ClearSpeedLimitAll(MotorController_T * p_dev, MotSpeedLimitId_T id);

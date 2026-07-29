@@ -64,10 +64,11 @@ static packet_size_t Ping(MotorController_T * p_dev, MotPacket_PingResp_T * p_tx
 static packet_size_t Version(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     (void)p_rxPacket;
-    MotPacket_VersionResp_T * p_payload = (MotPacket_VersionResp_T *)p_txPacket->Payload;
-    p_payload->Protocol = MOT_PACKET_VERSION_WORD32;
-    p_payload->Library  = MOTOR_LIBRARY_VERSION;
-    p_payload->Firmware = p_dev->MAIN_VERSION.Word32.Value32;
+    MotPacket_VersionResp_T * p_resp = (MotPacket_VersionResp_T *)p_txPacket->Payload;
+    p_resp->Protocol = MOT_PACKET_VERSION_WORD32;
+    p_resp->Library  = MOTOR_LIBRARY_VERSION;
+    p_resp->Firmware = p_dev->MAIN_VERSION.Word32.Value32;
+
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VERSION, sizeof(MotPacket_VersionResp_T));
 }
 
@@ -79,6 +80,7 @@ static packet_size_t StopAll(MotorController_T * p_dev, MotPacket_T * p_txPacket
     (void)p_rxPacket;
     MotorController_ForceDisableControl(p_dev);
     ((MotPacket_StopResp_T *)p_txPacket->Payload)->Status = MOT_STATUS_SUCCESS;
+
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_STOP_ALL, sizeof(MotPacket_StopResp_T));
 }
 
@@ -89,10 +91,11 @@ static packet_size_t StopAll(MotorController_T * p_dev, MotPacket_T * p_txPacket
 static packet_size_t Call_Blocking(MotorController_T * p_dev, MotPacket_T * p_txPacket, const MotPacket_T * p_rxPacket)
 {
     const MotPacket_CallReq_T * p_req = (const MotPacket_CallReq_T *)p_rxPacket->Payload;
-    MotPacket_CallResp_T * p_payload = (MotPacket_CallResp_T *)p_txPacket->Payload;
+    MotPacket_CallResp_T * p_resp = (MotPacket_CallResp_T *)p_txPacket->Payload;
     uint16_t status = MotorController_CallSystemCmd(p_dev, (MotorController_SystemCmd_T)p_req->Id, p_req->Arg);
-    p_payload->Id     = p_req->Id;
-    p_payload->Status = status;
+    p_resp->Id     = p_req->Id;
+    p_resp->Status = status;
+
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_CALL, sizeof(MotPacket_CallResp_T));
 }
 
@@ -134,6 +137,7 @@ static packet_size_t Var16Read(MotorController_T * p_dev, MotPacket_T * p_txPack
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t);
     MotorController_BuildReadVar16s(p_dev, (const MotPacket_VarReadReq_T *)p_rxPacket->Payload, (MotPacket_VarReadResp_T *)p_txPacket->Payload, varCount);
+
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_READ, varCount * sizeof(uint16_t));
 }
 
@@ -144,6 +148,7 @@ static packet_size_t Var16Write(MotorController_T * p_dev, MotPacket_T * p_txPac
 {
     uint8_t varCount = MotPacket_ParsePayloadLength(p_rxPacket) / sizeof(uint16_t) / 2U;
     MotorController_BuildWriteVar16s(p_dev, (const MotPacket_VarWriteReq_T *)p_rxPacket->Payload, (MotPacket_VarWriteResp_T *)p_txPacket->Payload, varCount);
+
     return MotPacket_BuildHeader(p_txPacket, MOT_PACKET_VAR_WRITE, varCount * sizeof(uint8_t));
 }
 

@@ -223,14 +223,14 @@ int32_t _Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_Config
     int32_t value = 0;
     switch (id)
     {
-        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
-        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
+        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES;                    break;
+        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL;                  break;
         case THERMISTOR_BOARD_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
-        // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
+            // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
         case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
-        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm) / 10U;            break;
+        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm);            break;
         case THERMISTOR_CONFIG_T0:              value = Thermistor_GetT0(p_therm);                  break;
-        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm) ;       break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm);       break;
         case THERMISTOR_CONFIG_LINEAR_DELTA_T:  value = Thermistor_GetLinearDeltaT(p_therm);        break;
         default: break;
     }
@@ -246,9 +246,9 @@ void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_
             case THERMISTOR_BOARD_R_SERIES:        break;
             case THERMISTOR_BOARD_R_PARALLEL:      break;
             case THERMISTOR_BOARD_V_SERIES_MV:     break;
-            // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
+                // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
             case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
-            case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value * 10U);            break;
+            case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value);                  break;
             case THERMISTOR_CONFIG_T0:              _Thermistor_SetT0(p_therm, value);                  break;
             case THERMISTOR_CONFIG_LINEAR_DELTA_R:  _Thermistor_SetLinearDeltaR(p_therm, value);        break;
             case THERMISTOR_CONFIG_LINEAR_DELTA_T:  _Thermistor_SetLinearDeltaT(p_therm, value);        break;
@@ -260,3 +260,43 @@ void _Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_
 int Thermistor_ConfigId_Get(const Thermistor_T * p_therm, Thermistor_ConfigId_T id) { return (p_therm != NULL) ? _Thermistor_ConfigId_Get(p_therm, id) : 0; }
 
 void Thermistor_ConfigId_Set(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int value) { if (p_therm != NULL) { _Thermistor_ConfigId_Set(p_therm, id, value); } }
+
+
+int32_t _Thermistor_ConfigId_Get16(const Thermistor_T * p_therm, Thermistor_ConfigId_T id)
+{
+    int32_t value = 0;
+    switch (id)
+    {
+        case THERMISTOR_BOARD_R_SERIES:        value = p_therm->R_SERIES / 10U;                    break;
+        case THERMISTOR_BOARD_R_PARALLEL:      value = p_therm->R_PARALLEL / 10U;                  break;
+        case THERMISTOR_BOARD_V_SERIES_MV:     value = p_therm->V_SERIES_MV;                       break;
+            // case THERMISTOR_CONFIG_TYPE:            value = Thermistor_GetType(p_therm);                break;
+        case THERMISTOR_CONFIG_B:               value = Thermistor_GetB(p_therm);                   break;
+        case THERMISTOR_CONFIG_R0:              value = Thermistor_GetR0(p_therm) / 10U;            break;
+        case THERMISTOR_CONFIG_T0:              value = Thermistor_GetT0(p_therm);                  break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_R:  value = Thermistor_GetLinearDeltaR(p_therm);       break;
+        case THERMISTOR_CONFIG_LINEAR_DELTA_T:  value = Thermistor_GetLinearDeltaT(p_therm);        break;
+        default: break;
+    }
+    return value;
+}
+
+void _Thermistor_ConfigId_Set16(const Thermistor_T * p_therm, Thermistor_ConfigId_T id, int32_t value)
+{
+    if (!Thermistor_IsFixed(p_therm))
+    {
+        switch (id)
+        {
+            case THERMISTOR_BOARD_R_SERIES:        break;
+            case THERMISTOR_BOARD_R_PARALLEL:      break;
+            case THERMISTOR_BOARD_V_SERIES_MV:     break;
+                // case THERMISTOR_CONFIG_TYPE:            _Thermistor_SetType(p_therm, value);                break;
+            case THERMISTOR_CONFIG_B:               _Thermistor_SetB(p_therm, value);                   break;
+            case THERMISTOR_CONFIG_R0:              _Thermistor_SetR0(p_therm, value * 10U);            break;
+            case THERMISTOR_CONFIG_T0:              _Thermistor_SetT0(p_therm, value);                  break;
+            case THERMISTOR_CONFIG_LINEAR_DELTA_R:  _Thermistor_SetLinearDeltaR(p_therm, value);        break;
+            case THERMISTOR_CONFIG_LINEAR_DELTA_T:  _Thermistor_SetLinearDeltaT(p_therm, value);        break;
+            default: break;
+        }
+    }
+}

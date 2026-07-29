@@ -36,7 +36,7 @@
 
 #include "System/SysTime/SysTime.h"
 
-#include "MotAnalogUser/MotoController_AnalogUser.h"
+#include "MotAnalogUser/MotorController_AnalogUser.h"
 
 /* only point of coupling to AppTable */
 #include "AppTable/MotorController_AppTable.h"

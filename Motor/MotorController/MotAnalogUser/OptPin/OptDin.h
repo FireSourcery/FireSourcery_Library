@@ -163,7 +163,7 @@ static inline void OptDin_ConfigId_Set(OptDin_Config_T * p_config, OptDin_Config
 }
 
 
-// static inline UserDIn_T * _OptDin_FindByMode(UserDIn_T * p_dins, const UserDIn_Config_T * p_configs, uint8_t count, MotorController_OptDinMode_T mode)
+// static inline UserDIn_T * _OptDin_FindByMode(UserDIn_T * p_dins, uint8_t count, MotorController_OptDinMode_T mode)
 // {
 //     UserDIn_T * found = NULL;
 //     for (uint8_t i = 0U; i < count; i++)

@@ -334,7 +334,6 @@ int Motor_Var_Board_Get(Motor_Var_Board_T varId)
     return value;
 }
 
-/*  */
 
 /******************************************************************************/
 /*
@@ -355,6 +354,11 @@ int _Motor_Var_ConfigDebug_Get(const Motor_T * p_motor, Motor_Var_ConfigDebug_T 
     return value;
 }
 
+/******************************************************************************/
+/*
+
+*/
+/******************************************************************************/
 static inline int Motor_FocConfig_GetSi(Motor_T * p_motor, FOC_ConfigId_T var)
 {
     FOC_Config_T * p_config = &p_motor->P_MOTOR->Foc.Config;

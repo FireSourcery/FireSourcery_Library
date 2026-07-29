@@ -78,40 +78,6 @@ static inline void MotLimits_ClearIDerate(MotLimits_T * p_limits) { _LimitArray_
 // static inline LimitArray_T MotLimits_GetIGenLimitArray(MotLimits_T * p_limits) { return (LimitArray_T) { .P_BUFFER = &p_limits->IGenLimitValues[0U], .LENGTH = MOT_I_GEN_LIMIT_COUNT, .P_AUGMENTS = &p_limits->IGenLimitState, }; }
 // static inline LimitArray_T MotLimits_GetSpeedLimitArray(MotLimits_T * p_limits) { return (LimitArray_T) { .P_BUFFER = &p_limits->SpeedLimitValues[0U], .LENGTH = MOT_SPEED_LIMIT_COUNT, .P_AUGMENTS = &p_limits->SpeedLimitState, }; }
 
-// bool MotLimits_SetSpeedLimitAll(MotLimits_T * p_limits, Motor_Table_T * p_motors, MotSpeedLimitId_T id, limit_t speed_fract16)
-// {
-//     if (_LimitArray_TestSetUpper(&p_limits->SpeedLimitState, p_limits->SpeedLimitValues, id, speed_fract16) == true) { Motor_Table_ApplySpeedLimit(p_motors, &p_limits->SpeedLimitState); return true; }
-//     return false;
-// }
-
-// bool MotLimits_SetSpeedLimit(MotLimits_T * p_limits, MotSpeedLimitId_T id, limit_t speed_fract16)
-// {
-//     if (_LimitArray_TestSetUpper(&p_limits->SpeedLimitState, p_limits->SpeedLimitValues, id, speed_fract16) == true)
-//     { Motor_Table_ApplySpeedLimit(&p_limits->MOTORS, &p_limits->SpeedLimitState); return true; }
-//     return false;
-// }
-
-// bool MotLimits_ClearSpeedLimit(MotLimits_T * p_limits, MotSpeedLimitId_T id)
-// {
-//     if (_LimitArray_TestClearEntry(&p_limits->SpeedLimitState, p_limits->SpeedLimitValues, MOT_SPEED_LIMIT_COUNT, id) == true)
-//     { Motor_Table_ApplySpeedLimit(&p_limits->MOTORS, &p_limits->SpeedLimitState); return true; }
-//     return false;
-// }
-
-// bool MotLimits_SetILimit(MotLimits_T * p_limits, MotILimitId_T id, limit_t i_fract16)
-// {
-//     if (_LimitArray_TestSetUpper(&p_limits->ILimitState, p_limits->ILimitValues, id, i_fract16) == true)
-//     { Motor_Table_ApplyILimit(&p_limits->MOTORS, &p_limits->ILimitState); return true; }
-//     return false;
-// }
-
-// bool MotLimits_ClearILimit(MotLimits_T * p_limits, MotILimitId_T id)
-// {
-//     if (_LimitArray_TestClearEntry(&p_limits->ILimitState, p_limits->ILimitValues, id) == true)
-//     { Motor_Table_ApplyILimit(&p_limits->MOTORS, &p_limits->ILimitState); return true; }
-//     return false;
-// }
-
 
 
 

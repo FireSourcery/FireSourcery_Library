@@ -74,27 +74,28 @@
 #include "Types/Motor_Electrical.h"
 
 
-#if !defined(MOTOR_OPEN_LOOP_RUN_ENABLE)
-#define MOTOR_OPEN_LOOP_RUN_DISABLE
-#endif
-
-// MOTOR_CALIBRATION_ELECTRICAL_ENABLE
-
+/******************************************************************************/
+/*
+*/
+/******************************************************************************/
 #if !defined(MOTOR_V_MATCH_SENSOR) && !defined(MOTOR_V_MATCH_SPEED)
 #define MOTOR_V_MATCH_SENSOR
 #endif
 
-
-#if     defined(MOTOR_UNIT_CONVERSION_LOCAL)
-#if defined(MOTOR_SURFACE_SPEED_ENABLE)
-#endif
-#elif   defined(MOTOR_UNIT_CONVERSION_HOST)
-#else
+#if !defined(MOTOR_UNIT_CONVERSION_LOCAL)
 #define MOTOR_UNIT_CONVERSION_HOST
 #endif
 
 #if !defined(MOTOR_EXTERN_CONTROL_ENABLE)
 #define MOTOR_EXTERN_CONTROL_DISABLE
+#endif
+
+#if !defined(MOTOR_OPEN_LOOP_RUN_ENABLE) && !defined(MOTOR_OPEN_LOOP_RUN_DISABLE)
+#define MOTOR_OPEN_LOOP_RUN_ENABLE
+#endif
+
+#if !defined(MOTOR_CALIBRATION_ELECTRICAL_ENABLE) && !defined(MOTOR_CALIBRATION_ELECTRICAL_DISABLE)
+#define MOTOR_CALIBRATION_ELECTRICAL_ENABLE
 #endif
 
 /* Define to largest used */

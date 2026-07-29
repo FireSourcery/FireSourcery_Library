@@ -45,6 +45,31 @@
 
 
 
+/*
+    Optionally map AIn states to MotorController_Context_T for contiguous memory.
+    Per-slot UserAIn_T initializer for AINS[Index].PIN.
+    Maps state into the contiguous MotorController_Context_T-side AInStates[]/AInPinStates[] arrays.
+    Caller pairs this with .CONVERSION = ANALOG_CONVERSION_INIT_FROM(...) at the same slot.
+*/
+#define MOT_AIN_INIT(Index, PinHal, PinId, IsInvert, p_Timer, p_McState, p_Config) (UserAIn_T) \
+{                                                                                              \
+    .P_EDGE_PIN   = &USER_DIN_INIT_FROM(PinHal, PinId, IsInvert, &(p_McState)->AInGateStates[Index], (p_Timer), 10U),   \
+    .P_STATE      = &(p_McState)->AInStates[Index],                                             \
+    .P_NVM_CONFIG = &((p_Config)->AInConfigs[Index]),                                           \
+    .FILTER_SHIFT = 0U,                                                                         \
+}
+
+
+static inline bool MotorController_AIn_IsEveryZero(MotorController_T * p_dev)
+{
+    bool isZero = true;
+    for (uint8_t i = 0U; i < MOT_USER_AIN_COUNT; ++i) { isZero &= (UserAIn_GetValue(&p_dev->AINS[i].PIN) == 0); }
+    return isZero;
+}
+
+
+
+
 /******************************************************************************/
 /*
 

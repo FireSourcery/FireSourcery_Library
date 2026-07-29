@@ -58,13 +58,16 @@ static inline void MotorController_ProcParkPin(MotorController_T * p_dev) { (voi
 
 #endif
 
-/* auto check input  */
-// State_T * MotorController_ResolveInitial(MotorController_T * p_dev)
-// {
-//     if (p_dev->P_MC->Config.InputMode != MOTOR_CONTROLLER_INPUT_MODE_ANALOG) { return & ; }
-//     for (uint8_t iMode = 0; iMode < MOTOR_CONTROLLER_OPT_DIN_MODE_COUNT; iMode++)
-//     {
-//         if (p_dev->P_MC->Config.OptDinConfig.FunctionIds[iMode] == MOTOR_CONTROLLER_OPT_DIN_PARK) { return & ; }
-//     }
-//     return MotorController_App_EnterMain(p_dev);
-// }
+/*
+    Runtime availability — a Park input is any DIN configured with CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK
+    Used to arm headless-analog auto-start out of STANDBY.
+*/
+static inline bool MotorController_IsParkPinMapped(MotorController_T * p_dev)
+{
+    for (uint8_t iDin = 0U; iDin < MOT_USER_DIN_COUNT; iDin++)
+    {
+        if (p_dev->P_MC->Config.DInConfigs[iDin].CmdId == MOTOR_CONTROLLER_OPT_DIN_PARK) { return true; }
+    }
+    return false;
+}
+

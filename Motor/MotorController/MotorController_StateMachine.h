@@ -63,7 +63,6 @@ extern const State_T MC_STATE_MOTOR_TUNING;
 extern const State_T MC_STATE_LOCK;
 extern const State_T MC_STATE_FAULT;
 
-/* optionally add P_VAR_ACCESS table this layer only. handle var acces via var access structs interface only, caller def access structs */
 
 /*
     state_input_t
@@ -83,11 +82,6 @@ MotorController_StateInput_T;
 /* Alternatively: App extends the input alphabet. keep as one list.  */
 // wrap generic naming
 // MC_STATE_INPUT_APP_USER_1, /* Reserve table space, or use mapper, or buffer */
-// App wraps motor generic
-// MC_STATE_INPUT_SETPOINT,
-// MC_STATE_INPUT_PHASE,
-// MC_STATE_INPUT_FEEDBACK,
-// MC_STATE_INPUT_DIRECTION,
 
 /*
     extern for Init
@@ -95,6 +89,7 @@ MotorController_StateInput_T;
 extern const StateMachine_Machine_T MCSM_MACHINE;
 
 #define MOTOR_CONTROLLER_STATE_MACHINE_INIT(p_MotorControllerConst, MotorControllerActive) STATE_MACHINE_INIT(p_MotorControllerConst, &MCSM_MACHINE, &((MotorControllerActive).StateMachine))
+
 
 /******************************************************************************/
 /*
@@ -317,9 +312,7 @@ typedef union MotorController_FaultCmd
 }
 MotorController_FaultCmd_T;
 
-// extern void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
-// extern void MotorController_ClearFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags);
-// extern bool MotorController_TryClearFaultAll(MotorController_T * p_dev);
+
 static void MotorController_SetFault(MotorController_T * p_dev, MotorController_FaultFlags_T faultFlags)
 {
     StateMachine_Tree_InputAsyncTransition(&p_dev->STATE_MACHINE, MC_STATE_INPUT_FAULT, (MotorController_FaultCmd_T) { .FaultSet = faultFlags.Value }.Value);
